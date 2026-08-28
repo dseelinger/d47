@@ -7,7 +7,7 @@ namespace D47.Core.Tests.Checklists;
 
 /// <summary>
 /// Progress is a diff against live journal state, so nobody ever types in what they have already
-/// done (list.md Phase 17). These are the answers that are not "open", because each one is a
+/// done (Phase 17). These are the answers that are not "open", because each one is a
 /// different next action.
 /// </summary>
 public class ChecklistEvaluatorTests
@@ -312,7 +312,7 @@ public class ChecklistEvaluatorTests
     /// <summary>
     /// A plan for a ship in another dock now gets a verdict, from the loadout d47 remembers —
     /// reported 2026-08-23, and the comment that used to sit over this said it "cannot be diffed at
-    /// all", which stopped being true when list.md Phase 37 started remembering them.
+    /// all", which stopped being true when Phase 37 started remembering them.
     /// <para>
     /// The line already read <i>"5A Thrusters"</i> off that remembered loadout while the verdict
     /// under it refused to look at the same place, which is the asymmetry that made one report read

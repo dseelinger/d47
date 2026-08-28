@@ -25,7 +25,7 @@ public enum SettingsCaller
     Model,
 
     /// <summary>
-    /// A binding the Commander made, acting (list.md Phase 35). Same trust as the panel and for a
+    /// A binding the Commander made, acting (Phase 35). Same trust as the panel and for a
     /// stronger reason than the hotkey has: the value was not merely typed by them, it was written
     /// down by them and is being replayed unchanged. Nothing is interpreted between the file and
     /// the row.
@@ -76,7 +76,7 @@ public sealed record SettingsSection(CapabilityDescriptor Capability, IReadOnlyL
 /// arrives here, which is what lets the protected set be enforced once rather than once per
 /// surface, and what makes "apply every setting without a restart" a property of the service
 /// rather than a promise each screen has to keep: a change is validated, written, persisted
-/// and announced in that order, and subscribers act on the announcement (list.md Phase 4).
+/// and announced in that order, and subscribers act on the announcement (Phase 4).
 /// <para>
 /// There is no save button and no dirty state. A rejected value never reaches
 /// <see cref="Current"/>, so what is on disk and what is in memory cannot disagree.
@@ -92,7 +92,7 @@ public sealed class SettingsService
     private Dictionary<string, SettingRow>? _byKey;
 
     /// <summary>
-    /// The document as it is on disk — both layers (list.md Phase 44). <see cref="Current"/> is
+    /// The document as it is on disk — both layers (Phase 44). <see cref="Current"/> is
     /// this seen through the active Commander's overlay, and every write comes back through
     /// <see cref="CommanderScope.Persist"/> to land in the right layer.
     /// </summary>
@@ -129,7 +129,7 @@ public sealed class SettingsService
     public D47Settings Current { get; private set; }
 
     /// <summary>
-    /// Re-reads the settings for the Commander the journal now says is flying (list.md Phase 44).
+    /// Re-reads the settings for the Commander the journal now says is flying (Phase 44).
     /// <para>
     /// Called for an adoption and for a switch alike, and during the backlog replay as well as
     /// live: this is a pure reading of who is active — the projection is a function of the id, and
@@ -477,8 +477,8 @@ public sealed class SettingsService
     /// Every setting a Commander can change is a row, and rows are how the protected rule, the
     /// validation and the picker all work — so this is deliberately not a general escape hatch.
     /// It exists for derived state that lives in the settings file because it must survive a
-    /// restart, but that nobody types: the voice paired to each persona is the case (list.md
-    /// Phase 11, #33), chosen in the background from a list the Commander never sees.
+    /// restart, but that nobody types: the voice paired to each persona is the case (Phase 11,
+    /// #33), chosen in the background from a list the Commander never sees.
     /// </para>
     /// <para>
     /// It still saves and still announces, under <paramref name="reason"/>, so a subscriber
@@ -603,8 +603,8 @@ public sealed class SettingsService
         try
         {
             // A Commander row lands in the Commander's overlay and an installation row in the
-            // file's body; the row does not know which it is and does not need to (list.md
-            // Phase 44). A row whose write changes nothing on disk — the core-for-that-ship row
+            // file's body; the row does not know which it is and does not need to (Phase 44). A
+            // row whose write changes nothing on disk — the core-for-that-ship row
             // writes to its own store and hands the settings back untouched — still announces,
             // because what it changed is what a subscriber reads through the settings.
             Persist(next);
@@ -700,7 +700,7 @@ public sealed class SettingsService
                 }
 
                 // Fail-soft by contract: an endpoint d47 has never seen still has model names,
-                // so a row that says so accepts a value it cannot offer (list.md Phase 4).
+                // so a row that says so accepts a value it cannot offer (Phase 4).
                 normalised = row.AllowsFreeText ? value : null;
                 return normalised is not null;
 

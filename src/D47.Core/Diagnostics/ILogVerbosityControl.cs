@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Diagnostics;
 
 /// <summary>
-/// Runtime per-subsystem verbosity (list.md Phase 1, "Turn a subsystem up without
+/// Runtime per-subsystem verbosity (Phase 1, "Turn a subsystem up without
 /// restarting"). Implemented in D47.App over Serilog level switches — Core needs to read
 /// and change levels without knowing what a sink is.
 /// </summary>

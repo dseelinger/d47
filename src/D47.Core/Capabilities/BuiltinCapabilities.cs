@@ -10,7 +10,7 @@ namespace D47.Core.Capabilities;
 /// <summary>
 /// The capability set d47 ships with. One list: the app registers from it and the
 /// documentation gate reads it, so a capability cannot exist in the app and be invisible to
-/// the gate (list.md Phase 1, "Every capability has a documentation page").
+/// the gate (Phase 1, "Every capability has a documentation page").
 /// <para>
 /// Declaration order is display order, and it is also the order the settings surface renders
 /// its cards in.
@@ -50,7 +50,7 @@ public static class BuiltinCapabilities
         // Null where nothing composed one — under the designer, and in a test that is not about
         // it. The capability still registers either way, so its settings row and its
         // documentation page exist; its tools report that they cannot act, which is what a
-        // capability being off looks like rather than one being absent (list.md Phase 3).
+        // capability being off looks like rather than one being absent (Phase 3).
         Knowledge.IGalaxyService? galaxy = null,
 
         // Same story as the galaxy service, and the same host behind it — but a different
@@ -58,7 +58,7 @@ public static class BuiltinCapabilities
         Knowledge.IRouteService? routes = null,
 
         // And a third protocol against that same host: lookups plus arithmetic run here, rather
-        // than a job somebody else queues (list.md Phase 36).
+        // than a job somebody else queues (Phase 36).
         Knowledge.ITradePlanService? trade = null,
 
         // Third of the same family, and the only one that needs a credential before it can do
@@ -72,12 +72,12 @@ public static class BuiltinCapabilities
         Func<DateTimeOffset>? now = null,
 
         // Tries a language-model provider's stored key against the real service, by provider id
-        // (list.md Phase 16). Null under the designer and in every test that does not press the
+        // (Phase 16). Null under the designer and in every test that does not press the
         // button; the row then offers no check rather than offering one that cannot be made.
         Func<string, CancellationToken, Task<Configuration.SecretCheck>>? verifyLlmKey = null,
 
         // The live Status.json, which is the only thing that knows where the Commander is standing
-        // (list.md Phase 18). Null under the designer and in tests that are not about it; the
+        // (Phase 18). Null under the designer and in tests that are not about it; the
         // sampling answer then carries counts without distances.
         Func<Journal.GameStatus>? gameStatus = null,
 
@@ -86,18 +86,18 @@ public static class BuiltinCapabilities
         // window rather than going quiet, which is the one thing this must never do.
         Func<Builtin.FocusResult>? raiseGame = null,
 
-        // The Commander's mapped HOTAS switches (list.md Phase 21). Null under the designer and
+        // The Commander's mapped HOTAS switches (Phase 21). Null under the designer and
         // in tests that are not about them; the capability still registers, so its rows and its
         // documentation page exist, and it reports that it is reading nothing — which is what a
         // machine with no stick honestly looks like.
         SwitchSurface? switches = null,
 
-        // The Commander's own notes about systems (list.md Phase 23). Null under the designer and
+        // The Commander's own notes about systems (Phase 23). Null under the designer and
         // in tests that are not about them; the capability still registers and still answers from
         // the shipped table, because that table is compiled in rather than composed.
         Lore.LoreBook? lore = null,
 
-        // The Commander's timers and alarms (list.md Phase 24). Null under the designer and in
+        // The Commander's timers and alarms (Phase 24). Null under the designer and in
         // tests that are not about them; the capability still registers, so its rows and its
         // documentation page exist, and every tool answers that nothing is keeping time.
         Utilities.Timekeeper? timekeeper = null,
@@ -106,17 +106,17 @@ public static class BuiltinCapabilities
         // mid-session should not have to restart to see it.
         Func<TimeZoneInfo>? zone = null,
 
-        // The Commander's ship builds (list.md Phase 26). Null under the designer and in tests
+        // The Commander's ship builds (Phase 26). Null under the designer and in tests
         // that are not about them; the capability still registers, so its page exists, and every
         // tool answers that nothing is being tracked.
         Ships.ShipPlanService? ships = null,
 
-        // And their suit and weapon plans (list.md Phase 27), on exactly the same terms. Two
+        // And their suit and weapon plans (Phase 27), on exactly the same terms. Two
         // parameters rather than one because they are two stores: the game separates ship and
         // on-foot hard, and so does everything that reads them.
         Loadout.OnFootPlanService? onFoot = null,
 
-        // The engineer solver (list.md Phase 28), on the same terms again. It reads both stores
+        // The engineer solver (Phase 28), on the same terms again. It reads both stores
         // above rather than being handed their contents, because a ranking is only as current as
         // the plans under it and both of them move while the panel is open.
         Engineers.EngineerPlanService? unlocks = null,
@@ -127,18 +127,18 @@ public static class BuiltinCapabilities
         // the disclosure describes searches at an endpoint that will never make one.
         Func<bool>? searchAvailable = null,
 
-        // What the language-model endpoint said it serves, when d47 has asked it (list.md Phase
-        // 29). Null under the designer and in every test, and null again in the app until the
+        // What the language-model endpoint said it serves, when d47 has asked it (Phase 29).
+        // Null under the designer and in every test, and null again in the app until the
         // first handshake answers — the model picker then behaves exactly as it did before there
         // was anybody to ask, which is the state it was designed for.
         Func<IReadOnlyList<string>>? endpointModels = null,
 
-        // What d47 remembers about the Commander (list.md Phase 31). Null under the designer and in
+        // What d47 remembers about the Commander (Phase 31). Null under the designer and in
         // tests that are not about it; the capability still registers, so its rows and its
         // documentation page exist, and every tool answers that there is nowhere to keep anything.
         Memory.MemoryBook? memories = null,
 
-        // What d47 has noticed the Commander keeps doing (list.md Phase 32). Null under the
+        // What d47 has noticed the Commander keeps doing (Phase 32). Null under the
         // designer and in tests that are not about it, on the same terms as every other optional
         // service: the capability still registers, so its rows and its documentation page exist,
         // and every tool answers that nothing is reading the journals.
@@ -150,13 +150,13 @@ public static class BuiltinCapabilities
         // no button.
         Func<Action?>? mineHabits = null,
 
-        // The Commander's log (list.md Phase 33). Null under the designer and in tests that are not
+        // The Commander's log (Phase 33). Null under the designer and in tests that are not
         // about it, on the same terms as the two above: the capability still registers, so its four
         // rows and its documentation page exist, and every tool answers that there is nothing set
         // up to write with.
         Logbook.LogbookBook? logbook = null,
 
-        // The Commander's long arcs (list.md Phase 34). Null under the designer and in tests that
+        // The Commander's long arcs (Phase 34). Null under the designer and in tests that
         // are not about it, on the same terms as the three above: the capability still registers,
         // so its row and its documentation page exist, and every tool answers that nothing is
         // being tracked.
@@ -166,14 +166,14 @@ public static class BuiltinCapabilities
         // the reason mineHabits gives — Core owns no thread, and the pass is seconds long.
         Func<Action?>? backfillGoals = null,
 
-        // Which core flies which ship (list.md Phase 35). Null under the designer and in tests
+        // Which core flies which ship (Phase 35). Null under the designer and in tests
         // that are not about it, on the same terms as every other optional service — and here the
         // absence is more than a row: with no store there is nothing to bind, so the persona
         // capability registers without its two protected tools rather than registering tools that
         // would answer that they cannot act.
         Persona.ShipCoreService? shipCores = null,
 
-        // Where a plan is kept once it is made (list.md Phase 37). Null where nothing draws them,
+        // Where a plan is kept once it is made (Phase 37). Null where nothing draws them,
         // which is every test that is not about the Routing tab: a plot still answers, it just
         // leaves nothing behind for a surface to show.
         Knowledge.RoutePlanBook? plans = null,
@@ -189,19 +189,19 @@ public static class BuiltinCapabilities
         // searches then make no offer.
         Conversation.ClipboardOffer? clipboard = null,
 
-        // The waits the compound ship commands need (list.md Phase 52). Null under the designer
+        // The waits the compound ship commands need (Phase 52). Null under the designer
         // and in tests that are not about them; the tool still registers, so its page and its
         // three settings rows exist, and every command answers that it is switched off. At the
         // end, by the rule the comment above records the cost of.
         Builtin.ShipCommandSurface? shipCommands = null,
 
-        // Where the last commodity answer is posted (list.md Phase 49), so the Routing tab draws
+        // Where the last commodity answer is posted (Phase 49), so the Routing tab draws
         // what the Commander was told rather than searching again. Null under the designer and in
         // tests that are not about it; the answer is then spoken and nothing is kept.
         Knowledge.CommodityBoard? commodities = null,
 
         // What the Commander says is on their carrier, and where the last shopping list is posted
-        // (list.md Phase 50). Null under the designer and in tests that are not about them; asking
+        // (Phase 50). Null under the designer and in tests that are not about them; asking
         // where to buy then says markets are not composed, and the tracking half is untouched. At
         // the end, by the rule the comment above records the cost of.
         Knowledge.CarrierManifest? carrier = null,
@@ -226,7 +226,7 @@ public static class BuiltinCapabilities
             settings,
 
             // Whole markets already live behind the trade planner, and this fetches nothing new
-            // (list.md Phase 49).
+            // (Phase 49).
             trade,
             () => gameState.Active?.Location.StationName,
             commodities,
@@ -251,14 +251,14 @@ public static class BuiltinCapabilities
             settings,
 
             // The same sweep and the same cache the commodity search uses, so a build's shopping
-            // list and "where do I buy tritium" cost one pull between them (list.md Phase 50).
+            // list and "where do I buy tritium" cost one pull between them (Phase 50).
             trade,
             carrier,
             sourcing,
             now),
 
         // At the end of the run of ledgers, which is where the Commander put the tab
-        // itself (list.md Phase 47). Registry order is nav order on the site, so this
+        // itself (Phase 47). Registry order is nav order on the site, so this
         // position is what a reader sees rather than an implementation detail.
         AdventureCapability.Create(),
 
@@ -276,7 +276,7 @@ public static class BuiltinCapabilities
             settings, llmAvailability, spend, cancellation, speech.Silence, verifyLlmKey,
 
             // The same tracker the speech rows read, so "what has this cost" cannot answer two
-            // different numbers depending on where it is asked (list.md Phase 19). Passed as the
+            // different numbers depending on where it is asked (Phase 19). Passed as the
             // surface's own late-bound function, because the host that owns it does not exist
             // yet at this point in composition.
             speech.SpeechSpend,

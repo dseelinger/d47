@@ -8,7 +8,7 @@ using Xunit;
 namespace D47.Core.Tests.Callouts;
 
 /// <summary>
-/// In-game chat, read aloud in somebody else's voice (list.md Phase 11).
+/// In-game chat, read aloud in somebody else's voice (Phase 11).
 /// </summary>
 public class IncomingMessageTests
 {

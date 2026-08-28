@@ -5,7 +5,7 @@ namespace D47.Core.Ships;
 
 /// <summary>
 /// Asks, once, when the ship the Commander has just boarded carries a build their checklist does
-/// not (list.md Phase 38, "Ask before the plan and the checklist drift apart").
+/// not (Phase 38, "Ask before the plan and the checklist drift apart").
 /// <para>
 /// <b>The moment of boarding is the moment to say so.</b> A plan and a checklist fall out of step
 /// in both directions — a roll gets done in game and the line is still sitting there, or a plan is
@@ -42,7 +42,7 @@ public sealed class ShipDriftWatch(ShipPlanService ships, ChecklistService check
 
     /// <summary>
     /// Forgets the last ship seen, so the new Commander's first <c>Loadout</c> is a swap and is
-    /// compared (list.md Phase 44). Ship ids are per Commander, so without this two Commanders
+    /// compared (Phase 44). Ship ids are per Commander, so without this two Commanders
     /// both in ship 7 read as the same ship and the new one's build is never checked. A question
     /// outstanding for the old Commander is dropped with it: the answer would be theirs, not the
     /// new one's.

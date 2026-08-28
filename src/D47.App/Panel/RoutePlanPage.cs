@@ -12,7 +12,7 @@ using D47.Core.Knowledge;
 namespace D47.App.Panel;
 
 /// <summary>
-/// Where a route comes from: the three planners, as forms (list.md Phase 37, "Plan").
+/// Where a route comes from: the three planners, as forms (Phase 37, "Plan").
 /// <para>
 /// <b>One page of three cards rather than a second strip.</b> <c>PanelTabs.axaml</c> records that
 /// two stacked strips is the thing the tab design avoids, and a drill to reach a form is two

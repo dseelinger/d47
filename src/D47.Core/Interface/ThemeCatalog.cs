@@ -4,7 +4,7 @@ public sealed record ThemeInfo(string Id, string Name, string Summary);
 
 /// <summary>
 /// The themes d47 ships. Identity only — the colours themselves live in one place in the UI
-/// layer, which is what "no view hardcodes a literal" means in practice (list.md Phase 4).
+/// layer, which is what "no view hardcodes a literal" means in practice (Phase 4).
 /// Core knows a theme's name because a settings row has to offer it; it does not know what
 /// colour anything is, because Core does not know what a colour is.
 /// </summary>

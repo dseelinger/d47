@@ -8,7 +8,7 @@ using D47.Core.Configuration;
 namespace D47.App.Settings;
 
 /// <summary>
-/// The guided way in for a fresh install (list.md Phase 16, "Ask for the keys on the first run
+/// The guided way in for a fresh install (Phase 16, "Ask for the keys on the first run
 /// that needs them").
 /// <para>
 /// A fresh install has no language-model key, so without this the first thing a Commander does is
@@ -16,7 +16,7 @@ namespace D47.App.Settings;
 /// matter, in order, with what each one sends and where.
 /// </para>
 /// <para>
-/// <b>It is not a wall.</b> Capabilities are state rather than guards (list.md Phase 3), so
+/// <b>It is not a wall.</b> Capabilities are state rather than guards (Phase 3), so
 /// declining every key leaves d47 running and typed rather than a dead app behind a form. Every
 /// step can be skipped, the window can be closed at any point, and nothing here is recorded as
 /// having been shown — <see cref="FirstRun"/> decides from live state each time.

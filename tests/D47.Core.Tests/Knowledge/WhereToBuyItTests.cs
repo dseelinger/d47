@@ -4,7 +4,7 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>
-/// Where to buy it, and what it costs there (list.md Phase 49).
+/// Where to buy it, and what it costs there (Phase 49).
 /// <para>
 /// The ranking is the whole of this feature and it is pure, so all of it is assertable without a
 /// socket. The case that matters most is the one the checklist names: the same two stations, and

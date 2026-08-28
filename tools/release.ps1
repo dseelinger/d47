@@ -27,7 +27,7 @@
 .PARAMETER Release
     Patch or Minor, case-insensitive.
 
-    Minor is for a completed phase in list.md or a batch of wanted changes — anything where a
+    Minor is for a completed phase or a batch of wanted changes — anything where a
     Commander should be able to tell "there is a whole capability here now" from "some fixes
     landed". Patch is for the fixes. See CLAUDE.md.
 

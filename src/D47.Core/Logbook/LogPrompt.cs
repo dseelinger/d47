@@ -59,7 +59,7 @@ public static class LogLengths
 }
 
 /// <summary>
-/// Turns a digest into the one request d47 sends (list.md Phase 33).
+/// Turns a digest into the one request d47 sends (Phase 33).
 /// <para>
 /// <b>Not a turn, and deliberately not routed through <see cref="TurnLoop"/>.</b> That class owns
 /// conversation history, a quantized tool profile and a cache prefix worth 39,000-odd bytes; a

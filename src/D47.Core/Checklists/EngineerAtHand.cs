@@ -338,7 +338,7 @@ public static class EngineersHere
     /// </para>
     /// <para>
     /// The remembered loadout is the same source <see cref="ChecklistWording"/> reads to name the
-    /// module on the line, and for the same reason — list.md Phase 37 remembered them for exactly
+    /// module on the line, and for the same reason — Phase 37 remembered them for exactly
     /// this. Null survives only for a ship d47 has never been aboard, which is the case the
     /// name-alone match above was always for.
     /// </para>

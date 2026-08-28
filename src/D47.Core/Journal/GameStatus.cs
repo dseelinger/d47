@@ -142,7 +142,7 @@ public sealed record GameStatus
     public long? Balance { get; init; }
 
     /// <summary>
-    /// Where the Commander is standing, in degrees (list.md Phase 18, "Exobiology sampling").
+    /// Where the Commander is standing, in degrees (Phase 18, "Exobiology sampling").
     /// <para>
     /// <b>Written only when there is a surface to be above</b>, which is what
     /// <see cref="StatusFlags.HasLatLong"/> announces — so these are null in supercruise and in deep

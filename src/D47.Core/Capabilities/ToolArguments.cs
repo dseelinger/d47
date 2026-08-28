@@ -96,7 +96,7 @@ public sealed class ToolArguments(IReadOnlyDictionary<string, string> values)
     /// <summary>
     /// A fractional number, for the parameters that genuinely are one — a length of time in
     /// minutes, where "an hour and a half" is ninety and "a minute and a half" is one and a half
-    /// (list.md Phase 24).
+    /// (Phase 24).
     /// <para>
     /// Invariant culture, like every other reader here: what arrives is a model's JSON rather than
     /// something a Commander typed, and JSON numbers use a point wherever the Commander lives.

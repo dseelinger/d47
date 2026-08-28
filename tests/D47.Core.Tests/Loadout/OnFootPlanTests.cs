@@ -8,7 +8,7 @@ using Xunit;
 namespace D47.Core.Tests.Loadout;
 
 /// <summary>
-/// Suit and weapon plans: the Ships arrangement, on foot (list.md Phase 27, "The same page, on
+/// Suit and weapon plans: the Ships arrangement, on foot (Phase 27, "The same page, on
 /// foot").
 /// <para>
 /// <b>The plan owns what and the checklist owns when.</b> Nothing in this file writes to a

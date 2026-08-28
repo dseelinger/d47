@@ -6,7 +6,7 @@ using SoundFlow.Extensions.WebRtc.Apm;
 namespace D47.Audio;
 
 /// <summary>
-/// Acoustic echo cancellation (list.md Phase 13), sitting between the microphone and the gate.
+/// Acoustic echo cancellation (Phase 13), sitting between the microphone and the gate.
 /// <para>
 /// <b>It consumes the arbiter's render reference tap rather than a loopback capture</b>, which
 /// is the whole reason the tap was built in Phase 5 with nothing to consume it
@@ -26,7 +26,7 @@ namespace D47.Audio;
 /// <b>Failure is the capability being off, not a crash.</b> A machine where the native library
 /// will not load is a machine that still has push-to-talk, so the constructor records why and
 /// <see cref="IsActive"/> stays false — and every buffer then goes to the gate untouched, which
-/// is exactly what happened before this class existed (list.md Phase 3).
+/// is exactly what happened before this class existed (Phase 3).
 /// </para>
 /// </summary>
 public sealed class EchoCanceller : ICaptureSink, IDisposable

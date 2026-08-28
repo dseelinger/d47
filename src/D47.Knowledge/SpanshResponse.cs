@@ -76,7 +76,7 @@ internal static class SpanshResponse
     }
 
     /// <summary>
-    /// The markets behind d47's own trade planner (list.md Phase 36).
+    /// The markets behind d47's own trade planner (Phase 36).
     /// <para>
     /// Every result of the station search carries its whole <c>market</c> array, which is the fact
     /// the phase rests on: d47 does not need a galaxy dump and does not need anybody else's
@@ -232,7 +232,7 @@ internal static class SpanshResponse
     }
 
     /// <summary>
-    /// An exobiology plot (list.md Phase 18, "Find the exobiology").
+    /// An exobiology plot (Phase 18, "Find the exobiology").
     /// <para>
     /// <b>The origin comes back as a stop with no bodies</b> — a live plot from Sol returned four
     /// stops of which the first was Sol itself carrying an empty list. Dropping bodyless stops is
@@ -336,7 +336,7 @@ internal static class SpanshResponse
     }
 
     /// <summary>
-    /// The colonisation candidate scan (list.md Phase 18, "Find somewhere worth colonising").
+    /// The colonisation candidate scan (Phase 18, "Find somewhere worth colonising").
     /// <para>
     /// The counting happens here rather than downstream because the raw material is enormous and
     /// almost entirely unwanted: 51 systems within 15 light years of Sol came back as 1.49 MB,

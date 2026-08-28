@@ -9,7 +9,7 @@ public sealed record StationSummary
 
     public required string SystemName { get; init; }
 
-    /// <summary>What the journal writes as <c>MarketID</c> on docking. Null where the service did not say (list.md Phase 47).</summary>
+    /// <summary>What the journal writes as <c>MarketID</c> on docking. Null where the service did not say (Phase 47).</summary>
     public long? MarketId { get; init; }
 
     /// <summary>The system's id64, for the same reason.</summary>
@@ -181,7 +181,7 @@ public sealed record StationQuery
 
     /// <summary>
     /// Every station in one named system, for resolving a station a story names to its market id
-    /// (list.md Phase 47). Not through <see cref="TryParse"/>, which insists on something being
+    /// (Phase 47). Not through <see cref="TryParse"/>, which insists on something being
     /// sold: the question here is what is there, not who sells what. A light year is the narrowest
     /// radius the index honours, so a neighbour inside it can appear and the caller matches on name.
     /// </summary>
@@ -193,8 +193,8 @@ public sealed record StationQuery
     };
 
     /// <summary>
-    /// The stations nearest a system, for proposing real places a story may dock at (list.md
-    /// Phase 47). Nothing sold, no pad — what is within reach, nearest first.
+    /// The stations nearest a system, for proposing real places a story may dock at (Phase 47).
+    /// Nothing sold, no pad — what is within reach, nearest first.
     /// </summary>
     public static StationQuery Near(string referenceSystem, double maxDistance, int size) => new()
     {

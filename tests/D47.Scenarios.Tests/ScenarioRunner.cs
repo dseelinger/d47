@@ -82,7 +82,7 @@ public static class ScenarioRunner
         {
             Persona = persona?.RenderBlock(),
 
-            // Prompt position 5 (list.md Phase 31). Assigned once, as the app assigns it: it sits
+            // Prompt position 5 (Phase 31). Assigned once, as the app assigns it: it sits
             // above the cache breakpoint, so a source read per turn would be the exact mistake the
             // placement was chosen to avoid.
             Recall = scenario.Recall,

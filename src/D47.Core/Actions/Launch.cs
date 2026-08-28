@@ -28,7 +28,7 @@ public readonly record struct LaunchOutcome(LaunchEnding Ending, string Message)
 }
 
 /// <summary>
-/// <em>Take us out</em> (list.md Phase 52, item 2), and the one command in the phase that is not a
+/// <em>Take us out</em> (Phase 52, item 2), and the one command in the phase that is not a
 /// key.
 /// <para>
 /// <b>Elite has no launch binding.</b> Verified against every <c>.binds</c> under Frontier's own

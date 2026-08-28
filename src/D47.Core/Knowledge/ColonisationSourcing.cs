@@ -27,7 +27,7 @@ public sealed record SourcingLot(string Commodity, string Symbol, int Tonnes, in
 }
 
 /// <summary>
-/// Everything one build still needs, and where to buy it (list.md Phase 50).
+/// Everything one build still needs, and where to buy it (Phase 50).
 /// </summary>
 /// <param name="Stops">The stations, best first.</param>
 /// <param name="Unpriced">
@@ -57,7 +57,7 @@ public sealed record SourcingPlan(
 }
 
 /// <summary>
-/// Where to buy everything one construction site still needs (list.md Phase 50).
+/// Where to buy everything one construction site still needs (Phase 50).
 /// <para>
 /// <b>A covering problem, and not the trade planner.</b> <see cref="TradePlanner"/> maximises
 /// credits over hops and carries credits and cargo between them, because holding a commodity past a
@@ -295,7 +295,7 @@ public static class ColonisationSourcing
 }
 
 /// <summary>
-/// The last sourcing answer, so the spoken one and the drawn one are one answer (list.md Phase 50).
+/// The last sourcing answer, so the spoken one and the drawn one are one answer (Phase 50).
 /// <para>
 /// <b>The same arrangement <see cref="CommodityBoard"/> makes for one commodity</b>, and in memory
 /// for the same reason: the shopping list is built out of network prices that age in hours, and one

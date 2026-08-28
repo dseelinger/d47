@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Adventures;
 
 /// <summary>
-/// One beat reached, or an opening spoken, waiting to be said (list.md Phase 47, "The ship's AI
+/// One beat reached, or an opening spoken, waiting to be said (Phase 47, "The ship's AI
 /// tells it, and the authored beat is the floor").
 /// </summary>
 /// <param name="Beat">The beat index, or <c>-1</c> for the opening.</param>
@@ -38,7 +38,7 @@ public sealed record AdventureMoment(string FrontierId, Adventure Adventure, int
 }
 
 /// <summary>
-/// The Commander's adventures, read as one thing (list.md Phase 47).
+/// The Commander's adventures, read as one thing (Phase 47).
 /// <para>
 /// The store knows about a file; this knows who is flying and what the journal has said since each
 /// story began. Same arrangement as <see cref="Goals.GoalBook"/> over <see cref="Goals.GoalStore"/>.

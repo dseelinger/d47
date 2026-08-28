@@ -5,7 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Audio;
 
 /// <summary>
-/// What a voice says when it is auditioned (list.md Phase 19, "Hear a voice before you choose
+/// What a voice says when it is auditioned (Phase 19, "Hear a voice before you choose
 /// it").
 /// <para>
 /// The line is the core's own, because a voice is being cast for a character: "Bill - Wise,

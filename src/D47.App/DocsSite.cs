@@ -12,7 +12,7 @@ public static class DocsSite
 
     /// <summary>
     /// A capability's page, optionally at one row's anchor. In-app help is the short form and
-    /// this is the long form (list.md Phase 4, "Link each settings row to its documentation").
+    /// this is the long form (Phase 4, "Link each settings row to its documentation").
     /// </summary>
     public static string Capability(string capabilityId, string? anchor = null) =>
         $"{Root}capabilities/{capabilityId}.html{(anchor is null ? string.Empty : $"#{anchor}")}";

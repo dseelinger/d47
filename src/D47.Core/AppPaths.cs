@@ -4,7 +4,7 @@ using D47.Core.Audio;
 namespace D47.Core;
 
 /// <summary>
-/// Everything d47 writes lives in one folder beside the executable (list.md Phase 1,
+/// Everything d47 writes lives in one folder beside the executable (Phase 1,
 /// "TheApp keeps your key and your state safe"). Portable by construction: copy the
 /// folder and the state comes with it.
 /// </summary>
@@ -73,7 +73,7 @@ public sealed class AppPaths
     public string Logs { get; }
 
     /// <summary>
-    /// Where the Commander drops their own cues, beds and ambience (list.md Phase 12). Created
+    /// Where the Commander drops their own cues, beds and ambience (Phase 12). Created
     /// whether or not anything is in it, so the convention is discoverable by opening the data
     /// folder rather than by reading the documentation.
     /// </summary>

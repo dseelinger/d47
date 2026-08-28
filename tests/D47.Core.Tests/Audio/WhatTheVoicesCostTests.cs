@@ -5,7 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Audio;
 
 /// <summary>
-/// A running total for paid speech, beside what the model costs (list.md Phase 19).
+/// A running total for paid speech, beside what the model costs (Phase 19).
 /// <para>
 /// The two claims this makes are of different kinds and the tests are arranged around that:
 /// the character count is measured, and the dollar figure is an assumption the Commander can
@@ -105,8 +105,8 @@ public class WhatTheVoicesCostTests
     /// <para>
     /// <b>This test has now been three things, and the sequence is the point.</b> It first
     /// asserted every billed provider published a rate, and named its own trigger: a provider
-    /// added with <c>Billed = true</c> and no list price. OpenAI was that provider (list.md Phase
-    /// 58) and it fired exactly as written. It then asserted the opposite — that such a provider
+    /// added with <c>Billed = true</c> and no list price. OpenAI was that provider (Phase 58) and
+    /// it fired exactly as written. It then asserted the opposite — that such a provider
     /// says "no rate set" rather than quoting zero — because OpenAI publishes per minute and d47
     /// counted characters, and the conversion between them moves about 40% with the content of
     /// the line.
@@ -123,7 +123,7 @@ public class WhatTheVoicesCostTests
     /// rate set trips this, which is what it is for.
     /// </para>
     /// <para>
-    /// <b>It fired again on Cartesia (list.md Phase 60), and the escape it grew is a sentence
+    /// <b>It fired again on Cartesia (Phase 60), and the escape it grew is a sentence
     /// rather than a widening.</b> That provider's API publishes neither a rate nor a balance —
     /// four account endpoints, four 404s — so d47 does not know the <em>unit</em>, let alone the
     /// figure. A silent null there would be indistinguishable from a field nobody set, which is
@@ -305,7 +305,7 @@ public class WhatTheVoicesCostTests
     }
     /// <summary>
     /// Which slot is costing money, which is a question nobody could ask before six of them could
-    /// name six providers (list.md Phase 57).
+    /// name six providers (Phase 57).
     /// </summary>
     [Fact]
     public void TheCharactersBreakDownBySlot()
@@ -366,7 +366,7 @@ public class WhatTheVoicesCostTests
 }
 
 /// <summary>
-/// Counting happens at the seam and only on synthesis that succeeded (list.md Phase 19).
+/// Counting happens at the seam and only on synthesis that succeeded (Phase 19).
 /// </summary>
 public class SpeechIsCountedAtTheSeamTests
 {

@@ -5,7 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>
-/// Everything one build still needs, and where to buy it (list.md Phase 50).
+/// Everything one build still needs, and where to buy it (Phase 50).
 /// <para>
 /// The covering arithmetic and — first, because it is the thing most likely to ship broken — the
 /// join between the depot's folded symbols and the markets' display names.

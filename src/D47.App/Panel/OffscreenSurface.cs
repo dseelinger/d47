@@ -170,7 +170,7 @@ public sealed class OffscreenSurface : IDisposable
         Invalidate();
 
         // <b>What the Commander has scrolled to, taken down before the pass can move it</b>
-        // (list.md Phase 39).
+        // (Phase 39).
         //
         // The window's arrange hands a scroll viewer a viewport a good deal taller than the one
         // it ends up with — measured at 566 pixels against a final 438 on the checklist tab — and
@@ -672,7 +672,7 @@ public sealed class OffscreenSurface : IDisposable
                 case ToggleButton toggle:
                     toggle.IsChecked = toggle.IsChecked != true;
 
-                    // And the click, which a real release also raises (list.md Phase 39).
+                    // And the click, which a real release also raises (Phase 39).
                     //
                     // <b>Setting the property alone is a tick that does nothing.</b> A checkbox
                     // whose handler hangs off <c>Click</c> — which is the right event for it,

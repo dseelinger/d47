@@ -7,7 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Checklists;
 
 /// <summary>
-/// The seam between Phase 14's tables and this phase's lists (list.md Phase 17): a build costed
+/// The seam between Phase 14's tables and this phase's lists (Phase 17): a build costed
 /// into the things a Commander has to <em>do</em>, with an exact total rather than a floor.
 /// </summary>
 public class ChecklistPlanTests

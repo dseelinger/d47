@@ -9,7 +9,7 @@ using D47.Core.Hotas;
 namespace D47.App.Controls;
 
 /// <summary>
-/// <em>Press the button you want</em> (list.md Phase 53).
+/// <em>Press the button you want</em> (Phase 53).
 /// <para>
 /// The same gesture Phase 4 set for a key — press the thing and d47 works out what it was —
 /// pointed at a stick. It reuses the reader the tick loop already polls and the clock the switch

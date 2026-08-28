@@ -3,7 +3,7 @@ using D47.Core.Capabilities.Builtin;
 namespace D47.Core.Listening;
 
 /// <summary>
-/// The line under the microphone indicator, saying what would open the gate (list.md Phase 13).
+/// The line under the microphone indicator, saying what would open the gate (Phase 13).
 /// <para>
 /// A settings question rather than a view one, which is why it is neither in the view — which
 /// reads no settings — nor on the gate, which knows about audio and not about keys. It was in
@@ -11,7 +11,7 @@ namespace D47.Core.Listening;
 /// </para>
 /// <para>
 /// Pure, so the sentences a Commander actually reads are covered by a test rather than by
-/// launching the app and looking at the panel (list.md Phase 19).
+/// launching the app and looking at the panel (Phase 19).
 /// </para>
 /// </summary>
 public static class MicrophoneNarration

@@ -5,7 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>
-/// Switching provider and switching back costs nothing (list.md Phase 19, "Remember which voice
+/// Switching provider and switching back costs nothing (Phase 19, "Remember which voice
 /// you chose for each provider").
 /// <para>
 /// The behaviour this joins is <see cref="VoicesAreProviderScopedTests"/>, which is still right:

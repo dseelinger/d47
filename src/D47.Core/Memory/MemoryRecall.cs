@@ -3,7 +3,7 @@ using System.Text;
 namespace D47.Core.Memory;
 
 /// <summary>
-/// Which remembered facts reach a prompt (list.md Phase 31, "Recall arrives above the cache
+/// Which remembered facts reach a prompt (Phase 31, "Recall arrives above the cache
 /// breakpoint").
 /// <para>
 /// <b>Selection is the hard part and it is not "send everything".</b> A store that grows for a year

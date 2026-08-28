@@ -1,7 +1,7 @@
 namespace D47.Core.Hotas;
 
 /// <summary>
-/// Push-to-talk on a stick button (list.md Phase 53).
+/// Push-to-talk on a stick button (Phase 53).
 /// <para>
 /// <b>The same shape as the keyboard's <c>PushToTalkKey</c>, one layer down.</b> A polled edge
 /// detector sampled from the tick, raising <see cref="Pressed"/> and <see cref="Released"/>, and
@@ -189,7 +189,7 @@ public sealed class PushToTalkButton
 }
 
 /// <summary>
-/// The two push-to-talk sources as one gate (list.md Phase 53).
+/// The two push-to-talk sources as one gate (Phase 53).
 /// <para>
 /// <b>Either triggers, and both are live</b> (the Commander's call, 2026-08-25). A Commander who
 /// bound a key and later bound a button has said two things rather than replaced one, and

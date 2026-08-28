@@ -1,7 +1,7 @@
 namespace D47.Core.Conversation;
 
 /// <summary>
-/// Whether an endpoint address is on this machine (list.md Phase 29).
+/// Whether an endpoint address is on this machine (Phase 29).
 /// <para>
 /// One judgement in one place, because two things read it and they must never disagree. The
 /// <b>disclosure</b> reads it to say that nothing leaves this machine — the first time in d47's

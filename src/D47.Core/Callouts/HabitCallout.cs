@@ -4,7 +4,7 @@ using D47.Core.Journal;
 namespace D47.Core.Callouts;
 
 /// <summary>
-/// The one thing a Commander experiences out of Phase 32 (list.md Phase 32, "Callouts that are
+/// The one thing a Commander experiences out of Phase 32 (Phase 32, "Callouts that are
 /// yours rather than everyone's").
 /// <para>
 /// <b>It fires because of the situation, not at the start of a session.</b>

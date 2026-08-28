@@ -2,7 +2,7 @@ namespace D47.Core.Lore;
 
 /// <summary>
 /// The second half of an arrival remark: what a web search turns up about the place, and the
-/// rules for saying it (list.md Phase 23, "Look it up, and say where the answer came from").
+/// rules for saying it (Phase 23, "Look it up, and say where the answer came from").
 /// <para>
 /// <b>This is the first unprompted untrusted prose d47 speaks.</b> Every other untrusted path is
 /// either the Commander having asked — a turn — or a callout assembled from journal fields. So

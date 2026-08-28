@@ -3,7 +3,7 @@ using D47.Core.Journal;
 namespace D47.Core.Callouts;
 
 /// <summary>
-/// Interdiction, shields, hull, heat and a full hold (list.md Phase 8, "Call out danger without
+/// Interdiction, shields, hull, heat and a full hold (Phase 8, "Call out danger without
 /// waiting for a turn").
 /// <para>
 /// <b>These fire on the event, never at the model's discretion.</b> That is the checklist's

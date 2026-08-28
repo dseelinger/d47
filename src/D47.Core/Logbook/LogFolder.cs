@@ -12,7 +12,7 @@ public sealed record LogEntry(string Path, DateTimeOffset Written, long Bytes)
 }
 
 /// <summary>
-/// The folder the logs live in (list.md Phase 33, item 1).
+/// The folder the logs live in (Phase 33, item 1).
 /// <para>
 /// <b><c>data/commander-log/</c>, and deliberately not <c>data/logs/</c></b>, which
 /// <see cref="AppPaths.Logs"/> already owns and fills with d47's own diagnostics. Two different

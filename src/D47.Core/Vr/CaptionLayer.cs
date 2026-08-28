@@ -1,7 +1,7 @@
 namespace D47.Core.Vr;
 
 /// <summary>
-/// The rolling caption window (list.md Phase 9, "TheApp appears in the headset").
+/// The rolling caption window (Phase 9, "TheApp appears in the headset").
 /// <para>
 /// Output only, and unmovable. It is a separate overlay handle from the panel precisely so
 /// that the placement settings cannot reach it: a caption that the Commander can drag is a

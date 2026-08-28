@@ -5,7 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Callouts;
 
 /// <summary>
-/// Remarks said because nothing has happened (list.md Phase 11, "Ambient Voice").
+/// Remarks said because nothing has happened (Phase 11, "Ambient Voice").
 /// <para>
 /// Almost everything here is about timing. The lines are the easy part; a companion that says
 /// the right thing at the wrong moment is worse than one that says nothing.
@@ -88,7 +88,7 @@ public class AmbientCalloutTests
 
     /// <summary>
     /// The index the stock line was picked with travels on the announcement, so the model-written
-    /// replacement can be chosen by the same count (list.md Phase 43). It is the only
+    /// replacement can be chosen by the same count (Phase 43). It is the only
     /// deterministic index a flavour call has.
     /// </summary>
     [Fact]

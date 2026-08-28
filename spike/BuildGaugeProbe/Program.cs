@@ -9,7 +9,7 @@ namespace BuildGaugeProbe;
 
 /// <summary>
 /// Replays every <c>Loadout</c> in the corpus through the shipped gauge arithmetic and compares it
-/// against the figures Frontier wrote (list.md Phase 38).
+/// against the figures Frontier wrote (Phase 38).
 /// <para>
 /// Two questions, and the corpus answers both: does the jump formula reproduce
 /// <c>MaxJumpRange</c>, and does a blueprint's own grade row applied to a stock figure land on the

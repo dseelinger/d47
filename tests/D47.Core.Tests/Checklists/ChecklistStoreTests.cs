@@ -6,7 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Checklists;
 
 /// <summary>
-/// The store follows <see cref="D47.Core.Actions.MacroStore"/> deliberately (list.md Phase 17):
+/// The store follows <see cref="D47.Core.Actions.MacroStore"/> deliberately (Phase 17):
 /// a file under <c>data/</c>, polled on its write time so a hand edit is live with no restart,
 /// and <b>problems reported rather than items silently dropped</b>.
 /// </summary>

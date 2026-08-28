@@ -90,13 +90,13 @@ public partial class PanelView : UserControl
 
     /// <summary>
     /// The tab that was showing when mini took it away, so leaving mini can put it back
-    /// (list.md Phase 51). Null whenever mini did not have to move anything.
+    /// (Phase 51). Null whenever mini did not have to move anything.
     /// </summary>
     private PanelTab? _beforeMini;
 
     /// <summary>
     /// Where the Commander is on this surface: which tab, which of its roots, and how far down
-    /// (list.md Phase 25).
+    /// (Phase 25).
     /// <para>
     /// Per surface rather than per model, exactly like <see cref="Mode"/> and the scroll
     /// position, and for the same reason: the window can be three levels into a ship's slots
@@ -105,7 +105,7 @@ public partial class PanelView : UserControl
     /// </para>
     /// <para>
     /// One exception, and it is the host's rather than this view's: the Transcript tab's root is
-    /// shared across every surface (list.md Phase 45), so a press on this mode control that picks
+    /// shared across every surface (Phase 45), so a press on this mode control that picks
     /// Technical is heard by the headset and drawn there too. The navigator still holds the value;
     /// the host's <c>TranscriptMirror</c> keeps the navigators agreeing about it.
     /// </para>
@@ -114,7 +114,7 @@ public partial class PanelView : UserControl
 
     /// <summary>
     /// The two questions this surface can put to the Commander — pick one of these, and say or
-    /// type this (list.md Phase 25). Per surface for the reason the navigator is: a chooser is a
+    /// type this (Phase 25). Per surface for the reason the navigator is: a chooser is a
     /// level of one surface's stack, and the other surface should be able to go on reading the
     /// transcript while it is up.
     /// </summary>
@@ -139,7 +139,7 @@ public partial class PanelView : UserControl
     private readonly Dictionary<PanelTab, RadioButton> _tabs = [];
 
     /// <summary>
-    /// The glyph the log mode carries while it reads the file (list.md Phase 12). On the mode
+    /// The glyph the log mode carries while it reads the file (Phase 12). On the mode
     /// rather than on the tab now, because the tab is three readings of one thing and only one
     /// of them touches the disk — which is exactly the asymmetry the collapse keeps.
     /// </summary>
@@ -219,7 +219,7 @@ public partial class PanelView : UserControl
     private int _hitOffset;
 
     /// <summary>
-    /// Whether this surface is following the end of the transcript (list.md Phase 19, "Follow
+    /// Whether this surface is following the end of the transcript (Phase 19, "Follow
     /// the live log, or stop following it").
     /// <para>
     /// A property of the surface rather than of the model, like the scroll position it is about:
@@ -450,8 +450,8 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>
-    /// Which reading of the transcript this instantiation is showing — and, since list.md Phase
-    /// 45, every other one: the host mirrors the root between surfaces, so setting it here sets
+    /// Which reading of the transcript this instantiation is showing — and, since Phase 45,
+    /// every other one: the host mirrors the root between surfaces, so setting it here sets
     /// it everywhere. Settable without switching to the Transcript tab, because it says which
     /// mode that tab is on rather than which tab is.
     /// </summary>
@@ -546,7 +546,7 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>
-    /// Draws what the microphone is doing (list.md Phase 13, "Show that the microphone is open").
+    /// Draws what the microphone is doing (Phase 13, "Show that the microphone is open").
     /// <para>
     /// Set in code rather than bound through three converters, for the same reason the chrome is:
     /// one state decides four things about one control — the shape, the colour, the border and
@@ -635,7 +635,7 @@ public partial class PanelView : UserControl
     /// A capability of the host rather than of the view, and the asymmetry is the point: the
     /// desktop window calls this and the headset never does, so an overlay sized for a quad a
     /// metre away cannot be put on a surface that opens at 1180 pixels. Nobody has to remember
-    /// to leave it out, because leaving it out is the default (list.md Phase 12).
+    /// to leave it out, because leaving it out is the default (Phase 12).
     /// </para>
     /// <para>
     /// Deferred to first selection because building it means constructing ninety-odd rows from
@@ -690,7 +690,7 @@ public partial class PanelView : UserControl
             };
 
     /// <summary>
-    /// Gives this surface the checklist (list.md Phase 25, "The checklist leaves its window").
+    /// Gives this surface the checklist (Phase 25, "The checklist leaves its window").
     /// <para>
     /// <b>Both surfaces</b>, unlike settings. A <c>Window</c> cannot appear in the headset at
     /// all, so a Commander in VR could not see their checklist before this — which is the whole
@@ -703,12 +703,12 @@ public partial class PanelView : UserControl
     /// </para>
     /// </summary>
     /// <param name="goals">
-    /// The Commander's long arcs (list.md Phase 34). Null under the designer and in tests that are
+    /// The Commander's long arcs (Phase 34). Null under the designer and in tests that are
     /// not about them, where the page draws no band at all rather than an empty one.
     /// </param>
     /// <param name="backfill">What "read my journals" does. Null where there is nowhere to run it.</param>
     /// <param name="sourcing">
-    /// Where to buy everything a construction site still needs (list.md Phase 50), as a second root
+    /// Where to buy everything a construction site still needs (Phase 50), as a second root
     /// on this tab — or null for a surface that does not get one.
     /// <para>
     /// <b>The desktop window only, for now</b>, and by not making the call rather than by any test
@@ -779,7 +779,7 @@ public partial class PanelView : UserControl
 
     /// <summary>
     /// Gives this surface the fleet, what the Commander is wearing, and the arithmetic between
-    /// them (list.md Phase 26, "Ships"; Phase 27, "Suits and weapons, and the gap").
+    /// them (Phase 26, "Ships"; Phase 27, "Suits and weapons, and the gap").
     /// <para>
     /// Three roots of one tab rather than three tabs, because they are three readings of one
     /// question — <em>what am I building</em> — rather than three destinations. The mode control
@@ -860,7 +860,7 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>
-    /// Gives this surface the Commander's adventures (list.md Phase 47). The desktop window only,
+    /// Gives this surface the Commander's adventures (Phase 47). The desktop window only,
     /// for now: the editor is typing, and the reading level is one call away when the headset
     /// wants it — which is the parity rule working as written rather than an exception to it.
     /// </summary>
@@ -886,7 +886,7 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>
-    /// Gives this surface the engineer directory and the solver (list.md Phase 28, "Engineers").
+    /// Gives this surface the engineer directory and the solver (Phase 28, "Engineers").
     /// <para>
     /// Both surfaces, like the checklist and the loadout: a Commander deciding who to fly to next
     /// is very often the Commander already sitting in the ship.
@@ -1006,7 +1006,7 @@ public partial class PanelView : UserControl
     private D47.Core.Journal.ShipLoadout? _loadoutSeen;
 
     /// <summary>
-    /// Gives this surface the clocks, timers and alarms (list.md Phase 24, "Utilities").
+    /// Gives this surface the clocks, timers and alarms (Phase 24, "Utilities").
     /// <para>
     /// Both surfaces, like the checklist: a Commander in a headset is exactly the Commander who
     /// cannot glance at a wall clock.
@@ -1085,7 +1085,7 @@ public partial class PanelView : UserControl
     private UtilitiesPage? _utilities;
 
     /// <summary>
-    /// Gives this surface the Routing tab (list.md Phase 37): where the Commander is going, in
+    /// Gives this surface the Routing tab (Phase 37): where the Commander is going, in
     /// three readings of one journey.
     /// <para>
     /// <b>The roots are flags rather than a fixed three</b>, because the surfaces do not want the
@@ -1130,7 +1130,7 @@ public partial class PanelView : UserControl
         }
 
         // Last of the four, because it is the newest and because the three before it are the
-        // journey and this is the errand (list.md Phase 49).
+        // journey and this is the errand (Phase 49).
         if (market && surface.Commodities is not null)
         {
             roots.Add(new NavCrumb(RoutingPages.MarketRoot, "Market")
@@ -1213,7 +1213,7 @@ public partial class PanelView : UserControl
 
     /// <summary>
     /// Gives this surface a tab, built by <paramref name="build"/> the first time it is selected,
-    /// with the roots it offers (list.md Phase 25).
+    /// with the roots it offers (Phase 25).
     /// <para>
     /// The general form of what <see cref="EnableSettings"/> has done since Phase 12, and the
     /// generalisation is the point: a tab is a capability the host grants, so the surfaces
@@ -1250,7 +1250,7 @@ public partial class PanelView : UserControl
 
     /// <summary>
     /// Back, and the one method all three routes that must agree go through — the breadcrumb,
-    /// the controller button and the phrase (list.md Phase 25). Says whether there was anything
+    /// the controller button and the phrase (Phase 25). Says whether there was anything
     /// to go back from, so Escape with nothing to leave stays available to whatever else wants
     /// the key.
     /// <para>
@@ -1279,7 +1279,7 @@ public partial class PanelView : UserControl
 
     /// <summary>
     /// Gives this surface the tools that belong to the page being read — the search box, and the
-    /// button that copies the page (list.md Phase 19, "Copy log").
+    /// button that copies the page (Phase 19, "Copy log").
     /// <para>
     /// Enabled by the host, like the settings page and for the same reason: the desktop window is
     /// the surface with a keyboard and a clipboard. Mini shows no strip at all and the headset
@@ -1288,7 +1288,7 @@ public partial class PanelView : UserControl
     /// </summary>
     /// <summary>
     /// How tall the rows this surface keeps in mini <em>beyond the headset's</em> want to be at a
-    /// given width, or zero where it keeps none (list.md Phase 51).
+    /// given width, or zero where it keeps none (Phase 51).
     /// <para>
     /// <b>This is what makes the window's mini size measured rather than typed.</b> Mini is
     /// 512x280 in the headset for a stated reason — apparent size there is the pixel count and the
@@ -1460,7 +1460,7 @@ public partial class PanelView : UserControl
         _switchMode?.Invoke(Mode == PanelMode.Full ? PanelMode.Mini : PanelMode.Full);
 
     /// <summary>
-    /// Keeps the ask line on this surface in mini (list.md Phase 51).
+    /// Keeps the ask line on this surface in mini (Phase 51).
     /// <para>
     /// <c>AskRow</c> is hidden in mini everywhere else, and that is right for a headset with no
     /// keyboard and wrong for the one surface whose entire point is a keyboard. <b>A mini window
@@ -1472,7 +1472,7 @@ public partial class PanelView : UserControl
     /// <b>Furnished rather than branched.</b> The host that wants it says so, the way
     /// <see cref="EnableSettings"/> and <see cref="EnableChecklist"/> already work — so no code
     /// anywhere tests which surface it is on, the headset's mini is untouched, and the flat
-    /// overlay (list.md Phase 48) stays output-only by simply not calling this.
+    /// overlay (Phase 48) stays output-only by simply not calling this.
     /// </para>
     /// </summary>
     public void EnableAskInMini()
@@ -1508,12 +1508,12 @@ public partial class PanelView : UserControl
 
     /// <summary>
     /// Where the Commander dragged the rules between panes, on the one surface that has a mouse
-    /// (list.md Phase 55). Null everywhere else, which is what keeps this the window's alone.
+    /// (Phase 55). Null everywhere else, which is what keeps this the window's alone.
     /// </summary>
     private PaneWidthMemory? _paneWidths;
 
     /// <summary>
-    /// Lets the mouse drag the rule between two panes, on every tab at once (list.md Phase 55).
+    /// Lets the mouse drag the rule between two panes, on every tab at once (Phase 55).
     /// <para>
     /// Furnished rather than branched, like <see cref="EnableSearch"/> and
     /// <see cref="EnableTurnDetails"/> — and here that is a safety property rather than a
@@ -2002,7 +2002,7 @@ public partial class PanelView : UserControl
         // About and the data folder — so the ask line and the provenance line give way to it
         // rather than sitting under it saying nothing about a page with no turns on it.
         //
-        // In mini it stays only where a host asked for it (list.md Phase 51). That is the one
+        // In mini it stays only where a host asked for it (Phase 51). That is the one
         // line of shared code this phase changes, and it is furnished rather than branched so
         // the headset's mini is untouched by it — see EnableAskInMini.
         AskRow.IsVisible = (full || _asksInMini) && transcript;
@@ -2126,7 +2126,7 @@ public partial class PanelView : UserControl
     private static bool MiniShows(PanelTab tab) => tab != PanelTab.Settings;
 
     /// <summary>
-    /// Keeps mini on a page mini actually has, and puts back what it took (list.md Phase 51).
+    /// Keeps mini on a page mini actually has, and puts back what it took (Phase 51).
     /// <para>
     /// <b>This is a hole that was already open.</b> <see cref="ApplyChrome"/> hides the tab strip
     /// in mini but leaves <c>PagePane</c> visible whenever the tab is not the transcript, so a
@@ -2198,7 +2198,7 @@ public partial class PanelView : UserControl
         }
 
         // And mini refuses a tab it has no reading of, whatever moved the navigator — a press, a
-        // spoken phrase, or a switch (list.md Phase 51). Returning rather than falling through,
+        // spoken phrase, or a switch (Phase 51). Returning rather than falling through,
         // because the assignment raises Changed and this method runs again on the tab it lands on.
         if (Mode == PanelMode.Mini && !MiniShows(tab))
         {
@@ -2475,7 +2475,7 @@ public partial class PanelView : UserControl
 
             // At the end, because a log is read newest-first and this page has always opened at
             // the top of it. The transcript pages have followed the tail since Phase 4 and this
-            // one never did, which was a difference nobody chose (list.md Phase 19).
+            // one never did, which was a difference nobody chose (Phase 19).
             ScrollToEnd();
         });
     }
@@ -3008,7 +3008,7 @@ public partial class PanelView : UserControl
 
     /// <summary>
     /// A page's segments with the model's markdown read: the markers gone and what they meant
-    /// carried as a style (list.md Phase 19, and the transcript drawing <c>**A-rate FSD**</c>
+    /// carried as a style (Phase 19, and the transcript drawing <c>**A-rate FSD**</c>
     /// literally for as long as it has existed).
     /// <para>
     /// The log file is exempt and drawn exactly as it is on disk. It is a file rather than
@@ -3208,7 +3208,7 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>
-    /// Pressing the tab that is already selected returns to its root (list.md Phase 25, "the tab
+    /// Pressing the tab that is already selected returns to its root (Phase 25, "the tab
     /// is the root rather than the first level").
     /// <para>
     /// <b>This has to be added rather than inherited.</b> The tabs are <c>RadioButton</c>s and
@@ -3249,7 +3249,7 @@ public partial class PanelView : UserControl
     {
         // Only while following. This used to be unconditional, which is the whole of the
         // complaint: reading back through history meant being dragged to the bottom by every
-        // line that arrived, and a busy session appends several a second (list.md Phase 19).
+        // line that arrived, and a busy session appends several a second (Phase 19).
         if (!_following)
         {
             return;
@@ -3376,7 +3376,7 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>
-    /// Copies the whole of the page being read (list.md Phase 19, "Copy log").
+    /// Copies the whole of the page being read (Phase 19, "Copy log").
     /// <para>
     /// The page as currently shown, which is what "as currently filtered" means here: the
     /// conversation without the diagnostics, or with them, or the log file — the same text the

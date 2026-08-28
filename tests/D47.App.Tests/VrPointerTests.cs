@@ -9,8 +9,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// Grab-to-move needs the trigger, and the trigger arrives through <c>IVRInput</c> (list.md
-/// Phase 9).
+/// Grab-to-move needs the trigger, and the trigger arrives through <c>IVRInput</c> (Phase 9).
 /// <para>
 /// None of that can be asserted from here — it is a conversation with a running SteamVR. What can
 /// be asserted is the shape of the defect that has now happened twice in this file's subject:

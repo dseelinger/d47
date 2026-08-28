@@ -4,7 +4,7 @@ namespace D47.Core.Habits;
 
 /// <summary>
 /// Dropping out of supercruise short of where you meant to be, and going round again — the
-/// manoeuvre every Commander knows by name (list.md Phase 32).
+/// manoeuvre every Commander knows by name (Phase 32).
 /// <para>
 /// <b>Measured before it was written: 69 of these across 914 journals, and every single one at a
 /// planet.</b> Not one at a station, which is worth stating because the loop of shame is folklore

@@ -6,7 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>
-/// What the Commander says is on their fleet carrier (list.md Phase 50, amended by the Commander on
+/// What the Commander says is on their fleet carrier (Phase 50, amended by the Commander on
 /// 2026-08-25).
 /// <para>
 /// <b>The plan of record kept the carrier out of the arithmetic entirely</b>, and the measurement

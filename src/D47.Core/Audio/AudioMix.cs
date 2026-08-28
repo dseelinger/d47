@@ -1,7 +1,7 @@
 namespace D47.Core.Audio;
 
 /// <summary>
-/// One category's share of the output (list.md Phase 12, "#96 Ambient audio mixer").
+/// One category's share of the output (Phase 12, "#96 Ambient audio mixer").
 /// </summary>
 /// <param name="Level">
 /// How loud, 0 to 1. A level of 0 and <paramref name="Muted"/> sound identical and mean

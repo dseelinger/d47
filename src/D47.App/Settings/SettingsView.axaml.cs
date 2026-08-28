@@ -37,7 +37,7 @@ namespace D47.App.Settings;
 /// <para>
 /// Control choice per row kind: a short closed vocabulary is a ComboBox, because a dialog for
 /// seven fixed values is ceremony; the searchable picker is reserved for the long and open
-/// lists it was built for — models now, voices and devices in later phases (list.md Phase 4).
+/// lists it was built for — models now, voices and devices in later phases (Phase 4).
 /// Free text is only used where the value genuinely is free text.
 /// </para>
 /// </summary>
@@ -89,7 +89,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     private AppPaths? _paths;
 
     /// <summary>
-    /// Reopens the guided key setup from About (list.md Phase 16). Null in the designer and
+    /// Reopens the guided key setup from About (Phase 16). Null in the designer and
     /// in tests, which hides the button rather than offering one that does nothing.
     /// </summary>
     private Func<Task>? _setUpKeys;
@@ -121,20 +121,20 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
     /// <summary>
     /// What d47 remembers about the Commander, and the clock a hand-typed fact is stamped with
-    /// (list.md Phase 31). Null under the designer and in a test that is not about it, and the
+    /// (Phase 31). Null under the designer and in a test that is not about it, and the
     /// button is then absent rather than dead.
     /// </summary>
     private (D47.Core.Memory.MemoryBook Book, Func<DateTimeOffset> Now)? _memories;
 
     /// <summary>
     /// What d47 has noticed the Commander keeps doing, and what pressing "read my journals" does
-    /// (list.md Phase 32). Null under the designer and in a test that is not about it, and the
+    /// (Phase 32). Null under the designer and in a test that is not about it, and the
     /// button is then absent rather than dead.
     /// </summary>
     private (D47.Core.Habits.HabitBook Book, Action? Mine)? _habits;
 
     /// <summary>
-    /// The Commander's log (list.md Phase 33). Null under the designer and in a test that is not
+    /// The Commander's log (Phase 33). Null under the designer and in a test that is not
     /// about it, and the row then reads a folder with no way to write into it.
     /// </summary>
     private D47.Core.Logbook.LogbookBook? _logbook;
@@ -339,7 +339,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Spacing = 18,
             Margin = new Thickness(18, 4, 18, 18),
             // Applied while building, not after painting: a card that flashes open and then
-            // collapses is worse than one that never remembered (list.md Phase 4).
+            // collapses is worse than one that never remembered (Phase 4).
             IsVisible = _viewState.IsExpanded(section.Capability.Id, section.Capability.Display.StartCollapsed),
         };
 
@@ -796,7 +796,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
     /// <summary>
     /// Highlights the section the panel is actually showing — the topmost card still in view —
-    /// rather than the last one clicked (list.md Phase 4, "Settings Nav Menu").
+    /// rather than the last one clicked (Phase 4, "Settings Nav Menu").
     /// </summary>
     /// <summary>
     /// The card column tracks the viewport, between a floor and a ceiling.
@@ -849,7 +849,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// and is meant to sit beside a running game. Ported unchanged, the second window would not
     /// have been removed so much as the first one made too big to keep on screen — so below 900
     /// the nav goes and the cards take the whole width, which at the default size is the state
-    /// the Commander actually sees (list.md Phase 12).
+    /// the Commander actually sees (Phase 12).
     /// </para>
     /// <para>
     /// Guarded on the state changing rather than run every pass, because the handler sets
@@ -927,7 +927,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// <para>
     /// Public because a row can go stale without any setting having changed: the disclosure
     /// naming what was found in <c>data/audio/</c> is read from the cue library, and the library
-    /// is rebuilt when the Commander drops a file in (list.md Phase 12). Every other caller
+    /// is rebuilt when the Commander drops a file in (Phase 12). Every other caller
     /// arrives through <see cref="SettingsService.Changed"/>, which is why this is the only one
     /// that has to ask.
     /// </para>
@@ -964,7 +964,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             foreach (var row in _rows)
             {
                 // A row that does not apply is absent, not disabled: a greyed-out control still
-                // asserts that the setting exists (list.md Phase 4).
+                // asserts that the setting exists (Phase 4).
                 var shown = row.Row.Applies(_settings.Current)
                             && !SettingsFold.IsFolded(
                                 row.Row,
@@ -1020,7 +1020,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
     /// <summary>
     /// Shows only the rows that match, and marks what the query found in each of them
-    /// (list.md Phase 12, "Search whichever tab you are looking at").
+    /// (Phase 12, "Search whichever tab you are looking at").
     /// <para>
     /// Settings filters where the transcript pages only highlight, and the difference is the
     /// design rather than an inconsistency: 92 rows across 14 sections is a haystack, and
@@ -1464,7 +1464,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         if (row.Scope == SettingScope.Commander)
         {
-            // The same pill for the other declaration a row can make (list.md Phase 44): this
+            // The same pill for the other declaration a row can make (Phase 44): this
             // value is the Commander's who is flying, and a second Commander on this machine
             // will see their own here rather than this one.
             var tag = new TextBlock { Text = "per Commander", FontSize = TypeScale.Small, VerticalAlignment = VerticalAlignment.Center };
@@ -1774,13 +1774,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             // The sixth row that offers a window. A fact about the Commander is not a settings
             // value, and typing one is the act that makes an entry their own word rather than
             // something d47 worked out — so, like the note above, it lives where the tool surface
-            // cannot reach (list.md Phase 31).
+            // cannot reach (Phase 31).
             case SettingKind.Info when row.Key == MemoryCapability.StoreKey && _memories is not null:
                 return BuildMemories(row);
 
             // The seventh, and the only one whose button starts work rather than opening
             // something. Mining is seconds long and runs off this thread, so the row follows the
-            // store rather than being refreshed by the press (list.md Phase 32).
+            // store rather than being refreshed by the press (Phase 32).
             case SettingKind.Info when row.Key == HabitsCapability.StoreKey && _habits is not null:
                 return BuildHabits(row);
 
@@ -1810,7 +1810,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
             case SettingKind.Choice when row.AllowsFreeText || row.IsOpenVocabulary:
                 // Long or open vocabulary: the searchable picker, which stays usable when the
-                // list is empty because the value can be typed (list.md Phase 4).
+                // list is empty because the value can be typed (Phase 4).
                 return BuildPickerButton(row, message);
 
             case SettingKind.Choice:
@@ -1994,7 +1994,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     }
 
     /// <summary>
-    /// The Commander's log, behind a button (list.md Phase 33).
+    /// The Commander's log, behind a button (Phase 33).
     /// <para>
     /// A window rather than a row for the same reason habits get one, and one more: this is the
     /// only surface in d47 that spends real money on request, so it needs room for a quote, a
@@ -2058,7 +2058,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             // The whole surface rather than this row, because a press is not always about the row
             // it is on: binding a core to a ship changes what the row above says *and* what the
             // list below it says, and refreshing only the one pressed left the other one stating
-            // the state before the press (list.md Phase 35). A press is a rare, deliberate act, so
+            // the state before the press (Phase 35). A press is a rare, deliberate act, so
             // reading ninety rows once is not a cost anybody can perceive.
             Refresh();
         };
@@ -2631,7 +2631,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             box.Text = _settings!.Read(row.Key) ?? string.Empty;
 
             // The default is a placeholder, never a value, so "I have not chosen" stays
-            // distinguishable from "I chose the default" (list.md Phase 4).
+            // distinguishable from "I chose the default" (Phase 4).
             box.PlaceholderText = row.DefaultDisplayFor(_settings.Current) ?? string.Empty;
             ShowDefaultOnHover(box, row);
         }, false);
@@ -2639,7 +2639,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
     /// <summary>
     /// The key row, which is <see cref="SecretEditor"/> — the same control the first-run guide
-    /// shows (list.md Phase 16). Extracted rather than duplicated so the trim, the reveal, the
+    /// shows (Phase 16). Extracted rather than duplicated so the trim, the reveal, the
     /// write-only store and the real check cannot drift between the two surfaces.
     /// </summary>
     private (Control, Action, bool) BuildSecret(SettingRow row, TextBlock message)
@@ -2682,7 +2682,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     }
 
     /// <summary>
-    /// The stick's push-to-talk row (list.md Phase 53).
+    /// The stick's push-to-talk row (Phase 53).
     /// <para>
     /// Built like <see cref="BuildHotkey"/> because it is the same gesture — press the thing you
     /// want — and it reuses the reader and the clock the switch walk already carries rather than
@@ -2799,7 +2799,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// <summary>
     /// Binds a gesture by listening for one, rather than by offering a list of key names. There
     /// is no way to type a key that does not exist, and no list to keep in step with a keyboard
-    /// layout (list.md Phase 4, "Hotkey Binding").
+    /// layout (Phase 4, "Hotkey Binding").
     /// </summary>
     private async Task CaptureHotkeyAsync(SettingRow row, Button button, TextBlock message)
     {

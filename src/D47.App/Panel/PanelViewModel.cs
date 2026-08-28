@@ -5,7 +5,7 @@ using System.Text;
 namespace D47.App.Panel;
 
 /// <summary>
-/// How much of itself the panel is showing (list.md Phase 9, "TheApp's panel works in VR").
+/// How much of itself the panel is showing (Phase 9, "TheApp's panel works in VR").
 /// <para>
 /// Mini is a mode, not a surface: not a separate window, not a scaled-down copy, a reduced
 /// content set on the same panel.
@@ -26,7 +26,7 @@ public enum PanelMode
 }
 
 /// <summary>
-/// Which reading of the transcript a surface is showing (list.md Phase 25, "One transcript,
+/// Which reading of the transcript a surface is showing (Phase 25, "One transcript,
 /// three views").
 /// <para>
 /// Three <em>modes</em> of one tab rather than three tabs, because they are three readings of
@@ -41,7 +41,7 @@ public enum PanelMode
 /// carries the busy glyph and why the collapse is three modes rather than a single toggle.
 /// </para>
 /// <para>
-/// <b>One choice across every surface, since list.md Phase 45 — a reversal, recorded rather
+/// <b>One choice across every surface, since Phase 45 — a reversal, recorded rather
 /// than smoothed over.</b> This used to be a property of the surface, exactly like
 /// <see cref="PanelMode"/> and for the same reason: a page held in common would send the
 /// headset to the log file the moment the window went to it. The Commander's ruling is that
@@ -338,12 +338,12 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     public void ShowLog(string text) => LogText = text;
 
     /// <summary>
-    /// Where the conversation loop is (list.md Phase 11, "Ship's AI Avatar"). The panel has
+    /// Where the conversation loop is (Phase 11, "Ship's AI Avatar"). The panel has
     /// always had these states audibly, one cue each; this is the same states, visible.
     /// <para>
     /// On the view model rather than on the view, like everything else here, because the
     /// desktop window and the headset overlay each instantiate a view against this one model —
-    /// a state owned by one of them would make the other a guest (list.md Phase 9).
+    /// a state owned by one of them would make the other a guest (Phase 9).
     /// </para>
     /// </summary>
     public D47.Core.Audio.LoopState LoopState
@@ -353,7 +353,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// What the microphone is doing (list.md Phase 13, "Show that the microphone is open").
+    /// What the microphone is doing (Phase 13, "Show that the microphone is open").
     /// <para>
     /// On the view model rather than on either surface, and that is the requirement rather than
     /// a convenience: the checklist asks for the state to be visible on the panel <em>and</em>
@@ -409,7 +409,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     public bool MicrophoneVisible => _microphone != D47.Core.Listening.MicrophoneState.Off;
 
     /// <summary>
-    /// Which assigned switches currently sit against the game's state (list.md Phase 21, "Show
+    /// Which assigned switches currently sit against the game's state (Phase 21, "Show
     /// which switches disagree with the game"). Null when none do, which is nearly always.
     /// <para>
     /// On the view model rather than on either surface, for the same reason

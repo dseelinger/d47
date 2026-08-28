@@ -105,7 +105,7 @@ public static class FocusCapability
     /// How to put Elite in front. Null where nothing composed one — under the designer and in
     /// tests that are not about it. The capability still registers, and its tool then says it
     /// cannot act rather than being absent, which is what a capability being off looks like
-    /// (list.md Phase 3).
+    /// (Phase 3).
     /// </param>
     public static CapabilityDescriptor Create(Func<FocusResult>? raise) => new()
     {

@@ -4,7 +4,7 @@ using Xunit;
 namespace D47.Core.Tests.Listening;
 
 /// <summary>
-/// Wake-word gating (list.md Phase 13), which decides about words rather than about audio — so
+/// Wake-word gating (Phase 13), which decides about words rather than about audio — so
 /// every one of these is a transcript in and a decision out, with no model and no microphone.
 /// </summary>
 public class WakeWordTests

@@ -63,7 +63,7 @@ public sealed class AnthropicLlmProvider : ILlmProvider
 
     /// <summary>
     /// Models that predate the 4.6 generation and so reject <c>thinking</c> and
-    /// <c>output_config.effort</c> outright (list.md Phase 54).
+    /// <c>output_config.effort</c> outright (Phase 54).
     /// <para>
     /// The same family rule as <see cref="BasicWebSearchOnly"/> — 4.6 or later — named as its
     /// exceptions rather than its members, so a model d47 has not heard of is assumed current.
@@ -132,7 +132,7 @@ public sealed class AnthropicLlmProvider : ILlmProvider
     /// <summary>
     /// <paramref name="baseUrl"/> is null for Anthropic's own endpoint. A value points at
     /// something else speaking the same protocol — a gateway or a proxy — which is a setting
-    /// the Commander can change without restarting d47 (list.md Phase 4).
+    /// the Commander can change without restarting d47 (Phase 4).
     /// </summary>
     public AnthropicLlmProvider(string apiKey, string? baseUrl = null)
     {
@@ -232,7 +232,7 @@ public sealed class AnthropicLlmProvider : ILlmProvider
 
             if (failureMessage is not null)
             {
-                // Advertise, then demote (list.md Phase 29, ported here by Phase 54). The
+                // Advertise, then demote (Phase 29, ported here by Phase 54). The
                 // endpoint named a field it will not accept, so it is recorded against this
                 // endpoint and this model and the turn is sent once more without it. Demote
                 // returns false if that pairing had already refused, which is what makes this
@@ -461,7 +461,7 @@ public sealed class AnthropicLlmProvider : ILlmProvider
             // same either way — and it is what lets the panel show progress instead of a pause.
             //
             // Both omitted together on a model that will not take them, and omitted rather than
-            // substituted (list.md Phase 54). Falling back to a budget_tokens thinking config
+            // substituted (Phase 54). Falling back to a budget_tokens thinking config
             // would mean inventing a token budget per effort rung on the one model that exists
             // to be cheap, which is the wrong trade in both directions: guess high and the
             // saving is gone, guess low and the model is worse than the one it replaced. A
@@ -565,7 +565,7 @@ public sealed class AnthropicLlmProvider : ILlmProvider
     }
 
     /// <summary>
-    /// Which optional field the endpoint refused, if it named one (list.md Phase 54).
+    /// Which optional field the endpoint refused, if it named one (Phase 54).
     /// <para>
     /// Only ever consulted on a 400 or a 422 — a request the server would not accept as written
     /// — so the question being asked is already "which part of it". <b>Nothing is inferred from
@@ -600,7 +600,7 @@ public sealed class AnthropicLlmProvider : ILlmProvider
         CoreConversation.ThinkingEffort.High => Effort.High,
 
         // Straight through: the pinned SDK's Effort is { Low, Medium, High, Xhigh, Max }, which
-        // is the note this enum used to carry the opposite of (list.md Phase 54).
+        // is the note this enum used to carry the opposite of (Phase 54).
         CoreConversation.ThinkingEffort.Xhigh => Effort.Xhigh,
         CoreConversation.ThinkingEffort.Max => Effort.Max,
         _ => Effort.High,

@@ -40,7 +40,7 @@ public sealed class FakeTtsProvider : ITtsProvider
     /// <summary>
     /// What this provider reports when asked for its voices. Settable, so a test can stand in
     /// for a provider that answered and had none, or one that refused the key — which are
-    /// different empties and are shown differently (list.md Phase 19).
+    /// different empties and are shown differently (Phase 19).
     /// </summary>
     public VoiceCatalogue Catalogue { get; init; } =
         VoiceCatalogue.Of([new VoiceInfo("fake-1", "Fake One", "en-GB")]);

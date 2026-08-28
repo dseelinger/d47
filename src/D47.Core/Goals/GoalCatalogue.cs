@@ -1,7 +1,7 @@
 namespace D47.Core.Goals;
 
 /// <summary>
-/// The arcs that ship (list.md Phase 34, "Goals that outlive a checklist").
+/// The arcs that ship (Phase 34, "Goals that outlive a checklist").
 /// <para>
 /// <b>Nine, and none of them is CQC.</b> Almost nobody plays it, and an arc permanently at nothing
 /// is a line of the page spent telling every Commander about a thing they are not doing. That is a

@@ -9,7 +9,7 @@ public sealed record CrewAddressed(CrewMember Member, string Question);
 
 /// <summary>
 /// Working out whether the Commander was talking to the ship's AI or to somebody in the fighter
-/// bay (list.md Phase 11, "Ship Crew").
+/// bay (Phase 11, "Ship Crew").
 /// <para>
 /// <b>Model-free, and against a closed vocabulary.</b> The names come from the journal — real
 /// pilots the Commander really hired — so this is a fixed set matched exactly, the same shape

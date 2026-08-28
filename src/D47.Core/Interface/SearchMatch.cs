@@ -8,7 +8,7 @@ public readonly record struct SearchMatch(int Start, int Length)
 
 /// <summary>
 /// Finding a query in a page and keeping track of which hit is current
-/// (list.md Phase 12, "Search whichever tab you are looking at").
+/// (Phase 12, "Search whichever tab you are looking at").
 /// <para>
 /// Offset arithmetic and nothing else. It lives here rather than in the view for the reason
 /// everything in Core does: the awkward parts of this feature — the current hit surviving the

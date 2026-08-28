@@ -6,7 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Checklists;
 
 /// <summary>
-/// The checklist in the order the Commander cares about (list.md Phase 42).
+/// The checklist in the order the Commander cares about (Phase 42).
 /// <para>
 /// Two levels, and the tests divide the same way: between projects the order is the Commander's
 /// and stored, within one it is derived on every read — what can be done now, in the ship being

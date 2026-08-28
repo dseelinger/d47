@@ -11,7 +11,7 @@ public sealed record LogClaim(string Text, IReadOnlyList<int> Cited)
 }
 
 /// <summary>
-/// Reads the written log back against the digest it was written from (list.md Phase 33, item 2).
+/// Reads the written log back against the digest it was written from (Phase 33, item 2).
 /// <para>
 /// <b>"A sentence that cannot be traced back is the bug this item exists to prevent."</b> An
 /// instruction alone does not prevent it — a model that has been told to cite will usually cite,

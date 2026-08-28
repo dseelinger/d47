@@ -21,7 +21,7 @@ public sealed record ChecklistNews(string Key, string Text);
 public sealed record ChecklistView(string Filter, bool IncludePartialGrades);
 
 /// <summary>
-/// The one place the checklist is read from and written to (list.md Phase 17, "TheApp keeps 'The
+/// The one place the checklist is read from and written to (Phase 17, "TheApp keeps 'The
 /// Ultimate' checklist").
 /// <para>
 /// <b>"What am I working on" has exactly one answer.</b> The derived lists — a ship's build, a
@@ -524,7 +524,7 @@ public sealed class ChecklistService(
     {
         var document = Document;
 
-        // In the Commander's order rather than the file's (list.md Phase 42): the scope headings
+        // In the Commander's order rather than the file's (Phase 42): the scope headings
         // below follow first appearance, so the projects arrive ranked and the lines within one
         // arrive actionable-first without this method holding an opinion of its own.
         var live = ChecklistOrdering.Arrange(document, State).ToList();
@@ -638,7 +638,7 @@ public sealed class ChecklistService(
     }
 
     /// <summary>
-    /// What every live plan still costs, netted across all of them at once (list.md Phase 17, "An
+    /// What every live plan still costs, netted across all of them at once (Phase 17, "An
     /// engineering plan writes the checklist"; and the batching half of Phase 14's "Go and get it",
     /// which was deferred here because it needs a plan to exist).
     /// <para>
@@ -1028,7 +1028,7 @@ public sealed class ChecklistService(
     /// proposes and this commits, which is what keeps a hostile in-game message to a proposal that
     /// gets declined.
     /// </summary>
-    /// <param name="goal">The arc that asked for the line, where one did (list.md Phase 34).</param>
+    /// <param name="goal">The arc that asked for the line, where one did (Phase 34).</param>
     public ChecklistChange AddNote(ChecklistScope scope, string text, string? goal = null) =>
         // The new line becomes the selected one (reported 2026-08-21). A Commander who has just
         // said a line is thinking about that line, and "put it at the top" said in the next breath
@@ -1127,7 +1127,7 @@ public sealed class ChecklistService(
     }
 
     /// <summary>
-    /// Moves an item in the Commander's own order (list.md Phase 25). Reachable from the panel and
+    /// Moves an item in the Commander's own order (Phase 25). Reachable from the panel and
     /// from a phrase, and — like every other write here — <b>not from the tool surface</b>: the
     /// order is the Commander's answer to what they are working on next, which is not a thing an
     /// in-game message gets to rearrange.
@@ -1178,7 +1178,7 @@ public sealed class ChecklistService(
     }
 
     /// <summary>
-    /// The list in the order the Commander cares about (list.md Phase 42): their project order,
+    /// The list in the order the Commander cares about (Phase 42): their project order,
     /// then what can be done now, where they are standing. The one reading the panel, the report
     /// and the opening line all take, so the drawn top of the list and the spoken one cannot
     /// disagree.
@@ -1189,7 +1189,7 @@ public sealed class ChecklistService(
     public IReadOnlyList<ChecklistProject> Projects() => ChecklistOrdering.Projects(Document, State);
 
     /// <summary>
-    /// Moves a whole project in the Commander's order (list.md Phase 42). Reachable from the
+    /// Moves a whole project in the Commander's order (Phase 42). Reachable from the
     /// panel and from a phrase, and — like every other write here — <b>not from the tool
     /// surface</b>: the order is the Commander's answer to what they are working on next, which
     /// is not a thing an in-game message gets to rearrange.
@@ -1301,7 +1301,7 @@ public sealed class ChecklistService(
 
         var items = incoming.Items;
 
-        // The project order travels with the list (list.md Phase 42): it is part of what the
+        // The project order travels with the list (Phase 42): it is part of what the
         // export means, and an import that kept the items and dropped the ranking would arrive
         // subtly different from what left — the one thing a round trip must not do.
         var order = incoming.ProjectOrder;
@@ -1464,7 +1464,7 @@ public sealed class ChecklistService(
     /// than the Commander's list.
     /// </summary>
     /// <param name="goal">
-    /// The arc that asked for these lines, where one did (list.md Phase 34). Carried onto every
+    /// The arc that asked for these lines, where one did (Phase 34). Carried onto every
     /// item so that finishing one visibly moves something bigger than itself.
     /// </param>
     public string ProposeAdd(ChecklistScope scope, IReadOnlyList<string> lines, string? goal = null)

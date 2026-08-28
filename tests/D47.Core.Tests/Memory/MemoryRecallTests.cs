@@ -6,7 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Memory;
 
 /// <summary>
-/// What reaches a prompt, and what it costs to put it there (list.md Phase 31, "Recall arrives above
+/// What reaches a prompt, and what it costs to put it there (Phase 31, "Recall arrives above
 /// the cache breakpoint").
 /// <para>
 /// Two properties, and the second is the expensive one. The set has to be <b>bounded and honest

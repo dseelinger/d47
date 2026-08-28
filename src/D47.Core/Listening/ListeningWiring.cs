@@ -40,7 +40,7 @@ public sealed record SpeechModelPlan
 /// device handles, file paths and native loads with these two questions threaded through it —
 /// unreachable by a test, because answering them needed a microphone, a model file and a
 /// keyboard hook. Neither of them needs any of those; both are functions of settings and of what
-/// is on disk (list.md Phase 19, "Give the composition root a test harness").
+/// is on disk (Phase 19, "Give the composition root a test harness").
 /// </para>
 /// <para>
 /// Pure, and deliberately in Core. The root still opens the device, loads the native model and
@@ -101,7 +101,7 @@ public static class ListeningWiring
         keyBound || ListeningCapability.IsHandsFree(mode);
 
     /// <summary>
-    /// What d47 answers to (list.md Phase 13).
+    /// What d47 answers to (Phase 13).
     /// <para>
     /// Empty outside wake-word mode, which is what makes the policy inert rather than every
     /// caller having to know which mode is in force: with no phrases the gate admits everything,

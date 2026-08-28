@@ -10,7 +10,7 @@ using Xunit;
 namespace D47.Core.Tests.Input;
 
 /// <summary>
-/// Named sequences the Commander authored (list.md Phase 10, "Macros").
+/// Named sequences the Commander authored (Phase 10, "Macros").
 /// <para>
 /// The validation is the interesting half. Authoring is the one input whose vocabulary cannot
 /// be closed in advance, so everything a macro is <em>made of</em> has to be checked against a

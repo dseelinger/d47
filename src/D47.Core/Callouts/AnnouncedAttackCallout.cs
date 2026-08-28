@@ -4,7 +4,7 @@ using D47.Core.Journal;
 namespace D47.Core.Callouts;
 
 /// <summary>
-/// An attack that has been announced but has not yet landed (list.md Phase 15).
+/// An attack that has been announced but has not yet landed (Phase 15).
 /// <para>
 /// NPCs say what they are about to do before they do it, and Elite writes that as a localisation
 /// id — <c>$Pirate_StartInterdiction07;</c> — with the prose in a separate field. So this is an

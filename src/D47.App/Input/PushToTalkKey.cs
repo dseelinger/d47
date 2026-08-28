@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 namespace D47.App.Input;
 
 /// <summary>
-/// The push-to-talk key, sampled from the tick loop (list.md Phase 6).
+/// The push-to-talk key, sampled from the tick loop (Phase 6).
 /// <para>
 /// <b>Why polling, and not the three alternatives.</b>
 /// </para>

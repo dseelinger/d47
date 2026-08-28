@@ -3,7 +3,7 @@ using System.Text;
 namespace D47.Core.Habits;
 
 /// <summary>
-/// Everything d47 has noticed about the Commander, read as one thing (list.md Phase 32).
+/// Everything d47 has noticed about the Commander, read as one thing (Phase 32).
 /// <para>
 /// The store knows about a file; this knows who is flying, which claims they have refused, and
 /// which one was said last. Same arrangement as <see cref="Memory.MemoryBook"/> over

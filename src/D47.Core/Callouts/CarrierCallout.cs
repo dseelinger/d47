@@ -4,7 +4,7 @@ using D47.Core.Journal;
 namespace D47.Core.Callouts;
 
 /// <summary>
-/// The Commander's fleet carrier, answering for itself (list.md Phase 11, "Carrier Captain").
+/// The Commander's fleet carrier, answering for itself (Phase 11, "Carrier Captain").
 /// <para>
 /// Two people rather than one. The captain speaks about the carrier — its jump, its fuel — and
 /// the tower handles the Commander's own arrivals and departures, because that is how it works
@@ -18,7 +18,7 @@ namespace D47.Core.Callouts;
 /// </para>
 /// <para>
 /// The lines here are the authored floor. The app replaces them with a model-generated line in
-/// character when there is a model to ask (list.md Phase 11: "varied LLM arrival and departure
+/// character when there is a model to ask (Phase 11: "varied LLM arrival and departure
 /// responses"), which is why each carries a <see cref="Announcement.Key"/> the app can match on
 /// rather than being the final text.
 /// </para>

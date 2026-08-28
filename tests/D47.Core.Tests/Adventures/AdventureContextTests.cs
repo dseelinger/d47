@@ -5,7 +5,7 @@ using static D47.Core.Tests.Adventures.AdventureFixtures;
 namespace D47.Core.Tests.Adventures;
 
 /// <summary>
-/// The persona knows what the Commander knows, plus the stake (list.md Phase 47). The turn and the
+/// The persona knows what the Commander knows, plus the stake (Phase 47). The turn and the
 /// ending enter the block only when their beats have fired; the beats ahead never do.
 /// </summary>
 public class AdventureContextTests

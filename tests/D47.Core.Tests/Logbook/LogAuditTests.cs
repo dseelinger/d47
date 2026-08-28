@@ -4,8 +4,8 @@ using Xunit;
 namespace D47.Core.Tests.Logbook;
 
 /// <summary>
-/// "A sentence that cannot be traced back is the bug this item exists to prevent" (list.md
-/// Phase 33, item 2).
+/// "A sentence that cannot be traced back is the bug this item exists to prevent" (Phase 33,
+/// item 2).
 /// </summary>
 public class LogAuditTests
 {

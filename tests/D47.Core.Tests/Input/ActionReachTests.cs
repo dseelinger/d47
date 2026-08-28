@@ -6,7 +6,7 @@ namespace D47.Core.Tests.Input;
 
 /// <summary>
 /// What d47 will admit to being able to do, given the Commander's own bindings and the mode
-/// they are in (list.md Phase 10, items 1 and 4).
+/// they are in (Phase 10, items 1 and 4).
 /// <para>
 /// The shapes here are taken from the bindings Elite ships. <c>PrimaryFire</c> really is on
 /// <c>Mouse_1</c> in <c>KeyboardMouseOnly</c>, <c>GalaxyMapOpen</c> really is unbound in it,

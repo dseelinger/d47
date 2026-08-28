@@ -6,7 +6,7 @@ using Xunit;
 namespace D47.Llm.Tests;
 
 /// <summary>
-/// The Responses decoder, driven against recorded responses (list.md Phase 29, "A turn answered
+/// The Responses decoder, driven against recorded responses (Phase 29, "A turn answered
 /// by OpenAI").
 /// <para>
 /// This protocol names every frame with its own <c>type</c>, which makes the decoding readable

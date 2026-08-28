@@ -7,7 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Goals;
 
 /// <summary>
-/// The walk that gives every arc its age (list.md Phase 34).
+/// The walk that gives every arc its age (Phase 34).
 /// <para>
 /// Journals written by hand rather than replayed, for the reason <see cref="Habits.HabitMinerTests"/>
 /// records: the real corpus is on one machine and CI has none, so what these prove is that the

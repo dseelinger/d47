@@ -32,14 +32,14 @@ public sealed record SettingsFanoutPlan
 }
 
 /// <summary>
-/// Which subsystems a settings key reaches (list.md Phase 4, "Apply every setting without a
+/// Which subsystems a settings key reaches (Phase 4, "Apply every setting without a
 /// restart").
 /// <para>
 /// The root's job is that every row takes effect immediately and that the startup path and the
 /// change path cannot drift. That made this dispatch load-bearing and left it as an if/else
 /// chain of string prefixes inside an event handler, where a key routed to the wrong subsystem —
 /// or to none — is a row that silently does nothing until the app is restarted. Exactly the
-/// class of fault the composition-root harness exists to reach (list.md Phase 19).
+/// class of fault the composition-root harness exists to reach (Phase 19).
 /// </para>
 /// <para>
 /// Pure. The root still does the applying; this only says what to apply.

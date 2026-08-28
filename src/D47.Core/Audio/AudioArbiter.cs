@@ -8,13 +8,13 @@ namespace D47.Core.Audio;
 public enum AudioChannel
 {
     /// <summary>
-    /// The looping bed under a working turn (list.md Phase 5, #18). Not in the serial queue —
+    /// The looping bed under a working turn (Phase 5, #18). Not in the serial queue —
     /// it plays underneath whatever is, and ducks.
     /// </summary>
     Bed = 0,
 
     /// <summary>
-    /// Situational ambience (list.md Phase 12, "Ambient music"). The second background layer,
+    /// Situational ambience (Phase 12, "Ambient music"). The second background layer,
     /// beside the bed and not in the serial queue either — a loop that took its turn at the head
     /// of a queue would never give it back, and two of them would never give it back twice.
     /// <para>
@@ -32,7 +32,7 @@ public enum AudioChannel
     Speech = 3,
 
     /// <summary>
-    /// A journal-triggered danger callout (list.md Phase 8). Outranks speech because an alert
+    /// A journal-triggered danger callout (Phase 8). Outranks speech because an alert
     /// that waits for the current sentence to finish is not an alert.
     /// </summary>
     Alert = 4,
@@ -56,7 +56,7 @@ public sealed record AudioRequest
 
     /// <summary>
     /// The text this is speaking, if any. Carried on the request rather than tracked
-    /// separately because captions are timed from the end of speech (list.md Phase 9), and the
+    /// separately because captions are timed from the end of speech (Phase 9), and the
     /// only component that knows when speech ends is the one that owns the queue.
     /// </summary>
     public string? Caption { get; init; }
@@ -153,7 +153,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
     }
 
     /// <summary>
-    /// Per-category level, mute and ducking (list.md Phase 12, "#96 Ambient audio mixer").
+    /// Per-category level, mute and ducking (Phase 12, "#96 Ambient audio mixer").
     /// <para>
     /// Set rather than injected, because it follows a settings row and the arbiter outlives
     /// every value of it. Assigning re-levels whatever is playing rather than waiting for the
@@ -297,7 +297,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
     }
 
     /// <summary>
-    /// Shut up (list.md Phase 5). Flush the queue, stop mid-sentence, drop the bed.
+    /// Shut up (Phase 5). Flush the queue, stop mid-sentence, drop the bed.
     /// <para>
     /// It is a queue operation rather than a feature layered on top, which is precisely why it
     /// can be instant and why nothing can gate it behind a turn completing: there is no work

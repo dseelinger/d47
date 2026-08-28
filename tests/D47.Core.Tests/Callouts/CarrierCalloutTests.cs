@@ -8,7 +8,7 @@ using Xunit;
 namespace D47.Core.Tests.Callouts;
 
 /// <summary>
-/// The Commander's fleet carrier, answering for itself (list.md Phase 11, "Carrier Captain").
+/// The Commander's fleet carrier, answering for itself (Phase 11, "Carrier Captain").
 /// </summary>
 public class CarrierCalloutTests
 {

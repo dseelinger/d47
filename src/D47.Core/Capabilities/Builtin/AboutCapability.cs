@@ -90,7 +90,7 @@ public static class AboutCapability
     /// decision irreversible. Null hides the row; so does a shortcut that already exists.
     /// </param>
     /// <param name="setUpKeys">
-    /// Reopens the guided key setup (list.md Phase 16). Here because <b>keys get rotated and
+    /// Reopens the guided key setup (Phase 16). Here because <b>keys get rotated and
     /// revoked</b>, so the state that triggers the guide is one a working install can return to.
     /// </param>
     public static CapabilityDescriptor Create(

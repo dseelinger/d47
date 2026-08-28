@@ -15,7 +15,7 @@ public enum PriceSource
     /// <summary>
     /// The Commander's own <c>Market.json</c>, written by the game while they stood at the
     /// commodity board. Exact, free, and covers almost nothing of the galaxy — which is the whole
-    /// reason <see cref="Reported"/> exists beside it (list.md Phase 36).
+    /// reason <see cref="Reported"/> exists beside it (Phase 36).
     /// </summary>
     Seen,
 }
@@ -39,7 +39,7 @@ public sealed record MarketQuote(string Commodity)
     /// <summary>
     /// How many tonnes the station wants. <b>The cap on a leg</b>, and the reason a plan does not
     /// promise a profit it cannot deliver: selling far past demand drops what the rest of it
-    /// fetches, by a factor nobody here is willing to invent (list.md Phase 36).
+    /// fetches, by a factor nobody here is willing to invent (Phase 36).
     /// </summary>
     public int Demand { get; init; }
 
@@ -55,7 +55,7 @@ public sealed record MarketQuote(string Commodity)
 }
 
 /// <summary>
-/// One station's whole commodity market at one moment (list.md Phase 36).
+/// One station's whole commodity market at one moment (Phase 36).
 /// <para>
 /// The unit the planner works in. It is deliberately a flat record of numbers with no idea where
 /// it came from beyond <see cref="Source"/> — the Spansh station search fills one in, the

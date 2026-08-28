@@ -7,7 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Audio;
 
 /// <summary>
-/// Who is speaking, and who keeps their voice (list.md Phase 11, "Voices stick").
+/// Who is speaking, and who keeps their voice (Phase 11, "Voices stick").
 /// </summary>
 public class VoiceCastTests
 {
@@ -225,7 +225,7 @@ public class VoiceCastTests
 }
 
 /// <summary>
-/// Two providers, one settings surface (list.md Phase 11, "ElevenLabs").
+/// Two providers, one settings surface (Phase 11, "ElevenLabs").
 /// </summary>
 public class TtsProviderCatalogTests
 {
@@ -270,7 +270,7 @@ public class TtsProviderCatalogTests
 }
 
 /// <summary>
-/// Speaking rate, remembered against the provider it was chosen for (list.md Phase 11:
+/// Speaking rate, remembered against the provider it was chosen for (Phase 11:
 /// "Differences between providers, such as speed, is maintained on a per-provider basis").
 /// </summary>
 public class PerProviderRateTests

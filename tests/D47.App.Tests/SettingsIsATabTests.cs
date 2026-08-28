@@ -16,7 +16,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// One visible window (list.md Phase 12, "Settings is a tab of the main window, not a second
+/// One visible window (Phase 12, "Settings is a tab of the main window, not a second
 /// window"). Settings is the fourth page of the strip that already carried Conversation,
 /// Technical and Log file, and takes the place of the transcript when it is selected.
 /// </summary>

@@ -3,7 +3,7 @@ using System.Globalization;
 namespace D47.Core.Hotas;
 
 /// <summary>
-/// One button on one controller (list.md Phase 53).
+/// One button on one controller (Phase 53).
 /// <para>
 /// <b>The device is the hard half.</b> Several HOTAS controllers is the ordinary case — the
 /// WinWing throttle alone presents four interfaces with 4x32 mode on — so <em>button 7</em> alone

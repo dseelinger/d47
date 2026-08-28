@@ -3,7 +3,7 @@ using D47.Core.Journal;
 namespace D47.Core.Callouts;
 
 /// <summary>
-/// Where you have just arrived (list.md Phase 8, "Recognize where you have arrived" and
+/// Where you have just arrived (Phase 8, "Recognize where you have arrived" and
 /// "Home System").
 /// <para>
 /// Everything this recognises is derived from the Commander's own data — the home system they

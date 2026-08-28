@@ -8,7 +8,7 @@ using Xunit;
 namespace D47.Core.Tests.Habits;
 
 /// <summary>
-/// The habits capability's surface (list.md Phase 32).
+/// The habits capability's surface (Phase 32).
 /// <para>
 /// <b>Nothing here reaches the model, and the assertions say so three ways.</b> Item 1 promises no
 /// journal reaches a model; keeping the conclusions out of its reach too is the same boundary one

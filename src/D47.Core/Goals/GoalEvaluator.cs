@@ -4,7 +4,7 @@ using D47.Core.Knowledge;
 namespace D47.Core.Goals;
 
 /// <summary>
-/// What every arc is worth right now (list.md Phase 34, "Progress is derived, never typed").
+/// What every arc is worth right now (Phase 34, "Progress is derived, never typed").
 /// <para>
 /// <b>Three sources and a fixed precedence, which is the whole of item 2.</b> Live journal state
 /// answers what is true now and is preferred whenever it has anything to say. The mine answers the

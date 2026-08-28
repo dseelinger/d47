@@ -5,7 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>
-/// Retry with backoff, and saying so out loud when it runs out (list.md Phase 5, "Say
+/// Retry with backoff, and saying so out loud when it runs out (Phase 5, "Say
 /// something when a turn is taking too long").
 /// </summary>
 public class TurnRetryTests

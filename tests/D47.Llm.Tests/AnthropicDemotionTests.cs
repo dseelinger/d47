@@ -4,7 +4,7 @@ using Xunit;
 namespace D47.Llm.Tests;
 
 /// <summary>
-/// Answering Anthropic when it says no (list.md Phase 54).
+/// Answering Anthropic when it says no (Phase 54).
 /// <para>
 /// The gap this closes was never that Haiku 4.5 is unusual. It is that one provider learned from
 /// refusals and the other could not: both OpenAI providers have wrapped every optional field in

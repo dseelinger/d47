@@ -1,8 +1,7 @@
 namespace D47.Core.Knowledge;
 
 /// <summary>
-/// The last commodity answer, so the spoken one and the drawn one are one answer (list.md Phase
-/// 49).
+/// The last commodity answer, so the spoken one and the drawn one are one answer (Phase 49).
 /// <para>
 /// <b>The same arrangement <see cref="RoutePlanBook"/> makes for routes</b>, and for the same
 /// reason: a Commander who asks by voice and then looks at the panel should see what they were

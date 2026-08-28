@@ -3,7 +3,7 @@ using D47.Core.Engineers;
 namespace D47.App.Panel;
 
 /// <summary>
-/// Where the Engineers tab gets its answer, and how it knows to ask again (list.md Phase 28).
+/// Where the Engineers tab gets its answer, and how it knows to ask again (Phase 28).
 /// <para>
 /// A source rather than a report, for the same reason the gap has one: the answer moves under the
 /// page in four separate ways — a ship build, an on-foot build, where the Commander is, and what

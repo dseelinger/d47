@@ -16,8 +16,8 @@ cues so they never compete with speech.
 Loop-state cue names are the state ids themselves. That is deliberate: `CueLibrary`
 discovers them from disk and asserts one per state, so a state added in code without a
 cue fails loudly at startup instead of going wrong as silence nobody notices
-(list.md Phase 5, #20). Alert cues are named for the `AlertCue` members under the same
-rule (list.md Phase 15).
+(Phase 5, #20). Alert cues are named for the `AlertCue` members under the same
+rule (Phase 15).
 """
 
 import os
@@ -152,7 +152,7 @@ def main():
     _write("alerts/rivalterritory.wav", _sequence([("D4", 0.16), ("A2", 0.40)], 0.70, peak=0.34))
 
     # The one alert that is not trouble, and the one the Commander asked for: a timer or an alarm
-    # finishing (list.md Phase 24). So it rises where the other four fall, and it is quieter than
+    # finishing (Phase 24). So it rises where the other four fall, and it is quieter than
     # them - nothing is about to shoot, and a chime that startles is a chime somebody turns off.
     #
     # It says "something finished" and nothing more. d47 speaks the name straight after, which is

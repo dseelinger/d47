@@ -6,7 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Persona;
 
 /// <summary>
-/// The boundary this phase turns on (list.md Phase 35, "The binding is the Commander's, and
+/// The boundary this phase turns on (Phase 35, "The binding is the Commander's, and
 /// unreachable from the model"): <b>the model may read a binding and never write one</b>.
 /// <para>
 /// Persona selection is protected because in-game comms and journal text are untrusted

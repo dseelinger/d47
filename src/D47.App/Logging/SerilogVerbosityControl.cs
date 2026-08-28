@@ -8,7 +8,7 @@ namespace D47.App.Logging;
 /// <summary>
 /// Runtime per-subsystem verbosity, implemented over Serilog level switches. Serilog reads a
 /// switch on every event, so changing one takes effect on the next log call — no restart, no
-/// reconfiguration (list.md Phase 1, "Turn a subsystem up without restarting").
+/// reconfiguration (Phase 1, "Turn a subsystem up without restarting").
 /// </summary>
 public sealed class SerilogVerbosityControl : ILogVerbosityControl
 {

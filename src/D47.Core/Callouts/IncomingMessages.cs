@@ -5,7 +5,7 @@ using D47.Core.Journal;
 namespace D47.Core.Callouts;
 
 /// <summary>
-/// In-game chat, read aloud in somebody else's voice (list.md Phase 11, "Speak incoming
+/// In-game chat, read aloud in somebody else's voice (Phase 11, "Speak incoming
 /// messages in another voice").
 /// <para>
 /// Phase 10 shipped dictating <em>into</em> Elite's chat. Nothing read what came back, so this
@@ -162,7 +162,7 @@ public sealed partial class IncomingMessages : ICallout
             SpeakerIsPlayer = isPlayer,
 
             // Which slot pays for this line, and it is not derivable from the boolean above:
-            // a squadron mate and a stranger in local are both players (list.md Phase 57).
+            // a squadron mate and a stranger in local are both players (Phase 57).
             CommsChannel = channel,
 
             // Written down with the sender on it, whoever they are. The page has no voices to

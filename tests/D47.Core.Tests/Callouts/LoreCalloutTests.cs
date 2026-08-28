@@ -8,7 +8,7 @@ using Xunit;
 namespace D47.Core.Tests.Callouts;
 
 /// <summary>
-/// Remarking on a system worth remarking on (list.md Phase 23).
+/// Remarking on a system worth remarking on (Phase 23).
 /// <para>
 /// Most of this is about the 24-hour rule, because that is the whole difference between a
 /// companion and a tour guide who has forgotten meeting you — and because it is the part that

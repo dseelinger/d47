@@ -7,7 +7,7 @@ using D47.Core.Lore;
 namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
-/// Systems worth remarking on, and the Commander's own notes about them (list.md Phase 23).
+/// Systems worth remarking on, and the Commander's own notes about them (Phase 23).
 /// <para>
 /// <b>Reading is model-callable and so is writing, which is a departure worth stating.</b>
 /// <see cref="ChecklistCapability"/> makes every write a proposal because the Commander's list is
@@ -71,7 +71,7 @@ public static class LoreCapability
     /// The Commander's own notes, or null where nothing composed a store — under the designer and
     /// in tests that are not about them. <b>The shipped table is still answered from</b>, because
     /// it is part of the build rather than part of the state: a null book costs the notes, not the
-    /// capability (list.md Phase 3, and the same shape <c>galaxy</c> has in
+    /// capability (Phase 3, and the same shape <c>galaxy</c> has in
     /// <see cref="BuiltinCapabilities"/>).
     /// </param>
     public static CapabilityDescriptor Create(

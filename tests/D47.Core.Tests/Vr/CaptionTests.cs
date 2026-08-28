@@ -4,7 +4,7 @@ using Xunit;
 namespace D47.Core.Tests.Vr;
 
 /// <summary>
-/// The caption standard, asserted rather than claimed (list.md Phase 9, "Captions follow
+/// The caption standard, asserted rather than claimed (Phase 9, "Captions follow
 /// Netflix CC standard").
 /// </summary>
 public class CaptionTests

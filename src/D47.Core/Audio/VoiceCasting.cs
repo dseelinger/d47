@@ -2,7 +2,7 @@ namespace D47.Core.Audio;
 
 /// <summary>
 /// A <see cref="VoiceCast"/> per provider, because a voice id means nothing to a provider that
-/// did not issue it (list.md Phase 57).
+/// did not issue it (Phase 57).
 /// <para>
 /// Phase 11 could hold one cast, because there was one provider and every voice in it came from
 /// the same list. With six slots naming up to six providers, a stranger in local drawn from

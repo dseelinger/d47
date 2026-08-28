@@ -69,7 +69,7 @@ public abstract record TurnEvent
     /// <summary>
     /// About to try again after a transient failure. Carries the wait so a surface can say how
     /// long it is about to be quiet for, which is the whole point of the item: silence that
-    /// nobody has accounted for is indistinguishable from a hang (list.md Phase 5).
+    /// nobody has accounted for is indistinguishable from a hang (Phase 5).
     /// </summary>
     public sealed record Retrying(int Attempt, int Of, TimeSpan Wait, string Because) : TurnEvent;
 
@@ -120,7 +120,7 @@ public sealed class TurnLoop(
 
     /// <summary>
     /// How hard to try before saying so out loud. Settable so a settings change applies to the
-    /// next turn without a restart (list.md Phase 4).
+    /// next turn without a restart (Phase 4).
     /// </summary>
     public RetryPolicy Retry { get; set; } = RetryPolicy.Default;
 
@@ -322,7 +322,7 @@ public sealed class TurnLoop(
     /// <summary>
     /// The provider answering turns, or null for none. Settable because a key or an endpoint
     /// can change mid-session and the next turn has to use it — "apply every setting without a
-    /// restart" reaches in here (list.md Phase 4).
+    /// restart" reaches in here (Phase 4).
     /// </summary>
     public ILlmProvider? Provider { get; set; } = provider;
 
@@ -331,7 +331,7 @@ public sealed class TurnLoop(
 
     /// <summary>
     /// The model for calls the Commander is not waiting on — ambient remarks, the opening
-    /// brief, the gap reaction, the two lore lookups, voice casting (list.md Phase 54). Never
+    /// brief, the gap reaction, the two lore lookups, voice casting (Phase 54). Never
     /// null once settings have been applied: the host resolves it to <see cref="Model"/> where
     /// the Commander has chosen nothing.
     /// <para>
@@ -352,7 +352,7 @@ public sealed class TurnLoop(
 
     /// <summary>
     /// The least effort a turn may run at, or null for whatever <see cref="EffortRouter"/>
-    /// answered (list.md Phase 54).
+    /// answered (Phase 54).
     /// <para>
     /// A property assigned from settings, exactly as <see cref="Model"/> and
     /// <see cref="Persona"/> are, and the clamp is applied at the call site rather than inside
@@ -365,7 +365,7 @@ public sealed class TurnLoop(
 
     /// <summary>
     /// The most effort a turn may run at, or null for whatever <see cref="EffortRouter"/>
-    /// answered (list.md Phase 54). A cost dial, and a guard against the router's own false
+    /// answered (Phase 54). A cost dial, and a guard against the router's own false
     /// positives: it matches substrings with no word boundaries, so "what do you think about"
     /// hits "think about" and routes to Max.
     /// </summary>
@@ -378,7 +378,7 @@ public sealed class TurnLoop(
 
     /// <summary>
     /// What d47 remembers about the Commander, already bounded and labelled by
-    /// <see cref="Memory.MemoryRecall"/> (list.md Phase 31).
+    /// <see cref="Memory.MemoryRecall"/> (Phase 31).
     /// <para>
     /// <b>A value rather than a source, unlike everything below it, and that is the point.</b>
     /// <see cref="LiveGameState"/> is a function because it must be as fresh as the turn; this must
@@ -542,7 +542,7 @@ public sealed class TurnLoop(
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var chosenModel = Model ?? activeProvider.DefaultModel;
-        // What the Commander asked for, held between what they will pay for (list.md Phase 54).
+        // What the Commander asked for, held between what they will pay for (Phase 54).
         // The clamp is here rather than inside ChooseFor so the router stays a pure heuristic
         // with nothing to say about money — and so its own tests never have to know the bounds
         // exist. Both bounds unset is exactly ChooseFor's answer.
@@ -554,7 +554,7 @@ public sealed class TurnLoop(
         _lastModelUsed = chosenModel;
 
         // Which tools ship is a choice between pre-declared profiles, never between individual
-        // tools (list.md Phase 10) — a per-turn set would rewrite position 1 and invalidate the
+        // tools (Phase 10) — a per-turn set would rewrite position 1 and invalidate the
         // whole cached prefix. The profile is quantized by mode, so a Commander who stays in
         // supercruise pays for one cache entry and reads it.
         //
@@ -576,8 +576,8 @@ public sealed class TurnLoop(
         // rather than a turn that fails (architecture.md §6).
         var webSearch = providerCapabilities.SupportsWebSearch && (WebSearchEnabled?.Invoke() ?? false);
 
-        // What this turn says it thought at, which is not always what it asked for (list.md
-        // Phase 54). A model with no effort dial — Haiku 4.5, or anything an endpoint has
+        // What this turn says it thought at, which is not always what it asked for (Phase 54).
+        // A model with no effort dial — Haiku 4.5, or anything an endpoint has
         // refused the field for — is still sent the chosen rung in the request, because the
         // provider is the only thing that knows whether it can carry it. What it must not do is
         // report an effort nobody applied: Routed.Effort and TurnResult.Effort are both nullable
@@ -724,7 +724,7 @@ public sealed class TurnLoop(
 
         // A model on the Commander's own machine is free, and that is a fact about the address
         // rather than about the model id — no table row could hold it, because the id is whatever
-        // the local server happens to call the weights it loaded (list.md Phase 29).
+        // the local server happens to call the weights it loaded (Phase 29).
         var price = activeProvider.RunsOnThisMachine
             ? PriceTable.Free
             : prices.For(activeProvider.Id, chosenModel);
@@ -798,7 +798,7 @@ public sealed class TurnLoop(
     /// </summary>
     /// <summary>
     /// Whether the prefix was there, in terms that mean the same thing on every provider
-    /// (list.md Phase 29, seam 3). Two signals, because no provider sends both.
+    /// (Phase 29, seam 3). Two signals, because no provider sends both.
     /// <para>
     /// A <b>cache write</b> is a cold prefix wherever one is reported, which is Anthropic and
     /// GPT-5.6 onward. Reading <b>nothing</b> is the inverse signal and the one that works
@@ -842,7 +842,7 @@ public sealed class TurnLoop(
 
         // One silent round makes the whole turn unpriced, not partly priced. A sum of the rounds
         // that did report is a smaller number than the truth wearing the same confidence as a
-        // complete one, which is the failure this flag exists to prevent (list.md Phase 29).
+        // complete one, which is the failure this flag exists to prevent (Phase 29).
         Reported = running.Reported && round.Reported,
     };
 
@@ -852,7 +852,7 @@ public sealed class TurnLoop(
     /// Retry lives here rather than around the whole turn because of one asymmetry: once a word
     /// has been streamed it has probably already been spoken, and there is no such thing as
     /// un-saying it. So an attempt that produced text is never retried, however transient the
-    /// failure that ended it looked (list.md Phase 5). A tool call is not subject to that rule —
+    /// failure that ended it looked (Phase 5). A tool call is not subject to that rule —
     /// nothing has run yet when the round ends, because execution is the caller's job — so a
     /// round that failed part-way through assembling calls is safe to attempt again.
     /// </para>

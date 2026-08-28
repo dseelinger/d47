@@ -4,7 +4,7 @@ using D47.Core.Input;
 namespace D47.Core.Conversation;
 
 /// <summary>
-/// One pre-declared tool set (list.md Phase 10, "Decide which tools ship on a turn as the count
+/// One pre-declared tool set (Phase 10, "Decide which tools ship on a turn as the count
 /// grows").
 /// </summary>
 /// <param name="Id">Stable name. It is what a cache entry is keyed by in practice.</param>

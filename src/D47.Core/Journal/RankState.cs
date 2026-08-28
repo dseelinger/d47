@@ -1,7 +1,7 @@
 namespace D47.Core.Journal;
 
 /// <summary>
-/// One career's ladder, as the journal states it (list.md Phase 34, "Goals that outlive a
+/// One career's ladder, as the journal states it (Phase 34, "Goals that outlive a
 /// checklist").
 /// <para>
 /// <b>The journal gives a number and never a word</b>, so this carries a number. Naming rank 6 in
@@ -40,7 +40,7 @@ public sealed record RankStanding(string Career, int Rank)
 
 /// <summary>
 /// Where the Commander stands in every career, folded from <c>Rank</c>, <c>Progress</c> and
-/// <c>Promotion</c> (list.md Phase 34).
+/// <c>Promotion</c> (Phase 34).
 /// <para>
 /// <b>Three events, and they are not interchangeable.</b> <c>Rank</c> is a complete snapshot
 /// written at startup, <c>Progress</c> is the percent into each of those same ranks, and

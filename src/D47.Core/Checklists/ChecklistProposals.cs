@@ -57,7 +57,7 @@ public sealed record ChecklistProposal
 
 /// <summary>
 /// The proposals file — <c>data/checklist-proposals.json</c> — and the whole of the trust
-/// boundary this phase turns on (list.md Phase 17, "LLM Ship AI may propose that a checklist item
+/// boundary this phase turns on (Phase 17, "LLM Ship AI may propose that a checklist item
 /// is done").
 /// <para>
 /// <b>Proposing is model-callable and committing is not, into two different files so the boundary

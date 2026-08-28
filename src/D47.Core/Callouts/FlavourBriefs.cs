@@ -30,7 +30,7 @@ public sealed record FlavourBrief
     public required bool NeedsGameState { get; init; }
 
     /// <summary>
-    /// Whether the Commander's own account of themselves goes with it (list.md Phase 43).
+    /// Whether the Commander's own account of themselves goes with it (Phase 43).
     /// <para>
     /// False for the carrier's two roles, for the reason they get <see cref="NeedsPersona"/>
     /// false — a stranger on a comms channel does not know the Commander's history, and putting
@@ -57,20 +57,20 @@ public sealed record FlavourBrief
 }
 
 /// <summary>
-/// Which callouts get said in character, and what the model is asked (list.md Phase 11, "with
+/// Which callouts get said in character, and what the model is asked (Phase 11, "with
 /// varied LLM arrival and departure responses").
 /// <para>
 /// Only the ambient remarks, the session's opening line and the carrier's own lines. <b>A danger
 /// callout is never rewritten by a model</b>: those fire on the event and say exactly what
 /// happened, and "shields are down"
-/// is not a line that benefits from personality (list.md Phase 8). That exclusion is the whole
+/// is not a line that benefits from personality (Phase 8). That exclusion is the whole
 /// safety property here, and it was expressed as the default arm of a switch inside
 /// <c>AppHost.VaryAsync</c> — where nothing could assert it, and where adding a case above it
 /// would have been the entire cost of losing it.
 /// </para>
 /// <para>
 /// Pure. The root still resolves the persona block, reads the live game state and makes the call;
-/// what was lifted is which line is eligible and what it is asked (list.md Phase 19).
+/// what was lifted is which line is eligible and what it is asked (Phase 19).
 /// </para>
 /// </summary>
 public static class FlavourBriefs
@@ -188,7 +188,7 @@ public static class FlavourBriefs
             };
         }
 
-        // A beat of the Commander's adventure, or its opening (list.md Phase 47, "The ship's AI tells
+        // A beat of the Commander's adventure, or its opening (Phase 47, "The ship's AI tells
         // it, and the authored beat is the floor"). A rewording brief: the authored line carries
         // what the beat has to say and the model says it in the core's voice. The story itself —
         // premise, stake, what has fired — rides in the game state below the breakpoint, which is
@@ -353,7 +353,7 @@ public static class FlavourBriefs
     /// the shapes that have actually been heard and it will not catch the next one.
     /// </para>
     /// <para>
-    /// It matters more the cheaper the model gets. list.md Phase 54 points every background call
+    /// It matters more the cheaper the model gets. Phase 54 points every background call
     /// at a deliberately cheap model, which is exactly the traffic these briefs are.
     /// </para>
     /// </summary>

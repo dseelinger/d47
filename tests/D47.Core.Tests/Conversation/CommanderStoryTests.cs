@@ -5,7 +5,7 @@ namespace D47.Core.Tests.Conversation;
 
 /// <summary>
 /// The two halves of the Commander's own account of themselves, and which calls carry which
-/// (list.md Phase 43, "The sheet always, the story sometimes").
+/// (Phase 43, "The sheet always, the story sometimes").
 /// </summary>
 public class CommanderStoryTests
 {

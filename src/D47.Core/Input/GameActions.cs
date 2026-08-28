@@ -88,7 +88,7 @@ public sealed record GameAction
 }
 
 /// <summary>
-/// The actions d47 will ask Elite to perform (list.md Phase 10, items 6 to 9).
+/// The actions d47 will ask Elite to perform (Phase 10, items 6 to 9).
 /// <para>
 /// <b>Curated, not generated.</b> Elite declares 369 actions and most of them are axes, camera
 /// controls and multicrew plumbing that nobody asks for by voice. A generated table would
@@ -219,7 +219,7 @@ public static class GameActions
 
             // The bare word is safe here for the reason the router is whole-utterance: "engage
             // supercruise" is a different utterance from "supercruise" and matches its own
-            // phrase, so the short one shadows nothing (list.md Phase 52, item 1).
+            // phrase, so the short one shadows nothing (Phase 52, item 1).
             Phrases =
             [
                 ("supercruise", DesiredState.Toggle),
@@ -235,7 +235,7 @@ public static class GameActions
             Group = Flight,
             Variants = [new ActionVariant("Hyperspace", ControlContext.Flying)],
 
-            // "Engage" is the Commander's word for the jump (list.md Phase 52, item 1), and it
+            // "Engage" is the Commander's word for the jump (Phase 52, item 1), and it
             // is a whole utterance rather than a keyword. As a keyword it would hijack every
             // sentence containing it — "engage supercruise", "engage boost", "engage the frame
             // shift drive" are all live phrases and all contain it, which is remediation.md 16
@@ -274,13 +274,13 @@ public static class GameActions
             Variants = [new ActionVariant("SetSpeedZero", ControlContext.Flying)],
 
             // Not "stop". That is the interrupt word, and it has to stay the fastest way to
-            // silence d47 rather than a way to park the ship (list.md Phase 5).
+            // silence d47 rather than a way to park the ship (Phase 5).
             Phrases = [("all stop", DesiredState.Toggle), ("throttle to zero", DesiredState.Toggle)],
         },
 
         new()
         {
-            // The other end of the throttle, and the first step of "separate" (list.md Phase 52,
+            // The other end of the throttle, and the first step of "separate" (Phase 52,
             // item 3). A real binding in Frontier's own presets — verified against every .binds
             // under ControlSchemes rather than assumed, which is the rule Phase 10 set after
             // finding three things Elite has no control for.
@@ -515,7 +515,7 @@ public static class GameActions
             ],
         },
 
-        // ---- Weapons (the honk's route in, list.md Phase 10 item 3) --------------------------
+        // ---- Weapons (the honk's route in, Phase 10 item 3) --------------------------
         // No phrases and no tool. The catalogue carries these because the discovery scanner is
         // fired through them and has no binding of its own; nothing the Commander or the model
         // says reaches them.

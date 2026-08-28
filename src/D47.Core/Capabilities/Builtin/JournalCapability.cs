@@ -4,7 +4,7 @@ using D47.Core.Journal;
 namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
-/// Everything d47 knows about the game from the journal (list.md Phase 2, "TheApp knows where
+/// Everything d47 knows about the game from the journal (Phase 2, "TheApp knows where
 /// you are"; Phase 7, "Knowing the game").
 /// <para>
 /// Every tool here answers from <see cref="GameStateStore"/> with no model and no network. That

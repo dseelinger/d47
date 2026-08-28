@@ -14,7 +14,7 @@ public sealed record JournalEvent(DateTimeOffset Timestamp, string Kind, JsonEle
     /// <summary>
     /// Parses one line. A missing "event" field or invalid JSON is the only thing that fails
     /// here — an unrecognised event *name* still parses fine, because surviving a schema
-    /// change means new event types are inert, not unreadable (list.md Phase 2).
+    /// change means new event types are inert, not unreadable (Phase 2).
     /// </summary>
     public static bool TryParse(string line, ILogger logger, out JournalEvent? result)
     {

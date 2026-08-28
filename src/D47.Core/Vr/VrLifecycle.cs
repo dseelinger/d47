@@ -71,7 +71,7 @@ public interface IVrRuntime
 
 /// <summary>
 /// <em>Order agnostic Overlay</em>, and there is nothing else to it: this is the whole
-/// feature (list.md Phase 9). SteamVR may start after d47, exit under it, or restart
+/// feature (Phase 9). SteamVR may start after d47, exit under it, or restart
 /// mid-session, and none of those is an ordering the Commander should have to know about.
 /// <para>
 /// It owns no thread and reads no clock — the tick loop calls <see cref="Tick"/> and supplies

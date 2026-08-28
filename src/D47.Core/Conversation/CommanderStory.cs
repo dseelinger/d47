@@ -1,8 +1,8 @@
 namespace D47.Core.Conversation;
 
 /// <summary>
-/// The Commander's own account of themselves, in the two halves a real biography has (list.md
-/// Phase 43, "The sheet always, the story sometimes").
+/// The Commander's own account of themselves, in the two halves a real biography has (Phase 43,
+/// "The sheet always, the story sometimes").
 /// <para>
 /// A <b>character sheet</b> — name, origin, year, build, accent — is some forty tokens, stable,
 /// and relevant to nearly anything said. A <b>story</b> runs to thirteen hundred and is relevant

@@ -45,7 +45,7 @@ public enum ChecklistMove
 
 /// <summary>
 /// One Commander's whole checklist — universal, per ship and per system, authored and derived,
-/// live and tombstoned (list.md Phase 17).
+/// live and tombstoned (Phase 17).
 /// <para>
 /// <b>The Commander's key lives inside the document, never in a path.</b> The Frontier id comes
 /// out of the journal, and journal content is untrusted input; turning it into a filename would
@@ -67,7 +67,7 @@ public sealed record ChecklistDocument
     public IReadOnlyList<ChecklistItem> Items { get; init; } = [];
 
     /// <summary>
-    /// The Commander's order <em>between</em> projects (list.md Phase 42), as project keys —
+    /// The Commander's order <em>between</em> projects (Phase 42), as project keys —
     /// see <see cref="ChecklistOrdering.Key"/>. Empty until they rank one, which is the ordinary
     /// state and means the reading falls back to what can be done now, where they are standing.
     /// <para>
@@ -143,7 +143,7 @@ public sealed record ChecklistDocument
 
     /// <summary>Adds an authored line. The Commander's own words, attributed to them.</summary>
     /// <param name="goal">
-    /// The arc that asked for it, where one did (list.md Phase 34). Carried here rather than only
+    /// The arc that asked for it, where one did (Phase 34). Carried here rather than only
     /// on the proposal, because a proposal is accepted into a <em>new</em> item and provenance a
     /// Commander loses on the way onto their own list is provenance they never had.
     /// </param>
@@ -313,7 +313,7 @@ public sealed record ChecklistDocument
     }
 
     /// <summary>
-    /// Moves an item up or down the Commander's own order (list.md Phase 25, "The checklist
+    /// Moves an item up or down the Commander's own order (Phase 25, "The checklist
     /// leaves its window").
     /// <para>
     /// <b>The order is one order, across every scope.</b> What gets reordered on a whim is
@@ -433,7 +433,7 @@ public sealed record ChecklistDocument
 
     /// <summary>
     /// Replaces one plan's items in one scope with a new set — <b>as a diff, never as a rebuild</b>
-    /// (list.md Phase 17).
+    /// (Phase 17).
     /// <list type="bullet">
     /// <item>Present in both: kept exactly as it is, history and all.</item>
     /// <item>Dropped: tombstoned — <see cref="ChecklistTombstone.Superseded"/> when it was done,

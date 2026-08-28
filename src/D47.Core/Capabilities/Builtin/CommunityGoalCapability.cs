@@ -7,7 +7,7 @@ namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
 /// Community goals: what is running, what tier it has reached, and where the Commander stands
-/// (list.md Phase 14, "Know the current community goals").
+/// (Phase 14, "Know the current community goals").
 /// <para>
 /// <b>The item was written around a split the journal does not make.</b> It asks for goals the
 /// Commander is not participating in to come from Inara — but the journal's board event fires
@@ -46,7 +46,7 @@ public static class CommunityGoalCapability
     /// <param name="listing">
     /// The external listing, or null where none is composed — under the designer and in a test
     /// that is not about it. Null, and a key that has never been stored, produce the same
-    /// answer: what the journal knows, said plainly as being only that (list.md Phase 3 —
+    /// answer: what the journal knows, said plainly as being only that (Phase 3 —
     /// capabilities are state, not guards, so this must not dead-end).
     /// </param>
     /// <param name="now">

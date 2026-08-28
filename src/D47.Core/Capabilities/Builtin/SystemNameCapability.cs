@@ -6,7 +6,7 @@ using D47.Core.Knowledge;
 namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
-/// Reading a system's name back to the Commander (list.md Phase 18, "Read a system name").
+/// Reading a system's name back to the Commander (Phase 18, "Read a system name").
 /// <para>
 /// <b>The only capability in this repository that needs nothing at all</b> — no key, no network, no
 /// index, and not even a journal when the Commander says a name out loud. That is the entire point

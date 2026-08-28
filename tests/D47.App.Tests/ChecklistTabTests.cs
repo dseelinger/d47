@@ -16,8 +16,8 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The one surface (list.md Phase 17), now a tab of the panel rather than a window over it
-/// (list.md Phase 25, "The checklist leaves its window").
+/// The one surface (Phase 17), now a tab of the panel rather than a window over it
+/// (Phase 25, "The checklist leaves its window").
 /// <para>
 /// <b>The headline is not tidiness.</b> A <c>Window</c> cannot appear in the headset, so until
 /// this moved a Commander in VR could not see their checklist at all — which is why these tests
@@ -112,7 +112,7 @@ public class ChecklistTabTests
 
     /// <summary>
     /// And the headset's own instantiation has it again, and still has no Loadout
-    /// (list.md Phase 39, "The Checklist tab is furnished on the VR panel again").
+    /// (Phase 39, "The Checklist tab is furnished on the VR panel again").
     /// <para>
     /// <b>This assertion has now been written three ways, and the middle one was not a mistake.</b>
     /// Phase 25 put the checklist in the headset because a <c>Window</c> cannot appear there at
@@ -244,7 +244,7 @@ public class ChecklistTabTests
             .Select(tick => tick.Content as string ?? string.Empty)
             .ToList();
 
-        // Grouped by project in first-appearance order (list.md Phase 42), no headings between
+        // Grouped by project in first-appearance order (Phase 42), no headings between
         // them, and nothing lost.
         Assert.Equal(["buy limpets", "sell the cargo", "fit a fuel scoop"], lines);
 

@@ -6,7 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>
-/// "Settings by voice" (list.md Phase 6): unless otherwise noted, every setting should be
+/// "Settings by voice" (Phase 6): unless otherwise noted, every setting should be
 /// settable by voice — and protected rows are reachable by voice <em>only</em> through the
 /// model-free keyword router, so "by voice" never silently means "by the LLM".
 /// <para>

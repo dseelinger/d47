@@ -6,7 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Persona;
 
 /// <summary>
-/// A core per ship (list.md Phase 35). The two halves are tested apart because they are two
+/// A core per ship (Phase 35). The two halves are tested apart because they are two
 /// different promises: the file holds what the Commander said, and the watch decides when what
 /// they said acts.
 /// </summary>
@@ -48,7 +48,7 @@ public class ShipCoreStoreTests
     }
 
     /// <summary>
-    /// The Commander is half the key (the list.md Phase 44 defect item): Elite's ship ids are per
+    /// The Commander is half the key (the Phase 44 defect item): Elite's ship ids are per
     /// Commander and start small, so two Commanders' ship 12s are two ships — each binds their
     /// own, and each reads back their own.
     /// </summary>
@@ -209,7 +209,7 @@ public class ShipCoreStoreTests
 }
 
 /// <summary>
-/// When a binding acts (list.md Phase 35, "Switching ships switches the core"). Every question
+/// When a binding acts (Phase 35, "Switching ships switches the core"). Every question
 /// here is about timing, and every answer is measured in elapsed time handed in — no component
 /// tested here owns a thread or reads a clock.
 /// </summary>
@@ -343,7 +343,7 @@ public class ShipCoreWatchTests
     }
 
     /// <summary>
-    /// The bug the key exists for (the list.md Phase 44 defect item): another Commander's ship 12
+    /// The bug the key exists for (the Phase 44 defect item): another Commander's ship 12
     /// is a different ship, so their binding must not put a core aboard this Commander's.
     /// </summary>
     [Fact]
@@ -408,7 +408,7 @@ public class ShipCoreWatchTests
     }
 
     /// <summary>
-    /// The live half of the list.md Phase 44 defect. The store is keyed per Commander, but the
+    /// The live half of the Phase 44 defect. The store is keyed per Commander, but the
     /// watch remembers the ship it acted on as a bare id — so a second Commander logging in
     /// aboard their own ship 7 reads as no change, and the first one's core stays aboard. A reset
     /// on the switch makes the next observation the ship d47 found them in, adopted silently.

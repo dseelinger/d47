@@ -8,7 +8,7 @@ namespace D47.Core.Utilities;
 public sealed record AlarmProblem(string Where, string Reason);
 
 /// <summary>
-/// The Commander's alarms, in one file beside the executable (list.md Phase 24, "Timers and
+/// The Commander's alarms, in one file beside the executable (Phase 24, "Timers and
 /// alarms").
 /// <para>
 /// <b>Alarms survive a restart and timers do not</b>, which is the whole reason this file exists

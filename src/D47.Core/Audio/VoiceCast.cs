@@ -38,7 +38,7 @@ public enum VoiceRole
 /// One component rather than a field on each caller, because the sticky assignments are the
 /// part that is easy to get wrong: a wingmate whose voice changes on every jump reads as a bug
 /// rather than as variety, and an NPC who keeps a voice forever means the cast never turns over
-/// (list.md Phase 11, "Voices stick").
+/// (Phase 11, "Voices stick").
 /// </para>
 /// <para>
 /// Owns no thread and reads no clock. Scope changes are pushed in by whatever is already

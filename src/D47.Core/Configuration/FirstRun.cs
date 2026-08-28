@@ -13,7 +13,7 @@ namespace D47.Core.Configuration;
 /// </param>
 /// <param name="Required">
 /// Whether skipping it leaves d47 unable to hold a conversation. Exactly one step is required and
-/// it is still skippable: capabilities are state rather than guards (list.md Phase 3), so
+/// it is still skippable: capabilities are state rather than guards (Phase 3), so
 /// declining every key leaves d47 running and typed rather than a dead app behind a form.
 /// </param>
 /// <param name="Egress">
@@ -27,7 +27,7 @@ public sealed record FirstRunStep(SettingRow Row, bool Required, EgressEntry? Eg
 }
 
 /// <summary>
-/// The guided path a fresh install needs before d47 can answer anything (list.md Phase 16, "Ask
+/// The guided path a fresh install needs before d47 can answer anything (Phase 16, "Ask
 /// for the keys on the first run that needs them").
 /// <para>
 /// <b>Driven by state, never by a "have we done this?" flag.</b> The condition is <em>there is no

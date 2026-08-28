@@ -4,7 +4,7 @@ using Xunit;
 namespace D47.Core.Tests.Vr;
 
 /// <summary>
-/// How often SteamVR's own account of an overlay reaches the log (list.md Phase 9).
+/// How often SteamVR's own account of an overlay reaches the log (Phase 9).
 /// <para>
 /// The read-back is what settles "the quad is placed correctly and I still cannot see it", which
 /// is the question that cost a day in Phase 12. Writing it every frame is what makes it useless:
@@ -14,7 +14,7 @@ namespace D47.Core.Tests.Vr;
 /// <para>
 /// This lived inside <c>SteamVrRuntime.Serve</c>, five lines between an overlay submit and a
 /// compositor call, and could not be reached without a headset — while being arithmetic over a
-/// string and two timestamps (list.md Phase 19).
+/// string and two timestamps (Phase 19).
 /// </para>
 /// </summary>
 public class TheReadbackSaysWhenItChangesTests

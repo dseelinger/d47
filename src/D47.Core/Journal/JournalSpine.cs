@@ -16,7 +16,7 @@ namespace D47.Core.Journal;
 /// </summary>
 /// <param name="position">
 /// The live <c>Status.json</c>, for stamping a position onto events that carry none — organic
-/// sampling is the whole reason it exists (list.md Phase 18). Null where nothing composed one, and
+/// sampling is the whole reason it exists (Phase 18). Null where nothing composed one, and
 /// the sampling state then simply carries no distances.
 /// </param>
 public sealed class JournalSpine(

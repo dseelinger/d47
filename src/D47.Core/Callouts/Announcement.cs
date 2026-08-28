@@ -20,7 +20,7 @@ public enum CalloutUrgency
 }
 
 /// <summary>
-/// Something d47 has decided to say without being asked (list.md Phase 8).
+/// Something d47 has decided to say without being asked (Phase 8).
 /// <para>
 /// A callout emits one of these from the tick loop, which is synchronous and must not block —
 /// so this is a description of what to say, not the act of saying it. The app drains these onto
@@ -48,7 +48,7 @@ public sealed record Announcement(string Key, string Text, CalloutUrgency Urgenc
 
     /// <summary>
     /// A marker played immediately ahead of the line, saying which warning this is before the
-    /// sentence has arrived (list.md Phase 15).
+    /// sentence has arrived (Phase 15).
     /// <para>
     /// Null for everything that came before Phase 15, which is most of what is said: a cue per
     /// announcement would make the common ones into an alarm and would leave the Commander no way
@@ -61,7 +61,7 @@ public sealed record Announcement(string Key, string Text, CalloutUrgency Urgenc
     /// <summary>
     /// Which of a callout's stock lines this is, when it has a numbered set to pick from — the
     /// index <see cref="AmbientLines.Pick"/> was given. Null for every callout with one line to
-    /// say (list.md Phase 43).
+    /// say (Phase 43).
     /// <para>
     /// Carried here for the reason the situation travels on the key: the app asks the model for
     /// the line in character after the callout has moved on, and what it asks for depends on
@@ -93,13 +93,13 @@ public sealed record Announcement(string Key, string Text, CalloutUrgency Urgenc
 
     /// <summary>
     /// Whether <see cref="Speaker"/> is a player rather than an NPC. Decides which scope their
-    /// voice assignment lives in: players survive hyperspace, NPCs do not (list.md Phase 11).
+    /// voice assignment lives in: players survive hyperspace, NPCs do not (Phase 11).
     /// </summary>
     public bool SpeakerIsPlayer { get; init; }
 
     /// <summary>
     /// The in-game chat channel this arrived on, or null for a line that is not chat — every
-    /// callout, the crew, the carrier (list.md Phase 57).
+    /// callout, the crew, the carrier (Phase 57).
     /// <para>
     /// <b><see cref="SpeakerIsPlayer"/> cannot answer what this answers.</b> That boolean says
     /// whether a person typed it, which is the question Phase 11 needed: it decides how long a

@@ -114,7 +114,7 @@ public sealed record BodySampling(long SystemAddress, int BodyId)
 }
 
 /// <summary>
-/// Organic sampling, per body and per genus (list.md Phase 18, "Exobiology sampling").
+/// Organic sampling, per body and per genus (Phase 18, "Exobiology sampling").
 /// <para>
 /// <b>The spacing rule is the feature, and d47 does not ship a table of it.</b> The required distance
 /// between specimens is published by the game in the species' own Codex entry, and every

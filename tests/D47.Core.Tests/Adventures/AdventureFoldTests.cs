@@ -5,7 +5,7 @@ using static D47.Core.Tests.Adventures.AdventureFixtures;
 namespace D47.Core.Tests.Adventures;
 
 /// <summary>
-/// Progress is derived, and an adventure counts forward only (list.md Phase 47).
+/// Progress is derived, and an adventure counts forward only (Phase 47).
 /// <para>
 /// The assertion is the list's own sentence: fires at each place in order, once, and at nothing
 /// before the stamp.

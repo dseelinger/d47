@@ -47,7 +47,7 @@ public sealed record CaptureResult
 }
 
 /// <summary>
-/// The walk (list.md Phase 21, "Assign a switch by walking its positions").
+/// The walk (Phase 21, "Assign a switch by walking its positions").
 /// <para>
 /// <b>The walk is what makes this device-independent.</b> The instruction is not the shorter
 /// <em>flip it and leave it there</em>, because walking is what discovers how many positions a

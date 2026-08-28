@@ -38,8 +38,7 @@ public interface ICallout
 }
 
 /// <summary>
-/// The tick-loop subscriber that runs every callout and queues what they produce (list.md
-/// Phase 8).
+/// The tick-loop subscriber that runs every callout and queues what they produce (Phase 8).
 /// <para>
 /// It owns the two policies that would otherwise be reimplemented, differently, in each
 /// callout: <b>a callout that throws does not stop the others</b>, and <b>the same warning is

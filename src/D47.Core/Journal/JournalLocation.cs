@@ -23,7 +23,7 @@ public enum FlightMode
 }
 
 /// <summary>
-/// Where a Commander is and what they are doing there (list.md Phase 7, "Know your location").
+/// Where a Commander is and what they are doing there (Phase 7, "Know your location").
 /// <para>
 /// Every field here is folded from an event that states it. Nothing is inferred from absence:
 /// an event this type does not recognise leaves the location alone rather than clearing it,
@@ -52,7 +52,7 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
 
     /// <summary>
     /// The <c>MarketID</c> of the station the Commander is docked at, and null when they are not
-    /// (list.md Phase 47). The number a dock beat matches on, so the editor's <em>Here</em> can
+    /// (Phase 47). The number a dock beat matches on, so the editor's <em>Here</em> can
     /// read it off the game rather than asking for it.
     /// </summary>
     public long? MarketId { get; init; }
@@ -64,7 +64,7 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
     public int? BodyId { get; init; }
 
     /// <summary>
-    /// Where the system is, in light years on Frontier's axes (list.md Phase 28, "Where every
+    /// Where the system is, in light years on Frontier's axes (Phase 28, "Where every
     /// engineer is").
     /// <para>
     /// <b>Three events state it and nothing else does</b> — <c>Location</c>, <c>FSDJump</c> and
@@ -100,7 +100,7 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
     public string? NextJumpStarClass { get; init; }
 
     /// <summary>
-    /// The class of the star the Commander is at now (list.md Phase 18, "Read a system name" —
+    /// The class of the star the Commander is at now (Phase 18, "Read a system name" —
     /// a variant's colour follows the star, and the variant is what sets an organic's price).
     /// <para>
     /// <b>It comes from the <c>FSDTarget</c> that preceded the jump, not from the arrival scan.</b>
@@ -126,7 +126,7 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
     public double? FuelMain { get; init; }
 
     /// <summary>
-    /// The Power controlling this system, or null where nobody does (list.md Phase 15).
+    /// The Power controlling this system, or null where nobody does (Phase 15).
     /// <para>
     /// <b>Absent means unoccupied.</b> Elite omits the field entirely rather than writing null —
     /// 1,932 of 4,891 measured jumps have no <c>ControllingPower</c> at all — so null here is a

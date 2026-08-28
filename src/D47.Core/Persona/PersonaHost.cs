@@ -49,7 +49,7 @@ public enum PersonaArrival
     /// <item>A core reselected inside <see cref="PersonaHost.GapAfter"/>.</item>
     /// <item>A core arriving because the Commander boarded the ship they bound it to. They said
     /// what should fly this ship; d47 doing it is keeping the deal rather than announcing
-    /// it (list.md Phase 35).</item>
+    /// it (Phase 35).</item>
     /// <item>The binding for the ship d47 finds them already in at startup.</item>
     /// </list>
     /// The switch is still real — the voice, the wake word and the transcript all change. What
@@ -61,8 +61,7 @@ public enum PersonaArrival
 /// <summary>
 /// Why the core changed. Not <em>who</em> asked — the caller trust question is the settings
 /// surface's and is answered by <see cref="Configuration.SettingsCaller"/> — but what kind of
-/// event this is, which is what decides whether the arriving core says anything (list.md
-/// Phase 35).
+/// event this is, which is what decides whether the arriving core says anything (Phase 35).
 /// </summary>
 public enum PersonaSwitch
 {
@@ -212,7 +211,7 @@ public sealed class PersonaHost
 
     /// <summary>
     /// What the Commander calls the ship's AI: their own name for it, or the core's own
-    /// (list.md Phase 11, "Ship AI Naming"). Asked rather than stored, so it follows the
+    /// (Phase 11, "Ship AI Naming"). Asked rather than stored, so it follows the
     /// persona when nothing has been overridden.
     /// </summary>
     public string ShipName =>
@@ -227,7 +226,7 @@ public sealed class PersonaHost
 
     /// <summary>
     /// Drops every core's transcript, so the next turn with any of them starts from nothing
-    /// (list.md Phase 44: <i>"The old transcript goes away, a new one is created."</i>).
+    /// (Phase 44: <i>"The old transcript goes away, a new one is created."</i>).
     /// <para>
     /// Every core's rather than the one aboard, because the conversation each of them holds was
     /// with the Commander who just logged out — a second core brought aboard by the new Commander

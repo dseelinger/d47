@@ -67,7 +67,7 @@ public sealed record CapabilityDescriptor
     /// can still be the fastest possible interrupt. "Stop" is the case: on its own it is a bare
     /// common verb, and the general vocabulary refuses those for the reason
     /// <see cref="Builtin.JournalCapability"/> documents — a bare word hijacks any sentence
-    /// containing it. The concrete future claimant is Macros (list.md Phase 10), whose names
+    /// containing it. The concrete future claimant is Macros (Phase 10), whose names
     /// the Commander authors and whose vocabulary the checklist says outright cannot be closed
     /// in advance. But while d47 is mid-sentence, "stop" has one plausible meaning, and it is
     /// the shortest thing a Commander can say. Context is what disambiguates it, so context is what

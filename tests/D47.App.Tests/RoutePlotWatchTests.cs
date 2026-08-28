@@ -6,7 +6,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The route half of "did the galaxy map macro work" (list.md Phase 10, "Galaxy Map").
+/// The route half of "did the galaxy map macro work" (Phase 10, "Galaxy Map").
 /// <para>
 /// Reported 2026-08-21: the Commander plotted a route by hand, asked for the same one by voice,
 /// and heard "course plotted" for a macro that had plotted nothing — the check read the file

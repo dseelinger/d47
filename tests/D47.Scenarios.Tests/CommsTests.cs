@@ -8,7 +8,7 @@ namespace D47.Scenarios.Tests;
 /// <summary>
 /// <b>In-game comms is not a path to the model, and this is the regression test for it.</b>
 /// <para>
-/// list.md asks for the corpus to be fired down each untrusted path and names four: journal,
+/// The phase asks for the corpus to be fired down each untrusted path and names four: journal,
 /// in-game comms, web search and third-party services. Read against the code, comms is not one of
 /// those paths:
 /// </para>

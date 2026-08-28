@@ -1,7 +1,7 @@
 namespace D47.Core.Interface;
 
 /// <summary>
-/// How many pixels the big headset panel is rendered at (list.md Phase 25, "The panel resizes
+/// How many pixels the big headset panel is rendered at (Phase 25, "The panel resizes
 /// and zooms").
 /// <para>
 /// <b>Three levers, and they are different things worth keeping distinct in the Commander's

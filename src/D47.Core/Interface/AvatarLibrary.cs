@@ -3,7 +3,7 @@ using D47.Core.Audio;
 namespace D47.Core.Interface;
 
 /// <summary>
-/// The Commander's own avatar imagery, per loop state (list.md Phase 11, "Ship's AI Avatar").
+/// The Commander's own avatar imagery, per loop state (Phase 11, "Ship's AI Avatar").
 /// <para>
 /// <b>The shipped set is not here.</b> It is drawn by the panel itself as vector shapes with
 /// Avalonia's own animation, for one reason: one widget tree renders to both the desktop window

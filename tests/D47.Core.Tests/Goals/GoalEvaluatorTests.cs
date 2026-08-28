@@ -6,7 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Goals;
 
 /// <summary>
-/// What every arc is worth right now (list.md Phase 34, "Progress is derived, never typed").
+/// What every arc is worth right now (Phase 34, "Progress is derived, never typed").
 /// <para>
 /// The precedence is the subject: live state answers now, the mine answers history, and neither is
 /// a real answer rather than a zero. That last one is item 2's sentence and it is the assertion

@@ -5,7 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Logbook;
 
 /// <summary>
-/// What span a log covers (list.md Phase 33, item 1: "a session — or a week").
+/// What span a log covers (Phase 33, item 1: "a session — or a week").
 /// </summary>
 public class LogRangeTests : IDisposable
 {

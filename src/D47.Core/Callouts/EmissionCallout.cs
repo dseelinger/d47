@@ -6,7 +6,7 @@ namespace D47.Core.Callouts;
 
 /// <summary>
 /// This system might be holding High Grade Emissions, and here is what would be in them
-/// (list.md Phase 40, asked for 2026-08-21).
+/// (Phase 40, asked for 2026-08-21).
 /// <para>
 /// <b>Said on arrival, because that is when it is worth anything.</b> A Commander who has already
 /// jumped out cannot act on it, and one who is about to has a decision in front of them. So it

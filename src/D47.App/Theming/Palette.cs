@@ -6,7 +6,7 @@ namespace D47.App.Theming;
 /// <summary>
 /// Colour by role, never by name. Every view asks for <c>D47.Accent</c> rather than for
 /// orange, which is what makes a fifth theme a table entry instead of a sweep through every
-/// screen (list.md Phase 4, "Themes").
+/// screen (Phase 4, "Themes").
 /// <para>
 /// This record is the only place in d47 where a colour literal is allowed to appear.
 /// </para>

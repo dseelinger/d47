@@ -1,6 +1,6 @@
 """Where does the current system's star class come from, and how often is it actually there?
 
-`list.md` Phase 18's *Read a system name* says the star class rides along, because a variant's
+Phase 18's *Read a system name* says the star class rides along, because a variant's
 colour follows the star and the variant is what sets the price. Two candidate sources, and the
 obvious one is not the one that works:
 

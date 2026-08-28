@@ -8,7 +8,7 @@ namespace D47.Core.Ships;
 public sealed record ShipBuildProblem(string Where, string Reason);
 
 /// <summary>
-/// The Commander's ship builds, in one file beside the executable (list.md Phase 26, "The fleet,
+/// The Commander's ship builds, in one file beside the executable (Phase 26, "The fleet,
 /// and the fleet you intend").
 /// <para>
 /// <b>Ships owns its own store, and nothing crosses into the checklist unasked.</b> The plan owns
@@ -18,8 +18,8 @@ public sealed record ShipBuildProblem(string Where, string Reason);
 /// trust boundary is in the right place.
 /// </para>
 /// <para>
-/// <b>Change is detected by comparing content rather than a last-write time</b>, which is Phase
-/// 21's correction: Windows updates the file-system clock about every 15.6 ms, so two writes
+/// <b>Change is detected by comparing content rather than a last-write time</b>, which is Phase 21
+/// 's correction: Windows updates the file-system clock about every 15.6 ms, so two writes
 /// inside one tick carry the same stamp and the second is invisible.
 /// </para>
 /// <para>
@@ -86,7 +86,7 @@ public sealed class ShipBuildStore(string path, ILogger<ShipBuildStore> logger)
 
     /// <summary>
     /// One Commander's build for a journal ship id, or null when nothing is planned for it. The
-    /// Commander is half the key (the list.md Phase 44 defect item): ship ids are per Commander,
+    /// Commander is half the key (the Phase 44 defect item): ship ids are per Commander,
     /// so two Commanders' ship 7s are two ships.
     /// </summary>
     public ShipBuild? ForShip(string? fid, int shipId) =>
@@ -369,7 +369,7 @@ public sealed class ShipBuildStore(string path, ILogger<ShipBuildStore> logger)
 
         /// <summary>
         /// The disagreement with the checklist the Commander has already said no to
-        /// (list.md Phase 38). See <see cref="ShipBuild.Settled"/>. Never removed or renamed — a
+        /// (Phase 38). See <see cref="ShipBuild.Settled"/>. Never removed or renamed — a
         /// property dropped from this file is a Commander being asked a settled question again.
         /// </summary>
         public string? Settled { get; init; }

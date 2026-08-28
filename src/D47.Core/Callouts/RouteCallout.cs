@@ -3,7 +3,7 @@ using D47.Core.Journal;
 namespace D47.Core.Callouts;
 
 /// <summary>
-/// Progress along a plotted route (list.md Phase 8, "Route Progress"): how many jumps are left,
+/// Progress along a plotted route (Phase 8, "Route Progress"): how many jumps are left,
 /// what the next system is, and what is hazardous ahead.
 /// <para>
 /// Read from the route file Elite writes locally, so no route-planning service is involved.
@@ -129,7 +129,7 @@ public sealed class RouteCallout : ICallout
 }
 
 /// <summary>
-/// Flavour during a longer-than-normal hyperspace jump (list.md Phase 8, "Remark on an
+/// Flavour during a longer-than-normal hyperspace jump (Phase 8, "Remark on an
 /// unusually long jump").
 /// <para>
 /// Fired once hyperspace has <em>actually been entered</em>, not on the jump being initiated.

@@ -137,11 +137,11 @@ public sealed class VrHost : IDisposable
 
     /// <summary>
     /// The headset panel's own prompts, so a spoken value can reach a chooser the Commander
-    /// opened in the headset rather than only one they opened in the window (list.md Phase 25).
+    /// opened in the headset rather than only one they opened in the window (Phase 25).
     /// </summary>
     public Panel.PanelPrompts Prompts => _panel.Prompts;
 
-    /// <summary>Where the headset panel is, so a spoken phrase can move it (list.md Phase 25).</summary>
+    /// <summary>Where the headset panel is, so a spoken phrase can move it (Phase 25).</summary>
     public D47.Core.Interface.PanelNavigator Nav => _panel.Nav;
 
     /// <summary>How far down the headset panel is, so a spoken scroll can move it (#34).</summary>
@@ -212,7 +212,7 @@ public sealed class VrHost : IDisposable
     /// As a group is the whole point. Elite's recenter turns the cockpit, so putting the
     /// panels back means turning them all by the same amount — a per-surface "put it back
     /// where it started" stacks them in front of the Commander, which is a different feature
-    /// and not one anybody asked for (list.md Phase 9).
+    /// and not one anybody asked for (Phase 9).
     /// </para>
     /// <para>
     /// Returns how many moved, so "there is nothing to re-anchor" is a real answer rather than
@@ -321,7 +321,7 @@ public sealed class VrHost : IDisposable
             // Before the serve, so a clock that moved is in the frame this tick draws rather than
             // in the next one. It marks the surface dirty only when Utilities is what is showing,
             // which is what keeps a ticking clock from re-rendering a transcript nobody moved
-            // (list.md Phase 24).
+            // (Phase 24).
             _panel.TickClocks();
             _panel.TickEngineers();
 
@@ -508,7 +508,7 @@ public sealed class VrHost : IDisposable
         // the claim there would drop the panel mid-move.
         var held = _runtime.Actions.TriggerHeld(found is not null || _carrying is not null);
 
-        // Back, on the grip (list.md Phase 25). One of the three routes that must agree, and the
+        // Back, on the grip (Phase 25). One of the three routes that must agree, and the
         // one a Commander with a controller in each hand reaches for without looking. Read after
         // the trigger because the action set's priority is claimed there, and only ever acted on
         // when it moves the panel somewhere — a grip squeezed at a root is a grip that meant

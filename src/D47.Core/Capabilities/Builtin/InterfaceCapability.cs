@@ -30,7 +30,7 @@ public static class InterfaceCapability
     public const string ReanchorHotkeyKey = "hotkeys.reanchor";
 
     /// <summary>
-    /// The gesture that binds the core aboard to the ship the Commander is in (list.md Phase 35).
+    /// The gesture that binds the core aboard to the ship the Commander is in (Phase 35).
     /// <para>
     /// Here with the other gestures rather than beside the persona rows it acts on, because this
     /// is where a Commander looks for a key to change — every hotkey in d47 is on one page, and a
@@ -41,7 +41,7 @@ public static class InterfaceCapability
     public const string BindShipCoreHotkeyKey = "hotkeys.bindShipCore";
 
     /// <summary>
-    /// Which content set the desktop window is showing (list.md Phase 51).
+    /// Which content set the desktop window is showing (Phase 51).
     /// <para>
     /// <c>ui.mode</c> beside <c>vr.mode</c> rather than instead of it, because mode is per
     /// surface: what you are reading is shared and how a surface draws it is not.
@@ -51,7 +51,7 @@ public static class InterfaceCapability
 
     public const string WindowModeHotkeyKey = "hotkeys.windowMode";
 
-    /// <summary>The flat mini panel, on or off (list.md Phase 48).</summary>
+    /// <summary>The flat mini panel, on or off (Phase 48).</summary>
     public const string OverlayKey = "ui.overlay.enabled";
 
     public const string OverlayScaleKey = "ui.overlay.scale";
@@ -244,7 +244,7 @@ public static class InterfaceCapability
                 },
             },
 
-            // The flat mini panel (list.md Phase 48). Here rather than under VR because there is
+            // The flat mini panel (Phase 48). Here rather than under VR because there is
             // no headset in it — a Commander goes looking where the theme, the zoom and the
             // hotkeys already are rather than under a card about a device they are not wearing.
             new SettingRow

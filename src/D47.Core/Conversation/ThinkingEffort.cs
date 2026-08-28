@@ -1,7 +1,7 @@
 namespace D47.Core.Conversation;
 
 /// <summary>
-/// Per-turn reasoning effort (list.md Phase 3, "Model Level and Thinking").
+/// Per-turn reasoning effort (Phase 3, "Model Level and Thinking").
 /// <para>
 /// There is deliberately no <c>Off</c> or <c>None</c> member. The checklist allows "low
 /// through max, but no 'off' unless the LLM is set to none" — and the LLM being set to none
@@ -9,7 +9,7 @@ namespace D47.Core.Conversation;
 /// how that is enforced rather than remembered.
 /// </para>
 /// <para>
-/// <b>Declaration order is the ladder</b> (list.md Phase 54). The clamp that a floor and a
+/// <b>Declaration order is the ladder</b> (Phase 54). The clamp that a floor and a
 /// ceiling apply compares these as they are written, so inserting a member in the wrong place
 /// silently reorders the rungs. Ordinal churn is otherwise safe and was checked before
 /// <c>Xhigh</c> went in: settings serialise the enum as camelCase strings, the spend ledger

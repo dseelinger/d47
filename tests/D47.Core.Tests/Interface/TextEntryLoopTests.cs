@@ -4,7 +4,7 @@ using Xunit;
 namespace D47.Core.Tests.Interface;
 
 /// <summary>
-/// The correction loop behind "say it, or type it" (list.md Phase 25).
+/// The correction loop behind "say it, or type it" (Phase 25).
 /// <para>
 /// <b>The keyboard returns by itself on the three failures d47 can detect</b> — nothing heard, a
 /// transcription below confidence, and a value that fails to resolve — and that list is exactly

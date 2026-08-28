@@ -13,7 +13,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// Two implementations, one look (list.md Phase 12).
+/// Two implementations, one look (Phase 12).
 /// <para>
 /// A row that opens a short list uses a combo box and a row that opens a long one uses a button
 /// that opens the picker, and the Commander is not supposed to be able to tell. They could:

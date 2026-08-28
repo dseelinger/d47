@@ -68,7 +68,7 @@ public sealed record Engineer
     public string? Body { get; init; }
 
     /// <summary>
-    /// Where their system is, in light years on Frontier's axes (list.md Phase 28, "Where every
+    /// Where their system is, in light years on Frontier's axes (Phase 28, "Where every
     /// engineer is").
     /// <para>
     /// <b>Shipped rather than looked up</b>, which is the whole of why the Engineers tab works in
@@ -139,7 +139,7 @@ public sealed record Engineer
 }
 
 /// <summary>
-/// Every engineer, where they are, and what they grade (list.md Phase 14, "Engineers").
+/// Every engineer, where they are, and what they grade (Phase 14, "Engineers").
 /// <para>
 /// <b>Derived, and read on first use</b>, like <see cref="EliteSpecifications"/> and for the same
 /// reasons. Identity comes from EDCD/FDevIDs, which carries the id the journal writes and the two

@@ -6,7 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>
-/// The markets the Commander has stood in themselves (list.md Phase 36) — read from the file the
+/// The markets the Commander has stood in themselves (Phase 36) — read from the file the
 /// game writes, kept in one beside the executable, and preferred over a report when they are
 /// newer.
 /// </summary>

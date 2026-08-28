@@ -5,7 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>
-/// A stored voice moves with the slot that owns it, not with the ship (list.md Phase 57).
+/// A stored voice moves with the slot that owns it, not with the ship (Phase 57).
 /// <para>
 /// <see cref="VoicesAreRememberedPerProviderTests"/> is the Phase 19 behaviour and is unchanged
 /// where every slot follows one provider. What is new is that they need not: a carrier left on

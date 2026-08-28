@@ -10,7 +10,7 @@ namespace D47.Core.Engineers;
 
 /// <summary>
 /// The Engineers tab's one seam: it reads both plan stores and the Commander's journal, ranks the
-/// ways in, and offers a chosen route to the checklist (list.md Phase 28).
+/// ways in, and offers a chosen route to the checklist (Phase 28).
 /// <para>
 /// <b>A service rather than a store, because this owns nothing.</b> Every figure is recomputed
 /// from the two build stores and the live game state, all three of which move underneath it —
@@ -92,7 +92,7 @@ public sealed class EngineerPlanService(
     /// </para>
     /// </summary>
     /// <param name="goal">
-    /// The arc asking, where one is (list.md Phase 34). The engineers arc delegates its "what do I
+    /// The arc asking, where one is (Phase 34). The engineers arc delegates its "what do I
     /// do about this today" here rather than growing a worse solver of its own, and the chain is
     /// stamped with the arc so the lines say where they came from.
     /// </param>

@@ -4,7 +4,7 @@ using Xunit;
 namespace D47.Llm.Tests;
 
 /// <summary>
-/// The streaming decoder, driven against recorded responses (list.md Phase 2, Phase 14).
+/// The streaming decoder, driven against recorded responses (Phase 2, Phase 14).
 /// <para>
 /// Everything here is d47's half of the exchange. The provider seam's contract is that a turn
 /// arrives as a sequence of <see cref="LlmStreamEvent"/> and that <b>nothing ever leaves it as an

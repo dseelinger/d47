@@ -49,8 +49,8 @@ public sealed record LogSource(string Event, DateTimeOffset At)
 }
 
 /// <summary>
-/// One thing d47 computed from the journals, numbered so a sentence can point at it (list.md
-/// Phase 33, "Every sentence traces to an event").
+/// One thing d47 computed from the journals, numbered so a sentence can point at it (Phase 33,
+/// "Every sentence traces to an event").
 /// <para>
 /// <b>This is the whole defence and it is worth being plain about the mechanism.</b> A model handed
 /// a journal will write a better evening than the one that happened — it will promote a routine

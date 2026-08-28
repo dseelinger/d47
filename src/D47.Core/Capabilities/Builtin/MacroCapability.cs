@@ -5,7 +5,7 @@ using D47.Core.Input;
 namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
-/// Named multi-step sequences the Commander authored (list.md Phase 10, "Macros").
+/// Named multi-step sequences the Commander authored (Phase 10, "Macros").
 /// <para>
 /// <b>Invocation is by voice; authoring is not.</b> That asymmetry is the checklist's, and it
 /// is the one stated exception to "every setting can be set by voice" — composing a new action

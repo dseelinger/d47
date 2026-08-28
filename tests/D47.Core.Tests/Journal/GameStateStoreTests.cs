@@ -93,7 +93,7 @@ public class GameStateStoreTests
     }
 
     /// <summary>
-    /// One switch signal (list.md Phase 44). Nobody to somebody is an adoption; one to another is
+    /// One switch signal (Phase 44). Nobody to somebody is an adoption; one to another is
     /// a switch; the same Commander again — the LoadGame that follows every Commander event, or
     /// a relog — is nothing.
     /// </summary>

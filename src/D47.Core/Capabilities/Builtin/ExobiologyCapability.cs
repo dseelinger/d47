@@ -6,7 +6,7 @@ using D47.Core.Knowledge;
 namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
-/// Finding exobiology worth landing for (list.md Phase 18, "Find the exobiology").
+/// Finding exobiology worth landing for (Phase 18, "Find the exobiology").
 /// <para>
 /// <b>Two halves that answer different questions from different sources, and the difference is the
 /// design.</b> The plotter tours biology somebody has <em>already found</em> and can therefore name
@@ -29,7 +29,7 @@ public static class ExobiologyCapability
     /// <param name="routes">
     /// Null where nothing composed one — under the designer, and in a test that is not about it. The
     /// journal half still answers, which is what a capability being partly off looks like rather
-    /// than one being absent (list.md Phase 3).
+    /// than one being absent (Phase 3).
     /// </param>
     /// <param name="status">
     /// The live <c>Status.json</c>, which is the only thing that knows where the Commander is

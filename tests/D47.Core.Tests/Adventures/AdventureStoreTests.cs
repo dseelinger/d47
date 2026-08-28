@@ -6,7 +6,7 @@ using static D47.Core.Tests.Adventures.AdventureFixtures;
 namespace D47.Core.Tests.Adventures;
 
 /// <summary>
-/// The adventures on disk (list.md Phase 47). Hand-editable, per Commander, and a record that
+/// The adventures on disk (Phase 47). Hand-editable, per Commander, and a record that
 /// cannot be read back is reported by name rather than dropped.
 /// </summary>
 public class AdventureStoreTests : IDisposable

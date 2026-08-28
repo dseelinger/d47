@@ -23,7 +23,7 @@ public sealed record ReadbackPlan
 }
 
 /// <summary>
-/// How often SteamVR's own account of an overlay reaches the log (list.md Phase 9).
+/// How often SteamVR's own account of an overlay reaches the log (Phase 9).
 /// <para>
 /// The read-back exists because going blind is what made the Phase 12 fault cost a day: a quad
 /// can be placed correctly, reported visible, and still be invisible, and three theories
@@ -43,7 +43,7 @@ public sealed record ReadbackPlan
 /// otherwise on a slow heartbeat that proves the session is still being served. Lifted out of
 /// <c>SteamVrRuntime.Serve</c>, where it was five lines threaded between an overlay submit and a
 /// compositor call and could not be reached without a headset — while being pure arithmetic over
-/// a string, two timestamps and two constants (list.md Phase 19, "Give the composition root a
+/// a string, two timestamps and two constants (Phase 19, "Give the composition root a
 /// test harness").
 /// </para>
 /// </summary>

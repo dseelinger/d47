@@ -1,7 +1,7 @@
 namespace D47.Core.Memory;
 
 /// <summary>
-/// Everything d47 remembers about the Commander, read and written as one thing (list.md Phase 31).
+/// Everything d47 remembers about the Commander, read and written as one thing (Phase 31).
 /// <para>
 /// The store is a file and this is the seam every caller uses, which is what keeps the three write
 /// routes from disagreeing: <b>the tier is decided here, from the route, and is never a parameter</b>

@@ -2,7 +2,7 @@ namespace D47.Core.Interface;
 
 /// <summary>
 /// The zoom levels the panel steps through, and the arithmetic for moving between them
-/// (list.md Phase 9, "Zoom the desktop window").
+/// (Phase 9, "Zoom the desktop window").
 /// <para>
 /// The ladder is Chrome's, deliberately. The whole argument for this feature is that every
 /// browser has already taught the Commander the four gestures, and a control that answers a

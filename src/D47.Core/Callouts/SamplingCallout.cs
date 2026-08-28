@@ -3,7 +3,7 @@ using D47.Core.Journal;
 namespace D47.Core.Callouts;
 
 /// <summary>
-/// Organic sampling, spoken on the surface (list.md Phase 18, "Exobiology sampling").
+/// Organic sampling, spoken on the surface (Phase 18, "Exobiology sampling").
 /// <para>
 /// <b>The distance is the whole feature, because it is the number nobody can eyeball.</b> A
 /// Commander in an SRV can see the genus and can count to three; what they cannot do is judge four

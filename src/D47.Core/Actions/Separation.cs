@@ -50,7 +50,7 @@ public readonly record struct SeparationLimits(int MaxBoosts, TimeSpan Ceiling)
 }
 
 /// <summary>
-/// <em>Separate and engage</em>, and <em>separate and supercruise</em> (list.md Phase 52, item 3).
+/// <em>Separate and engage</em>, and <em>separate and supercruise</em> (Phase 52, item 3).
 /// Full throttle, boost until the mass lock breaks, then the finishing key.
 /// <para>
 /// <b>This waits on the game's own state rather than on a clock</b>, which is the whole reason it

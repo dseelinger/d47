@@ -7,7 +7,7 @@ namespace D47.Core.Tests.Hotas;
 
 /// <summary>
 /// What a stored switch is allowed to say, and how a reading is turned into a position
-/// (list.md Phase 21).
+/// (Phase 21).
 /// </summary>
 public class SwitchMappingTests
 {
@@ -141,7 +141,7 @@ public class SwitchMappingTests
     }
 
     /// <summary>
-    /// A position may name a page of d47's own panel instead of an action (list.md Phase 46).
+    /// A position may name a page of d47's own panel instead of an action (Phase 46).
     /// Not one of the ten actions Elite reports — not an action at all — and accepted, because
     /// <em>are you already there</em> is answered exactly for d47's own panel.
     /// </summary>

@@ -25,7 +25,7 @@ public sealed record ButtonCaptureResult(ButtonCaptureStage Stage, HotasButton? 
 }
 
 /// <summary>
-/// <em>Press the button you want</em> (list.md Phase 53).
+/// <em>Press the button you want</em> (Phase 53).
 /// <para>
 /// <b>The opposite case to <see cref="SwitchCapture"/>, and that is why it is a second walk
 /// rather than a flag on the first.</b> A switch needs a <em>position</em> to mean anything, so

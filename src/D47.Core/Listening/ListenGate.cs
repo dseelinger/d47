@@ -13,7 +13,7 @@ public enum ListenMode
 
     /// <summary>
     /// Hands free. The gate opens when somebody starts talking and closes when they stop
-    /// (list.md Phase 13). The key still works and still wins — a policy that decides for
+    /// (Phase 13). The key still works and still wins — a policy that decides for
     /// itself is not a reason to take away the one that does not.
     /// </summary>
     VoiceActivity,
@@ -27,7 +27,7 @@ public enum ListenMode
 }
 
 /// <summary>
-/// What the microphone is doing, for a Commander looking at the panel (list.md Phase 13,
+/// What the microphone is doing, for a Commander looking at the panel (Phase 13,
 /// "Show that the microphone is open").
 /// <para>
 /// A property of the gate policy rather than of any one capability, which is what the checklist
@@ -111,7 +111,7 @@ public enum UtteranceEnd
 }
 
 /// <summary>
-/// Push-to-talk as <b>one gate policy over a continuous audio stream</b> (list.md Phase 6).
+/// Push-to-talk as <b>one gate policy over a continuous audio stream</b> (Phase 6).
 /// <para>
 /// That phrasing in the checklist is the architecture, not a description. The microphone runs
 /// continuously into a ring buffer; the gate decides which part of that stream is speech

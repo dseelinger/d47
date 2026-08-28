@@ -7,7 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Habits;
 
 /// <summary>
-/// The batch job over journals that already exist (list.md Phase 32, "Mine the Commander's own
+/// The batch job over journals that already exist (Phase 32, "Mine the Commander's own
 /// journals").
 /// <para>
 /// The journals here are written by hand rather than replayed from a corpus, and that is
@@ -103,7 +103,7 @@ public class HabitMinerTests : IDisposable
     }
 
     /// <summary>
-    /// The detector that ships having found nothing, and the reason it ships (list.md Phase 32).
+    /// The detector that ships having found nothing, and the reason it ships (Phase 32).
     /// A Commander who lands only on light worlds is told that, not told there is nothing to say.
     /// </summary>
     [Fact]

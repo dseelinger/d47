@@ -71,7 +71,7 @@ public sealed record PlanCosting
 }
 
 /// <summary>
-/// A build costed into the things a Commander actually has to <em>do</em> (list.md Phase 17, "An
+/// A build costed into the things a Commander actually has to <em>do</em> (Phase 17, "An
 /// engineering plan writes the checklist").
 /// <para>
 /// <b>A total is exact, and it is a multiplication d47 is entitled to make.</b> An application
@@ -181,7 +181,7 @@ public static class EngineeringPlan
         // the slot for the slot-shaped intents, so this falls out of the key rather than needing
         // a rule of its own - and a later request about a slot already spoken for wins, because
         // it is the Commander changing their mind rather than a second opinion to keep beside the
-        // first (list.md Phase 26).
+        // first (Phase 26).
         return [.. items.GroupBy(item => item.Key, StringComparer.OrdinalIgnoreCase).Select(group => group.Last())];
     }
 

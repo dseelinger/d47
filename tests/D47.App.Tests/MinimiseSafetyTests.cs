@@ -9,7 +9,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// "Keep working when the main window is minimized" (list.md Phase 9). Structural rather than
+/// "Keep working when the main window is minimized" (Phase 9). Structural rather than
 /// defended — but structural claims are exactly the ones worth an assertion, because nothing
 /// about the code says out loud that it does not depend on a window state.
 /// </summary>

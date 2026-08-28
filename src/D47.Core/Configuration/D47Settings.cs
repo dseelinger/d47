@@ -4,7 +4,7 @@ namespace D47.Core.Configuration;
 
 /// <summary>
 /// The settings store's whole shape. Anything not declared here is an unknown key and is
-/// rejected on load (list.md Phase 1).
+/// rejected on load (Phase 1).
 /// </summary>
 public sealed record D47Settings
 {
@@ -24,7 +24,7 @@ public sealed record D47Settings
     public SpeechSettings Speech { get; init; } = new();
 
     /// <summary>
-    /// Per-category level, mute and ducking (list.md Phase 12, "#96 Ambient audio mixer").
+    /// Per-category level, mute and ducking (Phase 12, "#96 Ambient audio mixer").
     /// <para>
     /// The arbiter's own record rather than a settings-shaped copy of it. Two records that have
     /// to agree about five categories and three numbers each is two records that eventually
@@ -52,18 +52,18 @@ public sealed record D47Settings
     public KnowledgeSettings Knowledge { get; init; } = new();
 
     /// <summary>
-    /// What d47 keeps about the Commander, and for how long (list.md Phase 31).
+    /// What d47 keeps about the Commander, and for how long (Phase 31).
     /// </summary>
     public MemorySettings Memory { get; init; } = new();
 
     /// <summary>
-    /// How a Commander's log is written when one is asked for (list.md Phase 33).
+    /// How a Commander's log is written when one is asked for (Phase 33).
     /// </summary>
     public LogbookSettings Logbook { get; init; } = new();
 
     /// <summary>
     /// What each Commander has set of the rows that are theirs rather than the installation's
-    /// (list.md Phase 44). One entry per Frontier id, <b>keyed inside the document</b>: the id
+    /// (Phase 44). One entry per Frontier id, <b>keyed inside the document</b>: the id
     /// comes out of the journal, and turning untrusted input into a filename buys a
     /// path-traversal surface for an organisational convenience — the rule every per-Commander
     /// store already follows.
@@ -78,7 +78,7 @@ public sealed record D47Settings
 }
 
 /// <summary>
-/// One Commander's overlay over the installation's settings (list.md Phase 44).
+/// One Commander's overlay over the installation's settings (Phase 44).
 /// <para>
 /// <b>Null is unset and empty is deliberately blank</b>, and the two are kept apart on purpose.
 /// A Commander who has never touched About Me reads the installation's; one who cleared it reads
@@ -111,7 +111,7 @@ public sealed record CommanderSettings
 }
 
 /// <summary>
-/// The Commander's log (list.md Phase 33). Three choices and no switch, because there is nothing
+/// The Commander's log (Phase 33). Three choices and no switch, because there is nothing
 /// to switch off: nothing here happens until somebody asks for it, which is item 4's requirement
 /// and is enforced by there being no caller but a button and a phrase.
 /// <para>
@@ -147,7 +147,7 @@ public sealed record LogbookSettings
 }
 
 /// <summary>
-/// The memory store's two settings (list.md Phase 31, "It forgets, and can be read and emptied").
+/// The memory store's two settings (Phase 31, "It forgets, and can be read and emptied").
 /// <para>
 /// Its own block rather than a pair of flags on <see cref="LlmSettings"/>, because the store is not
 /// the model's: the panel writes to it, the journal observer writes to it, and it is still there and
@@ -179,7 +179,7 @@ public sealed record MemorySettings
 }
 
 /// <summary>
-/// Looking things up outside this machine (list.md Phase 14).
+/// Looking things up outside this machine (Phase 14).
 /// <para>
 /// Its own block rather than a flag on <see cref="LlmSettings"/>, because these destinations are
 /// not the model's. A Commander can run a local model and still want the galaxy search, or run a
@@ -194,19 +194,19 @@ public sealed record KnowledgeSettings
     /// this is the first capability whose answers come from a third party, and a fresh install
     /// should not start talking to one before the Commander has seen it in the disclosure and
     /// said yes. Off is a capability that is off, not an error — the tool says so and the turn
-    /// carries on (list.md Phase 3).
+    /// carries on (Phase 3).
     /// </summary>
     public bool GalaxySearch { get; init; }
 
     /// <summary>
     /// Whether a generated adventure may fetch the catalogue of notable places from edastro.com
-    /// (list.md Phase 47). Off by default, like every third-party destination.
+    /// (Phase 47). Off by default, like every third-party destination.
     /// </summary>
     public bool NotablePlaces { get; init; }
 }
 
 /// <summary>
-/// Which companion character is aboard (list.md Phase 11).
+/// Which companion character is aboard (Phase 11).
 /// <para>
 /// Its own block rather than a field on <see cref="LlmSettings"/>, because the persona is not
 /// a property of the model. It picks the prompt block, it picks the voice, and it picks the
@@ -244,7 +244,7 @@ public sealed record PersonaSettings
     public bool KeepShipName { get; init; } = true;
 
     /// <summary>
-    /// The voice paired to each core, keyed by persona id (list.md Phase 11, #33). Written by
+    /// The voice paired to each core, keyed by persona id (Phase 11, #33). Written by
     /// the background pairing at first startup and by the Commander choosing one by hand;
     /// nothing distinguishes the two, on purpose, because a pairing the Commander has
     /// overridden should never be quietly re-derived.
@@ -319,7 +319,7 @@ public sealed record PersonaSettings
 }
 
 /// <summary>
-/// Acting on the game (list.md Phase 10).
+/// Acting on the game (Phase 10).
 /// <para>
 /// Two switches with deliberately different shapes. <see cref="Keyboard"/> is one decision
 /// covering every spoken command, because a Commander who wants voice control of their ship
@@ -358,7 +358,7 @@ public sealed record ActionSettings
     public bool Chat { get; init; }
 
     /// <summary>
-    /// Whether a mapped HOTAS switch may operate the ship (list.md Phase 21). Off by default,
+    /// Whether a mapped HOTAS switch may operate the ship (Phase 21). Off by default,
     /// on its own row, and protected — a hostile in-game message must not be able to give a
     /// switch the keyboard.
     /// <para>
@@ -371,7 +371,7 @@ public sealed record ActionSettings
     public bool Switches { get; init; }
 
     /// <summary>
-    /// Whether "take us out" may walk the left panel to the launch button (list.md Phase 52).
+    /// Whether "take us out" may walk the left panel to the launch button (Phase 52).
     /// <para>
     /// Its own row, and the one here with the weakest guarantee: Elite has no launch binding, so
     /// this is a menu walk rather than a key press and it depends on the panel starting where d47
@@ -383,7 +383,7 @@ public sealed record ActionSettings
 
     /// <summary>
     /// Whether "separate and engage" may go to full throttle and boost out of a mass lock
-    /// (list.md Phase 52). Gated by <see cref="Keyboard"/>.
+    /// (Phase 52). Gated by <see cref="Keyboard"/>.
     /// </summary>
     public bool SeparateAndEngage { get; init; } = true;
 
@@ -396,7 +396,7 @@ public sealed record ActionSettings
 }
 
 /// <summary>
-/// The headset (list.md Phase 9).
+/// The headset (Phase 9).
 /// <para>
 /// There is no "is a headset present" setting and there never will be: that is a state d47
 /// discovers and reports, not a thing the Commander configures. This is only whether they want
@@ -488,7 +488,7 @@ public sealed record VrSettings
 }
 
 /// <summary>
-/// The microphone and the key that opens it (list.md Phase 6).
+/// The microphone and the key that opens it (Phase 6).
 /// <para>
 /// Push-to-talk is one gate policy over a continuous stream, so "toggle instead of hold" is a
 /// value here rather than a second mechanism — and continuous listening and a wake word arrive
@@ -532,7 +532,7 @@ public sealed record ListeningSettings
     public string? PushToTalkKey { get; init; } = "RightShift";
 
     /// <summary>
-    /// A stick button to talk with, as <c>NonRoamableId#index</c> (list.md Phase 53).
+    /// A stick button to talk with, as <c>NonRoamableId#index</c> (Phase 53).
     /// <para>
     /// <b>A new key beside <see cref="PushToTalkKey"/> rather than that key learning a second
     /// meaning</b>, because <c>settings.json</c> is append-only and because a Commander who bound
@@ -548,7 +548,7 @@ public sealed record ListeningSettings
     public string? PushToTalkButton { get; init; }
 
     /// <summary>
-    /// "hold", "toggle", "continuous" or "wake" — the gate policy (list.md Phase 6 and 13).
+    /// "hold", "toggle", "continuous" or "wake" — the gate policy (Phase 6 and 13).
     /// <para>
     /// Protected, and this is the row where that matters most. The last two open the microphone
     /// and keep it open; a model that can put d47 into one of them can start continuous capture
@@ -590,7 +590,7 @@ public sealed record ListeningSettings
     public bool UseGpu { get; init; }
 
     /// <summary>
-    /// Subtract what d47 is playing from what the microphone hears (list.md Phase 13).
+    /// Subtract what d47 is playing from what the microphone hears (Phase 13).
     /// <para>
     /// On, and on in every mode rather than only the hands-free ones. It is what makes talking
     /// over d47 work at all on speakers, and push-to-talk benefits from that as much as
@@ -635,7 +635,7 @@ public sealed record ListeningSettings
 }
 
 /// <summary>
-/// What d47 says without being asked (list.md Phase 8).
+/// What d47 says without being asked (Phase 8).
 /// <para>
 /// One toggle per callout rather than one for all of them: a Commander who finds route progress
 /// chatty should not have to switch off danger warnings to stop it. The master switch exists
@@ -664,7 +664,7 @@ public sealed record CalloutSettings
 
     /// <summary>
     /// Systems that might be running High Grade Emissions, and what would be in them
-    /// (list.md Phase 40).
+    /// (Phase 40).
     /// <para>
     /// <b>On.</b> It speaks once per system, only above a million population, only about materials
     /// there is still room for — so a Commander who has finished gathering stops hearing it without
@@ -674,7 +674,7 @@ public sealed record CalloutSettings
     public bool Emissions { get; init; } = true;
 
     /// <summary>
-    /// A reminder to buy limpets on docking somewhere that sells them (list.md Phase 41).
+    /// A reminder to buy limpets on docking somewhere that sells them (Phase 41).
     /// <para>
     /// <b>Off, unlike most callouts.</b> It is for Commanders who fly limpets, and one who never
     /// does should not have to switch it off to stop hearing about it. Phase 32's habit callout is
@@ -697,37 +697,37 @@ public sealed record CalloutSettings
     public int LimpetPercent { get; init; } = 5;
 
     /// <summary>
-    /// An attack an NPC has announced but not yet made (list.md Phase 15). On, because it is the
+    /// An attack an NPC has announced but not yet made (Phase 15). On, because it is the
     /// only warning here that arrives while there is still something to do about it.
     /// </summary>
     public bool AnnouncedAttack { get; init; } = true;
 
-    /// <summary>Flying in a rival Power's space (list.md Phase 15).</summary>
+    /// <summary>Flying in a rival Power's space (Phase 15).</summary>
     public bool RivalTerritory { get; init; } = true;
 
     /// <summary>
     /// A checklist item the journal has just changed its mind about, and the last unit a plan
-    /// needed (list.md Phase 17). On, because a computed tick going backwards is something the
+    /// needed (Phase 17). On, because a computed tick going backwards is something the
     /// Commander wants to know rather than a glitch to hide.
     /// </summary>
     public bool Checklist { get; init; } = true;
 
     /// <summary>
-    /// What a prospector limpet found, spoken in the ring (list.md Phase 18). On, because a
+    /// What a prospector limpet found, spoken in the ring (Phase 18). On, because a
     /// Commander mining is looking at the rock rather than at a panel — but separable from the core
     /// alert below, since this one arrives every 48 seconds at the median and that one is rare.
     /// </summary>
     public bool Prospector { get; init; } = true;
 
     /// <summary>
-    /// A core asteroid (list.md Phase 18). Its own row rather than sharing the prospector's,
+    /// A core asteroid (Phase 18). Its own row rather than sharing the prospector's,
     /// because it is 3 in 1,633 prospects and it is the announcement somebody turning the running
     /// commentary off still wants.
     /// </summary>
     public bool CoreAsteroid { get; init; } = true;
 
     /// <summary>
-    /// Organic sampling progress on the surface (list.md Phase 18). On, because the distance is the
+    /// Organic sampling progress on the surface (Phase 18). On, because the distance is the
     /// number nobody can eyeball and the reason a sample gets wasted.
     /// </summary>
     public bool Sampling { get; init; } = true;
@@ -749,7 +749,7 @@ public sealed record CalloutSettings
 
     /// <summary>
     /// In-character remarks about where the Commander is, said because nothing has happened
-    /// rather than because something has (list.md Phase 11, "Ambient Voice").
+    /// rather than because something has (Phase 11, "Ambient Voice").
     /// <para>
     /// On, because a companion that only ever answers questions is a search box with a voice.
     /// The interval is what makes that tolerable.
@@ -778,7 +778,7 @@ public sealed record CalloutSettings
     public int? AmbientMinutes { get; init; }
 
     /// <summary>
-    /// What to say on arriving in a system d47 knows something about (list.md Phase 23).
+    /// What to say on arriving in a system d47 knows something about (Phase 23).
     /// <para>
     /// Three states rather than a switch and a switch, because a lookup with the remark off is
     /// detail about something that was never announced.
@@ -793,8 +793,8 @@ public sealed record CalloutSettings
     public Callouts.LoreRemarks Lore { get; init; } = Callouts.LoreRemarks.Lookup;
 
     /// <summary>
-    /// One line at the start of a session, picking up where the Commander left off (list.md Phase
-    /// 31, "Picking up where you left off").
+    /// One line at the start of a session, picking up where the Commander left off (Phase 31,
+    /// "Picking up where you left off").
     /// <para>
     /// On, and it costs nothing to leave on: it is silent unless there is a store to read, and it
     /// is the item the other three exist to make possible.
@@ -804,7 +804,7 @@ public sealed record CalloutSettings
 
     /// <summary>
     /// Things D47 has noticed the Commander keeps doing, said when the circumstance arrives
-    /// (list.md Phase 32, "Callouts that are yours rather than everyone's").
+    /// (Phase 32, "Callouts that are yours rather than everyone's").
     /// <para>
     /// <b>Off, and it is the only callout in this record that is.</b> Every other one fires because
     /// the game said something; this one fires because of a claim d47 made about the Commander out
@@ -815,7 +815,7 @@ public sealed record CalloutSettings
     /// </summary>
     public bool Habits { get; init; }
 
-    /// <summary>A beat of the Commander's adventure, said when it is reached (list.md Phase 47).</summary>
+    /// <summary>A beat of the Commander's adventure, said when it is reached (Phase 47).</summary>
     public bool Adventure { get; init; } = true;
 }
 
@@ -823,7 +823,7 @@ public sealed record LlmSettings
 {
     /// <summary>
     /// Which provider to use. "none" is a real, supported choice — every input path stays
-    /// answerable through the model-free keyword router (list.md Phase 3).
+    /// answerable through the model-free keyword router (Phase 3).
     /// </summary>
     public string Provider { get; init; } = "anthropic";
 
@@ -835,7 +835,7 @@ public sealed record LlmSettings
     /// speaking the same protocol — a gateway or a proxy — which is why changing it clears
     /// <see cref="Model"/>: model ids are a property of the endpoint's namespace, and a name
     /// carried across from another endpoint is a stale selection that fails at the first turn
-    /// (list.md Phase 4).
+    /// (Phase 4).
     /// </summary>
     public string? Endpoint { get; init; }
 
@@ -847,13 +847,13 @@ public sealed record LlmSettings
 
     /// <summary>
     /// The Commander's story, in their own words, kept between sessions. Treated as true of the
-    /// world the Commander and the ship's AI share (list.md Phase 43).
+    /// world the Commander and the ship's AI share (Phase 43).
     /// </summary>
     public string? AboutMe { get; init; }
 
     /// <summary>
     /// The Commander's character sheet — name, origin, age, accent: the few lines that are true
-    /// of them in any sentence (list.md Phase 43). A second field rather than the first paragraph
+    /// of them in any sentence (Phase 43). A second field rather than the first paragraph
     /// of <see cref="AboutMe"/>, because the two want opposite handling off the turn path: the
     /// sheet goes with every line said in character and the story only sometimes, and a split
     /// inferred from paragraph breaks is one nobody can see in the settings page.
@@ -879,8 +879,8 @@ public sealed record LlmSettings
 
     /// <summary>
     /// Which model answers the calls the Commander is not waiting on — ambient remarks, the
-    /// opening brief, the gap reaction, the two lore lookups, and casting a voice (list.md
-    /// Phase 54). Null means they take <see cref="Model"/>, exactly as they always have.
+    /// opening brief, the gap reaction, the two lore lookups, and casting a voice (Phase 54).
+    /// Null means they take <see cref="Model"/>, exactly as they always have.
     /// <para>
     /// <b>A call class, not a floor the router picks within.</b> The two dials do not behave
     /// alike: effort is a top-level request field outside the cached prefix, so routing it per
@@ -906,7 +906,7 @@ public sealed record LlmSettings
 
     /// <summary>
     /// The least effort any conversation turn may run at, or null for the router's own answer
-    /// (list.md Phase 54). The Commander saying a lookup still deserves more than the cheapest
+    /// (Phase 54). The Commander saying a lookup still deserves more than the cheapest
     /// setting.
     /// <para>
     /// Conversation turns only. The background calls above are call-site decisions with stated
@@ -919,7 +919,7 @@ public sealed record LlmSettings
 
     /// <summary>
     /// The most effort any conversation turn may run at, or null for the router's own answer
-    /// (list.md Phase 54). A cost dial, and a guard against the router's own false positives:
+    /// (Phase 54). A cost dial, and a guard against the router's own false positives:
     /// <c>EffortRouter</c> matches substrings with no word boundaries, so "what do you think
     /// about" hits "think about" and routes to Max.
     /// </summary>
@@ -935,13 +935,13 @@ public sealed record SpeechSettings
     /// <summary>
     /// Which voice provider, or "none". "none" is a real, supported choice: d47 stays fully
     /// usable in text with cues still audible, which is what keeps local-only operation
-    /// reachable rather than theoretical (list.md Phase 4).
+    /// reachable rather than theoretical (Phase 4).
     /// </summary>
     public string Provider { get; init; } = "edge";
 
     /// <summary>
     /// Which provider speaks for each of the other five slots, keyed by
-    /// <see cref="Audio.VoiceGroupInfo.Id"/> (list.md Phase 57). <see cref="Provider"/> above is
+    /// <see cref="Audio.VoiceGroupInfo.Id"/> (Phase 57). <see cref="Provider"/> above is
     /// the sixth and is the one aboard the ship; it keeps its meaning exactly.
     /// <para>
     /// <b>Null means a file written before Phase 57</b>, and it loads as every slot following
@@ -1001,7 +1001,7 @@ public sealed record SpeechSettings
 
     /// <summary>
     /// 1.0 is the voice's natural pace. Normalised here and converted at the provider seam,
-    /// because providers disagree about both the units and the range (list.md Phase 11).
+    /// because providers disagree about both the units and the range (Phase 11).
     /// <para>
     /// The rate you like in general. <see cref="ProviderRates"/> is "except on this one".
     /// </para>
@@ -1010,7 +1010,7 @@ public sealed record SpeechSettings
 
     /// <summary>
     /// Speaking rate per provider, keyed by provider id, overriding <see cref="Rate"/> where
-    /// present (list.md Phase 11: "Differences between providers, such as speed, is maintained
+    /// present (Phase 11: "Differences between providers, such as speed, is maintained
     /// on a per-provider basis").
     /// <para>
     /// Normalising at the seam gets the <em>units</em> agreeing; it does not make 1.15 sound
@@ -1025,7 +1025,7 @@ public sealed record SpeechSettings
 
     /// <summary>
     /// The voices chosen while each <em>other</em> provider was selected, keyed by provider id
-    /// (list.md Phase 19, "Remember which voice you chose for each provider").
+    /// (Phase 19, "Remember which voice you chose for each provider").
     /// <para>
     /// <see cref="ProviderRates"/> is the shape this copies and the reason it could not simply
     /// be copied: a rate is one number and a voice choice is the ship's, two named roles, one
@@ -1042,7 +1042,7 @@ public sealed record SpeechSettings
         new Dictionary<string, VoiceChoices>(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
-    /// What a thousand characters costs, in US dollars, per provider (list.md Phase 19, "What
+    /// What a thousand characters costs, in US dollars, per provider (Phase 19, "What
     /// the voices cost, beside what the model costs").
     /// <para>
     /// Absent means the provider's published list price stands. Present means the Commander has
@@ -1075,7 +1075,7 @@ public sealed record SpeechSettings
         new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
-    /// The voice a fleet carrier answers in, or null for the ship AI's (list.md Phase 11,
+    /// The voice a fleet carrier answers in, or null for the ship AI's (Phase 11,
     /// "Carrier Captain").
     /// </summary>
     public string? CarrierCaptainVoice { get; init; }
@@ -1084,7 +1084,7 @@ public sealed record SpeechSettings
     public string? TowerVoice { get; init; }
 
     /// <summary>
-    /// Whether in-game messages are spoken aloud, re-voiced (list.md Phase 11, "Speak incoming
+    /// Whether in-game messages are spoken aloud, re-voiced (Phase 11, "Speak incoming
     /// messages in another voice").
     /// <para>
     /// Off by default, and not only because it is chatty. Message text is written by other
@@ -1107,7 +1107,7 @@ public sealed record SpeechSettings
     /// </summary>
     public string? OutputDevice { get; init; }
 
-    /// <summary>The loop-state cues (list.md Phase 5, #20).</summary>
+    /// <summary>The loop-state cues (Phase 5, #20).</summary>
     public bool CuesEnabled { get; init; } = true;
 
     /// <summary>The bed under a working turn (#18).</summary>
@@ -1117,7 +1117,7 @@ public sealed record SpeechSettings
     public string? ThinkingBed { get; init; }
 
     /// <summary>
-    /// Instant silence (list.md Phase 5, "Shut up"). System-wide rather than window-scoped,
+    /// Instant silence (Phase 5, "Shut up"). System-wide rather than window-scoped,
     /// because the case this exists for is Elite holding the foreground — a key that only
     /// works when d47 has focus is gated by definition, and this one is never gated.
     /// <para>
@@ -1132,7 +1132,7 @@ public sealed record SpeechSettings
 
     public double RetryWaitSeconds { get; init; } = 2;
 
-    /// <summary>"sequential" or "logarithmic" (list.md Phase 5).</summary>
+    /// <summary>"sequential" or "logarithmic" (Phase 5).</summary>
     public string RetryBackoff { get; init; } = "sequential";
 
     /// <summary>How long one attempt may run before it counts as a failure worth reporting.</summary>
@@ -1156,8 +1156,8 @@ public sealed record UiSettings
 {
     /// <summary>
     /// A theme id from the shipped set. Colour lives in one place and no view hardcodes a
-    /// literal, so this is the only thing that has to change to repaint the app (list.md
-    /// Phase 4, "Themes").
+    /// literal, so this is the only thing that has to change to repaint the app (Phase 4,
+    /// "Themes").
     /// </summary>
     public string Theme { get; init; } = "elite";
 
@@ -1173,7 +1173,7 @@ public sealed record UiSettings
     public bool ShowEverySetting { get; init; }
 
     /// <summary>
-    /// How large the panel is drawn, as a percentage (list.md Phase 9, "Zoom the desktop
+    /// How large the panel is drawn, as a percentage (Phase 9, "Zoom the desktop
     /// window"). A setting rather than view state, because the checklist puts it alongside the
     /// theme: it is how the Commander wants d47 to look, not how they happened to leave a card.
     /// <para>
@@ -1184,7 +1184,7 @@ public sealed record UiSettings
     public int ZoomPercent { get; init; } = Interface.ZoomLadder.Default;
 
     /// <summary>
-    /// Which content set the desktop window is showing: "full" or "mini" (list.md Phase 51).
+    /// Which content set the desktop window is showing: "full" or "mini" (Phase 51).
     /// <para>
     /// <b>Its own row rather than the headset's.</b> Phase 45 settled the principle in one line —
     /// what you are reading is shared, and mini/full and zoom are how a surface draws it — so this
@@ -1200,7 +1200,7 @@ public sealed record UiSettings
     public string Mode { get; init; } = "full";
 
     /// <summary>
-    /// The mini panel on a monitor, for a Commander with no headset (list.md Phase 48). Under
+    /// The mini panel on a monitor, for a Commander with no headset (Phase 48). Under
     /// <see cref="UiSettings"/> rather than beside <see cref="VrSettings"/> because there is no
     /// headset in it: a Commander goes looking where the theme, the zoom and the hotkeys already
     /// are rather than under a card about a device they are not wearing.
@@ -1210,7 +1210,7 @@ public sealed record UiSettings
 
 /// <summary>
 /// The flat mini panel: a chromeless, click-through, topmost strip pinned over the game
-/// (list.md Phase 48).
+/// (Phase 48).
 /// <para>
 /// Three knobs and nothing else. Where it sits is deliberately <em>not</em> here — a monitor
 /// coordinate is not something a Commander typed, so it joins the VR anchors and the window's
@@ -1280,8 +1280,8 @@ public sealed record HotkeySettings
     public string? FocusAsk { get; init; } = "Ctrl+L";
 
     /// <summary>
-    /// Snaps every world-locked headset surface back in front of the Commander (list.md
-    /// Phase 9, "Re-anchor the panels").
+    /// Snaps every world-locked headset surface back in front of the Commander (Phase 9,
+    /// "Re-anchor the panels").
     /// <para>
     /// System-wide rather than window-scoped, and that is the whole point of it: the case this
     /// exists for is Elite holding the foreground with the panels drifted out of position, so a
@@ -1295,7 +1295,7 @@ public sealed record HotkeySettings
 
     /// <summary>
     /// Binds the core aboard to the ship the Commander is in, and unbinds it when it is already
-    /// that core (list.md Phase 35, "The binding is the Commander's, and unreachable from the
+    /// that core (Phase 35, "The binding is the Commander's, and unreachable from the
     /// model").
     /// <para>
     /// System-wide, like re-anchoring and for the same reason: the moment this is wanted is the
@@ -1312,7 +1312,7 @@ public sealed record HotkeySettings
     public string? BindShipCore { get; init; } = "Ctrl+Alt+B";
 
     /// <summary>
-    /// Shows and hides the flat mini panel (list.md Phase 48).
+    /// Shows and hides the flat mini panel (Phase 48).
     /// <para>
     /// <b>System-wide, and it is the one control that reaches the overlay from where it is
     /// looked at.</b> The strip is output-only — the pointer goes straight through it — so every
@@ -1328,7 +1328,7 @@ public sealed record HotkeySettings
 
     /// <summary>
     /// Puts the flat mini panel into place mode, where it briefly takes clicks so it can be
-    /// dragged, and gives them back the moment it is done (list.md Phase 48).
+    /// dragged, and gives them back the moment it is done (Phase 48).
     /// <para>
     /// <b>Its own gesture rather than a row, because placement has to be explicit and has to be
     /// reachable from where the overlay is visible.</b> The headset's answer to the same question
@@ -1340,7 +1340,7 @@ public sealed record HotkeySettings
     public string? MoveOverlay { get; init; } = "Ctrl+Alt+M";
 
     /// <summary>
-    /// Puts the desktop window into mini and back (list.md Phase 51).
+    /// Puts the desktop window into mini and back (Phase 51).
     /// <para>
     /// <b>This is the way back, and the way back must not live in the thing that disappears.</b>
     /// Mini takes the tab strip, the mode control, the breadcrumb, the search box, the banners and
@@ -1364,7 +1364,7 @@ public sealed record UpdateSettings
     /// <summary>
     /// The startup check contacts GitHub, so it is egress and is disclosed as such. Turning it
     /// off is part of what makes local-only operation a reachable configuration rather than a
-    /// theoretical one (list.md Phase 4, "Say what each provider receives").
+    /// theoretical one (Phase 4, "Say what each provider receives").
     /// </summary>
     public bool CheckOnStartup { get; init; } = true;
 }

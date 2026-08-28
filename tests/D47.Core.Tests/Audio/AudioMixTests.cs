@@ -7,7 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Audio;
 
 /// <summary>
-/// Per-category level, mute and ducking (list.md Phase 12, "#96 Ambient audio mixer").
+/// Per-category level, mute and ducking (Phase 12, "#96 Ambient audio mixer").
 /// <para>
 /// Driven against the null sink, so every claim about what would be audible is assertable with
 /// no audio device present — which is the only way any of this can be covered at all. The

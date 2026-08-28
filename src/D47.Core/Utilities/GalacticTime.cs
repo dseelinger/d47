@@ -3,7 +3,7 @@ using System.Globalization;
 namespace D47.Core.Utilities;
 
 /// <summary>
-/// What time it is, in both worlds at once (list.md Phase 24, "Two clocks, one instant").
+/// What time it is, in both worlds at once (Phase 24, "Two clocks, one instant").
 /// <para>
 /// <b>Elite runs 1286 years ahead</b>, so 2026-08-17 is 3312-08-17 and the in-universe date is
 /// <em>arithmetic over the same instant</em> rather than a second clock. That is the whole design:

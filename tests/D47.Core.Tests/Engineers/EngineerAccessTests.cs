@@ -7,8 +7,8 @@ using Xunit;
 namespace D47.Core.Tests.Engineers;
 
 /// <summary>
-/// Where every engineer is, and what stands between the Commander and each of them (list.md
-/// Phase 28, "Where every engineer is" and "Who can roll this").
+/// Where every engineer is, and what stands between the Commander and each of them (Phase 28,
+/// "Where every engineer is" and "Who can roll this").
 /// <para>
 /// The claim under all of it is that <b>distance is local arithmetic</b>: the coordinates shipped
 /// in the table, the Commander's own position comes out of the journal, and nothing here reaches

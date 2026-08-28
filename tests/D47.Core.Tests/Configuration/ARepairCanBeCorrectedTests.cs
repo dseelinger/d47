@@ -5,7 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>
-/// A repair that shipped wrong has to be able to reach the files it stamped (list.md Phase 11,
+/// A repair that shipped wrong has to be able to reach the files it stamped (Phase 11,
 /// #33).
 /// <para>
 /// v0.6.2 wrote "the named defaults have been checked" onto files it had only half-repaired: it

@@ -8,7 +8,7 @@ namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
 /// Engineers: where they are, what they grade, and how far along the Commander is with each
-/// (list.md Phase 14, "Engineers").
+/// (Phase 14, "Engineers").
 /// <para>
 /// Two halves that only mean something together. The <em>directory</em> is a shipped table —
 /// where each engineer works and what they modify — and the <em>standing</em> is folded from the

@@ -336,7 +336,7 @@ public class SettingsServiceTests
     public void ChangingTheEndpointResetsTheModelListAndTheSelection()
     {
         // A model id belongs to its endpoint's namespace. Carrying one across is a stale
-        // selection that fails at the first turn (list.md Phase 4).
+        // selection that fails at the first turn (Phase 4).
         //
         // Driven through the row's own binding rather than through Apply, because no shipped
         // provider currently offers the endpoint row: Anthropic has one address and no reason to

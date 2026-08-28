@@ -7,7 +7,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// Echo cancellation (list.md Phase 13), driven with synthesised audio and no hardware.
+/// Echo cancellation (Phase 13), driven with synthesised audio and no hardware.
 /// <para>
 /// This is the one part of Phase 13 that cannot live in Core — it is a native library, so it
 /// sits behind the same project boundary NAudio and Whisper do (architecture.md §3). What can
@@ -353,7 +353,7 @@ public class EchoCancellationTests
     }
 
     /// <summary>
-    /// A capability being off, not a startup failure (list.md Phase 3). A machine where the
+    /// A capability being off, not a startup failure (Phase 3). A machine where the
     /// native library will not load is a machine that still has push-to-talk.
     /// </summary>
     [Fact]

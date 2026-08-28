@@ -4,7 +4,7 @@ namespace D47.Core.Lore;
 
 /// <summary>
 /// Everything d47 knows about a system that is not astrography — the shipped table and the
-/// Commander's own additions, read as one thing (list.md Phase 23).
+/// Commander's own additions, read as one thing (Phase 23).
 /// <para>
 /// The two halves stay distinguishable all the way to the sentence: <see cref="LoreEntry.Tier"/>
 /// travels with every entry and <see cref="LoreEntry.Spoken"/> is the only place a tier turns

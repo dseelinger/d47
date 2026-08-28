@@ -1,6 +1,6 @@
 namespace D47.Core.Adventures;
 
-/// <summary>What kind of thing was said about a story (list.md Phase 47, amended 2026-08-22).</summary>
+/// <summary>What kind of thing was said about a story (Phase 47, amended 2026-08-22).</summary>
 public enum AdventureToldKind
 {
     /// <summary>The opening, or a beat, as it was actually spoken — the model's wording where there was one.</summary>

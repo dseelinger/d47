@@ -4,7 +4,7 @@ using System.Text;
 namespace D47.Core.Checklists;
 
 /// <summary>
-/// How an item comes by the key that is its identity (list.md Phase 17, "item identity is the
+/// How an item comes by the key that is its identity (Phase 17, "item identity is the
 /// load-bearing decision").
 /// <para>
 /// <b>Never positional.</b> A key derived from where an item sits in a list makes every revision
@@ -55,10 +55,10 @@ public static class ChecklistKeys
 
     /// <summary>
     /// A derived item's key: <b>slot plus intent</b> for a ship, <b>body or orbital slot plus
-    /// facility type</b> for a system — exactly as list.md states it.
+    /// facility type</b> for a system — exactly as the phase states it.
     /// <para>
     /// <b>A slot-shaped intent keys on the slot alone, and nothing about what is wanted in it</b>
-    /// (list.md Phase 26, "A plan is keyed to its slot"). This used to carry the blueprint and the
+    /// (Phase 26, "A plan is keyed to its slot"). This used to carry the blueprint and the
     /// grade as well, and that was right for as long as items were regenerated from scratch on
     /// every evaluation: two conversations settling on different things wanted two items, and the
     /// diff sorted it out. <b>It does not survive a plan the Commander edits.</b> Changing a slot

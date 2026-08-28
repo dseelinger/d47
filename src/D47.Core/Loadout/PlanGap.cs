@@ -41,7 +41,7 @@ public sealed record GapDemand(string What, int Units)
 }
 
 /// <summary>
-/// What a material trader would charge to cover a shortfall (list.md Phase 27, "Gap analysis").
+/// What a material trader would charge to cover a shortfall (Phase 27, "Gap analysis").
 /// <para>
 /// <b>Secondary, always.</b> The headline stays the honest raw shortfall; this is the second line
 /// beside it, because a trade is a thing the Commander may choose to do and not a reason to
@@ -131,8 +131,8 @@ public sealed record GapReport
 }
 
 /// <summary>
-/// The arithmetic between what the Commander's plans need and what they are carrying (list.md
-/// Phase 27, "Gap analysis").
+/// The arithmetic between what the Commander's plans need and what they are carrying (Phase 27,
+/// "Gap analysis").
 /// <para>
 /// <b>Not a wishlist.</b> A wishlist is a list of things you want, which is what the plans
 /// themselves are. This is the subtraction, read across every plan at once — because a Commander

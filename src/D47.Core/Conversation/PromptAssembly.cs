@@ -43,7 +43,7 @@ public sealed record PromptAssembly
     public string? AboutMe { get; init; }
 
     /// <summary>
-    /// What the model is told position 4 is (list.md Phase 43, "Position 4 is relabelled to
+    /// What the model is told position 4 is (Phase 43, "Position 4 is relabelled to
     /// commit, not to hedge").
     /// <para>
     /// A Commander's biography asserts things about named in-game figures that are their own
@@ -62,7 +62,7 @@ public sealed record PromptAssembly
 
     /// <summary>
     /// Position 5 — what d47 remembers about the Commander, bounded and labelled by
-    /// <see cref="Memory.MemoryRecall"/> (list.md Phase 31).
+    /// <see cref="Memory.MemoryRecall"/> (Phase 31).
     /// <para>
     /// <b>Above the breakpoint, which is a decision rather than a default.</b> The obvious placement
     /// is game state, because that is where changing things go — and it is wrong twice over.

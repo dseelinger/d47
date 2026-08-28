@@ -3,7 +3,7 @@
 namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
-/// The Commander's checklist, and the plans that write into it (list.md Phase 17).
+/// The Commander's checklist, and the plans that write into it (Phase 17).
 /// <para>
 /// <b>One surface, two kinds, three groups.</b> "What am I working on" has exactly one answer, so
 /// a ship's build and a system's construction show up here rather than each growing a capability
@@ -37,7 +37,7 @@ public static class ChecklistCapability
     private static readonly string[] Groups = ["custom", "ship", "system", "suit", "weapon"];
 
         /// <param name="ships">
-    /// The Commander's ship builds (list.md Phase 26). <c>plan_ship_build</c> writes there rather
+    /// The Commander's ship builds (Phase 26). <c>plan_ship_build</c> writes there rather
     /// than proposing straight to the checklist, because the plan owns <em>what</em> and the
     /// checklist owns <em>when</em>. Null under the designer and in tests that are not about
     /// builds, and the tool then says it is tracking none rather than quietly doing the old thing
@@ -45,7 +45,7 @@ public static class ChecklistCapability
     /// about.
     /// </param>
     /// <param name="onFoot">
-    /// The Commander's suit and weapon plans (list.md Phase 27). <c>plan_on_foot_build</c> writes
+    /// The Commander's suit and weapon plans (Phase 27). <c>plan_on_foot_build</c> writes
     /// there rather than proposing straight to the checklist, for the reason
     /// <c>plan_ship_build</c> does: the plan owns <em>what</em> and the checklist owns
     /// <em>when</em>. Null under the designer and in tests that are not about plans, and the tool
@@ -464,7 +464,7 @@ public static class ChecklistCapability
                         : ToolResult.Error("Say up, down, top or bottom.")),
             },
 
-            // The other level of the order (list.md Phase 42): a whole project at a time, on the
+            // The other level of the order (Phase 42): a whole project at a time, on the
             // same boundary as the line movers and for the same reason. Between projects the
             // order is the Commander's and stored; within one it is derived on read and there is
             // nothing to move.
@@ -611,7 +611,7 @@ public static class ChecklistCapability
     ];
 
     /// <summary>
-    /// The same, a project at a time (list.md Phase 42). "This project" means the selected line's,
+    /// The same, a project at a time (Phase 42). "This project" means the selected line's,
     /// which is the line the tab is drawing a highlight round — the named form is the tool's
     /// <c>project</c> parameter, reachable from the panel's chooser, because a declared phrase
     /// carries fixed arguments and the name is the part that varies.
@@ -681,7 +681,7 @@ public static class ChecklistCapability
             arguments.TryGetString("name", out var name) ? name : null);
 
     /// <summary>
-    /// Writes one slot of a ship's build (list.md Phase 26, "A plan reaches the checklist when you
+    /// Writes one slot of a ship's build (Phase 26, "A plan reaches the checklist when you
     /// say so").
     /// <para>
     /// <b>It used to propose straight to the checklist, and no longer does.</b> The plan owns
@@ -753,7 +753,7 @@ public static class ChecklistCapability
     }
 
     /// <summary>
-    /// Writes a suit or weapon plan (list.md Phase 27, "The same page, on foot").
+    /// Writes a suit or weapon plan (Phase 27, "The same page, on foot").
     /// <para>
     /// <b>To the plan, not to the checklist</b> — which is the change Phase 27 makes here, and the
     /// same one Phase 26 made to <c>plan_ship_build</c>. Before it, one sentence about a

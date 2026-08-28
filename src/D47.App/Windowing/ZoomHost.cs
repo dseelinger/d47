@@ -12,7 +12,7 @@ using System.Globalization;
 namespace D47.App.Windowing;
 
 /// <summary>
-/// Ctrl and the scroll wheel, Ctrl+plus, Ctrl+minus, Ctrl+0 (list.md Phase 9, "Zoom the
+/// Ctrl and the scroll wheel, Ctrl+plus, Ctrl+minus, Ctrl+0 (Phase 9, "Zoom the
 /// desktop window"). Attached to a window rather than built into one, because the settings
 /// window is the same widget tree and shipping a zoom that stops at the panel's edge would be
 /// a zoom the Commander has to remember the boundaries of.

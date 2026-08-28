@@ -1,7 +1,7 @@
 namespace D47.Core.Interface;
 
 /// <summary>
-/// Where a chooser is drawn (list.md Phase 25, "Choosing takes the panel").
+/// Where a chooser is drawn (Phase 25, "Choosing takes the panel").
 /// <para>
 /// <b>Declared per call site, never computed from list length.</b> A module picker is a page and
 /// a five-item settings enum stays the in-tree layer, and which one a control gets is a property
@@ -70,7 +70,7 @@ public sealed record ChoiceOption(string Key, string Label, string? Detail = nul
 }
 
 /// <summary>
-/// A question the panel is being asked to put to the Commander (list.md Phase 25, "Choosing takes
+/// A question the panel is being asked to put to the Commander (Phase 25, "Choosing takes
 /// the panel").
 /// <para>
 /// <b>The chooser carries what it is choosing for in its header</b> — the slot, its size, and

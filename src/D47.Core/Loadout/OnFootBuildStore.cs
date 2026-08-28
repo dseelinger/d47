@@ -9,7 +9,7 @@ namespace D47.Core.Loadout;
 public sealed record OnFootBuildProblem(string Where, string Reason);
 
 /// <summary>
-/// The Commander's suit and weapon builds, in one file beside the executable (list.md Phase 27,
+/// The Commander's suit and weapon builds, in one file beside the executable (Phase 27,
 /// "The same page, on foot").
 /// <para>
 /// <b>Its own file rather than a second array in the ship one</b>, and the reason is the reason

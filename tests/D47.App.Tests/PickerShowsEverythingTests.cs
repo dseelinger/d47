@@ -72,7 +72,7 @@ public class PickerShowsEverythingTests
 
     /// <summary>
     /// A picker with nothing in it says what the row told it, not the generic line
-    /// (list.md Phase 19).
+    /// (Phase 19).
     /// <para>
     /// The generic line is "D47 does not know this endpoint's vocabulary — type the value you
     /// want", which is true of a model name and useless for a voice id. Four different reasons

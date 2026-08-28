@@ -11,7 +11,7 @@ public enum AdventureSource
 }
 
 /// <summary>
-/// The five things a beat can wait for (list.md Phase 47, "The trigger vocabulary is closed and the
+/// The five things a beat can wait for (Phase 47, "The trigger vocabulary is closed and the
 /// prose is free").
 /// <para>
 /// <b>The vocabulary is the event catalogue.</b> Core has no list of journal event kinds — every
@@ -119,7 +119,7 @@ public sealed record AdventureTrigger
 }
 
 /// <summary>
-/// One dramatic function, anchored to a place (list.md Phase 47, "Story, not a checklist"). The
+/// One dramatic function, anchored to a place (Phase 47, "Story, not a checklist"). The
 /// model is never asked for five stops; it is asked for a structure, and the trigger is where the
 /// function lands.
 /// </summary>
@@ -164,7 +164,7 @@ public sealed record AdventureSpine
 }
 
 /// <summary>
-/// A story the Commander progresses through, tracked from their own journal (list.md Phase 47).
+/// A story the Commander progresses through, tracked from their own journal (Phase 47).
 /// <para>
 /// <b>This is the definition, and one stamp.</b> Progress is never stored: it is a fold over the
 /// journal after <see cref="AcceptedAt"/>, computed by <see cref="AdventureFold"/>, because

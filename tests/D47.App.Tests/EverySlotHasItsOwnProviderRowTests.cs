@@ -10,7 +10,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The five slot rows, on the page a Commander actually opens (list.md Phase 57).
+/// The five slot rows, on the page a Commander actually opens (Phase 57).
 /// <para>
 /// Core can say the mapping is right and the settings binding round-trips; it cannot say the row
 /// was drawn, and a settings row that exists in the registry and never reaches the surface is a

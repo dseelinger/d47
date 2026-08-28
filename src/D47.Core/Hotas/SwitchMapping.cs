@@ -12,7 +12,7 @@ namespace D47.Core.Hotas;
 /// hardware cannot rule out. So *nothing held* is a position like any other, named by its
 /// absence. A reconciler carrying the bench's encoding as a constant would read that centre as
 /// <em>still where it last was</em> and drive the wrong state silently, which is the exact
-/// failure this phase exists to prevent (list.md Phase 21, item 3).
+/// failure this phase exists to prevent (Phase 21, item 3).
 /// </para>
 /// </summary>
 /// <param name="Button">The button held at this position, or null when none is.</param>
@@ -27,7 +27,7 @@ namespace D47.Core.Hotas;
 /// </param>
 /// <param name="Destination">
 /// The page of d47's own panel this position asks for, as the key of a root some surface
-/// registered — <c>transcript.technical</c> — or null (list.md Phase 46).
+/// registered — <c>transcript.technical</c> — or null (Phase 46).
 /// <para>
 /// <b>Its own field, never a prefix on <paramref name="Action"/>.</b> The same reasoning as
 /// <see cref="Interface.NavCrumb.Level"/>: a statement by the Commander about what the position
@@ -62,7 +62,7 @@ public sealed record SwitchPosition(
 }
 
 /// <summary>
-/// One switch the Commander walked, and what each of its positions does (list.md Phase 21,
+/// One switch the Commander walked, and what each of its positions does (Phase 21,
 /// items 2 and 4).
 /// </summary>
 public sealed record SwitchMapping
@@ -163,7 +163,7 @@ public static class SwitchValidation
 
     /// <summary>
     /// Every action a switch position may name: the ones Elite reports the state of, and no
-    /// others. Not the whole vocabulary since list.md Phase 46 — a position may instead name a
+    /// others. Not the whole vocabulary since Phase 46 — a position may instead name a
     /// page of d47's own panel (<see cref="SwitchPosition.Destination"/>), whose vocabulary is
     /// the roots each surface registered and is checked where they are known, at reconcile time,
     /// rather than here.

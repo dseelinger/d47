@@ -1,7 +1,7 @@
 namespace D47.Core.Interface;
 
 /// <summary>
-/// One transcript page across every surface (list.md Phase 45, "One transcript, both surfaces").
+/// One transcript page across every surface (Phase 45, "One transcript, both surfaces").
 /// <para>
 /// <b>What you are reading is shared; how it is drawn is not.</b> Each surface keeps its own
 /// <see cref="PanelNavigator"/> because tabs and drill trails are per-surface — the window can be
@@ -37,7 +37,7 @@ namespace D47.Core.Interface;
 /// <b>One-way, and that is the half that protects the Commander.</b> The follower may be moved
 /// independently and keeps where it was put until the window next moves, so somebody in a headset
 /// can put their mini panel on something and have it stay there. It also leaves
-/// <c>list.md</c> Phase 48 standing untouched — <em>what must not follow is the overlay's tab
+/// Phase 48 standing untouched — <em>what must not follow is the overlay's tab
 /// dragging the window's</em> — which was the strongest argument for this shape rather than a
 /// symmetrical one.
 /// </para>

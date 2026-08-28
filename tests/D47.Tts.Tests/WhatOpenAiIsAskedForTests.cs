@@ -8,7 +8,7 @@ using Xunit;
 namespace D47.Tts.Tests;
 
 /// <summary>
-/// What d47 sends OpenAI, and what it does with what comes back (list.md Phase 58).
+/// What d47 sends OpenAI, and what it does with what comes back (Phase 58).
 /// <para>
 /// The sibling of <see cref="TheModelOnTheWireTests"/> and for the same reasons: the model
 /// decides what a Commander hears and what they are billed, and neither fact is asserted anywhere

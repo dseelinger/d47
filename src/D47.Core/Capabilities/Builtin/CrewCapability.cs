@@ -4,7 +4,7 @@ using D47.Core.Journal;
 namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
-/// Who else is aboard (list.md Phase 11, "Ship Crew").
+/// Who else is aboard (Phase 11, "Ship Crew").
 /// <para>
 /// Only what the journal reports. Elite hires, fires, assigns and ranks NPC pilots and says
 /// nothing else about them — there is no engineer, no gunner and no navigator in this game, and

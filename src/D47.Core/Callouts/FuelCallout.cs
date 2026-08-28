@@ -3,7 +3,7 @@ using D47.Core.Journal;
 namespace D47.Core.Callouts;
 
 /// <summary>
-/// Fuel, and the specific way a Commander gets stranded (list.md Phase 8, "Fuel and range
+/// Fuel, and the specific way a Commander gets stranded (Phase 8, "Fuel and range
 /// safety").
 /// <para>
 /// The low-fuel warning is the easy half. The half that matters is the one the checklist names:

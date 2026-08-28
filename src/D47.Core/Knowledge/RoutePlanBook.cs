@@ -18,7 +18,7 @@ public enum RoutePlanKind
 }
 
 /// <summary>
-/// The last plan of one kind, as it was answered (list.md Phase 37, "One last plan").
+/// The last plan of one kind, as it was answered (Phase 37, "One last plan").
 /// <para>
 /// Exactly one of <see cref="Jump"/>, <see cref="Riches"/> and <see cref="Trade"/> is set, and
 /// <see cref="Kind"/> says which — a discriminated union written the way this repository's JSON
@@ -47,8 +47,8 @@ public sealed record StoredRoutePlan
 }
 
 /// <summary>
-/// The last plan each planner produced, shared by every path that can ask for one (list.md
-/// Phase 37, "One last plan, shared by the voice and the panel").
+/// The last plan each planner produced, shared by every path that can ask for one (Phase 37,
+/// "One last plan, shared by the voice and the panel").
 /// <para>
 /// <b>The reason this exists is that the alternative disagrees.</b> <c>RouteCapability</c>
 /// computes a plan, describes it and keeps nothing, so a panel that plotted its own would hold a

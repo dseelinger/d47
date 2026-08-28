@@ -156,7 +156,7 @@ public sealed record Blueprint
     /// What a full grade actually costs a Commander at a given rank, or null when the rank
     /// cannot reach the grade or the recipe is not per-application.
     /// <para>
-    /// This is the arithmetic list.md asked for and the reason the hedging in the original items
+    /// This is the arithmetic the phase asked for and the reason the hedging in the original items
     /// is unnecessary: <c>ingredients × rolls(grade, rank)</c> is exact. Null rather than the
     /// per-application list, because silently returning a one-roll cost as a total is the
     /// mistake the <see cref="Kind"/> column exists to prevent.
@@ -177,7 +177,7 @@ public sealed record Blueprint
 
 /// <summary>
 /// Every engineering recipe: what it does, what it costs per application, who offers it, and
-/// which experimental effects a module can take (list.md Phase 14, <c>#102</c>).
+/// which experimental effects a module can take (Phase 14, <c>#102</c>).
 /// <para>
 /// <b>Derived, not written.</b> <c>tools/gen-blueprints.py</c> builds it from msarilar/EDEngineer
 /// and cross-checks it against EDCD/coriolis-data on the guid the two share.

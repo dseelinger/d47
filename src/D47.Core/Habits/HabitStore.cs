@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Habits;
 
 /// <summary>
-/// What d47 has noticed about the Commander, on disk (list.md Phase 32).
+/// What d47 has noticed about the Commander, on disk (Phase 32).
 /// <para>
 /// The <see cref="Memory.MemoryStore"/> shape with a different payload: written through
 /// <see cref="AtomicFile"/>, polled by comparing <b>content</b> rather than a last-write time

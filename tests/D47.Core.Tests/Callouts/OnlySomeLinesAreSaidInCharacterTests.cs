@@ -6,7 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Callouts;
 
 /// <summary>
-/// Which callouts a model is allowed to rewrite (list.md Phase 11; list.md Phase 8).
+/// Which callouts a model is allowed to rewrite (Phase 11; Phase 8).
 /// <para>
 /// The safety property is the exclusion, not the inclusion: <b>a danger callout is never
 /// rewritten</b>. Those fire on the event and say exactly what happened, and "shields are down"
@@ -15,7 +15,7 @@ namespace D47.Core.Tests.Callouts;
 /// </para>
 /// <para>
 /// It was the default arm of a switch inside <c>AppHost.VaryAsync</c>, where nothing could assert
-/// it and where adding one case above it was the entire cost of losing it (list.md Phase 19).
+/// it and where adding one case above it was the entire cost of losing it (Phase 19).
 /// </para>
 /// </summary>
 public class OnlySomeLinesAreSaidInCharacterTests
@@ -193,8 +193,8 @@ public class OnlySomeLinesAreSaidInCharacterTests
     }
 
     /// <summary>
-    /// Every line the ship's AI says to the Commander knows who the Commander is (list.md Phase
-    /// 43): the ambient remarks, the opening line and a core's first words all carry the sheet.
+    /// Every line the ship's AI says to the Commander knows who the Commander is (Phase 43):
+    /// the ambient remarks, the opening line and a core's first words all carry the sheet.
     /// </summary>
     [Fact]
     public void TheShipsAiKnowsWhoItIsFlyingWith()

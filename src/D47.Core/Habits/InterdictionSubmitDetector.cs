@@ -3,7 +3,7 @@ using D47.Core.Journal;
 namespace D47.Core.Habits;
 
 /// <summary>
-/// What the Commander does when somebody pulls them out of supercruise (list.md Phase 32).
+/// What the Commander does when somebody pulls them out of supercruise (Phase 32).
 /// <para>
 /// <b>50 submissions out of 52 across thirteen months</b>, with three escapes among the rest. That
 /// is not a criticism and the line does not pretend it is one — submitting keeps the FSD cool and

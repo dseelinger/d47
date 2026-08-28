@@ -9,7 +9,7 @@ using D47.Core.Capabilities;
 namespace D47.App.Panel;
 
 /// <summary>
-/// Getting a system name into the game (list.md Phase 37, "Course").
+/// Getting a system name into the game (Phase 37, "Course").
 /// <para>
 /// <b>The clipboard is the part that always works</b>, and the order on this page is the order in
 /// <c>navigation.md</c> because the order <em>is</em> the feature: the name goes on the clipboard

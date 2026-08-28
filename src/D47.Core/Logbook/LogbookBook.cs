@@ -43,7 +43,7 @@ public sealed record LogbookContext
 public sealed record LogOutcome(bool Ok, string Message, LogWritten? Written = null);
 
 /// <summary>
-/// The Commander's log, end to end (list.md Phase 33).
+/// The Commander's log, end to end (Phase 33).
 /// <para>
 /// <b>Two acts, and that is item 4's whole requirement.</b> <see cref="Estimate"/> reads the
 /// journals, builds the digest, prices the request and <em>arms</em> the writer;

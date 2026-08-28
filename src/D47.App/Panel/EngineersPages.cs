@@ -12,7 +12,7 @@ using D47.Core.Knowledge;
 namespace D47.App.Panel;
 
 /// <summary>
-/// The Engineers tab (list.md Phase 28).
+/// The Engineers tab (Phase 28).
 /// <para>
 /// <b>Two roots and one level.</b> The <em>Directory</em> answers "who can I go and get", ordered
 /// by what the Commander can act on today; the <em>Route</em> answers "how do I get everything my
@@ -160,7 +160,7 @@ public abstract class EngineerPageBase : UserControl
 }
 
 /// <summary>
-/// The directory (list.md Phase 28, "Who can roll this").
+/// The directory (Phase 28, "Who can roll this").
 /// <para>
 /// <b>Sorted by what the Commander can act on today</b> — within reach, then unlocked, then
 /// locked — rather than alphabetically or by speciality, because the question is nearly always
@@ -331,7 +331,7 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage
 }
 
 /// <summary>
-/// One engineer (list.md Phase 28, "Who can roll this").
+/// One engineer (Phase 28, "Who can roll this").
 /// <para>
 /// Everything a row could not hold: what they grade and to what grade, where the Commander stands,
 /// and the way in — spelled out stop by stop, with the button that puts it on the checklist.
@@ -523,7 +523,7 @@ public sealed class EngineerPage : EngineerPageBase
 }
 
 /// <summary>
-/// The solver (list.md Phase 28, "The fastest way in").
+/// The solver (Phase 28, "The fastest way in").
 /// <para>
 /// <b>It shows its work.</b> Every candidate carries the sentence that produced its place in the
 /// order — the stops, the distance, the jumps at the range of the ship being flown, and what it

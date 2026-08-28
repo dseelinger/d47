@@ -190,7 +190,7 @@ public sealed class HelpFigureView : Control
     /// including the Elite HUD recolouring, without the markup knowing a theme exists.
     /// <para>
     /// The fallback is not decoration. A headless render has none of the application's resources
-    /// (list.md Phase 39), so without it every captured figure would be blank and the captures
+    /// (Phase 39), so without it every captured figure would be blank and the captures
     /// that prove layout would prove nothing.
     /// </para>
     /// </summary>

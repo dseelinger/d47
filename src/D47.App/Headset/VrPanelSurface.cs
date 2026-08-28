@@ -18,7 +18,7 @@ namespace D47.App.Headset;
 /// This is where "one widget tree renders to both surfaces" actually lands. There is no second
 /// view definition and no screenshot of the window — both surfaces read one model, so the
 /// windowed one cannot be more functional than the headset one by construction rather than by
-/// anybody remembering (list.md Phase 9).
+/// anybody remembering (Phase 9).
 /// </para>
 /// </summary>
 public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
@@ -91,12 +91,12 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         D47.Core.Loadout.OnFootPlanService? onFoot = null,
         D47.Core.Engineers.EngineerPlanService? unlocks = null,
 
-        // The Commander's long arcs, and the button that ages them (list.md Phase 34). They ride
+        // The Commander's long arcs, and the button that ages them (Phase 34). They ride
         // the checklist tab, so they reach the headset exactly when the checklist does.
         D47.Core.Goals.GoalBook? goals = null,
         Action? backfillGoals = null,
 
-        // The stories the Commander flies (list.md Phase 47), in the headset from 2026-08-22.
+        // The stories the Commander flies (Phase 47), in the headset from 2026-08-22.
         Panel.AdventureSurface? adventures = null)
     {
         _dumpTo = dumpTo;
@@ -119,7 +119,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
         if (checklists is not null)
         {
-            // What the Commander is working on, back in the headset (list.md Phase 39). Phase 25
+            // What the Commander is working on, back in the headset (Phase 39). Phase 25
             // made the checklist reachable there at all, which a `Window` cannot be, and both it
             // and Loadout were then <b>withdrawn on the Commander's instruction</b> during the
             // panel redesign - the Commander overruling two built phases, not a discovery that
@@ -140,8 +140,8 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             // and nothing else: the constructor has gone on taking `checklists`, `goals` and
             // `backfillGoals` from `AppHost` against exactly this day.
             //
-            // `goals` and `backfillGoals` ride the tab rather than sitting beside it (list.md
-            // Phase 34), so the arcs and the button that ages them reach the headset on exactly
+            // `goals` and `backfillGoals` ride the tab rather than sitting beside it (Phase 34
+            // ), so the arcs and the button that ages them reach the headset on exactly
             // the same terms the list does.
             _view.EnableChecklist(checklists, goals, backfillGoals);
         }
@@ -165,7 +165,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
         if (unlocks is not null && ships is not null && gameState is not null)
         {
-            // And who to go and get next (list.md Phase 28). The distances are arithmetic over a
+            // And who to go and get next (Phase 28). The distances are arithmetic over a
             // shipped table, so this page is exactly as useful in a headset in flight as it is at
             // a desk with a browser open — which is the whole reason the coordinates ship.
             _view.EnableEngineers(unlocks, ships, gameState, onFoot);
@@ -174,7 +174,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         if (timekeeper is not null && alarmStore is not null)
         {
             // A Commander in a headset is exactly the Commander who cannot glance at a wall
-            // clock, which is most of why this page exists at all (list.md Phase 24).
+            // clock, which is most of why this page exists at all (Phase 24).
             _view.EnableUtilities(
                 timekeeper,
                 alarmStore,
@@ -201,7 +201,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     public bool Enabled { get; set; }
 
     /// <summary>
-    /// This surface's own prompts (list.md Phase 25). Its own, and not the window's: a chooser is
+    /// This surface's own prompts (Phase 25). Its own, and not the window's: a chooser is
     /// a level of one navigator's stack, and the Commander can be picking a module in the headset
     /// while the window goes on showing the transcript.
     /// </summary>
@@ -209,7 +209,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
     /// <summary>
     /// Back one level on this surface, and whether there was anything to go back from — so the
-    /// controller button stays available to whatever else wants it at a root (list.md Phase 25).
+    /// controller button stays available to whatever else wants it at a root (Phase 25).
     /// </summary>
     public bool Back() => _view.GoBack();
 
@@ -224,7 +224,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
     /// <summary>
     /// Redraws the engineer pages when the Commander has moved, re-fitted or unlocked somebody
-    /// (list.md Phase 28). Marks the surface dirty only when something actually moved: unlike a
+    /// (Phase 28). Marks the surface dirty only when something actually moved: unlike a
     /// clock, a ranking with nothing behind it has not changed.
     /// <para>
     /// This sentence was true of the intent and not of the code until #23 — the stamp comparison

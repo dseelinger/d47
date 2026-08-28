@@ -5,7 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Hotas;
 
 /// <summary>
-/// Push-to-talk on a stick button (list.md Phase 53).
+/// Push-to-talk on a stick button (Phase 53).
 /// <para>
 /// All of it runs with nothing plugged in, which is the point of <see cref="IHotasReader"/> being
 /// a Core contract: the edges, the missing device and the fallback are the parts a Commander only

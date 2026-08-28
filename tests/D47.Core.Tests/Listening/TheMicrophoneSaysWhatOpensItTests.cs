@@ -5,12 +5,12 @@ using Xunit;
 namespace D47.Core.Tests.Listening;
 
 /// <summary>
-/// The line under the microphone indicator (list.md Phase 13).
+/// The line under the microphone indicator (Phase 13).
 /// <para>
 /// It answers one question — what would open the gate right now — and it is the only place the
 /// pre-roll is ever explained to a Commander. It lived in <c>AppHost</c>, so the only way to
 /// check any of these sentences was to launch the app and put the microphone into each state by
-/// hand (list.md Phase 19).
+/// hand (Phase 19).
 /// </para>
 /// </summary>
 public class TheMicrophoneSaysWhatOpensItTests

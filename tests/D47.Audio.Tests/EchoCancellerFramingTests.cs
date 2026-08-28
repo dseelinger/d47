@@ -6,7 +6,7 @@ namespace D47.Audio.Tests;
 
 /// <summary>
 /// The framing, which is the whole of what <see cref="EchoCanceller"/> adds to WebRTC's AEC3
-/// (list.md Phase 13).
+/// (Phase 13).
 /// <para>
 /// The module takes exactly 10 ms at a time on both streams and WASAPI hands over whatever it
 /// feels like on either, so both directions are accumulated into 10 ms frames and the remainder

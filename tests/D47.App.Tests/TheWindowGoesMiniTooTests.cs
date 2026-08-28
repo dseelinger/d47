@@ -16,7 +16,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The desktop window shows what the headset already can (list.md Phase 51).
+/// The desktop window shows what the headset already can (Phase 51).
 /// <para>
 /// The phase names three tests and this file carries two of them: a capture of the window in mini
 /// showing the tail, and the round-trip rectangle. The third is <c>MinimiseSafetyTests</c>, which
@@ -89,7 +89,7 @@ public class TheWindowGoesMiniTooTests
 
     /// <summary>
     /// And while in mini, a move to Settings is declined — whatever moved the navigator. A spoken
-    /// phrase reaches every surface at once (list.md Phase 45), so a Commander with a mini window
+    /// phrase reaches every surface at once (Phase 45), so a Commander with a mini window
     /// and a full headset saying "settings" moves the headset and leaves the window where it is,
     /// rather than dropping it on a page that cannot fit.
     /// <para>

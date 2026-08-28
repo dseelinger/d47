@@ -3,7 +3,7 @@ namespace D47.Core.Audio;
 /// <summary>
 /// Where the conversation loop is. Every state has exactly one shipped cue, and the cue file
 /// is named for the state — `assets/cues/thinking.wav` is the cue for
-/// <see cref="Thinking"/> and nothing else can be (list.md Phase 5, #20).
+/// <see cref="Thinking"/> and nothing else can be (Phase 5, #20).
 /// <para>
 /// The naming is the whole point. A hand-written state → filename table is a place for a
 /// typo to live, and a typo there goes wrong as silence: the cue simply never plays and
@@ -34,7 +34,7 @@ public enum LoopState
     /// <summary>
     /// The turn produced an explicit "unsure". A state of the loop rather than an error,
     /// which is why it gets its own cue rather than borrowing <see cref="Failed"/>'s
-    /// (list.md Phase 3, "Ship's AI Unsure").
+    /// (Phase 3, "Ship's AI Unsure").
     /// </summary>
     Unsure,
 

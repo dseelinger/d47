@@ -10,7 +10,7 @@ public sealed record VoiceInfo(string Id, string Name, string Locale, string? Ge
 /// <summary>
 /// A voice, plus how fast to say it. Rate lives here rather than in settings-shaped form
 /// because providers disagree about its units and its range, and normalising at the seam is
-/// one conversion instead of one per caller (list.md Phase 11).
+/// one conversion instead of one per caller (Phase 11).
 /// </summary>
 public sealed record VoiceSelection(string? VoiceId, double Rate = 1.0)
 {
@@ -170,7 +170,7 @@ public enum TtsFault
 
     /// <summary>
     /// The credential was refused, or there is none stored. The Commander's to fix, and from a
-    /// row they can see (list.md Phase 58).
+    /// row they can see (Phase 58).
     /// </summary>
     KeyRejected,
 
@@ -208,12 +208,12 @@ public interface ITtsProvider
     /// What this provider can say, and why that is all of it. Network-bound for every provider
     /// d47 has, which is why it is async and why an empty list is a supported answer rather than
     /// an error — the picker still lets the Commander keep the current value or type one
-    /// (list.md Phase 4).
+    /// (Phase 4).
     /// <para>
     /// It answers a <see cref="VoiceCatalogue"/> rather than a list because "empty" was four
     /// situations wearing one face, and the one that means "pay attention to the row above" was
     /// indistinguishable from the one that means "wait and try again"
-    /// (list.md Phase 19; docs/spikes/elevenlabs-voice-sources.md §3).
+    /// (Phase 19; docs/spikes/elevenlabs-voice-sources.md §3).
     /// </para>
     /// </summary>
     Task<VoiceCatalogue> ListVoicesAsync(CancellationToken cancellationToken = default);

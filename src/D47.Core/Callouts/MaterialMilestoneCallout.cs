@@ -3,7 +3,7 @@ using D47.Core.Journal;
 namespace D47.Core.Callouts;
 
 /// <summary>
-/// Progress towards filling a material (list.md Phase 8, "Call out material-gathering
+/// Progress towards filling a material (Phase 8, "Call out material-gathering
 /// milestones"): the first unit, then 25/50/75%, a running count above 75%, and full.
 /// <para>
 /// <b>The tracker is primed from the session backlog at startup</b>, which the checklist calls

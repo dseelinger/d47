@@ -5,7 +5,7 @@ namespace D47.Core.Tests.Knowledge;
 
 /// <summary>
 /// Applying a blueprint's own grade row to a stock figure lands on what Elite actually wrote
-/// (list.md Phase 38, "Planned rolls modelled from the effects already shipped").
+/// (Phase 38, "Planned rolls modelled from the effects already shipped").
 /// <para>
 /// <b>The figures below are real rolls out of the journal corpus</b>, not invented ones: the
 /// before-and-after of each is what Elite reported in a <c>Loadout</c>'s <c>Modifiers</c>, so a
@@ -100,7 +100,7 @@ public class APlannedRollIsModelledFromTheShippedTableTests
     [Fact]
     public void TheOverchargedDriveIsCostedFromTheOrdinaryDrivesRecipe()
     {
-        // **The gap that mattered most** (list.md Phase 38, item 10). EDSY files the SCO drive
+        // **The gap that mattered most** (Phase 38, item 10). EDSY files the SCO drive
         // under its own module type and EDEngineer has one "Frame Shift Drive", so every drive
         // recipe landed on the ordinary drive and an SCO drive — which is what almost every
         // Commander now flies — was offered eight blueprints d47 held no recipe for.

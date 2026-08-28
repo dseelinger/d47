@@ -8,7 +8,7 @@ namespace D47.App.Voice;
 /// <summary>
 /// One turn, made audible. Drives the loop-state cues, the thinking bed and the spoken reply
 /// off the turn's own event stream, so there is exactly one description of what a turn sounds
-/// like (list.md Phase 5).
+/// like (Phase 5).
 /// <para>
 /// It lives in the App rather than in Core because it is composition: Core owns the arbiter,
 /// the splitter and the turn loop separately, and this is the wiring that says how they run
@@ -19,7 +19,7 @@ namespace D47.App.Voice;
 /// <param name="cues">
 /// Asked for each time rather than held, because the library is rebuilt when the Commander drops
 /// a file into <c>data/audio/</c> and a reference captured at startup would go on playing the set
-/// that existed then (list.md Phase 12, "Pick up dropped-in audio without a restart").
+/// that existed then (Phase 12, "Pick up dropped-in audio without a restart").
 /// </param>
 public sealed class VoicePipeline(
     AudioArbiter arbiter,
@@ -198,7 +198,7 @@ public sealed class VoicePipeline(
     /// <summary>
     /// Says something without a turn behind it. Used for the startup warning when the model is
     /// misconfigured — silence there is indistinguishable from a model with nothing to say
-    /// (list.md Phase 5) — and for every Phase 8 callout.
+    /// (Phase 5) — and for every Phase 8 callout.
     /// </summary>
     /// <param name="speaker">
     /// Who is talking, for the log line that records which voice said it. Null leaves the group
@@ -246,7 +246,7 @@ public sealed class VoicePipeline(
     /// The group a persona's introduction or gap reaction is spoken in. Its own group so a
     /// second switch can drop the first acknowledgement mid-word — which is the requirement:
     /// "if it changes before its acknowledgement has completed speaking, it stops and the next
-    /// one starts" (list.md Phase 11).
+    /// one starts" (Phase 11).
     /// </summary>
     private const string PersonaGroup = "persona-acknowledgement";
 
@@ -266,7 +266,7 @@ public sealed class VoicePipeline(
     }
 
     /// <summary>
-    /// Speaks one unprompted callout (list.md Phase 8).
+    /// Speaks one unprompted callout (Phase 8).
     /// <para>
     /// An urgent one silences the queue first rather than joining it. That is the difference
     /// between a warning and a remark: an interdiction announced after d47 finishes reading out
@@ -324,14 +324,14 @@ public sealed class VoicePipeline(
                 // Which slot pays for it, and so which provider says it. Resolved here for the
                 // same reason the radio treatment is: this is the one point where a role and a
                 // synthesiser meet, and a callout knows whose line it is and nothing more
-                // (list.md Phase 57).
+                // (Phase 57).
                 slot: VoiceGroups.Of(announcement.Voice, announcement.CommsChannel))
             .ConfigureAwait(false);
     }
 
     /// <summary>
     /// Raised as the loop moves. The cues have marked these states audibly since Phase 5; this
-    /// is the same states, for the surfaces that show a face (list.md Phase 11).
+    /// is the same states, for the surfaces that show a face (Phase 11).
     /// </summary>
     public event Action<LoopState>? StateEntered;
 
@@ -342,7 +342,7 @@ public sealed class VoicePipeline(
     /// <para>
     /// The cue is suppressible rather than removed because it is only redundant when the same
     /// news arrived by voice a moment earlier. With speech switched off, the chime is the only
-    /// thing that says the turn finished, and list.md Phase 5 (#20) asks for one per state.
+    /// thing that says the turn finished, and Phase 5 (#20) asks for one per state.
     /// </para>
     /// </summary>
     public void EnterState(LoopState state, bool cue)

@@ -3,7 +3,7 @@ using D47.Core.Configuration;
 namespace D47.App.Panel;
 
 /// <summary>
-/// Remembers where the Commander dragged the rule between two panes (list.md Phase 55).
+/// Remembers where the Commander dragged the rule between two panes (Phase 55).
 /// <para>
 /// The neighbour to <see cref="Windowing.WindowPlacementMemory"/> and deliberately so: both keep a
 /// number nobody would ever type, on the one surface that has a mouse, out of the append-only

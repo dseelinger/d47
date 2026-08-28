@@ -6,8 +6,8 @@ using D47.Core.Knowledge;
 namespace D47.Core.Ships;
 
 /// <summary>
-/// One line of the fleet page: a hull, whatever is planned for it, and where it is (list.md Phase
-/// 26, "The fleet, and the fleet you intend").
+/// One line of the fleet page: a hull, whatever is planned for it, and where it is (Phase 26,
+/// "The fleet, and the fleet you intend").
 /// </summary>
 /// <param name="Build">The build, or null for a ship the Commander owns and has planned nothing for.</param>
 /// <param name="Stored">The journal's record of it, or null for a hull that is only intended.</param>
@@ -75,7 +75,7 @@ public sealed record FleetEntry(ShipBuild? Build, StoredShip? Stored, bool IsAct
 }
 
 /// <summary>
-/// The Commander's ship builds, joined to the fleet the journal reports (list.md Phase 26,
+/// The Commander's ship builds, joined to the fleet the journal reports (Phase 26,
 /// "Ships").
 /// <para>
 /// <b>The plan owns what and the checklist owns when.</b> Nothing here writes to the checklist:
@@ -102,7 +102,7 @@ public sealed class ShipPlanService(
     public ShipBuildStore Store => store;
 
     /// <summary>
-    /// Whose plans are being read and written. Half the store's key (the list.md Phase 44 defect
+    /// Whose plans are being read and written. Half the store's key (the Phase 44 defect
     /// item): Elite's ship ids are per Commander, so ship 7 alone does not name a ship, and one
     /// Commander's fleet page must not offer another's builds.
     /// </summary>
@@ -277,7 +277,7 @@ public sealed class ShipPlanService(
     }
 
     /// <summary>
-    /// Starts a build for a hull the Commander does not own (list.md Phase 26).
+    /// Starts a build for a hull the Commander does not own (Phase 26).
     /// <para>
     /// <b>A hull you do not own is not in the fleet.</b> It is its own class with no <c>ShipID</c>,
     /// because <see cref="ChecklistScope.Ship(int)"/> takes the journal's id and a Corsair nobody
@@ -379,7 +379,7 @@ public sealed class ShipPlanService(
     }
 
     /// <summary>
-    /// Offers a build to the checklist (list.md Phase 26, "A plan reaches the checklist when you
+    /// Offers a build to the checklist (Phase 26, "A plan reaches the checklist when you
     /// say so").
     /// <para>
     /// <b>Promotion is one-to-many.</b> <see cref="EngineeringPlan.Items"/> already emits an
@@ -453,14 +453,14 @@ public sealed class ShipPlanService(
 
     /// <summary>
     /// Watches for the Commander buying — or boarding — a hull they had planned for, and adopts the
-    /// plan onto it (list.md Phase 26; the boarding half is remediation.md 17, item 7).
+    /// plan onto it (Phase 26; the boarding half is remediation.md 17, item 7).
     /// <para>
     /// <b>Buying one adopts the plan rather than making the Commander re-point it.</b> Doug's
     /// words: "don't make me re-point it".
     /// </para>
     /// <para>
     /// <b>On <c>ShipyardNew</c> rather than <c>ShipyardBuy</c>, which is a correction to what the
-    /// phase says.</b> list.md has "ShipyardBuy names the hull and the new id"; measured against
+    /// phase says.</b> It has "ShipyardBuy names the hull and the new id"; measured against
     /// the Commander's own journals, <c>ShipyardBuy</c> carries <c>ShipType</c>, <c>ShipPrice</c>
     /// and the old ship being stored, and <b>no id for the new one at all</b> — the id arrives in
     /// the <c>ShipyardNew</c> written immediately after, as <c>NewShipID</c>. Matching on the
@@ -556,7 +556,7 @@ public sealed class ShipPlanService(
 
     /// <summary>
     /// Records that the Commander has said no to one particular disagreement between a build and
-    /// the checklist (list.md Phase 38). Written by <see cref="ShipDriftWatch"/> and nothing else.
+    /// the checklist (Phase 38). Written by <see cref="ShipDriftWatch"/> and nothing else.
     /// </summary>
     public void Settle(string buildId, string fingerprint)
     {

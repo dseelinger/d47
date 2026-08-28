@@ -225,7 +225,7 @@ public static class ChecklistWording
         }
 
         // The remembered loadout rather than the ship being flown, so a plan for the Cutter in
-        // another dock still names its modules (list.md Phase 37 remembered them for exactly this).
+        // another dock still names its modules (Phase 37 remembered them for exactly this).
         if (state.Loadouts.For(shipId)?.Loadout is not { } loadout)
         {
             return null;

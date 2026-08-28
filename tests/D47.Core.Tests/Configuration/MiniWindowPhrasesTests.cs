@@ -5,7 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>
-/// <b>The spoken phrases must not collide with the headset's</b> (list.md Phase 51).
+/// <b>The spoken phrases must not collide with the headset's</b> (Phase 51).
 /// <para>
 /// <c>VrCapability.ModeKey</c> already owns "mini panel" and "full panel". A Commander in a headset
 /// who says those must not shrink a window they cannot see, and one at a desk must not resize a

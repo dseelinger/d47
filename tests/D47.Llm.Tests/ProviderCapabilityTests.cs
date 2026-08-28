@@ -93,7 +93,7 @@ public class ProviderCapabilityTests
     /// Caching and tool calls are true for everything this provider speaks to, gateway or not —
     /// they are protocol features rather than deployment ones.
     /// <para>
-    /// <b>Effort used to be asserted here and is not any more</b> (list.md Phase 54). It is a
+    /// <b>Effort used to be asserted here and is not any more</b> (Phase 54). It is a
     /// per-model fact, not a protocol one: Haiku 4.5 predates the 4.6 generation and rejects the
     /// two fields that carry it. Left in this list, the claim would have been true of the model
     /// it was written against and wrong about the picker.

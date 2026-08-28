@@ -3,7 +3,7 @@ using D47.Core.Journal;
 namespace D47.Core.Habits;
 
 /// <summary>
-/// Hull damage taken on arrival with nobody shooting (list.md Phase 32).
+/// Hull damage taken on arrival with nobody shooting (Phase 32).
 /// <para>
 /// <b>The strongest signal in the phase, and the one the checklist could not have named.</b> The
 /// Commander asked for a warning about missing the game's own impact warnings on a set-and-forget

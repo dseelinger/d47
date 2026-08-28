@@ -4,7 +4,7 @@ using Xunit;
 namespace D47.Core.Tests.Interface;
 
 /// <summary>
-/// The arithmetic behind "Search whichever tab you are looking at" (list.md Phase 12).
+/// The arithmetic behind "Search whichever tab you are looking at" (Phase 12).
 /// <para>
 /// It is in Core, and so is this, because the awkward parts of that feature are all offsets:
 /// the current hit surviving the log growing underneath it, stepping wrapping at both ends, and

@@ -14,7 +14,7 @@ public enum VoiceActivity
 }
 
 /// <summary>
-/// Whether somebody is talking (list.md Phase 13, "Voice Activity Detection").
+/// Whether somebody is talking (Phase 13, "Voice Activity Detection").
 /// <para>
 /// It is deliberately not a model. The checklist asks for a <em>gate policy over the existing
 /// stream</em>, and what a gate policy has to be is cheap enough to run on every buffer on the

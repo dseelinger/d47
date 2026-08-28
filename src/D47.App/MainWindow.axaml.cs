@@ -29,7 +29,7 @@ namespace D47.App;
 /// needs its handle, and navigating away from it.
 /// <para>
 /// Everything the panel shows and does moved to <see cref="PanelViewModel"/>, which the VR
-/// overlay binds a second instantiation of the same view to (list.md Phase 9, "TheApp's panel
+/// overlay binds a second instantiation of the same view to (Phase 9, "TheApp's panel
 /// works in VR"). The split is what makes the windowed surface unable to be more functional
 /// than the headset one — not a rule anybody has to remember, just where the code is.
 /// </para>
@@ -42,7 +42,7 @@ public partial class MainWindow : Window
     private readonly GlobalHotkey _bindShipCore;
 
     /// <summary>
-    /// The two keys that reach the flat mini panel (list.md Phase 48). System-wide, because the
+    /// The two keys that reach the flat mini panel (Phase 48). System-wide, because the
     /// only moment either is wanted is a moment Elite is filling the screen — and the overlay is
     /// the one surface a Commander cannot click on to reach.
     /// </summary>
@@ -157,17 +157,16 @@ public partial class MainWindow : Window
             Panel.EnableRawJournal();
 
             // The window that can show settings says so; the headset's copy of this same view
-            // is handed nothing and therefore has no Settings tab (list.md Phase 12). The second
+            // is handed nothing and therefore has no Settings tab (Phase 12). The second
             // argument is what a help card naming a settings section does when pressed, and it
             // is null on the headset for exactly the same reason the first one is absent there.
             Panel.EnableSettings(BuildSettingsPage, RevealSetting);
 
             // The checklist, on the other hand, goes to both surfaces — which is the whole
             // headline of the item that moved it out of a Window. A Window cannot appear in the
-            // headset, so a Commander in VR could not see their checklist at all (list.md
-            // Phase 25).
+            // headset, so a Commander in VR could not see their checklist at all (Phase 25).
             //
-            // Its second root, where to buy everything a build still needs (list.md Phase 50), is
+            // Its second root, where to buy everything a build still needs (Phase 50), is
             // this window's alone: the carrier figure is typed, and typing wants a keyboard. Passed
             // as a factory so the page is built on the way into it rather than at startup.
             Panel.EnableChecklist(
@@ -182,7 +181,7 @@ public partial class MainWindow : Window
                     () => host.Settings.Current.Knowledge.GalaxySearch,
                     OpenSettings));
 
-            // The stories the Commander flies (list.md Phase 47). **Both surfaces from
+            // The stories the Commander flies (Phase 47). **Both surfaces from
             // 2026-08-22**, on the Commander's instruction: the tab was desktop-only on the
             // reasoning that the editor and the ask form want a keyboard, and that was the wrong
             // half to weigh — a Commander wearing a headset is exactly the one who has just
@@ -210,9 +209,9 @@ public partial class MainWindow : Window
             }
 
             // The fleet and its builds, what the Commander is wearing, and the arithmetic
-            // between them (list.md Phases 26 and 27). This window only: withdrawn from the
+            // between them (Phases 26 and 27). This window only: withdrawn from the
             // headset during the panel redesign and left there when the checklist went back
-            // (list.md Phase 39), because a three-level drill ending in a search field is a
+            // (Phase 39), because a three-level drill ending in a search field is a
             // bigger surface than one list of short rows.
             Panel.EnableLoadout(
                 host.Ships,
@@ -221,13 +220,13 @@ public partial class MainWindow : Window
                 host.OnFootPlans,
                 () => host.ModulePower);
 
-            // Who to go and unlock next, read across both plan stores (list.md Phase 28). Both
+            // Who to go and unlock next, read across both plan stores (Phase 28). Both
             // surfaces again, because a Commander deciding where to fly is usually already in
             // the ship.
             Panel.EnableEngineers(
                 host.Unlocks, host.Ships, () => host.GameState.Active, host.OnFootPlans);
 
-            // Where the Commander is going, in three readings of one journey (list.md Phase 37).
+            // Where the Commander is going, in three readings of one journey (Phase 37).
             // This window only: the plan forms want a keyboard the headset has not got. If VR
             // ever gets this tab it gets Progress and nothing else, which is a different set of
             // flags on this same call rather than a second page.
@@ -239,11 +238,11 @@ public partial class MainWindow : Window
                 () => host.Settings.Current.Knowledge.GalaxySearch,
                 OpenSettings,
 
-                // And the Market page beside them (list.md Phase 49), for the same reason the
+                // And the Market page beside them (Phase 49), for the same reason the
                 // plan forms are here and not in the headset: it wants a keyboard.
                 host.Commodities));
 
-            // And the clocks, timers and alarms (list.md Phase 24). Both surfaces, like the
+            // And the clocks, timers and alarms (Phase 24). Both surfaces, like the
             // checklist: a Commander in a headset is exactly the Commander who cannot glance at
             // a wall clock.
             Panel.EnableUtilities(
@@ -258,7 +257,7 @@ public partial class MainWindow : Window
             Panel.EnableSearch();
 
             // And the same window is the one with a mouse, which is the only thing the ask lets
-            // drag a pane (list.md Phase 55). Third call on the same line of the same file, for
+            // drag a pane (Phase 55). Third call on the same line of the same file, for
             // the same reason: "desktop only" lives here rather than in a test inside the view.
             Panel.EnableDraggablePanes(new PaneWidthMemory(host.ViewState));
 
@@ -267,7 +266,7 @@ public partial class MainWindow : Window
             Panel.EnableTurnDetails(() => _ = ShowSpendAsync());
 
             // A value being said rather than typed reaches this surface's open prompt, if it has
-            // one (list.md Phase 25). Registered rather than assigned: the headset's copy of this
+            // one (Phase 25). Registered rather than assigned: the headset's copy of this
             // panel registers its own, and either can be the one asking.
             host.RoutePrompts(heard =>
             {
@@ -282,8 +281,8 @@ public partial class MainWindow : Window
                 return true;
             });
 
-            // And a spoken "show me the checklist" moves this surface (list.md Phase 25), as does
-            // a switch (list.md Phase 46) — which arrives from the tick thread, so it is given the
+            // And a spoken "show me the checklist" moves this surface (Phase 25), as does
+            // a switch (Phase 46) — which arrives from the tick thread, so it is given the
             // dispatcher captured here rather than left to read the static one from a worker.
             var ui = Avalonia.Threading.Dispatcher.UIThread;
             // The window leads: its tab carries to any surface that furnished the same one
@@ -294,7 +293,7 @@ public partial class MainWindow : Window
             host.RouteScrolling(Panel.Scroll);
 
             // A clock is the one page whose content changes with nothing having happened, so it
-            // is pushed rather than pulled (list.md Phase 24). Posted, because the tick loop runs
+            // is pushed rather than pulled (Phase 24). Posted, because the tick loop runs
             // on its own thread and every control here belongs to this one; and it does nothing
             // at all until the tab has been opened once.
             host.Tick.Add("clocks", _ =>
@@ -303,7 +302,7 @@ public partial class MainWindow : Window
             // The engineer pages move for a different reason: nothing has to happen for a clock
             // to change, and everything has to happen for a ranking to. So this one asks whether
             // the Commander has moved, re-fitted or unlocked somebody, and redraws only then
-            // (list.md Phase 28).
+            // (Phase 28).
             host.Tick.Add("engineers", _ =>
                 Avalonia.Threading.Dispatcher.UIThread.Post(() => Panel.TickEngineers()));
 
@@ -322,7 +321,7 @@ public partial class MainWindow : Window
             host.Tick.Add("loadout", _ =>
                 Avalonia.Threading.Dispatcher.UIThread.Post(Panel.TickLoadout));
 
-            // And the route being flown, by the same route again (list.md Phase 37). A jump
+            // And the route being flown, by the same route again (Phase 37). A jump
             // rewrites NavRoute.json and moves the Commander along it, and neither of those is
             // something the page can notice by itself.
             //
@@ -331,7 +330,7 @@ public partial class MainWindow : Window
                 Avalonia.Threading.Dispatcher.UIThread.Post(Panel.TickRouting));
 
             // And the same window is the one with a keyboard, so it is the one whose mini keeps
-            // the ask line (list.md Phase 51). Furnished rather than branched: the headset's mini
+            // the ask line (Phase 51). Furnished rather than branched: the headset's mini
             // is untouched and the flat overlay stays output-only by not making this call.
             Panel.EnableAskInMini();
 
@@ -431,7 +430,7 @@ public partial class MainWindow : Window
         // Spoken input runs the same turn as typed input, deliberately. A second path would be
         // a second place for the in-flight gate, the interrupt vocabulary and the cancellation
         // slot to be got wrong, and the Commander expects "where am I" to mean the same thing
-        // whichever way they said it (list.md Phase 6).
+        // whichever way they said it (Phase 6).
         _host.Heard += text => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
             // Spoken and typed run the same turn - the Commander expects "where am I" to mean
@@ -490,7 +489,7 @@ public partial class MainWindow : Window
                 BindOverlayKeys();
             }
 
-            // Mini and back, with no restart (list.md Phase 51, and Phase 4's rule about every
+            // Mini and back, with no restart (Phase 51, and Phase 4's rule about every
             // setting). Zoom too, because the mini size is measured: a layout transform
             // re-measures, so a mini window at 150% is a bigger mini window rather than a
             // clipped one, and nothing but this resizes it.
@@ -512,12 +511,12 @@ public partial class MainWindow : Window
 
         // Said aloud as well as shown, because a misconfigured provider otherwise presents as
         // silence, and silence is indistinguishable from a model with nothing to say
-        // (list.md Phase 5). Not awaited: it must never delay the panel.
+        // (Phase 5). Not awaited: it must never delay the panel.
         _ = _host.AnnounceStartupProblemsAsync();
 
         // Optional in two senses: it must never delay the status the Commander is here for, and
         // it is the one network call d47 makes on its own — so it is a setting, and it is
-        // disclosed (list.md Phase 4, "Say what each provider receives").
+        // disclosed (Phase 4, "Say what each provider receives").
         if (_host.Settings.Current.Updates.CheckOnStartup)
         {
             _ = CheckForUpdateAsync(_host);
@@ -536,7 +535,7 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// The guided key setup, shown when there is no usable language-model key (list.md Phase 16).
+    /// The guided key setup, shown when there is no usable language-model key (Phase 16).
     /// <para>
     /// <b>Driven by state, never by a flag.</b> There is nothing recorded about having shown
     /// this, which is the point: a Commander who restored a <c>data\</c> folder onto a new
@@ -622,7 +621,7 @@ public partial class MainWindow : Window
             else if (Matches(_host.Settings.Current.Hotkeys.WindowMode, e))
             {
                 // The way back that works when there is nothing at all on the surface
-                // (list.md Phase 51). Through the settings service rather than straight at the
+                // (Phase 51). Through the settings service rather than straight at the
                 // view, the same road ZoomHost.Set takes: this is a hotkey reaching a settings
                 // row, which is a caller the service already knows about, and going around it
                 // would leave the row showing a state that is no longer true.
@@ -739,7 +738,7 @@ public partial class MainWindow : Window
         string.Equals(settings.Ui.Mode, "mini", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
-    /// Puts the window into the shape the setting names, and back (list.md Phase 51).
+    /// Puts the window into the shape the setting names, and back (Phase 51).
     /// <para>
     /// <see cref="Headset.VrPanelSurface.ApplyMode"/> is the whole pattern, copied rather than
     /// reinvented: read the setting, compare against what the view is on, assign only if it moved.
@@ -774,7 +773,7 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// What mini wants: <b>measured rather than typed</b> (list.md Phase 51).
+    /// What mini wants: <b>measured rather than typed</b> (Phase 51).
     /// <para>
     /// The headset's 512x280 is the floor — mini is a reduced content set and the height is what
     /// that set needs — and this window's mini keeps the ask line, which the headset's does not.
@@ -822,7 +821,7 @@ public partial class MainWindow : Window
     /// </para>
     /// </summary>
     /// <summary>
-    /// What the Adventures tab reads, built once for both surfaces (list.md Phase 47, amended
+    /// What the Adventures tab reads, built once for both surfaces (Phase 47, amended
     /// 2026-08-22). Null where the host has no adventures — the designer, and a test that is not
     /// about them. The headset is handed this same instance; it carries delegates and no visual,
     /// which is exactly what makes that safe.
@@ -856,16 +855,16 @@ public partial class MainWindow : Window
 
                 // The Commander's own notes, and the search that decides how one is filed. The
                 // host owns both halves of "can this search at all", which is the thing the
-                // window has to say before anything is typed (list.md Phase 23).
+                // window has to say before anything is typed (Phase 23).
                 _host.LoreEditing,
                 _host.Memories,
 
-                // And what it has noticed about them, with the way to look again (list.md Phase
-                // 32). The action is the host's, because mining runs off the UI thread and the
+                // And what it has noticed about them, with the way to look again (Phase 32).
+                // The action is the host's, because mining runs off the UI thread and the
                 // panel is not the thing that decides where work happens.
                 _host.Habits,
 
-                // And the log those journals can be turned into (list.md Phase 33). The book
+                // And the log those journals can be turned into (Phase 33). The book
                 // rather than an action, because writing one is two acts and the window is what
                 // holds the figure between them.
                 _host.Logbook,
@@ -881,7 +880,7 @@ public partial class MainWindow : Window
 
             // A file dropped into data/audio rebuilds the cue library without any setting having
             // changed, so the row that says what was found has no other way to know. Posted
-            // because the rescan runs on the tick thread (list.md Phase 12).
+            // because the rescan runs on the tick thread (Phase 12).
             _host.AudioReloaded += () => Avalonia.Threading.Dispatcher.UIThread.Post(view.Refresh);
 
             // The two About rows that need a window to open one over (#50). Joined here for the
@@ -974,14 +973,14 @@ public partial class MainWindow : Window
 
         // Asked before the in-flight gate, never after. A silence command is only ever wanted
         // while d47 is mid-sentence, which is exactly when _turnInFlight is true — so gating it
-        // on that would drop it at the one moment it matters (list.md Phase 5, "never gated
+        // on that would drop it at the one moment it matters (Phase 5, "never gated
         // behind a turn completing"). The registry decides what may interrupt; this does not.
         //
         // Only consulted when there is actually something to interrupt, which is what lets the
         // vocabulary include a bare "stop". Idle, "stop" is the opening word of "stop the ship"
         // and belongs to whatever answers that; mid-sentence it has one meaning. Context is the
         // disambiguator, so context is the gate.
-        // Moving the panel by saying so (list.md Phase 25). Before the in-flight gate for the same
+        // Moving the panel by saying so (Phase 25). Before the in-flight gate for the same
         // reason the silence command is: navigating is a thing about the surface rather than about
         // the conversation, and a Commander who wants their checklist while d47 is mid-sentence
         // should get it. Deterministic, provider-free, and never a tool — nothing an in-game
@@ -1033,7 +1032,7 @@ public partial class MainWindow : Window
 
         // Addressed to somebody in the fighter bay rather than to the ship's AI? The scope swaps
         // the prompt block and the voice and puts them back in its Dispose, so a crew turn
-        // cannot leak the wrong persona into the next one (list.md Phase 11, "Ship Crew").
+        // cannot leak the wrong persona into the next one (Phase 11, "Ship Crew").
         using var crew = _host.BeginCrewTurn(input);
 
         if (crew is not null)
@@ -1052,7 +1051,7 @@ public partial class MainWindow : Window
             // Through the voice pipeline rather than straight off the turn loop, so the panel
             // and the speaker are fed from one traversal of one stream. Rendering as it arrives
             // is what lets speech start at the first sentence boundary rather than at end of
-            // turn (list.md Phase 5).
+            // turn (Phase 5).
             await _host.Voice.RunAsync(
                 _host.Turns.RunAsync(input, source, cancelling.Token),
                 turnEvent =>
@@ -1132,7 +1131,7 @@ public partial class MainWindow : Window
     /// <para>
     /// Deferred to here rather than done in <see cref="AppHost"/> because a registration needs a
     /// window handle, and the handle does not exist until the window does. The key itself is not
-    /// scoped to that window — that is the entire point of it (list.md Phase 5, "Shut up").
+    /// scoped to that window — that is the entire point of it (Phase 5, "Shut up").
     /// </para>
     /// </summary>
     private void BindShutUp()
@@ -1155,7 +1154,7 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Registers the system-wide re-anchor key (list.md Phase 9, "Re-anchor the panels").
+    /// Registers the system-wide re-anchor key (Phase 9, "Re-anchor the panels").
     /// <para>
     /// System-wide for the same reason the silence key is, and more so: the case it exists for
     /// is Elite holding the foreground with the panels drifted somewhere the Commander cannot
@@ -1164,7 +1163,7 @@ public partial class MainWindow : Window
     /// </para>
     /// </summary>
     /// <summary>
-    /// The two gestures that reach the flat mini panel (list.md Phase 48).
+    /// The two gestures that reach the flat mini panel (Phase 48).
     /// <para>
     /// <b>Show/hide writes the setting rather than holding a visibility of its own</b>, through
     /// the settings service as <see cref="SettingsCaller.Hotkey"/> — the same route
@@ -1222,7 +1221,7 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// The gesture that binds the core aboard to the ship the Commander is in (list.md Phase 35).
+    /// The gesture that binds the core aboard to the ship the Commander is in (Phase 35).
     /// <para>
     /// System-wide, because the moment it is wanted is a moment they are sitting in the ship with
     /// Elite in front of them. Pressing it again with the same core already bound takes it back,
@@ -1360,7 +1359,7 @@ public partial class MainWindow : Window
 
     /// <summary>
     /// Downloads the new build, verifies it, puts it where this one is and starts it
-    /// (list.md Phase 19: "the user is given an opportunity to exit, install it, and restart").
+    /// (Phase 19: "the user is given an opportunity to exit, install it, and restart").
     /// <para>
     /// Every failure ends at the release page rather than at a dead end — the Commander asked to
     /// be updated, and the browser is the path that always works. The reason is said out loud

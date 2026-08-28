@@ -1,6 +1,6 @@
 namespace D47.Core.Conversation;
 
-/// <summary>How the wait grows between attempts (list.md Phase 5).</summary>
+/// <summary>How the wait grows between attempts (Phase 5).</summary>
 public enum BackoffShape
 {
     /// <summary>X, 2X, 3X — the wait grows by the base each time.</summary>
@@ -16,7 +16,7 @@ public enum BackoffShape
 
 /// <summary>
 /// N tries, X wait, one shape or the other. Pure arithmetic with no clock in it, so the
-/// schedule is assertable without anything actually waiting (list.md Phase 5, architecture.md §8).
+/// schedule is assertable without anything actually waiting (Phase 5, architecture.md §8).
 /// </summary>
 public sealed record RetryPolicy
 {

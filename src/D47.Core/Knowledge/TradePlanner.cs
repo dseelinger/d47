@@ -1,7 +1,7 @@
 namespace D47.Core.Knowledge;
 
 /// <summary>
-/// d47's own trade route arithmetic (list.md Phase 36).
+/// d47's own trade route arithmetic (Phase 36).
 /// <para>
 /// <b>This is the half nobody else does.</b> A leg that sells everything is what every planner
 /// assumes, and it is not always the best move: holding a commodity past a station that pays
@@ -598,7 +598,7 @@ public static class TradePlanner
             // Never more than somebody actually wants. This is the whole of d47's saturation
             // answer and it is deliberately the conservative half of it: selling far past demand
             // drops what the rest fetches by a factor that is not known and must not be invented
-            // (list.md Phase 36), so a leg stops at demand and the report says that it did.
+            // (Phase 36), so a leg stops at demand and the report says that it did.
             var wanted = !closing && board.Ceiling[commodity] > pays
                 ? Math.Max(board.Demand[destination][commodity], board.CeilingDemand[commodity])
                 : board.Demand[destination][commodity];

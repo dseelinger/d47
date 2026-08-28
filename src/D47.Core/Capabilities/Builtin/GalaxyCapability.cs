@@ -5,7 +5,7 @@ using D47.Core.Knowledge;
 namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
-/// Looking things up in the galaxy (list.md Phase 14, "Galaxy Search").
+/// Looking things up in the galaxy (Phase 14, "Galaxy Search").
 /// <para>
 /// The first capability whose answers come from off this machine, which is what makes its two
 /// unusual properties necessary. Filters are validated against a closed vocabulary <em>before</em>
@@ -24,10 +24,10 @@ public static class GalaxyCapability
     /// <param name="galaxy">
     /// The service, or null where none is composed — under the designer and in a test that is not
     /// about it. Null and switched off give the same answer for the same reason: a capability
-    /// that cannot act says so and the turn carries on (list.md Phase 3).
+    /// that cannot act says so and the turn carries on (Phase 3).
     /// </param>
     /// <param name="trade">
-    /// The trade planner, which is where whole markets already live (list.md Phase 49). Null where
+    /// The trade planner, which is where whole markets already live (Phase 49). Null where
     /// none is composed, and <c>find_nearest_station</c> then answers the module and ship halves of
     /// its question and says it cannot price a commodity.
     /// </param>
@@ -254,7 +254,7 @@ public static class GalaxyCapability
 
                         // Two examples rather than four. They exist to teach the shape of a name,
                         // and two teach it; the other two were paid for on every turn by the
-                        // Commander's action tools (list.md Phase 49).
+                        // Commander's action tools (Phase 49).
                         Description = "The kind of body, by name — \"Earth-like world\", \"Class I gas giant\".",
                     },
                     new ToolParameter
@@ -385,7 +385,7 @@ public static class GalaxyCapability
 
     public const string EnabledKey = "knowledge.galaxy";
 
-    /// <summary>The catalogue of notable places a generated adventure may draw on (list.md Phase 47).</summary>
+    /// <summary>The catalogue of notable places a generated adventure may draw on (Phase 47).</summary>
     public const string NotablePlacesKey = "knowledge.notablePlaces";
 
     private static IReadOnlyList<string> Choices(string filter) =>
@@ -529,8 +529,8 @@ public static class GalaxyCapability
         }
 
         // The commodity half is a different source and a different ranking, so it forks here
-        // rather than threading a second kind of answer through the module search (list.md Phase
-        // 49). Everything above it — near, max_distance, large_pad, limit — means the same thing
+        // rather than threading a second kind of answer through the module search (Phase 49).
+        // Everything above it — near, max_distance, large_pad, limit — means the same thing
         // on both sides, which is most of why this is a parameter and not a second tool.
         if (arguments.TryGetString("commodity", out var commodity) && !string.IsNullOrWhiteSpace(commodity))
         {
@@ -591,7 +591,7 @@ public static class GalaxyCapability
     }
 
     /// <summary>
-    /// Where to buy a commodity, or where to dump one (list.md Phase 49).
+    /// Where to buy a commodity, or where to dump one (Phase 49).
     /// </summary>
     private static async Task<ToolResult> FindCommodityAsync(
         ITradePlanService? trade,
@@ -652,8 +652,8 @@ public static class GalaxyCapability
                 .ConfigureAwait(false);
 
             // Posted on the way out, so the Routing tab draws the answer the Commander was just
-            // told rather than running a second search that could disagree with it (list.md Phase
-            // 49; the arrangement RoutePlanBook already makes for routes).
+            // told rather than running a second search that could disagree with it (Phase 49; the
+            // arrangement RoutePlanBook already makes for routes).
             if (board is not null)
             {
                 board.Post(new CommodityPosting(

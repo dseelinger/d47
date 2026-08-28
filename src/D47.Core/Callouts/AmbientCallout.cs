@@ -3,7 +3,7 @@ using D47.Core.Journal;
 namespace D47.Core.Callouts;
 
 /// <summary>
-/// A remark, now and then, about where the Commander actually is (list.md Phase 11, "Ambient
+/// A remark, now and then, about where the Commander actually is (Phase 11, "Ambient
 /// Voice").
 /// <para>
 /// Everything else in Phase 8 speaks because something happened. This speaks because nothing
@@ -105,7 +105,7 @@ public sealed class AmbientCallout : ICallout
 
             // The index the stock line was picked with, so the model-written replacement can be
             // chosen by the same count — which ambient remark this is decides whether the
-            // Commander's story goes with it (list.md Phase 43).
+            // Commander's story goes with it (Phase 43).
             Variant = variant,
         };
     }

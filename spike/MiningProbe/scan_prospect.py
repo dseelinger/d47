@@ -1,6 +1,6 @@
 """What does a prospector limpet actually report, and what can a callout say about it?
 
-`list.md` Phase 18, *Prospector and core callouts*. Three questions, and the second one changes what
+Phase 18, *Prospector and core callouts*. Three questions, and the second one changes what
 ships:
 
   1. What does `ProspectedAsteroid` carry, how often does it arrive, and how rare is a core?

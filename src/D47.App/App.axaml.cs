@@ -33,7 +33,7 @@ public partial class App(AppHost? host) : Application
             // <b>Closing the window is how d47 is quit</b> — there is no tray icon — and that has
             // been true only by accident: the default is to shut down when the <em>last</em>
             // window closes, and d47 had exactly one. The flat mini panel is a second one
-            // (list.md Phase 48), so without this a Commander who closes the window while the
+            // (Phase 48), so without this a Commander who closes the window while the
             // overlay has been on leaves d47 running with nothing on screen to close, which is
             // the shape of failure a first run never recovers from.
             desktop.ShutdownMode = Avalonia.Controls.ShutdownMode.OnMainWindowClose;
@@ -42,7 +42,7 @@ public partial class App(AppHost? host) : Application
         // After the framework is up, because the headset path rasterises a widget tree and
         // needs a dispatcher to do it on. Unconditional: a machine with no headset gets the
         // same code path and the Unavailable state, rather than a branch that only runs for
-        // Commanders who have one (list.md Phase 9, "Order agnostic Overlay").
+        // Commanders who have one (Phase 9, "Order agnostic Overlay").
         if (host is not null)
         {
             host.Vr = Headset.VrHost.Start(
@@ -64,36 +64,36 @@ public partial class App(AppHost? host) : Application
 
                 // And the checklist, which the headset copy needs more than the window does: a
                 // Window cannot appear here, so this is the only way a Commander in VR sees it
-                // (list.md Phase 25).
+                // (Phase 25).
                 host.Checklists,
 
-                // And the clocks, timers and alarms (list.md Phase 24).
+                // And the clocks, timers and alarms (Phase 24).
                 host.Timekeeper,
                 host.Alarms,
 
-                // And the fleet (list.md Phase 26), with the suits and the gap beside it
-                // (list.md Phase 27).
+                // And the fleet (Phase 26), with the suits and the gap beside it
+                // (Phase 27).
                 host.Ships,
                 () => host.GameState.Active,
                 host.OnFootPlans,
 
-                // And who to go and unlock next (list.md Phase 28), which is the page whose
+                // And who to go and unlock next (Phase 28), which is the page whose
                 // whole design is for being read where there is no second monitor.
                 host.Unlocks,
 
                 // And the long arcs, which ride the checklist tab and therefore reach the headset
-                // on exactly the same terms it does (list.md Phase 34).
+                // on exactly the same terms it does (Phase 34).
                 host.Goals?.Book,
                 host.Goals?.Backfill,
 
-                // And the stories (list.md Phase 47), from 2026-08-22. The window's own instance
+                // And the stories (Phase 47), from 2026-08-22. The window's own instance
                 // rather than a second one: the record is delegates and no visual, and two of them
                 // would be two lists of what an adventure surface needs wired to it — which is the
                 // same argument the settings page builder above is passed for.
                 window?.Adventures);
 
             // And the headset's copy of the panel can be the one asking for a spoken value
-            // (list.md Phase 25). Registered beside the window's rather than instead of it: two
+            // (Phase 25). Registered beside the window's rather than instead of it: two
             // surfaces, two navigators, and either can have a prompt open.
             var prompts = host.Vr.Prompts;
 
@@ -119,7 +119,7 @@ public partial class App(AppHost? host) : Application
             host.RouteScrolling(host.Vr.Scroll);
 
             // And the third surface: the mini panel on a monitor, for a Commander with no headset
-            // (list.md Phase 48). Built unconditionally like the headset path and for the same
+            // (Phase 48). Built unconditionally like the headset path and for the same
             // reason — a code path that only runs for people who turned something on is the code
             // path that breaks — and it puts nothing on screen until the setting says so.
             //
@@ -154,7 +154,7 @@ public partial class App(AppHost? host) : Application
                     Alarms = host.Alarms,
                 });
 
-            // Through the same route as the other two (list.md Phase 45). Never as the leader:
+            // Through the same route as the other two (Phase 45). Never as the leader:
             // the window leads and this follows, so a spoken phrase or a switch can put the strip
             // on a page and the strip's own tab can never drag the window's.
             //

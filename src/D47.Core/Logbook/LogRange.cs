@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Logbook;
 
 /// <summary>
-/// What span a log covers (list.md Phase 33, "A session becomes something worth keeping").
+/// What span a log covers (Phase 33, "A session becomes something worth keeping").
 /// <para>
 /// The item says <em>a session — or a week</em> and both halves are here. A session is not a
 /// duration and cannot be expressed as one, which is why this is a closed set rather than a

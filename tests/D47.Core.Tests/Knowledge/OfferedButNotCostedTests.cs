@@ -17,7 +17,7 @@ namespace D47.Core.Tests.Knowledge;
 /// a claim about Elite. The true claim is about d47.
 /// </para>
 /// <para>
-/// <b>Half of the gap closed in list.md Phase 38, and the two halves are different kinds of thing.</b>
+/// <b>Half of the gap closed in Phase 38, and the two halves are different kinds of thing.</b>
 /// Some offers were uncosted because EDSY <em>splits a module type EDEngineer does not</em> — the
 /// Supercharged drive against the ordinary one — so the recipe was on disk all along, filed under
 /// a sibling name. That is a join, it is settled by the corpus rather than by a resemblance, and
@@ -63,7 +63,7 @@ public class OfferedButNotCostedTests
     [Fact]
     public void TheSuperchargedDriveIsOfferedAndNowCosted()
     {
-        // **The largest gap of the family, and it was never missing data** (list.md Phase 38,
+        // **The largest gap of the family, and it was never missing data** (Phase 38,
         // item 10). EDSY files the SCO drive as its own module type; EDEngineer has one "Frame
         // Shift Drive" — so all eight of the drive's blueprints were offered to a Commander with
         // no recipe behind any of them, on the drive almost everybody now flies.

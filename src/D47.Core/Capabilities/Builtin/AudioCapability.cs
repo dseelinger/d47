@@ -6,7 +6,7 @@ namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
 /// The mixer: how loud each category is, whether it is muted, and how far it drops while d47 is
-/// speaking (list.md Phase 12, "#96 Ambient audio mixer").
+/// speaking (Phase 12, "#96 Ambient audio mixer").
 /// <para>
 /// <b>No tool surface.</b> Every row here is reachable from the panel and by the model-free
 /// keyword router, and none of it is reachable by the model — a model that can turn its own
@@ -145,7 +145,7 @@ public static class AudioCapability
 
         // Speech and alerts are what everything else ducks under. A row asking how far speech
         // drops while speech is playing is a row with no answer, and offering it would invite
-        // a Commander to set a number that does nothing (list.md Phase 4: a row that does not
+        // a Commander to set a number that does nothing (Phase 4: a row that does not
         // apply is absent rather than disabled).
         if (!AudioMix.Ducks(channel))
         {

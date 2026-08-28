@@ -8,7 +8,7 @@ using Xunit;
 namespace D47.Tts.Tests;
 
 /// <summary>
-/// What d47 sends Cartesia, and what it does with what comes back (list.md Phase 60).
+/// What d47 sends Cartesia, and what it does with what comes back (Phase 60).
 /// <para>
 /// The sibling of <see cref="WhatOpenAiIsAskedForTests"/> and for the same reason: the model and
 /// the request shape decide what a Commander hears and what they are billed, and neither fact is
@@ -265,7 +265,7 @@ public class WhatCartesiaIsAskedForTests
         var listed = await provider.ListVoicesAsync(TestContext.Current.CancellationToken);
 
         // Not the same nothing a refused key shows: the picker's contract is that an empty list
-        // says why (list.md Phase 19).
+        // says why (Phase 19).
         Assert.Equal(VoiceListing.NoKey, listed.Listing);
     }
 

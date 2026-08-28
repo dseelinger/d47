@@ -16,7 +16,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The ship AI's face (list.md Phase 11, "Ship's AI Avatar").
+/// The ship AI's face (Phase 11, "Ship's AI Avatar").
 /// <para>
 /// Rendered rather than merely constructed, for the reason the panel parity tests already give:
 /// an unlaid-out view shows nothing at all, and that is exactly how a blank surface gets as far
@@ -134,7 +134,7 @@ public class AvatarTests
 }
 
 /// <summary>
-/// The Commander's own frames, resolved per state (list.md Phase 11).
+/// The Commander's own frames, resolved per state (Phase 11).
 /// </summary>
 public class AvatarLibraryTests
 {

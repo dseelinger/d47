@@ -23,7 +23,7 @@ public sealed record ActionSurface
 
     /// <summary>
     /// Whether keyboard actions are switched on. Read through a function for the same reason,
-    /// since it changes without a restart (list.md Phase 4).
+    /// since it changes without a restart (Phase 4).
     /// </summary>
     public required Func<bool> Enabled { get; init; }
 
@@ -45,7 +45,7 @@ public sealed record ActionSurface
 }
 
 /// <summary>
-/// What the compound ship commands need on top of <see cref="ActionSurface"/> (list.md Phase 52):
+/// What the compound ship commands need on top of <see cref="ActionSurface"/> (Phase 52):
 /// somewhere to wait for the game to change its mind.
 /// <para>
 /// Three waits, all injected, for the reason every wait in Core is injected: no component here
@@ -84,7 +84,7 @@ public sealed record ShipCommandSurface
 }
 
 /// <summary>
-/// Voice control of the ship, its systems, its panels and the SRV (list.md Phase 10, items 6
+/// Voice control of the ship, its systems, its panels and the SRV (Phase 10, items 6
 /// to 9). One capability per checklist item, because each gets its own documentation page and
 /// its own place in spoken help, and because a tool with forty values in its vocabulary is one
 /// the model picks badly from.
@@ -229,7 +229,7 @@ public static class ActionCapabilities
             // four, and four copies of it is four things to switch off.
             //
             // The compound commands are the exception, and deliberately: each is its own row
-            // (list.md Phase 52, item 5), because a Commander who trusts d47 to supercruise may
+            // (Phase 52, item 5), because a Commander who trusts d47 to supercruise may
             // well not trust it to boost, and because "take us out" walks a menu by guesswork
             // where everything else presses one key the Commander bound themselves. Every one of
             // them is gated by the row above as well, so a Commander who has not allowed key
@@ -320,7 +320,7 @@ public static class ActionCapabilities
         var reach = ActionReachability.Resolve(action, surface.Binds(), surface.Context);
 
         // The refusal carries the reason. An action that fails as silence is the failure this
-        // whole path exists to prevent (list.md Phase 10, item 1).
+        // whole path exists to prevent (Phase 10, item 1).
         if (!reach.IsOffered)
         {
             return ToolResult.Error(reach.Reason);

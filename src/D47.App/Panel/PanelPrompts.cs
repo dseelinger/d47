@@ -11,7 +11,7 @@ namespace D47.App.Panel;
 
 /// <summary>
 /// The two questions the panel can put to the Commander — pick one of these, and say or type
-/// this — and the two places either can be drawn (list.md Phase 25, "Choosing takes the panel"
+/// this — and the two places either can be drawn (Phase 25, "Choosing takes the panel"
 /// and "Say it, or type it").
 /// <para>
 /// One host for both, because they are one mechanism seen twice: a level that takes the panel
@@ -593,7 +593,7 @@ public sealed class PanelPrompts
     }
 
     /// <summary>
-    /// One value being said or typed, with the correction loop around it (list.md Phase 25, "Say
+    /// One value being said or typed, with the correction loop around it (Phase 25, "Say
     /// it, or type it").
     /// <para>
     /// <b>Voice first with the drawn keyboard as the fallback</b>, and which one opens is
@@ -621,7 +621,7 @@ public sealed class PanelPrompts
 
         /// <summary>
         /// The visible listening state, and it has to be visible or the Commander is talking at
-        /// a blank page (list.md Phase 25).
+        /// a blank page (Phase 25).
         /// <para>
         /// Read per show rather than held as a constant. It used to be the one sentence "Say it —
         /// I am listening.", with a comment arguing it was worded for both modes; the Commander

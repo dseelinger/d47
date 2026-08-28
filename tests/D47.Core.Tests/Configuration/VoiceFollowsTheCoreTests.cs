@@ -6,7 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>
-/// The Voice row belongs to the core aboard (list.md Phase 11, #33).
+/// The Voice row belongs to the core aboard (Phase 11, #33).
 /// <para>
 /// It used to be one value for the whole app, and that value beat every pairing: a Commander who
 /// picked a voice once heard it from all eleven cores forever, so the pairing was computed,

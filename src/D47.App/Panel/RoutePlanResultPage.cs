@@ -9,7 +9,7 @@ using D47.Core.Knowledge;
 namespace D47.App.Panel;
 
 /// <summary>
-/// A plan that was made, drawn whole (list.md Phase 37, "Plan").
+/// A plan that was made, drawn whole (Phase 37, "Plan").
 /// <para>
 /// <b>The whole thing, not the five waypoints the sentence carries.</b> The service returns every
 /// waypoint of a Sol-to-Colonia plot and <c>RouteCapability</c> reads out the first few, because

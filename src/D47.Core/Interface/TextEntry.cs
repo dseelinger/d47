@@ -1,7 +1,7 @@
 namespace D47.Core.Interface;
 
 /// <summary>
-/// Which way of entering text opens first (list.md Phase 25, "Say it, or type it").
+/// Which way of entering text opens first (Phase 25, "Say it, or type it").
 /// <para>
 /// <b>Declared per call site</b>, exactly as <see cref="ChoiceSurface"/> is, and for a reason
 /// that is about the value rather than about the control: a system name is far easier said than
@@ -21,7 +21,7 @@ public enum EntrySurface
 }
 
 /// <summary>
-/// Why the keyboard came back on its own (list.md Phase 25).
+/// Why the keyboard came back on its own (Phase 25).
 /// <para>
 /// <b>The three failures d47 can detect</b>, and the list is exactly that long on purpose.
 /// Anything outside it — confident, valid, and still not what the Commander meant — is not
@@ -39,7 +39,7 @@ public enum EntryFallback
     /// <summary>
     /// A confident transcription of a value that is not a thing. Real rather than theoretical:
     /// the two-resolver check already catches a renamed system and an invented one
-    /// (list.md Phase 23).
+    /// (Phase 23).
     /// </summary>
     DidNotResolve,
 }
@@ -59,7 +59,7 @@ public sealed record EntryVerdict(bool Accepted, string? Complaint = null)
 }
 
 /// <summary>
-/// Something the panel is asking the Commander to say or type (list.md Phase 25, "Say it, or type
+/// Something the panel is asking the Commander to say or type (Phase 25, "Say it, or type
 /// it").
 /// </summary>
 /// <param name="Key">The crumb key this becomes.</param>
@@ -83,7 +83,7 @@ public sealed record EntryRequest(
     Func<string, EntryVerdict>? Validate = null);
 
 /// <summary>
-/// What d47 heard, and how sure it was (list.md Phase 25).
+/// What d47 heard, and how sure it was (Phase 25).
 /// </summary>
 /// <param name="Text">The transcription. Empty when nothing was heard.</param>
 /// <param name="Confidence">
@@ -98,7 +98,7 @@ public sealed record EntryRequest(
 public sealed record Heard(string Text, double Confidence, bool Final);
 
 /// <summary>
-/// The correction loop, as arithmetic (list.md Phase 25, "Say it, or type it").
+/// The correction loop, as arithmetic (Phase 25, "Say it, or type it").
 /// <para>
 /// <b>The same loop the timers use</b>: d47 shows and says what it heard, and the Commander
 /// confirms or corrects. That also satisfies the rule <c>69fbd3e</c> already set — what is

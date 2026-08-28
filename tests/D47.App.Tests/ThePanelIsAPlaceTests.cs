@@ -11,7 +11,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The bar, the modes, the breadcrumb and the panes (list.md Phase 25, "The panel becomes a
+/// The bar, the modes, the breadcrumb and the panes (Phase 25, "The panel becomes a
 /// place").
 /// <para>
 /// The collapse is what pays for the bar: Conversation, Technical and the log file were three

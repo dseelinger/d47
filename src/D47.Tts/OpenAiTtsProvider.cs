@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 namespace D47.Tts;
 
 /// <summary>
-/// OpenAI's speech endpoint (list.md Phase 58).
+/// OpenAI's speech endpoint (Phase 58).
 /// <para>
 /// The third provider, and the first to arrive after Phase 57 made the <em>slot</em> the unit
 /// rather than the app. Nothing above <see cref="ITtsProvider"/> learns it exists: a slot names
@@ -32,7 +32,7 @@ public sealed class OpenAiTtsProvider : ITtsProvider, IDisposable
     public const string ProviderId = "openai";
 
     /// <summary>
-    /// The same secret the language-model provider uses, on purpose (list.md Phase 58).
+    /// The same secret the language-model provider uses, on purpose (Phase 58).
     /// <para>
     /// One account, one credential. Asking a Commander to paste the same key twice would be an
     /// implementation detail charged to them, and two copies of one secret is a rotation that
@@ -170,7 +170,7 @@ public sealed class OpenAiTtsProvider : ITtsProvider, IDisposable
     /// <summary>
     /// The thirteen, always, key or no key. Nothing is asked over the network, so nothing can
     /// fail — which is why the Check button proves a key by synthesising a character instead of
-    /// by calling this (list.md Phase 58).
+    /// by calling this (Phase 58).
     /// </summary>
     public Task<VoiceCatalogue> ListVoicesAsync(CancellationToken cancellationToken = default) =>
         Task.FromResult(new VoiceCatalogue(Catalogue, VoiceListing.Listed));
@@ -260,7 +260,7 @@ public sealed class OpenAiTtsProvider : ITtsProvider, IDisposable
     }
 
     /// <summary>
-    /// One character, synthesised and thrown away, to prove a key (list.md Phase 58).
+    /// One character, synthesised and thrown away, to prove a key (Phase 58).
     /// <para>
     /// The Check button proves a key by listing voices everywhere else, and there is nothing here
     /// to list. This is the cheapest honest alternative: a fraction of a cent, and it exercises

@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Lore;
 
 /// <summary>
-/// When each system was last remarked on, kept between sessions (list.md Phase 23, "Remark on
+/// When each system was last remarked on, kept between sessions (Phase 23, "Remark on
 /// arrival, and not again today").
 /// <para>
 /// <b>The stamps are absolute, never elapsed.</b> An "eleven hours ago" written to disk is a

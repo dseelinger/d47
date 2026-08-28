@@ -31,7 +31,7 @@ speciality list and the top grade they reach in each.
 
 The referral chain, and the one place a source is overruled
 -----------------------------------------------------------
-list.md asks for "who in the chain of unlocks", and the reason this script once had no answer
+The phase asks for "who in the chain of unlocks", and the reason this script once had no answer
 was recorded as a verdict when it was only a fact about three files: FDevIDs has no unlock
 column, coriolis carries blueprints and not requirements, and EDEngineer's ship rows name only
 the engineer being unlocked. All true, and none of it about the world.

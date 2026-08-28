@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Memory;
 
 /// <summary>
-/// What d47 remembers about the Commander, on disk (list.md Phase 31, "A memory is written down,
+/// What d47 remembers about the Commander, on disk (Phase 31, "A memory is written down,
 /// never inferred into being").
 /// <para>
 /// <b>This is the store that survives.</b> Before it, the whole of d47's recall was
@@ -264,7 +264,7 @@ public sealed class MemoryStore(string path, ILogger<MemoryStore> logger)
     /// <summary>
     /// Removes everything older than <paramref name="window"/> and <b>reports what went</b>.
     /// <para>
-    /// The report is the point. list.md Phase 31 item 3: a companion that quietly drops what you
+    /// The report is the point. Phase 31 item 3: a companion that quietly drops what you
     /// told it last month is worse than one that never remembered, so this returns the entries
     /// rather than a count and the caller decides which of them are worth a sentence.
     /// </para>

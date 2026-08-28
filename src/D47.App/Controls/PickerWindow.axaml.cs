@@ -40,14 +40,14 @@ public sealed record PickerRequest
     /// The voice row is what this exists for: "D47 does not know this endpoint's vocabulary,
     /// type the value you want" is true of a model name and useless for a voice id, which the
     /// Commander has no way of knowing and four different reasons for not being shown
-    /// (list.md Phase 19).
+    /// (Phase 19).
     /// </para>
     /// </summary>
     public string? WhyEmpty { get; init; }
 
     /// <summary>
     /// How to play the highlighted value, when the row offers that. Null everywhere else, and
-    /// the button is then absent rather than present and inert (list.md Phase 19).
+    /// the button is then absent rather than present and inert (Phase 19).
     /// </summary>
     public PickerAudition? Audition { get; init; }
 }
@@ -159,7 +159,7 @@ public sealed class PickerChoice : INotifyPropertyChanged
 
 /// <summary>
 /// One searchable picker, used everywhere a value is chosen — models, themes, log levels, and
-/// the voices and devices that arrive in later phases (list.md Phase 4). Command-palette
+/// the voices and devices that arrive in later phases (Phase 4). Command-palette
 /// shaped: type to filter, arrows to move, Enter to take it, Escape to keep what you had.
 /// <para>
 /// Fail-soft by contract. An empty list is a supported state, not an error state: the filter

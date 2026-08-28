@@ -6,7 +6,7 @@ namespace D47.Core.Conversation;
 /// separately would be two more numbers to keep in step with the first.
 /// <para>
 /// <b>Those two factors are Anthropic's terms, and were the defaults before anybody else was
-/// reachable</b> (list.md Phase 29). They stay the defaults, so no Anthropic row changes and no
+/// reachable</b> (Phase 29). They stay the defaults, so no Anthropic row changes and no
 /// existing test moves — but they are per-row now, because OpenAI charges <em>nothing</em> to
 /// write a cache entry and discounts reads by its own factor. Left derived, every OpenAI turn
 /// would be invoiced for a cache write that does not exist, upward and silently.
@@ -130,7 +130,7 @@ public sealed record TurnCost(LlmUsage Usage, decimal Dollars, bool Priced)
 
 /// <summary>
 /// What the provider said about caching for one turn, in terms that mean the same thing whoever
-/// answered it (list.md Phase 29, seam 3).
+/// answered it (Phase 29, seam 3).
 /// </summary>
 public enum PrefixWarmth
 {
@@ -152,7 +152,7 @@ public enum PrefixWarmth
 }
 
 /// <summary>
-/// Per-turn usage and a running total (list.md Phase 3, "LLM Turn Price").
+/// Per-turn usage and a running total (Phase 3, "LLM Turn Price").
 /// <para>
 /// Also the regression detector the checklist asks for: a profile switch is the only sanctioned
 /// cause of a cold prefix, so a turn that writes cache without one is counted as unexplained
@@ -178,8 +178,8 @@ public sealed class SpendTracker(SpendLedger? ledger = null)
     /// something — non-deterministic tool schemas, a mutated descriptor, a prompt whose bytes
     /// vary per turn.
     /// <para>
-    /// <b>What counts as cold had to stop being one provider's evidence for it</b> (list.md
-    /// Phase 29). This counted turns that <em>wrote</em> cache, which is Anthropic's way of
+    /// <b>What counts as cold had to stop being one provider's evidence for it</b> (Phase 29).
+    /// This counted turns that <em>wrote</em> cache, which is Anthropic's way of
     /// showing a cold prefix and is not universal: a provider that never reports a write cannot
     /// trip it, so the counter would have sat at zero on OpenAI and read as <em>caching is
     /// perfect</em> rather than as <em>this instrument is not measuring here</em> — the more

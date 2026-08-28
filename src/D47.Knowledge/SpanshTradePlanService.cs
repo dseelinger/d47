@@ -8,7 +8,7 @@ namespace D47.Knowledge;
 
 /// <summary>
 /// <see cref="ITradePlanService"/> — the markets fetched, the local ones preferred, and
-/// <see cref="TradePlanner"/> run over both (list.md Phase 36).
+/// <see cref="TradePlanner"/> run over both (Phase 36).
 /// <para>
 /// <b>Spansh is the lookup and d47 is the planner.</b> The station search already returns every
 /// result's whole <c>market</c> array, so the routing is d47's own arithmetic over data it was
@@ -102,7 +102,7 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
     }
 
     /// <summary>
-    /// Where to buy one commodity, or where to dump it (list.md Phase 49).
+    /// Where to buy one commodity, or where to dump it (Phase 49).
     /// <para>
     /// <b>Nothing new is fetched.</b> This is the planner's own sweep, its own cache and its own
     /// merge with the Commander's <c>MarketBook</c>, followed by one local pass. Spansh will not
@@ -148,7 +148,7 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
     }
 
     /// <summary>
-    /// Where to buy everything one construction site still needs (list.md Phase 50).
+    /// Where to buy everything one construction site still needs (Phase 50).
     /// <para>
     /// <b>Nothing new is fetched here either.</b> It is the planner's sweep, its cache and its
     /// <c>MarketBook</c> merge, and then <see cref="ColonisationSourcing"/> — which reads no clock

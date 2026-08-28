@@ -3,7 +3,7 @@ using D47.Core.Journal;
 namespace D47.Core.Listening;
 
 /// <summary>
-/// Names drawn from the journal to bias transcription with (list.md Phase 6, "Bias
+/// Names drawn from the journal to bias transcription with (Phase 6, "Bias
 /// transcription with proper nouns from the journal").
 /// <para>
 /// <b>Proper nouns are where speech recognition fails hardest and most silently.</b> A misheard

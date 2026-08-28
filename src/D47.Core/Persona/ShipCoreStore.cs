@@ -5,12 +5,12 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Persona;
 
 /// <summary>
-/// One ship, and the core aboard it (list.md Phase 35).
+/// One ship, and the core aboard it (Phase 35).
 /// <para>
 /// <b>Aboard it, not flying it.</b> This used to quote Phase 35's heading — <em>"A ship remembers
 /// the core that flew it"</em> — which has the Commander and the core the wrong way round: the
-/// Commander flies the ship and the core is the AI aboard. The heading in <c>list.md</c> is the
-/// product's own record and is left as it stands; this stops repeating it
+/// Commander flies the ship and the core is the AI aboard. The heading shipped as written and
+/// is recorded that way in <c>CHANGELOG.md</c>; this stops repeating it
 /// (https://github.com/dseelinger/d47/issues/80).
 /// </para>
 /// <para>
@@ -24,7 +24,7 @@ namespace D47.Core.Persona;
 /// Whose binding this is — the Frontier id, <b>inside the document rather than in a path</b>, which
 /// is <see cref="Checklists.ChecklistDocument"/>'s rule for the same untrusted input. It is half
 /// the key: Elite's <c>ShipID</c> is per Commander and starts small, so without it one Commander's
-/// ship 7 answered for another's (the list.md Phase 44 defect item). Empty for a line written
+/// ship 7 answered for another's (the Phase 44 defect item). Empty for a line written
 /// before this file carried a Commander; the first Commander seen adopts those.
 /// </param>
 /// <param name="ShipId">The journal's id for this ship.</param>
@@ -47,7 +47,7 @@ public sealed record ShipCoreBinding(
 public sealed record ShipCoreProblem(string Where, string Reason);
 
 /// <summary>
-/// The Commander's ship-to-core bindings, in one file beside the executable (list.md Phase 35,
+/// The Commander's ship-to-core bindings, in one file beside the executable (Phase 35,
 /// "Nothing is bound until it is asked for").
 /// <para>
 /// <b>Its own file rather than a field on <c>ships.json</c></b>, which the phase called the

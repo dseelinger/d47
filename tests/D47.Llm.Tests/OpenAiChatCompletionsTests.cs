@@ -6,7 +6,7 @@ using Xunit;
 namespace D47.Llm.Tests;
 
 /// <summary>
-/// The Chat Completions decoder, driven against recorded responses (list.md Phase 29,
+/// The Chat Completions decoder, driven against recorded responses (Phase 29,
 /// "A turn answered by a machine you own").
 /// <para>
 /// The seam's contract is that a turn arrives as a sequence of <see cref="LlmStreamEvent"/> and

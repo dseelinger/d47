@@ -7,7 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Persona;
 
 /// <summary>
-/// The pilots the Commander actually hired (list.md Phase 11, "Ship Crew").
+/// The pilots the Commander actually hired (Phase 11, "Ship Crew").
 /// </summary>
 public class ShipCrewTests
 {
@@ -115,7 +115,7 @@ public class ShipCrewTests
     [Fact]
     public void AnEventMissingItsFieldsIsSkippedRatherThanFatal()
     {
-        // A schema change is a morning's work, not an outage (list.md Phase 2).
+        // A schema change is a morning's work, not an outage (Phase 2).
         var crew = ShipCrew.Empty.Apply(Event("CrewHire", ("Name", "Vance")));
 
         Assert.Empty(crew.Members);
@@ -123,7 +123,7 @@ public class ShipCrewTests
 }
 
 /// <summary>
-/// Working out who the Commander was talking to (list.md Phase 11, "Crew is addressable").
+/// Working out who the Commander was talking to (Phase 11, "Crew is addressable").
 /// </summary>
 public class CrewAddressingTests
 {

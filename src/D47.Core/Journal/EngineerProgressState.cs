@@ -36,7 +36,7 @@ public sealed record EngineerStanding(int Id, string Name, string Progress)
 }
 
 /// <summary>
-/// The Commander's standing with every engineer (list.md Phase 14, "Engineers" — the current
+/// The Commander's standing with every engineer (Phase 14, "Engineers" — the current
 /// unlock status half), folded from <c>EngineerProgress</c>.
 /// <para>
 /// <b>The event comes in two shapes and they mean different things.</b> At startup Elite writes

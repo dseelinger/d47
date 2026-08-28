@@ -7,7 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Ships;
 
 /// <summary>
-/// The two gauges at the head of a ship's slot list (list.md Phase 38, "A build you can watch").
+/// The two gauges at the head of a ship's slot list (Phase 38, "A build you can watch").
 /// <para>
 /// <b>The loadout below is a real one.</b> Cobra Mk V "Predestinatio", out of the journal corpus on
 /// 24 August 2025, with the cosmetics taken out — a paint job and a bobble have no row in the

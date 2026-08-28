@@ -6,7 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Journal;
 
 /// <summary>
-/// Organic sampling (list.md Phase 18, "Exobiology sampling"). Every shape here was measured across
+/// Organic sampling (Phase 18, "Exobiology sampling"). Every shape here was measured across
 /// 632 real <c>ScanOrganic</c> events: the run is Log, Sample, Sample, Analyse on 94 of 101 runs;
 /// <c>Body</c> is an id rather than a name; and not one event carries a position.
 /// </summary>

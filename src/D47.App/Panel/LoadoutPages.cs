@@ -21,7 +21,7 @@ namespace D47.App.Panel;
 
 /// <summary>
 /// The Loadout tab's pages: an index, then an item, then a slot — drawn once and shown for every
-/// mode (list.md Phase 26, "Ships"; Phase 27, "The same page, on foot").
+/// mode (Phase 26, "Ships"; Phase 27, "The same page, on foot").
 /// <para>
 /// Three levels of one drill stack rather than three screens, so the reflow, the breadcrumb and
 /// the phrases Phase 25 built cover all of them without any of them knowing.
@@ -515,7 +515,7 @@ public static class LoadoutPages
     }
 
     /// <summary>
-    /// The coin: this module is behind a Powerplay pledge (list.md Phase 38).
+    /// The coin: this module is behind a Powerplay pledge (Phase 38).
     /// <para>
     /// <b>The danger hue, because it is a gate.</b> The gear says what was done to a module and
     /// the dot says a plan exists; this says the Commander may not be able to buy the thing at
@@ -536,7 +536,7 @@ public static class LoadoutPages
     }
 
     /// <summary>
-    /// The waiting question, as a banner with two answers (list.md Phase 38).
+    /// The waiting question, as a banner with two answers (Phase 38).
     /// <para>
     /// <b>Buttons rather than a chooser.</b> A chooser is modal and would take the tab over the
     /// moment it was opened; this is a question the Commander may want to look at the build before
@@ -583,7 +583,7 @@ public static class LoadoutPages
     }
 
     /// <summary>
-    /// One gauge at the head of a slot list — a labelled horizontal bar (list.md Phase 38).
+    /// One gauge at the head of a slot list — a labelled horizontal bar (Phase 38).
     /// <para>
     /// <b>A bar and not a dial</b> (the Commander's call, 2026-08-20). Three reasons and all of
     /// them are about the headset: it reads at overlay resolution where small text on an arc does
@@ -974,7 +974,7 @@ public static class LoadoutPages
             inlines.Add(Gear());
         }
 
-        // And the coin, for a module a Powerplay pledge is needed to buy (list.md Phase 38).
+        // And the coin, for a module a Powerplay pledge is needed to buy (Phase 38).
         // Beside the gear rather than instead of it: a Prismatic Shield Generator can be both
         // gated and engineered, and they are different facts.
         if (side.Gated)
@@ -1245,7 +1245,7 @@ public abstract class LoadoutPage : UserControl
 }
 
 /// <summary>
-/// The index (list.md Phase 26, "The fleet, and the fleet you intend"; Phase 27, "The same page,
+/// The index (Phase 26, "The fleet, and the fleet you intend"; Phase 27, "The same page,
 /// on foot").
 /// <para>
 /// <b>A root rather than a level</b>, and it earns being landed on by answering where each thing
@@ -1287,7 +1287,7 @@ public sealed class IndexPage : LoadoutPage
     {
         _list.Children.Clear();
 
-        // A question left over from one d47 asked out loud (list.md Phase 38). At the head of the
+        // A question left over from one d47 asked out loud (Phase 38). At the head of the
         // index because that is where a Commander lands on the tab, and above the empty case
         // because a fleet d47 has not read yet can still have a question waiting about a build.
         if (Mode.Notice() is { } notice)
@@ -1322,7 +1322,7 @@ public sealed class IndexPage : LoadoutPage
 }
 
 /// <summary>
-/// One item's slots (list.md Phase 26, "What is fitted and what you want").
+/// One item's slots (Phase 26, "What is fitted and what you want").
 /// <para>
 /// <b>An index rather than a table</b>: one line per slot, a mark where a plan exists, and
 /// everything else in the pane that opens. That is what lets one layout survive from 512 to 2048
@@ -1472,7 +1472,7 @@ public sealed class ItemPage : LoadoutPage
 
         _summary.Text = summary;
 
-        // The same question the index carries, here too (list.md Phase 38): a Commander who has
+        // The same question the index carries, here too (Phase 38): a Commander who has
         // drilled into the ship it is about is the likeliest one to answer it, and they would
         // otherwise have to go back a level to find out it had been asked.
         if (Mode.Notice() is { } notice)
@@ -1510,7 +1510,7 @@ public sealed class ItemPage : LoadoutPage
         }
 
         // Power and jump range, at the head of the slot list and under the hull's own figures
-        // (list.md Phase 38). Here rather than docked above the scroller for the same reason the
+        // (Phase 38). Here rather than docked above the scroller for the same reason the
         // details are: two gauges would cost the slot list two rows on every window, and they are
         // read once when the page opens rather than watched while scrolling.
         foreach (var gauge in roomy ? Mode.Gauges(_item) : [])
@@ -1809,7 +1809,7 @@ public sealed class ItemPage : LoadoutPage
 }
 
 /// <summary>
-/// One slot (list.md Phase 26, "What is fitted and what you want").
+/// One slot (Phase 26, "What is fitted and what you want").
 /// <para>
 /// <b>Fitted and planned are two blocks and never one merged line</b>, because a plan is a second
 /// thing the Commander wants rather than an edit to the truth.
@@ -1900,7 +1900,7 @@ public sealed class SlotPage : LoadoutPage
 }
 
 /// <summary>
-/// The gap between every plan and what the Commander is carrying (list.md Phase 27, "Gap
+/// The gap between every plan and what the Commander is carrying (Phase 27, "Gap
 /// analysis").
 /// <para>
 /// <b>A third root-only mode reading across both the others</b>, because a Commander gathering

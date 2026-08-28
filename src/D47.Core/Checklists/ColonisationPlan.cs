@@ -12,7 +12,7 @@ namespace D47.Core.Checklists;
 public sealed record FacilityRequest(string Place, string Facility);
 
 /// <summary>
-/// A system objective turned into the things a Commander has to do (list.md Phase 17, "A
+/// A system objective turned into the things a Commander has to do (Phase 17, "A
 /// colonisation plan writes the checklist").
 /// <para>
 /// <b>It rides the same substrate as the ship builds and that is the whole point.</b> Intents

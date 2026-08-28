@@ -7,7 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Ships;
 
 /// <summary>
-/// The fleet, the fleet the Commander intends, and one build per ship (list.md Phase 26).
+/// The fleet, the fleet the Commander intends, and one build per ship (Phase 26).
 /// <para>
 /// <b>The plan owns what and the checklist owns when.</b> Everything here is about the first half:
 /// nothing in this file writes to a checklist without a proposal.
@@ -258,7 +258,7 @@ public class ShipPlanTests
     }
 
     /// <summary>
-    /// The Commander is half the key (the list.md Phase 44 defect item): Elite's ship ids are per
+    /// The Commander is half the key (the Phase 44 defect item): Elite's ship ids are per
     /// Commander and start small, so two Commanders' ship 12s are two ships and neither build is a
     /// duplicate of the other.
     /// </summary>

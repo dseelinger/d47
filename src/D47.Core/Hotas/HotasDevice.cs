@@ -1,7 +1,7 @@
 namespace D47.Core.Hotas;
 
 /// <summary>
-/// One reading of one controller interface, as Core sees it (list.md Phase 21, "Read the
+/// One reading of one controller interface, as Core sees it (Phase 21, "Read the
 /// Commander's controllers").
 /// <para>
 /// <b>An interface, not a product.</b> The WinWing throttle alone presents four of these with

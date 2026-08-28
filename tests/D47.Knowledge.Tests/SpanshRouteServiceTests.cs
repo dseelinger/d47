@@ -191,7 +191,7 @@ public class SpanshRouteServiceTests
     }
 
     /// <summary>
-    /// The fifth plot type (list.md Phase 18, "Find the exobiology"). The body below is a verbatim
+    /// The fifth plot type (Phase 18, "Find the exobiology"). The body below is a verbatim
     /// slice of a live plot from Sol on 2026-08-16 — including the origin stop with no bodies, which
     /// the plotter really does return.
     /// </summary>

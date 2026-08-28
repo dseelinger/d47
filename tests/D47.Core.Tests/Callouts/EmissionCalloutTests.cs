@@ -8,7 +8,7 @@ using Xunit;
 namespace D47.Core.Tests.Callouts;
 
 /// <summary>
-/// Systems that might be running High Grade Emissions (list.md Phase 40, asked for 2026-08-21).
+/// Systems that might be running High Grade Emissions (Phase 40, asked for 2026-08-21).
 /// <para>
 /// The conditions are the Elite Dangerous Wiki's, corroborated by the 2017 Frontier Forums USS
 /// guide and by what <c>edgalaxy.net/hge</c> sorts live detections into — and settled where those

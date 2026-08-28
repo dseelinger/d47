@@ -9,7 +9,7 @@ using Xunit;
 namespace D47.Core.Tests.Input;
 
 /// <summary>
-/// The five spoken ship commands (list.md Phase 52).
+/// The five spoken ship commands (Phase 52).
 /// <para>
 /// The bare words are the risk this file exists for. <c>engage</c> is a substring of three
 /// phrases that were already live — <em>engage supercruise</em>, <em>engage boost</em> and
@@ -186,7 +186,7 @@ public class SayItAndTheShipDoesItTests
         Assert.NotEmpty(longer);
     }
 
-    // ---- Separate (list.md Phase 52, item 3) -------------------------------------------------
+    // ---- Separate (Phase 52, item 3) -------------------------------------------------
 
     private static ActionSurface Surface(RecordingGameInput input, GameStatus status, EliteBinds? binds = null) =>
         new()
@@ -285,7 +285,7 @@ public class SayItAndTheShipDoesItTests
     }
 
     /// <summary>
-    /// The second command ends in supercruise whatever the ask said (list.md Phase 52, item 4), so
+    /// The second command ends in supercruise whatever the ask said (Phase 52, item 4), so
     /// the two differ in their last key and in nothing else.
     /// </summary>
     [Fact]
@@ -371,7 +371,7 @@ public class SayItAndTheShipDoesItTests
         Assert.True(input.ReleaseAllCalls > 0);
     }
 
-    // ---- Take us out (list.md Phase 52, item 2) ----------------------------------------------
+    // ---- Take us out (Phase 52, item 2) ----------------------------------------------
 
     private const uint Panel = 0x31;
     private const uint Left = 0x41;
@@ -512,7 +512,7 @@ public class SayItAndTheShipDoesItTests
         Assert.Empty(Pressed(input));
     }
 
-    // ---- The route in, and the switches (list.md Phase 52, item 5) ---------------------------
+    // ---- The route in, and the switches (Phase 52, item 5) ---------------------------
 
     private static CapabilityRegistry Commands(
         RecordingGameInput input,

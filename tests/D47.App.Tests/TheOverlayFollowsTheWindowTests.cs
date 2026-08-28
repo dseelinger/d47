@@ -8,7 +8,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The window leads and the flat overlay follows (change-requests.md 34, and list.md Phase 48).
+/// The window leads and the flat overlay follows (change-requests.md 34, and Phase 48).
 /// <para>
 /// Asked 2026-08-24: <em>"How do I get it to show a different tab? I would have thought that it
 /// would track with whatever is the main window's tab."</em> It does — <b>for the tabs it has</b>,

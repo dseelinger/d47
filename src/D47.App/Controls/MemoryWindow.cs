@@ -11,8 +11,8 @@ using D47.Core.Memory;
 namespace D47.App.Controls;
 
 /// <summary>
-/// Everything d47 remembers about the Commander, readable and editable by a person (list.md Phase
-/// 31, "It forgets, and can be read and emptied").
+/// Everything d47 remembers about the Commander, readable and editable by a person (Phase 31, "It
+/// forgets, and can be read and emptied").
 /// <para>
 /// <b>A window rather than a settings row, for the reason the notes window is one.</b> A fact is not
 /// a settings value, and typing one here is the act that produces

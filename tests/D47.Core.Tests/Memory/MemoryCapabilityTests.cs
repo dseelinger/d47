@@ -8,7 +8,7 @@ using Xunit;
 namespace D47.Core.Tests.Memory;
 
 /// <summary>
-/// The memory capability's surface (list.md Phase 31).
+/// The memory capability's surface (Phase 31).
 /// <para>
 /// The interesting assertions are all about <b>which of the three tools the model can see</b>, and
 /// that is arithmetic as much as it is safety: the SRV profile had 361 bytes of headroom when this

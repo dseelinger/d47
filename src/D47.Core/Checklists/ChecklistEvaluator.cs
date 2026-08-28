@@ -49,7 +49,7 @@ public readonly record struct ChecklistVerdict(ChecklistState State, string Reas
 }
 
 /// <summary>
-/// What the journal says about a derived item (list.md Phase 17, "Per ship build
+/// What the journal says about a derived item (Phase 17, "Per ship build
 /// planning/tracking" and "A colonisation plan writes the checklist").
 /// <para>
 /// <b>Nobody ever types in what they have already done.</b> A derived item's progress is a diff
@@ -106,7 +106,7 @@ public static class ChecklistEvaluator
         var aboard = IsActive(item.Scope, state.Ship);
 
         // <b>A ship in another dock is diffed from the loadout d47 remembers.</b> The comment that
-        // stood here said it "cannot be diffed at all", and that was true until list.md Phase 37
+        // stood here said it "cannot be diffed at all", and that was true until Phase 37
         // started remembering them — after which a line about a parked ship read out its module by
         // name, from the remembered loadout, over a verdict that had refused to look at the same
         // place. The line and the verdict beneath it read different sources, and one report of that

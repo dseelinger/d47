@@ -1,7 +1,7 @@
 namespace D47.Core.Journal;
 
 /// <summary>
-/// The Commander being tailed changed (list.md Phase 44).
+/// The Commander being tailed changed (Phase 44).
 /// </summary>
 /// <param name="Previous">Who it was, or null when nobody had been identified yet — which makes this an adoption.</param>
 /// <param name="Current">Who it is now.</param>
@@ -20,7 +20,7 @@ public sealed record CommanderSwitch(CommanderIdentity? Previous, CommanderIdent
 
 /// <summary>
 /// State keyed per Commander so a second Commander's journal can never blend into the
-/// first one's (list.md Phase 2). Each journal file establishes its own identity near the
+/// first one's (Phase 2). Each journal file establishes its own identity near the
 /// top, and every event after that is folded into that Commander's own bucket only — there is
 /// no path from one bucket's events into another's.
 /// </summary>
@@ -70,7 +70,7 @@ public sealed class GameStateStore
     public Func<string, ShipLoadouts?>? RestoreLoadouts { get; init; }
 
     /// <summary>
-    /// Raised when the Commander whose journal is being tailed changes (list.md Phase 44, "One
+    /// Raised when the Commander whose journal is being tailed changes (Phase 44, "One
     /// switch signal"). From nobody to somebody is an adoption; from one to another is a switch.
     /// <para>
     /// <b>The signal carries whether it happened during priming, and every subscriber honours
@@ -115,7 +115,7 @@ public sealed class GameStateStore
 
                 // Anything this Commander had before d47 last stopped. Two buckets need it, and
                 // for different reasons: sampling because it is d47's own record and nothing in
-                // the journal restates it (list.md Phase 18), and the fleet because the newest
+                // the journal restates it (Phase 18), and the fleet because the newest
                 // journal often does not contain a StoredShips to refold from at all.
                 if (Restore?.Invoke(identity.FrontierId) is { } restored)
                 {

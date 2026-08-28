@@ -9,7 +9,7 @@ namespace D47.Core.Adventures;
 public sealed record AdventureProblem(string Where, string Reason);
 
 /// <summary>
-/// The adventures on disk — <c>data/adventures.json</c> (list.md Phase 47).
+/// The adventures on disk — <c>data/adventures.json</c> (Phase 47).
 /// <para>
 /// <see cref="Goals.GoalStore"/>'s shape with a different payload, for the reason that file gives:
 /// written through <see cref="AtomicFile"/>, polled by comparing <b>content</b>, keyed per Commander

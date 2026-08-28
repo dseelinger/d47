@@ -23,7 +23,7 @@ public enum WakeOutcome
 public readonly record struct WakeDecision(WakeOutcome Outcome, string Text);
 
 /// <summary>
-/// Wake-word gating (list.md Phase 13), as another policy over the same audio stream.
+/// Wake-word gating (Phase 13), as another policy over the same audio stream.
 /// <para>
 /// <b>It matches words, not audio, and that is the design rather than a shortcut.</b> The usual
 /// shape for this is a small always-on acoustic model listening for one phrase — which means a

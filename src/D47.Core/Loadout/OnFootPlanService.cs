@@ -7,7 +7,7 @@ namespace D47.Core.Loadout;
 
 /// <summary>
 /// One line of the on-foot index: a suit or a weapon, whatever is planned for it, and whether it
-/// is on the Commander right now (list.md Phase 27, "The same page, on foot").
+/// is on the Commander right now (Phase 27, "The same page, on foot").
 /// </summary>
 /// <param name="Build">The build, or null for something carried that has no plan yet.</param>
 /// <param name="Equipment">What it is called.</param>
@@ -62,8 +62,8 @@ public sealed record KitEntry(
 }
 
 /// <summary>
-/// The Commander's suit and weapon builds, joined to what they are actually wearing (list.md
-/// Phase 27, "The same page, on foot").
+/// The Commander's suit and weapon builds, joined to what they are actually wearing (Phase 27,
+/// "The same page, on foot").
 /// <para>
 /// <b>The parallel of <see cref="Ships.ShipPlanService"/>, deliberately down to the method
 /// names</b>, because the page above the two is one page instantiated twice. The plan owns
@@ -239,7 +239,7 @@ public sealed class OnFootPlanService(
     }
 
     /// <summary>
-    /// Starts a build for a suit or weapon the Commander does not own (list.md Phase 27).
+    /// Starts a build for a suit or weapon the Commander does not own (Phase 27).
     /// <para>
     /// The on-foot reading of <em>a hull you do not own is not in the fleet</em>: no
     /// <c>SuitID</c>, so acquiring the item is the plan's first step rather than a precondition
@@ -348,7 +348,7 @@ public sealed class OnFootPlanService(
     }
 
     /// <summary>
-    /// Offers a build to the checklist (list.md Phase 27).
+    /// Offers a build to the checklist (Phase 27).
     /// <para>
     /// <b>The grade first and the modifications after it, always</b>, which is
     /// <see cref="OnFootPlan.Items"/>'s own ordering rather than something imposed here: a grade 1
@@ -387,7 +387,7 @@ public sealed class OnFootPlanService(
 
     /// <summary>
     /// Watches for the Commander buying something they had planned for, and adopts the plan onto
-    /// it (list.md Phase 27).
+    /// it (Phase 27).
     /// <para>
     /// <b>On foot the buy event carries the id, which is the opposite of the ship side.</b>
     /// <c>ShipyardBuy</c> names the hull and no id for the new ship at all, so Phase 26 had to

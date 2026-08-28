@@ -3,7 +3,7 @@ namespace D47.Core.Conversation;
 /// <summary>
 /// What one provider offers and what talking to it costs in privacy. Declared as data so the
 /// settings surface can show the controls the selected provider actually has rather than a
-/// hardwired set, and so the egress disclosure has one place to read from (list.md Phase 4).
+/// hardwired set, and so the egress disclosure has one place to read from (Phase 4).
 /// </summary>
 public sealed record LlmProviderInfo
 {
@@ -32,7 +32,7 @@ public sealed record LlmProviderInfo
     /// <summary>
     /// Exactly what leaves the machine when this provider answers a turn. Written in the
     /// second person and in full, because a disclosure that summarises is a disclosure that
-    /// omits (list.md Phase 4, "Say what each provider receives").
+    /// omits (Phase 4, "Say what each provider receives").
     /// </summary>
     public required string Egress { get; init; }
 
@@ -50,7 +50,7 @@ public sealed record LlmProviderInfo
 
     /// <summary>
     /// Whether the key row exists but the endpoint may be reached without filling it in
-    /// (list.md Phase 29).
+    /// (Phase 29).
     /// <para>
     /// Ollama has no key. llama.cpp has no key. Before this flag, the <em>most private
     /// configuration d47 can offer</em> was unreachable by construction rather than by decision:
@@ -86,7 +86,7 @@ public sealed record LlmProviderInfo
 /// <summary>
 /// The providers d47 can be pointed at. "none" is a first-class member, not an absence: the
 /// keyword router answers every input path with no model at all, so local-only operation is a
-/// configuration rather than a degraded state (list.md Phase 3, Phase 4).
+/// configuration rather than a degraded state (Phase 3, Phase 4).
 /// </summary>
 public static class LlmProviderCatalog
 {
@@ -95,7 +95,7 @@ public static class LlmProviderCatalog
     public const string AnthropicId = "anthropic";
 
     /// <summary>
-    /// OpenAI's own endpoint, over the Responses API (list.md Phase 29).
+    /// OpenAI's own endpoint, over the Responses API (Phase 29).
     /// <para>
     /// <b>These ids are permanent the moment they are written.</b> They become settings keys —
     /// <c>llm.openai.apiKey</c> — and the settings file is append-only: a property is never

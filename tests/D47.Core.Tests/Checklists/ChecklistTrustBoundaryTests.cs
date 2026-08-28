@@ -7,7 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Checklists;
 
 /// <summary>
-/// The boundary the phase turns on (list.md Phase 17): <b>proposing is model-callable and
+/// The boundary the phase turns on (Phase 17): <b>proposing is model-callable and
 /// committing is not</b>, into two different files so the boundary is inspectable by looking at
 /// <c>data/</c>.
 /// <para>

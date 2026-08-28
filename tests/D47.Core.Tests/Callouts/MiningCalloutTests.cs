@@ -6,7 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Callouts;
 
 /// <summary>
-/// Prospector and core callouts (list.md Phase 18). Every shape and every threshold decision here
+/// Prospector and core callouts (Phase 18). Every shape and every threshold decision here
 /// was measured against 1,633 real <c>ProspectedAsteroid</c> events — see
 /// <c>docs/spikes/mining-callouts.md</c> — and the one that would have shipped a wrong answer is
 /// the game's own <c>Content</c> grade.

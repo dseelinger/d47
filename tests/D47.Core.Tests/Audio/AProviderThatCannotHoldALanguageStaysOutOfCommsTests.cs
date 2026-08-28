@@ -6,7 +6,7 @@ namespace D47.Core.Tests.Audio;
 
 /// <summary>
 /// A provider that cannot be told what language to speak never speaks for a slot carrying other
-/// people's words (list.md Phase 58).
+/// people's words (Phase 58).
 /// <para>
 /// <b>The rule exists because of what those slots carry.</b> A message from another Commander can
 /// be in any language at all, and a provider that cannot be told one follows the text — so a
@@ -37,7 +37,7 @@ public class AProviderThatCannotHoldALanguageStaysOutOfCommsTests
     }
 
     /// <summary>
-    /// And the third one does too, which is half of why it was added (list.md Phase 60).
+    /// And the third one does too, which is half of why it was added (Phase 60).
     /// <para>
     /// Cartesia sends a <c>language</c> with every line and holds it, so it is the second provider
     /// after ElevenLabs that may legally carry another player's words at all. <b>A capability

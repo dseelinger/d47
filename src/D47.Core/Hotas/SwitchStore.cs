@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Hotas;
 
 /// <summary>
-/// The Commander's switch mappings, in one file beside the executable (list.md Phase 21).
+/// The Commander's switch mappings, in one file beside the executable (Phase 21).
 /// <para>
 /// <b>A file rather than a settings section</b>, for the reason macros are: this is not a value
 /// with a vocabulary, it is a capture — the whole of what d47 will ever know about a Commander's

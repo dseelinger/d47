@@ -19,7 +19,7 @@ public sealed record EmissionGroup(
     IReadOnlyList<string> Materials);
 
 /// <summary>
-/// What a High Grade Emission holds, and where (list.md Phase 40).
+/// What a High Grade Emission holds, and where (Phase 40).
 /// <para>
 /// <b>This table is the Commander's, given 2026-08-21, and it supersedes what was derived from the
 /// sources.</b> Two published readings were tried before it and both shipped wrong, so what is

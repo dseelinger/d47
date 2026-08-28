@@ -7,7 +7,7 @@ namespace D47.App.Logging;
 
 /// <summary>
 /// Two sinks, both files beside the executable: one human-readable, one newline-delimited JSON
-/// so an agent can parse a session (list.md Phase 1). Nothing here reaches the network. There
+/// so an agent can parse a session (Phase 1). Nothing here reaches the network. There
 /// is no analytics sink, no metrics endpoint and no crash reporter, and provider egress is a
 /// separate concern with its own settings row.
 /// </summary>

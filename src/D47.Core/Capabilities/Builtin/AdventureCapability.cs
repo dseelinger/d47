@@ -1,7 +1,7 @@
 namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
-/// Adventures — stories the Commander flies, told by the ship's AI (list.md Phase 47).
+/// Adventures — stories the Commander flies, told by the ship's AI (Phase 47).
 /// <para>
 /// <b>A capability with no tools, and that is the design rather than an omission.</b> Phase 47
 /// settled it before the code: generation is a panel action, abandoning and removing are the

@@ -49,7 +49,7 @@ public sealed record CarriedWeapon(string Slot, string Symbol)
 }
 
 /// <summary>
-/// What the Commander is wearing and carrying on foot (list.md Phase 20, "d47 knows what you are
+/// What the Commander is wearing and carrying on foot (Phase 20, "d47 knows what you are
 /// wearing").
 /// <para>
 /// <b>None of this was readable before.</b> `SuitLoadout`, `BuySuit`, `UpgradeSuit`,

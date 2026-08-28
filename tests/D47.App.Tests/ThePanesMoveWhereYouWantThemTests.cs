@@ -12,7 +12,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The rule between two panes becomes something the mouse can take hold of (list.md Phase 55).
+/// The rule between two panes becomes something the mouse can take hold of (Phase 55).
 /// <para>
 /// Driven through the drawn panel rather than through the memory class, because the two claims
 /// worth making are both about what is on screen: that a handle exists where a mouse can reach it,

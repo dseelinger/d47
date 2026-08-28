@@ -5,7 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Callouts;
 
 /// <summary>
-/// The opening line of a session (list.md Phase 31, "Picking up where you left off"), as amended
+/// The opening line of a session (Phase 31, "Picking up where you left off"), as amended
 /// on 2026-08-21: a greeting on the Commander's own clock and a readiness, and nothing about the
 /// list, the gap or the engineer under their feet — those are answered when asked for.
 /// </summary>
@@ -87,7 +87,7 @@ public class ContinuityCalloutTests
 
     /// <summary>
     /// Once per session rather than once per run, where a login by somebody else starts a
-    /// session (list.md Phase 44, "Welcome back, Commander"). The settle window runs again, and
+    /// session (Phase 44, "Welcome back, Commander"). The settle window runs again, and
     /// the line after a switch names the Commander — it is answering <i>who is speaking now</i>.
     /// </summary>
     [Fact]

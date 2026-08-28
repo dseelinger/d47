@@ -4,7 +4,7 @@ namespace D47.Core.Audio;
 /// What one voice provider offers and what talking to it costs in privacy. Declared as data
 /// for the same reasons <see cref="Conversation.LlmProviderCatalog"/> is: the settings surface
 /// shows the controls the selected provider actually has rather than a hardwired set, and the
-/// egress disclosure has one place to read from (list.md Phase 4).
+/// egress disclosure has one place to read from (Phase 4).
 /// </summary>
 public sealed record TtsProviderInfo
 {
@@ -43,7 +43,7 @@ public sealed record TtsProviderInfo
     /// Declared rather than inferred from <see cref="NeedsKey"/>, because "free" and "billed at a
     /// rate d47 does not know" have to read differently: <c>$0.00</c> from Edge and <c>$0.00</c>
     /// from an ElevenLabs run nobody has priced are the same string for opposite reasons
-    /// (list.md Phase 19).
+    /// (Phase 19).
     /// </para>
     /// </summary>
     public bool Billed { get; init; }
@@ -93,7 +93,7 @@ public sealed record TtsProviderInfo
     public bool VoiceIdsAreOpaque { get; init; }
 
     /// <summary>
-    /// Whether this provider can be told which language to speak (list.md Phase 58).
+    /// Whether this provider can be told which language to speak (Phase 58).
     /// <para>
     /// <b>The property a slot carrying other people's text depends on.</b> Edge sends
     /// <c>xml:lang</c> in its SSML and ElevenLabs sends a <c>language_code</c>; both therefore
@@ -114,7 +114,7 @@ public sealed record TtsProviderInfo
 
     /// <summary>
     /// Whether the voice list is known without asking, so listing it proves nothing about a key
-    /// (list.md Phase 58).
+    /// (Phase 58).
     /// <para>
     /// True for a provider with no voices endpoint at all. The Check button lists voices to prove
     /// a credential everywhere else, and for such a provider that check would answer "accepted
@@ -126,7 +126,7 @@ public sealed record TtsProviderInfo
 
     /// <summary>
     /// Whether telling this provider to speak faster or slower actually changes the audio
-    /// (list.md Phase 60).
+    /// (Phase 60).
     /// <para>
     /// <b>The second thing a provider turned out not to be able to do, and it fails in a stranger
     /// way than the first.</b> OpenAI has no language field at all. Cartesia <em>has</em> a speed
@@ -167,7 +167,7 @@ public sealed record TtsProviderInfo
     /// <summary>
     /// Whether this provider can say anything right now. Both halves matter: a provider with no
     /// key is configured but off, which is a capability being off rather than a failure to
-    /// handle (list.md Phase 3).
+    /// handle (Phase 3).
     /// </summary>
     public bool Speaks => Id != TtsProviderCatalog.NoneId;
 }
@@ -279,7 +279,7 @@ public static class TtsProviderCatalog
         Billed = true,
 
         // Not priced by the character, and that is still the finding rather than an omission
-        // (list.md Phase 58). Measured on the spike's own clips, plain prose runs at 951
+        // (Phase 58). Measured on the spike's own clips, plain prose runs at 951
         // characters a minute and a line of system names and numerals at 671 — a spread of about
         // 40% with *content* — so no character-to-minute conversion exists and any figure derived
         // that way would be wrong by a different amount on every line.
@@ -362,7 +362,7 @@ public static class TtsProviderCatalog
 
     /// <summary>
     /// The providers that may speak for one slot. Everything, except that a slot carrying other
-    /// people's words is not offered a provider that cannot be told a language (list.md Phase 58).
+    /// people's words is not offered a provider that cannot be told a language (Phase 58).
     /// <para>
     /// Read by the settings row and by <see cref="VoiceGroups.ProviderFor"/>, so what the picker
     /// offers and what the app will actually use cannot disagree — which is the failure mode a

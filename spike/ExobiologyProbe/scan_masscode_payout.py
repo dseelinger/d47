@@ -1,6 +1,6 @@
 """Does a system's mass code predict its exobiology, measured with a denominator under it?
 
-`list.md` Phase 18, *Spike: does the mass code predict the biology, with a denominator*.
+Phase 18, *Spike: does the mass code predict the biology, with a denominator*.
 
 Phase 16's spike asked this of one Commander's own scan history and could not answer it — the fatal
 reason being that a flight log is a record of where somebody chose to fly, so a Commander who

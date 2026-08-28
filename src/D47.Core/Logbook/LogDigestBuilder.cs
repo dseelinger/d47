@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Logbook;
 
 /// <summary>
-/// Folds a window of journals into a <see cref="LogDigest"/> (list.md Phase 33, item 2).
+/// Folds a window of journals into a <see cref="LogDigest"/> (Phase 33, item 2).
 /// <para>
 /// <b>This is the phase's quality bar in one class.</b> Everything a log can truthfully say has to
 /// be computed here, because the generator downstream is only ever handed what this produces. A

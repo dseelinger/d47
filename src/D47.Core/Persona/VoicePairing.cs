@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Persona;
 
 /// <summary>
-/// Choosing a sensible voice for each core, once, in the background (list.md Phase 11, #33).
+/// Choosing a sensible voice for each core, once, in the background (Phase 11, #33).
 /// <para>
 /// The problem this solves is stated in the checklist: picking a character should not also mean
 /// auditioning potentially hundreds of voices. Edge Neural offers several hundred and an
@@ -226,7 +226,7 @@ public static class VoicePairing
 
     /// <summary>
     /// The pairings, with every named default this provider carries put where it belongs
-    /// (list.md Phase 11, #33).
+    /// (Phase 11, #33).
     /// <para>
     /// The same repair as <see cref="WithoutMiscastVoices"/> and for the same reason: a named
     /// default is not a judgement, so a core holding something else in its place is this pass
@@ -294,7 +294,7 @@ public static class VoicePairing
     }
 
     /// <summary>
-    /// The pairings, less any that gives a core a voice of the wrong gender (list.md Phase 11,
+    /// The pairings, less any that gives a core a voice of the wrong gender (Phase 11,
     /// #33).
     /// <para>
     /// A pairing is never re-derived, because nothing distinguishes one the Commander chose from
@@ -345,7 +345,7 @@ public static class VoicePairing
 
     /// <summary>
     /// A voice for one core, asked for at the moment it is needed — the Commander has just
-    /// selected a core that has none (list.md Phase 11, #33).
+    /// selected a core that has none (Phase 11, #33).
     /// <para>
     /// The lazy half of the same job. The pass above runs once and covers the cast; this covers
     /// the core that pass never saw, because it ran before a model was configured, or before
@@ -415,7 +415,7 @@ public static class VoicePairing
     public sealed record VoiceRepair(IReadOnlyDictionary<string, string> Voices, bool Complete);
 
     /// <summary>
-    /// Gives a voice back to every core a repair took one off (list.md Phase 11, #33).
+    /// Gives a voice back to every core a repair took one off (Phase 11, #33).
     /// <para>
     /// <see cref="WithoutMiscastVoices"/> and <see cref="WithNamedDefaultsRestored"/> both work
     /// by <em>removing</em> a pairing, which leaves the core with none — and a core with no
@@ -431,7 +431,7 @@ public static class VoicePairing
     /// <para>
     /// Lifted out of <c>AppHost</c>, where it was unreachable by any test and where it was
     /// wrong: the replacement was logged and then dropped on the floor, so the success path —
-    /// the common one — did the exact thing the method exists to prevent (list.md Phase 19,
+    /// the common one — did the exact thing the method exists to prevent (Phase 19,
     /// "Give the composition root a test harness").
     /// </para>
     /// </summary>

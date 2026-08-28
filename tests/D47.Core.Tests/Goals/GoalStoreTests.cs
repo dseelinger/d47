@@ -5,7 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Goals;
 
 /// <summary>
-/// The arcs on disk (list.md Phase 34).
+/// The arcs on disk (Phase 34).
 /// <para>
 /// <b>The split is the subject.</b> Mining is a recomputation and replaces what it wrote last time;
 /// the arcs a Commander wrote and the ones they set aside are theirs and survive it. Phase 32

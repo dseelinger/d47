@@ -31,7 +31,7 @@ public class ElevenLabsTests
     public async Task WithNoKeyTheVoiceListIsEmptyRatherThanAnError()
     {
         // An empty list is a supported answer: the picker still lets the Commander keep the
-        // current value or type one (list.md Phase 4). A provider with no key is a capability
+        // current value or type one (Phase 4). A provider with no key is a capability
         // that is off, not a failure to handle.
         using var provider = Provider();
 
@@ -117,7 +117,7 @@ public class ElevenLabsTests
 }
 
 /// <summary>
-/// The half that needs a real account (list.md Phase 11, "ElevenLabs").
+/// The half that needs a real account (Phase 11, "ElevenLabs").
 /// <para>
 /// Opt-in via <c>D47_ELEVENLABS_KEY</c>, so <c>dotnet test</c> stays hermetic, CI never depends
 /// on a paid third party, and nobody's character quota is spent by a routine test run:

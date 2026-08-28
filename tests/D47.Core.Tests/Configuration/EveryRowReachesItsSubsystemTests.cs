@@ -5,8 +5,8 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>
-/// Which subsystem a changed settings key re-applies (list.md Phase 4, "Apply every setting
-/// without a restart"; list.md Phase 19).
+/// Which subsystem a changed settings key re-applies (Phase 4, "Apply every setting
+/// without a restart"; Phase 19).
 /// <para>
 /// The promise is that every row takes effect immediately and that the startup path and the
 /// change path cannot drift. That made this dispatch load-bearing, and it was an if/else chain of

@@ -193,7 +193,7 @@ public sealed record ModuleSpecification
     /// <summary>
     /// The pledge, permit or unlock a Commander needs before they can buy it, exactly as
     /// <c>outfitting.csv</c> names the gate — or null for a module anyone may fit
-    /// (list.md Phase 38).
+    /// (Phase 38).
     /// <para>
     /// <b>Nineteen modules carry <c>ELITE_SPECIFIC_V_POWER_&lt;id&gt;</c></b>, and the id says
     /// <em>which</em> Power: 200020 is Aisling Duval's Prismatic Shield Generator. So the badge is
@@ -210,7 +210,7 @@ public sealed record ModuleSpecification
     public string? Entitlement { get; init; }
 
     /// <summary>
-    /// Whether buying this needs a Powerplay pledge (list.md Phase 38).
+    /// Whether buying this needs a Powerplay pledge (Phase 38).
     /// <para>
     /// <b>It does not say which Power, because nothing d47 reads does.</b> The gate carries
     /// Frontier's numeric id — <c>ELITE_SPECIFIC_V_POWER_200020</c> for the Prismatic Shield
@@ -306,7 +306,7 @@ public sealed record ModuleSpecification
 }
 
 /// <summary>
-/// Ship and module figures (list.md Phase 14, "Elite Dangerous Ships").
+/// Ship and module figures (Phase 14, "Elite Dangerous Ships").
 /// <para>
 /// <b>The table is derived, not written.</b> None of this is in the journal — the journal says
 /// what <em>this</em> Commander is flying, not what a hull can do before they buy one — so the
@@ -318,7 +318,7 @@ public sealed record ModuleSpecification
 /// </para>
 /// <para>
 /// <b>Read on first use, never at startup.</b> Twelve hundred module rows is a parse nobody should
-/// pay for unless they ask a specification question, which is what list.md means by a dataset
+/// pay for unless they ask a specification question, which is what the phase means by a dataset
 /// "lazy-queried at runtime". <see cref="Lazy{T}"/> rather than a static constructor so the
 /// laziness is visible in the type rather than a property of where the field happens to sit.
 /// </para>
@@ -1007,7 +1007,7 @@ public static class EliteSpecifications
         Hulls = Words(cells, 19),
         MustFillSlot = Text(cells, 20) is not null,
 
-        // Appended by list.md Phase 38, after `limit`, for the reason `limit` itself was: this
+        // Appended by Phase 38, after `limit`, for the reason `limit` itself was: this
         // reader indexes by position, so a new column goes on the end and nothing above it moves.
         Entitlement = Text(cells, 24),
         PowerCapacity = Real(cells, 25),

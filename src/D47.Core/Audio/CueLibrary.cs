@@ -41,7 +41,7 @@ public sealed class EmbeddedCueSource(Assembly assembly) : ICueSource
 
 /// <summary>
 /// The cues, beds and ambience d47 can play: what it ships with, plus whatever the Commander
-/// has dropped into <c>data/audio/</c> (list.md Phase 5 #20, Phase 12 "Custom Sound Cues").
+/// has dropped into <c>data/audio/</c> (Phase 5 #20, Phase 12 "Custom Sound Cues").
 /// <para>
 /// The direction matters. This does not ask "where is the file for <see cref="LoopState.Thinking"/>";
 /// it enumerates what actually shipped and then checks that set against the enum. A state
@@ -107,7 +107,7 @@ public sealed class CueLibrary
     public bool IsCustom(string name) => _custom.Contains(name);
 
     /// <summary>
-    /// The bed played while a turn runs (list.md Phase 5, #18). Named rather than positional
+    /// The bed played while a turn runs (Phase 5, #18). Named rather than positional
     /// so which one is the default survives a second bed being added.
     /// </summary>
     public const string DefaultBed = "thinking-hum";
@@ -301,7 +301,7 @@ public sealed class CueLibrary
     public AudioClip For(LoopState state) => _cues[state];
 
     /// <summary>
-    /// The marker played ahead of one warning (list.md Phase 15). An indexer rather than a
+    /// The marker played ahead of one warning (Phase 15). An indexer rather than a
     /// try-get: the set is closed and asserted complete at construction, so a miss here is a bug
     /// in this class rather than a Commander's missing file.
     /// </summary>

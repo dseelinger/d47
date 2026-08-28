@@ -33,7 +33,7 @@ public sealed class ConfirmWindow : Window
 
         // Themed the same way every control the settings view builds in code is: a dynamic
         // resource, so the dialog repaints with the rest of the app rather than pinning a
-        // literal (list.md Phase 4, "Themes").
+        // literal (Phase 4, "Themes").
         Themed(this, BackgroundProperty, ThemeManager.BackgroundKey);
 
         var text = new TextBlock

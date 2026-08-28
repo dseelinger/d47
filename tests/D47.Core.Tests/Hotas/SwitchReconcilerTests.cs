@@ -8,7 +8,7 @@ using Xunit;
 namespace D47.Core.Tests.Hotas;
 
 /// <summary>
-/// A switch position meaning a state rather than a press (list.md Phase 21, items 3 to 6).
+/// A switch position meaning a state rather than a press (Phase 21, items 3 to 6).
 /// <para>
 /// The assertions that matter most here are the ones about <em>nothing happening</em>. Gear
 /// already down and the switch moved to down must do nothing at all; a switch left alone while
@@ -443,7 +443,7 @@ public class SwitchReconcilerTests
         Assert.NotEmpty(pending[0].Steps);
     }
 
-    // ----- Switches that reach d47 itself (list.md Phase 46) -----
+    // ----- Switches that reach d47 itself (Phase 46) -----
 
     /// <summary>The three roots both surfaces register for the transcript.</summary>
     private static readonly IReadOnlyList<PanelDestination> Pages =

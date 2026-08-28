@@ -12,7 +12,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// "Show that the microphone is open" (list.md Phase 13).
+/// "Show that the microphone is open" (Phase 13).
 /// <para>
 /// The item is specific about what it wants and why: continuous capture with no visible state is
 /// the thing a Commander is right to distrust, and the indicator is a property of the gate policy

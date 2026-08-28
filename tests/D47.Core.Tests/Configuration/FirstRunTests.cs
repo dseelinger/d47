@@ -6,7 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>
-/// The guided key setup (list.md Phase 16, "Ask for the keys on the first run that needs them").
+/// The guided key setup (Phase 16, "Ask for the keys on the first run that needs them").
 /// <para>
 /// Everything asserted here is about the <em>decision</em> rather than the window, which is why it
 /// lives in Core: "should this be shown" and "what should it show" are answerable from state, and a

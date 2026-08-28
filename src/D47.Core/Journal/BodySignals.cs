@@ -11,7 +11,7 @@ namespace D47.Core.Journal;
 public sealed record BodySignal(string Type, int Count);
 
 /// <summary>
-/// What a detailed surface scan found on one body (list.md Phase 18, "Find the exobiology").
+/// What a detailed surface scan found on one body (Phase 18, "Find the exobiology").
 /// <para>
 /// <b>The game's own answer, and it outranks any prediction d47 could make.</b> Once a body has been
 /// mapped, <c>SAASignalsFound</c> says what is on it — so "is this worth landing on" stops being an

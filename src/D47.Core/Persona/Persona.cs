@@ -13,8 +13,8 @@ namespace D47.Core.Persona;
 /// <paramref name="Name"/>.
 /// </param>
 /// <param name="Name">
-/// What the persona calls itself, and therefore the default name of the ship's AI (list.md
-/// Phase 11, "Ship AI Naming"). The Commander may override that without renaming the persona.
+/// What the persona calls itself, and therefore the default name of the ship's AI (Phase 11,
+/// "Ship AI Naming"). The Commander may override that without renaming the persona.
 /// </param>
 /// <param name="Tagline">One line for the picker. Never reaches the model.</param>
 /// <param name="Body">
@@ -25,7 +25,7 @@ namespace D47.Core.Persona;
 /// <param name="Intro">
 /// What it says when it is first selected. Spoken rather than prompted — it is authored text
 /// from the persona pack, so putting it through the model would be paying for a paraphrase of
-/// something already written (list.md Phase 11, "Say when the persona has changed").
+/// something already written (Phase 11, "Say when the persona has changed").
 /// </param>
 /// <param name="Return">
 /// What it says when it is selected again after time away, with no model available to react to

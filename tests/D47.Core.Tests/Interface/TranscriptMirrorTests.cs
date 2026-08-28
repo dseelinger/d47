@@ -4,7 +4,7 @@ using Xunit;
 namespace D47.Core.Tests.Interface;
 
 /// <summary>
-/// One transcript page across both surfaces (list.md Phase 45, "One transcript, both surfaces").
+/// One transcript page across both surfaces (Phase 45, "One transcript, both surfaces").
 /// <para>
 /// Two real navigators rather than a window and a headset, because the rule is arithmetic over
 /// navigators: the Transcript root is one choice, tabs and trails are not, the echo stops because
@@ -270,7 +270,7 @@ public class TranscriptMirrorTests
 
     /// <summary>
     /// <b>One-way, which is the half that protects a Commander in a headset.</b> The mini panel may
-    /// be moved on its own and the window does not follow it — the rule <c>list.md</c> Phase 48
+    /// be moved on its own and the window does not follow it — the rule Phase 48
     /// states as <em>what must not follow is the overlay's tab dragging the window's</em>.
     /// </summary>
     [Fact]

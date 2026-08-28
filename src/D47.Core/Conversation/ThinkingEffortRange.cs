@@ -1,8 +1,8 @@
 namespace D47.Core.Conversation;
 
 /// <summary>
-/// The effort ladder, and the floor and ceiling a Commander can hold it between (list.md
-/// Phase 54, "A floor and a ceiling").
+/// The effort ladder, and the floor and ceiling a Commander can hold it between (Phase 54, "A
+/// floor and a ceiling").
 /// <para>
 /// <b>One place, so the clamp and the settings rows cannot disagree.</b> The rows offer a
 /// truncated ladder, the clamp applies the bounds, and both read the order and the spelling

@@ -12,7 +12,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// Reading history does not mean fighting new lines as they arrive (list.md Phase 19, "Follow
+/// Reading history does not mean fighting new lines as they arrive (Phase 19, "Follow
 /// the live log, or stop following it").
 /// <para>
 /// The transcript has followed its own tail since Phase 4, unconditionally — which is right
@@ -222,7 +222,7 @@ public class FollowingTheLiveLogTests
     /// <summary>
     /// Selection and copy across the appending log are the control's own, which is the item's
     /// own instruction: "if it is free due to the nature of the controls being used, then don't
-    /// invent a workflow that's unneeded" (list.md Phase 19, "Live log selectable and copyable").
+    /// invent a workflow that's unneeded" (Phase 19, "Live log selectable and copyable").
     /// <para>
     /// Asserted rather than assumed, because it is free only for as long as nobody swaps the
     /// control for a plain <c>TextBlock</c> to save a few allocations — and drag-selection across
@@ -250,7 +250,7 @@ public class FollowingTheLiveLogTests
     }
 
     /// <summary>
-    /// One affordance for the whole page as it is currently shown (list.md Phase 19, "Copy log").
+    /// One affordance for the whole page as it is currently shown (Phase 19, "Copy log").
     /// The clipboard itself is the platform's and is not driven headlessly here; what is worth
     /// asserting is that the button exists where the reading tools are, and that the text it
     /// would copy is the page rather than something assembled for the occasion.

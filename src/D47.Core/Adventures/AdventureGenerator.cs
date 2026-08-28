@@ -29,7 +29,7 @@ public enum AdventureLength
     Long,
 }
 
-/// <summary>What the Commander decided on the form, and the brief they spoke (list.md Phase 47).</summary>
+/// <summary>What the Commander decided on the form, and the brief they spoke (Phase 47).</summary>
 public sealed record AdventureAsk(
     AdventureReach Reach = AdventureReach.NearHere,
     AdventureLength Length = AdventureLength.Evening,
@@ -50,7 +50,7 @@ public sealed record AdventureOutcome(Adventure? Draft, string? Reply, string? R
 }
 
 /// <summary>
-/// Writes an adventure with the model, once, for a person to agree to (list.md Phase 47, "Written,
+/// Writes an adventure with the model, once, for a person to agree to (Phase 47, "Written,
 /// generated or imported, and each records how it arrived").
 /// <para>
 /// <b>Two turns, then a dry run.</b> The first writes the spine — premise, want, stake, turn, ending

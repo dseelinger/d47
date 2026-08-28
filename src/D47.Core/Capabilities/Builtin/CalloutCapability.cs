@@ -5,7 +5,7 @@ using D47.Core.Configuration;
 namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
-/// Speaking without being asked (list.md Phase 8).
+/// Speaking without being asked (Phase 8).
 /// <para>
 /// It registers one tool, and that tool is read-only. The model can ask what d47 is watching
 /// for; it cannot switch a warning off. That is not caution about the model — it is the trust
@@ -50,18 +50,18 @@ public static class CalloutCapability
     public const string LongJumpSecondsKey = "callouts.longJumpSeconds";
     public const string HomeSystemKey = "callouts.homeSystem";
     /// <summary>
-    /// One line at the start of a session, picking up where the Commander left off (list.md Phase
-    /// 31). A callout row rather than an autonomous one, because it presses nothing.
+    /// One line at the start of a session, picking up where the Commander left off (Phase 31). A
+    /// callout row rather than an autonomous one, because it presses nothing.
     /// </summary>
     public const string ContinuityKey = "callouts.continuity";
 
     /// <summary>
     /// Something d47 noticed the Commander keeps doing, said when the circumstance comes round
-    /// again (list.md Phase 32). The one row in this capability that ships off.
+    /// again (Phase 32). The one row in this capability that ships off.
     /// </summary>
     public const string HabitsKey = "callouts.habits";
 
-    /// <summary>A beat of the Commander's adventure, said when it is reached (list.md Phase 47).</summary>
+    /// <summary>A beat of the Commander's adventure, said when it is reached (Phase 47).</summary>
     public const string AdventureKey = "callouts.adventure";
 
     public const string AmbientKey = "callouts.ambient";
@@ -289,7 +289,7 @@ public static class CalloutCapability
                 s => s.Callouts.Habits,
                 (s, v) => s with { Callouts = s.Callouts with { Habits = v } },
 
-                // The only one off by default (list.md Phase 32, item 3). It fires because of a
+                // The only one off by default (Phase 32, item 3). It fires because of a
                 // claim about the Commander rather than because the game said something, and the
                 // item is explicit that this changes the deal.
                 defaultOn: false),

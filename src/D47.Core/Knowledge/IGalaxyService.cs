@@ -17,8 +17,8 @@ public sealed record SystemSummary
 
     /// <summary>
     /// The system's id64 — what the journal writes as <c>SystemAddress</c>. Carried so a place a
-    /// story names can be matched against the journal by number rather than by name (list.md
-    /// Phase 47). Null where the service did not say.
+    /// story names can be matched against the journal by number rather than by name (Phase 47).
+    /// Null where the service did not say.
     /// </summary>
     public long? SystemAddress { get; init; }
 
@@ -83,7 +83,7 @@ public interface IGalaxyService
     Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Stations selling a named module or ship, nearest first (list.md Phase 14, "Find Nearest").
+    /// Stations selling a named module or ship, nearest first (Phase 14, "Find Nearest").
     /// </summary>
     Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken);
 
@@ -95,7 +95,7 @@ public interface IGalaxyService
     Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Every system within claim range of a reference, least populated first (list.md Phase 18,
+    /// Every system within claim range of a reference, least populated first (Phase 18,
     /// "Find somewhere worth colonising").
     /// <para>
     /// Deliberately not a <see cref="SearchAsync"/> with more filters. The criterion that decides

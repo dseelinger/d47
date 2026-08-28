@@ -4,7 +4,7 @@ namespace D47.Core.Adventures;
 
 /// <summary>
 /// The story as standing prompt context, below the cache breakpoint beside the game state
-/// (list.md Phase 47, "The story is told from inside, between the beats").
+/// (Phase 47, "The story is told from inside, between the beats").
 /// <para>
 /// <b>The persona knows what the Commander knows, plus the stake.</b> The premise, the want and the
 /// stake are always here, so the core tells from inside the story rather than reciting the next

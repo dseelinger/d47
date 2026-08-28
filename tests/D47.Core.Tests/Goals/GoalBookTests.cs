@@ -6,7 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Goals;
 
 /// <summary>
-/// The join that makes an arc and a checklist worth having together (list.md Phase 34, "The
+/// The join that makes an arc and a checklist worth having together (Phase 34, "The
 /// checklist points at the arc").
 /// </summary>
 public class GoalBookTests : IDisposable

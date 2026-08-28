@@ -17,7 +17,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The Loadout tab's other two modes: Suits and weapons, and the gap (list.md Phase 27).
+/// The Loadout tab's other two modes: Suits and weapons, and the gap (Phase 27).
 /// <para>
 /// <b>One page kind built once and shown twice.</b> The assertions here are deliberately the same
 /// assertions <see cref="LoadoutTabTests"/> makes about Ships — an index, a drill, two blocks on a

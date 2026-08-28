@@ -9,8 +9,8 @@ using D47.Core.Ships;
 namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
-/// The arithmetic between what the Commander's plans need and what they are carrying (list.md
-/// Phase 27, "Gap analysis").
+/// The arithmetic between what the Commander's plans need and what they are carrying (Phase 27,
+/// "Gap analysis").
 /// <para>
 /// <b>Not a wishlist.</b> A wishlist is a list of things you want, which is what the ship builds
 /// and the on-foot plans already are. This is the subtraction, read across all of them at once —

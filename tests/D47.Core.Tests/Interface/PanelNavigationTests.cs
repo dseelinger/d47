@@ -4,7 +4,7 @@ using Xunit;
 namespace D47.Core.Tests.Interface;
 
 /// <summary>
-/// Where the Commander is, and every way of changing it (list.md Phase 25, "Drill in, and find
+/// Where the Commander is, and every way of changing it (Phase 25, "Drill in, and find
 /// your way back").
 /// <para>
 /// Walked here rather than through a surface, which is the point of the arithmetic being in Core:
@@ -290,8 +290,8 @@ public class PanelNavigationTests
     }
 
     /// <summary>
-    /// The destination vocabulary is the roots, in bar order, and nothing else (list.md Phase
-    /// 46) — derived from what was registered rather than kept as a second list.
+    /// The destination vocabulary is the roots, in bar order, and nothing else (Phase 46) —
+    /// derived from what was registered rather than kept as a second list.
     /// </summary>
     [Fact]
     public void EveryRootOfEveryTabIsADestinationInBarOrder()

@@ -4,7 +4,7 @@ using Xunit;
 namespace D47.Core.Tests.Interface;
 
 /// <summary>
-/// Whether d47 can tell that a topmost strip will be visible over the game (list.md Phase 48).
+/// Whether d47 can tell that a topmost strip will be visible over the game (Phase 48).
 /// <para>
 /// Worth a test out of proportion to its size, because the failure it guards against is silent:
 /// an exclusive-fullscreen game composites over nothing, so the overlay is simply not there —

@@ -9,7 +9,7 @@ using D47.Core.Input;
 namespace D47.App.Controls;
 
 /// <summary>
-/// Authoring macros (list.md Phase 10, "Macros": <i>invocation is by voice; authoring is not</i>).
+/// Authoring macros (Phase 10, "Macros": <i>invocation is by voice; authoring is not</i>).
 /// <para>
 /// <b>Every field here is a closed vocabulary except the name.</b> The action is a drop-down of
 /// the catalogue, the state is one of three, and the pause is a bounded number — so a macro

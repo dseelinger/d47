@@ -4,7 +4,7 @@ using Xunit;
 namespace D47.Llm.Tests;
 
 /// <summary>
-/// What a failed turn looks like coming out of the seam (list.md Phase 2).
+/// What a failed turn looks like coming out of the seam (Phase 2).
 /// <para>
 /// Two properties, and the second is the one with teeth. <b>Nothing leaves as an exception</b> —
 /// the turn loop has no handler for one and a transport failure that escaped would take the tick

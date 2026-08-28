@@ -117,7 +117,7 @@ public sealed record MaterialEntry
 
 /// <summary>
 /// Every material, micro-resource and commodity, with the grade, the trader line and the
-/// ledger the journal does not carry (list.md Phase 14, <c>#102</c>).
+/// ledger the journal does not carry (Phase 14, <c>#102</c>).
 /// <para>
 /// <b>Derived, not written.</b> <c>tools/gen-materials.py</c> builds it from EDCD/FDevIDs,
 /// cross-checks the line against EDDiscovery/EliteDangerousCore, and takes origins from

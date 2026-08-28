@@ -9,7 +9,7 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>
-/// "Never gated behind a turn completing" (list.md Phase 5, "Shut up").
+/// "Never gated behind a turn completing" (Phase 5, "Shut up").
 /// <para>
 /// Every surface must gate ordinary input on a turn being in flight, or a second question
 /// tramples the first. That gate is precisely what a silence command must not be behind — and

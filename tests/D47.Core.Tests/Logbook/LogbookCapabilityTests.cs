@@ -7,7 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Logbook;
 
 /// <summary>
-/// What the model can reach, and what only a person can (list.md Phase 33).
+/// What the model can reach, and what only a person can (Phase 33).
 /// </summary>
 public class LogbookCapabilityTests
 {

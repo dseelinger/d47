@@ -6,7 +6,7 @@ using D47.Core.Listening;
 namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
-/// Hearing the Commander (list.md Phase 6).
+/// Hearing the Commander (Phase 6).
 /// <para>
 /// The one tool is read-only, and the push-to-talk key row is protected. A model that can
 /// rebind or unbind the microphone key has taken away how the Commander talks to it — and
@@ -21,7 +21,7 @@ public static class ListeningCapability
     public const string DeviceKey = "listening.inputDevice";
     public const string PushToTalkKeyKey = "listening.pushToTalkKey";
 
-    /// <summary>The stick button beside it (list.md Phase 53).</summary>
+    /// <summary>The stick button beside it (Phase 53).</summary>
     public const string PushToTalkButtonKey = "listening.pushToTalkButton";
     public const string ModeKey = "listening.mode";
     public const string PreRollKey = "listening.preRoll";
@@ -38,7 +38,7 @@ public static class ListeningCapability
     public const string HoldMode = "hold";
     public const string ToggleMode = "toggle";
 
-    /// <summary>Hands free: the gate opens when somebody talks (list.md Phase 13).</summary>
+    /// <summary>Hands free: the gate opens when somebody talks (Phase 13).</summary>
     public const string ContinuousMode = "continuous";
 
     /// <summary>Hands free, and only when spoken to by name.</summary>
@@ -86,7 +86,7 @@ public static class ListeningCapability
 
         /// <summary>
         /// What the microphone is doing right now, as the gate policy sees it. The one question
-        /// a Commander running hands free actually wants answered (list.md Phase 13).
+        /// a Commander running hands free actually wants answered (Phase 13).
         /// </summary>
         public Func<MicrophoneState>? Microphone { get; init; }
 
@@ -547,7 +547,7 @@ public static class ListeningCapability
                 // Applies in every mode. It was written for the polling delay on the key, and it
                 // covers the detector's onset delay in the hands-free modes for the same reason
                 // and by the same mechanism — the gate opens retroactively into the ring either
-                // way (list.md Phase 13).
+                // way (Phase 13).
                 // The button counts as much as the key: pre-roll covers the polling delay on
                 // whichever opened the gate, and a Commander bound only to a stick used to find
                 // this row missing (GitHub issue 44).
@@ -828,7 +828,7 @@ public static class ListeningCapability
     };
 
     /// <summary>
-    /// "Report a key that is bound twice" (list.md Phase 6). A double-bound push-to-talk key
+    /// "Report a key that is bound twice" (Phase 6). A double-bound push-to-talk key
     /// has no symptom other than not working — in one direction or the other, depending on
     /// which application sees the key first — so the collision is stated outright.
     /// </summary>

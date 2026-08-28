@@ -376,7 +376,7 @@ internal static class SpanshRequest
     }
 
     /// <summary>
-    /// The market sweep behind d47's own trade planner (list.md Phase 36).
+    /// The market sweep behind d47's own trade planner (Phase 36).
     /// <para>
     /// The same endpoint the station search uses, asked a different question: no module, no ship,
     /// no service — just everything within a radius, for the <c>market</c> array each result

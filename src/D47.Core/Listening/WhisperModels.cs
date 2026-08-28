@@ -1,7 +1,7 @@
 namespace D47.Core.Listening;
 
 /// <summary>
-/// One speech-to-text model the Commander can choose (list.md Phase 6, "STT Model Choice").
+/// One speech-to-text model the Commander can choose (Phase 6, "STT Model Choice").
 /// </summary>
 /// <param name="Id">The settings value and the ggml file's stem — "base.en".</param>
 /// <param name="ApproximateMegabytes">

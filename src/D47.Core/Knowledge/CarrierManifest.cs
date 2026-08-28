@@ -23,7 +23,7 @@ namespace D47.Core.Knowledge;
 public sealed record CarrierStock(string Commodity, int Tonnes, DateTimeOffset SaidAt);
 
 /// <summary>
-/// What the Commander says is on their fleet carrier (list.md Phase 50, amended by the Commander
+/// What the Commander says is on their fleet carrier (Phase 50, amended by the Commander
 /// on 2026-08-25).
 /// <para>
 /// <b>Told, never derived, and the difference is the whole reason this class exists.</b> The plan

@@ -5,7 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Vr;
 
 /// <summary>
-/// <em>Order agnostic Overlay</em> (list.md Phase 9), driven with no headset in the room.
+/// <em>Order agnostic Overlay</em> (Phase 9), driven with no headset in the room.
 /// <para>
 /// This is the test the whole seam exists for. SteamVR starting after d47, exiting under it,
 /// and restarting mid-session are three orderings a Commander should never have to know about,

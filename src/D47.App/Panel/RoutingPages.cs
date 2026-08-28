@@ -7,7 +7,7 @@ using D47.Core.Knowledge;
 namespace D47.App.Panel;
 
 /// <summary>
-/// What the Routing tab is made of, and what each of its pages needs (list.md Phase 37).
+/// What the Routing tab is made of, and what each of its pages needs (Phase 37).
 /// <para>
 /// Handed to <see cref="PanelView.Furnish"/> as one builder, the way the Loadout and Engineers
 /// tabs are.
@@ -23,7 +23,7 @@ namespace D47.App.Panel;
 /// <param name="LookupsEnabled">Whether the galaxy setting is on, for the Plan page's gate.</param>
 /// <param name="OpenSettings">A way to the row that turns it on, where the surface has one.</param>
 /// <param name="Commodities">
-/// The last commodity answer (list.md Phase 49), written by whoever asked — by voice or from the
+/// The last commodity answer (Phase 49), written by whoever asked — by voice or from the
 /// Market page — so both routes show one answer rather than two searches that could disagree.
 /// </param>
 public sealed record RoutingSurface(
@@ -36,7 +36,7 @@ public sealed record RoutingSurface(
     CommodityBoard? Commodities = null);
 
 /// <summary>
-/// The Routing tab (list.md Phase 37).
+/// The Routing tab (Phase 37).
 /// <para>
 /// <b>Three roots, one journey.</b> <em>Plan</em> is where a route comes from, <em>Progress</em>
 /// is the one being flown, and <em>Course</em> is getting a system name into the game. They are
@@ -60,7 +60,7 @@ public static class RoutingPages
     /// <summary>A system name onto the clipboard, and into the galaxy map.</summary>
     public const string CourseRoot = "routing.course";
 
-    /// <summary>Where to buy a commodity, or where to dump one (list.md Phase 49).</summary>
+    /// <summary>Where to buy a commodity, or where to dump one (Phase 49).</summary>
     public const string MarketRoot = "routing.market";
 
     /// <summary>How a plan that was made is keyed when it is opened as a level.</summary>
@@ -141,7 +141,7 @@ public static class RoutingPages
     /// <summary>
     /// Copying a system name, wherever one is drawn on this tab. Through the tool rather than
     /// straight to the clipboard, so the one place that knows how to put a name somewhere useful
-    /// stays the one place (list.md Phase 37, "Course").
+    /// stays the one place (Phase 37, "Course").
     /// </summary>
     private static Action<string>? Copy(RoutingSurface surface) =>
         surface.Registry is { } registry

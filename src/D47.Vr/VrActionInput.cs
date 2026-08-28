@@ -278,7 +278,7 @@ public sealed class VrActionInput(ILogger logger)
     };
 
     /// <summary>
-    /// Whether the back button was <em>pressed</em> this frame (list.md Phase 25, "Drill in, and
+    /// Whether the back button was <em>pressed</em> this frame (Phase 25, "Drill in, and
     /// find your way back").
     /// <para>
     /// The edge rather than the level, and that is the whole of it: this runs at frame rate and a

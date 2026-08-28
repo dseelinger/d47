@@ -4,7 +4,7 @@ using System.Text;
 namespace D47.Core.Tests.Logbook;
 
 /// <summary>
-/// A folder of journals written by hand, for the Commander's log tests (list.md Phase 33).
+/// A folder of journals written by hand, for the Commander's log tests (Phase 33).
 /// <para>
 /// By hand rather than replayed from the real corpus, for the reason
 /// <c>HabitMinerTests</c> records: the 914 journals are on one machine and CI has none, so what

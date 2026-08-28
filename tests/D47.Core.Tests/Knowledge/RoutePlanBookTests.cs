@@ -5,7 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>
-/// The last plan each planner produced (list.md Phase 37, "One last plan, shared by the voice
+/// The last plan each planner produced (Phase 37, "One last plan, shared by the voice
 /// and the panel").
 /// </summary>
 public class RoutePlanBookTests : IDisposable

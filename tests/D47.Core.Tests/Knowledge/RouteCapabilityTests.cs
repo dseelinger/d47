@@ -392,7 +392,7 @@ public class RouteCapabilityTests
     }
 
     /// <summary>
-    /// A route plotted by voice lands in the book the Routing tab reads (list.md Phase 37).
+    /// A route plotted by voice lands in the book the Routing tab reads (Phase 37).
     /// <para>
     /// The join this phase exists to make: without it the tab would plot its own and the two
     /// would hold different routes, which is the settings-row-and-speaking-path disagreement

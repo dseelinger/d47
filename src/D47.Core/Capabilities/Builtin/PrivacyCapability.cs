@@ -4,7 +4,7 @@ using D47.Core.Conversation;
 namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
-/// What leaves this machine, stated where the settings that cause it live (list.md Phase 4,
+/// What leaves this machine, stated where the settings that cause it live (Phase 4,
 /// "Say what each provider receives"). The disclosure rows are read-only: they are not
 /// something the Commander sets, they are something d47 says, and saying it as a row means it
 /// sits next to the toggle that changes it rather than in a document nobody opens.
@@ -15,12 +15,12 @@ public static class PrivacyCapability
 
     public const string UpdateCheckKey = "updates.checkOnStartup";
 
-    /// <summary>The row carrying the one action that empties the memory store (list.md Phase 31).</summary>
+    /// <summary>The row carrying the one action that empties the memory store (Phase 31).</summary>
     public const string MemoryKey = "privacy.memory";
 
     /// <summary>
-    /// Throwing away what d47 worked out about the Commander from their journals (list.md Phase
-    /// 32). Beside the memory row, because a Commander wanting to be forgotten means both.
+    /// Throwing away what d47 worked out about the Commander from their journals (Phase 32).
+    /// Beside the memory row, because a Commander wanting to be forgotten means both.
     /// </summary>
     public const string HabitsKey = "privacy.habits";
 
@@ -31,12 +31,12 @@ public static class PrivacyCapability
     /// web-search row describes searches at an endpoint that will never make one.
     /// </param>
     /// <param name="memories">
-    /// What d47 remembers about the Commander (list.md Phase 31). Null where nothing composed a
+    /// What d47 remembers about the Commander (Phase 31). Null where nothing composed a
     /// store — under the designer and in tests that are not about it — and the row then says so
     /// rather than offering a button that erases nothing.
     /// </param>
     /// <param name="habits">
-    /// What d47 has noticed about the Commander (list.md Phase 32), on exactly the same terms.
+    /// What d47 has noticed about the Commander (Phase 32), on exactly the same terms.
     /// </param>
     public static CapabilityDescriptor Create(
         SettingsService settings,
@@ -136,7 +136,7 @@ public static class PrivacyCapability
             },
         };
 
-        // Emptying the memory store, here rather than in its own section (list.md Phase 31, item 3:
+        // Emptying the memory store, here rather than in its own section (Phase 31, item 3:
         // "which joins the existing privacy capability rather than inventing a second place to
         // look"). A Commander who wants d47 to forget them looks for that where the rest of "what
         // does this thing know" lives, and a second erase button somewhere else is one they would
@@ -171,7 +171,7 @@ public static class PrivacyCapability
         // Info with a Press again, so nothing on the tool surface can reach it. Unlike the memory
         // row this one does not erase everything in its file: the dismissals stay, because they are
         // the Commander's own instructions rather than d47's observations, and clearing them would
-        // resurrect exactly the claims that had already been refused (list.md Phase 32, item 2).
+        // resurrect exactly the claims that had already been refused (Phase 32, item 2).
         rows.Add(new SettingRow
         {
             Key = HabitsKey,

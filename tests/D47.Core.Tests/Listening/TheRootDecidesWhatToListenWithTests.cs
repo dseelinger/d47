@@ -6,7 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Listening;
 
 /// <summary>
-/// The composition root's listening wiring, decided from settings alone (list.md Phase 19,
+/// The composition root's listening wiring, decided from settings alone (Phase 19,
 /// "Give the composition root a test harness").
 /// <para>
 /// <c>AppHost.ApplyListeningSettings</c> is a hundred and twenty lines of device handles, native

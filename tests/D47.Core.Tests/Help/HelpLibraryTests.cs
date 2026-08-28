@@ -94,7 +94,7 @@ public class HelpLibraryTests
     /// <summary>
     /// <b>Nothing smaller than 14 in a band.</b> The big headset panel is 1024 pixels across a
     /// 1.1 m quad at 1.1 m, which is 19 pixels per degree — so 14 px is about 31 arcminutes of cap
-    /// height against a ~20 arcminute floor for text meant to be read (list.md Phase 39). A figure
+    /// height against a ~20 arcminute floor for text meant to be read (Phase 39). A figure
     /// is scaled to the panel's width, near enough one-to-one there, so the number in the markup
     /// is the number in the headset.
     /// <para>

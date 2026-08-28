@@ -4,7 +4,7 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>
-/// What on-foot engineering costs (list.md Phase 20, "Know what on-foot engineering does").
+/// What on-foot engineering costs (Phase 20, "Know what on-foot engineering does").
 /// <para>
 /// <b>These numbers are not the ones the community sources publish, and that is the point.</b>
 /// Every on-foot quantity in EDEngineer predates the patch that cut them, and

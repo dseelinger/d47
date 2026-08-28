@@ -13,7 +13,7 @@ public enum CaptionSize
 }
 
 /// <summary>
-/// What <em>Configure the captions</em> configures (list.md Phase 9). Bounded by the standard:
+/// What <em>Configure the captions</em> configures (Phase 9). Bounded by the standard:
 /// everything here is something the CC specification leaves to the viewer, and nothing here is
 /// something it fixes.
 /// <para>

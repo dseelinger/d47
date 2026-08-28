@@ -20,7 +20,7 @@ namespace D47.App.Tests;
 
 /// <summary>
 /// Power and jump range at the head of a ship's slot list, and the coin on a module a pledge is
-/// needed to buy (list.md Phase 38, "A build you can watch").
+/// needed to buy (Phase 38, "A build you can watch").
 /// <para>
 /// The arithmetic is <c>D47.Core.Tests.Ships.BuildGaugeTests</c>'s; this is about what a Commander
 /// sees — that the bars are drawn where the item says, that a modelled figure looks different from

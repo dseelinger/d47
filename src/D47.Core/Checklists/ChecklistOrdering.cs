@@ -11,7 +11,7 @@ namespace D47.Core.Checklists;
 public sealed record ChecklistProject(ChecklistScope Scope, string Key, string Word);
 
 /// <summary>
-/// The checklist in the order the Commander cares about (list.md Phase 42).
+/// The checklist in the order the Commander cares about (Phase 42).
 /// <para>
 /// <b>A reading of the document, never a rewrite of it.</b> The stored file keeps its own order —
 /// a hand edit still lands where the Commander put it — and this arranges what is drawn, spoken
@@ -214,7 +214,7 @@ public static class ChecklistOrdering
     };
 
     /// <summary>
-    /// Moves one project in the Commander's order (list.md Phase 42, "Projects are ordered by the
+    /// Moves one project in the Commander's order (Phase 42, "Projects are ordered by the
     /// Commander, and that order is stored").
     /// <para>
     /// <b>The first rank writes the whole sequence down.</b> The move is made over the order the

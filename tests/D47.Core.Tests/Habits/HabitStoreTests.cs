@@ -5,7 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Habits;
 
 /// <summary>
-/// The store, and the one structural decision in it (list.md Phase 32).
+/// The store, and the one structural decision in it (Phase 32).
 /// <para>
 /// Most of what is asserted here is about <b>dismissals surviving things</b>, because that is the
 /// property the item calls "the failure mode this whole phase risks" — the same wrong observation

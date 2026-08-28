@@ -7,7 +7,7 @@ using D47.Vr;
 namespace D47.App.Headset;
 
 /// <summary>
-/// The caption quad (list.md Phase 9, "TheApp appears in the headset").
+/// The caption quad (Phase 9, "TheApp appears in the headset").
 /// <para>
 /// Its own overlay handle, head-locked, flat, and unmovable. Not a preference — a caption the
 /// Commander can drag is a caption they can drag somewhere they will not see it, and the one

@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Habits;
 
 /// <summary>
-/// What one mining run concluded about one Commander (list.md Phase 32).
+/// What one mining run concluded about one Commander (Phase 32).
 /// <para>
 /// Two lists rather than one, and that is item 2's requirement rather than tidiness: a detector
 /// that found no problem and a detector that has not seen enough of the Commander to say are
@@ -40,7 +40,7 @@ public sealed record HabitReport
 }
 
 /// <summary>
-/// The batch job over journals that already exist (list.md Phase 32, "Mine the Commander's own
+/// The batch job over journals that already exist (Phase 32, "Mine the Commander's own
 /// journals").
 /// <para>
 /// <b>The most defensible thing d47 can do, because it cannot be copied.</b> A competitor can ship

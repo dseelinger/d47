@@ -9,7 +9,7 @@ it. Run it when a row is added, corrected or dropped:
 
 What it answers
 ---------------
-list.md Phase 23 asks d47 to say something on arriving in a system that means more than its
+Phase 23 asks d47 to say something on arriving in a system that means more than its
 astrography. The journal cannot answer that: `FSDJump` reports where you are, `CodexEntry`
 reports astronomy ("G Type Giant", "Terraformable") and `ApproachSettlement` names 229
 settlements in the corpus without saying which of them matter.

@@ -3,7 +3,7 @@ using D47.Core.Journal;
 namespace D47.Core.Habits;
 
 /// <summary>
-/// Landing somewhere heavy (list.md Phase 32) — and <b>the detector that ships having found
+/// Landing somewhere heavy (Phase 32) — and <b>the detector that ships having found
 /// nothing</b>.
 /// <para>
 /// The Commander named high-gravity landings as something they get wrong. Across 914 journals: 477

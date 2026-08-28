@@ -4,7 +4,7 @@ using D47.Core.Configuration;
 namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
-/// The autonomous-action category (list.md Phase 10, items 2 and 3).
+/// The autonomous-action category (Phase 10, items 2 and 3).
 /// <para>
 /// <b>The category has its rule before it has a second member.</b> Every other capability acts
 /// on something the Commander said, and the sentence they said is the consent. An action that

@@ -35,7 +35,7 @@ namespace D47.App.Tests;
 /// </summary>
 public class HelpInTheHeadsetTests
 {
-    /// <summary>What a ray-sized target has to clear, in surface pixels (list.md Phase 39).</summary>
+    /// <summary>What a ray-sized target has to clear, in surface pixels (Phase 39).</summary>
     private const double TouchFloor = 30;
 
     /// <summary>
@@ -344,7 +344,7 @@ public class HelpInTheHeadsetTests
     /// every wrong theory about an invisible overlay has come from assuming those two agree.
     /// <b>It cannot judge contrast</b>: a headless render has none of the application's theme
     /// resources, so the palette in the file is the fallback rather than the Commander's
-    /// (list.md Phase 39). Size and layout are real; colour is not.
+    /// (Phase 39). Size and layout are real; colour is not.
     /// </para>
     /// </summary>
     [AvaloniaFact]

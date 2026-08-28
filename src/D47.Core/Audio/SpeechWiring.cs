@@ -7,7 +7,7 @@ namespace D47.Core.Audio;
 public sealed record SpeechSlotWiring(string ProviderId, bool KeyPresent);
 
 /// <summary>
-/// What the composition root is currently holding, per slot (list.md Phase 57).
+/// What the composition root is currently holding, per slot (Phase 57).
 /// <para>
 /// <see cref="Nothing"/> is the state before the first apply of the process, and it is not the
 /// same as "every slot is on Edge" — the empty map is what makes the first apply build clients
@@ -78,7 +78,7 @@ public sealed record SpeechWiringPlan
 /// When speech clients are built, when they are released and when a voice list is asked for
 /// again — the decisions the composition root used to make inline, lifted here because both of
 /// the faults found in one afternoon's hand-testing lived in them and neither could be reached
-/// by a test (list.md Phase 19, "Give the composition root a test harness").
+/// by a test (Phase 19, "Give the composition root a test harness").
 /// <para>
 /// A pure function of what is held and what is selected. It builds nothing, disposes nothing
 /// and reaches no network: the root still owns every one of those, and owns them in one place

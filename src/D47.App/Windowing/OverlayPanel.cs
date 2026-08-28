@@ -18,7 +18,7 @@ namespace D47.App.Windowing;
 
 /// <summary>
 /// The mini panel without a headset: a chromeless, click-through strip pinned over the game
-/// (list.md Phase 48).
+/// (Phase 48).
 /// <para>
 /// <b>A third instantiation, not a second design.</b> <see cref="PanelView"/> is a
 /// <c>UserControl</c> instantiated once per surface against one <see cref="PanelViewModel"/>, and
@@ -128,7 +128,7 @@ public sealed class OverlayPanel : Window
 
         if (adventures is not null)
         {
-            // The story, at mini's size (list.md Phase 48). <b>These two roots are all the overlay
+            // The story, at mini's size (Phase 48). <b>These two roots are all the overlay
             // furnishes</b> — the transcript, which every surface has by construction, and this.
             // Being sparse costs no special case anywhere: `PanelView.Tab` already declines to
             // select a tab nobody furnished, which is the same *not calling `Furnish`* that
@@ -186,8 +186,7 @@ public sealed class OverlayPanel : Window
         if (tabs.Checklists is { } checklists)
         {
             // What the Commander is working on — the tab this instruction named. It rides its
-            // goals and the button that ages them, exactly as the headset's does (list.md
-            // Phase 34).
+            // goals and the button that ages them, exactly as the headset's does (Phase 34).
             _view.EnableChecklist(checklists, tabs.Goals, tabs.BackfillGoals);
         }
 
@@ -205,7 +204,7 @@ public sealed class OverlayPanel : Window
 
     /// <summary>
     /// Redraws the pages that change with nothing having happened — the clocks, and the engineer
-    /// ranking when the Commander has moved or re-fitted (list.md Phases 24 and 28).
+    /// ranking when the Commander has moved or re-fitted (Phases 24 and 28).
     /// <para>
     /// Pulled rather than pushed, like the window's and the headset's: a clock is the one page
     /// whose content moves with no event behind it. Registered on the tick and posted onto this
@@ -219,7 +218,7 @@ public sealed class OverlayPanel : Window
     }
 
     /// <summary>
-    /// Where this surface is, so a spoken phrase and a switch can move it (list.md Phase 45 and
+    /// Where this surface is, so a spoken phrase and a switch can move it (Phase 45 and
     /// Phase 46). It joins through the same <c>AppHost.RouteNavigation</c> that already routes the
     /// other two, and never as the leader: the window leads and this follows, so the overlay's tab
     /// can never drag the window's.
@@ -332,7 +331,7 @@ public sealed class OverlayPanel : Window
 
     /// <summary>
     /// Hands the pointer back to the strip so it can be dragged, and takes it away again the
-    /// moment the Commander lets go (list.md Phase 48).
+    /// moment the Commander lets go (Phase 48).
     /// <para>
     /// Reached by a system-wide gesture rather than by a settings row, because the overlay is
     /// hidden whenever d47's own window is the thing in front — so a button on a page is a button

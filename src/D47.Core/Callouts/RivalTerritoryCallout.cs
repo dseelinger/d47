@@ -4,7 +4,7 @@ using D47.Core.Journal;
 namespace D47.Core.Callouts;
 
 /// <summary>
-/// Flying in a rival Power's space (list.md Phase 15, "Warn that you are exposed in a rival Power's
+/// Flying in a rival Power's space (Phase 15, "Warn that you are exposed in a rival Power's
 /// territory").
 /// <para>
 /// <b>A standing condition rather than an event.</b> It announces on the edge into the condition

@@ -47,7 +47,7 @@ public sealed record RichesRoute(IReadOnlyList<RichesStop> Stops)
 }
 
 /// <summary>
-/// One species the plotter says is on a body, with what it pays (list.md Phase 18, "Find the
+/// One species the plotter says is on a body, with what it pays (Phase 18, "Find the
 /// exobiology").
 /// <para>
 /// <b>The species, not the genus</b> — and that distinction is the whole reason this half of the
@@ -174,7 +174,7 @@ public sealed record TradeLot(string Commodity, int Amount, int UnitPrice)
 
 /// <summary>
 /// One station on a trade route, and everything that happens while the Commander is standing on
-/// it (list.md Phase 36).
+/// it (Phase 36).
 /// <para>
 /// <b>A stop rather than a hop, and that is the phase in one record.</b> A hop is a leg with a
 /// buy at one end and a sell at the other, which is the shape every planner assumes and the shape
@@ -225,7 +225,7 @@ public sealed record TradeStop(string System, string Station)
 }
 
 /// <summary>
-/// A trade route d47 worked out (list.md Phase 36).
+/// A trade route d47 worked out (Phase 36).
 /// </summary>
 public sealed record TradeRoute(IReadOnlyList<TradeStop> Stops)
 {
@@ -420,8 +420,8 @@ public sealed record TradeQuery
     public int CargoCapacity { get; init; }
 
     /// <summary>
-    /// How many stations to visit. <b>Ten is the target and not a holy number</b> (list.md Phase
-    /// 36): the naive formulation of a route that carries cargo between hops does not finish at
+    /// How many stations to visit. <b>Ten is the target and not a holy number</b> (Phase 36):
+    /// the naive formulation of a route that carries cargo between hops does not finish at
     /// that depth, and the bounded one does — measured at 300,000 leg evaluations for ten hops
     /// against a beam of 200, which is tens of milliseconds of arithmetic.
     /// </summary>
@@ -503,7 +503,7 @@ public sealed record TradeQuery
 }
 
 /// <summary>
-/// The seam to whatever plots routes (list.md Phase 14, "Route Planning").
+/// The seam to whatever plots routes (Phase 14, "Route Planning").
 /// <para>
 /// Separate from <see cref="IGalaxyService"/> even though the same host answers both, because the
 /// protocol is a different one: a search is a request and a reply, and a plot is a job that is
@@ -523,12 +523,12 @@ public interface IRouteService
 
     Task<RichesRoute?> PlotRichesAsync(RichesQuery query, CancellationToken cancellationToken);
 
-    /// <summary>The fourth plot type (list.md Phase 18, "Find the exobiology").</summary>
+    /// <summary>The fourth plot type (Phase 18, "Find the exobiology").</summary>
     Task<ExobiologyRoute?> PlotExobiologyAsync(ExobiologyQuery query, CancellationToken cancellationToken);
 }
 
 /// <summary>
-/// The seam to whatever gathers markets and plans a trade route over them (list.md Phase 36).
+/// The seam to whatever gathers markets and plans a trade route over them (Phase 36).
 /// <para>
 /// <b>It left <see cref="IRouteService"/> when the planner became d47's own.</b> That interface
 /// exists to describe one protocol — a job submitted, queued and polled for — and the trade plot
@@ -547,7 +547,7 @@ public interface ITradePlanService
     Task<TradeRoute?> PlanAsync(TradeQuery query, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Where to buy one commodity, or where to dump it (list.md Phase 49).
+    /// Where to buy one commodity, or where to dump it (Phase 49).
     /// <para>
     /// On this interface rather than on its own, because it fetches nothing new: the same sweep
     /// the planner runs already returns whole markets, and the same cache already holds them. Two
@@ -557,7 +557,7 @@ public interface ITradePlanService
     Task<CommodityAnswer> FindCommodityAsync(CommoditySearch search, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Where to buy everything one construction site still needs (list.md Phase 50).
+    /// Where to buy everything one construction site still needs (Phase 50).
     /// <para>
     /// Here for the same reason <see cref="FindCommodityAsync"/> is, and more so: this is the same
     /// sweep and the same cache again, and the difference is entirely in the arithmetic done on
@@ -569,7 +569,7 @@ public interface ITradePlanService
 }
 
 /// <summary>
-/// One build's sourcing question (list.md Phase 50).
+/// One build's sourcing question (Phase 50).
 /// </summary>
 /// <param name="System">Where to search out from.</param>
 /// <param name="Station">
@@ -618,7 +618,7 @@ public sealed record SourcingAnswer(
 }
 
 /// <summary>
-/// One commodity question, with everything the sweep needs beside it (list.md Phase 49).
+/// One commodity question, with everything the sweep needs beside it (Phase 49).
 /// </summary>
 /// <param name="System">Where to search out from.</param>
 /// <param name="Station">

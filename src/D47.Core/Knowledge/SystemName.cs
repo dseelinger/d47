@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 namespace D47.Core.Knowledge;
 
 /// <summary>
-/// What a system's own name says about it (list.md Phase 18, "Read a system name").
+/// What a system's own name says about it (Phase 18, "Read a system name").
 /// <para>
 /// <b>This is the only question in the family that does not need somebody else to have been there
 /// first.</b> Every index d47 can query knows only what has already been scanned and uploaded, so

@@ -27,7 +27,7 @@ public static class VrActionManifest
     public const string GrabAction = "/actions/panel/in/grab";
 
     /// <summary>
-    /// Back one level (list.md Phase 25, "Drill in, and find your way back").
+    /// Back one level (Phase 25, "Drill in, and find your way back").
     /// <para>
     /// One of the three routes that must agree - the breadcrumb, this, and a phrase - and the one
     /// a Commander with a controller in each hand reaches for without looking.

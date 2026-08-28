@@ -8,7 +8,7 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>
-/// Finding exobiology (list.md Phase 18, "Find the exobiology") — two halves from two sources, and
+/// Finding exobiology (Phase 18, "Find the exobiology") — two halves from two sources, and
 /// the tests that keep them from being mistaken for each other.
 /// </summary>
 public class ExobiologyCapabilityTests
@@ -258,7 +258,7 @@ public class ExobiologyCapabilityTests
     }
 
     /// <summary>
-    /// Capabilities are state rather than guards (list.md Phase 3). With no plotter composed the
+    /// Capabilities are state rather than guards (Phase 3). With no plotter composed the
     /// journal half still answers, so this must not dead-end.
     /// </summary>
     [Fact]

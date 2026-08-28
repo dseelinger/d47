@@ -8,7 +8,7 @@ namespace D47.Core.Tests.Adventures;
 
 /// <summary>
 /// The list's own sentence, on real journals: fires at each place in order, once, and at nothing
-/// before the stamp (list.md Phase 47).
+/// before the stamp (Phase 47).
 /// <para>
 /// The fixture is five places one of the corpus Commanders actually went on 21–26 June 2026 — a
 /// jump, a scan, a docking, a touchdown and a jump — read off the journals by a scan and written
