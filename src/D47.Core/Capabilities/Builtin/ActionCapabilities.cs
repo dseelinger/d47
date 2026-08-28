@@ -1,4 +1,4 @@
-using D47.Core.Configuration;
+﻿using D47.Core.Configuration;
 using D47.Core.Input;
 using D47.Core.Journal;
 
@@ -59,8 +59,17 @@ public sealed record ShipCommandSurface
     /// <summary>Whether each command is switched on. One switch per command, keyed by its id.</summary>
     public required Func<string, bool> Enabled { get; init; }
 
-    /// <summary>Awaits <c>GuiFocus</c> reaching or leaving the internal panel.</summary>
-    public required Func<bool, CancellationToken, Task<bool?>> AwaitInternalPanel { get; init; }
+    /// <summary>
+    /// Awaits <c>GuiFocus</c> reaching or leaving the <b>left</b> panel — the one
+    /// <see cref="Actions.Launch.Panel"/> names, which is <c>ExternalPanel</c>.
+    /// <para>
+    /// <b>Named for the panel rather than for the flag since #106</b>, because the flag's name is
+    /// the trap: Frontier call the right-hand panel <em>internal</em> and the left-hand one
+    /// <em>external</em>, so a property called <c>AwaitInternalPanel</c> made a wait on the wrong
+    /// one of the two read as obviously correct for as long as it shipped.
+    /// </para>
+    /// </summary>
+    public required Func<bool, CancellationToken, Task<bool?>> AwaitLeftPanel { get; init; }
 
     /// <summary>Awaits the <c>Docked</c> flag clearing, which is what says the ship actually left.</summary>
     public required Func<CancellationToken, Task<bool?>> AwaitUndocked { get; init; }
@@ -77,7 +86,7 @@ public sealed record ShipCommandSurface
     public static ShipCommandSurface Inert => new()
     {
         Enabled = _ => false,
-        AwaitInternalPanel = (_, _) => Task.FromResult<bool?>(null),
+        AwaitLeftPanel = (_, _) => Task.FromResult<bool?>(null),
         AwaitUndocked = _ => Task.FromResult<bool?>(null),
         NextStatus = _ => Task.FromResult(GameStatus.Unknown),
     };

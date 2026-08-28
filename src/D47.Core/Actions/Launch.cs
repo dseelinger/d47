@@ -1,4 +1,4 @@
-using D47.Core.Capabilities.Builtin;
+﻿using D47.Core.Capabilities.Builtin;
 using D47.Core.Input;
 using D47.Core.Journal;
 
@@ -41,25 +41,50 @@ public readonly record struct LaunchOutcome(LaunchEnding Ending, string Message)
 /// </para>
 /// <para>
 /// <b>As fragile as the galaxy map macro, and for the same reason.</b> It walks a menu by pressing
-/// direction keys, so it depends on where that menu starts and how many tabs it has. The counts
-/// below are the fragile part; everything else is verified against the game's own status. The
-/// panel is confirmed open before a single direction key is sent, because those keys typed into a
-/// cockpit instead of a panel are direction inputs to a docked ship.
+/// direction keys, so it depends on where that menu starts. The sequence below is the fragile part;
+/// everything else is verified against the game's own status. The panel is confirmed open before a
+/// single direction key is sent, because those keys typed into a cockpit instead of a panel are
+/// direction inputs to a docked ship.
+/// </para>
+/// <para>
+/// <b>Both halves of it shipped wrong, and the first hid the second</b> (#106). The gate waited for
+/// <see cref="GuiFocus.InternalPanel"/> after pressing the <em>left</em> panel key — and Frontier
+/// number the panels by what they are about rather than by where they are: <b>internal</b> is the
+/// ship's own systems, on the <b>right</b>, and <b>external</b> is navigation and contacts, on the
+/// <b>left</b>. Measured against a running game on 2026-08-28: left panel gives GuiFocus 2, right
+/// panel gives 1. So the wait could never succeed, the macro refused every time, and the walk
+/// underneath it was never once seen to run. It was wrong too — four presses of left and four of up
+/// where the Commander's own panel wants back, down, select.
 /// </para>
 /// </summary>
 public static class Launch
 {
     /// <summary>
-    /// How many times to press left to reach the leftmost tab, and up to reach the top item.
+    /// Which <see cref="GuiFocus"/> the left panel actually reports, which is <em>not</em> the one
+    /// whose name contains the word panel a reader expects.
     /// <para>
-    /// Enough presses to arrive from wherever the panel was left, since Elite remembers the tab
-    /// the Commander last used. This is the part of the macro that is a guess about a menu rather
-    /// than a fact about the game, which is why it is one named constant rather than scattered
-    /// repeat counts — a Commander whose panel does not land where this expects has one number to
-    /// change.
+    /// <b>Here rather than at the wait, so the App cannot hold a different opinion</b> — it did,
+    /// and that was #106. Frontier name the panels by subject: the <em>internal</em> panel is the
+    /// ship's own systems and sits on the right; the <em>external</em> panel is navigation and
+    /// contacts, which are outside the ship, and sits on the left. Measured against a running game
+    /// on 2026-08-28 — left panel 2, right panel 1 — rather than reasoned from the names, because
+    /// reasoning from the names is what produced the bug.
     /// </para>
     /// </summary>
-    public const int WalkPresses = 4;
+    public const GuiFocus Panel = GuiFocus.ExternalPanel;
+
+    /// <summary>
+    /// The walk, in the order the Commander's own panel wants it: back out to the tabs, down into
+    /// the list, select what is there.
+    /// <para>
+    /// <b>His layout is the authority here</b>, and it replaced a guess that was never once seen to
+    /// run — four presses of left and four of up, guarded by a gate that always refused. Named so
+    /// the pre-flight resolve and the walk itself cannot disagree about which actions are needed:
+    /// a macro that opens the panel and then finds it has no <em>select</em> leaves a panel open
+    /// over the cockpit.
+    /// </para>
+    /// </summary>
+    public static readonly IReadOnlyList<string> Walk = ["ui_back", "ui_down", "ui_select"];
 
     /// <summary>
     /// Runs the macro.
@@ -102,7 +127,7 @@ public static class Launch
 
         // All four or none, before a key is sent. A macro that opens the panel and then finds it
         // has no "select" leaves a panel open over the cockpit, which is worse than doing nothing.
-        foreach (var id in new[] { "left_panel", "ui_left", "ui_up", "ui_select" })
+        foreach (var id in Walk.Prepend("left_panel"))
         {
             if (GameActions.Find(id) is not { } action)
             {
@@ -122,7 +147,7 @@ public static class Launch
         try
         {
             // A panel that is already open is not toggled shut first.
-            if (status.GuiFocus != GuiFocus.InternalPanel)
+            if (status.GuiFocus != Panel)
             {
                 var opened = await actions.Input
                     .SendAsync(InputSequence.Tap(resolved["left_panel"]), cancellationToken)
@@ -144,17 +169,10 @@ public static class Launch
 
             var walk = new List<InputStep>();
 
-            for (var press = 0; press < WalkPresses; press++)
+            foreach (var id in Walk)
             {
-                walk.AddRange(InputSequence.Tap(resolved["ui_left"]));
+                walk.AddRange(InputSequence.Tap(resolved[id]));
             }
-
-            for (var press = 0; press < WalkPresses; press++)
-            {
-                walk.AddRange(InputSequence.Tap(resolved["ui_up"]));
-            }
-
-            walk.AddRange(InputSequence.Tap(resolved["ui_select"]));
 
             var walked = await actions.Input.SendAsync(walk, cancellationToken).ConfigureAwait(false);
 

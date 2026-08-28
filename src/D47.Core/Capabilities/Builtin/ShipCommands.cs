@@ -1,4 +1,4 @@
-using D47.Core.Actions;
+﻿using D47.Core.Actions;
 using D47.Core.Configuration;
 
 namespace D47.Core.Capabilities.Builtin;
@@ -99,7 +99,7 @@ public static class ShipCommands
         if (command == TakeUsOut)
         {
             var launched = await Launch
-                .RunAsync(actions, commands.AwaitInternalPanel, commands.AwaitUndocked, cancellationToken)
+                .RunAsync(actions, commands.AwaitLeftPanel, commands.AwaitUndocked, cancellationToken)
                 .ConfigureAwait(false);
 
             return launched.Ok ? ToolResult.Ok(launched.Message) : ToolResult.Error(launched.Message);

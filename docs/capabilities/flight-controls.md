@@ -162,9 +162,9 @@ Say **take us out** while docked and Directive 47 walks the left panel to the la
 
 **This one is a menu walk, not a key press, and it is the least reliable thing here.** Elite has
 no launch binding at all — launching is a button on a panel, and Frontier ships no control for it —
-so instead of pressing your own key, Directive 47 opens the left panel, walks left to the first
-tab, walks up to the top item, and selects it. If your panel does not start where it expects, it
-selects the wrong thing.
+so instead of pressing your own key, Directive 47 opens the left panel, presses **back**, then
+**down**, then **select**. If your panel does not start where it expects, it selects the wrong
+thing.
 
 Everything around the walk is checked against the game rather than assumed. It refuses unless you
 are docked. It confirms the panel is actually open before sending a single direction key, because

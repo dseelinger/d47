@@ -27,6 +27,42 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.84.4 — 2026-08-28 — Take us out, walked the way the panel actually works
+
+*Take us out* has never once worked, and the reason it never worked is the reason nobody could see
+what else was wrong with it. [#106](https://github.com/dseelinger/d47/issues/106).
+
+**It waited for the wrong panel.** The macro presses the **left** panel key and then waited for
+`GuiFocus` to reach `InternalPanel` — and Frontier number the panels by *subject*, not by side. The
+**internal** panel is the ship's own systems and sits on the **right**; the **external** panel is
+navigation and contacts, which are outside the ship, and sits on the **left**. Measured against a
+running game: left panel gives 2, right panel gives 1. So the gate was waiting on a value that
+pressing that key cannot produce. It refused every single time, deterministically, and said *the
+panel did not open* to a Commander who was looking at the panel.
+
+**Which meant the walk underneath it had never run, and it was wrong too.** Four presses of left and
+four of up — the phase's own stated guess about a menu, and the one part of the macro that was
+guessed rather than verified. It is now the Commander's own sequence: **back**, **down**, **select**,
+with `ui_back` and `ui_down` added to the all-or-none pre-flight check, because a macro that opens
+the panel and then finds it has no *select* leaves a panel open over the cockpit.
+
+**The panel's identity now lives in `Launch.Panel`**, in Core, next to the walk it belongs to. The
+App used to hold that opinion by itself, and the name of the thing it was reading — `InternalPanel`,
+reached through a property called `AwaitInternalPanel` — made the wrong constant read as obviously
+correct for as long as it shipped. Both are named for the panel now rather than for the flag.
+
+**The stale-read theory was measured and is not the cause.** Both faults were suspected to sit
+behind [#148](https://github.com/dseelinger/d47/issues/148): `GameStatusReader` re-reads Status.json
+only when the file's last-write time moves, and Windows is not obliged to advance that while Elite
+holds the handle open. Sampled at the tick loop's own 10 Hz — 320 synthetic samples against a
+held-open writer, then three minutes against the running game — the stamp moved with the contents
+**35 times out of 36**, and the one exception lasted a single poll and is indistinguishable from the
+probe's own read ordering. A tenth of a second of blindness cannot produce a three-second failure.
+`GameStatusReader` is therefore unchanged: a fix with no defect behind it is a change that has to be
+maintained for nothing.
+
+---
+
 ## 0.84.3 — 2026-08-28 — Dialogs that fit the window they are drawn in
 
 Reported from a running build at 150% zoom: the **Voice** picker was about three times as wide as
