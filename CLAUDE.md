@@ -257,7 +257,7 @@ is no second description of any rule to disagree with the first.
 | Command | What it does |
 |---|---|
 | `prerelease` | Decides **minor or patch**, then runs `release.ps1` with `-PreRelease -Yes` |
-| `release` | Promotes the newest waiting pre-release to latest (`tools/promote.ps1`) |
+| `promote` | Promotes the newest waiting pre-release to latest (`tools/promote.ps1`). **`release` is the same command** — both names are on the PATH, because the file is `promote.ps1` and that is the word the Commander reaches for |
 | `get-ver <spec>` | Downloads, verifies and installs a named build — `0.79.0`, `0.79`, `prerelease`, `latest` |
 
 **`prerelease` automates the one decision a person gets wrong.** It reads the phase state out of
@@ -280,7 +280,7 @@ superseded pre-release on its first run and would have offered the install base 
 
 **A release is never promoted automatically.** *Stated 2026-08-27.* Cutting, tagging and
 publishing a release is one command and may be run on request. Deciding a build is fit for
-**everyone** is the Commander's, and it is a separate act — `release`, or
+**everyone** is the Commander's, and it is a separate act — `promote`, or
 `gh release edit vX.Y.Z --prerelease=false --latest`. **Having a command for it does not make it
 automatic**: it is still a thing the Commander types on purpose, and never a step an agent adds to
 the end of a flow. Until it runs, `UpdateChecker` reads `/releases/latest` and is
