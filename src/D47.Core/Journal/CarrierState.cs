@@ -100,6 +100,39 @@ public sealed record CarrierState
             journalEvent.String("StationType"), "FleetCarrier", StringComparison.OrdinalIgnoreCase)
         && journalEvent.String("StationName") is { Length: > 0 };
 
+    /// <summary>
+    /// The carrier's name out of a string that ends with its callsign, or null.
+    /// <para>
+    /// <b>Exactly the known callsign, and only when one is known.</b> Nothing is parsed
+    /// speculatively: no pattern is matched, no shape is guessed, and a carrier d47 has not
+    /// already identified yields nothing. The separating space is required too, so a callsign
+    /// that happens to be a suffix of a longer word cannot strip one.
+    /// </para>
+    /// <para>
+    /// Callers write <c>Name ?? …</c> rather than <c>… ?? Name</c>, which is what keeps
+    /// <c>CarrierStats</c> the authority: Frontier said the name outright, so a name it supplies
+    /// overrides a derived one and a derived one never replaces it.
+    /// </para>
+    /// </summary>
+    private string? NameWithoutCallsign(string? decorated)
+    {
+        if (CallSign is not { Length: > 0 } callsign || decorated is not { Length: > 0 })
+        {
+            return null;
+        }
+
+        var tail = " " + callsign;
+
+        if (!decorated.EndsWith(tail, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        var name = decorated[..^tail.Length].Trim();
+
+        return name.Length > 0 ? name : null;
+    }
+
     private static bool Mine(JournalEvent journalEvent) =>
         journalEvent.String("CarrierType") is not { Length: > 0 } type
         || string.Equals(type, "FleetCarrier", StringComparison.OrdinalIgnoreCase);
@@ -134,6 +167,51 @@ public sealed record CarrierState
         "Docked" or "Undocked" or "Location" when SaysMyCallsign(journalEvent) => this with
         {
             CallSign = journalEvent.String("StationName") ?? CallSign,
+        },
+
+        // <b>The name, learned from a string that carries it decorated</b> (#130). Reported as
+        // <i>"Docking granted, Commander. Welcome home to BNH-T2F"</i> — and the wording was not
+        // the bug. Every one of the five surfaces that says the carrier already prefers the name
+        // and falls back to the callsign; they all said the callsign because the name was null.
+        //
+        // <b><c>CarrierStats</c> is its only source and it is usually absent.</b> Elite writes it
+        // only when the Commander opens the carrier management panel: <b>34 corpus journals dock
+        // at BNH-T2F and only 13 contain a CarrierStats anywhere</b>, so in 21 of 34 sessions d47
+        // docks at the Commander's own carrier with no way to know what it is called. This is the
+        // airlock fix one field over.
+        //
+        // <b>Three events carry "Sacred Fire BNH-T2F" — the name and the callsign in one string.</b>
+        // This is the safe one, because it carries a <c>MarketID</c>: matched against the id this
+        // state already holds, it is the Commander's own carrier naming itself, which is the same
+        // id-not-shape rule the callsign fix established. <c>FSSSignalDiscovered</c> carries no id
+        // and is not read at all.
+        "SupercruiseDestinationDrop" when journalEvent.Long("MarketID") == CarrierId => this with
+        {
+            Name = Name ?? NameWithoutCallsign(journalEvent.String("Type")),
+        },
+
+        // <b>The secondary, and it is safe only because the callsign was learned by id.</b>
+        // <c>ReceiveText</c>'s <c>From</c> carries the same decorated string 244 times in the
+        // corpus and carries no id at all, so it cannot be trusted on shape — the Commander has a
+        // squadron carrier in these same journals, and #28 already ruled that one must never be
+        // mistaken for their own. What makes it usable is that a string ending in exactly the
+        // vouched callsign can only be that carrier. It matters because these arrive on approach,
+        // before the dock.
+        "ReceiveText" => this with
+        {
+            Name = Name ?? NameWithoutCallsign(journalEvent.String("From")),
+        },
+
+        // <b>And the same rule reaches the event that actually carries it most often.</b>
+        // Measured over this Commander's corpus: of the <b>27 journals that name BNH-T2F with no
+        // CarrierStats in them, 22 name it in an FSSSignalDiscovered</b>, against 14 apiece for
+        // the other two. The issue proposed ReceiveText as the secondary and this one is the
+        // same argument applied where the data is: it carries no id either, and what makes both
+        // safe is not the event but the callsign they end with, which was learned by id.
+        // Leaving it out would have left half these sessions still saying the callsign.
+        "FSSSignalDiscovered" => this with
+        {
+            Name = Name ?? NameWithoutCallsign(journalEvent.String("SignalName")),
         },
 
         "CarrierBuy" => this with
