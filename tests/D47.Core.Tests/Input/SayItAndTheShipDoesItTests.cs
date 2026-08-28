@@ -478,6 +478,66 @@ public class SayItAndTheShipDoesItTests
     }
 
     /// <summary>
+    /// <b>Down and select wait for the panel to actually go</b> (#106, second report).
+    /// <para>
+    /// The left panel is not where the launch button is — <em>Auto Launch</em> is on the station
+    /// menu in the centre, and pressing <em>back</em> out of the panel is how a Commander arrives
+    /// there. So the panel closing is the point of that key. All three used to go out as one
+    /// burst, and the field report was that back closed the panel and the other two did nothing:
+    /// sent during the transition, with no menu yet to receive them.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task TakeUsOutWaitsForThePanelToCloseBeforeReachingTheStationMenu()
+    {
+        var input = new RecordingGameInput();
+        var pressedWhenAsked = new List<int>();
+
+        // Records how much had been pressed at each check, which is the assertion: nothing beyond
+        // back has gone out by the time the close is awaited.
+        Task<bool?> Watching(bool open, CancellationToken token)
+        {
+            pressedWhenAsked.Add(Pressed(input).Length);
+            return Task.FromResult<bool?>(true);
+        }
+
+        var outcome = await Launch.RunAsync(
+            Surface(input, Docked(), PanelBinds()),
+            Watching,
+            Undocks(true),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(LaunchEnding.Launched, outcome.Ending);
+        Assert.Equal([Panel, Back, Down, Select], Pressed(input));
+
+        // Asked twice: that the panel opened, then that it closed. And the second question was
+        // asked with back sent and nothing after it.
+        Assert.Equal([1, 2], pressedWhenAsked);
+    }
+
+    /// <summary>
+    /// And a panel that will not close stops the walk there, because down and select with no
+    /// station menu in front of them are flight controls typed into a docked ship — the hazard
+    /// the gate has always existed for, arriving one step later than it used to.
+    /// </summary>
+    [Fact]
+    public async Task TakeUsOutStopsIfBackLeavesThePanelOpen()
+    {
+        var input = new RecordingGameInput();
+
+        // Open when asked whether it opened, still open when asked whether it closed.
+        var outcome = await Launch.RunAsync(
+            Surface(input, Docked(), PanelBinds()),
+            (open, _) => Task.FromResult<bool?>(open),
+            Undocks(true),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(LaunchEnding.Refused, outcome.Ending);
+        Assert.Equal([Panel, Back], Pressed(input));
+        Assert.Contains("stayed open", outcome.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
     /// Not docked is a refusal rather than an attempt. The same walk in space opens a panel and
     /// selects whatever happens to be at the top of it.
     /// </summary>

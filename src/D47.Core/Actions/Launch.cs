@@ -74,14 +74,20 @@ public static class Launch
     public const GuiFocus Panel = GuiFocus.ExternalPanel;
 
     /// <summary>
-    /// The walk, in the order the Commander's own panel wants it: back out to the tabs, down into
-    /// the list, select what is there.
+    /// The walk: back, down, select.
     /// <para>
-    /// <b>His layout is the authority here</b>, and it replaced a guess that was never once seen to
-    /// run — four presses of left and four of up, guarded by a gate that always refused. Named so
-    /// the pre-flight resolve and the walk itself cannot disagree about which actions are needed:
-    /// a macro that opens the panel and then finds it has no <em>select</em> leaves a panel open
-    /// over the cockpit.
+    /// <b>The left panel is not where the launch button is</b>, which is the thing that was
+    /// misunderstood twice. <em>Auto Launch</em> — or <em>Launch</em>, on a ship with no advanced
+    /// docking computer — is on the station menu in the <b>centre</b>. Opening the left panel and
+    /// pressing <em>back</em> is a way of arriving there: back dismisses the panel and leaves the
+    /// Commander on that menu, and down then select reach the button. So the panel closing is the
+    /// <em>point</em> of the first key rather than a failure of it, and a walk that treated the
+    /// panel as the destination could only ever have been wrong.
+    /// </para>
+    /// <para>
+    /// Named as a list so the pre-flight resolve and the walk cannot disagree about which actions
+    /// are needed: a macro that opens the panel and then finds it has no <em>select</em> leaves a
+    /// panel open over the cockpit.
     /// </para>
     /// </summary>
     public static readonly IReadOnlyList<string> Walk = ["ui_back", "ui_down", "ui_select"];
@@ -167,12 +173,41 @@ public static class Launch
                 }
             }
 
+            // Back, and then wait for the panel to actually go (#106, second report).
+            //
+            // <b>The panel closing is the point of pressing back, not a failure of it.</b> The left
+            // panel is a way of reaching the station menu in the centre, which is where Auto Launch
+            // lives; back dismisses the panel and leaves the Commander on that menu. So this is the
+            // one step of the walk with a visible effect, and it is the step to wait on.
+            //
+            // <b>Waiting is also the timing fix.</b> All three keys used to go out as one burst,
+            // and the report was that back closed the panel and down and select did nothing — sent
+            // during the transition, while there was no menu to receive them. Waiting on the game
+            // rather than on a guessed delay is the same answer the galaxy map macro reached.
+            var back = await actions.Input
+                .SendAsync(InputSequence.Tap(resolved["ui_back"]), cancellationToken)
+                .ConfigureAwait(false);
+
+            if (!back.Sent)
+            {
+                return new LaunchOutcome(LaunchEnding.Refused, back.Reason);
+            }
+
+            if (await awaitPanel(false, cancellationToken).ConfigureAwait(false) is false)
+            {
+                return new LaunchOutcome(
+                    LaunchEnding.Refused,
+                    "I pressed back and the panel stayed open, so I have not pressed anything else. "
+                    + "Without the station menu in front of us, down and select are flight controls.");
+            }
+
+            // The two that act on the station menu. Together, because nothing between them is
+            // observable in Status.json: the menu the Commander is now looking at reports the same
+            // GuiFocus as the cockpit does.
             var walk = new List<InputStep>();
 
-            foreach (var id in Walk)
-            {
-                walk.AddRange(InputSequence.Tap(resolved[id]));
-            }
+            walk.AddRange(InputSequence.Tap(resolved["ui_down"]));
+            walk.AddRange(InputSequence.Tap(resolved["ui_select"]));
 
             var walked = await actions.Input.SendAsync(walk, cancellationToken).ConfigureAwait(false);
 

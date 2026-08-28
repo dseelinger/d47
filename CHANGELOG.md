@@ -46,6 +46,21 @@ guessed rather than verified. It is now the Commander's own sequence: **back**, 
 with `ui_back` and `ui_down` added to the all-or-none pre-flight check, because a macro that opens
 the panel and then finds it has no *select* leaves a panel open over the cockpit.
 
+**And the walk waits, because the left panel is not where the launch button is.** *Auto Launch* — or
+*Launch*, without an advanced docking computer — is on the station menu in the **centre**. Opening
+the left panel and pressing *back* is how a Commander arrives there: back dismisses the panel and
+leaves them on that menu. So the panel closing is the **point** of the first key rather than a
+failure of it, and the walk is not one burst but two halves with the game consulted in between —
+back, then wait for the panel to actually go, then down and select. Flown before that wait went in,
+back closed the panel and the other two did nothing at all: sent during the transition, with no menu
+yet to receive them. Waiting on the game rather than on a guessed delay is the answer the galaxy map
+macro already reached.
+
+That wait is also the guard. Down and select with no station menu in front of them are flight
+controls typed into a docked ship, which is the hazard the phase built the gate for — so a *back*
+that leaves the panel open now stops the run and says so, rather than pressing two direction keys
+into a cockpit.
+
 **The panel's identity now lives in `Launch.Panel`**, in Core, next to the walk it belongs to. The
 App used to hold that opinion by itself, and the name of the thing it was reading — `InternalPanel`,
 reached through a property called `AwaitInternalPanel` — made the wrong constant read as obviously
