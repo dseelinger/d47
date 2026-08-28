@@ -27,6 +27,30 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.84.5 — 2026-08-28 — The log page keeps up, and says which service spoke
+
+**The log page was a snapshot of the moment it was opened.** The read ran on navigation and nothing
+ever read again — so a Commander who opened it to watch a failure saw nothing arrive, and the only
+way to see the next line was to leave the page and come back. It now re-reads once a second while
+it is the page showing, and stops the moment it is not.
+
+The original reasoning is kept rather than overturned, because it was right: *a log nobody is
+looking at is not worth a file read per tick.* What changed is that a page somebody is looking at
+now counts as somebody looking. The refresh is silent — no busy glyph for something nobody asked
+for — and does not redraw at all when the file has not moved, because a redraw rebuilds every run
+and would fight a reader's selection once a second for no new text. Scrolling still follows only if
+the reader was already following.
+
+**And a voice id now says whose it is.** The line read `Spoken by Boe Dock in pFQStpMdprGFILRDrWR2`
+— an opaque id, with no way to tell which voice that was or which service said it. Since Phase 57
+three providers can be speaking at once, so the provider is a fact about the line rather than
+something a reader can infer: it is now `Spoken by Boe Dock in pFQStpMdprGFILRDrWR2 through
+ElevenLabs`. Asked of the client that actually spoke rather than of settings, which can have moved
+on since. Kokoro's ids happen to carry a name and ElevenLabs' do not, which had made the gap look
+like a formatting quirk of one provider rather than a missing fact about all of them.
+
+---
+
 ## 0.84.4 — 2026-08-28 — Take us out, walked the way the panel actually works
 
 *Take us out* has never once worked, and the reason it never worked is the reason nobody could see

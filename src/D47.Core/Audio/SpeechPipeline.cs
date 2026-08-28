@@ -1,4 +1,4 @@
-using System.Threading.Channels;
+﻿using System.Threading.Channels;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Audio;
@@ -244,9 +244,19 @@ public sealed class SpeechPipeline : IAsyncDisposable
         }
 
         _logger.LogInformation(
-            "Spoken by {Who} in {Voice} ({Group}, {Link})",
+            "Spoken by {Who} in {Voice} through {Provider} ({Group}, {Link})",
             _speaker ?? "D47",
             Named(_voice),
+
+            // Which service said it, asked of the client rather than of settings, so it names
+            // what actually spoke rather than what is currently selected (2026-08-28).
+            //
+            // <b>A voice id means nothing without it.</b> Since Phase 57 six slots can name three
+            // providers at once, and this line read "Spoken by Boe Dock in pFQStpMdprGFILRDrWR2"
+            // — an opaque id, with no way to tell whose it was or which of the three was billed
+            // for it. Kokoro's ids happen to carry a name and ElevenLabs' do not, which made the
+            // gap look like a formatting quirk of one provider rather than a missing fact.
+            _tts.Name,
             _group,
 
             // Which side of the hull this came from, because "it did not sound like a radio" is
