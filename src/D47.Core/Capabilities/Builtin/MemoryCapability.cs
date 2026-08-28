@@ -241,7 +241,7 @@ public static class MemoryCapability
             + "what is already there, which is its own action in [Privacy](privacy).",
         Kind = SettingKind.Toggle,
         DefaultDisplay = "on",
-        DocsAnchor = "remembering",
+        DocsAnchor = "what-is-stored-and-what-is-not",
 
         // Protected. Not caution about the model: this row decides whether facts about the
         // Commander are written to disk and put in a prompt, and untrusted text can reach the tool
@@ -277,7 +277,7 @@ public static class MemoryCapability
             _ => "Three months",
         },
         DefaultDisplay = "Three months",
-        DocsAnchor = "expiry",
+        DocsAnchor = "forgetting",
         Protected = true,
 
         // One phrase per value, because a protected row is unreachable from the tool surface by
@@ -311,7 +311,7 @@ public static class MemoryCapability
         Label = "What D47 remembers",
         Help = "Everything written down, where it came from, and the one place a fact can be added by hand.",
         Kind = SettingKind.Info,
-        DocsAnchor = "store",
+        DocsAnchor = "where-it-lives",
         Binding = new SettingBinding { Read = _ => Summarise(book) },
     };
 }

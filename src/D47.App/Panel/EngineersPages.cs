@@ -276,11 +276,21 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage
                 line += $" — {wanted}";
             }
 
+            // Which row the right pane is drawing, and it is one comparison rather than a
+            // second piece of state to keep in step (#110). The trail's last crumb is what the
+            // detail pane is showing, and this list already builds every row's crumb to hand to
+            // Drill — so the outline follows the right pane however it got there: pressed here,
+            // reached by voice, or arrived at by the back gesture.
+            var crumb = EngineersPages.Crumb(entry.Engineer);
+            var showing = _nav.Trail.Count > 0
+                          && string.Equals(_nav.Trail[^1].Key, crumb.Key, StringComparison.Ordinal);
+
             _list.Children.Add(LoadoutPages.Row(
                 line,
                 entry.Aside,
                 entry.Wanted > 0,
-                () => _nav.Drill(EngineersPages.Crumb(entry.Engineer))));
+                () => _nav.Drill(crumb),
+                showing: showing));
         }
     }
 
@@ -391,7 +401,7 @@ public sealed class EngineerPage : EngineerPageBase
 
         var engineer = entry.Engineer;
 
-        _body.Children.Add(new TextBlock
+        _body.Children.Add(new SelectableTextBlock
         {
             Text = engineer.Where,
             FontSize = TypeScale.Body,
@@ -431,7 +441,7 @@ public sealed class EngineerPage : EngineerPageBase
 
             foreach (var criterion in entry.Criteria)
             {
-                _body.Children.Add(new TextBlock
+                _body.Children.Add(new SelectableTextBlock
                 {
                     Text = criterion.Describe(),
                     FontSize = TypeScale.Body,
@@ -466,7 +476,7 @@ public sealed class EngineerPage : EngineerPageBase
                     Children =
                     {
                         EngineersPages.Name(step.Engineer, _nav, TypeScale.Body),
-                        new TextBlock
+                        new SelectableTextBlock
                         {
                             Text = step.Rest(),
                             FontSize = TypeScale.Body,
@@ -573,7 +583,7 @@ public sealed class EngineerRoutePage : EngineerPageBase
 
         var report = Source.Read();
 
-        _body.Children.Add(new TextBlock
+        _body.Children.Add(new SelectableTextBlock
         {
             Text = report.Summary(),
             FontSize = TypeScale.Body,
@@ -600,7 +610,7 @@ public sealed class EngineerRoutePage : EngineerPageBase
             _body.Children.Add(EngineersPages.Name(
                 candidate.Engineer, _nav, TypeScale.Body, FontWeight.SemiBold));
 
-            _body.Children.Add(new TextBlock
+            _body.Children.Add(new SelectableTextBlock
             {
                 Text = candidate.Summary(),
                 FontSize = TypeScale.Body,

@@ -306,8 +306,20 @@ public sealed record SettingRow
 
     /// <summary>
     /// Anchor within the owning capability's documentation page. The per-row setup-guide link
-    /// points here; the docs gate asserts the anchor's heading exists (Phase 4,
-    /// "Link each settings row to its documentation").
+    /// points here (Phase 4, "Link each settings row to its documentation").
+    /// <para>
+    /// <b>It must name a heading on that capability's own page</b>, either as an explicit
+    /// <c>{#anchor}</c> or as GitHub's slug of the heading text; both spellings are in use.
+    /// <c>EverySettingsAnchorResolvesToAHeadingOnItsOwnPage</c> is what holds that, and until
+    /// 2026-08-28 this comment claimed a gate that had never been written — forty-five rows
+    /// pointed at nothing, and pressing "?" on them arrived nowhere (#123).
+    /// </para>
+    /// <para>
+    /// <b>Where several rows share one explanation, they share one anchor.</b> The five audio
+    /// categories and the ten headset placement settings are each explained once, as a group,
+    /// and pointing each row at a heading of its own would mean writing documentation to
+    /// satisfy a link rather than to be read.
+    /// </para>
     /// </summary>
     public string? DocsAnchor { get; init; }
 

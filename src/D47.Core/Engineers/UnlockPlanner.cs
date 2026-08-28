@@ -338,7 +338,7 @@ public static class UnlockPlanner
         foreach (var entry in directory)
         {
             var covers = outstanding
-                .Where(work => work.Engineers.Contains(entry.Engineer.Name, StringComparer.Ordinal))
+                .Where(work => EngineerDirectory.IsNamedIn(work.Engineers, entry.Engineer))
                 .ToList();
 
             // The grade to aim for is the highest any covered plan asks of them. Unlocking buys
@@ -397,7 +397,7 @@ public static class UnlockPlanner
             Standing = progress?.For(engineer.Id),
             LightYears = light,
             Jumps = EngineerAccess.Jumps(light, range),
-            Wanted = planned.Count(work => work.Engineers.Contains(engineer.Name, StringComparer.Ordinal)),
+            Wanted = planned.Count(work => EngineerDirectory.IsNamedIn(work.Engineers, engineer)),
             Chain = EngineerAccess.ChainTo(engineer, 1, progress, from, range),
             Criteria = EngineerAccess.CriteriaFor(engineer, progress),
         };

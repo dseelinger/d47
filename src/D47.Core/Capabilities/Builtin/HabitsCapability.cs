@@ -200,7 +200,7 @@ public static class HabitsCapability
             + "Nothing leaves the machine, no journal is sent to a model, and every claim comes with "
             + "how often it happened and out of how many chances.",
         Kind = SettingKind.Info,
-        DocsAnchor = "mining",
+        DocsAnchor = "reading-your-journals",
         PressLabel = mine() is null ? null : "Read my journals",
         Press = mine() is null ? null : () => mine()!(),
         Binding = new SettingBinding { Read = _ => Summarise(book) },

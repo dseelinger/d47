@@ -887,7 +887,7 @@ public static class ChecklistCapability
         Help = "What you are working on: your own lines, your ship builds and your construction sites. "
                + "Computed items cannot be ticked by hand — they follow your journal.",
         Kind = SettingKind.Info,
-        DocsAnchor = "the-panel",
+        DocsAnchor = "the-checklist-tab",
         Binding = new SettingBinding { Read = _ => Summarise(checklists) },
     };
 

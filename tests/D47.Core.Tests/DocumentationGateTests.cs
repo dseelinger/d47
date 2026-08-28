@@ -316,6 +316,108 @@ public partial class DocumentationGateTests
             $"Documentation pages with no registered capability: {string.Join(", ", orphans)}");
     }
 
+    /// <summary>
+    /// <b>Every settings row's documentation anchor resolves to a heading on that row's own
+    /// capability page.</b> <c>SettingRow.DocsAnchor</c>'s comment claimed this gate existed
+    /// from the day the anchors were introduced, and it did not: nothing anywhere asserted an
+    /// anchor resolved to anything, only that a row declared one. Twelve of ninety pointed at
+    /// no heading on any page, so pressing "?" on those rows arrived nowhere (#123).
+    /// <para>
+    /// <b>Both spellings of an anchor count</b>, because the pages use both and rows that work
+    /// today depend on each. An explicit <c>{#background-model}</c> on a heading is one;
+    /// GitHub's own slug of the heading text is the other, which is how <c>take-us-out</c> and
+    /// <c>the-arrival-honk</c> resolve with no id written anywhere. A gate that accepted only
+    /// the explicit form would fail rows that are not broken.
+    /// </para>
+    /// <para>
+    /// <b>The anchor is checked against the owning capability's page and not against all of
+    /// them.</b> A link is <c>capability.md#anchor</c>, so a heading of the same name on a
+    /// different page is not a hit — it is a jump to the wrong subject, which reads to a
+    /// Commander exactly like a broken one.
+    /// </para>
+    /// <para>
+    /// <b>It sees only the rows this surface furnishes, which is not all of them.</b> A row
+    /// whose binding comes from a host delegate does not exist when that delegate is null, and
+    /// the test surfaces pass null for several — so <c>audio.drops</c>, whose anchor was just
+    /// as dead, was invisible here and had to be found by reading. That is the same hole that
+    /// let a crash-on-every-launch through in 0.76.0, and it raises the floor rather than
+    /// replacing the reading.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void EverySettingsAnchorResolvesToAHeadingOnItsOwnPage()
+    {
+        var dangling = new List<string>();
+
+        foreach (var capability in Registry().All)
+        {
+            var page = Path.Combine(RepositoryRoot(), CapabilityDocsFolder, $"{capability.Descriptor.Id}.md");
+
+            if (!File.Exists(page))
+            {
+                // Its own gate above reports this; a second complaint here would be noise.
+                continue;
+            }
+
+            var anchors = AnchorsIn(File.ReadAllText(page));
+
+            foreach (var row in capability.Descriptor.Settings)
+            {
+                if (string.IsNullOrWhiteSpace(row.DocsAnchor) || anchors.Contains(row.DocsAnchor))
+                {
+                    continue;
+                }
+
+                dangling.Add($"{row.Key} -> {capability.Descriptor.Id}.md#{row.DocsAnchor}");
+            }
+        }
+
+        Assert.True(
+            dangling.Count == 0,
+            "Settings rows whose documentation anchor names no heading on their own page: "
+            + string.Join(", ", dangling));
+    }
+
+    /// <summary>
+    /// Every anchor a page offers: the explicit <c>{#id}</c> markers, plus GitHub's slug of each
+    /// heading. The slug rule is GitHub's own — lower-case, punctuation dropped, spaces to
+    /// hyphens — and it is reproduced here rather than depended on, because the alternative is a
+    /// Markdown dependency in this project's graph for one line of string handling.
+    /// </summary>
+    private static HashSet<string> AnchorsIn(string page)
+    {
+        var anchors = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (Match explicitId in ExplicitAnchor().Matches(page))
+        {
+            anchors.Add(explicitId.Groups[1].Value);
+        }
+
+        foreach (Match heading in Heading().Matches(page))
+        {
+            var text = ExplicitAnchor().Replace(heading.Groups[1].Value, string.Empty).Trim();
+            var slug = new string(text
+                .ToLowerInvariant()
+                .Select(c => char.IsLetterOrDigit(c) || c == '-' || c == ' ' || c == '_' ? c : '\0')
+                .Where(c => c != '\0')
+                .ToArray())
+                .Trim()
+                .Replace(' ', '-');
+
+            if (slug.Length > 0)
+            {
+                anchors.Add(slug);
+            }
+        }
+
+        return anchors;
+    }
+
+    [GeneratedRegex(@"\{#([a-z0-9\-_]+)\}")]
+    private static partial Regex ExplicitAnchor();
+
+    [GeneratedRegex(@"(?m)^\#{1,6}[ \t]+(.+?)[ \t]*$")]
+    private static partial Regex Heading();
     private static CapabilityRegistry Registry() => Surface().Registry;
 
     /// <summary>

@@ -181,7 +181,7 @@ public static class PrivacyCapability
                 + "out of how many chances. Throwing them away covers every Commander in the file. Anything "
                 + "you have told D47 to drop stays dropped.",
             Kind = SettingKind.Info,
-            DocsAnchor = "habits",
+            DocsAnchor = "memory",
             PressLabel = habits is null ? null : "Forget what you noticed",
             Press = habits is null ? null : () => habits.Store.Empty(),
             Binding = new SettingBinding

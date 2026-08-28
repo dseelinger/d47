@@ -366,7 +366,10 @@ public static class VrCapability
             Help = help + scope,
             Kind = kind,
             Choices = choices ?? [],
-            DocsAnchor = $"{slot}-{name}",
+            // "Placing a surface" is the section, and it says outright that there are five
+            // settings each with the mini panel keeping its own copies. Ten per-row headings
+            // would be documentation written to satisfy a link rather than to be read (#123).
+            DocsAnchor = "placing-a-surface",
             Group = $"{what} placement",
             GroupHelp = $"Where the {what.ToLowerInvariant()} sits and what it looks like. You can also just "
                         + "reach out and grab it with a controller, which is what the numbers are here for "

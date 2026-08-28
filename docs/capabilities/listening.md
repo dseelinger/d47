@@ -172,6 +172,21 @@ Warning: CapsLock is also bound in Elite (KeyboardMouseOnly) to HeadLookToggle. 
 will not work, and neither will say so — pick another key for one of them.
 ```
 
+**And the same for a stick button, with one difference that matters.** Elite records a joystick
+binding against its own name for the device, which is not the one Directive 47 reads — so when a
+button of that number is bound in Elite, it cannot tell you whether that is the same stick or a
+different one on your desk. It says so in those words rather than pretending to be sure:
+
+```text
+Warning: button 7 on the Virpil Alpha may collide. Elite (Custom) binds a button of that number
+to SelectTarget, and I cannot tell whether that is the same controller. If the microphone will
+not open, this is the first thing to check.
+```
+
+Finding **nothing** is the stronger answer of the two, and is said plainly: no button of that
+number is bound anywhere in your preset, on any device, so there is nothing left to be unsure
+about.
+
 **Your bindings are never written to.** Directive 47 only ever reads them.
 
 If it has not managed to read them, it says nothing rather than giving you an all-clear — never
@@ -355,6 +370,14 @@ you want the accuracy and can spend the download.
 then, with the size and progress on the row; the same thing happens at startup for a model that
 is selected and missing. The choice is the go-ahead — the size is on the row before you make it,
 and `huggingface.co` is listed under [Privacy](privacy.md) for as long as a model is selected.
+
+**Directive 47 knows what each model file should be.** The SHA-256 of every model it offers is
+written into the build, and a download that does not match it is discarded rather than loaded.
+That is worth one sentence of honesty about what it buys: those values were read from
+`huggingface.co` once, on a stated date, and pinning them does not make that first read
+trustworthy — it means the file *changing* afterwards becomes visible, where before the expected
+hash and the bytes came from the same place. The model is loaded and run on your machine, so it
+is worth checking.
 
 `none` stays a real choice. Pick it and Directive 47 hears you and says, honestly, that it cannot
 turn what it heard into words.

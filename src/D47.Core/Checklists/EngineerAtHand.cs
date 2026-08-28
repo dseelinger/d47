@@ -308,7 +308,7 @@ public static class EngineersHere
             // (change-requests.md 35). Wherever they can finish the work the two answers are the
             // same — an engineer appears on every grade row up to their ceiling — and where they
             // cannot, the ceiling is the thing worth saying: "Lei Cheung takes this to 3 of 5."
-            .Where(recipe => recipe.Engineers.Contains(engineer.Name, StringComparer.OrdinalIgnoreCase))
+            .Where(recipe => EngineerDirectory.IsNamedIn(recipe.Engineers, engineer))
             .Select(recipe => recipe.Grade ?? Ungraded)
             .DefaultIfEmpty(NotTheirs)
             .Max() is var top && top == NotTheirs
