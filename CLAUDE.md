@@ -222,7 +222,7 @@ section gets written before the run that reads it. `-SkipTests` leaves the suite
 the same one on the pushed commit — worth it on a resume, where the tree has not changed since it
 last passed, and refused alongside `-SkipCi`.
 
-**Three commands sit on top of it, and they are on the Commander's PATH.** *Added 2026-08-27.*
+**Four commands sit on top of it, and they are on the Commander's PATH.** *Added 2026-08-27; the fourth on 2026-08-28.*
 Each is a `.ps1` in `tools/` with a bash and a `.cmd` shim beside it that contain no logic, and a
 pointer in `%LOCALAPPDATA%\..\.local\bin` — so `release.ps1` stays the one implementation and there
 is no second description of any rule to disagree with the first.
@@ -232,6 +232,7 @@ is no second description of any rule to disagree with the first.
 | `prerelease` | Decides **minor or patch**, then runs `release.ps1` with `-PreRelease -Yes` |
 | `promote` | Promotes the newest waiting pre-release to latest (`tools/promote.ps1`). **`release` is the same command** — both names are on the PATH, because the file is `promote.ps1` and that is the word the Commander reaches for |
 | `get-ver <spec>` | Downloads, verifies and installs a named build — `0.79.0`, `0.79`, `prerelease`, `latest` |
+| `get-local` | Publishes **this working tree** and installs it over the installed d47, so a change can be flown without cutting a release for it |
 
 **`prerelease` automates the one decision a person gets wrong.** It reads the commits since the
 last tag for what they say they close, asks GitHub for those issues' labels, and calls it a minor
@@ -252,6 +253,20 @@ naming an older tag by hand is refused too. That guard exists because the plain 
 superseded pre-release on its first run and would have offered the install base a downgrade.
 `tools/release.ps1` still exists and still does the work; the file behind `release` is
 `promote.ps1`, because two files named release doing different things is the hazard.
+
+**`get-local` is the way to fly a change without spending a version number**, and it is a *Release*
+publish for a reason that is not a preference: a Debug build carries an `AssemblyMetadata` pointing
+at `dev-install\`, compiled in, so copied into the install folder it still reads `dev-install\data`
+and sees none of the Commander's settings, secrets or downloaded models. It copies exactly the two
+things `installer\d47.iss` ships — `d47.exe` and `runtimes\` — never mirrors, and never touches
+`data\`. It refuses while d47 is running unless told to stop it, and runs `--selftest` afterwards,
+which is the gate that catches a payload missing its natives.
+
+**It does not replace flying a real build before promoting one.** The build it installs is stamped
+`<newest tag>-local` and About shows the whole stamp, but `ReleaseVersion` strips everything from
+the first `-` or `+`, so the title bar reads the release number and the updater will not offer to
+replace it — **About is the only place that says which one is running**. The way back is
+`get-ver latest`.
 
 **A release is never promoted automatically.** *Stated 2026-08-27.* Cutting, tagging and
 publishing a release is one command and may be run on request. Deciding a build is fit for
