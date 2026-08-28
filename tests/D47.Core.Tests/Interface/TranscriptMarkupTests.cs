@@ -5,7 +5,7 @@ namespace D47.Core.Tests.Interface;
 
 /// <summary>
 /// Reading the markdown a model writes, so the transcript stops drawing the markers
-/// (list.md Phase 19). The reply in the bug report is the first case here.
+/// (Phase 19). The reply in the bug report is the first case here.
 /// </summary>
 public class TranscriptMarkupTests
 {

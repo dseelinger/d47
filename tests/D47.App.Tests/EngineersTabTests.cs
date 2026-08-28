@@ -18,7 +18,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The Engineers tab (list.md Phase 28).
+/// The Engineers tab (Phase 28).
 /// <para>
 /// Two roots and one level: the <b>Directory</b>, ordered by what the Commander can act on today,
 /// and the <b>Route</b>, which ranks the ways in and shows its work. The claims asserted here are

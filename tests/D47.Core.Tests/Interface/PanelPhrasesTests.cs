@@ -4,7 +4,7 @@ using Xunit;
 namespace D47.Core.Tests.Interface;
 
 /// <summary>
-/// Moving the panel by saying so (list.md Phase 25). The third of the three routes back that
+/// Moving the panel by saying so (Phase 25). The third of the three routes back that
 /// must agree, plus the tabs, the modes and every crumb of the trail.
 /// <para>
 /// The precision is the half worth testing hardest. A miss costs the Commander a press; a false

@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace LogbookProbe;
 
 /// <summary>
-/// The acceptance run for list.md Phase 33: "a log generated from a corpus session read against
+/// The acceptance run for Phase 33: "a log generated from a corpus session read against
 /// that session's events by hand, once, deliberately".
 /// <para>
 /// Two modes, and the default one spends nothing. Without <c>--send</c> it resolves the window,

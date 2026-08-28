@@ -6,7 +6,7 @@ namespace D47.Core.Tests.Audio;
 
 /// <summary>
 /// Drop your own audio in and d47 uses it, kept distinct from the set it ships with
-/// (list.md Phase 12, "Custom Sound Cues").
+/// (Phase 12, "Custom Sound Cues").
 /// </summary>
 public class FolderAudioSourceTests : IDisposable
 {

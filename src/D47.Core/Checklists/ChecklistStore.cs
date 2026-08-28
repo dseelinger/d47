@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Checklists;
 
 /// <summary>
-/// The Commander's checklist, in one file beside the executable (list.md Phase 17).
+/// The Commander's checklist, in one file beside the executable (Phase 17).
 /// <para>
 /// <b><see cref="Actions.MacroStore"/> is the precedent and this follows it deliberately.</b> It
 /// is the repo's only Commander-authored, mutable, list-shaped state, and everything that makes

@@ -4,7 +4,7 @@ using Xunit;
 namespace D47.Llm.Tests;
 
 /// <summary>
-/// Five rungs, in order, and what each one becomes on the wire (list.md Phase 54).
+/// Five rungs, in order, and what each one becomes on the wire (Phase 54).
 /// <para>
 /// <b>Declaration order is the ladder.</b> Phase 54's floor and ceiling clamp against these as
 /// they are written, so a member inserted in the wrong place silently reorders the rungs and a

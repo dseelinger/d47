@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Knowledge;
 
 /// <summary>
-/// The markets the Commander has stood in themselves (list.md Phase 36).
+/// The markets the Commander has stood in themselves (Phase 36).
 /// <para>
 /// Elite writes <c>Market.json</c> for the station they are docked at: local, exact, current, and
 /// covering almost nothing of the galaxy. Everything beyond it is a network source and a report

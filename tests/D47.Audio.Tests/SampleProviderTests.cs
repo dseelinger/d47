@@ -5,7 +5,7 @@ using Xunit;
 namespace D47.Audio.Tests;
 
 /// <summary>
-/// The clip reader that feeds the mixer (list.md Phase 5).
+/// The clip reader that feeds the mixer (Phase 5).
 /// <para>
 /// It reads straight out of a clip's PCM rather than through a stream, which is what keeps a
 /// looping bed from allocating once a cycle — and which makes the little-endian widening and the

@@ -6,7 +6,7 @@ namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
 /// Everything about which model answers, and on what terms. Its settings rows are the
-/// clearest case of "show the controls the active provider actually has" (list.md Phase 4):
+/// clearest case of "show the controls the active provider actually has" (Phase 4):
 /// the endpoint, key and model rows are generated from the provider catalog and each one
 /// declares when it applies, so selecting "none" leaves nothing behind but the selector
 /// itself rather than a hardwired panel of dead controls.
@@ -22,7 +22,7 @@ public static class ConversationCapability
     public const string ModelKey = "llm.model";
 
     /// <summary>
-    /// The model for calls the Commander is not waiting on (list.md Phase 54). A separate key
+    /// The model for calls the Commander is not waiting on (Phase 54). A separate key
     /// rather than a range around <see cref="ModelKey"/>, because it selects a call class and
     /// not a bound — see <see cref="Configuration.LlmSettings.BackgroundModel"/>.
     /// </summary>
@@ -92,7 +92,7 @@ public static class ConversationCapability
     }
 
     /// <param name="verifyKey">
-    /// Tries a provider's stored key against the real service, by provider id (list.md Phase 16).
+    /// Tries a provider's stored key against the real service, by provider id (Phase 16).
     /// Optional, because most callers of this factory are tests that never press the button.
     /// </param>
     public static CapabilityDescriptor Create(
@@ -188,7 +188,7 @@ public static class ConversationCapability
         {
             report.AppendLine($"Model: {settings.Llm.Model ?? provider.DefaultModel ?? "(provider default)"}");
 
-            // Only when the Commander has split the two (list.md Phase 54), following the rule
+            // Only when the Commander has split the two (Phase 54), following the rule
             // the endpoint line below already uses: a line saying the quiet calls use the model
             // that was named one line above tells them nothing they did not just read.
             if (settings.Llm.BackgroundModel is { Length: > 0 } background)
@@ -210,7 +210,7 @@ public static class ConversationCapability
             $"Session so far: {spend.TurnCount} turn(s), {spend.RunningTotalDollars:C4}");
 
         // Here rather than on a capability of its own, because the question a Commander asks is
-        // "what has this cost" and it has one answer (list.md Phase 19). The unit differs and
+        // "what has this cost" and it has one answer (Phase 19). The unit differs and
         // says so: the model is billed in tokens and speech in characters.
         if (speechSpend?.Invoke()?.Describe(settings) is { } voice)
         {
@@ -221,7 +221,7 @@ public static class ConversationCapability
     }
 
     /// <param name="endpointModels">
-    /// What the endpoint itself said it serves, when d47 has asked it (list.md Phase 29). Null
+    /// What the endpoint itself said it serves, when d47 has asked it (Phase 29). Null
     /// for a caller with nobody to ask — every test, and the app before the first handshake
     /// answers — which leaves the picker exactly as it was.
     /// </param>
@@ -282,7 +282,7 @@ public static class ConversationCapability
                             // model left over from another provider is a request that fails
                             // where nothing is watching — FlavourTurn logs at Debug and returns
                             // null, so every ambient line falls back to its authored text with
-                            // nothing on screen (list.md Phase 54).
+                            // nothing on screen (Phase 54).
                             Model = null,
                             BackgroundModel = null,
                         },
@@ -304,7 +304,7 @@ public static class ConversationCapability
                 {
                     Read = s => s.Llm.Endpoint,
                     // Changing the endpoint resets the model list to that endpoint's namespace
-                    // rather than leaving a stale selection (list.md Phase 4) — both models, for
+                    // rather than leaving a stale selection (Phase 4) — both models, for
                     // the reason the provider row above states.
                     Write = (s, v) => s with
                     {
@@ -321,11 +321,11 @@ public static class ConversationCapability
                 DefaultDisplaySource = s => LlmProviderCatalog.Selected(s.Llm.Provider).DefaultModel,
                 DocsAnchor = "model",
                 // A custom endpoint has models d47 has never heard of, so the list can be empty
-                // and a typed value has to be accepted (list.md Phase 4, the picker's contract).
+                // and a typed value has to be accepted (Phase 4, the picker's contract).
                 AllowsFreeText = true,
 
                 // The provider's own list where it has one, and the endpoint's own where it does
-                // not (list.md Phase 29). The order matters and is not a preference: every id in
+                // not (Phase 29). The order matters and is not a preference: every id in
                 // a catalog list is one the price table can quote, which is that field's whole
                 // contract, and a discovered id is priced as unknown. So the curated list is
                 // never displaced — it is only filled in behind where there was nothing.
@@ -363,7 +363,7 @@ public static class ConversationCapability
                 DocsAnchor = "background-model",
 
                 // The model row's contract, for the model row's reason: an endpoint d47 has
-                // never heard of still has model names (list.md Phase 4).
+                // never heard of still has model names (Phase 4).
                 AllowsFreeText = true,
                 ChoiceSource = s =>
                 {
@@ -448,8 +448,8 @@ public static class ConversationCapability
         // shifts underneath it. Each declares when it applies, so only the selected provider's
         // key is on screen.
         //
-        // Every provider that *accepts* a key, not every provider that requires one (list.md
-        // Phase 29). A local server needs no account, and the row is still here because the same
+        // Every provider that *accepts* a key, not every provider that requires one (Phase 29).
+        // A local server needs no account, and the row is still here because the same
         // protocol is spoken by gateways that do want one — so the row's help says which of the
         // two this is, and nothing gates on the box being filled in.
         rows.AddRange(
@@ -525,7 +525,7 @@ public static class ConversationCapability
             },
         });
 
-        // The two halves of a biography, in the order they are read (list.md Phase 43). The sheet
+        // The two halves of a biography, in the order they are read (Phase 43). The sheet
         // goes with every turn and every line D47 says in character; the story goes with every
         // turn and, now and then, with an ambient remark. The help says which, because a row that
         // costs money on every remark should say so where it is typed.
@@ -543,7 +543,7 @@ public static class ConversationCapability
             DefaultDisplay = "(nothing yet)",
             DocsAnchor = "character-sheet",
 
-            // The Commander's, in exactly the way About Me is (list.md Phase 44): whose ship this is
+            // The Commander's, in exactly the way About Me is (Phase 44): whose ship this is
             // changes when who is flying changes.
             Scope = SettingScope.Commander,
             Binding = new SettingBinding

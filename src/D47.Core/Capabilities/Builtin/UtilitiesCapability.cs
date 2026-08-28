@@ -4,7 +4,7 @@ using D47.Core.Utilities;
 namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
-/// Clocks, timers and alarms (list.md Phase 24, "Utilities").
+/// Clocks, timers and alarms (Phase 24, "Utilities").
 /// <para>
 /// <b>"Ship AI" means the app, not the language model.</b> "What's the date?" is answered by the
 /// keyword router, deterministically, with no turn taken and no provider needed — it works with

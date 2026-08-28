@@ -4,7 +4,7 @@ namespace D47.Llm.OpenAi;
 
 /// <summary>
 /// One turn of the conversation, flattened into the pieces both OpenAI protocols need and
-/// neither of them arranges the same way (list.md Phase 29).
+/// neither of them arranges the same way (Phase 29).
 /// <para>
 /// Results come before text because a message carrying tool results has to open with them, and
 /// calls come last because they are what the assistant said it wanted next.

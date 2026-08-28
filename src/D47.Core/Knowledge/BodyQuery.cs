@@ -28,7 +28,7 @@ public sealed record BodySummary
 
     public required string SystemName { get; init; }
 
-    /// <summary>What the journal writes as <c>BodyID</c> on a scan or a touchdown. Null where the service did not say (list.md Phase 47).</summary>
+    /// <summary>What the journal writes as <c>BodyID</c> on a scan or a touchdown. Null where the service did not say (Phase 47).</summary>
     public int? BodyId { get; init; }
 
     /// <summary>The system's id64, for the same reason.</summary>
@@ -257,12 +257,12 @@ public sealed record BodyQuery
     /// overrun any smaller number without saying so.
     /// </para>
     /// </summary>
-    /// <summary>Every body in one named system, for resolving a body a story names to its id (list.md Phase 47).</summary>
+    /// <summary>Every body in one named system, for resolving a body a story names to its id (Phase 47).</summary>
     public static BodyQuery Within(string system) => ForSystems(system, [system.Trim()], 1);
 
     /// <summary>
     /// The landable bodies nearest a system, for proposing real places a story may land on or
-    /// scan (list.md Phase 47). Landable because a land beat needs it and a scan beat is not
+    /// scan (Phase 47). Landable because a land beat needs it and a scan beat is not
     /// harmed by it.
     /// </summary>
     public static BodyQuery LandableNear(string referenceSystem, double maxDistance, int size) =>

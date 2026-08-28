@@ -49,8 +49,8 @@ public sealed record TracedSettingApply(string Key, SettingApplyStatus Status, S
 /// Everything the suite is allowed to assert on.
 /// <para>
 /// <b>Assertions read the trace, not the text.</b> A test that pins wording fails on the next
-/// model and teaches everyone to ignore it, which is worse than no test at all (list.md Phase
-/// 30). The two sanctioned exceptions are named in the plan of record and are both negative:
+/// model and teaches everyone to ignore it, which is worse than no test at all (Phase 30). The
+/// two sanctioned exceptions are named in the plan of record and are both negative:
 /// with personality off the reply must not carry the core's own name, and no persona block may
 /// appear on the wire.
 /// </para>

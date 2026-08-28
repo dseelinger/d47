@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace D47.App.Input;
 
 /// <summary>
-/// The Commander's clipboard, through Avalonia's own abstraction (list.md Phase 10, "Put
+/// The Commander's clipboard, through Avalonia's own abstraction (Phase 10, "Put
 /// something on the clipboard").
 /// <para>
 /// Avalonia reaches the clipboard through a top-level window, so this needs one — and on a run

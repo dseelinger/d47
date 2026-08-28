@@ -11,7 +11,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// Anything that might take a moment says it is working (list.md Phase 12).
+/// Anything that might take a moment says it is working (Phase 12).
 /// <para>
 /// Two failure modes held off at once, and both are here: no silence on the slow case, and no
 /// flash on the fast one. The two numbers that decide it are stated in one place, which is what

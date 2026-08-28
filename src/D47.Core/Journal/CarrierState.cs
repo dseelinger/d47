@@ -1,7 +1,7 @@
 namespace D47.Core.Journal;
 
 /// <summary>
-/// The Commander's fleet carrier, if they own one (list.md Phase 7, "Know your location and
+/// The Commander's fleet carrier, if they own one (Phase 7, "Know your location and
 /// your carrier (if owned)").
 /// <para>
 /// Ownership is established by an event that only an owner receives — CarrierBuy, CarrierStats
@@ -40,7 +40,7 @@ public sealed record CarrierState
     public string? DockingAccess { get; init; }
 
     /// <summary>
-    /// Tonnes of cargo aboard, from <c>CarrierStats.SpaceUsage.Cargo</c> (list.md Phase 18).
+    /// Tonnes of cargo aboard, from <c>CarrierStats.SpaceUsage.Cargo</c> (Phase 18).
     /// <para>
     /// <b>A total, and there is no manifest anywhere behind it.</b> Nothing Elite writes says what
     /// those tonnes are. The only per-commodity signal is <c>CargoTransfer</c>, and deriving stock

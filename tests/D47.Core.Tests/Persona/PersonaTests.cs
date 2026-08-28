@@ -8,7 +8,7 @@ using Xunit;
 namespace D47.Core.Tests.Persona;
 
 /// <summary>
-/// The cast itself (list.md Phase 11, "Personas").
+/// The cast itself (Phase 11, "Personas").
 /// </summary>
 public class PersonaCatalogTests
 {
@@ -111,7 +111,7 @@ public class PersonaCatalogTests
 }
 
 /// <summary>
-/// Which core is aboard, and what it remembers (list.md Phase 11, and the persona pack's
+/// Which core is aboard, and what it remembers (Phase 11, and the persona pack's
 /// separate-memory requirement).
 /// </summary>
 public class PersonaHostTests
@@ -160,7 +160,7 @@ public class PersonaHostTests
     }
 
     /// <summary>
-    /// A new Commander logging in starts every core from nothing (list.md Phase 44: "The old
+    /// A new Commander logging in starts every core from nothing (Phase 44: "The old
     /// transcript goes away, a new one is created"). Every core's, because each conversation was
     /// with the Commander who just left — and as a new list, because the old one is handed out by
     /// reference and whoever holds it has to ask again.
@@ -241,7 +241,7 @@ public class PersonaHostTests
         // anywhere, so there is nothing to open with. This used to replay the introduction on the
         // reasoning that a core saying nothing reads as a core that failed to load — which was
         // true when arriving in silence was impossible, and became the wrong trade the moment
-        // silence was the normal case (list.md Phase 35).
+        // silence was the normal case (Phase 35).
         var host = new PersonaHost();
         PersonaChanged? last = null;
         host.Changed += change => last = change;
@@ -279,7 +279,7 @@ public class PersonaHostTests
     /// <summary>
     /// A core arriving because the Commander boarded the ship they bound it to says nothing —
     /// unless they have never met it, which is the one line worth hearing and is heard once ever
-    /// (list.md Phase 35).
+    /// (Phase 35).
     /// </summary>
     [Fact]
     public void BoardingABoundShipIsSilentUnlessTheCoreIsNew()
@@ -399,7 +399,7 @@ public class PersonaHostTests
 
         // A return, so it does not open with a line this Commander has already heard — which
         // before this was only true inside one run. Three hours is not a month, so it says
-        // nothing at all rather than remarking on the gap (list.md Phase 35).
+        // nothing at all rather than remarking on the gap (Phase 35).
         next.Apply(Choose("cora"), TimeSpan.FromHours(3), "9 jumps");
         Assert.Equal([PersonaArrival.Quiet], arrivals);
     }

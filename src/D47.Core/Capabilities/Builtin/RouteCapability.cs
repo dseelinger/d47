@@ -6,7 +6,7 @@ using D47.Core.Knowledge;
 namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
-/// Plotting a route (list.md Phase 14, "Route Planning").
+/// Plotting a route (Phase 14, "Route Planning").
 /// <para>
 /// Its own capability rather than more tools on <see cref="GalaxyCapability"/>, because plotting
 /// is not searching: a search is a request and a reply, and a plot is a job that is queued and
@@ -22,7 +22,7 @@ namespace D47.Core.Capabilities.Builtin;
 /// worse answer than not having one.
 /// </para>
 /// <para>
-/// <b>The trade route is no longer a plot at all (list.md Phase 36).</b> Three of these four tools
+/// <b>The trade route is no longer a plot at all (Phase 36).</b> Three of these four tools
 /// hand the question to a service and read back the answer; <c>plot_trade_route</c> now asks for
 /// markets and does the arithmetic here, which is what lets it hold cargo past a station and come
 /// home again. It kept its name because it answers the same question, and it replaced the borrowed
@@ -49,7 +49,7 @@ public static class RouteCapability
     /// rather than a job that is queued and polled for — and the seam says so.
     /// </param>
     /// <param name="plans">
-    /// Where a plan is kept once it is made (list.md Phase 37), or null where nothing is drawing
+    /// Where a plan is kept once it is made (Phase 37), or null where nothing is drawing
     /// them. The capability describes a route and forgets it, which is correct for speech and
     /// leaves a surface with nothing to show — so what it worked out is written here, and the
     /// Routing tab and this path stay one answer rather than two.
@@ -300,7 +300,7 @@ public static class RouteCapability
             }
 
             // Kept before it is described, so a surface has the whole route while the sentence
-            // keeps its five waypoints (list.md Phase 37).
+            // keeps its five waypoints (Phase 37).
             plans?.Record(route, $"{route.Origin} to {route.Destination}", now?.Invoke() ?? default);
 
             return ToolResult.Ok(Describe(route));
@@ -669,7 +669,7 @@ public static class RouteCapability
         // The honest half of the saturation answer, and it is said every time rather than only
         // when it bites: d47 does not model the price drop from dumping past demand, so it never
         // plans past demand — and a profit that assumed otherwise would be wrong in a way that
-        // reads exactly like the feature working (list.md Phase 36).
+        // reads exactly like the feature working (Phase 36).
         report.Append(
             capped
                 ? "No leg sells more than a station asked for, and some were cut short by that. I "

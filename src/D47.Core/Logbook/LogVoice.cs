@@ -1,7 +1,7 @@
 namespace D47.Core.Logbook;
 
 /// <summary>
-/// Whose log it is (list.md Phase 33, item 3). Two voices in the item, and a third asked for
+/// Whose log it is (Phase 33, item 3). Two voices in the item, and a third asked for
 /// while the plan of record was being written.
 /// <para>
 /// <b>They are not interchangeable and the difference is the point.</b> The Commander's own first

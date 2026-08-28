@@ -5,7 +5,7 @@ namespace D47.Core.Tests.Audio;
 
 /// <summary>
 /// The composition root's speech wiring, driven as a sequence rather than as one call
-/// (list.md Phase 19, "Give the composition root a test harness").
+/// (Phase 19, "Give the composition root a test harness").
 /// <para>
 /// <c>AppHost</c> is where the app is actually assembled and nothing constructs one, so every
 /// behaviour that lived in it was covered only by running the app. Two of the three faults found

@@ -8,7 +8,7 @@ using Xunit;
 namespace D47.Scenarios.Tests;
 
 /// <summary>
-/// <b>Does this endpoint resist these attacks?</b> The question list.md actually asks, and the one
+/// <b>Does this endpoint resist these attacks?</b> The question the phase actually asks, and the one
 /// that cannot be answered without a model.
 /// <para>
 /// Opt-in with <c>D47_SCENARIOS_LIVE=1</c>, following the three precedents already in the tree

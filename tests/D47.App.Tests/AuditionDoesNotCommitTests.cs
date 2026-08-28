@@ -13,7 +13,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// Hearing a voice is not choosing it (list.md Phase 19, "Hear a voice before you choose it"),
+/// Hearing a voice is not choosing it (Phase 19, "Hear a voice before you choose it"),
 /// and from change-requests.md 18 and 19 that is a play glyph on the row rather than a button
 /// with a price written on it under the list.
 /// <para>

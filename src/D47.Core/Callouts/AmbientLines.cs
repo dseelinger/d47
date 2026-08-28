@@ -31,7 +31,7 @@ public enum AmbientSituation
 }
 
 /// <summary>
-/// The stock ambient lines (list.md Phase 11, "Ambient Voice").
+/// The stock ambient lines (Phase 11, "Ambient Voice").
 /// <para>
 /// <b>One shared set rather than one per core.</b> Eleven cores times seven situations times ten
 /// lines is several thousand lines of authored fiction that would go stale against the next

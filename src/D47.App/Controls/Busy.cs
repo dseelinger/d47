@@ -4,7 +4,7 @@ namespace D47.App.Controls;
 
 /// <summary>
 /// Says that something is working, on the affordance that was touched
-/// (list.md Phase 12, "Anything that might take a moment says it is working").
+/// (Phase 12, "Anything that might take a moment says it is working").
 /// <para>
 /// One line at a call site:
 /// <code>await Busy.While(control, glyph, async () =&gt; …);</code>

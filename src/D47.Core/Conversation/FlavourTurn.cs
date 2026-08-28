@@ -38,7 +38,7 @@ public static class FlavourTurn
     /// <param name="aboutMe">
     /// Position 4 — the Commander's own account of themselves, already composed by
     /// <see cref="CommanderStory"/> to the depth the caller chose, or null when this line is not
-    /// the ship's AI speaking to the Commander (list.md Phase 43). Before this parameter existed
+    /// the ship's AI speaking to the Commander (Phase 43). Before this parameter existed
     /// every ambient remark, opening line and introduction was written by a model that had never
     /// heard of the person flying, which is the real reason those remarks felt generic.
     /// </param>
@@ -88,7 +88,7 @@ public static class FlavourTurn
     /// </param>
     /// <param name="effort">Low for a remark; the generator asks for more, because a story is a reasoning problem.</param>
     /// <param name="webSearch">
-    /// Whether the provider may search the web while writing this line (list.md Phase 23, "Look
+    /// Whether the provider may search the web while writing this line (Phase 23, "Look
     /// it up, and say where the answer came from").
     /// <para>
     /// The caller decides, and has to have checked both halves first —

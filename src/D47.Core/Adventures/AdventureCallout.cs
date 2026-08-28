@@ -4,7 +4,7 @@ using D47.Core.Journal;
 namespace D47.Core.Adventures;
 
 /// <summary>
-/// A beat, said when it is reached (list.md Phase 47, "The ship's AI tells it, and the authored
+/// A beat, said when it is reached (Phase 47, "The ship's AI tells it, and the authored
 /// beat is the floor").
 /// <para>
 /// Takes the callout family's discipline: a settle window, so a beat is not read out over the

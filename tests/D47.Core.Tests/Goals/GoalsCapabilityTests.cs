@@ -7,7 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Goals;
 
 /// <summary>
-/// The goals capability's surface (list.md Phase 34).
+/// The goals capability's surface (Phase 34).
 /// <para>
 /// <b>One tool advertised and the rest Protected, which is the first time in four phases the line
 /// has been drawn anywhere but at the edge.</b> Reading an arc is a thing the model has to be able

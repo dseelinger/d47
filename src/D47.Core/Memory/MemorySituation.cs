@@ -4,8 +4,8 @@ using D47.Core.Journal;
 namespace D47.Core.Memory;
 
 /// <summary>
-/// What was going on, reduced to the three things a memory can usefully be filed under (list.md
-/// Phase 31, "Recall arrives above the cache breakpoint" — <em>this system, this ship, this
+/// What was going on, reduced to the three things a memory can usefully be filed under (Phase 31
+/// , "Recall arrives above the cache breakpoint" — <em>this system, this ship, this
 /// activity</em>).
 /// <para>
 /// <b>Tags rather than fields, and the writer never chooses them.</b> A tag is a fact about the

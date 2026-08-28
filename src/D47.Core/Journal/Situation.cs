@@ -3,7 +3,7 @@ using System.Text;
 namespace D47.Core.Journal;
 
 /// <summary>
-/// The game state that rides along with every turn (list.md Phase 7, "Know what is happening
+/// The game state that rides along with every turn (Phase 7, "Know what is happening
 /// around you"): where the Commander is, what they are flying, and what just happened.
 /// <para>
 /// This is prompt position 7 (architecture.md §6) — below the cache breakpoint, so it changes

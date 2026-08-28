@@ -4,7 +4,7 @@ namespace D47.Core.Persona;
 
 /// <summary>
 /// A ship change that has settled, and the core the Commander bound to the ship they are now in
-/// (list.md Phase 35, "Switching ships switches the core").
+/// (Phase 35, "Switching ships switches the core").
 /// </summary>
 /// <param name="Announce">
 /// Whether the arriving core is allowed to say anything. False for the ship d47 finds the
@@ -14,7 +14,7 @@ namespace D47.Core.Persona;
 public sealed record ShipCoreSwitch(int ShipId, string Core, bool Announce);
 
 /// <summary>
-/// Which core flies which ship, and when boarding one puts it aboard (list.md Phase 35).
+/// Which core flies which ship, and when boarding one puts it aboard (Phase 35).
 /// <para>
 /// <b>Binding is an act, applying is a consequence.</b> The store is written only from here and
 /// only by <see cref="Bind"/> and <see cref="Forget"/>, whose callers are a panel button, a
@@ -71,7 +71,7 @@ public sealed class ShipCoreService(ShipCoreStore store, Func<CommanderGameState
     public ShipCoreStore Store => store;
 
     /// <summary>
-    /// Whose bindings are being read and written. Half the store's key (the list.md Phase 44
+    /// Whose bindings are being read and written. Half the store's key (the Phase 44
     /// defect item): Elite's ship ids are per Commander, so ship 7 alone does not name a ship.
     /// </summary>
     private string Fid => game()?.Identity.FrontierId ?? string.Empty;
@@ -201,7 +201,7 @@ public sealed class ShipCoreService(ShipCoreStore store, Func<CommanderGameState
 
     /// <summary>
     /// Forgets which ship has been acted on, so the next <see cref="Observe"/> adopts whatever the
-    /// Commander is in as the ship d47 found them in — silently, as at startup (list.md Phase 44,
+    /// Commander is in as the ship d47 found them in — silently, as at startup (Phase 44,
     /// "What a new Commander logging in actually changes").
     /// <para>
     /// Called on a Commander switch and nothing else. <see cref="_aboard"/> is a bare ship id and

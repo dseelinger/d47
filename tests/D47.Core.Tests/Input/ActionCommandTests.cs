@@ -9,7 +9,7 @@ namespace D47.Core.Tests.Input;
 
 /// <summary>
 /// Acting on the game end to end, with nothing sent: the declared phrase, the mode check, the
-/// state check, and the refusals (list.md Phase 10, items 1, 4 and 6 to 9).
+/// state check, and the refusals (Phase 10, items 1, 4 and 6 to 9).
 /// </summary>
 public class ActionCommandTests
 {

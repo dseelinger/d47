@@ -4,7 +4,7 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>
-/// The seam between two providers that count the same turn differently (list.md Phase 29, seam 1).
+/// The seam between two providers that count the same turn differently (Phase 29, seam 1).
 /// <para>
 /// Anthropic's <c>input_tokens</c> excludes what was cached; OpenAI's <c>prompt_tokens</c>
 /// includes it. Every test here exists because that difference produces a <em>plausible</em>

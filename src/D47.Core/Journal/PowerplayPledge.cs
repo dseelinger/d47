@@ -1,7 +1,7 @@
 namespace D47.Core.Journal;
 
 /// <summary>
-/// Which Power the Commander flies for, if any (list.md Phase 15, "Warn that you are exposed in a
+/// Which Power the Commander flies for, if any (Phase 15, "Warn that you are exposed in a
 /// rival Power's territory").
 /// <para>
 /// <b>Tracked as history rather than read once</b>, which is the item's own wording and is the

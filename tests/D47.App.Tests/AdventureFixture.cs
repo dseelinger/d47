@@ -9,8 +9,8 @@ namespace D47.App.Tests;
 /// The smallest adventure surface that furnishes a tab.
 /// <para>
 /// For tests that are about <em>whether</em> a surface has the Adventures tab rather than about
-/// what is on it — the flat overlay's two roots (list.md Phase 48) and mini keeping a reading it
-/// actually has (list.md Phase 51). Nothing here is exercised; <c>AdventuresTabTests</c> is where
+/// what is on it — the flat overlay's two roots (Phase 48) and mini keeping a reading it
+/// actually has (Phase 51). Nothing here is exercised; <c>AdventuresTabTests</c> is where
 /// a surface with stories in it lives.
 /// </para>
 /// </summary>

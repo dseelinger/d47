@@ -3,7 +3,7 @@ using System.Globalization;
 namespace D47.Core.Engineers;
 
 /// <summary>
-/// The handful of phrases the Engineers tab and the engineers tools both use (list.md Phase 28).
+/// The handful of phrases the Engineers tab and the engineers tools both use (Phase 28).
 /// <para>
 /// Shared rather than written twice, because <b>the ray points and the voice edits</b>: what the
 /// page shows and what d47 says about the same ranking have to be the same sentence, or a

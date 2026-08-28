@@ -8,7 +8,7 @@ using Xunit;
 namespace D47.Core.Tests.Callouts;
 
 /// <summary>
-/// The personal callout (list.md Phase 32, "Callouts that are yours rather than everyone's").
+/// The personal callout (Phase 32, "Callouts that are yours rather than everyone's").
 /// <para>
 /// The item sets a bar rather than a behaviour — "it must be right more often" — so what is
 /// asserted here is the four things that make the bar keepable: it is off by default, it fires only

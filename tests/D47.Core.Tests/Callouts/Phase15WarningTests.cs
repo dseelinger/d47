@@ -8,7 +8,7 @@ using Xunit;
 namespace D47.Core.Tests.Callouts;
 
 /// <summary>
-/// Warnings that arrive in time (list.md Phase 15).
+/// Warnings that arrive in time (Phase 15).
 /// <para>
 /// The numbers these are written against are in docs/spikes/journal-corpus-warnings.md, measured
 /// over 912 real journals. What is asserted here is the shape of the decision rather than the

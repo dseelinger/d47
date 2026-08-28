@@ -17,7 +17,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// One search affordance, on the tab that is selected (list.md Phase 12). What a match
+/// One search affordance, on the tab that is selected (Phase 12). What a match
 /// <em>does</em> differs by page and that difference is the design: the transcript pages are
 /// prose so a query highlights and steps, and Settings is 92 rows so a query filters.
 /// </summary>

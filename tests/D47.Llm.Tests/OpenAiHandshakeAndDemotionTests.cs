@@ -5,7 +5,7 @@ using Xunit;
 namespace D47.Llm.Tests;
 
 /// <summary>
-/// Asking an endpoint what it is, and answering it when it says no (list.md Phase 29, "What the
+/// Asking an endpoint what it is, and answering it when it says no (Phase 29, "What the
 /// endpoint can actually do").
 /// <para>
 /// A model list says what an endpoint <em>serves</em> and nothing about what it <em>accepts</em>.
@@ -250,7 +250,7 @@ public class OpenAiHandshakeAndDemotionTests
     }
 
     /// <summary>
-    /// What each rung actually becomes in the body, on both OpenAI shapes (list.md Phase 54).
+    /// What each rung actually becomes in the body, on both OpenAI shapes (Phase 54).
     /// <para>
     /// <b>Closing a gap rather than covering a change.</b> Nothing asserted that OpenAI effort
     /// reached the wire at all, which is how adding a fifth rung compiled clean while both

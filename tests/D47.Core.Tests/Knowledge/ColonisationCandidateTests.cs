@@ -7,7 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>
-/// Finding somewhere to colonise (list.md Phase 18, "Find somewhere worth colonising").
+/// Finding somewhere to colonise (Phase 18, "Find somewhere worth colonising").
 /// <para>
 /// Two things are being defended here and they pull in opposite directions. The index cannot
 /// filter on the one criterion Frontier's rule turns on, so the deciding happens over the

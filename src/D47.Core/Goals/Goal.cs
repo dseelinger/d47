@@ -1,7 +1,7 @@
 namespace D47.Core.Goals;
 
 /// <summary>
-/// How an arc's progress is settled (list.md Phase 34, "Progress is derived, never typed").
+/// How an arc's progress is settled (Phase 34, "Progress is derived, never typed").
 /// <para>
 /// The same rule the checklist already draws in <see cref="Checklists.ChecklistItemKind"/> and for
 /// the same reason: mixing computed progress with typed progress gives a page where some figures
@@ -19,7 +19,7 @@ public enum GoalKind
 
 /// <summary>
 /// A named ambition with a definition of done — the thing the checklist has never had anywhere to
-/// put (list.md Phase 34, "Goals that outlive a checklist").
+/// put (Phase 34, "Goals that outlive a checklist").
 /// <para>
 /// This is the <em>definition</em>. What it is worth right now is a <see cref="GoalStanding"/>,
 /// computed fresh every time it is asked for, because <b>no progress figure is ever stored</b> —
@@ -87,7 +87,7 @@ public enum GoalSource
 }
 
 /// <summary>
-/// What an arc is worth, computed rather than read (list.md Phase 34).
+/// What an arc is worth, computed rather than read (Phase 34).
 /// </summary>
 public sealed record GoalStanding
 {

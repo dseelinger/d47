@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Journal;
 
 /// <summary>
-/// What Elite says each module in the ship being flown actually draws (list.md Phase 38).
+/// What Elite says each module in the ship being flown actually draws (Phase 38).
 /// <para>
 /// <b>The measured half of the power gauge.</b> The game writes <c>ModulesInfo.json</c> beside the
 /// journal with a <c>Power</c> and a <c>Priority</c> per slot, computed with the engineering

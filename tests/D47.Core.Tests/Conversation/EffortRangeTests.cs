@@ -4,7 +4,7 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>
-/// The floor and the ceiling (list.md Phase 54). The router's own answer is untouched by any
+/// The floor and the ceiling (Phase 54). The router's own answer is untouched by any
 /// of this — <see cref="EffortRouterTests"/> stays as it was, which is the evidence the change
 /// is additive.
 /// </summary>

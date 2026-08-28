@@ -4,7 +4,7 @@ using D47.Core.Ships;
 namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
-/// The fleet, and what the Commander wants doing to it (list.md Phase 26, "Ships").
+/// The fleet, and what the Commander wants doing to it (Phase 26, "Ships").
 /// <para>
 /// <b>The plan owns what and the checklist owns when.</b> Nothing here writes to the checklist:
 /// <c>promote_ship_plan</c> offers, and accepting stays the Commander's own act through

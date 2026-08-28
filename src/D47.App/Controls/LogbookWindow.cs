@@ -12,7 +12,7 @@ using D47.Core.Logbook;
 namespace D47.App.Controls;
 
 /// <summary>
-/// Writing up a session, and reading back what has been written (list.md Phase 33).
+/// Writing up a session, and reading back what has been written (Phase 33).
 /// <para>
 /// <b>Two buttons and they are deliberately not one.</b> Item 4 says the log estimates before it
 /// runs, and the only way that means anything is if seeing the figure and agreeing to it are

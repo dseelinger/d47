@@ -13,7 +13,7 @@ using D47.Core.Interface;
 namespace D47.App.Panel;
 
 /// <summary>
-/// The checklist, as a tab of the panel (list.md Phase 25, "The checklist leaves its window").
+/// The checklist, as a tab of the panel (Phase 25, "The checklist leaves its window").
 /// <para>
 /// <b>The headline is not tidiness.</b> A <c>Window</c> cannot appear in the headset at all, so
 /// until this moved a Commander in VR could not see their checklist — the one surface that
@@ -44,7 +44,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     private readonly PanelPrompts _prompts;
 
     /// <summary>
-    /// The Commander's long arcs (list.md Phase 34, "The checklist points at the arc"). Null under
+    /// The Commander's long arcs (Phase 34, "The checklist points at the arc"). Null under
     /// the designer and in a configuration that tracks none, where the band simply is not drawn.
     /// </summary>
     private readonly D47.Core.Goals.GoalBook? _goals;
@@ -134,7 +134,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     private readonly StackPanel _controls = new() { Orientation = Orientation.Horizontal, Spacing = 8 };
 
     /// <summary>
-    /// The way into the project order (list.md Phase 42). A chooser rather than movers on the
+    /// The way into the project order (Phase 42). A chooser rather than movers on the
     /// page: projects are a handful where lines are hundreds, ordering them is a sit-down act
     /// rather than a per-row one, and a chooser is the one control that works the same for a ray
     /// at a metre and a phrase.
@@ -254,8 +254,8 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         // A chooser rather than a combo box, and declared as a layer rather than as a page: the
         // scopes on a working list are a handful, and taking the whole panel to answer a question
-        // the Commander did not think of as one is a level of navigation for nothing (list.md
-        // Phase 25, "Page or layer is declared per call site").
+        // the Commander did not think of as one is a level of navigation for nothing (Phase 25,
+        // "Page or layer is declared per call site").
         _scopeButton.Click += (_, _) => ChooseScope();
 
         // Through the service, like the filter beside it: shared across surfaces and remembered.
@@ -378,7 +378,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     }
 
     /// <summary>
-    /// The surface's one search box, narrowing this page (list.md Phase 12). A filter rather than
+    /// The surface's one search box, narrowing this page (Phase 12). A filter rather than
     /// a highlight, because a checklist is a list of things rather than a body of text — which is
     /// exactly the per-page difference the one search affordance exists to allow.
     /// </summary>
@@ -407,7 +407,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     }
 
     /// <summary>
-    /// The suggestions page, built for the crumb the button above pushes (list.md Phase 25).
+    /// The suggestions page, built for the crumb the button above pushes (Phase 25).
     /// <para>
     /// <b>Suggestions are a page rather than an interruption.</b> Everything
     /// <see cref="ChecklistProposals"/> is holding waits in one place, and accepting stays the
@@ -529,7 +529,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         RebuildArcs();
 
-        // In the order the Commander cares about (list.md Phase 42): their project order, then
+        // In the order the Commander cares about (Phase 42): their project order, then
         // what can be done now, where they are standing — with their own hand-moves as the
         // tiebreak. A reading, never a rewrite: the stored file keeps its own order, so a hand
         // edit still lands where they put it.
@@ -601,7 +601,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     }
 
     /// <summary>
-    /// The arcs band (list.md Phase 34, "The checklist points at the arc").
+    /// The arcs band (Phase 34, "The checklist points at the arc").
     /// <para>
     /// <b>Here rather than on a tab of its own</b>, because the join is the feature: a goal that
     /// takes months and the lines it produced this week belong on one page, and putting them on two
@@ -906,7 +906,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         // finished rolls said which id they were on and not which ship (reported 2026-08-21).
         var aside = new List<string> { _checklists.Where(item) };
 
-        // And the arc it came from, where one proposed it (list.md Phase 34). Without this,
+        // And the arc it came from, where one proposed it (Phase 34). Without this,
         // finishing the line visibly moves nothing bigger than itself, which is the phase's own
         // statement of why the join is worth having.
         if (item.Goal is { Length: > 0 } goal)
@@ -1151,7 +1151,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
             // <see cref="TouchTarget"/> rather than whatever the padding came to, which was about
             // twenty pixels: these are the only controls on the page that were below the floor,
-            // and they went back into a headset with the tab (list.md Phase 39).
+            // and they went back into a headset with the tab (Phase 39).
             MinHeight = TouchTarget,
             MinWidth = 0,
             VerticalAlignment = VerticalAlignment.Center,
@@ -1179,7 +1179,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     /// A bar-and-arrow character exists — U+2912 — and whether it renders is a property of
     /// whatever font the panel resolved. This repo has already paid for that once: a glyph nobody
     /// can see is worse than no glyph, because the control then reads as blank rather than as
-    /// missing (list.md Phase 37, and the currency-sign reasoning in <c>ShipsMode.Coin</c>). Four
+    /// missing (Phase 37, and the currency-sign reasoning in <c>ShipsMode.Coin</c>). Four
     /// paths cannot be tofu in any font, and they let the end glyphs be the step glyph with a bar
     /// on it — which is the whole of what the ask specified, and what no two unrelated codepoints
     /// would have given.
@@ -1256,7 +1256,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     }
 
     /// <summary>
-    /// The project order, as two choosers: which project, then where it goes (list.md Phase 42).
+    /// The project order, as two choosers: which project, then where it goes (Phase 42).
     /// Two steps rather than movers-per-row because a chooser picks exactly one thing — and both
     /// steps are drawn into the panel's layer, because a popup cannot exist in the VR path at all.
     /// </summary>
@@ -1621,7 +1621,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     /// sentence saying why it is not something to tick.
     /// <para>
     /// <b><see cref="TypeScale.Body"/> rather than <see cref="TypeScale.Secondary"/>, decided in
-    /// the headset's geometry rather than the window's (list.md Phase 39).</b> The big panel is
+    /// the headset's geometry rather than the window's (Phase 39).</b> The big panel is
     /// 1024 pixels across a 1.1 m quad at 1.1 m, which is 53° of view and 19 pixels to the degree,
     /// so a 13-pixel line stands about 29 arcminutes tall <em>before</em> the compositor resamples
     /// it — over the ~20 that is the floor for reading, but not by enough to also be the lowest

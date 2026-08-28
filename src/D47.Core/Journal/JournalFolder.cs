@@ -4,7 +4,7 @@ namespace D47.Core.Journal;
 /// Elite writes one file per session into one folder shared by every Commander on the
 /// machine. Picking "the latest" is a filename comparison, not a filesystem-timestamp one,
 /// because the filename already encodes the session's start time and that is what survives a
-/// copy (list.md Phase 2).
+/// copy (Phase 2).
 /// </summary>
 public static class JournalFolder
 {

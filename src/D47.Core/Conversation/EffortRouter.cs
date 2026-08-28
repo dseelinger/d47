@@ -1,7 +1,7 @@
 namespace D47.Core.Conversation;
 
 /// <summary>
-/// Chooses reasoning effort per turn (list.md Phase 3, "Model Level and Thinking"). Effort is
+/// Chooses reasoning effort per turn (Phase 3, "Model Level and Thinking"). Effort is
 /// a per-turn decision rather than an install setting, and it is <em>the router</em> that
 /// gauges it, not the model — asking the model how hard it should think costs a round trip to
 /// answer a question a heuristic answers well enough.

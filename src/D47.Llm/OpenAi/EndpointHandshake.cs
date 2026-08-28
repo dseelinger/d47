@@ -3,7 +3,7 @@ using System.Text.Json;
 namespace D47.Llm.OpenAi;
 
 /// <summary>
-/// What an endpoint says it serves, and whether it answered at all (list.md Phase 29,
+/// What an endpoint says it serves, and whether it answered at all (Phase 29,
 /// "What the endpoint can actually do").
 /// <para>
 /// The three states are kept apart on purpose, the same way the key check keeps <em>rejected</em>

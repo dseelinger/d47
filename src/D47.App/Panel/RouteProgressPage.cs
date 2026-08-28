@@ -9,7 +9,7 @@ using D47.Core.Journal;
 namespace D47.App.Panel;
 
 /// <summary>
-/// The route being flown, all of it (list.md Phase 37, "Progress").
+/// The route being flown, all of it (Phase 37, "Progress").
 /// <para>
 /// <b>This is the mode that justifies the tab.</b> A Sol-to-Colonia plot is 131 waypoints, and
 /// <c>routes.md</c> records that reading that aloud is not an answer — so the spoken form gives
@@ -216,7 +216,7 @@ public sealed class RouteProgressPage : UserControl
 
         if (_copy is { } copy)
         {
-            // Every system name on this page is a copy target (list.md Phase 37, "Course"): the
+            // Every system name on this page is a copy target (Phase 37, "Course"): the
             // clipboard is the part of plotting that always works, whatever the map is doing.
             row.Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand);
             row.Tapped += (_, _) => copy(hop.StarSystem);

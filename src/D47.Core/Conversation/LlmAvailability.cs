@@ -18,7 +18,7 @@ public enum LlmAvailability
 }
 
 /// <summary>
-/// "Capabilities as state, not guard" (list.md Phase 3). The turn loop reads this at the start
+/// "Capabilities as state, not guard" (Phase 3). The turn loop reads this at the start
 /// of each turn and routes accordingly; failures write to it. There is no failure handler to
 /// author because a failure is just a state the next turn reads.
 /// <para>
@@ -64,7 +64,7 @@ public sealed class LlmAvailabilityState
     /// Called when the provider itself is rebuilt — a key stored, an endpoint changed, the
     /// provider set to none. A settings change has to be able to turn the model capability on
     /// as well as off, or "apply without a restart" would be true in only one direction
-    /// (list.md Phase 4).
+    /// (Phase 4).
     /// </summary>
     public void SetProviderConfigured(bool configured, string? reason = null)
     {

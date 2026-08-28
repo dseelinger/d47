@@ -35,7 +35,7 @@ public sealed record LogWritten
 }
 
 /// <summary>
-/// The markdown file (list.md Phase 33, item 1: "written to <c>data/</c> in plain markdown so it
+/// The markdown file (Phase 33, item 1: "written to <c>data/</c> in plain markdown so it
 /// can be kept, edited and posted somewhere").
 /// <para>
 /// <b>The citations stay in the prose.</b> Stripping them would read better and would defeat the

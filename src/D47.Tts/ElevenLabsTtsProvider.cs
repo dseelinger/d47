@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 namespace D47.Tts;
 
 /// <summary>
-/// The paid voices (list.md Phase 11, "ElevenLabs").
+/// The paid voices (Phase 11, "ElevenLabs").
 /// <para>
 /// The whole requirement is that a Commander with a key hears it and nothing else changes.
 /// That is what <see cref="ITtsProvider"/> already guaranteed — this class exists entirely
@@ -97,7 +97,7 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
 
     /// <summary>
     /// What leaves the machine. Stated here so the settings row and the documentation page read
-    /// it from one place (list.md Phase 4, "Say what each provider receives").
+    /// it from one place (Phase 4, "Say what each provider receives").
     /// </summary>
     public const string EgressDisclosure =
         "The text of every line D47 speaks is sent to ElevenLabs to be turned into audio, along " +
@@ -130,7 +130,7 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
     /// <param name="key">
     /// Asked for rather than held, because a key can be added or replaced mid-session and the
     /// next line has to use it — "apply every setting without a restart" reaches in here
-    /// (list.md Phase 4). Null means no key is stored yet, which is a capability being off
+    /// (Phase 4). Null means no key is stored yet, which is a capability being off
     /// rather than an error to raise.
     /// </param>
     public ElevenLabsTtsProvider(
@@ -158,7 +158,7 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
         if (_key() is not { Length: > 0 } key)
         {
             // No key is not a failure to log loudly. The picker's contract is that an empty
-            // list still lets the Commander keep the current value or type one (list.md Phase 4)
+            // list still lets the Commander keep the current value or type one (Phase 4)
             // — and it now says which kind of empty this is, rather than showing the same
             // nothing it shows for a refused key.
             //

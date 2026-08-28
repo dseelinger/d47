@@ -4,7 +4,7 @@ using D47.Core.Journal;
 namespace D47.App.Panel;
 
 /// <summary>
-/// Everything the Adventures tab reads and the few things it may do (list.md Phase 47).
+/// Everything the Adventures tab reads and the few things it may do (Phase 47).
 /// <para>
 /// A record of delegates rather than the host, so the page owns no composition root and a test can
 /// hand it a book and nothing else. <paramref name="Say"/> is the one way the tab makes a sound:

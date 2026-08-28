@@ -20,7 +20,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The mini panel without a headset (list.md Phase 48).
+/// The mini panel without a headset (Phase 48).
 /// <para>
 /// The acceptance the phase states is blunt: the transcript's tail readable over Elite with d47's
 /// own window minimised, and the headset untouched by closing the overlay. The second half is

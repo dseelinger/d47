@@ -8,7 +8,7 @@ namespace D47.Core.Configuration;
 /// <summary>
 /// How the panel was left, as opposed to how d47 is configured. Which cards are collapsed is
 /// not a setting: it has no default worth documenting, no effect on behaviour, and nothing
-/// should fail loudly because it could not be read (list.md Phase 4, "Collapse settings cards").
+/// should fail loudly because it could not be read (Phase 4, "Collapse settings cards").
 /// </summary>
 public sealed record ViewState
 {
@@ -17,7 +17,7 @@ public sealed record ViewState
 
     /// <summary>
     /// Where the main window was left, or null if it has never been moved or resized
-    /// (list.md Phase 9, "Open at a size that fits the screen"). Here rather than in settings
+    /// (Phase 9, "Open at a size that fits the screen"). Here rather than in settings
     /// for the same reason a collapsed card is: it has no default worth documenting and
     /// nothing should fail loudly because it could not be read.
     /// </summary>
@@ -25,7 +25,7 @@ public sealed record ViewState
 
     /// <summary>
     /// And where it was left <em>in mini</em>, kept apart from the rectangle above
-    /// (list.md Phase 51).
+    /// (Phase 51).
     /// <para>
     /// <b>Two records rather than one, and that is the whole of the trap this phase names.</b>
     /// The placement memory samples the window on every resize and move and writes the result down
@@ -57,7 +57,7 @@ public sealed record ViewState
 
     /// <summary>
     /// Where the Commander put the flat mini panel, or null if they never moved it
-    /// (list.md Phase 48).
+    /// (Phase 48).
     /// <para>
     /// Here rather than in settings, and that is a ruling rather than a filing convenience:
     /// <b>a monitor coordinate is not something a Commander typed</b>, and <c>settings.json</c>
@@ -133,7 +133,7 @@ public sealed record ViewState
 
     /// <summary>
     /// When each core was last aboard, so a gap reaction can be about a gap that spans launches
-    /// (list.md Phase 35).
+    /// (Phase 35).
     /// <para>
     /// <b>Without this the reaction is unreachable.</b> A core remarks on missing time only past
     /// <see cref="Persona.PersonaHost.GapAfter"/>, which is a month, and the elapsed time was
@@ -153,7 +153,7 @@ public sealed record ViewState
 
     /// <summary>
     /// How the Commander last dragged the rule between panes, keyed by how many panes were
-    /// showing at the time (list.md Phase 55).
+    /// showing at the time (Phase 55).
     /// <para>
     /// <b>Proportions rather than pixels.</b> The window is resizable and a remembered 640 means
     /// something different at 1024 and at 2048, so what is kept is each pane's share of the strip.
@@ -228,7 +228,7 @@ public sealed record ViewState
 
     /// <summary>
     /// Where each world-locked headset surface was put down, keyed by surface slot, and where
-    /// the head was when it was put there (list.md Phase 9, "Re-anchor the panels").
+    /// the head was when it was put there (Phase 9, "Re-anchor the panels").
     /// <para>
     /// Here rather than in settings for the same reason the window's position is. <em>Choosing</em>
     /// to have a surface world-locked is a setting - it is a preference, it has a default worth
@@ -263,14 +263,14 @@ public sealed record ViewState
 
     /// <summary>
     /// Records where the window was left, in whichever of its two shapes it was in
-    /// (list.md Phase 51). The caller says which; nothing here reads a mode, because
+    /// (Phase 51). The caller says which; nothing here reads a mode, because
     /// <c>PanelMode</c> is the app's word and Core has never heard it.
     /// </summary>
     public ViewState With(WindowPlacement placement, bool mini) => mini
         ? this with { MainWindowMini = placement }
         : this with { MainWindow = placement };
 
-    /// <summary>Records where the flat mini panel was dragged to (list.md Phase 48).</summary>
+    /// <summary>Records where the flat mini panel was dragged to (Phase 48).</summary>
     public ViewState With(OverlayPlacement placement) => this with { Overlay = placement };
 
     /// <summary>Records a card's new state as an explicit choice.</summary>
@@ -352,7 +352,7 @@ public sealed record WindowPlacement
 
 /// <summary>
 /// Where the flat mini panel was left, in device-independent pixels on the virtual desktop
-/// (list.md Phase 48).
+/// (Phase 48).
 /// <para>
 /// Its own record rather than a <see cref="WindowPlacement"/> with two fields left at zero: the
 /// overlay has no size to remember and cannot be maximised, and a record whose meaningful half is

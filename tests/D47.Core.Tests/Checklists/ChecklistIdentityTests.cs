@@ -4,7 +4,7 @@ using Xunit;
 namespace D47.Core.Tests.Checklists;
 
 /// <summary>
-/// The decision the whole phase rests on (list.md Phase 17): <b>two plans can only be diffed if an
+/// The decision the whole phase rests on (Phase 17): <b>two plans can only be diffed if an
 /// item knows what it is independently of its position in a list</b>. Get the key wrong and every
 /// revision reads as everything removed and everything added, which wipes a fortnight of progress
 /// the first time somebody changes one weapon.
@@ -47,7 +47,7 @@ public class ChecklistIdentityTests
 
     /// <summary>
     /// Deciding on a grade for a slot planned without one is the same item changing its mind
-    /// (list.md Phase 26, "A plan is keyed to its slot").
+    /// (Phase 26, "A plan is keyed to its slot").
     /// <para>
     /// This asserted the opposite until Phase 26, and the reversal is the point rather than a
     /// relaxation: keying on the content was right while items were regenerated from scratch each

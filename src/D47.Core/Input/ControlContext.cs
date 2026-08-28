@@ -4,7 +4,7 @@ namespace D47.Core.Input;
 
 /// <summary>
 /// Which control mode the Commander is in right now, as a set so an action can declare the
-/// several it works in (list.md Phase 10, "Offer only the actions that work right now").
+/// several it works in (Phase 10, "Offer only the actions that work right now").
 /// <para>
 /// <b>The cockpit is not one mode.</b> Hardpoints, the cargo scoop and the landing gear all
 /// do nothing in supercruise, so a single "in a ship" context would advertise three keys that

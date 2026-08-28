@@ -19,7 +19,7 @@ public readonly record struct HabitWindow(
 public sealed record HabitOutcome(HabitClaim? Claim, HabitSilence? Silence);
 
 /// <summary>
-/// One pattern d47 looks for in the Commander's own journals (list.md Phase 32, "Mine the
+/// One pattern d47 looks for in the Commander's own journals (Phase 32, "Mine the
 /// Commander's own journals").
 /// <para>
 /// <b>Arithmetic over events, and nothing else.</b> No journal text reaches a model and no model
@@ -48,7 +48,7 @@ public interface IHabitDetector
 }
 
 /// <summary>
-/// The floor test and the sentence assembly, written once (list.md Phase 32, item 2).
+/// The floor test and the sentence assembly, written once (Phase 32, item 2).
 /// <para>
 /// Every detector counts two things — how often it happened and how many chances it had — and the
 /// rest is identical between them. Putting the comparison here rather than in each detector is what

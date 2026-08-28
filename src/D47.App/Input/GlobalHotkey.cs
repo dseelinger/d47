@@ -11,7 +11,7 @@ namespace D47.App.Input;
 /// gated — not behind a turn completing, not behind the model, and not behind d47 having focus.
 /// A Commander in a headset with the game in front of them has no way to give d47 focus, so a
 /// focus-scoped stop key is a stop key that does not work precisely when it is wanted
-/// (list.md Phase 5).
+/// (Phase 5).
 /// </para>
 /// <para>
 /// The registration lives on a message-only window with its own pump thread, owned here.

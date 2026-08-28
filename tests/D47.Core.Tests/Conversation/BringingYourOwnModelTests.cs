@@ -9,7 +9,7 @@ namespace D47.Core.Tests.Conversation;
 
 /// <summary>
 /// What changed in Core so a model on the Commander's own machine could be reached at all
-/// (list.md Phase 29).
+/// (Phase 29).
 /// <para>
 /// Two of these are about a property that silently changed meaning rather than about new code —
 /// <see cref="LlmProviderInfo.NeedsKey"/> stopped being "there is a key row" — and they are here

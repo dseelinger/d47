@@ -6,7 +6,7 @@ using static D47.Core.Tests.Adventures.AdventureFixtures;
 namespace D47.Core.Tests.Adventures;
 
 /// <summary>
-/// One fold, two callers (list.md Phase 47). The catch-up over files on disk and the live tick
+/// One fold, two callers (Phase 47). The catch-up over files on disk and the live tick
 /// give the same standing for the same events, and the priming replay cannot count a beat twice.
 /// </summary>
 public class AdventureBookTests : IDisposable

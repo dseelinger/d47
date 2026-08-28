@@ -20,7 +20,7 @@ namespace D47.Knowledge;
 /// plot, and a dropped key is not an error — the plot runs with that parameter at its default.
 /// </para>
 /// <para>
-/// <b>The trade plot used to be here and is not (list.md Phase 36).</b> <c>api/trade/route</c> is
+/// <b>The trade plot used to be here and is not (Phase 36).</b> <c>api/trade/route</c> is
 /// still real and still answers; d47 stopped asking. It could not hold cargo between legs, could
 /// not be asked for a round trip — <c>loop</c> was one of the keys it silently dropped — and took
 /// forty-eight seconds over four hops. Those are not parameters of somebody else's planner but a
@@ -118,7 +118,7 @@ public sealed class SpanshRouteService : IRouteService, IDisposable
     }
 
     /// <summary>
-    /// The exobiology plotter (list.md Phase 18, "Find the exobiology").
+    /// The exobiology plotter (Phase 18, "Find the exobiology").
     /// <para>
     /// <b>Two traps here that the other four do not have, both established live rather than
     /// guessed.</b> <c>from</c> is required, works, and comes home under a <em>different name</em> —

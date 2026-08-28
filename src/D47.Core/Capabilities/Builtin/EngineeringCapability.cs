@@ -7,7 +7,7 @@ namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
 /// Engineering: what a blueprint costs and does, and how a fitted module's roll actually went
-/// (list.md Phase 14, <c>#102</c> "Know what engineering actually does").
+/// (Phase 14, <c>#102</c> "Know what engineering actually does").
 /// <para>
 /// The first place the whole loop runs end to end. Every table Steps 1–5 built — materials,
 /// blueprints, the roll rules, the engineer directory — meets the Commander's own journal here,

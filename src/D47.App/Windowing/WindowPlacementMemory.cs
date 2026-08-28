@@ -9,7 +9,7 @@ namespace D47.App.Windowing;
 
 /// <summary>
 /// Opens the window at a size that fits, and remembers where the Commander left it
-/// (list.md Phase 9, "Open at a size that fits the screen").
+/// (Phase 9, "Open at a size that fits the screen").
 /// <para>
 /// The two halves are one feature. Clamping alone would re-derive a size every launch and
 /// throw away whatever the Commander resized it to; remembering alone would never help the
@@ -25,7 +25,7 @@ public sealed class WindowPlacementMemory
     private WindowPlacement _last;
 
     /// <summary>
-    /// The mini rectangle, kept apart from the full one (list.md Phase 51). Null until the
+    /// The mini rectangle, kept apart from the full one (Phase 51). Null until the
     /// Commander has been there.
     /// </summary>
     private WindowPlacement? _lastMini;
@@ -58,12 +58,12 @@ public sealed class WindowPlacementMemory
     /// </summary>
     /// <param name="zoom">
     /// The zoom level the surface will be drawn at, when it has one. Zoom scrolls the window
-    /// horizontally rather than reflowing the layout (list.md Phase 9), so at 125% the content
+    /// horizontally rather than reflowing the layout (Phase 9), so at 125% the content
     /// is a quarter wider than at 100% and a default chosen at 100% clips on every launch.
     /// Only the unremembered default scales: a size the Commander chose is a size they chose.
     /// </param>
     /// <param name="startMini">
-    /// Whether the window is opening in mini (list.md Phase 51). It opens on the mini rectangle
+    /// Whether the window is opening in mini (Phase 51). It opens on the mini rectangle
     /// when it has one, and the caller measures one for it when it does not — see
     /// <see cref="Resize"/>, which is what the window calls on every toggle after this.
     /// </param>
@@ -298,7 +298,7 @@ public sealed class WindowPlacementMemory
     }
 
     /// <summary>
-    /// Puts the window into its other shape (list.md Phase 51): the rectangle it is leaving is
+    /// Puts the window into its other shape (Phase 51): the rectangle it is leaving is
     /// written down, and the one it is going to is applied.
     /// <para>
     /// <b>Called before the content changes, not after.</b> The sample that has to happen is a
@@ -357,7 +357,7 @@ public sealed class WindowPlacementMemory
 
     /// <summary>
     /// The measured size mini wants, applied to a window already in mini — what a zoom change
-    /// means (list.md Phase 51).
+    /// means (Phase 51).
     /// <para>
     /// The layout transform re-measures, so a mini window at 150% is a bigger mini window rather
     /// than a clipped one; this is the half of that the window has to do for itself, because

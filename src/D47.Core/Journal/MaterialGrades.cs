@@ -1,7 +1,7 @@
 namespace D47.Core.Journal;
 
 /// <summary>
-/// How many of a material a Commander can hold (list.md Phase 8, "Call out material-gathering
+/// How many of a material a Commander can hold (Phase 8, "Call out material-gathering
 /// milestones").
 /// <para>
 /// <b>Elite reports capacity nowhere.</b> Not in a journal event, not in Status.json, not in the

@@ -18,7 +18,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The guided key setup, on the surface (list.md Phase 16). The decision itself is covered in
+/// The guided key setup, on the surface (Phase 16). The decision itself is covered in
 /// Core; what is asserted here is that the window shows the real rows, discloses egress, and can
 /// be reached again from About.
 /// </summary>
@@ -139,7 +139,7 @@ public class FirstRunKeysTests
 
     /// <summary>
     /// Nothing here is a wall: the window closes on its own button, and declining is simply
-    /// closing it. Capabilities are state rather than guards (list.md Phase 3).
+    /// closing it. Capabilities are state rather than guards (Phase 3).
     /// </summary>
     [AvaloniaFact]
     public void ItCanBeClosedWithoutStoringAnything()

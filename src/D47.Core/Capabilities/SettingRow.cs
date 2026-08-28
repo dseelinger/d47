@@ -12,7 +12,7 @@ public enum SettingKind
     Hotkey,
 
     /// <summary>
-    /// A controller button, bound by pressing it (list.md Phase 53).
+    /// A controller button, bound by pressing it (Phase 53).
     /// <para>
     /// Its own kind rather than <see cref="Hotkey"/> with a flag, because the gesture that fills
     /// it is a different one: a key is caught by the window that has focus, and a button has to be
@@ -31,7 +31,7 @@ public enum SettingKind
 }
 
 /// <summary>
-/// Whose value a row holds (list.md Phase 44, "Several Commanders, one installation").
+/// Whose value a row holds (Phase 44, "Several Commanders, one installation").
 /// </summary>
 public enum SettingScope
 {
@@ -51,7 +51,7 @@ public enum SettingScope
 }
 
 /// <summary>
-/// Hearing a value before choosing it (list.md Phase 19).
+/// Hearing a value before choosing it (Phase 19).
 /// <para>
 /// Declared on the row rather than special-cased in the settings surface, for the reason every
 /// other row property is: the surface renders what a descriptor declares, and a voice row that
@@ -131,7 +131,7 @@ public sealed record SettingRow
 
     /// <summary>
     /// Shown as a placeholder, never as a value, so a default is visually distinct from a
-    /// choice the Commander actually made (list.md Phase 4).
+    /// choice the Commander actually made (Phase 4).
     /// </summary>
     public string? DefaultDisplay { get; init; }
 
@@ -159,7 +159,7 @@ public sealed record SettingRow
     /// <summary>
     /// Whether a value outside the offered choices is legitimate. True for the model row: an
     /// endpoint d47 has never heard of still has model names, and the picker's contract is
-    /// that an empty list still lets you keep the current value or type one (list.md Phase 4).
+    /// that an empty list still lets you keep the current value or type one (Phase 4).
     /// </summary>
     public bool AllowsFreeText { get; init; }
 
@@ -171,7 +171,7 @@ public sealed record SettingRow
     /// for all of them: no key stored, a key the provider refused, a provider that could not be
     /// reached, and an account that genuinely has no voices. Only the first two are anything the
     /// Commander can act on, and the picker was telling them to type a voice id they have no way
-    /// of knowing (list.md Phase 19; docs/spikes/elevenlabs-voice-sources.md §3).
+    /// of knowing (Phase 19; docs/spikes/elevenlabs-voice-sources.md §3).
     /// </para>
     /// <para>
     /// A function of settings rather than a string, for the same reason
@@ -183,14 +183,14 @@ public sealed record SettingRow
 
     /// <summary>
     /// How a value can be heard before it is chosen, when hearing it is the only way to judge it
-    /// (list.md Phase 19, "Hear a voice before you choose it"). Null on every row where it is
+    /// (Phase 19, "Hear a voice before you choose it"). Null on every row where it is
     /// not, which is all of them but three.
     /// </summary>
     public SettingAudition? Audition { get; init; }
 
     /// <summary>
     /// Whether the row applies at all right now. Settings adapt to the selected provider
-    /// instead of showing a hardwired set (list.md Phase 4), and a row that does not apply is
+    /// instead of showing a hardwired set (Phase 4), and a row that does not apply is
     /// absent rather than disabled — a greyed-out control still asserts the setting exists.
     /// </summary>
     public Func<D47Settings, bool>? AppliesWhen { get; init; }
@@ -263,7 +263,7 @@ public sealed record SettingRow
     public string? SecretName { get; init; }
 
     /// <summary>
-    /// Tries the stored secret against the real service and says what happened (list.md Phase 16).
+    /// Tries the stored secret against the real service and says what happened (Phase 16).
     /// Null on a row that has nothing to try it against.
     /// <para>
     /// <b>It makes the real call.</b> A key that is wrong, revoked, or pasted with a trailing
@@ -306,7 +306,7 @@ public sealed record SettingRow
 
     /// <summary>
     /// Anchor within the owning capability's documentation page. The per-row setup-guide link
-    /// points here; the docs gate asserts the anchor's heading exists (list.md Phase 4,
+    /// points here; the docs gate asserts the anchor's heading exists (Phase 4,
     /// "Link each settings row to its documentation").
     /// </summary>
     public string? DocsAnchor { get; init; }
@@ -408,15 +408,15 @@ public sealed record SettingRow
 
     /// <summary>
     /// Never settable through a tool the model can call — the panel, a hotkey and the
-    /// model-free keyword router reach it, the LLM path does not (list.md Phase 4). The
+    /// model-free keyword router reach it, the LLM path does not (Phase 4). The
     /// protected set is a property of the caller, so it is enforced in one place:
     /// <see cref="Configuration.SettingsService.Apply"/>.
     /// </summary>
     public bool Protected { get; init; }
 
     /// <summary>
-    /// Whose setting this is: the installation's, or the Commander's who is flying (list.md
-    /// Phase 44). Declared on the row the way <see cref="Protected"/> is, and for the same
+    /// Whose setting this is: the installation's, or the Commander's who is flying (Phase 44).
+    /// Declared on the row the way <see cref="Protected"/> is, and for the same
     /// reason: the split is per row and never inferred, because the obvious sweep gets it wrong
     /// in both directions — About Me is the Commander describing themselves and sat in a
     /// per-installation file, and the spend ledger is the person's running cost across every

@@ -71,7 +71,7 @@ Why a TSV resource and not a generated .g.cs
 --------------------------------------------
 `MaterialGrades.g.cs` is 137 short rows and belongs in code. This is around 1,200 module
 rows with a dozen columns each, and a static dictionary that size is a large static
-constructor that runs whether or not anybody asks a specification question. list.md asks
+constructor that runs whether or not anybody asks a specification question. The phase asks
 for a dataset "lazy-queried at runtime", and a resource parsed on first use is literally
 that: a Commander who never asks never pays for it.
 """
@@ -118,7 +118,7 @@ MODULE_COLUMNS = [
     # beside `mtype` so no existing column index moves; the reader indexes by position.
     "limit",
 
-    # The three list.md Phase 38 asks the generator to stop dropping, appended for the same
+    # The three Phase 38 asks the generator to stop dropping, appended for the same
     # reason `limit` was — the reader indexes by position, so a new column goes on the end.
     #
     # `entitlement` is `outfitting.csv`'s own column and is the purchase gate: 19 modules carry

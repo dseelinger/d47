@@ -11,7 +11,7 @@ using D47.Core.Utilities;
 namespace D47.App.Panel;
 
 /// <summary>
-/// Clocks, timers and alarms (list.md Phase 24, "Utilities").
+/// Clocks, timers and alarms (Phase 24, "Utilities").
 /// <para>
 /// <b>One page, no drill.</b> Everything here is a fact or a short list, and a stack would be
 /// three levels to reach a countdown.

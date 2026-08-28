@@ -124,7 +124,7 @@ public class FleetBackfillTests
 
     /// <summary>
     /// Two Commanders share one journal folder and neither may be handed the other's ships — the
-    /// isolation rule the whole store is built on (list.md Phase 2). Both snapshots are in the
+    /// isolation rule the whole store is built on (Phase 2). Both snapshots are in the
     /// folded range here, so both are recovered, separately.
     /// </summary>
     [Fact]

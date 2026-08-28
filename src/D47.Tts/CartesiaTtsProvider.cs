@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 namespace D47.Tts;
 
 /// <summary>
-/// Cartesia's speech endpoint (list.md Phase 60).
+/// Cartesia's speech endpoint (Phase 60).
 /// <para>
 /// The fourth provider, and it arrives through the seam Phase 57 cut and Phase 58 proved: a
 /// catalogue entry, a client and a key row. Nothing above <see cref="ITtsProvider"/> learns it
@@ -106,7 +106,7 @@ public sealed class CartesiaTtsProvider : ITtsProvider, IDisposable
 
     /// <param name="key">
     /// Asked for rather than held, because a key can be added or replaced mid-session and the
-    /// next line has to use it (list.md Phase 4). Null means no key is stored yet, which is a
+    /// next line has to use it (Phase 4). Null means no key is stored yet, which is a
     /// capability being off rather than an error to raise.
     /// </param>
     public CartesiaTtsProvider(
@@ -140,7 +140,7 @@ public sealed class CartesiaTtsProvider : ITtsProvider, IDisposable
         {
             // Not cached, deliberately: the key is the thing most likely to arrive next. The
             // picker's contract is that an empty list still says which kind of empty it is
-            // (list.md Phase 19).
+            // (Phase 19).
             _logger.LogDebug("No Cartesia key is stored, so no voices can be listed");
             return VoiceCatalogue.NoKey("no key is stored");
         }

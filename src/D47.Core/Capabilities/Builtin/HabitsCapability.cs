@@ -4,7 +4,7 @@ using D47.Core.Habits;
 namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
-/// What d47 has worked out about the Commander from their own journals (list.md Phase 32).
+/// What d47 has worked out about the Commander from their own journals (Phase 32).
 /// <para>
 /// <b>Every tool here is <see cref="ToolDefinition.Protected"/>, and that is not the byte ceiling
 /// talking.</b> Phase 31 shipped the SRV profile at 39,914 against
@@ -103,7 +103,7 @@ public static class HabitsCapability
                         + "behind it.",
                     Protected = true,
 
-                    // list.md Phase 32 item 3: "it says why it fired if asked". Whole-utterance
+                    // Phase 32 item 3: "it says why it fired if asked". Whole-utterance
                     // matching is what keeps this from swallowing "why did you say that about the
                     // fuel", which is a question for the model.
                     Commands =

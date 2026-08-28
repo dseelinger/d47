@@ -28,7 +28,7 @@ public sealed record SwitchSurface
 }
 
 /// <summary>
-/// HOTAS switches that mean a state rather than a press (list.md Phase 21).
+/// HOTAS switches that mean a state rather than a press (Phase 21).
 /// <para>
 /// <b>Assignment is reachable from the panel only, never from the tool surface.</b> The model
 /// reads untrusted text — journal entries, in-game comms, web search and INARA — so a tool that
@@ -187,7 +187,7 @@ public static class SwitchCapability
         Protected = true,
 
         // Absent rather than greyed out when there is nothing for it to do. A row that cannot
-        // work while a row above it is off should not assert that it can (list.md Phase 4).
+        // work while a row above it is off should not assert that it can (Phase 4).
         AppliesWhen = _ => keyboardEnabled(),
         Commands =
         [

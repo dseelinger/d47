@@ -4,7 +4,7 @@ namespace D47.Core.Audio;
 
 /// <summary>
 /// The Commander's own audio, from a convention folder beside the executable
-/// (list.md Phase 12, "Custom Sound Cues").
+/// (Phase 12, "Custom Sound Cues").
 /// <para>
 /// <c>ICueSource</c> was written for this — "so Phase 12's drop-in folder has somewhere to plug
 /// in without reopening this class" — so a drop-in is a second source rather than a second code
@@ -65,7 +65,7 @@ public sealed class FolderAudioSource : ICueSource
 
     /// <summary>
     /// Re-reads the folder if anything in it has changed, and says whether it did
-    /// (list.md Phase 12, "Pick up dropped-in audio without a restart").
+    /// (Phase 12, "Pick up dropped-in audio without a restart").
     /// <para>
     /// Compares names and write times against what was loaded, so an unchanged folder costs one
     /// directory enumeration and nothing else. The tick loop calls this; nothing here owns a

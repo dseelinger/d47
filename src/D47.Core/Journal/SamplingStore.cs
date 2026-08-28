@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Journal;
 
 /// <summary>
-/// What has been sampled on each body, kept between sessions (list.md Phase 18, "Exobiology
+/// What has been sampled on each body, kept between sessions (Phase 18, "Exobiology
 /// sampling").
 /// <para>
 /// <b>The repository's first per-body state that has to outlive a session</b>, and the reason it has

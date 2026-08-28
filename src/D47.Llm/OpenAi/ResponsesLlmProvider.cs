@@ -5,7 +5,7 @@ using D47.Core.Conversation;
 namespace D47.Llm.OpenAi;
 
 /// <summary>
-/// OpenAI and its protocol peers, over the Responses API (list.md Phase 29, "A turn answered by
+/// OpenAI and its protocol peers, over the Responses API (Phase 29, "A turn answered by
 /// OpenAI").
 /// <para>
 /// <b>Responses rather than Chat Completions, and the reason is web search rather than
@@ -623,7 +623,7 @@ public sealed class ResponsesLlmProvider : ILlmProvider, IDisposable
 
         // Both map down rather than through. OpenAI's acceptance of "xhigh" is not something
         // d47 has seen a 200 for, and the fallback arm below would send "medium" -- a rung
-        // *below* High for the setting that asks for more than it (list.md Phase 54). Raising
+        // *below* High for the setting that asks for more than it (Phase 54). Raising
         // either of these wants a real response, not a guess.
         ThinkingEffort.Xhigh => "high",
         ThinkingEffort.Max => "high",

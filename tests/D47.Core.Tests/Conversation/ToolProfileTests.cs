@@ -5,7 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>
-/// Which tools ship on a turn (list.md Phase 10, "Decide which tools ship on a turn as the count
+/// Which tools ship on a turn (Phase 10, "Decide which tools ship on a turn as the count
 /// grows").
 /// <para>
 /// Everything here is really one property tested from several angles: the same situation must

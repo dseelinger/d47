@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 namespace D47.App.Input;
 
 /// <summary>
-/// One galaxy-map plotting attempt's view of NavRoute.json (list.md Phase 10, "Galaxy Map").
+/// One galaxy-map plotting attempt's view of NavRoute.json (Phase 10, "Galaxy Map").
 /// <para>
 /// Opened before the first key is sent, and it remembers when the file was last written at that
 /// moment. Afterwards it polls for up to <see cref="Patience"/> and says yes only to a route

@@ -4,7 +4,7 @@ using D47.Core.Conversation;
 namespace D47.Core.Logbook;
 
 /// <summary>
-/// What a log is about to cost, said before a byte is sent (list.md Phase 33, item 4).
+/// What a log is about to cost, said before a byte is sent (Phase 33, item 4).
 /// <para>
 /// <b>The item is about consent rather than about accounting.</b> "A Commander who set a monthly
 /// cap and found it eaten by an unrequested essay about their Tuesday would be right to be angry"

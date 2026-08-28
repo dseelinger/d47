@@ -6,7 +6,7 @@ namespace D47.Core.Tests.Journal;
 
 /// <summary>
 /// Reading the cargo hold, and the commodity-name fold that joins it to a construction site
-/// (list.md Phase 18, "Colonisation and construction tracking").
+/// (Phase 18, "Colonisation and construction tracking").
 /// <para>
 /// Every shape asserted here was measured against the 912-journal corpus — see
 /// <c>docs/spikes/colonisation-sources.md</c> §7 — and the two that would fail silently in the game

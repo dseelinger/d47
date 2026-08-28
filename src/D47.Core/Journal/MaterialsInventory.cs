@@ -26,7 +26,7 @@ public sealed record MaterialHolding(string Name, MaterialCategory Category, int
 }
 
 /// <summary>
-/// What the Commander is carrying (list.md Phase 7, "Know what materials you are carrying"),
+/// What the Commander is carrying (Phase 7, "Know what materials you are carrying"),
 /// answerable with no external lookup.
 /// <para>
 /// The Materials event is a complete snapshot written at session start; everything after it is

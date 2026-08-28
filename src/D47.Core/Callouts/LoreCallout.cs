@@ -4,7 +4,7 @@ using D47.Core.Lore;
 namespace D47.Core.Callouts;
 
 /// <summary>
-/// How much of the lore remark a Commander wants (list.md Phase 23, "Look it up, and say where
+/// How much of the lore remark a Commander wants (Phase 23, "Look it up, and say where
 /// the answer came from").
 /// <para>
 /// <b>Three states rather than two independent switches</b>, because a lookup with the remark off
@@ -27,7 +27,7 @@ public enum LoreRemarks
 }
 
 /// <summary>
-/// Something about where you have just arrived, when there is something to say (list.md Phase 23,
+/// Something about where you have just arrived, when there is something to say (Phase 23,
 /// "Remark on arrival, and not again today").
 /// <para>
 /// <b>Once per system per 24 hours</b>, which is the whole difference between a companion and a

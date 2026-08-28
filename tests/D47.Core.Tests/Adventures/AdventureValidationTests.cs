@@ -5,7 +5,7 @@ using static D47.Core.Tests.Adventures.AdventureFixtures;
 namespace D47.Core.Tests.Adventures;
 
 /// <summary>
-/// The trigger vocabulary is closed and the prose is free (list.md Phase 47). A step naming an
+/// The trigger vocabulary is closed and the prose is free (Phase 47). A step naming an
 /// event that does not exist is refused by name with the reason.
 /// </summary>
 public class AdventureValidationTests

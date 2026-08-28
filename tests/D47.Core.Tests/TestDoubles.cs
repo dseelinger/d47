@@ -256,7 +256,7 @@ public sealed class TestSurface
             // own: the documentation gate reads this registry, and a persona capability built
             // without one registers without its two protected ship-core tools — so the gate would
             // report a fully documented capability while the shipped app carried two tools it had
-            // never seen (list.md Phase 35).
+            // never seen (Phase 35).
             shipCores: new D47.Core.Persona.ShipCoreService(
                 new D47.Core.Persona.ShipCoreStore(
                     Path.Combine(install.Paths.Data, "ship-cores.json"),

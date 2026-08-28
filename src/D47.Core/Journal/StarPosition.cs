@@ -4,7 +4,7 @@ namespace D47.Core.Journal;
 
 /// <summary>
 /// A point in the galaxy, in light years on Frontier's own axes — the numbers Elite writes as
-/// <c>StarPos</c> (list.md Phase 28, "Where every engineer is").
+/// <c>StarPos</c> (Phase 28, "Where every engineer is").
 /// <para>
 /// <b>One distance formula in Core, and this is it.</b> <see cref="Knowledge.IGalaxyService"/> answers the
 /// same question correctly over the network and is the wrong shape for a page that re-ranks

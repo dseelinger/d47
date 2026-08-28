@@ -5,7 +5,7 @@ using D47.Core.Knowledge;
 namespace D47.Core.Loadout;
 
 /// <summary>
-/// What the Commander wants in one slot of a suit or a hand weapon (list.md Phase 27, "The same
+/// What the Commander wants in one slot of a suit or a hand weapon (Phase 27, "The same
 /// page, on foot").
 /// <para>
 /// <b>The slot is a mod slot, and it is read as the mod slot it is.</b> A hull's slot is a place a
@@ -45,7 +45,7 @@ public sealed record KitPlan(string Slot, int? Grade = null, string? Modificatio
 }
 
 /// <summary>
-/// One suit's or one weapon's build (list.md Phase 27, "The same page, on foot").
+/// One suit's or one weapon's build (Phase 27, "The same page, on foot").
 /// <para>
 /// The parallel of <see cref="Ships.ShipBuild"/> down to the vocabulary, because the page above it
 /// is the same page: one build per item, a slot holds one plan, and an item the Commander does not

@@ -8,7 +8,7 @@ namespace D47.Scenarios.Tests;
 /// <summary>
 /// <b>Does the instrument work?</b> Free, hermetic, deterministic, and it runs on every push.
 /// <para>
-/// The free tier as list.md describes it is doing two unrelated jobs, and separating them is what
+/// The free tier as the phase describes it is doing two unrelated jobs, and separating them is what
 /// makes both affordable. This is the first: do the assertions fire at all, does the injection
 /// plumbing put the hostile string where it claims to, does a compliant model actually fail. None
 /// of that needs a model — it needs a <em>scripted</em> provider that can be told to emit exactly
@@ -371,7 +371,7 @@ public class InstrumentTests
 
     /// <summary>
     /// What d47 remembers reaches the wire, inside the cached region and below the guardrails
-    /// (list.md Phase 31).
+    /// (Phase 31).
     /// <para>
     /// The instrument half of the two memory scenarios: the live tier asks whether a model
     /// <em>honours</em> the label on an inference, and that question is worthless unless the label

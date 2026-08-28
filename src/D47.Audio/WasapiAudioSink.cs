@@ -73,7 +73,7 @@ public sealed class WasapiAudioSink : IAudioSink, IDisposable
     /// <summary>
     /// Opens the device. Separate from the constructor because it is the part that can fail
     /// on a machine with no working output, and a sink that exists but cannot render is
-    /// exactly the "capability is off" state rather than a startup crash (list.md Phase 3).
+    /// exactly the "capability is off" state rather than a startup crash (Phase 3).
     /// </summary>
     public void Open(string? deviceId = null)
     {
@@ -107,7 +107,7 @@ public sealed class WasapiAudioSink : IAudioSink, IDisposable
     /// <summary>
     /// Moves to another output device. Closing and reopening is the only way WASAPI offers, so
     /// it happens on a settings change rather than making the Commander restart for it
-    /// (list.md Phase 4). The mixer graph survives — only the device behind it changes.
+    /// (Phase 4). The mixer graph survives — only the device behind it changes.
     /// </summary>
     public void Reopen(string? deviceId)
     {

@@ -6,7 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Persona;
 
 /// <summary>
-/// A sensible voice per core, chosen once (list.md Phase 11, #33).
+/// A sensible voice per core, chosen once (Phase 11, #33).
 /// <para>
 /// Chosen by a model or not at all. Matching a core's description against a provider's voice
 /// list is a judgement, and the keyword fallback that used to stand in for one handed out
@@ -332,7 +332,7 @@ public class LazyVoicePairingTests
 }
 
 /// <summary>
-/// The pairings written before the pass was told which cores are men (list.md Phase 11, #33).
+/// The pairings written before the pass was told which cores are men (Phase 11, #33).
 /// <para>
 /// A pairing is otherwise never re-derived, because a hand-picked one is indistinguishable from
 /// a derived one — but that rule protects a choice, and a core written as a man speaking in a
@@ -394,7 +394,7 @@ public class MiscastVoicesAreDroppedTests
 }
 
 /// <summary>
-/// The named defaults, on a file where one of them did not take (list.md Phase 11, #33).
+/// The named defaults, on a file where one of them did not take (Phase 11, #33).
 /// <para>
 /// Warden on ElevenLabs is a lookup, not a judgement — so a file with Warden on something else
 /// and George on another core is this pass having failed, which it did on every account that

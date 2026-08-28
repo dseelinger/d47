@@ -12,7 +12,7 @@ using D47.Core.Lore;
 namespace D47.App.Controls;
 
 /// <summary>
-/// The Commander's own notes about systems, and where one is written (list.md Phase 23,
+/// The Commander's own notes about systems, and where one is written (Phase 23,
 /// "Commander's Lore").
 /// <para>
 /// <b>A window rather than a settings row, for the reason the checklist's is.</b> A note is not a

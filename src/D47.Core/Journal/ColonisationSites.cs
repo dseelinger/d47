@@ -73,7 +73,7 @@ public sealed record ConstructionSite(long MarketId)
 }
 
 /// <summary>
-/// Every construction site the Commander's journal has reported (list.md Phase 17, "A colonisation
+/// Every construction site the Commander's journal has reported (Phase 17, "A colonisation
 /// plan writes the checklist").
 /// <para>
 /// <b>What d47 knows is exactly as fresh as the Commander's last visit, and it says so.</b> The

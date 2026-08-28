@@ -4,7 +4,7 @@ using D47.Core.Journal;
 namespace D47.Core.Callouts;
 
 /// <summary>
-/// What a prospector limpet found, spoken in the ring (list.md Phase 18, "Prospector and core
+/// What a prospector limpet found, spoken in the ring (Phase 18, "Prospector and core
 /// callouts"). Route planning gets the Commander to the ring; this is the part after they arrive,
 /// and the whole value of it is not having to look at a panel while flying between rocks.
 /// <para>
@@ -103,7 +103,7 @@ public sealed class ProspectorCallout : ICallout
 }
 
 /// <summary>
-/// A core asteroid, which is the one prospect worth interrupting anything for (list.md Phase 18).
+/// A core asteroid, which is the one prospect worth interrupting anything for (Phase 18).
 /// <para>
 /// Kept apart from <see cref="ProspectorCallout"/> so it can be left on when the running commentary
 /// is turned off. It is also the rarest thing d47 announces — 3 in 1,633 prospects — so its cue is

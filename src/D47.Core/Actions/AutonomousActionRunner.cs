@@ -8,7 +8,7 @@ namespace D47.Core.Actions;
 public readonly record struct PendingAction(string Id, string Label, AutonomousDecision Decision);
 
 /// <summary>
-/// Runs the autonomous actions on each tick and queues what they decided (list.md Phase 10,
+/// Runs the autonomous actions on each tick and queues what they decided (Phase 10,
 /// items 2 and 3).
 /// <para>
 /// It owns the two policies that would otherwise be reimplemented differently in each action:

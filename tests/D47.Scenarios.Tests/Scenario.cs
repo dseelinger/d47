@@ -73,7 +73,7 @@ public sealed record Scenario
 
     /// <summary>
     /// What d47 remembers about the Commander, as it would already have been rendered by
-    /// <see cref="D47.Core.Memory.MemoryRecall"/> (list.md Phase 31).
+    /// <see cref="D47.Core.Memory.MemoryRecall"/> (Phase 31).
     /// <para>
     /// <b>Prompt position 5, above the cache breakpoint, and the newest thing in the assembly that a
     /// model can be steered by.</b> A memory the model wrote itself is labelled as an inference and

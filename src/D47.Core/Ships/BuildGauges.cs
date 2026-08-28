@@ -5,7 +5,7 @@ namespace D47.Core.Ships;
 
 /// <summary>
 /// Whether a figure was read off the game or worked out from the shipped tables
-/// (list.md Phase 38).
+/// (Phase 38).
 /// <para>
 /// <b>The distinction is the feature, not a caveat on it.</b> <c>ShipsMode.Parted</c> states that
 /// the effects on a slot row are the fitted module's own and never a plan's, because showing
@@ -30,7 +30,7 @@ public enum FigureKind
 
 /// <summary>
 /// What a build draws against what its plant makes, retracted and deployed
-/// (list.md Phase 38).
+/// (Phase 38).
 /// </summary>
 /// <param name="Retracted">Megawatts drawn with the hardpoints in.</param>
 /// <param name="Deployed">
@@ -64,7 +64,7 @@ public sealed record PowerGauge(double Retracted, double Deployed, double? Capac
 
 /// <summary>
 /// A jump range at three masses, because a Commander flies at all three
-/// (list.md Phase 38).
+/// (Phase 38).
 /// </summary>
 /// <param name="Best">
 /// Unladen plus <b>one jump's fuel</b>, which is Frontier's own <c>MaxJumpRange</c> — measured
@@ -78,7 +78,7 @@ public sealed record JumpGauge(double Best, double Middle, double Worst, FigureK
 
 /// <summary>
 /// The two gauges at the head of a ship's slot list, and what d47 could not work out
-/// (list.md Phase 38).
+/// (Phase 38).
 /// </summary>
 /// <param name="Power">The power budget, or null where there is no build to total.</param>
 /// <param name="Jump">The jump range, or null where no drive can be found.</param>
@@ -103,7 +103,7 @@ public sealed record BuildGauges(PowerGauge? Power, JumpGauge? Jump, int Unmodel
 }
 
 /// <summary>
-/// The arithmetic behind the two gauges (list.md Phase 38, "A build you can watch").
+/// The arithmetic behind the two gauges (Phase 38, "A build you can watch").
 /// <para>
 /// <b>Pure, and in Core, because it is checkable.</b> Both figures are functions of the shipped
 /// tables and one <c>Loadout</c> event, so the jump half was validated by replaying every

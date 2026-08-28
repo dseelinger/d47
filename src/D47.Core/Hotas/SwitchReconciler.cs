@@ -54,8 +54,8 @@ public sealed record SwitchState
     public string Note { get; init; } = string.Empty;
 
     /// <summary>
-    /// Set when the switch's current position asks for a state the game is not in (list.md
-    /// Phase 21, "Show which switches disagree with the game").
+    /// Set when the switch's current position asks for a state the game is not in (Phase 21,
+    /// "Show which switches disagree with the game").
     /// <para>
     /// A stale switch is harmless under the reconcile rule and costs one extra flip — but only
     /// if the Commander can see it coming. This is the answer real aviation reached with
@@ -72,7 +72,7 @@ public sealed record SwitchState
 /// <param name="Steps">Empty when this is only something to say, or only somewhere to go.</param>
 /// <param name="Destination">
 /// The root key the host is to put the panel on, for a position that names a page rather than an
-/// action (list.md Phase 46). <paramref name="Steps"/> is empty whenever this is set: a page move
+/// action (Phase 46). <paramref name="Steps"/> is empty whenever this is set: a page move
 /// presses nothing, reads no binds and checks no foreground.
 /// </param>
 public readonly record struct PendingReconcile(
@@ -102,7 +102,7 @@ public readonly record struct SwitchTick
 
     /// <summary>
     /// Every page a surface has registered, in bar order — the vocabulary a
-    /// <see cref="SwitchPosition.Destination"/> is checked against (list.md Phase 46). Empty
+    /// <see cref="SwitchPosition.Destination"/> is checked against (Phase 46). Empty
     /// until a surface is up, which is not a fault and is reported as such.
     /// </summary>
     public IReadOnlyList<PanelDestination> Destinations
@@ -127,7 +127,7 @@ public readonly record struct SwitchTick
 }
 
 /// <summary>
-/// The reconciler (list.md Phase 21, "A switch position means a state, not a press").
+/// The reconciler (Phase 21, "A switch position means a state, not a press").
 /// <para>
 /// <b>The flip is the question and the game's own status is the answer.</b> On a flip, d47 asks
 /// whether Elite is already in the state that position means, and presses the Commander's
@@ -426,7 +426,7 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger)
     }
 
     /// <summary>
-    /// A position that names a page of d47's own panel (list.md Phase 46). The same rule as the
+    /// A position that names a page of d47's own panel (Phase 46). The same rule as the
     /// game path — the flip is the question, <em>are you already there</em> is asked first, and
     /// between flips nothing is touched — with the two differences the target makes.
     /// <para>

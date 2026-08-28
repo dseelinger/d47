@@ -1,7 +1,7 @@
 namespace D47.Core.Callouts;
 
 /// <summary>
-/// The opening line of a session (list.md Phase 31, "Picking up where you left off").
+/// The opening line of a session (Phase 31, "Picking up where you left off").
 /// <para>
 /// <b>A greeting, and nothing else</b> — amended 2026-08-21 on the Commander's instruction. The
 /// line used to carry the gap since they were last seen, the engineer under their feet and the
@@ -49,7 +49,7 @@ public sealed class ContinuityCallout : ICallout
 
     /// <summary>
     /// Makes the line due again, for a Commander who has just logged in where another was
-    /// (list.md Phase 44, "Welcome back, Commander"). The gate moves from once per run of d47 to
+    /// (Phase 44, "Welcome back, Commander"). The gate moves from once per run of d47 to
     /// once per session, where a login starts a session; the settle window runs again from the
     /// next live tick, for the reason it ran the first time.
     /// <para>

@@ -4,7 +4,7 @@ using D47.Core.Checklists;
 namespace D47.Core.Ships;
 
 /// <summary>
-/// What the Commander wants in one slot (list.md Phase 26, "What is fitted and what you want").
+/// What the Commander wants in one slot (Phase 26, "What is fitted and what you want").
 /// <para>
 /// The same shape as a <see cref="BuildRequest"/>, and deliberately: a slot plan <em>is</em> a
 /// build request that has been written down, so promotion hands one straight to
@@ -139,7 +139,7 @@ public sealed record SlotPlan(
 }
 
 /// <summary>
-/// One ship's build (list.md Phase 26, "The fleet, and the fleet you intend").
+/// One ship's build (Phase 26, "The fleet, and the fleet you intend").
 /// <para>
 /// <b>One build per ship.</b> Comparing a combat fit against an exploration fit for the same hull
 /// is a planner feature this deliberately does not have — and slot identity is what makes that a
@@ -157,7 +157,7 @@ public sealed record SlotPlan(
 /// Whose plan this is — the Frontier id, <b>inside the document rather than in a path</b>, which is
 /// <see cref="Checklists.ChecklistDocument"/>'s rule for the same untrusted input. It is half of
 /// what makes <see cref="ShipId"/> mean anything: Elite's ship ids are per Commander and start
-/// small, so without it one Commander's ship 7 answered for another's (the list.md Phase 44 defect
+/// small, so without it one Commander's ship 7 answered for another's (the Phase 44 defect
 /// item). Empty for a build written before this file carried a Commander, or planned before any
 /// Commander was known; the first Commander seen adopts those.
 /// </param>
@@ -191,7 +191,7 @@ public sealed record ShipBuild(
 
     /// <summary>
     /// The disagreement between this build and the checklist that the Commander has already said
-    /// no to (list.md Phase 38). Null for a build nobody has been asked about.
+    /// no to (Phase 38). Null for a build nobody has been asked about.
     /// <para>
     /// <b>On the build rather than in memory</b>, because "does not ask again for that same
     /// difference" has to survive d47 being restarted — a question re-asked every morning is a

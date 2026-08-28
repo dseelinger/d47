@@ -6,7 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Persona;
 
 /// <summary>
-/// A voice repair has to give a voice back to every core it takes one off (list.md Phase 11,
+/// A voice repair has to give a voice back to every core it takes one off (Phase 11,
 /// #33).
 /// <para>
 /// Both repairs work by <em>removing</em> a pairing, and a core with no pairing has no voice. On
@@ -21,7 +21,7 @@ namespace D47.Core.Tests.Persona;
 /// <see cref="AModelsChoiceIsWrittenDownToo"/> and
 /// <see cref="TwoCoresRepairedTogetherDoNotEndUpSharingAVoice"/>. The rest pin the properties
 /// that were already right, so the next change to this has all of them to answer to
-/// (list.md Phase 19, "Give the composition root a test harness").
+/// (Phase 19, "Give the composition root a test harness").
 /// </para>
 /// <para>
 /// What made the fault permanent rather than merely wrong is that the stripped core was reported

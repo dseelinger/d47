@@ -23,7 +23,7 @@ public sealed record CargoItem(string Symbol, int Count)
 }
 
 /// <summary>
-/// What is in the hold right now (list.md Phase 18, "Colonisation and construction tracking").
+/// What is in the hold right now (Phase 18, "Colonisation and construction tracking").
 /// <para>
 /// <b>This comes from <c>Cargo.json</c> and cannot come from the journal.</b> The <c>Cargo</c>
 /// event carries its <c>Inventory</c> array on only <b>1,151 of 13,762</b> occurrences measured

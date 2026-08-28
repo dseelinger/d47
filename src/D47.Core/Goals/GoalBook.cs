@@ -8,7 +8,7 @@ using D47.Core.Knowledge;
 namespace D47.Core.Goals;
 
 /// <summary>
-/// What to do about an arc today (list.md Phase 34, "The checklist points at the arc").
+/// What to do about an arc today (Phase 34, "The checklist points at the arc").
 /// <para>
 /// <b>Two halves, and only one of them is a proposal.</b> <see cref="Say"/> is what d47 tells the
 /// Commander; <see cref="Lines"/> is what it would put on their list if they agreed. A step with
@@ -29,7 +29,7 @@ public sealed record GoalStep(string Say, IReadOnlyList<string> Lines, bool Dele
 }
 
 /// <summary>
-/// The Commander's arcs, read as one thing (list.md Phase 34).
+/// The Commander's arcs, read as one thing (Phase 34).
 /// <para>
 /// The store knows about a file; this knows who is flying, what the game is currently saying, and
 /// which arcs have been set aside. Same arrangement as <see cref="Habits.HabitBook"/> over

@@ -3,7 +3,7 @@ using D47.Core.Journal;
 namespace D47.Core.Habits;
 
 /// <summary>
-/// Dying on foot, at a settlement, to things that were already there (list.md Phase 32).
+/// Dying on foot, at a settlement, to things that were already there (Phase 32).
 /// <para>
 /// <b>The Commander called this "poking the bear" and the journals agree.</b> Eleven of twenty-three
 /// deaths in thirteen months are to suit AI or to a settlement's own turrets, and they do not spread

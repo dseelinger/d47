@@ -26,19 +26,19 @@ namespace D47.App.Windowing;
 /// </summary>
 public sealed record OverlayTabs
 {
-    /// <summary>What the Commander is working on (list.md Phase 25). The tab the request named.</summary>
+    /// <summary>What the Commander is working on (Phase 25). The tab the request named.</summary>
     public D47.Core.Checklists.ChecklistService? Checklists { get; init; }
 
     /// <summary>
-    /// The long arcs, which ride the checklist tab rather than sitting beside it (list.md
-    /// Phase 34) — so they reach this surface on exactly the same terms the list does.
+    /// The long arcs, which ride the checklist tab rather than sitting beside it (Phase 34) —
+    /// so they reach this surface on exactly the same terms the list does.
     /// </summary>
     public D47.Core.Goals.GoalBook? Goals { get; init; }
 
     public Action? BackfillGoals { get; init; }
 
     /// <summary>
-    /// Who to go and unlock next (list.md Phase 28). Needs the fleet and the game state with it,
+    /// Who to go and unlock next (Phase 28). Needs the fleet and the game state with it,
     /// because the ranking is arithmetic over where the Commander is and what they are flying.
     /// </summary>
     public D47.Core.Engineers.EngineerPlanService? Unlocks { get; init; }
@@ -50,7 +50,7 @@ public sealed record OverlayTabs
     public D47.Core.Loadout.OnFootPlanService? OnFoot { get; init; }
 
     /// <summary>
-    /// The clocks, timers and alarms (list.md Phase 24) — the page whose whole argument is a
+    /// The clocks, timers and alarms (Phase 24) — the page whose whole argument is a
     /// Commander who cannot glance at a wall clock, which is as true over a full-screen game as it
     /// is inside a headset.
     /// </summary>

@@ -3,7 +3,7 @@ using D47.Core.Configuration;
 namespace D47.Core.Audio;
 
 /// <summary>
-/// Which slot a voice comes out of, and so which provider synthesises it (list.md Phase 57).
+/// Which slot a voice comes out of, and so which provider synthesises it (Phase 57).
 /// <para>
 /// A layer above <see cref="VoiceRole"/> rather than a replacement for it. A role is who is
 /// speaking and is what a caller knows; a group is who is <em>paying</em> for it and what a
@@ -101,7 +101,7 @@ public sealed record VoiceGroupInfo
 /// <summary>
 /// The six slots, what falls into each, and which provider speaks for it. One list read by the
 /// provider rows, the disclosure, the wiring plan and the app's client map — so a slot cannot
-/// exist in one of those and be missing from another (list.md Phase 57).
+/// exist in one of those and be missing from another (Phase 57).
 /// </summary>
 public static class VoiceGroups
 {
@@ -258,7 +258,7 @@ public static class VoiceGroups
         // A provider that cannot be told a language never speaks for a slot carrying other
         // people's words, however it got named — the picker does not offer it, and a hand-edited
         // file naming one is treated the way every unusable value is rather than obeyed
-        // (list.md Phase 58). Falling back to Edge rather than to `Provider`: the ship's provider
+        // (Phase 58). Falling back to Edge rather than to `Provider`: the ship's provider
         // could be the very one being refused, and a fallback that can loop is not one.
         return TtsProviderCatalog.For(slot).Contains(resolved)
             ? resolved.Id

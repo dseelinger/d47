@@ -133,7 +133,7 @@ public sealed record CommunityGoal(int Id, string Title)
 }
 
 /// <summary>
-/// Every community goal the Commander's journal has reported (list.md Phase 14, "Know the
+/// Every community goal the Commander's journal has reported (Phase 14, "Know the
 /// current community goals"), folded from <c>CommunityGoal</c> and the three events around it.
 /// <para>
 /// <b>The split the item was written around is not the split the journal makes.</b> The board

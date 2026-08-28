@@ -2,7 +2,7 @@ namespace D47.Core.Habits;
 
 /// <summary>
 /// The circumstance a claim is about, and therefore the moment the callout is allowed to say it
-/// (list.md Phase 32, "Callouts that are yours rather than everyone's").
+/// (Phase 32, "Callouts that are yours rather than everyone's").
 /// <para>
 /// A personal callout fires <b>when the circumstance arrives</b> rather than at the start of a
 /// session. <see cref="Callouts.ContinuityCallout"/> already owns the opening line, and a second
@@ -38,7 +38,7 @@ public enum HabitOccasion
 }
 
 /// <summary>
-/// The numbers behind a claim (list.md Phase 32, "A habit is a claim with a count behind it").
+/// The numbers behind a claim (Phase 32, "A habit is a claim with a count behind it").
 /// <para>
 /// <b>Every field here is the item's requirement rather than a convenience.</b> It refuses
 /// <em>you always forget the gear</em> and asks for <em>eleven times this month, twice last
@@ -115,7 +115,7 @@ public sealed record HabitEvidence
 }
 
 /// <summary>
-/// How much of the Commander there has to be before d47 says anything about them (list.md Phase 32,
+/// How much of the Commander there has to be before d47 says anything about them (Phase 32,
 /// item 2: "a small corpus says so rather than inventing a pattern from three journals").
 /// <para>
 /// Constants rather than settings, deliberately. A Commander who could lower the floor would be
@@ -156,7 +156,7 @@ public static class HabitFloor
 
 /// <summary>
 /// One thing d47 has noticed the Commander keeps doing, with the arithmetic that says so
-/// (list.md Phase 32).
+/// (Phase 32).
 /// <para>
 /// <b>Derived, never told.</b> A claim is the output of arithmetic over journal events on this
 /// machine. No model wrote one, no model reads one, and nothing the Commander says can create one —
@@ -226,7 +226,7 @@ public sealed record HabitClaim(string Key, string Subject)
 }
 
 /// <summary>
-/// A detector that ran and had nothing to claim, and why (list.md Phase 32, item 2).
+/// A detector that ran and had nothing to claim, and why (Phase 32, item 2).
 /// <para>
 /// <b>This exists because "nothing to report" and "not enough of you to say" are different
 /// answers</b>, and a Commander given the first when the second is true has been told something

@@ -10,7 +10,7 @@ using Xunit;
 namespace D47.Core.Tests.Engineers;
 
 /// <summary>
-/// The engineer solver (list.md Phase 28, "The fastest way in").
+/// The engineer solver (Phase 28, "The fastest way in").
 /// <para>
 /// Three claims hold this file up. <b>The best next unlock is the one that covers the most of
 /// what is planned</b>, not the shortest chain. <b>The unit is jumps</b>, so a long haul and a

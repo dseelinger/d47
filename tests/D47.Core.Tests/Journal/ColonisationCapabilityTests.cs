@@ -7,7 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Journal;
 
 /// <summary>
-/// The reporting surface over the depot fold (list.md Phase 18, "Colonisation and construction
+/// The reporting surface over the depot fold (Phase 18, "Colonisation and construction
 /// tracking"): what a site still wants, what is already aboard, and the two things d47 must refuse
 /// to say — that the figures are live, and what is on the carrier.
 /// </summary>

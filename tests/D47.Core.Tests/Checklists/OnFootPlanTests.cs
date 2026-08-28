@@ -6,7 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Checklists;
 
 /// <summary>
-/// Planning a suit or a weapon on the Phase 17 substrate (list.md Phase 20, "Plan a suit or a
+/// Planning a suit or a weapon on the Phase 17 substrate (Phase 20, "Plan a suit or a
 /// weapon").
 /// <para>
 /// <b>Permanence is what these are about.</b> Four slots, no undo, and a wrong modification

@@ -8,7 +8,7 @@ namespace KokoroProbe;
 
 /// <summary>
 /// What Kokoro actually does through the ONNX path, measured from C# rather than from a Python
-/// wrapper's account of it — which is what list.md's unbuilt Phase 59 issue asks for before any of
+/// wrapper's account of it — which is what the unbuilt Phase 59 issue asks for before any of
 /// it is designed around.
 /// </summary>
 internal static class Program

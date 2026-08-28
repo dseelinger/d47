@@ -55,7 +55,7 @@ public class CommunityGoalTests
         Assert.Equal("Alliance Research Initiative", goal.Title);
         Assert.Equal("Neville Horizons, Kaushpoos", goal.Where);
 
-        // The tiers, which is what list.md asks for by name. Elite writes them as "Tier 1" and
+        // The tiers, which is what the phase asks for by name. Elite writes them as "Tier 1" and
         // "Tier 5"; a Commander plans around the numbers.
         Assert.Equal(1, goal.TierReached);
         Assert.Equal(5, goal.TopTier);

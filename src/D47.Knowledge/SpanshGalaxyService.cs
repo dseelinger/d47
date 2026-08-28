@@ -147,7 +147,7 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
         }
 
         // Computed here rather than asked for, so that "how far" has one answer regardless of
-        // which endpoint happens to be able to express the question (list.md Phase 14).
+        // which endpoint happens to be able to express the question (Phase 14).
         var dx = destination.Value.X - origin.Value.X;
         var dy = destination.Value.Y - origin.Value.Y;
         var dz = destination.Value.Z - origin.Value.Z;

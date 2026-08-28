@@ -12,7 +12,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// Clocks, timers and alarms as a tab of the panel (list.md Phase 24, "Utilities").
+/// Clocks, timers and alarms as a tab of the panel (Phase 24, "Utilities").
 /// <para>
 /// The clock is fed an instant rather than reading one, which is the same rule Core follows and
 /// the reason a test can assert what it says: 2026 presents as 3312 beside it, from one instant.

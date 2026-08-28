@@ -2,7 +2,7 @@ namespace D47.Core.Audio;
 
 /// <summary>
 /// A short non-speech marker played ahead of a warning, saying <em>which</em> warning it is before
-/// the sentence has finished arriving (list.md Phase 15).
+/// the sentence has finished arriving (Phase 15).
 /// <para>
 /// The phase asks for this in as many words: each id group gets "its own spoken line and its own
 /// alert cue rather than one generic warning, because the game has already told us which situation
@@ -46,7 +46,7 @@ public enum AlertCue
     RivalTerritory,
 
     /// <summary>
-    /// A timer or an alarm has gone off (list.md Phase 24, "A timer says its own name").
+    /// A timer or an alarm has gone off (Phase 24, "A timer says its own name").
     /// <para>
     /// The only member here that is not about somebody shooting, and the only one the Commander
     /// asked for. It joins this family rather than getting machinery of its own because the

@@ -11,8 +11,8 @@ using D47.Core.Habits;
 namespace D47.App.Controls;
 
 /// <summary>
-/// What d47 has noticed the Commander keeps doing, readable and refusable by a person (list.md
-/// Phase 32).
+/// What d47 has noticed the Commander keeps doing, readable and refusable by a person (Phase 32
+/// ).
 /// <para>
 /// <b>A window rather than a settings row, because a claim is not a settings value and refusing one
 /// is an act.</b> The row that opens this is <see cref="SettingKind.Info"/>, so

@@ -46,7 +46,7 @@ public sealed record StoredModule(string Name, string StarSystem)
 }
 
 /// <summary>
-/// Every module the Commander has in storage (list.md Phase 14, "Find Nearest" — the stored
+/// Every module the Commander has in storage (Phase 14, "Find Nearest" — the stored
 /// modules half), built from the <c>StoredModules</c> event.
 /// <para>
 /// The same snapshot rule as <see cref="FleetRegistry"/>, and for the same reason: Elite writes

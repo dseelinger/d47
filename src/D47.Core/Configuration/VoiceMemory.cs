@@ -11,7 +11,7 @@ namespace D47.Core.Configuration;
 /// <see cref="SpeechSettings.ProviderRates"/> keeps one number per provider and that shape does
 /// not stretch: a voice choice is four kinds of thing at once, and the fix that stopped the
 /// silence dropped them rather than waiting on a schema that could hold all of it twice
-/// (list.md Phase 19).
+/// (Phase 19).
 /// </para>
 /// <para>
 /// <see cref="Paired"/> is the field that makes this worth having. Without it, switching to
@@ -45,7 +45,7 @@ public sealed record VoiceChoices
 
 /// <summary>
 /// Which voices belong to which provider, and what happens to them when the provider changes
-/// (list.md Phase 19, "Remember which voice you chose for each provider").
+/// (Phase 19, "Remember which voice you chose for each provider").
 /// <para>
 /// The behaviour this replaces was correct and lossy: a voice id means nothing to a provider
 /// that did not issue it, so carrying one across a switch fails every sentence — and the fix
@@ -153,7 +153,7 @@ public static class VoiceMemory
         Switched(Switched(settings, VoiceGroup.Aboard, from, to), VoiceGroup.Carrier, from, to);
 
     /// <summary>
-    /// The same move for one slot's voices only (list.md Phase 57).
+    /// The same move for one slot's voices only (Phase 57).
     /// <para>
     /// <b>Which fields belong to which slot is the whole of the difference.</b> The ship's AI owns
     /// the one voice and every per-core pairing behind it; the carrier owns its captain and its

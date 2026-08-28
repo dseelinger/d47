@@ -11,7 +11,7 @@ namespace D47.Core.Utilities;
 public sealed record Fired(Reminder Reminder, bool Missed);
 
 /// <summary>
-/// The Commander's timers and alarms (list.md Phase 24, "Timers and alarms").
+/// The Commander's timers and alarms (Phase 24, "Timers and alarms").
 /// <para>
 /// <b>The first thing d47 does that nothing external triggers.</b> Every other behaviour is
 /// reactive — a journal event arrives, a callout goes out — or the Commander started it in that

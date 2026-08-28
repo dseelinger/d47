@@ -9,7 +9,7 @@ namespace D47.Core.Goals;
 public sealed record GoalProblem(string Where, string Reason);
 
 /// <summary>
-/// The arcs on disk — <c>data/goals.json</c> (list.md Phase 34).
+/// The arcs on disk — <c>data/goals.json</c> (Phase 34).
 /// <para>
 /// <see cref="Habits.HabitStore"/>'s shape with a different payload, because it is the same kind of
 /// thing and a second shape would be a second set of bugs: written through <see cref="AtomicFile"/>,

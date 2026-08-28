@@ -3,7 +3,7 @@ using System.Globalization;
 namespace D47.Core.Utilities;
 
 /// <summary>
-/// Whether this is a stretch of time or a moment (list.md Phase 24, "Timers and alarms").
+/// Whether this is a stretch of time or a moment (Phase 24, "Timers and alarms").
 /// </summary>
 public enum ReminderKind
 {
@@ -31,7 +31,7 @@ public enum ReminderKind
 }
 
 /// <summary>
-/// One thing d47 has been asked to say something about later (list.md Phase 24).
+/// One thing d47 has been asked to say something about later (Phase 24).
 /// <para>
 /// <b>The first thing d47 does that nothing external triggers.</b> Every other behaviour is
 /// reactive — a journal event arrives, a callout goes out — or the Commander started it in that

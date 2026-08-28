@@ -1,13 +1,13 @@
 namespace D47.Core.Interface;
 
 /// <summary>
-/// The panel's surfaces, as the bar shows them (list.md Phase 25, "One transcript, three
+/// The panel's surfaces, as the bar shows them (Phase 25, "One transcript, three
 /// views").
 /// <para>
 /// Seven, and the collapse is what pays for them: Conversation, Technical and the log file were
 /// three tabs and are three <em>modes</em> of one, because they are three readings of one
 /// exchange rather than three destinations. The bar carries the surfaces below without growing.
-/// Routing arrived the same way and for the same reason (list.md Phase 37) — Plan, Progress and
+/// Routing arrived the same way and for the same reason (Phase 37) — Plan, Progress and
 /// Course are three readings of one journey, so they cost one tab rather than three.
 /// </para>
 /// <para>
@@ -22,7 +22,7 @@ public enum PanelTab
     Transcript,
 
     /// <summary>
-    /// Where the Commander is going, in three readings (list.md Phase 37): the plan, the route
+    /// Where the Commander is going, in three readings (Phase 37): the plan, the route
     /// being flown, and getting a system name into the game.
     /// <para>
     /// Second, beside the transcript rather than out among the ledgers, because it is read while
@@ -31,17 +31,17 @@ public enum PanelTab
     /// </summary>
     Routing,
 
-    /// <summary>What the Commander is working on, in their own order (list.md Phase 17).</summary>
+    /// <summary>What the Commander is working on, in their own order (Phase 17).</summary>
     Checklist,
 
-    /// <summary>Ships, suits and weapons, and the arithmetic between them (list.md Phases 26-27).</summary>
+    /// <summary>Ships, suits and weapons, and the arithmetic between them (Phases 26-27).</summary>
     Loadout,
 
-    /// <summary>Who unlocks what, and how far away they are (list.md Phase 28).</summary>
+    /// <summary>Who unlocks what, and how far away they are (Phase 28).</summary>
     Engineers,
 
     /// <summary>
-    /// Stories the Commander flies, told by the ship's AI (list.md Phase 47). Deliberately not a
+    /// Stories the Commander flies, told by the ship's AI (Phase 47). Deliberately not a
     /// mode of the checklist, because a story is not a list and the phase exists to keep it from
     /// reading as one.
     /// <para>
@@ -53,7 +53,7 @@ public enum PanelTab
     /// </summary>
     Adventures,
 
-    /// <summary>Clocks, timers and alarms (list.md Phase 24).</summary>
+    /// <summary>Clocks, timers and alarms (Phase 24).</summary>
     Utilities,
 
     /// <summary>
@@ -64,7 +64,7 @@ public enum PanelTab
 }
 
 /// <summary>
-/// One step of a drill, as an identity and as a word (list.md Phase 25, "Drill in, and find
+/// One step of a drill, as an identity and as a word (Phase 25, "Drill in, and find
 /// your way back").
 /// <para>
 /// The word is not decoration. The breadcrumb is both the back affordance and the you-are-here
@@ -79,7 +79,7 @@ public enum PanelTab
 /// </param>
 /// <param name="Word">What this level is, to the Commander. Shown, and matched when spoken.</param>
 /// <param name="Modal">
-/// Whether this level holds the panel until it is dismissed - a chooser (list.md Phase 25,
+/// Whether this level holds the panel until it is dismissed - a chooser (Phase 25,
 /// "Choosing takes the panel"). Drawn as a level and behaving as a modal: <b>no navigating away
 /// mid-choice</b>. Held on the crumb rather than on the navigator so that popping it clears the
 /// state rather than requiring somebody to remember to.
@@ -125,7 +125,7 @@ public sealed record NavCrumb(string Key, string Word, bool Modal = false)
 }
 
 /// <summary>
-/// One place a surface can be sent to: a root, and the tab it is a root of (list.md Phase 46).
+/// One place a surface can be sent to: a root, and the tab it is a root of (Phase 46).
 /// <para>
 /// The destination vocabulary a switch position may name is this list, derived from what each
 /// surface registered, so there is no second list to keep in step with the spoken route — the
@@ -147,8 +147,8 @@ public sealed record PanelDestination(PanelTab Tab, NavCrumb Root)
 }
 
 /// <summary>
-/// Where the Commander is, per tab and per root, and every way of changing it (list.md Phase
-/// 25, "Drill in, and find your way back").
+/// Where the Commander is, per tab and per root, and every way of changing it (Phase 25, "Drill
+/// in, and find your way back").
 /// <para>
 /// <b>The tab is the root rather than the first level.</b> Fleet, Locker and Directory are
 /// roots, not levels, so the breadcrumb's first crumb <em>is</em> the tab - which is what makes
@@ -225,7 +225,7 @@ public sealed class PanelNavigator
     public bool Has(PanelTab tab) => Roots(tab).Count > 0;
 
     /// <summary>
-    /// Every root of every tab this surface furnished, in bar order (list.md Phase 46). The
+    /// Every root of every tab this surface furnished, in bar order (Phase 46). The
     /// whole of what a switch position may name, and nothing that is not also sayable.
     /// </summary>
     public IReadOnlyList<PanelDestination> Destinations =>
@@ -236,7 +236,7 @@ public sealed class PanelNavigator
     /// mode first and then the tab, so a destination on another tab arrives without a visible
     /// flick through that tab's previous mode. False when no tab here has it, when a chooser
     /// holds the panel, or when it is already showing — which is the <em>are you already
-    /// there</em> answer a switch needs, given exactly rather than inferred (list.md Phase 46).
+    /// there</em> answer a switch needs, given exactly rather than inferred (Phase 46).
     /// </summary>
     public bool Show(string rootKey)
     {
@@ -457,7 +457,7 @@ public sealed class PanelNavigator
     }
 
     /// <summary>
-    /// Puts the Commander at the end of a trail they did not walk (list.md Phase 25, "Voice jumps
+    /// Puts the Commander at the end of a trail they did not walk (Phase 25, "Voice jumps
     /// levels").
     /// <para>
     /// This is the route that makes the breadcrumb honest. "Open the third weapon slot on the

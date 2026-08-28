@@ -3,7 +3,7 @@ using D47.Core.Help;
 namespace D47.Core.Interface;
 
 /// <summary>
-/// Moving the panel by saying so (list.md Phase 25, "Drill in, and find your way back").
+/// Moving the panel by saying so (Phase 25, "Drill in, and find your way back").
 /// <para>
 /// <b>Back is three routes that must agree</b> — the breadcrumb, a controller button, and a
 /// phrase — and this is the third. Alongside it: the tabs by name, the modes of whichever tab is

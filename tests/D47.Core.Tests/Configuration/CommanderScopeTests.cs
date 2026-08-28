@@ -7,7 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>
-/// Several Commanders, one installation (list.md Phase 44): the rows that are the Commander's
+/// Several Commanders, one installation (Phase 44): the rows that are the Commander's
 /// rather than the installation's are declared on the row, layered per Frontier id inside the
 /// one settings file, and keep <i>unset</i> and <i>deliberately blank</i> apart.
 /// </summary>

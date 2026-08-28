@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Actions;
 
 /// <summary>
-/// The Commander's macros, in one file beside the executable (list.md Phase 10, "Macros").
+/// The Commander's macros, in one file beside the executable (Phase 10, "Macros").
 /// <para>
 /// <b>A file rather than a settings section</b>, because a macro is not a setting: it is a
 /// small program, it is the one input whose vocabulary cannot be closed in advance, and it is

@@ -11,7 +11,7 @@ using D47.Core.Interface;
 namespace D47.App.Controls;
 
 /// <summary>
-/// Assigning HOTAS switches (list.md Phase 21, items 2 and 4).
+/// Assigning HOTAS switches (Phase 21, items 2 and 4).
 /// <para>
 /// <b>Reachable from here and from nowhere else.</b> The model reads untrusted text, so a tool
 /// that could remap a switch is a tool a hostile in-game message can use to give itself the
@@ -49,7 +49,7 @@ public sealed class SwitchWindow : Window
         ["(nothing)", .. SwitchValidation.Assignable.Select(action => action.Id)];
 
     /// <summary>
-    /// The pages a position may name instead (list.md Phase 46): every root any surface
+    /// The pages a position may name instead (Phase 46): every root any surface
     /// registered, as the host collected them, so the list here and the spoken route read one
     /// vocabulary. Keys, and the words shown for them, in parallel.
     /// </summary>
@@ -487,7 +487,7 @@ public sealed class SwitchWindow : Window
 
         var state = new ComboBox { ItemsSource = States, SelectedItem = position.State, Width = 90 };
 
-        // Or a page of D47's own panel (list.md Phase 46). A second control rather than entries
+        // Or a page of D47's own panel (Phase 46). A second control rather than entries
         // in the first, because what is stored is a declared field and not a prefixed string —
         // and choosing one clears the other, so a position never means two things.
         var pageIndex = Math.Max(0, _pageKeys.IndexOf(position.Destination));

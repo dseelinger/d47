@@ -8,7 +8,7 @@ using D47.Core.Loadout;
 namespace D47.App.Panel;
 
 /// <summary>
-/// The Loadout tab's Suits and weapons mode (list.md Phase 27, "The same page, on foot").
+/// The Loadout tab's Suits and weapons mode (Phase 27, "The same page, on foot").
 /// <para>
 /// <b>The Ships page instantiated against <see cref="OnFootPlan"/></b> — the same index, the same
 /// drill, the same promote path, the same say-lines along the bottom. Nothing about the layout is

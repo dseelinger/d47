@@ -5,7 +5,7 @@ namespace D47.Llm.OpenAi;
 
 /// <summary>
 /// The address half of an OpenAI-shaped provider, and the one HTTP client both decoders share
-/// (list.md Phase 29).
+/// (Phase 29).
 /// <para>
 /// Hand-rolled rather than the official SDK, which is MIT and would pass the licence gate. The
 /// Edge and ElevenLabs voices are the precedent, the protocol is one POST and a stream of

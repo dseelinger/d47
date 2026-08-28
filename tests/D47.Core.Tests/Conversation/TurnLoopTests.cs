@@ -344,8 +344,8 @@ public class TurnLoopTests
     }
 
     /// <summary>
-    /// A model with no effort dial says so rather than reporting one it never applied (list.md
-    /// Phase 54). Haiku 4.5 predates the 4.6 generation and rejects the fields that carry it, so
+    /// A model with no effort dial says so rather than reporting one it never applied (Phase 54
+    /// ). Haiku 4.5 predates the 4.6 generation and rejects the fields that carry it, so
     /// a turn on it thought at whatever it thinks at and no rung describes that.
     /// <para>
     /// <b>The request still carries the chosen rung, and that clause is the point of the test.</b>

@@ -5,7 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Memory;
 
 /// <summary>
-/// The store that survives (list.md Phase 31, "A memory is written down, never inferred into
+/// The store that survives (Phase 31, "A memory is written down, never inferred into
 /// being").
 /// <para>
 /// Most of this is about labels rather than about storage, because the labels are the phase. A file

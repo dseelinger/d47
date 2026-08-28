@@ -5,7 +5,7 @@ namespace D47.Core.Goals;
 
 /// <summary>
 /// What the corpus could say about one arc: when it started, and how far it had got by the end of
-/// the journals on this disk (list.md Phase 34, "Progress is derived, never typed").
+/// the journals on this disk (Phase 34, "Progress is derived, never typed").
 /// </summary>
 public sealed record GoalMark
 {
@@ -49,7 +49,7 @@ public sealed record GoalMine
 }
 
 /// <summary>
-/// The batch walk that gives every arc its age (list.md Phase 34, "Goals that outlive a
+/// The batch walk that gives every arc its age (Phase 34, "Goals that outlive a
 /// checklist" — <em>how long it has been running</em>).
 /// <para>
 /// <b>It exists because live state structurally cannot say two things.</b> The journal tells d47

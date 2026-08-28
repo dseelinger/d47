@@ -8,7 +8,7 @@ namespace D47.Core.Tests;
 
 /// <summary>
 /// The gate that makes "write the docs later" impossible rather than merely discouraged
-/// (list.md Phase 1, "Every capability has a documentation page"). It lives as a test so CI
+/// (Phase 1, "Every capability has a documentation page"). It lives as a test so CI
 /// needs no separate step that could drift from the capability list.
 /// </summary>
 public partial class DocumentationGateTests
@@ -79,8 +79,8 @@ public partial class DocumentationGateTests
             // Quoting the canonical schema means the page cannot drift from the tool. When this
             // fails, the fix is to paste the schema below into the page.
             //
-            // A fenced block has to *be* the schema rather than merely contain it (list.md Phase
-            // 37). Containment was the first version, and it let a pasted test failure sit inside
+            // A fenced block has to *be* the schema rather than merely contain it (Phase 37).
+            // Containment was the first version, and it let a pasted test failure sit inside
             // routes.md's plot_trade_route fence for a whole phase: the schema was still in
             // there, so the gate reported a documented tool while a Commander read a stack trace
             // off the published page. Anything a page wants to say *about* a schema it can say
@@ -116,7 +116,7 @@ public partial class DocumentationGateTests
 
     /// <summary>
     /// The nav is grouped by <see cref="CapabilityDescriptor.Group"/>, and this is what stops
-    /// that being a second hand-maintained list (list.md Phase 19, "The published docs need a
+    /// that being a second hand-maintained list (Phase 19, "The published docs need a
     /// left nav").
     /// <para>
     /// The site is Jekyll and cannot read the registry, so the grouping lives in each page's
@@ -364,7 +364,7 @@ public partial class DocumentationGateTests
         // Every gesture on the hotkey record, read off the record rather than listed here. A
         // hand-written list is a second place to remember, and the twelfth hotkey added would be
         // documented, shipped, and invisible to the gate that exists to check exactly that
-        // (list.md Phase 35 added one and this list did not notice).
+        // (Phase 35 added one and this list did not notice).
         var hotkeys = typeof(HotkeySettings)
             .GetProperties()
             .Where(property => property.PropertyType == typeof(string))

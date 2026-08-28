@@ -3,7 +3,7 @@ using D47.Core.Conversation;
 namespace D47.Llm;
 
 /// <summary>
-/// The one place a catalog entry becomes a client (list.md Phase 29).
+/// The one place a catalog entry becomes a client (Phase 29).
 /// <para>
 /// There were two, and they had already drifted into being identical by accident: both switched
 /// on the provider id, both fell through to <c>null</c>, and both then said <em>"D47 has no

@@ -5,7 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Interface;
 
 /// <summary>
-/// How many pixels the big headset panel is rendered at (list.md Phase 25, "The panel resizes and
+/// How many pixels the big headset panel is rendered at (Phase 25, "The panel resizes and
 /// zooms").
 /// <para>
 /// The claim worth a test is the one that keeps the three levers independent: every rung is the

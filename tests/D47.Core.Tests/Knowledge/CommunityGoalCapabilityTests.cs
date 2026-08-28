@@ -91,7 +91,7 @@ public class CommunityGoalCapabilityTests
     [Fact]
     public async Task WithNoKeyTheJournalStillAnswersAndTheAnswerSaysWhatItIs()
     {
-        // A capability that is off is state, not a guard (list.md Phase 3): the journal half
+        // A capability that is off is state, not a guard (Phase 3): the journal half
         // needs nothing, so refusing the whole question for want of a key would be the tool
         // dead-ending on a destination it does not need.
         var registry = Build(Commander(Board()), listing: null);

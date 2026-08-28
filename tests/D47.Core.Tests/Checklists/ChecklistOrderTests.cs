@@ -4,7 +4,7 @@ using Xunit;
 namespace D47.Core.Tests.Checklists;
 
 /// <summary>
-/// The Commander's own order (list.md Phase 25, "The checklist leaves its window").
+/// The Commander's own order (Phase 25, "The checklist leaves its window").
 /// <para>
 /// <b>One order across every scope.</b> What gets reordered on a whim is everything being worked
 /// on, not one ship's share of it — so scope is a label and a filter and never a partition, and

@@ -1,6 +1,6 @@
 """Derive the boxel ladder from the game's own coordinates, rather than reciting it.
 
-`list.md` Phase 18's *Read a system name* requires the a-to-h mass ladder to come from a source with
+Phase 18's *Read a system name* requires the a-to-h mass ladder to come from a source with
 its provenance recorded, never from memory. This is that source, and it is the game itself.
 
 A procedural name encodes a boxel index in its three letters plus the boxel number. If a mass code's

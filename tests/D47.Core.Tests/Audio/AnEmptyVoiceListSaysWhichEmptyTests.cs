@@ -4,7 +4,7 @@ using Xunit;
 namespace D47.Core.Tests.Audio;
 
 /// <summary>
-/// Four situations used to arrive as one empty list (list.md Phase 19,
+/// Four situations used to arrive as one empty list (Phase 19,
 /// docs/spikes/elevenlabs-voice-sources.md §3).
 /// <para>
 /// The spike measured the distinction living at the seam and being discarded one line above it:

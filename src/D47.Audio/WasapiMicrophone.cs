@@ -177,7 +177,7 @@ public sealed class WasapiMicrophone(ICaptureSink sink, ILogger<WasapiMicrophone
             catch (Exception ex)
             {
                 // No microphone is a capability being off, not a startup failure — d47 stays
-                // fully usable typed (list.md Phase 3, "Capabilities as state, not guard").
+                // fully usable typed (Phase 3, "Capabilities as state, not guard").
                 Unavailable = $"The microphone could not be opened: {ex.Message}";
                 logger.LogError(ex, "Could not open the microphone");
                 Stop();

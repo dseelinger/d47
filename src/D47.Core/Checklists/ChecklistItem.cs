@@ -1,7 +1,7 @@
 namespace D47.Core.Checklists;
 
 /// <summary>
-/// The third axis, orthogonal to kind and to state (list.md Phase 17, "One surface, two kinds,
+/// The third axis, orthogonal to kind and to state (Phase 17, "One surface, two kinds,
 /// three groups").
 /// <para>
 /// Derived items belong to whatever produced them. Authored ones file anywhere, which is what
@@ -99,7 +99,7 @@ public sealed record ChecklistScope(ChecklistGroup Group, string? Key = null)
 
 /// <summary>
 /// How an item's "done" is decided — <b>a property of where the item came from, not something the
-/// Commander picks</b> (list.md Phase 17).
+/// Commander picks</b> (Phase 17).
 /// <para>
 /// Mixing the two in one bucket gives a list where some ticks are computed and some are opinions,
 /// with nothing on screen saying which. That is the failure this repo already names about keyword
@@ -168,7 +168,7 @@ public enum ChecklistState
 }
 
 /// <summary>
-/// What each state means the Commander should do next (list.md Phase 25, "The checklist leaves
+/// What each state means the Commander should do next (Phase 25, "The checklist leaves
 /// its window").
 /// <para>
 /// <b>A state is a next action rather than a badge</b>, which is what <see cref="ChecklistState"/>
@@ -208,7 +208,7 @@ public static class ChecklistNextAction
 
 /// <summary>
 /// Why an item is no longer live. <b>Completing is not removing and abandoning is not deleting</b>
-/// (list.md Phase 17).
+/// (Phase 17).
 /// </summary>
 public enum ChecklistTombstone
 {
@@ -226,7 +226,7 @@ public enum ChecklistTombstone
 }
 
 /// <summary>
-/// Where the wording came from, which survives into how d47 says it (list.md Phase 17, "LLM Ship
+/// Where the wording came from, which survives into how d47 says it (Phase 17, "LLM Ship
 /// AI may propose that a checklist item is done").
 /// <para>
 /// Provenance in the sentence rather than in a flag nobody reads. The three are not
@@ -303,7 +303,7 @@ public sealed record ChecklistIntent(ChecklistIntentKind Kind, string Subject)
     /// stated in.
     /// <para>
     /// <b>Part of the key for everything except a slot-shaped intent</b>, where the slot alone is
-    /// the identity (list.md Phase 26). This used to say that swapping burst lasers for
+    /// the identity (Phase 26). This used to say that swapping burst lasers for
     /// multi-cannons in one slot was a tombstone and a new item; it is the same item changing its
     /// mind, and reading it the other way made an edit look like a fortnight of progress thrown
     /// away. See <see cref="ChecklistKeys.SlotShaped"/> for which kinds those are and why the
@@ -346,7 +346,7 @@ public sealed record ChecklistIntent(ChecklistIntentKind Kind, string Subject)
     /// </para>
     /// <para>
     /// <b>Out of the key, like <see cref="Detail"/> and <see cref="Grade"/>.</b> The slot alone is
-    /// the identity of a slot-shaped intent (list.md Phase 26), so changing which module is
+    /// the identity of a slot-shaped intent (Phase 26), so changing which module is
     /// intended for a slot is the Commander changing their mind rather than abandoning the item —
     /// and this field must not be what makes a plan revision read as a fortnight of progress
     /// thrown away.
@@ -379,7 +379,7 @@ public readonly record struct ChecklistItemId(ChecklistScope Scope, string Key)
 }
 
 /// <summary>
-/// One line of the Commander's list, authored or derived (list.md Phase 17).
+/// One line of the Commander's list, authored or derived (Phase 17).
 /// <para>
 /// <b>No number is ever stored here.</b> Every figure a plan quotes is recomputed from a table
 /// with a generator behind it, because a stored number gets recited in October with nothing left
@@ -427,7 +427,7 @@ public sealed record ChecklistItem
     public bool Noted { get; init; }
 
     /// <summary>
-    /// The arc this line came from, where one proposed it (list.md Phase 34, "The checklist points
+    /// The arc this line came from, where one proposed it (Phase 34, "The checklist points
     /// at the arc").
     /// <para>
     /// <b>Null on every line nobody's long goal produced</b>, which is most of them. It is carried

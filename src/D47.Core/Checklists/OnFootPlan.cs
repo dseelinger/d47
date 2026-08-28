@@ -20,7 +20,7 @@ public sealed record OnFootRequest(
 
 /// <summary>
 /// A suit or weapon build costed into the things a Commander has to do, on the same substrate as
-/// the ship and colonisation plans (list.md Phase 20, "Plan a suit or a weapon").
+/// the ship and colonisation plans (Phase 20, "Plan a suit or a weapon").
 /// <para>
 /// <b>Permanence is the reason this needs planning more than ships do.</b> Four slots, no undo, no
 /// way to practise, and a wrong modification recoverable only by buying and re-upgrading a fresh

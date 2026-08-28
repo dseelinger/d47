@@ -9,7 +9,7 @@ using Xunit;
 namespace D47.Core.Tests.Logbook;
 
 /// <summary>
-/// The two acts, the money, and the voice (list.md Phase 33, items 3 and 4).
+/// The two acts, the money, and the voice (Phase 33, items 3 and 4).
 /// </summary>
 public class LogbookBookTests : IDisposable
 {

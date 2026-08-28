@@ -57,7 +57,7 @@ public sealed partial class CapabilityRegistry
 
     /// <summary>
     /// How many times each capability has actually been used this session. Spoken help is
-    /// ranked by it (list.md Phase 6, "ranked by real usage"), so the capabilities a Commander
+    /// ranked by it (Phase 6, "ranked by real usage"), so the capabilities a Commander
     /// reaches for come first instead of whichever happened to be registered first.
     /// <para>
     /// Session-scoped rather than persisted. Persisting it means a store, a schema and a
@@ -163,7 +163,7 @@ public sealed partial class CapabilityRegistry
     /// Runs a tool. Arguments are validated against the declared schema first, so a
     /// hallucinated parameter or an out-of-vocabulary value never reaches capability code.
     /// A handler that throws becomes an error result rather than taking the turn down: a
-    /// capability failing is a state, not a crash (list.md Phase 3).
+    /// capability failing is a state, not a crash (Phase 3).
     /// </summary>
     /// <param name="caller">
     /// Who asked. Defaults to <see cref="ToolCaller.Commander"/> because the panel and the

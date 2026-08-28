@@ -8,7 +8,7 @@ using Xunit;
 namespace D47.Core.Tests.Loadout;
 
 /// <summary>
-/// The gap between every plan and what the Commander is carrying (list.md Phase 27, "Gap
+/// The gap between every plan and what the Commander is carrying (Phase 27, "Gap
 /// analysis").
 /// <para>
 /// <b>Not a wishlist</b>, and <b>the ledgers are never totalled together</b>. Those are the two

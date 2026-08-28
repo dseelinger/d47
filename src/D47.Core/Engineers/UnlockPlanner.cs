@@ -9,7 +9,7 @@ using D47.Core.Ships;
 namespace D47.Core.Engineers;
 
 /// <summary>
-/// One engineer worth unlocking next, what it would take, and what it would buy (list.md Phase 28,
+/// One engineer worth unlocking next, what it would take, and what it would buy (Phase 28,
 /// "The fastest way in").
 /// </summary>
 public sealed record UnlockCandidate
@@ -110,7 +110,7 @@ public sealed record UnlockCandidate
 }
 
 /// <summary>
-/// Where every engineer stands, and which one to go and get next (list.md Phase 28).
+/// Where every engineer stands, and which one to go and get next (Phase 28).
 /// </summary>
 public sealed record EngineerReport
 {
@@ -180,7 +180,7 @@ public sealed record EngineerReport
 }
 
 /// <summary>
-/// The engineer solver (list.md Phase 28, "The fastest way in").
+/// The engineer solver (Phase 28, "The fastest way in").
 /// <para>
 /// <b>A solver rather than a display, and it has to show its work.</b> Walking one engineer's
 /// referral chain is exact and cheap — <c>referred_by</c> is a single parent — and it answers the
@@ -273,7 +273,7 @@ public static class UnlockPlanner
                 state.Engineers.TakenAt?.ToString("O", CultureInfo.InvariantCulture) ?? string.Empty);
 
     /// <summary>
-    /// The chain to one engineer as checklist items, in flying order (list.md Phase 28, "The route
+    /// The chain to one engineer as checklist items, in flying order (Phase 28, "The route
     /// promotes to the checklist as a chain rather than a line").
     /// <para>
     /// <b>One item per stop</b>, which is what <see cref="EngineeringPlan"/> already does when it

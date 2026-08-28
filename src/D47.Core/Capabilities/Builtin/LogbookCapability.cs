@@ -4,7 +4,7 @@ using D47.Core.Logbook;
 namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
-/// The Commander's log (list.md Phase 33).
+/// The Commander's log (Phase 33).
 /// <para>
 /// <b>Every tool here is <see cref="ToolDefinition.Protected"/>, and this one is about money.</b>
 /// Phase 32 kept its tools off the model because the model is the component that reads untrusted

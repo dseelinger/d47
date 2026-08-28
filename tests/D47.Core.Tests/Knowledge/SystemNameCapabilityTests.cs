@@ -7,7 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>
-/// Reading a system name back to the Commander (list.md Phase 18, "Read a system name") — including
+/// Reading a system name back to the Commander (Phase 18, "Read a system name") — including
 /// the two refusals that are the point of the item: no payout claim, and no star class for a system
 /// d47 never watched them arrive at.
 /// </summary>

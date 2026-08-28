@@ -4,7 +4,7 @@ namespace D47.Core.Audio;
 
 /// <summary>
 /// Which of the five situations the Commander is in, from what Status.json actually says
-/// (list.md Phase 12, "Ambient music").
+/// (Phase 12, "Ambient music").
 /// <para>
 /// Five, and no more, because these are the five that file can state without guessing. There is
 /// no "in combat" folder and no "exploring" folder: neither is a thing Elite reports, and a
@@ -72,7 +72,7 @@ public static class Situations
 
 /// <summary>
 /// The ambience layer: which situation is playing and which track comes next
-/// (list.md Phase 12, "Ambient music").
+/// (Phase 12, "Ambient music").
 /// <para>
 /// Owns no thread and reads no clock. It is told the situation and told when a track finished,
 /// and answers with the next clip — so the tick loop drives it in production and a test drives

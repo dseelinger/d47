@@ -17,7 +17,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// Where to buy everything a build still needs, drawn (list.md Phase 50).
+/// Where to buy everything a build still needs, drawn (Phase 50).
 /// <para>
 /// <b>A page on the Checklist tab rather than on Routing.</b> The Commander is looking at what they
 /// owe, and <em>where to get it</em> belongs beside <em>what is left</em> — and a panel page costs

@@ -1,7 +1,7 @@
 namespace D47.Core.Diagnostics;
 
 /// <summary>
-/// One log target per subsystem (list.md Phase 1). A closed set, so the verbosity capability,
+/// One log target per subsystem (Phase 1). A closed set, so the verbosity capability,
 /// the generated settings rows and the model-free keyword router all draw on the same
 /// vocabulary instead of accepting free text.
 /// </summary>

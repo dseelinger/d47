@@ -13,7 +13,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The Routing tab (list.md Phase 37): where the Commander is going, in three readings of one
+/// The Routing tab (Phase 37): where the Commander is going, in three readings of one
 /// journey.
 /// <para>
 /// The tab is furnished by the desktop window and by nothing else, so most of what is asserted

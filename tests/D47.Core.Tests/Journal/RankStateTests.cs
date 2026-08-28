@@ -5,7 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Journal;
 
 /// <summary>
-/// Where the Commander stands in every career (list.md Phase 34).
+/// Where the Commander stands in every career (Phase 34).
 /// <para>
 /// Three events that look alike and are not interchangeable, which is the whole of what this has to
 /// get right. The shapes here are copied off the real journal rather than invented: a

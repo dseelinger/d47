@@ -3,7 +3,7 @@ using D47.Core.Checklists;
 namespace D47.Core.Callouts;
 
 /// <summary>
-/// Speaking up about the checklist (list.md Phase 17).
+/// Speaking up about the checklist (Phase 17).
 /// <para>
 /// Two things, and both of them are moments rather than questions.
 /// </para>

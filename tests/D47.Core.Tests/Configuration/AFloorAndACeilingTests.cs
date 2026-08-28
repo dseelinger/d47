@@ -8,7 +8,7 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>
-/// The three settings a floor and a ceiling arrive as (list.md Phase 54), at the store seam.
+/// The three settings a floor and a ceiling arrive as (Phase 54), at the store seam.
 /// <para>
 /// The behaviour half — what the clamp does with them and which callers take the background
 /// model — is asserted where it happens: <c>EffortRangeTests</c> and <c>TurnLoopTests</c>.

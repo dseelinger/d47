@@ -4,7 +4,7 @@ using D47.Core.Journal;
 namespace D47.Core.Adventures;
 
 /// <summary>
-/// Where one adventure stands, computed rather than read (list.md Phase 47, "Progress is derived,
+/// Where one adventure stands, computed rather than read (Phase 47, "Progress is derived,
 /// and an adventure counts forward only").
 /// <para>
 /// <see cref="Fired"/> is one stamp per beat reached, in order, and everything else is arithmetic
@@ -12,8 +12,8 @@ namespace D47.Core.Adventures;
 /// finished, or was abandoned.
 /// </para>
 /// <para>
-/// <b>The count reaches the Commander after all, from 2026-08-22, on their instruction.</b> Phase
-/// 47 wrote the opposite rule here — <em>beat 3 of 7 is checklist language and belongs to the
+/// <b>The count reaches the Commander after all, from 2026-08-22, on their instruction.</b> Phase 47
+///  wrote the opposite rule here — <em>beat 3 of 7 is checklist language and belongs to the
 /// Technical transcript</em> — on the story-not-a-checklist framing that governs the whole phase.
 /// Flown, the Commander asked for <em>Step X of Y</em> on both surfaces. The framing was about the
 /// <em>prose</em>: the beats are still dramatic functions with titles rather than numbered stops,
@@ -158,7 +158,7 @@ public sealed record AdventureStanding
 }
 
 /// <summary>
-/// The one fold, for the live tick and the startup catch-up alike (list.md Phase 47).
+/// The one fold, for the live tick and the startup catch-up alike (Phase 47).
 /// <para>
 /// Pure: owns no thread, reads no clock, takes the event's own timestamp. Ignores everything before
 /// <see cref="Adventure.AcceptedAt"/> — <em>adventures start when accepted and mine no history</em>

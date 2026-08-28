@@ -2,7 +2,7 @@ namespace D47.Core.Memory;
 
 /// <summary>
 /// How a remembered fact arrived at being believed, and therefore which sentence reads it back
-/// (list.md Phase 31, "A memory is written down, never inferred into being").
+/// (Phase 31, "A memory is written down, never inferred into being").
 /// <para>
 /// <b>Phase 23's tiered truth, extended by one tier.</b> <see cref="Lore.LoreTier"/> exists for
 /// notes about places and this exists for facts about the Commander, and the reason both are a
@@ -27,7 +27,7 @@ public enum MemoryTier
 {
     /// <summary>
     /// The Commander said so, on the panel, in their own words. The only tier a person authored,
-    /// and the only one whose expiry is worth announcing (list.md Phase 31, item 3).
+    /// and the only one whose expiry is worth announcing (Phase 31, item 3).
     /// </summary>
     Stated,
 
@@ -87,7 +87,7 @@ public enum MemoryArrival
 /// <summary>
 /// One thing d47 remembers about the Commander.
 /// <para>
-/// <b>A fact or an observation, and never a transcript.</b> list.md Phase 31 gives all three reasons
+/// <b>A fact or an observation, and never a transcript.</b> Phase 31 gives all three reasons
 /// in one line — a rolling transcript is a privacy liability, a context-window problem and a
 /// confabulation engine — so there is no field here that could hold one and no writer that offers.
 /// </para>

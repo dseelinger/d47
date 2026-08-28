@@ -1,7 +1,7 @@
 namespace D47.Core.Configuration;
 
 /// <summary>
-/// The two layers of the settings file, read as one and written back as two (list.md Phase 44,
+/// The two layers of the settings file, read as one and written back as two (Phase 44,
 /// "The split is per row and per store, declared rather than inferred").
 /// <para>
 /// <see cref="D47Settings"/> is one record in one file and most of it is the installation's. A

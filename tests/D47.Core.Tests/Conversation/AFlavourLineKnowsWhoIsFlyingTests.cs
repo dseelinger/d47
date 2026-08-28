@@ -4,8 +4,8 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>
-/// The Commander's own account of themselves reaches the lines said in character (list.md Phase
-/// 43, "About Me reaches the conversation and nothing else").
+/// The Commander's own account of themselves reaches the lines said in character (Phase 43,
+/// "About Me reaches the conversation and nothing else").
 /// <para>
 /// Before this, <c>FlavourTurn.AskAsync</c> took provider, model, persona, instruction and game
 /// state and had no parameter for it — so every ambient remark, the opening line and a core's

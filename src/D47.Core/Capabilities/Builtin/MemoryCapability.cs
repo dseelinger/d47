@@ -4,7 +4,7 @@ using D47.Core.Memory;
 namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
-/// What d47 remembers about the Commander (list.md Phase 31).
+/// What d47 remembers about the Commander (Phase 31).
 /// <para>
 /// <b>One tool is advertised and two are not, and the split is arithmetic before it is anything
 /// else.</b> The SRV profile — the largest, because it carries that vehicle's controls on top of

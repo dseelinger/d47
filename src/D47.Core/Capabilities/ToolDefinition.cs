@@ -44,7 +44,7 @@ public delegate Task<ToolResult> ToolHandler(ToolArguments arguments, Cancellati
 
 /// <summary>
 /// A phrase that reaches one tool with one fixed set of arguments — the closed grammar the
-/// keyword router was always going to need (list.md Phase 10, "Control flight and navigation by
+/// keyword router was always going to need (Phase 10, "Control flight and navigation by
 /// voice").
 /// <para>
 /// Nothing is extracted from what the Commander said. The phrase is declared, the arguments are
@@ -93,7 +93,7 @@ public sealed record ToolDefinition
     /// in line. This is for the handful of commands whose entire purpose is to interrupt what
     /// is already happening — <c>stop_speaking</c> is the first and, for now, the only one. An
     /// instant-silence command that waits for the turn it is trying to silence is not one
-    /// (list.md Phase 5, "never gated behind a turn completing").
+    /// (Phase 5, "never gated behind a turn completing").
     /// </para>
     /// <para>
     /// Declared on the tool rather than checked by name at the call site, so the surface asks
@@ -116,7 +116,7 @@ public sealed record ToolDefinition
     /// The same rule <see cref="SettingRow.Protected"/> already carries, and the same reason:
     /// journal text and in-game messages are untrusted (architecture.md §7), so anything the model
     /// can call, a hostile in-game message can attempt to invoke. It arrived on tools when the
-    /// checklist did (list.md Phase 17), which is the first capability whose <em>write</em> path
+    /// checklist did (Phase 17), which is the first capability whose <em>write</em> path
     /// has to be model-free while its read path stays open.
     /// </para>
     /// <para>

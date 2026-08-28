@@ -21,7 +21,7 @@ public readonly record struct AutonomousDecision(IReadOnlyList<InputStep> Steps,
 }
 
 /// <summary>
-/// One thing d47 does to the game with nobody asking (list.md Phase 10, "Autonomous actions
+/// One thing d47 does to the game with nobody asking (Phase 10, "Autonomous actions
 /// are opt-in per action").
 /// <para>
 /// <b>This is a category, and the category has its rule before it has a second member.</b>

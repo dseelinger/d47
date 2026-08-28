@@ -11,7 +11,7 @@ public enum TradeSide
 }
 
 /// <summary>
-/// Where to buy a commodity, or where to dump one (list.md Phase 49).
+/// Where to buy a commodity, or where to dump one (Phase 49).
 /// <para>
 /// <b>Both sides of the board, one query.</b> <em>Where do I dump 700 tonnes of tritium</em> is
 /// the same question as <em>where do I buy it</em> read the other way round, and a search that
@@ -67,7 +67,7 @@ public sealed record CommodityOffer(
 }
 
 /// <summary>
-/// The local ranking (list.md Phase 49).
+/// The local ranking (Phase 49).
 /// <para>
 /// <b>Local is the arrangement rather than a workaround.</b> Spansh will not sort on a commodity's
 /// price server-side — every sort shape tried answered HTTP 400 — and its demand bounds are

@@ -21,7 +21,7 @@ public enum VrSurface
 }
 
 /// <summary>
-/// Head-locked or world-locked, per surface (list.md Phase 9, "VR Panel locking").
+/// Head-locked or world-locked, per surface (Phase 9, "VR Panel locking").
 /// </summary>
 public enum SurfaceLock
 {

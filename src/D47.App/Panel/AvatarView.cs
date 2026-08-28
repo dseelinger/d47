@@ -15,7 +15,7 @@ using D47.Core.Interface;
 namespace D47.App.Panel;
 
 /// <summary>
-/// The ship AI's face: one look per loop state, animated (list.md Phase 11, "Ship's AI Avatar").
+/// The ship AI's face: one look per loop state, animated (Phase 11, "Ship's AI Avatar").
 /// <para>
 /// <b>Drawn rather than decoded, and that is the load-bearing decision.</b> One widget tree
 /// renders to both the desktop window and the headset, so an animation made of decoded image

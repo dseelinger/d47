@@ -1,7 +1,7 @@
 namespace D47.Core.Knowledge;
 
 /// <summary>
-/// One system as the candidate scan can see it (list.md Phase 18, "Find somewhere worth
+/// One system as the candidate scan can see it (Phase 18, "Find somewhere worth
 /// colonising").
 /// <para>
 /// <b>Aggregates rather than bodies, and that is a fact about the index rather than a design

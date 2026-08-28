@@ -4,7 +4,7 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>
-/// The three columns list.md Phase 38 asks the generator to stop dropping, asserted against the
+/// The three columns Phase 38 asks the generator to stop dropping, asserted against the
 /// shipped table.
 /// <para>
 /// Each one closes an arithmetic that had a hole in it: the purchase gate that says which modules
@@ -36,7 +36,7 @@ public class ThreeColumnsTheGeneratorUsedToDropTests
     public void ExactlyNineteenModulesNeedAPledge()
     {
         // Named rather than counted alone, because the count is the part that can be right for the
-        // wrong reason. This is the list list.md Phase 38 records, and it comes out of
+        // wrong reason. This is the list Phase 38 records, and it comes out of
         // `outfitting.csv`'s own column rather than out of anybody's memory of Powerplay.
         var gated = EliteSpecifications.Modules
             .Where(module => module.NeedsPledge)

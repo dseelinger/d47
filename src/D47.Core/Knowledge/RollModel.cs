@@ -3,7 +3,7 @@ using System.Globalization;
 namespace D47.Core.Knowledge;
 
 /// <summary>
-/// What a roll the Commander has not done yet would land on (list.md Phase 38).
+/// What a roll the Commander has not done yet would land on (Phase 38).
 /// <para>
 /// <b>No new source, and no new table.</b> <c>Blueprints.tsv</c>'s <c>effects</c> column has
 /// carried an attribute, a change and a good-or-bad flag <em>per grade</em> since remediation 15

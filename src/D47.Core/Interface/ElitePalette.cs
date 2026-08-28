@@ -33,7 +33,7 @@ public sealed record GuiColourMatrix(
 
 /// <summary>
 /// Reads the Commander's own HUD colour scheme, so one of d47's themes can match whatever the
-/// cockpit already looks like (list.md Phase 4, "Themes").
+/// cockpit already looks like (Phase 4, "Themes").
 /// <para>
 /// Read-only and fail-soft, for the same reason the binds parser is read-only: this is the
 /// Commander's game configuration, d47 is a guest in it, and a file that is missing, hand-edited

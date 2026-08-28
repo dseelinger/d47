@@ -9,7 +9,7 @@ namespace D47.App.Tests;
 
 /// <summary>
 /// A fault the Commander has read and decided about stops taking a strip off the top of the
-/// panel (list.md Phase 12).
+/// panel (Phase 12).
 /// <para>
 /// The banner is the only thing that says a voice companion cannot speak, so it is loud on
 /// purpose — and until now it stayed for the rest of the session, above the conversation,

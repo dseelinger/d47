@@ -4,7 +4,7 @@ using Xunit;
 namespace D47.Core.Tests.Hotas;
 
 /// <summary>
-/// Walking a switch (list.md Phase 21, "Assign a switch by walking its positions").
+/// Walking a switch (Phase 21, "Assign a switch by walking its positions").
 /// <para>
 /// The shapes here are the ones the spike measured on real hardware. The two-position switch
 /// really does hold button 8 or button 9 and never neither; the three-position one really was
@@ -127,7 +127,7 @@ public class SwitchCaptureTests
         // Every maintained switch on the bench held exactly one button at all times including at
         // centre — and nothing in RawGameController requires that. A capture that could not
         // express "nothing held" would read this centre as *still where it last was*, which is
-        // the exact silent failure the phase exists to prevent (list.md Phase 21, item 3).
+        // the exact silent failure the phase exists to prevent (Phase 21, item 3).
         var walk = new Walk()
             .Rest(Held(Stick, 4))
             .Rest(Held(Stick))

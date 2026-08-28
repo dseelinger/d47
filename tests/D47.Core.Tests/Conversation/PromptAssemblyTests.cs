@@ -69,7 +69,7 @@ public class PromptAssemblyTests
     }
 
     /// <summary>
-    /// Position 4 is labelled to commit, not to hedge (list.md Phase 43). A biography names
+    /// Position 4 is labelled to commit, not to hedge (Phase 43). A biography names
     /// things that are the Commander's own invention, and the model is told it is true of the
     /// world they share — not handed a disclaimer about whose words these are.
     /// </summary>

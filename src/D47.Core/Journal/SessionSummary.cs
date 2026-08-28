@@ -1,7 +1,7 @@
 namespace D47.Core.Journal;
 
 /// <summary>
-/// What has happened since the Commander entered the game (list.md Phase 7, "Session
+/// What has happened since the Commander entered the game (Phase 7, "Session
 /// summary"), accumulated from the journal already being tailed rather than from anything new.
 /// <para>
 /// "Session" means since the last LoadGame, not since the journal file began. Elite rolls the

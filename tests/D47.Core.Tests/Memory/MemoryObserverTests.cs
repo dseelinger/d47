@@ -7,7 +7,7 @@ namespace D47.Core.Tests.Memory;
 
 /// <summary>
 /// The only thing in Phase 31 that writes a memory nobody asked for, and the only producer of the
-/// observed tier (list.md Phase 31, "d47 observed it in the journal").
+/// observed tier (Phase 31, "d47 observed it in the journal").
 /// <para>
 /// It exists because without it that tier would be an enum member reachable by nothing — the failure
 /// <c>LoreArrival</c>'s own comment refuses to ship. So the assertions here are mostly about it being

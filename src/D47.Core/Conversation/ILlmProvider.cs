@@ -72,7 +72,7 @@ public sealed record LlmUsage(
 
     /// <summary>
     /// A turn whose provider reported no usage at all, which is not the same as a turn that used
-    /// nothing (list.md Phase 29).
+    /// nothing (Phase 29).
     /// <para>
     /// Streamed Chat Completions returns no usage block <em>unless it is asked for</em>, and
     /// plenty of compatible servers do not send one even when asked. Priced as zero, that reports
@@ -282,7 +282,7 @@ public interface ILlmProvider
 
     /// <summary>
     /// Whether this provider is pointed at an address on the Commander's own machine
-    /// (list.md Phase 29).
+    /// (Phase 29).
     /// <para>
     /// Two things read it and they must agree: the disclosure says nothing leaves this machine,
     /// and the price table charges zero. Defaulted to false so no existing implementation changes

@@ -40,8 +40,8 @@ public sealed record Macro
 public sealed record MacroProblem(string Name, string Reason);
 
 /// <summary>
-/// Checking a macro against the closed vocabularies before it is allowed to exist (list.md
-/// Phase 10, "validated against closed vocabularies and the action allowlist").
+/// Checking a macro against the closed vocabularies before it is allowed to exist (Phase 10,
+/// "validated against closed vocabularies and the action allowlist").
 /// <para>
 /// <b>Authoring is the one input whose vocabulary cannot be closed in advance</b>, which is why
 /// the checklist exempts it from "every setting can be set by voice". What can be closed is

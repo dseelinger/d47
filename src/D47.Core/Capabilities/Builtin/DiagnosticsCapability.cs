@@ -7,7 +7,7 @@ namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
 /// The first capability, and the one that makes "Turn a subsystem up without restarting"
-/// reachable rather than merely implemented (list.md Phase 1). It needs no game, no model,
+/// reachable rather than merely implemented (Phase 1). It needs no game, no model,
 /// no audio device and no headset, which is why it is the one Phase 1 ships.
 /// </summary>
 public static class DiagnosticsCapability

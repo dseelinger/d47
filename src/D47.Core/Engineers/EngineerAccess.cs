@@ -5,7 +5,7 @@ using D47.Core.Knowledge;
 namespace D47.Core.Engineers;
 
 /// <summary>
-/// What the Commander can do about an engineer today (list.md Phase 28, "Who can roll this").
+/// What the Commander can do about an engineer today (Phase 28, "Who can roll this").
 /// <para>
 /// The order of these values <b>is</b> the order the directory sorts in, so it is declared once
 /// here rather than in a comparer somewhere else: the question is nearly always <em>who can I go
@@ -30,7 +30,7 @@ public enum EngineerReach
 
 /// <summary>
 /// One stop on the way to an unlock — somebody who has to be reached before the next one
-/// (list.md Phase 28, "The fastest way in").
+/// (Phase 28, "The fastest way in").
 /// </summary>
 /// <param name="Engineer">Who this stop is.</param>
 /// <param name="LightYears">
@@ -114,7 +114,7 @@ public sealed record UnlockStep(
 
 /// <summary>
 /// Everything still standing between the Commander and one engineer, in the order it has to
-/// happen (list.md Phase 28, "The fastest way in").
+/// happen (Phase 28, "The fastest way in").
 /// <para>
 /// <b>A chain rather than a line.</b> Broo Tarquin comes through Hera Tani, who comes through Liz
 /// Ryder — three unlocks and two rank climbs, and a checklist entry reading "unlock Broo Tarquin"
@@ -184,7 +184,7 @@ public sealed record UnlockCriterion(string Text, bool? Met)
 
 /// <summary>
 /// How far along the Commander is with one engineer, and what the way in looks like from where
-/// they are standing (list.md Phase 28, "Who can roll this").
+/// they are standing (Phase 28, "Who can roll this").
 /// <para>
 /// <b>One pane rather than two.</b> A row already holds the name, the specialities, the location
 /// and the standing, so a second column beside it would only repeat them.
@@ -274,7 +274,7 @@ public sealed record EngineerEntry
 }
 
 /// <summary>
-/// Where each engineer stands with this Commander, and what the way in costs (list.md Phase 28).
+/// Where each engineer stands with this Commander, and what the way in costs (Phase 28).
 /// <para>
 /// <b>Core-pure and local.</b> Every distance here is arithmetic over coordinates that shipped in
 /// <c>Engineers.tsv</c> and a position the journal already stated, so the Engineers tab works in

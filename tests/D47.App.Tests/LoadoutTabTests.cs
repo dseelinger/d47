@@ -20,7 +20,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The Loadout tab: Fleet, then a ship, then a slot (list.md Phase 26, "Ships").
+/// The Loadout tab: Fleet, then a ship, then a slot (Phase 26, "Ships").
 /// <para>
 /// Three levels of the drill stack Phase 25 built, so the breadcrumb, the reflow and the way back
 /// come from there rather than from anything here.

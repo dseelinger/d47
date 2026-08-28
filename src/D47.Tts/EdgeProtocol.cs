@@ -102,7 +102,7 @@ internal static class EdgeProtocol
     /// <summary>
     /// Rate arrives normalised at 1.0 and leaves as the percentage offset the service wants.
     /// Normalising at the seam is what keeps per-provider rate units out of settings
-    /// (list.md Phase 11).
+    /// (Phase 11).
     /// </summary>
     public static string RateAttribute(double rate)
     {

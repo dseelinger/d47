@@ -3,7 +3,7 @@ using System.Text;
 namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
-/// "What can you do" (list.md Phase 6), answered from the capability registry.
+/// "What can you do" (Phase 6), answered from the capability registry.
 /// <para>
 /// <b>The model is never asked what d47 can do.</b> That is the whole point of the item, and it
 /// is not a stylistic preference: a model asked to describe its own capabilities produces a

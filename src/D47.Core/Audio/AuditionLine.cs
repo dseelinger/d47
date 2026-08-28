@@ -3,7 +3,7 @@ using D47.Core.Persona;
 namespace D47.Core.Audio;
 
 /// <summary>
-/// What a voice says when it is auditioned (list.md Phase 19, "Hear a voice before you choose
+/// What a voice says when it is auditioned (Phase 19, "Hear a voice before you choose
 /// it").
 /// <para>
 /// <b>The core's own line, not a generic sample.</b> The picker lists several hundred names and

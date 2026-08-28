@@ -8,7 +8,7 @@ public sealed record SpeechCharge(string ProviderId, long Characters, int Uttera
 {
     /// <summary>
     /// Which slot it was speaking for, or null for the per-provider total that covers all of
-    /// them (list.md Phase 57).
+    /// them (Phase 57).
     /// <para>
     /// An init property rather than a fourth positional one, deliberately: every existing reader
     /// asks a provider what it cost, and that question and its answer are unchanged. The slot is
@@ -36,7 +36,7 @@ public sealed record SpeechCharge(string ProviderId, long Characters, int Uttera
 }
 
 /// <summary>
-/// What the voices have cost, beside what the model costs (list.md Phase 19).
+/// What the voices have cost, beside what the model costs (Phase 19).
 /// <para>
 /// <b>The unit is not tokens, and it is not one unit either.</b> ElevenLabs bills per character,
 /// OpenAI by the length of the audio, Edge nothing at all — so a charge carries both measures and
@@ -182,8 +182,8 @@ public sealed class SpeechSpend
     }
 
     /// <summary>
-    /// The same characters, broken down by the slot that spoke them, most first (list.md Phase
-    /// 57). Charges recorded without a slot are here with a null <see cref="SpeechCharge.Group"/>
+    /// The same characters, broken down by the slot that spoke them, most first (Phase 57).
+    /// Charges recorded without a slot are here with a null <see cref="SpeechCharge.Group"/>
     /// rather than dropped — an audition is real spend and hiding it would make this disagree
     /// with <see cref="Charges"/>.
     /// </summary>
@@ -244,7 +244,7 @@ public sealed class SpeechSpend
 
     /// <summary>
     /// What each slot has cost, one line per slot that has spoken, or null when nothing has
-    /// (list.md Phase 57).
+    /// (Phase 57).
     /// <para>
     /// The question the refactor makes askable for the first time. Until six slots could name six
     /// providers, "which of them is costing money" had one answer and it was "the one provider" —
@@ -386,7 +386,7 @@ public sealed class SpeechSpend
 /// </summary>
 /// <param name="group">
 /// Which slot this decorator counts for, or null where there is no slot to name. <b>One thin
-/// decorator per slot over a <em>shared</em> client</b> (list.md Phase 57): the count learns
+/// decorator per slot over a <em>shared</em> client</b> (Phase 57): the count learns
 /// which slot spoke without <see cref="ITtsProvider"/> learning that slots exist, and without a
 /// second connection to the provider — which is the property
 /// <c>ElevenLabsTtsProvider.MaxConcurrent</c> depends on.

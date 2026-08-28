@@ -4,7 +4,7 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>
-/// Decoding a procedural system name (list.md Phase 18, "Read a system name").
+/// Decoding a procedural system name (Phase 18, "Read a system name").
 /// <para>
 /// The grammar was validated against 4,746 distinct real names from the corpus — 2,854 procedural,
 /// 1,892 hand-named, and no near-miss — but the corpus is one Commander's travel history and stays

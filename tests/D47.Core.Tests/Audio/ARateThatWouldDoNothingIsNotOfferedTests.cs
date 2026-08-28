@@ -7,7 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Audio;
 
 /// <summary>
-/// A provider that cannot be told a speaking rate is never offered one (list.md Phase 60).
+/// A provider that cannot be told a speaking rate is never offered one (Phase 60).
 /// <para>
 /// <b>This is Phase 58's rule arriving at a different provider, and the failure it prevents is
 /// stranger.</b> OpenAI has no language field at all. Cartesia <em>has</em> a speed control, in

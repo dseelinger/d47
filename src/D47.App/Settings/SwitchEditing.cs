@@ -4,7 +4,7 @@ using D47.Core.Interface;
 namespace D47.App.Settings;
 
 /// <summary>
-/// Everything the switch row needs to open the walk (list.md Phase 21).
+/// Everything the switch row needs to open the walk (Phase 21).
 /// <para>
 /// One record rather than four parameters on <c>SettingsView.Attach</c>, because the four are
 /// meaningless apart: a store with no reader cannot capture, and a reader with no reconciler
@@ -19,7 +19,7 @@ namespace D47.App.Settings;
 /// <param name="Now">The clock. Injected here because the capture never reads one itself.</param>
 /// <param name="ExportPath">Where a declined capture's report is written.</param>
 /// <param name="Destinations">
-/// Every page a surface has registered, for the position editor's list (list.md Phase 46). Asked
+/// Every page a surface has registered, for the position editor's list (Phase 46). Asked
 /// for when the window opens rather than captured, and on the thread that owns the navigators.
 /// </param>
 public sealed record SwitchEditing(

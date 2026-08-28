@@ -1,7 +1,7 @@
 namespace D47.Core.Configuration;
 
 /// <summary>
-/// What happened when a stored key was tried for real (list.md Phase 16, "Ask for the keys on the
+/// What happened when a stored key was tried for real (Phase 16, "Ask for the keys on the
 /// first run that needs them").
 /// <para>
 /// The item asks for a key that is <b>verified, not merely stored</b>, and the reason is that the

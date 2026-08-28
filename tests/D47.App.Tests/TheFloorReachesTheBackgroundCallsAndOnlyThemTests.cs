@@ -3,7 +3,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// Which calls take the cheap model and which keep the Commander's (list.md Phase 54). The
+/// Which calls take the cheap model and which keep the Commander's (Phase 54). The
 /// negative half is the half worth holding: a floor that quietly reached adventure generation
 /// or the Commander's log would spend nothing and cost something the Commander agreed a price
 /// for.

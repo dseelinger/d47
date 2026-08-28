@@ -123,7 +123,7 @@ public sealed class AppHost : IDisposable
         Version = version;
         StartupError = startupError;
 
-        // When each core was last aboard, from previous runs (list.md Phase 35). Without this the
+        // When each core was last aboard, from previous runs (Phase 35). Without this the
         // elapsed time a gap reaction is measured against would start at zero every launch, and a
         // month-long absence — which is the only kind that earns one — spans launches by
         // definition. No session goes with it: see the field.
@@ -179,7 +179,7 @@ public sealed class AppHost : IDisposable
     /// <summary>
     /// What the panel is showing. Owned here rather than by the window, because it is app
     /// state: the desktop window and the headset overlay each instantiate a view against it,
-    /// and a model owned by one of them would make the other a guest (list.md Phase 9).
+    /// and a model owned by one of them would make the other a guest (Phase 9).
     /// </summary>
     public Panel.PanelViewModel Panel { get; } = new();
 
@@ -191,7 +191,7 @@ public sealed class AppHost : IDisposable
     public Headset.VrHost? Vr { get; set; }
 
     /// <summary>
-    /// The flat mini panel over the game, once Avalonia has come up (list.md Phase 48). Null
+    /// The flat mini panel over the game, once Avalonia has come up (Phase 48). Null
     /// before that and on a run where the framework never initialises, for the same reason
     /// <see cref="Vr"/> is: it is a widget tree, and there is no dispatcher to build one on when
     /// this host is constructed.
@@ -206,7 +206,7 @@ public sealed class AppHost : IDisposable
     public IEliteWindow Elite { get; private set; } = null!;
 
     /// <summary>
-    /// What d47 says without being asked (list.md Phase 8). Exposed because the panel drains it:
+    /// What d47 says without being asked (Phase 8). Exposed because the panel drains it:
     /// the tick that produces an announcement must not block on synthesising it.
     /// </summary>
     public CalloutEngine Callouts { get; }
@@ -246,26 +246,26 @@ public sealed class AppHost : IDisposable
     /// <summary>One turn of conversation, whichever path answers it.</summary>
     public TurnLoop Turns { get; }
 
-    /// <summary>Which Guardian core is aboard, and what it remembers (list.md Phase 11).</summary>
+    /// <summary>Which Guardian core is aboard, and what it remembers (Phase 11).</summary>
     public PersonaHost Personas { get; }
 
     /// <summary>
-    /// Which core flies which ship (list.md Phase 35). Public because the gesture reaches it:
+    /// Which core flies which ship (Phase 35). Public because the gesture reaches it:
     /// a system-wide hotkey is bound in the window and has to be able to perform the act, on
     /// exactly the same footing as the panel button and the phrase.
     /// </summary>
     public ShipCoreService ShipCores { get; }
 
     /// <summary>
-    /// The watch that compares a boarded ship against its plan (list.md Phase 38). Held here for
+    /// The watch that compares a boarded ship against its plan (Phase 38). Held here for
     /// one reason: it keeps the last ship seen as a bare id, and a Commander switch has to reset
-    /// it (list.md Phase 44). Set after construction like the other services the tick registers.
+    /// it (Phase 44). Set after construction like the other services the tick registers.
     /// </summary>
     public ShipDriftWatch? Drift { get; set; }
 
     /// <summary>
-    /// The session's opening line (list.md Phase 31), held here so a Commander switch can make
-    /// it due again (list.md Phase 44, "Welcome back, Commander").
+    /// The session's opening line (Phase 31), held here so a Commander switch can make
+    /// it due again (Phase 44, "Welcome back, Commander").
     /// </summary>
     public ContinuityCallout? Continuity { get; set; }
 
@@ -298,7 +298,7 @@ public sealed class AppHost : IDisposable
     /// <c>data/audio/</c>.
     /// <para>
     /// Replaced rather than mutated when the folder changes, so anything mid-playback keeps the
-    /// clip it already holds and a reload can never cut a sentence (list.md Phase 12).
+    /// clip it already holds and a reload can never cut a sentence (Phase 12).
     /// </para>
     /// </summary>
     public CueLibrary Cues { get; private set; }
@@ -313,7 +313,7 @@ public sealed class AppHost : IDisposable
     public ListenGate Listening { get; }
 
     /// <summary>
-    /// What removes d47's own voice from what the microphone hears (list.md Phase 13). Exposed
+    /// What removes d47's own voice from what the microphone hears (Phase 13). Exposed
     /// because whether it is actually running is a thing the listening status answers, and
     /// "the setting is on" is not the same claim.
     /// </summary>
@@ -344,23 +344,23 @@ public sealed class AppHost : IDisposable
     public OwnPersonaStore OwnPersonas { get; private set; } = null!;
 
     /// <summary>
-    /// The Commander's checklist, and the proposals waiting on it (list.md Phase 17). The panel
+    /// The Commander's checklist, and the proposals waiting on it (Phase 17). The panel
     /// writes through this like the macro editor does — and it is the surface that accepts a
     /// proposal, which is an act the model is not allowed to perform.
     /// </summary>
     public ChecklistService Checklists { get; private set; } = null!;
 
-    /// <summary>The Commander's timers and alarms (list.md Phase 24).</summary>
+    /// <summary>The Commander's timers and alarms (Phase 24).</summary>
     public Timekeeper Timekeeper { get; private set; } = null!;
 
-    /// <summary>The Commander's ship builds, joined to the fleet (list.md Phase 26).</summary>
+    /// <summary>The Commander's ship builds, joined to the fleet (Phase 26).</summary>
     public ShipPlanService Ships { get; private set; } = null!;
 
     /// <summary>Where the builds are kept, for the panel to follow and for a hand edit to reach.</summary>
     public ShipBuildStore ShipBuilds { get; private set; } = null!;
 
     /// <summary>
-    /// The Commander's suit and weapon plans, joined to what they are wearing (list.md Phase 27).
+    /// The Commander's suit and weapon plans, joined to what they are wearing (Phase 27).
     /// The on-foot half of the same page.
     /// </summary>
     public D47.Core.Loadout.OnFootPlanService OnFootPlans { get; private set; } = null!;
@@ -369,7 +369,7 @@ public sealed class AppHost : IDisposable
     public D47.Core.Loadout.OnFootBuildStore OnFootBuilds { get; private set; } = null!;
 
     /// <summary>
-    /// Which engineer to go and get next, read across both plan stores (list.md Phase 28). Owns
+    /// Which engineer to go and get next, read across both plan stores (Phase 28). Owns
     /// nothing: every figure is recomputed from those two and the live game state.
     /// </summary>
     public D47.Core.Engineers.EngineerPlanService Unlocks { get; private set; } = null!;
@@ -384,7 +384,7 @@ public sealed class AppHost : IDisposable
     public IReadOnlyList<string> ReservedPhrases { get; private set; } = [];
 
     /// <summary>
-    /// What the settings surface needs to walk and assign a HOTAS switch (list.md Phase 21).
+    /// What the settings surface needs to walk and assign a HOTAS switch (Phase 21).
     /// Null when nothing composed hardware, which is what the designer and a test that is not
     /// about switches get — the row's button is then absent rather than dead.
     /// </summary>
@@ -392,49 +392,49 @@ public sealed class AppHost : IDisposable
 
     /// <summary>
     /// What the settings surface needs to show and write the Commander's own lore notes
-    /// (list.md Phase 23). Null under the designer, where the row shows a summary and no button.
+    /// (Phase 23). Null under the designer, where the row shows a summary and no button.
     /// </summary>
     public Settings.LoreEditing? LoreEditing { get; private set; }
 
     /// <summary>
     /// What d47 remembers about the Commander, and the clock a fact typed on the panel is stamped
-    /// with (list.md Phase 31). Null under the designer, where the row shows a summary and no
+    /// with (Phase 31). Null under the designer, where the row shows a summary and no
     /// button.
     /// </summary>
     public (MemoryBook Book, Func<DateTimeOffset> Now)? Memories { get; private set; }
 
     /// <summary>
-    /// What d47 has noticed the Commander keeps doing (list.md Phase 32). Null under the designer,
+    /// What d47 has noticed the Commander keeps doing (Phase 32). Null under the designer,
     /// where the row shows a summary and no button.
     /// </summary>
     public (D47.Core.Habits.HabitBook Book, Action? Mine)? Habits { get; private set; }
 
     /// <summary>
-    /// The Commander's log (list.md Phase 33). Null under the designer, where the row reads a
+    /// The Commander's log (Phase 33). Null under the designer, where the row reads a
     /// folder that does not exist and offers no way to spend anything.
     /// </summary>
     public D47.Core.Logbook.LogbookBook? Logbook { get; private set; }
 
     /// <summary>
-    /// The Commander's long arcs (list.md Phase 34). Null under the designer, where the checklist
+    /// The Commander's long arcs (Phase 34). Null under the designer, where the checklist
     /// page draws no arc band and the row shows a summary and no button.
     /// </summary>
     public (D47.Core.Goals.GoalBook Book, Action? Backfill)? Goals { get; private set; }
 
     /// <summary>
-    /// The stories the Commander flies, and the thing that writes one (list.md Phase 47). Null
+    /// The stories the Commander flies, and the thing that writes one (Phase 47). Null
     /// under the designer, where the tab is simply not furnished.
     /// </summary>
     public (D47.Core.Adventures.AdventureBook Book, D47.Core.Adventures.AdventureGenerator Generator)? Adventures { get; private set; }
 
-    /// <summary>The galaxy service, for the adventure editor to check a typed place against (list.md Phase 47).</summary>
+    /// <summary>The galaxy service, for the adventure editor to check a typed place against (Phase 47).</summary>
     public D47.Core.Knowledge.IGalaxyService? Galaxy { get; private set; }
 
     /// <summary>Where Elite writes its journals, for the adventure catch-up that walks them.</summary>
     public string? JournalDirectory { get; private set; }
 
     /// <summary>
-    /// The last plan each planner produced (list.md Phase 37). Set during composition, like the
+    /// The last plan each planner produced (Phase 37). Set during composition, like the
     /// three books above, because the file it reads lives beside the executable rather than
     /// anywhere Core can find on its own.
     /// <para>
@@ -446,14 +446,14 @@ public sealed class AppHost : IDisposable
     public D47.Core.Knowledge.RoutePlanBook? Plans { get; private set; }
 
     /// <summary>
-    /// The last commodity answer (list.md Phase 49), so the spoken one and the drawn one are one
+    /// The last commodity answer (Phase 49), so the spoken one and the drawn one are one
     /// answer. In memory rather than on disk, unlike <see cref="Plans"/>: a price is the thing
     /// here that ages fastest, and a saved one would look current because it was saved.
     /// </summary>
     public D47.Core.Knowledge.CommodityBoard Commodities { get; private set; } = new();
 
     /// <summary>
-    /// The last shopping list for a construction site (list.md Phase 50), on the same terms as
+    /// The last shopping list for a construction site (Phase 50), on the same terms as
     /// <see cref="Commodities"/> and for the same reason.
     /// </summary>
     public D47.Core.Knowledge.SourcingBoard Sourcing { get; private set; } = new();
@@ -528,7 +528,7 @@ public sealed class AppHost : IDisposable
 
     /// <summary>
     /// Raised true when a core has been chosen and has not yet worked out what to say, and
-    /// false when it has (list.md Phase 12, "Anything that might take a moment says it is
+    /// false when it has (Phase 12, "Anything that might take a moment says it is
     /// working").
     /// <para>
     /// A gap reaction spends a model round trip before the new core's first word, which from the
@@ -560,7 +560,7 @@ public sealed class AppHost : IDisposable
         if (result.Success)
         {
             // Load it now rather than at the next restart — the same "apply every setting
-            // without a restart" rule everything else follows (list.md Phase 4).
+            // without a restart" rule everything else follows (Phase 4).
             ApplyListeningSettings();
         }
 
@@ -582,7 +582,7 @@ public sealed class AppHost : IDisposable
 
     private readonly PushToTalkKey _pushToTalk;
 
-    /// <summary>The stick's half of push-to-talk (list.md Phase 53).</summary>
+    /// <summary>The stick's half of push-to-talk (Phase 53).</summary>
     private readonly D47.Core.Hotas.PushToTalkButton _pushToTalkButton;
 
     /// <summary>The two of them as one gate. Either opens it; the last release closes it.</summary>
@@ -732,15 +732,15 @@ public sealed class AppHost : IDisposable
 
         // Sampling history, which is the one derived state that has to outlive a session: the
         // spine tails the newest journal, so a run begun yesterday is otherwise simply gone
-        // (list.md Phase 18).
+        // (Phase 18).
         var sampling = new SamplingStore(
             Path.Combine(paths.Data, "sampling.json"),
             loggerFactory.CreateLogger<SamplingStore>());
 
         sampling.Load();
 
-        // Systems worth remarking on, in two files with two different characters (list.md
-        // Phase 23). The book is the Commander's own words, so it is polled for hand edits and
+        // Systems worth remarking on, in two files with two different characters (Phase 23).
+        // The book is the Commander's own words, so it is polled for hand edits and
         // reports problems rather than dropping lines; the visits are derived stamps, so a bad
         // file is discarded and the worst it costs is hearing one remark twice. One set each for
         // the installation rather than per Commander: a note about a system is true whichever
@@ -780,7 +780,7 @@ public sealed class AppHost : IDisposable
             RestoreLoadouts = fid => recoveredLoadouts.Value.TryGetValue(fid, out var seen) ? seen : null,
         };
 
-        // The settings follow whoever the journal says is flying (list.md Phase 44). Subscribed
+        // The settings follow whoever the journal says is flying (Phase 44). Subscribed
         // before the priming tick, because the adoption happens inside it and the host that does
         // everything else on this signal does not exist yet — and this one does not wait for it:
         // a projection is a pure reading of the id and discards nothing, so it follows every
@@ -794,14 +794,14 @@ public sealed class AppHost : IDisposable
         var status = new GameStatusReader(journalDirectory, loggerFactory.CreateLogger<GameStatusReader>());
         var route = new NavRouteReader(journalDirectory, loggerFactory.CreateLogger<NavRouteReader>());
 
-        // A third of the same kind (list.md Phase 38): what Elite says each module in the ship the
+        // A third of the same kind (Phase 38): what Elite says each module in the ship the
         // Commander is flying actually draws, engineering included. The measured half of the power
         // gauge, and the only place those figures exist — the journal's ModuleInfo event is a
         // marker carrying none of them.
         var modulePower = new ModulePowerReader(
             journalDirectory, loggerFactory.CreateLogger<ModulePowerReader>());
 
-        // A third file of the same kind, and the markets read out of it (list.md Phase 36). The
+        // A third file of the same kind, and the markets read out of it (Phase 36). The
         // book is loaded here so a plan made in the first minute already knows the stations this
         // Commander has stood in; the reader files a new one whenever the game rewrites the file.
         var marketBook = new D47.Core.Knowledge.MarketBook(
@@ -810,7 +810,7 @@ public sealed class AppHost : IDisposable
 
         marketBook.Load();
 
-        // And a fourth (list.md Phase 37). Loaded here for the same reason the market book is:
+        // And a fourth (Phase 37). Loaded here for the same reason the market book is:
         // the Routing tab is drawn before anybody plots anything, and a tab that is empty until
         // the first plot of the session forgets what the Commander asked for last night.
         var planBook = new D47.Core.Knowledge.RoutePlanBook(
@@ -821,12 +821,12 @@ public sealed class AppHost : IDisposable
 
         // In memory rather than loaded, unlike the plan book above: a commodity price is the
         // thing here that ages fastest, so one restored from disk would look current because it
-        // was saved rather than because it is true (list.md Phase 49).
+        // was saved rather than because it is true (Phase 49).
         var commodityBoard = new D47.Core.Knowledge.CommodityBoard();
         var sourcingBoard = new D47.Core.Knowledge.SourcingBoard();
 
         // On disk, unlike the two boards: a carrier figure is the Commander's own statement rather
-        // than a price, and it is dated wherever it is used (list.md Phase 50).
+        // than a price, and it is dated wherever it is used (Phase 50).
         var carrierManifest = new D47.Core.Knowledge.CarrierManifest(
             Path.Combine(paths.Data, "carrier.json"),
             loggerFactory.CreateLogger<D47.Core.Knowledge.CarrierManifest>());
@@ -837,11 +837,11 @@ public sealed class AppHost : IDisposable
             loggerFactory.CreateLogger<D47.Core.Knowledge.MarketReader>());
 
         // After the status reader, because the spine stamps a surface position onto events that
-        // carry none — organic sampling is the whole reason (list.md Phase 18).
+        // carry none — organic sampling is the whole reason (Phase 18).
         var journal = new JournalSpine(journalDirectory, gameState, loggerFactory, () => status.Current);
 
         // The Commander's checklist and the proposals waiting on it, in two files beside the
-        // executable (list.md Phase 17). Two files rather than one because the trust boundary is
+        // executable (Phase 17). Two files rather than one because the trust boundary is
         // the point: the model writes proposals and never the list, and that is inspectable by
         // opening data\ rather than by reading this file.
         //
@@ -872,7 +872,7 @@ public sealed class AppHost : IDisposable
                 viewState.Load().ChecklistFilter ?? ChecklistService.Everything,
                 viewState.Load().ChecklistPartialGrades));
 
-        // What d47 remembers about the Commander (list.md Phase 31). One file, per Commander with
+        // What d47 remembers about the Commander (Phase 31). One file, per Commander with
         // the key inside the document, and it has both halves of the store pattern Phase 23 split
         // in two: the Commander's own words are in it, so it is polled for hand edits and reports
         // problems rather than dropping lines — and it is keyed per character, because who is
@@ -893,7 +893,7 @@ public sealed class AppHost : IDisposable
         var memoryObserver = new MemoryObserver(memoryBook);
 
         // What d47 has noticed the Commander keeps doing, from the journals already on this disk
-        // (list.md Phase 32). Same store shape as memories and keyed the same way, because it is
+        // (Phase 32). Same store shape as memories and keyed the same way, because it is
         // about the same person — and separate from them because a claim carries a count, a window
         // and a dismissal, none of which a remembered fact has anywhere to put.
         var habits = new D47.Core.Habits.HabitStore(
@@ -942,7 +942,7 @@ public sealed class AppHost : IDisposable
             });
         }
 
-        // The Commander's long arcs (list.md Phase 34). The third store keyed on the Frontier id
+        // The Commander's long arcs (Phase 34). The third store keyed on the Frontier id
         // and the second walk over the same corpus — separate from habits because an arc carries a
         // definition of done, a start date and a person's decision to set it aside, none of which a
         // noticed habit has anywhere to put.
@@ -952,7 +952,7 @@ public sealed class AppHost : IDisposable
 
         goals.Poll();
 
-        // The stories the Commander flies (list.md Phase 47). The same store shape again, keyed
+        // The stories the Commander flies (Phase 47). The same store shape again, keyed
         // per Commander; the book folds the journal after each story's acceptance and is the one
         // thing the tick, the prompt and the tab all read. Built before the callouts because it
         // has one, and before the turn loop because the prompt carries the story.
@@ -1018,7 +1018,7 @@ public sealed class AppHost : IDisposable
         var callouts = BuildCallouts(
             loaded, loggerFactory, checklists, lore, loreVisits, memoryBook, habitBook, adventureBook);
 
-        // Acting on the game without being asked (list.md Phase 10, item 2). Each member is off
+        // Acting on the game without being asked (Phase 10, item 2). Each member is off
         // until its own row is switched on, which is why the runner reads the setting per tick
         // rather than being told once at construction.
         var autonomous = new AutonomousActionRunner(loggerFactory.CreateLogger<AutonomousActionRunner>())
@@ -1044,7 +1044,7 @@ public sealed class AppHost : IDisposable
         tick.Add("journal", context =>
         {
             // The first tick is the replay of the backlog, and the switch signal has to know that
-            // (list.md Phase 44): a Commander change met during the replay is history, not a login.
+            // (Phase 44): a Commander change met during the replay is history, not a login.
             var events = journal.Poll(priming: context.IsFirst);
 
             arrived = events;
@@ -1062,7 +1062,7 @@ public sealed class AppHost : IDisposable
             modulePower.Poll();
 
             // The commodity board the Commander is standing in front of, if they have opened one
-            // (list.md Phase 36). Given the position from the journal, because Market.json does
+            // (Phase 36). Given the position from the journal, because Market.json does
             // not carry one and a market that cannot be placed cannot be routed to.
             markets.Poll(gameState.Active?.Location.StarPos);
 
@@ -1123,7 +1123,7 @@ public sealed class AppHost : IDisposable
         });
 
         // A story under way is caught up before the priming tick replays the current session
-        // (list.md Phase 47): the walk is bounded to the files since the earliest acceptance, so
+        // (Phase 47): the walk is bounded to the files since the earliest acceptance, so
         // with nothing under way it reads nothing, and a beat that fired while d47 was closed is
         // in the standing before the first live event arrives.
         adventureBook.CatchUp(D47.Core.Adventures.AdventureBook.FilesToWalk(journalDirectory, adventureBook.EarliestAcceptance()));
@@ -1154,7 +1154,7 @@ public sealed class AppHost : IDisposable
 
         var spend = new SpendTracker(spendLedger);
 
-        // Clocks, timers and alarms (list.md Phase 24). Alarms are a file because they are a
+        // Clocks, timers and alarms (Phase 24). Alarms are a file because they are a
         // promise about a wall-clock moment that outlives the process; timers live only in the
         // Timekeeper, because a forty-minute countdown through a crash is a question nobody can
         // answer.
@@ -1166,7 +1166,7 @@ public sealed class AppHost : IDisposable
 
         var timekeeper = new Timekeeper(alarms);
 
-        // The Commander's ship builds (list.md Phase 26). Its own store, because the plan owns
+        // The Commander's ship builds (Phase 26). Its own store, because the plan owns
         // what and the checklist owns when - nothing crosses between them unasked.
         var shipBuilds = new ShipBuildStore(
             Path.Combine(paths.Data, "ships.json"),
@@ -1178,11 +1178,11 @@ public sealed class AppHost : IDisposable
         // and never writes to it directly: the plan owns what, the checklist owns when.
         var shipPlans = new ShipPlanService(shipBuilds, checklists, () => gameState.Active);
 
-        // And the one thing that watches the two for drifting apart (list.md Phase 38). It asks
+        // And the one thing that watches the two for drifting apart (Phase 38). It asks
         // through the same proposal boundary the promote button uses and writes nothing itself.
         var drift = new ShipDriftWatch(shipPlans, checklists);
 
-        // Which core flies which ship (list.md Phase 35). Its own file rather than a column on the
+        // Which core flies which ship (Phase 35). Its own file rather than a column on the
         // one above: a build is a plan, so hanging a preference off one would create a plan as a
         // side effect of stating the preference, and lose the preference when the plan was deleted.
         var shipCoreStore = new ShipCoreStore(
@@ -1193,7 +1193,7 @@ public sealed class AppHost : IDisposable
 
         var shipCores = new ShipCoreService(shipCoreStore, () => gameState.Active);
 
-        // And the same arrangement on foot (list.md Phase 27). Its own file rather than a second
+        // And the same arrangement on foot (Phase 27). Its own file rather than a second
         // array in the ship one, because the game separates ship and on-foot hard and a Commander
         // hand-editing a suit should not be reading past twenty hardpoints to find it.
         var onFootBuilds = new D47.Core.Loadout.OnFootBuildStore(
@@ -1205,7 +1205,7 @@ public sealed class AppHost : IDisposable
         var onFootPlans = new D47.Core.Loadout.OnFootPlanService(
             onFootBuilds, checklists, () => gameState.Active);
 
-        // The engineer solver (list.md Phase 28). It reads both stores rather than being handed
+        // The engineer solver (Phase 28). It reads both stores rather than being handed
         // their contents, because a ranking is only as current as the plans under it — and both
         // of them move while the panel is open.
         var unlocks = new D47.Core.Engineers.EngineerPlanService(
@@ -1220,7 +1220,7 @@ public sealed class AppHost : IDisposable
         // library, which is replaced whenever the Commander drops a file into data/audio.
         AppHost? self = null;
 
-        // A session, written up (list.md Phase 33). The one thing d47 produces that the Commander
+        // A session, written up (Phase 33). The one thing d47 produces that the Commander
         // takes away, so it goes to its own folder beside the executable rather than into data/logs,
         // which already holds d47's diagnostics and would make "my log" a support question.
         var logbook = new D47.Core.Logbook.LogbookBook(
@@ -1241,8 +1241,8 @@ public sealed class AppHost : IDisposable
             // against one model and written by another would make the quote a fiction — which
             // LogbookBook.WriteAsync checks for rather than assumes.
             //
-            // The conversation model, deliberately, and not Turns.BackgroundModel (list.md
-            // Phase 54). This one is quoted at a price the Commander agrees to before anything
+            // The conversation model, deliberately, and not Turns.BackgroundModel (Phase 54).
+            // This one is quoted at a price the Commander agrees to before anything
             // is written, so the cheap model is not d47's to substitute — and the check above is
             // exactly what would refuse the write if it were. "It uses FlavourTurn" is the
             // reasoning that would otherwise move this by accident.
@@ -1268,7 +1268,7 @@ public sealed class AppHost : IDisposable
         // turn the Commander was hoping to hear.
         //
         // The Commander's own folder is a second source beside the embedded one, drop-ins winning
-        // by name (list.md Phase 12, "Custom Sound Cues"). Nothing here holds the resulting
+        // by name (Phase 12, "Custom Sound Cues"). Nothing here holds the resulting
         // library: everything that plays a cue asks the host for the current one, so a rebuild is
         // one assignment rather than a set of references to chase.
         var drops = new FolderAudioSource(paths.Audio, loggerFactory.CreateLogger<FolderAudioSource>());
@@ -1302,19 +1302,19 @@ public sealed class AppHost : IDisposable
         catch (Exception ex)
         {
             // No audio output is a capability being off, not a startup failure. d47 stays
-            // fully usable in text (list.md Phase 3, "Capabilities as state, not guard").
+            // fully usable in text (Phase 3, "Capabilities as state, not guard").
             logger.LogError(ex, "No audio output could be opened; D47 will be silent");
         }
 
         // Listening. The microphone runs continuously into the gate and the gate decides which
         // part of that stream was addressed to d47 — push-to-talk is a policy over the stream,
-        // not a reason to start and stop the device (list.md Phase 6).
+        // not a reason to start and stop the device (Phase 6).
         var models = new HttpModelStore(paths, loggerFactory.CreateLogger<HttpModelStore>());
         var transcriber = new WhisperTranscriber(loggerFactory.CreateLogger<WhisperTranscriber>());
         var gate = new ListenGate(WasapiMicrophone.SampleRate, loggerFactory.CreateLogger<ListenGate>());
 
         // Between the microphone and the gate, consuming the arbiter's render reference tap
-        // rather than a loopback capture (list.md Phase 13, architecture.md D7). The tap has
+        // rather than a loopback capture (Phase 13, architecture.md D7). The tap has
         // existed since Phase 5 with nothing subscribed to it, precisely so that this line
         // could be added without opening the component every voice path depends on.
         var echo = new EchoCanceller(
@@ -1332,7 +1332,7 @@ public sealed class AppHost : IDisposable
         var microphone = new WasapiMicrophone(echo, loggerFactory.CreateLogger<WasapiMicrophone>());
         var pushToTalk = new PushToTalkKey(loggerFactory.CreateLogger<PushToTalkKey>());
 
-        // The stick's half of push-to-talk, and the two of them as one gate (list.md Phase 53).
+        // The stick's half of push-to-talk, and the two of them as one gate (Phase 53).
         // Both are Core types: reading a controller is already a Core contract where reading a
         // key is a P/Invoke, and the asymmetry buys a path that is driveable with nothing
         // plugged in.
@@ -1373,7 +1373,7 @@ public sealed class AppHost : IDisposable
         var clipboardOffer = new D47.Core.Conversation.ClipboardOffer();
 
         // The Commander's HOTAS switches, in the same shape and beside the same executable
-        // (list.md Phase 21). The reader is the one hardware component here that stays
+        // (Phase 21). The reader is the one hardware component here that stays
         // subscribed as well as being polled — hot-plug and slow enumeration are the same code
         // path, and a startup-only enumeration reports three of six devices.
         var switches = new SwitchStore(
@@ -1430,7 +1430,7 @@ public sealed class AppHost : IDisposable
         var routePlanner = new D47.Knowledge.SpanshRouteService(
             loggerFactory.CreateLogger<D47.Knowledge.SpanshRouteService>());
 
-        // d47's own trade planner (list.md Phase 36). It reaches the same host the two above do
+        // d47's own trade planner (Phase 36). It reaches the same host the two above do
         // and shares their one setting and their one disclosure, because it is the same decision a
         // Commander is making.
         var tradePlanner = new D47.Knowledge.SpanshTradePlanService(
@@ -1511,7 +1511,7 @@ public sealed class AppHost : IDisposable
                     InstalledModels = () => models.Installed(),
 
                     // What the gate policy is actually doing, which is the question a Commander
-                    // running hands free is asking when they ask this one (list.md Phase 13).
+                    // running hands free is asking when they ask this one (Phase 13).
                     Microphone = () => gate.State,
                     EchoState = () => (echo.IsActive, echo.Unavailable),
                     WakeWords = () => self?.Wake.Phrases ?? [],
@@ -1557,7 +1557,7 @@ public sealed class AppHost : IDisposable
 
                 // Constructed unconditionally and gated by its setting rather than by whether it
                 // exists: the row that turns it on has to work without a restart, and a service
-                // built only when the setting was already true could not (list.md Phase 4).
+                // built only when the setting was already true could not (Phase 4).
                 galaxy,
                 routePlanner,
                 tradePlanner,
@@ -1571,7 +1571,7 @@ public sealed class AppHost : IDisposable
                     : Task.FromResult(SecretCheck.Unreachable("D47 is still starting up.")),
 
                 // Where the Commander is standing, which only Status.json knows — ScanOrganic
-                // carries no position at all (list.md Phase 18).
+                // carries no position at all (Phase 18).
                 () => status.Current,
 
                 // The same window object the injector asks about before every key. One thing
@@ -1588,7 +1588,7 @@ public sealed class AppHost : IDisposable
                 },
                 lore,
 
-                // The Commander's timers and alarms (list.md Phase 24). The store polls itself
+                // The Commander's timers and alarms (Phase 24). The store polls itself
                 // from the tick below, so an alarm edited by hand is live without a restart.
                 timekeeper,
 
@@ -1597,11 +1597,11 @@ public sealed class AppHost : IDisposable
                 () => TimeZoneInfo.Local,
                 shipPlans,
 
-                // And the suit and weapon plans beside them (list.md Phase 27). Two stores rather
+                // And the suit and weapon plans beside them (Phase 27). Two stores rather
                 // than one, because the game separates ship and on-foot hard.
                 onFootPlans,
 
-                // Which engineer to go and get next, read across both of them (list.md Phase 28).
+                // Which engineer to go and get next, read across both of them (Phase 28).
                 unlocks,
 
                 // The endpoint half of web search, for the egress row. Asked each time because
@@ -1609,39 +1609,39 @@ public sealed class AppHost : IDisposable
                 // computed at render time so it has to be able to change underneath.
                 () => self?.SearchReachesTheWeb ?? true,
 
-                // What the endpoint said it serves (list.md Phase 29). Empty until the handshake
+                // What the endpoint said it serves (Phase 29). Empty until the handshake
                 // answers, which is the state the model picker was designed for from Phase 4 —
                 // the row accepts free text, so an empty list has always been a supported answer
                 // rather than a broken one.
                 () => self?.EndpointModelIds ?? [],
 
-                // What d47 remembers about the Commander (list.md Phase 31). Read by two
+                // What d47 remembers about the Commander (Phase 31). Read by two
                 // capabilities — its own, and the privacy section, which is where emptying it lives
                 // rather than in a second place to look.
                 memoryBook,
 
-                // And what it has noticed about them (list.md Phase 32). Read by two capabilities
+                // And what it has noticed about them (Phase 32). Read by two capabilities
                 // as well — its own, and privacy, which is where throwing it away lives.
                 habitBook,
 
-                // What the "read my journals" button does (list.md Phase 32).
+                // What the "read my journals" button does (Phase 32).
                 () => MineHabits,
 
-                // Turning a session into something worth keeping (list.md Phase 33).
+                // Turning a session into something worth keeping (Phase 33).
                 logbook,
 
-                // The campaigns that outlive a checklist (list.md Phase 34).
+                // The campaigns that outlive a checklist (Phase 34).
                 goalBook,
 
                 // What the "read my journals" button does for the arcs' ages.
                 () => BackfillGoals,
 
-                // Which core flies which ship (list.md Phase 35). Read by the persona capability
+                // Which core flies which ship (Phase 35). Read by the persona capability
                 // for its two rows, its two protected tools, and the one sentence the model is
                 // allowed to know about a binding.
                 shipCores,
 
-                // And where a plan goes once it is made (list.md Phase 37), so the spoken route
+                // And where a plan goes once it is made (Phase 37), so the spoken route
                 // and the drawn one are one answer rather than two.
                 planBook,
 
@@ -1649,7 +1649,7 @@ public sealed class AppHost : IDisposable
                 // inside a capability because two of them write it and the router reads it.
                 clipboardOffer,
 
-                // The three waits the compound ship commands need (list.md Phase 52). Core owns
+                // The three waits the compound ship commands need (Phase 52). Core owns
                 // the sequences and none of the waiting, which is what lets the whole boost loop
                 // run in a test in microseconds against a scripted status stream.
                 new ShipCommandSurface
@@ -1678,12 +1678,12 @@ public sealed class AppHost : IDisposable
                     NextStatus = token => NextStatus(status, token),
                 },
 
-                // Where a commodity answer is posted on its way out (list.md Phase 49), so the
+                // Where a commodity answer is posted on its way out (Phase 49), so the
                 // Routing tab draws what was just said rather than asking again.
                 commodityBoard,
 
                 // What the Commander says is aboard their carrier, and where a build's shopping
-                // list is posted on its way out (list.md Phase 50).
+                // list is posted on its way out (Phase 50).
                 carrierManifest,
                 sourcingBoard,
 
@@ -1805,7 +1805,7 @@ public sealed class AppHost : IDisposable
                             ChecklistCapability.Live(checklists),
 
                             Join(
-                                // The story under way, told from inside (list.md Phase 47).
+                                // The story under way, told from inside (Phase 47).
                                 // Below the breakpoint beside the game state, so a beat firing
                                 // costs the cached prefix nothing; and the turn and the ending
                                 // are withheld until their beats, which is the block's own rule.
@@ -1816,7 +1816,7 @@ public sealed class AppHost : IDisposable
 
                             Join(
                                 // Both dates, already worked out, below the cache breakpoint
-                                // where a per-turn value costs nothing (list.md Phase 24). The
+                                // where a per-turn value costs nothing (Phase 24). The
                                 // model is never asked to add 1286 to anything.
                                 UtilitiesCapability.Live(
                                     timekeeper, SystemWallClock.Instance.UtcNow, TimeZoneInfo.Local),
@@ -1830,7 +1830,7 @@ public sealed class AppHost : IDisposable
                                     self?.SearchReachesTheWeb ?? true))))))),
         };
 
-        // The catalogue a generated story may draw its stops from (list.md Phase 47). A different
+        // The catalogue a generated story may draw its stops from (Phase 47). A different
         // host from the galaxy search, behind its own row and its own disclosure.
         var notablePlaces = new D47.Knowledge.GecNotablePlacesService(
             loggerFactory.CreateLogger<D47.Knowledge.GecNotablePlacesService>());
@@ -1838,7 +1838,7 @@ public sealed class AppHost : IDisposable
         // What writes an adventure, once, for the Commander to agree to. Not a tool: it runs from
         // the panel with the flavour turn's bookkeeping, and the model it asks never sees an id.
         //
-        // The conversation model, deliberately, and not turns.BackgroundModel (list.md Phase 54).
+        // The conversation model, deliberately, and not turns.BackgroundModel (Phase 54).
         // Every reason the floor exists points the other way here: the Commander pressed a button
         // and is waiting, the output must name real systems exactly, it is validated and re-asked
         // on refusal, and it already asks Medium effort against token budgets an order of
@@ -1931,7 +1931,7 @@ public sealed class AppHost : IDisposable
             host.Panel.Append($"[error] {line}{Environment.NewLine}", TranscriptKind.Technical));
 
         // That the microphone is open, on both surfaces, as a property of the gate policy rather
-        // than of any one capability (list.md Phase 13). Set straight onto the view model from
+        // than of any one capability (Phase 13). Set straight onto the view model from
         // whichever thread the change arrived on, following the same rule the avatar does: a
         // view model is affine to nothing and the view marshals.
         gate.StateChanged += state => host.ShowMicrophone(state);
@@ -1953,7 +1953,7 @@ public sealed class AppHost : IDisposable
         audio.Mix = loaded.Audio;
 
         // From here on, a setting takes effect because it changed — not because something was
-        // restarted (list.md Phase 4, "Apply every setting without a restart").
+        // restarted (Phase 4, "Apply every setting without a restart").
         settings.Changed += host.OnSettingsChanged;
 
         // The one instance, shared: the injector's foreground rule and the overlay's visibility
@@ -1972,7 +1972,7 @@ public sealed class AppHost : IDisposable
         host.OnFootBuilds = onFootBuilds;
         host.Alarms = alarms;
 
-        // The Commander switch (list.md Phase 44). Subscribed after the priming tick, which is
+        // The Commander switch (Phase 44). Subscribed after the priming tick, which is
         // fine and also not the point: the signal carries whether it happened during priming, and
         // the handler honours that rather than this ordering. The settings followed the same
         // signal earlier, before the host existed.
@@ -2037,7 +2037,7 @@ public sealed class AppHost : IDisposable
         {
             pushToTalk.Poll();
 
-            // And the stick, on the same tick (list.md Phase 53). The polling rate is not a risk
+            // And the stick, on the same tick (Phase 53). The polling rate is not a risk
             // here for the reason it is not one above: a button read on this tick is no less
             // responsive than the key it replaces.
             pushToTalkButton.Poll(controllers.Poll());
@@ -2054,12 +2054,12 @@ public sealed class AppHost : IDisposable
 
             // Where the hands-free gate opens and closes. The detector runs on the audio thread
             // and records what it decided; this is the thread that acts on it, so a real-time
-            // callback never plays a cue or hands an utterance to a transcriber (list.md
-            // Phase 13, architecture.md §4).
+            // callback never plays a cue or hands an utterance to a transcriber (Phase 13,
+            // architecture.md §4).
             gate.Poll(context.Now);
         });
 
-        // Two sources, one gate (list.md Phase 53). Either opens the microphone and the last
+        // Two sources, one gate (Phase 53). Either opens the microphone and the last
         // release closes it, so letting go of the key while the button is still held does not cut
         // the Commander off mid-sentence.
         pushToTalk.Pressed += sources.KeyPressed;
@@ -2107,7 +2107,7 @@ public sealed class AppHost : IDisposable
 
         // The switch path, in the tick's own shape: read the file if it changed, read the
         // hardware, decide. Nothing here presses anything — the drain below does that, on the
-        // thread pool, for the same reason the autonomous drain does (list.md Phase 21).
+        // thread pool, for the same reason the autonomous drain does (Phase 21).
         tick.Add("switches", context =>
         {
             switches.Poll();
@@ -2126,7 +2126,7 @@ public sealed class AppHost : IDisposable
                     // Gated by key injection as well as by its own row. A Commander who has not
                     // allowed d47 to press keys at all has not allowed it for switches either.
                     // A position that names a page of the panel is not behind either row —
-                    // it presses nothing (list.md Phase 46).
+                    // it presses nothing (Phase 46).
                     Enabled = settings.Current.Actions.Keyboard && settings.Current.Actions.Switches,
                     Destinations = panel.Destinations,
                     Showing = panel.Showing,
@@ -2139,7 +2139,7 @@ public sealed class AppHost : IDisposable
             host.ShowSwitches(SwitchCapability.Annunciator(reconciler.States));
         });
 
-        // The first thing d47 does that nothing external triggers (list.md Phase 24). Every other
+        // The first thing d47 does that nothing external triggers (Phase 24). Every other
         // subscriber here is reacting to something that arrived; this one asks whether time has
         // passed. The now comes from the tick's own context, which is what keeps the clock rule
         // and lets the replay harness run a day of alarms in a second.
@@ -2150,7 +2150,7 @@ public sealed class AppHost : IDisposable
         });
 
         // Ship builds are hand-editable, and buying a hull the Commander had planned for offers
-        // to adopt the plan onto it rather than making them re-point it (list.md Phase 26). Its
+        // to adopt the plan onto it rather than making them re-point it (Phase 26). Its
         // own subscriber rather than a line in the journal one, because it needs the host that
         // does not exist when that closure is written.
         // The context is unused: what this reads is the events the journal subscriber above put
@@ -2162,7 +2162,7 @@ public sealed class AppHost : IDisposable
 
             // Both halves of the same offer. On foot the buy event carries the id, which is the
             // opposite of the ship side - ShipyardBuy names no id for the new hull at all and the
-            // ShipyardNew written after it does (list.md Phase 27).
+            // ShipyardNew written after it does (Phase 27).
             foreach (var adopted in shipPlans.Observe(arrived).Concat(onFootPlans.Observe(arrived)))
             {
                 host.Panel.Append($"{adopted}{Environment.NewLine}");
@@ -2170,7 +2170,7 @@ public sealed class AppHost : IDisposable
             }
 
             // Boarding a ship whose build carries engineering the checklist has not got is the
-            // moment to say so, once (list.md Phase 38). Spoken, because the Commander is in the
+            // moment to say so, once (Phase 38). Spoken, because the Commander is in the
             // cockpit at that moment and not looking at a window; the Ships tab carries the same
             // question as a banner for as long as it goes unanswered.
             if (drift.Observe(arrived) is { Length: > 0 } asked)
@@ -2180,7 +2180,7 @@ public sealed class AppHost : IDisposable
             }
         });
 
-        // A core per ship (list.md Phase 35). The store is read first so a hand edit is live, then
+        // A core per ship (Phase 35). The store is read first so a hand edit is live, then
         // the ship the Commander is in is compared against the one whose binding is already
         // aboard. Nothing here writes a binding: this reads what they already said.
         //
@@ -2196,7 +2196,7 @@ public sealed class AppHost : IDisposable
             }
         });
 
-        // What d47 remembers, on the tick like every other store (list.md Phase 31). Four things,
+        // What d47 remembers, on the tick like every other store (Phase 31). Four things,
         // and the order matters: the file is read first so a hand edit is live, then the journal's
         // two observations are written if they changed, then expiry runs on a coarse interval, and
         // only then is the recall block recomputed — so the block reflects this tick's store rather
@@ -2264,7 +2264,7 @@ public sealed class AppHost : IDisposable
         tick.Add("ambience", _ => host.FollowSituation(status.Current));
 
         // And the folder those tracks came from, which the Commander can add to while d47 is
-        // running (list.md Phase 12, "Pick up dropped-in audio without a restart"). The same
+        // running (Phase 12, "Pick up dropped-in audio without a restart"). The same
         // shape the journal reader uses, and for the same reason: nothing here owns a thread or
         // a file watcher, so the tick drives it in production and a test calls Poll directly.
         tick.Add("audio-folder", context => host.RescanAudio(context, drops, cueLogger));
@@ -2315,7 +2315,7 @@ public sealed class AppHost : IDisposable
         var engine = new CalloutEngine(loggers.CreateLogger<CalloutEngine>())
             .Add(new DangerCallout())
 
-            // Above everything except danger itself (list.md Phase 15). It is the only warning
+            // Above everything except danger itself (Phase 15). It is the only warning
             // here that arrives before the thing it warns about, and it has a median of six to
             // eight seconds to be useful in.
             .Add(new AnnouncedAttackCallout())
@@ -2355,7 +2355,7 @@ public sealed class AppHost : IDisposable
 
             // Low on purpose. It is a standing condition rather than news, and it stands down for
             // anything above it — a remark about enemy territory arriving as somebody opens fire
-            // is worse than silence (list.md Phase 15).
+            // is worse than silence (Phase 15).
             .Add(new RivalTerritoryCallout())
 
             // Phase 23. Below the warnings and above the ambient line: it is news, but it is news
@@ -2379,7 +2379,7 @@ public sealed class AppHost : IDisposable
             // nothing d47 worked out about somebody outranks something the game just said. Off
             // until the Commander switches it on — the only callout here that ships that way.
             .Add(new HabitCallout(habits))
-            // A beat of the Commander's story, when they reach it (list.md Phase 47). Also the one
+            // A beat of the Commander's story, when they reach it (Phase 47). Also the one
             // path the live journal reaches the adventure book by.
             .Add(new D47.Core.Adventures.AdventureCallout(adventures))
             .Add(new AmbientCallout())
@@ -2494,7 +2494,7 @@ public sealed class AppHost : IDisposable
             // The key may legitimately be absent. A provider whose key is optional is a complete
             // configuration with an empty box — a model on this machine has no account to get a
             // key from — so the resolution is attempted and its absence is only fatal if the
-            // factory says so (list.md Phase 29).
+            // factory says so (Phase 29).
             var resolved = ResolveKey(selected);
 
             provider = LlmProviderFactory.Create(selected, resolved?.Key, current.Llm.Endpoint);
@@ -2518,7 +2518,7 @@ public sealed class AppHost : IDisposable
         Turns.Provider = provider;
         Turns.Model = current.Llm.Model;
 
-        // Resolved once, here, rather than at each of the eight call sites (list.md Phase 54).
+        // Resolved once, here, rather than at each of the eight call sites (Phase 54).
         // Null means the Commander has not split the two, so the background calls take the
         // conversation model and nothing about them changes.
         Turns.BackgroundModel = current.Llm.BackgroundModel ?? current.Llm.Model;
@@ -2529,7 +2529,7 @@ public sealed class AppHost : IDisposable
         Turns.EffortCeiling = current.Llm.EffortCeiling;
 
         // Position 4, both halves: the turn path is cached above the breakpoint, so the story's
-        // thirteen hundred tokens are paid once per edit rather than per turn (list.md Phase 43).
+        // thirteen hundred tokens are paid once per edit rather than per turn (Phase 43).
         Turns.AboutMe = CommanderStory.Compose(current.Llm.CharacterSheet, current.Llm.AboutMe, withStory: true);
 
         // Position 3 of the assembled prompt, and null when personality is off. Null rather
@@ -2542,8 +2542,8 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>
-    /// Puts the recall block into the prompt, and <b>only when it has actually changed</b> (list.md
-    /// Phase 31, "Recall arrives above the cache breakpoint").
+    /// Puts the recall block into the prompt, and <b>only when it has actually changed</b> (Phase 31
+    /// , "Recall arrives above the cache breakpoint").
     /// <para>
     /// <b>The comparison is the whole point of this method existing.</b> Recall sits above the cache
     /// breakpoint, so assigning it invalidates the entire cached prefix — the 39,000-odd bytes of
@@ -2573,7 +2573,7 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>
-    /// Says what an expiry took, when it took something worth saying (list.md Phase 31, "Forgetting
+    /// Says what an expiry took, when it took something worth saying (Phase 31, "Forgetting
     /// is said out loud when it matters").
     /// <para>
     /// <b>Only the Commander's own words.</b> An observation aging out is d47 forgetting where
@@ -2614,18 +2614,18 @@ public sealed class AppHost : IDisposable
     /// <summary>
     /// Rebuilds everything downstream of the speech settings: the voice provider, the voice
     /// itself, the cues, the bed, the output device and the retry policy. Called at startup and
-    /// again on any change, so the two paths cannot drift (list.md Phase 4, "Apply every
+    /// again on any change, so the two paths cannot drift (Phase 4, "Apply every
     /// setting without a restart").
     /// </summary>
     /// <summary>
-    /// What the language-model endpoint said it serves (list.md Phase 29). Empty until a
+    /// What the language-model endpoint said it serves (Phase 29). Empty until a
     /// handshake has answered, and empty again for a provider with no endpoint to ask.
     /// </summary>
     internal IReadOnlyList<string> EndpointModelIds => _endpointModels;
 
     /// <summary>
     /// Asks the endpoint what it serves, if it is the kind of thing that can be asked and has not
-    /// been asked already (list.md Phase 29).
+    /// been asked already (Phase 29).
     /// <para>
     /// <b>Fire and forget, and only on a change of address.</b> Settings are re-applied on every
     /// edit to any row — a persona switch, a volume change — and a handshake on each of those
@@ -2725,7 +2725,7 @@ public sealed class AppHost : IDisposable
             TtsProviderCatalog.Selected(VoiceGroups.ProviderFor(Settings.Current.Speech, group)));
 
     /// <summary>
-    /// Why the voice picker has nothing in it, when it has nothing in it (list.md Phase 19;
+    /// Why the voice picker has nothing in it, when it has nothing in it (Phase 19;
     /// docs/spikes/elevenlabs-voice-sources.md §3).
     /// <para>
     /// Four situations used to arrive as one empty list and one generic sentence telling the
@@ -2745,7 +2745,7 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>
-    /// One voice per core, chosen once and written to settings (list.md Phase 11, #33).
+    /// One voice per core, chosen once and written to settings (Phase 11, #33).
     /// <para>
     /// Guarded by a flag rather than by "are there pairings yet", so a Commander who cleared
     /// every pairing by hand does not have them silently regenerated on the next launch. Runs
@@ -2754,7 +2754,7 @@ public sealed class AppHost : IDisposable
     /// </para>
     /// </summary>
     /// <summary>
-    /// A voice for the core aboard, chosen now if it has none (list.md Phase 11, #33).
+    /// A voice for the core aboard, chosen now if it has none (Phase 11, #33).
     /// <para>
     /// The lazy half of the pairing, and the half that answers what a Commander actually
     /// notices: selecting a core they have never used should sound like that core, not like the
@@ -3027,7 +3027,7 @@ public sealed class AppHost : IDisposable
             // How the core aboard should be performed, asked per sentence because a Commander
             // switches core while d47 is running (#49).
             //
-            // ONE CLIENT SERVES ALL SIX SLOTS (list.md Phase 57), so this reaches every slot on
+            // ONE CLIENT SERVES ALL SIX SLOTS (Phase 57), so this reaches every slot on
             // OpenAI rather than the ship's AI alone - the Commander's call, 2026-08-26, taking
             // the small honest cost over a second client. A second client would be correct in
             // every configuration and would put two concurrency gates against one account, which
@@ -3079,7 +3079,7 @@ public sealed class AppHost : IDisposable
 
             // Pairing a voice to each core needs the list, so it starts once the list arrives
             // rather than at startup. Background and best-effort: picking a character must never
-            // wait on it (list.md Phase 11, #33).
+            // wait on it (Phase 11, #33).
             //
             // Only for the ship's own provider. A pairing is the companion's voice, and pairing
             // eleven cores against the list belonging to whoever speaks for local chat would
@@ -3109,7 +3109,7 @@ public sealed class AppHost : IDisposable
     /// <summary>
     /// Which situation the ambience is playing for, and which track is next. Held here because
     /// it is the only thing that spans ticks; everything it decides is a pure function of the
-    /// situation and the library (list.md Phase 12).
+    /// situation and the library (Phase 12).
     /// </summary>
     private readonly Ambience _ambience = new();
 
@@ -3119,7 +3119,7 @@ public sealed class AppHost : IDisposable
     private TimeSpan _sinceAudioScan = TimeSpan.Zero;
 
     /// <summary>
-    /// How often the memory store is checked for entries past their expiry (list.md Phase 31).
+    /// How often the memory store is checked for entries past their expiry (Phase 31).
     /// Coarse on purpose: an expiry is a boundary being crossed rather than something happening, so
     /// the only cost of a wide interval is that a fact lives a few minutes longer than it was asked
     /// to.
@@ -3141,7 +3141,7 @@ public sealed class AppHost : IDisposable
         new(StringComparer.Ordinal);
 
     /// <summary>
-    /// What kind of switch the settings write about to arrive is (list.md Phase 35). A field
+    /// What kind of switch the settings write about to arrive is (Phase 35). A field
     /// rather than a parameter because the write goes through the settings row like every other
     /// caller — that is what keeps the ship-AI-name rule and the protected rule in one place —
     /// and the row cannot carry a reason. Set immediately before the write and cleared after it,
@@ -3150,7 +3150,7 @@ public sealed class AppHost : IDisposable
     private PersonaSwitch _personaCause = PersonaSwitch.Selected;
 
     /// <summary>
-    /// Puts the core the Commander bound to this ship aboard (list.md Phase 35, "Switching ships
+    /// Puts the core the Commander bound to this ship aboard (Phase 35, "Switching ships
     /// switches the core").
     /// <para>
     /// Through the settings row rather than straight into the host, so this is a persona change
@@ -3184,7 +3184,7 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>
-    /// What a new Commander logging in actually changes (list.md Phase 44). The Commander's ruling,
+    /// What a new Commander logging in actually changes (Phase 44). The Commander's ruling,
     /// 2026-08-21: <i>"The old transcript goes away, a new one is created. New ship, new AI."</i>
     /// <para>
     /// <b>Adoption discards nothing.</b> Nobody to somebody is d47 learning who has been flying
@@ -3243,7 +3243,7 @@ public sealed class AppHost : IDisposable
 
     /// <summary>
     /// Writes down when the core aboard stopped being aboard, so a gap reaction can be about a
-    /// month rather than about an evening (list.md Phase 35). A read-modify-write, like every
+    /// month rather than about an evening (Phase 35). A read-modify-write, like every
     /// other writer of this file: it carries every surface's state, and a copy taken earlier and
     /// written back later would revert whatever the settings page or the headset had saved since.
     /// </summary>
@@ -3342,7 +3342,7 @@ public sealed class AppHost : IDisposable
         // not wait behind it.
         Noted?.Invoke($"Switched to {change.Current.Name}");
 
-        // A quiet arrival is a real switch with nothing to say (list.md Phase 35). The voice, the
+        // A quiet arrival is a real switch with nothing to say (Phase 35). The voice, the
         // wake word, the transcript and the mark above have all already changed; what is skipped
         // is a spoken line and the model call behind it. Three cases reach here — a core the
         // Commander has met arriving because they boarded the ship they bound it to, the binding
@@ -3357,7 +3357,7 @@ public sealed class AppHost : IDisposable
             // The Commander chose a core on a settings row and nothing has happened yet: the
             // voice has to be fetched and, on a gap, a model has to be asked for a line. Said on
             // the row they touched, because a Commander who clicked there does not look
-            // elsewhere (list.md Phase 12).
+            // elsewhere (Phase 12).
             PersonaSettling?.Invoke(true);
 
             var line = change.Current.Intro;
@@ -3497,7 +3497,7 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>
-    /// The ambience layer, following what the Commander is doing (list.md Phase 12).
+    /// The ambience layer, following what the Commander is doing (Phase 12).
     /// <para>
     /// Called every tick and almost always does nothing: <see cref="Ambience.Enter"/> answers
     /// false unless the situation actually changed, and a situation changes a handful of times
@@ -3546,7 +3546,7 @@ public sealed class AppHost : IDisposable
         // What to build, what to release, which slots moved and whose list to ask for again are
         // decided in Core, where a test can reach them; what to build and how to fetch it stay
         // here, where the loggers and the secret store are. Both of the faults an afternoon's
-        // hand-testing found lived on the far side of that line (list.md Phase 19), and Phase 57
+        // hand-testing found lived on the far side of that line (Phase 19), and Phase 57
         // widened the answer from one bool to six slots without moving the line.
         var plan = SpeechWiring.Plan(
             _speechWiring,
@@ -3582,7 +3582,7 @@ public sealed class AppHost : IDisposable
 
         // One decorator per slot over the shared client, which is what lets the spend row answer
         // "which slot is costing money" without a second connection to the provider — the thing
-        // ElevenLabsTtsProvider.MaxConcurrent's reasoning depends on (list.md Phase 57).
+        // ElevenLabsTtsProvider.MaxConcurrent's reasoning depends on (Phase 57).
         foreach (var moved in plan.Rewire)
         {
             _slots[moved] = _clients.GetValueOrDefault(VoiceGroups.ProviderFor(speech, moved)) is { } client
@@ -3624,7 +3624,7 @@ public sealed class AppHost : IDisposable
             // A rate is a property of the synthesiser rather than of the Commander's patience,
             // once two of them can be speaking at once: ElevenLabs *rejects* a speed outside its
             // range rather than clamping it, so a figure chosen for Edge and applied here would
-            // not be a fast carrier but a silent one (list.md Phase 57).
+            // not be a fast carrier but a silent one (Phase 57).
             cast.Rate = SpeechCapability.RateFor(Settings.Current, providerId);
 
             // The ship's voice belongs to the ship's provider and to nobody else's. Where a comms
@@ -3725,14 +3725,14 @@ public sealed class AppHost : IDisposable
             {
                 // Journal-derived and network-free. Proper nouns are where recognition fails
                 // hardest and most silently, so the names of where the Commander is and what
-                // they fly go in with every utterance (list.md Phase 6).
+                // they fly go in with every utterance (Phase 6).
                 var nouns = ProperNouns.From(GameState.Active, _route?.Invoke());
 
                 var transcription = await _transcriber
                     .TranscribeAsync(utterance, nouns)
                     .ConfigureAwait(false);
 
-                // A panel is asking for a value and this is the answer to it (list.md Phase 25,
+                // A panel is asking for a value and this is the answer to it (Phase 25,
                 // "Say it, or type it").
                 //
                 // Ahead of both the empty check and the wake word, and both are deliberate.
@@ -3771,8 +3771,8 @@ public sealed class AppHost : IDisposable
                     clock.Value = DateTimeOffset.Now;
                 }
 
-                // The wake word, applied to the words rather than to the audio (list.md
-                // Phase 13). Outside wake-word mode the policy holds no phrases and admits
+                // The wake word, applied to the words rather than to the audio (Phase 13).
+                // Outside wake-word mode the policy holds no phrases and admits
                 // everything, so push-to-talk and continuous listening take the same path
                 // through here and neither pays for a decision that has already been made.
                 var decision = Wake.Admit(transcription.Text, DateTimeOffset.Now);
@@ -3800,7 +3800,7 @@ public sealed class AppHost : IDisposable
                     // stuck: nothing settles out of that state, so a Commander who said the name
                     // and then changed their mind would leave the face listening for the rest of
                     // the session. What is actually waiting is the microphone, and the microphone
-                    // has its own indicator now (list.md Phase 13).
+                    // has its own indicator now (Phase 13).
                     if (Voice.CuesEnabled)
                     {
                         Audio.Enqueue(new Core.Audio.AudioRequest
@@ -3837,7 +3837,7 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>
-    /// The surfaces that may be waiting on a spoken value (list.md Phase 25, "Say it, or type
+    /// The surfaces that may be waiting on a spoken value (Phase 25, "Say it, or type
     /// it").
     /// <para>
     /// A list rather than one delegate, because there are two panels and either can have a
@@ -3852,7 +3852,7 @@ public sealed class AppHost : IDisposable
     public void RoutePrompts(Func<Core.Interface.Heard, bool> surface) => _prompts.Add(surface);
 
     /// <summary>
-    /// The navigators a spoken "show me the checklist" moves (list.md Phase 25).
+    /// The navigators a spoken "show me the checklist" moves (Phase 25).
     /// <para>
     /// <b>Every surface, not one.</b> A phrase has no surface attached to it — the Commander said
     /// it once, into the room — and moving only the window would leave a Commander in a headset
@@ -3861,7 +3861,7 @@ public sealed class AppHost : IDisposable
     /// of the phrase that is never surprising.
     /// </para>
     /// <para>
-    /// For the transcript the agreement is unconditional (list.md Phase 45): which of Conversation,
+    /// For the transcript the agreement is unconditional (Phase 45): which of Conversation,
     /// Technical and the log file is being read is one choice across every surface, held by
     /// <see cref="_transcript"/>. Tabs and trails stay per surface, so this list is still walked.
     /// </para>
@@ -3870,7 +3870,7 @@ public sealed class AppHost : IDisposable
 
     /// <summary>
     /// The one mechanism that carries a transcript root from the surface that moved it to the rest
-    /// (list.md Phase 45). <see cref="Navigate"/> and <see cref="Show"/> initiate moves on every
+    /// (Phase 45). <see cref="Navigate"/> and <see cref="Show"/> initiate moves on every
     /// surface and never propagate them: the first navigator they reach raises <c>Changed</c>, the
     /// mirror moves the others, and the loop is declined by each of those as already there.
     /// </summary>
@@ -3879,7 +3879,7 @@ public sealed class AppHost : IDisposable
     /// <summary>
     /// How to reach each navigator from a thread that does not own it, in the order they were
     /// routed. A switch flip arrives on the tick thread and a navigator belongs to the thread
-    /// that draws it (list.md Phase 46).
+    /// that draws it (Phase 46).
     /// </summary>
     private readonly List<(Core.Interface.PanelNavigator Nav, Action<Action> Post)> _surfaces = [];
 
@@ -3901,7 +3901,7 @@ public sealed class AppHost : IDisposable
     /// Whether this surface's <em>tab</em> carries to the others (change-requests.md 34). True for
     /// the window and nothing else: the window leads, the mini panel follows and may be moved
     /// independently, and a follower's tab never drags the window's — which is what
-    /// <c>list.md</c> Phase 48 requires and why this is a flag rather than a mirror.
+    /// Phase 48 requires and why this is a flag rather than a mirror.
     /// </param>
     public void RouteNavigation(
         Core.Interface.PanelNavigator nav, Action<Action> post, bool leads = false)
@@ -3913,7 +3913,7 @@ public sealed class AppHost : IDisposable
         // other is brought level and the first snapshot already reads two surfaces agreeing. The
         // mirror moves navigators in the handler rather than through `post`: every surface is on
         // the window's thread (architecture.md D1), and a posted move could cross another in
-        // flight (list.md Phase 45).
+        // flight (Phase 45).
         if (leads)
         {
             _transcript.Lead(nav);
@@ -3945,19 +3945,19 @@ public sealed class AppHost : IDisposable
         _panel = new PanelSnapshot(destinations, showing.Count == 1 ? showing[0] : null);
     }
 
-    /// <summary>Every page any surface offers, for the switch editor's list (list.md Phase 46).</summary>
+    /// <summary>Every page any surface offers, for the switch editor's list (Phase 46).</summary>
     public IReadOnlyList<Core.Interface.PanelDestination> PanelDestinations => _panel.Destinations;
 
     /// <summary>
     /// Puts every surface on this page, each on its own thread — what a switch position that
-    /// names a destination does (list.md Phase 46). The same every-surface rule as
+    /// names a destination does (Phase 46). The same every-surface rule as
     /// <see cref="Navigate"/>, for the same reason: a switch has no surface attached to it
     /// either. A surface that does not offer the page declines it, which is
     /// <c>PanelView.Tab</c> declining a tab nobody furnished, inherited rather than re-stated.
     /// <para>
     /// For a transcript root the second surface is moved by <see cref="_transcript"/> before this
     /// loop reaches it, and declines the loop as already there; the loop still has to reach it,
-    /// because arriving on the Transcript <em>tab</em> is per surface (list.md Phase 45).
+    /// because arriving on the Transcript <em>tab</em> is per surface (Phase 45).
     /// </para>
     /// </summary>
     private void Show(string rootKey)
@@ -4039,7 +4039,7 @@ public sealed class AppHost : IDisposable
             // than one surface's share of it.
             //
             // A transcript mode — "technical" — is taken by the first surface at a root, and the
-            // mirror has moved the rest before this loop reaches them (list.md Phase 45). So a
+            // mirror has moved the rest before this loop reaches them (Phase 45). So a
             // headset three levels into a checklist, which answers nothing here, is reading
             // Technical when it comes back to the transcript.
             var moved = Core.Interface.PanelPhrases.Apply(spoken, nav);
@@ -4065,7 +4065,7 @@ public sealed class AppHost : IDisposable
     private Func<NavRoute>? _route;
 
     /// <summary>
-    /// The plotted route, for anything that wants to draw it (list.md Phase 37, "Progress").
+    /// The plotted route, for anything that wants to draw it (Phase 37, "Progress").
     /// <para>
     /// The same reader the callout and the proper-noun biasing already use, rather than a second
     /// one: two readers of one file is two answers to "where am I going" waiting to disagree.
@@ -4079,7 +4079,7 @@ public sealed class AppHost : IDisposable
     private Func<ModulePower>? _modulePower;
 
     /// <summary>
-    /// What Elite says each module in the ship being flown draws (list.md Phase 38).
+    /// What Elite says each module in the ship being flown draws (Phase 38).
     /// <para>
     /// <see cref="ModulePower.None"/> before composition has run and until the file is first read,
     /// so a surface built early weighs the specification table rather than throwing — which is the
@@ -4149,7 +4149,7 @@ public sealed class AppHost : IDisposable
     /// <summary>
     /// Rebuilds everything downstream of the listening settings: the device, the key, the gate
     /// policy and the pre-roll. Called at startup and on any change, so the two paths cannot
-    /// drift (list.md Phase 4, "Apply every setting without a restart").
+    /// drift (Phase 4, "Apply every setting without a restart").
     /// </summary>
     private void ApplyListeningSettings()
     {
@@ -4237,7 +4237,7 @@ public sealed class AppHost : IDisposable
 
         var boundKey = _pushToTalk.Bind(listening.PushToTalkKey);
 
-        // And the stick (list.md Phase 53). Both stay live: a Commander who bound a key and later
+        // And the stick (Phase 53). Both stay live: a Commander who bound a key and later
         // bound a button has said two things rather than replaced one.
         var boundButton = _pushToTalkButton.Bind(
             D47.Core.Hotas.HotasButton.Parse(listening.PushToTalkButton));
@@ -4298,7 +4298,7 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>
-    /// The stick bound to push-to-talk is not here (list.md Phase 53).
+    /// The stick bound to push-to-talk is not here (Phase 53).
     /// <para>
     /// <b>Said, and the key carries on</b> (the Commander's call, 2026-08-25). A silent controller
     /// otherwise means no voice at all until they notice, and "d47 cannot hear me" with no reason
@@ -4347,7 +4347,7 @@ public sealed class AppHost : IDisposable
     /// </para>
     /// </summary>
     /// <summary>
-    /// The switch annunciator, on both surfaces at once (list.md Phase 21, item 6). Called every
+    /// The switch annunciator, on both surfaces at once (Phase 21, item 6). Called every
     /// tick and setting the same value repeatedly is free — the view model raises nothing when
     /// nothing changed.
     /// </summary>
@@ -4374,7 +4374,7 @@ public sealed class AppHost : IDisposable
 
         // The ones that move the panel rather than the ship go elsewhere: to each surface on its
         // own thread, and outside _acting, because a page move holds no keys for a honk to
-        // collide with (list.md Phase 46).
+        // collide with (Phase 46).
         foreach (var page in pending.Where(reconcile => reconcile.Destination is not null))
         {
             Show(page.Destination!);
@@ -4488,7 +4488,7 @@ public sealed class AppHost : IDisposable
     /// <para>
     /// The whole point of the item is that a misconfigured provider currently presents as
     /// silence, and silence is indistinguishable from a model with nothing to say
-    /// (list.md Phase 5). Called after the panel is up so the same message is on screen.
+    /// (Phase 5). Called after the panel is up so the same message is on screen.
     /// </para>
     /// </summary>
     public async Task AnnounceStartupProblemsAsync()
@@ -4526,7 +4526,7 @@ public sealed class AppHost : IDisposable
     /// line noticing (architecture.md §2).
     /// </summary>
     /// <summary>
-    /// One client per provider, shared by every slot that named it (list.md Phase 57).
+    /// One client per provider, shared by every slot that named it (Phase 57).
     /// <para>
     /// <b>Never one per slot.</b> <c>ElevenLabsTtsProvider.MaxConcurrent</c> gates the account
     /// rather than the pipeline, and that reasoning only survives if two slots choosing one
@@ -4559,7 +4559,7 @@ public sealed class AppHost : IDisposable
     private SpeechWiringState _speechWiring = SpeechWiringState.Nothing;
 
     /// <summary>
-    /// Everyone d47 can speak as (list.md Phase 11). Not a second audio path: it decides which
+    /// Everyone d47 can speak as (Phase 11). Not a second audio path: it decides which
     /// voice a line is synthesised in, and the line still goes through the one arbiter, because
     /// separate paths per voice are how a line gets spoken in the wrong one (architecture.md D7).
     /// </summary>
@@ -4601,14 +4601,14 @@ public sealed class AppHost : IDisposable
     /// </summary>
     private VoiceCatalogue AboardVoices => VoicesFor(VoiceGroup.Aboard);
 
-    /// <summary>What the language-model endpoint last said it serves (list.md Phase 29).</summary>
+    /// <summary>What the language-model endpoint last said it serves (Phase 29).</summary>
     private volatile IReadOnlyList<string> _endpointModels = [];
 
     /// <summary>Which provider and address that list came from, so it is asked once each.</summary>
     private volatile string? _endpointModelsFor;
 
     /// <summary>
-    /// What the voices have cost this session (list.md Phase 19). Lives for the process, like
+    /// What the voices have cost this session (Phase 19). Lives for the process, like
     /// <see cref="Spend"/>, and for the same reason: "what has this cost" is a question about a
     /// session rather than about a turn, and it must survive the provider being switched.
     /// </summary>
@@ -4616,7 +4616,7 @@ public sealed class AppHost : IDisposable
 
     /// <summary>
     /// Auditions already paid for, keyed by the provider that issued the voice, the role being
-    /// cast and the voice itself (list.md Phase 19).
+    /// cast and the voice itself (Phase 19).
     /// <para>
     /// Walking back and forth over four candidates should not be four purchases each way. Keyed
     /// on the provider as well as the voice because an id means nothing outside the provider
@@ -4634,7 +4634,7 @@ public sealed class AppHost : IDisposable
     private const string AuditionGroup = "voice-audition";
 
     /// <summary>
-    /// Speaks one voice so it can be judged before it is chosen (list.md Phase 19, "Hear a voice
+    /// Speaks one voice so it can be judged before it is chosen (Phase 19, "Hear a voice
     /// before you choose it").
     /// <para>
     /// The line is the core aboard's own opening for the ship's AI, and the role's own words for
@@ -4653,7 +4653,7 @@ public sealed class AppHost : IDisposable
     internal async Task AuditionVoiceAsync(string voiceId, VoiceRole role, CancellationToken cancellationToken)
     {
         // The slot the role belongs to, so the carrier's tower is auditioned through whoever
-        // speaks for the carrier — and billed to that slot (list.md Phase 57).
+        // speaks for the carrier — and billed to that slot (Phase 57).
         var group = VoiceGroups.Of(role);
 
         if (Speaker(group) is not { } provider)
@@ -4773,8 +4773,8 @@ public sealed class AppHost : IDisposable
     /// <summary>
     /// One announcement, in whoever's voice it belongs to.
     /// <para>
-    /// Everything Phase 8 produces is the ship's AI, so this resolved to one voice until Phase
-    /// 11. Now a re-voiced message carries a sender and a carrier line carries a role, and the
+    /// Everything Phase 8 produces is the ship's AI, so this resolved to one voice until Phase 11
+    /// . Now a re-voiced message carries a sender and a carrier line carries a role, and the
     /// lookup for both lives here — the callout knows whose line it is, the cast knows what
     /// that person sounds like, and neither has to know about the other.
     /// </para>
@@ -4816,7 +4816,7 @@ public sealed class AppHost : IDisposable
         // Drawn from the cast belonging to whoever speaks for this slot. A voice id means
         // nothing to a provider that did not issue it, so a stranger in local gets one of the
         // voices their own slot's provider offers and never one of the companion's
-        // (list.md Phase 57).
+        // (Phase 57).
         var cast = Casting.Of(VoiceGroups.ProviderFor(
             Settings.Current.Speech,
             VoiceGroups.Of(announcement.Voice, announcement.CommsChannel)));
@@ -4863,12 +4863,12 @@ public sealed class AppHost : IDisposable
 
     /// <summary>
     /// The same announcement, said in character, when there is a model to ask and it is one of
-    /// the lines the checklist wants varied (list.md Phase 11: "with varied LLM arrival and
+    /// the lines the checklist wants varied (Phase 11: "with varied LLM arrival and
     /// departure responses").
     /// <para>
     /// Only the carrier's own lines. A danger callout is never rewritten by a model: those fire
     /// on the event and say exactly what happened, and "shields are down" is not a line that
-    /// benefits from personality (list.md Phase 8).
+    /// benefits from personality (Phase 8).
     /// </para>
     /// </summary>
     private async Task<Announcement> VaryAsync(Announcement announcement)
@@ -4904,7 +4904,7 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>
-    /// Position 4 for a flavour line, to the depth the brief asked for (list.md Phase 43). The
+    /// Position 4 for a flavour line, to the depth the brief asked for (Phase 43). The
     /// brief decides — in Core, where it can be asserted — and this only reads the two fields.
     /// </summary>
     private string? StoryFor(FlavourBrief brief) =>
@@ -4937,7 +4937,7 @@ public sealed class AppHost : IDisposable
     /// says the real thing.
     /// </para>
     /// <para>
-    /// <b>Flagged rather than fixed (list.md Phase 54).</b> This asks about the conversation
+    /// <b>Flagged rather than fixed (Phase 54).</b> This asks about the conversation
     /// model while one of the two things it gates — the lore lookup — now runs on
     /// <see cref="TurnLoop.BackgroundModel"/>. It is correct today by accident: web search is
     /// endpoint-gated in all three providers, so the model named makes no difference to the
@@ -4979,7 +4979,7 @@ public sealed class AppHost : IDisposable
             webSearch: true);
 
     /// <summary>
-    /// The second half of an arrival remark: a web search, and what it found (list.md Phase 23,
+    /// The second half of an arrival remark: a web search, and what it found (Phase 23,
     /// "Look it up, and say where the answer came from").
     /// <para>
     /// Fire and forget by design. Nothing is waiting on it, the Commander has already been told
@@ -5082,7 +5082,7 @@ public sealed class AppHost : IDisposable
 
     /// <summary>
     /// Whether this input was addressed to somebody in the fighter bay rather than to the ship's
-    /// AI, and if so, everything needed to answer as them (list.md Phase 11, "Ship Crew").
+    /// AI, and if so, everything needed to answer as them (Phase 11, "Ship Crew").
     /// <para>
     /// Matched model-free against the names the journal reports, so no round trip is spent
     /// working out who a round trip is for, and so this works with no model at all — in which
@@ -5115,7 +5115,7 @@ public sealed class AppHost : IDisposable
 
     /// <summary>
     /// Drops the NPC voice assignments when the Commander arrives somewhere new. The cast turns
-    /// over on a jump; a wingmate does not (list.md Phase 11, "Voices stick").
+    /// over on a jump; a wingmate does not (Phase 11, "Voices stick").
     /// </summary>
     private void FollowSystemForVoices()
     {
@@ -5158,7 +5158,7 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>
-    /// Sounds what came due, and says which (list.md Phase 24, "A timer says its own name").
+    /// Sounds what came due, and says which (Phase 24, "A timer says its own name").
     /// <para>
     /// <b>The cue says <em>something finished</em> and d47 speaks the name.</b> One shipped clip
     /// for every timer rather than a synthesised tone per timer: per-timer tones are genuinely
@@ -5215,7 +5215,7 @@ public sealed class AppHost : IDisposable
 
     /// <summary>
     /// A line d47 says because the panel asked it to - a generator's reply, a refusal - spoken,
-    /// shown, and recorded exactly as a timer going off is (list.md Phase 47). "Why did you just
+    /// shown, and recorded exactly as a timer going off is (Phase 47). "Why did you just
     /// say that?" has to be answerable about this too.
     /// </summary>
     public void SayAside(string line)
@@ -5254,7 +5254,7 @@ public sealed class AppHost : IDisposable
             // Whether the lore remarks in this batch are owed a second part, decided here rather
             // than inside the speaking loop: a Commander who asked for a lookup the endpoint
             // cannot run is told so in the first sentence, and the alternative is leaving them
-            // waiting for something that was never coming (list.md Phase 23).
+            // waiting for something that was never coming (Phase 23).
             lines = [.. lines.Select(Owing)];
 
             // One at a time, and in order. A previous batch still being spoken holds this one
@@ -5454,7 +5454,7 @@ public sealed class AppHost : IDisposable
     private static readonly TimeSpan KeyCheckBudget = TimeSpan.FromSeconds(20);
 
     /// <summary>
-    /// Tries the stored language-model key for real (list.md Phase 16, "a key is verified, not
+    /// Tries the stored language-model key for real (Phase 16, "a key is verified, not
     /// merely stored").
     /// <para>
     /// The smallest turn that proves a key: one token, no tools, no persona, no game state. It
@@ -5489,7 +5489,7 @@ public sealed class AppHost : IDisposable
         budget.CancelAfter(KeyCheckBudget);
 
         // An OpenAI-shaped endpoint is checked by asking it what it serves rather than by
-        // spending a turn on it (list.md Phase 29), and that is the same reasoning the speech key
+        // spending a turn on it (Phase 29), and that is the same reasoning the speech key
         // check follows: it proves the exact call d47 makes anyway rather than a proxy for it.
         //
         // Three things make it the better probe here. It works with **no key**, which is the
@@ -5624,7 +5624,7 @@ public sealed class AppHost : IDisposable
         // A provider whose catalogue is static cannot be checked by listing it: the list is known
         // without a key, so it would answer "accepted the key" for a key that had never left this
         // machine. One character, synthesised and discarded, proves the call that actually has to
-        // work — a fraction of a cent (list.md Phase 58).
+        // work — a fraction of a cent (Phase 58).
         if (selected.VoicesAreStatic)
         {
             return await ProveSpeechKeyAsync(provider, selected, budget.Token).ConfigureAwait(false);
@@ -5636,7 +5636,7 @@ public sealed class AppHost : IDisposable
 
             // Read from the listing rather than from the count, which is what this check was
             // quietly doing wrong: the provider answers an empty list rather than throwing, so a
-            // rejected key arrived here as "accepted the key — 0 voices" (list.md Phase 19).
+            // rejected key arrived here as "accepted the key — 0 voices" (Phase 19).
             return voices.Listing switch
             {
                 VoiceListing.KeyRejected => SecretCheck.Rejected(
@@ -5667,7 +5667,7 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>
-    /// Proves a key by speaking one character and throwing the audio away (list.md Phase 58).
+    /// Proves a key by speaking one character and throwing the audio away (Phase 58).
     /// <para>
     /// For a provider whose voice list is static, where listing proves nothing. The distinction
     /// the answer has to keep is the one that makes a key check worth having: <b>"refused the
@@ -5772,7 +5772,7 @@ public sealed class AppHost : IDisposable
     /// </para>
     /// </summary>
     /// <summary>
-    /// Waits for Status.json to say something, or gives up (list.md Phase 52).
+    /// Waits for Status.json to say something, or gives up (Phase 52).
     /// <para>
     /// The same three answers <see cref="AwaitGalaxyMap"/> gives, and for the same reason: true
     /// means it happened, false means it did not, and <c>null</c> means d47 never got a readable
@@ -5830,7 +5830,7 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>
-    /// The next status sample, which is what the boost loop watches (list.md Phase 52).
+    /// The next status sample, which is what the boost loop watches (Phase 52).
     /// <para>
     /// Elite rewrites Status.json several times a second, so this waits one polling interval and
     /// reads again rather than trying to detect a change: the loop only cares what the flag says
@@ -5899,7 +5899,7 @@ public sealed class AppHost : IDisposable
     /// would have no way to tell which one ran.
     /// </summary>
     /// <summary>
-    /// Every journal on the disk, oldest first, for the Commander's log (list.md Phase 33).
+    /// Every journal on the disk, oldest first, for the Commander's log (Phase 33).
     /// <para>
     /// Name order rather than filesystem timestamps, because Elite's filenames already encode the
     /// session start and that is what survives a copy — the same judgement
@@ -6031,7 +6031,7 @@ public sealed class AppHost : IDisposable
 
         CoverageRecorder?.Save();
 
-        // When the core aboard stopped being aboard, which is now (list.md Phase 35). Every other
+        // When the core aboard stopped being aboard, which is now (Phase 35). Every other
         // core's stamp was written as it was switched away from; this is the one that never is,
         // and without it the core a Commander closes d47 on is the one core that could never earn
         // a gap reaction. A crash loses it, which costs one reaction and nothing else.

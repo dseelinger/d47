@@ -6,7 +6,7 @@ using D47.Core.Ships;
 namespace D47.Core.Engineers;
 
 /// <summary>
-/// One planned thing that somebody has to roll, and who could roll it (list.md Phase 28, "The
+/// One planned thing that somebody has to roll, and who could roll it (Phase 28, "The
 /// fastest way in").
 /// </summary>
 /// <param name="What">The ship and slot, or the item and mod slot, that wants it.</param>
@@ -43,7 +43,7 @@ public sealed record PlannedWork(
 }
 
 /// <summary>
-/// What the Commander's plans need an engineer for (list.md Phase 28).
+/// What the Commander's plans need an engineer for (Phase 28).
 /// <para>
 /// <b>Read from the plans rather than from the checklist</b>, and that is the same call Phase 27
 /// made for the gap: the plan owns <em>what</em> and the checklist owns <em>when</em>, so a

@@ -13,7 +13,7 @@ namespace D47.App.Theming;
 /// Publishes the selected palette as application resources and keeps it there. Views bind
 /// with <c>DynamicResource</c>, so changing the theme setting repaints every open window on
 /// the spot — no restart, and no per-window code that has to remember to re-read anything
-/// (list.md Phase 4).
+/// (Phase 4).
 /// </summary>
 public sealed class ThemeManager(Application application, ILogger<ThemeManager> logger)
 {

@@ -5,7 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Logbook;
 
 /// <summary>
-/// The facts the generator is handed, and the ones it is not (list.md Phase 33, item 2).
+/// The facts the generator is handed, and the ones it is not (Phase 33, item 2).
 /// </summary>
 public class LogDigestBuilderTests : IDisposable
 {

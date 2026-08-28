@@ -58,7 +58,7 @@ public sealed record StoredShip(int ShipId, string Type, string? Name, string St
 }
 
 /// <summary>
-/// Every ship the Commander owns (list.md Phase 7, "Know what ships you own and where they
+/// Every ship the Commander owns (Phase 7, "Know what ships you own and where they
 /// are"), built from the StoredShips event.
 /// <para>
 /// StoredShips is a complete snapshot rather than a delta, and Elite writes it on docking at

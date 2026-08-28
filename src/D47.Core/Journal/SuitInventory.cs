@@ -13,7 +13,7 @@ public sealed record SuitItem(string Name, string Kind, int Count)
 
 /// <summary>
 /// What the Commander is carrying on foot: the backpack they have with them and the ship
-/// locker they left behind (list.md Phase 7, "Know what is in your backpack and ship locker").
+/// locker they left behind (Phase 7, "Know what is in your backpack and ship locker").
 /// <para>
 /// These come from <c>Backpack.json</c> and <c>ShipLocker.json</c> rather than from the
 /// journal, which is what the checklist specifies and is also the only thing that works: the
@@ -49,7 +49,7 @@ public sealed record SuitInventory
 
     /// <summary>
     /// How many of one micro-resource the Commander has, <b>backpack and locker together</b>
-    /// (list.md Phase 20).
+    /// (Phase 20).
     /// <para>
     /// Both, because an on-foot recipe spends from either and a Commander standing at Pioneer
     /// Supplies with the last five in their backpack is not short. Keyed on the journal's symbol,

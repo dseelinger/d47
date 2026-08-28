@@ -9,7 +9,7 @@ using Xunit;
 namespace D47.Core.Tests.Journal;
 
 /// <summary>
-/// Everything one build still needs, and where to buy it (list.md Phase 50).
+/// Everything one build still needs, and where to buy it (Phase 50).
 /// <para>
 /// <b>A parameter on the tool whose sentence already covers the subject</b>, not a tool of its own:
 /// the surface had 136 bytes spare after Phase 49, a fresh tool description costs hundreds, and the

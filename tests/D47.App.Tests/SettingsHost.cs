@@ -11,7 +11,7 @@ namespace D47.App.Tests;
 
 /// <summary>
 /// The settings surface in the arrangement it actually ships in: a page of the panel, chosen
-/// from the tab strip, inside the one window (list.md Phase 12).
+/// from the tab strip, inside the one window (Phase 12).
 /// <para>
 /// There used to be a <c>SettingsWindow</c> and every test here opened one. Hosting it the way
 /// the app does is not ceremony — the surface now sits under a strip, beside a transcript, in a

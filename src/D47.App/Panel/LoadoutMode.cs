@@ -3,7 +3,7 @@ using D47.Core.Loadout;
 namespace D47.App.Panel;
 
 /// <summary>
-/// Where the gap page gets its arithmetic, and how it knows to redo it (list.md Phase 27, "Gap
+/// Where the gap page gets its arithmetic, and how it knows to redo it (Phase 27, "Gap
 /// analysis").
 /// <para>
 /// A source rather than a report, because the answer moves under the page in three separate ways
@@ -96,7 +96,7 @@ public sealed record LoadoutCopy(string Value, string Tip);
 
 /// <summary>
 /// A second figure on a gauge's bar, drawn as a mark rather than as fill
-/// (list.md Phase 38).
+/// (Phase 38).
 /// </summary>
 /// <param name="At">Where it sits, 0 to 1 of the bar's width.</param>
 /// <param name="Label">What it is, for the reading under the bar.</param>
@@ -104,7 +104,7 @@ public readonly record struct LoadoutMark(double At, string Label);
 
 /// <summary>
 /// One gauge at the head of a ship's slot list — power, or jump range
-/// (list.md Phase 38, "A build you can watch").
+/// (Phase 38, "A build you can watch").
 /// <para>
 /// <b>A horizontal bar rather than a dial</b> (the Commander's call, 2026-08-20). It reads at
 /// overlay resolution, it survives a narrow panel, and it needs no drawing code of its own: a
@@ -131,7 +131,7 @@ public sealed record LoadoutGauge(string Name, string Reading, double Fill, Load
     public string? Note { get; init; }
 
     /// <summary>
-    /// Whether this figure was worked out rather than read off the game (list.md Phase 38).
+    /// Whether this figure was worked out rather than read off the game (Phase 38).
     /// <para>
     /// <b>Drawn differently, and that is the condition on which the gauges exist at all.</b>
     /// <c>ShipsMode.Parted</c> holds that a modelled figure must never sit beside a measured one
@@ -144,7 +144,7 @@ public sealed record LoadoutGauge(string Name, string Reading, double Fill, Load
 
 /// <summary>
 /// A question waiting on the Commander, drawn at the head of the tab
-/// (list.md Phase 38, "Ask before the plan and the checklist drift apart").
+/// (Phase 38, "Ask before the plan and the checklist drift apart").
 /// <para>
 /// <b>The banner is the half that cannot be missed.</b> The question is asked out loud at the
 /// moment it becomes true — boarding the ship — because that is when the Commander is in the
@@ -265,7 +265,7 @@ public sealed record LoadoutSide(
 {
     /// <summary>
     /// Whether the module this side names is one a Powerplay pledge is needed to buy
-    /// (list.md Phase 38).
+    /// (Phase 38).
     /// <para>
     /// <b>Nineteen modules</b>, named by <c>outfitting.csv</c>'s own <c>entitlement</c> column
     /// rather than by a list anybody maintains — the Prismatic Shield Generator in all eight
@@ -343,7 +343,7 @@ public sealed record LoadoutParts(
 }
 
 /// <summary>
-/// One mode of the Loadout tab — Ships, or Suits and weapons (list.md Phase 27, "The same page, on
+/// One mode of the Loadout tab — Ships, or Suits and weapons (Phase 27, "The same page, on
 /// foot").
 /// <para>
 /// <b>This is what "one page kind built once and shown twice" means here.</b> The pages in
@@ -419,7 +419,7 @@ public interface ILoadoutMode
 
     /// <summary>
     /// The gauges at the head of this item's slot list, or empty for a mode with none
-    /// (list.md Phase 38).
+    /// (Phase 38).
     /// <para>
     /// <b>Defaulted rather than added to every mode.</b> Power and jump range are facts about a
     /// hull; a suit has neither, and a mode that has nothing to gauge should not have to say so in
@@ -429,7 +429,7 @@ public interface ILoadoutMode
     IReadOnlyList<LoadoutGauge> Gauges(string item) => [];
 
     /// <summary>
-    /// A question waiting on the Commander, or null when nothing is (list.md Phase 38).
+    /// A question waiting on the Commander, or null when nothing is (Phase 38).
     /// <para>
     /// Defaulted for the same reason the gauges are: a mode with nothing to ask should not have to
     /// say so in code.

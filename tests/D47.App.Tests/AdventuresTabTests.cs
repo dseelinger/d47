@@ -16,7 +16,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The Adventures tab draws, and every level below it builds (list.md Phase 47).
+/// The Adventures tab draws, and every level below it builds (Phase 47).
 /// <para>
 /// Construction tests rather than behaviour ones: the fold, the store, the context and the callout
 /// are held in Core, and what the surface can get wrong on its own is a level that throws when it

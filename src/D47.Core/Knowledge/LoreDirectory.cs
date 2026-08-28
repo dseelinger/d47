@@ -5,7 +5,7 @@ using D47.Core.Lore;
 namespace D47.Core.Knowledge;
 
 /// <summary>
-/// The shipped table of systems that mean something beyond their astrography (list.md Phase 23,
+/// The shipped table of systems that mean something beyond their astrography (Phase 23,
 /// "Know which systems carry lore").
 /// <para>
 /// <b>The table holds the fact, not the prose.</b> <em>This system contains this notable site</em>

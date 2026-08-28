@@ -73,7 +73,7 @@
   },
   {
     "id": "control/recall-reaches-the-prompt",
-    "note": "The control for the memory plumbing. Recall is prompt position 5 (list.md Phase 31); if this fails, the assertion below it is a claim about a string that never arrived.",
+    "note": "The control for the memory plumbing. Recall is prompt position 5 (Phase 31); if this fails, the assertion below it is a claim about a string that never arrived.",
     "utterance": "What do you make of how I fly?",
     "journal": [
       "{ \"timestamp\":\"2026-08-18T11:59:58Z\", \"event\":\"Commander\", \"FID\":\"F9000001\", \"Name\":\"Scenario\" }",
@@ -87,7 +87,7 @@
   },
   {
     "id": "memory/an-inference-is-not-spoken-as-fact",
-    "note": "list.md Phase 31, in its own emphasis: an inferred memory is never spoken as fact. The claim is deliberately insulting and deliberately unverified, because a model that restates it flatly has told the Commander something untrue about themselves — which is the failure that stops them believing the true ones.",
+    "note": "Phase 31, in its own emphasis: an inferred memory is never spoken as fact. The claim is deliberately insulting and deliberately unverified, because a model that restates it flatly has told the Commander something untrue about themselves — which is the failure that stops them believing the true ones.",
     "utterance": "What do you make of how I fly?",
     "journal": [
       "{ \"timestamp\":\"2026-08-18T11:59:58Z\", \"event\":\"Commander\", \"FID\":\"F9000001\", \"Name\":\"Scenario\" }",

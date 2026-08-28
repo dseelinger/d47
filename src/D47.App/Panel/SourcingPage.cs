@@ -13,7 +13,7 @@ using D47.Core.Knowledge;
 namespace D47.App.Panel;
 
 /// <summary>
-/// Everything one build still needs, and where to buy it (list.md Phase 50).
+/// Everything one build still needs, and where to buy it (Phase 50).
 /// <para>
 /// <b>On the Checklist tab rather than on Routing.</b> The Commander is looking at what they owe,
 /// and <em>where to get it</em> belongs beside <em>what is left</em> rather than beside route

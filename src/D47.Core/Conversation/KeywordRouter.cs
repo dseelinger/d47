@@ -42,7 +42,7 @@ public sealed record ToolCommandMatch(
     string Phrase);
 
 /// <summary>
-/// The model-free command path (list.md Phase 3, "Ship's AI Unsure"). It exists for three
+/// The model-free command path (Phase 3, "Ship's AI Unsure"). It exists for three
 /// separate reasons, and it would be worth building for any one of them:
 /// <list type="bullet">
 /// <item>every input path must be answerable with no capabilities at all;</item>
@@ -129,7 +129,7 @@ public sealed class KeywordRouter(
     /// ahead of the turn in flight". A surface that gates input on a turn being in progress —
     /// which every surface must, or a second question would trample the first — has to ask this
     /// before it applies that gate, or instant silence is gated behind the very thing it exists
-    /// to interrupt (list.md Phase 5).
+    /// to interrupt (Phase 5).
     /// </para>
     /// </summary>
     public KeywordMatch? MatchInterrupting(string input)
@@ -221,7 +221,7 @@ public sealed class KeywordRouter(
     }
 
     /// <summary>
-    /// Matches a tool command phrase — the model-free way to act on the game (list.md Phase 10).
+    /// Matches a tool command phrase — the model-free way to act on the game (Phase 10).
     /// <para>
     /// This is the closed grammar <see cref="Match"/> says it is waiting for. A tool with
     /// required parameters is unreachable there because filling arguments from free text is

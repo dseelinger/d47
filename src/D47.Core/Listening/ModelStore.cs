@@ -45,7 +45,7 @@ public sealed record ModelProgress(string ModelId, long BytesReceived, long Tota
 }
 
 /// <summary>
-/// Fetching a speech model, on demand (list.md Phase 6).
+/// Fetching a speech model, on demand (Phase 6).
 /// <para>
 /// The interface lives in Core so the settings rows, the egress disclosure and the capability
 /// can be written and tested against it, while the HTTP lives outside Core with the rest of the

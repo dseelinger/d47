@@ -102,7 +102,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
 
         // Shut up has to reach synthesis, not just the queue. Without this, a sentence still
         // rendering when the Commander says stop would arrive a moment later and start
-        // speaking into the silence it was supposed to end (list.md Phase 5, "Shut up").
+        // speaking into the silence it was supposed to end (Phase 5, "Shut up").
         _arbiter.Silenced += Abandon;
 
         _drain = DrainAsync();
@@ -111,7 +111,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
     /// <summary>
     /// Raised when the provider could not synthesise. The caller decides what that means —
     /// usually that the TTS capability is off until it works again, which is a state rather
-    /// than a failure handler (list.md Phase 3, "Capabilities as state, not guard").
+    /// than a failure handler (Phase 3, "Capabilities as state, not guard").
     /// </summary>
     public event Action<string>? SynthesisFailed;
 

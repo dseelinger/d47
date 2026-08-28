@@ -3,7 +3,7 @@ using D47.Core.Journal;
 namespace D47.Core.Memory;
 
 /// <summary>
-/// The one thing in Phase 31 that writes a memory nobody asked for (list.md Phase 31, "the
+/// The one thing in Phase 31 that writes a memory nobody asked for (Phase 31, "the
 /// Commander told me this, d47 observed it in the journal, or d47 inferred it").
 /// <para>
 /// <b>It exists because the <see cref="MemoryTier.Observed"/> tier would otherwise be an enum

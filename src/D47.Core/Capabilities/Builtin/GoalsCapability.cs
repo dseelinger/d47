@@ -4,7 +4,7 @@ using D47.Core.Goals;
 namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
-/// The Commander's long arcs — the ambitions that outlive a checklist (list.md Phase 34).
+/// The Commander's long arcs — the ambitions that outlive a checklist (Phase 34).
 /// <para>
 /// <b>`get_goals` is advertised, and it is the first tool in four phases that is.</b> Phases 31, 32
 /// and 33 shipped everything <see cref="ToolDefinition.Protected"/>, and Phase 32 recorded that the

@@ -74,7 +74,7 @@ public sealed record OnFootEntry
 
 /// <summary>
 /// Every suit, hand weapon, hand tool and on-foot modification, keyed on what the journal writes
-/// (list.md Phase 20, "d47 knows what you are wearing").
+/// (Phase 20, "d47 knows what you are wearing").
 /// <para>
 /// <b>Derived, not written.</b> <c>tools/gen-onfoot.py</c> builds it from
 /// EDDiscovery/EliteDangerousCore's <c>Items/Suits.cs</c> and <c>Items/HandItems.cs</c>, which are

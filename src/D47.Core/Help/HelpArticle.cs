@@ -79,7 +79,7 @@ public static class HelpLevel
 
 /// <summary>
 /// One page's short-form help — the ELI5 band from the top of its documentation page, as data
-/// the panel can draw (list.md Phase 4, "GitHub Pages documentation"; the in-app half was asked
+/// the panel can draw (Phase 4, "GitHub Pages documentation"; the in-app half was asked
 /// for on 2026-08-22).
 /// <para>
 /// <b>One source, two surfaces.</b> The band is authored once, in the markdown, and published to

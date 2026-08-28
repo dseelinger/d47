@@ -5,7 +5,7 @@ namespace D47.Core.Logbook;
 
 /// <summary>
 /// The structured summary of what happened, and the only thing the generator is ever handed
-/// (list.md Phase 33, "Every sentence traces to an event").
+/// (Phase 33, "Every sentence traces to an event").
 /// <para>
 /// <b>Facts, not files.</b> The item is explicit that this is the reason the phase is not simply a
 /// prompt: a journal handed to a model produces a better evening than the one that happened, and

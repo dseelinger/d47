@@ -7,7 +7,7 @@ using D47.Core.Persona;
 namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
-/// Which companion character is aboard (list.md Phase 11, "Personas" and "Ship AI Naming").
+/// Which companion character is aboard (Phase 11, "Personas" and "Ship AI Naming").
 /// </summary>
 public static class PersonaCapability
 {
@@ -85,7 +85,7 @@ public static class PersonaCapability
     };
 
     /// <summary>
-    /// Binding a core to a ship, and unbinding it (list.md Phase 35, "The binding is the
+    /// Binding a core to a ship, and unbinding it (Phase 35, "The binding is the
     /// Commander's, and unreachable from the model").
     /// <para>
     /// <b>Both protected, and this is the case the invariant was written for.</b> Persona
@@ -167,7 +167,7 @@ public static class PersonaCapability
 
             // Protected, and this is the one row in the phase where that is a judgement call
             // rather than a rule being followed. It is not safety-critical in the sense
-            // list.md means — nothing here presses a key in the Commander's ship. Two things
+            // the phase means — nothing here presses a key in the Commander's ship. Two things
             // decide it anyway. A switch discards the working transcript, because separate
             // memory per core is the premise; and in-game comms are untrusted input that
             // reaches the model, so "switch persona" is exactly the shape of thing a hostile
@@ -260,7 +260,7 @@ public static class PersonaCapability
     ];
 
     /// <summary>
-    /// A core per ship, on the panel (list.md Phase 35). Two rows rather than one, because the
+    /// A core per ship, on the panel (Phase 35). Two rows rather than one, because the
     /// two acts are not a toggle: binding is about the core aboard and forgetting is about the
     /// ship, and one button whose meaning flips depending on state is a button nobody can aim.
     /// <para>
@@ -303,7 +303,7 @@ public static class PersonaCapability
             Protected = true,
 
             // A ship id, which only means something for the Commander whose fleet it counts
-            // (list.md Phase 44): one Commander's ship 7 and another's are two ships.
+            // (Phase 44): one Commander's ship 7 and another's are two ships.
             Scope = SettingScope.Commander,
             ChoiceSource = _ => [.. ships.Fleet().Select(entry => Keyed(entry.ShipId))],
             ChoiceLabel = key => ships.Fleet()
@@ -338,7 +338,7 @@ public static class PersonaCapability
 
             // Per Commander through the store rather than the settings file: what it reads is the
             // binding for the ship the row above points at, and ship-cores.json carries the
-            // Commander beside each one (list.md Phase 44). Declared here so the row says what
+            // Commander beside each one (Phase 44). Declared here so the row says what
             // the file already does.
             Scope = SettingScope.Commander,
 
@@ -498,7 +498,7 @@ public static class PersonaCapability
             ? "Personality is on."
             : "Personality is off, so you are answering plainly and this persona's voice is not in play.");
 
-        // The binding, read and never written (list.md Phase 35). Here rather than in a tool of
+        // The binding, read and never written (Phase 35). Here rather than in a tool of
         // its own: the model is allowed to know which core the Commander's ship asks for, and an
         // existing tool saying one sentence more costs nothing on the advertised surface.
         if (ships is not null)

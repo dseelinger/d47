@@ -5,7 +5,7 @@ namespace D47.Core.Interface;
 
 /// <summary>
 /// How Elite is putting itself on the screen, which is the one thing that decides whether a
-/// topmost window can be seen over it at all (list.md Phase 48).
+/// topmost window can be seen over it at all (Phase 48).
 /// </summary>
 public enum EliteDisplayMode
 {
@@ -31,7 +31,7 @@ public enum EliteDisplayMode
 
 /// <summary>
 /// Reads which display mode Elite is set to, so the overlay can say out loud when the Commander
-/// will not be able to see it (list.md Phase 48).
+/// will not be able to see it (Phase 48).
 /// <para>
 /// <b>Why this is worth a reader at all.</b> A topmost window composites over a borderless or
 /// windowed game and is simply not there over an exclusive-fullscreen one, with no error and no

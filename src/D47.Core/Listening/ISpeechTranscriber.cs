@@ -11,7 +11,7 @@ public sealed record Transcription(string Text)
     public string? Model { get; init; }
 
     /// <summary>
-    /// How sure the model was, 0 to 1 (list.md Phase 25, "Say it, or type it").
+    /// How sure the model was, 0 to 1 (Phase 25, "Say it, or type it").
     /// <para>
     /// One is the default and means "not reported", which is what every path that does not
     /// produce a figure gets — a test double, a replay, a transcriber that has none. That is the
@@ -59,8 +59,8 @@ public interface ISpeechTranscriber : IDisposable
     /// </summary>
     /// <param name="utterance">Mono float PCM at the rate the utterance declares.</param>
     /// <param name="properNouns">
-    /// Names to bias towards — systems, stations and ships drawn from the journal (list.md
-    /// Phase 6, "Bias transcription with proper nouns from the journal"). Journal-derived and
+    /// Names to bias towards — systems, stations and ships drawn from the journal (Phase 6,
+    /// "Bias transcription with proper nouns from the journal"). Journal-derived and
     /// network-free. Proper nouns are where speech recognition fails hardest and most silently:
     /// a misheard system name comes back as a plausible English phrase rather than as an error.
     /// </param>

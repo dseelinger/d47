@@ -4,7 +4,7 @@ using D47.Core.Configuration;
 namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
-/// The three compound spoken commands of list.md Phase 52: <em>take us out</em>,
+/// The three compound spoken commands of Phase 52: <em>take us out</em>,
 /// <em>separate and engage</em> and <em>separate and supercruise</em>.
 /// <para>
 /// <b>Protected, and that is the whole design.</b> These reach the ship, so they are reachable
@@ -106,7 +106,7 @@ public static class ShipCommands
         }
 
         // The only difference between the two separations, and it is deliberate that they differ
-        // in nothing else (list.md Phase 52, item 4).
+        // in nothing else (Phase 52, item 4).
         var finisher = command == SeparateAndSupercruise ? "supercruise" : "hyperspace";
 
         var outcome = await Separation

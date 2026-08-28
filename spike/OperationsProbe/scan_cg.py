@@ -1,6 +1,6 @@
 """Do community goal events exist here, and do they name a module?
 
-Written after being told these modules are community goal rewards — which the list.md item
+Written after being told these modules are community goal rewards — which the phase item
 itself said the wiki claims, and which the first pass never searched for.
 """
 import collections, glob, json, os

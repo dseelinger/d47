@@ -4,7 +4,7 @@ namespace D47.Llm.Tests;
 
 /// <summary>
 /// Recorded frames for the two OpenAI-shaped protocols, and the plumbing to drive a provider
-/// against them (list.md Phase 29).
+/// against them (Phase 29).
 /// <para>
 /// <b>No test in this file makes a live API call.</b> What is under test is d47's half of the
 /// exchange — a tool call assembled out of JSON fragments, usage converted from a convention that

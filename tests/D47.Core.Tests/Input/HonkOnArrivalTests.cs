@@ -9,7 +9,7 @@ using Xunit;
 namespace D47.Core.Tests.Input;
 
 /// <summary>
-/// The first member of the autonomous-action category (list.md Phase 10, items 2 and 3).
+/// The first member of the autonomous-action category (Phase 10, items 2 and 3).
 /// <para>
 /// The interesting cases are all the ones where it decides <em>not</em> to fire. Nobody asked
 /// for this, so nobody is watching it work, and every wrong firing is d47 pressing the

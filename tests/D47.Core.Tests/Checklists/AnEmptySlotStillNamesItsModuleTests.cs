@@ -171,7 +171,7 @@ public class AnEmptySlotStillNamesItsModuleTests
 
     /// <summary>
     /// <b>And it stays out of the key.</b> The slot alone is the identity of a slot-shaped intent
-    /// (list.md Phase 26), so changing which module is meant for a slot is the Commander changing
+    /// (Phase 26), so changing which module is meant for a slot is the Commander changing
     /// their mind — not the item being abandoned and a new one appearing, which is how a fortnight
     /// of progress would read as thrown away.
     /// </summary>

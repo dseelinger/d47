@@ -13,7 +13,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The control stays inside the column the row gave it (list.md Phase 4).
+/// The control stays inside the column the row gave it (Phase 4).
 /// <para>
 /// <see cref="RowWidthTests"/> holds the column to two fifths of the row. It does not hold the
 /// control to the column, and a ComboBox asks for the width of its widest item — so an

@@ -5,7 +5,7 @@ namespace D47.Core.Audio;
 /// <summary>
 /// Turns a stream of model text deltas into complete sentences, as soon as each one closes.
 /// <para>
-/// This is the largest perceived-latency win available (list.md Phase 5, architecture.md §6):
+/// This is the largest perceived-latency win available (Phase 5, architecture.md §6):
 /// speech starts at the first sentence boundary instead of at end of turn. It only exists
 /// because the provider streams — a completion that arrives whole has no first boundary to
 /// start at.

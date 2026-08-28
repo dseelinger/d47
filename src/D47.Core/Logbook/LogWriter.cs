@@ -24,7 +24,7 @@ public record LogAttempt
 }
 
 /// <summary>
-/// Drives the provider for one log (list.md Phase 33).
+/// Drives the provider for one log (Phase 33).
 /// <para>
 /// <b>One request, and it is the largest d47 makes.</b> Everything about the retry rule follows
 /// from that: two attempts rather than three, and <b>a retry only when nothing has arrived yet</b>.

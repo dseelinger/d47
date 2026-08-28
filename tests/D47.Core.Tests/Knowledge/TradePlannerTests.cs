@@ -5,7 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>
-/// d47's own trade arithmetic (list.md Phase 36). Every market here is written out by hand, which
+/// d47's own trade arithmetic (Phase 36). Every market here is written out by hand, which
 /// is the property that makes the phase testable at all: the planner reads no clock, opens no
 /// socket and has never heard of Spansh.
 /// </summary>

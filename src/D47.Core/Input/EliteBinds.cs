@@ -81,7 +81,7 @@ public sealed record EliteBinds
             string.Equals(Normalise(binding.Gesture()), Normalise(gesture), StringComparison.OrdinalIgnoreCase))];
 
     /// <summary>
-    /// Every binding on a controller button of this index, whichever device (list.md Phase 53).
+    /// Every binding on a controller button of this index, whichever device (Phase 53).
     /// <para>
     /// <b>Deliberately weaker than <see cref="Using"/>, and the weakness is stated where it is
     /// used.</b> Elite writes a joystick binding against its own device hash —
@@ -171,7 +171,7 @@ public sealed record EliteBinds
     /// <summary>
     /// Parses one .binds file. Malformed XML produces no bindings rather than an exception: an
     /// unreadable bindings file is a capability being unavailable, not a reason for d47 to fail
-    /// to start (list.md Phase 3, "Capabilities as state, not guard").
+    /// to start (Phase 3, "Capabilities as state, not guard").
     /// </summary>
     public static EliteBinds Parse(string path, string? presetName, ILogger logger)
     {

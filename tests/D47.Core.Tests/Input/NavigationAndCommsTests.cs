@@ -7,7 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Input;
 
 /// <summary>
-/// Getting a destination into the game and a message out of it (list.md Phase 10, items 10 to
+/// Getting a destination into the game and a message out of it (Phase 10, items 10 to
 /// 12).
 /// </summary>
 public class NavigationAndCommsTests

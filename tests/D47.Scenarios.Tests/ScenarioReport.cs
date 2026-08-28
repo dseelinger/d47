@@ -20,7 +20,7 @@ public enum RunMode
     /// </summary>
     LocalModel,
 
-    /// <summary>A model somewhere else. The only mode that can answer the question list.md asks.</summary>
+    /// <summary>A model somewhere else. The only mode that can answer the question the phase asks.</summary>
     RemoteModel,
 }
 
@@ -366,7 +366,7 @@ public sealed class ScenarioReport
     {
         RunMode.Scripted => "scripted provider - the instrument only, no model was asked anything",
         RunMode.LocalModel => "a model on this machine - nothing left it, nothing was paid",
-        _ => "a model somewhere else - the only mode that measures what list.md asks about",
+        _ => "a model somewhere else - the only mode that measures what the phase asks about",
     };
 
     /// <summary>

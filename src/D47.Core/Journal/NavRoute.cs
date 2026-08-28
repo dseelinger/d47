@@ -141,7 +141,7 @@ public sealed record RouteHop(string StarSystem, string? StarClass)
 
 /// <summary>
 /// The route Elite plotted, read from the <c>NavRoute.json</c> file it writes locally
-/// (list.md Phase 8, "Route Progress").
+/// (Phase 8, "Route Progress").
 /// <para>
 /// This is the whole reason no route-planning service is needed: the file already contains
 /// every hop and every star class, which is exactly what the fuel and hazard warnings need. It
@@ -186,7 +186,7 @@ public sealed record NavRoute
 }
 
 /// <summary>
-/// Where the Commander is in a plotted route, and what is left of it (list.md Phase 37,
+/// Where the Commander is in a plotted route, and what is left of it (Phase 37,
 /// "Progress").
 /// <para>
 /// In Core rather than in the page that draws it, because it is arithmetic over records and

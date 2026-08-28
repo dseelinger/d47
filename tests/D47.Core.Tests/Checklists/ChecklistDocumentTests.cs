@@ -4,7 +4,7 @@ using Xunit;
 namespace D47.Core.Tests.Checklists;
 
 /// <summary>
-/// The two kinds, the three groups, and revision as a diff (list.md Phase 17).
+/// The two kinds, the three groups, and revision as a diff (Phase 17).
 /// </summary>
 public class ChecklistDocumentTests
 {
@@ -136,8 +136,8 @@ public class ChecklistDocumentTests
     }
 
     /// <summary>
-    /// Changing a slot from one blueprint to another is the same item changing its mind (list.md
-    /// Phase 26, "A plan is keyed to its slot").
+    /// Changing a slot from one blueprint to another is the same item changing its mind (Phase 26
+    /// , "A plan is keyed to its slot").
     /// <para>
     /// This is what the slot key buys, seen from the outside: before it, the first edit to a slot
     /// tombstoned whatever history it had and opened an identical-looking new item beside the

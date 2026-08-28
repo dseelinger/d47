@@ -5,7 +5,7 @@ using D47.Core.Vr;
 namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
-/// The headset (list.md Phase 9). What it declares is a switch and a state — where the
+/// The headset (Phase 9). What it declares is a switch and a state — where the
 /// surfaces go belongs to the placement rows, and whether a headset is <em>present</em>
 /// belongs to nobody, because that is something d47 discovers and says rather than something
 /// the Commander sets.
@@ -434,7 +434,7 @@ public static class VrCapability
 
         // The big panel only. Mini's pixel budget is not on this ladder and is not meant to be:
         // it is a floor under a reduced content set rather than an aspect, which VrPanelSurface
-        // records at length (list.md Phase 25).
+        // records at length (Phase 25).
         if (slot != PanelSlot)
         {
             yield break;

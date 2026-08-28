@@ -5,7 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Listening;
 
 /// <summary>
-/// The continuous-listening gate policy (list.md Phase 13), driven with synthesised audio and no
+/// The continuous-listening gate policy (Phase 13), driven with synthesised audio and no
 /// microphone. Every one of these is what a WAV file into the gate would do — which is the whole
 /// reason the detector lives in Core and takes samples rather than owning a device
 /// (architecture.md §8).
@@ -290,7 +290,7 @@ public class VoiceActivityTests
 
         // Shouting at a push-to-talk gate opens nothing, which is what push-to-talk means. The
         // modes are one gate with different policies over it, not one policy leaking into
-        // another (list.md Phase 6).
+        // another (Phase 6).
         for (var second = 0; second < 5; second++)
         {
             Feed(gate, Speech(TimeSpan.FromSeconds(1), level: 0.8f), ref now);

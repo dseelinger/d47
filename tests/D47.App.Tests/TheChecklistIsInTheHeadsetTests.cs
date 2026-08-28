@@ -18,7 +18,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The checklist as the headset gets it (list.md Phase 39, "The checklist in the headset").
+/// The checklist as the headset gets it (Phase 39, "The checklist in the headset").
 /// <para>
 /// <b>Furnishing the tab is one call, and none of these tests is about that call.</b> They are
 /// about the four things a headset does differently from a monitor: a ray is not a mouse, the
@@ -407,7 +407,7 @@ public class TheChecklistIsInTheHeadsetTests
     }
 
     /// <summary>
-    /// The sentence is drawn big enough to be read through a lens (list.md Phase 39, item 2).
+    /// The sentence is drawn big enough to be read through a lens (Phase 39, item 2).
     /// <para>
     /// Pinned as a number rather than left to a capture, because the capture is what settled it
     /// and a capture cannot fail a build: at 19 pixels to the degree the second line stood 29

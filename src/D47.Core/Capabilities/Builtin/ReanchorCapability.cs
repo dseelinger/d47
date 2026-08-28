@@ -1,7 +1,7 @@
 namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
-/// Putting the headset surfaces back (list.md Phase 9, "Re-anchor the panels").
+/// Putting the headset surfaces back (Phase 9, "Re-anchor the panels").
 /// <para>
 /// Elite's in-game recenter moves the cockpit without telling SteamVR, so a world-locked
 /// surface drifts out of position with no event to hook. There is nothing to detect and

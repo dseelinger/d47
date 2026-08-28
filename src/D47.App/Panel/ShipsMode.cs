@@ -8,7 +8,7 @@ using D47.Core.Ships;
 namespace D47.App.Panel;
 
 /// <summary>
-/// The Loadout tab's Ships mode: the fleet, a ship, a slot (list.md Phase 26, "Ships").
+/// The Loadout tab's Ships mode: the fleet, a ship, a slot (Phase 26, "Ships").
 /// <para>
 /// Everything that was in <c>FleetPage</c>, <c>ShipPage</c> and <c>SlotPage</c> that is about
 /// <em>ships</em> rather than about drawing, moved behind <see cref="ILoadoutMode"/> when Phase 27
@@ -75,7 +75,7 @@ public sealed class ShipsMode(
         {
             ships.Store.Changed += value;
 
-            // And a third, added by list.md Phase 38: the tab now carries a question waiting on
+            // And a third, added by Phase 38: the tab now carries a question waiting on
             // the Commander, so a question arriving or being answered moves these pages. Without
             // it the banner is drawn on whichever pane was redrawn last and left standing on the
             // other — a Commander who answers on the ship page finds the fleet page still asking.
@@ -364,7 +364,7 @@ public sealed class ShipsMode(
 
     /// <summary>
     /// The question left on the tab when one was asked out loud and not answered
-    /// (list.md Phase 38, "Ask before the plan and the checklist drift apart").
+    /// (Phase 38, "Ask before the plan and the checklist drift apart").
     /// <para>
     /// <b>Read off the proposal itself rather than kept beside it.</b> The question <em>is</em> a
     /// checklist proposal — the same accept-or-decline boundary the promote button uses — so the
@@ -400,7 +400,7 @@ public sealed class ShipsMode(
     }
 
     /// <summary>
-    /// Power and jump range, live while the build is edited (list.md Phase 38).
+    /// Power and jump range, live while the build is edited (Phase 38).
     /// <para>
     /// <b>The two numbers a build is designed against</b>, and neither was visible until after the
     /// credits were spent: a Commander answered both by alt-tabbing to Coriolis. Both are
@@ -770,8 +770,8 @@ public sealed class ShipsMode(
             experimental,
             effects)
         {
-            // Whether the module this side names is one a pledge is needed to buy (list.md Phase
-            // 38). Per side, because planning one you have not got is exactly when the gate is
+            // Whether the module this side names is one a pledge is needed to buy (Phase 38).
+            // Per side, because planning one you have not got is exactly when the gate is
             // worth knowing about.
             Gated = EliteSpecifications.Module(symbol)?.NeedsPledge ?? false,
         };
@@ -2108,7 +2108,7 @@ public sealed class ShipsMode(
     }
 
     /// <summary>
-    /// The coin that marks a module a Powerplay pledge is needed to buy (list.md Phase 38).
+    /// The coin that marks a module a Powerplay pledge is needed to buy (Phase 38).
     /// <para>
     /// <b>U+00A4, the currency sign</b>, and the character is a decision rather than a taste: it
     /// is in every Latin font there is, so it cannot come out as tofu — which is the one failure

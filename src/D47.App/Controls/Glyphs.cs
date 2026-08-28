@@ -78,7 +78,7 @@ public static class Glyphs
     /// <param name="data">One of the constants above.</param>
     /// <param name="brush">
     /// The theme key to stroke it with, so switching theme repaints it without it knowing a theme
-    /// exists — colour by role, never by literal (list.md Phase 4).
+    /// exists — colour by role, never by literal (Phase 4).
     /// </param>
     /// <param name="size">
     /// Pixels across, square. 14 sits beside secondary text; the microphone uses 13 beside small
@@ -89,7 +89,7 @@ public static class Glyphs
         var glyph = Made(data, size);
 
         // Bound rather than assigned, so switching theme repaints it — colour by role, never by
-        // literal, and never a colour read once at build time (list.md Phase 4).
+        // literal, and never a colour read once at build time (Phase 4).
         glyph.Bind(Shape.StrokeProperty, glyph.GetResourceObservable(brush));
 
         return glyph;

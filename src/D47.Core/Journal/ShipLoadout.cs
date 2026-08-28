@@ -173,7 +173,7 @@ public sealed record ShipModule(string Slot, string Item, bool Powered, int? Hea
 }
 
 /// <summary>
-/// The ship the Commander is flying, and what the game says about it (list.md Phase 7,
+/// The ship the Commander is flying, and what the game says about it (Phase 7,
 /// "Ship's loadout" and "Ship metrics").
 /// <para>
 /// <b>Every number here is reported by the Loadout event, not computed from a table of ship

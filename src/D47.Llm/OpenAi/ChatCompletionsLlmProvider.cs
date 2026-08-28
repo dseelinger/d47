@@ -5,7 +5,7 @@ using D47.Core.Conversation;
 namespace D47.Llm.OpenAi;
 
 /// <summary>
-/// A model on a machine the Commander controls, over Chat Completions (list.md Phase 29,
+/// A model on a machine the Commander controls, over Chat Completions (Phase 29,
 /// "A turn answered by a machine you own").
 /// <para>
 /// <b>Chat Completions is where every local server lives.</b> Ollama, LM Studio, vLLM and
@@ -638,7 +638,7 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
 
         // Both map down rather than through. OpenAI's acceptance of "xhigh" is not something
         // d47 has seen a 200 for, and the fallback arm below would send "medium" -- a rung
-        // *below* High for the setting that asks for more than it (list.md Phase 54). Raising
+        // *below* High for the setting that asks for more than it (Phase 54). Raising
         // either of these wants a real response, not a guess.
         ThinkingEffort.Xhigh => "high",
         ThinkingEffort.Max => "high",

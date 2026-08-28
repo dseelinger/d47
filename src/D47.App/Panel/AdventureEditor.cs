@@ -13,7 +13,7 @@ using D47.Core.Knowledge;
 namespace D47.App.Panel;
 
 /// <summary>
-/// Writing an adventure by hand (list.md Phase 47, "Written, generated or imported").
+/// Writing an adventure by hand (Phase 47, "Written, generated or imported").
 /// <para>
 /// <b>Every field is a closed vocabulary except the prose</b> — <see cref="Controls.MacroWindow"/>'s
 /// guarantee, arrived at from the panel side: the kind of a beat is a chooser of exactly five, a

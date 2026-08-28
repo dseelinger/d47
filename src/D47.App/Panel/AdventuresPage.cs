@@ -12,7 +12,7 @@ using D47.Core.Interface;
 namespace D47.App.Panel;
 
 /// <summary>
-/// The Adventures tab (list.md Phase 47).
+/// The Adventures tab (Phase 47).
 /// <para>
 /// <b>The root is cards, and no card carries a number.</b> Each says the story's name, who wrote
 /// it, and where it is — the current beat's title, <em>not begun</em>, <em>waiting for your yes</em>,
@@ -721,7 +721,7 @@ public sealed class AdventuresPage : UserControl
     }
 
     /// <summary>
-    /// Reasoning with the AI about a draft (list.md Phase 47, "Revision before acceptance"). Said
+    /// Reasoning with the AI about a draft (Phase 47, "Revision before acceptance"). Said
     /// or typed; the revised draft replaces the pending one with the previous kept for Put it back.
     /// </summary>
     private void Revise(Adventure draft) => _prompts.Enter(

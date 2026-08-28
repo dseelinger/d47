@@ -8,7 +8,7 @@ namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
 /// On foot: what the Commander is wearing, what upgrading or modifying it costs, who does it, and
-/// where the materials come from (list.md Phase 20).
+/// where the materials come from (Phase 20).
 /// <para>
 /// <b>Two axes, and neither one is the ship model.</b> Grade 1 to 5 is bought at Pioneer Supplies
 /// for a fixed list and a fixed price — no roll, no quality, nothing random. Modifications come
@@ -35,7 +35,7 @@ public static class OnFootCapability
     public const string Id = "on-foot";
 
     /// <param name="plans">
-    /// The Commander's suit and weapon plans (list.md Phase 27). Null under the designer and in
+    /// The Commander's suit and weapon plans (Phase 27). Null under the designer and in
     /// tests that are not about them, and the plan tools then answer that nothing is being
     /// tracked rather than throwing.
     /// </param>

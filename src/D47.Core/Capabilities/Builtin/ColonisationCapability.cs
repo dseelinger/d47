@@ -7,7 +7,7 @@ namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
 /// What a construction site still wants, what the Commander has to give it, and where the next one
-/// could go (list.md Phase 18, "Colonisation and construction tracking" and "Find somewhere worth
+/// could go (Phase 18, "Colonisation and construction tracking" and "Find somewhere worth
 /// colonising").
 /// <para>
 /// <b>Two halves that answer different questions from different sources, which is the same shape
@@ -36,7 +36,7 @@ namespace D47.Core.Capabilities.Builtin;
 /// </para>
 /// <para>
 /// <b>The planning half is not here.</b> A site's objective, its facilities and their order live on
-/// the checklist substrate (<see cref="ChecklistCapability"/>, list.md Phase 17), because a
+/// the checklist substrate (<see cref="ChecklistCapability"/>, Phase 17), because a
 /// colonisation build is the same shape of long-lived intent as an engineering one. This capability
 /// reports; it holds no state of its own and proposes nothing.
 /// </para>
@@ -61,10 +61,10 @@ public static class ColonisationCapability
     /// <param name="galaxy">
     /// The galaxy index, or null where none is composed — under the designer, and in a test that is
     /// not about it. The journal half still answers, which is what a capability being partly off
-    /// looks like rather than one being absent (list.md Phase 3).
+    /// looks like rather than one being absent (Phase 3).
     /// </param>
     /// <param name="trade">
-    /// Where the shopping list comes from (list.md Phase 50). Null under the designer and in tests
+    /// Where the shopping list comes from (Phase 50). Null under the designer and in tests
     /// that are not about it, and the tracking half still answers — asking where to buy then says
     /// it has nothing composed that reads markets, which is a capability being partly off rather
     /// than absent.
@@ -294,7 +294,7 @@ public static class ColonisationCapability
     // ------------------------------------------------------------------ needs
 
     /// <summary>
-    /// The hauling list for one site, and — since list.md Phase 50 — where to buy it.
+    /// The hauling list for one site, and — since Phase 50 — where to buy it.
     /// <para>
     /// <b>The outstanding list itself is never recomputed here.</b> <c>ColonisationConstructionDepot</c>
     /// is a snapshot rather than a delta, measured over 6,330 events with <c>RequiredAmount</c> never
@@ -401,7 +401,7 @@ public static class ColonisationCapability
     }
 
     /// <summary>
-    /// Which stations between them carry the whole list (list.md Phase 50).
+    /// Which stations between them carry the whole list (Phase 50).
     /// <para>
     /// <b>The unit is <em>this station covers six of your twenty</em></b>, because that is the
     /// sentence a Commander acts on. Not a plotted course: they are flying a loop they will repeat

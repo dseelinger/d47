@@ -21,7 +21,7 @@ public enum ActionAvailability
 
 /// <summary>
 /// One action resolved against the Commander's own bindings and the mode they are in
-/// (list.md Phase 10, "Know which actions the Commander can actually reach" and "Offer only
+/// (Phase 10, "Know which actions the Commander can actually reach" and "Offer only
 /// the actions that work right now").
 /// <para>
 /// The point of carrying a <see cref="Reason"/> even when the answer is no: the audience is

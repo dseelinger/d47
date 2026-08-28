@@ -11,7 +11,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The Market page on the Routing tab (list.md Phase 49).
+/// The Market page on the Routing tab (Phase 49).
 /// <para>
 /// Driven through the drawn page rather than through the ranker, because the ranker being right
 /// and the page showing it are two different claims and only one of them is what a Commander

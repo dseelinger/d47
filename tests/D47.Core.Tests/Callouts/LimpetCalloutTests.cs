@@ -7,7 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Callouts;
 
 /// <summary>
-/// The limpet reminder (list.md Phase 41, asked for 2026-08-21).
+/// The limpet reminder (Phase 41, asked for 2026-08-21).
 /// <para>
 /// Every condition here was measured against the Commander's own 148 limpet purchases rather than
 /// guessed — see <see cref="LimpetCallout"/> for the numbers and for the three-in-136 carrier miss

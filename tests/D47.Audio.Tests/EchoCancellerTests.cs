@@ -5,7 +5,7 @@ using Xunit;
 namespace D47.Audio.Tests;
 
 /// <summary>
-/// The echo canceller's lifecycle and its pass-through (list.md Phase 13).
+/// The echo canceller's lifecycle and its pass-through (Phase 13).
 /// <para>
 /// None of this needs a microphone, a speaker or a running game — which is the reason it is
 /// worth having. The class sits between capture and the listening gate on the one path where a

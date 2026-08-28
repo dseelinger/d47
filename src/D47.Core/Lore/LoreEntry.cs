@@ -1,7 +1,7 @@
 namespace D47.Core.Lore;
 
 /// <summary>
-/// How much weight a note carries, and therefore which sentence reads it back (list.md Phase 23,
+/// How much weight a note carries, and therefore which sentence reads it back (Phase 23,
 /// "Commander's Lore").
 /// <para>
 /// <b>This is the difference between a companion that remembers and one that invents</b>, and it

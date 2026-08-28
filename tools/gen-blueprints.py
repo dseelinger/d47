@@ -976,7 +976,7 @@ def main() -> None:
             inherited += 1
 
     # Every offer still without a recipe, named rather than counted, because this is the gap
-    # list.md Phase 38 item 10 is about and a list can be checked against the outfitting screen.
+    # Phase 38 item 10 is about and a list can be checked against the outfitting screen.
     # The remainder is genuine absence: EDEngineer carries no Guardian weapon recipes at all, so
     # Anti-Guardian Zone Resistance has no ingredients here — and EDSY's symbol for it, and for all
     # three of its materials, is one EDSY itself marks `// TODO`. A guess is not a recipe.
@@ -1083,7 +1083,7 @@ def main() -> None:
         print(f"{inherited} recipes were also filed under a variant module type EDSY splits and "
               f"EDEngineer does not: {', '.join(sorted(MTYPE_ALIASES))}")
 
-    # The state list.md Phase 38 item 10 describes, reported every run rather than pinned to a
+    # The state Phase 38 item 10 describes, reported every run rather than pinned to a
     # known list: a run that stops naming one of these is the signal that a source has filled it in.
     if uncosted:
         print(f"{len(uncosted)} offers have no recipe anywhere, so the surface says so rather than "

@@ -38,28 +38,28 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>How far along they are with each engineer.</summary>
     public EngineerProgressState Engineers { get; private set; } = EngineerProgressState.Empty;
 
-    /// <summary>Where they stand in every career ladder (list.md Phase 34).</summary>
+    /// <summary>Where they stand in every career ladder (Phase 34).</summary>
     public RankState Ranks { get; private set; } = RankState.Empty;
 
     /// <summary>Every community goal their journal has reported, and where they stand on it.</summary>
     public CommunityGoalBoard CommunityGoals { get; private set; } = CommunityGoalBoard.Empty;
 
-    /// <summary>Which Power they fly for, if any (list.md Phase 15).</summary>
+    /// <summary>Which Power they fly for, if any (Phase 15).</summary>
     public PowerplayPledge Pledge { get; private set; } = PowerplayPledge.None;
 
-    /// <summary>Construction sites they have visited (list.md Phase 17).</summary>
+    /// <summary>Construction sites they have visited (Phase 17).</summary>
     public ColonisationSites Colonisation { get; private set; } = ColonisationSites.Empty;
 
-    /// <summary>What their surface scans found on each body (list.md Phase 18).</summary>
+    /// <summary>What their surface scans found on each body (Phase 18).</summary>
     public BodySignals Bodies { get; private set; } = BodySignals.Empty;
 
-    /// <summary>What they have sampled, per body and per genus (list.md Phase 18).</summary>
+    /// <summary>What they have sampled, per body and per genus (Phase 18).</summary>
     public OrganicSampling Sampling { get; internal set; } = OrganicSampling.Empty;
 
     /// <summary>Since they entered the game.</summary>
     public SessionSummary Session { get; private set; } = SessionSummary.Empty;
 
-    /// <summary>The hired NPC pilots on the books (list.md Phase 11, "Ship Crew").</summary>
+    /// <summary>The hired NPC pilots on the books (Phase 11, "Ship Crew").</summary>
     public ShipCrew Crew { get; private set; } = ShipCrew.Empty;
 
     /// <summary>
@@ -68,11 +68,11 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// </summary>
     public SuitInventory Suit { get; internal set; } = SuitInventory.Empty;
 
-    /// <summary>What they are wearing and carrying on foot (list.md Phase 20).</summary>
+    /// <summary>What they are wearing and carrying on foot (Phase 20).</summary>
     public OnFootLoadout OnFoot { get; private set; } = OnFootLoadout.Unknown;
 
     /// <summary>
-    /// What is in the cargo hold (list.md Phase 18). Same story as <see cref="Suit"/> and for the
+    /// What is in the cargo hold (Phase 18). Same story as <see cref="Suit"/> and for the
     /// same measured reason — the manifest is in a file Elite rewrites, and the matching journal
     /// event carries it on 8% of its occurrences.
     /// </summary>

@@ -15,7 +15,7 @@ public sealed record EgressEntry(string Id, string Name, string Destination, str
 /// <summary>
 /// What is leaving this machine, as of the current settings. Answerable at any time rather
 /// than documented once and hoped for: the settings surface renders it, a tool reports it
-/// aloud, and both read this (list.md Phase 4, "Say what each provider receives").
+/// aloud, and both read this (Phase 4, "Say what each provider receives").
 /// <para>
 /// The entry <em>ids</em> are a closed set and the entry <em>contents</em> are computed from
 /// settings. That split is what lets the disclosure rows be declared once and never mutated
@@ -44,7 +44,7 @@ public static class EgressDisclosure
     /// Synthesising a spoken line. Added in Phase 11 alongside the second provider, and it
     /// should have been here from Phase 5 — every voice provider d47 has is a network service,
     /// so a set that claimed to be exhaustive while omitting the one that sends every word D47
-    /// says was not exhaustive. architecture.md §7 names it and list.md Phase 4 asks for it by
+    /// says was not exhaustive. architecture.md §7 names it and Phase 4 asks for it by
     /// name ("reply text to a paid TTS").
     /// </summary>
     public const string TextToSpeech = "tts";
@@ -76,8 +76,8 @@ public static class EgressDisclosure
     public const string WebSearch = "websearch";
 
     /// <summary>
-    /// Fetching the catalogue of notable places a generated adventure may draw on (list.md Phase
-    /// 47). A different host from the galaxy search, so its own entry — the disclosure lists
+    /// Fetching the catalogue of notable places a generated adventure may draw on (Phase 47). A
+    /// different host from the galaxy search, so its own entry — the disclosure lists
     /// destinations by where the bytes go.
     /// </summary>
     public const string NotablePlaces = "notableplaces";
@@ -269,7 +269,7 @@ public static class EgressDisclosure
     {
         var provider = LlmProviderCatalog.Selected(settings.Llm.Provider);
         // A provider whose key is optional is usable with an empty box, which is the change
-        // list.md Phase 29 made — and NeedsKey now says so, so this test needed no editing to
+        // Phase 29 made — and NeedsKey now says so, so this test needed no editing to
         // become right. It is spelled out because it silently changed meaning.
         var usable = provider.Id != LlmProviderCatalog.NoneId && (!provider.NeedsKey || keyPresent);
 
@@ -397,7 +397,7 @@ public static class EgressDisclosure
             providers.Select(provider => provider.Destination).Distinct(StringComparer.OrdinalIgnoreCase));
 
     /// <summary>
-    /// What choosing one provider for <em>one slot</em> causes to leave (list.md Phase 57).
+    /// What choosing one provider for <em>one slot</em> causes to leave (Phase 57).
     /// <para>
     /// The slot row's own question, and it is not the one the privacy section asks. A Commander
     /// on that row is deciding whether a particular set of voices should go to a particular
@@ -505,7 +505,7 @@ public static class EgressDisclosure
         var destination = settings.Llm.Endpoint ?? provider.DefaultEndpoint ?? provider.Name;
 
         // The first time in d47's life that the honest answer to *what is leaving* is *nothing*
-        // (list.md Phase 29). Phase 4's amendment made local-only a matter of the enumeration
+        // (Phase 29). Phase 4's amendment made local-only a matter of the enumeration
         // being truthful rather than of a mode being promised, and this is what being truthful
         // looks like when the endpoint is on this machine.
         //

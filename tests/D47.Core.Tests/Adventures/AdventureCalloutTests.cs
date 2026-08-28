@@ -9,7 +9,7 @@ namespace D47.Core.Tests.Adventures;
 
 /// <summary>
 /// A beat, said when it is reached — after a settle, never mid-danger, never from the priming
-/// backlog (list.md Phase 47, "The ship's AI tells it, and the authored beat is the floor").
+/// backlog (Phase 47, "The ship's AI tells it, and the authored beat is the floor").
 /// </summary>
 public class AdventureCalloutTests : IDisposable
 {

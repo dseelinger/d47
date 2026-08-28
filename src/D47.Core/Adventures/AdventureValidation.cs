@@ -61,7 +61,7 @@ public static class Careers
 
 /// <summary>
 /// What the file and the form both check, so a hand-edited adventure and a form-built one are
-/// refused identically (list.md Phase 47, "The trigger vocabulary is closed and the prose is
+/// refused identically (Phase 47, "The trigger vocabulary is closed and the prose is
 /// free").
 /// <para>
 /// Two lists, because there are two questions. <see cref="Problems"/> is whether this is an

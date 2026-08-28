@@ -2,7 +2,7 @@ namespace D47.App.Panel;
 
 /// <summary>
 /// A page that answers the panel's search by filtering itself, and then marking what it kept
-/// (list.md Phase 12, "Search whichever tab you are looking at").
+/// (Phase 12, "Search whichever tab you are looking at").
 /// <para>
 /// Settings is 92 rows across 14 sections, so highlighting <em>instead of</em> filtering is a
 /// scroll hunt with extra colour — the query has to take rows away. It highlights as well,

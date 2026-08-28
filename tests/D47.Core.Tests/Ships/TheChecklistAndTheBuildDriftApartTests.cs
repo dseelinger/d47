@@ -8,7 +8,7 @@ namespace D47.Core.Tests.Ships;
 
 /// <summary>
 /// Asking, once, when the ship the Commander has boarded carries a build their checklist does not
-/// (list.md Phase 38, "Ask before the plan and the checklist drift apart").
+/// (Phase 38, "Ask before the plan and the checklist drift apart").
 /// <para>
 /// <b>Three rules, and all three are about not being a nuisance.</b> It fires on a swap and only
 /// where the two actually disagree; <i>no</i> leaves both untouched and is not asked again for that
@@ -84,7 +84,7 @@ public class TheChecklistAndTheBuildDriftApartTests
     }
 
     /// <summary>
-    /// The live half of the list.md Phase 44 defect, on this watch. Ship ids are per Commander,
+    /// The live half of the Phase 44 defect, on this watch. Ship ids are per Commander,
     /// and the last ship seen is a bare id — so a second Commander logging in aboard their own
     /// ship 12 reads as the ship already seen, and their build is never compared. A reset on the
     /// switch makes their first Loadout a swap.

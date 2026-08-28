@@ -4,7 +4,7 @@ using Xunit;
 namespace D47.Core.Tests.Journal;
 
 /// <summary>
-/// Where the Commander is in a plotted route (list.md Phase 37, "Progress").
+/// Where the Commander is in a plotted route (Phase 37, "Progress").
 /// <para>
 /// The arithmetic the Routing tab draws, tested without a window — which is the whole reason it
 /// lives in Core rather than in the page.

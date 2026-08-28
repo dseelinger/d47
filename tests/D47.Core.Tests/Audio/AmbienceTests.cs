@@ -7,7 +7,7 @@ namespace D47.Core.Tests.Audio;
 
 /// <summary>
 /// Music separate from cues and sound effects, situational from what the game reports
-/// (list.md Phase 12, "Ambient music").
+/// (Phase 12, "Ambient music").
 /// </summary>
 public class AmbienceTests : IDisposable
 {

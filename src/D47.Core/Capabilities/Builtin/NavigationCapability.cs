@@ -109,7 +109,7 @@ public sealed class RecordingClipboard : IClipboard
 }
 
 /// <summary>
-/// Getting a destination out of d47 and into the game (list.md Phase 10, items 10 and 11).
+/// Getting a destination out of d47 and into the game (Phase 10, items 10 and 11).
 /// <para>
 /// <b>The clipboard is the primary path and the plotting attempt is a convenience on top of
 /// it.</b> That ordering is the checklist's, and it is right: pasting a system name into the

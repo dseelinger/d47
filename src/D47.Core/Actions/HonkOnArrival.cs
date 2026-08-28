@@ -5,7 +5,7 @@ using D47.Core.Journal;
 namespace D47.Core.Actions;
 
 /// <summary>
-/// Fires the discovery scanner on arriving in a system (list.md Phase 10, "TheApp honks when
+/// Fires the discovery scanner on arriving in a system (Phase 10, "TheApp honks when
 /// you arrive in a system"). The first member of the autonomous-action category, and therefore
 /// off by default and enabled on its own row.
 /// <para>

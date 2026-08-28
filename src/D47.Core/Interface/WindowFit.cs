@@ -21,7 +21,7 @@ public readonly record struct FitRect(double X, double Y, double Width, double H
 }
 
 /// <summary>
-/// Where the window opens, given how big the screen actually is (list.md Phase 9, "Open at a
+/// Where the window opens, given how big the screen actually is (Phase 9, "Open at a
 /// size that fits the screen").
 /// <para>
 /// The bug this exists for is a scaling bug wearing a sizing bug's clothes. Avalonia's

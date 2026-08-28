@@ -38,7 +38,7 @@ public readonly record struct EliteKey(EliteInputKind Kind, uint Code)
 }
 
 /// <summary>
-/// Elite's key symbols to something d47 can press (list.md Phase 10, "Know which actions the
+/// Elite's key symbols to something d47 can press (Phase 10, "Know which actions the
 /// Commander can actually reach").
 /// <para>
 /// Written out rather than derived, for the same reason <c>VirtualKeys</c> in the app is:

@@ -8,8 +8,7 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>
-/// The shipped table, the Commander's own notes, and the tiers that keep them apart (list.md
-/// Phase 23).
+/// The shipped table, the Commander's own notes, and the tiers that keep them apart (Phase 23).
 /// <para>
 /// The tiers carry the whole difference between a companion that remembers and one that invents,
 /// so most of what is asserted here is about which sentence an entry is read back in — and about

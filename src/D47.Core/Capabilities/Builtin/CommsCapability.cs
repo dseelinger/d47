@@ -4,7 +4,7 @@ using D47.Core.Input;
 namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
-/// Dictating into Elite's chat (list.md Phase 10, "Send/Receive messages to another commander
+/// Dictating into Elite's chat (Phase 10, "Send/Receive messages to another commander
 /// or commanders").
 /// <para>
 /// <b>The only thing d47 does that other people can see.</b> Everything else in this phase acts

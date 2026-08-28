@@ -6,7 +6,7 @@ using D47.Core.Knowledge;
 namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
-/// What a hull and a module can do (list.md Phase 14, "Elite Dangerous Ships").
+/// What a hull and a module can do (Phase 14, "Elite Dangerous Ships").
 /// <para>
 /// The counterpart to <see cref="JournalCapability"/>: that one reports what the Commander is
 /// flying, and this one reports what a ship is capable of before anybody buys it. Both are

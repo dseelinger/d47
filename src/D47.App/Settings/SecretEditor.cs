@@ -21,7 +21,7 @@ using Path = Avalonia.Controls.Shapes.Path;
 namespace D47.App.Settings;
 
 /// <summary>
-/// One key: paste it, store it, prove it works, clear it (list.md Phase 16).
+/// One key: paste it, store it, prove it works, clear it (Phase 16).
 /// <para>
 /// <b>One control, two surfaces.</b> The settings row and the first-run guide both show a key,
 /// and the guide is explicitly not allowed to re-author these fields — "a parallel copy of these
@@ -458,7 +458,7 @@ public sealed class SecretEditor : UserControl
 
     /// <summary>
     /// Themed through a dynamic resource rather than a literal brush, so a glyph repaints with
-    /// the rest of the app on a theme change (list.md Phase 4, "Themes"). Static, so it cannot
+    /// the rest of the app on a theme change (Phase 4, "Themes"). Static, so it cannot
     /// use the instance helper and reaches for the same markup extension the confirm dialog does.
     /// </summary>
     private static Path Stroked(string data)

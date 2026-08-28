@@ -6,7 +6,7 @@ namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
 /// Everything audible: the voice, the device, the loop-state cues, the thinking bed, and the
-/// one control that outranks all of them (list.md Phase 5).
+/// one control that outranks all of them (Phase 5).
 /// <para>
 /// It registers exactly one tool, and that tool is <c>stop_speaking</c>. Nothing else here is
 /// reachable by the model: a model that can change the output device or the voice mid-sentence
@@ -57,13 +57,13 @@ public static class SpeechCapability
     public static string KeyRowFor(TtsProviderInfo provider) => $"speech.{provider.Id}.apiKey";
 
     /// <summary>
-    /// The row key for one slot's provider (list.md Phase 57). Beneath
+    /// The row key for one slot's provider (Phase 57). Beneath
     /// <see cref="ProviderKey"/> rather than beside it, because that row <em>is</em>
     /// <see cref="VoiceGroup.Aboard"/>'s and these are the other five.
     /// </summary>
     public static string SlotProviderKey(VoiceGroupInfo slot) => $"speech.provider.{slot.Id}";
 
-    /// <summary>What has been spoken this session, broken down by slot (list.md Phase 57).</summary>
+    /// <summary>What has been spoken this session, broken down by slot (Phase 57).</summary>
     public const string SpentBySlotKey = "speech.spentBySlot";
 
     /// <summary>
@@ -92,7 +92,7 @@ public static class SpeechCapability
 
             // Priced and gated against the provider speaking for *this* row's slot, not the
             // ship's. A tower on free Edge beside a companion on a paid provider must not be
-            // announced as costing a fraction of a cent a press (list.md Phase 57).
+            // announced as costing a fraction of a cent a press (Phase 57).
             Cost = AuditionCost(VoiceGroups.Of(role)),
             Unavailable = AuditionUnavailable(surface, VoiceGroups.Of(role)),
         };
@@ -109,7 +109,7 @@ public static class SpeechCapability
     /// </para>
     /// <para>
     /// Free reads as free. A provider that costs nothing must not be described with a figure,
-    /// for the same reason the spend line does not print "$0.00" for Edge (list.md Phase 19).
+    /// for the same reason the spend line does not print "$0.00" for Edge (Phase 19).
     /// </para>
     /// </summary>
     private static Func<D47Settings, string> AuditionCost(VoiceGroup group) => settings =>
@@ -184,13 +184,13 @@ public static class SpeechCapability
         /// Separate from <see cref="Voices"/> because an empty list is four different situations
         /// and only the provider knows which — no key stored, a key it refused, no answer at all,
         /// or an account that genuinely holds none. Three of those look identical from here and
-        /// two of them are the Commander's to fix (list.md Phase 19).
+        /// two of them are the Commander's to fix (Phase 19).
         /// </para>
         /// </summary>
         public Func<VoiceGroup, string?>? WhyNoVoices { get; init; }
 
         /// <summary>
-        /// What speech has cost this session (list.md Phase 19). A function because the tracker
+        /// What speech has cost this session (Phase 19). A function because the tracker
         /// is the app's and lives for the process, and Core holds no reference to it — the row
         /// asks at render time, which is also what keeps the figure current without anything
         /// having to push it.
@@ -198,7 +198,7 @@ public static class SpeechCapability
         public Func<Audio.SpeechSpend?>? SpeechSpend { get; init; }
 
         /// <summary>
-        /// Speaks one voice so it can be judged before it is chosen (list.md Phase 19). Takes the
+        /// Speaks one voice so it can be judged before it is chosen (Phase 19). Takes the
         /// voice id and the role it is being cast in; the app decides what it says, because the
         /// ship AI's line is the core's own and the core aboard is the app's to know.
         /// <para>
@@ -216,7 +216,7 @@ public static class SpeechCapability
         public Func<VoiceGroup, bool>? HasKey { get; init; }
 
         /// <summary>
-        /// Tries a provider's stored key against the real service (list.md Phase 16). Takes the
+        /// Tries a provider's stored key against the real service (Phase 16). Takes the
         /// provider id, because the row that asks is the row for one provider and the surface has
         /// to know which.
         /// <para>
@@ -237,7 +237,7 @@ public static class SpeechCapability
         /// <para>
         /// A function rather than a list, because the library is rebuilt when the Commander drops
         /// a file into <c>data/audio/beds</c> and a list captured at startup would go on offering
-        /// the set that existed then (list.md Phase 12).
+        /// the set that existed then (Phase 12).
         /// </para>
         /// </summary>
         public required Func<IReadOnlyList<string>> Beds { get; init; }
@@ -375,7 +375,7 @@ public static class SpeechCapability
 
                 // Not offered where it would do nothing. Cartesia validates a speed precisely and
                 // then ignores it, so a row here would be a control that appears to work — the
-                // exact failure docs/capabilities/listening.md names (list.md Phase 60). The
+                // exact failure docs/capabilities/listening.md names (Phase 60). The
                 // resolver refuses it too; this half only keeps it off the screen.
                 AppliesWhen = s => TtsProviderCatalog.Selected(s.Speech.Provider)
                     is { Speaks: true, RateCanBeSet: true },
@@ -649,9 +649,9 @@ public static class SpeechCapability
                 Kind = SettingKind.Choice,
 
                 // Read from the library rather than listed here, which would be a second place
-                // for a name to be wrong (list.md Phase 5, #20) — and asked for each time it is
+                // for a name to be wrong (Phase 5, #20) — and asked for each time it is
                 // opened rather than captured, so a bed dropped into data/audio/beds is offered
-                // without a restart (list.md Phase 12).
+                // without a restart (Phase 12).
                 ChoiceSource = _ => surface.Beds(),
                 ChoiceLabel = surface.BedLabel,
                 DefaultDisplay = CueLibrary.DefaultBed,
@@ -803,7 +803,7 @@ public static class SpeechCapability
         // One row per slot that is not the ship's, offering the same providers the row above
         // does. Placed between the ship's own voice and what it costs, because that is the order
         // the decision is actually made in: pick the companion's voice, say where everybody else
-        // comes from, then look at the bill (list.md Phase 57).
+        // comes from, then look at the bill (Phase 57).
         rows.InsertRange(
             rows.FindIndex(row => row.Key == CharacterPriceKey),
             from slot in VoiceGroups.All
@@ -1034,7 +1034,7 @@ public static class SpeechCapability
 
     /// <summary>
     /// The same question asked of a named provider rather than of the selected one, which is what
-    /// six slots made necessary (list.md Phase 57).
+    /// six slots made necessary (Phase 57).
     /// <para>
     /// <b>A rate is a property of the synthesiser, so it follows the slot's provider.</b> The
     /// ranges are not comparable — Edge takes a wide percentage offset and ElevenLabs a narrow
@@ -1051,7 +1051,7 @@ public static class SpeechCapability
 
         // A provider that cannot be told a rate speaks at its own pace, whatever a settings file
         // says — the half of the rule the picker cannot enforce, because `settings.json` is a file
-        // a Commander reads and edits (list.md Phase 60). Natural pace rather than the stored
+        // a Commander reads and edits (Phase 60). Natural pace rather than the stored
         // number, so the value the app uses and the value the provider honours are the same one.
         if (!provider.RateCanBeSet)
         {

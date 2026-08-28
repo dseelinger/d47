@@ -5,7 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Utilities;
 
 /// <summary>
-/// Two clocks over one instant, and the timers and alarms beside them (list.md Phase 24).
+/// Two clocks over one instant, and the timers and alarms beside them (Phase 24).
 /// </summary>
 public class TimekeepingTests
 {

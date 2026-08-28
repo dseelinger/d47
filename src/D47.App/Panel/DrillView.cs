@@ -9,7 +9,7 @@ using D47.Core.Interface;
 namespace D47.App.Panel;
 
 /// <summary>
-/// A tab's drill stack, drawn as however many panes will fit (list.md Phase 25, "Drill in, and
+/// A tab's drill stack, drawn as however many panes will fit (Phase 25, "Drill in, and
 /// find your way back" and "The panel resizes and zooms").
 /// <para>
 /// <b>Drilling in and reflowing are one mechanism, and the mechanism is how many panes are
@@ -54,7 +54,7 @@ public sealed class DrillView : UserControl, IFilterablePage
     public const int MostPanes = 3;
 
     /// <summary>
-    /// How much of the gutter answers the mouse, in logical pixels (list.md Phase 55).
+    /// How much of the gutter answers the mouse, in logical pixels (Phase 55).
     /// <para>
     /// Wider than the rule it sits on, because a one-pixel target is one nobody can hit — and
     /// narrower than the 28-pixel gutter, so a click just inside a pane is a click in that pane
@@ -89,7 +89,7 @@ public sealed class DrillView : UserControl, IFilterablePage
 
     /// <summary>
     /// Where the Commander dragged the rules, or null on every surface that was not handed a
-    /// mouse (list.md Phase 55). <b>Null is what makes this the window's alone.</b>
+    /// mouse (Phase 55). <b>Null is what makes this the window's alone.</b>
     /// <para>
     /// Furnished rather than branched, like <c>PanelView.EnableSearch</c> and
     /// <c>EnableTurnDetails</c>: no code here asks which surface it is on. The headset drives this
@@ -218,7 +218,7 @@ public sealed class DrillView : UserControl, IFilterablePage
         // A chooser is drawn by the panel itself, over this whole region, because it takes the
         // panel rather than sharing it. Dropped from the trail here rather than special-cased
         // below: the strip's job is the levels the Commander can be in two of at once, and a
-        // modal is by definition not one of those (list.md Phase 25).
+        // modal is by definition not one of those (Phase 25).
         var trail = _nav.Modal
             ? _nav.Trail.Take(_nav.Trail.Count - 1).ToList()
             : _nav.Trail;
@@ -306,7 +306,7 @@ public sealed class DrillView : UserControl, IFilterablePage
     }
 
     /// <summary>
-    /// The grab area on one rule (list.md Phase 55).
+    /// The grab area on one rule (Phase 55).
     /// <para>
     /// <b>In the pane's own column rather than a column of its own</b>, aligned left and sitting
     /// in the gutter the border already leaves. A splitter column would change what
@@ -384,7 +384,7 @@ public sealed class DrillView : UserControl, IFilterablePage
 
     /// <summary>
     /// Gives this strip's rules a handle the mouse can drag, and remembers where they are left
-    /// (list.md Phase 55). The desktop window calls it; the headset and the flat overlay never do.
+    /// (Phase 55). The desktop window calls it; the headset and the flat overlay never do.
     /// <para>
     /// Redraws rather than waiting for the next navigation, because a strip that is already on
     /// screen when this arrives would otherwise have no handles until the Commander drilled

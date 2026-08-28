@@ -6,7 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Journal;
 
 /// <summary>
-/// What the Commander is wearing (list.md Phase 20, "d47 knows what you are wearing").
+/// What the Commander is wearing (Phase 20, "d47 knows what you are wearing").
 /// <para>
 /// <b>Every event body below is a real one</b>, copied out of a 912-journal corpus rather than
 /// invented — including the broken localisation, which is not an oddity to guard against but the

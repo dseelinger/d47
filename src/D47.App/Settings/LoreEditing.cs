@@ -4,7 +4,7 @@ using D47.Core.Lore;
 namespace D47.App.Settings;
 
 /// <summary>
-/// Everything the notes window needs, gathered where the app can supply it (list.md Phase 23).
+/// Everything the notes window needs, gathered where the app can supply it (Phase 23).
 /// <para>
 /// A surface rather than four parameters threaded through <c>Attach</c>, matching
 /// <see cref="SwitchEditing"/> beside it: the settings view knows how to open a window and

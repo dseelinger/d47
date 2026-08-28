@@ -342,7 +342,7 @@ public class PromptOnTheWireTests
 
     /// <summary>
     /// Haiku 4.5 predates the 4.6 generation and rejects both fields outright — a 400, not a
-    /// worse answer (list.md Phase 54). Asserted as <b>absent keys</b> rather than as null
+    /// worse answer (Phase 54). Asserted as <b>absent keys</b> rather than as null
     /// values, which is the whole question: a serialised <c>"thinking": null</c> is still the
     /// field being sent, and the model refuses it either way.
     /// <para>

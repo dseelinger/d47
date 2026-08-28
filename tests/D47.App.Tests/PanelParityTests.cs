@@ -15,7 +15,7 @@ namespace D47.App.Tests;
 /// The claim behind "one widget tree renders to both surfaces": the desktop window and the VR
 /// overlay each instantiate <see cref="PanelView"/>, both bind to one
 /// <see cref="PanelViewModel"/>, and neither can therefore be showing something the other is
-/// not (list.md Phase 9, "TheApp's panel works in VR").
+/// not (Phase 9, "TheApp's panel works in VR").
 /// <para>
 /// The part worth pinning by test is the part the framework will not do for us. A
 /// <c>Visual</c> belongs to exactly one visual tree, so there is no single instance rendered

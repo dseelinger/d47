@@ -45,7 +45,7 @@ public sealed record PoseSettings
 /// Where one surface sits and what it looks like — <em>VR Panel locking</em>, <em>Overlay
 /// Positioning &amp; Look</em>, <em>Panels can switch between curved and flat</em> and
 /// <em>Scale the big panel</em>, which are four checklist items over one record because they
-/// are four properties of one quad (list.md Phase 9).
+/// are four properties of one quad (Phase 9).
 /// </summary>
 public sealed record VrSurfaceSettings
 {
@@ -111,7 +111,7 @@ public sealed record VrSurfaceSettings
     public int Zoom { get; init; } = Interface.ZoomLadder.Default;
 
     /// <summary>
-    /// How many pixels this surface is rendered at, as "1280x800" (list.md Phase 25, "The panel
+    /// How many pixels this surface is rendered at, as "1280x800" (Phase 25, "The panel
     /// resizes and zooms").
     /// <para>
     /// The third of the three levers, and the one that was a constant until now: pixels decide

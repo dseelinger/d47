@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 namespace D47.Llm;
 
 /// <summary>
-/// Which optional parts of a request an endpoint has refused, this session (list.md Phase 29).
+/// Which optional parts of a request an endpoint has refused, this session (Phase 29).
 /// <para>
 /// <b>The rule is advertise, then demote.</b> A model list says what an endpoint serves and
 /// nothing about what it accepts — whether tool calls work, whether reasoning effort is a field
@@ -24,8 +24,8 @@ namespace D47.Llm;
 /// demotion that forgets itself that easily would be re-probed on every visit to the panel.
 /// </para>
 /// <para>
-/// <b>The key carries the model as well as the address, and that is not optional</b> (list.md
-/// Phase 54). It began keyed on the address alone, which is right for an OpenAI-compatible
+/// <b>The key carries the model as well as the address, and that is not optional</b> (Phase 54
+/// ). It began keyed on the address alone, which is right for an OpenAI-compatible
 /// endpoint — one server, one set of accepted fields, and the model list is a catalogue rather
 /// than a set of dialects. Anthropic serves five models from one address and they do not accept
 /// the same fields: Haiku 4.5 rejects the two 4.6-generation fields that Opus 5 requires. A

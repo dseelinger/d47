@@ -9,7 +9,7 @@ namespace D47.Core.Lore;
 public sealed record LoreProblem(string What, string Why);
 
 /// <summary>
-/// Commander's Lore on disk (list.md Phase 23, "Commander's Lore").
+/// Commander's Lore on disk (Phase 23, "Commander's Lore").
 /// <para>
 /// <b>Commander-authored, so it follows <see cref="Checklists.ChecklistStore"/> rather than
 /// <see cref="Journal.SamplingStore"/>.</b> Sampling state is derived — a bad file is discarded

@@ -8,7 +8,7 @@ namespace D47.Knowledge;
 
 /// <summary>
 /// <see cref="INotablePlacesService"/> against EDAstro's Galactic Exploration Catalog — the
-/// community catalogue the Galactic Mapping Project was migrated into (list.md Phase 47).
+/// community catalogue the Galactic Mapping Project was migrated into (Phase 47).
 /// <para>
 /// <b>One document, fetched whole and filtered here.</b> The catalogue is served as a single JSON
 /// array of every point of interest — 633 entries and about two megabytes on 2026-08-22 — and there

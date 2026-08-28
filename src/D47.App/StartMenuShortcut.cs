@@ -6,7 +6,7 @@ namespace D47.App;
 /// <summary>
 /// A Start Menu entry for a portable executable, offered once and never assumed.
 /// <para>
-/// d47 does not install (list.md Phase 1, architecture.md §9): one self-contained file, per
+/// d47 does not install (Phase 1, architecture.md §9): one self-contained file, per
 /// user, no elevation, no MSI, and everything it writes beside the executable. The cost of that
 /// is a program the Commander can only reach by remembering where they put it. A shortcut is
 /// the cheapest fix that does not turn this into an installer — one file, in the folder Windows

@@ -7,7 +7,7 @@ namespace D47.App.Input;
 
 /// <summary>
 /// Reading the Commander's controllers through <c>Windows.Gaming.Input.RawGameController</c>
-/// (list.md Phase 21, "Read the Commander's controllers").
+/// (Phase 21, "Read the Commander's controllers").
 /// <para>
 /// <b>No driver, no window, no elevation.</b> That is what keeps this inside the per-user
 /// no-elevation install and off the vJoy/ViGEmBus row in architecture.md §10 — verified from a

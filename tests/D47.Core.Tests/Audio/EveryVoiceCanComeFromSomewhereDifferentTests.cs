@@ -8,7 +8,7 @@ using Xunit;
 namespace D47.Core.Tests.Audio;
 
 /// <summary>
-/// Which slot a line belongs to, and which provider speaks for it (list.md Phase 57).
+/// Which slot a line belongs to, and which provider speaks for it (Phase 57).
 /// <para>
 /// The mapping is asserted rather than commented, because it is the whole of the routing and
 /// every one of its inputs already existed: a role, and a chat channel. Getting it wrong is not a

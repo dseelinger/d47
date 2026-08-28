@@ -6,7 +6,7 @@ namespace D47.Core.Tests.Audio;
 
 /// <summary>
 /// Cues, beds and ambience discovered from the convention folders and reloaded live
-/// (list.md Phase 12, "Pick up dropped-in audio without a restart").
+/// (Phase 12, "Pick up dropped-in audio without a restart").
 /// <para>
 /// Driven through <see cref="FolderAudioSource.Poll"/> directly, which is the whole point of the
 /// journal reader's shape being reused here: the tick loop calls it in production and this calls

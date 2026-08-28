@@ -4,7 +4,7 @@ namespace D47.Core.Knowledge;
 
 /// <summary>
 /// One point of interest from a curated catalogue, cut down to what a story can stand on
-/// (list.md Phase 47, "The Galactic Mapping lookup").
+/// (Phase 47, "The Galactic Mapping lookup").
 /// </summary>
 /// <param name="SystemAddress">
 /// The catalogue's own id for the system. Carried so the dry run can hold it against the galaxy

@@ -1,7 +1,7 @@
 namespace D47.Core.Journal;
 
 /// <summary>
-/// One hired pilot, as the journal reports them (list.md Phase 11, "Ship Crew").
+/// One hired pilot, as the journal reports them (Phase 11, "Ship Crew").
 /// </summary>
 /// <param name="Name">
 /// Theirs, chosen by the game. Untrusted only in the weak sense — it is game-generated rather
@@ -119,7 +119,7 @@ public sealed record ShipCrew
     /// <summary>
     /// The name and id every crew event carries, or null when one of them is missing — which is
     /// a schema change rather than an error, and is skipped like any other unrecognised shape
-    /// (list.md Phase 2, "Survive a journal schema change").
+    /// (Phase 2, "Survive a journal schema change").
     /// </summary>
     private static (string Name, long CrewId)? Read(JournalEvent journalEvent) =>
         journalEvent.String("Name") is { Length: > 0 } name && journalEvent.Long("CrewID") is { } id

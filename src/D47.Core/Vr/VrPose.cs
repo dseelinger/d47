@@ -131,7 +131,7 @@ public static class VrPlacementMath
 
     /// <summary>
     /// Moves a world-locked surface by the change in head pose since it was anchored
-    /// (list.md Phase 9, "Re-anchor the panels").
+    /// (Phase 9, "Re-anchor the panels").
     /// <para>
     /// Elite's in-game recenter moves the cockpit without telling SteamVR, so a world-locked
     /// surface drifts out of position with no event to hook. The delta is applied to every

@@ -13,7 +13,7 @@ namespace D47.Tts;
 /// and it sounds far better than anything local, but it is not a supported API and it can
 /// change without notice — which is exactly why it sits behind <see cref="ITtsProvider"/> and
 /// why a failure here degrades to "the speech capability is off" rather than to a crash
-/// (list.md Phase 3, "Capabilities as state, not guard").
+/// (Phase 3, "Capabilities as state, not guard").
 /// </para>
 /// <para>
 /// <b>This is the one provider that decodes.</b> Raw PCM was preferred here for as long as it
@@ -59,7 +59,7 @@ public sealed class EdgeNeuralTtsProvider(ILogger<EdgeNeuralTtsProvider> logger,
     /// <summary>
     /// What leaves the machine for this provider. Stated once here so the settings row and
     /// the documentation page read it from one place rather than each asserting it separately
-    /// (list.md Phase 4, "Say what each provider receives").
+    /// (Phase 4, "Say what each provider receives").
     /// </summary>
     public const string EgressDisclosure =
         "The text of every reply D47 speaks is sent to Microsoft's Edge Read Aloud service to be " +
@@ -113,7 +113,7 @@ public sealed class EdgeNeuralTtsProvider(ILogger<EdgeNeuralTtsProvider> logger,
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             // An empty list is a supported answer: the picker still lets the Commander keep
-            // the current value or type one (list.md Phase 4). It says which kind of empty it
+            // the current value or type one (Phase 4). It says which kind of empty it
             // is, though — Edge needs no key, so unreachable is the only one it can be.
             logger.LogWarning(ex, "Could not list Edge Neural voices");
             return VoiceCatalogue.Unreachable(ex.Message);

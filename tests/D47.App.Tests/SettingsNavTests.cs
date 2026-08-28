@@ -14,7 +14,7 @@ namespace D47.App.Tests;
 
 /// <summary>
 /// The nav column down the side of Settings, which is a scroll-spy rather than a tab strip
-/// (list.md Phase 4, "Settings Nav Menu").
+/// (Phase 4, "Settings Nav Menu").
 /// <para>
 /// Opened the way the app opens it: the window is up and showing the transcript, and the page
 /// is built when the tab is clicked. That order is the whole point — the surface paints its nav
