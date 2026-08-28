@@ -1449,6 +1449,7 @@ public sealed class AppHost : IDisposable
                     // list is fetched from the provider over the network after this point.
                     Voices = group => self?.VoiceIds(group) ?? [],
                     VoiceLabel = (group, id) => self?.VoiceLabelFor(group, id) ?? id,
+                    VoiceGender = (group, id) => self?.VoiceGenderFor(group, id),
                     WhyNoVoices = group => self?.WhyNoVoices(group),
                     SpeechSpend = () => self?.SpeechSpend,
 
@@ -2679,6 +2680,20 @@ public sealed class AppHost : IDisposable
     /// supplies the two things it needs that only the host knows.
     /// </summary>
     internal string VoiceLabelFor(string id) => VoiceLabelFor(VoiceGroup.Aboard, id);
+
+    /// <summary>
+    /// What the provider tags one voice's gender as, or null where it says nothing
+    /// (<a href="https://github.com/dseelinger/d47/issues/146">#146</a>).
+    /// <para>
+    /// Read out of the same catalogue <see cref="VoiceLabelFor(VoiceGroup, string)"/> and
+    /// <c>VoicePool.Feminine</c> read, which is what makes the picker's gender filter and the
+    /// casting rule agree about every voice by construction rather than by inspection.
+    /// </para>
+    /// </summary>
+    internal string? VoiceGenderFor(VoiceGroup group, string id) =>
+        VoicesFor(group).Voices
+            .FirstOrDefault(voice => string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase))
+            ?.Gender;
 
     /// <inheritdoc cref="VoiceLabelFor(string)"/>
     internal string VoiceLabelFor(VoiceGroup group, string id) =>

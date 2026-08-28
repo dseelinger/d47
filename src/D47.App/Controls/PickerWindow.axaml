@@ -40,6 +40,29 @@
                KeyDown="OnFilterKeyDown"
                TextChanged="OnFilterChanged" />
 
+      <!--
+        The structured half of the filter (#146). A voice carries its gender as data and the label
+        merely renders it, so asking for the women asks the field rather than hoping a word turns up
+        in a string - which is the mistake underneath "male" having listed every female voice.
+
+        Absent rather than present-and-pointless where the choices carry no such field: a microphone
+        picker has no facet at all, the same way it has no play glyph.
+      -->
+      <StackPanel x:Name="FacetPanel"
+                  DockPanel.Dock="Top"
+                  Orientation="Horizontal"
+                  Spacing="8"
+                  IsVisible="False"
+                  Margin="0,0,0,8">
+        <TextBlock x:Name="FacetLabel"
+                   VerticalAlignment="Center"
+                   FontSize="{StaticResource D47.Type.Secondary}"
+                   Foreground="{DynamicResource D47.TextMuted}" />
+        <ComboBox x:Name="FacetBox"
+                  MinWidth="150"
+                  SelectionChanged="OnFacetChanged" />
+      </StackPanel>
+
       <!-- The fail-soft contract, stated rather than implied: with nothing to offer, the box
            above is still the answer. -->
       <TextBlock x:Name="EmptyHint"

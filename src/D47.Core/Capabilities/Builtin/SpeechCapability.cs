@@ -77,6 +77,58 @@ public static class SpeechCapability
         surface.WhyNoVoices?.Invoke(group);
 
     /// <summary>
+    /// The gender filter the three voice rows offer, or null where this provider's voices carry no
+    /// gender to filter on (<a href="https://github.com/dseelinger/d47/issues/146">#146</a>).
+    /// <para>
+    /// <b>Offered where the choices carry one and absent where they do not</b>, the way the engineer
+    /// filter is absent where there is no engineer. That is asked of the live list rather than of
+    /// the provider's name: an account whose voices happen to be untagged gets no filter, and the
+    /// same provider gets one the day it starts tagging them.
+    /// </para>
+    /// <para>
+    /// <b>Four options, and the fourth is the decision worth stating.</b> Untagged voices are common
+    /// on some providers, so they are reachable by name rather than swept in with the men or hidden
+    /// behind a filter that looks like a shorter list. <em>Male</em> means tagged male and nothing
+    /// else — which is the opposite of what <see cref="VoicePool.Feminine"/> does for casting, and
+    /// deliberately: casting has to put every voice somewhere and a Commander reading a list does
+    /// not.
+    /// </para>
+    /// <para>
+    /// The predicates run through <see cref="VoicePool.GenderOf"/>, so this filter and the casting
+    /// rule are one rule read twice.
+    /// </para>
+    /// </summary>
+    private static SettingFacet? GenderFacet(SpeechSurface surface, VoiceGroup group)
+    {
+        if (surface.Voices?.Invoke(group) is not { Count: > 0 } voices || surface.VoiceGender is not { } tag)
+        {
+            return null;
+        }
+
+        VoiceGender Of(string id) => VoicePool.GenderOf(tag(group, id));
+
+        // Nothing to filter on. A control whose every option is "all of them" is worse than no
+        // control, because it says the list has a property it does not have.
+        if (!voices.Any(id => Of(id) != VoiceGender.Unlabelled))
+        {
+            return null;
+        }
+
+        return new SettingFacet
+        {
+            Label = "Gender",
+            Options =
+            [
+                // First, so it is what the picker opens on and nothing is hidden by default.
+                new SettingFacetOption("All", null),
+                new SettingFacetOption("Female", id => Of(id) == VoiceGender.Feminine),
+                new SettingFacetOption("Male", id => Of(id) == VoiceGender.Masculine),
+                new SettingFacetOption("Unlabelled", id => Of(id) == VoiceGender.Unlabelled),
+            ],
+        };
+    }
+
+    /// <summary>
     /// The audition the three voice rows offer, or null where nothing composed one — under the
     /// designer and in tests, where the button is then absent rather than dead.
     /// <para>
@@ -256,6 +308,18 @@ public static class SpeechCapability
         public Func<VoiceGroup, string, string>? VoiceLabel { get; init; }
 
         /// <summary>
+        /// What the provider tags one voice's gender as, unchanged and untranslated, or null where
+        /// it says nothing (<a href="https://github.com/dseelinger/d47/issues/146">#146</a>).
+        /// <para>
+        /// <b>The raw tag rather than a classification</b>, so the one place that decides what
+        /// "female" means stays <see cref="VoicePool.GenderOf"/>. The app knows which catalogue to
+        /// read and Core knows what the answer means, which is the same division every other
+        /// delegate here follows.
+        /// </para>
+        /// </summary>
+        public Func<VoiceGroup, string, string?>? VoiceGender { get; init; }
+
+        /// <summary>
         /// Bed names — shipped and dropped in. Read from the cue library, never a literal list.
         /// <para>
         /// A function rather than a list, because the library is rebuilt when the Commander drops
@@ -367,6 +431,7 @@ public static class SpeechCapability
                 ChoiceSource = _ => surface.Voices?.Invoke(VoiceGroup.Aboard) ?? [],
                 ChoiceLabel = id => surface.VoiceLabel?.Invoke(VoiceGroup.Aboard, id) ?? id,
                 WhyNoChoices = WhyNoVoices(surface, VoiceGroup.Aboard),
+                Facet = _ => GenderFacet(surface, VoiceGroup.Aboard),
                 Audition = AuditionOf(surface, VoiceRole.ShipAi),
                 AppliesWhen = s => s.Speech.Provider != NoneId,
                 DocsAnchor = "voice",
@@ -571,6 +636,7 @@ public static class SpeechCapability
                 ChoiceSource = _ => surface.Voices?.Invoke(VoiceGroup.Carrier) ?? [],
                 ChoiceLabel = id => surface.VoiceLabel?.Invoke(VoiceGroup.Carrier, id) ?? id,
                 WhyNoChoices = WhyNoVoices(surface, VoiceGroup.Carrier),
+                Facet = _ => GenderFacet(surface, VoiceGroup.Carrier),
                 Audition = AuditionOf(surface, VoiceRole.CarrierCaptain),
 
                 // Only on offer to a Commander who has one. A row for a carrier you do not own
@@ -599,6 +665,7 @@ public static class SpeechCapability
                 ChoiceSource = _ => surface.Voices?.Invoke(VoiceGroup.Carrier) ?? [],
                 ChoiceLabel = id => surface.VoiceLabel?.Invoke(VoiceGroup.Carrier, id) ?? id,
                 WhyNoChoices = WhyNoVoices(surface, VoiceGroup.Carrier),
+                Facet = _ => GenderFacet(surface, VoiceGroup.Carrier),
                 Audition = AuditionOf(surface, VoiceRole.TowerControl),
                 AppliesWhen = s => s.Speech.Provider != NoneId,
                 Group = "Other voices",

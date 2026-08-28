@@ -275,11 +275,29 @@ the picker's **Use the default** button is that same act under a name. With no m
 there is nothing to pick with, so clearing it leaves that core on the provider's own default —
 which is what the button says in that case, because it is a different outcome.
 
+##### Narrowing several hundred names
+
+The picker lists several hundred voices, so the two ways of cutting it down both matter.
+
+**Type to search, and it matches the starts of words.** `eng` finds *Engineering*, `kra` finds
+*Krait*, and `multilingual` finds *en-US-AndrewMultilingualNeural* — but `male` no longer finds
+*female*, which it used to, and which left no way to search for the men at all.
+
+**And there is a gender filter beside the box**, because gender is something a voice *has* rather
+than a word you have to hope appears in its label. It offers **All**, **Female**, **Male** and
+**Unlabelled**, and the two filters narrow together — Female plus `en-GB` is the British women.
+
+*Unlabelled* is voices the provider tags with nothing. They are their own answer rather than being
+counted as men or quietly left out, because some providers label every voice and some label none,
+and a filter that hid them would look like a shorter list rather than like a filter.
+
+The filter is only offered where the voices carry a gender at all. A provider that tags none of them
+gets no control, the same way a microphone picker has no play glyph.
+
 ##### Hear it before you choose it
 
-The picker lists several hundred names, and you are casting a character from them. "Bill - Wise,
-Mature, Balanced" and "George - Warm, Captivating Storyteller" are both true and neither tells
-you which one is Warden.
+You are casting a character from that list. "Bill - Wise, Mature, Balanced" and "George - Warm,
+Captivating Storyteller" are both true and neither tells you which one is Warden.
 
 **Every voice in the list has a play glyph at the right of its row.** Pressing it speaks that
 voice without closing the dialog and without committing the choice, so you can walk the list and
