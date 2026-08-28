@@ -27,6 +27,38 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.84.3 — 2026-08-28 — Dialogs that fit the window they are drawn in
+
+Reported from a running build at 150% zoom: the **Voice** picker was about three times as wide as
+it declares itself, its help paragraph ran off the right edge on one unwrapped line, its rows did
+not trim, and *Cancel* and *Use this* were off the side of the screen. Measured with the real help
+text and five voices: **2307 pixels of content inside a 780-pixel window**.
+[#145](https://github.com/dseelinger/d47/issues/145).
+
+**A ScrollViewer that may scroll sideways measures its child with infinite available width.** That
+is what *may scroll sideways* means to a measure pass, so `TextWrapping` beneath one has nothing to
+wrap against and never wraps, and `TextTrimming` has nothing to trim against and never trims. This
+is the same trap the **main window** was fixed for in 0.57.0 — *"at 100% zoom the main window
+doesn't fit in HD"* — and the correction that fixed it, `FitToViewport`, carries a paragraph
+explaining exactly this. The dialog path builds the identical scrolling host, to draw a dialog at
+the zoom of the panel that opened it, and undid none of it. **The mechanism was written down twice
+in one file and defended once.** The rule now lives in one place both paths call.
+
+**It was invisible to the whole suite, and that part is worth recording.** The dialog path returns
+immediately at 100% zoom, and 100% is what a headless test gets unless it says so. Every picker
+test drew a 520-wide window and passed, for as long as the fault has existed. The new tests set the
+zoom first.
+
+Every dialog took this path, not only the picker — confirm, changelog, macro, lore, memory,
+persona, spend, switch and coverage all open through it.
+
+**And the local voice's rows said everything twice.** *Jessica — female, American — Female, en-US*:
+the id already carries the name, the gender and the accent, and the label was composed from all
+three and then handed to the thing whose job is to add the gender and the locale. Now *Jessica —
+Female, en-US*, which is the shape every other provider's rows have always had.
+
+---
+
 ## 0.84.2 — 2026-08-28 — The local voice, heard and understood
 
 Three reports from the first flight of the local voice, one for each of the things a Commander does
