@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -456,11 +456,16 @@ public sealed class SwitchWindow : Window
 
             resume.IsVisible = state?.Health == SwitchHealth.Paused;
 
+            // The collision first, because it is the one line that explains a switch doing the
+            // opposite of what it was asked — and unlike the other two it is a fault in the setup
+            // rather than a state of the flight (#147).
             health.Text = state is null
                 ? "Not being reconciled yet — save to start."
-                : state.Disagrees is { } disagrees
-                    ? $"{state.Note} Sitting against the game: {disagrees}.".TrimStart()
-                    : state.Note;
+                : state.Collides is { } collides
+                    ? collides
+                    : state.Disagrees is { } disagrees
+                        ? $"{state.Note} Sitting against the game: {disagrees}.".TrimStart()
+                        : state.Note;
 
             health.IsVisible = health.Text is { Length: > 0 };
         });
