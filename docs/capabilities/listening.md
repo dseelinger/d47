@@ -371,6 +371,14 @@ then, with the size and progress on the row; the same thing happens at startup f
 is selected and missing. The choice is the go-ahead — the size is on the row before you make it,
 and `huggingface.co` is listed under [Privacy](privacy.md) for as long as a model is selected.
 
+**Directive 47 knows what each model file should be.** The SHA-256 of every model it offers is
+written into the build, and a download that does not match it is discarded rather than loaded.
+That is worth one sentence of honesty about what it buys: those values were read from
+`huggingface.co` once, on a stated date, and pinning them does not make that first read
+trustworthy — it means the file *changing* afterwards becomes visible, where before the expected
+hash and the bytes came from the same place. The model is loaded and run on your machine, so it
+is worth checking.
+
 `none` stays a real choice. Pick it and Directive 47 hears you and says, honestly, that it cannot
 turn what it heard into words.
 

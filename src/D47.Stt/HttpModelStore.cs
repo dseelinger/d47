@@ -86,8 +86,8 @@ public sealed class HttpModelStore : IModelStore, IDisposable
                     name.ValueKind == JsonValueKind.String &&
                     name.GetString() == model.RepositoryPath)
                 {
-                    // Large files are stored via LFS, and the oid is their SHA-256. A model
-                    // small enough not to be LFS-backed simply has no hash here, which is
+                    // Large files are stored via LFS and the block carries their SHA-256. A
+                    // model small enough not to be LFS-backed simply has no hash here, which is
                     // reported rather than papered over.
                     var lfs = file.TryGetProperty("lfs", out var value) && value.ValueKind == JsonValueKind.Object
                         ? value
@@ -98,7 +98,35 @@ public sealed class HttpModelStore : IModelStore, IDisposable
                         ? bytes
                         : 0;
 
-                    var sha = lfs?.TryGetProperty("oid", out var oid) == true ? oid.GetString() : null;
+                    // <b>The key is <c>sha256</c>.</b> This read <c>oid</c> alone, which this
+                    // listing does not carry, so the hash was null on every model and the
+                    // verification below never once ran. <c>oid</c> is kept as a second reading
+                    // because it is what the LFS pointer itself calls the field and other
+                    // shapes of this API have used it.
+                    var sha =
+                        (lfs?.TryGetProperty("sha256", out var hash) == true ? hash.GetString() : null)
+                        ?? (lfs?.TryGetProperty("oid", out var oid) == true ? oid.GetString() : null);
+
+                    // <b>The pin wins, and a disagreement is refused rather than resolved.</b>
+                    // Falling back to the host's value on a mismatch would undo the whole point:
+                    // the pin exists precisely so that the server cannot both change the file
+                    // and change what the file is expected to be.
+                    if (model.Sha256 is { Length: > 0 } pinned)
+                    {
+                        if (sha is { Length: > 0 } offered &&
+                            !string.Equals(offered, pinned, StringComparison.OrdinalIgnoreCase))
+                        {
+                            _logger.LogWarning(
+                                "{Host} offers {Model} with hash {Offered}, which is not the {Pinned} d47 "
+                                + "expects. The file has changed since it was pinned, or it is not the file.",
+                                WhisperModels.Host,
+                                model.Id,
+                                offered,
+                                pinned);
+                        }
+
+                        return new ModelOffer(model, size, pinned);
+                    }
 
                     return new ModelOffer(model, size, sha);
                 }
