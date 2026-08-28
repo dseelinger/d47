@@ -27,6 +27,114 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.82.0 — 2026-08-28 — Eight things that were quietly wrong
+
+A release of fixes rather than a new capability, and three of them were silent in the way that
+matters most: nothing looked broken.
+
+### Tod 'The Blaster' McQuinn was invisible to every plan you made
+
+Reported from Wolf 397: three Grade 5 Overcharged multi-cannon rolls on the flown ship, Tod at
+Trophy Camp doing exactly that work, and the checklist offering nothing.
+
+The two shipped tables spell him differently — the engineer list says
+*Tod 'The Blaster' McQuinn* and the recipe list says *Tod McQuinn* — and three places compared those strings
+directly. **So no recipe ever matched him, for any blueprint, in any system.** His *"what can
+be done here"* filter was never offered, and the Engineers directory counted him as wanted by
+nobody while three of his rolls sat on the list.
+
+He is the only one of the thirty-eight it happened to, which is what made it look safe. There
+is now a check that every engineer named in the recipe table is one d47 can find, so a fourth
+spelling cannot arrive unnoticed.
+
+### Your carrier is called by its name again
+
+> Docking granted, Commander. Welcome home to BNH-T2F.
+
+Elite only writes down what your carrier is called when you open its management panel — so in
+**21 of 34 sessions** d47 docked at your own carrier without ever being told the name, and fell
+back to the callsign. Every surface that names it already preferred the name; there was no name
+to prefer.
+
+It now learns *Sacred Fire* from the journal itself, where it appears attached to the callsign,
+and it does that carefully: by the carrier's id where the event carries one, and otherwise only
+from a line ending in exactly the callsign it has already confirmed. **A carrier that is not
+yours never contributes a name**, and nothing is guessed before your own is identified. When
+Elite does say the name, Elite wins.
+
+Your carrier's name also joins the words the transcriber is told to expect, so you can say it
+and be understood.
+
+### No speech model download was ever checked
+
+**Found while doing something smaller.** d47 asked Hugging Face what each model file should be,
+and asked in a way that returns only the file's name — no size and no hash. The verification is
+skipped when there is nothing to verify against, so **every model ever downloaded was accepted
+unchecked**, and every model was offered to you as "0 MB".
+
+Both halves are fixed, and the expected hashes are now **written into d47 itself** rather than
+asked for at download time. Worth being precise about what that buys: they were read from the
+same place, once, on a stated date. It does not make that first read trustworthy — it means the
+file *changing* afterwards becomes visible, where before the expected hash and the bytes came
+from the same server. The model is loaded and run on your machine, so it is worth checking.
+
+### Analyst Prime talks about Cora far less
+
+> Every other message had something about Cora not approving. He's meant to be more
+> condescending than anything else.
+
+His own rules already said *one leak per exchange, maximum* — and thirty words earlier told him
+to praise whatever Cora would have criticised, *"Consistently."* Given a concrete instruction
+and an abstract budget, a model follows the instruction.
+
+That word is gone, the limit is now its own rule and reads *rarely*, and the character leads
+with the condescension that was always supposed to be the point. **She is still there** — the
+rarest and best beat, where he cannot tell a memory of her from a reconstruction, is untouched.
+You get this automatically on update; nothing is stored on your machine to migrate.
+
+### A push-to-talk button warns you about Elite, like a key always has
+
+Bind push-to-talk to a keyboard key and d47 tells you if Elite is already using it. Bind it to a
+stick button and you got nothing at all — no warning and no all-clear. The check existed and was
+writing to a log file nobody reads.
+
+It is hedged on purpose. Elite records a joystick binding against its own name for the device,
+so d47 cannot tell whether that *Joy_7* is the stick on your desk or another one, and it says
+so rather than pretending. Finding nothing is the stronger answer and is said plainly.
+
+### The detail pane can be copied
+
+> I want to be able to copy text from the Engineer Details pane.
+
+A system name, a station, *"Provide 50 units of Lavian Brandy"* — all of it is selectable now,
+and not only on Engineers: every drilled detail pane in the panel was built from the same
+helpers and all of them gain it. The rows you press are deliberately left alone, so a drag that
+was meant to open something still opens it.
+
+### The engineer you are reading is outlined in the list
+
+The right pane showed one engineer and the left list drew all thirty-eight identically. The one
+you are looking at is outlined now, and it follows the pane however you got there — pressed,
+asked for by voice, or arrived at by going back.
+
+### The "?" links on settings rows go somewhere
+
+**Forty-five settings rows had a help link that arrived nowhere.** A comment in the code had
+claimed since the feature was built that a test guarded this. There was no such test; there is
+now, and it found nearly four times what a careful reading by hand had.
+
+---
+
+Fixes [#133](https://github.com/dseelinger/d47/issues/133),
+[#130](https://github.com/dseelinger/d47/issues/130),
+[#124](https://github.com/dseelinger/d47/issues/124),
+[#123](https://github.com/dseelinger/d47/issues/123),
+[#122](https://github.com/dseelinger/d47/issues/122),
+[#110](https://github.com/dseelinger/d47/issues/110),
+[#81](https://github.com/dseelinger/d47/issues/81) and
+[#71](https://github.com/dseelinger/d47/issues/71).
+
+---
 ## 0.81.1 — 2026-08-27 — Raw Journal is actually raw
 
 ### The two journal readings looked the same, because they were
