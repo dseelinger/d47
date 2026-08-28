@@ -1,7 +1,7 @@
 # CartesiaProbe
 
 Throwaway. Answers the three questions Phase 60 of
-[per-role-voice-providers.md](../../docs/plans/per-role-voice-providers.md) says must be answered
+the per-role voice providers plan said must be answered
 **before** the phase is written. Finding will go in `docs/spikes/`.
 
 | Question | Why the phase is blocked on it |

@@ -209,12 +209,15 @@ public partial class DocumentationGateTests
     }
 
     /// <summary>
-    /// The pages the site actually publishes. <c>_config.yml</c> excludes the spike write-ups, the
-    /// implementation plans and the retired queues under <c>archive/</c> — those are contributor
-    /// material that GitHub renders in the repo — so a gate about the published site must exclude
-    /// them too or it fails on documents that were never meant to have a nav entry. The two lists
-    /// are written twice and must be kept in step; reading the real one would cost a YAML
-    /// dependency in this project's graph for three prefixes.
+    /// The pages the site actually publishes. <c>_config.yml</c> excludes the spike write-ups —
+    /// contributor material that GitHub renders in the repo — so a gate about the published site
+    /// must exclude them too or it fails on documents that were never meant to have a nav entry.
+    /// The two lists are written twice and must be kept in step; reading the real one would cost
+    /// a YAML dependency in this project's graph for one prefix.
+    /// <para>
+    /// It excluded <c>plans/</c> and <c>archive/</c> until 2026-08-27, when both directories were
+    /// deleted along with everything else in this repository that held project-management state.
+    /// </para>
     /// </summary>
     private static IEnumerable<(string Path, string Relative)> PublishedPages()
     {
@@ -228,8 +231,6 @@ public partial class DocumentationGateTests
 
     private static bool Excluded(string relative) =>
         relative.StartsWith("spikes", StringComparison.OrdinalIgnoreCase)
-        || relative.StartsWith("plans", StringComparison.OrdinalIgnoreCase)
-        || relative.StartsWith("archive", StringComparison.OrdinalIgnoreCase)
         || relative.StartsWith("_", StringComparison.Ordinal);
 
     /// <summary>

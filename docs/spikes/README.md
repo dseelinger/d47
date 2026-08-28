@@ -22,7 +22,7 @@ because getting the answer wrong would have shipped game data d47 invented.
 | [journal-corpus-soak.md](journal-corpus-soak.md) | Phases 17, 18 and 19 shipped in one day — what do 692,631 real events say about them? One fix, two reports, and a crash hunt that came back empty. |
 
 The three engineering pages back Phase 14 `#102`, Phase 17 and Phase 20 in
-[list.md](../../list.md). The rest of this page is what a fresh pair of hands needs to carry that
+the phase it belongs to. The rest of this page is what a fresh pair of hands needs to carry that
 research on.
 
 ---

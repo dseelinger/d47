@@ -11,13 +11,13 @@ makes a bug fixable. This page is for people who want to change the code.
 
 ## Read the spec first
 
-Three documents carry the design, and they are not summarised here:
+Two documents carry the design, and they are not summarised here:
 
-| Question | File |
+| Question | Where |
 |---|---|
-| What should it do? Is this in scope? | [list.md](list.md) |
 | How is it built? Why not X? | [architecture.md](architecture.md) |
 | What do the personas say? | [guardian-personas.md](guardian-personas.md) |
+| What has shipped? What is wanted? | [CHANGELOG.md](CHANGELOG.md) and [the issues](https://github.com/dseelinger/d47/issues) |
 
 [CLAUDE.md](CLAUDE.md) is the working agreement — invariants, conventions, and the reasons
 behind them. Most "why is it done this odd way" questions are answered there, and
@@ -26,8 +26,8 @@ reason. Checking those two before proposing a stack change saves everybody a rou
 
 ## Before you write code
 
-**Open an issue first for anything non-trivial.** Not bureaucracy — scope. `list.md` is the
-product description and it is opinionated; a well-built feature that does not belong is worse
+**Open an issue first for anything non-trivial.** Not bureaucracy — scope. This project is
+opinionated about what belongs in it; a well-built feature that does not belong is worse
 than no feature, because declining it wastes work already done. An issue costs you five
 minutes and gets you an answer before you spend the evening.
 

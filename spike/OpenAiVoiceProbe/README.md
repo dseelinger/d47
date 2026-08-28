@@ -2,7 +2,7 @@
 
 Throwaway. Answers [#48](https://github.com/dseelinger/d47/issues/48) — *does OpenAI TTS drift
 language on Elite system names, and is its `speed` parameter honoured?* — which blocked writing
-Phase 58 of [per-role-voice-providers.md](../../docs/plans/per-role-voice-providers.md). Finding:
+Phase 58. Finding:
 [docs/spikes/openai-tts-language-and-speed.md](../../docs/spikes/openai-tts-language-and-speed.md).
 
 | Script | Question |
