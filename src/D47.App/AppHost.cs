@@ -5256,6 +5256,11 @@ public sealed class AppHost : IDisposable
             {
                 callout.CarrierName = carrier.Name;
                 callout.CarrierCallSign = carrier.CallSign;
+
+                // The third key, and the one that is known before the dock (#109). Read from the
+                // same state and on the same pass as the other two, so nothing can be current while
+                // another is stale.
+                callout.CarrierDisplayName = carrier.DisplayName;
             }
         }
 
