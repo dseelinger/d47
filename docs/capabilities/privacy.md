@@ -85,6 +85,16 @@ able to say so.
 from them can reach the model as game state, which is disclosed under the language model above
 rather than twice.
 
+### A voice that is not a destination either
+
+Since Phase 59 there is a speech provider that sends nothing: **Kokoro** runs on this computer. Its
+model is downloaded once from `huggingface.co` — which is a destination, and is listed as one for
+as long as a download is happening — and after that the voice needs no network at all.
+
+That is the whole reason it exists. Every other provider, free ones included, receives the text
+Directive 47 speaks, and that includes re-voiced in-game messages written by other players. With
+Kokoro selected for those slots, nobody's words leave your machine to be spoken.
+
 ## Your microphone is not a destination
 
 It is worth saying plainly, because Phase 13 added hands-free listening and "the microphone is

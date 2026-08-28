@@ -122,10 +122,35 @@ and still costing.
 | Value | Meaning |
 |---|---|
 | `edge` | Edge Neural, the free voices Microsoft Edge's Read Aloud uses. |
+| `kokoro` | Kokoro, **running on this computer**. Free, no key, and nothing sent anywhere. |
 | `elevenlabs` | ElevenLabs. Paid, needs an API key, and generally the better voices. |
 | `openai` | OpenAI. Paid, needs an API key — **the same key the language model uses**. |
 | `cartesia` | Cartesia. Paid, needs an API key. **924 voices**, far the largest library here. |
 | `none` | Do not speak. The cues and the thinking loop still play. |
+
+**Kokoro is the only one that sends nothing anywhere, and it is the reason it is here.** Every
+other provider on this list is a service: the words Directive 47 speaks are sent somewhere to be
+turned into audio, and that includes re-voiced in-game messages, which are written by other
+players. Edge is free, but free is not the same as private. Kokoro runs the voice on your own
+machine, so those words do not leave it.
+
+The model is **downloaded once**, about 350 MB, from `huggingface.co` — there is a **Local voice**
+row below the speaking rate that says whether it is here and fetches it if not. After that this
+provider needs no network at all.
+
+**It speaks English and only English**, and that is worth understanding rather than working out.
+Every other provider is told which language a line is in; Kokoro is not told, because it has only
+one. A message in French will be read out by an English speaker rather than in French. For the
+slots that carry other people's words that is a fair trade and it is the point: the alternative is
+that those words leave your computer.
+
+**Names it has never seen are worked out rather than guessed.** Kokoro is given sounds rather than
+letters, so Directive 47 turns text into sounds itself: known words come from a pronunciation
+dictionary, and anything else is broken on spaces and dashes and taken a piece at a time. A piece
+that reads as English is pronounced, digits are read as a number, and a run of letters nobody could
+say — or letters mixed with digits — is spelled out. So `COL 385 SECTOR B0-GQPI` comes out as *call
+three eighty-five sector bee zero dash gee queue pee eye*, and *Shinrarta Dezhra* is pronounced
+rather than spelled. A voice with a British accent says **zed**.
 
 **OpenAI is the only one that can be told how to *perform*.** Every other provider assigns a voice
 and that is the whole of the choice; OpenAI takes a direction — accent, tone, intonation, delivery —
