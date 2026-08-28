@@ -140,8 +140,24 @@ public static class LoadoutPages
     /// where a plan exists, and everything else in the pane that opens — which is what lets one
     /// layout survive from 512 to 2048 logical pixels.
     /// </summary>
+    /// <param name="showing">
+    /// Whether this is the row the other pane is currently drawing, in which case it is
+    /// outlined (#110). <b>Opt-in, and deliberately not a behaviour</b>: the argument applies
+    /// to an index that stays on screen beside the detail it drilled into, and to no index that
+    /// does not. Every other caller of this method leaves it alone and is unaffected.
+    /// <para>
+    /// <b>An outline rather than a fill.</b> The row already carries a coloured dot for
+    /// <em>something is planned</em>, and a tinted background would be a second colour-only
+    /// signal on the same line — an outline reads at a glance and does not compete with it.
+    /// </para>
+    /// </param>
     internal static Control Row(
-        string text, string? aside, bool marked, Action pressed, bool engineered = false)
+        string text,
+        string? aside,
+        bool marked,
+        Action pressed,
+        bool engineered = false,
+        bool showing = false)
     {
         var label = new TextBlock
         {
@@ -257,6 +273,17 @@ public static class LoadoutPages
             MinHeight = 34,
             Padding = new Thickness(12, 6),
         };
+
+        if (showing)
+        {
+            // The class names the state and the two lines below draw it. A Button already
+            // carries a one-pixel border from the theme, so thickness alone does not say
+            // whether a row is the open one — which is exactly what the first version of the
+            // test for this could not tell, and would have passed on every row at once.
+            button.Classes.Add("showing");
+            button.BorderThickness = new Thickness(2);
+            Themed(button, Button.BorderBrushProperty, ThemeManager.AccentKey);
+        }
 
         button.Click += (_, _) => pressed();
 
@@ -446,9 +473,27 @@ public static class LoadoutPages
 
     internal static TextBlock Muted(string text) => Toned(text, ThemeManager.TextMutedKey);
 
+    /// <summary>
+    /// Prose in a detail pane, and it is <b>selectable</b> (#122). A system name, a station, a
+    /// commodity and a quantity are all things a Commander wants in a search box or a
+    /// spreadsheet, and until this returned the selectable control none of them could be
+    /// picked up — the drilled detail panes were the one family in d47 outside the idiom Phase 19
+    /// wrote down, which every pop-out window and the whole Transcript already use.
+    /// <para>
+    /// <b>Deliberately these three helpers and deliberately not <see cref="Row"/>.</b> Selection
+    /// and pressing fight: a drag that begins on a selectable label inside a button can be taken
+    /// for a selection rather than the press it was meant to be. The prose in a detail pane is
+    /// not pressable and the index rows are, so the cut falls exactly there — <c>Row</c> builds
+    /// its own label and note and is untouched by this.
+    /// </para>
+    /// <para>
+    /// <c>SelectableTextBlock</c> derives from <c>TextBlock</c>, so every <c>Themed(block,
+    /// TextBlock.ForegroundProperty, ...)</c> call and every return type here keeps working.
+    /// </para>
+    /// </summary>
     internal static TextBlock Toned(string text, string key)
     {
-        var block = new TextBlock
+        var block = new SelectableTextBlock
         {
             Text = text,
             FontSize = TypeScale.Secondary,
@@ -459,7 +504,8 @@ public static class LoadoutPages
         return block;
     }
 
-    internal static TextBlock Heading(string text) => new()
+    /// <summary>A detail pane's heading, selectable for the same reason its prose is.</summary>
+    internal static TextBlock Heading(string text) => new SelectableTextBlock
     {
         Text = text,
         FontSize = TypeScale.Body,
