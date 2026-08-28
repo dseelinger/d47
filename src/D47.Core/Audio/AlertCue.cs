@@ -36,8 +36,52 @@ public enum AlertCue
     /// <summary>
     /// A bounty hunter, who is here for the Commander rather than for the hold. Its own cue
     /// because the answer is different — cargo will not buy this one off.
+    /// <para>
+    /// <b>A hitman shares it</b> (<a href="https://github.com/dseelinger/d47/issues/137">#137</a>),
+    /// because the rule for a distinct cue is that the <em>response</em> differs and here it does
+    /// not: both are here for the Commander, and neither can be bought off with the hold. Giving
+    /// the hitman a fourth sound would be accumulating cues rather than deciding on one.
+    /// </para>
     /// </summary>
     BountyHunter,
+
+    /// <summary>
+    /// Somebody is hurting the ship right now — shot, shields gone, hull opened, or pulled out of
+    /// supercruise into it (<a href="https://github.com/dseelinger/d47/issues/136">#136</a>).
+    /// <para>
+    /// <b>The cue was on the warning that an attack might happen and not on the one saying it
+    /// is.</b> Every line in <see cref="Callouts.DangerCallout"/> is
+    /// <see cref="Callouts.CalloutUrgency.Urgent"/> precisely because it is that kind of moment,
+    /// and every one of them used to arrive as prose with no marker in front of it — so a pirate
+    /// <em>announcing</em> an interdiction got a sound before the sentence and being shot did not.
+    /// </para>
+    /// <para>
+    /// <b>One cue across the whole hostile set rather than one per line.</b> The three that came
+    /// before are distinct because the answer differs — cargo buys off a pirate and not a bounty
+    /// hunter — and shields-down, hull damage and under-attack do not divide that way: they are one
+    /// situation reported by three sensors, and the answer to all of them is fight, run or
+    /// high-wake. Phase 15 was explicit that a cue per announcement "would make the common ones
+    /// into an alarm and leave the Commander no way to tell the four that matter apart".
+    /// </para>
+    /// </summary>
+    UnderFire,
+
+    /// <summary>
+    /// The ship is cooking itself (#136). The one urgent danger that is not somebody else's doing.
+    /// <para>
+    /// <b>The split that earned itself</b>, where shields-and-hull did not. Heat is a different
+    /// problem with a different answer — cut the throttle, drop silent running, get off the star —
+    /// and nothing about it is answered by fighting or by running from anyone. So the urgent set
+    /// carries two cues and not one, and that is the decision rather than a count that grew: heat
+    /// and hostiles, and no third.
+    /// </para>
+    /// <para>
+    /// It is also the only alert here that does not fall. The others are all somebody hostile and
+    /// use a falling interval to say so; this pulses on one note, which reads as a warning lamp
+    /// rather than as a threat.
+    /// </para>
+    /// </summary>
+    Overheating,
 
     /// <summary>
     /// Flying in a rival Power's space. Not a thing that just happened but a condition entered,

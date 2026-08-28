@@ -1,3 +1,4 @@
+using D47.Core.Audio;
 using D47.Core.Journal;
 
 namespace D47.Core.Callouts;
@@ -105,7 +106,8 @@ public sealed class DangerCallout : ICallout
                         "danger.interdicted",
                         by is null
                             ? "Interdiction. Someone has pulled us out of supercruise."
-                            : $"Interdicted by {pilot} {by}.");
+                            : $"Interdicted by {pilot} {by}.",
+                        AlertCue.Interdiction);
                     break;
                 }
 
@@ -124,20 +126,21 @@ public sealed class DangerCallout : ICallout
                         "danger.hull",
                         health is { } fraction
                             ? $"Hull damage. {Math.Round(fraction * 100)} percent integrity."
-                            : "Hull damage.");
+                            : "Hull damage.",
+                        AlertCue.UnderFire);
                     break;
                 }
 
                 case "HeatDamage":
-                    yield return Urgent("danger.heat", "Taking heat damage.");
+                    yield return Urgent("danger.heat", "Taking heat damage.", AlertCue.Overheating);
                     break;
 
                 case "ShieldState" when !journalEvent.Bool("ShieldsUp") && !HasNoShields(context):
-                    yield return Urgent("danger.shields", "Shields are down.");
+                    yield return Urgent("danger.shields", "Shields are down.", AlertCue.UnderFire);
                     break;
 
                 case "UnderAttack":
-                    yield return Urgent("danger.attack", "We are under attack.");
+                    yield return Urgent("danger.attack", "We are under attack.", AlertCue.UnderFire);
                     break;
 
                 case "Died":
@@ -183,7 +186,7 @@ public sealed class DangerCallout : ICallout
         // shielded hull would then be the edge that never came.
         if (_shieldsWereUp && !shieldsUp && !context.IsPriming && !HasNoShields(context))
         {
-            yield return Urgent("danger.shields", "Shields are down.");
+            yield return Urgent("danger.shields", "Shields are down.", AlertCue.UnderFire);
         }
 
         _shieldsWereUp = shieldsUp;
@@ -192,7 +195,7 @@ public sealed class DangerCallout : ICallout
 
         if (!_wasOverheating && overheating && !context.IsPriming)
         {
-            yield return Urgent("danger.overheat", "Overheating.");
+            yield return Urgent("danger.overheat", "Overheating.", AlertCue.Overheating);
         }
 
         _wasOverheating = overheating;
@@ -203,7 +206,7 @@ public sealed class DangerCallout : ICallout
         {
             // Ahead of the Interdicted event, which Elite writes once the pull succeeds. This is
             // the warning that arrives while there is still something to do about it.
-            yield return Urgent("danger.interdiction", "We are being interdicted.");
+            yield return Urgent("danger.interdiction", "We are being interdicted.", AlertCue.Interdiction);
         }
 
         _wasBeingInterdicted = interdicted;
@@ -226,6 +229,22 @@ public sealed class DangerCallout : ICallout
         _holdWasFull = holdFull;
     }
 
-    private static Announcement Urgent(string key, string text) =>
-        new(key, text, CalloutUrgency.Urgent) { Cooldown = Cooldown };
+    /// <summary>
+    /// One urgent warning, with the marker that says which kind it is before the sentence has
+    /// arrived (<a href="https://github.com/dseelinger/d47/issues/136">#136</a>).
+    /// <para>
+    /// <b>The cue is not optional here, and that is the whole of the change.</b> Every line this
+    /// makes is <see cref="CalloutUrgency.Urgent"/> — the moment where a second or two is what the
+    /// warning is <em>for</em> — and until #136 not one of them carried a cue, while the warnings
+    /// that an attack <em>might</em> happen all did. Requiring it as an argument is what stops a
+    /// line being added later without one: there is no overload that omits it.
+    /// </para>
+    /// <para>
+    /// The routine lines do not come through here, which is the existing urgency distinction doing
+    /// the work rather than a second judgement. A full cargo hold and the rebuy screen are not
+    /// emergencies and get no alarm.
+    /// </para>
+    /// </summary>
+    private static Announcement Urgent(string key, string text, AlertCue cue) =>
+        new(key, text, CalloutUrgency.Urgent) { Cooldown = Cooldown, Cue = cue };
 }

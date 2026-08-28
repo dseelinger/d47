@@ -55,8 +55,28 @@ public sealed class CalloutEngine(ILogger<CalloutEngine> logger)
 {
     private readonly List<ICallout> _callouts = [];
     private readonly Dictionary<string, DateTimeOffset> _spokenAt = new(StringComparer.Ordinal);
+    private readonly Dictionary<Audio.AlertCue, DateTimeOffset> _markedAt = [];
     private readonly ConcurrentQueue<Announcement> _pending = new();
     private readonly HashSet<string> _disabled = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// How close two alarms of the same kind may fall before the second is played as words alone
+    /// (<a href="https://github.com/dseelinger/d47/issues/136">#136</a>).
+    /// <para>
+    /// <b>The keys cannot answer this, which is why it is here rather than in a cooldown.</b> An
+    /// announced interdiction is <c>attack.interdiction</c> and the interdiction itself is
+    /// <c>danger.interdiction</c> — two different warnings, correctly, both worth saying. What is
+    /// not worth doing twice in six seconds is the <em>alarm</em>: the Commander has already been
+    /// told to look up, and a second identical sound carries nothing the first did not.
+    /// </para>
+    /// <para>
+    /// Ten seconds, against a median of six to eight between an announced attack and the shooting.
+    /// Long enough to cover that pair, short enough that a second engagement a minute later is
+    /// marked as one. <b>Only the cue is dropped and never the line</b>, because the words are what
+    /// say which warning this is and they were always the part that mattered.
+    /// </para>
+    /// </summary>
+    private static readonly TimeSpan CueSpacing = TimeSpan.FromSeconds(10);
 
     /// <summary>Whether callouts are on at all. Off leaves everything else running.</summary>
     public bool Enabled { get; set; } = true;
@@ -152,9 +172,41 @@ public sealed class CalloutEngine(ILogger<CalloutEngine> logger)
         }
 
         _spokenAt[announcement.Key] = context.Now;
+
+        // After the key cooldown, never before it: an announcement that is not going to be said
+        // must not consume the spacing that would silence the alarm of one that is.
+        announcement = Marked(announcement, context.Now);
+
         _pending.Enqueue(announcement);
 
         logger.LogInformation("Callout {Key}: {Text}", announcement.Key, announcement.Text);
+    }
+
+    /// <summary>
+    /// The announcement with its alarm kept or dropped, by how recently that same alarm sounded
+    /// (<a href="https://github.com/dseelinger/d47/issues/136">#136</a>).
+    /// <para>
+    /// Keyed on the cue rather than on the callout or the key, because the question being asked is
+    /// about the Commander's ear: two sounds a Commander cannot tell apart, six seconds apart, are
+    /// one sound played twice however many different things produced them.
+    /// </para>
+    /// </summary>
+    private Announcement Marked(Announcement announcement, DateTimeOffset now)
+    {
+        if (announcement.Cue is not { } cue)
+        {
+            return announcement;
+        }
+
+        if (_markedAt.TryGetValue(cue, out var last) && now - last < CueSpacing)
+        {
+            // The line still goes. Only the marker in front of it is dropped.
+            return announcement with { Cue = null };
+        }
+
+        _markedAt[cue] = now;
+
+        return announcement;
     }
 
     /// <summary>

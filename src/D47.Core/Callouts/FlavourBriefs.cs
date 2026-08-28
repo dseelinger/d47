@@ -216,6 +216,44 @@ public static class FlavourBriefs
             };
         }
 
+        // <b>Somebody has been paid to hunt the Commander, and d47 reacts to it in character</b>
+        // (<a href="https://github.com/dseelinger/d47/issues/137">#137</a>). Reported as three
+        // threats read out flat in a stranger's voice: "Finally! Found you. Come to me lil' fishy."
+        //
+        // <b>The text handed over is d47's own and never the hitman's.</b> `AnnouncedAttackCallout`
+        // chose a constant line by the id family, and that constant is what is interpolated here —
+        // the same rule as the carrier fix above, arrived at from the other direction. An in-game
+        // message reaching this quotation would be the trust boundary crossed, and the guard at the
+        // top of this method does not cover it, because a reaction is d47 talking rather than a
+        // re-voiced transmission and so carries neither CommsChannel nor Transcript.
+        //
+        // <b>It must not say why.</b> The families read as though they join to a failed mission and
+        // they do not: one of 30 corpus lines had a MissionFailed or MissionAbandoned within the
+        // hour. A model given a hunter and no reason will supply one, so the instruction forbids it
+        // outright rather than hoping.
+        if (string.Equals(announcement.Key, AnnouncedAttackCallout.HuntedKey, StringComparison.Ordinal))
+        {
+            return new FlavourBrief
+            {
+                Instruction =
+                    "Someone has been hunting the Commander and has just been heard on the radio "
+                    + "looking for them. Say this once, in your own voice, keeping what it means: "
+                    + $"\"{announcement.Text}\" One or two sentences. Do not say who they are, why "
+                    + "they are there or who sent them — you do not know, and guessing would be "
+                    + "inventing it. Do not tell the Commander what to do and do not ask a question.",
+                NeedsPersona = true,
+
+                // Where they are is the whole of what makes this worth remarking on: being hunted
+                // in a busy system and being hunted alone are different situations.
+                NeedsGameState = true,
+
+                // The sheet, so it is addressed to somebody. Not the story — the instruction says
+                // to invent nothing, and a history is exactly what a model would reach for to
+                // explain why somebody is hunting them.
+                NeedsAboutMe = true,
+            };
+        }
+
         // Phase 31's opening line. Eligible for the same reason the ambient remarks are: it is d47
         // filling a moment rather than reporting an event, and it is the first thing a Commander
         // hears in a session — which is precisely where a core sounding like itself is worth
