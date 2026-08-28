@@ -187,6 +187,61 @@ public static class EngineerDirectory
             : null;
     }
 
+    /// <summary>
+    /// Whether a recipe's engineer list names this engineer, through the same matcher
+    /// <see cref="ByName"/> uses rather than by comparing the two strings.
+    /// <para>
+    /// <b>The two tables spell one engineer differently and neither is wrong.</b>
+    /// <c>Engineers.tsv</c> takes identity from EDCD/FDevIDs and says
+    /// <c>Tod 'The Blaster' McQuinn</c>; <c>Blueprints.tsv</c> takes recipes from EDEngineer
+    /// and says <c>Tod McQuinn</c>. Three call sites compared those strings directly, so no
+    /// recipe row ever matched him, for any blueprint, in any system — his ceiling was always
+    /// null, he was never worth listing, and the checklist filter naming him was never offered
+    /// (#133). He is the only one of the thirty-eight it happens to, which is what makes
+    /// comparing strings look safe.
+    /// </para>
+    /// <para>
+    /// The ladder was already here and these callers walked past it, which is the same shape as
+    /// the hull symbols. Fixing it at the join rather than in the generator means neither
+    /// upstream has to be taught about the other's spelling, and a fourth caller that reaches
+    /// for this method cannot reintroduce it. <c>EveryBlueprintEngineerIsInTheDirectoryTests</c>
+    /// is the gate that a fourth <i>spelling</i> cannot arrive unnoticed.
+    /// </para>
+    /// <para>
+    /// Memoised because the callers ask inside a loop over every planned item for every one of
+    /// the thirty-eight engineers, and <see cref="Catalogue.Match"/> walks the whole name list
+    /// per call. The distinct spellings in the recipe table number a few dozen and never change
+    /// while the process runs.
+    /// </para>
+    /// </summary>
+    public static bool IsNamedIn(IEnumerable<string>? recipeEngineers, Engineer? engineer)
+    {
+        if (recipeEngineers is null || engineer is null)
+        {
+            return false;
+        }
+
+        foreach (var named in recipeEngineers)
+        {
+            if (Canonical(named) is { } resolved && resolved.Id == engineer.Id)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// The directory row a recipe table's spelling means, remembered. Null for a name that
+    /// resolves to nobody, which is itself remembered so a miss costs one walk rather than one
+    /// per plan item.
+    /// </summary>
+    private static Engineer? Canonical(string named) =>
+        Resolved.GetOrAdd(named, name => ByName(name));
+
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, Engineer?> Resolved =
+        new(StringComparer.OrdinalIgnoreCase);
     public static IReadOnlyList<string> Near(string spoken) =>
         Catalogue.Near([.. All.Select(engineer => engineer.Name)], spoken);
 
