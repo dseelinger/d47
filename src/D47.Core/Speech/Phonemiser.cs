@@ -74,7 +74,15 @@ public sealed class Phonemiser(IPronunciationDictionary? dictionary = null)
 
         // A model writes the curly one and a Commander types the straight one, and they are the
         // same word. Settled here rather than in five places further down.
-        foreach (var token in text.Replace('’', '\'').Split(' ', StringSplitOptions.RemoveEmptyEntries))
+        //
+        // Mark and class numerals are written out before the split, and they have to be: the
+        // context spans tokens, so `Mk II` arrives as two segments and `MkII` as one, and the
+        // per-segment ladder below can see neither pair (#138). What comes back is ordinary
+        // English, so "Mark three" then goes down the ladder out of the dictionary like any other
+        // words rather than through a second set of rules that could disagree with it.
+        var prepared = SpokenNumerals.Expand(text.Replace('’', '\''));
+
+        foreach (var token in prepared.Split(' ', StringSplitOptions.RemoveEmptyEntries))
         {
             if (built.Length > 0)
             {
