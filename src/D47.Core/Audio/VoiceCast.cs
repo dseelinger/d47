@@ -128,6 +128,27 @@ public sealed class VoiceCast
     /// </param>
     public VoiceSelection ForSender(string sender, bool isPlayer, VoiceRole role = VoiceRole.Comms)
     {
+        // <b>A role the Commander has cast has one voice, and a sender does not override it</b>
+        // (<a href="https://github.com/dseelinger/d47/issues/109">#109</a>).
+        //
+        // This is the second half of that report, and the half nothing had noticed. The first was
+        // that the carrier was identified too late for its docking chatter; fixing it made the
+        // announcement <see cref="VoiceRole.TowerControl"/> and changed nothing a Commander could
+        // hear, because a re-voiced message always carries a <c>Speaker</c> and every caller with a
+        // speaker came here — where the cast voice was only ever reached as a fallback for an empty
+        // pool. So the tower spoke in whichever pool voice its callsign hashed to, exactly as an
+        // unknown NPC would, and the voice the Commander cast for it was never used for a word the
+        // carrier actually said.
+        //
+        // Only the carrier's two roles are ever assigned one, and each is one person — a tower and
+        // a captain — so "cast" and "has exactly one member" are the same set here. Comms is never
+        // assigned, which is what keeps the per-sender draw below the answer for everybody else:
+        // a system with four NPCs in it still gets four distinct voices.
+        if (_roleVoices.ContainsKey(role))
+        {
+            return For(role);
+        }
+
         var assignments = Lasts(isPlayer, role) ? _lasting : _perSystem;
 
         if (assignments.TryGetValue(sender, out var already))

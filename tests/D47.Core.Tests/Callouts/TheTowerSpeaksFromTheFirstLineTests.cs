@@ -230,4 +230,68 @@ public class TheTowerSpeaksFromTheFirstLineTests
 
         Assert.Equal(VoiceRole.Comms, Assert.Single(heard).Voice);
     }
+
+    // ---- And the role has to reach a voice ------------------------------------------------
+
+    /// <summary>
+    /// <b>The half of #109 that the identity fix alone did not deliver, found by flying it.</b>
+    /// Making the announcement <see cref="VoiceRole.TowerControl"/> changed nothing a Commander
+    /// could hear: a re-voiced message always carries a <c>Speaker</c>, every caller with a speaker
+    /// went to <see cref="VoiceCast.ForSender"/>, and there the cast voice was only ever a fallback
+    /// for an empty pool. So the tower spoke in whichever pool voice its callsign hashed to.
+    /// <para>
+    /// Both halves are needed and neither is sufficient: without the identity fix the role is wrong,
+    /// and without this the right role still reaches the wrong voice.
+    /// </para>
+    /// </summary>
+    [Theory]
+    [InlineData(VoiceRole.TowerControl)]
+    [InlineData(VoiceRole.CarrierCaptain)]
+    public void ACastRoleKeepsItsVoiceEvenWithASenderOnTheLine(VoiceRole role)
+    {
+        var cast = new VoiceCast { Pool = ["pool-one", "pool-two", "pool-three"] };
+
+        cast.Assign(role, "the-cast-voice");
+
+        Assert.Equal("the-cast-voice", cast.ForSender(Shown, isPlayer: false, role).VoiceId);
+
+        // And it does not drift: the same sender asked twice is still the cast voice rather than
+        // an assignment made on the first call and kept.
+        Assert.Equal("the-cast-voice", cast.ForSender(Shown, isPlayer: false, role).VoiceId);
+    }
+
+    /// <summary>
+    /// <b>And everybody else still gets a voice of their own</b>, which is what stops this being a
+    /// fix that collapses the whole cast onto one. <see cref="VoiceRole.Comms"/> is never assigned a
+    /// role voice, so the per-sender draw is untouched for the traffic it exists for.
+    /// </summary>
+    [Fact]
+    public void StrangersStillGetAVoiceEach()
+    {
+        var cast = new VoiceCast { Pool = ["pool-one", "pool-two", "pool-three"] };
+
+        cast.Assign(VoiceRole.TowerControl, "the-cast-voice");
+
+        var first = cast.ForSender("Iron Duke XYZ-99Z", isPlayer: false).VoiceId;
+        var second = cast.ForSender("Kaiser Grendel", isPlayer: false).VoiceId;
+
+        Assert.NotEqual(first, second);
+        Assert.NotEqual("the-cast-voice", first);
+        Assert.NotEqual("the-cast-voice", second);
+    }
+
+    /// <summary>
+    /// An uncast role falls through to the pool as it always did — the rule is "cast", not "not
+    /// Comms", so a Commander who has cleared the tower's voice gets the old behaviour rather than
+    /// silence.
+    /// </summary>
+    [Fact]
+    public void AnUncastRoleStillDrawsFromThePool()
+    {
+        var cast = new VoiceCast { Pool = ["pool-one", "pool-two"] };
+
+        Assert.Contains(
+            cast.ForSender(Shown, isPlayer: false, VoiceRole.TowerControl).VoiceId,
+            (string[])["pool-one", "pool-two"]);
+    }
 }
