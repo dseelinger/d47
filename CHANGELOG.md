@@ -27,6 +27,27 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.84.1 — 2026-08-28 — The local voice had no download button
+
+Reported within minutes of 0.84.0: the **Local voice** row offered no way to fetch the model.
+
+The row asks the app two things — whether the model is here, and what to run to fetch it — and it
+asked the second one **while the settings rows were being built**. At that moment the app has not
+finished constructing itself, so the answer was "nothing", the button was left off, and it was left
+off for good: the rows are built once.
+
+That indirection exists precisely so the question can be asked *later*, which every other
+long-running button here does correctly. Asking it immediately is the one thing that defeats it.
+
+**Every test passed, and that is the part worth recording.** The row-level tests handed over a
+working app straight away, which no real app does. The page-level tests supplied neither of the
+row's two app connections, so the row they drew was not the row that ships — the same hole that let
+a crash-on-launch through in 0.76.0. Both are closed: the test surface now supplies them, and there
+is a test that opens the real settings page and looks for the button a Commander would press.
+
+---
+
+---
 ## 0.84.0 — 2026-08-28 — Phase 59: a voice that never leaves the machine
 
 **Every provider Directive 47 has ever had is a service.** The words it speaks are sent

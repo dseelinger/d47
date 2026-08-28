@@ -83,6 +83,13 @@ public static class TestSurface
                 Beds = () => [.. CueLibrary.Load().BedNames],
                 Voices = _ => [.. (voices ?? []).Select(voice => voice.Id)],
                 VoiceLabel = (_, id) => (voices ?? []).FirstOrDefault(voice => voice.Id == id)?.Label ?? id,
+
+                // Supplied rather than left null, because a null host delegate makes its row
+                // ABSENT and the surface these tests bind is then not the one that ships. That
+                // hole let a crash through in 0.76.0 and let the local voice's missing download
+                // button through in 0.84.0.
+                LocalVoiceState = () => "Not downloaded. About 350 MB, fetched once.",
+                DownloadLocalVoice = () => () => { },
             },
             new TurnCancellation(NullLogger<TurnCancellation>.Instance),
             new CalloutEngine(NullLogger<CalloutEngine>.Instance),

@@ -421,10 +421,20 @@ public static class SpeechCapability
                 Kind = SettingKind.Info,
                 DocsAnchor = "provider",
 
-                // A press rather than a choice, and the button is absent rather than dead when
-                // nothing can run the download — the same shape every long-running press here has.
-                PressLabel = surface.DownloadLocalVoice?.Invoke() is null ? null : "Download it",
-                Press = surface.DownloadLocalVoice?.Invoke(),
+                // A press rather than a choice, and the button is absent rather than dead where
+                // nothing can run the download.
+                //
+                // <b>Asked at press time, never at build time, and that is the whole reason the
+                // delegate returns a function.</b> Rows are built once, before AppHost has
+                // finished constructing itself — its `self` is still null while the capability
+                // list is assembled. Calling this here answered null, dropped the button, and
+                // dropped it permanently, which is what shipped in v0.84.0 and is what
+                // TheLocalVoiceRowOffersItsButtonTests now holds. Presence of the delegate is a
+                // fact known now; what it returns is not.
+                PressLabel = surface.DownloadLocalVoice is null ? null : "Download it",
+                Press = surface.DownloadLocalVoice is null
+                    ? null
+                    : () => surface.DownloadLocalVoice.Invoke()?.Invoke(),
                 Binding = new SettingBinding
                 {
                     Read = _ => surface.LocalVoiceState?.Invoke() ?? "Not available.",
