@@ -191,17 +191,54 @@ public sealed class HttpModelStore : IModelStore, IDisposable
                     .ReadAsStreamAsync(cancellationToken)
                     .ConfigureAwait(false);
 
+                // <b>Asynchronous, and unbuffered.</b> The four-argument constructor defaults to
+                // <c>bufferSize: 4096, useAsync: false</c>, so every <c>WriteAsync</c> of a
+                // network chunk became a run of <em>blocking</em> 4 KB writes on a threadpool
+                // thread. A buffer size of 1 means no buffering, which is what is wanted when the
+                // caller already arrives with a whole chunk in hand.
+                //
+                // <b>Measured, and it changed nothing — which is why it is written down.</b> This
+                // was the leading suspect for a download reported as slow on 2026-08-28, and two
+                // runs of each shape against the real file put both at 60-77 MB/s with the
+                // ordering crossing over: no effect. It is kept because blocking threadpool I/O
+                // through a 4 KB buffer is the wrong shape on a machine that is busy, and it is
+                // recorded as neutral so nobody re-derives it as the fix.
                 await using var file = new FileStream(
-                    pending, FileMode.Create, FileAccess.Write, FileShare.None);
+                    pending,
+                    FileMode.Create,
+                    FileAccess.Write,
+                    FileShare.None,
+                    bufferSize: 1,
+                    FileOptions.Asynchronous);
 
                 // Hashed as it lands rather than by re-reading the file afterwards: a second
                 // pass over 500 MB to learn something the first pass already went past is
                 // avoidable work on the slowest thing in the operation.
                 using var sha = SHA256.Create();
 
-                var buffer = new byte[81920];
+                // 256 KB rather than 80. Also measured as neutral; it is here because it is what
+                // makes one report per whole percent land naturally rather than needing a timer.
+                var buffer = new byte[262144];
                 long received = 0;
                 int read;
+
+                // <b>Reported on whole percentage points, not on every read — and this is about
+                // the bar rather than about the transfer.</b>
+                //
+                // <c>Progress&lt;T&gt;</c> captures the UI synchronisation context, so each report
+                // is a post to the Avalonia dispatcher that sets a bar and invalidates its layout.
+                // A 75 MB model produced <b>4,700</b> of them; it now produces <b>101</b>.
+                //
+                // <b>What that does not do is make the download faster, and the measurement is
+                // the reason to say so.</b> <c>Report</c> posts and returns, so the loop never
+                // waits on the dispatcher: driven against a pump doing 300 microseconds of work
+                // per post — 1.4 seconds of queued work behind a transfer that takes one — both
+                // shapes still finished in the same time. What the flood costs is that the queue
+                // drains long after the bytes have landed, so the bar trails the transfer and a
+                // download that has finished can still look like one that is crawling.
+                //
+                // A hundred updates is every update a progress bar can express.
+                var lastPercent = -1;
 
                 while ((read = await source.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)) > 0)
                 {
@@ -209,8 +246,22 @@ public sealed class HttpModelStore : IModelStore, IDisposable
                     sha.TransformBlock(buffer, 0, read, null, 0);
 
                     received += read;
-                    progress?.Report(new ModelProgress(model.Id, received, total));
+
+                    // A total of zero would make this divide by zero; it also means there is no
+                    // percentage to report, so the bar is left to whatever it shows for unknown
+                    // length rather than being driven from a number that does not exist.
+                    var percent = total > 0 ? (int)(received * 100 / total) : -1;
+
+                    if (percent != lastPercent)
+                    {
+                        lastPercent = percent;
+                        progress?.Report(new ModelProgress(model.Id, received, total));
+                    }
                 }
+
+                // The last one always lands, whatever the arithmetic above did with it: a bar
+                // left at 99% on a finished download is the one report worth spending.
+                progress?.Report(new ModelProgress(model.Id, received, total));
 
                 sha.TransformFinalBlock([], 0, 0);
                 actualHash = Convert.ToHexStringLower(sha.Hash!);
