@@ -81,6 +81,12 @@ public static class LetterToSound
     /// spelling, first-syllable is the commonest English pattern, and a wrong mark is less audible
     /// than no mark at all, which makes the whole name flat.
     /// </para>
+    /// <para>
+    /// <b>Which syllable is marked is that judgement; where in the syllable the mark goes is not.</b>
+    /// It goes immediately before the vowel, which is the one convention the shipped dictionary
+    /// follows without a single exception — see the note at the mark itself for what putting it
+    /// anywhere else sounded like.
+    /// </para>
     /// </summary>
     public static string? Pronounce(string? word)
     {
@@ -95,11 +101,6 @@ public static class LetterToSound
 
         for (var i = 0; i < syllables.Count; i++)
         {
-            if (i == 0 && syllables.Count > 1)
-            {
-                built.Append('ˈ');
-            }
-
             var syllable = syllables[i];
 
             built.Append(Spell(SoftenOnset(syllable.Onset, syllable.Vowel)));
@@ -116,7 +117,43 @@ public static class LetterToSound
                 : syllable.IsOpen && Long.TryGetValue(syllable.Vowel, out var open) ? open
                 : Short.GetValueOrDefault(syllable.Vowel, syllable.Vowel);
 
-            built.Append(vowel);
+            // <b>A leading glide belongs to the onset, not to the nucleus.</b> Four vowel spellings
+            // here answer with one — <c>eu</c>, <c>ew</c> and a long <c>u</c> all give <c>juː</c> —
+            // so marking the start of the vowel <em>string</em> would put the mark back in front of
+            // a consonant for exactly those words, which is the fault being fixed reached by a
+            // different road. The dictionary is unambiguous: <c>jˈuːnɪt</c>, <c>mjˈuːzɪk</c>,
+            // <c>fjˈuː</c>, <c>kjˈuːt</c> — glide, then mark, then vowel.
+            var glide = vowel.Length > 1 && vowel[0] is 'j' or 'w' ? 1 : 0;
+
+            built.Append(vowel[..glide]);
+
+            // <b>The mark goes immediately before the stressed vowel, never before the consonants
+            // in front of it</b> (reported 2026-08-28, against the local voice shipped in 0.84.0).
+            //
+            // It used to sit at the head of the syllable — <c>ˈdɛpæɹæɡɑːn</c> — and the shipped
+            // dictionary does not do that <b>once in 274,927 entries</b>: not a single one begins
+            // with a stress mark followed by a consonant. It writes <c>dʒˈɑːn</c> and
+            // <c>tˈɜːmɪnəl</c>, marking the vowel rather than the syllable. So every word these
+            // rules answered for reached Kokoro in a shape it had never once been given, and Kokoro
+            // rendered the unfamiliar shape as an extra vowel: <em>"JOHN ay DEPARAGON is in ay
+            // Kamitra, near ay Hammel Terminal"</em>.
+            //
+            // <b>The reported line is what makes the cause certain rather than likely.</b> Every
+            // word an intruded vowel was heard before — Deparagon, Kamitra, Hammel, Hammel — is a
+            // word these rules answered for, and every word without one — John, is, in, near,
+            // Terminal, docked, at — came from the dictionary. Four for four and seven for seven,
+            // in one sentence.
+            //
+            // It costs a name nothing to be marked the dictionary's way, and names are most of what
+            // d47 says: systems, stations, Commanders. A vowel-initial word is unaffected, because
+            // there the two positions are the same one — which is exactly the 5.7% of dictionary
+            // entries that do begin with the mark, every one of them with a vowel after it.
+            if (i == 0 && syllables.Count > 1)
+            {
+                built.Append('ˈ');
+            }
+
+            built.Append(vowel[glide..]);
             built.Append(Spell(syllable.Coda));
         }
 
