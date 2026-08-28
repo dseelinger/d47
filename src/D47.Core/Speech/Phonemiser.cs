@@ -1,4 +1,4 @@
-namespace D47.Core.Speech;
+﻿namespace D47.Core.Speech;
 
 /// <summary>A word's pronunciation, or nothing. Implemented by the shipped dictionary.</summary>
 public interface IPronunciationDictionary
@@ -20,6 +20,9 @@ public interface IPronunciationDictionary
 /// </para>
 /// <list type="number">
 /// <item>a word the dictionary holds is said the dictionary's way;</item>
+/// <item>a word with an apostrophe inside it is built from its stem — see
+/// <see cref="Contractions"/>, added on the day the voice was first heard aloud saying
+/// <em>ess aitch eye pee ess</em> for <c>Ship's</c>;</item>
 /// <item>digits are said as a number — <c>385</c> is <em>three eighty-five</em>;</item>
 /// <item>letters and digits mixed with nothing between them are spelled — <c>B0</c> is
 /// <em>bee zero</em>;</item>
@@ -69,7 +72,9 @@ public sealed class Phonemiser(IPronunciationDictionary? dictionary = null)
         var accent = SpokenLetters.AccentOf(voiceId);
         var built = new System.Text.StringBuilder();
 
-        foreach (var token in text.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+        // A model writes the curly one and a Commander types the straight one, and they are the
+        // same word. Settled here rather than in five places further down.
+        foreach (var token in text.Replace('’', '\'').Split(' ', StringSplitOptions.RemoveEmptyEntries))
         {
             if (built.Length > 0)
             {
@@ -145,6 +150,15 @@ public sealed class Phonemiser(IPronunciationDictionary? dictionary = null)
             return (known, Reading.Spoken);
         }
 
+        // 1b. A word with an apostrophe inside it, which the dictionary holds none of: not one of
+        //     its 274,927 entries contains one. Before the digit rungs, because those are about
+        //     designations and this is about English.
+        if (Contractions.Looks(segment) &&
+            Contractions.Ipa(segment, accent, Sound) is { Length: > 0 } joined)
+        {
+            return (joined, Reading.Spoken);
+        }
+
         // 2. All digits: a number, said casually.
         if (segment.All(char.IsAsciiDigit))
         {
@@ -166,6 +180,27 @@ public sealed class Phonemiser(IPronunciationDictionary? dictionary = null)
 
         // 5. Anything left. Never wrong, and the only honest answer for a run nobody can say.
         return (SpokenLetters.SpellOut(segment, accent), Reading.Spelled);
+    }
+
+    /// <summary>
+    /// What a stem sounds like, by the two rungs that answer rather than spell — the dictionary,
+    /// then the rules. Null where neither can say, which is what stops a contraction being built
+    /// on top of a spelled-out stem: <em>GQPI's</em> is spelled whole, not spelled and then given
+    /// a possessive.
+    /// </summary>
+    private string? Sound(string stem)
+    {
+        if (stem.Length == 0)
+        {
+            return null;
+        }
+
+        if (dictionary?.Lookup(stem.ToLowerInvariant()) is { Length: > 0 } known)
+        {
+            return known;
+        }
+
+        return LetterToSound.Pronounce(stem);
     }
 
     /// <summary>

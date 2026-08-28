@@ -27,6 +27,46 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.84.2 — 2026-08-28 — The local voice, heard and understood
+
+Three reports from the first flight of the local voice, one for each of the things a Commander does
+with it: fetch it, choose it, listen to it.
+
+**The download said nothing while it worked.** 350 MB arrived correctly and the surface reported
+none of it — no bar, a button that stayed pressable throughout, and a row still reading *not
+downloaded* until something else happened to redraw the page. The only evidence it had worked at
+all was a line in a log. A press that takes minutes now reports a fraction while it runs, shuts its
+own button so a second press cannot start a second download, and refreshes the row when it lands.
+The mechanism is a property of the row rather than of this one button, so the next long press gets
+it for free.
+
+**And then it speaks.** A finished download is a claim; a voice coming out of the speakers is the
+proof of it, and it is the only part of this a Commander can check without reading a log. It plays
+through the one arbiter like every other sound, and through a client of its own where the local
+voice is not the selected provider — proving the download worked must not require choosing it
+first.
+
+**There was no voice to choose.** The picker had asked the provider for its list at startup, been
+told *not installed*, and nothing ever revisited that answer. So the model was on disk, the row said
+so, and the voice row was empty. The list is asked for again the moment the download lands.
+
+**`Ship's` was spelled out, one letter at a time.** *"Systems responding, Commander. Ship's docked in
+Buzhang Ku"* came out **ess aitch eye pee ess**. Not a fault in the spelling rung — that rung was
+doing exactly what it exists for — but a missing rung above it: an apostrophe makes a word fail the
+*is this all letters* test, so both rungs that can pronounce anything skipped it, and the last rung,
+which never refuses, spelled it.
+
+The dictionary cannot fix this and never could: **0 of its 274,927 entries contain an apostrophe**.
+So the ending is derived from the word underneath it — *ship* plus a possessive lands on exactly the
+transcription the dictionary holds for *ships* — which is also why it works for *Buzhang's*, a name
+no list was ever going to hold. Stripping the apostrophe and looking that up was the obvious cheap
+fix and is wrong where it counts: the dictionary reads `ill` as *ill*, `id` as *I.D.* and `wont` as
+*wont*, so *I'll*, *I'd* and *won't* would each have come out as a real word that is not the one
+written. The dozen that no rule reaches are written down individually, and **can't** takes the vowel
+of the voice saying it, for the same reason a British voice says *zed*.
+
+---
+
 ## 0.84.1 — 2026-08-28 — The local voice had no download button
 
 Reported within minutes of 0.84.0: the **Local voice** row offered no way to fetch the model.

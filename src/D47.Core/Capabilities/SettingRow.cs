@@ -1,4 +1,4 @@
-using D47.Core.Configuration;
+﻿using D47.Core.Configuration;
 
 namespace D47.Core.Capabilities;
 
@@ -113,6 +113,16 @@ public sealed record SettingBinding
 /// </para>
 /// </summary>
 public sealed record SettingCommandPhrase(string Phrase, string? Value);
+
+/// <summary>
+/// What a long press does: report how far it has got, answer what to say when it ends.
+/// <para>
+/// The fraction runs 0 to 1. The answer is a sentence for the row to show, or null where there
+/// is nothing to add — a finished download is described by the row's own state, and a line
+/// saying so is a line the Commander has to dismiss by reading it.
+/// </para>
+/// </summary>
+public delegate Task<string?> LongPress(IProgress<double> progress, CancellationToken cancellationToken);
 
 /// <summary>
 /// A settings row, declared by the capability that owns it. The UI renders these rather
@@ -380,6 +390,25 @@ public sealed record SettingRow
     /// </para>
     /// </summary>
     public Action? Press { get; init; }
+
+    /// <summary>
+    /// The same button, where what is behind it takes long enough that the Commander has to see
+    /// it happening.
+    /// <para>
+    /// <b>Added the day the local voice was first downloaded and nobody could tell.</b> A press
+    /// that fetches 350 MB and reports nothing is indistinguishable from a dead control: the row
+    /// still read <em>not downloaded</em>, the button still invited a second press, and the only
+    /// evidence it had worked at all was a line in the log. So a press that answers this reports
+    /// a fraction while it runs, shuts its own button, and answers a sentence for the row to
+    /// show — or null where the state the row already reads says everything.
+    /// </para>
+    /// <para>
+    /// Core owns no thread and starts nothing (architecture.md, invariants): this is a Task the
+    /// App hands over, and the App is what decides where the work runs. Set instead of
+    /// <see cref="Press"/> rather than beside it — a row has one button.
+    /// </para>
+    /// </summary>
+    public LongPress? PressAsync { get; init; }
 
     /// <summary>What the <see cref="Press"/> button says. Required when there is one.</summary>
     public string? PressLabel { get; init; }

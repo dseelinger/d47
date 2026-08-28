@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using D47.Core.Capabilities;
 using Microsoft.Extensions.Logging;
 
@@ -269,7 +269,7 @@ public sealed class SettingsService
             var wired = row.Kind switch
             {
                 SettingKind.Secret => row.SecretName is not null,
-                SettingKind.Info => row.Binding?.Read is not null || row.Press is not null,
+                SettingKind.Info => row.Binding?.Read is not null || row.Press is not null || row.PressAsync is not null,
                 _ => row.Binding?.Write is not null,
             };
 
@@ -281,7 +281,7 @@ public sealed class SettingsService
 
             // Same rule, for the button an Info row may carry: one with no words on it is a
             // control the Commander cannot know the effect of until they press it.
-            if (row.Press is not null && string.IsNullOrWhiteSpace(row.PressLabel))
+            if ((row.Press is not null || row.PressAsync is not null) && string.IsNullOrWhiteSpace(row.PressLabel))
             {
                 throw new CapabilityRegistrationException(
                     $"Settings row '{row.Key}' offers a button with nothing written on it.");

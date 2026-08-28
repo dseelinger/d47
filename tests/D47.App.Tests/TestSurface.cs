@@ -1,4 +1,4 @@
-using D47.Core;
+﻿using D47.Core;
 using D47.Core.Audio;
 using D47.Core.Callouts;
 using D47.Core.Capabilities;
@@ -54,10 +54,15 @@ public static class TestSurface
     /// provider — passed in by the tests about the Voice row, which cannot say anything about a
     /// row with nothing in it.
     /// </param>
+    /// <param name="localVoice">
+    /// What the local voice's download button does. A fetch that returns at once on every normal
+    /// run, and a controllable one for the test about what the row shows while it is running.
+    /// </param>
     public static (SettingsService Settings, ViewStateStore ViewState, AppPaths Paths, CapabilityRegistry Registry, SecretStore Secrets) CreateFull(
         Func<string>? coverage = null,
         D47.Core.Persona.PersonaHost? personas = null,
-        IReadOnlyList<VoiceInfo>? voices = null)
+        IReadOnlyList<VoiceInfo>? voices = null,
+        LongPress? localVoice = null)
     {
         var root = TempFolders.Create("d47-app-tests");
         var paths = new AppPaths(root);
@@ -89,7 +94,7 @@ public static class TestSurface
                 // hole let a crash through in 0.76.0 and let the local voice's missing download
                 // button through in 0.84.0.
                 LocalVoiceState = () => "Not downloaded. About 350 MB, fetched once.",
-                DownloadLocalVoice = () => () => { },
+                DownloadLocalVoice = () => localVoice ?? ((_, _) => Task.FromResult<string?>(null)),
             },
             new TurnCancellation(NullLogger<TurnCancellation>.Instance),
             new CalloutEngine(NullLogger<CalloutEngine>.Instance),
@@ -162,9 +167,10 @@ public static class TestSurface
     public static (SettingsService Settings, ViewStateStore ViewState, AppPaths Paths) Create(
         Func<string>? coverage = null,
         D47.Core.Persona.PersonaHost? personas = null,
-        IReadOnlyList<VoiceInfo>? voices = null)
+        IReadOnlyList<VoiceInfo>? voices = null,
+        LongPress? localVoice = null)
     {
-        var (settings, viewState, paths, _, _) = CreateFull(coverage, personas, voices);
+        var (settings, viewState, paths, _, _) = CreateFull(coverage, personas, voices, localVoice);
         return (settings, viewState, paths);
     }
 

@@ -1,4 +1,4 @@
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Reflection;
 using D47.App.Input;
 using D47.App.Logging;
@@ -2991,39 +2991,135 @@ public sealed class AppHost : IDisposable
     private int _fetchingVoice;
 
     /// <summary>
-    /// Fetches the local voice, off the UI thread.
+    /// What the local voice says the moment it can say anything. A download that finished is a
+    /// claim; a voice coming out of the speakers is the proof of it, and it is the only part of
+    /// this a Commander can check without reading a log.
+    /// </summary>
+    private const string LocalVoiceProof =
+        "Local voice installed. This is D47, speaking from your own machine. Nothing I say through "
+        + "this provider leaves it.";
+
+    /// <summary>
+    /// Fetches the local voice, off the UI thread, saying how far it has got.
     /// <para>
-    /// Guarded the same way every long press here is: hundreds of megabytes take a while, and a
-    /// Commander who does not see anything happen presses the button again.
+    /// <b>Three of the four things this does were added after the first Commander pressed it</b>
+    /// (2026-08-28). It downloaded 350 MB correctly and reported none of it: no bar, a button that
+    /// stayed pressable, a row that went on saying <em>not downloaded</em>, and — the one that
+    /// actually cost something — <b>a voice list that was never asked for again</b>. The picker had
+    /// been told <em>not installed</em> at startup and nothing revisits that answer, so the
+    /// Commander had a local voice on disk and no way to choose one.
+    /// </para>
+    /// <para>
+    /// Guarded the same way every long press here is, and now doubly: the view shuts the button
+    /// while this runs, and this refuses a second run regardless, because the view is not the only
+    /// thing that could call it.
     /// </para>
     /// </summary>
-    private void DownloadLocalVoice()
+    private async Task<string?> DownloadLocalVoice(
+        IProgress<double> progress,
+        CancellationToken cancellationToken)
     {
         if (Interlocked.Exchange(ref _fetchingVoice, 1) == 1)
         {
-            return;
+            return "A download is already running.";
         }
 
-        _ = Task.Run(async () =>
+        try
         {
-            try
-            {
-                using var installer = new KokoroInstaller(
-                    KokoroFolder(), _loggerFactory.CreateLogger<KokoroInstaller>());
+            using var installer = new KokoroInstaller(
+                KokoroFolder(), _loggerFactory.CreateLogger<KokoroInstaller>());
 
-                var result = await installer.InstallAsync().ConfigureAwait(false);
+            var reported = new Progress<KokoroProgress>(step => progress.Report(step.Fraction));
 
-                _logger.LogInformation("The local voice download ended as {Outcome}", result.Outcome);
-            }
-            catch (Exception ex) when (ex is IOException or HttpRequestException)
+            var result = await Task.Run(
+                () => installer.InstallAsync(reported, cancellationToken),
+                cancellationToken).ConfigureAwait(false);
+
+            _logger.LogInformation("The local voice download ended as {Outcome}", result.Outcome);
+
+            if (result.Outcome is not (KokoroInstall.Installed or KokoroInstall.AlreadyPresent))
             {
-                _logger.LogWarning(ex, "The local voice could not be downloaded");
+                return result.Detail ?? "The local voice could not be downloaded.";
             }
-            finally
+
+            // The picker's list, asked for again now that there is something to list. Without
+            // this the files are on disk and the voice row is still empty, which is what shipped.
+            await RefreshLocalVoicesAsync().ConfigureAwait(false);
+
+            return await SpeakLocalVoiceProofAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is IOException or HttpRequestException)
+        {
+            _logger.LogWarning(ex, "The local voice could not be downloaded");
+            return $"The local voice could not be downloaded: {ex.Message}";
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _fetchingVoice, 0);
+        }
+    }
+
+    /// <summary>
+    /// Asks the local voice what it offers, now that it has something to offer.
+    /// <para>
+    /// Only where a client exists, which is where it matters: a client is built the moment the
+    /// provider is selected, and a provider that is not selected asks for its list when it is.
+    /// </para>
+    /// </summary>
+    private async Task RefreshLocalVoicesAsync()
+    {
+        if (_clients.GetValueOrDefault(TtsProviderCatalog.KokoroId) is { } client)
+        {
+            await LoadVoicesAsync(client).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    /// Speaks one line in the voice that was just downloaded, through the one arbiter like
+    /// everything else that makes a sound (architecture.md D7).
+    /// <para>
+    /// Through a client of its own where the provider is not the selected one, because proving the
+    /// download worked must not require choosing it first — and that client is disposed here rather
+    /// than kept, since the selected provider's client is the one the rest of d47 speaks through.
+    /// </para>
+    /// </summary>
+    private async Task<string?> SpeakLocalVoiceProofAsync(CancellationToken cancellationToken)
+    {
+        var shared = _clients.GetValueOrDefault(TtsProviderCatalog.KokoroId);
+        var own = shared is null
+            ? new KokoroTtsProvider(KokoroFolder(), _loggerFactory.CreateLogger<KokoroTtsProvider>())
+            : null;
+
+        try
+        {
+            var clip = await (shared ?? own!).SynthesizeAsync(
+                LocalVoiceProof,
+                new VoiceSelection(
+                    SpeechCapability.ShipVoiceFor(Settings.Current, Personas.Current.Id),
+                    SpeechCapability.RateFor(Settings.Current, TtsProviderCatalog.KokoroId)),
+                cancellationToken).ConfigureAwait(false);
+
+            Audio.Enqueue(new AudioRequest
             {
-                Interlocked.Exchange(ref _fetchingVoice, 0);
-            }
-        });
+                Channel = AudioChannel.Speech,
+                Clip = clip,
+                Group = AuditionGroup,
+                Caption = clip.Name,
+            });
+
+            return null;
+        }
+        catch (Exception ex) when (ex is IOException or InvalidOperationException)
+        {
+            // The files are there and something else is wrong, which is worth saying on the row:
+            // the state above it now reads "installed" and the Commander heard nothing.
+            _logger.LogWarning(ex, "The local voice was downloaded but could not speak");
+            return $"Downloaded, but the voice could not speak: {ex.Message}";
+        }
+        finally
+        {
+            own?.Dispose();
+        }
     }
 
     private ITtsProvider? BuildSpeechClient(string providerId) => providerId switch
