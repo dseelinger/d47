@@ -1,4 +1,4 @@
-using D47.Core.Audio;
+﻿using D47.Core.Audio;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
 
@@ -175,12 +175,19 @@ public static class SpeechCapability
         public Func<string>? LocalVoiceState { get; init; }
 
         /// <summary>
-        /// Fetches the local voice. A function returning an action rather than the action, for
-        /// the reason every long-running press here uses: Core owns no thread, the download is
+        /// Fetches the local voice. A function returning the fetch rather than the fetch itself,
+        /// for the reason every long-running press here uses: Core owns no thread, the download is
         /// hundreds of megabytes, and the App is what decides where that runs. A caller with
         /// nowhere to run it answers null and the row keeps its state and loses its button.
+        /// <para>
+        /// <b>A <see cref="LongPress"/> rather than an <c>Action</c> since 2026-08-28</b>, because
+        /// the first Commander to press it saw nothing happen: 350 MB arrived, the row went on
+        /// saying <em>not downloaded</em> until something else redrew it, and the button stayed
+        /// pressable throughout. The fraction is what the row draws; the sentence is what it says
+        /// when it ends.
+        /// </para>
         /// </summary>
-        public Func<Action?>? DownloadLocalVoice { get; init; }
+        public Func<LongPress?>? DownloadLocalVoice { get; init; }
 
         /// <summary>Stops everything audible, immediately. The whole point of the capability.</summary>
         public required Action Silence { get; init; }
@@ -432,9 +439,12 @@ public static class SpeechCapability
                 // TheLocalVoiceRowOffersItsButtonTests now holds. Presence of the delegate is a
                 // fact known now; what it returns is not.
                 PressLabel = surface.DownloadLocalVoice is null ? null : "Download it",
-                Press = surface.DownloadLocalVoice is null
+                PressAsync = surface.DownloadLocalVoice is null
                     ? null
-                    : () => surface.DownloadLocalVoice.Invoke()?.Invoke(),
+                    : (progress, cancellationToken) =>
+                        surface.DownloadLocalVoice.Invoke() is { } fetch
+                            ? fetch(progress, cancellationToken)
+                            : Task.FromResult<string?>(null),
                 Binding = new SettingBinding
                 {
                     Read = _ => surface.LocalVoiceState?.Invoke() ?? "Not available.",

@@ -138,6 +138,12 @@ The model is **downloaded once**, about 350 MB, from `huggingface.co` — there 
 row below the speaking rate that says whether it is here and fetches it if not. After that this
 provider needs no network at all.
 
+**The download shows itself.** A bar fills along the bottom of the button while it runs, the button
+is shut so a second press cannot start a second download, and when it finishes the row changes to
+say the voice is installed — and then **speaks a line aloud in it**, which is the only part of this
+you can check without reading a log. The voice picker is asked for its list again at the same
+moment, so the voices are there to choose from immediately rather than after a restart.
+
 **It speaks English and only English**, and that is worth understanding rather than working out.
 Every other provider is told which language a line is in; Kokoro is not told, because it has only
 one. A message in French will be read out by an English speaker rather than in French. For the
@@ -151,6 +157,12 @@ that reads as English is pronounced, digits are read as a number, and a run of l
 say — or letters mixed with digits — is spelled out. So `COL 385 SECTOR B0-GQPI` comes out as *call
 three eighty-five sector bee zero dash gee queue pee eye*, and *Shinrarta Dezhra* is pronounced
 rather than spelled. A voice with a British accent says **zed**.
+
+Words with an apostrophe in them are built from the word underneath: *Ship's* is *ship* with the
+ending worked out, which is also how *Buzhang's* works and why no list of words could have covered
+it. The dictionary contains no apostrophes at all — not one of its 274,927 entries — so the handful
+that are not built that way, like *don't* and *won't*, are written down individually. **can't**
+takes the vowel of the voice saying it.
 
 **OpenAI is the only one that can be told how to *perform*.** Every other provider assigns a voice
 and that is the whole of the choice; OpenAI takes a direction — accent, tone, intonation, delivery —

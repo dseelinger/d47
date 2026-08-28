@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using D47.Core.Listening;
 using Avalonia;
 using Avalonia.Automation;
@@ -1782,8 +1782,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             // An Info row that also clears the state it describes. Rendered from the row
             // rather than special-cased by key like the two above, because what is behind
             // this button is a method rather than a window the App has to own.
-            case SettingKind.Info when row.Press is not null:
-                return BuildPressable(row);
+            case SettingKind.Info when row.Press is not null || row.PressAsync is not null:
+                return BuildPressable(row, message);
 
             // A disclosure that is consulted rather than read. It has no control at all: the
             // value goes on the caption's tooltip, which BuildRow attaches once it has the
@@ -1965,7 +1965,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         return (stack, refresh, false);
     }
 
-    private (Control, Action, bool) BuildPressable(SettingRow row)
+    private (Control, Action, bool) BuildPressable(SettingRow row, TextBlock message)
     {
         var (inset, refresh, _) = BuildInfo(row);
 
@@ -1978,24 +1978,111 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             HorizontalAlignment = HorizontalAlignment.Left,
         };
 
-        press.Click += (_, _) =>
+        // Along the bottom of the button rather than across the row, because it is the button's
+        // work it is reporting. The panel below is left-aligned and sized by the button, so a
+        // stretched bar inside it is exactly the button's width without anybody measuring it.
+        var bar = new ProgressBar
         {
-            row.Press!();
+            Name = $"Progress_{row.Key.Replace('.', '_')}",
+            Height = 3,
+            Minimum = 0,
+            Maximum = 1,
+            IsVisible = false,
+        };
 
-            // The whole surface rather than this row, because a press is not always about the row
-            // it is on: binding a core to a ship changes what the row above says *and* what the
-            // list below it says, and refreshing only the one pressed left the other one stating
-            // the state before the press (Phase 35). A press is a rare, deliberate act, so
-            // reading ninety rows once is not a cost anybody can perceive.
-            Refresh();
+        if (row.PressAsync is { } running)
+        {
+            press.Click += async (_, _) => await RunPressAsync(row, running, press, bar, message);
+        }
+        else
+        {
+            press.Click += (_, _) =>
+            {
+                row.Press!();
+
+                // The whole surface rather than this row, because a press is not always about the
+                // row it is on: binding a core to a ship changes what the row above says *and* what
+                // the list below it says, and refreshing only the one pressed left the other one
+                // stating the state before the press (Phase 35). A press is a rare, deliberate act,
+                // so reading ninety rows once is not a cost anybody can perceive.
+                Refresh();
+            };
+        }
+
+        var pressed = new StackPanel
+        {
+            Spacing = 4,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children = { press, bar },
         };
 
         // Nothing to read means nothing to show above the button, so the inset stays out (#78).
         var stack = row.Binding?.Read is null
-            ? new StackPanel { Spacing = 8, Children = { press } }
-            : new StackPanel { Spacing = 8, Children = { inset, press } };
+            ? new StackPanel { Spacing = 8, Children = { pressed } }
+            : new StackPanel { Spacing = 8, Children = { inset, pressed } };
 
         return (stack, refresh, false);
+    }
+
+    /// <summary>Whether a long press is already running. One at a time, like the model download.</summary>
+    private bool _pressing;
+
+    /// <summary>
+    /// A press that takes long enough to watch (#101).
+    /// <para>
+    /// <b>Everything here is what the first local-voice download did not do.</b> The button shuts
+    /// while the work runs, so a Commander who saw nothing happen cannot start a second one over
+    /// the first; the bar says how far it has got; and the surface is refreshed at the end, which
+    /// is what turns <em>not downloaded</em> into <em>installed</em> without waiting for something
+    /// else to redraw the page.
+    /// </para>
+    /// <para>
+    /// The row is refreshed on the way out whatever happened, because a failure halfway through a
+    /// download leaves a state worth reading as much as a success does.
+    /// </para>
+    /// </summary>
+    private async Task RunPressAsync(
+        SettingRow row,
+        LongPress running,
+        Button press,
+        ProgressBar bar,
+        TextBlock message)
+    {
+        if (_pressing)
+        {
+            return;
+        }
+
+        _pressing = true;
+        press.IsEnabled = false;
+        bar.Value = 0;
+        bar.IsVisible = true;
+        message.IsVisible = false;
+
+        try
+        {
+            var progress = new Progress<double>(fraction => bar.Value = fraction);
+            var said = await running(progress, CancellationToken.None);
+
+            if (said is { Length: > 0 })
+            {
+                Note(message, said);
+            }
+        }
+        catch (Exception ex) when (ex is HttpRequestException or IOException or TaskCanceledException)
+        {
+            Note(message, $"{row.Label} could not be done: {ex.Message}");
+        }
+        finally
+        {
+            _pressing = false;
+            press.IsEnabled = true;
+            bar.IsVisible = false;
+
+            // The whole surface, for the reason the plain press refreshes it: what a press changes
+            // is not always the row it was on.
+            Refresh();
+        }
     }
 
     /// <summary>

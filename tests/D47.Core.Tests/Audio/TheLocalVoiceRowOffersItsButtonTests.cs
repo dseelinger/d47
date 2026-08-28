@@ -1,4 +1,4 @@
-using D47.Core.Capabilities;
+﻿using D47.Core.Capabilities;
 using D47.Core.Configuration;
 using D47.Core.Capabilities.Builtin;
 using Xunit;
@@ -42,7 +42,13 @@ public class TheLocalVoiceRowOffersItsButtonTests
             Silence = () => { },
             Beds = () => [],
             LocalVoiceState = () => host is null ? "Not available." : "Not downloaded. About 350 MB.",
-            DownloadLocalVoice = () => host is null ? null : () => presses.Add("pressed"),
+            DownloadLocalVoice = () => host is null
+                ? null
+                : (_, _) =>
+                {
+                    presses.Add("pressed");
+                    return Task.FromResult<string?>(null);
+                },
         };
 
         return (surface, () => host = new object(), presses);
@@ -56,7 +62,7 @@ public class TheLocalVoiceRowOffersItsButtonTests
     /// The button is there for a host that arrives after the rows do, which is every host d47 has.
     /// </summary>
     [Fact]
-    public void TheButtonSurvivesAHostThatArrivesLater()
+    public async Task TheButtonSurvivesAHostThatArrivesLater()
     {
         var (surface, arrive, presses) = Deferred();
 
@@ -66,9 +72,9 @@ public class TheLocalVoiceRowOffersItsButtonTests
         arrive();
 
         Assert.NotNull(row.PressLabel);
-        Assert.NotNull(row.Press);
+        Assert.NotNull(row.PressAsync);
 
-        row.Press!();
+        await row.PressAsync!(new Progress<double>(), CancellationToken.None);
 
         Assert.Single(presses);
     }
@@ -101,6 +107,7 @@ public class TheLocalVoiceRowOffersItsButtonTests
         var row = Row(new SpeechCapability.SpeechSurface { Silence = () => { }, Beds = () => [] });
 
         Assert.Null(row.Press);
+        Assert.Null(row.PressAsync);
         Assert.Null(row.PressLabel);
         Assert.NotNull(row.Binding);
     }
