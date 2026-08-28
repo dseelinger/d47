@@ -1434,6 +1434,11 @@ public sealed class AppHost : IDisposable
                 new SpeechCapability.SpeechSurface
                 {
                     Silence = audio.Silence,
+
+                    // The local voice, and what fetching it would cost (Phase 59). Read at draw
+                    // time rather than captured, so the row changes the moment the download ends.
+                    LocalVoiceState = () => self?.LocalVoiceState() ?? "Not available.",
+                    DownloadLocalVoice = () => self is null ? null : self.DownloadLocalVoice,
                     Beds = () => [.. (self?.Cues ?? cues).BedNames],
                     BedLabel = name => (self?.Cues ?? cues).IsCustom(name) ? $"{name} (yours)" : name,
                     OutputDevices = () => [.. WasapiAudioSink.Devices().Select(device => device.Id)],
@@ -2968,6 +2973,59 @@ public sealed class AppHost : IDisposable
     /// One provider's client, or null for a provider that does not speak. The only place a
     /// concrete synthesiser is named, which is what keeps the seam a seam (architecture.md §2).
     /// </summary>
+    /// <summary>
+    /// Where the local voice keeps its model, beside the speech-to-text models and for the same
+    /// reason: it is a large downloaded thing that is not the Commander's data, and deleting it
+    /// costs a download rather than anything they wrote.
+    /// </summary>
+    private string KokoroFolder() => Path.Combine(Paths.Data, "models", "kokoro");
+
+    /// <summary>Whether the local voice is here, and what it would cost if not.</summary>
+    private string LocalVoiceState() =>
+        D47.Core.Speech.KokoroAssets.IsInstalled(KokoroFolder())
+            ? "Installed. Nothing D47 speaks through this provider leaves this machine."
+            : $"Not downloaded. About {D47.Core.Speech.KokoroAssets.TotalMegabytes:0} MB, fetched "
+              + "once from huggingface.co.";
+
+    /// <summary>Whether a download is already running, atomic because the button is a press.</summary>
+    private int _fetchingVoice;
+
+    /// <summary>
+    /// Fetches the local voice, off the UI thread.
+    /// <para>
+    /// Guarded the same way every long press here is: hundreds of megabytes take a while, and a
+    /// Commander who does not see anything happen presses the button again.
+    /// </para>
+    /// </summary>
+    private void DownloadLocalVoice()
+    {
+        if (Interlocked.Exchange(ref _fetchingVoice, 1) == 1)
+        {
+            return;
+        }
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                using var installer = new KokoroInstaller(
+                    KokoroFolder(), _loggerFactory.CreateLogger<KokoroInstaller>());
+
+                var result = await installer.InstallAsync().ConfigureAwait(false);
+
+                _logger.LogInformation("The local voice download ended as {Outcome}", result.Outcome);
+            }
+            catch (Exception ex) when (ex is IOException or HttpRequestException)
+            {
+                _logger.LogWarning(ex, "The local voice could not be downloaded");
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _fetchingVoice, 0);
+            }
+        });
+    }
+
     private ITtsProvider? BuildSpeechClient(string providerId) => providerId switch
     {
         SpeechCapability.EdgeId =>
@@ -2999,6 +3057,14 @@ public sealed class AppHost : IDisposable
         TtsProviderCatalog.CartesiaId => new CartesiaTtsProvider(
             () => Secrets.TryGet(CartesiaTtsProvider.KeySecretName, out var key) ? key : null,
             _loggerFactory.CreateLogger<CartesiaTtsProvider>()),
+
+        // The local voice (Phase 59). No key, no endpoint and no network once the model is
+        // on disk - the folder is the whole of its configuration. It is built whether or not
+        // the files are there: a provider that cannot find them lists no voices and says why,
+        // which is the state a Commander needs to see in order to fetch them.
+        TtsProviderCatalog.KokoroId => new KokoroTtsProvider(
+            KokoroFolder(),
+            _loggerFactory.CreateLogger<KokoroTtsProvider>()),
 
         _ => null,
     };

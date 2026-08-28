@@ -76,6 +76,38 @@ Catalogues read at runtime, never shipped
                             non-commercial, which is the condition the licence attaches.
 
 
+Vendored inside a package, and not covered by that package's own licence
+-------------------------------------------------------------------------
+
+    Eigen                  MPL-2.0. Not a dependency of this project and not chosen by it:
+                           Microsoft.ML.OnnxRuntime compiles Eigen into its native runtime,
+                           and says so in its own ThirdPartyNotices.txt. The package's nuspec
+                           declares MIT, which is true of the package's own code and does not
+                           reach this. Recorded here because a licence file that names one
+                           licence is not a statement about everything shipped beside it.
+
+                           ONNX Runtime 1.29.0 pins Eigen by commit, so the commit is what
+                           identifies what was compiled in:
+
+                             1d8b82b0740839c0de7f1242a3585e3390ff5f33
+                             https://gitlab.com/libeigen/eigen
+
+                           MPL-2.0 is file-scope copyleft and its section 3.3 permits a Larger
+                           Work under other terms, so this obliges attribution and a pointer to
+                           the source rather than anything about d47's own licence. ONNX Runtime
+                           also compiles with -DEIGEN_MPL2_ONLY unconditionally, which excludes
+                           the LGPL corner of Eigen.
+
+    OpenPhonemizer         BSD-3-Clause-Clear, over DeepPhonemizer (MIT). Only its pronunciation
+    dictionary             dictionary is used and it is downloaded rather than shipped; the
+                           neural model in the same repository is not used at all, having
+                           measured 0.0% exact on words from its own training set.
+
+    Kokoro-82M             Apache-2.0, hosted by onnx-community. The model and its voice files
+                           are downloaded on request rather than shipped, the same way the
+                           speech-to-text models are.
+
+
 Other third-party components
 ----------------------------
 

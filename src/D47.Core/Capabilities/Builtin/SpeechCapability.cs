@@ -22,6 +22,7 @@ public static class SpeechCapability
     public const string Id = "speech";
 
     public const string ProviderKey = "speech.provider";
+    public const string LocalVoiceKey = "speech.localVoice";
     public const string VoiceKey = "speech.voice";
     public const string RateKey = "speech.rate";
     public const string OutputDeviceKey = "speech.outputDevice";
@@ -166,6 +167,21 @@ public static class SpeechCapability
     /// </summary>
     public sealed record SpeechSurface
     {
+        /// <summary>
+        /// What the local voice needs, said in one line: whether it is on this machine and what
+        /// fetching it would cost (Phase 59). Null where nothing can answer, and the row then
+        /// reads as unavailable rather than absent.
+        /// </summary>
+        public Func<string>? LocalVoiceState { get; init; }
+
+        /// <summary>
+        /// Fetches the local voice. A function returning an action rather than the action, for
+        /// the reason every long-running press here uses: Core owns no thread, the download is
+        /// hundreds of megabytes, and the App is what decides where that runs. A caller with
+        /// nowhere to run it answers null and the row keeps its state and loses its button.
+        /// </summary>
+        public Func<Action?>? DownloadLocalVoice { get; init; }
+
         /// <summary>Stops everything audible, immediately. The whole point of the capability.</summary>
         public required Action Silence { get; init; }
 
@@ -388,6 +404,30 @@ public static class SpeechCapability
                     // check never fires, so the settings file is rewritten on every apply.
                     Read = s => RateFor(s).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture),
                     Write = (s, v) => WriteRate(s, v),
+                },
+            },
+            // Below voice and rate rather than beside the provider: the block above is the
+            // deliberate arrangement TheKeyRowSitsBesideItsProviderTests pins -- each key beside
+            // the provider that needs it, then the voice, then the rate -- and this is setup
+            // rather than a choice about how d47 sounds.
+            new SettingRow
+            {
+                Key = LocalVoiceKey,
+                Label = "Local voice",
+                Help =
+                    "Kokoro runs on this computer, so nothing D47 says leaves it — including re-voiced "
+                    + "messages written by other players. The model is downloaded once from "
+                    + "huggingface.co and after that this needs no network at all.",
+                Kind = SettingKind.Info,
+                DocsAnchor = "provider",
+
+                // A press rather than a choice, and the button is absent rather than dead when
+                // nothing can run the download — the same shape every long-running press here has.
+                PressLabel = surface.DownloadLocalVoice?.Invoke() is null ? null : "Download it",
+                Press = surface.DownloadLocalVoice?.Invoke(),
+                Binding = new SettingBinding
+                {
+                    Read = _ => surface.LocalVoiceState?.Invoke() ?? "Not available.",
                 },
             },
             new SettingRow

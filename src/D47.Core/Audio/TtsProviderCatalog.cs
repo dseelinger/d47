@@ -189,6 +189,8 @@ public static class TtsProviderCatalog
 
     public const string CartesiaId = "cartesia";
 
+    public const string KokoroId = "kokoro";
+
     public static TtsProviderInfo None { get; } = new()
     {
         Id = NoneId,
@@ -356,9 +358,57 @@ public static class TtsProviderCatalog
             + "read. Set the rate in Settings once it has.",
     };
 
+    /// <summary>
+    /// The local voice (Phase 59), and the only entry here that sends nothing anywhere.
+    /// <para>
+    /// <b>It exists to close Phase 57's last open item</b> — <em>no other player's text has to
+    /// leave the machine</em> — which has stood since v0.72.0. The cost half was settled then,
+    /// because every slot carrying another player's words defaults to Edge and Edge is free. The
+    /// egress half could not be: Edge is free and <em>not local</em>, so those words still reached
+    /// Microsoft.
+    /// </para>
+    /// </summary>
+    public static TtsProviderInfo Kokoro { get; } = new()
+    {
+        Id = KokoroId,
+        Name = "Kokoro",
+        Label = "Kokoro (free — runs on this machine)",
+        Destination = "nothing sent",
+        Egress =
+            "Nothing is sent anywhere. The voice runs on this computer, so the text D47 speaks — "
+            + "including re-voiced in-game messages written by other players — never leaves it. The "
+            + "model is downloaded once, from huggingface.co, and after that this slot needs no "
+            + "network at all.",
+
+        // Free, and free in the way None is rather than the way Edge is: there is no service.
+        Billed = false,
+
+        // The voices are files on disk, so listing them proves nothing about a credential — there
+        // is no credential. Same reasoning as OpenAI's static list, arriving from further along.
+        VoicesAreStatic = true,
+
+        // The ids say who they are — af_heart, bm_george — so they are not the opaque kind that
+        // must never be shown in place of a name.
+        VoiceIdsAreOpaque = false,
+
+        // <b>Eligible for the slots carrying other people's words, and the flag needs its
+        // reasoning stated rather than copied.</b> The rule exists because a provider that cannot
+        // be told a language FOLLOWS the text's language, so a French message would be read as
+        // French in a voice chosen for English. Kokoro cannot be told a language because it only
+        // speaks one: everything reaching it is phonemes worked out by d47's own English rules, so
+        // the language is pinned permanently rather than not at all. The risk the flag guards
+        // against cannot arise here, and excluding it would exclude the only provider that makes
+        // those slots private, which is the whole point of the phase.
+        LanguageCanBePinned = true,
+
+        // The model takes a speed input and the spike measured it moving the audio, unlike
+        // Cartesia's.
+        RateCanBeSet = true,
+    };
+
     /// <summary>Every provider, in the order the row offers them. "None" last, like the LLM row.</summary>
     public static IReadOnlyList<TtsProviderInfo> All { get; } =
-        [Edge, ElevenLabs, OpenAi, Cartesia, None];
+        [Edge, Kokoro, ElevenLabs, OpenAi, Cartesia, None];
 
     /// <summary>
     /// The providers that may speak for one slot. Everything, except that a slot carrying other

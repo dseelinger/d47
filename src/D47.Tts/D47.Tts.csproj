@@ -21,6 +21,23 @@
   </ItemGroup>
 
   <!--
+    ONNX Runtime runs the local voice (#101). It is the only way to run Kokoro without Python;
+    and it is the same version (1.29.0) the spike measured, so the licence finding and the
+    latency figures describe one artifact.
+    
+    Its nuspec declares MIT and its LICENSE file is MIT, so PackageLicenceGateTests passes it.
+    That gate reads only the licence file a nuspec names, and this package vendors more than
+    that file covers: ThirdPartyNotices.txt carries Eigen under MPL-2.0, quoted in full. The
+    exposure was read and accepted on 2026-08-25 and is discharged by the NOTICE entry naming
+    Eigen, its licence and the commit ONNX Runtime pins it at. Permissive is deliberately NOT
+    widened: it never saw this MPL, and widening would lower the floor for a package that
+    genuinely declares one.
+  -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.29.0" />
+  </ItemGroup>
+
+  <!--
     The wire format is internal because nothing outside this assembly should be composing
     Edge's frames, but it is exactly the part that can be wrong without the network being
     involved, so the tests reach it directly.
