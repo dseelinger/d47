@@ -58,7 +58,8 @@ public sealed record GoalMine
 /// facts about a history, and a history is a folder of files.
 /// </para>
 /// <para>
-/// <see cref="Habits.HabitMiner"/>'s shape, deliberately and to the letter: files in name order,
+/// One pass over the journals in name order, and deliberately to the letter the shape every
+/// other miner in this repository uses: files in name order,
 /// per Commander on the Frontier id carried across continuation files, no thread, no clock, and the
 /// instant injected. It is the second walk over the same corpus and the first one measured it at
 /// 697,787 events in 3.6 seconds, so the cost of this was known before it was written.
@@ -92,9 +93,10 @@ public sealed class GoalMiner(ILogger<GoalMiner> logger)
 
         var folds = new Dictionary<string, Fold>(StringComparer.Ordinal);
 
-        // Carried across files rather than reset per file, for the reason HabitMiner records: a
+        // Carried across files rather than reset per file, and the reason is the journals rather
+        // than a preference: a
         // continuation journal re-emits Fileheader and does not re-emit Commander.
-        var commander = Habits.HabitStore.NoCommander;
+        var commander = GoalStore.NoCommander;
         var events = 0L;
 
         foreach (var file in files)
@@ -136,7 +138,7 @@ public sealed class GoalMiner(ILogger<GoalMiner> logger)
 
         if (folds.Count > 1)
         {
-            folds.Remove(Habits.HabitStore.NoCommander);
+            folds.Remove(GoalStore.NoCommander);
         }
 
         return

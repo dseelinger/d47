@@ -404,12 +404,6 @@ public sealed class AppHost : IDisposable
     public (MemoryBook Book, Func<DateTimeOffset> Now)? Memories { get; private set; }
 
     /// <summary>
-    /// What d47 has noticed the Commander keeps doing (Phase 32). Null under the designer,
-    /// where the row shows a summary and no button.
-    /// </summary>
-    public (D47.Core.Habits.HabitBook Book, Action? Mine)? Habits { get; private set; }
-
-    /// <summary>
     /// The Commander's log (Phase 33). Null under the designer, where the row reads a
     /// folder that does not exist and offers no way to spend anything.
     /// </summary>
@@ -892,60 +886,43 @@ public sealed class AppHost : IDisposable
         // of the observed tier — without it that tier would be an enum member reachable by nothing.
         var memoryObserver = new MemoryObserver(memoryBook);
 
-        // What d47 has noticed the Commander keeps doing, from the journals already on this disk
-        // (Phase 32). Same store shape as memories and keyed the same way, because it is
-        // about the same person — and separate from them because a claim carries a count, a window
-        // and a dismissal, none of which a remembered fact has anywhere to put.
-        var habits = new D47.Core.Habits.HabitStore(
-            Path.Combine(paths.Data, "habits.json"),
-            loggerFactory.CreateLogger<D47.Core.Habits.HabitStore>());
+        // <b>Habits was withdrawn, and its file goes with it.</b> The Commander asked for the
+        // feature removed "and any data associated with it as well from existing data files as
+        // part of the update" (#84), and this is that: the store is gone, so anything left in
+        // data/habits.json is read by nothing and is the Commander's own flying recorded by a
+        // feature that no longer exists.
+        //
+        // <b>No repair flag, and that is a decision rather than an omission.</b> The precedent
+        // for a one-time cleanup is PersonaSettings.VoicesRepaired, and it exists because a
+        // repair that re-decides something the Commander may have decided differently must run
+        // once and never again. Deleting a file is not that: it is idempotent, it costs one
+        // existence check per launch, and a settings property added to remember having done it
+        // would outlive the thing it was tracking — the file is append-only, so that property
+        // could never be removed either.
+        //
+        // Logged when it actually removes something, because deleting a Commander's data
+        // silently is the wrong way round even when they asked for it.
+        var retiredHabits = Path.Combine(paths.Data, "habits.json");
 
-        habits.Poll();
-
-        var habitBook = new D47.Core.Habits.HabitBook(
-            habits,
-            () => gameState.Active?.Identity.FrontierId);
-
-        var miner = new D47.Core.Habits.HabitMiner(
-            loggerFactory.CreateLogger<D47.Core.Habits.HabitMiner>());
-
-        // Whether a pass is already running. An int rather than a bool because Interlocked has no
-        // overload for one, and the guard has to be atomic: the button is a press and a Commander
-        // who does not see anything happen for three seconds presses it again.
-        var mining = 0;
-
-        // Off the UI thread, because the pass is seconds long over hundreds of megabytes. Core
-        // stays synchronous and clock-free and the App is what decides where it runs — the same
-        // split every long-running thing in this file has. Named rather than inlined because two
-        // surfaces press it: the settings row and the window behind it.
-        void MineHabits()
+        try
         {
-            if (Interlocked.Exchange(ref mining, 1) == 1)
+            if (File.Exists(retiredHabits))
             {
-                return;
+                File.Delete(retiredHabits);
+                logger.LogInformation(
+                    "Habits was withdrawn; {Path} has been deleted", retiredHabits);
             }
-
-            _ = Task.Run(() =>
-            {
-                try
-                {
-                    habits.Record(miner.Mine(journalDirectory, DateTimeOffset.Now));
-                }
-                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-                {
-                    logger.LogWarning(ex, "Could not read the journals for habits");
-                }
-                finally
-                {
-                    Interlocked.Exchange(ref mining, 0);
-                }
-            });
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // A file that cannot be deleted is a file nothing reads. Worth a line and not worth
+            // failing a launch over.
+            logger.LogWarning(ex, "Could not delete the retired {Path}", retiredHabits);
         }
 
         // The Commander's long arcs (Phase 34). The third store keyed on the Frontier id
-        // and the second walk over the same corpus — separate from habits because an arc carries a
-        // definition of done, a start date and a person's decision to set it aside, none of which a
-        // noticed habit has anywhere to put.
+        // and the second walk over the same corpus. An arc carries a definition of done, a start
+        // date and a person's decision to set it aside, which is why it is its own store.
         var goals = new D47.Core.Goals.GoalStore(
             Path.Combine(paths.Data, "goals.json"),
             loggerFactory.CreateLogger<D47.Core.Goals.GoalStore>());
@@ -974,8 +951,9 @@ public sealed class AppHost : IDisposable
 
         var backfilling = 0;
 
-        // Off the UI thread for the reason MineHabits is, and guarded the same way: the button is a
-        // press, and a Commander who does not see anything happen presses it again.
+        // Off the UI thread, because the pass is seconds long over hundreds of megabytes, and
+        // guarded because the button is a press and a Commander who sees nothing happen presses it
+        // again. Core stays synchronous and clock-free; the App decides where the work runs.
         void BackfillGoals()
         {
             if (Interlocked.Exchange(ref backfilling, 1) == 1)
@@ -1016,7 +994,7 @@ public sealed class AppHost : IDisposable
             () => unlocksRef);
 
         var callouts = BuildCallouts(
-            loaded, loggerFactory, checklists, lore, loreVisits, memoryBook, habitBook, adventureBook);
+            loaded, loggerFactory, checklists, lore, loreVisits, memoryBook, adventureBook);
 
         // Acting on the game without being asked (Phase 10, item 2). Each member is off
         // until its own row is switched on, which is why the runner reads the setting per tick
@@ -1620,13 +1598,6 @@ public sealed class AppHost : IDisposable
                 // rather than in a second place to look.
                 memoryBook,
 
-                // And what it has noticed about them (Phase 32). Read by two capabilities
-                // as well — its own, and privacy, which is where throwing it away lives.
-                habitBook,
-
-                // What the "read my journals" button does (Phase 32).
-                () => MineHabits,
-
                 // Turning a session into something worth keeping (Phase 33).
                 logbook,
 
@@ -2000,7 +1971,6 @@ public sealed class AppHost : IDisposable
         // The store and the clock, together, because a fact typed here is stamped with a real
         // instant and Core reads no clock of its own.
         host.Memories = (memoryBook, () => DateTimeOffset.Now);
-        host.Habits = (habitBook, MineHabits);
         host.Logbook = logbook;
         host.Goals = (goalBook, BackfillGoals);
         host.Adventures = (adventureBook, adventureGenerator);
@@ -2232,13 +2202,7 @@ public sealed class AppHost : IDisposable
             host.ApplyRecall(memoryBook.Recall());
         });
 
-        // What d47 has noticed, on the tick for the same reason the memory store is: the file is
-        // hand-editable, so a claim dropped in a text editor is live without a restart. Nothing is
-        // mined here — that is a button, and the whole point of item 1 is that it costs nothing
-        // while flying.
-        tick.Add("habits", _ => habits.Poll());
-
-        // The arcs, on the tick for the same reason: goals.json is hand-editable, so a goal typed
+        // The arcs, on the tick because goals.json is hand-editable, so a goal typed
         // into it is live without a restart. Nothing is walked here — that is a button.
         tick.Add("goals", _ => goals.Poll());
 
@@ -2309,7 +2273,6 @@ public sealed class AppHost : IDisposable
         LoreBook lore,
         LoreVisits loreVisits,
         MemoryBook memories,
-        D47.Core.Habits.HabitBook habits,
         D47.Core.Adventures.AdventureBook adventures)
     {
         var engine = new CalloutEngine(loggers.CreateLogger<CalloutEngine>())
@@ -2374,11 +2337,6 @@ public sealed class AppHost : IDisposable
             // once and should hear one greeting rather than two.
             .Add(new SessionCallout())
 
-            // Phase 32, and below the continuity line for the same reason it is below everything
-            // else: it is an observation about the Commander rather than about the world, and
-            // nothing d47 worked out about somebody outranks something the game just said. Off
-            // until the Commander switches it on — the only callout here that ships that way.
-            .Add(new HabitCallout(habits))
             // A beat of the Commander's story, when they reach it (Phase 47). Also the one
             // path the live journal reaches the adventure book by.
             .Add(new D47.Core.Adventures.AdventureCallout(adventures))
@@ -2422,7 +2380,6 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("checklist", callouts.Checklist);
         engine.SetEnabled("ambient", callouts.Ambient);
         engine.SetEnabled("continuity", callouts.Continuity);
-        engine.SetEnabled("habits", callouts.Habits);
         engine.SetEnabled("adventure", callouts.Adventure);
 
         foreach (var callout in engine.Callouts)

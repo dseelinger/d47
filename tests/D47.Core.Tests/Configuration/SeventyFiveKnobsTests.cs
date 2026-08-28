@@ -121,7 +121,6 @@ public class SeventyFiveKnobsTests
     [InlineData("knowledge.galaxy")]
     [InlineData("knowledge.notablePlaces")]
     [InlineData("privacy.memory")]
-    [InlineData("privacy.habits")]
     [InlineData("memory.enabled")]
     public void ARowThatDecidesWhatLeavesThisMachineIsNeverFolded(string key)
     {

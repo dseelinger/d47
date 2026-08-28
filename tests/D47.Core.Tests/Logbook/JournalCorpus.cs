@@ -7,7 +7,7 @@ namespace D47.Core.Tests.Logbook;
 /// A folder of journals written by hand, for the Commander's log tests (Phase 33).
 /// <para>
 /// By hand rather than replayed from the real corpus, for the reason
-/// <c>HabitMinerTests</c> records: the 914 journals are on one machine and CI has none, so what
+/// records: the 914 journals are on one machine and CI has none, so what
 /// these prove is that the arithmetic is the arithmetic. A builder that aggregates forty-two jumps
 /// on real data has to aggregate three on three lines of JSON.
 /// </para>

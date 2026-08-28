@@ -65,7 +65,7 @@ public static class LogbookCapability
                 "what would a log cost",
             ],
 
-            // After Habits, which is the other thing d47 does with the journals rather than with
+            // The other thing d47 does with the journals rather than with
             // the game — and last, because nav_order is the registry index and inserting earlier
             // shifts every page after it.
             Display = new CapabilityDisplay { PanelTitle = "Commander's log", Order = 15 },

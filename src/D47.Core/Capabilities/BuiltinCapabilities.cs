@@ -138,18 +138,6 @@ public static class BuiltinCapabilities
         // documentation page exist, and every tool answers that there is nowhere to keep anything.
         Memory.MemoryBook? memories = null,
 
-        // What d47 has noticed the Commander keeps doing (Phase 32). Null under the
-        // designer and in tests that are not about it, on the same terms as every other optional
-        // service: the capability still registers, so its rows and its documentation page exist,
-        // and every tool answers that nothing is reading the journals.
-        Habits.HabitBook? habits = null,
-
-        // What pressing "read my journals" does. A function returning an action rather than the
-        // action, because Core owns no thread and the pass is seven seconds long — the App decides
-        // what to run it on, and a caller with nowhere to run it answers null and gets a row with
-        // no button.
-        Func<Action?>? mineHabits = null,
-
         // The Commander's log (Phase 33). Null under the designer and in tests that are not
         // about it, on the same terms as the two above: the capability still registers, so its four
         // rows and its documentation page exist, and every tool answers that there is nothing set
@@ -162,8 +150,8 @@ public static class BuiltinCapabilities
         // being tracked.
         Goals.GoalBook? goals = null,
 
-        // What pressing "read my journals" does for the arcs. A function returning an action for
-        // the reason mineHabits gives — Core owns no thread, and the pass is seconds long.
+        // What pressing "read my journals" does for the arcs. A function returning an action
+        // rather than the action, because Core owns no thread and the pass is seconds long.
         Func<Action?>? backfillGoals = null,
 
         // Which core flies which ship (Phase 35). Null under the designer and in tests
@@ -306,14 +294,6 @@ public static class BuiltinCapabilities
         // order is the registry index, which Phase 26 learned the expensive way.
         MemoryCapability.Create(memories, now ?? (() => DateTimeOffset.MinValue), settings),
 
-        // Immediately after Memory, which is the other capability about the person rather than the
-        // game — and here rather than earlier because nav_order is the registry index, so inserting
-        // near the end shifts two documentation pages instead of twenty-eight.
-        HabitsCapability.Create(habits, mineHabits ?? (() => null)),
-
-        // And immediately after Habits, for the third time and the same reason: this is the other
-        // thing d47 does with the journals rather than with the game, and the tail of the list is
-        // where a new capability costs two documentation pages a nav_order instead of twenty-nine.
         LogbookCapability.Create(logbook),
 
         // And after the log, for the fourth time and the same reason. This one is about a history
@@ -323,7 +303,7 @@ public static class BuiltinCapabilities
             backfillGoals ?? (() => null),
             now ?? (() => DateTimeOffset.MinValue)),
 
-        PrivacyCapability.Create(settings, searchAvailable, memories, habits),
+        PrivacyCapability.Create(settings, searchAvailable, memories),
         SettingsCapability.Create(settings),
 
         // LAST, and it has to be last twice over (#50) - for two different reasons, which is what

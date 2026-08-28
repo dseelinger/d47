@@ -1,7 +1,7 @@
 ---
 title: Commander's log
 group: Conversation
-nav_order: 141
+nav_order: 140
 ---
 
 <!--
@@ -78,7 +78,6 @@ nav_order: 141
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">
-<a class="card" href="habits.html"><span class="ct">Habits →</span><span class="cd">The other pass over your journals, and why the model is kept away from it.</span></a>
 <a class="card" href="persona.html"><span class="ct">Persona →</span><span class="cd">The voice the ship’s-AI log is written in.</span></a>
 <a class="card" href="conversation.html"><span class="ct">Language model →</span><span class="cd">The spend ledger a written log reports into.</span></a>
 </div>

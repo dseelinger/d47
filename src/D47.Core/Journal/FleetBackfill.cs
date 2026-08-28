@@ -17,7 +17,7 @@ namespace D47.Core.Journal;
 /// <b>Why it is not simply "read more files".</b> Replaying whole journals through
 /// <see cref="GameStateStore"/> would restore two-week-old positions, missions and materials as
 /// though they were current. This reads the same files for one subject only, which is the pattern
-/// <see cref="Habits.HabitMiner"/> and <see cref="Goals.GoalMiner"/> already follow.
+/// <see cref="Goals.GoalMiner"/> already follows.
 /// </para>
 /// <para>
 /// <b>Why a snapshot alone is not enough.</b> Wholesale replacement is safe when the snapshot was
@@ -59,7 +59,7 @@ public static class FleetBackfill
     /// <para>
     /// Keyed by Frontier id, because <see cref="GameStateStore"/> is: two Commanders share one
     /// journal folder and neither may be handed the other's ships. The fold tracks the id the
-    /// same way <see cref="Habits.HabitMiner"/> does, off <c>Commander</c> and <c>LoadGame</c>.
+    /// same way every miner here does, off <c>Commander</c> and <c>LoadGame</c>.
     /// </para>
     /// <para>
     /// <b>Known limit.</b> The search looks back <see cref="MaxLookback"/> files. A Commander
@@ -132,7 +132,8 @@ public static class FleetBackfill
         // that happened after the snapshot is applied in the order it happened.
         var location = JournalLocation.Unknown;
 
-        // Carried across files rather than reset per file, for the reason HabitMiner records: a
+        // Carried across files rather than reset per file, and the reason is the journals rather
+        // than a preference: a
         // continuation journal re-emits Fileheader and does not re-emit Commander.
         var commander = string.Empty;
 

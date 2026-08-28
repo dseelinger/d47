@@ -859,11 +859,6 @@ public partial class MainWindow : Window
                 _host.LoreEditing,
                 _host.Memories,
 
-                // And what it has noticed about them, with the way to look again (Phase 32).
-                // The action is the host's, because mining runs off the UI thread and the
-                // panel is not the thing that decides where work happens.
-                _host.Habits,
-
                 // And the log those journals can be turned into (Phase 33). The book
                 // rather than an action, because writing one is two acts and the window is what
                 // holds the figure between them.

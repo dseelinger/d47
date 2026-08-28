@@ -32,8 +32,9 @@ public sealed record GoalStep(string Say, IReadOnlyList<string> Lines, bool Dele
 /// The Commander's arcs, read as one thing (Phase 34).
 /// <para>
 /// The store knows about a file; this knows who is flying, what the game is currently saying, and
-/// which arcs have been set aside. Same arrangement as <see cref="Habits.HabitBook"/> over
-/// <see cref="Habits.HabitStore"/>, and for the same reason.
+/// which arcs have been set aside. A reader over a store, so that what is <em>known</em> and what
+/// the Commander has <em>decided</em> stay separable — mining rebuilds the first from scratch and
+/// must never be able to erase the second.
 /// </para>
 /// </summary>
 /// <param name="store">The file.</param>

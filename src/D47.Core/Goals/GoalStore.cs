@@ -11,7 +11,8 @@ public sealed record GoalProblem(string Where, string Reason);
 /// <summary>
 /// The arcs on disk — <c>data/goals.json</c> (Phase 34).
 /// <para>
-/// <see cref="Habits.HabitStore"/>'s shape with a different payload, because it is the same kind of
+/// A mined report per Commander, plus what they authored and what they set aside, because it is
+/// the same kind of
 /// thing and a second shape would be a second set of bugs: written through <see cref="AtomicFile"/>,
 /// polled by comparing <b>content</b> rather than a last-write time, keyed per Commander with the
 /// key <b>inside</b> the document, hand-editable, and a line that cannot be read back reported
@@ -21,7 +22,8 @@ public sealed record GoalProblem(string Where, string Reason);
 /// <b>Three things live here and only two of them are d47's.</b> The mined marks are a
 /// recomputation and are replaced wholesale by the next run. The arcs a Commander wrote and the
 /// arcs they set aside are <em>theirs</em>, are stored apart, and mining never touches either — the
-/// same split <see cref="Habits.HabitStore"/> makes for dismissals, for the same reason: a
+/// same split every store here makes between what was mined and what was decided, for the same
+/// reason: a
 /// recomputation that erased a person's decision would resurrect exactly the thing they had already
 /// refused.
 /// </para>

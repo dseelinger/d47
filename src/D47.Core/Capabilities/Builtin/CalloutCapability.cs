@@ -59,7 +59,6 @@ public static class CalloutCapability
     /// Something d47 noticed the Commander keeps doing, said when the circumstance comes round
     /// again (Phase 32). The one row in this capability that ships off.
     /// </summary>
-    public const string HabitsKey = "callouts.habits";
 
     /// <summary>A beat of the Commander's adventure, said when it is reached (Phase 47).</summary>
     public const string AdventureKey = "callouts.adventure";
@@ -278,21 +277,6 @@ public static class CalloutCapability
                 "where I left off",
                 s => s.Callouts.Continuity,
                 (s, v) => s with { Callouts = s.Callouts with { Continuity = v } }),
-
-            Toggle(
-                HabitsKey,
-                "Things you keep doing",
-                "Something D47 has noticed in your own journals, said when the situation it is about comes "
-                + "round again. Off until you switch it on, and every claim can be dropped for good.",
-                "what-it-speaks-up-about",
-                "my habits",
-                s => s.Callouts.Habits,
-                (s, v) => s with { Callouts = s.Callouts with { Habits = v } },
-
-                // The only one off by default (Phase 32, item 3). It fires because of a
-                // claim about the Commander rather than because the game said something, and the
-                // item is explicit that this changes the deal.
-                defaultOn: false),
 
             Toggle(
                 AdventureKey,

@@ -16,7 +16,7 @@ namespace D47.Core.Journal;
 /// <b>Not a whole replay.</b> Driving old journals through <see cref="GameStateStore"/> would
 /// restore month-old positions, missions and materials as though they were current. This reads the
 /// same files for one subject, which is the pattern <see cref="FleetBackfill"/>,
-/// <see cref="Habits.HabitMiner"/> and <see cref="Goals.GoalMiner"/> all follow.
+/// <see cref="Goals.GoalMiner"/> follows.
 /// </para>
 /// <para>
 /// <b>It folds rather than snapshots</b>, and must: a <c>Loadout</c> is the whole ship, but the

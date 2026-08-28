@@ -77,7 +77,6 @@ nav_order: 124
 <div class="next-title">Where to go next</div>
 <div class="cards">
 <a class="card" href="audio.html"><span class="ct">Audio →</span><span class="cd">The alert category these ride, and what everything else ducks under.</span></a>
-<a class="card" href="habits.html"><span class="ct">Habits →</span><span class="cd">The one callout that fires because of a claim about you, not about the game.</span></a>
 <a class="card" href="settings.html"><span class="ct">Settings →</span><span class="cd">Every switch on this page, and what protected means for them.</span></a>
 </div>
 </div>

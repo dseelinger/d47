@@ -803,14 +803,15 @@ public sealed record CalloutSettings
     public bool Continuity { get; init; } = true;
 
     /// <summary>
-    /// Things D47 has noticed the Commander keeps doing, said when the circumstance arrives
-    /// (Phase 32, "Callouts that are yours rather than everyone's").
+    /// <b>Retired with Habits itself in v0.83.0, and kept because unknown keys are rejected on
+    /// load.</b> Every settings file written before that carries this key, and removing the
+    /// property would <em>refuse</em> those files rather than ignore the value — the same reason
+    /// <see cref="PersonaSettings.VoicesNamedChecked"/> is still here. Nothing reads it.
     /// <para>
-    /// <b>Off, and it is the only callout in this record that is.</b> Every other one fires because
-    /// the game said something; this one fires because of a claim d47 made about the Commander out
-    /// of their own journals, and the item is explicit about what that changes: "a companion that
-    /// starts commenting on your flying without being asked has changed the deal". Switching it on
-    /// is the Commander agreeing to the new deal.
+    /// <b>The name is retired and is never reused</b>, on the ruling that took Phase 32 out: a
+    /// later feature answering to <c>callouts.habits</c> would silently inherit whatever a
+    /// Commander decided about a different one. Same treatment, and the same reason, as the
+    /// phase number.
     /// </para>
     /// </summary>
     public bool Habits { get; init; }
