@@ -196,7 +196,7 @@ public static class GoalsCapability
             + "and reading back through the journals already on this disk is what gives each one its age. "
             + "Nothing leaves the machine.",
         Kind = SettingKind.Info,
-        DocsAnchor = "backfill",
+        DocsAnchor = "ages-come-from-your-journals",
         PressLabel = backfill() is null ? null : "Read my journals",
         Press = backfill() is null ? null : () => backfill()!(),
         Binding = new SettingBinding { Read = _ => Summarise(book, now()) },

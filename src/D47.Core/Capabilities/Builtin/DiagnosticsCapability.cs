@@ -177,7 +177,7 @@ public static class DiagnosticsCapability
                 Kind = SettingKind.Choice,
                 Choices = LogLevelNames,
                 DefaultDisplay = nameof(LogLevel.Information),
-                DocsAnchor = "default-log-level",
+                DocsAnchor = "how-loud",
                 Binding = new SettingBinding
                 {
                     Read = s => s.Logging.Default.ToString(),
@@ -205,7 +205,7 @@ public static class DiagnosticsCapability
                 + "(default) to follow it. Changes apply on the next log line.",
             Kind = SettingKind.Choice,
             Choices = LogLevelNames,
-            DocsAnchor = "subsystem-log-levels",
+            DocsAnchor = "the-parts-you-can-turn-up",
             Binding = new SettingBinding
             {
                 // Absent from the dictionary is the "no override" state, which is what the

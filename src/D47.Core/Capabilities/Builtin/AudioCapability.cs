@@ -99,7 +99,7 @@ public static class AudioCapability
         Kind = SettingKind.Info,
         Group = "Your own audio",
         GroupHelp = "What D47 found beside the set it ships with.",
-        DocsAnchor = "drop-in-folder",
+        DocsAnchor = "your-own-sounds",
         Binding = new SettingBinding { Read = _ => drops() },
     };
 
@@ -122,7 +122,10 @@ public static class AudioCapability
             Maximum = 1,
             Group = group,
             GroupHelp = groupHelp,
-            DocsAnchor = $"{Slug(channel)}-level",
+            // The page explains the five categories together and has no heading per channel,
+            // so this points at the section rather than at a heading that would have to be
+            // written to satisfy a link (#123).
+            DocsAnchor = "the-five-categories",
             Binding = Bind(channel, mix => Number(mix.Level), (mix, v) => mix with { Level = Fraction(v, mix.Level) }),
         };
 
@@ -136,7 +139,7 @@ public static class AudioCapability
             Kind = SettingKind.Toggle,
             Group = group,
             GroupHelp = groupHelp,
-            DocsAnchor = $"{Slug(channel)}-mute",
+            DocsAnchor = "the-five-categories",
             Binding = Bind(
                 channel,
                 mix => mix.Muted ? "true" : "false",
@@ -165,7 +168,7 @@ public static class AudioCapability
             Maximum = 1,
             Group = group,
             GroupHelp = groupHelp,
-            DocsAnchor = $"{Slug(channel)}-duck",
+            DocsAnchor = "ducking",
             Binding = Bind(
                 channel,
                 mix => Number(mix.DuckUnderSpeech),

@@ -284,7 +284,7 @@ public static class CalloutCapability
                 "Things you keep doing",
                 "Something D47 has noticed in your own journals, said when the situation it is about comes "
                 + "round again. Off until you switch it on, and every claim can be dropped for good.",
-                "habits",
+                "what-it-speaks-up-about",
                 "my habits",
                 s => s.Callouts.Habits,
                 (s, v) => s with { Callouts = s.Callouts with { Habits = v } },

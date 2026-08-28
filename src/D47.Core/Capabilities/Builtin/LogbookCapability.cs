@@ -182,7 +182,7 @@ public static class LogbookCapability
         Choices = LogVoices.Ids,
         ChoiceLabel = LogVoices.LabelOf,
         DefaultDisplay = "You write it, in your own words",
-        DocsAnchor = "voice",
+        DocsAnchor = "whose-log-it-is",
         Protected = true,
         Commands =
         [
@@ -212,7 +212,7 @@ public static class LogbookCapability
         Choices = LogRanges.Ids,
         ChoiceLabel = LogRanges.LabelOf,
         DefaultDisplay = "the last session",
-        DocsAnchor = "range",
+        DocsAnchor = "what-a-log-covers",
         Binding = new SettingBinding
         {
             Read = settings => settings.Logbook.Range,
@@ -235,7 +235,7 @@ public static class LogbookCapability
         Choices = LogLengths.Ids,
         ChoiceLabel = LogLengths.LabelOf,
         DefaultDisplay = "standard — about a page",
-        DocsAnchor = "cost",
+        DocsAnchor = "it-costs-money-and-says-so-first",
         Binding = new SettingBinding
         {
             Read = settings => settings.Logbook.Length,
@@ -263,7 +263,7 @@ public static class LogbookCapability
             "Logs are written as plain markdown beside D47, in data/commander-log. They are yours — D47 "
             + "never overwrites one, and nothing is written until you ask and have seen what it costs.",
         Kind = SettingKind.Info,
-        DocsAnchor = "writing",
+        DocsAnchor = "writing-one",
         Binding = new SettingBinding { Read = _ => Summarise(book) },
     };
 }
