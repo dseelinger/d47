@@ -1,4 +1,4 @@
-namespace D47.Core.Speech;
+﻿namespace D47.Core.Speech;
 
 /// <summary>One file the local voice needs, and what it should be when it lands.</summary>
 /// <param name="Path">Where it sits under the models folder, and its path in the repository.</param>
@@ -114,22 +114,20 @@ public static class KokoroAssets
         [.. Voices.Select(voice => System.IO.Path.GetFileNameWithoutExtension(voice.Path))];
 
     /// <summary>
-    /// How a voice is labelled in the picker. Derived from the id rather than tabled, because the
-    /// id already says everything: accent, gender and name.
+    /// What a voice is called. Derived from the id rather than tabled, because the id already says
+    /// everything: accent, gender and name.
+    /// <para>
+    /// <b>The name alone, and only since #145.</b> This used to answer the whole label —
+    /// <em>Jessica — female, American</em> — and it is handed to <c>VoiceInfo.Name</c>, which
+    /// composes the label by adding the gender and the locale it was given separately. So every
+    /// Kokoro row in the picker read <em>Jessica — female, American — Female, en-US</em>: the same
+    /// two facts, twice, in two spellings, on a row long enough to widen the window.
+    /// </para>
     /// </summary>
-    public static string Label(string voiceId)
-    {
-        if (voiceId.Length < 4 || voiceId[2] != '_')
-        {
-            return voiceId;
-        }
-
-        var name = char.ToUpperInvariant(voiceId[3]) + voiceId[4..];
-        var accent = voiceId[0] == 'b' ? "British" : "American";
-        var gender = voiceId[1] == 'f' ? "female" : "male";
-
-        return $"{name} — {gender}, {accent}";
-    }
+    public static string Name(string voiceId) =>
+        voiceId.Length < 4 || voiceId[2] != '_'
+            ? voiceId
+            : char.ToUpperInvariant(voiceId[3]) + voiceId[4..];
 
     /// <summary>Whether every file is present, which is what the settings row reports.</summary>
     public static bool IsInstalled(string folder) =>

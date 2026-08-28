@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using D47.Core.Audio;
 using D47.Core.Speech;
 using Microsoft.Extensions.Logging;
@@ -71,7 +71,7 @@ public sealed class KokoroTtsProvider : ITtsProvider, IDisposable
         var voices = KokoroAssets.VoiceIds
             .Select(id => new VoiceInfo(
                 id,
-                KokoroAssets.Label(id),
+                KokoroAssets.Name(id),
                 SpokenLetters.AccentOf(id) == SpeechAccent.British ? "en-GB" : "en-US",
                 id[1] == 'f' ? "Female" : "Male"))
             .ToList();

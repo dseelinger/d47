@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
@@ -78,7 +78,7 @@ public sealed class ZoomHost
         // to a new parent throws rather than reparenting.
         dialog.Content = null;
 
-        dialog.Content = new ScrollViewer
+        var viewport = new ScrollViewer
         {
             HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
             VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
@@ -88,6 +88,21 @@ public sealed class ZoomHost
                 Child = content,
             },
         };
+
+        // The same undoing FitToViewport performs for the panel, and for exactly
+        // the same reason — see #145. Without it a zoomed dialog is measured at infinite width,
+        // so nothing in it wraps and nothing trims: the Voice picker came up 2307 pixels wide
+        // inside a 780-pixel window, with its help paragraph on one line and its buttons off the
+        // right-hand edge. This was written down twice in this file and defended once.
+        viewport.PropertyChanged += (_, change) =>
+        {
+            if (change.Property == ScrollViewer.ViewportProperty)
+            {
+                Fit(content, viewport.Viewport.Width, scale);
+            }
+        };
+
+        dialog.Content = viewport;
 
         // The window was sized for its content at 100%, so it has to grow with it or the dialog
         // opens showing a scaled corner of itself.
@@ -101,6 +116,22 @@ public sealed class ZoomHost
             dialog.Height *= scale;
         }
     }
+
+    /// <summary>
+    /// Gives a scaled layout a width to lay out against. The one rule both hosts obey, written
+    /// once so they cannot disagree about it.
+    /// <para>
+    /// Divided by the scale because the constraint belongs on the <em>unscaled</em> layout: at
+    /// 150% the child is laid out at two thirds of the viewport and then drawn half again as
+    /// large, which is a browser's text zoom — bigger text, rewrapped, still inside the window.
+    /// </para>
+    /// <para>
+    /// Before the first layout pass there is no viewport to fit. Constraining to zero would
+    /// measure the content at nothing at all, which is not a smaller panel but an absent one.
+    /// </para>
+    /// </summary>
+    private static void Fit(Control content, double available, double scale) =>
+        content.MaxWidth = available > 0 ? available / scale : double.PositiveInfinity;
 
     /// <summary>
     /// Wraps the window's content in a scaling host and binds the four gestures.
@@ -232,13 +263,7 @@ public sealed class ZoomHost
             return;
         }
 
-        var available = _viewport.Viewport.Width;
-
-        // Before the first layout pass there is no viewport to fit. Constraining to zero would
-        // measure the panel at nothing at all, which is not a smaller panel but an absent one.
-        _content.MaxWidth = available > 0
-            ? available / ZoomLadder.ScaleOf(Percent)
-            : double.PositiveInfinity;
+        Fit(_content, _viewport.Viewport.Width, ZoomLadder.ScaleOf(Percent));
     }
 
     private void OnWheel(object? sender, PointerWheelEventArgs e)
