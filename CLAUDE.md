@@ -268,6 +268,19 @@ the first `-` or `+`, so the title bar reads the release number and the updater 
 replace it — **About is the only place that says which one is running**. The way back is
 `get-ver latest`.
 
+**Both commands snapshot `data\` before they replace anything**, into `data\backups\`, one zip per
+deploy and the last ten kept. *Added 2026-08-28 on the Commander's instruction.* The reason is that
+a build migrates data: swapping the executable back without the data that version was written
+against is half a rollback, and the half that is missing is the one holding the checklist. One
+implementation, `tools/data-backup.ps1`, invoked by both — it also lists and restores, and a restore
+snapshots first, so putting the wrong one back is itself undoable.
+
+**`models\` is left out, and that is what makes it affordable**: 1,064 MB of the installed 1,072 is
+the local voice and the Whisper models, which are downloaded rather than written and are identical
+across versions. Ten snapshots with them would be ten gigabytes to protect eight megabytes. `logs\`
+and `updates\` go the same way; `audio\` is kept, because the Commander's own cues are theirs and
+nothing else holds a copy.
+
 **A release is never promoted automatically.** *Stated 2026-08-27.* Cutting, tagging and
 publishing a release is one command and may be run on request. Deciding a build is fit for
 **everyone** is the Commander's, and it is a separate act — `promote`, or

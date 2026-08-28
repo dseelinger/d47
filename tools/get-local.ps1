@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Publishes what is in this working tree and installs it over the installed d47.
 
@@ -30,6 +30,10 @@
     *equal* to the release it was cut from, and the updater will not offer to replace it. **About
     is how you tell which one you are running.**
 
+    **The data folder is snapshotted first**, by `tools\data-backup.ps1`, into `data\backups\` —
+    one zip per deploy, the last ten kept. A build migrates data, so swapping the executable back
+    without the data it was written against is only half a rollback. `-NoBackup` skips it.
+
     **The way back is `get-ver`.** Nothing here is backed up, because a real build is one command
     away and a backup is a second thing to trust:
 
@@ -43,6 +47,11 @@
 .PARAMETER Force
     Stop a running d47 first. Without it, a running instance is an error rather than a silent kill:
     the Commander may be mid-flight, and the file lock is the least of what is lost.
+
+.PARAMETER NoBackup
+    Skip the snapshot of `data\`. The snapshot runs before anything is replaced, so a failure here
+    stops the install rather than leaving one half done — which is the right way round, and this is
+    the switch for when it is in the way.
 
 .PARAMETER NoSelfTest
     Skip the plumbing check after the copy. `--selftest` is what proves the payload is complete —
@@ -63,6 +72,8 @@ param(
     [switch] $NoBuild,
 
     [switch] $Force,
+
+    [switch] $NoBackup,
 
     [switch] $NoSelfTest,
 
@@ -119,6 +130,13 @@ else {
     if ($LASTEXITCODE -ne 0) {
         Write-Error 'The publish failed, so nothing has been copied.'
     }
+}
+
+# Before the copy and after the build, so a failed publish costs no snapshot and a successful one
+# cannot replace anything until the data it is replacing has been kept. One implementation, invoked
+# rather than repeated: the rules about what is archived live in that file and only there.
+if (-not $NoBackup) {
+    & (Join-Path $PSScriptRoot 'data-backup.ps1') -InstallRoot $InstallRoot
 }
 
 Write-Step "Installing over $InstallRoot"
