@@ -24,14 +24,14 @@ public static class SpokenLetters
         ['f'] = "ˈɛf", ['g'] = "dʒiː", ['h'] = "eɪtʃ", ['i'] = "aɪ", ['j'] = "dʒeɪ",
         ['k'] = "keɪ", ['l'] = "ˈɛl", ['m'] = "ˈɛm", ['n'] = "ˈɛn", ['o'] = "oʊ",
         ['p'] = "piː", ['q'] = "kjuː", ['r'] = "ɑːɹ", ['s'] = "ˈɛs", ['t'] = "tiː",
-        ['u'] = "juː", ['v'] = "viː", ['w'] = "ˈdʌbəljuː", ['x'] = "ˈɛks", ['y'] = "waɪ",
+        ['u'] = "juː", ['v'] = "viː", ['w'] = "dˈʌbəljuː", ['x'] = "ˈɛks", ['y'] = "waɪ",
     };
 
     private const string Zee = "ziː";
     private const string Zed = "zɛd";
 
     private static readonly string[] Digits =
-        ["ˈzɪɹoʊ", "wʌn", "tuː", "θɹiː", "fɔːɹ", "faɪv", "sɪks", "ˈsɛvən", "eɪt", "naɪn"];
+        ["zˈiəɹoʊ", "wˌʌn", "tˈuː", "θɹˈiː", "fˈoːɹ", "fˈaɪv", "sˈɪks", "sˈɛvən", "ˈeɪt", "nˈaɪn"];
 
     /// <summary>The accent a Kokoro voice id implies. Unknown ids are read as American.</summary>
     public static SpeechAccent AccentOf(string? voiceId) =>

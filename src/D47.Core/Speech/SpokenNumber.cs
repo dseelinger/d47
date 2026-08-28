@@ -35,20 +35,36 @@ public static class SpokenNumber
     /// silent and no rule can know that from the spelling. Thirty words written down once is the
     /// honest answer; a rule that guesses at them would be wrong on the commonest words d47 says.
     /// </para>
+    /// <para>
+    /// <b>Copied from the shipped dictionary rather than written by ear, since 2026-08-28.</b> They
+    /// were hand-written, and eighteen of the thirty put their stress mark in front of a consonant —
+    /// <c>ˈθəɹti</c>, <c>ˈsɛvən</c>, <c>ˈhʌndɹəd</c> — which is the shape the dictionary has no
+    /// instance of and which Kokoro renders as an intruded vowel. That fault was reported against
+    /// names and fixed in <see cref="LetterToSound"/>; it lived here too, and here it matters more,
+    /// because d47 says numbers constantly — ranges, distances, tonnages, percentages, credits.
+    /// </para>
+    /// <para>
+    /// So these are now the dictionary's own entries for the same words, which makes them derived
+    /// with a source rather than judged: <c>θˈɜːɾi</c>, <c>sˈɛvən</c>, <c>hˈʌndɹɪd</c>. It also
+    /// settles the two the ear gets wrong — <c>thirteen</c> was <c>θəˈɹtiːn</c>, breaking the
+    /// syllable inside the <c>ɹ</c>. The table stays rather than deferring to the dictionary at
+    /// runtime, because it is the fallback for a build whose dictionary never downloaded, which is
+    /// the case it was written for.
+    /// </para>
     /// </summary>
     public static readonly IReadOnlyDictionary<string, string> Sounds =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            ["zero"] = "ˈzɪɹoʊ", ["one"] = "wʌn", ["two"] = "tuː", ["three"] = "θɹiː",
-            ["four"] = "fɔːɹ", ["five"] = "faɪv", ["six"] = "sɪks", ["seven"] = "ˈsɛvən",
-            ["eight"] = "eɪt", ["nine"] = "naɪn", ["ten"] = "tɛn", ["eleven"] = "əˈlɛvən",
-            ["twelve"] = "twɛlv", ["thirteen"] = "θəˈɹtiːn", ["fourteen"] = "fɔɹˈtiːn",
-            ["fifteen"] = "fɪfˈtiːn", ["sixteen"] = "sɪksˈtiːn", ["seventeen"] = "ˈsɛvənˌtiːn",
-            ["eighteen"] = "eɪˈtiːn", ["nineteen"] = "naɪnˈtiːn",
-            ["twenty"] = "ˈtwɛnti", ["thirty"] = "ˈθəɹti", ["forty"] = "ˈfɔɹti",
-            ["fifty"] = "ˈfɪfti", ["sixty"] = "ˈsɪksti", ["seventy"] = "ˈsɛvənti",
-            ["eighty"] = "ˈeɪti", ["ninety"] = "ˈnaɪnti",
-            ["hundred"] = "ˈhʌndɹəd", ["oh"] = "oʊ",
+            ["zero"] = "zˈiəɹoʊ", ["one"] = "wˌʌn", ["two"] = "tˈuː", ["three"] = "θɹˈiː",
+            ["four"] = "fˈoːɹ", ["five"] = "fˈaɪv", ["six"] = "sˈɪks", ["seven"] = "sˈɛvən",
+            ["eight"] = "ˈeɪt", ["nine"] = "nˈaɪn", ["ten"] = "tˈɛn", ["eleven"] = "ᵻlˈɛvən",
+            ["twelve"] = "twˈɛlv", ["thirteen"] = "θˈɜːtiːn", ["fourteen"] = "fˈoːɹtiːn",
+            ["fifteen"] = "fˈɪftiːn", ["sixteen"] = "sˈɪkstiːn", ["seventeen"] = "sˈɛvəntˌiːn",
+            ["eighteen"] = "ˈeɪtiːn", ["nineteen"] = "nˈaɪntiːn",
+            ["twenty"] = "twˈɛnti", ["thirty"] = "θˈɜːɾi", ["forty"] = "fˈɔːɹɾi",
+            ["fifty"] = "fˈɪfti", ["sixty"] = "sˈɪksti", ["seventy"] = "sˈɛvənti",
+            ["eighty"] = "ˈeɪɾi", ["ninety"] = "nˈaɪnti",
+            ["hundred"] = "hˈʌndɹɪd", ["oh"] = "ˈoʊ",
         };
 
     /// <summary>

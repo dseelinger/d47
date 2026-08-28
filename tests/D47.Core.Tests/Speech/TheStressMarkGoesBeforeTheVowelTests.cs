@@ -184,6 +184,77 @@ public class TheStressMarkGoesBeforeTheVowelTests
         Assert.DoesNotContain("ˈ", LetterToSound.Pronounce(word)!, StringComparison.Ordinal);
 
     /// <summary>
+    /// <b>The same rule for the number words, which is where it was found a second time.</b> Those
+    /// are hand-written rather than derived, and eighteen of the thirty marked a consonant —
+    /// <c>ˈθəɹti</c>, <c>ˈsɛvən</c>, <c>ˈhʌndɹəd</c>. Fixing <see cref="LetterToSound"/> did not
+    /// reach them, and they matter more: d47 says numbers constantly, and a range or a tonnage is
+    /// in most of what it reports.
+    /// <para>
+    /// The set is closed and small, so every entry is checked rather than a sample.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void EveryNumberWordMarksAVowel()
+    {
+        foreach (var (word, said) in SpokenNumber.Sounds)
+        {
+            for (var i = said.IndexOfAny(['ˈ', 'ˌ']); i >= 0; i = said.IndexOfAny(['ˈ', 'ˌ'], i + 1))
+            {
+                Assert.True(
+                    i + 1 < said.Length && Vowels.Contains(said[i + 1], StringComparison.Ordinal),
+                    $"\"{word}\" -> \"{said}\" marks '{(i + 1 < said.Length ? said[i + 1] : ' ')}', "
+                    + "which is not a vowel.");
+            }
+        }
+    }
+
+    /// <summary>
+    /// And every number word is in the table, so the assertion above cannot pass by the table having
+    /// quietly lost one — the ladder falls through to the rules for anything missing, and the rules
+    /// read <c>eighty</c> as <c>eɪɡtaɪ</c>.
+    /// </summary>
+    [Theory]
+    [InlineData("thirty")]
+    [InlineData("seven")]
+    [InlineData("hundred")]
+    [InlineData("thirteen")]
+    [InlineData("eleven")]
+    public void TheNumberWordsAreStillAllThere(string word) =>
+        Assert.True(SpokenNumber.Sounds.ContainsKey(word), $"\"{word}\" is no longer in the table.");
+
+    /// <summary>
+    /// <b>Every letter and digit, which is the third place this lived.</b> Fixing the rules did not
+    /// reach the hand-written tables, and there turned out to be two of them — the number words and
+    /// the spelled letters. <c>w</c> was <c>ˈdʌbəljuː</c> and the spoken digits carried
+    /// <c>ˈzɪɹoʊ</c> and <c>ˈsɛvən</c>.
+    /// <para>
+    /// This is the assertion that makes a fourth place impossible to add quietly: every rung of the
+    /// ladder that produces IPA is driven here, so a new literal marking a consonant fails whichever
+    /// table somebody puts it in.
+    /// </para>
+    /// </summary>
+    [Theory]
+    [InlineData(SpeechAccent.American)]
+    [InlineData(SpeechAccent.British)]
+    public void EveryLetterAndDigitMarksAVowel(SpeechAccent accent)
+    {
+        foreach (var character in "abcdefghijklmnopqrstuvwxyz0123456789")
+        {
+            if (SpokenLetters.Say(character, accent) is not { } said)
+            {
+                continue;
+            }
+
+            for (var i = said.IndexOfAny(['ˈ', 'ˌ']); i >= 0; i = said.IndexOfAny(['ˈ', 'ˌ'], i + 1))
+            {
+                Assert.True(
+                    i + 1 < said.Length && Vowels.Contains(said[i + 1], StringComparison.Ordinal),
+                    $"'{character}' -> \"{said}\" marks a consonant.");
+            }
+        }
+    }
+
+    /// <summary>
     /// And the whole sentence that was reported, through the ladder, with nothing marking a
     /// consonant anywhere in it.
     /// </summary>
