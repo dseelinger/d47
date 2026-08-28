@@ -625,6 +625,11 @@ public static class ListeningCapability
             faults.AppendLine(collision);
         }
 
+        if (ButtonCollisionWarning(listening, surface) is { } buttonCollision)
+        {
+            faults.AppendLine(buttonCollision);
+        }
+
         if (faults.Length > 0)
         {
             return $"No — not properly.\n{faults.ToString().TrimEnd()}";
@@ -775,6 +780,11 @@ public static class ListeningCapability
                     report.AppendLine(line);
                 }
             }
+
+            foreach (var line in DescribeButtonCollision(listening, surface))
+            {
+                report.AppendLine(line);
+            }
         }
         else if (IsHandsFree(listening.Mode))
         {
@@ -881,6 +891,90 @@ public static class ListeningCapability
         return
             $"Warning: {printed} is also bound in Elite ({binds.PresetName}) to {actions}. "
             + "One of the two will not work, and neither will say so — pick another key for one of them.";
+    }
+
+    /// <summary>
+    /// The same question for a stick button, and the same shape as the key's pair above: a
+    /// warning worth interrupting for, separated from an all-clear that is not (#71).
+    /// <para>
+    /// <b>The check already existed and only reached a log file.</b> <c>AppHost</c> has called
+    /// <c>UsingJoystickButton</c> since Phase 53 and written a startup warning a Commander
+    /// never reads. Phase 53's own rule is that a clash is advice rather than a refusal — and
+    /// advice has to arrive where the binding is done.
+    /// </para>
+    /// <para>
+    /// <b>Hedged, and the hedge is the honest part.</b> Elite writes a joystick binding against
+    /// its own device hash, which is not the <c>NonRoamableId</c> d47 reads, so this cannot say
+    /// whether that <c>Joy_N</c> is on the same stick. A false warning costs a sentence; a
+    /// missed one costs an evening of a microphone that will not open. So it says
+    /// <em>may collide</em> and never <em>collides</em> — which is why this is not simply the
+    /// key's method with a different lookup.
+    /// </para>
+    /// </summary>
+    private static string? ButtonCollisionWarning(ListeningSettings listening, ListeningSurface surface)
+    {
+        if (Hotas.HotasButton.Parse(listening.PushToTalkButton) is not { } button)
+        {
+            return null;
+        }
+
+        var binds = surface.Binds();
+
+        if (!binds.IsKnown)
+        {
+            return null;
+        }
+
+        var sharing = binds.UsingJoystickButton(button.Button);
+
+        if (sharing.Count == 0)
+        {
+            return null;
+        }
+
+        var actions = string.Join(", ", sharing.Select(binding => binding.Action).Distinct());
+
+        return
+            $"Warning: {button.Describe()} may collide. Elite ({binds.PresetName}) binds a button of "
+            + $"that number to {actions}, and I cannot tell whether that is the same controller. "
+            + "If the microphone will not open, this is the first thing to check.";
+    }
+
+    /// <summary>
+    /// The button collision or its all-clear, for the detailed inventory.
+    /// <para>
+    /// <b>The two answers are not symmetrical.</b> Nothing found is a genuine all-clear — no
+    /// button of that number is bound on <em>any</em> device, so there is nothing left to be
+    /// uncertain about, and it is said as plainly as the key's is. Something found is hedged,
+    /// because it may be that stick or another one.
+    /// </para>
+    /// <para>
+    /// Silence when the binds were never read, exactly as for the key: not having looked is not
+    /// the same as having looked and found nothing.
+    /// </para>
+    /// </summary>
+    private static IEnumerable<string> DescribeButtonCollision(
+        ListeningSettings listening,
+        ListeningSurface surface)
+    {
+        if (Hotas.HotasButton.Parse(listening.PushToTalkButton) is not { } button)
+        {
+            yield break;
+        }
+
+        if (ButtonCollisionWarning(listening, surface) is { } warning)
+        {
+            yield return warning;
+            yield break;
+        }
+
+        var binds = surface.Binds();
+
+        if (binds.IsKnown)
+        {
+            yield return
+                $"No Elite binding uses a button of that number in the {binds.PresetName} preset.";
+        }
     }
 
     /// <summary>

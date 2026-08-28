@@ -172,6 +172,21 @@ Warning: CapsLock is also bound in Elite (KeyboardMouseOnly) to HeadLookToggle. 
 will not work, and neither will say so — pick another key for one of them.
 ```
 
+**And the same for a stick button, with one difference that matters.** Elite records a joystick
+binding against its own name for the device, which is not the one Directive 47 reads — so when a
+button of that number is bound in Elite, it cannot tell you whether that is the same stick or a
+different one on your desk. It says so in those words rather than pretending to be sure:
+
+```text
+Warning: button 7 on the Virpil Alpha may collide. Elite (Custom) binds a button of that number
+to SelectTarget, and I cannot tell whether that is the same controller. If the microphone will
+not open, this is the first thing to check.
+```
+
+Finding **nothing** is the stronger answer of the two, and is said plainly: no button of that
+number is bound anywhere in your preset, on any device, so there is nothing left to be unsure
+about.
+
 **Your bindings are never written to.** Directive 47 only ever reads them.
 
 If it has not managed to read them, it says nothing rather than giving you an all-clear — never
