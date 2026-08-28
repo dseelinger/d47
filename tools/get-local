@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+#
+# get-local, from bash. A shim and deliberately nothing more.
+#
+# The rules - Release not Debug, which files are the payload, what the version is stamped
+# with - live in get-local.ps1 and only there. A second implementation here would
+# be two things that have to agree about all of that, and this repository has a rule about those:
+# two lists that must agree are two lists that will not.
+#
+# So this finds the script, hands over the arguments unchanged, and gets out of the way.
+
+set -euo pipefail
+
+here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+script="$here/get-local.ps1"
+
+# PowerShell is a Windows program and does not understand an MSYS path like /c/dev/d47. cygpath is
+# present in Git Bash and WSL alike; if it is missing the path was probably already a Windows one.
+if command -v cygpath >/dev/null 2>&1; then
+  script="$(cygpath -w "$script")"
+fi
+
+for candidate in pwsh powershell powershell.exe; do
+  if command -v "$candidate" >/dev/null 2>&1; then
+    exec "$candidate" -NoProfile -ExecutionPolicy Bypass -File "$script" "$@"
+  fi
+done
+
+echo "get-local: no PowerShell found (looked for pwsh, powershell)." >&2
+exit 1

@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using D47.Core.Input;
 using D47.Core.Interface;
 using D47.Core.Journal;
@@ -64,6 +64,23 @@ public sealed record SwitchState
     /// </para>
     /// </summary>
     public string? Disagrees { get; init; }
+
+    /// <summary>
+    /// Set when Elite binds the same button this switch position sits on, so both act on every
+    /// flip (#147).
+    /// <para>
+    /// <b>The failure it names is invisible from inside d47.</b> Elite toggling the gear on its
+    /// own binding while the reconciler correctly presses nothing looks exactly like d47 moving
+    /// the gear the wrong way; and a flip where d47 <em>does</em> press cancels against Elite's
+    /// toggle and looks like d47 doing nothing at all. Both were reported as reconciler bugs, and
+    /// the reconciler's every reading and decision was correct.
+    /// </para>
+    /// <para>
+    /// Reported and not enforced: <b>binds are read-only</b> and always will be, so the only thing
+    /// d47 can do about a collision is be the one component in the room that can see it.
+    /// </para>
+    /// </summary>
+    public string? Collides { get; init; }
 }
 
 /// <summary>One reconcile waiting to be carried out. Nothing in Core presses anything.</summary>
@@ -332,7 +349,11 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger)
 
         var state = Reconcile(tick, mapping, position, flipped);
 
-        return state with { Disagrees = Disagreement(tick, position) };
+        return state with
+        {
+            Disagrees = Disagreement(tick, position),
+            Collides = Collision(tick, mapping, position),
+        };
     }
 
     /// <summary>
@@ -503,9 +524,39 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger)
         // A mode change explains a change back, and one of them is not hypothetical: hardpoints
         // retract by themselves on entering supercruise. The game changing its own mind during a
         // mode change is the game doing its job, not a second binding.
-        if (flipped || tick.Now > watch.Until || tick.Context != watch.Context)
+        if (flipped || tick.Context != watch.Context)
         {
             _watching.Remove(mapping.Name);
+            return;
+        }
+
+        if (tick.Now > watch.Until)
+        {
+            _watching.Remove(mapping.Name);
+
+            // <b>The press that never took, said out loud</b> (#147). The watch has always
+            // reported the state arriving and then going back — something fighting d47 — and has
+            // never reported it not arriving at all. That is the silent half, and it is the half
+            // the collision produced: d47 pressed, Elite's binding on the same button toggled
+            // against it, the two cancelled, and the log said "Sent" twice while the gear did not
+            // move. One sentence here would have diagnosed in a moment what took an afternoon.
+            //
+            // Only where the state is readable. A "press it and find out" action reports nothing,
+            // so its watch cannot tell not-arrived from cannot-say, and guessing would put a
+            // failure notice on every press d47 makes blind.
+            if (!watch.Arrived && watch.Action.AlreadyIn(watch.State, tick.Status) == false)
+            {
+                var silent = $"I set {watch.Action.Label} from {mapping.Name} and it did not take. "
+                             + "Something else may be bound to the same button.";
+
+                logger.LogWarning(
+                    "Switch {Name} pressed {Action} and the state never arrived",
+                    mapping.Name,
+                    watch.Action.Id);
+
+                _pending.Enqueue(new PendingReconcile(mapping.Name, watch.Action.Label, [], silent));
+            }
+
             return;
         }
 
@@ -531,6 +582,48 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger)
         logger.LogWarning("Switch {Name} contested on {Action}; reconciling paused", mapping.Name, watch.Action.Id);
 
         _pending.Enqueue(new PendingReconcile(mapping.Name, watch.Action.Label, [], why));
+    }
+
+    /// <summary>
+    /// Whether Elite binds the same button, in which case every flip acts twice (#147).
+    /// <para>
+    /// <b>Both halves of this were already in hand and never put together.</b> d47 parses the
+    /// binds file at startup and knows the device and button of every switch position; nobody
+    /// asked the one question that joins them. It cost an afternoon of a gear that moved the wrong
+    /// way, and the reconciler was right every single time.
+    /// </para>
+    /// <para>
+    /// Narrowed to the device, because a Commander with two sticks of the same model has one VID
+    /// and PID across both: matching on the button alone reported four collisions on the machine
+    /// this was found on, where one was real. Where the device cannot be worked out the check is
+    /// skipped rather than widened — a warning naming the wrong stick is worse than none.
+    /// </para>
+    /// </summary>
+    private static string? Collision(SwitchTick tick, SwitchMapping mapping, SwitchPosition position)
+    {
+        // Only a position that actually does something. An unassigned position presses nothing,
+        // so Elite owning that button is not a collision, it is just a binding.
+        if (!position.IsAssigned || position.Action is not { Length: > 0 } || position.Button is not { } button)
+        {
+            return null;
+        }
+
+        if (EliteBinds.EliteDeviceToken(mapping.Device) is not { } device)
+        {
+            return null;
+        }
+
+        var bound = tick.Binds.UsingJoystickButton(button, device);
+
+        if (bound.Count == 0)
+        {
+            return null;
+        }
+
+        var actions = string.Join(" and ", bound.Select(binding => binding.Action).Distinct());
+
+        return $"Elite binds this button to {actions} as well, so both act on every flip. "
+               + "Unbind it in Elite, or move this switch to a button Elite does not use.";
     }
 
     /// <summary>

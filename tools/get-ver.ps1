@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Downloads and installs a named d47 release, resolving a partial version to a real one.
 
@@ -40,6 +40,13 @@
     Take `d47.zip` instead of the installer — the portable build, for a side-by-side that must not
     touch the installed one. Extracted rather than run; see `two installs, two data folders`.
 
+.PARAMETER NoBackup
+    Skip the snapshot of the installed `data\` folder. Taken by `tools\data-backup.ps1` into
+    `data\backups\` before the installer runs - one zip per deploy, the last ten kept - because a
+    build migrates data, so going back a version without the data that version was written against
+    is only half a rollback. Nothing is taken for `-Zip` or `-DownloadOnly`, which install nothing,
+    or where there is no install to snapshot.
+
 .PARAMETER Path
     Where to put the download. Defaults to a folder under TEMP named for the version.
 
@@ -66,7 +73,9 @@ param(
 
     [switch] $Zip,
 
-    [string] $Path
+    [string] $Path,
+
+    [switch] $NoBackup
 )
 
 Set-StrictMode -Version Latest
@@ -277,6 +286,15 @@ if ($DownloadOnly) {
     Write-Step 'Downloaded and verified. Not installed, because -DownloadOnly.'
     Write-Note $file
     return
+}
+
+# Before the installer, and only where there is something to snapshot: a first install has no
+# data folder, and asking for one would turn "get me d47" into an error. One implementation,
+# invoked rather than repeated - what is archived lives in that file and only there.
+$installed = Join-Path $env:LOCALAPPDATA 'Programs\d47'
+
+if (-not $NoBackup -and (Test-Path (Join-Path $installed 'data'))) {
+    & (Join-Path $PSScriptRoot 'data-backup.ps1') -InstallRoot $installed
 }
 
 Write-Step "Installing $tag"

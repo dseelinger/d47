@@ -1632,9 +1632,9 @@ public sealed class AppHost : IDisposable
                 {
                     Enabled = command => ShipCommands.IsEnabled(settings.Current, command),
 
-                    AwaitInternalPanel = (open, token) => AwaitStatus(
+                    AwaitLeftPanel = (open, token) => AwaitStatus(
                         status,
-                        current => (current.GuiFocus == Core.Journal.GuiFocus.InternalPanel) == open,
+                        current => (current.GuiFocus == Core.Actions.Launch.Panel) == open,
                         TimeSpan.FromSeconds(3),
                         open ? "left panel open" : "left panel closed",
                         logger,

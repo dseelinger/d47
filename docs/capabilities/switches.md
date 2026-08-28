@@ -223,12 +223,29 @@ change and quietly press button 15 of a block that is no longer the same block. 
 id changes, so instead the switch **fails closed**: the row says it needs reassigning, and
 nothing is pressed.
 
+### When Elite is bound to the same button
+
+**The most common way for this to go wrong is the one you can see, so Directive 47 looks.** If a
+switch position sits on a button Elite also binds, both act on every flip — and the results look
+like Directive 47 misbehaving in two different ways at once:
+
+- where Directive 47 correctly presses **nothing**, Elite's binding toggles, so the thing moves the
+  wrong way;
+- where Directive 47 correctly **presses**, the two toggles cancel and nothing happens at all.
+
+That is one setup fault wearing two disguises, and it cost an afternoon before it was understood.
+The switch now says so directly:
+
+> Elite binds this button to LandingGearToggle as well, so both act on every flip. Unbind it in
+> Elite, or move this switch to a button Elite does not use.
+
+Directive 47 will not fix it for you: **your bindings file is read-only to it, always.** Unbind the
+button in Elite, or move the switch.
+
 ### When something else is driving the same switch
 
-If Directive 47 sets a state and it immediately goes back the other way, something else is bound
-to that action — a leftover Elite binding, or a vJoy device SimApp Pro or Joystick Gremlin is
-publishing. That cannot be detected by looking: Elite's binds name the virtual device, and
-nothing connects it back to the physical switch.
+A virtual device is the case that cannot be seen. If SimApp Pro or Joystick Gremlin is publishing a
+vJoy device, Elite's binds name *that* device and nothing connects it back to your physical switch.
 
 So the symptom is watched instead. One unexplained reversal and Directive 47 **stops reconciling
 that switch** and says so, rather than fighting whatever else is there. The panel offers a
@@ -236,6 +253,14 @@ Resume button; a restart clears it too.
 
 A mode change is not counted as unexplained. Hardpoints retract by themselves when you enter
 supercruise, and that is the game doing its job.
+
+**And a press that simply does not take is now reported too.** Watching for a reversal only catches
+something that fights back *after* the state arrives; two toggles cancelling means the state never
+arrives at all, and that used to be silent — the log said the key was sent, and nothing said the
+thing had not moved. Now:
+
+> I set the landing gear from LDG GEAR and it did not take. Something else may be bound to the same
+> button.
 
 ### Switches that disagree with the game
 

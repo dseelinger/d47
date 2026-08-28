@@ -1,4 +1,4 @@
-using D47.Core.Audio;
+﻿using D47.Core.Audio;
 using Microsoft.Extensions.Logging;
 using Xunit;
 
@@ -50,6 +50,22 @@ public class TheLogSaysWhichVoiceSpokeTests
         Assert.Contains("Spoken by D47", line, StringComparison.Ordinal);
         Assert.Contains("George", line, StringComparison.Ordinal);
         Assert.Contains("JBFqnCBsd6RMkjVDRZzb", line, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// <b>And which service said it</b> (2026-08-28). A voice id means nothing without the
+    /// provider that issued it, and since Phase 57 three of them can be speaking at once — so a
+    /// line reading <em>Spoken by Boe Dock in pFQStpMdprGFILRDrWR2</em> named neither the voice
+    /// nor whose it was. Asked of the client that actually spoke rather than of settings, which
+    /// can have moved on since.
+    /// </summary>
+    [Fact]
+    public async Task TheProviderIsNamedBesideTheVoice()
+    {
+        var said = await SpokenAsync(new VoiceSelection("pFQStpMdprGFILRDrWR2"), speaker: "Boe Dock");
+        var line = Assert.Single(said, message => message.StartsWith("Spoken by", StringComparison.Ordinal));
+
+        Assert.Contains(new FakeTtsProvider().Name, line, StringComparison.Ordinal);
     }
 
     /// <summary>

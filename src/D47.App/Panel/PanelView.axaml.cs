@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Input;
@@ -1621,9 +1621,20 @@ public partial class PanelView : UserControl
     /// different channel and must not be a one-way door.
     /// </para>
     /// </summary>
-    public void ShowChannel(D47.Core.Updates.ReleaseChannel channel) =>
-        PreReleaseBadge.IsVisible =
-            !OutputOnly && channel == D47.Core.Updates.ReleaseChannel.PreRelease;
+    public void ShowChannel(D47.Core.Updates.ReleaseChannel channel)
+    {
+        // The wording comes from Core with the rest of it, so the badge cannot say one thing while
+        // the title bar and About say another - which is the whole reason that text lives there.
+        var marker = D47.Core.Updates.ReleaseChannelText.Short(channel);
+
+        PreReleaseBadge.IsVisible = !OutputOnly && marker is not null;
+
+        if (marker is not null)
+        {
+            PreReleaseBadgeText.Text = marker.ToUpperInvariant();
+            ToolTip.SetTip(PreReleaseBadge, D47.Core.Updates.ReleaseChannelText.Full(channel));
+        }
+    }
 
     /// <summary>
     /// Help over the page rather than beside it (asked for 2026-08-22): pushed as a modal level,
@@ -2274,14 +2285,19 @@ public partial class PanelView : UserControl
             return;
         }
 
-        // Read when the page is opened rather than on a timer. A log nobody is looking at is
-        // not worth a file read per tick, and one being looked at is being looked at because
-        // something has already gone wrong.
+        // Read when the page is opened, and then kept up while it is open. A log nobody is looking
+        // at is still not worth a file read per tick — the ticker below runs only while this page
+        // is the one showing, which is the half that was missing: the page was a snapshot of the
+        // moment it was opened, so watching it during a failure showed nothing arriving and the
+        // only way to see the next line was to leave the page and come back (reported 2026-08-28).
         if (Page == TranscriptPage.Log)
         {
             Reading = ReadLogAsync();
+            FollowLogFile(true);
             return;
         }
+
+        FollowLogFile(false);
 
         // Rebuilt when the page is opened, for the reason the log is read then: the events are
         // already in memory, but projecting four thousand of them into lines is not worth doing
@@ -2435,6 +2451,96 @@ public partial class PanelView : UserControl
     /// looks unchanged for a second reads as a tab that did not take the click.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// Re-reads today's log while the log page is the one showing, and stops the moment it is not.
+    /// <para>
+    /// <b>A second a tick, and only while somebody is looking.</b> The original reasoning holds
+    /// and is why this is a ticker rather than a subscription: a log nobody has open is not worth
+    /// a file read, and <see cref="Logging.LogTail"/> reads at most the last 256 KB. What it buys
+    /// is the page being live during the failure it was opened to watch.
+    /// </para>
+    /// <para>
+    /// <b>Silent, unlike the open.</b> Opening the page shows the busy glyph because a Commander
+    /// pressed something; a refresh nobody asked for must not flash one every second, and must not
+    /// redraw at all when the file has not moved — a redraw rebuilds every run and would fight a
+    /// reader's selection for nothing.
+    /// </para>
+    /// </summary>
+    private void FollowLogFile(bool following)
+    {
+        if (!following)
+        {
+            _logTicker?.Stop();
+            return;
+        }
+
+        _logTicker ??= new DispatcherTimer(
+            TimeSpan.FromSeconds(1),
+            DispatcherPriority.Background,
+            (_, _) => _ = KeepLogUp());
+
+        _logTicker.Start();
+    }
+
+    /// <summary>
+    /// One tick of the log page's refresh. Does nothing where nothing has changed.
+    /// <para>
+    /// Internal and awaitable so a test can drive a tick rather than wait a real second for one:
+    /// a test that sleeps for a timer is slow and flaky about the same thing.
+    /// </para>
+    /// </summary>
+    internal async Task RefreshLogNow() => await KeepLogUp();
+
+    private async Task KeepLogUp()
+    {
+        // A read still in flight, a page that has moved on, or nothing to read into: all three are
+        // "not now" rather than errors, and the next tick asks again.
+        if (Page != TranscriptPage.Log || Tab != PanelTab.Transcript || _bound is not { } bound)
+        {
+            return;
+        }
+
+        if (!Reading.IsCompleted)
+        {
+            return;
+        }
+
+        try
+        {
+            var text = await Task.Run(bound.ReadLog);
+
+            if (string.Equals(text, bound.LogText, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            // Checked again after the await: a Commander who left the page while the read was in
+            // flight must not have it redrawn under whatever they went to.
+            if (Page != TranscriptPage.Log || Tab != PanelTab.Transcript)
+            {
+                return;
+            }
+
+            bound.ShowLog(text);
+            DrawTranscript();
+
+            // Only if they are following, which ScrollToEnd already decides. A Commander who has
+            // scrolled up to read something is the reason that check exists (Phase 19).
+            ScrollToEnd();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // The file is being rolled, or something else has it. The next tick asks again, and a
+            // log line about not being able to read the log is a loop.
+        }
+    }
+
+    /// <summary>
+    /// The log page's refresh while it is open. Null until the page has been opened once, so a
+    /// session that never looks at it never builds one.
+    /// </summary>
+    private DispatcherTimer? _logTicker;
+
     private async Task ReadLogAsync()
     {
         // The mode button, which may not exist: it is hidden in mini and below a root, and the

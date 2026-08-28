@@ -27,6 +27,129 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.84.4 — 2026-08-28 — Four field reports, and the one that was not a bug in the code
+
+### Take us out, walked the way the panel actually works
+
+*Take us out* has never once worked, and the reason it never worked is the reason nobody could see
+what else was wrong with it. [#106](https://github.com/dseelinger/d47/issues/106).
+
+**It waited for the wrong panel.** The macro presses the **left** panel key and then waited for
+`GuiFocus` to reach `InternalPanel` — and Frontier number the panels by *subject*, not by side. The
+**internal** panel is the ship's own systems and sits on the **right**; the **external** panel is
+navigation and contacts, which are outside the ship, and sits on the **left**. Measured against a
+running game: left panel gives 2, right panel gives 1. So the gate was waiting on a value that
+pressing that key cannot produce. It refused every single time, deterministically, and said *the
+panel did not open* to a Commander who was looking at the panel.
+
+**Which meant the walk underneath it had never run, and it was wrong too.** Four presses of left and
+four of up — the phase's own stated guess about a menu, and the one part of the macro that was
+guessed rather than verified. It is now the Commander's own sequence: **back**, **down**, **select**,
+with `ui_back` and `ui_down` added to the all-or-none pre-flight check, because a macro that opens
+the panel and then finds it has no *select* leaves a panel open over the cockpit.
+
+**And the walk waits, because the left panel is not where the launch button is.** *Auto Launch* — or
+*Launch*, without an advanced docking computer — is on the station menu in the **centre**. Opening
+the left panel and pressing *back* is how a Commander arrives there: back dismisses the panel and
+leaves them on that menu. So the panel closing is the **point** of the first key rather than a
+failure of it, and the walk is not one burst but two halves with the game consulted in between —
+back, then wait for the panel to actually go, then down and select. Flown before that wait went in,
+back closed the panel and the other two did nothing at all: sent during the transition, with no menu
+yet to receive them. Waiting on the game rather than on a guessed delay is the answer the galaxy map
+macro already reached.
+
+That wait is also the guard. Down and select with no station menu in front of them are flight
+controls typed into a docked ship, which is the hazard the phase built the gate for — so a *back*
+that leaves the panel open now stops the run and says so, rather than pressing two direction keys
+into a cockpit.
+
+**The panel's identity now lives in `Launch.Panel`**, in Core, next to the walk it belongs to. The
+App used to hold that opinion by itself, and the name of the thing it was reading — `InternalPanel`,
+reached through a property called `AwaitInternalPanel` — made the wrong constant read as obviously
+correct for as long as it shipped. Both are named for the panel now rather than for the flag.
+
+**The stale-read theory was measured and is not the cause.** Both faults were suspected to sit
+behind [#148](https://github.com/dseelinger/d47/issues/148): `GameStatusReader` re-reads Status.json
+only when the file's last-write time moves, and Windows is not obliged to advance that while Elite
+holds the handle open. Sampled at the tick loop's own 10 Hz — 320 synthetic samples against a
+held-open writer, then three minutes against the running game — the stamp moved with the contents
+**35 times out of 36**, and the one exception lasted a single poll and is indistinguishable from the
+probe's own read ordering. A tenth of a second of blindness cannot produce a three-second failure.
+`GameStatusReader` is therefore unchanged: a fix with no defect behind it is a change that has to be
+maintained for nothing.
+
+**And a build from a working tree now says which it is.** Reported the same day against a
+hand-installed build: the title bar read **pre-release 0.84.3**. Not merely unhelpful — a claim to
+be a signed, published build that it was not, in the one piece of chrome that is never off screen.
+The channel is asked of GitHub at run time on purpose, because promoting a pre-release changes the
+answer without changing the binary; but a local build's version compares *equal* to the release it
+was cut from — `0.84.3-local` is `0.84.3` for comparison, and has to be, or the updater would offer
+to replace it with itself. So GitHub answered truthfully about a different binary. A version
+carrying any label is now answered from the binary and GitHub is not asked at all: the title bar
+reads `0.84.3 (local build)` and the panel badge matches. The rule is not about one tool's wording —
+the release workflow builds from the tag's bare version, so a published `d47.exe` never carries a
+label.
+
+### The switch that was bound twice
+
+The gear switch inverted: flip it to up and the gear went down, flip it back and the gear went down
+again, and only pressing **L** by hand ever fixed it.
+[#147](https://github.com/dseelinger/d47/issues/147).
+
+**Directive 47 was right every single time.** The same physical button was bound twice — once in
+Elite, once as a d47 maintained switch — so every flip acted twice. Where d47 correctly pressed
+nothing, Elite's own binding toggled and the gear moved the wrong way; where d47 correctly pressed,
+the two toggles cancelled and nothing happened at all. One setup fault, wearing two disguises, both
+of which look exactly like the reconciler misbehaving.
+
+It was settled by measuring rather than by reasoning: the gear's true state sampled at 10 Hz from
+Status.json and laid against d47's own log, seven flips, every one accounted for and **d47's belief
+about the gear correct on all of them**. The same measurement killed the theory this had been
+filed under — [#148](https://github.com/dseelinger/d47/issues/148), a stale status read — which is
+now closed as not reproduced, with `GameStatusReader` unchanged.
+
+**So d47 now notices.** It already parsed the binds file at startup and already knew the device and
+button of every switch position; nobody had asked the one question that joins them. A switch sitting
+on a button Elite binds says so, on the panel, in the switch window and when asked out loud, naming
+the Elite action it collides with. It is narrowed to the device as well as the button — this
+Commander's binds file carries four `DeviceIndex` values under one VID and PID, and matching the
+button alone reported four collisions where one was real. **Binds stay read-only**: the one thing
+d47 can do about a collision is be the component in the room that can see it.
+
+**And a press that never takes is said out loud.** The watch has always reported a state arriving
+and then going back — something fighting d47 — and never reported it not arriving at all. That is
+precisely the shape two cancelling toggles make: the log said *Sent* twice while the gear did not
+move, and nothing said so. One sentence would have diagnosed in a moment what took an afternoon.
+Only where the state is readable, because an action d47 presses blind cannot tell *did not arrive*
+from *cannot say*.
+
+The off-by-one is pinned by a test, since it is the kind of fact that rots silently: Elite counts
+joystick buttons from one, so its `Joy_9` is d47's button 8.
+
+### The log page keeps up, and says which service spoke
+
+**The log page was a snapshot of the moment it was opened.** The read ran on navigation and nothing
+ever read again — so a Commander who opened it to watch a failure saw nothing arrive, and the only
+way to see the next line was to leave the page and come back. It now re-reads once a second while
+it is the page showing, and stops the moment it is not.
+
+The original reasoning is kept rather than overturned, because it was right: *a log nobody is
+looking at is not worth a file read per tick.* What changed is that a page somebody is looking at
+now counts as somebody looking. The refresh is silent — no busy glyph for something nobody asked
+for — and does not redraw at all when the file has not moved, because a redraw rebuilds every run
+and would fight a reader's selection once a second for no new text. Scrolling still follows only if
+the reader was already following.
+
+**And a voice id now says whose it is.** The line read `Spoken by Boe Dock in pFQStpMdprGFILRDrWR2`
+— an opaque id, with no way to tell which voice that was or which service said it. Since Phase 57
+three providers can be speaking at once, so the provider is a fact about the line rather than
+something a reader can infer: it is now `Spoken by Boe Dock in pFQStpMdprGFILRDrWR2 through
+ElevenLabs`. Asked of the client that actually spoke rather than of settings, which can have moved
+on since. Kokoro's ids happen to carry a name and ElevenLabs' do not, which had made the gap look
+like a formatting quirk of one provider rather than a missing fact about all of them.
+
+---
+
 ## 0.84.3 — 2026-08-28 — Dialogs that fit the window they are drawn in
 
 Reported from a running build at 150% zoom: the **Voice** picker was about three times as wide as

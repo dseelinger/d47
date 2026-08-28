@@ -145,7 +145,11 @@ public static class SwitchCapability
                 _ => state.Position is { } position ? position.Describe() : "position unknown",
             });
 
-            if (state.Disagrees is { } disagrees)
+            if (state.Collides is { } collides)
+            {
+                text.Append(" — ").Append(collides);
+            }
+            else if (state.Disagrees is { } disagrees)
             {
                 text.Append(" — disagrees with the game (").Append(disagrees).Append(')');
             }

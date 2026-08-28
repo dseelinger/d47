@@ -1,4 +1,4 @@
-using D47.Core.Actions;
+﻿using D47.Core.Actions;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Conversation;
@@ -374,14 +374,14 @@ public class SayItAndTheShipDoesItTests
     // ---- Take us out (Phase 52, item 2) ----------------------------------------------
 
     private const uint Panel = 0x31;
-    private const uint Left = 0x41;
-    private const uint Up = 0x57;
+    private const uint Back = 0x42;
+    private const uint Down = 0x53;
     private const uint Select = 0x5A;
 
     private static EliteBinds PanelBinds() => Binds(
         ("FocusLeftPanel", "Key_1"),
-        ("UI_Left", "Key_A"),
-        ("UI_Up", "Key_W"),
+        ("UI_Back", "Key_B"),
+        ("UI_Down", "Key_S"),
         ("UI_Select", "Key_Z"));
 
     private static GameStatus Docked(GuiFocus focus = GuiFocus.None) => new()
@@ -395,7 +395,15 @@ public class SayItAndTheShipDoesItTests
 
     private static Func<CancellationToken, Task<bool?>> Undocks(bool? answer) => _ => Task.FromResult(answer);
 
-    /// <summary>The whole walk, in order: open, left to the leftmost tab, up to the top, select.</summary>
+    /// <summary>
+    /// The whole walk, in order: open, back out to the tabs, down into the list, select.
+    /// <para>
+    /// <b>The Commander's own sequence, and it had never once run</b> (#106). What shipped was four
+    /// presses of left and four of up — the phase's own stated guess about a menu — behind a gate
+    /// that always refused, so the guess was never tested against the game. Asserted as the exact
+    /// key list so the counts cannot drift back.
+    /// </para>
+    /// </summary>
     [Fact]
     public async Task TakeUsOutOpensTheLeftPanelAndWalksItToTheLaunchItem()
     {
@@ -409,20 +417,54 @@ public class SayItAndTheShipDoesItTests
 
         Assert.Equal(LaunchEnding.Launched, outcome.Ending);
 
-        uint[] expected =
-        [
-            Panel,
-            .. Enumerable.Repeat(Left, Launch.WalkPresses),
-            .. Enumerable.Repeat(Up, Launch.WalkPresses),
-            Select,
-        ];
-
-        Assert.Equal(expected, Pressed(input));
+        Assert.Equal([Panel, Back, Down, Select], Pressed(input));
     }
 
-    /// <summary>A panel that is already open is not toggled shut first.</summary>
+    /// <summary>
+    /// A panel that is already open is not toggled shut first — and <em>already open</em> means the
+    /// left one, which reports <c>ExternalPanel</c>.
+    /// </summary>
     [Fact]
     public async Task TakeUsOutDoesNotReopenAPanelThatIsAlreadyShowing()
+    {
+        var input = new RecordingGameInput();
+
+        await Launch.RunAsync(
+            Surface(input, Docked(GuiFocus.ExternalPanel), PanelBinds()),
+            Panels(true),
+            Undocks(true),
+            TestContext.Current.CancellationToken);
+
+        Assert.DoesNotContain(Panel, Pressed(input));
+        Assert.Equal(Back, Pressed(input)[0]);
+    }
+
+    /// <summary>
+    /// <b>The whole of #106's first fault, pinned as a value.</b> Frontier number the panels by
+    /// subject rather than by side: the <em>internal</em> panel is the ship's own systems and is on
+    /// the right; the <em>external</em> panel is navigation and contacts and is on the left.
+    /// Measured against a running game on 2026-08-28 — opening the left panel gave GuiFocus 2 and
+    /// the right gave 1.
+    /// <para>
+    /// The macro presses the <em>left</em> panel key, so it must wait on 2. It waited on 1, which
+    /// pressing that key cannot produce, so the gate refused every single time and said the panel
+    /// had not opened while the Commander was looking at it. Here rather than in the App because
+    /// the App held the opinion that was wrong.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void TheLeftPanelIsTheExternalOneWhateverTheNamesSuggest()
+    {
+        Assert.Equal(GuiFocus.ExternalPanel, Launch.Panel);
+        Assert.Equal(2, (int)Launch.Panel);
+    }
+
+    /// <summary>
+    /// A right panel showing is not the left one being open, which is the reading that failed in
+    /// the field: the macro must press its key rather than assume it is already there.
+    /// </summary>
+    [Fact]
+    public async Task TakeUsOutOpensTheLeftPanelEvenWhenTheRightOneIsShowing()
     {
         var input = new RecordingGameInput();
 
@@ -432,8 +474,67 @@ public class SayItAndTheShipDoesItTests
             Undocks(true),
             TestContext.Current.CancellationToken);
 
-        Assert.DoesNotContain(Panel, Pressed(input));
-        Assert.Equal(Left, Pressed(input)[0]);
+        Assert.Equal([Panel, Back, Down, Select], Pressed(input));
+    }
+
+    /// <summary>
+    /// <b>Down and select wait for the panel to actually go</b> (#106, second report).
+    /// <para>
+    /// The left panel is not where the launch button is — <em>Auto Launch</em> is on the station
+    /// menu in the centre, and pressing <em>back</em> out of the panel is how a Commander arrives
+    /// there. So the panel closing is the point of that key. All three used to go out as one
+    /// burst, and the field report was that back closed the panel and the other two did nothing:
+    /// sent during the transition, with no menu yet to receive them.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task TakeUsOutWaitsForThePanelToCloseBeforeReachingTheStationMenu()
+    {
+        var input = new RecordingGameInput();
+        var pressedWhenAsked = new List<int>();
+
+        // Records how much had been pressed at each check, which is the assertion: nothing beyond
+        // back has gone out by the time the close is awaited.
+        Task<bool?> Watching(bool open, CancellationToken token)
+        {
+            pressedWhenAsked.Add(Pressed(input).Length);
+            return Task.FromResult<bool?>(true);
+        }
+
+        var outcome = await Launch.RunAsync(
+            Surface(input, Docked(), PanelBinds()),
+            Watching,
+            Undocks(true),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(LaunchEnding.Launched, outcome.Ending);
+        Assert.Equal([Panel, Back, Down, Select], Pressed(input));
+
+        // Asked twice: that the panel opened, then that it closed. And the second question was
+        // asked with back sent and nothing after it.
+        Assert.Equal([1, 2], pressedWhenAsked);
+    }
+
+    /// <summary>
+    /// And a panel that will not close stops the walk there, because down and select with no
+    /// station menu in front of them are flight controls typed into a docked ship — the hazard
+    /// the gate has always existed for, arriving one step later than it used to.
+    /// </summary>
+    [Fact]
+    public async Task TakeUsOutStopsIfBackLeavesThePanelOpen()
+    {
+        var input = new RecordingGameInput();
+
+        // Open when asked whether it opened, still open when asked whether it closed.
+        var outcome = await Launch.RunAsync(
+            Surface(input, Docked(), PanelBinds()),
+            (open, _) => Task.FromResult<bool?>(open),
+            Undocks(true),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(LaunchEnding.Refused, outcome.Ending);
+        Assert.Equal([Panel, Back], Pressed(input));
+        Assert.Contains("stayed open", outcome.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
@@ -503,7 +604,7 @@ public class SayItAndTheShipDoesItTests
         var input = new RecordingGameInput();
 
         var outcome = await Launch.RunAsync(
-            Surface(input, Docked(), Binds(("FocusLeftPanel", "Key_1"), ("UI_Left", "Key_A"), ("UI_Up", "Key_W"))),
+            Surface(input, Docked(), Binds(("FocusLeftPanel", "Key_1"), ("UI_Back", "Key_B"), ("UI_Down", "Key_S"))),
             Panels(true),
             Undocks(true),
             TestContext.Current.CancellationToken);
@@ -529,8 +630,8 @@ public class SayItAndTheShipDoesItTests
                     ("UseBoostJuice", "Key_B"),
                     ("SetSpeed100", "Key_T"),
                     ("FocusLeftPanel", "Key_1"),
-                    ("UI_Left", "Key_A"),
-                    ("UI_Up", "Key_W"),
+                    ("UI_Back", "Key_B"),
+                    ("UI_Down", "Key_S"),
                     ("UI_Select", "Key_Z")),
                 Status = () => status,
                 Input = input,
@@ -539,7 +640,7 @@ public class SayItAndTheShipDoesItTests
             new ShipCommandSurface
             {
                 Enabled = _ => permitted,
-                AwaitInternalPanel = (_, _) => Task.FromResult<bool?>(true),
+                AwaitLeftPanel = (_, _) => Task.FromResult<bool?>(true),
                 AwaitUndocked = _ => Task.FromResult<bool?>(true),
                 NextStatus = stream ?? Stream(Clear(1)),
             }));

@@ -161,10 +161,14 @@ would jump when you asked it to boost. Directive 47 matches what you said, all o
 Say **take us out** while docked and Directive 47 walks the left panel to the launch button.
 
 **This one is a menu walk, not a key press, and it is the least reliable thing here.** Elite has
-no launch binding at all — launching is a button on a panel, and Frontier ships no control for it —
-so instead of pressing your own key, Directive 47 opens the left panel, walks left to the first
-tab, walks up to the top item, and selects it. If your panel does not start where it expects, it
-selects the wrong thing.
+no launch binding at all — launching is a button on a menu, and Frontier ships no control for it —
+so instead of pressing your own key, Directive 47 opens the left panel, presses **back** to leave
+it, and then **down** and **select** on the station menu in the centre, which is where *Auto
+Launch* lives. The left panel is only a way of getting to that menu.
+
+It waits for the panel to actually close before pressing anything else, rather than counting on a
+delay: those two keys sent while the panel is still going away arrive with no menu to receive them,
+which is exactly how this failed the first time it was flown.
 
 Everything around the walk is checked against the game rather than assumed. It refuses unless you
 are docked. It confirms the panel is actually open before sending a single direction key, because
