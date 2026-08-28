@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text;
 using Avalonia;
 using Avalonia.Controls;
@@ -1345,7 +1345,13 @@ public partial class MainWindow : Window
     /// </summary>
     private async Task ShowReleaseChannelAsync(AppHost host)
     {
-        host.Channel = await host.Updates.ChannelAsync(host.Version, CancellationToken.None);
+        // A build from a working tree is answered from the binary and GitHub is not asked, because
+        // the answer it would give is true about a different one: a local build's version compares
+        // equal to the release it was cut from, so 0.84.3-local came up wearing 0.84.3's
+        // pre-release badge and claimed to be a published build it was not.
+        host.Channel = BuildInfo.IsLocal
+            ? ReleaseChannel.Local
+            : await host.Updates.ChannelAsync(host.Version, CancellationToken.None);
 
         Title = $"Directive 47 — {ReleaseChannelText.Marked(BuildInfo.Semantic, host.Channel)}";
 

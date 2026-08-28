@@ -61,6 +61,18 @@ probe's own read ordering. A tenth of a second of blindness cannot produce a thr
 `GameStatusReader` is therefore unchanged: a fix with no defect behind it is a change that has to be
 maintained for nothing.
 
+**And a build from a working tree now says which it is.** Reported the same day against a
+hand-installed build: the title bar read **pre-release 0.84.3**. Not merely unhelpful — a claim to
+be a signed, published build that it was not, in the one piece of chrome that is never off screen.
+The channel is asked of GitHub at run time on purpose, because promoting a pre-release changes the
+answer without changing the binary; but a local build's version compares *equal* to the release it
+was cut from — `0.84.3-local` is `0.84.3` for comparison, and has to be, or the updater would offer
+to replace it with itself. So GitHub answered truthfully about a different binary. A version
+carrying any label is now answered from the binary and GitHub is not asked at all: the title bar
+reads `0.84.3 (local build)` and the panel badge matches. The rule is not about one tool's wording —
+the release workflow builds from the tag's bare version, so a published `d47.exe` never carries a
+label.
+
 ---
 
 ## 0.84.3 — 2026-08-28 — Dialogs that fit the window they are drawn in

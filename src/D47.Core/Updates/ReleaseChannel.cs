@@ -1,4 +1,4 @@
-namespace D47.Core.Updates;
+﻿namespace D47.Core.Updates;
 
 /// <summary>
 /// Whether the running build is a release, a pre-release, or something d47 has not been able to
@@ -21,6 +21,19 @@ public enum ReleaseChannel
 
     /// <summary>GitHub carries its <c>prerelease</c> flag on this version's Release.</summary>
     PreRelease,
+
+    /// <summary>
+    /// Not a published build at all: something built from a working tree and installed by hand.
+    /// <para>
+    /// <b>Answered from the binary rather than from GitHub, and it has to be.</b> A local build
+    /// carries a version that resolves to a real published one — <c>get-local</c> stamps
+    /// <c>0.84.3-local</c>, and comparison deliberately ignores everything after the dash — so
+    /// asking GitHub about it gets a truthful answer about a <em>different binary</em>. That is how
+    /// a hand-installed build came up calling itself the published pre-release 0.84.3, which is the
+    /// one thing a build marker exists to prevent.
+    /// </para>
+    /// </summary>
+    Local,
 }
 
 /// <summary>
@@ -46,8 +59,12 @@ public static class ReleaseChannelText
     /// is excluded from it: that strip is chrome a Commander cannot dismiss, so anything living
     /// there earns its width.
     /// </summary>
-    public static string? Short(ReleaseChannel channel) =>
-        channel == ReleaseChannel.PreRelease ? "pre-release" : null;
+    public static string? Short(ReleaseChannel channel) => channel switch
+    {
+        ReleaseChannel.PreRelease => "pre-release",
+        ReleaseChannel.Local => "local build",
+        _ => null,
+    };
 
     /// <summary>
     /// For About's Version row, which is the line a bug report quotes and so the one place the
@@ -57,6 +74,8 @@ public static class ReleaseChannelText
     {
         ReleaseChannel.PreRelease =>
             "pre-release — not offered to anyone automatically, and not final",
+        ReleaseChannel.Local =>
+            "local build — built from a working tree and installed by hand, not from any release",
         _ => null,
     };
 

@@ -24,11 +24,15 @@
     stamped `<newest tag>-local`, and About shows the full string — `0.84.3-local+<sha>` — so a
     screenshot or a bug report says outright that this was not a published build.
 
-    **The title bar does not, and that is worth knowing before relying on it.** `ReleaseVersion`
-    strips everything from the first `-` or `+` on, because the SDK appends `+<sha>` to every build
-    and that is noise for comparison. So a local build reads `0.84.3` in the title bar, compares
-    *equal* to the release it was cut from, and the updater will not offer to replace it. **About
-    is how you tell which one you are running.**
+    **And the title bar says so too, since 2026-08-28**: `0.84.3 (local build)`, with a matching
+    badge on the panel. It did not at first, and what it said instead was worse than nothing -
+    `ReleaseVersion` strips everything from the first `-` or `+`, so a local build compares *equal*
+    to the release it was cut from, the app asked GitHub what channel `0.84.3` was on, and a
+    hand-built binary came up wearing the published pre-release's badge. The channel is now read
+    from the binary whenever the version carries a label, and GitHub is not asked at all.
+
+    The version still compares equal, deliberately, so the updater will not offer to replace a
+    local build with the release it came from.
 
     **The data folder is snapshotted first**, by `tools\data-backup.ps1`, into `data\backups\` —
     one zip per deploy, the last ten kept. A build migrates data, so swapping the executable back
@@ -118,7 +122,7 @@ if ($NoBuild) {
 }
 else {
     # Named for what it is, off the newest tag, so About says which release this was cut from and
-    # that it is not that release. The title bar cannot say so - see the notes above.
+    # that it is not that release, and the title bar marks it as a local build.
     $tag = (git -C $repo describe --tags --abbrev=0 2>$null)
     $version = if ($LASTEXITCODE -eq 0 -and $tag) { "$($tag.TrimStart('v'))-local" } else { '0.1.0-local' }
 

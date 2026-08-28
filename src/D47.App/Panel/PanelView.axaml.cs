@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Input;
@@ -1621,9 +1621,20 @@ public partial class PanelView : UserControl
     /// different channel and must not be a one-way door.
     /// </para>
     /// </summary>
-    public void ShowChannel(D47.Core.Updates.ReleaseChannel channel) =>
-        PreReleaseBadge.IsVisible =
-            !OutputOnly && channel == D47.Core.Updates.ReleaseChannel.PreRelease;
+    public void ShowChannel(D47.Core.Updates.ReleaseChannel channel)
+    {
+        // The wording comes from Core with the rest of it, so the badge cannot say one thing while
+        // the title bar and About say another - which is the whole reason that text lives there.
+        var marker = D47.Core.Updates.ReleaseChannelText.Short(channel);
+
+        PreReleaseBadge.IsVisible = !OutputOnly && marker is not null;
+
+        if (marker is not null)
+        {
+            PreReleaseBadgeText.Text = marker.ToUpperInvariant();
+            ToolTip.SetTip(PreReleaseBadge, D47.Core.Updates.ReleaseChannelText.Full(channel));
+        }
+    }
 
     /// <summary>
     /// Help over the page rather than beside it (asked for 2026-08-22): pushed as a modal level,

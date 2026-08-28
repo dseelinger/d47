@@ -1,4 +1,4 @@
-using D47.Core.Capabilities;
+﻿using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Updates;
@@ -115,15 +115,26 @@ public class APreReleaseSaysSoTests
     /// One judgement, read the same way everywhere. The three sites take their wording from here,
     /// so a marker that appeared in one place and not another would be a bug in a surface rather
     /// than a second opinion about the build.
+    /// <para>
+    /// <b>Unmarked means "a final release, or nobody could ask"</b>, and that is the rule this
+    /// pins — it used to say <em>only a pre-release is ever marked</em>, which was the same rule
+    /// while there were only three channels. A local build joined them on 2026-08-28, after a
+    /// hand-installed <c>0.84.3-local</c> was displayed as the published pre-release 0.84.3.
+    /// </para>
     /// </summary>
     [Fact]
-    public void OnlyAPreReleaseIsEverMarked()
+    public void EveryBuildThatIsNotAFinalReleaseSaysWhatItIs()
     {
         foreach (var channel in Enum.GetValues<ReleaseChannel>())
         {
             var marked = ReleaseChannelText.Short(channel) is not null;
+            var shouldBe = channel is ReleaseChannel.PreRelease or ReleaseChannel.Local;
 
-            Assert.Equal(channel == ReleaseChannel.PreRelease, marked);
+            Assert.Equal(shouldBe, marked);
+
+            // And the long form agrees with the short one, since About and the title bar are
+            // answering the same question at two lengths.
+            Assert.Equal(marked, ReleaseChannelText.Full(channel) is not null);
         }
     }
 }
