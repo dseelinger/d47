@@ -155,7 +155,7 @@ public sealed class Phonemiser(IPronunciationDictionary? dictionary = null)
         if (segment.All(char.IsLetter) &&
             dictionary?.Lookup(segment.ToLowerInvariant()) is { Length: > 0 } known)
         {
-            return (known, Reading.Spoken);
+            return (Weakened(segment, known), Reading.Spoken);
         }
 
         // 1b. A word with an apostrophe inside it, which the dictionary holds none of: not one of
@@ -189,6 +189,51 @@ public sealed class Phonemiser(IPronunciationDictionary? dictionary = null)
         // 5. Anything left. Never wrong, and the only honest answer for a run nobody can say.
         return (SpokenLetters.SpellOut(segment, accent), Reading.Spelled);
     }
+
+    /// <summary>
+    /// Words the dictionary marks as stressed which English says unstressed inside a sentence
+    /// (2026-08-28).
+    /// <para>
+    /// <b>The dictionary stores citation forms — how a word is said on its own.</b> That is right
+    /// for a lookup and wrong for a sentence: read back, <em>"JOHN DEPARAGON is <b>in</b>
+    /// Kamitra"</em> and <em>"you <b>have</b> 256 tonnes"</em> put the emphasis on the preposition
+    /// and the auxiliary, which is not a thing a person does.
+    /// </para>
+    /// <para>
+    /// <b>This is a small change and it is worth saying how small.</b> Measured over ten lines d47
+    /// actually said, <b>9 of 84</b> stress marks land on one of these — 11%. It was reached for as
+    /// a fix for the <em>density</em> of marks, which it is not: the dictionary already leaves most
+    /// function words weak, and the remaining marks are on content words where they belong. What it
+    /// removes is nine <em>misplaced</em> prominences, which are audible out of proportion to their
+    /// number because a wrongly stressed preposition is jarring in a way a correctly stressed noun
+    /// is not.
+    /// </para>
+    /// <para>
+    /// <b>What is deliberately not here.</b> <c>no</c> and <c>not</c>, because negation is the one
+    /// thing a sentence most needs to carry. <c>one</c>, which is a number far more often than a
+    /// pronoun in anything d47 says. <c>this</c>, <c>that</c>, <c>these</c> and <c>those</c>,
+    /// because a demonstrative is usually pointing at something and pointing is emphasis. Each of
+    /// those would be wrong more often than right, which is the whole test for being on this list.
+    /// </para>
+    /// </summary>
+    private static readonly HashSet<string> Weak = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "a", "an", "the",
+        "of", "to", "in", "on", "at", "by", "for", "with", "from", "into", "onto", "than",
+        "and", "or", "but", "as",
+        "is", "are", "was", "were", "be", "been", "am", "has", "have", "had",
+        "will", "would", "shall", "should", "can", "could", "may", "might", "must",
+        "do", "does", "did",
+        "it", "its", "he", "she", "they", "them", "we", "us", "you",
+        "my", "your", "our", "their", "his", "her",
+    };
+
+    /// <summary>
+    /// One dictionary reading, with its stress marks dropped where the word is one English says
+    /// weak. Everything else comes back exactly as the dictionary wrote it.
+    /// </summary>
+    private static string Weakened(string word, string ipa) =>
+        Weak.Contains(word) ? ipa.Replace("ˈ", string.Empty).Replace("ˌ", string.Empty) : ipa;
 
     /// <summary>
     /// What a stem sounds like, by the two rungs that answer rather than spell — the dictionary,
