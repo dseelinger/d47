@@ -1,4 +1,4 @@
-namespace D47.Core.Conversation;
+﻿namespace D47.Core.Conversation;
 
 /// <summary>
 /// What one provider offers and what talking to it costs in privacy. Declared as data so the
@@ -173,7 +173,20 @@ public static class LlmProviderCatalog
 
             // Every id here is one the price table can quote, which is what the field's contract
             // requires. Anything else is reachable by typing it and is priced as unknown.
-            Models = ["gpt-5.6-terra", "gpt-5.6-sol", "gpt-5.6-luna", "gpt-5.5", "gpt-5.4-mini"],
+            //
+            // Last checked against the published list on 2026-08-18, the day the price table
+            // beside it was read from developers.openai.com. Stated because the list's freshness
+            // is what a Commander shops on and OpenAI renames its tiers freely — 5.4's mini and
+            // nano became 5.6's terra, sol and luna — so a list nobody has dated is one nobody
+            // can tell is stale.
+            //
+            // <b>The nano tier is here because the price table quotes one</b>
+            // (<a href="https://github.com/dseelinger/d47/issues/151">#151</a>). Offering mini
+            // and not nano read as an oversight rather than as curation, and it left the cheapest
+            // OpenAI id d47 can price off the list a cost-shopping Commander is looking at.
+            // gpt-5.4 and gpt-5 are still deliberately absent: the list is short on purpose and
+            // the 5.6 family covers both of their price points.
+            Models = ["gpt-5.6-terra", "gpt-5.6-sol", "gpt-5.6-luna", "gpt-5.5", "gpt-5.4-mini", "gpt-5.4-nano"],
 
             // Responses is spoken at its own address by xAI and OpenRouter as well, so reaching
             // Grok is a base URL and a model name rather than a third implementation.

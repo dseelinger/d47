@@ -2399,7 +2399,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             items.Add(row.BareDefaultFor(_settings!.Current) is { } bare ? $"(default: {bare})" : "(default)");
         }
 
-        items.AddRange(choices.Select(row.LabelForChoice));
+        // One describer for the whole list rather than one call per item: a row may label a
+        // choice against the others beside it — the model rows mark the cheapest of what is
+        // offered — and that is a property of the list, not of the line (#152).
+        items.AddRange(choices.Select(row.DescriberFor(_settings!.Current)));
         combo.ItemsSource = items;
 
         var offset = clearable ? 1 : 0;
@@ -2632,11 +2635,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             var current = _settings!.Read(row.Key);
             value.Text = current is null
                 ? $"({row.BareDefaultFor(_settings.Current) ?? "not set"})"
-                : row.LabelForChoice(current);
+                : row.LabelForChoice(current, _settings.Current);
 
             // The button is one line in a column; a model id or a resolved device name is
             // routinely longer than it. Chosen or defaulted, the whole string is on the pointer.
-            ToolTip.SetTip(button, current is null ? null : row.LabelForChoice(current));
+            ToolTip.SetTip(button, current is null ? null : row.LabelForChoice(current, _settings.Current));
 
             if (current is null)
             {
@@ -2851,7 +2854,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 Prompt = row.Label,
                 Help = row.Help,
                 Choices = row.ChoicesFor(_settings.Current),
-                Describe = row.ChoiceLabel,
+
+                // Read at open like the choices themselves: a label can depend on the provider
+                // serving the list right now, and on the rest of the list beside it (#152).
+                Describe = row.DescriberFor(_settings.Current),
                 Current = _settings.Read(row.Key),
                 DefaultDisplay = row.IsClearable ? row.BareDefaultFor(_settings.Current) : null,
                 AllowsFreeText = row.AllowsFreeText,

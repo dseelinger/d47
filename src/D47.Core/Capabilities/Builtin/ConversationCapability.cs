@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
 
@@ -229,6 +229,28 @@ public static class ConversationCapability
     /// for a caller with nobody to ask — every test, and the app before the first handshake
     /// answers — which leaves the picker exactly as it was.
     /// </param>
+    /// <summary>
+    /// How both model rows write a choice: the id, then its price, then whichever of <em>the
+    /// provider's default</em> and <em>cheapest here</em> apply
+    /// (<a href="https://github.com/dseelinger/d47/issues/152">#152</a>).
+    /// <para>
+    /// One function shared by the two rows rather than a copy on each, which is the whole of
+    /// "the same words from one source": the conversation model and the quiet one are chosen
+    /// from the same list against the same rates, and two labels that agreed on the day they
+    /// were written is not the same as one that cannot disagree.
+    /// </para>
+    /// <para>
+    /// <see cref="PriceTable.Default"/> because that is what the app hands every other pricing
+    /// caller — the turn loop, the spend dialog, the logbook's estimate. A row quoting a
+    /// different table would be a picker disagreeing with the bill.
+    /// </para>
+    /// </summary>
+    private static Func<string, string> Describer(D47Settings settings) =>
+        ModelChoice.Describer(
+            LlmProviderCatalog.Selected(settings.Llm.Provider),
+            settings.Llm.Endpoint,
+            PriceTable.Default);
+
     private static IReadOnlyList<SettingRow> BuildSettingRows(
         Func<string, CancellationToken, Task<SecretCheck>>? verifyKey,
         Func<IReadOnlyList<string>>? endpointModels = null)
@@ -344,6 +366,12 @@ public static class ConversationCapability
 
                     return known.Count > 0 ? known : endpointModels?.Invoke() ?? [];
                 },
+
+                // What each one costs, which is the fact the row is chosen on and the one it
+                // never said (#152). Derived from the same table the spend dialog bills
+                // against, so the price beside a model and the price on the invoice are one
+                // number rather than two that agree today.
+                ChoiceLabelSource = Describer,
                 AppliesWhen = s => LlmProviderCatalog.Selected(s.Llm.Provider).Id != LlmProviderCatalog.NoneId,
                 Binding = new SettingBinding
                 {
@@ -375,6 +403,12 @@ public static class ConversationCapability
 
                     return known.Count > 0 ? known : endpointModels?.Invoke() ?? [];
                 },
+
+                // The same words as the row above, from the same source. This row is where a
+                // Commander is most likely to be shopping on price — a cheaper model here costs
+                // nothing in cache and saves most of what d47 spends when nobody is talking to
+                // it — so a picker that would not say which one is cheaper is worst here (#152).
+                ChoiceLabelSource = Describer,
                 AppliesWhen = s => LlmProviderCatalog.Selected(s.Llm.Provider).Id != LlmProviderCatalog.NoneId,
 
                 // No voice commands, and not for want of a phrase. A model id cannot be
