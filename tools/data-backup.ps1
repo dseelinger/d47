@@ -61,11 +61,19 @@ param(
 
     [string] $Restore,
 
+    # **Never zero** (<https://github.com/dseelinger/d47/issues/171>). -Keep 0 turned the backup
+    # command into a delete-all-snapshots command, which is one typo away in an unattended
+    # invocation and is not undoable: the trim uses Remove-Item -Force, not the recycle bin.
+    [ValidateRange(1, 100)]
     [int] $Keep = 10,
 
     [switch] $IncludeModels,
 
     [string] $Label,
+
+    # A snapshot the trim must not drop, by full path. Set only by the restore path below, on
+    # itself.
+    [string] $Protect,
 
     [string] $InstallRoot = (Join-Path $env:LOCALAPPDATA 'Programs\d47')
 )
@@ -183,8 +191,15 @@ if ($Restore) {
 
     # Before, not after. Putting the wrong one back is the mistake this is most likely to be used
     # to fix, and it must not be the one thing that cannot be undone.
+    # **-Protect is what stops the deepest rollback destroying itself**
+    # (<https://github.com/dseelinger/d47/issues/171>). At the steady state this tool creates —
+    # ten held, one per deploy — the pre-restore snapshot is an eleventh, so the trim drops the
+    # oldest. When the Commander reached for the oldest, that was the file about to be read, and
+    # Expand-Archive then threw on a path that no longer existed under ErrorActionPreference Stop.
+    # The restore that reaches deepest was the one that self-destructed, which is the exact
+    # opposite of this tool's own promise that putting the wrong one back is itself undoable.
     Write-Step 'Snapshotting what is there now, first'
-    & $PSCommandPath -InstallRoot $InstallRoot -Keep $Keep -Label 'pre-restore'
+    & $PSCommandPath -InstallRoot $InstallRoot -Keep $Keep -Label 'pre-restore' -Protect $wanted.FullName
 
     Write-Step "Restoring $($wanted.Name)"
 
@@ -257,8 +272,12 @@ if (-not $IncludeModels) {
 $held = @(Get-Snapshots)
 $excess = $held.Count - $Keep
 
+# The cap still holds — what changes is which one goes. A protected snapshot is passed over and the
+# next oldest is dropped in its place, so a restore does not quietly raise the ceiling either.
+$droppable = @($held | Where-Object { $_.FullName -ne $Protect })
+
 if ($excess -gt 0) {
-    foreach ($old in $held | Select-Object -First $excess) {
+    foreach ($old in $droppable | Select-Object -First $excess) {
         Write-Note "dropping $($old.Name)"
         Remove-Item $old.FullName -Force
     }

@@ -78,7 +78,17 @@ jobs:
             echo "::warning title=No CHANGELOG entry::CHANGELOG.md has no '## $version' section, so this release falls back to generated notes. Add the section and the next release will use it."
           fi
 
-      - run: dotnet test -c Release
+      # **No `dotnet test` here, and that is deliberate**
+      # (https://github.com/dseelinger/d47/issues/169). release.ps1 waits for ci.yml to go green
+      # on the merge commit and then tags *that commit by name*, so by the time this workflow
+      # runs, the suite has already passed on exactly this tree. Re-running it cost a full serial
+      # suite on every release's critical path, and it carried a hazard of its own: a flaky
+      # failure here lands *after* the tag is published, which leaves a signed tag with no Release
+      # behind it — the one failure this repository has recorded as costing a version number,
+      # because a published tag never moves.
+      #
+      # It was not pure waste before the tag was pinned. It was the only thing standing between a
+      # commit that arrived mid-wait and a published Release. Pinning removed that job from it.
 
       # Publish settings live in D47.App.csproj so this needs no flags.
       - run: dotnet publish src/D47.App -c Release -p:Version=${{ steps.v.outputs.version }}

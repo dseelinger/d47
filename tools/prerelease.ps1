@@ -62,7 +62,15 @@ param(
 
     [switch] $Patch,
 
-    [switch] $DryRun
+    [switch] $DryRun,
+
+    # Handed straight to release.ps1 (<https://github.com/dseelinger/d47/issues/170>). Without
+    # these the unattended flow could say nothing at all to the script it hands over to: it always
+    # paid for the local suite, and a dirty tree died at release.ps1's commit step naming a switch
+    # this command had no way to pass.
+    [switch] $Tests,
+
+    [string] $Message
 )
 
 Set-StrictMode -Version Latest
@@ -130,6 +138,7 @@ try {
     $phaseLabel = 'phase'
     $landed = @()
     $closedRequests = @()
+    $unreadable = @()
 
     foreach ($number in @($mentioned)) {
         try {
@@ -137,7 +146,16 @@ try {
                 gh issue view $number --repo dseelinger/d47 --json number,labels 2>&1
             }
 
-            if ($LASTEXITCODE -ne 0) { continue }
+            if ($LASTEXITCODE -ne 0) {
+                # **Warned, not swallowed** (<https://github.com/dseelinger/d47/issues/172>). A
+                # silent continue here is how an offline or unauthenticated run reads zero labels
+                # and calls a phase release a Patch — the exact wrong-version mistake this command
+                # exists to prevent, and a published tag never moves, so the number is spent. The
+                # catch below has always said so; this path did not.
+                $unreadable += $number
+                Write-Warning "Could not read #${number}'s labels (gh exited $LASTEXITCODE), so it did not count toward the decision."
+                continue
+            }
 
             $issue = $raw | ConvertFrom-Json
             $labels = @($issue.labels | ForEach-Object { $_.name })
@@ -150,8 +168,21 @@ try {
             }
         }
         catch {
+            $unreadable += $number
             Write-Warning "Could not read #${number}'s labels, so it did not count toward the decision."
         }
+    }
+
+    # **Refuse to decide rather than default to Patch.** Every lookup having failed does not mean
+    # nothing landed; it means nothing is known, and the two are indistinguishable from the
+    # decision's point of view. Failing toward asking costs a rerun. Failing toward a guess costs a
+    # version number, permanently (<https://github.com/dseelinger/d47/issues/172>).
+    if (@($mentioned).Count -gt 0 -and $unreadable.Count -eq @($mentioned).Count) {
+        throw @"
+None of the $($unreadable.Count) issue(s) closed since $lastTag could be read, so there is nothing
+to decide a minor from a patch on. Check `gh auth status` and the network, then run this again —
+or say which you meant with -Minor or -Patch.
+"@
     }
 
     foreach ($phase in $landed) {
@@ -203,7 +234,15 @@ try {
         Write-Warning "CHANGELOG.md has no '## $next' section."
         Write-Note 'The tag annotation and the release body are both read out of it, so write it'
         Write-Note 'first. Nothing has been committed, tagged or pushed.'
-        return
+
+        # Nonzero, because "wrote a changelog section and cut a pre-release" and "did nothing at
+        # all" were the same answer to anything reading the exit code
+        # (<https://github.com/dseelinger/d47/issues/172>).
+        #
+        # This check sits above the -DryRun stop on purpose, so a dry run reports a missing section
+        # nonzero too. That is the useful answer rather than a leak: a dry run exists to find out
+        # whether the real run would work, and this is the one thing that stops it.
+        exit 1
     }
 
     Write-Note "CHANGELOG.md has its '## $next' section."
@@ -215,7 +254,20 @@ try {
 
     Write-Step "Handing over to release.ps1 $($kind.ToLowerInvariant()) -PreRelease"
 
-    & (Join-Path $PSScriptRoot 'release.ps1') $kind -PreRelease -Yes
+    $handover = @($kind, '-PreRelease', '-Yes')
+
+    if ($Tests) { $handover += '-Tests' }
+    if ($Message) { $handover += @('-Message', $Message) }
+
+    & (Join-Path $PSScriptRoot 'release.ps1') @handover
+
+    # **The last statement of the unattended chain, and it is read by exit code**
+    # (<https://github.com/dseelinger/d47/issues/172>). Without this, a release.ps1 that threw —
+    # including the timeout that leaves an unmarked build heading for latest — reported success to
+    # whatever ran `prerelease`.
+    if ($LASTEXITCODE -ne 0) {
+        exit $LASTEXITCODE
+    }
 }
 finally {
     Pop-Location
