@@ -58,11 +58,16 @@ public static class TestSurface
     /// What the local voice's download button does. A fetch that returns at once on every normal
     /// run, and a controllable one for the test about what the row shows while it is running.
     /// </param>
+    /// <param name="flight">
+    /// What the audio flight recorder has kept, which is what makes the Privacy recording row
+    /// exist at all (#164). Null on every normal run, and on every test that is not about it.
+    /// </param>
     public static (SettingsService Settings, ViewStateStore ViewState, AppPaths Paths, CapabilityRegistry Registry, SecretStore Secrets) CreateFull(
         Func<string>? coverage = null,
         D47.Core.Persona.PersonaHost? personas = null,
         IReadOnlyList<VoiceInfo>? voices = null,
-        LongPress? localVoice = null)
+        LongPress? localVoice = null,
+        D47.Core.Diagnostics.Flight.FlightLog? flight = null)
     {
         var root = TempFolders.Create("d47-app-tests");
         var paths = new AppPaths(root);
@@ -147,7 +152,8 @@ public static class TestSurface
             // built without them is not the registry that ships — which is how four button-only
             // rows reached a release that could not start. Same trap the ship cores above are
             // real for, one capability along.
-            about: D47.Core.Capabilities.Builtin.AboutSurface.Inert));
+            about: D47.Core.Capabilities.Builtin.AboutSurface.Inert,
+            flight: flight));
 
         built = registry;
 
@@ -168,9 +174,10 @@ public static class TestSurface
         Func<string>? coverage = null,
         D47.Core.Persona.PersonaHost? personas = null,
         IReadOnlyList<VoiceInfo>? voices = null,
-        LongPress? localVoice = null)
+        LongPress? localVoice = null,
+        D47.Core.Diagnostics.Flight.FlightLog? flight = null)
     {
-        var (settings, viewState, paths, _, _) = CreateFull(coverage, personas, voices, localVoice);
+        var (settings, viewState, paths, _, _) = CreateFull(coverage, personas, voices, localVoice, flight);
         return (settings, viewState, paths);
     }
 

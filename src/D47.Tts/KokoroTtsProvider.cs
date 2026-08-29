@@ -93,13 +93,53 @@ public sealed class KokoroTtsProvider : ITtsProvider, IDisposable
         CancellationToken cancellationToken = default) =>
         Task.Run(() => Speak(text, voice, cancellationToken), cancellationToken);
 
+    /// <summary>
+    /// The phonemes this line will actually be spoken as
+    /// (<a href="https://github.com/dseelinger/d47/issues/164">#164</a>).
+    /// <para>
+    /// The one provider that has an answer to this, because it is the one that is handed
+    /// phonemes rather than words — which is also why the answer is worth recording: everything
+    /// that can go wrong between the text and the sound goes wrong here.
+    /// </para>
+    /// <para>
+    /// The dictionary without the model. A caller asking what a line would be pronounced as must
+    /// not pay seconds of session load for it, and the recorder asks after the line has already
+    /// been spoken, when the answer is wanted for a row rather than for a sound.
+    /// </para>
+    /// </summary>
+    public string? Phonemes(string text, VoiceSelection voice)
+    {
+        ArgumentNullException.ThrowIfNull(voice);
+
+        if (!KokoroAssets.IsInstalled(_folder))
+        {
+            return null;
+        }
+
+        Phonemiser phonemiser;
+
+        lock (_gate)
+        {
+            phonemiser = LoadPhonemiser();
+        }
+
+        return phonemiser.ToPhonemes(text, VoiceIdFor(voice));
+    }
+
+    /// <summary>
+    /// The voice actually spoken in: the chosen one where Kokoro has it, and its own default
+    /// where it does not. Extracted so the phoneme trace names the same voice the sound did.
+    /// </summary>
+    private static string VoiceIdFor(VoiceSelection voice) =>
+        voice.VoiceId is { Length: > 0 } chosen && KokoroAssets.VoiceIds.Contains(chosen)
+            ? chosen
+            : "af_heart";
+
     private AudioClip Speak(string text, VoiceSelection voice, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var voiceId = voice.VoiceId is { Length: > 0 } chosen && KokoroAssets.VoiceIds.Contains(chosen)
-            ? chosen
-            : "af_heart";
+        var voiceId = VoiceIdFor(voice);
 
         var (session, vocabulary, phonemiser) = Load();
 
@@ -143,15 +183,22 @@ public sealed class KokoroTtsProvider : ITtsProvider, IDisposable
 
             _session ??= new InferenceSession(Path.Combine(_folder, "model.onnx"));
             _vocabulary ??= ReadVocabulary();
-            _phonemiser ??= new Phonemiser(PhonemeDictionary.Read(
-                Path.Combine(_folder, "phoneme_dict.json"), _logger));
+            var phonemiser = LoadPhonemiser();
 
             _logger.LogInformation(
                 "The local voice is loaded ({Milliseconds} ms)", started.ElapsedMilliseconds);
 
-            return (_session, _vocabulary, _phonemiser);
+            return (_session, _vocabulary, phonemiser);
         }
     }
+
+    /// <summary>
+    /// The dictionary, built once and kept. <b>The caller holds <c>_gate</c></b> — it is
+    /// reached both by a full load and by a phoneme trace that wants no model at all.
+    /// </summary>
+    private Phonemiser LoadPhonemiser() =>
+        _phonemiser ??= new Phonemiser(PhonemeDictionary.Read(
+            Path.Combine(_folder, "phoneme_dict.json"), _logger));
 
     /// <summary>
     /// The phoneme vocabulary, read from the file rather than transcribed into the source: a

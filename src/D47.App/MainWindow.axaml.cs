@@ -873,7 +873,13 @@ public partial class MainWindow : Window
                 _host.Logbook,
 
                 // And the cores the Commander wrote themselves (remediation.md 11, item 9).
-                _host.OwnPersonas);
+                _host.OwnPersonas,
+
+                // And what the audio flight recorder kept, when this process was asked to record
+                // (#164). Null on every ordinary run, and the row is then absent too.
+                _host.FlightRecorder is { } recording
+                    ? (recording.Log, (Func<DateTimeOffset>)(() => DateTimeOffset.Now))
+                    : null);
 
             // The gap reaction happens in the host, on whatever thread resolved the switch, and
             // the affordance it belongs to is a row on this surface. Joined here because this is

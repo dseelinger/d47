@@ -242,4 +242,22 @@ public interface ITtsProvider
     /// </para>
     /// </summary>
     string Billable(string text) => text;
+
+    /// <summary>
+    /// What this provider will actually be given to pronounce, where that is phonemes rather
+    /// than the text itself. Null for every provider that takes text, which is all of them
+    /// except the local voice.
+    /// <para>
+    /// It exists for the audio flight recorder
+    /// (<a href="https://github.com/dseelinger/d47/issues/164">#164</a>). A mispronunciation
+    /// heard in the headset is otherwise reconstructed backwards to the phonemes that caused it,
+    /// one guess at a time; recorded beside the audio it is a diagnosis. Null is the honest
+    /// answer for a provider that was handed words, and the recorder shows the column empty
+    /// rather than inventing a transcription nobody spoke.
+    /// </para>
+    /// <para>
+    /// Asked only while something is recording, so a provider is free to do real work here.
+    /// </para>
+    /// </summary>
+    string? Phonemes(string text, VoiceSelection voice) => null;
 }

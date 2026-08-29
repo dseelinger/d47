@@ -12,7 +12,7 @@
     Snapshots live in `data\backups\`, newest last, ten kept. A zip is written to TEMP and moved in,
     because writing an archive into the folder being archived is a race with itself.
 
-    **Three folders are left out, and one of them is the whole reason this is affordable.**
+    **Four folders are left out, and one of them is the whole reason this is affordable.**
 
       `models\`    1,064 MB of the installed 1,072 — the local voice and the Whisper models. They
                    are downloaded, not written by d47, and are identical across versions. Ten
@@ -20,6 +20,8 @@
       `logs\`      Churn, and the running app holds today's file open. Read them where they are.
       `updates\`   Downloaded installers, re-fetchable by name with `get-ver`.
       `backups\`   Itself, or each snapshot would contain every snapshot before it.
+      `flight\`    The audio flight recorder's clips (#164). Disposable evidence rather than
+                   Commander data, capped and off unless it was asked for.
 
     `audio\` is **kept**: the Commander's own cues, beds and ambience are theirs and nothing else
     holds a copy.
@@ -91,7 +93,7 @@ $backups = Join-Path $data 'backups'
 
 # Named rather than spelled out at each use, so the two lists that must agree — what is archived and
 # what is skipped on the way back in — are one list.
-$Skip = @('backups', 'logs', 'updates') + $(if ($IncludeModels) { @() } else { @('models') })
+$Skip = @('backups', 'flight', 'logs', 'updates') + $(if ($IncludeModels) { @() } else { @('models') })
 
 function Get-Payload {
     param([string] $Root)
@@ -265,7 +267,7 @@ $size = (Get-Item (Join-Path $backups $name)).Length
 Write-Note "$($payload.Count) files, $('{0:N0}' -f ($size / 1KB)) KB"
 
 if (-not $IncludeModels) {
-    Write-Note 'models\, logs\ and updates\ were left out — downloaded, not written by d47.'
+    Write-Note 'models\, logs\, flight\ and updates\ were left out — downloaded or disposable, not Commander data.'
 }
 
 # Oldest first, so what is dropped is what is dropped.
