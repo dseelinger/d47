@@ -27,6 +27,94 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.92.0 — 2026-08-29 — The debrief drafts, the Commander adopts, and the voice gets its cores
+
+Six issues, four parallel sessions, zero merge conflicts.
+[#162](https://github.com/dseelinger/d47/issues/162) builds the debrief pass;
+[#182](https://github.com/dseelinger/d47/issues/182) finds and removes the floor under
+transcription; [#183](https://github.com/dseelinger/d47/issues/183) and
+[#184](https://github.com/dseelinger/d47/issues/184) teach the number and letter rungs their next
+lessons; [#185](https://github.com/dseelinger/d47/issues/185) and
+[#186](https://github.com/dseelinger/d47/issues/186) finish the release tooling review's remainder.
+
+### The debrief pass: corrections become standing directions, adopted by hand (#162)
+
+At the end of a session, d47 reads what the Commander said back over the flight — arithmetic over
+words, no model, nothing leaving the machine — and drafts standing directions from the moments of
+pushback: *"stop calling it that"*, *"shorter answers in combat"*. Each proposal quotes the
+Commander's own sentence, and the new debrief pane shows the exact block that would enter the
+prompt, rendered by the same code that builds it. **Adoption is the only road**: a direction's
+tier is computed — adopted means Stated, everything else stays Inferred — and there is
+deliberately no "adopt automatically" row, no advertised tool, and no way for game text to reach a
+proposal: the extractor reads the Commander's voice alone, and the same hostile sentence planted
+as an in-game message extracts nothing. Speech cut off mid-line and warnings silenced seconds
+after firing surface as *questions*, three occurrences to earn one, never as silent adaptation.
+Adopted directions enter the prompt's cached region at the next session, never mid-flight — the
+latch, not a convention, is what Phase 54's 23x measurement demanded.
+
+### Four threads on a twenty-four core machine (#182)
+
+[#182](https://github.com/dseelinger/d47/issues/182) asked what share of transcription's flat
+three-second cost belonged to the name-hint prompt. The answer is a sixth of it, and the prime
+suspect is acquitted — but the measurement that acquitted it found the floor somewhere nobody had
+looked. **whisper.cpp defaults to `min(4, hardware_concurrency)` threads and d47 had never
+overridden it**, so a 24-core machine was transcribing on four. `small.en` now answers in **one
+second where it took three**; Tiny in 0.2 s, Base in 0.4 s.
+
+Sixteen threads is where the curve flattens — twenty-four bought 11 ms more — and four cores are
+left for Elite on purpose. On a small machine the rule resolves to four, which is exactly what
+whisper.cpp was already doing, so nothing anywhere gets slower. The transcript is identical at
+every thread count; that was checked rather than assumed, because `ggml` reduces across threads
+and the arithmetic is not bit-identical.
+
+The rest is written down in [docs/spikes/transcription-floor.md](docs/spikes/transcription-floor.md),
+because three of the four things it settles are negative results and negative results are what get
+re-litigated. The hints cost about 8 ms each. **Whisper encodes a fixed 30-second window whatever
+you said into it** — a quarter-second of audio costs what twenty-nine seconds costs, and thirty-one
+costs twice that — which is the flat cost the issue inferred, located. Rebuilding the processor on a
+changed hint set costs 90 ms, so caching the encoded prompt is a fix for a problem that is not
+there. And the prompt cap sits exactly on `ProperNouns.Limit`: past sixty hints the cost stops
+rising and never resumes, so raising that cap would buy nothing — the names past it are not slow,
+they are ignored.
+
+**Two things the measurement found and did not fix**, both recorded in the finding: the GPU toggle
+loads without complaint, reports success and runs on the CPU anyway — only CPU natives ship, and
+`UsingGpu` is assigned from the flag that was asked for rather than from anything the native side
+said, which is why #182's "the GPU is genuinely working" reads as it does. And which end of an
+overlong hint list Whisper drops is still unknown; d47 appends the shipped engineers last on the
+reasoning that the Commander's current system should win, and if the tail is what survives, that
+ordering achieves the opposite of what it intends.
+
+The transcription log line now carries the thread count, since that line is where this was
+diagnosed from and the one number that explained it was the one it did not have.
+
+---
+
+### The number and letter rungs, next lessons (#183, #184)
+
+A grouping comma is punctuation, validated before it is believed — a comma every three digits
+makes a number, anything else falls through honestly — so `6,680` is *six thousand six hundred
+eighty*, never *six six eight zero*. And a new ruling, decided by the token's own punctuation: a
+decimal or a grouping comma makes a **measured quantity**, whose whole part takes the full reading
+— `1234.5` is *one thousand two hundred thirty-four point five* — while bare digits keep the
+casual designation reading unchanged. The one known cost is written beside the ruling: `1234
+tonnes` still reads casually, and overruling is one predicate and one test. The letter rungs
+gained the silent-`gh` family (*light*, *night*, *fought*), `ngle` keeps its /ɡ/, syllabic `-le`
+widened, and `ck` joined `dge` on the short-vowel side — every reading counted against the shipped
+dictionary (181/182, 54/56, 63/64, 64/65) rather than judged by ear.
+
+### The tooling review's remainder (#185, #186)
+
+`release.ps1` now fetches tags and asks the remote whether the next number is taken *before
+anything commits* — the stale-checkout collision dies at the start instead of after the merge —
+and refuses to sweep a large untracked pile into a release commit without being told
+(`-IncludeUntracked`), which is the 2026-08-24 incident made structurally unrepeatable. **Both
+guards protect the release after the one that ships them.** `get-ver` reaches every published
+version by asking for it directly (the newest-100 page had silently orphaned everything below
+v0.37.0), refuses a downgrade on the `prerelease` spec, uses the `isLatest` pin it was already
+fetching, and its install step now waits, reads the installer's exit code, self-tests, and only
+then says "installed" — a cancelled wizard finally reads as cancelled.
+
 ## 0.91.0 — 2026-08-29 — The way back, written down and wired
 
 Fourteen issues, five parallel sessions, one landing.

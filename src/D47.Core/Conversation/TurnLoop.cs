@@ -1,4 +1,4 @@
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using D47.Core.Capabilities;
 using D47.Core.Configuration;
 using Microsoft.Extensions.Logging;
@@ -403,6 +403,19 @@ public sealed class TurnLoop(
     public string? Recall { get; set; }
 
     /// <summary>
+    /// Position 6 — the standing directions the Commander adopted by hand
+    /// (<a href="https://github.com/dseelinger/d47/issues/162">#162</a>).
+    /// <para>
+    /// <b>A value rather than a source, and for a stronger reason than <see cref="Recall"/>'s.</b>
+    /// That one must be as stale as the last time it changed; this one must be as stale as the
+    /// session, because adoption during a flight is expressly not allowed to move a byte above the
+    /// breakpoint. The owner assigns it once, from
+    /// <see cref="Debrief.StandingDirectionsSession"/>.
+    /// </para>
+    /// </summary>
+    public string? Directions { get; set; }
+
+    /// <summary>
     /// Live game state for the turn about to run. A source rather than a value: the tick loop
     /// is folding journal events continuously, so anything assigned here would be as old as the
     /// last time somebody remembered to assign it. Asked once per turn, at the moment the
@@ -637,6 +650,7 @@ public sealed class TurnLoop(
                     Persona = Persona,
                     AboutMe = AboutMe,
                     Recall = Recall,
+                    Directions = Directions,
                     History = [.. _history, .. pending],
                     LiveGameState = LiveGameState?.Invoke(),
                 },

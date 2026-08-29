@@ -1,4 +1,4 @@
-# TheApp — Architecture
+﻿# TheApp — Architecture
 
 **How** TheApp is built, and why those choices were made. What it does is described release by release in [CHANGELOG.md](CHANGELOG.md); nothing here restates that, and where a decision was forced by a particular phase, the phase is named.
 
@@ -381,7 +381,8 @@ The API renders `tools` → `system` → `messages`, and caching is a **prefix m
 | 3 | Persona block | Per persona selection |
 | 4 | Commander's About Me | Per session |
 | 5 | Remembered facts about the Commander | Rarely, and never per turn |
-| 6 | ← **cache breakpoint** | |
+| 6 | Standing directions the Commander adopted | At a session boundary, and never within one |
+| — | ← **cache breakpoint** | |
 | 7 | Conversation history | Per turn |
 | 8 | Live game state | Per turn |
 
@@ -394,6 +395,20 @@ safe is that the rendered text carries no system, no ship and no live figure, an
 only when the bytes actually change (`MemoryRecall`, `AppHost.ApplyRecall`). A cache miss then happens
 when the Commander flies somewhere they have history, which is the turn where the memory is the reason
 they wanted it.
+
+**Amended 2026-08-29, [#162](https://github.com/dseelinger/d47/issues/162).** Position 6 is new and
+it took the row the breakpoint was occupying; **the breakpoint moved down without taking a number**,
+so 7 and 8 still mean what a dozen comments across Core say they mean. Phase 31's amendment above
+renumbered instead, which was affordable then and is not now.
+
+Standing directions are drafted by an offline debrief pass, adopted by hand, and **latched when a
+session opens** (`StandingDirectionsSession`). That cadence is the whole reason they can sit up
+here: adopting one mid-flight writes a file and cannot move a byte of the cached prefix, which is
+what Phase 54 measured the cost of at 23x. A per-core direction rides in position 3 instead, which
+is the block that already changes when the core does — and it rides there rather than in the persona
+pack, because that writing lives twice and a runtime loop editing either copy would drift them
+apart. The pass writes one file and the check is on the path: it cannot reach the guardrails, the
+tool schemas or the pack (`DebriefWriteFence`).
 
 **Guardrails sit above the persona**, which is what makes *Personality on/off* safe: switching the persona off truncates block 3 and invalidates from there down, but the guardrails are in the cached region and are structurally unremovable by any setting.
 

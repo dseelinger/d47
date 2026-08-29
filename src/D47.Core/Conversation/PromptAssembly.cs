@@ -10,10 +10,15 @@ namespace D47.Core.Conversation;
 /// 3  persona               per persona selection
 /// 4  Commander's About Me  per session
 /// 5  remembered facts      rarely, and never per turn
+/// 6  standing directions   at a session boundary, and never within one
 ///    ---- cache breakpoint ----
 /// 7  conversation history  per turn
 /// 8  live game state       per turn
 /// </code>
+/// Position 6 was the breakpoint's own row until #162 put the standing directions in it. The
+/// breakpoint moved down without taking a number, which is why 7 and 8 are where they were: those
+/// two are cited by name in a dozen comments across Core, and a faithful renumbering would have
+/// repointed every one of them at something else.
 /// The order is the type's contract, not a convention a caller has to remember. Everything at
 /// or above the breakpoint is rendered by <see cref="RenderCachedSystemBlock"/>; everything
 /// below it is a separate property the provider attaches after the breakpoint.
@@ -80,6 +85,26 @@ public sealed record PromptAssembly
     /// </summary>
     public string? Recall { get; init; }
 
+    /// <summary>
+    /// Position 6 — the standing directions the Commander has adopted by hand
+    /// (<a href="https://github.com/dseelinger/d47/issues/162">#162</a>), rendered by
+    /// <see cref="Debrief.StandingDirections"/>.
+    /// <para>
+    /// <b>Last of the cached region, which is the strongest slot in it and is the point.</b> These
+    /// are instructions about manner — shorter answers in a fight, stop calling the ship that — and
+    /// a preference stated closest to the conversation is the one that survives a long session. It
+    /// is still four blocks below the guardrails, which is what matters: position 2 is above every
+    /// setting, every persona and this, and nothing here can loosen it.
+    /// </para>
+    /// <para>
+    /// <b>Changes at a session boundary and never within one.</b> Phase 54 measured per-turn churn
+    /// of the stable prefix at 23x, so the caller assigns this once, from
+    /// <see cref="Debrief.StandingDirectionsSession"/>, which is a latch rather than a convention.
+    /// Adopting a direction mid-flight writes a file and moves no byte of this.
+    /// </para>
+    /// </summary>
+    public string? Directions { get; init; }
+
     /// <summary>Position 7 — below the breakpoint, so it changes every turn for free.</summary>
     public IReadOnlyList<ConversationMessage> History { get; init; } = [];
 
@@ -92,8 +117,9 @@ public sealed record PromptAssembly
     public string? LiveGameState { get; init; }
 
     /// <summary>
-    /// Positions 2 through 5, in order. This is the text the cache breakpoint is placed on, so
-    /// its bytes must not vary for reasons other than a persona, an About Me or a recall change.
+    /// Positions 2 through 6, in order. This is the text the cache breakpoint is placed on, so
+    /// its bytes must not vary for reasons other than a persona, an About Me, a recall change or
+    /// a session boundary.
     /// </summary>
     public string RenderCachedSystemBlock()
     {
@@ -115,6 +141,15 @@ public sealed record PromptAssembly
         if (!string.IsNullOrWhiteSpace(Recall))
         {
             block.Append("\n\n").Append(Recall.Trim());
+        }
+
+        // Last, and below the recall for the same kind of reason the recall sits below About Me:
+        // the blocks above are about who the Commander is, and this one is about what they have
+        // asked for. Where they read as competing, the instruction they typed on purpose is the
+        // one read most recently.
+        if (!string.IsNullOrWhiteSpace(Directions))
+        {
+            block.Append("\n\n").Append(Directions.Trim());
         }
 
         return block.ToString();

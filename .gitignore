@@ -467,3 +467,6 @@ installer/*.exe
 data/
 /dev-install/
 /dev-data/
+
+# wrangler's machine-local state from Worker provisioning; never repository material
+worker/.wrangler/

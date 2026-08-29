@@ -155,6 +155,24 @@ public class TheStressMarkGoesBeforeTheVowelTests
     [InlineData("Deciange")]
     [InlineData("Shinrartah")]
     [InlineData("tah")]
+
+    // The four gaps of #184, for the same reason again. A coda that did not parse at all now does,
+    // which changes how many syllables a word has and therefore whether it is marked; a /ɡ/ has
+    // appeared after a coda; and the syllabic rule now moves a schwa past a consonant that used to
+    // be in the next syllable's onset — which is precisely the shape of change that put a mark in
+    // front of one in the first place.
+    [InlineData("light")]
+    [InlineData("lighter")]
+    [InlineData("thought")]
+    [InlineData("lightweight")]
+    [InlineData("single")]
+    [InlineData("angle")]
+    [InlineData("Kamitrangle")]
+    [InlineData("uncle")]
+    [InlineData("muscle")]
+    [InlineData("centre")]
+    [InlineData("tickle")]
+    [InlineData("Shinrancle")]
     public void WhereverTheMarkIsTheNextSoundIsAVowel(string word) => MarksAVowel(word);
 
     /// <summary>
@@ -245,6 +263,14 @@ public class TheStressMarkGoesBeforeTheVowelTests
     // is the fallback for a build whose dictionary never downloaded, and a decimal is said as often
     // as any number word above it.
     [InlineData("point")]
+
+    // And the scale words joined them with #184, which ruled that a measured quantity takes the
+    // full reading — so "thousand" is now a word this rung produces, and d47 reports credits in
+    // billions.
+    [InlineData("thousand")]
+    [InlineData("million")]
+    [InlineData("billion")]
+    [InlineData("trillion")]
     public void TheNumberWordsAreStillAllThere(string word) =>
         Assert.True(SpokenNumber.Sounds.ContainsKey(word), $"\"{word}\" is no longer in the table.");
 
@@ -303,6 +329,17 @@ public class TheStressMarkGoesBeforeTheVowelTests
     // instead — so every mark in one of these is a mark that was not being produced before.
     [InlineData("Perez Ring, LHS 2637 — 5.79 ly, 395 ls out, large pad.")]
     [InlineData("1 ly, 1.5 ly, 0.5, .79 and 128.5 tonnes.")]
+
+    // And the grouped numbers (#183), for exactly the same reason one issue later: "6,680" used to
+    // be spelled and now comes off the number rung, so every mark in one of these is new.
+    [InlineData("That will be 6,680 credits for 1,234 tonnes.")]
+    [InlineData("1,234.5 ly out, 9,876,543,210 credits, and 12,345 ls.")]
+
+    // And #184's, which reaches this file twice over: the scale words are marks the number rung had
+    // never produced, and "light", "single" and "uncle" are marks the rules had never produced
+    // because those words were spelled or read wrong.
+    [InlineData("Deciat is 1234.5 light years out, and that is a single jump.")]
+    [InlineData("The uncle at that angle thought 9,876,543,210 credits was a tight squeeze.")]
     public void TheReportedSentenceMarksNoConsonant(string line)
     {
         var said = new Phonemiser().ToPhonemes(line);

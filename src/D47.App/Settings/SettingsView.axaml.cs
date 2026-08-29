@@ -135,6 +135,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     private (D47.Core.Diagnostics.Flight.FlightLog Log, Func<DateTimeOffset> Now)? _flight;
 
     /// <summary>
+    /// What the debrief drafted, the clock an adoption is stamped with, and which core is aboard
+    /// (<a href="https://github.com/dseelinger/d47/issues/162">#162</a>). Null under the designer
+    /// and in a test that is not about it, and the button is then absent rather than dead.
+    /// </summary>
+    private (D47.Core.Debrief.DebriefBook Book, Func<DateTimeOffset> Now,
+        Func<D47.Core.Persona.Persona> Core)? _debrief;
+
+    /// <summary>
     /// The Commander's log (Phase 33). Null under the designer and in a test that is not
     /// about it, and the row then reads a folder with no way to write into it.
     /// </summary>
@@ -182,7 +190,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         D47.Core.Persona.OwnPersonaStore? ownPersonas = null,
 
         // At the end, by the rule the comment above records the cost of (#164).
-        (D47.Core.Diagnostics.Flight.FlightLog Log, Func<DateTimeOffset> Now)? flight = null)
+        (D47.Core.Diagnostics.Flight.FlightLog Log, Func<DateTimeOffset> Now)? flight = null,
+
+        // At the end, by the rule the comment above records the cost of (#162).
+        (D47.Core.Debrief.DebriefBook Book, Func<DateTimeOffset> Now,
+            Func<D47.Core.Persona.Persona> Core)? debrief = null)
     {
         _setUpKeys = setUpKeys;
         _downloadModel = downloadModel;
@@ -198,6 +210,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         _lore = lore;
         _memories = memories;
         _flight = flight;
+        _debrief = debrief;
         _logbook = logbook;
         _reserved = reservedPhrases ?? [];
 
@@ -1798,6 +1811,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             case SettingKind.Info when row.Key == PrivacyCapability.AudioFlightKey && _flight is not null:
                 return BuildAudioFlight(row);
 
+            // The tenth, and the only one behind which nothing is written down by D47 at all until
+            // the Commander presses something. Taking a proposal is the act that makes it their
+            // own word, so like the note and the fact above it, it lives where the tool surface
+            // cannot reach (#162).
+            case SettingKind.Info when row.Key == DebriefCapability.DirectionsKey && _debrief is not null:
+                return BuildDebrief(row);
+
             // An Info row that also clears the state it describes. Rendered from the row
             // rather than special-cased by key like the two above, because what is behind
             // this button is a method rather than a window the App has to own.
@@ -1896,6 +1916,43 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             }
 
             await new Controls.MemoryWindow(memories.Book, memories.Now).Over(owner);
+
+            // The window writes the file; this is what puts the new count on the row without
+            // waiting for something else to notice.
+            refresh();
+        };
+
+        var stack = new StackPanel { Spacing = 8, Children = { inset, open } };
+
+        return (stack, refresh, false);
+    }
+
+    /// <summary>
+    /// The debrief summary, plus the way into the proposals. Built like the memory row above and
+    /// for the same reason: what is behind the button becomes the Commander's own word by their
+    /// pressing it, and the panel is the only place that can happen (#162).
+    /// </summary>
+    private (Control, Action, bool) BuildDebrief(SettingRow row)
+    {
+        var (inset, refresh, _) = BuildInfo(row);
+
+        var open = new Button
+        {
+            Name = "OpenDebrief",
+            Content = "Open what D47 has drafted",
+            FontSize = TypeScale.Body,
+            Padding = new Thickness(10, 4),
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+
+        open.Click += async (_, _) =>
+        {
+            if (_debrief is not { } debrief || TopLevel.GetTopLevel(this) is not Window owner)
+            {
+                return;
+            }
+
+            await new Controls.DebriefWindow(debrief.Book, debrief.Now, debrief.Core).Over(owner);
 
             // The window writes the file; this is what puts the new count on the row without
             // waiting for something else to notice.

@@ -74,6 +74,13 @@ public static class Phonotactics
     [
         "ngths", "rlds", "ndst",
 
+        // <b>The silent gh</b> (#184). Without this row there was no coda for it at all: the parse
+        // took "gh", was left with a "t" that begins no syllable, backtracked to "g" and was left
+        // with "ht", and gave up — so "light" was not a sayable word and was spelled out letter by
+        // letter. Ahead of "gh" because the list is longest-first, and #155 rewrites "ly" to
+        // "light years" before any provider sees it, which makes this a word d47 says constantly.
+        "ght",
+
         "nch", "nge", "rch", "rsh", "rst", "rth", "sch", "sht", "sks", "sps", "sts",
         "tch", "ths", "cts", "lds", "lfs", "lks", "lms", "lps", "lts", "mps", "nds",
         "ngs", "nks", "nts", "ppt", "rds", "rks", "rls", "rms", "rns", "rps", "rts",

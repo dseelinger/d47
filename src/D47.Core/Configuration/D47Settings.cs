@@ -63,6 +63,12 @@ public sealed record D47Settings
     public MemorySettings Memory { get; init; } = new();
 
     /// <summary>
+    /// Whether d47 debriefs itself after a session, and what it does with what it finds
+    /// (<a href="https://github.com/dseelinger/d47/issues/162">#162</a>).
+    /// </summary>
+    public DebriefSettings Debrief { get; init; } = new();
+
+    /// <summary>
     /// How a Commander's log is written when one is asked for (Phase 33).
     /// </summary>
     public LogbookSettings Logbook { get; init; } = new();
@@ -182,6 +188,25 @@ public sealed record MemorySettings
     /// </para>
     /// </summary>
     public int ExpiryDays { get; init; } = 90;
+}
+
+/// <summary>
+/// The debrief pass (<a href="https://github.com/dseelinger/d47/issues/162">#162</a>).
+/// <para>
+/// <b>One switch, and there is deliberately no second one.</b> A row for "adopt what it drafts
+/// automatically" is the one setting this feature must not have: the merge gate is the whole
+/// design, and a toggle that removed it would put a loop that rewrites d47's own instructions one
+/// click away from every installation.
+/// </para>
+/// </summary>
+public sealed record DebriefSettings
+{
+    /// <summary>
+    /// Whether the pass runs at the end of a session at all. On by default, which is safe because
+    /// what it produces is a list nobody has agreed to: with this on and the pane never opened,
+    /// the prompt is byte-for-byte what it was.
+    /// </summary>
+    public bool Enabled { get; init; } = true;
 }
 
 /// <summary>

@@ -20,6 +20,7 @@ because getting the answer wrong would have shipped game data d47 invented.
 | [elevenlabs-voice-sources.md](elevenlabs-voice-sources.md) | What does an ElevenLabs account's voice list actually hold, is the picker empty on a fresh one, and does the named default survive? |
 | [openai-tts-language-and-speed.md](openai-tts-language-and-speed.md) | Does OpenAI's TTS drift language on Elite proper nouns, can it be told a language at all, and does `speed` do anything? Two noes and a yes, and one of them contradicts the published schema. |
 | [journal-corpus-soak.md](journal-corpus-soak.md) | Phases 17, 18 and 19 shipped in one day — what do 692,631 real events say about them? One fix, two reports, and a crash hunt that came back empty. |
+| [transcription-floor.md](transcription-floor.md) | Why does every transcription cost about three seconds whatever was said into it? The name hints were not it, and the floor turned out to be four threads. |
 
 The three engineering pages back Phase 14 `#102`, Phase 17 and Phase 20 in
 the phase it belongs to. The rest of this page is what a fresh pair of hands needs to carry that

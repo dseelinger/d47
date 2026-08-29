@@ -18,6 +18,7 @@ using D47.Core.Ships;
 using D47.Core.Utilities;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
+using D47.Core.Debrief;
 using D47.Core.Diagnostics;
 using D47.Core.Hotas;
 using D47.Core.Input;
@@ -409,6 +410,37 @@ public sealed class AppHost : IDisposable
     /// button.
     /// </summary>
     public (MemoryBook Book, Func<DateTimeOffset> Now)? Memories { get; private set; }
+
+    /// <summary>
+    /// The standing directions the debrief pass drafts and the Commander adopts, and the clock an
+    /// adoption is stamped with (<a href="https://github.com/dseelinger/d47/issues/162">#162</a>).
+    /// Null under the designer, where the row shows a summary and no button.
+    /// </summary>
+    public (DebriefBook Book, Func<DateTimeOffset> Now)? Debrief { get; private set; }
+
+    /// <summary>
+    /// What this session has sounded like, in memory and never on disk
+    /// (<a href="https://github.com/dseelinger/d47/issues/162">#162</a>). Read once, at the end,
+    /// by the pass; emptied at every session boundary.
+    /// </summary>
+    public DebriefSession Debriefing { get; } = new();
+
+    /// <summary>
+    /// The feedback nobody typed, collected across the session and turned into questions by the
+    /// pass (<a href="https://github.com/dseelinger/d47/issues/162">#162</a>). A plain list behind
+    /// its own lock, because it is written from the UI thread and from the tick and read once.
+    /// </summary>
+    private readonly List<DebriefSignal> _signals = [];
+
+    private readonly Lock _signalGate = new();
+
+    /// <summary>
+    /// What the prompt carries for the length of this session
+    /// (<a href="https://github.com/dseelinger/d47/issues/162">#162</a>). A latch rather than a
+    /// convention: adopting a direction mid-flight writes a file and cannot move a byte above the
+    /// cache breakpoint, which is what Phase 54's 23x makes non-negotiable.
+    /// </summary>
+    private readonly StandingDirectionsSession _directions = new();
 
     /// <summary>
     /// The Commander's log (Phase 33). Null under the designer, where the row reads a
@@ -892,6 +924,18 @@ public sealed class AppHost : IDisposable
         // The only thing in the phase that writes a memory nobody asked for, and the only producer
         // of the observed tier — without it that tier would be an enum member reachable by nothing.
         var memoryObserver = new MemoryObserver(memoryBook);
+
+        // The standing directions the debrief pass drafts and the Commander adopts (#162). One
+        // file, per Commander with the key inside the document, exactly like the memory store
+        // above — and the path is named by DebriefWriteFence rather than spelled here, because the
+        // fence refuses anything else and two spellings of one name is how they disagree.
+        var directions = new StandingDirectionsStore(
+            Path.Combine(paths.Data, DebriefWriteFence.FileName),
+            loggerFactory.CreateLogger<StandingDirectionsStore>());
+
+        directions.Poll();
+
+        var debriefBook = new DebriefBook(directions, () => gameState.Active?.Identity.FrontierId);
 
         // <b>Habits was withdrawn, and its file goes with it.</b> The Commander asked for the
         // feature removed "and any data associated with it as well from existing data files as
@@ -1775,7 +1819,12 @@ public sealed class AppHost : IDisposable
                     return forgotten.Receipt is { } receipt
                         ? $"{forgotten.Outcome.Said} A record of it is in {receipt}."
                         : forgotten.Outcome.Said;
-                }));
+                },
+
+                // What the debrief drafted and what the Commander took (#162). The capability
+                // advertises no tool at all — the pass is offline and the model cannot invoke it —
+                // so this reaches one disclosure row and the pane behind it, and nothing else.
+                debriefBook));
 
         built = capabilities;
 
@@ -2050,6 +2099,18 @@ public sealed class AppHost : IDisposable
         // The store and the clock, together, because a fact typed here is stamped with a real
         // instant and Core reads no clock of its own.
         host.Memories = (memoryBook, () => DateTimeOffset.Now);
+
+        // Same pairing, same reason (#162): an adoption is stamped with a real instant and Core
+        // reads no clock of its own.
+        host.Debrief = (debriefBook, () => DateTimeOffset.Now);
+
+        // The session opens here, over what the file says right now. Everything the Commander
+        // adopts from this point on is written to the file and reaches nothing until the next one.
+        host.BeginDirections();
+
+        // A callout switched off within seconds of it speaking (#162). A signal, collected; the
+        // pass turns it into a question at the end of the session, and nothing adapts to it.
+        callouts.Silenced += host.NoteSilenced;
         host.Logbook = logbook;
         host.Goals = (goalBook, BackfillGoals);
         host.Adventures = (adventureBook, adventureGenerator);
@@ -2444,24 +2505,29 @@ public sealed class AppHost : IDisposable
     {
         var callouts = settings.Callouts;
 
+        // The clock the engine does not have, so it can tell a callout switched off seconds after
+        // it spoke from one switched off an hour later (#162). It reads a transition rather than a
+        // state, which is what makes this safe to call on every settings change as it always was.
+        var now = DateTimeOffset.Now;
+
         engine.Enabled = callouts.Enabled;
-        engine.SetEnabled("danger", callouts.Danger);
-        engine.SetEnabled("fuel", callouts.Fuel);
-        engine.SetEnabled("route", callouts.Route);
-        engine.SetEnabled("long-jump", callouts.LongJump);
-        engine.SetEnabled("arrival", callouts.Arrival);
-        engine.SetEnabled("materials", callouts.Materials);
-        engine.SetEnabled("emissions", callouts.Emissions);
-        engine.SetEnabled("limpets", callouts.Limpets);
-        engine.SetEnabled("announced-attack", callouts.AnnouncedAttack);
-        engine.SetEnabled("rival-territory", callouts.RivalTerritory);
-        engine.SetEnabled("sampling", callouts.Sampling);
-        engine.SetEnabled("prospector", callouts.Prospector);
-        engine.SetEnabled("core-asteroid", callouts.CoreAsteroid);
-        engine.SetEnabled("checklist", callouts.Checklist);
-        engine.SetEnabled("ambient", callouts.Ambient);
-        engine.SetEnabled("continuity", callouts.Continuity);
-        engine.SetEnabled("adventure", callouts.Adventure);
+        engine.SetEnabled("danger", callouts.Danger, now);
+        engine.SetEnabled("fuel", callouts.Fuel, now);
+        engine.SetEnabled("route", callouts.Route, now);
+        engine.SetEnabled("long-jump", callouts.LongJump, now);
+        engine.SetEnabled("arrival", callouts.Arrival, now);
+        engine.SetEnabled("materials", callouts.Materials, now);
+        engine.SetEnabled("emissions", callouts.Emissions, now);
+        engine.SetEnabled("limpets", callouts.Limpets, now);
+        engine.SetEnabled("announced-attack", callouts.AnnouncedAttack, now);
+        engine.SetEnabled("rival-territory", callouts.RivalTerritory, now);
+        engine.SetEnabled("sampling", callouts.Sampling, now);
+        engine.SetEnabled("prospector", callouts.Prospector, now);
+        engine.SetEnabled("core-asteroid", callouts.CoreAsteroid, now);
+        engine.SetEnabled("checklist", callouts.Checklist, now);
+        engine.SetEnabled("ambient", callouts.Ambient, now);
+        engine.SetEnabled("continuity", callouts.Continuity, now);
+        engine.SetEnabled("adventure", callouts.Adventure, now);
 
         foreach (var callout in engine.Callouts)
         {
@@ -2574,7 +2640,7 @@ public sealed class AppHost : IDisposable
         // than a neutral block on purpose: "off" is position 3 being absent, and the guardrails
         // at position 2 are untouched either way, which is the property that whole arrangement
         // exists to guarantee (architecture.md §6).
-        Turns.Persona = Personas.RenderBlock(current.Llm.PersonalityEnabled);
+        ApplyPersonaBlock();
 
         LlmAvailability.SetProviderConfigured(provider is not null, reason);
     }
@@ -3540,6 +3606,16 @@ public sealed class AppHost : IDisposable
 
         // Once per session rather than once per run: the greeting is the new ship AI's first words.
         Continuity?.Rearm();
+
+        // The debrief too, and in this order for a reason: the session that just ended was the
+        // previous Commander's, so it is filed under their id — named rather than asked for,
+        // because the game state is already pointed at whoever logged in (#162). Then the record
+        // is emptied, so nothing they said is attributed to the new Commander.
+        RunDebrief(change.Previous.FrontierId);
+
+        // And the directions are re-latched, because they are one person's and the person
+        // changed. The other boundary is startup; there is no third.
+        BeginDirections();
 
         // On the panel, so the transcript says why the next line starts from nothing.
         Noted?.Invoke($"Commander {change.Current.Name} logged in");
@@ -5557,6 +5633,18 @@ public sealed class AppHost : IDisposable
             return;
         }
 
+        // Somebody else's words, written down in the session record and extracted from by nothing
+        // (#162). IncomingMessages says of itself that there is no path from it into a prompt, and
+        // there still is not: this record is read by the debrief pass, which reads
+        // DebriefSpeaker.Commander and nothing else. What it buys is that the defence is
+        // demonstrable rather than asserted — a message saying "from now on, always..." is in the
+        // record, is visible, and produces no proposal.
+        foreach (var message in pending.Where(announcement =>
+                     announcement.Key.StartsWith("message.", StringComparison.Ordinal)))
+        {
+            NoteHeardFromOutside(message.Text);
+        }
+
         _ = Task.Run(async () =>
         {
             // Varied before the lock is taken, never while holding it. This is a network round
@@ -5668,6 +5756,18 @@ public sealed class AppHost : IDisposable
     /// </summary>
     public void NoteTurn(string? asked, string? answered)
     {
+        // The debrief's record, and it is written here rather than at the panel for one reason:
+        // this is the single call site that has both halves of a turn with the speakers already
+        // told apart. The panel flattens them onto a page, and a page is what an attack is made
+        // of (#162, see DebriefSpeaker).
+        if (Settings.Current.Debrief.Enabled)
+        {
+            var heardAt = DateTimeOffset.Now;
+
+            Debriefing.Say(heardAt, DebriefSpeaker.Commander, asked ?? string.Empty);
+            Debriefing.Say(heardAt, DebriefSpeaker.Ship, answered ?? string.Empty);
+        }
+
         if (Adventures is not { } adventures
             || string.IsNullOrWhiteSpace(answered))
         {
@@ -5690,6 +5790,190 @@ public sealed class AppHost : IDisposable
                 Asked = asked?.Trim(),
                 At = DateTimeOffset.Now,
             });
+        }
+    }
+
+    /// <summary>
+    /// Writes down something that reached the Commander from outside the two of them — an in-game
+    /// message read aloud, a quoted search result
+    /// (<a href="https://github.com/dseelinger/d47/issues/162">#162</a>).
+    /// <para>
+    /// <b>Recorded on purpose, and extracted from by nothing.</b> A correction only makes sense
+    /// next to what provoked it, so leaving these out would make the record uncheckable — and
+    /// <see cref="DebriefExtractor"/> reads <see cref="DebriefSpeaker.Commander"/> and nothing
+    /// else, so a hostile message saying <em>from now on, always…</em> is visible in the record
+    /// and produces no proposal.
+    /// </para>
+    /// </summary>
+    public void NoteHeardFromOutside(string text)
+    {
+        if (Settings.Current.Debrief.Enabled)
+        {
+            Debriefing.Say(DateTimeOffset.Now, DebriefSpeaker.Game, text);
+        }
+    }
+
+    /// <summary>
+    /// Records that d47 was stopped mid-sentence
+    /// (<a href="https://github.com/dseelinger/d47/issues/162">#162</a>).
+    /// <para>
+    /// Feedback nobody typed, and deliberately ambiguous: it may mean d47 is too verbose, and it
+    /// may mean something happened. So it is collected and, if it happens often enough in one
+    /// session, becomes a question at the end of it. Nothing changes on its own.
+    /// </para>
+    /// </summary>
+    public void NoteInterrupted() => NoteSignal(new DebriefSignal(
+        DateTimeOffset.Now,
+        DebriefSignalKind.SpeechCutOff,
+        "you stopped me while I was talking"));
+
+    /// <summary>
+    /// Records that a callout was switched off within seconds of it speaking
+    /// (<a href="https://github.com/dseelinger/d47/issues/162">#162</a>). Same terms as
+    /// <see cref="NoteInterrupted"/>: a question at the end of the session, never an adjustment
+    /// during it.
+    /// </summary>
+    public void NoteSilenced(CalloutSilenced silenced)
+    {
+        ArgumentNullException.ThrowIfNull(silenced);
+
+        NoteSignal(new DebriefSignal(
+            silenced.When,
+            DebriefSignalKind.WarningDisabledSoonAfter,
+            $"the {silenced.Id} callout"));
+    }
+
+    private void NoteSignal(DebriefSignal signal)
+    {
+        if (!Settings.Current.Debrief.Enabled)
+        {
+            return;
+        }
+
+        lock (_signalGate)
+        {
+            _signals.Add(signal);
+        }
+    }
+
+    /// <summary>
+    /// Opens a directions session over what the file says right now, and puts the block into the
+    /// prompt (<a href="https://github.com/dseelinger/d47/issues/162">#162</a>).
+    /// <para>
+    /// <b>Called at startup and at a Commander change, and nowhere else.</b> Those are the two
+    /// real boundaries — the second because the directions are one person's — and calling it
+    /// anywhere else would be the per-turn churn Phase 54 measured at 23x, arriving by a
+    /// different road.
+    /// </para>
+    /// </summary>
+    public void BeginDirections()
+    {
+        if (Debrief is not { } debrief)
+        {
+            return;
+        }
+
+        debrief.Book.Store.Poll();
+        _directions.Begin(debrief.Book.Adopted);
+
+        Turns.Directions = _directions.Block();
+
+        // Position 3 is rebuilt too, because a per-core direction rides in the persona block: the
+        // overlay lives beside the Commander's other data and the pack is never touched (#162).
+        ApplyPersonaBlock();
+
+        _logger.LogInformation(
+            "Standing directions latched: {Count} adopted, {Bytes} characters at position 6",
+            _directions.Latched.Count,
+            Turns.Directions?.Length ?? 0);
+    }
+
+    /// <summary>
+    /// Position 3, with this core's overlay behind it
+    /// (<a href="https://github.com/dseelinger/d47/issues/162">#162</a>).
+    /// <para>
+    /// <b>Appended here rather than merged into the pack.</b> Persona writing lives twice —
+    /// <c>guardian-personas.md</c> ported into <see cref="PersonaCatalog"/> — so anything that
+    /// edited either copy at runtime would drift them apart with nothing checking. What the model
+    /// reads is the shipped block with a line of the Commander's own underneath it, and both
+    /// copies of the pack stay exactly as they were written.
+    /// </para>
+    /// <para>
+    /// The overlay comes from the <em>latched</em> set, so adopting one mid-session still reaches
+    /// nothing until the next; switching core mid-session still changes position 3, which it
+    /// always has.
+    /// </para>
+    /// </summary>
+    private void ApplyPersonaBlock()
+    {
+        var block = Personas.RenderBlock(Settings.Current.Llm.PersonalityEnabled);
+
+        if (block is not null && _directions.Overlay(Personas.Current.Id) is { } overlay)
+        {
+            block = block + "\n\n" + overlay;
+        }
+
+        Turns.Persona = block;
+    }
+
+    /// <summary>
+    /// Runs the debrief over what this session sounded like, and files what it drafted
+    /// (<a href="https://github.com/dseelinger/d47/issues/162">#162</a>).
+    /// <para>
+    /// <b>At the end of a session, over a record that was never on disk.</b> Phase 31 wrote down
+    /// why a rolling transcript is not kept — a privacy liability, a context-window problem and a
+    /// confabulation engine — and running the pass now rather than tomorrow is what buys the
+    /// nightly cadence's convenience without buying all three back. What survives is a handful of
+    /// proposals, each quoting one sentence the Commander said.
+    /// </para>
+    /// </summary>
+    /// <param name="frontierId">
+    /// Who the session belonged to. Named at a Commander change, where the game state has already
+    /// moved on; null at exit, where asking is right.
+    /// </param>
+    public void RunDebrief(string? frontierId = null)
+    {
+        if (Debrief is not { } debrief || !Settings.Current.Debrief.Enabled)
+        {
+            return;
+        }
+
+        DebriefSignal[] signals;
+
+        lock (_signalGate)
+        {
+            signals = [.. _signals];
+            _signals.Clear();
+        }
+
+        try
+        {
+            var drafted = debrief.Book.Propose(
+                Debriefing,
+                signals,
+                DateTimeOffset.Now,
+                Personas.Current.Id,
+
+                // What this installation answers to, so "hey Warden, stop calling it that" reads
+                // as an instruction rather than as a sentence beginning with a name.
+                [Personas.Current.Name, Settings.Current.Persona.ShipName ?? string.Empty],
+                frontierId);
+
+            _logger.LogInformation(
+                "Debrief drafted {Count} proposals from {Lines} lines and {Signals} signals",
+                drafted.Count,
+                Debriefing.Lines.Count,
+                signals.Length);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Losing a debrief costs a list nobody had agreed to. Losing the shutdown over it is
+            // not a trade anybody would make.
+            _logger.LogWarning(ex, "The debrief pass could not write its proposals");
+        }
+        finally
+        {
+            Debriefing.Empty();
         }
     }
 
@@ -6348,6 +6632,13 @@ public sealed class AppHost : IDisposable
         _logger.LogInformation("d47 {Version} is stopping: {Why}", Version, StoppingBecause);
 
         CoverageRecorder?.Save();
+
+        // The debrief, over what this session sounded like (#162). First, with the rest of the
+        // shutdown still standing: the record is in memory and goes with the process, so a pass
+        // that ran after the teardown would be a pass that ran over nothing. It writes proposals
+        // and changes no prompt — what it drafts reaches the model only if the Commander takes it,
+        // and then only at the start of a later session.
+        RunDebrief();
 
         // When the core aboard stopped being aboard, which is now (Phase 35). Every other
         // core's stamp was written as it was switched away from; this is the one that never is,

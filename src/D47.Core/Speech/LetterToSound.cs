@@ -27,6 +27,12 @@ public static class LetterToSound
         ("phr", "fɹ"), ("spl", "spl"), ("spr", "spɹ"), ("str", "stɹ"), ("scr", "skɹ"),
         ("squ", "skw"), ("sph", "sf"),
 
+        // <b>The silent gh</b> (#184). Ahead of "gh", which would otherwise answer /ɡ/ and leave
+        // the t to be matched on its own — and ahead of everything, because a coda is only ever
+        // reached by <see cref="Spell"/> scanning this array from the top. See
+        // <see cref="SilentGh"/> for what a word this could not say used to sound like.
+        ("ght", "t"),
+
         // A doubled consonant is one sound. Without these the letters are matched singly and
         // "well" comes out with two /l/ in it.
         ("bb", "b"), ("cc", "k"), ("dd", "d"), ("ff", "f"), ("gg", "ɡ"), ("kk", "k"),
@@ -87,9 +93,61 @@ public static class LetterToSound
     /// <c>e</c> lengthens — <em>Lave</em>, <em>bathe</em> — and two do not: <em>serve</em>,
     /// <em>dense</em>, <em>paste</em> are all short, which is why the rule counts sounds rather
     /// than letters.
+    /// <para>
+    /// <b><c>ck</c> was on this list and is not any more</b> (#184). It is one sound, so it
+    /// belonged here by the rule as stated — and it lengthened nothing in English, because
+    /// <c>ck</c> is what English writes to say a vowel is <em>short</em>, exactly as <c>dge</c> is.
+    /// It cost little through the silent <c>e</c>, which almost never stands behind one, and a
+    /// great deal through the syllabic <c>-le</c> that reaches the same test: <em>tickle</em> was
+    /// <c>tˈaɪkəl</c>, <em>tackle</em> was <c>tˈeɪkəl</c> and <em>suckle</em> was <c>sjˈuːkəl</c>.
+    /// </para>
+    /// <para>
+    /// <b>Counted rather than judged, on 2026-08-29.</b> Of the shipped dictionary's 65 entries
+    /// ending <c>-ckle</c>, <b>64 are short</b> — the one exception is <em>ickle</em>. And of the
+    /// 13 entries that end in a vowel and <c>cke</c>, which is the silent-<c>e</c> side of the same
+    /// test, <b>every single one is short</b>: <em>becke</em> is <c>bˈɛk</c>, <em>pecke</em> is
+    /// <c>pˈɛk</c>. So the row was wrong on both roads it reached.
+    /// </para>
     /// </summary>
     private static readonly HashSet<string> OneSound =
-        new(StringComparer.Ordinal) { "ch", "ck", "gh", "ph", "sh", "th", "zh" };
+        new(StringComparer.Ordinal) { "ch", "gh", "ph", "sh", "th", "zh" };
+
+    /// <summary>
+    /// <b>The silent <c>gh</c></b> (#184). <c>ght</c> is /t/ and the vowel in front of it is long:
+    /// <em>light</em>, <em>night</em>, <em>fought</em>.
+    /// <para>
+    /// <b>Before this there was no such coda at all, so the word could not be said</b> — the parse
+    /// tried <c>gh</c>, was left with a <c>t</c> that could begin no syllable, and gave up. A word
+    /// the rules cannot say is spelled, so on a build whose dictionary failed to download,
+    /// <em>light</em> was <em>ell eye gee aitch tee</em>. #155 rewrites <c>ly</c> to <em>light
+    /// years</em> before any provider sees it, so that is a word d47 now says constantly.
+    /// </para>
+    /// <para>
+    /// <b>The length is measured, not judged.</b> Of the dictionary's entries ending in a single
+    /// <c>i</c> and <c>ght</c>, <b>181 of 182</b> are /aɪt/ — the exception is <em>anight</em>. A
+    /// digraph needs no rule and deliberately gets none: <c>ei</c> and <c>au</c> already carry
+    /// their own length, which is why <em>weight</em>, <em>freight</em>, <em>caught</em> and
+    /// <em>taught</em> come out right without being special cases — and they are the whole of the
+    /// apparent counter-evidence, since the 34 <c>-ight</c> entries that are not /aɪt/ are almost
+    /// all <em>weight</em> and <em>freight</em> compounds.
+    /// </para>
+    /// </summary>
+    private const string SilentGh = "ght";
+
+    /// <summary>
+    /// The one vowel that reads differently in front of <see cref="SilentGh"/>: <c>ou</c> is /ɔː/
+    /// rather than its usual /aʊ/, so <em>fought</em>, <em>bought</em> and <em>thought</em> are
+    /// /ɔːt/.
+    /// <para>
+    /// <b>Counted like the rest:</b> 54 of the dictionary's 56 <c>-ought</c> entries are /ɔːt/, and
+    /// the two that are not are <em>drought</em> and <em>dought</em>. Every other spelling of
+    /// <c>ough</c> — <em>tough</em>, <em>through</em>, <em>though</em>, <em>plough</em> — ends
+    /// <c>gh</c> rather than <c>ght</c>, so none of them reaches this rule and none of them is
+    /// evidence against it.
+    /// </para>
+    /// </summary>
+    private static string? Rereads(string coda, string vowel) =>
+        coda == SilentGh && vowel == "ou" ? "ɔː" : null;
 
     /// <summary>
     /// <b>The three codas that carry their own silent <c>e</c> inside them</b> — <c>nge</c>,
@@ -175,6 +233,16 @@ public static class LetterToSound
         // it left behind, which is the other half of why "table" is not "tabble".
         var syllabic = syllables.Count > 1 && IsSyllabic(syllables[^1]);
 
+        // <b>And whatever else stands in that onset stays in front of the schwa</b> (#184). #179
+        // asked the onset to be exactly "l" or "r", which is what the parse hands back only when
+        // nothing before the l could close the syllable before it — "ta.ble", "ac.re". Where two
+        // consonants stand there and the pair is a legal onset but not a legal coda, the parse
+        // hands back "un.cle" and "mus.cle" instead, the test missed them, and #179's own defect
+        // survived in exactly those words: "uncle" was "ˈʌnklə". The consonants ahead of the l are
+        // the previous syllable's to say — /ʌn.kəl/ — so they are spelled before the schwa and the
+        // l alone after it.
+        var ahead = syllabic ? syllables[^1].Onset[..^1] : string.Empty;
+
         // Which syllable the trailing e — silent, or standing behind a syllabic l — reaches back
         // over. Nothing, where there is no such e.
         var behind = silentE ? count - 1 : syllabic ? count - 2 : -1;
@@ -187,8 +255,9 @@ public static class LetterToSound
 
             if (syllabic && i == count - 1)
             {
+                built.Append(Spell(ahead));
                 built.Append('ə');
-                built.Append(Spell(syllable.Onset));
+                built.Append(Spell(syllable.Onset[^1..]));
                 continue;
             }
 
@@ -204,11 +273,23 @@ public static class LetterToSound
             // half of the same rule: the e in "Lave" is not merely silent, it is what makes the
             // a say its own name. It only reaches across one sound, which is why "serve" and
             // "paste" stay short — see <see cref="OneSound"/>.
-            var lengthens = (i == behind && Lengthens(syllable.Coda))
-                            || CarriesASilentE(syllable.Coda, syllable.Vowel);
+            //
+            // <b>The sounds it reaches across include the ones ahead of a syllabic l</b> (#184),
+            // because the parse put them in the next syllable's onset and the ear puts them here:
+            // the cluster between the vowel of "uncle" and its l is "nc" whichever side of the
+            // break the c was written on, and two sounds do not lengthen. Without this the
+            // generalisation above would have made "uncle" "jˈuːnkəl".
+            //
+            // And "ght" lengthens wherever it stands rather than only where an e reaches back
+            // over it (#184) — there is no e in "light", and the length is the coda's own.
+            var lengthens = (i == behind && Lengthens(syllable.Coda + ahead))
+                            || CarriesASilentE(syllable.Coda, syllable.Vowel)
+                            || syllable.Coda == SilentGh;
 
             var vowel =
-                last && syllable.IsOpen && syllable.Vowel == "y" ? "i"
+                // "ought" is /ɔːt/, which is neither this vowel's short reading nor its long one.
+                Rereads(syllable.Coda, syllable.Vowel) is { } reread ? reread
+                : last && syllable.IsOpen && syllable.Vowel == "y" ? "i"
                 : last && syllable.IsOpen && Reduces.Contains(syllable.Vowel) ? "ə"
                 : (syllable.IsOpen || lengthens)
                   && Long.TryGetValue(syllable.Vowel, out var open) ? open
@@ -257,6 +338,20 @@ public static class LetterToSound
             // end of the syllable because that is the end the e was standing at.
             built.Append(Spell(Coda(
                 silentE && i == count - 1 ? SoftenCoda(syllable.Coda) : syllable.Coda)));
+
+            // <b>And "ng" keeps its /ɡ/ in front of a syllabic l</b> (#184). "single" was "sˈɪŋəl"
+            // and "angle" was "ˈæŋəl": the coda spelling answers /ŋ/, which is right at the end of
+            // a word — "sing", "long" — and wrong here, where English says both sounds. The /ɡ/ is
+            // appended rather than written into the coda's spelling because it belongs to this
+            // shape and not to "ng" generally, and because a second spelling of "ng" would have to
+            // agree with the first.
+            //
+            // Counted, like the rest of this file: <b>63 of the dictionary's 64</b> entries ending
+            // "-ngle" have /ŋɡ/, the exception being "comingle", which is a prefix on "mingle".
+            if (Hardens(syllabic, i, count, syllable.Coda))
+            {
+                built.Append('ɡ');
+            }
         }
 
         return built.ToString();
@@ -271,16 +366,37 @@ public static class LetterToSound
         syllable.Onset.Length == 0 && syllable.Vowel == "e" && syllable.Coda.Length == 0;
 
     /// <summary>
-    /// A final syllable that is one <c>l</c> or <c>r</c> and an <c>e</c> — which is what the parse
-    /// makes of <c>-ble</c>, <c>-tle</c>, <c>-cre</c> and their family, because the consonant in
-    /// front closes the syllable before it and leaves the <c>l</c> to open this one.
+    /// A final syllable that ends in an <c>l</c> or an <c>r</c> and an <c>e</c> — which is what the
+    /// parse makes of <c>-ble</c>, <c>-tle</c>, <c>-cre</c> and their family, because the consonant
+    /// in front closes the syllable before it and leaves the <c>l</c> to open this one.
     /// <para>
-    /// The onset must be that single letter: <c>-ale</c> and <c>-ole</c> hand their <c>e</c> back
-    /// bare and are <see cref="IsSilentE"/>'s, not this.
+    /// <b>The onset used to have to be that single letter, and #184 widened it to any onset ending
+    /// in one.</b> Where two consonants stand between the vowel and the <c>l</c>, whether the parse
+    /// hands the first one back as a coda or keeps the pair as an onset depends on which of them
+    /// <see cref="Phonotactics"/> admits — <c>st</c> is a coda so <em>castle</em> is <em>cas.tle</em>
+    /// and was caught, while <c>nc</c> is not, so <em>uncle</em> is <em>un.cle</em> and was missed.
+    /// The two words are the same shape to a listener, and #179's defect survived in the second one
+    /// unchanged: <em>uncle</em> was <c>ˈʌnklə</c>, <em>muscle</em> was <c>mˈʌsklə</c>, and
+    /// <em>centre</em> was <c>sˈɛntɹə</c>.
+    /// </para>
+    /// <para>
+    /// There must still be an onset: <c>-ale</c> and <c>-ole</c> hand their <c>e</c> back bare and
+    /// are <see cref="IsSilentE"/>'s, not this.
     /// </para>
     /// </summary>
     private static bool IsSyllabic(Syllable syllable) =>
-        syllable.Coda.Length == 0 && syllable.Vowel == "e" && syllable.Onset is "l" or "r";
+        syllable.Coda.Length == 0
+        && syllable.Vowel == "e"
+        && syllable.Onset.Length > 0
+        && syllable.Onset[^1] is 'l' or 'r';
+
+    /// <summary>
+    /// Whether this syllable's coda is the <c>ng</c> standing in front of a syllabic <c>l</c>,
+    /// which keeps its /ɡ/ (#184) — the <c>ngle</c> of <em>single</em>, <em>angle</em> and
+    /// <em>jungle</em>.
+    /// </summary>
+    private static bool Hardens(bool syllabic, int at, int count, string coda) =>
+        syllabic && at == count - 2 && coda.EndsWith("ng", StringComparison.Ordinal);
 
     /// <summary>
     /// A coda as it is spelled, with a lone <c>h</c> dropped (#179).
