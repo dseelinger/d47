@@ -41,6 +41,12 @@ public sealed class KokoroTtsProvider : ITtsProvider, IDisposable
     private Dictionary<string, long>? _vocabulary;
     private Phonemiser? _phonemiser;
 
+    /// <param name="folder">Where the model, the voices and the dictionary are.</param>
+    /// <param name="logger">
+    /// Also where the ladder says its work: at Debug it names the rung every segment came off,
+    /// which is the line #153 was investigated without. <c>D47.Tts</c> is the Voice subsystem, so
+    /// turning Voice up is how a Commander turns it on.
+    /// </param>
     public KokoroTtsProvider(string folder, ILogger<KokoroTtsProvider> logger)
     {
         _folder = folder;
@@ -143,8 +149,9 @@ public sealed class KokoroTtsProvider : ITtsProvider, IDisposable
 
             _session ??= new InferenceSession(Path.Combine(_folder, "model.onnx"));
             _vocabulary ??= ReadVocabulary();
-            _phonemiser ??= new Phonemiser(PhonemeDictionary.Read(
-                Path.Combine(_folder, "phoneme_dict.json"), _logger));
+            _phonemiser ??= new Phonemiser(
+                PhonemeDictionary.Read(Path.Combine(_folder, "phoneme_dict.json"), _logger),
+                Note);
 
             _logger.LogInformation(
                 "The local voice is loaded ({Milliseconds} ms)", started.ElapsedMilliseconds);
@@ -152,6 +159,14 @@ public sealed class KokoroTtsProvider : ITtsProvider, IDisposable
             return (_session, _vocabulary, _phonemiser);
         }
     }
+
+    /// <summary>
+    /// Which rung of the ladder a segment came off. One line per segment is a lot of lines, which
+    /// is why it is Debug and why the Voice subsystem's level is the switch.
+    /// </summary>
+    private void Note(string segment, PhonemeRung rung, string ipa) =>
+        _logger.LogDebug(
+            "\"{Segment}\" came off the {Rung} rung as {Ipa}", segment, rung, ipa);
 
     /// <summary>
     /// The phoneme vocabulary, read from the file rather than transcribed into the source: a

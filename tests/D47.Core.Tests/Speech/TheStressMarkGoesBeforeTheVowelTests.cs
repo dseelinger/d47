@@ -134,6 +134,14 @@ public class TheStressMarkGoesBeforeTheVowelTests
     [InlineData("Python")]
     [InlineData("Anaconda")]
     [InlineData("Imperial")]
+
+    // The silent-e words (#153). A rule that drops the last syllable changes which syllable is
+    // last and whether there are two of them at all, so it reaches everything this file guards.
+    [InlineData("Lave")]
+    [InlineData("Orbite")]
+    [InlineData("Shinrarte")]
+    [InlineData("observe")]
+    [InlineData("Deciate")]
     public void WhereverTheMarkIsTheNextSoundIsAVowel(string word) => MarksAVowel(word);
 
     /// <summary>
@@ -258,11 +266,23 @@ public class TheStressMarkGoesBeforeTheVowelTests
     /// And the whole sentence that was reported, through the ladder, with nothing marking a
     /// consonant anywhere in it.
     /// </summary>
-    [Fact]
-    public void TheReportedSentenceMarksNoConsonant()
+    [Theory]
+    [InlineData("JOHN DEPARAGON is in Kamitra, near Hammel Terminal, docked at Hammel Terminal.")]
+
+    // <b>The other reported sentence, and it is this file's business rather than #153's.</b> The
+    // build that said it was 0.84.4, which still marked the syllable, and "starport" is not in the
+    // dictionary — so the rules answered it, put the mark in front of the "st", and Kokoro rendered
+    // the shape it had never been given as a vowel. That vowel landed between "observe" and
+    // "starport" and was reported as "observ-eh". The word before it was never at fault.
+    [InlineData("Ensure to observe starport protocol during your visit, pilot.")]
+
+    // And a line of decoration, because #153's other half sends words to rungs they were not
+    // reaching before: an emphasised word now comes off the rules or the dictionary, and a mark
+    // that was never produced cannot have been guarded.
+    [InlineData("**Guardian** FSD Booster — engineered, at “Perez Ring”…")]
+    public void TheReportedSentenceMarksNoConsonant(string line)
     {
-        var said = new Phonemiser().ToPhonemes(
-            "JOHN DEPARAGON is in Kamitra, near Hammel Terminal, docked at Hammel Terminal.");
+        var said = new Phonemiser().ToPhonemes(line);
 
         for (var i = said.IndexOf(Mark); i >= 0; i = said.IndexOf(Mark, i + 1))
         {

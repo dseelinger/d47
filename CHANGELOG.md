@@ -27,6 +27,61 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.90.0 — 2026-08-29 — The e English does not say
+
+[#153](https://github.com/dseelinger/d47/issues/153).
+
+### #153, and the reported word was not the broken one
+
+Three words came out wrong on 2026-08-28 and they failed in two different ways, which turned out to
+be the whole diagnosis.
+
+**`observe` was never at fault, and neither was the rung it was reported against.** It is in the
+shipped dictionary as `əbzˈɜːv`, it was looked up, and it was said that way — asserted now as a
+unit test over the exact logged sentence, which is the check the issue asked for. What was heard as
+*observ-eh* was the word after it. The build speaking at 15:38 was 0.84.4, which still put the
+stress mark at the head of a syllable rather than in front of its vowel, and `starport` is not a
+dictionary word — so the rules answered `ˈstæɹpɑːɹt`, the shape Kokoro renders as an intruded
+vowel, and the intrusion landed in the gap between the two words. `aeda4a3` fixed that at 19:25 the
+same evening, four hours after the report, and shipped in 0.85.0. The report was true, the word it
+named was not, and nothing in the log could have said so.
+
+**So the log says so now.** Every segment names the rung it came off — dictionary, contraction,
+number, designation, rules, spelled, or the Commander's own file — at Debug, under the Voice
+subsystem. Turn Voice up and three wrong words are a read rather than an investigation.
+
+**`Guardian` and `Booster` were spelled out, and the cause was markdown.** A segment is spelled
+only when it is not `All(char.IsLetter)`, and both are ordinary words — but d47's own prose is
+`At a **human tech broker** that carries **Guardian modules**`, from the log verbatim. The token
+trimmer covered ASCII punctuation and nothing else, so `**Guardian` failed the letters test,
+skipped the dictionary *and* the rules, and was read out *gee, you, ay, ar, dee, eye, ay, en*. It
+is the curly-apostrophe bug of `Ship's` a second time, in the same six lines. Markdown emphasis,
+curly quotes, the ellipsis and the em dash are now stripped or carried as phrasing — trimmed
+together rather than one set after the other, because `**Guardian modules**.` ends in `**.` and
+either pass alone is stopped by the other's characters. Every dash is a compound's joint, so
+`Booster—engineered` is two words rather than one unsayable run, and the dash between two spelled
+segments is still voiced.
+
+**And the silent e, which is the rules gap the report was right about.** `lave` parses as `lav.e`,
+so the reduction rule — correct for the a of *Dezhra* — made the e a syllable of its own and
+*Lave* came out *lav-uh*. A final `e` with no onset and no coda is now silent, and it lengthens the
+vowel one sound behind it: *Lave* is `leɪv`, *Hive* is `haɪv`, *Prime* is `pɹaɪm`. It reaches over
+one sound and not two, which is why *serve*, *dense* and *paste* stay short, and it softens as well
+as lengthens, because *ace* read with a /k/ would be a new wrongness bought with the old one. A
+`-le` or `-re` carries an onset and is untouched: that e is one an English speaker says.
+
+Half the proper nouns in the galaxy end consonant-plus-e, and every one of them said *-uh* the day
+it missed the dictionary. *Lave* is in the game's opening credits.
+
+### What is still wrong, and is nobody's business here
+
+Two things were found next door and left alone. `change` reads as `tʃæŋ`, because `nge` has no
+consonant spelling and the `ng` inside it matches first; `5.79` loses its decimal point and is
+spelled as three digits. Both predate this work, both are out of what was reported, and neither is
+#153.
+
+---
+
 ## 0.89.0 — 2026-08-29 — A history nobody can read, and a way to say yes to it anyway
 
 [#174](https://github.com/dseelinger/d47/issues/174), which stays open — see the end.
