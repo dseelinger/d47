@@ -88,6 +88,46 @@ public sealed record SettingAudition
 }
 
 /// <summary>
+/// One named subset of a picker's list, offered beside the search box
+/// (<a href="https://github.com/dseelinger/d47/issues/146">#146</a>).
+/// </summary>
+/// <param name="Label">What the option is called. "All", "Female", "Unlabelled".</param>
+/// <param name="Matches">
+/// Whether a choice belongs in it, or null for the option that takes everything. A predicate over
+/// the stored value rather than over the rendered label, because the label is prose and the value
+/// is the thing that has a property.
+/// </param>
+public sealed record SettingFacetOption(string Label, Func<string, bool>? Matches);
+
+/// <summary>
+/// A structured filter a picker offers as well as its search box
+/// (<a href="https://github.com/dseelinger/d47/issues/146">#146</a>).
+/// <para>
+/// <b>It exists because searching a label for a word is not the same as filtering on a field.</b>
+/// A voice carries its gender as data and the label merely renders it, so a Commander wanting the
+/// women had to type a word that happens to appear in the rendered string — which is how typing
+/// <em>male</em> came to list every female voice, and why there was no way to type your way out of
+/// it. A facet asks the data.
+/// </para>
+/// <para>
+/// Declared on the row for the reason every other row property is: the surface renders what a
+/// descriptor declares, and a picker that had to recognise the voice rows by key would be a second
+/// list to keep in step with the registry.
+/// </para>
+/// </summary>
+public sealed record SettingFacet
+{
+    /// <summary>What the facet is about, shown beside the control. "Voice", "Kind".</summary>
+    public required string Label { get; init; }
+
+    /// <summary>
+    /// The options, in the order they are offered. The first is the one selected when the picker
+    /// opens, so it should be the one that hides nothing.
+    /// </summary>
+    public required IReadOnlyList<SettingFacetOption> Options { get; init; }
+}
+
+/// <summary>
 /// How a row reads and writes its value. String-valued throughout: the settings surface, the
 /// picker, the tool surface and the keyword router all speak text, and one conversion point
 /// per row is fewer than one per caller. A null written value means "no choice made" and the
@@ -172,6 +212,19 @@ public sealed record SettingRow
     /// that an empty list still lets you keep the current value or type one (Phase 4).
     /// </summary>
     public bool AllowsFreeText { get; init; }
+
+    /// <summary>
+    /// A structured filter offered beside the picker's search box, or null on a row that has no
+    /// property worth filtering on (<a href="https://github.com/dseelinger/d47/issues/146">#146</a>).
+    /// <para>
+    /// A function of settings for the reason <see cref="ChoiceSource"/> is: the voices belong to
+    /// whichever provider is selected right now, and a facet built at registration would be
+    /// describing a list that is no longer on screen. <b>Returning null is how a row says the
+    /// choices carry nothing to filter on</b> — a provider that tags no voice offers no gender
+    /// filter, rather than one whose every option is empty.
+    /// </para>
+    /// </summary>
+    public Func<D47Settings, SettingFacet?>? Facet { get; init; }
 
     /// <summary>
     /// Why there is nothing to choose from, when there is nothing to choose from — or null when

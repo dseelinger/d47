@@ -62,6 +62,25 @@ public sealed partial class IncomingMessages : ICallout
     public string? CarrierCallSign { get; set; }
 
     /// <summary>
+    /// The carrier as Elite writes it for display — <c>"Sacred Fire BNH-T2F"</c> — which is what
+    /// the <c>From</c> field of its own traffic literally holds
+    /// (<a href="https://github.com/dseelinger/d47/issues/109">#109</a>).
+    /// <para>
+    /// <b>The third key, and the only one that is ever known in time.</b> The other two are learned
+    /// at the airlock and from <c>CarrierStats</c>; docking chatter arrives before the airlock, so
+    /// in the reported session all three messages were spoken in an NPC voice while both were still
+    /// null. This one is learned from a supercruise drop whose MarketID is the carrier's id, twelve
+    /// seconds ahead of the first line.
+    /// </para>
+    /// <para>
+    /// <b>It is not a weaker check for being a longer string.</b> Like the other two it comes only
+    /// from state that was vouched by id — a squadron carrier's drop carries a different MarketID
+    /// and never reaches this field, which is the rule #28 was built on.
+    /// </para>
+    /// </summary>
+    public string? CarrierDisplayName { get; set; }
+
+    /// <summary>
     /// Channels carrying messages a person typed. <c>starsystem</c> is included because system
     /// chat is players; <c>npc</c> is the only channel that is not, which is why it is the one
     /// with its own switch.
@@ -110,7 +129,9 @@ public sealed partial class IncomingMessages : ICallout
         && ((CarrierCallSign is { Length: > 0 } call
              && sender.Contains(call, StringComparison.OrdinalIgnoreCase))
             || (CarrierName is { Length: > 0 } named
-                && sender.Contains(named, StringComparison.OrdinalIgnoreCase)));
+                && sender.Contains(named, StringComparison.OrdinalIgnoreCase))
+            || (CarrierDisplayName is { Length: > 0 } shown
+                && sender.Contains(shown, StringComparison.OrdinalIgnoreCase)));
 
     public Announcement? Read(JournalEvent journalEvent)
     {

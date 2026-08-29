@@ -346,6 +346,146 @@ public class EmissionCalloutTests
             StringComparison.Ordinal);
     }
 
+    // --------------------------------------------------------- the headroom it says (#132)
+
+    /// <summary>
+    /// <b>The reported case, with the Commander's own holdings</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/132">#132</a>). Read off that session's
+    /// <c>Materials</c> event against the grades in <c>Materials.tsv</c>: 95 of 100, 114 of 150 and
+    /// 80 of 100, so the filter was right to speak and the sentence was what read as a bug.
+    /// <para>
+    /// <i>"It should only tell me this when I am not full"</i> — it only did. What it never said
+    /// was by how much, and a line that reads identically at one unit of headroom and at a hundred
+    /// and fifty cannot be told from a broken filter.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void EachMaterialIsNamedWithTheRoomLeftForIt()
+    {
+        var state = Commander();
+
+        state.Apply(Held(
+            ("protoheatradiators", 95),
+            ("protolightalloys", 114),
+            ("protoradiolicalloys", 80)));
+
+        var said = Said(
+            new EmissionCallout { Capacity = Capacities },
+            state,
+            Arrival("Sharru Sector GM-V b2-1", 5_000_000, "Independent", "Boom"));
+
+        Assert.Contains("Proto Heat Radiators, 5 short", said, StringComparison.Ordinal);
+        Assert.Contains("Proto Light Alloys, 36 short", said, StringComparison.Ordinal);
+        Assert.Contains("Proto Radiolic Alloys, 20 short", said, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// <b>The number and the filter cannot disagree, asserted rather than reasoned about.</b> The
+    /// room the line names is exactly what it takes to make that material disappear from it:
+    /// collecting the stated number drops it, and one fewer leaves it named with one short.
+    /// <para>
+    /// This is the property the issue asks for — <i>"the numbers come from the same capacity lookup
+    /// the filter uses"</i> — and it is worth a test rather than a reading, because the way it
+    /// breaks is a second capacity lookup added later for the sentence alone.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void CollectingTheRoomItNamesIsExactlyWhatDropsTheMaterial()
+    {
+        IReadOnlyList<Announcement> Heard(int held)
+        {
+            var state = Commander();
+            state.Apply(Held(("protoheatradiators", held)));
+
+            return [.. new EmissionCallout { Capacity = Capacities }.Examine(
+                Context(state, Arrival("Deciat", 5_000_000, "Independent", "Boom")))];
+        }
+
+        Assert.Contains("Proto Heat Radiators, 5 short", Heard(95)[0].Text, StringComparison.Ordinal);
+        Assert.Contains("Proto Heat Radiators, 1 short", Heard(99)[0].Text, StringComparison.Ordinal);
+
+        // At the capacity the line named, it is gone entirely rather than said as nothing left.
+        Assert.DoesNotContain("Proto Heat Radiators", Heard(100)[0].Text, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// <b>An unknown capacity is named without a number rather than with a guessed one.</b> The
+    /// filter's existing choice — an unknown means say it — is unchanged, and the wording follows
+    /// it: d47 cannot prove the Commander is full and equally cannot say how much room there is.
+    /// <para>
+    /// The list keeps its ordinary commas when nothing carries a number, since the semicolons exist
+    /// only to separate entries that hold a comma of their own.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void AMaterialWhoseCapacityIsUnknownIsNamedWithNoNumber()
+    {
+        var said = Said(
+            new EmissionCallout(),
+            Commander(),
+            Arrival("Deciat", 5_000_000, "Independent", "Boom"));
+
+        Assert.Contains("Proto Heat Radiators, Proto Light Alloys and Proto Radiolic Alloys", said, StringComparison.Ordinal);
+        Assert.DoesNotContain("short", said, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// <b>No near-full threshold ships</b>, which the issue asked to be taken as a decision rather
+    /// than left to drift. Five short of a hundred still speaks, and says five.
+    /// <para>
+    /// The complaint was <em>why are you telling me this</em> rather than <em>stop talking</em>, and
+    /// a number answers it. Silencing a Commander who is finishing one specific roll would not.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void ANearlyFullMaterialIsStillSaidAndSaysHowNearlyFull()
+    {
+        var state = Commander();
+
+        state.Apply(Held(("protoheatradiators", 99)));
+
+        Assert.Contains(
+            "Proto Heat Radiators, 1 short",
+            Said(new EmissionCallout { Capacity = Capacities }, state, Arrival("Deciat", 5_000_000, "Independent", "Boom")),
+            StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The grade capacities for the three Proto materials, which is the mapping
+    /// <c>MaterialGrades.CapacityOf</c> supplies in the app: grade 5 holds 100 and grade 4 holds
+    /// 150. Anything else answers null, which is the "not known" arm.
+    /// </summary>
+    private static int? Capacities(string symbol) => symbol.ToLowerInvariant() switch
+    {
+        "protoheatradiators" => 100,
+        "protoradiolicalloys" => 100,
+        "protolightalloys" => 150,
+        _ => null,
+    };
+
+    /// <summary>
+    /// A whole-inventory snapshot with a different count per material, which the reported case
+    /// needs and <see cref="Collected"/> cannot express.
+    /// </summary>
+    private static JournalEvent Held(params (string Symbol, int Count)[] holdings)
+    {
+        var payload = new Dictionary<string, object?>
+        {
+            ["timestamp"] = "2026-08-27T09:00:00Z",
+            ["event"] = "Materials",
+            ["Manufactured"] = holdings
+                .Select(holding => new Dictionary<string, object?>
+                {
+                    ["Name"] = holding.Symbol,
+                    ["Count"] = holding.Count,
+                })
+                .ToArray(),
+        };
+
+        Assert.True(JournalEvent.TryParse(JsonSerializer.Serialize(payload), NullLogger.Instance, out var parsed));
+        return parsed!;
+    }
+
     // ------------------------------------------------------------------ when it speaks
 
     /// <summary>Arriving twice in the same system is not news twice.</summary>

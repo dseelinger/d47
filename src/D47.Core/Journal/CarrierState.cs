@@ -22,6 +22,27 @@ public sealed record CarrierState
     /// <summary>The name the Commander gave it.</summary>
     public string? Name { get; init; }
 
+    /// <summary>
+    /// The carrier as Elite writes it for display — name and callsign in one string, <c>"Sacred
+    /// Fire BNH-T2F"</c> — or null until something carrying it has been vouched by id
+    /// (<a href="https://github.com/dseelinger/d47/issues/109">#109</a>).
+    /// <para>
+    /// <b>Its own field rather than written into <see cref="Name"/>, because it is not the name.</b>
+    /// <c>CarrierStats</c> says the name outright and this is a display string that happens to
+    /// contain one; storing it as though Frontier had named the carrier would make every surface
+    /// that prefers the name say <i>"welcome home to Sacred Fire BNH-T2F"</i>. It exists to be
+    /// <em>matched against</em>, which is a different job from being said.
+    /// </para>
+    /// <para>
+    /// <b>And it is the earliest identity there is.</b> The callsign is learned at the airlock and
+    /// the name from <c>CarrierStats</c>; docking chatter is by definition the traffic that happens
+    /// before the airlock, so both arrive too late for it. In the reported session this landed at
+    /// 21:42:15 and the first message at 21:42:27 — twelve seconds, against the forty-seven the
+    /// dock would have cost.
+    /// </para>
+    /// </summary>
+    public string? DisplayName { get; init; }
+
     public long? CarrierId { get; init; }
 
     /// <summary>Where it is now.</summary>
@@ -164,10 +185,24 @@ public sealed record CarrierState
         // name. No callsign pattern is matched and no name is guessed: a carrier d47 has not already
         // identified stays unidentified, which is why the 19 corpus journals that dock before any
         // carrier event still say nothing.
-        "Docked" or "Undocked" or "Location" when SaysMyCallsign(journalEvent) => this with
-        {
-            CallSign = journalEvent.String("StationName") ?? CallSign,
-        },
+        // <b>And the same reading moved forward to the events that come first</b>
+        // (<a href="https://github.com/dseelinger/d47/issues/109">#109</a>). The rule above was
+        // right and its input was late: docking chatter is the traffic that happens *before* the
+        // dock, so a carrier identified at the airlock is identified 47 seconds after the messages
+        // it was meant to attribute. DockingRequested and DockingGranted carry everything
+        // SaysMyCallsign already tests for and arrive at the start of the approach rather than the
+        // end of it — they were simply not in this list.
+        //
+        // Counted over the Commander's 935 journals rather than assumed, the way the airlock fix
+        // counted CarrierStats against CarrierLocation: <b>859 DockingRequested and 857
+        // DockingGranted at a fleet carrier, and every single one carries MarketID, StationName and
+        // StationType together</b>. No new field is trusted and no new shape is matched; two event
+        // kinds join a test that already existed.
+        "Docked" or "Undocked" or "Location" or "DockingRequested" or "DockingGranted"
+            when SaysMyCallsign(journalEvent) => this with
+            {
+                CallSign = journalEvent.String("StationName") ?? CallSign,
+            },
 
         // <b>The name, learned from a string that carries it decorated</b> (#130). Reported as
         // <i>"Docking granted, Commander. Welcome home to BNH-T2F"</i> — and the wording was not
@@ -185,9 +220,20 @@ public sealed record CarrierState
         // state already holds, it is the Commander's own carrier naming itself, which is the same
         // id-not-shape rule the callsign fix established. <c>FSSSignalDiscovered</c> carries no id
         // and is not read at all.
+        // <b>And the whole string is kept as well as the name pulled out of it</b> (#109). The
+        // name derivation needs the callsign to strip, so before the first dock of a session it
+        // yields nothing — which is exactly the window the docking chatter arrives in. The
+        // undivided display string needs no callsign to be useful, because it is what the
+        // <c>From</c> field of those messages literally is.
+        //
+        // Vouched by id and by nothing else: this arm only runs when the MarketID is the carrier
+        // id this state already holds, which is the same id-not-shape rule as above. The
+        // Commander's squadron carrier is 3713474048 against their own 3715429376, so it never
+        // reaches here — asserted, because that is the mistake #28 exists to prevent.
         "SupercruiseDestinationDrop" when journalEvent.Long("MarketID") == CarrierId => this with
         {
             Name = Name ?? NameWithoutCallsign(journalEvent.String("Type")),
+            DisplayName = journalEvent.String("Type") ?? DisplayName,
         },
 
         // <b>The secondary, and it is safe only because the callsign was learned by id.</b>

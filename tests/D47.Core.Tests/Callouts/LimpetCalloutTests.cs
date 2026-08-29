@@ -183,6 +183,84 @@ public class LimpetCalloutTests
         Assert.DoesNotContain("101", said, StringComparison.Ordinal);
     }
 
+    // ------------------------------------------------- the number that silences it (#140)
+
+    /// <summary>
+    /// <b>The line names the total that silences it, in both wordings</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/140">#140</a>): <i>"doesn't actually tell
+    /// me how many limpets to put in the hold (total) to get it to stop complaining"</i>.
+    /// <para>
+    /// At 5% of a 256 tonne hold the threshold is 12.8, so the smallest whole number that clears it
+    /// is 13 — which is the boundary the theory above already pins from the other side.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void BothWordingsNameTheTotalThatSilencesTheCallout()
+    {
+        var empty = Assert.Single(Callout().Examine(Context(Commander(256, 0)))).Text;
+        var partial = Assert.Single(Callout().Examine(Context(Commander(256, 12)))).Text;
+
+        Assert.Contains("Buy 13", empty, StringComparison.Ordinal);
+        Assert.Contains("13 aboard silences me", partial, StringComparison.Ordinal);
+
+        // And the shortfall beside it, because that is the number typed into the purchase screen.
+        Assert.Contains("1 more", partial, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// <b>Asserted at the boundary, and against the number the line itself named</b> rather than
+    /// against one written down here twice. Buying exactly what was said silences it; one fewer
+    /// still fires. A Commander who buys the stated number and gets nagged anyway has been lied to
+    /// by arithmetic, and that is the only failure this callout cannot recover from.
+    /// <para>
+    /// Several thresholds, because the rounding is where this goes wrong: 5% of 256 is 12.8 and 10%
+    /// of 512 is exactly 51, so the ceiling has to be right on a fraction and right on a whole
+    /// number.
+    /// </para>
+    /// </summary>
+    [Theory]
+    [InlineData(256, 5)]
+    [InlineData(128, 5)]
+    [InlineData(512, 10)]
+    [InlineData(300, 7)]
+    public void BuyingTheNumberItNamesIsExactlyWhatSilencesIt(int capacity, int percent)
+    {
+        LimpetCallout Sized() => new() { Floor = () => 64, Percent = () => percent };
+
+        var said = Assert.Single(Sized().Examine(Context(Commander(capacity, 0)))).Text;
+        var target = int.Parse(
+            System.Text.RegularExpressions.Regex.Match(said, @"Buy (\d+)").Groups[1].Value,
+            System.Globalization.CultureInfo.InvariantCulture);
+
+        Assert.Empty(Sized().Examine(Context(Commander(capacity, target))));
+        Assert.Single(Sized().Examine(Context(Commander(capacity, target - 1))));
+    }
+
+    /// <summary>
+    /// <b>There is no second place to update.</b> The spoken number is solved from the same
+    /// comparison that fires the callout, read through the same setting on the same examination —
+    /// so moving the threshold moves the sentence, and a run where they disagreed would be a run
+    /// where one of them had been written down twice.
+    /// </summary>
+    [Fact]
+    public void ChangingTheThresholdChangesTheSpokenNumber()
+    {
+        var percent = 5;
+        var callout = new LimpetCallout { Floor = () => 64, Percent = () => percent };
+
+        Assert.Contains(
+            "Buy 13",
+            Assert.Single(callout.Examine(Context(Commander(256, 0)))).Text,
+            StringComparison.Ordinal);
+
+        percent = 25;
+
+        Assert.Contains(
+            "Buy 64",
+            Assert.Single(callout.Examine(Context(Commander(256, 0)))).Text,
+            StringComparison.Ordinal);
+    }
+
     /// <summary>The thresholds are read through, so moving a slider takes effect at once.</summary>
     [Fact]
     public void TheThresholdsAreReadEveryTimeRatherThanCaptured()

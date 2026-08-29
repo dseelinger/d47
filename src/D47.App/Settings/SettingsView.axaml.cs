@@ -2781,6 +2781,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 AllowsFreeText = row.AllowsFreeText,
                 WhyEmpty = row.WhyNoChoicesFor(_settings.Current),
 
+                // Read at open like the choices themselves, and for the same reason: which
+                // properties the list has depends on the provider serving it right now (#146).
+                Facet = row.Facet?.Invoke(_settings.Current),
+
                 // Read at open rather than captured once, because both the price and the reason
                 // it might be unavailable follow the selected provider.
                 Audition = row.Audition is { } audition

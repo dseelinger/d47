@@ -1,6 +1,23 @@
 namespace D47.Core.Audio;
 
 /// <summary>
+/// What a provider says about a voice's gender, including saying nothing
+/// (<a href="https://github.com/dseelinger/d47/issues/146">#146</a>).
+/// <para>
+/// <b>Three states rather than a boolean, because the third one is common.</b> Some providers tag
+/// every voice and some tag none, and "not known to be a woman's" is a different fact from "a
+/// man's" — <see cref="VoicePool.Feminine"/> may treat them alike for casting, and a Commander
+/// looking at a list may not.
+/// </para>
+/// </summary>
+public enum VoiceGender
+{
+    Unlabelled,
+    Feminine,
+    Masculine,
+}
+
+/// <summary>
 /// Which of a provider's voices a re-voiced sender may be drawn from
 /// (remediation.md, "Named NPCs should each use a different voice").
 /// <para>
@@ -33,14 +50,43 @@ public static class VoicePool
     /// including nothing at all, is left out. Absent means "not known to be", which for this
     /// purpose is the same as a man's.
     /// </para>
+    /// <para>
+    /// <b>The comparison itself is <see cref="GenderOf"/> since
+    /// <a href="https://github.com/dseelinger/d47/issues/146">#146</a></b>, so the voice picker's
+    /// gender filter and this casting rule are the same rule read twice rather than two rules that
+    /// agree today. Two filters disagreeing about who is female would be worse than the bug that
+    /// prompted the picker to have one.
+    /// </para>
     /// </summary>
     public static IReadOnlySet<string> Feminine(IEnumerable<VoiceInfo> voices) =>
         new HashSet<string>(
             voices
-                .Where(voice => Eligible(voice.Locale)
-                                && string.Equals(voice.Gender, "female", StringComparison.OrdinalIgnoreCase))
+                .Where(voice => Eligible(voice.Locale) && GenderOf(voice.Gender) == VoiceGender.Feminine)
                 .Select(voice => voice.Id),
             StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// What a provider's gender tag says, as something with three states rather than a boolean
+    /// (<a href="https://github.com/dseelinger/d47/issues/146">#146</a>).
+    /// <para>
+    /// <b>Case-insensitive equality on the whole tag, and nothing cleverer.</b> The two providers
+    /// disagree on capitalisation and on nothing else — Edge writes "Female" and ElevenLabs writes
+    /// "female" — so a substring or prefix test would buy nothing and would read "female" as male,
+    /// which is the exact bug in the picker that #146 is about.
+    /// </para>
+    /// <para>
+    /// <b><see cref="VoiceGender.Unlabelled"/> is a real third answer.</b> For casting it collapses
+    /// into "not known to be a woman's", which is what <see cref="Feminine"/> does with it; for a
+    /// Commander reading a list it must not, because a filter that silently hid every untagged
+    /// voice would look like a shorter list rather than like a filter.
+    /// </para>
+    /// </summary>
+    public static VoiceGender GenderOf(string? tag) => tag switch
+    {
+        not null when string.Equals(tag, "female", StringComparison.OrdinalIgnoreCase) => VoiceGender.Feminine,
+        not null when string.Equals(tag, "male", StringComparison.OrdinalIgnoreCase) => VoiceGender.Masculine,
+        _ => VoiceGender.Unlabelled,
+    };
 
     /// <summary>
     /// Whether a voice tagged this way belongs in the pool: untagged, tagged with something that

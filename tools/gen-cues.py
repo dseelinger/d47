@@ -151,6 +151,22 @@ def main():
     _write("alerts/bountyhunter.wav", _sequence([("C5", 0.07), ("C5", 0.07), ("F#4", 0.26)], 0.52, peak=0.55))
     _write("alerts/rivalterritory.wav", _sequence([("D4", 0.16), ("A2", 0.40)], 0.70, peak=0.34))
 
+    # The two the danger callouts got in #136, where every urgent line had been arriving as prose
+    # with no marker at all. Both are trouble and both fall -- except the second, which is the
+    # exception explained below.
+    #
+    # `underfire` is the loudest thing here and it starts at the top of the table, because it is the
+    # only cue that fires when the shooting has already started rather than while there is still
+    # time to avoid it. Three notes tumbling from A5 to A4 rather than the two-note falls of the
+    # announced warnings, so it is unmistakable against them in the same second.
+    _write("alerts/underfire.wav", _sequence([("A5", 0.07), ("E5", 0.07), ("A4", 0.28)], 0.50, peak=0.66))
+
+    # And `overheating` is the one alert that does not fall, because it is the one that is not
+    # somebody else. Three pulses on one note read as a warning lamp rather than as a threat, which
+    # is the distinction the split exists to carry: nothing is shooting, and the answer is the
+    # throttle rather than the trigger.
+    _write("alerts/overheating.wav", _ticks(NOTES["F#4"], 3, 0.40, 0.085, peak=0.50))
+
     # The one alert that is not trouble, and the one the Commander asked for: a timer or an alarm
     # finishing (Phase 24). So it rises where the other four fall, and it is quieter than
     # them - nothing is about to shoot, and a chime that startles is a chime somebody turns off.

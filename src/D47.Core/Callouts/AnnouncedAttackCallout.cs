@@ -78,7 +78,91 @@ public sealed class AnnouncedAttackCallout : ICallout
             "attack.bounty-hunter",
             "Bounty hunter interdicting. This one is not after the cargo.",
             AlertCue.BountyHunter),
+
+        // <b>7 of 7 — the strongest signal in the corpus</b>, above the 88% the pirate
+        // interdiction line was called the strongest measured on
+        // (<a href="https://github.com/dseelinger/d47/issues/137">#137</a>). Measured by the same
+        // code in the same run as the three above, which reproduced their shipped figures exactly
+        // (88%, 66%, 100%) against a rejected control at 1% — so this row is comparable rather
+        // than merely plausible.
+        new(
+            "HitmanMissionFailure_OnEnemyDetect",
+            "attack.hitman",
+            "Someone has been paid to find us, and they have. This one is not after the cargo.",
+            AlertCue.BountyHunter),
+
+        // <b>2 of 3, and shipped on exactly the terms the bounty hunter's single event was.</b>
+        // Thin evidence, right shape, and the same answer as the row above — so it is taken
+        // deliberately and its n is written down rather than left to be inferred from a
+        // percentage. If it turns out to cry wolf, the number to reconsider is this one.
+        new(
+            "HitmanMissionFailure_NearDeath",
+            "attack.hitman",
+            "Someone has been paid to find us, and they have. This one is not after the cargo.",
+            AlertCue.BountyHunter),
     ];
+
+    /// <summary>
+    /// The families where a hunter is talking about the Commander and an <em>alarm</em> would be
+    /// wrong (<a href="https://github.com/dseelinger/d47/issues/137">#137</a>).
+    /// <para>
+    /// <b>Measured, and they do not qualify.</b> <c>HitmanMissionFailure_Attack</c> is followed by
+    /// an attack 7 times in 20 (<b>35%</b>) and <c>Hitman_HunterHostileSC_Relevant</c> — the
+    /// <i>"the eagle is in the nest"</i> line the Commander actually noticed — 7 times in 47
+    /// (<b>15%</b>). Both are well under the 66% of the weakest line that ships, and cueing them
+    /// would be precisely the crying-wolf the allowlist exists to prevent: <i>"anything matching on
+    /// 'this sounds hostile' cries wolf a hundred times per real event"</i>.
+    /// </para>
+    /// <para>
+    /// <b>But 15% of 47 is still a hitman talking about you</b>, and that is the half of the report
+    /// that is not about alarms. Being hunted is a <em>situation</em>. A warning would be wrong and
+    /// saying nothing was the gap, so d47 reacts to it instead — in its own voice, off the cue
+    /// channel, at <see cref="CalloutUrgency.Routine"/>, on a long cooldown.
+    /// </para>
+    /// </summary>
+    private static readonly string[] Hunted =
+    [
+        "Hitman_HunterHostileSC_Relevant",
+        "HitmanMissionFailure_Attack",
+    ];
+
+    /// <summary>
+    /// The one key every hunted reaction shares, so a burst of chatter is one remark
+    /// (<a href="https://github.com/dseelinger/d47/issues/137">#137</a>).
+    /// <para>
+    /// Public because <see cref="FlavourBriefs"/> matches on it: this is the one line here that is
+    /// said in character rather than exactly as written.
+    /// </para>
+    /// </summary>
+    public const string HuntedKey = "hunted";
+
+    /// <summary>
+    /// Long, because being hunted is a condition rather than an event. The 47 corpus events arrive
+    /// in bursts — the reported session had three across half an hour — and a companion that
+    /// remarks on each one is noise wearing a personality.
+    /// </summary>
+    private static readonly TimeSpan HuntedCooldown = TimeSpan.FromMinutes(10);
+
+    /// <summary>
+    /// What d47 says about being hunted. <b>Its own words, chosen by the id family and never
+    /// assembled from the message</b> — the same constant-line rule the warnings above follow, for
+    /// the same reason.
+    /// <para>
+    /// <b>None of them says why.</b> <c>HitmanMissionFailure_*</c> reads as though it should join to
+    /// a mission the Commander failed, and it does not: of 30 such lines in the corpus, <b>one</b>
+    /// was preceded by a <c>MissionFailed</c> or <c>MissionAbandoned</c> within the hour. So the
+    /// reaction is about the situation now, and inventing a story the journal does not carry is the
+    /// one thing it must not do.
+    /// </para>
+    /// </summary>
+    private static readonly string[] HuntedLines =
+    [
+        "Someone out there is hunting us, and they are talking about it.",
+        "That transmission was about us. We are being looked for.",
+        "We have somebody's attention, and they are not being subtle about it.",
+    ];
+
+    private int _reactions;
 
     /// <summary>
     /// The channel NPC lines arrive on. Required rather than assumed: all 441 allowlisted events
@@ -105,11 +189,80 @@ public sealed class AnnouncedAttackCallout : ICallout
                 continue;
             }
 
+            // A warning first, then a reaction. The two tables share no prefix, so an event
+            // reaches at most one of them and no id can produce both an alarm and a remark.
             if (Read(journalEvent) is { } warning)
             {
                 yield return warning;
             }
+            else if (Reacted(journalEvent) is { } remark)
+            {
+                yield return remark;
+            }
         }
+    }
+
+    /// <summary>
+    /// A hunter has been heard talking about the Commander, and d47 says so in its own voice
+    /// (<a href="https://github.com/dseelinger/d47/issues/137">#137</a>).
+    /// <para>
+    /// <b>Keyed on the id family and never on the prose, which is the trust boundary rather than a
+    /// preference.</b> The comparison is against <c>Message</c> — a token from a closed set — and
+    /// what comes back is a constant from <see cref="HuntedLines"/>. So no text from the message
+    /// reaches the synthesiser, the panel or the model, exactly as for the warnings above. Reading
+    /// a message aloud is quoting and <see cref="IncomingMessages"/> already does it; handing that
+    /// text to a model is a different act and is the one the rule forbids.
+    /// </para>
+    /// <para>
+    /// The npc channel is required for the same reason it is required above: without it, another
+    /// Commander can type <c>$Hitman_HunterHostileSC_Relevant04;</c> into local chat and make d47
+    /// react to a threat nobody made.
+    /// </para>
+    /// <para>
+    /// <b>Routine, and it carries no cue.</b> Menace is not an alarm — 15% of these are followed by
+    /// anything at all, so interrupting for one would be the crying wolf the measurement rejected.
+    /// One shared key and a ten-minute cooldown make a burst into one remark.
+    /// </para>
+    /// </summary>
+    private Announcement? Reacted(JournalEvent journalEvent)
+    {
+        if (!string.Equals(journalEvent.String("Channel"), NpcChannel, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        if (journalEvent.String("Message") is not { Length: > 1 } message || message[0] is not '$')
+        {
+            return null;
+        }
+
+        var id = message.AsSpan(1);
+        var hunted = false;
+
+        foreach (var prefix in Hunted)
+        {
+            if (id.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                hunted = true;
+                break;
+            }
+        }
+
+        if (!hunted)
+        {
+            return null;
+        }
+
+        // The index the stock line was picked with, carried the way the ambient remarks carry
+        // theirs — it is the only deterministic choice a flavour call has, and no Core component
+        // reads a clock or a seed.
+        var variant = _reactions++;
+
+        return new Announcement(HuntedKey, HuntedLines[variant % HuntedLines.Length], CalloutUrgency.Routine)
+        {
+            Cooldown = HuntedCooldown,
+            Variant = variant,
+        };
     }
 
     /// <summary>

@@ -34,7 +34,7 @@ nav_order: 124
  <rect x="20" y="40" width="400" height="124" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="220" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--danger)">MATCHING ON THE WORDS</text>
  <text x="220" y="110" text-anchor="middle" font-size="15" fill="var(--text)">2,399 firings to catch</text>
- <text x="220" y="134" text-anchor="middle" font-size="15" fill="var(--text)">30 real attacks</text>
+ <text x="220" y="134" text-anchor="middle" font-size="15" fill="var(--text)">30 real attacks</text>
  <rect x="460" y="40" width="400" height="124" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="660" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">MATCHING ON THE ID</text>
  <text x="660" y="110" text-anchor="middle" font-size="15" fill="var(--text)">a fixed list, NPC chatter only</text>
@@ -124,6 +124,24 @@ decision and is not read back to you as an emergency.
 An urgent warning cuts in rather than waiting its turn. A warning that arrives after Directive 47
 has finished reading you a commodity list has arrived too late to be one.
 
+**Every urgent one is preceded by an alarm**, so you know what kind of trouble it is before the
+sentence has finished arriving. There are two, and which you hear tells you where to look:
+
+| Sound | What it means | The answer |
+|---|---|---|
+| Falling three-note tumble | Somebody is hurting you — shot at, shields gone, hull opened | Fight, run, or high-wake |
+| Three pulses on one note | The ship is cooking itself | The throttle, not the trigger |
+
+Being *pulled out of supercruise* uses the same sound as the warning that one was coming, because
+it is the same situation a moment later.
+
+The lines that are not emergencies stay quiet. A full cargo hold and the rebuy screen are worth
+saying and are not worth an alarm, so neither gets one.
+
+**Two alarms of the same kind seconds apart sound once.** A pirate announcing an interdiction and
+then interdicting you is two warnings, both worth saying — but only one of them is worth a noise,
+because by the second one you are already looking. The words still come; the sound does not repeat.
+
 #### Announced attacks {#announced-attack}
 
 NPCs say what they are about to do before they do it. Directive 47 listens for that and tells you
@@ -134,9 +152,25 @@ Pirate lining up an interdiction. Boost or high-wake now.
 ```
 
 Across 912 real journals, that line came a **median of six seconds** before the first shot and was
-right **88%** of the time. A pirate demanding cargo gives eight seconds and is right 67%. Each of
-the three situations gets its own sentence and its own sound, so you can tell an interdiction from
-a cargo demand from a bounty hunter before the sentence has finished.
+right **88%** of the time. A pirate demanding cargo gives eight seconds and is right 67%. Each
+situation gets its own sentence and its own sound, so you can tell an interdiction from a cargo
+demand from somebody who is here for you before the sentence has finished.
+
+**A hitman who has found you warns too**, and shares the bounty hunter's sound — because the answer
+is the same one, and cargo will not buy either of them off. That was measured the same way as the
+rest: the family that fires when a hunter spots you is followed by an attack **7 times out of 7**,
+the strongest signal in the whole corpus.
+
+##### Being hunted, which is not an emergency {#hunted}
+
+Two other hitman families are a hunter *talking about you* rather than closing on you — the one that
+produced *"the eagle is in the nest"* is followed by an attack only **15%** of the time. Warning you
+about those would be crying wolf six times in seven, so Directive 47 does not.
+
+It does not ignore them either. Being hunted is a situation rather than an event, so you get a
+remark on it in your core's own voice — no alarm, never interrupting, and once every ten minutes
+however much chatter arrives. It will not tell you why somebody is hunting you: the journal does not
+say, and inventing a reason is the one thing it must not do.
 
 **Directive 47 matches on Elite's message ids, never on the words.** That is not tidiness — it is
 the difference between a useful warning and an unusable one. The obvious approach, warning about

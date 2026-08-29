@@ -6,6 +6,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 
 using D47.App.Windowing;
+using D47.Core.Capabilities;
 
 namespace D47.App.Controls;
 
@@ -50,6 +51,17 @@ public sealed record PickerRequest
     /// the button is then absent rather than present and inert (Phase 19).
     /// </summary>
     public PickerAudition? Audition { get; init; }
+
+    /// <summary>
+    /// A structured filter offered beside the search box, or null where the choices carry no
+    /// property worth filtering on (<a href="https://github.com/dseelinger/d47/issues/146">#146</a>).
+    /// <para>
+    /// The row decides, the picker draws. A voice knows its gender as data and the label merely
+    /// renders it, so asking for the women should ask the data rather than hope a word appears in a
+    /// string — which is the mistake underneath the substring bug this shipped with.
+    /// </para>
+    /// </summary>
+    public SettingFacet? Facet { get; init; }
 }
 
 /// <summary>
@@ -242,6 +254,20 @@ public partial class PickerWindow : Window
             ? "Type to filter, or type a value of your own"
             : "Type to filter";
 
+        // Absent rather than empty where the choices carry nothing to filter on, which is every
+        // picker but the three voice ones (#146).
+        FacetPanel.IsVisible = _request.Facet is not null;
+
+        if (_request.Facet is { } facet)
+        {
+            FacetLabel.Text = facet.Label;
+            FacetBox.ItemsSource = facet.Options.Select(option => option.Label).ToArray();
+
+            // The first option is the one that hides nothing, which is where a picker has to open:
+            // a list that arrives pre-narrowed looks like a list with things missing.
+            FacetBox.SelectedIndex = 0;
+        }
+
         DefaultButton.IsVisible = _request.DefaultDisplay is not null;
 
         // Bracketed unconditionally, because what arrives here is the bare phrase — see
@@ -300,12 +326,20 @@ public partial class PickerWindow : Window
     {
         var filter = FilterBox.Text?.Trim() ?? string.Empty;
 
+        // The facet first, because it is a statement about the list and the text is a search within
+        // it. Null when the row offers none, or while the option that takes everything is chosen.
+        var facet = SelectedFacet();
+
         // Matches on either what it is called or what it is named, so a Commander who types
         // what they can see finds it, and one who types the id does too.
+        //
+        // At word starts rather than anywhere in the string (#146). `"female".Contains("male")` is
+        // true, so the old reading listed every female voice for a Commander typing `male` — and
+        // left no way to type out of it, since `female` worked and `male` could not.
         var matches = _all
-            .Where(choice => filter.Length == 0
-                             || choice.Value.Contains(filter, StringComparison.OrdinalIgnoreCase)
-                             || choice.Text.Contains(filter, StringComparison.OrdinalIgnoreCase))
+            .Where(choice => (facet is null || facet(choice.Value))
+                             && (ChoiceMatch.Matches(choice.Value, filter)
+                                 || ChoiceMatch.Matches(choice.Text, filter)))
             .ToArray();
 
         _visible = matches;
@@ -320,17 +354,48 @@ public partial class PickerWindow : Window
         // empty because the provider refused a key is not the same as one that is empty because
         // d47 does not know an endpoint's vocabulary, and the advice differs: one is "fix the row
         // above", the other is "type what you want".
+        // A facet that has hidden everything is a fourth empty, and the advice is different again:
+        // clearing the box will not help, because the box is not what emptied the list.
         EmptyHint.Text = _request.Choices.Count == 0
             ? _request.WhyEmpty
               ?? "There is nothing to offer here — D47 does not know this endpoint's vocabulary. Type the value you want, or keep the current one."
-            : $"Nothing matches \"{filter}\". {(_request.AllowsFreeText ? "Use it anyway, or clear the box to see everything." : "Clear the box to see everything.")}";
+            : facet is not null && filter.Length == 0
+                ? $"No {FacetBox.SelectionBoxItem} choices here. Choose {_request.Facet!.Options[0].Label} to see everything."
+                : $"Nothing matches \"{filter}\"{(facet is null ? string.Empty : $" under {FacetBox.SelectionBoxItem}")}. {(_request.AllowsFreeText ? "Use it anyway, or clear the box to see everything." : "Clear the box to see everything.")}";
 
         // A closed vocabulary means the typed text is a filter and nothing else, so there has to
         // be something selected for the button to accept.
         AcceptButton.IsEnabled = _request.AllowsFreeText || matches.Length > 0;
     }
 
+    /// <summary>
+    /// The predicate for the facet option currently chosen, or null when there is no facet or when
+    /// the chosen option is the one that takes everything.
+    /// </summary>
+    private Func<string, bool>? SelectedFacet() =>
+        _request.Facet is { } facet
+        && FacetBox.SelectedIndex >= 0
+        && FacetBox.SelectedIndex < facet.Options.Count
+            ? facet.Options[FacetBox.SelectedIndex].Matches
+            : null;
+
     private void OnFilterChanged(object? sender, TextChangedEventArgs e) => ApplyFilter();
+
+    /// <summary>
+    /// Choosing a facet re-filters and puts the highlight back on something visible. Without the
+    /// second half, narrowing to a facet that excludes the current value leaves a selection nobody
+    /// can see and Enter takes it anyway.
+    /// </summary>
+    private void OnFacetChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        ApplyFilter();
+
+        if (Choices.SelectedIndex < 0 && _visible.Count > 0)
+        {
+            Choices.SelectedIndex = 0;
+            Choices.ScrollIntoView(0);
+        }
+    }
 
     private void OnFilterKeyDown(object? sender, KeyEventArgs e)
     {

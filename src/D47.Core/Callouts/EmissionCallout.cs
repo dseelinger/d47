@@ -26,6 +26,26 @@ namespace D47.Core.Callouts;
 /// anything off.
 /// </para>
 /// <para>
+/// <b>And the line says how much room is left, which is what stopped it reading as a bug</b>
+/// (<a href="https://github.com/dseelinger/d47/issues/132">#132</a>). Reported as <i>"it should
+/// only tell me this when I am not full"</i> — and it already only did: the Commander had 5, 36 and
+/// 20 units of headroom across the three materials it named. The filter was right and the sentence
+/// was unfalsifiable, reading identically whether there was room for one unit or a hundred and
+/// fifty. The numbers were in hand at the moment it spoke and were thrown away, so this costs
+/// nothing but the wording and makes the callout self-explaining: a Commander can tell at once
+/// whether dropping out is worth it, and never has to wonder why d47 spoke.
+/// </para>
+/// <para>
+/// <b>No nearly-full threshold ships, and that is the decision rather than an omission.</b> Five
+/// short of a hundred is arguably full, and silencing it was the obvious companion change. It is
+/// declined because the complaint was never <em>stop talking</em> but <em>why are you telling me
+/// this</em>, and a number answers that; because a Commander finishing one specific roll wants
+/// those last five; and because a percentage and a flat count behave differently across grades —
+/// 95% of a grade-1 cap is fifteen units of headroom and of a grade-5 cap is five — so shipping one
+/// would mean choosing between two rules on no evidence. If one is ever wanted it is a settings row
+/// with a stated default, never a constant here.
+/// </para>
+/// <para>
 /// <b>Capacity is injected rather than looked up here</b>, exactly as
 /// <see cref="MaterialMilestoneCallout"/> does it and for the same reason: Elite reports a
 /// per-material capacity nowhere, and a material whose grade the table does not know answers null.
@@ -86,7 +106,7 @@ public sealed class EmissionCallout : ICallout
                 continue;
             }
 
-            if (Sayable(journalEvent, state) is { Count: > 0 } materials)
+            if (Worth(journalEvent, state) is { Count: > 0 } materials)
             {
                 yield return new Announcement(Key, Said(system, materials))
                 {
@@ -99,12 +119,18 @@ public sealed class EmissionCallout : ICallout
     }
 
     /// <summary>
-    /// Every material this system could put in an emission and the Commander has room for, each
-    /// named once and in the order the groups are declared in.
+    /// One material worth naming, and how much room is left for it — null where the capacity is
+    /// not known, which is the same unknown that makes it worth naming at all.
     /// </summary>
-    private List<string> Sayable(JournalEvent journalEvent, CommanderGameState state)
+    private readonly record struct Sayable(string Name, int? Room);
+
+    /// <summary>
+    /// Every material this system could put in an emission and the Commander has room for, each
+    /// named once and in the order the groups are declared in, carrying that room with it.
+    /// </summary>
+    private List<Sayable> Worth(JournalEvent journalEvent, CommanderGameState state)
     {
-        var said = new List<string>();
+        var said = new List<Sayable>();
 
         if (journalEvent.Long("Population") is not { } population || population < EmissionRules.MinimumPopulation)
         {
@@ -117,12 +143,21 @@ public sealed class EmissionCallout : ICallout
         {
             foreach (var symbol in group.Materials)
             {
-                if (!seen.Add(symbol) || IsFull(symbol, state))
+                if (!seen.Add(symbol))
                 {
                     continue;
                 }
 
-                said.Add(MaterialCatalogue.Find(symbol)?.Name ?? symbol);
+                var room = RoomFor(symbol, state);
+
+                // Full. The one reading where a known room decides not to speak rather than what
+                // to say.
+                if (room is <= 0)
+                {
+                    continue;
+                }
+
+                said.Add(new Sayable(MaterialCatalogue.Find(symbol)?.Name ?? symbol, room));
             }
         }
 
@@ -186,21 +221,55 @@ public sealed class EmissionCallout : ICallout
     }
 
     /// <summary>
-    /// Whether there is no room for another. <b>False where the capacity is not known</b>, so an
-    /// unknown answers "say it" — d47 cannot prove the Commander is full, and silence would be
-    /// withholding something true.
+    /// How many more of a material the Commander can carry, or null where the capacity is not
+    /// known. Zero or less is full.
+    /// <para>
+    /// <b>One lookup answers both questions</b>, which is the point of #132: what to skip and what
+    /// to say are the same number, and computing them apart is how a sentence comes to disagree
+    /// with the filter that produced it.
+    /// </para>
+    /// <para>
+    /// <b>Null still means "say it"</b> — the behaviour this replaces, unchanged. The opposite of
+    /// the milestone callout's choice and deliberately: there an unknown means a percentage that
+    /// would have to be invented, here it means only that d47 cannot prove the Commander is full,
+    /// and silence on that basis would be withholding something true. Such a material is named
+    /// without a number rather than with a guessed one.
+    /// </para>
     /// </summary>
-    private bool IsFull(string symbol, CommanderGameState state) =>
-        Capacity(symbol) is { } capacity && state.Materials.Find(symbol) is { } held && held.Count >= capacity;
+    private int? RoomFor(string symbol, CommanderGameState state) =>
+        Capacity(symbol) is { } capacity ? capacity - state.Materials.CountOf(symbol) : null;
 
-    private static string Said(string system, IReadOnlyList<string> materials) =>
+    private static string Said(string system, IReadOnlyList<Sayable> materials) =>
         $"{system} could be running high grade emissions for {Listed(materials)}.";
 
-    /// <summary>"A", "A and B", "A, B and C" — said the way a person says a list.</summary>
-    private static string Listed(IReadOnlyList<string> materials) => materials.Count switch
+    /// <summary>
+    /// "A", "A and B", "A, B and C" — said the way a person says a list.
+    /// <para>
+    /// <b>Semicolons once any entry carries a number</b>, because those entries carry a comma of
+    /// their own and two levels of list on one separator is unparseable in the ear: <i>"Proto Heat
+    /// Radiators, 5 short, Proto Light Alloys, 36 short"</i> is four things or two depending on how
+    /// you hear it. A list where nothing has a number keeps the ordinary commas.
+    /// </para>
+    /// </summary>
+    private static string Listed(IReadOnlyList<Sayable> materials)
     {
-        1 => materials[0],
-        2 => $"{materials[0]} and {materials[1]}",
-        _ => $"{string.Join(", ", materials.Take(materials.Count - 1))} and {materials[^1]}",
-    };
+        var said = materials.Select(Describe).ToList();
+        var separator = materials.Any(material => material.Room is not null) ? "; " : ", ";
+
+        return said.Count switch
+        {
+            1 => said[0],
+            2 => $"{said[0]} and {said[1]}",
+            _ => $"{string.Join(separator, said.Take(said.Count - 1))} and {said[^1]}",
+        };
+    }
+
+    /// <summary>
+    /// One material and its headroom. <b>The unit is repeated on every entry rather than stated
+    /// once at the front</b> — the issue's own example elides it after the first, which reads well
+    /// until the first material is the one with an unknown capacity and the list carries no unit
+    /// anywhere.
+    /// </summary>
+    private static string Describe(Sayable material) =>
+        material.Room is { } room ? $"{material.Name}, {room} short" : material.Name;
 }

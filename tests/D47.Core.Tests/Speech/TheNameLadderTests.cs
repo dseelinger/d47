@@ -34,12 +34,15 @@ public class TheNameLadderTests
         // COL parses as one syllable and is pronounced rather than spelled.
         Assert.DoesNotContain("siː, oʊ, ˈɛl", said, StringComparison.Ordinal);
 
-        // 385 is said casually, as a person reads a designation.
-        Assert.Contains("θɹiː", said, StringComparison.Ordinal);
-        Assert.Contains("eɪti", said, StringComparison.Ordinal);
+        // 385 is said casually, as a person reads a designation. The stress marks sit before the
+        // vowel rather than the syllable, which is the dictionary's convention and, since
+        // 2026-08-28, this module's -- see TheStressMarkGoesBeforeTheVowelTests for what the other
+        // placement sounded like.
+        Assert.Contains("θɹˈiː", said, StringComparison.Ordinal);
+        Assert.Contains("ˈeɪɾi", said, StringComparison.Ordinal);
 
         // B0 is letters and digits with nothing between them, so it is spelled.
-        Assert.Contains("biː, ˈzɪɹoʊ", said, StringComparison.Ordinal);
+        Assert.Contains("biː, zˈiəɹoʊ", said, StringComparison.Ordinal);
 
         // GQPI cannot begin an English syllable and has no vowel, so it is spelled.
         Assert.Contains("dʒiː, kjuː, piː, aɪ", said, StringComparison.Ordinal);
