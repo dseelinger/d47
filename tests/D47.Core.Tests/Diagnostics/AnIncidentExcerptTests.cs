@@ -41,6 +41,14 @@ public class AnIncidentExcerptTests
         return end < 0 ? "Unreadable" : compact[at..end];
     }
 
+    /// <summary>
+    /// A log fixture as entries, the way <see cref="IncidentSources.Logs"/> hands them over: parsed
+    /// against the day its filename would have carried. Take() is given entries rather than a file
+    /// now, because an excerpt spanning two days cannot place "14:02:11" without one (#173).
+    /// </summary>
+    private static IReadOnlyList<LogEntry> Entries(string log, int day = 28) =>
+        LogScrub.Parse(log, new DateOnly(2026, 8, day), Utc);
+
     /// <summary>The scrubbed line alone, where the test is about the line rather than the count.</summary>
     private static string? Scrubbed(string json, Pseudonyms names) => JournalScrub.Line(json, names).Json;
 
@@ -146,9 +154,8 @@ public class AnIncidentExcerptTests
         var report = ExcerptReport.Render(
             IncidentExcerpt.Take(
                 [Entry("""{"event":"ReceiveText","From":"","Message":"hello","Channel":"npc"}""", 3)],
-                string.Empty,
-                Window(),
-                Utc),
+                [],
+                Window()),
             new ExcerptPaperwork("0.85.0", Noon));
 
         Assert.Contains("1 in-game message withheld", report);
@@ -452,9 +459,8 @@ public class AnIncidentExcerptTests
 
         var told = IncidentExcerpt.Take(
             [],
-            spoken,
+            Entries(spoken),
             Window(),
-            Utc,
             carrier: new CarrierState { Name = "GDS PREDATOR", CallSign = "B0X-79X" });
 
         Assert.DoesNotContain(told.Log, line => line.Contains("GDS PREDATOR"));
@@ -534,9 +540,8 @@ public class AnIncidentExcerptTests
         var report = ExcerptReport.Render(
             IncidentExcerpt.Take(
                 [Entry("""{"event":"FSDJump","Factions":[{"Name":"X","SquadronFaction":true}]}""", 3)],
-                string.Empty,
-                Window(),
-                Utc),
+                [],
+                Window()),
             new ExcerptPaperwork("0.87.0", Noon));
 
         Assert.Contains("1 squadron link dropped", report);
@@ -547,9 +552,8 @@ public class AnIncidentExcerptTests
             ExcerptReport.Render(
                 IncidentExcerpt.Take(
                     [Entry("""{"event":"FSDJump","StarSystem":"Eurybia"}""", 3)],
-                    string.Empty,
-                    Window(),
-                    Utc),
+                    [],
+                    Window()),
                 new ExcerptPaperwork("0.87.0", Noon)));
     }
 
@@ -723,9 +727,8 @@ public class AnIncidentExcerptTests
 
         var excerpt = IncidentExcerpt.Take(
             [Entry("""{"event":"FSDJump","StarSystem":"Eurybia"}"""), Entry("not json at all", 1)],
-            string.Empty,
-            Window(),
-            Utc);
+            [],
+            Window());
 
         Assert.Single(excerpt.Journal);
         Assert.Equal(1, excerpt.Tally.JournalWithheld);
@@ -743,9 +746,8 @@ public class AnIncidentExcerptTests
                 Entry("""{"event":"Docked","StationName":"Jameson Memorial"}""", 3),
                 Entry("""{"event":"FSDJump","StarSystem":"Eurybia"}""", 1),
             ],
-            string.Empty,
-            Window(),
-            Utc);
+            [],
+            Window());
 
         Assert.Contains("FSDJump", excerpt.Journal[0]);
         Assert.Contains("Docked", excerpt.Journal[1]);
@@ -761,9 +763,8 @@ public class AnIncidentExcerptTests
                 Entry("""{"event":"FSDJump","StarSystem":"Eurybia"}""", 4),
                 Entry("""{"event":"Touchdown"}""", 90),
             ],
-            string.Empty,
-            new ExcerptRequest(Noon.AddMinutes(5), TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(1), false),
-            Utc);
+            [],
+            new ExcerptRequest(Noon.AddMinutes(5), TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(1), false));
 
         Assert.Single(excerpt.Journal);
         Assert.Contains("FSDJump", excerpt.Journal[0]);
@@ -783,7 +784,7 @@ public class AnIncidentExcerptTests
     [Fact]
     public void D47sOwnLinesTravel()
     {
-        var excerpt = IncidentExcerpt.Take([], Log, Window(), Utc);
+        var excerpt = IncidentExcerpt.Take([], Entries(Log), Window());
 
         Assert.Contains(excerpt.Log, line => line.Contains("Docking computer engaged"));
         Assert.Contains(excerpt.Log, line => line.Contains("Settings now read"));
@@ -796,13 +797,13 @@ public class AnIncidentExcerptTests
     [Fact]
     public void TheCommandersOwnSpeechIsHeldBackUntilTheySoSay()
     {
-        var without = IncidentExcerpt.Take([], Log, Window(), Utc);
+        var without = IncidentExcerpt.Take([], Entries(Log), Window());
 
         Assert.DoesNotContain(without.Log, line => line.Contains("the docking computer did nothing"));
         Assert.Equal(1, without.Tally.MySpeechLines);
         Assert.False(without.Tally.MySpeechIncluded);
 
-        var with = IncidentExcerpt.Take([], Log, Window(mySpeech: true), Utc);
+        var with = IncidentExcerpt.Take([], Entries(Log), Window(mySpeech: true));
 
         Assert.Contains(with.Log, line => line.Contains("the docking computer did nothing"));
         Assert.True(with.Tally.MySpeechIncluded);
@@ -818,8 +819,8 @@ public class AnIncidentExcerptTests
     {
         foreach (var excerpt in new[]
                  {
-                     IncidentExcerpt.Take([], Log, Window(), Utc),
-                     IncidentExcerpt.Take([], Log, Window(mySpeech: true), Utc),
+                     IncidentExcerpt.Take([], Entries(Log), Window()),
+                     IncidentExcerpt.Take([], Entries(Log), Window(mySpeech: true)),
                  })
         {
             Assert.DoesNotContain(excerpt.Log, line => line.Contains("watch where you're going"));
@@ -840,9 +841,8 @@ public class AnIncidentExcerptTests
     {
         var excerpt = IncidentExcerpt.Take(
             [Entry("""{"event":"Commander","FID":"F735466","Name":"JOHN DEPARAGON"}""", 3)],
-            Log,
-            Window(),
-            Utc);
+            Entries(Log),
+            Window());
 
         Assert.DoesNotContain(excerpt.Log, line => line.Contains("JOHN DEPARAGON"));
         Assert.DoesNotContain(excerpt.Log, line => line.Contains("F735466"));
@@ -862,15 +862,14 @@ public class AnIncidentExcerptTests
         const string spoken =
             "[12:03:00 INF] D47.Core.Audio.SpeechPipeline: D47 said: JOHN DEPARAGON is in Eurybia, docked.";
 
-        var blind = IncidentExcerpt.Take([], spoken, Window(), Utc);
+        var blind = IncidentExcerpt.Take([], Entries(spoken), Window());
 
         Assert.Contains(blind.Log, line => line.Contains("JOHN DEPARAGON"));
 
         var told = IncidentExcerpt.Take(
             [],
-            spoken,
+            Entries(spoken),
             Window(),
-            Utc,
             commander: new CommanderIdentity("F735466", "JOHN DEPARAGON"));
 
         Assert.DoesNotContain(told.Log, line => line.Contains("JOHN DEPARAGON"));
@@ -883,9 +882,8 @@ public class AnIncidentExcerptTests
     {
         var excerpt = IncidentExcerpt.Take(
             [],
-            "[12:03:00 INF] D47.App.AppHost: Loaded C:\\Users\\dougs\\data\\settings.json",
+            Entries("[12:03:00 INF] D47.App.AppHost: Loaded C:\\Users\\dougs\\data\\settings.json"),
             Window(),
-            Utc,
             [new KeyValuePair<string, string>("C:\\Users\\dougs", "%USERPROFILE%")]);
 
         Assert.Contains(excerpt.Log, line => line.Contains("%USERPROFILE%\\data\\settings.json"));
@@ -899,35 +897,52 @@ public class AnIncidentExcerptTests
     [Fact]
     public void AStackTraceStaysWithTheLineItBelongsTo()
     {
-        var entry = Assert.Single(LogScrub.Parse(
+        var entry = Assert.Single(Entries(
             "[12:03:00 ERR] D47.App.AppHost: Could not transcribe an utterance\n"
             + "System.InvalidOperationException: no model\n"
             + "   at D47.Stt.WhisperTranscriber.Transcribe()"));
 
         Assert.Contains("InvalidOperationException", entry.Text);
         Assert.Contains("WhisperTranscriber", entry.Text);
-        Assert.Equal(new TimeOnly(12, 3, 0), entry.At);
+        Assert.Equal(new DateTimeOffset(2026, 8, 28, 12, 3, 0, TimeSpan.Zero), entry.At);
     }
 
     /// <summary>
-    /// A Commander flying at midnight. The log carries a time of day and no date, so a window whose
-    /// start is a larger number than its end is the ordinary case rather than a corrupt one.
+    /// A Commander flying at midnight, which is two files rather than one wrap-around case now.
+    /// <para>
+    /// <b>And the same clock time on the wrong night no longer matches</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/173">#173</a>). While an entry carried
+    /// only a time of day, an excerpt spanning two files could not tell 23:58 last night from 23:58
+    /// the night before, and the wrap-aware comparison the old code needed would have taken both.
+    /// The day comes off the filename now, so this is an ordinary comparison of instants.
+    /// </para>
     /// </summary>
     [Fact]
-    public void AWindowThatCrossesMidnightStillSelects()
+    public void AWindowThatCrossesMidnightTakesTheRightNight()
     {
+        IReadOnlyList<LogEntry> log =
+        [
+            .. Entries("[23:58:00 INF] D47.App.AppHost: the night before", day: 27),
+            .. Entries("[23:58:00 INF] D47.App.AppHost: just before", day: 28),
+            .. Entries(
+                "[00:01:00 INF] D47.App.AppHost: just after\n"
+                + "[12:00:00 INF] D47.App.AppHost: the afternoon",
+                day: 29),
+        ];
+
         var excerpt = IncidentExcerpt.Take(
             [],
-            "[23:58:00 INF] D47.App.AppHost: before\n[00:01:00 INF] D47.App.AppHost: after\n"
-            + "[12:00:00 INF] D47.App.AppHost: the afternoon",
+            log,
             new ExcerptRequest(
                 new DateTimeOffset(2026, 8, 29, 0, 0, 0, TimeSpan.Zero),
                 TimeSpan.FromMinutes(5),
                 TimeSpan.FromMinutes(5),
-                false),
-            Utc);
+                false));
 
         Assert.Equal(2, excerpt.Log.Count);
+        Assert.Contains(excerpt.Log, line => line.Contains("just before"));
+        Assert.Contains(excerpt.Log, line => line.Contains("just after"));
+        Assert.DoesNotContain(excerpt.Log, line => line.Contains("the night before"));
         Assert.DoesNotContain(excerpt.Log, line => line.Contains("the afternoon"));
     }
 
@@ -944,9 +959,8 @@ public class AnIncidentExcerptTests
         var quiet = ExcerptReport.Render(
             IncidentExcerpt.Take(
                 [Entry("""{"event":"FSDJump","StarSystem":"Eurybia"}""", 3)],
-                string.Empty,
-                Window(),
-                Utc),
+                [],
+                Window()),
             new ExcerptPaperwork("0.85.0", Noon));
 
         Assert.Contains("No name or ID was found to replace", quiet);
@@ -956,9 +970,8 @@ public class AnIncidentExcerptTests
         var busy = ExcerptReport.Render(
             IncidentExcerpt.Take(
                 [Entry("""{"event":"Commander","FID":"F735466","Name":"JOHN DEPARAGON"}""", 3)],
-                Log,
-                Window(),
-                Utc),
+                Entries(Log),
+                Window()),
             new ExcerptPaperwork("0.85.0", Noon));
 
         Assert.Contains("2 names and IDs replaced", busy);
@@ -974,7 +987,7 @@ public class AnIncidentExcerptTests
     public void TheReportCarriesItsOwnPaperwork()
     {
         var report = ExcerptReport.Render(
-            IncidentExcerpt.Take([], string.Empty, Window(), Utc),
+            IncidentExcerpt.Take([], [], Window()),
             new ExcerptPaperwork("0.85.0+8b21b3d", Noon));
 
         Assert.StartsWith(ExcerptReport.Marker, report, StringComparison.Ordinal);
@@ -994,9 +1007,8 @@ public class AnIncidentExcerptTests
         var report = ExcerptReport.Render(
             IncidentExcerpt.Take(
                 [],
-                "[12:03:00 INF] D47.App.AppHost: it printed ``` and carried on",
-                Window(),
-                Utc),
+                Entries("[12:03:00 INF] D47.App.AppHost: it printed ``` and carried on"),
+                Window()),
             new ExcerptPaperwork("0.85.0", Noon));
 
         Assert.Contains("````text", report);

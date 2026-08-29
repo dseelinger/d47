@@ -63,20 +63,24 @@ public class WhatIsShownIsWhatLeavesTests
         var window = Shown(request =>
         {
             asked.Add(request);
-            return $"{request.Before.TotalMinutes} back, speech {request.IncludeMySpeech}";
+            return $"{request.Before.TotalMinutes:0} back, speech {request.IncludeMySpeech}";
         });
 
-        Assert.Equal("5 back, speech False", window.Text);
+        Assert.Equal("10 back, speech False", window.Text);
 
         Control<CheckBox>(window, "IncludeMySpeech").IsChecked = true;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal("5 back, speech True", window.Text);
+        Assert.Equal("10 back, speech True", window.Text);
 
-        Control<NumericUpDown>(window, "MinutesBefore").Value = 12;
+        // A named span rather than a minute stepper (#173). Reaching further is now a thing a
+        // person picks off a list, because the sources can finally answer it.
+        Control<ComboBox>(window, "Span").SelectedItem =
+            ExcerptSpan.All.Single(span => span.Name == "The last 12 hours");
+
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal("12 back, speech True", window.Text);
+        Assert.Equal("720 back, speech True", window.Text);
         Assert.Equal(3, asked.Count);
     }
 
@@ -137,7 +141,7 @@ public class WhatIsShownIsWhatLeavesTests
 
         Assert.NotNull(asked);
         Assert.Equal(Noon, asked.MarkedAt);
-        Assert.Equal(Noon.AddMinutes(-5), asked.From);
-        Assert.Equal(Noon.AddMinutes(1), asked.To);
+        Assert.Equal(Noon - ExcerptSpan.Default.Before, asked.From);
+        Assert.Equal(Noon + ExcerptSpan.Default.After, asked.To);
     }
 }

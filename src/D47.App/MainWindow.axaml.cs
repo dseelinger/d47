@@ -1358,25 +1358,31 @@ public partial class MainWindow : Window
             new(Environment.UserName, "%USERNAME%"),
         };
 
-        // Read on a worker: it opens the file the sink is still writing, and a five-minute window
-        // of a busy session is several megabytes to seek past.
-        var log = await Task.Run(() => Logging.LogTail.Read(host.Paths.Logs, 8 * 1024 * 1024, 200_000));
-
-        var journal = host.JournalLog.Read(noise: true);
         var paperwork = new ExcerptPaperwork(BuildInfo.Full, DateTimeOffset.Now);
+        var folder = host.JournalDirectory ?? D47.Core.Journal.JournalFolder.DefaultPath();
 
+        // **Read from disk, per window, on a worker** (#173). It used to read JournalLog and the
+        // newest d47 log, which between them reached the current Elite session and today — so the
+        // widest span here would have quietly returned the same events as the narrowest. Seven days
+        // of journals is tens of megabytes to walk, which is why this is not on the UI thread and
+        // why it happens per render rather than once: the span is the thing being chosen.
         await new Controls.DonateExcerptWindow(
             DateTimeOffset.Now,
-            request => ExcerptReport.Render(
-                IncidentExcerpt.Take(
-                    journal,
-                    log,
-                    request,
-                    TimeZoneInfo.Local,
-                    machine,
-                    host.GameState.Active?.Identity,
-                    host.GameState.Active?.Carrier),
-                paperwork)).Over(this);
+            request =>
+            {
+                var journal = IncidentSources.Journals(folder, request.From, request.To, _host?.Loggers.CreateLogger("Excerpt"));
+                var log = IncidentSources.Logs(host.Paths.Logs, request.From, request.To, TimeZoneInfo.Local);
+
+                return ExcerptReport.Render(
+                    IncidentExcerpt.Take(
+                        journal,
+                        log,
+                        request,
+                        machine,
+                        host.GameState.Active?.Identity,
+                        host.GameState.Active?.Carrier),
+                    paperwork);
+            }).Over(this);
     }
 
     private async Task CheckForUpdateAsync(AppHost host)

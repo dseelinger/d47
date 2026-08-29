@@ -22,9 +22,12 @@ public enum LogVoice
 
 /// <summary>One entry of d47's human-readable log: when, whose words, and the whole of it.</summary>
 /// <param name="At">
-/// The time of day the sink wrote, in local time. There is no date in the file — it rolls daily
-/// and the name carries it — which is why this is a <see cref="TimeOnly"/> and the window that
-/// selects on it is wrap-aware.
+/// When the sink wrote it. <b>An instant, not a time of day</b>
+/// (<a href="https://github.com/dseelinger/d47/issues/173">#173</a>). The file holds local
+/// wall-clock time and no date — it rolls daily and the name carries it — which was survivable
+/// while an excerpt could only ever read one file, and stops being so the moment it reads two:
+/// <c>14:02:11</c> is then ambiguous between them. The day comes from the filename and the offset
+/// from the zone the sink wrote in, and the window compares instants.
 /// </param>
 /// <param name="Voice">Whose words, decided by <see cref="LogScrub.Parse"/>.</param>
 /// <param name="Text">
@@ -32,7 +35,7 @@ public enum LogVoice
 /// with no timestamp on the ones after the first, and a stack trace cut in half is worse evidence
 /// than no stack trace.
 /// </param>
-public sealed record LogEntry(TimeOnly At, LogVoice Voice, string Text);
+public sealed record LogEntry(DateTimeOffset At, LogVoice Voice, string Text);
 
 /// <summary>
 /// The d47 half of an incident excerpt, and it rides <b>the opposite rule</b> to the journal half
@@ -103,11 +106,19 @@ public static partial class LogScrub
     /// entry above it; anything before the first timestamp is dropped, which is the fragment
     /// <c>LogTail</c> leaves when it reads a window off the end of a large file.
     /// </summary>
-    public static IReadOnlyList<LogEntry> Parse(string log)
+    /// <param name="day">
+    /// Which day this file holds, from its name. The sink writes no date, so without this an entry
+    /// cannot be placed on a timeline that spans more than one file (#173).
+    /// </param>
+    /// <param name="zone">
+    /// The zone the sink wrote in. Stated rather than assumed, for the reason nothing in Core reads
+    /// <c>TimeZoneInfo.Local</c> for itself.
+    /// </param>
+    public static IReadOnlyList<LogEntry> Parse(string log, DateOnly day, TimeZoneInfo zone)
     {
         var entries = new List<LogEntry>();
         var text = new System.Text.StringBuilder();
-        TimeOnly at = default;
+        DateTimeOffset at = default;
         var voice = LogVoice.D47;
         var open = false;
 
@@ -129,7 +140,13 @@ public static partial class LogScrub
             {
                 Close();
 
-                at = TimeOnly.ParseExact(head.Groups["at"].Value, "HH:mm:ss", CultureInfo.InvariantCulture);
+                var clock = TimeOnly.ParseExact(head.Groups["at"].Value, "HH:mm:ss", CultureInfo.InvariantCulture);
+                var local = day.ToDateTime(clock, DateTimeKind.Unspecified);
+
+                // The hour that happens twice when the clocks go back is resolved to the first of
+                // the two, which is what ConvertTimeToUtc does with an ambiguous local time. An
+                // excerpt an hour out once a year is a smaller wrong than a throw mid-donation.
+                at = new DateTimeOffset(TimeZoneInfo.ConvertTimeToUtc(local, zone), TimeSpan.Zero);
                 voice = VoiceOf(head.Groups["message"].Value);
                 open = true;
                 text.Append(trimmed);
