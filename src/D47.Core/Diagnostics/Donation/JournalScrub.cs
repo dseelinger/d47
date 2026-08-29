@@ -138,7 +138,7 @@ public static class JournalScrub
         new("SquadronName", Scrub.Squadron),
         new("SquadronID", Scrub.SquadronId),
 
-        // **The flag that undoes the two rules above it.** An excerpt replaces GREYBEARD DELTA with
+        // **The flag that undoes the two rules above it.** An excerpt replaces EXAMPLE SQUADRON with
         // SQUADRON ALPHA and its id with a stand-in, and then a jump three lines later points at a
         // minor faction and says SquadronFaction: true — one hop on INARA from there to the
         // squadron and its member list. Minor factions stay, on the Commander's ruling; what goes
@@ -253,7 +253,7 @@ public static class JournalScrub
         // incident window where SetUserShipName's equivalent would not be.
         // **A squadron's carrier is identified quite differently**, and the rules above miss all of
         // it: `Callsign` holds the four-character squadron tag rather than a XXX-XXX callsign,
-        // `StationName` holds that same bare tag, and a scan reads "GBD FORMIDINE DREAMS | OV40".
+        // `StationName` holds that same bare tag, and a scan reads "EXA EXAMPLE HORIZON | EX01".
         // Found by sweeping the corpus for names known to be real rather than by reading the
         // schema, which is the only way any of this was ever found.
         ["CarrierStats"] =
@@ -584,7 +584,7 @@ public static class JournalScrub
     /// its <em>shape</em> rather than guessing at its meaning.
     /// </para>
     /// <para>
-    /// <b>Except the one that is not a fact at all.</b> <c>$cmdr_decorate:#name=CALVIN INSTI;</c> is
+    /// <b>Except the one that is not a fact at all.</b> <c>$cmdr_decorate:#name=EXAMPLE CHARLIE;</c> is
     /// a real player wearing a symbol's clothes, and it arrives in <c>ReceiveText.From</c>, in
     /// <c>ShipTargeted.PilotName</c> and in <c>Bounty.PilotName</c> — 15,970 values across the
     /// corpus. Exempting it was a hole this class opened for itself: <c>From</c> had been scrubbed
@@ -599,7 +599,7 @@ public static class JournalScrub
 
     /// <summary>
     /// The Commander's name inside a decoration, or null where there is none. Elite concatenates
-    /// tokens — <c>"$RolePanel2_unmanned; $cmdr_decorate:#name=BRADFYRD;"</c> — so this reads to the
+    /// tokens — <c>"$RolePanel2_unmanned; $cmdr_decorate:#name=EXAMPLE BRAVO;"</c> — so this reads to the
     /// terminator rather than to the end of the value.
     /// </summary>
     private static string? DecoratedName(string? value)
@@ -632,8 +632,8 @@ public static class JournalScrub
     /// shaped like this, and every one of the 24 was seen as a <c>FleetCarrier</c>.
     /// </item>
     /// <item>
-    /// <b>A name with the callsign last</b> — <c>GDS PREDATOR B0X-79X</c>, <c>HMS BROTHEL
-    /// X8H-B0Y</c>. 15,002 distinct values end in a callsign-shaped token and every one is a
+    /// <b>A name with the callsign last</b> — <c>GDS PREDATOR B0X-79X</c>, <c>EXAMPLE HAULAGE
+    /// Q7Z-1AB</c>. 15,002 distinct values end in a callsign-shaped token and every one is a
     /// carrier. The whole value goes, because a name and its callsign are one identity — and
     /// somebody else's carrier is no more the donor's to give than their own.
     /// </item>
@@ -665,7 +665,7 @@ public static class JournalScrub
             return names.Carrier(value);
         }
 
-        // "GBD FORMIDINE DREAMS | OV40" — a squadron's carrier, which wears its squadron's tag
+        // "EXA EXAMPLE HORIZON | EX01" — a squadron's carrier, which wears its squadron's tag
         // where a private one wears a callsign. The pipe is Frontier's own separator and appears in
         // no other station name in the corpus.
         if (value.Contains(" | ", StringComparison.Ordinal))

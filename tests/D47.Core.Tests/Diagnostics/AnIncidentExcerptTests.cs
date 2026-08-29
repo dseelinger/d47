@@ -115,12 +115,12 @@ public class AnIncidentExcerptTests
     public void AMessageKeepsItsShapeAndLosesItsWords()
     {
         var scrubbed = Scrubbed(
-            """{"event":"ReceiveText","From":"Don Tazeme","Message":"Oh no you don't!","Message_Localised":"Oh no you don't!","Channel":"local"}""",
+            """{"event":"ReceiveText","From":"Example Delta","Message":"Oh no you don't!","Message_Localised":"Oh no you don't!","Channel":"local"}""",
             new Pseudonyms());
 
         Assert.NotNull(scrubbed);
         Assert.DoesNotContain("Oh no you don't", scrubbed);
-        Assert.DoesNotContain("Don Tazeme", scrubbed);
+        Assert.DoesNotContain("Example Delta", scrubbed);
 
         Assert.Contains("\"Channel\":\"local\"", scrubbed);
         Assert.Contains(JournalScrub.Withheld, scrubbed);
@@ -160,12 +160,12 @@ public class AnIncidentExcerptTests
     public void EveryNameInAWingIsReplaced()
     {
         var scrubbed = Scrubbed(
-            """{"event":"WingJoin","Others":["Ilse Bruhn","Don Tazeme"]}""",
+            """{"event":"WingJoin","Others":["Ilse Bruhn","Example Delta"]}""",
             new Pseudonyms());
 
         Assert.NotNull(scrubbed);
         Assert.DoesNotContain("Ilse Bruhn", scrubbed);
-        Assert.DoesNotContain("Don Tazeme", scrubbed);
+        Assert.DoesNotContain("Example Delta", scrubbed);
         Assert.Contains("CMDR ALPHA", scrubbed);
         Assert.Contains("CMDR BRAVO", scrubbed);
     }
@@ -214,10 +214,10 @@ public class AnIncidentExcerptTests
         Assert.Contains("Pai Huldr Blue Brothers", pirate);
 
         var person = Scrubbed(
-            """{"event":"Interdicted","Submitted":false,"Interdictor":"Don Tazeme","IsPlayer":true}""",
+            """{"event":"Interdicted","Submitted":false,"Interdictor":"Example Delta","IsPlayer":true}""",
             new Pseudonyms());
 
-        Assert.DoesNotContain("Don Tazeme", person);
+        Assert.DoesNotContain("Example Delta", person);
         Assert.Contains("CMDR ALPHA", person);
     }
 
@@ -379,7 +379,7 @@ public class AnIncidentExcerptTests
 
     /// <summary>
     /// Somebody else's carrier, seen from across a system, with its name and callsign in one
-    /// string — <c>"HMS BROTHEL X8H-B0Y"</c> is a real signal off the corpus. The shape guard
+    /// string — <c>"EXAMPLE HAULAGE Q7Z-1AB"</c> is a real signal off the corpus. The shape guard
     /// cannot help where the callsign is embedded rather than alone, so the whole value goes,
     /// conditioned on Elite's own word for what the signal is.
     /// </summary>
@@ -389,11 +389,11 @@ public class AnIncidentExcerptTests
         var names = new Pseudonyms();
 
         var carrier = Scrubbed(
-            """{"event":"FSSSignalDiscovered","SystemAddress":6405910172338,"SignalName":"HMS BROTHEL X8H-B0Y","SignalType":"FleetCarrier","IsStation":true}""",
+            """{"event":"FSSSignalDiscovered","SystemAddress":6405910172338,"SignalName":"EXAMPLE HAULAGE Q7Z-1AB","SignalType":"FleetCarrier","IsStation":true}""",
             names);
 
-        Assert.DoesNotContain("HMS BROTHEL", carrier);
-        Assert.DoesNotContain("X8H-B0Y", carrier);
+        Assert.DoesNotContain("EXAMPLE HAULAGE", carrier);
+        Assert.DoesNotContain("Q7Z-1AB", carrier);
         Assert.Contains("CARRIER ALPHA", carrier);
 
         // A megaship wears the same shape at the front, and is a game fact. So is a minor faction
@@ -473,11 +473,11 @@ public class AnIncidentExcerptTests
         var names = new Pseudonyms();
 
         var startup = Scrubbed(
-            """{"event":"SquadronStartup","SquadronName":"GREYBEARD DELTA","SquadronID":57404,"CurrentRank":3}""",
+            """{"event":"SquadronStartup","SquadronName":"EXAMPLE SQUADRON","SquadronID":10101,"CurrentRank":3}""",
             names);
 
-        Assert.DoesNotContain("GREYBEARD DELTA", startup);
-        Assert.DoesNotContain("57404", startup);
+        Assert.DoesNotContain("EXAMPLE SQUADRON", startup);
+        Assert.DoesNotContain("10101", startup);
         Assert.Contains("SQUADRON ALPHA", startup);
         Assert.Contains("\"SquadronID\":900000", startup);
         Assert.Contains("\"CurrentRank\":3", startup);
@@ -486,7 +486,7 @@ public class AnIncidentExcerptTests
         // holding a different shape.
         Assert.Contains(
             "\"SquadronID\":\"SQ01\"",
-            Scrubbed("""{"event":"ShipTargeted","SquadronID":"OV40","Ship":"python"}""", names));
+            Scrubbed("""{"event":"ShipTargeted","SquadronID":"EX01","Ship":"python"}""", names));
     }
 
     /// <summary>
@@ -504,10 +504,10 @@ public class AnIncidentExcerptTests
     public void TheFlagSayingWhichFactionIsTheSquadronsGoes()
     {
         var names = new Pseudonyms();
-        names.Squadron("GREYBEARD DELTA");
+        names.Squadron("EXAMPLE SQUADRON");
 
         var scrubbed = JournalScrub.Line(
-            """{"event":"FSDJump","StarSystem":"Suchifuku","Factions":[{"Name":"Suchifuku Pirates","Influence":0.010},{"Name":"Formidine Greybeard Guild","Influence":0.684,"SquadronFaction":true}],"SystemFaction":{"Name":"Formidine Greybeard Guild"}}""",
+            """{"event":"FSDJump","StarSystem":"Suchifuku","Factions":[{"Name":"Suchifuku Pirates","Influence":0.010},{"Name":"Example Independents","Influence":0.684,"SquadronFaction":true}],"SystemFaction":{"Name":"Example Independents"}}""",
             names);
 
         Assert.DoesNotContain("SquadronFaction", scrubbed.Json);
@@ -517,7 +517,7 @@ public class AnIncidentExcerptTests
 
         // The factions themselves stay — they are Frontier's, and they belong to the galaxy rather
         // than to anybody.
-        Assert.Contains("Formidine Greybeard Guild", scrubbed.Json);
+        Assert.Contains("Example Independents", scrubbed.Json);
         Assert.Contains("Suchifuku Pirates", scrubbed.Json);
         Assert.Contains("0.684", scrubbed.Json);
 
@@ -572,7 +572,7 @@ public class AnIncidentExcerptTests
     /// A squadron's carrier is identified quite differently from a private one, and the callsign
     /// rules missed all of it: <c>Callsign</c> holds the squadron tag rather than a
     /// <c>XXX-XXX</c> callsign, <c>StationName</c> holds that bare tag, and a scan reads
-    /// <c>"GBD FORMIDINE DREAMS | OV40"</c>.
+    /// <c>"EXA EXAMPLE HORIZON | EX01"</c>.
     /// </summary>
     [Fact]
     public void ASquadronsCarrierIsIdentifiedDifferentlyAndStillGoes()
@@ -580,31 +580,31 @@ public class AnIncidentExcerptTests
         var names = new Pseudonyms();
 
         var stats = Scrubbed(
-            """{"event":"CarrierStats","CarrierID":3713474048,"CarrierType":"SquadronCarrier","Callsign":"OV40","Name":"GBD FORMIDINE DREAMS","DockingAccess":"squadron"}""",
+            """{"event":"CarrierStats","CarrierID":3713474048,"CarrierType":"SquadronCarrier","Callsign":"EX01","Name":"EXA EXAMPLE HORIZON","DockingAccess":"squadron"}""",
             names);
 
-        Assert.DoesNotContain("GBD FORMIDINE DREAMS", stats);
-        Assert.DoesNotContain("OV40", stats);
+        Assert.DoesNotContain("EXA EXAMPLE HORIZON", stats);
+        Assert.DoesNotContain("EX01", stats);
         Assert.Contains("SquadronCarrier", stats);
 
         var signal = Scrubbed(
-            """{"event":"FSSSignalDiscovered","SignalName":"GBD FORMIDINE DREAMS | OV40","SignalType":"FleetCarrier"}""",
+            """{"event":"FSSSignalDiscovered","SignalName":"EXA EXAMPLE HORIZON | EX01","SignalType":"FleetCarrier"}""",
             names);
 
-        Assert.DoesNotContain("OV40", signal);
+        Assert.DoesNotContain("EX01", signal);
 
         // The bare tag where the station says it is a carrier...
         Assert.DoesNotContain(
-            "OV40",
+            "EX01",
             Scrubbed(
-                """{"event":"Docked","StationName":"OV40","StationType":"FleetCarrier","MarketID":3713474048}""",
+                """{"event":"Docked","StationName":"EX01","StationType":"FleetCarrier","MarketID":3713474048}""",
                 names));
 
         // ...and where it says nothing at all, which is the case the shape rules cannot reach. It
         // is covered because CarrierStats above already ruled on that value in this same excerpt.
         Assert.DoesNotContain(
-            "OV40",
-            Scrubbed("""{"event":"StoredShips","StationName":"OV40","ShipsHere":[]}""", names));
+            "EX01",
+            Scrubbed("""{"event":"StoredShips","StationName":"EX01","ShipsHere":[]}""", names));
     }
 
     /// <summary>
@@ -618,10 +618,10 @@ public class AnIncidentExcerptTests
         var names = new Pseudonyms();
 
         var chat = Scrubbed(
-            """{"event":"ReceiveText","From":"$cmdr_decorate:#name=CALVIN INSTI;","Message":"hi","Channel":"player"}""",
+            """{"event":"ReceiveText","From":"$cmdr_decorate:#name=EXAMPLE CHARLIE;","Message":"hi","Channel":"player"}""",
             names);
 
-        Assert.DoesNotContain("CALVIN INSTI", chat);
+        Assert.DoesNotContain("EXAMPLE CHARLIE", chat);
 
         // The wrapper survives, because it is game state: a replay that undecorates names takes a
         // different branch on a value that is no longer decorated.
@@ -672,18 +672,18 @@ public class AnIncidentExcerptTests
         var names = new Pseudonyms();
 
         var load = Scrubbed(
-            """{"event":"LoadGame","FID":"F735466","Commander":"JOHN DEPARAGON","Group":"BRADFYRD","Ship":"python"}""",
+            """{"event":"LoadGame","FID":"F735466","Commander":"JOHN DEPARAGON","Group":"EXAMPLE BRAVO","Ship":"python"}""",
             names);
 
-        Assert.DoesNotContain("BRADFYRD", load);
+        Assert.DoesNotContain("EXAMPLE BRAVO", load);
         Assert.DoesNotContain("JOHN DEPARAGON", load);
         Assert.Contains("\"Ship\":\"python\"", load);
 
         var crime = Scrubbed(
-            """{"event":"CrimeVictim","Offender":"CALVIN INSTI","CrimeType":"assault","Bounty":400}""",
+            """{"event":"CrimeVictim","Offender":"EXAMPLE CHARLIE","CrimeType":"assault","Bounty":400}""",
             names);
 
-        Assert.DoesNotContain("CALVIN INSTI", crime);
+        Assert.DoesNotContain("EXAMPLE CHARLIE", crime);
         Assert.Contains("\"CrimeType\":\"assault\"", crime);
         Assert.Contains("\"Bounty\":400", crime);
     }
@@ -775,7 +775,7 @@ public class AnIncidentExcerptTests
         [12:03:00 INF] D47.App.AppHost: Heard: the docking computer did nothing
         [12:03:01 INF] D47.Core.Audio.SpeechPipeline: ShipAi said: Docking computer engaged, Commander.
         [12:03:02 INF] D47.Core.Callouts.CalloutEngine: Callout message.local: watch where you're going
-        [12:03:03 INF] D47.Core.Audio.SpeechPipeline: Don Tazeme said: watch where you're going
+        [12:03:03 INF] D47.Core.Audio.SpeechPipeline: Example Delta said: watch where you're going
         [12:03:04 INF] D47.Core.Configuration.SettingsService: Settings now read for Commander JOHN DEPARAGON (F735466)
         """;
 
@@ -825,7 +825,7 @@ public class AnIncidentExcerptTests
             Assert.DoesNotContain(excerpt.Log, line => line.Contains("watch where you're going"));
 
             Assert.Contains(excerpt.Log, line => line.Contains("Callout message.local: " + LogScrub.Withheld));
-            Assert.Contains(excerpt.Log, line => line.Contains("Don Tazeme said: " + LogScrub.Withheld));
+            Assert.Contains(excerpt.Log, line => line.Contains("Example Delta said: " + LogScrub.Withheld));
 
             Assert.Equal(2, excerpt.Tally.InGameMessages);
         }

@@ -96,7 +96,7 @@ the rule is a field list whose treatment guards itself on shape, and it reaches 
 
 **Position is what makes a shape rule safe here**, and it was measured rather than assumed. A
 carrier is either the callsign alone — `B0X-79X`, 24 of 968 distinct station names, all 24 carriers
-— or a name with the callsign **last**: `GDS PREDATOR B0X-79X`, `HMS BROTHEL X8H-B0Y`, 15,002
+— or a name with the callsign **last**: `GDS PREDATOR B0X-79X`, `EXAMPLE HAULAGE Q7Z-1AB`, 15,002
 distinct values and every one a carrier. A megaship wears the same shape at the **front**
 (`MVU-891 Bellmarsh-class Reformatory`, 464 distinct) and a minor faction wears one in the middle,
 off the catalogue number of the star it is named for (`LP 466-235 Gold Boys`, 63 distinct). Both
@@ -120,7 +120,7 @@ not redacted, it is corrupt.
 Asking the corpus what else still named a real person after the rules ran turned up five more, and
 **none of them would have been found by reading the schema.**
 
-- **`$cmdr_decorate:#name=CALVIN INSTI;` — a real player wearing a symbol's clothes.** A hole this
+- **`$cmdr_decorate:#name=EXAMPLE CHARLIE;` — a real player wearing a symbol's clothes.** A hole this
   build opened for itself: `ReceiveText.From` had been scrubbed since the first version, and the
   rule sparing Frontier's `$…;` symbols quietly stopped it. 15,970 values across the corpus, in
   chat, in `ShipTargeted` and in `Bounty`. The decoration is now spliced — the name goes, the
@@ -139,13 +139,13 @@ Asking the corpus what else still named a real person after the rules ran turned
 
 The whole carrier ruleset above is built on the `XXX-XXX` callsign, and **a squadron carrier has
 none**. `Callsign` holds the four-character squadron tag, `StationName` holds that bare tag, and a
-scan reads `GBD FORMIDINE DREAMS | OV40`. Three shapes now, not one — the callsign alone, a name
+scan reads `EXA EXAMPLE HORIZON | EX01`. Three shapes now, not one — the callsign alone, a name
 with the callsign last, and a name with a tag after a pipe — plus the tag itself wherever the event
 says it is at a carrier.
 
 **The five events that say nothing about what kind of station they are** — `Shipyard`, `Outfitting`,
 `StoredShips`, `StoredModules`, `FCMaterials` — are covered by what the excerpt has already ruled
-on rather than by a shape: a bare `OV40` is indistinguishable from a station's name until some
+on rather than by a shape: a bare `EX01` is indistinguishable from a station's name until some
 other event in the same window says otherwise, and one always does. An ordinary station is not in
 that map and comes back untouched.
 
@@ -154,7 +154,7 @@ naming a real person, group or squadron tag, and none of them still naming one a
 
 ### The flag that undid the squadron scrub
 
-An excerpt replaces `GREYBEARD DELTA` with `SQUADRON ALPHA` and its id with a stand-in — and then a
+An excerpt replaces `EXAMPLE SQUADRON` with `SQUADRON ALPHA` and its id with a stand-in — and then a
 jump three lines later points at a minor faction and says `SquadronFaction: true`. One hop on INARA
 from there to the squadron and its member list. 275 events over the corpus, across `FSDJump`,
 `Location` and `CarrierJump`, flagging two factions.
