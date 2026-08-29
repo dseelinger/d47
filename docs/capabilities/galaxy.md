@@ -329,6 +329,14 @@ it did before this existed.
 year — and asking past it says so with the parameter's own name attached rather than narrowing the
 question in silence. *"That's as far as I search"* is the sentence the change exists to delete.
 
+**And `limit` is under the same two rules** ([#178](https://github.com/dseelinger/d47/issues/178)).
+It was not, and it was worse than a clamp: a value outside 1 to 20 was *reset* to 5, so asking for
+fifty returned five and the answer said nothing about either number. It now stops at 20 and starts
+at 1, says so when it bites — *"You asked for 50; limit stops at 20, so that is what I looked
+for."* — and echoes a non-default count that was honoured, the way the radius is echoed. Both
+halves of the tool obey it: the commodity search and the module-and-ship search take the same
+argument and now owe the same sentence.
+
 Module and ship names are **not** in the schema. There are 132 modules and 48 ships, and an
 `enum` that large sits in prompt position 1 where one changed byte invalidates the whole cached
 prefix — several kilobytes paid for on every turn to answer a question asked once a session. So

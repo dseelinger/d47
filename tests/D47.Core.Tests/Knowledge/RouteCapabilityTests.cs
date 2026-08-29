@@ -305,6 +305,25 @@ public class RouteCapabilityTests
         Assert.Equal("Abraham Lincoln", trade.LastTrade?.Station);
     }
 
+    /// <summary>
+    /// The staleness bound is spelled `max_price_age_hours` here as well as on the commodity
+    /// search (#178), and the handler reads it under that name — a rename that reached the schema
+    /// and not the handler would advertise a knob that quietly does nothing.
+    /// </summary>
+    [Fact]
+    public async Task TheStalenessBoundIsSpelledWithItsUnit()
+    {
+        using var install = new TempInstall();
+        var (registry, _, trade) = Build(install);
+
+        await registry.InvokeAsync(
+            "plot_trade_route",
+            Args(("capital", "50000000"), ("max_price_age_hours", "48")),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(48, trade.LastTrade?.MaxPriceAge);
+    }
+
     [Fact]
     public async Task ATradeRouteCannotBePlottedFromSupercruise()
     {

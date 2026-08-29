@@ -42,6 +42,24 @@ public static class GalaxyCapability
     /// </summary>
     private const int MaxPriceAgeHours = 8_760;
 
+    /// <summary>How many results the station search returns when nobody said.</summary>
+    private const int DefaultLimit = 5;
+
+    /// <summary>
+    /// The most <c>limit</c> will return, and the fewest. Bounds rather than a preference: the
+    /// answer is spoken, and a model handed forty stations reads out forty stations.
+    /// <para>
+    /// <b>Said out loud when either bites</b> (<a href="https://github.com/dseelinger/d47/issues/178">#178</a>),
+    /// on the precedent <see cref="MaxPriceAgeHours"/> set. Asking for fifty used to return five
+    /// with nothing said - reset rather than clamped, so the number that came back had no
+    /// relationship to the number asked for, and nothing in the answer admitted it.
+    /// </para>
+    /// </summary>
+    private const int MaxLimit = 20;
+
+    /// <summary>The other end of the same bound. Nought results is a question with no answer.</summary>
+    private const int MinLimit = 1;
+
     /// <param name="galaxy">
     /// The service, or null where none is composed — under the designer and in a test that is not
     /// about it. Null and switched off give the same answer for the same reason: a capability
@@ -601,10 +619,7 @@ public static class GalaxyCapability
             ? parsed
             : null;
 
-        if (!arguments.TryGetInt32("limit", out var limit))
-        {
-            limit = 5;
-        }
+        var limit = Limit(arguments, out var askedLimit);
 
         if (!StationQuery.TryParse(
                 near, module, moduleClass, moduleRating, ship, largePad, maxDistance, limit,
@@ -618,7 +633,7 @@ public static class GalaxyCapability
         {
             var result = await galaxy.FindStationsAsync(query, cancellationToken).ConfigureAwait(false);
 
-            return ToolResult.Ok(Describe(result, query));
+            return ToolResult.Ok(Describe(result, query) + LimitRefused(askedLimit));
         }
         catch (GalaxyUnavailableException ex)
         {
@@ -661,10 +676,7 @@ public static class GalaxyCapability
 
         int? tonnes = arguments.TryGetInt32("tonnes", out var asked) && asked > 0 ? asked : null;
 
-        if (!arguments.TryGetInt32("limit", out var limit) || limit is < 1 or > 20)
-        {
-            limit = 5;
-        }
+        var limit = Limit(arguments, out var askedLimit);
 
         // <b>No upper clamp</b> (#157). This used to be Math.Clamp(parsed, 1, 250), so "expand
         // your search out to 500 light years" became 250 with nothing said, and the only honest
@@ -713,7 +725,7 @@ public static class GalaxyCapability
                 board.Announce();
             }
 
-            return ToolResult.Ok(DescribeCommodity(query, answer, near, maxPriceAge, askedAge));
+            return ToolResult.Ok(DescribeCommodity(query, answer, near, maxPriceAge, askedAge, askedLimit));
         }
         catch (GalaxyUnavailableException ex)
         {
@@ -749,12 +761,17 @@ public static class GalaxyCapability
     /// <paramref name="maxPriceAge"/> only where the ask was refused, which is the one case that
     /// has to name the knob and the ceiling rather than answering as though nothing happened.
     /// </param>
+    /// <param name="askedLimit">
+    /// How many results the model asked for, if it asked. Out of range it owes the same sentence
+    /// for the same reason (#178); in range and non-default it is echoed like the others.
+    /// </param>
     private static string DescribeCommodity(
         CommodityQuery query,
         CommodityAnswer answer,
         string near,
         int maxPriceAge,
-        int? askedPriceAge)
+        int? askedPriceAge,
+        int? askedLimit)
     {
         var verb = query.Side == TradeSide.Buying ? "buying" : "selling";
 
@@ -790,7 +807,7 @@ public static class GalaxyCapability
                     + "quoting prices too old to trust rather than for having none.";
             }
 
-            return nothing + AsAsked(query, maxPriceAge, askedPriceAge);
+            return nothing + AsAsked(query, maxPriceAge, askedPriceAge, askedLimit);
         }
 
         var lines = new List<string>();
@@ -840,7 +857,7 @@ public static class GalaxyCapability
             report += $" {answer.DroppedAsStale} more were left out for quoting prices too old to trust.";
         }
 
-        report += AsAsked(query, maxPriceAge, askedPriceAge);
+        report += AsAsked(query, maxPriceAge, askedPriceAge, askedLimit);
 
         report += " Prices are reported by other Commanders and can be out of date; supply moves fastest.";
 
@@ -863,7 +880,8 @@ public static class GalaxyCapability
     /// they cannot argue with, so the number gets said out loud with the parameter it belongs to.
     /// </para>
     /// </summary>
-    private static string AsAsked(CommodityQuery query, int maxPriceAge, int? askedPriceAge)
+    private static string AsAsked(
+        CommodityQuery query, int maxPriceAge, int? askedPriceAge, int? askedLimit)
     {
         var refused = askedPriceAge is { } asked && asked > MaxPriceAgeHours;
 
@@ -872,6 +890,14 @@ public static class GalaxyCapability
         if (Math.Abs(query.MaxDistance - DefaultDistance) > 0.001)
         {
             turned.Add($"out to {query.MaxDistance:0.#} ly");
+        }
+
+        // Same rule as the radius above: a search that returned twelve and one that returned five
+        // read identically otherwise (#178). Left out when the ask was refused, because the
+        // refusal below already says the number with its reason attached.
+        if (query.Limit != DefaultLimit && LimitRefused(askedLimit).Length == 0)
+        {
+            turned.Add($"up to {query.Limit} results");
         }
 
         // Left out when the ask was refused, because the refusal below says the same number with
@@ -896,7 +922,7 @@ public static class GalaxyCapability
                 + "I searched.";
         }
 
-        return said;
+        return said + LimitRefused(askedLimit);
     }
 
     /// <summary>A stretch of hours in the words a Commander would use for it.</summary>
@@ -906,6 +932,40 @@ public static class GalaxyCapability
         >= 48 and var d when d % 24 == 0 => $"{d / 24} days",
         1 => "an hour",
         _ => $"{hours:N0} hours",
+    };
+
+    /// <summary>
+    /// How many results to return, and what the model asked for if it asked - the pair the
+    /// answer needs to tell an honoured ask from a refused one
+    /// (<a href="https://github.com/dseelinger/d47/issues/178">#178</a>).
+    /// <para>
+    /// Read here rather than in <see cref="StationQuery.TryParse"/> because both halves of
+    /// <c>find_nearest_station</c> take the same argument and owe the same sentence, and the
+    /// parser is also called by callers that pass a size of their own choosing (Phase 47) and
+    /// have nobody to say it to. The clamp there stays: it is the floor under this, not a
+    /// duplicate of it.
+    /// </para>
+    /// </summary>
+    private static int Limit(ToolArguments arguments, out int? asked)
+    {
+        asked = arguments.TryGetInt32("limit", out var wanted) ? wanted : null;
+
+        return Math.Clamp(asked ?? DefaultLimit, MinLimit, MaxLimit);
+    }
+
+    /// <summary>
+    /// The sentence a refused <c>limit</c> owes, or nothing at all where the ask was honoured.
+    /// <para>
+    /// The knob and its bound, in the shape <see cref="AsAsked"/> uses for
+    /// <c>max_price_age_hours</c>: an out-of-range value is not a value d47 gets to swap for one
+    /// it prefers without saying so.
+    /// </para>
+    /// </summary>
+    private static string LimitRefused(int? asked) => asked switch
+    {
+        > MaxLimit => $" You asked for {asked}; limit stops at {MaxLimit}, so that is what I looked for.",
+        < MinLimit => $" You asked for {asked}; limit starts at {MinLimit}, so that is what I looked for.",
+        _ => string.Empty,
     };
 
     /// <summary>

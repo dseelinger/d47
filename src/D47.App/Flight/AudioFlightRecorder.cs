@@ -42,6 +42,47 @@ public sealed class AudioFlightRecorder : IDisposable
     public const string EnvironmentVariable = "D47_FLIGHT_RECORDER";
 
     /// <summary>
+    /// The same switch with no shell in it
+    /// (<a href="https://github.com/dseelinger/d47/issues/180">#180</a>).
+    /// <para>
+    /// The variable is the right gate and was the wrong road. Reaching it meant knowing
+    /// PowerShell's prefix syntax, knowing the install path, and knowing that a variable only
+    /// reaches a d47 launched from that same shell — so a Commander who started d47 the way they
+    /// always do never got there, which is how the first attempt to use the recorder failed. A
+    /// switch is something a desktop shortcut can carry, and "the recording d47" becomes a thing
+    /// launched on purpose rather than an incantation typed correctly.
+    /// </para>
+    /// <para>
+    /// <b>It changes nothing about the gating stance.</b> Both roads are per-run and neither is a
+    /// setting: unasked-for, there is no row, no pane and no file, which is the whole of what
+    /// "absent from the surface unless enabled" means and the reason a permanent toggle was
+    /// refused.
+    /// </para>
+    /// </summary>
+    public const string Flag = "--flight-recorder";
+
+    /// <summary>
+    /// Whether the command line carried <see cref="Flag"/>. Set once from <c>Program.Main</c>,
+    /// before the host is built and therefore before anything asks <see cref="Enabled"/> — the
+    /// composition root reads it while wiring the audio, and a value arriving after that would
+    /// leave a recorder that records with no row to review it from.
+    /// </summary>
+    internal static bool Switched { get; private set; }
+
+    /// <summary>
+    /// Reads the command line for <see cref="Flag"/>. Called once from <c>Program.Main</c>, above
+    /// everything the host builds, because the composition root asks <see cref="Enabled"/> while
+    /// it wires the audio — and it is a method rather than a settable flag so that the one place
+    /// deciding what the switch is spelled like is the one place a test can drive.
+    /// </summary>
+    public static void ReadCommandLine(string[] args)
+    {
+        ArgumentNullException.ThrowIfNull(args);
+
+        Switched = args.Contains(Flag, StringComparer.Ordinal);
+    }
+
+    /// <summary>
     /// The most one utterance may hold — about two minutes of the mix. A ceiling rather than a
     /// policy: it exists so that a clip which never closes, because something stopped reporting
     /// that it had finished, cannot grow until the machine notices.
@@ -133,9 +174,12 @@ public sealed class AudioFlightRecorder : IDisposable
         ILogger logger) =>
         new(log, now, logger);
 
-    /// <summary>Whether recording is switched on for this process.</summary>
+    /// <summary>
+    /// Whether recording is switched on for this process, by either road. Both are per-run and
+    /// neither is remembered, so it is off again the next time d47 starts on its own.
+    /// </summary>
     public static bool Enabled =>
-        Environment.GetEnvironmentVariable(EnvironmentVariable) == "1";
+        Switched || Environment.GetEnvironmentVariable(EnvironmentVariable) == "1";
 
     /// <summary>What has been recorded, for the review pane and the settings row.</summary>
     public FlightLog Log => _log;
