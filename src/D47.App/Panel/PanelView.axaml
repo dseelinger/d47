@@ -736,9 +736,9 @@
                   HorizontalContentAlignment="Center"
                   Padding="10,0"
                   IsVisible="False"
-                  Content="Donate corpus…"
+                  Content="Donate journal history…"
                   FontSize="{StaticResource D47.Type.Secondary}"
-                  ToolTip.Tip="Scrub your whole journal history and read a report describing it, before any of it leaves"
+                  ToolTip.Tip="Scrub your whole Elite journal history and read a report describing it, before any of it leaves"
                   Click="OnDonateCorpusClick" />
           <!--
             The clear affordance sits inside the field, not beside it. Another sibling in this

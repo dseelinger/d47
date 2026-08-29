@@ -55,7 +55,7 @@ public sealed class CorpusDonateWindow : Window
     // Named, like the excerpt window's controls beside them, because these are what a test drives
     // to assert that the report on screen describes the range the Save would write.
     private readonly Button _read_ = new() { Name = "ReadJournals", Content = "Read my journals", MinWidth = 160 };
-    private readonly Button _save = new() { Name = "SaveCorpus", Content = "Save the corpus…", MinWidth = 170, IsEnabled = false };
+    private readonly Button _save = new() { Name = "SaveCorpus", Content = "Save the donation…", MinWidth = 170, IsEnabled = false };
     private readonly Button _stop = new() { Name = "StopCorpus", Content = "Cancel", MinWidth = 110 };
 
     private readonly SelectableTextBlock _preview = new()
@@ -91,7 +91,7 @@ public sealed class CorpusDonateWindow : Window
         _read = read;
         _write = write;
 
-        Title = "Donate a journal corpus";
+        Title = "Donate your journal history";
         Width = 900;
         Height = 720;
         MinWidth = 560;
@@ -154,7 +154,7 @@ public sealed class CorpusDonateWindow : Window
         {
             Text = "This reads every Elite journal on disk, scrubs it the same way an incident "
                    + "excerpt is scrubbed, and then shows you a report about it rather than the "
-                   + "thing itself — because a corpus runs to hundreds of megabytes and nobody "
+                   + "thing itself — because a full history runs to hundreds of megabytes and nobody "
                    + "reads that. The report names every kind of event in the donation and shows a "
                    + "real scrubbed line of each. Nothing is written or sent until you save it, "
                    + "and nothing here goes to a network.",
@@ -281,8 +281,8 @@ public sealed class CorpusDonateWindow : Window
 
         var file = await storage.SaveFilePickerAsync(new FilePickerSaveOptions
         {
-            Title = "Save the corpus",
-            SuggestedFileName = $"d47-corpus-{stamp.ToUniversalTime():yyyy-MM-dd}.jsonl",
+            Title = "Save your journal history",
+            SuggestedFileName = $"d47-journal-history-{stamp.ToUniversalTime():yyyy-MM-dd}.jsonl",
             DefaultExtension = "jsonl",
             FileTypeChoices =
             [

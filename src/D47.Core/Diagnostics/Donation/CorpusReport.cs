@@ -42,7 +42,7 @@ public static class CorpusReport
     private const string Fence = "````";
 
     /// <summary>The marker that says what this block is, for anybody reading the source.</summary>
-    public const string Marker = "<!-- d47 journal corpus -->";
+    public const string Marker = "<!-- d47 journal history -->";
 
     /// <summary>Renders the whole consent document.</summary>
     public static string Render(CorpusSurvey survey, ExcerptPaperwork paperwork)
@@ -53,7 +53,7 @@ public static class CorpusReport
         var untouched = kinds.Where(kind => !kind.Touched).ToList();
 
         report.AppendLine(Marker);
-        report.AppendLine("### Journal corpus");
+        report.AppendLine("### Journal history");
         report.AppendLine();
 
         report.AppendLine(
@@ -64,14 +64,14 @@ public static class CorpusReport
 
         report.AppendLine();
         report.AppendLine(
-            "**What it is for.** A replay corpus. `spike/CorpusReplay` drives these events through "
+            "**What it is for.** Replaying what really happened. `spike/CorpusReplay` drives these events through "
             + "the same fold the running app uses, so a defect can be proven fixed against play "
             + "that really happened and cannot regress silently afterwards. Nobody reads it; it is "
             + "test data, not a bug report.");
 
         report.AppendLine();
         report.AppendLine(
-            $"**Why you are reading this instead of the corpus.** {Count(survey.Tally.Events, "event")} "
+            $"**Why you are reading this instead of the history itself.** {Count(survey.Tally.Events, "event")} "
             + $"is {Size(survey.Bytes)}. Nobody reads that, and a yes given to a payload nobody "
             + "could have read is not consent. So this describes every *kind* of thing in the "
             + $"donation and shows a real scrubbed line of each — {Count(kinds.Count, "line")} "
@@ -151,7 +151,7 @@ public static class CorpusReport
             report.AppendLine();
         }
 
-        report.AppendLine("| Event | In corpus | Changed | Withheld |");
+        report.AppendLine("| Event | How many | Changed | Withheld |");
         report.AppendLine("|---|---:|---:|---:|");
 
         foreach (var kind in kinds)
