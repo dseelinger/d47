@@ -27,7 +27,32 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
-## 0.91.1 — unreleased — Four threads on a twenty-four core machine
+## 0.92.0 — 2026-08-29 — The debrief drafts, the Commander adopts, and the voice gets its cores
+
+Six issues, four parallel sessions, zero merge conflicts.
+[#162](https://github.com/dseelinger/d47/issues/162) builds the debrief pass;
+[#182](https://github.com/dseelinger/d47/issues/182) finds and removes the floor under
+transcription; [#183](https://github.com/dseelinger/d47/issues/183) and
+[#184](https://github.com/dseelinger/d47/issues/184) teach the number and letter rungs their next
+lessons; [#185](https://github.com/dseelinger/d47/issues/185) and
+[#186](https://github.com/dseelinger/d47/issues/186) finish the release tooling review's remainder.
+
+### The debrief pass: corrections become standing directions, adopted by hand (#162)
+
+At the end of a session, d47 reads what the Commander said back over the flight — arithmetic over
+words, no model, nothing leaving the machine — and drafts standing directions from the moments of
+pushback: *"stop calling it that"*, *"shorter answers in combat"*. Each proposal quotes the
+Commander's own sentence, and the new debrief pane shows the exact block that would enter the
+prompt, rendered by the same code that builds it. **Adoption is the only road**: a direction's
+tier is computed — adopted means Stated, everything else stays Inferred — and there is
+deliberately no "adopt automatically" row, no advertised tool, and no way for game text to reach a
+proposal: the extractor reads the Commander's voice alone, and the same hostile sentence planted
+as an in-game message extracts nothing. Speech cut off mid-line and warnings silenced seconds
+after firing surface as *questions*, three occurrences to earn one, never as silent adaptation.
+Adopted directions enter the prompt's cached region at the next session, never mid-flight — the
+latch, not a convention, is what Phase 54's 23x measurement demanded.
+
+### Four threads on a twenty-four core machine (#182)
 
 [#182](https://github.com/dseelinger/d47/issues/182) asked what share of transcription's flat
 three-second cost belonged to the name-hint prompt. The answer is a sixth of it, and the prime
@@ -64,6 +89,31 @@ The transcription log line now carries the thread count, since that line is wher
 diagnosed from and the one number that explained it was the one it did not have.
 
 ---
+
+### The number and letter rungs, next lessons (#183, #184)
+
+A grouping comma is punctuation, validated before it is believed — a comma every three digits
+makes a number, anything else falls through honestly — so `6,680` is *six thousand six hundred
+eighty*, never *six six eight zero*. And a new ruling, decided by the token's own punctuation: a
+decimal or a grouping comma makes a **measured quantity**, whose whole part takes the full reading
+— `1234.5` is *one thousand two hundred thirty-four point five* — while bare digits keep the
+casual designation reading unchanged. The one known cost is written beside the ruling: `1234
+tonnes` still reads casually, and overruling is one predicate and one test. The letter rungs
+gained the silent-`gh` family (*light*, *night*, *fought*), `ngle` keeps its /ɡ/, syllabic `-le`
+widened, and `ck` joined `dge` on the short-vowel side — every reading counted against the shipped
+dictionary (181/182, 54/56, 63/64, 64/65) rather than judged by ear.
+
+### The tooling review's remainder (#185, #186)
+
+`release.ps1` now fetches tags and asks the remote whether the next number is taken *before
+anything commits* — the stale-checkout collision dies at the start instead of after the merge —
+and refuses to sweep a large untracked pile into a release commit without being told
+(`-IncludeUntracked`), which is the 2026-08-24 incident made structurally unrepeatable. **Both
+guards protect the release after the one that ships them.** `get-ver` reaches every published
+version by asking for it directly (the newest-100 page had silently orphaned everything below
+v0.37.0), refuses a downgrade on the `prerelease` spec, uses the `isLatest` pin it was already
+fetching, and its install step now waits, reads the installer's exit code, self-tests, and only
+then says "installed" — a cancelled wizard finally reads as cancelled.
 
 ## 0.91.0 — 2026-08-29 — The way back, written down and wired
 
