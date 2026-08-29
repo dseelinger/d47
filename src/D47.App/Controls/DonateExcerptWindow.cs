@@ -52,10 +52,18 @@ public sealed class DonateExcerptWindow : Window
     private const string SendLabel = "Send it";
 
     /// <summary>
-    /// GitHub's own limit for one comment. Said here rather than found in a browser with the issue
-    /// half written — and it doubles as the point past which the claim this window makes starts to
-    /// wear thin, because the consent it asks for is <i>read this and say yes to it</i>
+    /// The point past which the claim this window makes starts to wear thin, because the consent
+    /// it asks for is <i>read this and say yes to it</i>
     /// (<a href="https://github.com/dseelinger/d47/issues/173">#173</a>).
+    /// <para>
+    /// <b>It used to be GitHub's limit for one comment, and it is not that any more</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/165">#165</a>). That number was a
+    /// transport detail of a destination the erasure ruling removed, and the store behind
+    /// <see cref="D47.App.Donation.DonationUpload"/> has a ceiling four megabytes away from here.
+    /// What it measured was never really the transport: it is that nobody reads sixty thousand
+    /// characters, and the yes this window asks for is a yes to something read. So the number
+    /// stayed and the reason for it is now stated as the reason it always was.
+    /// </para>
     /// </summary>
     private const int MostCharacters = 60_000;
 
@@ -229,9 +237,10 @@ public sealed class DonateExcerptWindow : Window
     {
         var where = _destination is { } destination
             ? "Sending it puts it in Directive 47's own store at " + destination + " — one press, "
-              + "nothing standing, nothing remembered. It is kept for thirty days or until the "
-              + "defect closes, whichever is first, and asking for it sooner is one delete. d47 "
-              + "keeps its own copy of exactly what it sent, and the hash, in data\\donations."
+              + "nothing standing, nothing remembered. A rule on the store deletes it after "
+              + "thirty days without anybody having to remember to, and asking for it sooner is "
+              + "one press in Privacy and egress. d47 keeps its own copy of exactly what it sent, "
+              + "and the hash, in data\\donations."
             : "Nothing can be sent from here: no donation address is set. Copy it or save it, and "
               + "where it goes after that is yours — anything posted publicly can be archived "
               + "beyond anyone's reach.";
@@ -324,20 +333,16 @@ public sealed class DonateExcerptWindow : Window
         _sendButton.Content = SendLabel;
         _sendButton.IsEnabled = true;
 
-        // Said because GitHub's own limit is 65,536 characters for one comment, and an excerpt
-        // that will not paste is better found here than in a browser with the issue half written.
         var long_ = _text.Length > MostCharacters;
 
-        // **Names the real problem rather than only GitHub's.** A comment limit is a transport
-        // detail; what actually matters at this size is that nobody reads it, and the yes this
-        // window asks for is a yes to something read.
-        // **Still says GitHub's limit, and still leads with the real problem.** A comment limit is
-        // a transport detail and the store has no such ceiling — but the yes this window asks for
-        // is a yes to something read, and that is what stops being true here whichever route the
-        // excerpt takes.
+        // **Names the real problem, and no longer names a transport at all** (#165). It used to
+        // add "more than one GitHub comment holds", which was a detail of the destination the
+        // erasure ruling removed — and it was never the thing that mattered here. What matters is
+        // that the yes this window asks for is a yes to something read, and that is what stops
+        // being true at this size whichever route the excerpt takes.
         _size.Text = long_
-            ? $"{_text.Length:N0} characters — more than a person reads, and more than one GitHub "
-              + "comment holds. Choose a shorter span."
+            ? $"{_text.Length:N0} characters — more than a person reads, so a yes to it would not "
+              + "be a yes to something you read. Choose a shorter span."
             : $"{_text.Length:N0} characters";
 
         // Disposed before rebinding. A binding per keystroke on the steppers would stack up

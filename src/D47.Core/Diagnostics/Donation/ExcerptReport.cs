@@ -6,8 +6,11 @@ namespace D47.Core.Diagnostics.Donation;
 /// <summary>
 /// The paperwork an excerpt carries: which build it came off, and when it was taken.
 /// <para>
-/// <b>Who donated it is deliberately absent.</b> The issue it rides on already says — a GitHub
-/// comment has an author on it — and writing a name into the body would put an identity inside the
+/// <b>Who donated it is deliberately absent, and it stayed absent when the destination changed.</b>
+/// It used to be absent because the issue it rode on had an author on the comment; a private store
+/// answers the same question with the random installation token on the envelope
+/// (<a href="https://github.com/dseelinger/d47/issues/176">#176</a>), which is beside the payload
+/// rather than inside it. Either way, writing a name into the body would put an identity inside the
 /// one artefact this whole path exists to keep identities out of.
 /// </para>
 /// </summary>
@@ -16,7 +19,7 @@ namespace D47.Core.Diagnostics.Donation;
 public sealed record ExcerptPaperwork(string Build, DateTimeOffset TakenAt);
 
 /// <summary>
-/// The excerpt as it will look in the issue — <b>and this text is the consent</b>
+/// The excerpt as it will look wherever it lands — <b>and this text is the consent</b>
 /// (<a href="https://github.com/dseelinger/d47/issues/160">#160</a>).
 /// <para>
 /// One rendering, used twice: it is what the review window shows and it is what the clipboard
@@ -46,11 +49,11 @@ public static class ExcerptReport
     /// <summary>
     /// Four backticks rather than three. A log line is free text and d47 has been known to say
     /// something with a fence in it; a three-backtick fence would end there and spill the rest of
-    /// the log into the issue as prose.
+    /// the log out of the block and into the surrounding document as prose.
     /// </summary>
     private const string Fence = "````";
 
-    /// <summary>The marker that says what this block is, for anybody reading the issue's source.</summary>
+    /// <summary>The marker that says what this block is, for anybody reading the raw document.</summary>
     public const string Marker = "<!-- d47 incident excerpt -->";
 
     /// <summary>Renders the whole block.</summary>
@@ -95,6 +98,14 @@ public static class ExcerptReport
             + "Copied or saved and taken somewhere public instead, that promise is not "
             + "transferable: anything posted publicly can be archived beyond anyone's reach, so "
             + "ask about removal wherever it ended up.");
+
+        report.AppendLine();
+
+        // **The notice travels with the thing it describes** (#166). The paragraph above says what
+        // happens to this excerpt; it does not say who ends up holding it, on what basis, or where
+        // to ask — and the in-app Privacy page cannot, because it answers what this build reaches
+        // rather than who is left with what. One line, at the one moment the answer is wanted.
+        report.AppendLine(DonationNotice.Line);
 
         report.AppendLine();
         Half(

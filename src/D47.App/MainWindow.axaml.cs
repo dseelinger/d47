@@ -1352,6 +1352,22 @@ public partial class MainWindow : Window
     /// reads no environment, the same way it reads no clock.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// <b>Where a send goes, worked out here and nowhere else</b> (#175). The dispatch mints the
+    /// donation identifier on the first send, seals the envelope, posts it and writes the receipt;
+    /// a window's job is still to show what would leave and take a yes. With no address configured
+    /// there is nothing to hand a window and it offers what it always did.
+    /// <para>
+    /// One helper rather than the same four lines in two places
+    /// (<a href="https://github.com/dseelinger/d47/issues/181">#181</a>): the excerpt window and
+    /// the journal-history window must not be able to disagree about where a donation goes, and
+    /// two constructions of this are two chances for them to.
+    /// </para>
+    /// </summary>
+    private static Donation.DonationDispatch DonationDispatchFor(AppHost host) =>
+        Donation.DonationDispatch.For(
+            host.Paths, () => host.Settings.Current.Donation.Endpoint, host.Loggers);
+
     private async Task ShowDonationAsync(AppHost host)
     {
         var profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -1368,15 +1384,7 @@ public partial class MainWindow : Window
         var paperwork = new ExcerptPaperwork(BuildInfo.Full, DateTimeOffset.Now);
         var folder = host.JournalDirectory ?? D47.Core.Journal.JournalFolder.DefaultPath();
 
-        // **Where a send goes, worked out here and nowhere else** (#175). The dispatch mints the
-        // donation identifier on the first send, seals the envelope, posts it and writes the
-        // receipt; the window's job is still to show what would leave and take a yes. With no
-        // address configured there is nothing to hand it and the window offers what it always did.
-        var dispatch = new Donation.DonationDispatch(
-            host.Paths,
-            () => host.Settings.Current.Donation.Endpoint,
-            new Donation.DonationUpload(log: host.Loggers.CreateLogger("Donation")),
-            host.Loggers.CreateLogger("Donation"));
+        var dispatch = DonationDispatchFor(host);
 
         // **Read from disk, per window, on a worker** (#173). It used to read JournalLog and the
         // newest d47 log, which between them reached the current Elite session and today — so the
@@ -1435,43 +1443,63 @@ public partial class MainWindow : Window
         Pseudonyms? names = null;
         var from = DateTimeOffset.MinValue;
 
+        var dispatch = DonationDispatchFor(host);
+
+        var read = (CorpusScope scope, IProgress<int> progress, CancellationToken cancel) => Task.Run(
+            () =>
+            {
+                names = IncidentExcerpt.Seeded(
+                    host.GameState.Active?.Identity,
+                    host.GameState.Active?.Carrier);
+
+                from = scope.From(now);
+
+                var survey = CorpusDonation.Survey(folder, from, now, names, logger, progress, cancel);
+
+                return new Controls.CorpusDonateWindow.CorpusReading(
+                    survey,
+                    CorpusReport.Render(survey, paperwork));
+            },
+            cancel);
+
+        // **Declared once and used twice** (#181). The Save button writes this into a file the
+        // Commander picked; the Send button hands the same delegate to the dispatch, which writes
+        // it into a spool it compresses and hashes on the way past. One writer, so the file that
+        // could have been saved and the bytes that leave are the same bytes rather than two
+        // renderings of one intent — which is the corpus form of the rule #160 shipped.
+        var write = (Stream stream, IProgress<int> progress, CancellationToken cancel) => Task.Run(
+            () =>
+            {
+                if (names is not { } standIns)
+                {
+                    return;
+                }
+
+                // **No BOM, and the caller is the one that owns the stream.** A byte order mark
+                // would sit in front of the first event and stop it parsing as JSON, which for a
+                // file whose whole purpose is to be replayed is a payload that fails at line one.
+                using var writer = new StreamWriter(
+                    stream,
+                    new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
+                    bufferSize: 65536,
+                    leaveOpen: true);
+
+                CorpusDonation.Write(folder, from, now, standIns, writer, logger, progress, cancel);
+            },
+            cancel);
+
         await new Controls.CorpusDonateWindow(
-            (scope, progress, cancel) => Task.Run(
-                () =>
-                {
-                    names = IncidentExcerpt.Seeded(
-                        host.GameState.Active?.Identity,
-                        host.GameState.Active?.Carrier);
+            read,
+            write,
 
-                    from = scope.From(now);
-
-                    var survey = CorpusDonation.Survey(folder, from, now, names, logger, progress, cancel);
-
-                    return new Controls.CorpusDonateWindow.CorpusReading(
-                        survey,
-                        CorpusReport.Render(survey, paperwork));
-                },
-                cancel),
-            (stream, progress, cancel) => Task.Run(
-                () =>
-                {
-                    if (names is not { } standIns)
-                    {
-                        return;
-                    }
-
-                    // **No BOM, and the window is the one that owns the stream.** A byte order mark
-                    // would sit in front of the first event and stop it parsing as JSON, which for a
-                    // file whose whole purpose is to be replayed is a payload that fails at line one.
-                    using var writer = new StreamWriter(
-                        stream,
-                        new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
-                        bufferSize: 65536,
-                        leaveOpen: true);
-
-                    CorpusDonation.Write(folder, from, now, standIns, writer, logger, progress, cancel);
-                },
-                cancel)).Over(this);
+            // Null where there is nowhere to send, which is what makes the send button appear only
+            // when it can work — the same rule the excerpt window and the donate button itself
+            // already follow.
+            dispatch.CanSend
+                ? (report, progress, cancel) =>
+                    dispatch.SendCorpusAsync(report, write, paperwork, progress, cancel)
+                : null,
+            dispatch.Destination).Over(this);
     }
 
     private async Task CheckForUpdateAsync(AppHost host)

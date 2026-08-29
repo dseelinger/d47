@@ -43,6 +43,21 @@ that it doesn't.
 account ID and everywhere you have been. The error line is enough, and the pinned template
 says which lines to take.
 
+## And one thing that does the scrubbing for you
+
+If a report needs more than an error line, **don't paste it anywhere — use the donation window.**
+It replaces your Commander name and Frontier IDs with stand-ins, drops other players' messages,
+and then shows you the whole thing before anything leaves. There is one for an incident (a few
+minutes around the moment it went wrong) and one for your whole journal history.
+
+**Where it goes is deliberately not a public issue any more.** A comment on a public repository is
+mirrored by third-party archives within the hour and mailed whole to everyone watching, so
+"ask and it will be deleted" is a promise no public transport can keep — by anybody, not just by
+this project. Directive 47 has its own store now, and a delete there is a delete:
+**Privacy and egress → Your donation identifier → Forget it** asks it to delete everything you
+have ever sent, without you having to post anywhere or ask anyone. See
+[Privacy](capabilities/privacy.html) for what is scrubbed and what is kept.
+
 ## Where the work is tracked
 
 Fixes and features live in [GitHub Issues](https://github.com/dseelinger/d47/issues), which is

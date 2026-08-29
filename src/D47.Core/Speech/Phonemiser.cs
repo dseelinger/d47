@@ -27,7 +27,7 @@ public enum PhonemeRung
     /// <summary>A word with an apostrophe inside it, built from its stem.</summary>
     Contraction,
 
-    /// <summary>All digits, said as a number.</summary>
+    /// <summary>Digits, with or without a decimal point among them, said as a number.</summary>
     Number,
 
     /// <summary>Letters and digits with nothing between them, so a designation and spelled.</summary>
@@ -58,7 +58,8 @@ public enum PhonemeRung
 /// <item>a word with an apostrophe inside it is built from its stem — see
 /// <see cref="Contractions"/>, added on the day the voice was first heard aloud saying
 /// <em>ess aitch eye pee ess</em> for <c>Ship's</c>;</item>
-/// <item>digits are said as a number — <c>385</c> is <em>three eighty-five</em>;</item>
+/// <item>digits are said as a number — <c>385</c> is <em>three eighty-five</em>, and since #177
+/// <c>5.79</c> is <em>five point seven nine</em>;</item>
 /// <item>letters and digits mixed with nothing between them are spelled — <c>B0</c> is
 /// <em>bee zero</em>;</item>
 /// <item>letters that parse as English syllables are pronounced by rule;</item>
@@ -302,8 +303,10 @@ public sealed class Phonemiser(
             return Fell(segment, PhonemeRung.Contraction, joined, Reading.Spoken);
         }
 
-        // 2. All digits: a number, said casually.
-        if (segment.All(char.IsAsciiDigit))
+        // 2. A number, said casually — and since #177 that includes one with a decimal point in
+        //    it. A decimal is not all digits, so it used to fall all the way to the spelling rung,
+        //    which has no sound for a full stop and dropped it: "5.79" was "five, seven, nine".
+        if (SpokenNumber.Looks(segment))
         {
             return Fell(
                 segment, PhonemeRung.Number, Words(SpokenNumber.Say(segment), accent), Reading.Spoken);

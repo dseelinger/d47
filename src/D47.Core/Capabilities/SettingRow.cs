@@ -207,6 +207,20 @@ public sealed record SettingRow
     public Func<D47Settings, IReadOnlyList<string>>? ChoiceSource { get; init; }
 
     /// <summary>
+    /// Labels that depend on other settings, for the reason <see cref="ChoiceSource"/> exists:
+    /// a model's price and whether it is the provider's default belong to whichever provider is
+    /// selected right now, and a label built at registration would be describing a list that is
+    /// no longer on screen. Takes precedence over <see cref="ChoiceLabel"/>.
+    /// <para>
+    /// A factory rather than a two-argument label, because a describer is built once per opening
+    /// and applied to every row of the list — the model row's <em>cheapest here</em> is a
+    /// property of the whole list, and computing it per line would be computing it per line
+    /// (<a href="https://github.com/dseelinger/d47/issues/152">#152</a>).
+    /// </para>
+    /// </summary>
+    public Func<D47Settings, Func<string, string>>? ChoiceLabelSource { get; init; }
+
+    /// <summary>
     /// Whether a value outside the offered choices is legitimate. True for the model row: an
     /// endpoint d47 has never heard of still has model names, and the picker's contract is
     /// that an empty list still lets you keep the current value or type one (Phase 4).
@@ -467,6 +481,31 @@ public sealed record SettingRow
     public string? PressLabel { get; init; }
 
     /// <summary>
+    /// A <see cref="SettingKind.Choice"/> row whose choices have to be fetched before they can be
+    /// selected (<a href="https://github.com/dseelinger/d47/issues/139">#139</a>).
+    /// <para>
+    /// <b>The choice is the go-ahead</b>, which is the rule the speech model row settled: the size
+    /// is stated in the list it was chosen from, so a confirmation on top of it is a question
+    /// asked twice. Given the chosen value, this fetches whatever backs it and answers null when
+    /// the choice can now be applied, or a sentence saying why it cannot.
+    /// </para>
+    /// <para>
+    /// <b>The setting is written only once that answers null</b>, so a row can never name
+    /// something d47 cannot load — and a failed or cancelled fetch leaves both the file and the
+    /// setting as they were. The speech model row does this with plumbing of its own that predates
+    /// this property; a row that sets this needs none.
+    /// </para>
+    /// <para>
+    /// Core owns no thread, exactly as <see cref="PressAsync"/> above: the Task is the App's.
+    /// </para>
+    /// </summary>
+    public Func<string?, IProgress<double>, CancellationToken, Task<string?>>? FetchChoiceAsync
+    {
+        get;
+        init;
+    }
+
+    /// <summary>
     /// Whether an <see cref="SettingKind.Info"/> row's value belongs on a tooltip rather than
     /// on the page.
     /// <para>
@@ -607,7 +646,23 @@ public sealed record SettingRow
             : shown;
     }
 
-    public string LabelForChoice(string choice) => ChoiceLabel?.Invoke(choice) ?? choice;
+    /// <summary>
+    /// How this row's choices read right now. Every surface that shows a choice goes through
+    /// here, so the picker's list, the row's value and its tooltip cannot describe the same id
+    /// three different ways.
+    /// </summary>
+    public Func<string, string> DescriberFor(D47Settings settings) =>
+        ChoiceLabelSource?.Invoke(settings) ?? ChoiceLabel ?? Verbatim;
+
+    /// <summary>
+    /// One choice, written for a person. Settings are taken rather than assumed because
+    /// <see cref="ChoiceLabelSource"/> reads them — a caller that could not pass them would get
+    /// the bare id back on exactly the rows that most need a label.
+    /// </summary>
+    public string LabelForChoice(string choice, D47Settings settings) => DescriberFor(settings)(choice);
+
+    /// <summary>The id reads fine as-is, which is true of log levels and of most rows.</summary>
+    private static readonly Func<string, string> Verbatim = choice => choice;
 
     /// <summary>
     /// Whether "nothing chosen" is a state this row can be in. Provider and theme always hold a

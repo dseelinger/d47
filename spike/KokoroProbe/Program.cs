@@ -38,6 +38,7 @@ internal static class Program
             "say" => Say(args),
             "blend" => Blend(args),
             "bench" => Bench(args),
+            "quality" => Quality(args),
             _ => Help(),
         };
     }
@@ -50,7 +51,8 @@ internal static class Program
               shape                      model inputs, outputs, and the voice tensor's real shape
               say <ipa> <voice> <out>    synthesise one line of IPA to a WAV
               blend <ipa> <a> <b> <t> <out>   the same line from a weighted blend of two voices
-              bench <ipa> <voice> [n]    latency per line, fp32 against q8f16
+              bench <ipa> <voice> [n]    latency per line, across all eight published builds
+              quality <ipa> <voice> [dir]   how far each build departs from fp32, and WAVs to hear
 
             IPA in, not text. The vocabulary is 115 IPA symbols and punctuation.
             """);
@@ -60,6 +62,26 @@ internal static class Program
 
     private static string ModelPath(bool quantised = false) =>
         Path.Combine(_root, "onnx", quantised ? "model_q8f16.onnx" : "model.onnx");
+
+    /// <summary>
+    /// The eight published ONNX builds, fp32 first (#139).
+    /// <para>
+    /// Ordered as the repository publishes them rather than by size, because size is exactly what
+    /// this list exists to stop anybody reasoning from: <c>model_q4.onnx</c> is a <em>quantised</em>
+    /// build and is 305 MB, within 6% of fp32.
+    /// </para>
+    /// </summary>
+    private static readonly (string Label, string File)[] Builds =
+    [
+        ("fp32", "model.onnx"),
+        ("fp16", "model_fp16.onnx"),
+        ("q4", "model_q4.onnx"),
+        ("q4f16", "model_q4f16.onnx"),
+        ("q8f16", "model_q8f16.onnx"),
+        ("quantized", "model_quantized.onnx"),
+        ("uint8", "model_uint8.onnx"),
+        ("uint8f16", "model_uint8f16.onnx"),
+    ];
 
     /// <summary>
     /// The phoneme vocabulary, read from <c>tokenizer.json</c> rather than transcribed — a
@@ -710,12 +732,14 @@ internal static class Program
         var ids = Encode(args[1], out _);
         var style = Style(args[2], ids.Length);
 
-        foreach (var (label, file) in new[]
-                 {
-                     ("fp32", "model.onnx"),
-                     ("fp16", "model_fp16.onnx"),
-                     ("q8f16", "model_q8f16.onnx"),
-                 })
+        // <b>Every published build, because five of the eight were never measured</b> (#139). The
+        // three that were are the reason the rest have to be: fp32 is the fastest and the smallest
+        // build was four times slower than the largest, so a picker that ranked them by file size
+        // would tell a Commander almost nothing true about what they were choosing.
+        //
+        // <b>fp32 leads, and that is load-bearing rather than tidy</b>: it is the reference the
+        // quality column below is measured against.
+        foreach (var (label, file) in Builds)
         {
             var path = Path.Combine(_root, "onnx", file);
 
@@ -755,6 +779,97 @@ internal static class Program
                               $"realtime x{seconds * 1000 / median:F1}   " +
                               $"({new FileInfo(path).Length / 1024 / 1024} MB)");
         }
+
+        return 0;
+    }
+
+    /// <summary>
+    /// How far each build's audio departs from fp32's, for the same line and voice (#139).
+    /// <para>
+    /// <b>Quality is the third axis and nobody had looked at it.</b> The spike measured latency and
+    /// listened to blends; it never compared how a quantised build <em>sounds</em> against fp32. A
+    /// build that is fast and small and audibly worse is not a bargain, and the issue asks for that
+    /// to be decided deliberately rather than by omission.
+    /// </para>
+    /// <para>
+    /// <b>What this measures and what it does not.</b> The model is deterministic, so the same
+    /// tokens and the same voice through a different build should produce the same waveform bar
+    /// quantisation error — which makes fp32 a reference signal and the difference an error signal.
+    /// The number is that ratio in dB, and it is a <em>proxy</em>: it says how far the samples moved,
+    /// not whether a person minds. A build that scores badly here is worth listening to before it is
+    /// offered or refused, which is why every one of them is also written out as a WAV.
+    /// </para>
+    /// <para>
+    /// A length that does not match fp32's is reported rather than scored. It would mean the build
+    /// produced different audio rather than the same audio less exactly, and averaging over a
+    /// misalignment would report a bad number for a good reason.
+    /// </para>
+    /// </summary>
+    private static int Quality(string[] args)
+    {
+        if (args.Length < 3)
+        {
+            Console.Error.WriteLine("quality <ipa> <voice> [outdir]");
+            return 2;
+        }
+
+        var ids = Encode(args[1], out _);
+        var style = Style(args[2], ids.Length);
+        var into = args.Length > 3 ? args[3] : Path.Combine(_root, "out", "quality");
+
+        Directory.CreateDirectory(into);
+
+        float[]? reference = null;
+
+        foreach (var (label, file) in Builds)
+        {
+            var path = Path.Combine(_root, "onnx", file);
+
+            if (!File.Exists(path))
+            {
+                Console.WriteLine($"{label,-10} not present");
+                continue;
+            }
+
+            using var session = new InferenceSession(path);
+            var audio = Synthesise(session, ids, style);
+
+            WriteWav(Path.Combine(into, $"{label}.wav"), audio);
+
+            if (reference is null)
+            {
+                reference = audio;
+                Console.WriteLine($"{label,-10} reference, {audio.Length} samples");
+                continue;
+            }
+
+            if (audio.Length != reference.Length)
+            {
+                Console.WriteLine(
+                    $"{label,-10} {audio.Length} samples against the reference's {reference.Length} "
+                    + "— different audio rather than the same audio less exactly");
+                continue;
+            }
+
+            double signal = 0;
+            double noise = 0;
+
+            for (var i = 0; i < reference.Length; i++)
+            {
+                signal += (double)reference[i] * reference[i];
+                var error = (double)audio[i] - reference[i];
+                noise += error * error;
+            }
+
+            var snr = noise <= 0 ? double.PositiveInfinity : 10 * Math.Log10(signal / noise);
+
+            Console.WriteLine(
+                $"{label,-10} against fp32: {snr,6:F1} dB   " +
+                $"({new FileInfo(path).Length / 1024 / 1024} MB)");
+        }
+
+        Console.WriteLine();
+        Console.WriteLine($"WAVs in {into} — the number is a proxy; the ear is the test.");
 
         return 0;
     }

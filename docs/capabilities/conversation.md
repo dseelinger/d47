@@ -260,6 +260,21 @@ running cost honest. Type one by hand and it is accepted, but counted as unknown
 free. Models the *endpoint* offered are in that second category — Directive 47 has no published
 rate for a model it has never heard of, and inventing one would be worse than saying so.
 
+**Every row in the picker says what it costs**, and two of them say a little more:
+
+```
+gpt-5.6-terra — the provider's default — $2 in / $12 out per million
+gpt-5.6-luna — cheapest here — $0.20 in / $1.20 out per million
+grok-4 — priced as unknown
+```
+
+The rate is read from the same table the running total is billed against, so the price beside a
+model and the price on your bill are one number rather than two that happen to agree. *The
+provider's default* and *cheapest here* are worked out from the list itself rather than written
+beside it, which is why there is no word here about what any model is **good** at: capability
+prose ages silently, tiers get renamed under their names — 5.4's mini and nano became 5.6's terra,
+sol and luna — and a rate that goes out of date does so visibly.
+
 **A model on your own machine is priced at zero, and says why.** If the endpoint is a loopback
 address, the turn is free — that is a fact about the address rather than a guess about the model,
 and reporting "unknown" forever about something that genuinely costs nothing is noise pretending

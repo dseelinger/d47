@@ -1,6 +1,7 @@
 ﻿using D47.Core.Audio;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
+using D47.Core.Speech;
 
 namespace D47.Core.Capabilities.Builtin;
 
@@ -23,6 +24,7 @@ public static class SpeechCapability
 
     public const string ProviderKey = "speech.provider";
     public const string LocalVoiceKey = "speech.localVoice";
+    public const string LocalVoiceBuildKey = "speech.localVoiceBuild";
     public const string VoiceKey = "speech.voice";
     public const string RateKey = "speech.rate";
     public const string OutputDeviceKey = "speech.outputDevice";
@@ -240,6 +242,27 @@ public static class SpeechCapability
         /// </para>
         /// </summary>
         public Func<LongPress?>? DownloadLocalVoice { get; init; }
+
+        /// <summary>
+        /// Which of Kokoro's eight builds is on this machine, or null where none is (#139).
+        /// <para>
+        /// Read from the model file's own byte count rather than from settings, so it is what is
+        /// actually loadable. Null where nothing can answer, and the build row is then absent
+        /// rather than offering a swap into an install that does not exist.
+        /// </para>
+        /// </summary>
+        public Func<string?>? InstalledLocalVoiceBuild { get; init; }
+
+        /// <summary>
+        /// Fetches a different build of the local voice model and swaps it in (#139).
+        /// <para>
+        /// The same shape as <see cref="DownloadLocalVoice"/> above and for the same reason: Core
+        /// owns no thread, the transfer is up to 310 MB, and the App decides where it runs. Given
+        /// a build id, answers the press that does it — or null where nothing can run one, and the
+        /// row then cannot be changed rather than appearing to change and doing nothing.
+        /// </para>
+        /// </summary>
+        public Func<string, LongPress?>? SwitchLocalVoiceBuild { get; init; }
 
         /// <summary>Stops everything audible, immediately. The whole point of the capability.</summary>
         public required Action Silence { get; init; }
@@ -513,6 +536,65 @@ public static class SpeechCapability
                 Binding = new SettingBinding
                 {
                     Read = _ => surface.LocalVoiceState?.Invoke() ?? "Not available.",
+                },
+            },
+            new SettingRow
+            {
+                Key = LocalVoiceBuildKey,
+                Advanced = true,
+                Label = "Local voice model build",
+                Help =
+                    "Kokoro publishes eight builds of the same model and they are not interchangeable "
+                    + "on size alone — the smallest is the slowest, and one quantised build is nearly "
+                    + "as large as the full one. Each choice states what it costs on disk and how fast "
+                    + "it rendered speech on this machine. Choosing a different one downloads it, "
+                    + "checks it, and replaces the one you have; a failed download leaves the build "
+                    + "you were using in place. How they SOUND has not been ranked — fp32 is the "
+                    + "reference and the default.",
+                Kind = SettingKind.Choice,
+                Choices = KokoroAssets.BuildIds,
+                ChoiceLabel = id =>
+                {
+                    var build = KokoroAssets.BuildFor(id);
+
+                    // Marked rather than hidden, the same way the speech model row marks its
+                    // choices: a Commander comparing builds needs to know which one they are
+                    // already running and which costs a download.
+                    var installed = surface.InstalledLocalVoiceBuild?.Invoke();
+
+                    return string.Equals(installed, build.Id, StringComparison.OrdinalIgnoreCase)
+                        ? $"{build.Label} — installed"
+                        : build.Label;
+                },
+                DefaultDisplay = KokoroAssets.DefaultBuildId,
+
+                // The choice is the go-ahead: it stated its size and its speed in the list it was
+                // made from. The setting is written only once the file is there.
+                FetchChoiceAsync = surface.SwitchLocalVoiceBuild is null
+                    ? null
+                    : (chosen, progress, cancellationToken) =>
+                        surface.SwitchLocalVoiceBuild.Invoke(KokoroAssets.BuildFor(chosen).Id) is { } swap
+                            ? swap(progress, cancellationToken)
+                            : Task.FromResult<string?>("The local voice build cannot be changed here."),
+
+                // Absent until the local voice is there at all. Before that the row above is the
+                // one that matters, and offering a build to swap into an install that does not
+                // exist is offering to download the model twice.
+                AppliesWhen = _ => surface.InstalledLocalVoiceBuild is not null
+                                   && surface.InstalledLocalVoiceBuild.Invoke() is not null,
+                DocsAnchor = "provider",
+                Binding = new SettingBinding
+                {
+                    // <b>What is on disk outranks what the file says.</b> The byte count is a fact
+                    // and the setting is a record of one, so a Commander who replaced model.onnx by
+                    // hand reads the build they actually have rather than the one d47 last wrote.
+                    Read = s => surface.InstalledLocalVoiceBuild?.Invoke()
+                                ?? s.Speech.LocalVoiceBuild
+                                ?? KokoroAssets.DefaultBuildId,
+                    Write = (s, v) => s with
+                    {
+                        Speech = s.Speech with { LocalVoiceBuild = KokoroAssets.BuildFor(v).Id },
+                    },
                 },
             },
             new SettingRow

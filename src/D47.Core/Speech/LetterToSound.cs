@@ -34,6 +34,14 @@ public static class LetterToSound
         ("tt", "t"), ("zz", "z"),
 
         ("ch", "tʃ"), ("ck", "k"), ("dge", "dʒ"), ("gh", "ɡ"), ("gn", "n"), ("kn", "n"),
+
+        // <b>Ahead of "ng", which used to swallow it and drop the e</b> (#179). "change" came out
+        // "tʃæŋ": the coda parses — "nge" is one — but with no spelling for it the letters matched
+        // singly, "ng" answered first, and the /dʒ/ vanished with nothing to say the e. The n is
+        // /n/ rather than /ŋ/ in front of the affricate, which is what the dictionary writes:
+        // "tʃˈeɪndʒ", "hˈɪndʒ", "spˈʌndʒ".
+        ("nge", "ndʒ"),
+
         ("ng", "ŋ"), ("ph", "f"), ("ps", "s"), ("qu", "kw"), ("rh", "ɹ"), ("sh", "ʃ"),
         ("th", "θ"), ("tch", "tʃ"), ("wh", "w"), ("wr", "ɹ"), ("zh", "ʒ"),
 
@@ -84,6 +92,48 @@ public static class LetterToSound
         new(StringComparer.Ordinal) { "ch", "ck", "gh", "ph", "sh", "th", "zh" };
 
     /// <summary>
+    /// <b>The three codas that carry their own silent <c>e</c> inside them</b> — <c>nge</c>,
+    /// <c>dge</c> and <c>ze</c> — and whether that <c>e</c> lengthens the vowel in front of it
+    /// (#179).
+    /// <para>
+    /// These are the codas <see cref="Phonotactics"/> admits whole, so the parse never hands the
+    /// <c>e</c> back as a syllable of its own and the silent-e rule above never sees it. Whether
+    /// they lengthen is the question #179 was left open on, because the examples pull both ways:
+    /// <em>change</em> and <em>maze</em> lengthen, <em>hinge</em> and <em>bridge</em> do not.
+    /// </para>
+    /// <para>
+    /// <b>Settled by counting the shipped dictionary rather than by ear, on 2026-08-29.</b> Every
+    /// entry ending in a single vowel and one of these three, by what the dictionary puts in front
+    /// of the final consonant:
+    /// </para>
+    /// <list type="bullet">
+    /// <item><c>ze</c> — <b>1,227 long of 1,236</b> (99.3%). <em>maze</em>, <em>size</em>,
+    /// <em>doze</em>, <em>prize</em>. It lengthens.</item>
+    /// <item><c>dge</c> — <b>74 short of 76</b> (97.4%). <em>badge</em>, <em>bridge</em>,
+    /// <em>judge</em>, <em>hedge</em>. It does not, which is the whole reason the spelling exists:
+    /// <c>dge</c> is how English writes a short vowel before /dʒ/.</item>
+    /// <item><c>nge</c> — <b>it depends on the vowel, and only on the vowel.</b> After <c>a</c> it
+    /// is long, 25 of 32 (<em>change</em>, <em>range</em>, <em>strange</em>, <em>arrange</em>, and
+    /// the seven exceptions are French loans plus <em>orange</em> and <em>flange</em>). After every
+    /// other single vowel it is short, 57 of 58 — <em>hinge</em>, <em>fringe</em>, <em>sponge</em>,
+    /// <em>plunge</em>, <em>revenge</em>.</item>
+    /// </list>
+    /// <para>
+    /// <b>A digraph is deliberately not asked about</b> and needs no row: <c>au</c>, <c>ou</c> and
+    /// <c>ee</c> already carry their own length in <see cref="Short"/>, which is why
+    /// <em>lounge</em> and <em>chaunge</em> come out right without being special cases. They are
+    /// also the whole of the apparent counter-evidence — every "long" reading under a vowel other
+    /// than <c>a</c> in that count was one of them.
+    /// </para>
+    /// </summary>
+    private static bool CarriesASilentE(string coda, string vowel) => coda switch
+    {
+        "ze" => true,
+        "nge" => vowel == "a",
+        _ => false,
+    };
+
+    /// <summary>
     /// The word in IPA, or null where it cannot be said and must be spelled instead.
     /// <para>
     /// Stress is marked on the first syllable of a multi-syllable word and nowhere else. That is
@@ -118,11 +168,29 @@ public static class LetterToSound
         var silentE = syllables.Count > 1 && IsSilentE(syllables[^1]);
         var count = silentE ? syllables.Count - 1 : syllables.Count;
 
+        // <b>A final -le or -re is a syllabic consonant, not a consonant and a schwa</b> (#179).
+        // "table" was "tˈæblə" rather than "tˈeɪbəl": the parse hands back "ta.ble", the l is that
+        // syllable's onset, and the reduction rule below then voiced the e after it. English says
+        // the schwa first and the consonant second — and the e, like a silent one, lengthens what
+        // it left behind, which is the other half of why "table" is not "tabble".
+        var syllabic = syllables.Count > 1 && IsSyllabic(syllables[^1]);
+
+        // Which syllable the trailing e — silent, or standing behind a syllabic l — reaches back
+        // over. Nothing, where there is no such e.
+        var behind = silentE ? count - 1 : syllabic ? count - 2 : -1;
+
         var built = new System.Text.StringBuilder();
 
         for (var i = 0; i < count; i++)
         {
             var syllable = syllables[i];
+
+            if (syllabic && i == count - 1)
+            {
+                built.Append('ə');
+                built.Append(Spell(syllable.Onset));
+                continue;
+            }
 
             built.Append(Spell(SoftenOnset(syllable.Onset, syllable.Vowel)));
 
@@ -136,7 +204,8 @@ public static class LetterToSound
             // half of the same rule: the e in "Lave" is not merely silent, it is what makes the
             // a say its own name. It only reaches across one sound, which is why "serve" and
             // "paste" stay short — see <see cref="OneSound"/>.
-            var lengthens = silentE && i == count - 1 && Lengthens(syllable.Coda);
+            var lengthens = (i == behind && Lengthens(syllable.Coda))
+                            || CarriesASilentE(syllable.Coda, syllable.Vowel);
 
             var vowel =
                 last && syllable.IsOpen && syllable.Vowel == "y" ? "i"
@@ -186,8 +255,8 @@ public static class LetterToSound
             // The silent e softens as well as lengthens — <em>ace</em> is not <em>ake</em> and
             // <em>page</em> is not <em>pag</em>. Same rule as the onset's, applied at the other
             // end of the syllable because that is the end the e was standing at.
-            built.Append(Spell(
-                silentE && i == count - 1 ? SoftenCoda(syllable.Coda) : syllable.Coda));
+            built.Append(Spell(Coda(
+                silentE && i == count - 1 ? SoftenCoda(syllable.Coda) : syllable.Coda)));
         }
 
         return built.ToString();
@@ -200,6 +269,37 @@ public static class LetterToSound
     /// </summary>
     private static bool IsSilentE(Syllable syllable) =>
         syllable.Onset.Length == 0 && syllable.Vowel == "e" && syllable.Coda.Length == 0;
+
+    /// <summary>
+    /// A final syllable that is one <c>l</c> or <c>r</c> and an <c>e</c> — which is what the parse
+    /// makes of <c>-ble</c>, <c>-tle</c>, <c>-cre</c> and their family, because the consonant in
+    /// front closes the syllable before it and leaves the <c>l</c> to open this one.
+    /// <para>
+    /// The onset must be that single letter: <c>-ale</c> and <c>-ole</c> hand their <c>e</c> back
+    /// bare and are <see cref="IsSilentE"/>'s, not this.
+    /// </para>
+    /// </summary>
+    private static bool IsSyllabic(Syllable syllable) =>
+        syllable.Coda.Length == 0 && syllable.Vowel == "e" && syllable.Onset is "l" or "r";
+
+    /// <summary>
+    /// A coda as it is spelled, with a lone <c>h</c> dropped (#179).
+    /// <para>
+    /// <b>English has no coda /h/ at all</b>, and the rules were producing one: <c>tah</c> was
+    /// <c>tæh</c>. It bites hardest through the Commander's own pronunciations file
+    /// (<a href="https://github.com/dseelinger/d47/issues/150">#150</a>), where <em>tah</em> and
+    /// <em>rah</em> are exactly how a person writes a syllable down — so anybody using that file
+    /// meets it on their first entry.
+    /// </para>
+    /// <para>
+    /// Only a lone one. <c>gh</c>, <c>sh</c>, <c>th</c>, <c>ch</c>, <c>ph</c> and <c>zh</c> are
+    /// codas that end in the letter and are not the sound, and dropping the h out of those would
+    /// break far more than it fixed. The syllable stays closed, so its vowel stays short — a
+    /// Commander who wants the broad /ɑː/ of <em>ah</em> writes the symbol, which is the one road
+    /// that rung never second-guesses.
+    /// </para>
+    /// </summary>
+    private static string Coda(string coda) => coda == "h" ? string.Empty : coda;
 
     /// <summary>
     /// Whether a silent <c>e</c> reaches back over this coda to lengthen the vowel. One sound

@@ -1466,6 +1466,19 @@ public sealed class AppHost : IDisposable
                     // time rather than captured, so the row changes the moment the download ends.
                     LocalVoiceState = () => self?.LocalVoiceState() ?? "Not available.",
                     DownloadLocalVoice = () => self is null ? null : self.DownloadLocalVoice,
+
+                    // Which of the eight builds is actually on disk, and the swap onto another
+                    // (#139). Both late-bound for the reason the download above records: rows are
+                    // built before `self` exists, so anything asked at build time answers null and
+                    // stays null.
+                    InstalledLocalVoiceBuild = () =>
+                        self is null
+                            ? null
+                            : D47.Core.Speech.KokoroAssets.InstalledBuild(self.KokoroFolder())?.Id,
+                    SwitchLocalVoiceBuild = build => self is null
+                        ? null
+                        : (progress, cancellationToken) =>
+                            self.SwitchLocalVoiceBuild(build, progress, cancellationToken),
                     Beds = () => [.. (self?.Cues ?? cues).BedNames],
                     BedLabel = name => (self?.Cues ?? cues).IsCustom(name) ? $"{name} (yours)" : name,
                     OutputDevices = () => [.. WasapiAudioSink.Devices().Select(device => device.Id)],
@@ -1742,7 +1755,27 @@ public sealed class AppHost : IDisposable
                 // What the audio flight recorder has kept (#164), so the privacy capability can
                 // carry the row that empties it. Null on every ordinary run, and there is then
                 // no row at all.
-                flight?.Log));
+                flight?.Log,
+
+                // **Withdrawal, and it now reaches the store rather than only this machine**
+                // (#167). The press asks the endpoint to delete every donation made under this
+                // installation's identifier, then forgets the identifier here and writes a record
+                // of what went — a route out that is the same one button the consent was, and that
+                // needs no public thread to post in.
+                //
+                // A refused erasure KEEPS the identifier, because it is the only handle anybody
+                // has on what was sent; the sentence it answers with says so and the press can
+                // simply be made again. See DonationDispatch.ForgetAsync.
+                async (_, cancel) =>
+                {
+                    var forgotten = await Donation.DonationDispatch
+                        .For(paths, () => settings.Current.Donation.Endpoint, loggerFactory)
+                        .ForgetAsync(cancel);
+
+                    return forgotten.Receipt is { } receipt
+                        ? $"{forgotten.Outcome.Said} A record of it is in {receipt}."
+                        : forgotten.Outcome.Said;
+                }));
 
         built = capabilities;
 
@@ -2711,10 +2744,21 @@ public sealed class AppHost : IDisposable
     /// is the case for an id the Commander typed themselves and for every voice before the list
     /// has been fetched. Null rather than the id, so the caller decides what to show
     /// (remediation.md 10, item 9).
+    /// <para>
+    /// <b>Every slot's list, not the ship's alone</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/149">#149</a>). This asked
+    /// <see cref="AboardVoices"/> and nothing else, so a voice handed to an NPC out of
+    /// ElevenLabs' pool was looked up in Kokoro's list and written into the log as a bare id. The
+    /// rule is <see cref="VoiceGroups.NameFor"/>, in Core where it can be asserted; this supplies
+    /// the one thing only the host knows, which is what each slot's provider actually answered.
+    /// </para>
+    /// <para>
+    /// Through <see cref="VoicesFor"/> per slot rather than by walking
+    /// <see cref="_voicesByProvider"/>, which is written to from the voice-loading path while
+    /// this is read from the speaking one.
+    /// </para>
     /// </summary>
-    internal string? VoiceNameFor(string id) =>
-        AboardVoices.Voices.FirstOrDefault(voice => string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase))
-            ?.Name;
+    internal string? VoiceNameFor(string id) => VoiceGroups.NameFor(VoicesFor, id);
 
     /// <summary>
     /// How a voice is shown to the Commander, wherever one is shown — the row, its tooltip and
@@ -3035,7 +3079,7 @@ public sealed class AppHost : IDisposable
     /// reason: it is a large downloaded thing that is not the Commander's data, and deleting it
     /// costs a download rather than anything they wrote.
     /// </summary>
-    private string KokoroFolder() => Path.Combine(Paths.Data, "models", "kokoro");
+    internal string KokoroFolder() => Path.Combine(Paths.Data, "models", "kokoro");
 
     /// <summary>Whether the local voice is here, and what it would cost if not.</summary>
     private string LocalVoiceState() =>
@@ -3113,6 +3157,86 @@ public sealed class AppHost : IDisposable
         finally
         {
             Interlocked.Exchange(ref _fetchingVoice, 0);
+        }
+    }
+
+    /// <summary>
+    /// Swaps the local voice onto a different one of Kokoro's eight builds (#139).
+    /// <para>
+    /// <b>The same guard as the download beside it, and it is the same guard rather than a second
+    /// one</b>: both write <c>model.onnx</c>, so two of them running at once is two writers on one
+    /// file. A switch while a first install is running is refused, and the other way round too.
+    /// </para>
+    /// <para>
+    /// <b>The provider is rebuilt afterwards, not at the next restart.</b> A loaded
+    /// <c>InferenceSession</c> holds the file it opened, so a Commander who changed the build and
+    /// went on talking would keep hearing the old one — which is the "apply every setting without
+    /// a restart" rule (Phase 4) and also the only observable difference this row makes.
+    /// </para>
+    /// </summary>
+    internal async Task<string?> SwitchLocalVoiceBuild(
+        string buildId,
+        IProgress<double> progress,
+        CancellationToken cancellationToken)
+    {
+        if (Interlocked.Exchange(ref _fetchingVoice, 1) == 1)
+        {
+            return "A download is already running.";
+        }
+
+        try
+        {
+            using var installer = new KokoroInstaller(
+                KokoroFolder(), _loggerFactory.CreateLogger<KokoroInstaller>());
+
+            var reported = new Progress<KokoroProgress>(step => progress.Report(step.Fraction));
+
+            // Let go of the file before overwriting it. Windows will not replace a model an open
+            // session is holding, and the failure it gives — "used by another process" — reads as
+            // a download problem rather than as the one thing that has to happen first.
+            DropLocalVoiceClient();
+
+            var result = await Task.Run(
+                () => installer.SwitchAsync(buildId, reported, cancellationToken),
+                cancellationToken).ConfigureAwait(false);
+
+            _logger.LogInformation(
+                "The local voice build change to {Build} ended as {Outcome}", buildId, result.Outcome);
+
+            if (result.Outcome is not (KokoroInstall.Installed or KokoroInstall.AlreadyPresent))
+            {
+                return result.Detail ?? $"The {buildId} build could not be downloaded.";
+            }
+
+            await RefreshLocalVoicesAsync().ConfigureAwait(false);
+
+            return await SpeakLocalVoiceProofAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is IOException or HttpRequestException)
+        {
+            _logger.LogWarning(ex, "The local voice build could not be changed");
+            return $"The {buildId} build could not be downloaded: {ex.Message}";
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _fetchingVoice, 0);
+        }
+    }
+
+    /// <summary>
+    /// Closes and forgets the Kokoro client, so nothing is holding <c>model.onnx</c> open.
+    /// <para>
+    /// The next thing that needs the local voice builds a fresh client, which is what makes this
+    /// safe to do mid-session: the provider is created on demand from the folder rather than kept
+    /// as the only copy of anything.
+    /// </para>
+    /// </summary>
+    private void DropLocalVoiceClient()
+    {
+        if (_clients.Remove(TtsProviderCatalog.KokoroId, out var client)
+            && client is IDisposable disposable)
+        {
+            disposable.Dispose();
         }
     }
 

@@ -294,14 +294,38 @@ public class WhatIsShownIsWhatIsSentTests : IDisposable
     {
         var window = Shown(_ => "### Incident excerpt\n");
 
-        var words = string.Join(
-            "\n",
-            window.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text)
-                .Concat(window.GetVisualDescendants().OfType<Button>().Select(b => b.Content as string)));
+        var words = Words(window);
 
         Assert.DoesNotContain("into the issue", words, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("paste it", words, StringComparison.OrdinalIgnoreCase);
     }
+
+    /// <summary>
+    /// <b>And the retired destination is not named anywhere else either</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/165">#165</a>). The last thing still
+    /// naming it was the size warning — "more than one GitHub comment holds" — which was a
+    /// transport detail of a destination the erasure ruling removed, and which was never the thing
+    /// that mattered at that size. The yes this window asks for is a yes to something read, and
+    /// that is what stops being true whichever route the excerpt takes.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheRetiredDestinationIsNotNamedAnywhereInTheWindow()
+    {
+        // Over the size warning as well as the resting state, since that is where it lived.
+        var window = Shown(_ => "### Incident excerpt\n" + new string('x', 70_000));
+
+        var words = Words(window);
+
+        Assert.Contains("more than a person reads", words, StringComparison.Ordinal);
+        Assert.DoesNotContain("GitHub", words, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("comment", words, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string Words(DonateExcerptWindow window) =>
+        string.Join(
+            "\n",
+            window.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text)
+                .Concat(window.GetVisualDescendants().OfType<Button>().Select(b => b.Content as string)));
 
     /// <summary>
     /// And it states the weaker linkage claim <b>before</b> the first donation, because anybody who

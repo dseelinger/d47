@@ -27,6 +27,77 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.91.0 — 2026-08-29 — The way back, written down and wired
+
+Fourteen issues, five parallel sessions, one landing.
+[#165](https://github.com/dseelinger/d47/issues/165),
+[#167](https://github.com/dseelinger/d47/issues/167),
+[#181](https://github.com/dseelinger/d47/issues/181),
+[#166](https://github.com/dseelinger/d47/issues/166) and
+[#168](https://github.com/dseelinger/d47/issues/168) finish what the donation platform started;
+[#149](https://github.com/dseelinger/d47/issues/149),
+[#151](https://github.com/dseelinger/d47/issues/151) and
+[#152](https://github.com/dseelinger/d47/issues/152) make the pickers say what they know;
+[#177](https://github.com/dseelinger/d47/issues/177),
+[#155](https://github.com/dseelinger/d47/issues/155),
+[#179](https://github.com/dseelinger/d47/issues/179) and
+[#139](https://github.com/dseelinger/d47/issues/139) continue the local voice's education;
+[#178](https://github.com/dseelinger/d47/issues/178) and
+[#180](https://github.com/dseelinger/d47/issues/180) close the search's last silent knob and give
+the flight recorder a road.
+
+### Taking a donation back is one press (#167, #165, #181)
+
+The Privacy panel's donor row now reads **"Forget it, and delete what was sent"**: one press asks
+the store to delete everything filed under the installation identifier — the erasure receipt names
+each deleted object — and then forgets the identifier locally. Withdrawal is no harder than consent
+was. Donated excerpts no longer land in a public issue: the public road is closed and its signposts
+are down. The corpus window gained the send button the excerpt window already had — the payload
+spools to a self-deleting temp file and is hashed *above* the compression, so a donor can verify
+the receipt's hash themselves with a gunzip and a checksum. And the rule for whether a donated
+excerpt may ever become a committed test fixture is written down before the first one exists, in
+the Worker runbook: severable by construction, and the donor told before the commit that this one
+is permanent. A donated journal history is never committed at all.
+
+### The rules are written down once (#168, #166)
+
+`docs/data-retention.md` gathers every retention rule the code enforces — they lived in five files
+and were written down nowhere — held by a test that fails if the page and the code drift.
+`docs/donation-privacy.md` says plainly who holds what, for how long, and how to have it deleted.
+One behaviour changed rather than merely being described: log retention is now by age and size —
+`.log` 90 days, `.jsonl` 14, 4 MB per day — instead of fourteen files per sink, so a log folder
+holds about three months (~16 MB typical, 360 MB ceiling) instead of two weeks.
+
+### The pickers say what they know (#149, #151, #152)
+
+Model pickers show each model's price and mark the default instead of listing bare ids, and the
+OpenAI list includes the nano tier the price table already knew about. A pool-assigned voice shows
+its name, and every spoken line's log entry names who spoke, in which voice, through which
+provider.
+
+### The local voice, continued (#177, #155, #179, #139)
+
+A decimal speaks its point — `5.79` is *five point seven nine*, not *five, seven, nine* — and unit
+abbreviations after numbers are written out once, before every provider, so `ly` and `ls` stop
+being *lee* and *lez* on the voices that guessed. Three letter-to-sound gaps closed, with the `nge`
+ruling settled by counting the shipped dictionary rather than judging by ear: long after `a`
+(*change*, *range*), short after everything else (*hinge*, *sponge*). And all eight Kokoro ONNX
+builds can now be chosen, each labelled with its measured speed beside its size — `uint8` runs
+5.4× realtime at 169 MB, half the default's size — with the default deliberately unchanged and
+sound quality deliberately unranked (`KokoroProbe quality` writes a WAV per build for ears to
+judge).
+
+### The last silent knob, and the recorder's road (#178, #180)
+
+`find_nearest_station`'s `limit` no longer quietly snaps 50 back to 5 — out of range is refused by
+name and number, an honoured non-default is echoed — and the same price-age argument is now
+spelled one way (`max_price_age_hours`) across both tools that take it. The flight recorder gained
+a road that needs no shell syntax: `flight-on` from anywhere, or a shortcut carrying
+`--flight-recorder`; per-run either way, remembered nowhere, and still entirely absent unless
+asked.
+
+---
+
 ## 0.90.0 — 2026-08-29 — Four lanes abreast
 
 Six issues in one release, built in four parallel sessions against one main and merged as one:

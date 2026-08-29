@@ -98,6 +98,25 @@ public static class CorpusReport
             + "rather than scrubbed, because a donor cannot consent on someone else's behalf.");
 
         report.AppendLine();
+        report.AppendLine(
+            // **The half of the paperwork this report did not have** (#168, #166). The excerpt's
+            // says where it came from and how long it lasts; this one said neither, and it is the
+            // donation with the *harder* retention sentence to write — indefinitely, which is a
+            // promise that has to be stated with its reason at the moment of consent rather than
+            // discovered later in a receipt. Forever is what makes the scrub load-bearing rather
+            // than tidy, so the two are said together.
+            "**Where this goes, and for how long.** It was scrubbed on the machine it came off, and "
+            + "the treatment above is checkable on every kind of thing in it. Sent to Directive 47's "
+            + "own store, it is **kept indefinitely** — that is the whole payoff, because a "
+            + "regression case that expires stops being one, and permanent retention is exactly "
+            + "what makes the scrub above load-bearing rather than decorative. It is never "
+            + "committed to a public repository, so it stays one object and one delete: ask, "
+            + "quoting the receipt d47 kept beside its executable, and it goes.");
+
+        report.AppendLine();
+        report.AppendLine(DonationNotice.Line);
+
+        report.AppendLine();
         Group(
             report,
             $"Kinds the scrub changed — {changed.Count} of {kinds.Count}",

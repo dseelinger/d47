@@ -189,12 +189,28 @@ public static class DonationReceipt
                 : "Nothing arrived, so there is nothing to delete.");
 
         receipt.AppendLine();
+
+        // **It named the object and never said who to name it to** (#166). A receipt that tells a
+        // donor exactly what to quote and nothing about where to quote it is a withdrawal route
+        // that stops one step short of being one — so the address goes here, next to the thing to
+        // be quoted, rather than at the end of the section.
+        receipt.AppendLine(DonationNotice.Line);
+
+        receipt.AppendLine();
         receipt.AppendLine(
             envelope.Kind == DonationEnvelope.Corpus
                 ? "A journal history is kept **indefinitely** — that is what it is for; a "
                   + "regression case that expires stops being one. It goes when you ask."
-                : "An incident excerpt is kept for **30 days**, or until the defect it was cut for "
-                  + "is closed, whichever comes first. You do not have to ask.");
+                // **Thirty days, and nothing else claimed as a mechanism** (#167). This said "or
+                // until the defect it was cut for is closed, whichever comes first", and only the
+                // first half is enforced by anything — the lifecycle rule on the store. The second
+                // was somebody's intention, written in the register of a guarantee, in the one
+                // document a donor keeps as evidence of what they were promised.
+                : "An incident excerpt is deleted **30 days** after it arrives, by a rule on the "
+                  + "store rather than by anybody remembering to. You do not have to ask. It may "
+                  + "well go sooner — there is no reason to keep one past the defect it was cut "
+                  + "for — but that is somebody deleting it and not a rule, so the thirty days is "
+                  + "what is promised. Asking for it sooner is one press, and immediate.");
 
         receipt.AppendLine();
         receipt.AppendLine(

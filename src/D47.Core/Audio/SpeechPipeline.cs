@@ -1,4 +1,5 @@
 ﻿using System.Threading.Channels;
+using D47.Core.Speech;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Audio;
@@ -199,21 +200,36 @@ public sealed class SpeechPipeline : IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// One sentence, in both of its forms.
+    /// <para>
+    /// <b>Written and spoken part company here and nowhere else</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/155">#155</a>). <c>5.79 ly</c> is right
+    /// on the page and is <em>five point seven nine lee</em> out of a speaker, because <c>ly</c>
+    /// is a word to a text-to-speech service. So the unit abbreviations are written out for the
+    /// provider only — see <see cref="SpokenUnits"/> for why this is one rewrite here rather than
+    /// seventeen call sites, and why it covers all four providers at once.
+    /// </para>
+    /// <para>
+    /// The written form is what everything else keeps: the caption, the transcript, the log and
+    /// the panel all read <c>5.79 ly</c>, which is how it should be written down.
+    /// </para>
+    /// </summary>
     private void Render(string sentence) =>
-        _rendered.Writer.TryWrite(SynthesizeAsync(sentence));
+        _rendered.Writer.TryWrite(SynthesizeAsync(sentence, SpokenUnits.Rewrite(sentence)));
 
-    private async Task<Spoken?> SynthesizeAsync(string sentence)
+    private async Task<Spoken?> SynthesizeAsync(string sentence, string spoken)
     {
         try
         {
             var started = System.Diagnostics.Stopwatch.StartNew();
 
             var clip = await _tts
-                .SynthesizeAsync(sentence, _voice, _abandon.Token)
+                .SynthesizeAsync(spoken, _voice, _abandon.Token)
                 .ConfigureAwait(false);
 
             Record();
-            Note(sentence, started.Elapsed);
+            Note(sentence, spoken, started.Elapsed);
 
             return new Spoken(sentence, _colour is null ? clip : _colour(clip));
         }
@@ -234,7 +250,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
 
             VoiceRejected?.Invoke(refused);
 
-            return await SpeakWithoutAVoiceAsync(sentence).ConfigureAwait(false);
+            return await SpeakWithoutAVoiceAsync(sentence, spoken).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -314,8 +330,16 @@ public sealed class SpeechPipeline : IAsyncDisposable
     /// run of the phonemiser over the same text, which is cheap but not free, and no run that is
     /// not recording should pay for it.
     /// </para>
+    /// <para>
+    /// <b>The text is the written form and the phonemes are of the spoken one</b>, which is the
+    /// pair a reader of the recording actually needs (#155). The recorder exists to answer
+    /// <em>why did it sound like that</em>, so its phoneme column has to be the phonemes that were
+    /// sent; showing the text beside them is what makes the unit rewrite visible rather than
+    /// invisible — <c>5.79 ly</c> against <em>five point seven nine light years</em> says at a
+    /// glance that the rewrite ran.
+    /// </para>
     /// </summary>
-    private void Note(string sentence, TimeSpan elapsed)
+    private void Note(string sentence, string spoken, TimeSpan elapsed)
     {
         if (_noted is not { } noted)
         {
@@ -326,7 +350,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
             sentence,
             _tts.Name,
             Named(_voice),
-            _tts.Phonemes(sentence, _voice),
+            _tts.Phonemes(spoken, _voice),
             elapsed));
     }
 
@@ -361,18 +385,18 @@ public sealed class SpeechPipeline : IAsyncDisposable
     /// Either way the failure stops being permanent.
     /// </para>
     /// </summary>
-    private async Task<Spoken?> SpeakWithoutAVoiceAsync(string sentence)
+    private async Task<Spoken?> SpeakWithoutAVoiceAsync(string sentence, string spoken)
     {
         try
         {
             var started = System.Diagnostics.Stopwatch.StartNew();
 
             var clip = await _tts
-                .SynthesizeAsync(sentence, _voice, _abandon.Token)
+                .SynthesizeAsync(spoken, _voice, _abandon.Token)
                 .ConfigureAwait(false);
 
             Record();
-            Note(sentence, started.Elapsed);
+            Note(sentence, spoken, started.Elapsed);
 
             return new Spoken(sentence, _colour is null ? clip : _colour(clip));
         }

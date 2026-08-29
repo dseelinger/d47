@@ -144,6 +144,39 @@ say the voice is installed — and then **speaks a line aloud in it**, which is 
 you can check without reading a log. The voice picker is asked for its list again at the same
 moment, so the voices are there to choose from immediately rather than after a restart.
 
+**Kokoro publishes eight builds of the same model, and you can choose which one you run.** There is
+a **Local voice model build** row under Advanced, and it appears once the local voice is installed.
+Each choice states what it costs on disk and how fast it rendered speech on this machine, together
+— because **size does not predict speed here, and it points the wrong way**:
+
+| build | size | speed |
+|---|---|---|
+| `uint8` | 169 MB | about 5.4× realtime — **the fastest** |
+| `q4` | 291 MB | about 4.5× |
+| `fp32` | 310 MB | about 4.4× — **the default** |
+| `q4f16` | 147 MB | about 4.2× |
+| `fp16` | 155 MB | about 3.5× |
+| `uint8f16` | 108 MB | about 3.5× |
+| `q8f16` | 82 MB | about 1.8× |
+| `quantized` | 88 MB | about 1.7× |
+
+Read that table before assuming a smaller download is a worse voice or a slower one. The **smallest
+two builds are the slowest by a factor of two and a half**, and `q4` is a *quantised* build that is
+within 6% of the full one's size. The figures compare the builds with each other on one machine on
+one day; treat the ordering as the finding and the multiples as approximate.
+
+**How they sound has not been ranked.** Speed and size are measurements; quality is not, because
+every quantised build renders the same line to a *different length* than `fp32` does, so there is
+nothing to compare sample against sample. `fp32` is the reference and the default, and if a smaller
+build sounds wrong to you, that is the only test there is — say so and go back.
+
+**Choosing one downloads it and replaces the one you have.** Only the model: the dictionary and the
+28 voices are the same files for every build, so changing your mind costs between 82 and 310 MB
+rather than a gigabyte. There is never more than one model on disk, so experimenting cannot fill
+your drive. A download that fails or is interrupted **leaves the build you were using in place and
+working**, and the row goes back to naming it — the setting is written only once the new file has
+landed and been checked against its own pinned checksum.
+
 **It speaks English and only English**, and that is worth understanding rather than working out.
 Every other provider is told which language a line is in; Kokoro is not told, because it has only
 one. A message in French will be read out by an English speaker rather than in French. For the

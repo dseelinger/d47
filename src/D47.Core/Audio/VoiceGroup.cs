@@ -1,4 +1,4 @@
-using D47.Core.Configuration;
+﻿using D47.Core.Configuration;
 
 namespace D47.Core.Audio;
 
@@ -268,6 +268,58 @@ public static class VoiceGroups
     /// <summary>Every slot's provider, resolved. What the wiring plan is asked to arrange.</summary>
     public static IReadOnlyDictionary<VoiceGroup, string> Selected(SpeechSettings speech) =>
         All.ToDictionary(slot => slot.Group, slot => ProviderFor(speech, slot.Group));
+
+    /// <summary>
+    /// What a voice id is called, looked for in <b>every</b> slot's list rather than the ship's
+    /// alone (<a href="https://github.com/dseelinger/d47/issues/149">#149</a>).
+    /// <para>
+    /// The ship's list was the whole answer while one provider spoke for everybody. Since this
+    /// phase six slots can name three, so a voice handed to an NPC out of ElevenLabs' pool was
+    /// looked up in Kokoro's list, found nowhere, and written into the log as a bare
+    /// <c>FwuKjlVpi0N3exead7ji</c> — telling the reader neither whose voice it was nor which of
+    /// the three providers had been billed for it. The name was fetched and held the whole time,
+    /// under another slot's key.
+    /// </para>
+    /// <para>
+    /// <b><see cref="Aboard"/> first, because <see cref="All"/> starts there.</b> An id that
+    /// already resolved gets exactly the answer it got before, and the other five are consulted
+    /// only where there was nothing — so widening this cannot change a line that was already
+    /// right. Ids are a provider's own namespace, and two providers minting the same one is not a
+    /// case worth ordering around beyond that.
+    /// </para>
+    /// <para>
+    /// Null is a normal state and not a fault: a list is fetched when a key arrives and when a
+    /// provider changes, so an id chosen last session is unresolved until that returns, and one
+    /// the Commander typed by hand may never resolve at all. The caller decides what to show.
+    /// </para>
+    /// </summary>
+    /// <param name="catalogues">
+    /// What one slot's provider offers. A function rather than the six lists, because the app
+    /// holds them per <em>provider</em> and two slots routinely share one — asking per slot is
+    /// what keeps this from needing to know that.
+    /// </param>
+    public static string? NameFor(Func<VoiceGroup, VoiceCatalogue> catalogues, string? id)
+    {
+        ArgumentNullException.ThrowIfNull(catalogues);
+
+        if (id is not { Length: > 0 })
+        {
+            return null;
+        }
+
+        foreach (var slot in All)
+        {
+            var named = catalogues(slot.Group).Voices
+                .FirstOrDefault(voice => string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase));
+
+            if (named?.Name is { Length: > 0 } name)
+            {
+                return name;
+            }
+        }
+
+        return null;
+    }
 
     /// <summary>
     /// The providers actually needed, each once. The list the app builds clients from — one per
