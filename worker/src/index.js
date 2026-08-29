@@ -13,7 +13,7 @@
 // it either would have moved the problem rather than solved it.
 //
 // **It is JavaScript, and that is a second language in the tree.** That is the honest cost of the
-// proposal, argued in #175 rather than smuggled in. It is about a hundred lines and it lives
+// proposal, argued in #175 rather than smuggled in. It is about two hundred lines and it lives
 // outside src/, where nothing builds it and nothing tests it with dotnet.
 //
 // **Nothing here bills.** Three hard stops, each of which fails closed:

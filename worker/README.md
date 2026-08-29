@@ -1,8 +1,12 @@
 # The donation endpoint
 
 d47's whole backend: a Cloudflare Worker in front of an R2 bucket, argued in
-[#175](https://github.com/dseelinger/d47/issues/175). About a hundred lines of JavaScript, one
-command to deploy, and no VM, framework or database anywhere in it.
+[#175](https://github.com/dseelinger/d47/issues/175). Two routes, about two hundred lines of
+JavaScript, one command to deploy, and no VM, framework or database anywhere in it. `POST /donate`
+takes a donation; `POST /forget` erases every donation made under one installation identifier
+([#167](https://github.com/dseelinger/d47/issues/167)) — and the second is why the first is allowed
+to exist, since GitHub was ruled out as a destination precisely because a public transport cannot
+honour "ask and it is deleted".
 
 It lives outside `src/` on purpose. Nothing in the .NET build references it, `dotnet test` does not
 run it, and it ships in no release — a d47 build reaches it over HTTPS like any other destination
@@ -103,8 +107,9 @@ node --test
 
 Node's own test runner, from this folder. No framework, no `package.json`, no `node_modules` — a
 second language in the tree is the honest cost of this endpoint and a second dependency tree on top
-of it would not be. Eighteen tests, and what they mostly assert is that a malformed donation is
-**refused with nothing written**.
+of it would not be. Twenty-nine tests, and what they mostly assert is that a malformed donation is
+**refused with nothing written**, and that an erasure deletes both prefixes for one identifier and
+nothing belonging to anybody else.
 
 **It is not part of `dotnet test`, and that gap is stated rather than papered over.** The three
 gates that run as tests do so because they must not drift from the code; this one cannot join them

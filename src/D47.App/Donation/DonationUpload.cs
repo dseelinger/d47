@@ -10,8 +10,13 @@ using Microsoft.Extensions.Logging;
 namespace D47.App.Donation;
 
 /// <summary>
-/// One POST, to one address, carrying one donation
-/// (<a href="https://github.com/dseelinger/d47/issues/175">#175</a>).
+/// One POST, to one address, carrying one donation — or, since
+/// <a href="https://github.com/dseelinger/d47/issues/167">#167</a>, one request to delete every
+/// donation an installation ever made (<a href="https://github.com/dseelinger/d47/issues/175">#175</a>).
+/// <para>
+/// <b>Two paths rather than a mode on one.</b> A request that stores and a request that deletes
+/// must not be one flag away from each other, at either end of the wire.
+/// </para>
 /// <para>
 /// <b>An <see cref="HttpClient"/> and nothing else.</b> No SDK, no package: the licence gate walks
 /// the transitive graph, and a storage SDK would drag a subtree through it to save writing seven
