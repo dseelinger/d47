@@ -69,7 +69,7 @@ public class TheBuildRowOffersAllEightTests
 
         foreach (var id in KokoroAssets.BuildIds)
         {
-            var label = row.LabelForChoice(id);
+            var label = row.LabelForChoice(id, new D47Settings());
 
             Assert.Contains("MB", label, StringComparison.Ordinal);
             Assert.Contains("realtime", label, StringComparison.Ordinal);
@@ -85,8 +85,8 @@ public class TheBuildRowOffersAllEightTests
     {
         var row = Row(Surface("uint8"))!;
 
-        Assert.EndsWith("— installed", row.LabelForChoice("uint8"), StringComparison.Ordinal);
-        Assert.DoesNotContain("installed", row.LabelForChoice("fp32"), StringComparison.Ordinal);
+        Assert.EndsWith("— installed", row.LabelForChoice("uint8", new D47Settings()), StringComparison.Ordinal);
+        Assert.DoesNotContain("installed", row.LabelForChoice("fp32", new D47Settings()), StringComparison.Ordinal);
     }
 
     // ---- What it reads ------------------------------------------------------------------------

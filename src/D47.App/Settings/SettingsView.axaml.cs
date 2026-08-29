@@ -2591,7 +2591,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         bar.Value = 0;
         bar.IsVisible = true;
 
-        Note(message, $"Fetching {row.LabelForChoice(chosen ?? string.Empty)}.");
+        Note(message, $"Fetching {row.LabelForChoice(chosen ?? string.Empty, _settings.Current)}.");
 
         try
         {

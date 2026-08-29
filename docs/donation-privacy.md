@@ -96,42 +96,34 @@ enforces each, along with every other number in the product.
 
 ## How to have it deleted
 
-<!--
-  THIS SECTION DESCRIBES THE ERASURE THAT EXISTS, NOT THE ONE THAT IS PLANNED.
+One press. **Settings → Privacy → "Forget it, and delete what was sent."** d47 asks the store to
+delete everything filed under your installation identifier — the deleted objects are named on the
+receipt it writes to `data\donations\` — and then forgets the identifier locally. Withdrawal is no
+harder than consent was: the same kind of press that sent is the press that takes back.
 
-  As written it is true of the product as it stands: deletion at the store on request, named by
-  the receipt or by the installation identifier, asked for through the project's ordinary contact
-  route, with no stated turnaround. #167 is building a runbook, a timeframe and a route meant for
-  this — when it lands, this section is the thing to rewrite, and the closing paragraph below is
-  the thing to delete. Do not describe any of that before it exists: a notice that promises a
-  withdrawal route nobody has built is the failure #165 removed from the excerpt window.
--->
+**If no donation address is set when you press it** — you donated once, then cleared the endpoint —
+d47 can only do the local half, and the receipt says so plainly: it records the identifier it just
+forgot and names the destination as nowhere, because that identifier is what a custodian needs to
+find and delete what was already sent. Send it with the ask below.
 
-Ask, and it is deleted. It is one object in a bucket and removing it is a single delete.
+**Asking a person instead.** If the machine that donated is gone, [the Discord](community.html)
+reaches a person directly and does not put your identifier anywhere public — a GitHub issue is a
+public archive, so if you open one, leave the object name and the identifier out of it. Your
+receipt in `data\donations\` names the exact object and its hash; failing that, the identifier
+from `data\donor-token.txt` is the whole of your prefix in the store. A human deletion has no
+stated turnaround; the press above needs none.
 
-**Naming it.** Your receipt in `data\donations\` names the exact object and its hash — quote that
-and nothing else has to be worked out. If you no longer have the receipt, your installation
-identifier from `data\donor-token.txt` is the whole of your prefix in the store, and everything
-under it can go together.
+**What deletion reaches, and what it does not.** The data goes — the stored objects, and nothing
+else anywhere holds a copy. What does not go is what was decided because of it — the fix, the
+released build, the changelog line, the test that now passes. Those are the product of having read
+the data once; they are not the data, and a published release cannot be recalled in any case.
+Nothing donated has been committed to this repository, a journal history never will be, and the
+narrow conditions under which an incident excerpt may ever become a committed test fixture were
+written down before the first one exists — in the Worker runbook (`worker/README.md`, "The rule
+for a committed replay fixture"): severable by construction, and the donor told before the commit
+that this one is permanent.
 
-**Where to ask.** [The Discord](community.html). It reaches a person directly and does not put your
-identifier anywhere public — which matters, because a GitHub issue is a public archive and anything
-written in one is copied beyond recall within the hour. You can open an issue saying you have a
-donation you want deleted; just do not put the object name or the identifier in it.
-
-**What deletion reaches, and what it does not.** The data goes — the stored object, and nothing
-else anywhere holds a copy of it. What does not go is what was decided because of it — the fix, the released build, the changelog
-line, the test that now passes. Those are the product of having read the data once; they are not
-the data, and a published release cannot be recalled in any case. Nothing donated has been
-committed to this repository and a journal history never will be, precisely so that erasure stays a
-single delete rather than a rewrite of a public repository's history.
-
-**Withdrawing consent going forward** is deleting `data\donor-token.txt`. Future donations then
-travel under a new identifier and cannot be joined to the old ones. It does not reach backwards:
-what you have already sent stays under the old identifier until it is deleted at the store.
-
-**Two things this section does not yet promise**, said plainly rather than left to be discovered:
-there is no stated turnaround for performing a deletion, and the route above is the project's
-ordinary contact route rather than one built for this. Both are
-[#167](https://github.com/dseelinger/d47/issues/167)'s to settle, and its own standard is that
-withdrawal must be no harder than consent was.
+**Deleting `data\donor-token.txt` by hand** is the local half only: future donations then travel
+under a new identifier and cannot be joined to the old ones, but what was already sent stays at
+the store under the old name until a deletion reaches it. The press does both halves; the file
+does one.
