@@ -162,6 +162,7 @@ public partial class MainWindow : Window
             // people's messages included; this cuts a window around the incident, scrubs it, and
             // shows exactly what would leave before any of it does.
             Panel.EnableDonation(() => _ = ShowDonationAsync(host));
+            Panel.EnableCorpusDonation(() => _ = ShowCorpusDonationAsync(host));
 
             // The window that can show settings says so; the headset's copy of this same view
             // is handed nothing and therefore has no Settings tab (Phase 12). The second
@@ -1383,6 +1384,71 @@ public partial class MainWindow : Window
                         host.GameState.Active?.Carrier),
                     paperwork);
             }).Over(this);
+    }
+
+    /// <summary>
+    /// The whole-history donation (<a href="https://github.com/dseelinger/d47/issues/174">#174</a>).
+    /// <para>
+    /// <b>Two passes over the same files, sharing one <see cref="Pseudonyms"/> and one range.</b>
+    /// The first counts what is there and keeps a single scrubbed line per event kind; the second
+    /// writes the payload straight into the file the Commander picked. Sharing the stand-ins is
+    /// what makes the samples in the report the lines in the payload, and holding the range from
+    /// the read rather than re-reading the chooser is what stops a report about twelve months
+    /// sitting above a file containing thirteen.
+    /// </para>
+    /// <para>
+    /// <b>No account name substitution here, unlike <see cref="ShowDonationAsync"/>.</b> That list
+    /// exists for the log half, which prints Windows paths; a corpus is Elite's journals alone and
+    /// they name no profile.
+    /// </para>
+    /// </summary>
+    private async Task ShowCorpusDonationAsync(AppHost host)
+    {
+        var paperwork = new ExcerptPaperwork(BuildInfo.Full, DateTimeOffset.Now);
+        var folder = host.JournalDirectory ?? D47.Core.Journal.JournalFolder.DefaultPath();
+        var logger = _host?.Loggers.CreateLogger("Corpus");
+        var now = DateTimeOffset.Now;
+
+        Pseudonyms? names = null;
+        var from = DateTimeOffset.MinValue;
+
+        await new Controls.CorpusDonateWindow(
+            (scope, progress, cancel) => Task.Run(
+                () =>
+                {
+                    names = IncidentExcerpt.Seeded(
+                        host.GameState.Active?.Identity,
+                        host.GameState.Active?.Carrier);
+
+                    from = scope.From(now);
+
+                    var survey = CorpusDonation.Survey(folder, from, now, names, logger, progress, cancel);
+
+                    return new Controls.CorpusDonateWindow.CorpusReading(
+                        survey,
+                        CorpusReport.Render(survey, paperwork));
+                },
+                cancel),
+            (stream, progress, cancel) => Task.Run(
+                () =>
+                {
+                    if (names is not { } standIns)
+                    {
+                        return;
+                    }
+
+                    // **No BOM, and the window is the one that owns the stream.** A byte order mark
+                    // would sit in front of the first event and stop it parsing as JSON, which for a
+                    // file whose whole purpose is to be replayed is a payload that fails at line one.
+                    using var writer = new StreamWriter(
+                        stream,
+                        new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
+                        bufferSize: 65536,
+                        leaveOpen: true);
+
+                    CorpusDonation.Write(folder, from, now, standIns, writer, logger, progress, cancel);
+                },
+                cancel)).Over(this);
     }
 
     private async Task CheckForUpdateAsync(AppHost host)

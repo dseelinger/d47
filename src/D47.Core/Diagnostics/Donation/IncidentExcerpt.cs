@@ -133,32 +133,7 @@ public sealed record IncidentExcerpt(
         CommanderIdentity? commander = null,
         CarrierState? carrier = null)
     {
-        var names = new Pseudonyms();
-
-        // First, so the Commander is CMDR ALPHA rather than whoever the window happened to name
-        // first — and so a stand-in exists for the log pass whether or not the window carries the
-        // events that would have created one.
-        if (commander is not null)
-        {
-            names.Person(commander.Name);
-            names.FrontierId(commander.FrontierId);
-        }
-
-        // And the carrier, for the same reason and with the same failure if it is left out: its
-        // name and callsign are PII by the Commander's ruling, the log half says both in what d47
-        // tells you about a jump, and the events that carry them may sit hours outside the window.
-        if (carrier is not null)
-        {
-            if (carrier.Name is { Length: > 0 } named)
-            {
-                names.Carrier(named);
-            }
-
-            if (carrier.CallSign is { Length: > 0 } call)
-            {
-                names.Callsign(call);
-            }
-        }
+        var names = Seeded(commander, carrier);
 
         var events = new List<string>();
         var withheld = 0;
@@ -223,6 +198,48 @@ public sealed record IncidentExcerpt(
                 request.IncludeMySpeech,
                 messages,
                 links));
+    }
+
+    /// <summary>
+    /// A fresh set of stand-ins with the identities that sit outside any window already in it.
+    /// <para>
+    /// <b>Seeded first, so the Commander is CMDR ALPHA</b> rather than whoever the window happened
+    /// to name first — and so a stand-in exists for the log pass whether or not the window carries
+    /// the events that would have created one. The carrier is here for the same reason and fails
+    /// the same way if it is left out: its name and callsign are both PII, the log half says both
+    /// in what d47 tells you about a jump, and the events that carry them may sit hours outside the
+    /// window.
+    /// </para>
+    /// <para>
+    /// <b>Shared with the corpus path</b> (<a href="https://github.com/dseelinger/d47/issues/174">#174</a>),
+    /// which needs the identical seeding and must not grow a second description of it — two
+    /// spellings of this rule would disagree the first time one of them was corrected.
+    /// </para>
+    /// </summary>
+    public static Pseudonyms Seeded(CommanderIdentity? commander, CarrierState? carrier)
+    {
+        var names = new Pseudonyms();
+
+        if (commander is not null)
+        {
+            names.Person(commander.Name);
+            names.FrontierId(commander.FrontierId);
+        }
+
+        if (carrier is not null)
+        {
+            if (carrier.Name is { Length: > 0 } named)
+            {
+                names.Carrier(named);
+            }
+
+            if (carrier.CallSign is { Length: > 0 } call)
+            {
+                names.Callsign(call);
+            }
+        }
+
+        return names;
     }
 
     // The wrap-around-midnight check that used to live here is gone: an entry carries an instant

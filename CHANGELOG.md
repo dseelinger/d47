@@ -27,6 +27,69 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.89.0 — 2026-08-29 — A history nobody can read, and a way to say yes to it anyway
+
+[#174](https://github.com/dseelinger/d47/issues/174), which stays open — see the end.
+
+**d47 can now donate a whole journal history, and the interesting part is not the reading.**
+[#160](https://github.com/dseelinger/d47/issues/160) shipped a control that works because a
+Commander reads exactly what would leave and says yes to that, and reading stops at about half a
+day. A full history is 936 files and 712,754 events. The same window pointed at it would ask for a
+yes to something nobody could have read, which is the consent form this whole path exists not to
+be.
+
+### The size argument, which is the only reason this is consentable
+
+The document a person reads is now **O(distinct event kinds)** while the payload stays
+**O(events)**. Counted over a real thirteen-month history: 356.7 MB and 712,754 events across 936
+files — and **221 distinct kinds**, of which the scrub changed 56. The report comes to 236 KB, and
+it carries one real scrubbed line of every kind rather than of the interesting ones, because an
+inventory that shows only what was touched is a curated one.
+
+Staging the review into sessions was the obvious answer and it is not one: 936 reviews is as
+unreadable as one 936-file payload. The number of kinds does not grow with the number of sittings,
+which is what makes this finite.
+
+**The sample for a kind is its longest instance**, and a changed instance always beats an untouched
+one of the same kind. A reader checking this report is checking the scrub, so they get the
+maximal-exposure line rather than a typical one. Each fold says how many characters it holds,
+because the samples are not the same order of magnitude — most run to a couple of hundred and one
+`StoredModules` is 58,535, a quarter of the document in a single line.
+
+### Two passes, no temporary file, one set of stand-ins
+
+The survey keeps counts and one line per kind; the write pass scrubs the same files again straight
+into the file the Commander picked. So nothing exists on disk until they have said yes, memory
+stays at one journal file whatever the history weighs, and **the samples in the report are the
+lines in the payload** rather than a second rendering of them — #160's "what is shown is what
+leaves", holding on a payload that cannot be shown in full.
+
+**Lines the parser cannot read are counted now** — eleven over the real history. The excerpt path
+drops them silently and can afford to, because that payload is read in full; nobody reads a
+history, so a silent drop is invisible by construction.
+
+**Changing the scope throws the reading away.** A report describing twelve months above a Save that
+would write thirteen is a yes to a document that does not describe what left.
+
+### It says journal history, not corpus
+
+*Corpus* is this repository's word — #174's own title, `spike/CorpusReplay`, `CLAUDE.md`
+throughout — and it says nothing to a Commander looking at a button. The strings a person reads
+changed; the type names did not, because they are internal and `spike/CorpusReplay` would disagree
+with a rename the first time somebody read both.
+
+### What is not here
+
+**The destination.** The window writes a file and deliberately names no place to put it:
+[#175](https://github.com/dseelinger/d47/issues/175) is where a hosted one is argued and it is
+unbuilt, and naming a destination that cannot honour what it promises is the mistake 0.88.0 already
+corrected once. That is why #174 does not close — it asks for a transport as well as a consent
+step, and only the consent step is built.
+
+**A hand-driven run.** The Core path was driven over all 936 real journals and the report read as a
+document, and the window and its button were driven through the real panel headlessly. Nobody has
+pressed the button and picked a file. That is why this is a pre-release.
+
 ## 0.88.0 — 2026-08-29 — The tools that said one thing and did another
 
 Five issues, and one thread runs through all of them: a thing that reported success it had not

@@ -1493,6 +1493,8 @@ public partial class PanelView : UserControl
     /// </summary>
     private Action? _donate;
 
+    private Action? _donateCorpus;
+
     /// <summary>
     /// Offers the two diagnostic readings a way into a bug report: a scrubbed window of Elite's
     /// events and d47's own log, shown in full and sent nowhere until the Commander says so (#160).
@@ -1511,6 +1513,22 @@ public partial class PanelView : UserControl
     public void EnableDonation(Action open)
     {
         _donate = open;
+        ApplyChrome();
+    }
+
+    /// <summary>
+    /// Adds the whole-history donation (<a href="https://github.com/dseelinger/d47/issues/174">#174</a>),
+    /// on a surface that can show a report and write a file.
+    /// <para>
+    /// <b>Furnished separately from <see cref="EnableDonation"/>, though both are wired by the same
+    /// host today.</b> They are two consents rather than two sizes of one, and a surface could
+    /// reasonably want the incident excerpt without wanting to offer a Commander the button that
+    /// scrubs thirteen months.
+    /// </para>
+    /// </summary>
+    public void EnableCorpusDonation(Action open)
+    {
+        _donateCorpus = open;
         ApplyChrome();
     }
 
@@ -3642,6 +3660,13 @@ public partial class PanelView : UserControl
                                      or TranscriptPage.Journal
                                      or TranscriptPage.RawJournal;
 
+        // The journal pages only, where the excerpt button also offers the Log. A corpus donation
+        // is Elite's journals and nothing else (#174), so offering it from the page that shows
+        // d47's own log would name a source it does not read.
+        DonateCorpusButton.IsVisible = transcript
+                                       && _donateCorpus is not null
+                                       && Page is TranscriptPage.Journal or TranscriptPage.RawJournal;
+
         SearchRow.IsVisible = _searchable
                               && Mode == PanelMode.Full
                               && ModalPane.Child is null
@@ -3660,6 +3685,9 @@ public partial class PanelView : UserControl
     /// <see cref="EnableDonation"/>.
     /// </summary>
     private void OnDonateClick(object? sender, RoutedEventArgs e) => _donate?.Invoke();
+
+    /// <summary>Opens the whole-history donation (#174). See <see cref="EnableCorpusDonation"/>.</summary>
+    private void OnDonateCorpusClick(object? sender, RoutedEventArgs e) => _donateCorpus?.Invoke();
 
     private void OnClearTranscriptClick(object? sender, RoutedEventArgs e) => ClearTranscript();
 
