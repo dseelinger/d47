@@ -232,7 +232,7 @@ is no second description of any rule to disagree with the first.
 | `prerelease` | Decides **minor or patch**, then runs `release.ps1` with `-PreRelease -Yes` |
 | `promote` | Promotes the newest waiting pre-release to latest (`tools/promote.ps1`). **`release` is the same command** — both names are on the PATH, because the file is `promote.ps1` and that is the word the Commander reaches for |
 | `get-ver <spec>` | Downloads, verifies and installs a named build — `0.79.0`, `0.79`, `prerelease`, `latest` |
-| `get-local` | Publishes **this working tree** and installs it over the installed d47, so a change can be flown without cutting a release for it |
+| `get-local` | Publishes **this working tree** and installs it over the installed d47, so a change can be driven without cutting a release for it |
 
 **`prerelease` automates the one decision a person gets wrong.** It reads the commits since the
 last tag for what they say they close, asks GitHub for those issues' labels, and calls it a minor
@@ -254,7 +254,7 @@ superseded pre-release on its first run and would have offered the install base 
 `tools/release.ps1` still exists and still does the work; the file behind `release` is
 `promote.ps1`, because two files named release doing different things is the hazard.
 
-**`get-local` is the way to fly a change without spending a version number**, and it is a *Release*
+**`get-local` is the way to drive a change without spending a version number**, and it is a *Release*
 publish for a reason that is not a preference: a Debug build carries an `AssemblyMetadata` pointing
 at `dev-install\`, compiled in, so copied into the install folder it still reads `dev-install\data`
 and sees none of the Commander's settings, secrets or downloaded models. It copies exactly the two
@@ -262,7 +262,7 @@ things `installer\d47.iss` ships — `d47.exe` and `runtimes\` — never mirrors
 `data\`. It refuses while d47 is running unless told to stop it, and runs `--selftest` afterwards,
 which is the gate that catches a payload missing its natives.
 
-**It does not replace flying a real build before promoting one.** The build it installs is stamped
+**It does not replace driving a real build before promoting one.** The build it installs is stamped
 `<newest tag>-local` and About shows the whole stamp, but `ReleaseVersion` strips everything from
 the first `-` or `+`, so the title bar reads the release number and the updater will not offer to
 replace it — **About is the only place that says which one is running**. The way back is
@@ -292,7 +292,7 @@ offered the previous release, so a pre-release reaches nobody who does not go an
 **A plain `release.ps1 <patch|minor>` with no `-PreRelease` publishes straight to latest**, which is
 the same act by omission — so under this rule the flag is not optional. The reason is that a
 published tag never moves: a mistake in a pre-release costs a version number, and the same mistake
-in a latest reaches the install base and can only be superseded. Every build is flown by hand first,
+in a latest reaches the install base and can only be superseded. Every build is driven by hand first,
 because a green suite and a working feature are different claims — Phase 60 shipped fully green with
 Cartesia never once heard aloud.
 
