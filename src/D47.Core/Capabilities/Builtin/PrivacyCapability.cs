@@ -1,5 +1,6 @@
 using D47.Core.Configuration;
 using D47.Core.Conversation;
+using D47.Core.Diagnostics.Donation;
 
 namespace D47.Core.Capabilities.Builtin;
 
@@ -19,6 +20,19 @@ public static class PrivacyCapability
     public const string MemoryKey = "privacy.memory";
 
     /// <summary>
+    /// Where a donation is posted (<a href="https://github.com/dseelinger/d47/issues/175">#175</a>).
+    /// Here rather than beside the donate buttons because it is an address bytes leave for, and
+    /// this is the section that answers what leaves.
+    /// </summary>
+    public const string DonationEndpointKey = "donation.endpoint";
+
+    /// <summary>
+    /// The random per-installation identifier donations are grouped under, and the one press that
+    /// forgets it (<a href="https://github.com/dseelinger/d47/issues/176">#176</a>).
+    /// </summary>
+    public const string DonorKey = "privacy.donor";
+
+    /// <summary>
     /// Throwing away what d47 worked out about the Commander from their journals (Phase 32).
     /// Beside the memory row, because a Commander wanting to be forgotten means both.
     /// </summary>
@@ -34,10 +48,16 @@ public static class PrivacyCapability
     /// store — under the designer and in tests that are not about it — and the row then says so
     /// rather than offering a button that erases nothing.
     /// </param>
+    /// <param name="donorTokenFile">
+    /// Where the donation identifier lives, or null where nothing composed a data folder — under
+    /// the designer and in tests that are not about it. The row then says there is none, which is
+    /// also the true answer for an installation that has never donated.
+    /// </param>
     public static CapabilityDescriptor Create(
         SettingsService settings,
         Func<bool>? searchAvailable = null,
-        Memory.MemoryBook? memories = null)
+        Memory.MemoryBook? memories = null,
+        string? donorTokenFile = null)
     {
         var canSearch = searchAvailable ?? (() => true);
 
@@ -92,7 +112,7 @@ public static class PrivacyCapability
                             settings.Current, KeyPresent(), InaraKeyPresent(), canSearch()))),
                 },
             ],
-            Settings = BuildSettingRows(KeyPresent, InaraKeyPresent, canSearch, memories),
+            Settings = BuildSettingRows(KeyPresent, InaraKeyPresent, canSearch, memories, donorTokenFile),
         };
     }
 
@@ -100,7 +120,8 @@ public static class PrivacyCapability
         Func<bool> keyPresent,
         Func<bool> inaraKeyPresent,
         Func<bool> searchAvailable,
-        Memory.MemoryBook? memories)
+        Memory.MemoryBook? memories,
+        string? donorTokenFile)
     {
         var rows = new List<SettingRow>
         {
@@ -156,6 +177,70 @@ public static class PrivacyCapability
             Binding = new SettingBinding
             {
                 Read = _ => MemoryCapability.Summarise(memories),
+            },
+        });
+
+        // Donation, and both of its rows are here rather than beside the donate buttons: one names
+        // an address bytes leave for and the other names an identifier that travels with them, and
+        // this is the section a Commander opens to ask what leaves.
+        rows.Add(new SettingRow
+        {
+            Key = DonationEndpointKey,
+            Advanced = true,
+            Label = "Where donations are sent",
+            Help =
+                "Empty means nothing can be uploaded: the donation windows offer a clipboard and a "
+                + "file, and where those go is yours. Set it and the same windows gain a send "
+                + "button — which still sends nothing until you press it, every time.",
+            Kind = SettingKind.Text,
+            DefaultDisplay = "nothing set",
+            DocsAnchor = "donation-endpoint",
+
+            // Protected, on the same reasoning as the update-check row above and then some: this
+            // one names where a scrubbed journal goes. A model that could set it is a model that
+            // could be told to by an in-game message, and the payload it would be redirecting is
+            // the Commander's play history.
+            Protected = true,
+            Binding = new SettingBinding
+            {
+                Read = s => s.Donation.Endpoint ?? string.Empty,
+                Write = (s, v) => s with
+                {
+                    Donation = s.Donation with
+                    {
+                        Endpoint = string.IsNullOrWhiteSpace(v) ? null : v.Trim(),
+                    },
+                },
+            },
+        });
+
+        rows.Add(new SettingRow
+        {
+            Key = DonorKey,
+            Advanced = true,
+            Label = "Your donation identifier",
+            Help =
+                "A random number made on this machine the first time you donate, so a journal "
+                + "history you add to can be added to rather than piling up as unrelated blobs. It "
+                + "is not derived from your Commander name or anything else about you, and it is "
+                + "used for donations and nothing else. Forgetting it stops future donations "
+                + "joining the ones already sent — it does not reach back, and what has already "
+                + "gone has to be deleted at the store.",
+            Kind = SettingKind.Info,
+            DocsAnchor = "donor-token",
+
+            // Info with a Press, like the memory row above: SettingsService.Apply refuses that
+            // shape, so nothing on the tool surface can reach it and it needs no protected flag of
+            // its own. No spoken phrase either — this one is destructive in the direction a
+            // Commander means it to be, but "forget me" is a sentence a transcriber invents.
+            PressLabel = donorTokenFile is null ? null : "Forget it",
+            Press = donorTokenFile is null ? null : () => DonorToken.Forget(donorTokenFile),
+            Binding = new SettingBinding
+            {
+                Read = _ => donorTokenFile is null
+                    ? "No donation identifier exists on this installation. One is created the "
+                      + "first time you donate, and never before."
+                    : DonorToken.Summarise(DonorToken.Read(donorTokenFile)),
             },
         });
 

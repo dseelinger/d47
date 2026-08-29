@@ -39,6 +39,12 @@ public sealed record D47Settings
 
     public UpdateSettings Updates { get; init; } = new();
 
+    /// <summary>
+    /// Where a donated excerpt or journal history is sent, when one is
+    /// (<a href="https://github.com/dseelinger/d47/issues/175">#175</a>).
+    /// </summary>
+    public DonationSettings Donation { get; init; } = new();
+
     public CalloutSettings Callouts { get; init; } = new();
 
     public ListeningSettings Listening { get; init; } = new();
@@ -1368,4 +1374,36 @@ public sealed record UpdateSettings
     /// theoretical one (Phase 4, "Say what each provider receives").
     /// </summary>
     public bool CheckOnStartup { get; init; } = true;
+}
+
+/// <summary>
+/// Where donations go (<a href="https://github.com/dseelinger/d47/issues/175">#175</a>).
+/// <para>
+/// <b>One field, and it is the switch as well as the address.</b> That is the shape the community
+/// goals row already has and it is the right one twice over: the destination cannot be reached at
+/// all until somebody puts an address in, which is a clearer act of consent than a checkbox, and
+/// clearing it is how donation egress is turned off. A separate toggle beside an empty address
+/// would be a control with nothing to control, and a second thing to get out of step with the
+/// first.
+/// </para>
+/// </summary>
+public sealed record DonationSettings
+{
+    /// <summary>
+    /// The endpoint a donation is posted to, or null where there is none and donations can only
+    /// be copied or saved.
+    /// <para>
+    /// <b>Null out of the box, and that is not a placeholder for a missing decision.</b> The store
+    /// behind this is R2, which requires a payment method on an account that currently has none —
+    /// a deliberate act rather than a footnote — so there is no address to bake in until the
+    /// Commander has performed it. A shipped build with a default here would be a build sending
+    /// donations somewhere before anybody chose to.
+    /// </para>
+    /// <para>
+    /// <b>Reachable from the panel and not from the model.</b> Its row is protected: an address
+    /// the model could set is an address a hostile in-game message could set, and this one names
+    /// where a scrubbed journal goes.
+    /// </para>
+    /// </summary>
+    public string? Endpoint { get; init; }
 }
