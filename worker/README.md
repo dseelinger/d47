@@ -144,19 +144,98 @@ and against the receipt d47 wrote on the donor's own machine when it sent.
   what and when is the ambient collection `architecture.md` §1 rules out, arriving at the other end
   of the wire.
 
-## Deleting a donation
+## Erasure on request — the runbook
 
-One object, one delete — which is what keeps erasure cheap enough to be a real promise, and why
-donated corpora are never committed to the repository
-([#167](https://github.com/dseelinger/d47/issues/167): a committed fixture cannot be erased without
-rewriting the history of a public repository).
+[#167](https://github.com/dseelinger/d47/issues/167). **A runbook is exactly the thing that goes
+wrong when it has never been written**: performed rarely, under time pressure, by somebody who
+wants it done today. So it is written before it is needed, and it is short.
 
-A donor quoting their receipt names the object exactly. A donor who has lost it can name their
-installation identifier, which is the whole of their prefix:
+**What is deleted is the data. What is not deleted is what was decided because of it** — the
+Commander's own framing and the whole of the design. A defect a donation found stays fixed, the
+release that carried the fix stays released, and the changelog line naming it stays written. A
+published tag never moves, and nobody is asking it to: those are the product of having read the
+data once, and they are not the data.
 
-```bash
-wrangler r2 object delete d47-donations/corpus/<token>/<object>
-```
+### The donor does not need you
 
-Deleting their `data\donor-token.txt` ends the grouping going forward. It does not reach back —
-what has already been sent stays under the old token until it is deleted here.
+**The self-serve road is the one to point at first, because it is not harder than consenting
+was** — which is #167's criterion, and the thing the old answer failed. In d47:
+
+> **Privacy and egress → Your donation identifier → Forget it, and delete what was sent**
+
+That posts the installation identifier to `/forget`, which deletes **every object under both
+prefixes for that identifier** and answers with what went. d47 then forgets the identifier here and
+writes an erasure receipt into `data\donations`. No thread to post in, nobody to ask, no wait.
+
+**A refused erasure keeps the identifier on purpose.** It is the only handle anybody has on what
+was sent — the store cannot find it without one and neither can the donor — so a failed press
+leaves it in place, says so, and can simply be made again.
+
+### When they ask you instead
+
+Somebody who has lost their identifier, or reinstalled, or would simply rather ask a person.
+
+1. **Find it.** Their receipt names the object and the identifier exactly. Without one, the only
+   handle is the identifier; there is deliberately no way to search the store by anything about a
+   person, because nothing about a person is in it.
+2. **Delete it**, one object or the whole prefix:
+
+   ```bash
+   wrangler r2 object delete d47-donations/corpus/<token>/<object>
+   ```
+
+3. **Check the repository for anything that still links back.** A committed replay fixture is the
+   case this exists to catch — see the rule below.
+4. **Tell them it is done**, and say what was not deleted and why: the fix, the release, the
+   changelog line.
+
+**Within one calendar month of the request**, which is the ordinary expectation and costs nothing
+to state. Most requests will never reach a person at all — the press above is immediate, and an
+excerpt expires on its own after thirty days in any case.
+
+### The rule for a committed replay fixture, decided before the first one is committed
+
+**A committed fixture cannot be erased.** Deleting it later means rewriting the history of a public
+repository, which is not a promise anybody can keep. So the rule is decided here rather than after
+somebody has already committed one.
+
+**A donated corpus is never committed.** It stays server-side and is fetched for replay runs. That
+is what keeps erasure a single delete, and it keeps the repository small.
+
+**A donated excerpt may become a committed fixture, and only under all of these:**
+
+- **Severable by construction.** No issue number, no handle, no paperwork header, no donation
+  identifier, no `Fixes #N` pointing at a donation thread. Anything that resolves back to a person
+  is stripped before the commit, not after — pseudonymised is not anonymous, and a filename or a
+  commit message restores the link the stand-ins were supposed to break.
+- **The stand-ins survive.** They are what makes the fixture a regression case rather than a
+  transcript.
+- **The donor is told, before it is committed, that this one is permanent.** A fixture is not
+  covered by the erasure promise, and consenting to a donation is not consenting to that.
+
+**What survives, and why that survival is not a deletion anybody can ask for.** A severed fixture
+is a sequence of game-world events with no remaining pointer to a person. It is the same class of
+artefact as the fix it proves, and it is kept for the same reason: a regression case that can be
+deleted is a regression case that will eventually be deleted, and the defect comes back.
+
+**The residual is accepted rather than assumed away.** A jump sequence with timestamps is
+game-world fact, but a determined reader holding a public EDSM or Inara history to match it against
+is not obviously defeated by pseudonyms. **That is judged acceptable**, and it is written down
+here rather than left to be discovered: the surviving artefact is small, the matching is
+speculative, and the alternative — no committed regression cases at all — costs the thing the
+donation was collected for. It is the same residual [#176](https://github.com/dseelinger/d47/issues/176)
+accepts for an accumulating corpus, on the same reasoning.
+
+### What is out of scope entirely
+
+Anything on the Commander's own machine — the journal, the 14-day log, `data\backups`. Those are
+theirs, they never left, and there is nothing to erase on request because nothing was received.
+And anything they copied or saved and carried somewhere themselves: the windows offer a clipboard
+and a file, and where those went afterwards is not reachable from here. Anything posted publicly
+can be archived beyond anyone's reach, which is the whole reason a public destination was ruled out.
+
+### Verifying it, once
+
+The commands are under **Check the defaults before trusting a delete** above. Until a delete has
+been *seen* to make an object unreadable, d47's erasure sentence is unverified — and it is a
+sentence a donor consented under.

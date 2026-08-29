@@ -5,6 +5,13 @@
 // and no path from a donor to storage that does not come through this file — which is what makes
 // this file's own ceiling the bucket's ceiling.
 //
+// **Two routes, and the second one is why the first is allowed to exist.** `POST /donate` takes a
+// donation; `POST /forget` erases every donation made under one installation identifier
+// (https://github.com/dseelinger/d47/issues/167). GitHub was ruled out as a destination for
+// exactly one reason — a public repository's comments are mirrored and mailed within the hour, so
+// "ask and it is deleted" is a promise no public transport can keep. A store that could not honour
+// it either would have moved the problem rather than solved it.
+//
 // **It is JavaScript, and that is a second language in the tree.** That is the honest cost of the
 // proposal, argued in #175 rather than smuggled in. It is about a hundred lines and it lives
 // outside src/, where nothing builds it and nothing tests it with dotnet.
@@ -69,6 +76,19 @@ const SHA256 = /^[0-9a-f]{64}$/;
  */
 const MOST_METADATA = 200;
 
+/**
+ * How many objects one erasure press may reach (https://github.com/dseelinger/d47/issues/167).
+ *
+ * R2 lists and deletes a thousand keys at a time, and ten pages of that is more donations than
+ * any installation will make in a lifetime — but it is a CEILING rather than an assumption, so a
+ * donor who somehow passed it is TOLD there is more rather than being quietly left with half a
+ * deletion. `more` in the reply says press again, and the receipt d47 writes says the same.
+ */
+const MOST_PER_PAGE = 1000;
+
+/** @see MOST_PER_PAGE */
+const MOST_PAGES = 10;
+
 export default {
   async fetch(request, env) {
     if (request.method !== 'POST') {
@@ -77,7 +97,9 @@ export default {
       return said(405, 'This endpoint takes donations by POST and does nothing else.');
     }
 
-    if (new URL(request.url).pathname !== '/donate') {
+    const path = new URL(request.url).pathname;
+
+    if (path !== '/donate' && path !== '/forget') {
       return said(404, 'Not found.');
     }
 
@@ -87,6 +109,16 @@ export default {
       // newer client's payload stored under this build's assumptions is a corpus nobody can trust
       // and nobody can tell is wrong.
       return said(400, `This endpoint speaks donation format ${FORMAT}, and this is ${format ?? 'unversioned'}.`);
+    }
+
+    if (path === '/forget') {
+      const forgetting = request.headers.get('d47-donor');
+
+      if (!TOKEN.test(forgetting ?? '')) {
+        return said(400, 'An erasure needs a well-formed installation identifier.');
+      }
+
+      return forget(env, forgetting);
     }
 
     const kind = KINDS[request.headers.get('d47-kind')];
@@ -164,6 +196,77 @@ export default {
     });
   },
 };
+
+/**
+ * Erasure on request (https://github.com/dseelinger/d47/issues/167), performed by the donor rather
+ * than asked for and waited on.
+ *
+ * **The token IS the authority, and that is the whole of the access control.** It is 128 bits of
+ * randomness minted on the donor's own machine, it appears in no public place, and nothing here
+ * will list or read a bucket — so possession of it is the only way to name a prefix, and the
+ * person holding it is the person whose data is under it. That is what makes withdrawal no harder
+ * than consent was: one press in d47, no public thread to post in, and nobody to wait for. #167
+ * calls withdrawal that is harder than consent a defect in the consent, and this is the fix.
+ *
+ * **The whole prefix, never a key the caller chose.** A donor asking to be forgotten means every
+ * object they sent, and taking a key from the request would be a stranger naming a path inside
+ * somebody else's bucket — the same refusal `/donate` already makes. Deleting one named object is
+ * the custodian's road, with wrangler, and it is in README.md.
+ *
+ * **It says how many, and it does not say whose.** An unknown token answers `0` rather than a
+ * refusal: there is nothing to hide from somebody who already holds the only handle to it, and a
+ * different answer for a token that exists would make this a way of testing whether one does.
+ */
+async function forget(env, donor) {
+  const gone = [];
+  let more = false;
+
+  try {
+    for (const kind of Object.values(KINDS)) {
+      const prefix = `${kind.prefix}${donor}/`;
+      let pages = 0;
+
+      // **No cursor, deliberately.** A cursor is a position in a listing, and this loop is
+      // deleting the very keys it just listed — so every page is a FRESH look at what is left
+      // rather than a continuation of a listing that no longer describes the bucket. Paging
+      // through while mutating is how a delete comes back reporting success with objects still
+      // in it, which is the one failure mode an erasure must not have.
+      for (;;) {
+        const listed = await env.DONATIONS.list({ prefix, limit: MOST_PER_PAGE });
+        const keys = listed.objects.map((object) => object.key);
+
+        if (keys.length === 0) {
+          break;
+        }
+
+        // One call per page. R2 takes the whole array, which matters here: a delete performed one
+        // key at a time can stop half way and leave a donor believing they were forgotten.
+        await env.DONATIONS.delete(keys);
+        gone.push(...keys);
+        pages++;
+
+        if (!listed.truncated) {
+          break;
+        }
+
+        if (pages >= MOST_PAGES) {
+          more = true;
+          break;
+        }
+      }
+    }
+  } catch (error) {
+    // Same rule as a failed write: what went wrong at the store is between this Worker and its
+    // bucket. What the donor needs is that nothing is confirmed gone, which is what they are told.
+    console.error('Erasure failed', error);
+    return said(503, 'The store did not answer. Nothing is confirmed deleted; try again later.');
+  }
+
+  return new Response(JSON.stringify({ ok: true, deleted: gone.length, keys: gone, more }), {
+    status: 200,
+    headers: { 'content-type': 'application/json' },
+  });
+}
 
 /** UTC, sorting in time order, and nothing an object name has to escape. */
 function stamp() {

@@ -1742,7 +1742,27 @@ public sealed class AppHost : IDisposable
                 // What the audio flight recorder has kept (#164), so the privacy capability can
                 // carry the row that empties it. Null on every ordinary run, and there is then
                 // no row at all.
-                flight?.Log));
+                flight?.Log,
+
+                // **Withdrawal, and it now reaches the store rather than only this machine**
+                // (#167). The press asks the endpoint to delete every donation made under this
+                // installation's identifier, then forgets the identifier here and writes a record
+                // of what went — a route out that is the same one button the consent was, and that
+                // needs no public thread to post in.
+                //
+                // A refused erasure KEEPS the identifier, because it is the only handle anybody
+                // has on what was sent; the sentence it answers with says so and the press can
+                // simply be made again. See DonationDispatch.ForgetAsync.
+                async (_, cancel) =>
+                {
+                    var forgotten = await Donation.DonationDispatch
+                        .For(paths, () => settings.Current.Donation.Endpoint, loggerFactory)
+                        .ForgetAsync(cancel);
+
+                    return forgotten.Receipt is { } receipt
+                        ? $"{forgotten.Outcome.Said} A record of it is in {receipt}."
+                        : forgotten.Outcome.Said;
+                }));
 
         built = capabilities;
 

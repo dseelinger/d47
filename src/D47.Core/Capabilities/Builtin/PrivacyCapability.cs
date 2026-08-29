@@ -67,6 +67,19 @@ public static class PrivacyCapability
     /// the designer and in tests that are not about it. The row then says there is none, which is
     /// also the true answer for an installation that has never donated.
     /// </param>
+    /// <param name="forgetDonations">
+    /// Withdrawal that reaches the store as well as this machine
+    /// (<a href="https://github.com/dseelinger/d47/issues/167">#167</a>), or null where nothing
+    /// composed a network — the designer, and every test that is not about it. The press then
+    /// forgets the identifier here and says so, which is what the row did before #167 and is the
+    /// whole of what is possible with nowhere to ask.
+    /// <para>
+    /// <b>#167's criterion is that withdrawal must not be harder than consent was.</b> Consent is
+    /// one button in a review pane; withdrawal used to be deleting a file by hand and then asking
+    /// somebody, in public, to delete the rest. This is the same one button, and it needs no
+    /// thread to post in.
+    /// </para>
+    /// </param>
     public static CapabilityDescriptor Create(
         SettingsService settings,
         Func<bool>? searchAvailable = null,
@@ -75,7 +88,11 @@ public static class PrivacyCapability
         // Appended, like every optional here: the composition root passes these positionally, so
         // a parameter added in the middle silently rebinds every argument after it.
         Diagnostics.Flight.FlightLog? flight = null,
-        string? donorTokenFile = null)
+        string? donorTokenFile = null,
+
+        // Appended, like every optional here and for the reason the parameter above records: the
+        // composition root passes these positionally.
+        LongPress? forgetDonations = null)
     {
         var canSearch = searchAvailable ?? (() => true);
 
@@ -130,7 +147,8 @@ public static class PrivacyCapability
                             settings.Current, KeyPresent(), InaraKeyPresent(), canSearch()))),
                 },
             ],
-            Settings = BuildSettingRows(KeyPresent, InaraKeyPresent, canSearch, memories, flight, donorTokenFile),
+            Settings = BuildSettingRows(
+                KeyPresent, InaraKeyPresent, canSearch, memories, flight, donorTokenFile, forgetDonations),
         };
     }
 
@@ -140,7 +158,8 @@ public static class PrivacyCapability
         Func<bool> searchAvailable,
         Memory.MemoryBook? memories,
         Diagnostics.Flight.FlightLog? flight,
-        string? donorTokenFile)
+        string? donorTokenFile,
+        LongPress? forgetDonations)
     {
         var rows = new List<SettingRow>
         {
@@ -274,13 +293,26 @@ public static class PrivacyCapability
             Key = DonorKey,
             Advanced = true,
             Label = "Your donation identifier",
-            Help =
-                "A random number made on this machine the first time you donate, so a journal "
-                + "history you add to can be added to rather than piling up as unrelated blobs. It "
-                + "is not derived from your Commander name or anything else about you, and it is "
-                + "used for donations and nothing else. Forgetting it stops future donations "
-                + "joining the ones already sent — it does not reach back, and what has already "
-                + "gone has to be deleted at the store.",
+            Help = forgetDonations is null
+                ? "A random number made on this machine the first time you donate, so a journal "
+                  + "history you add to can be added to rather than piling up as unrelated blobs. "
+                  + "It is not derived from your Commander name or anything else about you, and it "
+                  + "is used for donations and nothing else. Forgetting it stops future donations "
+                  + "joining the ones already sent — it does not reach back, and what has already "
+                  + "gone has to be deleted at the store."
+
+                // **The withdrawal sentence, and it is the reverse of what it used to say**
+                // (#167). It said what has gone "has to be deleted at the store", which made
+                // taking a donation back harder than giving it — a public ask, and a wait. It is
+                // now the same one press that consented.
+                : "A random number made on this machine the first time you donate, so a journal "
+                  + "history you add to can be added to rather than piling up as unrelated blobs. "
+                  + "It is not derived from your Commander name or anything else about you, and it "
+                  + "is used for donations and nothing else. Forgetting it asks the store to delete "
+                  + "every donation sent under it, and then forgets it here — you do not have to "
+                  + "post anywhere or ask anybody. A record of what was deleted is written to "
+                  + "data\\donations. What a donation was used for stays: a defect it found stays "
+                  + "fixed, and a released build never moves.",
             Kind = SettingKind.Info,
             DocsAnchor = "donor-token",
 
@@ -288,8 +320,16 @@ public static class PrivacyCapability
             // shape, so nothing on the tool surface can reach it and it needs no protected flag of
             // its own. No spoken phrase either — this one is destructive in the direction a
             // Commander means it to be, but "forget me" is a sentence a transcriber invents.
-            PressLabel = donorTokenFile is null ? null : "Forget it",
-            Press = donorTokenFile is null ? null : () => DonorToken.Forget(donorTokenFile),
+            //
+            // **One of the two, never both**: a row has one button, and PressAsync is the one that
+            // can report while it runs — which this needs, because it now crosses a network.
+            PressLabel = donorTokenFile is null
+                ? null
+                : forgetDonations is null ? "Forget it" : "Forget it, and delete what was sent",
+            Press = donorTokenFile is null || forgetDonations is not null
+                ? null
+                : () => DonorToken.Forget(donorTokenFile),
+            PressAsync = donorTokenFile is null ? null : forgetDonations,
             Binding = new SettingBinding
             {
                 Read = _ => donorTokenFile is null

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
@@ -38,6 +39,14 @@ public sealed class DonationUpload
     /// is a wider thing than the row claims to be.
     /// </summary>
     public const string Path = "donate";
+
+    /// <summary>
+    /// The path a withdrawal is posted to
+    /// (<a href="https://github.com/dseelinger/d47/issues/167">#167</a>). Fixed for the same
+    /// reason <see cref="Path"/> is, and a second path rather than a mode on the first: a request
+    /// that deletes and a request that stores must not be one call away from each other.
+    /// </summary>
+    public const string ForgetPath = "forget";
 
     /// <summary>
     /// How long one donation may take. Generous, because the first corpus donation is tens of
@@ -84,7 +93,11 @@ public sealed class DonationUpload
 
     /// <summary>Where a request actually goes, for the disclosure and for the receipt.</summary>
     public static string Destination(string endpoint) =>
-        new Uri(new Uri(endpoint.TrimEnd('/') + "/"), Path).ToString();
+        Destination(endpoint, Path);
+
+    /// <inheritdoc cref="Destination(string)"/>
+    public static string Destination(string endpoint, string path) =>
+        new Uri(new Uri(endpoint.TrimEnd('/') + "/"), path).ToString();
 
     /// <summary>
     /// Sends it. <b>Every way this can go wrong comes back as a sentence rather than an
@@ -98,12 +111,55 @@ public sealed class DonationUpload
     /// hash on the envelope is over these bytes rather than over what goes on the wire, so
     /// compression can change without changing what a donor can check.
     /// </param>
-    public async Task<DonationOutcome> SendAsync(
+    public Task<DonationOutcome> SendAsync(
         string endpoint,
         DonationEnvelope envelope,
         ReadOnlyMemory<byte> payload,
+        CancellationToken cancel = default) =>
+        SendAsync(endpoint, envelope, new ByteArrayContent(Compress(payload.Span)), cancel);
+
+    /// <summary>
+    /// The same send, for a payload that was never held whole
+    /// (<a href="https://github.com/dseelinger/d47/issues/181">#181</a>).
+    /// <para>
+    /// <b>Already compressed, and seekable, because the endpoint refuses a donation that does not
+    /// declare its length.</b> That is what settles how a 32 MB corpus is hashed rather than a
+    /// preference: <c>Content-Length</c> is the hard stop the other two rest on, a compressed
+    /// length is not knowable without compressing, and the payload deliberately never exists in
+    /// one place — so the compressed bytes land somewhere seekable first and the hash is taken
+    /// over the uncompressed bytes as they stream past. See <see cref="DonationDispatch"/>, which
+    /// does the spooling; this only posts what it is handed.
+    /// </para>
+    /// </summary>
+    /// <param name="compressed">
+    /// The gzipped payload, positioned at its start. Its remaining length becomes the declared
+    /// length of the request, so a stream that cannot answer <see cref="Stream.Length"/> is not
+    /// one this can send.
+    /// </param>
+    public Task<DonationOutcome> SendAsync(
+        string endpoint,
+        DonationEnvelope envelope,
+        Stream compressed,
         CancellationToken cancel = default)
     {
+        var content = new StreamContent(compressed);
+
+        // Said rather than left to be inferred. StreamContent works it out from a seekable stream
+        // anyway, and a donation that reached the endpoint chunked would be refused with 411 for
+        // a reason nobody could see from here.
+        content.Headers.ContentLength = compressed.Length - compressed.Position;
+
+        return SendAsync(endpoint, envelope, content, cancel);
+    }
+
+    private async Task<DonationOutcome> SendAsync(
+        string endpoint,
+        DonationEnvelope envelope,
+        HttpContent payload,
+        CancellationToken cancel)
+    {
+        using var body = payload;
+
         if (!IsUsable(endpoint))
         {
             return DonationOutcome.Refused(
@@ -125,8 +181,8 @@ public sealed class DonationUpload
             request.Headers.TryAddWithoutValidation(name, value);
         }
 
-        request.Content = new ByteArrayContent(Compress(payload.Span));
-        request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/gzip");
+        request.Content = body;
+        body.Headers.ContentType = new MediaTypeHeaderValue("application/gzip");
 
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancel);
         deadline.CancelAfter(Patience);
@@ -172,6 +228,142 @@ public sealed class DonationUpload
             {
                 http.Dispose();
             }
+        }
+    }
+
+    /// <summary>
+    /// Asks the store to delete every donation made under one installation identifier
+    /// (<a href="https://github.com/dseelinger/d47/issues/167">#167</a>).
+    /// <para>
+    /// <b>The token is the whole of the request, and the whole of the authority.</b> It names one
+    /// prefix and nothing else can be named — this does not send an object key, because a client
+    /// choosing what to delete inside somebody else's bucket is the same bad idea as a client
+    /// choosing what to write there. What a donor asking to be forgotten means is everything they
+    /// sent, which is exactly a prefix.
+    /// </para>
+    /// <para>
+    /// <b>One attempt, no retry</b>, like a send — but the failure costs differently, so the
+    /// caller is told plainly that nothing is confirmed gone rather than being left to infer it.
+    /// </para>
+    /// </summary>
+    public async Task<ErasureOutcome> ForgetAsync(
+        string endpoint,
+        string donor,
+        CancellationToken cancel = default)
+    {
+        if (!IsUsable(endpoint))
+        {
+            return ErasureOutcome.NotAsked(
+                "The donation address is not an https address, so no store was asked.");
+        }
+
+        if (!DonorToken.IsWellFormed(donor))
+        {
+            return ErasureOutcome.NotAsked(
+                "There is no well-formed donation identifier here, so no store was asked.");
+        }
+
+        using var request = new HttpRequestMessage(
+            HttpMethod.Post, Destination(endpoint, ForgetPath));
+
+        // The two the endpoint needs, and no more: the version, so it refuses what it does not
+        // understand rather than guessing, and the identifier that is the request.
+        request.Headers.TryAddWithoutValidation(
+            DonationEnvelope.FormatHeader,
+            DonationEnvelope.CurrentFormat.ToString(CultureInfo.InvariantCulture));
+
+        request.Headers.TryAddWithoutValidation(DonationEnvelope.DonorHeader, donor);
+
+        using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancel);
+        deadline.CancelAfter(Patience);
+
+        var http = _http ?? CreateClient();
+
+        try
+        {
+            using var response = await http.SendAsync(request, deadline.Token);
+            var said = (await response.Content.ReadAsStringAsync(deadline.Token)).Trim();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _log?.LogWarning(
+                    "Erasure refused with {Status}: {Said}", (int)response.StatusCode, said);
+
+                return ErasureOutcome.Refused(
+                    $"The store refused the deletion with {(int)response.StatusCode}. Nothing is "
+                    + "confirmed deleted, and the identifier on this machine has been kept so it "
+                    + "can be asked again."
+                    + (said is { Length: > 0 and < 300 } ? $" It said: {said}" : string.Empty));
+            }
+
+            return Erased(said);
+        }
+        catch (OperationCanceledException) when (!cancel.IsCancellationRequested)
+        {
+            return ErasureOutcome.Refused(
+                "The store took longer than ten minutes to answer. Nothing is confirmed deleted.");
+        }
+        catch (OperationCanceledException)
+        {
+            return ErasureOutcome.Refused("Stopped. Nothing is confirmed deleted.");
+        }
+        catch (HttpRequestException ex)
+        {
+            _log?.LogWarning(ex, "Erasure could not reach {Endpoint}.", endpoint);
+            return ErasureOutcome.Refused(
+                "The donation address could not be reached, so nothing was deleted. The "
+                + "identifier on this machine has been kept so it can be asked again.");
+        }
+        finally
+        {
+            if (_http is null)
+            {
+                http.Dispose();
+            }
+        }
+    }
+
+    /// <summary>
+    /// What the store said it deleted.
+    /// <para>
+    /// <b>An answer d47 cannot parse is not treated as a deletion.</b> The opposite call is made
+    /// for a send — an unreadable success there still stored something, and calling it a failure
+    /// would be the lie — but here an unreadable success would tell a Commander their data is gone
+    /// on no evidence at all, which is the one claim this path must never make loosely.
+    /// </para>
+    /// </summary>
+    private static ErasureOutcome Erased(string said)
+    {
+        try
+        {
+            var answer = JsonDocument.Parse(said).RootElement;
+
+            if (!answer.TryGetProperty("deleted", out var deleted)
+                || deleted.ValueKind != JsonValueKind.Number)
+            {
+                return ErasureOutcome.Refused(
+                    "The store answered something d47 could not read, so nothing is confirmed "
+                    + "deleted. The identifier on this machine has been kept.");
+            }
+
+            var more = answer.TryGetProperty("more", out var left)
+                       && left.ValueKind == JsonValueKind.True;
+
+            var keys = answer.TryGetProperty("keys", out var named)
+                       && named.ValueKind == JsonValueKind.Array
+                ? named.EnumerateArray()
+                    .Where(key => key.ValueKind == JsonValueKind.String)
+                    .Select(key => key.GetString()!)
+                    .ToArray()
+                : [];
+
+            return ErasureOutcome.Done(deleted.GetInt32(), more, keys);
+        }
+        catch (Exception ex) when (ex is JsonException or FormatException)
+        {
+            return ErasureOutcome.Refused(
+                "The store answered something d47 could not read, so nothing is confirmed "
+                + "deleted. The identifier on this machine has been kept.");
         }
     }
 

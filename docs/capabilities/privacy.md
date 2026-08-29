@@ -142,10 +142,22 @@ under a random token that identifies an install, not a person.** You read it her
 donation window, before the first donation rather than after
 ([#176](https://github.com/dseelinger/d47/issues/176)).
 
-**Deleting it is a withdrawal, and it is no harder than consenting was.** Delete
-`data\donor-token.txt` and future donations stop joining the ones already sent. It does not reach
-back: what has gone stays under the old identifier until it is deleted at the store, which is a
-separate ask.
+**Withdrawing is one press, and it is no harder than consenting was.** **Forget it, and delete
+what was sent** asks the store to delete every donation ever made under this installation's
+identifier, then forgets the identifier here and writes a record of what went into
+`data\donations`. You do not have to post anywhere or ask anybody, which is the point: a
+withdrawal that is harder than the consent was is a defect in the consent
+([#167](https://github.com/dseelinger/d47/issues/167)).
+
+If the store cannot be reached, **the identifier is kept** and the row says so — it is the only
+handle anyone has on what was sent, so losing it would strand the data rather than delete it.
+Press again when the connection is back.
+
+**What is not deleted is what was decided because of it.** A defect a donation found stays
+fixed, the release that carried the fix stays released, and the changelog line naming it stays
+written. Those are the product of having read the data once; they are not the data, and a
+published release never moves. Neither is anything you copied or saved yourself and took
+somewhere else — anything posted publicly can be archived beyond anyone's reach.
 
 **Two things are accepted rather than solved, and both are said here rather than discovered.**
 A thirteen-month history is easier to re-identify than a ten-minute excerpt — more surface, more

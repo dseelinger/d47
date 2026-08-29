@@ -17,10 +17,48 @@ import worker from './src/index.js';
 const TOKEN = '0123456789abcdef0123456789abcdef';
 const SHA = 'a'.repeat(64);
 
-/** A bucket that records what it was asked to store, and can be asserted to have been asked nothing. */
-function bucket() {
+/**
+ * A bucket that records what it was asked to store, and can be asserted to have been asked
+ * nothing. It also holds what it was given, so an erasure can be driven against objects that
+ * actually exist rather than against an empty store that would pass either way.
+ */
+function bucket(held = []) {
   const puts = [];
-  return { puts, put: async (key, _body, options) => void puts.push({ key, options }) };
+  const objects = new Map(held.map((key) => [key, true]));
+
+  return {
+    puts,
+    objects,
+    put: async (key, _body, options) => {
+      objects.set(key, true);
+      puts.push({ key, options });
+    },
+
+    // R2's own shape: a page of objects and a truncated flag saying there is more behind it.
+    // No cursor, because the Worker deliberately does not use one — it re-lists what is left
+    // after each delete rather than paging through a listing it is invalidating as it goes.
+    list: async ({ prefix, limit }) => {
+      const matching = [...objects.keys()].filter((key) => key.startsWith(prefix)).sort();
+      const page = matching.slice(0, limit);
+
+      return { objects: page.map((key) => ({ key })), truncated: page.length < matching.length };
+    },
+
+    delete: async (keys) => {
+      for (const key of [].concat(keys)) objects.delete(key);
+    },
+  };
+}
+
+/** An erasure, with any header overridable and any of them removable by passing null. */
+function erasure(overrides = {}) {
+  const headers = { 'd47-format': '1', 'd47-donor': TOKEN, ...overrides };
+
+  for (const [name, value] of Object.entries(headers)) {
+    if (value === null) delete headers[name];
+  }
+
+  return new Request('https://donate.invalid/forget', { method: 'POST', headers });
 }
 
 /** A donation, with any header overridable and any of them removable by passing null. */
@@ -114,7 +152,7 @@ test('a corpus may be far larger than an excerpt, and still not unbounded', asyn
 
 // There is nothing here to browse, and a GET that answered with anything friendly would be an
 // invitation to find out what else it answers.
-test('there is nothing here but the one path and the one method', async () => {
+test('there are two paths and one method, and nothing else answers', async () => {
   const get = await worker.fetch(
     new Request('https://donate.invalid/donate'), { DONATIONS: bucket() });
   assert.equal(get.status, 405);
@@ -142,4 +180,105 @@ test('a store failure says nothing about the store', async () => {
 
   assert.equal(response.status, 503);
   assert.doesNotMatch(await response.text(), /quota|bucket|d47-donations/);
+});
+
+// **Erasure on request** (https://github.com/dseelinger/d47/issues/167). The half of the design
+// that lets the other half exist: GitHub was ruled out as a destination because a public
+// transport cannot honour "ask and it is deleted", so a store that could not honour it either
+// would have moved the problem rather than solved it.
+
+test('forgetting an installation deletes everything it ever sent, and nothing else', async () => {
+  const other = 'fedcba9876543210fedcba9876543210';
+
+  const env = {
+    DONATIONS: bucket([
+      `excerpts/${TOKEN}/20260829T142530Z-aaaa.md.gz`,
+      `excerpts/${TOKEN}/20260830T090000Z-bbbb.md.gz`,
+      `corpus/${TOKEN}/20260829T142530Z-cccc.jsonl.gz`,
+      `corpus/${other}/20260829T142530Z-dddd.jsonl.gz`,
+    ]),
+  };
+
+  const response = await worker.fetch(erasure(), env);
+  const said = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(said.deleted, 3);
+  assert.equal(said.more, false);
+
+  // Both prefixes, because a donor asking to be forgotten means both retention classes — the
+  // permanent one included, which is the only way "kept for ever" stays honest.
+  assert.deepEqual([...env.DONATIONS.objects.keys()], [`corpus/${other}/20260829T142530Z-dddd.jsonl.gz`]);
+});
+
+test('the keys it deleted are named, so a receipt can say what went', async () => {
+  const key = `corpus/${TOKEN}/20260829T142530Z-cccc.jsonl.gz`;
+  const { keys } = await (await worker.fetch(erasure(), { DONATIONS: bucket([key]) })).json();
+
+  assert.deepEqual(keys, [key]);
+});
+
+// An unknown token answers nothing-to-do rather than a refusal: there is nothing to hide from
+// somebody already holding the only handle to it, and a different answer for a token that exists
+// would make this a way of testing whether one does.
+test('an identifier that donated nothing is forgotten just the same', async () => {
+  const env = { DONATIONS: bucket([`corpus/fedcba9876543210fedcba9876543210/x.jsonl.gz`]) };
+  const said = await (await worker.fetch(erasure(), env)).json();
+
+  assert.equal(said.deleted, 0);
+  assert.equal(env.DONATIONS.objects.size, 1);
+});
+
+for (const [what, overrides] of [
+  ['an unversioned erasure', { 'd47-format': null }],
+  ['a format from the future', { 'd47-format': '2' }],
+  ['no identifier at all', { 'd47-donor': null }],
+  ['an identifier that is a path', { 'd47-donor': '../../corpus' }],
+  ['an identifier of the wrong length', { 'd47-donor': 'abc' }],
+]) {
+  test(`${what} is refused, and nothing is deleted`, async () => {
+    const key = `corpus/${TOKEN}/20260829T142530Z-cccc.jsonl.gz`;
+    const env = { DONATIONS: bucket([key]) };
+    const response = await worker.fetch(erasure(overrides), env);
+
+    assert.ok(response.status >= 400, `expected a refusal, got ${response.status}`);
+    assert.equal(env.DONATIONS.objects.size, 1);
+  });
+}
+
+// A ceiling rather than an assumption. A donor who somehow passed it is told there is more, rather
+// than being quietly left with half a deletion.
+test('past the ceiling it says there is more rather than stopping quietly', async () => {
+  const many = Array.from(
+    { length: 10_001 },
+    (_, nth) => `corpus/${TOKEN}/${String(nth).padStart(6, '0')}.jsonl.gz`);
+
+  const env = { DONATIONS: bucket(many) };
+  const said = await (await worker.fetch(erasure(), env)).json();
+
+  assert.equal(said.more, true);
+  assert.equal(said.deleted, 10_000);
+  assert.equal(env.DONATIONS.objects.size, 1);
+});
+
+// The same rule a failed write follows: what went wrong at the store is between the Worker and its
+// bucket, and a donor needs to know only that nothing is confirmed gone.
+test('a store that will not answer does not report a deletion', async () => {
+  const response = await worker.fetch(erasure(), {
+    DONATIONS: { list: async () => { throw new Error('bucket d47-donations is unreachable'); } },
+  });
+
+  assert.equal(response.status, 503);
+  assert.doesNotMatch(await response.text(), /bucket|d47-donations|unreachable/);
+});
+
+// And the donation road is untouched by any of it: /forget is a second path, not a mode.
+test('a donation still lands while erasure exists beside it', async () => {
+  assert.equal((await post(donation())).response.status, 201);
+
+  const elsewhere = await worker.fetch(
+    new Request('https://donate.invalid/forgetting', { method: 'POST', headers: { 'd47-format': '1' } }),
+    { DONATIONS: bucket() });
+
+  assert.equal(elsewhere.status, 404);
 });
