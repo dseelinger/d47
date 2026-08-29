@@ -69,8 +69,17 @@ public static class ExcerptReport
 
         report.AppendLine();
         report.AppendLine(
-            "**Taking it back.** This excerpt lives in this issue and nowhere else — there is no "
-            + "server behind it and nothing was sent anywhere else. Ask here and it is deleted.");
+            // **Weakened, because the old wording promised something no transport here can keep**
+            // (<https://github.com/dseelinger/d47/issues/165>). It said the excerpt lived in this
+            // issue alone and would be deleted on request. Neither half survives contact with a
+            // public repository: a comment is copied to third-party archives within the hour and
+            // mailed whole to every watcher, so deleting it from GitHub recalls nothing. An
+            // erasure promise is only worth what the destination can honour, and the destination
+            // is undecided — so this now says what is true on this machine and stops there.
+            "**Where this came from.** It was scrubbed on the machine it came off, and nothing was "
+            + "sent from there — it was put on a clipboard and pasted here by hand. Anything "
+            + "posted publicly can be copied and archived beyond anyone's reach, so ask about "
+            + "removal wherever this ended up rather than assuming it can be taken back.");
 
         report.AppendLine();
         Half(
