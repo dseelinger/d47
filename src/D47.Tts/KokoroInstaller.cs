@@ -66,7 +66,8 @@ public sealed class KokoroInstaller : IDisposable
     /// <summary>Everything, in one go, reporting against the whole set rather than per file.</summary>
     public async Task<KokoroInstallResult> InstallAsync(
         IProgress<KokoroProgress>? progress = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string? buildId = null)
     {
         if (IsInstalled)
         {
@@ -75,7 +76,7 @@ public sealed class KokoroInstaller : IDisposable
 
         var assets = new List<KokoroAsset>
         {
-            KokoroAssets.Model,
+            KokoroAssets.BuildFor(buildId).Asset,
             KokoroAssets.Tokenizer,
             KokoroAssets.Dictionary,
         };
@@ -112,14 +113,73 @@ public sealed class KokoroInstaller : IDisposable
         return new KokoroInstallResult(KokoroInstall.Installed);
     }
 
-    /// <summary>Where a repository path lands on disk. Voices keep their folder; nothing else nests.</summary>
-    private string Destination(KokoroAsset asset)
+    /// <summary>
+    /// <b>Swaps the model for a different build of it</b> (#139).
+    /// <para>
+    /// Only the model: the tokenizer, the dictionary and the 28 voices are the same files for
+    /// every build, which is what makes changing one a 90–310 MB question rather than a 1 GB one.
+    /// </para>
+    /// <para>
+    /// <b>A failed or cancelled fetch leaves the previous build in place and working.</b> That
+    /// falls out of the road every file here already takes — written to a sibling <c>.part</c> and
+    /// moved into place only after its pinned hash matches — so there is no window in which
+    /// <c>model.onnx</c> is neither the old build nor the new one.
+    /// </para>
+    /// </summary>
+    public async Task<KokoroInstallResult> SwitchAsync(
+        string buildId,
+        IProgress<KokoroProgress>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var build = KokoroAssets.BuildFor(buildId);
+
+        if (KokoroAssets.InstalledBuild(_folder)?.Id == build.Id)
+        {
+            return new KokoroInstallResult(KokoroInstall.AlreadyPresent);
+        }
+
+        var result = await FetchAsync(
+                build.Asset,
+                Destination(build.Asset),
+                already: 0,
+                total: build.Asset.Bytes,
+                progress,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        if (result.Outcome == KokoroInstall.Installed)
+        {
+            _logger.LogInformation(
+                "The local voice is now running the {Build} build ({Megabytes:0} MB)",
+                build.Id,
+                build.Asset.Megabytes);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Where a repository path lands on disk. Voices keep their folder; nothing else nests.
+    /// <para>
+    /// <b>Every model build lands as <c>model.onnx</c></b> (#139), whichever of the eight it is.
+    /// One model file on disk is what makes a switch leave no orphan behind and stops eight builds
+    /// accumulating into 1.4 GB of a Commander's drive — and it is why the provider needs no
+    /// telling which build it is loading. Which one is there is read back from its byte count, by
+    /// <see cref="KokoroAssets.InstalledBuild"/>.
+    /// </para>
+    /// </summary>
+    internal string Destination(KokoroAsset asset)
     {
         var name = Path.GetFileName(asset.Path);
 
-        return asset.Path.StartsWith("voices/", StringComparison.Ordinal)
-            ? Path.Combine(_folder, "voices", name)
-            : Path.Combine(_folder, name);
+        if (asset.Path.StartsWith("voices/", StringComparison.Ordinal))
+        {
+            return Path.Combine(_folder, "voices", name);
+        }
+
+        return Path.Combine(
+            _folder,
+            KokoroAssets.Builds.Any(build => build.Asset.Path == asset.Path) ? "model.onnx" : name);
     }
 
     private async Task<KokoroInstallResult> FetchAsync(

@@ -40,13 +40,120 @@ public static class KokoroAssets
     public const string DictionaryRepository = "lookbe/open-phonemizer-onnx";
 
     /// <summary>
-    /// The model itself, in the fp32 build the Commander chose.
+    /// The build a Commander is running the local voice on, and what choosing it costs (#139).
     /// </summary>
-    public static readonly KokoroAsset Model = new(
-        "onnx/model.onnx",
-        ModelRepository,
-        325_532_232,
-        "8fbea51ea711f2af382e88c833d9e288c6dc82ce5e98421ea61c058ce21a34cb");
+    /// <param name="Id">
+    /// The name the repository publishes it under, minus <c>model_</c> — which is what the
+    /// settings file stores and what a support question is answered with.
+    /// </param>
+    /// <param name="RealtimeMultiple">
+    /// How many seconds of speech it renders per second, measured through
+    /// <c>Microsoft.ML.OnnxRuntime</c> on the Commander's machine. See
+    /// <see cref="KokoroAssets.Builds"/> for what these numbers are and are not.
+    /// </param>
+    public sealed record KokoroBuild(string Id, KokoroAsset Asset, double RealtimeMultiple)
+    {
+        /// <summary>What the picker shows: the size and the speed, together and never apart.</summary>
+        public string Label =>
+            $"{Id} — {Asset.Megabytes:0} MB, about {RealtimeMultiple:0.0}× realtime";
+    }
+
+    /// <summary>The build every Commander gets unless they choose otherwise. Unchanged by #139.</summary>
+    public const string DefaultBuildId = "fp32";
+
+    /// <summary>
+    /// <b>All eight published builds, each with a measured speed beside its size</b> (#139).
+    /// <para>
+    /// <b>Size does not predict speed here, and it does not merely fail to — it points the wrong
+    /// way.</b> That was already known for three of the eight when 0.84.0 shipped: fp32 was the
+    /// fastest and the smallest build was four times slower than the largest. The remaining five
+    /// were unmeasured, and <c>q4</c> is the one that says loudest why they could not simply be
+    /// listed: it is a <em>quantised</em> build and it is 291 MB, within 6% of fp32.
+    /// </para>
+    /// <para>
+    /// <b>So all five were measured before any of them was offered</b>, on 2026-08-29, through the
+    /// same harness and the same 7.2-second comms line — <c>spike/KokoroProbe</c>, <c>bench</c>,
+    /// nine runs each, the median of three passes. The result reorders the list again:
+    /// <b><c>uint8</c> is the fastest of the eight at half fp32's size</b>, and <c>q4f16</c> is
+    /// about fp32's speed at 147 MB. The two smallest, <c>q8f16</c> and <c>quantized</c>, are
+    /// roughly two and a half times slower than everything above them.
+    /// </para>
+    /// <para>
+    /// <b>These are ratios to trust and absolutes to hold loosely.</b> The ordering was identical
+    /// across all three passes; the absolute figures are about half what the 2026-08-28 spike
+    /// recorded for fp32 (×9.0), because that run had a quieter machine. What a Commander needs
+    /// from this row is which build is faster than which, and that is the part that repeated.
+    /// </para>
+    /// <para>
+    /// <b>Quality is the third axis and it is deliberately not a column here</b>, because it could
+    /// not be measured. Every quantised build renders the same line to a <em>different number of
+    /// samples</em> than fp32 does — the duration predictor diverges, not just the waveform — so a
+    /// sample-wise comparison has nothing to align and reports a bad number for the wrong reason.
+    /// Only fp16 aligns at all, and it sits 6.5 dB from fp32. <c>KokoroProbe quality</c> writes
+    /// every build out as a WAV for exactly this reason: the ear is the only test left, and
+    /// pretending otherwise in a column would be worse than saying so.
+    /// </para>
+    /// </summary>
+    public static readonly IReadOnlyList<KokoroBuild> Builds =
+    [
+        new("fp32", new("onnx/model.onnx", ModelRepository, 325_532_232,
+            "8fbea51ea711f2af382e88c833d9e288c6dc82ce5e98421ea61c058ce21a34cb"), 4.4),
+        new("uint8", new("onnx/model_uint8.onnx", ModelRepository, 177_464_632,
+            "6607a397d77b8514065420b7c1e7320117f7aabfdb45ce15f0050c5b0fe75aea"), 5.4),
+        new("q4", new("onnx/model_q4.onnx", ModelRepository, 305_215_966,
+            "04cf570cf9c4153694f76347ed4b9a48c1b59ff1de0999e6605d123966b197c7"), 4.5),
+        new("q4f16", new("onnx/model_q4f16.onnx", ModelRepository, 154_586_422,
+            "d1a508a6a29671ead84fac99c7401fbd3c21a583fc6ed1406d1ec974d53bf45f"), 4.2),
+        new("fp16", new("onnx/model_fp16.onnx", ModelRepository, 163_234_740,
+            "ba4527a874b42b21e35f468c10d326fdff3c7fc8cac1f85e9eb6c0dfc35c334a"), 3.5),
+        new("uint8f16", new("onnx/model_uint8f16.onnx", ModelRepository, 114_209_226,
+            "883333e03c597584b532eebea0f8310f25f0c9ade58fe864792c12d969944a9a"), 3.5),
+        new("q8f16", new("onnx/model_q8f16.onnx", ModelRepository, 86_033_585,
+            "04c658aec1b6008857c2ad10f8c589d4180d0ec427e7e6118ceb487e215c3cd0"), 1.8),
+        new("quantized", new("onnx/model_quantized.onnx", ModelRepository, 92_361_116,
+            "fbae9257e1e05ffc727e951ef9b9c98418e6d79f1c9b6b13bd59f5c9028a1478"), 1.7),
+    ];
+
+    /// <summary>Just the ids, in the order the picker offers them — fastest first after the default.</summary>
+    public static IReadOnlyList<string> BuildIds { get; } = [.. Builds.Select(build => build.Id)];
+
+    /// <summary>
+    /// The named build, or the default where the name is unknown — a settings file naming a build
+    /// this version no longer publishes resolves rather than failing, the way every other stored
+    /// id in this repository does.
+    /// </summary>
+    public static KokoroBuild BuildFor(string? id) =>
+        Builds.FirstOrDefault(build => string.Equals(build.Id, id, StringComparison.OrdinalIgnoreCase))
+        ?? Builds[0];
+
+    /// <summary>
+    /// The model itself, in the fp32 build the Commander chose. Still the default, and still what
+    /// a first install fetches.
+    /// </summary>
+    public static readonly KokoroAsset Model = Builds[0].Asset;
+
+    /// <summary>
+    /// <b>Which build is actually on disk, read from the file rather than from settings.</b>
+    /// <para>
+    /// Every build lands as <c>model.onnx</c> — one model file, so switching can never leave an
+    /// orphan and eight builds cannot accumulate into 1.4 GB of a Commander's drive. The byte
+    /// count is what tells them apart: the eight sizes are distinct and are tens of megabytes from
+    /// each other, so a stat answers it and no sidecar file has to be kept honest.
+    /// </para>
+    /// <para>
+    /// Null where nothing is installed, or where the file is a size none of the eight has — which
+    /// is a build from a different version of the repository, and is reported as unknown rather
+    /// than guessed at.
+    /// </para>
+    /// </summary>
+    public static KokoroBuild? InstalledBuild(string folder)
+    {
+        var model = new FileInfo(System.IO.Path.Combine(folder, "model.onnx"));
+
+        return model.Exists
+            ? Builds.FirstOrDefault(build => build.Asset.Bytes == model.Length)
+            : null;
+    }
 
     /// <summary>
     /// The phoneme vocabulary. Read rather than transcribed into the source: a hand-copied
