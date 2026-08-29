@@ -1000,6 +1000,12 @@ public class AnIncidentExcerptTests
         // (<https://github.com/dseelinger/d47/issues/165>).
         Assert.DoesNotContain("it is deleted", report);
         Assert.Contains("beyond anyone's reach", report);
+
+        // **And it names where the rest of the answer is** (#166). The paragraph above says what
+        // happens to the excerpt; it does not say who is left holding it or on what basis, and the
+        // in-app Privacy page cannot — it reports what this build reaches, and a donor deciding
+        // whether to send may not be looking at it.
+        Assert.Contains(DonationNotice.Url, report);
     }
 
     /// <summary>

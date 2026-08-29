@@ -225,4 +225,22 @@ public class ACorpusIsConsentedByKindTests : IDisposable
         Assert.Equal(0, survey.Tally.Events);
         Assert.Contains("an empty range — no events were found", report);
     }
+
+    /// <summary>
+    /// <b>The report a corpus donor reads had no retention sentence and no notice at all</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/168">#168</a>,
+    /// <a href="https://github.com/dseelinger/d47/issues/166">#166</a>). The excerpt's said where it
+    /// came from and how long it lasts; this one said neither — and it is the donation with the
+    /// harder sentence to write, because the answer is *indefinitely*. A retention period is a
+    /// promise to a donor, so it belongs where consent is given rather than only in the receipt
+    /// written afterwards.
+    /// </summary>
+    [Fact]
+    public void TheReportSaysHowLongItIsKeptAndWhereToReadWhoHoldsIt()
+    {
+        var report = CorpusReport.Render(Survey(new Pseudonyms()), Paperwork);
+
+        Assert.Contains("kept indefinitely", report);
+        Assert.Contains(DonationNotice.Url, report);
+    }
 }

@@ -276,4 +276,26 @@ public class ADonationCarriesItsOwnReceiptTests
         Assert.Contains("donor-token.txt", receipt, StringComparison.Ordinal);
         Assert.Contains("does not reach back", receipt, StringComparison.Ordinal);
     }
+
+    /// <summary>
+    /// <b>"Quote the object name" stopped one step short of a withdrawal route</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/166">#166</a>): it told a donor exactly
+    /// what to say and nothing about who to say it to. The receipt is the artefact they still have
+    /// months later, so it is the one that has to carry the address.
+    /// </summary>
+    [Fact]
+    public void TheReceiptSaysWhereToAsk()
+    {
+        var envelope = Sealed();
+
+        Assert.Contains(
+            DonationNotice.Url,
+            DonationReceipt.Render(
+                envelope,
+                DonationOutcome.Stored(envelope.PredictedKey()),
+                "https://example.invalid/donate",
+                "d.md",
+                documentIsPayload: true),
+            StringComparison.Ordinal);
+    }
 }

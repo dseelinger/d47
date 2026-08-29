@@ -19,6 +19,12 @@ Two documents carry the design, and they are not summarised here:
 | What do the personas say? | [guardian-personas.md](guardian-personas.md) |
 | What has shipped? What is wanted? | [CHANGELOG.md](CHANGELOG.md) and [the issues](https://github.com/dseelinger/d47/issues) |
 
+**If you are about to donate an incident excerpt or a journal history, read
+[the donation privacy notice](https://dseelinger.github.io/d47/donation-privacy.html) first.** It
+says who ends up holding it, on what basis, what it is used for, and how to have it deleted; the
+[retention policy](https://dseelinger.github.io/d47/data-retention.html) beside it says how long
+every kind of data d47 keeps is kept, and what enforces each rule.
+
 [CLAUDE.md](CLAUDE.md) is the working agreement — invariants, conventions, and the reasons
 behind them. Most "why is it done this odd way" questions are answered there, and
 `architecture.md` §10 lists alternatives that were already considered and rejected, with the
