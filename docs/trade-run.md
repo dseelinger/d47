@@ -125,8 +125,8 @@ that is. Tick it if your ship needs it.
 
 A trade stop says when its market was last reported, for the same reason outfitting stock does. A
 route can be arithmetically perfect against a four-year-old price and worth nothing at all. There
-is a bound on how old a price may be — `max_price_age` on the tool — and it is the same idea the
-rest of the market answers inherit.
+is a bound on how old a price may be — `max_price_age_hours` on the tool, spelled the way the
+commodity search spells it — and it is the same idea the rest of the market answers inherit.
 
 ### Fleet carriers
 

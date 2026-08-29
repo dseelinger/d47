@@ -233,9 +233,13 @@ public static class RouteCapability
                         Type = ToolParameterType.Boolean,
                         Description = "Only stations with a large landing pad.",
                     },
+                    // Spelled with its unit, matching the commodity search rather than differing
+                    // from it (#178). It was `max_price_age` here and `max_price_age_hours` there
+                    // — the same quantity under two names, one seam apart, which is a wrong call
+                    // waiting for a model that is switching between the two tools under pressure.
                     new ToolParameter
                     {
-                        Name = "max_price_age",
+                        Name = "max_price_age_hours",
                         Type = ToolParameterType.Integer,
                         Description =
                             "How stale a reported price may be, in hours. Defaults to 720, one month.",
@@ -527,7 +531,7 @@ public static class RouteCapability
                 Number(arguments, "max_hop_distance"),
                 Number(arguments, "max_station_distance"),
                 arguments.TryGetBoolean("large_pad", out var largePad) && largePad,
-                arguments.TryGetInt32("max_price_age", out var age) ? age : null,
+                arguments.TryGetInt32("max_price_age_hours", out var age) ? age : null,
                 Flag(arguments, "loop"),
                 out var query,
                 out var failure))
