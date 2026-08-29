@@ -1,4 +1,4 @@
-using D47.Core.Callouts;
+﻿using D47.Core.Callouts;
 using D47.Core.Journal;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -205,6 +205,100 @@ public class CalloutTests
         // Finding route progress chatty is not a reason to lose the interdiction warning.
         var drained = Assert.Single(engine.Drain());
         Assert.Equal("important", drained.Text);
+    }
+
+    /// <summary>
+    /// A callout switched off within seconds of it speaking is reported, so the debrief can ask
+    /// about it at the end of the session (<a href="https://github.com/dseelinger/d47/issues/162">#162</a>).
+    /// <para>
+    /// A signal and nothing else — nothing here changes a threshold. The reading is genuinely
+    /// ambiguous, so it becomes a question the Commander answers rather than an adjustment they
+    /// were never told about.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void SilencingAWarningSecondsAfterItFiredIsReported()
+    {
+        var engine = Engine(new FixedCallout("fuel", new Announcement("fuel.low", "fuel is low")));
+
+        CalloutSilenced? reported = null;
+        engine.Silenced += silenced => reported = silenced;
+
+        engine.Tick(Context());
+        Assert.Single(engine.Drain());
+
+        engine.SetEnabled("fuel", false, Start.AddSeconds(4));
+
+        Assert.NotNull(reported);
+        Assert.Equal("fuel", reported.Id);
+        Assert.Equal(TimeSpan.FromSeconds(4), reported.After);
+    }
+
+    /// <summary>
+    /// And switching one off an hour later is what it looks like — an unrelated decision. Without
+    /// this the signal would fire for every callout a Commander ever tidied up.
+    /// </summary>
+    [Fact]
+    public void SilencingAWarningLongAfterwardsIsNotReported()
+    {
+        var engine = Engine(new FixedCallout("fuel", new Announcement("fuel.low", "fuel is low")));
+
+        var reported = false;
+        engine.Silenced += _ => reported = true;
+
+        engine.Tick(Context());
+        engine.Drain();
+
+        engine.SetEnabled("fuel", false, Start.AddHours(1));
+
+        Assert.False(reported);
+    }
+
+    /// <summary>
+    /// The state is not the fact; the transition is. This is applied with every id on every
+    /// settings change, so a signal keyed on "it is off" would fire on every keystroke in the
+    /// panel.
+    /// </summary>
+    [Fact]
+    public void ReapplyingTheSameSettingReportsNothing()
+    {
+        var engine = Engine(new FixedCallout("fuel", new Announcement("fuel.low", "fuel is low")));
+
+        engine.Tick(Context());
+        engine.Drain();
+
+        var reports = 0;
+        engine.Silenced += _ => reports++;
+
+        engine.SetEnabled("fuel", false, Start.AddSeconds(2));
+        engine.SetEnabled("fuel", false, Start.AddSeconds(3));
+        engine.SetEnabled("fuel", false, Start.AddSeconds(4));
+
+        Assert.Equal(1, reports);
+    }
+
+    /// <summary>
+    /// A callout silenced without ever having spoken says nothing about anything, and a caller
+    /// with no clock is not asking.
+    /// </summary>
+    [Fact]
+    public void NothingIsReportedForACalloutThatNeverSpokeOrForACallerWithNoClock()
+    {
+        var engine = Engine(new FixedCallout("fuel", new Announcement("fuel.low", "fuel is low")));
+
+        var reported = false;
+        engine.Silenced += _ => reported = true;
+
+        engine.SetEnabled("fuel", false, Start);
+        Assert.False(reported);
+
+        engine.SetEnabled("route", true);
+        engine.Tick(Context());
+        engine.Drain();
+
+        engine.SetEnabled("fuel", true);
+        engine.SetEnabled("fuel", false);
+        Assert.False(reported);
     }
 
     [Fact]

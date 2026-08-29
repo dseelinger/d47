@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using D47.Core.Journal;
 using D47.Core.Ticking;
 using Microsoft.Extensions.Logging;
@@ -60,6 +60,22 @@ public sealed class CalloutEngine(ILogger<CalloutEngine> logger)
     private readonly HashSet<string> _disabled = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
+    /// When each callout last actually said something, by callout id
+    /// (<a href="https://github.com/dseelinger/d47/issues/162">#162</a>).
+    /// <para>
+    /// Not the same as <see cref="_spokenAt"/>, which is keyed by <em>announcement</em> and exists
+    /// to serve a cooldown: one callout produces several keys, and the question here is about the
+    /// callout the Commander just reached for the switch on.
+    /// </para>
+    /// <para>
+    /// Concurrent because it is written on the tick thread and read on whichever thread applied a
+    /// setting, which is the only cross-thread pair in this class.
+    /// </para>
+    /// </summary>
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, DateTimeOffset> _lastSpokeBy =
+        new(StringComparer.Ordinal);
+
+    /// <summary>
     /// How close two alarms of the same kind may fall before the second is played as words alone
     /// (<a href="https://github.com/dseelinger/d47/issues/136">#136</a>).
     /// <para>
@@ -81,6 +97,30 @@ public sealed class CalloutEngine(ILogger<CalloutEngine> logger)
     /// <summary>Whether callouts are on at all. Off leaves everything else running.</summary>
     public bool Enabled { get; set; } = true;
 
+    /// <summary>
+    /// How soon after speaking a callout has to be silenced for the two to be read as connected
+    /// (<a href="https://github.com/dseelinger/d47/issues/162">#162</a>).
+    /// <para>
+    /// Thirty seconds: long enough to cover a Commander hearing a warning, deciding it was wrong
+    /// and finding the row, and short enough that switching something off an hour later is what it
+    /// looks like — an unrelated decision.
+    /// </para>
+    /// </summary>
+    public static readonly TimeSpan SilencedSoonAfter = TimeSpan.FromSeconds(30);
+
+    /// <summary>
+    /// Raised when a callout is switched off within <see cref="SilencedSoonAfter"/> of it last
+    /// speaking (<a href="https://github.com/dseelinger/d47/issues/162">#162</a>).
+    /// <para>
+    /// <b>A signal, and nothing more.</b> It changes no threshold and writes nothing to a prompt;
+    /// the debrief turns it into a <em>question</em> at the end of the session, which the Commander
+    /// answers or discards. Adapting to it silently would be a companion whose behaviour changed
+    /// for a reason its Commander could not name, and the reading is genuinely ambiguous: the
+    /// warning may have been wrong, or it may have been right and dealt with.
+    /// </para>
+    /// </summary>
+    public event Action<CalloutSilenced>? Silenced;
+
     public IReadOnlyList<ICallout> Callouts => _callouts;
 
     public CalloutEngine Add(ICallout callout)
@@ -93,18 +133,38 @@ public sealed class CalloutEngine(ILogger<CalloutEngine> logger)
     /// Turns one callout off by id. Individually settable, because a Commander who finds route
     /// progress chatty should not have to silence danger warnings to stop it.
     /// </summary>
-    public void SetEnabled(string id, bool enabled)
+    /// <param name="now">
+    /// When the Commander did it, or null where the caller has no clock and does not want the
+    /// signal. Supplied rather than read, because no Core component reads one — and it is the only
+    /// thing that makes <see cref="Silenced"/> possible at all.
+    /// </param>
+    public void SetEnabled(string id, bool enabled, DateTimeOffset? now = null)
     {
+        bool silenced;
+
         lock (_disabled)
         {
             if (enabled)
             {
                 _disabled.Remove(id);
+                return;
             }
-            else
-            {
-                _disabled.Add(id);
-            }
+
+            // The transition, not the state. This is called with every id on every settings
+            // change, so "it is off" says nothing; "it has just been turned off" is the fact.
+            silenced = _disabled.Add(id);
+        }
+
+        if (!silenced || now is not { } at || !_lastSpokeBy.TryGetValue(id, out var spoke))
+        {
+            return;
+        }
+
+        var after = at - spoke;
+
+        if (after >= TimeSpan.Zero && after <= SilencedSoonAfter)
+        {
+            Silenced?.Invoke(new CalloutSilenced(id, at, after));
         }
     }
 
@@ -142,7 +202,10 @@ public sealed class CalloutEngine(ILogger<CalloutEngine> logger)
             {
                 foreach (var announcement in callout.Examine(context))
                 {
-                    Offer(announcement, context);
+                    if (Offer(announcement, context))
+                    {
+                        _lastSpokeBy[callout.Id] = context.Now;
+                    }
                 }
             }
             catch (Exception ex)
@@ -154,21 +217,26 @@ public sealed class CalloutEngine(ILogger<CalloutEngine> logger)
         }
     }
 
-    private void Offer(Announcement announcement, CalloutContext context)
+    /// <summary>
+    /// Queues one announcement, and says whether it queued it — which is what makes
+    /// <see cref="_lastSpokeBy"/> a record of what was <em>said</em> rather than of what was
+    /// examined.
+    /// </summary>
+    private bool Offer(Announcement announcement, CalloutContext context)
     {
         // Never during priming, whatever a callout returns. Belt and braces: the contract says
         // callouts check IsPriming themselves, and this is what makes forgetting it harmless
         // rather than a two-hour backlog read aloud at startup.
         if (context.IsPriming || !Enabled)
         {
-            return;
+            return false;
         }
 
         if (announcement.Cooldown > TimeSpan.Zero &&
             _spokenAt.TryGetValue(announcement.Key, out var last) &&
             context.Now - last < announcement.Cooldown)
         {
-            return;
+            return false;
         }
 
         _spokenAt[announcement.Key] = context.Now;
@@ -180,6 +248,8 @@ public sealed class CalloutEngine(ILogger<CalloutEngine> logger)
         _pending.Enqueue(announcement);
 
         logger.LogInformation("Callout {Key}: {Text}", announcement.Key, announcement.Text);
+
+        return true;
     }
 
     /// <summary>
@@ -230,3 +300,12 @@ public sealed class CalloutEngine(ILogger<CalloutEngine> logger)
         return drained;
     }
 }
+
+/// <summary>
+/// A callout the Commander switched off within seconds of hearing it
+/// (<a href="https://github.com/dseelinger/d47/issues/162">#162</a>).
+/// </summary>
+/// <param name="Id">Which callout, by the id the settings rows use.</param>
+/// <param name="When">When it was switched off.</param>
+/// <param name="After">How long after it last spoke. What makes the two read as connected.</param>
+public sealed record CalloutSilenced(string Id, DateTimeOffset When, TimeSpan After);

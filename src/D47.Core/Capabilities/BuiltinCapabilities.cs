@@ -1,4 +1,4 @@
-using D47.Core.Callouts;
+﻿using D47.Core.Callouts;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
@@ -214,7 +214,14 @@ public static class BuiltinCapabilities
         // rule the three comments above record the cost of. Null under the designer and in every
         // test that is not about it, and the privacy row then does what it did before — forgets
         // the identifier here, which is the whole of what is possible with nowhere to ask.
-        LongPress? forgetDonations = null) =>
+        LongPress? forgetDonations = null,
+
+        // The standing directions the debrief pass drafts and the Commander adopts
+        // (<a href="https://github.com/dseelinger/d47/issues/162">#162</a>). LAST, by the same rule
+        // the four comments above record the cost of. Null under the designer and in every test
+        // that is not about it; the capability still registers, so its two rows and its
+        // documentation page exist, and the disclosure says nothing is debriefing.
+        Debrief.DebriefBook? debrief = null) =>
     [
         HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage),
@@ -305,6 +312,11 @@ public static class BuiltinCapabilities
         // so that adding this shifted two documentation pages rather than twenty-seven — the nav
         // order is the registry index, which Phase 26 learned the expensive way.
         MemoryCapability.Create(memories, now ?? (() => DateTimeOffset.MinValue), settings),
+
+        // Beside Memory, which is the other card about what d47 carries between sessions —
+        // and directly after it, because a Commander looking for "what has D47 learned about
+        // how I like to be talked to" looks next to "what does D47 remember about me".
+        DebriefCapability.Create(debrief),
 
         LogbookCapability.Create(logbook),
 
