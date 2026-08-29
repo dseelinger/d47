@@ -4,6 +4,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
+using D47.App.Donation;
 using D47.App.Theming;
 using D47.Core.Diagnostics.Donation;
 
@@ -31,17 +32,40 @@ namespace D47.App.Controls;
 /// document that does not describe what left.
 /// </para>
 /// <para>
-/// <b>Nothing here reaches the network.</b> It writes a file the Commander picked, and where that
-/// goes afterwards is theirs. A hosted destination is
-/// <a href="https://github.com/dseelinger/d47/issues/175">#175</a> and is not built; until it is,
-/// this window deliberately names no destination at all rather than naming one that cannot honour
-/// what it promises.
+/// <b>Since <a href="https://github.com/dseelinger/d47/issues/181">#181</a> it can also send.</b>
+/// <a href="https://github.com/dseelinger/d47/issues/174">#174</a> shipped this consent flow before
+/// the transport existed and #175 built the transport without reaching into this window, so the
+/// endpoint road stopped one call short of the payload the whole thing was built to carry. The
+/// button is the one the excerpt window already has, on the same rules and in the same words: it
+/// appears only when an address is set, it sends only on the press, and it sends every time.
+/// </para>
+/// <para>
+/// <b>The Save button is not replaced.</b> Upload became the default action, not the only one —
+/// and the two share one code path, so the file a Commander could have saved and the bytes that
+/// leave are the same bytes rather than two renderings of the same intent.
+/// </para>
+/// <para>
+/// With no address set this window is the window that shipped before #181: it writes a file the
+/// Commander picked, names no destination, and says nothing reaches a network — which is then
+/// true.
 /// </para>
 /// </summary>
 public sealed class CorpusDonateWindow : Window
 {
+    private const string SendLabel = "Send it";
+
     private readonly Func<CorpusScope, IProgress<int>, CancellationToken, Task<CorpusReading>> _read;
     private readonly Func<Stream, IProgress<int>, CancellationToken, Task> _write;
+
+    /// <summary>
+    /// The send, or null where nothing composed one. <b>Null is a real state and not a test
+    /// convenience</b>, exactly as it is in <see cref="DonateExcerptWindow"/>: with no address
+    /// configured there is nowhere to send, and a button that explained why it could not work
+    /// would be worse than no button.
+    /// </summary>
+    private readonly Func<string, IProgress<DonationStep>, CancellationToken, Task<DonationSent>>? _send;
+
+    private readonly string? _destination;
 
     private readonly ComboBox _scope = new()
     {
@@ -57,6 +81,10 @@ public sealed class CorpusDonateWindow : Window
     private readonly Button _read_ = new() { Name = "ReadJournals", Content = "Read my journals", MinWidth = 160 };
     private readonly Button _save = new() { Name = "SaveCorpus", Content = "Save the donation…", MinWidth = 170, IsEnabled = false };
     private readonly Button _stop = new() { Name = "StopCorpus", Content = "Cancel", MinWidth = 110 };
+
+    // Named like the two above it, because a test drives this one to assert that the bytes on the
+    // wire come out of the same writer the Save button uses.
+    private readonly Button _sendButton = new() { Name = "SendCorpus", Content = SendLabel, MinWidth = 150, IsEnabled = false };
 
     private readonly SelectableTextBlock _preview = new()
     {
@@ -84,12 +112,23 @@ public sealed class CorpusDonateWindow : Window
     /// with the same stand-ins</b>, which is what makes the samples in the report the lines in the
     /// payload — see <see cref="CorpusDonation"/>.
     /// </param>
+    /// <param name="send">
+    /// Sends the payload, or null where there is nowhere to send it. Takes the report that is on
+    /// screen — the artefact the Commander actually read and said yes to — and does its own
+    /// writing through the same delegate as <paramref name="write"/>, which is what makes the file
+    /// this window could have saved and the bytes that leave one code path rather than two.
+    /// </param>
+    /// <param name="destination">Where a send would go, named on screen before it happens.</param>
     public CorpusDonateWindow(
         Func<CorpusScope, IProgress<int>, CancellationToken, Task<CorpusReading>> read,
-        Func<Stream, IProgress<int>, CancellationToken, Task> write)
+        Func<Stream, IProgress<int>, CancellationToken, Task> write,
+        Func<string, IProgress<DonationStep>, CancellationToken, Task<DonationSent>>? send = null,
+        string? destination = null)
     {
         _read = read;
         _write = write;
+        _send = send;
+        _destination = destination;
 
         Title = "Donate your journal history";
         Width = 900;
@@ -140,7 +179,13 @@ public sealed class CorpusDonateWindow : Window
         _scope.SelectionChanged += (_, _) => Discard();
         _read_.Click += async (_, _) => await ReadAsync();
         _save.Click += async (_, _) => await SaveAsync();
+        _sendButton.Click += async (_, _) => await SendAsync();
         _stop.Click += (_, _) => Stop();
+
+        // A send in flight is a request against a daily ceiling and tens of megabytes half written
+        // at the store. Closing the window is the Commander saying they are done with it, not a
+        // reason to leave one running with nowhere to report back to.
+        Closed += (_, _) => _running?.Cancel();
 
         Discard();
     }
@@ -148,16 +193,43 @@ public sealed class CorpusDonateWindow : Window
     /// <summary>What a reading produced: the document to show, and its own account of itself.</summary>
     public sealed record CorpusReading(CorpusSurvey Survey, string Report);
 
+    /// <summary>
+    /// What a Commander reads before they press anything.
+    /// <para>
+    /// <b>The last sentence used to be "nothing here goes to a network", and it stopped being true
+    /// the moment an address could be set</b> (<a href="https://github.com/dseelinger/d47/issues/181">#181</a>).
+    /// It is still said, word for word, when there is nowhere to send — because it is still true
+    /// then, and a window that hedged about a network it cannot reach would be a worse disclosure
+    /// than one that states the fact. With an address set it says where instead, and what the
+    /// donor can do about it afterwards.
+    /// </para>
+    /// </summary>
     private Control Lede()
     {
+        var where = _destination is { } destination
+            ? "Nothing is written or sent until you press. Sending it puts it in Directive 47's "
+              + "own store at " + destination + " — one press, nothing standing, nothing "
+              + "remembered. A journal history is kept indefinitely, because a regression case "
+              + "that expires stops being one; asking for it back is one press of Forget in "
+              + "Privacy and egress, and it does not need you to post anywhere. d47 keeps the "
+              + "report you are reading, and the hash of what it sent, in data\\donations."
+            : "Nothing is written or sent until you save it, and nothing here goes to a network: "
+              + "no donation address is set, so where the file goes afterwards is yours.";
+
         var lede = new TextBlock
         {
             Text = "This reads every Elite journal on disk, scrubs it the same way an incident "
                    + "excerpt is scrubbed, and then shows you a report about it rather than the "
                    + "thing itself — because a full history runs to hundreds of megabytes and nobody "
                    + "reads that. The report names every kind of event in the donation and shows a "
-                   + "real scrubbed line of each. Nothing is written or sent until you save it, "
-                   + "and nothing here goes to a network.",
+                   + "real scrubbed line of each.\n\n"
+                   + where
+                   + (_destination is null
+                       ? string.Empty
+                       : "\n\nA random number identifying this installation — not you, and not "
+                         + "derived from your Commander name — goes with a send, so a history you "
+                         + "add to is recognisable as the same history. Deleting "
+                         + "data\\donor-token.txt stops that."),
             TextWrapping = TextWrapping.Wrap,
             FontSize = TypeScale.Secondary,
             Margin = new Thickness(0, 0, 0, 12),
@@ -183,6 +255,8 @@ public sealed class CorpusDonateWindow : Window
 
     private Control Footer()
     {
+        // Send last, where the default action sits, and the save beside it rather than instead of
+        // it. With nowhere to send, this row is exactly the row that shipped before #181.
         var buttons = new StackPanel
         {
             Orientation = Orientation.Horizontal,
@@ -190,6 +264,11 @@ public sealed class CorpusDonateWindow : Window
             HorizontalAlignment = HorizontalAlignment.Right,
             Children = { _stop, _save },
         };
+
+        if (_send is not null)
+        {
+            buttons.Children.Add(_sendButton);
+        }
 
         var footer = new DockPanel { Margin = new Thickness(0, 12, 0, 0) };
 
@@ -209,6 +288,12 @@ public sealed class CorpusDonateWindow : Window
     {
         _reading = null;
         _save.IsEnabled = false;
+
+        // **A changed scope is a fresh decision about the send too**, and the button says so
+        // rather than keeping the word "Sent" over a report that no longer describes what left.
+        _sendButton.IsEnabled = false;
+        _sendButton.Content = SendLabel;
+
         _preview.Text =
             "Nothing has been read yet.\n\n"
             + "Choose how much of your history to include, then press Read my journals. "
@@ -236,6 +321,7 @@ public sealed class CorpusDonateWindow : Window
             _reading = await _read(scope, progress, token);
             _preview.Text = _reading.Report;
             _save.IsEnabled = true;
+            _sendButton.IsEnabled = true;
 
             var survey = _reading.Survey;
 
@@ -302,6 +388,7 @@ public sealed class CorpusDonateWindow : Window
 
         Busy(true);
         _save.IsEnabled = false;
+        _sendButton.IsEnabled = false;
 
         var progress = new Progress<int>(files => _status.Text = $"Writing — {files:N0} journal files so far");
 
@@ -325,6 +412,68 @@ public sealed class CorpusDonateWindow : Window
         {
             Busy(false);
             _save.IsEnabled = _reading is not null;
+            _sendButton.IsEnabled = _reading is not null;
+        }
+    }
+
+    /// <summary>
+    /// The other yes, and the one #181 made the default. <b>Sends what the report on screen
+    /// describes</b>, assembled by the same writer the Save button uses — the corpus form of "one
+    /// rendering, used twice", which here means one payload writer used two ways rather than a
+    /// second code path producing something the Commander never read a report about.
+    /// <para>
+    /// <b>The window does not close on it.</b> A send has an outcome the Commander has to be able
+    /// to read, and one that names a receipt they may want to go and find. Closing over the top of
+    /// it would make a refused donation indistinguishable from a stored one.
+    /// </para>
+    /// </summary>
+    private async Task SendAsync()
+    {
+        if (_send is not { } send || _reading is not { } reading)
+        {
+            return;
+        }
+
+        _running?.Cancel();
+        _running = new CancellationTokenSource();
+
+        var token = _running.Token;
+
+        Busy(true);
+        _sendButton.IsEnabled = false;
+        _sendButton.Content = "Sending…";
+        _save.IsEnabled = false;
+
+        var progress = new Progress<DonationStep>(step => _status.Text = step.Sending
+            ? "Sending. Nothing else is being sent, and nothing is being kept anywhere else."
+            : $"Preparing the donation — {step.Files:N0} journal files so far");
+
+        var landed = false;
+
+        try
+        {
+            var sent = await send(reading.Report, progress, token);
+
+            landed = sent.Outcome.Sent;
+            _sendButton.Content = landed ? "Sent" : SendLabel;
+
+            _status.Text = sent.Receipt is { } receipt
+                ? $"{sent.Outcome.Said} Your own copy of what you agreed to is in {receipt}."
+                : $"{sent.Outcome.Said} d47 could not write its own copy of it.";
+        }
+        catch (OperationCanceledException)
+        {
+            _sendButton.Content = SendLabel;
+            _status.Text = "Stopped. Nothing was confirmed as stored.";
+        }
+        finally
+        {
+            Busy(false);
+            _save.IsEnabled = _reading is not null;
+
+            // Offered again only where it did not land. A "Sent" button that invites a second
+            // press is a second thirty-megabyte donation nobody asked for.
+            _sendButton.IsEnabled = _reading is not null && !landed;
         }
     }
 
