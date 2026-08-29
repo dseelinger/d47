@@ -21,6 +21,27 @@ public static class GalaxyCapability
     /// <summary>The descriptor's id, named once so a help link cannot spell it differently.</summary>
     public const string Id = "galaxy";
 
+    /// <summary>
+    /// How far the commodity search looks when nobody said (#157). <b>A default and not a
+    /// ceiling</b> — the distinction the Commander had to discover by being told 500 was 250.
+    /// </summary>
+    private const double DefaultDistance = 50;
+
+    /// <summary>
+    /// How stale a quoted price may be when nobody said, in hours — one month, the bound the trade
+    /// planner already uses. Inherited rather than invented, for the reason
+    /// <see cref="CommoditySearch.MaxPriceAge"/> gives.
+    /// </summary>
+    private const int DefaultPriceAgeHours = 720;
+
+    /// <summary>
+    /// The oldest price the search will consider, a year, matching <see cref="TradeQuery"/>'s own
+    /// bound. <b>This one is a ceiling, so it is said out loud when it bites</b> (#157): a price a
+    /// year old is barely evidence, and a Commander who asks for two years is owed the number
+    /// rather than a silent narrowing of their question.
+    /// </summary>
+    private const int MaxPriceAgeHours = 8_760;
+
     /// <param name="galaxy">
     /// The service, or null where none is composed — under the designer and in a test that is not
     /// about it. Null and switched off give the same answer for the same reason: a capability
@@ -227,6 +248,21 @@ public static class GalaxyCapability
                         Name = "large_pad",
                         Type = ToolParameterType.Boolean,
                         Description = "Only stations with a large landing pad.",
+                    },
+                    // The commodity half's own two knobs (#157). Both were decisions taken in the
+                    // handler and hidden from the model, so "expand your staleness filter" had no
+                    // road from the sentence to the search.
+                    new ToolParameter
+                    {
+                        Name = "max_price_age_hours",
+                        Type = ToolParameterType.Integer,
+                        Description = "How stale a quoted price may be, in hours. Default 720, one month.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "include_carriers",
+                        Type = ToolParameterType.Boolean,
+                        Description = "Also fleet carriers, whose prices are player-set and can move.",
                     },
                     new ToolParameter
                     {
@@ -630,10 +666,25 @@ public static class GalaxyCapability
             limit = 5;
         }
 
+        // <b>No upper clamp</b> (#157). This used to be Math.Clamp(parsed, 1, 250), so "expand
+        // your search out to 500 light years" became 250 with nothing said, and the only honest
+        // thing left to the model was to report a cap the Commander had not asked for. What
+        // bounds the radius now is what the source honours and what the sweep can reach — and the
+        // sweep already says how far it got (#156), which is the truthful version of the sentence
+        // the cap was making up.
         var maxDistance = arguments.Values.TryGetValue("max_distance", out var raw)
                           && double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)
-            ? Math.Clamp(parsed, 1, 250)
-            : 50;
+                          && parsed > 0
+            ? parsed
+            : DefaultDistance;
+
+        arguments.TryGetBoolean("include_carriers", out var includeCarriers);
+
+        var askedAge = arguments.TryGetInt32("max_price_age_hours", out var hours) && hours > 0
+            ? hours
+            : (int?)null;
+
+        var maxPriceAge = Math.Clamp(askedAge ?? DefaultPriceAgeHours, 1, MaxPriceAgeHours);
 
         var query = new CommodityQuery(
             commodity.Trim(),
@@ -641,14 +692,14 @@ public static class GalaxyCapability
             tonnes,
             maxDistance,
             largePad,
-            IncludeCarriers: false,
+            includeCarriers,
             limit);
 
         try
         {
             var answer = await trade
                 .FindCommodityAsync(
-                    new CommoditySearch(near, currentStation?.Invoke(), query), cancellationToken)
+                    new CommoditySearch(near, currentStation?.Invoke(), query, maxPriceAge), cancellationToken)
                 .ConfigureAwait(false);
 
             // Posted on the way out, so the Routing tab draws the answer the Commander was just
@@ -662,7 +713,7 @@ public static class GalaxyCapability
                 board.Announce();
             }
 
-            return ToolResult.Ok(DescribeCommodity(query, answer, near));
+            return ToolResult.Ok(DescribeCommodity(query, answer, near, maxPriceAge, askedAge));
         }
         catch (GalaxyUnavailableException ex)
         {
@@ -681,8 +732,29 @@ public static class GalaxyCapability
     /// stations, all quoting last month" are different answers and only one of them means widen
     /// the search.
     /// </para>
+    /// <para>
+    /// <b>And the question is echoed when the Commander changed it</b> (#157). The knobs are all
+    /// arguments now, so an answer that reads the same whether it swept fifty light years or five
+    /// hundred leaves them no way to hear that their instruction landed — which is how <i>"expand
+    /// your search"</i> came to look like an instruction being ignored. The existing answer already
+    /// dates every price; this is the same honesty applied to the question rather than the result.
+    /// </para>
     /// </summary>
-    private static string DescribeCommodity(CommodityQuery query, CommodityAnswer answer, string near)
+    /// <param name="query">What was asked, knobs and all.</param>
+    /// <param name="answer">What came back.</param>
+    /// <param name="near">The reference system.</param>
+    /// <param name="maxPriceAge">The staleness bound actually used, in hours.</param>
+    /// <param name="askedPriceAge">
+    /// The staleness bound the model asked for, if it asked. Different from
+    /// <paramref name="maxPriceAge"/> only where the ask was refused, which is the one case that
+    /// has to name the knob and the ceiling rather than answering as though nothing happened.
+    /// </param>
+    private static string DescribeCommodity(
+        CommodityQuery query,
+        CommodityAnswer answer,
+        string near,
+        int maxPriceAge,
+        int? askedPriceAge)
     {
         var verb = query.Side == TradeSide.Buying ? "buying" : "selling";
 
@@ -718,7 +790,7 @@ public static class GalaxyCapability
                     + "quoting prices too old to trust rather than for having none.";
             }
 
-            return nothing;
+            return nothing + AsAsked(query, maxPriceAge, askedPriceAge);
         }
 
         var lines = new List<string>();
@@ -768,10 +840,73 @@ public static class GalaxyCapability
             report += $" {answer.DroppedAsStale} more were left out for quoting prices too old to trust.";
         }
 
+        report += AsAsked(query, maxPriceAge, askedPriceAge);
+
         report += " Prices are reported by other Commanders and can be out of date; supply moves fastest.";
 
         return report;
     }
+
+    /// <summary>
+    /// The knobs the Commander turned, said back to them, and the one that could not be turned as
+    /// far as they asked (#157).
+    /// <para>
+    /// <b>Silence is the default, and that is the point.</b> An unqualified search says nothing
+    /// here and reads exactly as it did before this existed. It is only a question that was
+    /// changed which gets told the change took — <i>"out to 500 ly, prices up to 60 days old"</i>
+    /// — because a widened search whose answer sounds identical to a narrow one is
+    /// indistinguishable from an instruction that was dropped.
+    /// </para>
+    /// <para>
+    /// <b>And a refused widening names the knob and the ceiling.</b> "That's as far as I search"
+    /// is the sentence this issue exists to delete: a bound the Commander cannot see is a bound
+    /// they cannot argue with, so the number gets said out loud with the parameter it belongs to.
+    /// </para>
+    /// </summary>
+    private static string AsAsked(CommodityQuery query, int maxPriceAge, int? askedPriceAge)
+    {
+        var refused = askedPriceAge is { } asked && asked > MaxPriceAgeHours;
+
+        var turned = new List<string>();
+
+        if (Math.Abs(query.MaxDistance - DefaultDistance) > 0.001)
+        {
+            turned.Add($"out to {query.MaxDistance:0.#} ly");
+        }
+
+        // Left out when the ask was refused, because the refusal below says the same number with
+        // the reason attached. Saying it twice reads as two facts rather than one.
+        if (maxPriceAge != DefaultPriceAgeHours && !refused)
+        {
+            turned.Add($"prices up to {Span(maxPriceAge)} old");
+        }
+
+        if (query.IncludeCarriers)
+        {
+            turned.Add("fleet carriers included");
+        }
+
+        var said = turned.Count > 0 ? $" Searched {string.Join(", ", turned)}." : string.Empty;
+
+        if (refused)
+        {
+            said +=
+                $" You asked for prices up to {Span(askedPriceAge!.Value)} old; max_price_age_hours "
+                + $"stops at {MaxPriceAgeHours:N0} hours — {Span(MaxPriceAgeHours)} — so that is what "
+                + "I searched.";
+        }
+
+        return said;
+    }
+
+    /// <summary>A stretch of hours in the words a Commander would use for it.</summary>
+    private static string Span(int hours) => hours switch
+    {
+        >= 8_760 and var y when y % 8_760 == 0 => y / 8_760 == 1 ? "a year" : $"{y / 8_760} years",
+        >= 48 and var d when d % 24 == 0 => $"{d / 24} days",
+        1 => "an hour",
+        _ => $"{hours:N0} hours",
+    };
 
     /// <summary>
     /// How old one quote is, in the words a Commander would use. A market they stood in themselves
