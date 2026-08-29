@@ -142,6 +142,19 @@ public class TheStressMarkGoesBeforeTheVowelTests
     [InlineData("Shinrarte")]
     [InlineData("observe")]
     [InlineData("Deciate")]
+
+    // The three gaps of #179, for the same reason. A rule that drops a coda changes which sounds
+    // are in the syllable, and a rule that moves a schwa in front of a consonant is the very shape
+    // of change that once put a mark in front of one.
+    [InlineData("table")]
+    [InlineData("acre")]
+    [InlineData("gentle")]
+    [InlineData("circle")]
+    [InlineData("Kamitrable")]
+    [InlineData("change")]
+    [InlineData("Deciange")]
+    [InlineData("Shinrartah")]
+    [InlineData("tah")]
     public void WhereverTheMarkIsTheNextSoundIsAVowel(string word) => MarksAVowel(word);
 
     /// <summary>
