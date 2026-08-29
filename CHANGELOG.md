@@ -27,11 +27,52 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
-## 0.90.0 — 2026-08-29 — The e English does not say, and a word the Commander gets the last word on
+## 0.90.0 — 2026-08-29 — Four lanes abreast
 
-[#153](https://github.com/dseelinger/d47/issues/153) and
-[#150](https://github.com/dseelinger/d47/issues/150). One neighbourhood — everything between an
-utterance and the phonemes a local voice is handed.
+Six issues in one release, built in four parallel sessions against one main and merged as one:
+[#150](https://github.com/dseelinger/d47/issues/150) and
+[#153](https://github.com/dseelinger/d47/issues/153) (the local voice),
+[#157](https://github.com/dseelinger/d47/issues/157) (the commodity search),
+[#164](https://github.com/dseelinger/d47/issues/164) (the audio flight recorder),
+[#175](https://github.com/dseelinger/d47/issues/175) and
+[#176](https://github.com/dseelinger/d47/issues/176) (where a donation lands, and the name it
+travels under).
+
+### The commodity search's knobs are the model's to turn (#157)
+
+`max_distance` loses its silent 250 ly clamp entirely; `max_price_age_hours` (default 720, ceiling
+8,760) and `include_carriers` become arguments rather than constants. A non-default knob is echoed
+back in the answer — *"Searched out to 500 ly, prices up to 60 days old."* — an unqualified search
+says nothing extra, and a price age past the ceiling is refused by name and number rather than
+narrowed in silence. The tool schema grew 241 bytes; the worst-case profile stands at 40,195 of the
+50,000 ceiling.
+
+### The audio flight recorder (#164)
+
+Set `D47_FLIGHT_RECORDER=1` and d47 retains, in a capped ring, what actually crossed the audio
+boundary in both directions: the buffer each transcription consumed beside what Whisper said it
+heard, and what left the speakers beside the text — with, for the local voice, the phoneme string
+the Phonemiser emitted, which is the column that turns a mispronunciation from an anecdote into a
+diagnosis. A kept row becomes a permanent test case. Unset, the recorder is absent from the surface
+entirely, the coverage recorder's rule. The wipe lives on the Privacy panel; recordings are left
+out of the rolling data snapshots the way `logs\` is; and the audio never joins a donated excerpt,
+because voice is biometric.
+
+### Where a donation lands, and the name it travels under (#175, #176)
+
+"There is no backend" is reversed on purpose: a Cloudflare Worker in `worker/` lands donation
+payloads in R2, capped so it cannot bill, holding no secrets — the bucket binding is the
+credential, and the shipped binary carries none. Until the Commander provisions it (five written
+steps in `worker/README.md`, two of them deliberately manual: activating R2 is the billing act, and
+a delete is verified to delete before the erasure sentence is believed) the endpoint setting is
+empty and no send button exists anywhere in d47. Donations travel under a random per-installation
+identifier — made on first donation, derived from nothing about the Commander, forgettable from the
+Privacy panel — so an accumulating history can accumulate without ever naming a person (#176), and
+an erasure request has something to claim without linkage doing the naming.
+
+### The local voice: the e English does not say, and a word the Commander gets the last word on (#150, #153)
+
+One neighbourhood — everything between an utterance and the phonemes a local voice is handed.
 
 ### #153, and the reported word was not the broken one
 
