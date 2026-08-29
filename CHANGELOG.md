@@ -27,6 +27,199 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.87.0 — 2026-08-28 — The events behind the complaint, with the words taken out
+
+[#160](https://github.com/dseelinger/d47/issues/160). A defect report arrives as prose, and the
+events that produced it stay on the reporter's machine — so the fix is tested against a
+reconstruction. **d47 can now cut the incident out of what it already holds**: the minimal journal
+sequence, the matching slice of its own log, scrubbed on the machine, shown in full, and handed
+over only on an explicit yes.
+
+Two halves, doing different work. The **journal half is the replay case** — `spike/CorpusReplay`
+already drives any directory of journal lines through the production fold, so a donated excerpt
+joins the suite with no harness changes and the fix cannot regress silently afterwards. The **log
+half is the diagnosis**: what d47 heard, what it decided, what it said, and how long each step
+took. A report wants both.
+
+### The journal is scrubbed by a field list; the log cannot be
+
+The personal surface of a journal is short and enumerable, so it is enumerated — `Commander` and
+`LoadGame`, chat, friends, crew and wing joins, ship names, squadrons. Names and Frontier IDs
+become consistent stand-ins; message bodies are dropped and the event's shape is kept, because a
+`ReceiveText` with no `Message` takes a path no live event ever takes. Everything else travels
+untouched: an `FSDJump` names a star system and an economy, not a person. A line the scrubber
+cannot read is **withheld whole and counted** — a scrubber that passes through what it could not
+read is not a scrubber.
+
+A log is free text and no field list can reach into a sentence, so the rule inverts. **The
+outburst is the bookmark, not the payload**: the instant travels and the words do not. d47's own
+lines travel by default, and for those the show step *is* the control — free text is reviewed as
+free text. The Commander's own speech is **held back unless they say otherwise**, per incident,
+because sometimes the exact words are the bug — a mishearing is reproduced by what was misheard —
+and sometimes they are nobody's business. **Another player's words never travel at all**, and
+there is no switch for that one: it is the same rule the journal half applies to chat, and a donor
+cannot consent on somebody else's behalf.
+
+### A pirate is not a person
+
+The events that name somebody who is not you — `PVPKill`, an interdiction, a death — fire on a
+person and not on a Frontier pirate. **Elite answers that question itself** on an interdiction,
+with `IsPlayer`, so the rule is conditioned on the flag rather than on the shape of a name: a
+condition read out of the event is still a field list, where a condition inferred from how a name
+looks would be the guesswork this is meant to avoid. A missing flag is not permission. `PVPKill`
+needs no condition — its victim is a player by definition — and a `Died` carries no flag at all,
+so there *cannot tell* resolves to scrub: over-replacing a Frontier pirate costs a replay a name
+nothing reasons about, and under-replacing hands over the one thing this exists to keep.
+
+**And a Frontier symbol is not a name.** `$ShipName_Military_Federation;` killed the Commander
+eleven times in the corpus; replacing it would break a lookup a replay may key on, and no
+Commander is called one. Its translation goes with it — `X` and `X_Localised` are one datum
+rendered twice, and scrubbing only the readable half produced a killer who was
+`$ShipName_Military_Federation;` in one field and `CMDR ALPHA` in the next.
+
+Measured across the 912-journal corpus: **75 of 90 combat events now pass through untouched**,
+where all 90 were being rewritten before. The Commander does not fly Open, so not one of them was
+ever a real person — which is the point. The rule is there for the donors who do.
+
+### A carrier is PII, name and callsign both
+
+The Commander's ruling of 2026-08-29: **both can be looked up on INARA**, and the callsign is the
+key that site indexes carriers by, so it ties a carrier to an owner more reliably than the name
+does. `CarrierStats` restates the name 491 times over the corpus, which is what puts it inside any
+incident window where `SetUserShipName`'s equivalent would never be.
+
+**The callsign travels in twenty-odd events and only five of them say what they are.** `Docked`,
+`Location`, `Market` and the docking handshake carry `StationType`, so a per-event condition would
+have worked there — and `Shipyard`, `Outfitting`, `StoredShips`, `StoredModules` and `FCMaterials`
+carry nothing to condition on at all. Those are the events that list a Commander's whole fleet. So
+the rule is a field list whose treatment guards itself on shape, and it reaches every event.
+
+**Position is what makes a shape rule safe here**, and it was measured rather than assumed. A
+carrier is either the callsign alone — `B0X-79X`, 24 of 968 distinct station names, all 24 carriers
+— or a name with the callsign **last**: `GDS PREDATOR B0X-79X`, `EXAMPLE HAULAGE Q7Z-1AB`, 15,002
+distinct values and every one a carrier. A megaship wears the same shape at the **front**
+(`MVU-891 Bellmarsh-class Reformatory`, 464 distinct) and a minor faction wears one in the middle,
+off the catalogue number of the star it is named for (`LP 466-235 Gold Boys`, 63 distinct). Both
+are game facts, both stay, and both would have gone under a rule that looked for the shape anywhere.
+
+**Two of the fields were found by sweeping rather than by reading the schema.**
+`SupercruiseDestinationDrop.Type` mixes Frontier symbols, ordinary stations and carriers with
+nothing on the event to tell them apart; `CodexEntry.NearestDestination` says what you were closest
+to when you scanned something. Between them, 205 lines that a table written from the schema would
+have kept. **Across the corpus: 170,747 lines Elite calls a fleet carrier, none of them still
+holding a callsign afterwards, and 2,003 megaship and faction lines untouched.**
+
+### A squadron is PII, and pulling that thread found five more things
+
+The Commander's ruling of 2026-08-29: **a squadron of one is a pseudonym for a person**, and its
+name and its id both resolve on INARA. A minor faction is not — it is Frontier's, it belongs to the
+galaxy rather than to anybody, and it stays. The id keeps its type through the scrub: Elite writes
+it as an integer on every event but one, and a replay handed `"SQ01"` where it expected a number is
+not redacted, it is corrupt.
+
+Asking the corpus what else still named a real person after the rules ran turned up five more, and
+**none of them would have been found by reading the schema.**
+
+- **`$cmdr_decorate:#name=EXAMPLE CHARLIE;` — a real player wearing a symbol's clothes.** A hole this
+  build opened for itself: `ReceiveText.From` had been scrubbed since the first version, and the
+  rule sparing Frontier's `$…;` symbols quietly stopped it. 15,970 values across the corpus, in
+  chat, in `ShipTargeted` and in `Bounty`. The decoration is now spliced — the name goes, the
+  wrapper stays, because a replay that undecorates names takes a different branch on a value that
+  is no longer decorated. `$npc_name_decorate:` is untouched: an NPC is not a person.
+- **`PilotName_Localised`, which leaked *after* the raw half was fixed.** Rules run in table order,
+  so by the time the prose half is reached its partner already holds a stand-in and the real name
+  is only in the map. One person now reads as one stand-in in both fields; two would be a person
+  the report's reader cannot follow.
+- **`ShipTargeted.PilotName` and `Bounty.PilotName`** were not on the list at all.
+- **`LoadGame.Group`** — a private group, which people name after themselves. 78 of the corpus's
+  `LoadGame` events carry another Commander's name there.
+- **`CrimeVictim.Offender`** — a real person every time; an NPC does not generate one.
+
+### And a squadron's carrier is not identified like anybody else's
+
+The whole carrier ruleset above is built on the `XXX-XXX` callsign, and **a squadron carrier has
+none**. `Callsign` holds the four-character squadron tag, `StationName` holds that bare tag, and a
+scan reads `EXA EXAMPLE HORIZON | EX01`. Three shapes now, not one — the callsign alone, a name
+with the callsign last, and a name with a tag after a pipe — plus the tag itself wherever the event
+says it is at a carrier.
+
+**The five events that say nothing about what kind of station they are** — `Shipyard`, `Outfitting`,
+`StoredShips`, `StoredModules`, `FCMaterials` — are covered by what the excerpt has already ruled
+on rather than by a shape: a bare `EX01` is indistinguishable from a station's name until some
+other event in the same window says otherwise, and one always does. An ordinary station is not in
+that map and comes back untouched.
+
+Swept the way an excerpt actually scrubs — one set of stand-ins per journal — **3,870 corpus lines
+naming a real person, group or squadron tag, and none of them still naming one afterwards.**
+
+### The flag that undid the squadron scrub
+
+An excerpt replaces `EXAMPLE SQUADRON` with `SQUADRON ALPHA` and its id with a stand-in — and then a
+jump three lines later points at a minor faction and says `SquadronFaction: true`. One hop on INARA
+from there to the squadron and its member list. 275 events over the corpus, across `FSDJump`,
+`Location` and `CarrierJump`, flagging two factions.
+
+**Dropped rather than falsified.** There is nothing to stand in for a `true`, and writing `false`
+would be a lie to whoever reads the report. The minor factions themselves stay, on the Commander's
+ruling; what goes is only the sentence saying which one is theirs. It costs nothing — d47 reads
+neither this field, nor `SquadronName`, nor `SquadronID`, so the production fold behaves identically
+without it. That was checked rather than assumed: the first read of this said dropping it would cost
+a replay real game state, and a `grep` said otherwise.
+
+The report counts it and says so, because a report that quietly takes something out is a report
+making a claim it has not stated. Across the corpus: 275 of 275 cleared, and nothing dropped from
+any of the other 712,432 lines.
+
+### Fail-closed did not hold, and Elite is why
+
+The same sweep crashed. **Elite writes duplicate keys** — an assassination mission carries `Target`
+twice, 11 lines over 912 journals — which `JsonNode` parses happily and then throws on at the first
+enumeration, with an exception type the scrubber's catch did not name. It escaped, which for a
+component whose whole contract is *a line I could not read does not travel* meant reaching a
+Commander mid-donation as a crash instead.
+
+The catch is deliberately wide now. Guessing the next shape Frontier writes is a worse bet than
+holding everything: the cost of withholding a line that would have been fine is one line, and it is
+counted and stated.
+
+### One thing the tests could not have found
+
+The pseudonyms cross from the journal half into the log half, or they are worth nothing — a
+scrubbed `LoadGame` three lines above the real name has protected nobody. That worked in every
+test and leaked on the first real session. Elite writes `Commander` and `LoadGame` **once, at the
+front of a file**, so an incident three hours in contains neither and there was no stand-in to
+substitute; d47's log meanwhile names the Commander in what it *says* — *"JOHN DEPARAGON is in
+Eurybia, docked at…"* — 107 times in one day. Who is flying is now handed in from outside the
+window. The Windows account name goes the same way, for the same reason: the log prints it on
+every path, dozens of times in a startup, and a show step that has to catch each one by eye is a
+show step that will miss one.
+
+### One act per donation, and no backend
+
+The excerpt is shown in the window that will hand it over, rendered by **the same code that fills
+the clipboard** — a preview assembled one way and a payload assembled another are two artefacts,
+and the Commander only ever read one of them. Copying closes the window, so the next donation is a
+fresh decision rather than this consent spent twice. There is no standing consent, no remembered
+choice, and nothing that sends anything: a scrubbed excerpt is kilobytes and travels inside the
+GitHub issue itself, pasted there by hand. Having the mechanism does not make it automatic — the
+`promote` rule, applied here.
+
+`Donate excerpt…` sits beside `Copy All` on the Journal, Raw Journal and D47 Log readings, and on
+the desktop window alone. The headset has neither a clipboard to put the result on nor a file
+picker to write it with, and a surface that cannot finish the act does not offer it.
+
+**The pane wraps, though a payload reads better as the lines it is.** Unwrapped with a horizontal
+scrollbar was the first cut, and rendering it against a real session settled it: every paragraph
+above the payload — what was replaced, what was withheld, what is being agreed to — ran off the
+right edge. A wrapped journal line is ugly; a consent notice you have to scroll sideways to find
+is worse than ugly.
+
+Whole-journal corpus donation stays out of scope on purpose. Storage was never the blocker —
+935 journals are 32.5 MB gzipped, so 500 Commanders would be about 16 GB — consent design is, and
+custody of other people's play histories is not taken on speculatively.
+
+---
+
 ## 0.86.0 — 2026-08-28 — Four answers that were sure of themselves
 
 Nothing new here, on purpose. Four issues where d47 said something wrong, or said the right thing

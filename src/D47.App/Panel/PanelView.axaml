@@ -692,6 +692,31 @@
                   ToolTip.Tip="Copy this whole page to the clipboard"
                   Click="OnCopyClick" />
           <!--
+            The other thing a Commander does with these two pages, and the one Copy All cannot do
+            (#160). Copy hands over the page as it stands — the Commander's name, other people's
+            messages, a screenful of whatever happened to be on screen. This cuts a window around
+            an incident, scrubs it, and shows exactly what would leave before anything does.
+
+            Worded rather than a glyph, unlike Copy beside it. Copy is a verb everybody already
+            knows and a clipboard icon says it; this is a thing nobody has done before and an icon
+            for it would be a small picture nobody presses. Shown only on the two pages it can cut
+            from, and only where a host has wired it — the headset has no clipboard and no file
+            picker, so on that surface it is simply absent.
+          -->
+          <Button x:Name="DonateButton"
+                  DockPanel.Dock="Left"
+                  Margin="0,0,6,0"
+                  Height="28"
+                  VerticalAlignment="Center"
+                  VerticalContentAlignment="Center"
+                  HorizontalContentAlignment="Center"
+                  Padding="10,0"
+                  IsVisible="False"
+                  Content="Donate excerpt…"
+                  FontSize="{StaticResource D47.Type.Secondary}"
+                  ToolTip.Tip="Cut the journal and log around an incident, scrubbed, to attach to a bug report"
+                  Click="OnDonateClick" />
+          <!--
             The clear affordance sits inside the field, not beside it. Another sibling in this
             StackPanel would sit outside the border and read as a fourth button in a row that
             already has Copy and the two steppers, rather than as part of the box it empties.

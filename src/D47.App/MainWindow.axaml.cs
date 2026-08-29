@@ -14,6 +14,7 @@ using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Interface;
+using D47.Core.Diagnostics.Donation;
 using D47.Core.Listening;
 using D47.Core.Audio;
 using D47.Core.Conversation;
@@ -155,6 +156,12 @@ public partial class MainWindow : Window
             // And the JSON behind them, which is this window's alone: a wall of fields is there to
             // be selected and pasted into a bug report, which is an act with no meaning in mid-air.
             Panel.EnableRawJournal();
+
+            // The sharper half of that same act (#160). Selecting a wall of JSON and pasting it
+            // hands over whatever happened to be on screen, the Commander's name and other
+            // people's messages included; this cuts a window around the incident, scrubs it, and
+            // shows exactly what would leave before any of it does.
+            Panel.EnableDonation(() => _ = ShowDonationAsync(host));
 
             // The window that can show settings says so; the headset's copy of this same view
             // is handed nothing and therefore has no Settings tab (Phase 12). The second
@@ -1314,6 +1321,62 @@ public partial class MainWindow : Window
             _host.SpendLedger,
             _host.Settings.Current,
             TimeZoneInfo.Local).Over(this);
+    }
+
+    /// <summary>
+    /// Cuts an incident out of what is already in memory, and puts it in front of the Commander
+    /// (<a href="https://github.com/dseelinger/d47/issues/160">#160</a>).
+    /// <para>
+    /// <b>The mark is now.</b> The outburst that prompted it — said aloud, or the press of the
+    /// button — is the bookmark and nothing more: the instant travels and the words do not. The
+    /// window either side of it is the Commander's to widen in the review.
+    /// </para>
+    /// <para>
+    /// <b>Noise included, and that is not the page's rule broken.</b> <c>JournalLog</c> calls a set
+    /// of high-volume kinds noise and hides them <em>from a reader</em>; a replay is not a reader,
+    /// and an excerpt with the inventory chatter cut out of it is a sequence the production fold
+    /// never sees. Which is the same distinction that class already draws: a display filter and
+    /// never a read filter.
+    /// </para>
+    /// <para>
+    /// <b>The account name is substituted along with the pseudonyms.</b> A log names the Windows
+    /// profile on every path it prints — dozens of times in a startup — and the review step is the
+    /// control for a log's free text, not a proofreading exercise. Supplied from here because Core
+    /// reads no environment, the same way it reads no clock.
+    /// </para>
+    /// </summary>
+    private async Task ShowDonationAsync(AppHost host)
+    {
+        var profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+        // Longest first, so the folder is replaced before the account name inside it and the
+        // second pass has nothing left to half-match. Pseudonyms.Replacements orders itself for
+        // the same reason; this list is short enough to order by hand.
+        var machine = new List<KeyValuePair<string, string>>
+        {
+            new(profile, "%USERPROFILE%"),
+            new(Environment.UserName, "%USERNAME%"),
+        };
+
+        // Read on a worker: it opens the file the sink is still writing, and a five-minute window
+        // of a busy session is several megabytes to seek past.
+        var log = await Task.Run(() => Logging.LogTail.Read(host.Paths.Logs, 8 * 1024 * 1024, 200_000));
+
+        var journal = host.JournalLog.Read(noise: true);
+        var paperwork = new ExcerptPaperwork(BuildInfo.Full, DateTimeOffset.Now);
+
+        await new Controls.DonateExcerptWindow(
+            DateTimeOffset.Now,
+            request => ExcerptReport.Render(
+                IncidentExcerpt.Take(
+                    journal,
+                    log,
+                    request,
+                    TimeZoneInfo.Local,
+                    machine,
+                    host.GameState.Active?.Identity,
+                    host.GameState.Active?.Carrier),
+                paperwork)).Over(this);
     }
 
     private async Task CheckForUpdateAsync(AppHost host)

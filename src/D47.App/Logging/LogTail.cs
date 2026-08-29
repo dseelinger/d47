@@ -31,7 +31,15 @@ public static class LogTail
     /// arithmetic is a guess. The same rule the journal reader already follows.
     /// </para>
     /// </summary>
-    public static string Read(string folder)
+    /// <param name="maxBytes">
+    /// How much of the end to read, defaulting to the page's window. An incident excerpt asks for
+    /// more (<a href="https://github.com/dseelinger/d47/issues/160">#160</a>): the page shows a
+    /// screenful and an excerpt cuts a stretch of minutes out of it, and a busy minute of d47 runs
+    /// to hundreds of lines. A parameter rather than a second reader, so there is one thing that
+    /// knows how to open a file the sink is still writing.
+    /// </param>
+    /// <param name="maxLines">The same, for the line trim that follows the byte window.</param>
+    public static string Read(string folder, long maxBytes = MaxBytes, int maxLines = MaxLines)
     {
         if (!Directory.Exists(folder))
         {
@@ -57,9 +65,9 @@ public static class LogTail
             FileAccess.Read,
             FileShare.ReadWrite | FileShare.Delete);
 
-        if (file.Length > MaxBytes)
+        if (file.Length > maxBytes)
         {
-            file.Seek(-MaxBytes, SeekOrigin.End);
+            file.Seek(-maxBytes, SeekOrigin.End);
         }
 
         using var reader = new StreamReader(file, Encoding.UTF8);
@@ -69,8 +77,8 @@ public static class LogTail
 
         // The first line is a fragment whenever the window started mid-file. Dropped rather
         // than shown, because half a timestamp reads as corruption.
-        var from = file.Length > MaxBytes && lines.Length > 1 ? 1 : 0;
-        var kept = lines.Length - from > MaxLines ? lines.Length - MaxLines : from;
+        var from = file.Length > maxBytes && lines.Length > 1 ? 1 : 0;
+        var kept = lines.Length - from > maxLines ? lines.Length - maxLines : from;
 
         return string.Join('\n', lines[kept..]).TrimEnd();
     }
