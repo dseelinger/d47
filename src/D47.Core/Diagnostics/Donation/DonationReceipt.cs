@@ -189,6 +189,14 @@ public static class DonationReceipt
                 : "Nothing arrived, so there is nothing to delete.");
 
         receipt.AppendLine();
+
+        // **It named the object and never said who to name it to** (#166). A receipt that tells a
+        // donor exactly what to quote and nothing about where to quote it is a withdrawal route
+        // that stops one step short of being one — so the address goes here, next to the thing to
+        // be quoted, rather than at the end of the section.
+        receipt.AppendLine(DonationNotice.Line);
+
+        receipt.AppendLine();
         receipt.AppendLine(
             envelope.Kind == DonationEnvelope.Corpus
                 ? "A journal history is kept **indefinitely** — that is what it is for; a "

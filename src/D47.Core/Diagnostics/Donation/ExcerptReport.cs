@@ -97,6 +97,14 @@ public static class ExcerptReport
             + "ask about removal wherever it ended up.");
 
         report.AppendLine();
+
+        // **The notice travels with the thing it describes** (#166). The paragraph above says what
+        // happens to this excerpt; it does not say who ends up holding it, on what basis, or where
+        // to ask — and the in-app Privacy page cannot, because it answers what this build reaches
+        // rather than who is left with what. One line, at the one moment the answer is wanted.
+        report.AppendLine(DonationNotice.Line);
+
+        report.AppendLine();
         Half(
             report,
             $"Journal — {Count(excerpt.Tally.JournalEvents, "event")}, replay-ready",
