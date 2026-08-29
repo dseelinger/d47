@@ -300,8 +300,34 @@ the coordinates, so "how far" has the same answer wherever it is asked from.
 Where to buy a named module or ship, nearest first.
 
 ```json
-{"type":"object","properties":{"commodity":{"type":"string","description":"A commodity traded there, by name."},"large_pad":{"type":"boolean","description":"Only stations with a large landing pad."},"limit":{"type":"integer","description":"How many to return, 1 to 20. Default 5."},"max_distance":{"type":"number","description":"How far to look, in light years. Default 50."},"module":{"type":"string","description":"A module to be sold there, by name \u2014 \u0022Frame Shift Drive\u0022."},"module_class":{"type":"string","description":"Module size, 0 to 8.","enum":["0","1","2","3","4","5","6","7","8"]},"module_rating":{"type":"string","description":"Module rating, A to I.","enum":["A","B","C","D","E","F","G","H","I"]},"near":{"type":"string","description":"Search out from this system. Defaults to theirs."},"selling":{"type":"boolean","description":"Sell it rather than buy it."},"ship":{"type":"string","description":"A ship to be sold there, by name \u2014 \u0022Krait MkII\u0022."},"tonnes":{"type":"integer","description":"How many tonnes, if they said."}},"required":[],"additionalProperties":false}
+{"type":"object","properties":{"commodity":{"type":"string","description":"A commodity traded there, by name."},"include_carriers":{"type":"boolean","description":"Also fleet carriers, whose prices are player-set and can move."},"large_pad":{"type":"boolean","description":"Only stations with a large landing pad."},"limit":{"type":"integer","description":"How many to return, 1 to 20. Default 5."},"max_distance":{"type":"number","description":"How far to look, in light years. Default 50."},"max_price_age_hours":{"type":"integer","description":"How stale a quoted price may be, in hours. Default 720, one month."},"module":{"type":"string","description":"A module to be sold there, by name \u2014 \u0022Frame Shift Drive\u0022."},"module_class":{"type":"string","description":"Module size, 0 to 8.","enum":["0","1","2","3","4","5","6","7","8"]},"module_rating":{"type":"string","description":"Module rating, A to I.","enum":["A","B","C","D","E","F","G","H","I"]},"near":{"type":"string","description":"Search out from this system. Defaults to theirs."},"selling":{"type":"boolean","description":"Sell it rather than buy it."},"ship":{"type":"string","description":"A ship to be sold there, by name \u2014 \u0022Krait MkII\u0022."},"tonnes":{"type":"integer","description":"How many tonnes, if they said."}},"required":[],"additionalProperties":false}
 ```
+
+**Every knob the commodity half has is an argument** ([#157](https://github.com/dseelinger/d47/issues/157)).
+It used not to be. `max_distance` was clamped to 250 inside the handler, so *"expand your search
+out to 500 light years"* became 250 with nothing said, and the staleness bound was not a parameter
+at all, so *"expand your staleness filter"* had no road from the sentence to the search. Both read
+as an assistant ignoring an instruction when it was the schema that could not say yes.
+
+So there is **no ceiling on `max_distance`** now. What bounds the radius is what the source honours
+and how far the sweep actually reaches — and the sweep says how far it got in its own words, which
+is the truthful version of the sentence the cap was inventing. `max_price_age_hours` and
+`include_carriers` were both decisions taken in the handler and are now the Commander's to change:
+carriers are still out by default, because their prices are player-set and the station itself may
+be a hundred light years away by the time anybody arrives, but a carrier is sometimes the only
+seller and INARA's equivalent search includes them.
+
+Two rules ride along with that, and they are the reason the knobs are safe to expose.
+
+**A question that was changed is said back.** A search that swept five hundred light years and one
+that swept fifty read identically otherwise, which leaves a Commander no way to hear that their
+instruction landed — so a non-default radius, price age or carrier setting is echoed: *"Searched
+out to 500 ly, prices up to 60 days old."* An unqualified search says nothing and reads exactly as
+it did before this existed.
+
+**A refused widening names its knob and its ceiling.** `max_price_age_hours` stops at 8,760 — a
+year — and asking past it says so with the parameter's own name attached rather than narrowing the
+question in silence. *"That's as far as I search"* is the sentence the change exists to delete.
 
 Module and ship names are **not** in the schema. There are 132 modules and 48 ships, and an
 `enum` that large sits in prompt position 1 where one changed byte invalidates the whole cached
