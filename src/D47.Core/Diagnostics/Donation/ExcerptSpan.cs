@@ -15,8 +15,7 @@ namespace D47.Core.Diagnostics.Donation;
 /// <b>The list stops at half a day, and that number came from measuring rather than taste.</b> The
 /// consent this window asks for is <i>read this and say yes to it</i>, so the offer has to stop
 /// where reading does. Driven against a real Commander's journals and logs: six hours came to
-/// 48,000 characters — about one GitHub comment — while two days came to 1.8 million and a week to
-/// 5.3 million. A span nobody can read is not a wider version of this feature, it is a different
+/// 48,000 characters, while two days came to 1.8 million and a week to 5.3 million. A span nobody can read is not a wider version of this feature, it is a different
 /// one, and it is <a href="https://github.com/dseelinger/d47/issues/174">#174</a>.
 /// </para>
 /// <para>

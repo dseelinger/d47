@@ -208,7 +208,13 @@ public static class BuiltinCapabilities
         // above record the cost of. Null in every process that was not asked to record — which is
         // every ordinary run, the designer and every test — and the privacy capability then
         // registers without the row, rather than with a row saying nothing was recorded.
-        Diagnostics.Flight.FlightLog? flight = null) =>
+        Diagnostics.Flight.FlightLog? flight = null,
+
+        // Withdrawal that reaches the store and not only this machine (#167). LAST, by the same
+        // rule the three comments above record the cost of. Null under the designer and in every
+        // test that is not about it, and the privacy row then does what it did before — forgets
+        // the identifier here, which is the whole of what is possible with nowhere to ask.
+        LongPress? forgetDonations = null) =>
     [
         HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage),
@@ -312,7 +318,8 @@ public static class BuiltinCapabilities
         // The donation identifier is read from the same AppPaths the diagnostics rows already
         // take, so this list keeps the shape it has — no parameter inserted in the middle, which
         // is the one edit this file records as silently rebinding everything after it.
-        PrivacyCapability.Create(settings, searchAvailable, memories, flight, paths.DonorTokenFile),
+        PrivacyCapability.Create(
+            settings, searchAvailable, memories, flight, paths.DonorTokenFile, forgetDonations),
         SettingsCapability.Create(settings),
 
         // LAST, and it has to be last twice over (#50) - for two different reasons, which is what
