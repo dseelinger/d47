@@ -490,6 +490,70 @@ public class AnIncidentExcerptTests
     }
 
     /// <summary>
+    /// The flag that would have undone the two rules above it. An excerpt replaces the squadron's
+    /// name and id, and then a jump three lines later points at a minor faction and says
+    /// <c>SquadronFaction: true</c> — one hop on INARA from there to the squadron and its members.
+    /// <para>
+    /// <b>Dropped rather than falsified</b>, because there is nothing to stand in for a true and
+    /// <c>false</c> would be a lie to whoever reads the report. And it costs nothing: d47 reads
+    /// neither this field, nor <c>SquadronName</c>, nor <c>SquadronID</c>, so the production fold
+    /// behaves identically without it.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void TheFlagSayingWhichFactionIsTheSquadronsGoes()
+    {
+        var names = new Pseudonyms();
+        names.Squadron("GREYBEARD DELTA");
+
+        var scrubbed = JournalScrub.Line(
+            """{"event":"FSDJump","StarSystem":"Suchifuku","Factions":[{"Name":"Suchifuku Pirates","Influence":0.010},{"Name":"Formidine Greybeard Guild","Influence":0.684,"SquadronFaction":true}],"SystemFaction":{"Name":"Formidine Greybeard Guild"}}""",
+            names);
+
+        Assert.DoesNotContain("SquadronFaction", scrubbed.Json);
+
+        // Not falsified into the other answer.
+        Assert.DoesNotContain("false", scrubbed.Json);
+
+        // The factions themselves stay — they are Frontier's, and they belong to the galaxy rather
+        // than to anybody.
+        Assert.Contains("Formidine Greybeard Guild", scrubbed.Json);
+        Assert.Contains("Suchifuku Pirates", scrubbed.Json);
+        Assert.Contains("0.684", scrubbed.Json);
+
+        Assert.Equal(1, scrubbed.FieldsDropped);
+    }
+
+    /// <summary>
+    /// And the report says so. A report that quietly takes something out is a report making a claim
+    /// it has not stated.
+    /// </summary>
+    [Fact]
+    public void TheReportSaysTheLinkWasDropped()
+    {
+        var report = ExcerptReport.Render(
+            IncidentExcerpt.Take(
+                [Entry("""{"event":"FSDJump","Factions":[{"Name":"X","SquadronFaction":true}]}""", 3)],
+                string.Empty,
+                Window(),
+                Utc),
+            new ExcerptPaperwork("0.87.0", Noon));
+
+        Assert.Contains("1 squadron link dropped", report);
+
+        // And says nothing about it where there was none to drop.
+        Assert.DoesNotContain(
+            "squadron link",
+            ExcerptReport.Render(
+                IncidentExcerpt.Take(
+                    [Entry("""{"event":"FSDJump","StarSystem":"Eurybia"}""", 3)],
+                    string.Empty,
+                    Window(),
+                    Utc),
+                new ExcerptPaperwork("0.87.0", Noon)));
+    }
+
+    /// <summary>
     /// A minor faction stays, on the same ruling. It is Frontier's, it belongs to the galaxy rather
     /// than to anybody, and an excerpt that renamed it would stop being a replay case.
     /// </summary>
@@ -647,6 +711,15 @@ public class AnIncidentExcerptTests
     public void ALineThatWillNotParseIsWithheldWholeAndCounted()
     {
         Assert.Null(Scrubbed("{\"event\":\"FSDJump\",", new Pseudonyms()));
+
+        // **And a line that parses and then will not be read.** Elite writes duplicate keys — an
+        // assassination mission carries `Target` twice, 11 lines over the 912-journal corpus —
+        // which JsonNode accepts and then throws on at the first enumeration, with an exception
+        // type the catch here did not name. It escaped the scrubber entirely and would have reached
+        // a Commander mid-donation as a crash. Found by sweeping the corpus rather than by reading.
+        Assert.Null(Scrubbed(
+            """{"event":"MissionAccepted","Target":"$MissionUtil_FactionTag_Terrorists;","Target":"David Eaves","MissionID":1}""",
+            new Pseudonyms()));
 
         var excerpt = IncidentExcerpt.Take(
             [Entry("""{"event":"FSDJump","StarSystem":"Eurybia"}"""), Entry("not json at all", 1)],

@@ -117,6 +117,14 @@ public static class ExcerptReport
                       + $"({Count(tally.MySpeechLines, "line")})",
         };
 
+        if (tally.LinksDropped > 0)
+        {
+            said.Add(
+                $"{Count(tally.LinksDropped, "squadron link")} dropped — the flag saying which "
+                + "minor faction is the Commander's squadron's, which would have undone the "
+                + "squadron stand-ins in one hop");
+        }
+
         if (tally.JournalWithheld > 0)
         {
             said.Add(

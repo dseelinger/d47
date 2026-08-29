@@ -152,6 +152,36 @@ that map and comes back untouched.
 Swept the way an excerpt actually scrubs — one set of stand-ins per journal — **3,870 corpus lines
 naming a real person, group or squadron tag, and none of them still naming one afterwards.**
 
+### The flag that undid the squadron scrub
+
+An excerpt replaces `GREYBEARD DELTA` with `SQUADRON ALPHA` and its id with a stand-in — and then a
+jump three lines later points at a minor faction and says `SquadronFaction: true`. One hop on INARA
+from there to the squadron and its member list. 275 events over the corpus, across `FSDJump`,
+`Location` and `CarrierJump`, flagging two factions.
+
+**Dropped rather than falsified.** There is nothing to stand in for a `true`, and writing `false`
+would be a lie to whoever reads the report. The minor factions themselves stay, on the Commander's
+ruling; what goes is only the sentence saying which one is theirs. It costs nothing — d47 reads
+neither this field, nor `SquadronName`, nor `SquadronID`, so the production fold behaves identically
+without it. That was checked rather than assumed: the first read of this said dropping it would cost
+a replay real game state, and a `grep` said otherwise.
+
+The report counts it and says so, because a report that quietly takes something out is a report
+making a claim it has not stated. Across the corpus: 275 of 275 cleared, and nothing dropped from
+any of the other 712,432 lines.
+
+### Fail-closed did not hold, and Elite is why
+
+The same sweep crashed. **Elite writes duplicate keys** — an assassination mission carries `Target`
+twice, 11 lines over 912 journals — which `JsonNode` parses happily and then throws on at the first
+enumeration, with an exception type the scrubber's catch did not name. It escaped, which for a
+component whose whole contract is *a line I could not read does not travel* meant reaching a
+Commander mid-donation as a crash instead.
+
+The catch is deliberately wide now. Guessing the next shape Frontier writes is a worse bet than
+holding everything: the cost of withholding a line that would have been fine is one line, and it is
+counted and stated.
+
 ### One thing the tests could not have found
 
 The pseudonyms cross from the journal half into the log half, or they are worth nothing — a

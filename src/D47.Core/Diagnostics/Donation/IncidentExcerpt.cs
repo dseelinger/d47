@@ -44,6 +44,10 @@ public sealed record ExcerptRequest(
 /// <param name="LogEntries">d47 log entries that travelled.</param>
 /// <param name="MySpeechLines">Entries carrying the Commander's own words, travelling or not.</param>
 /// <param name="MySpeechIncluded">Whether those travelled.</param>
+/// <param name="LinksDropped">
+/// Fields removed outright rather than replaced — in practice the flag saying which minor faction
+/// belongs to the Commander's squadron, which would otherwise undo the squadron scrub in one hop.
+/// </param>
 /// <param name="InGameMessages">
 /// Messages whose words were dropped, counted <b>across both halves</b> — Elite's own
 /// <c>ReceiveText</c> and <c>SendText</c> events, and the log entries where d47 re-voiced one.
@@ -57,7 +61,8 @@ public sealed record ExcerptTally(
     int LogEntries,
     int MySpeechLines,
     bool MySpeechIncluded,
-    int InGameMessages);
+    int InGameMessages,
+    int LinksDropped);
 
 /// <summary>
 /// One incident, in the two halves a report wants: <b>the replay case and the diagnosis</b>
@@ -164,6 +169,7 @@ public sealed record IncidentExcerpt(
         var events = new List<string>();
         var withheld = 0;
         var messages = 0;
+        var links = 0;
 
         // Oldest first, whatever order the source held them in. The page shows newest first
         // because that is what a reader wants; a replay is not a reader, and an excerpt handed to
@@ -178,6 +184,7 @@ public sealed record IncidentExcerpt(
             {
                 events.Add(line);
                 messages += scrubbed.BodiesDropped;
+                links += scrubbed.FieldsDropped;
             }
             else
             {
@@ -223,7 +230,8 @@ public sealed record IncidentExcerpt(
                 lines.Count,
                 mine,
                 request.IncludeMySpeech,
-                messages));
+                messages,
+                links));
     }
 
     /// <summary>

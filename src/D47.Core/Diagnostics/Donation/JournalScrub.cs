@@ -12,7 +12,11 @@ namespace D47.Core.Diagnostics.Donation;
 /// result, because the report makes a claim about it — "no in-game message arrived in this window"
 /// and a silence read the same, and only one of them is true.
 /// </param>
-public sealed record ScrubbedLine(string? Json, int BodiesDropped);
+/// <param name="FieldsDropped">
+/// How many fields were removed outright. Counted for the same reason: a report that quietly takes
+/// something out is a report making a claim it has not stated.
+/// </param>
+public sealed record ScrubbedLine(string? Json, int BodiesDropped, int FieldsDropped);
 
 /// <summary>What one field is replaced with.</summary>
 public enum Scrub
@@ -42,6 +46,14 @@ public enum Scrub
 
     /// <summary>A message body: the words go, the field stays.</summary>
     Body,
+
+    /// <summary>
+    /// The field goes entirely. <b>The only treatment that removes rather than replaces</b>, and it
+    /// exists for a value that is not a name at all: a flag whose whole content is <em>this one is
+    /// mine</em>. There is nothing to stand in for a true, and writing <c>false</c> would be a lie
+    /// to whoever reads the report.
+    /// </summary>
+    Drop,
 
     /// <summary>
     /// A squadron's id, in either shape Elite writes it — the numeric one it keys by, and the
@@ -125,6 +137,19 @@ public static class JournalScrub
     [
         new("SquadronName", Scrub.Squadron),
         new("SquadronID", Scrub.SquadronId),
+
+        // **The flag that undoes the two rules above it.** An excerpt replaces GREYBEARD DELTA with
+        // SQUADRON ALPHA and its id with a stand-in, and then a jump three lines later points at a
+        // minor faction and says SquadronFaction: true — one hop on INARA from there to the
+        // squadron and its member list. Minor factions stay, on the Commander's ruling; what goes
+        // is only the sentence saying which one is theirs.
+        //
+        // Dropped rather than falsified, and the cost is nothing rather than a replay's game state:
+        // grep the source and d47 reads neither this field, nor SquadronName, nor SquadronID, so
+        // the production fold behaves identically without it. 275 events over the corpus, across
+        // FSDJump, Location and CarrierJump — a global rule rather than three, because the field
+        // name means one thing wherever it appears.
+        new("SquadronFaction", Scrub.Drop),
         new("FID", Scrub.FrontierId),
 
         // The fields a fleet carrier's identity arrives in, across twenty-odd events — the
@@ -315,17 +340,18 @@ public static class JournalScrub
     public static ScrubbedLine Line(string json, Pseudonyms names)
     {
         var bodies = 0;
+        var dropped = 0;
 
         try
         {
             if (JsonNode.Parse(json) is not JsonObject root)
             {
-                return new ScrubbedLine(null, 0);
+                return new ScrubbedLine(null, 0, 0);
             }
 
             foreach (var rule in Everywhere)
             {
-                Anywhere(root, rule, names, ref bodies);
+                Anywhere(root, rule, names, ref bodies, ref dropped);
             }
 
             if (root["event"]?.GetValue<string>() is { } kind &&
@@ -333,24 +359,32 @@ public static class JournalScrub
             {
                 foreach (var rule in rules)
                 {
-                    Apply(root, rule, names, ref bodies);
+                    Apply(root, rule, names, ref bodies, ref dropped);
                 }
             }
 
             // One message rather than one field. ReceiveText carries the same sentence twice — raw
             // and localised — and counting fields would report two messages where one arrived.
-            return new ScrubbedLine(root.ToJsonString(Flat), bodies > 0 ? 1 : 0);
+            return new ScrubbedLine(root.ToJsonString(Flat), bodies > 0 ? 1 : 0, dropped);
         }
-        catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException)
+        catch (Exception)
         {
-            // Fail closed. A line this could not read is a line nobody has checked, and the whole
-            // claim being made about the excerpt is that everything in it was checked.
-            return new ScrubbedLine(null, 0);
+            // **Fail closed, and the catch is deliberately wide.** A line this could not read is a
+            // line nobody has checked, and the whole claim being made about the excerpt is that
+            // everything in it was checked — so an unanticipated shape has to withhold rather than
+            // escape. Anything thrown here reaches a Commander mid-donation as a crash.
+            //
+            // It was a list of three exception types until the corpus was swept for what these
+            // rules touch. Elite writes **duplicate keys**: an assassination mission carries
+            // `Target` twice, 11 lines over 912 journals, which JsonNode parses happily and then
+            // throws ArgumentException on at the first enumeration. Guessing the next one is a
+            // worse bet than holding everything.
+            return new ScrubbedLine(null, 0, 0);
         }
     }
 
     /// <summary>Walks the whole node applying one field rule wherever the field appears.</summary>
-    private static void Anywhere(JsonNode? node, Rule rule, Pseudonyms names, ref int bodies)
+    private static void Anywhere(JsonNode? node, Rule rule, Pseudonyms names, ref int bodies, ref int dropped)
     {
         switch (node)
         {
@@ -359,11 +393,11 @@ public static class JournalScrub
                 {
                     if (string.Equals(key, rule.Path, StringComparison.Ordinal))
                     {
-                        Replace(json, key, rule.Scrub, names, ref bodies);
+                        Replace(json, key, rule.Scrub, names, ref bodies, ref dropped);
                         continue;
                     }
 
-                    Anywhere(value, rule, names, ref bodies);
+                    Anywhere(value, rule, names, ref bodies, ref dropped);
                 }
 
                 break;
@@ -371,7 +405,7 @@ public static class JournalScrub
             case JsonArray array:
                 foreach (var item in array)
                 {
-                    Anywhere(item, rule, names, ref bodies);
+                    Anywhere(item, rule, names, ref bodies, ref dropped);
                 }
 
                 break;
@@ -379,7 +413,7 @@ public static class JournalScrub
     }
 
     /// <summary>Applies one event rule, resolving the three path shapes.</summary>
-    private static void Apply(JsonObject root, Rule rule, Pseudonyms names, ref int bodies)
+    private static void Apply(JsonObject root, Rule rule, Pseudonyms names, ref int bodies, ref int dropped)
     {
         // A condition that is absent is a condition that is not met. Elite omits `IsPlayer` from
         // events it has nothing to say about, and a missing flag read as permission would make the
@@ -393,7 +427,7 @@ public static class JournalScrub
 
         if (bracket < 0)
         {
-            Replace(root, rule.Path, rule.Scrub, names, ref bodies);
+            Replace(root, rule.Path, rule.Scrub, names, ref bodies, ref dropped);
             return;
         }
 
@@ -426,7 +460,7 @@ public static class JournalScrub
         {
             if (item is JsonObject element)
             {
-                Replace(element, field, rule.Scrub, names, ref bodies);
+                Replace(element, field, rule.Scrub, names, ref bodies, ref dropped);
             }
         }
     }
@@ -451,10 +485,19 @@ public static class JournalScrub
     }
 
     /// <summary>Replaces one property's value in place, and does nothing where there is none.</summary>
-    private static void Replace(JsonObject owner, string field, Scrub scrub, Pseudonyms names, ref int bodies)
+    private static void Replace(
+        JsonObject owner, string field, Scrub scrub, Pseudonyms names, ref int bodies, ref int dropped)
     {
         if (!owner.ContainsKey(field))
         {
+            return;
+        }
+
+        // Before the text check, because a flag is a boolean and Text() would answer null for it.
+        if (scrub == Scrub.Drop)
+        {
+            owner.Remove(field);
+            dropped++;
             return;
         }
 
