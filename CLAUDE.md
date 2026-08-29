@@ -237,10 +237,13 @@ not change is that **no path may tag a commit nothing has tested**: `-SkipCi` re
 of the check, so it turns the local run back on rather than being refused. It used to read the other
 way round, as `-SkipTests`.
 
-**Four commands sit on top of it, and they are on the Commander's PATH.** *Added 2026-08-27; the fourth on 2026-08-28.*
-Each is a `.ps1` in `tools/` with a bash and a `.cmd` shim beside it that contain no logic, and a
-pointer in `%LOCALAPPDATA%\..\.local\bin` — so `release.ps1` stays the one implementation and there
-is no second description of any rule to disagree with the first.
+**Five commands are on the Commander's PATH, four of them on top of `release.ps1`.** *Added
+2026-08-27; the fourth on 2026-08-28 and the fifth on 2026-08-29.* Each is a `.ps1` in `tools/`
+with a bash and a `.cmd` shim beside it that contain no logic, and a pointer in
+`%LOCALAPPDATA%\..\.local\bin` — so `release.ps1` stays the one implementation and there is no
+second description of any rule to disagree with the first. **A new one owes its bash shim an entry
+in `.gitattributes`' `eol=lf` list**: `* text=auto` checks it out with CRLF otherwise, and a
+shebang followed by a carriage return is not an interpreter path.
 
 | Command | What it does |
 |---|---|
@@ -248,6 +251,7 @@ is no second description of any rule to disagree with the first.
 | `promote` | Promotes the newest waiting pre-release to latest (`tools/promote.ps1`). **`release` is the same command** — both names are on the PATH, because the file is `promote.ps1` and that is the word the Commander reaches for |
 | `get-ver <spec>` | Downloads, verifies and installs a named build — `0.79.0`, `0.79`, `prerelease`, `latest` |
 | `get-local` | Publishes **this working tree** and installs it over the installed d47, so a change can be driven without cutting a release for it |
+| `flight-on` | Starts the installed d47 with the audio flight recorder on, for that run only. Not a release command; it is here because it is the same shape and the same PATH |
 
 **`prerelease` automates the one decision a person gets wrong.** It reads the commits since the
 last tag for what they say they close, asks GitHub for those issues' labels, and calls it a minor
@@ -357,3 +361,12 @@ So **`bin` is disposable again**, which is the point.
 running app, and which have changed since they last were, to `data/coverage.md`. A workbench
 aid for knowing what is left to try by hand — off, and entirely absent from the surface,
 unless that variable is set.
+
+**The audio flight recorder takes the same shape, and since 2026-08-29 it has a road with no shell
+in it** ([#180](https://github.com/dseelinger/d47/issues/180)). `D47_FLIGHT_RECORDER=1` still works
+and `--flight-recorder` on the command line does the same thing — which is what a desktop shortcut
+can carry, and what `flight-on` passes. The gate is unchanged and deliberately so: both roads are
+per-run, neither is remembered, and unasked-for there is no row, no review pane and no file. **A
+permanent settings toggle is a recorded non-option** — it would put "d47 can record audio" in front
+of every installation forever, which is the reading the gating exists to spare a Commander who
+never asked for it.

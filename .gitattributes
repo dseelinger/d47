@@ -21,3 +21,4 @@ tools/get-ver text eol=lf
 *.sh text eol=lf
 tools/prerelease text eol=lf
 tools/promote text eol=lf
+tools/flight-on text eol=lf
