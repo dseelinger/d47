@@ -86,6 +86,12 @@ GitHub issue itself, pasted there by hand. Having the mechanism does not make it
 the desktop window alone. The headset has neither a clipboard to put the result on nor a file
 picker to write it with, and a surface that cannot finish the act does not offer it.
 
+**The pane wraps, though a payload reads better as the lines it is.** Unwrapped with a horizontal
+scrollbar was the first cut, and rendering it against a real session settled it: every paragraph
+above the payload — what was replaced, what was withheld, what is being agreed to — ran off the
+right edge. A wrapped journal line is ugly; a consent notice you have to scroll sideways to find
+is worse than ugly.
+
 Whole-journal corpus donation stays out of scope on purpose. Storage was never the blocker —
 935 journals are 32.5 MB gzipped, so 500 Commanders would be about 16 GB — consent design is, and
 custody of other people's play histories is not taken on speculatively.

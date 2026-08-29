@@ -79,7 +79,15 @@ public sealed class DonateExcerptWindow : Window
         Name = "Excerpt",
         FontFamily = new FontFamily("Cascadia Mono,Consolas,monospace"),
         FontSize = TypeScale.Small,
-        TextWrapping = TextWrapping.NoWrap,
+
+        // **Wrapped, though a payload reads better as the lines it is.** Unwrapped with a
+        // horizontal scrollbar was the first cut, and rendering it against a real session showed
+        // what is wrong with that: the paragraphs above the payload — what was replaced, what was
+        // withheld, what the Commander is agreeing to — all ran off the right edge, and the one
+        // thing this window exists to do is put those in front of somebody before they say yes.
+        // A wrapped journal line is ugly. A consent notice you have to scroll sideways to find is
+        // worse than ugly.
+        TextWrapping = TextWrapping.Wrap,
     };
 
     private readonly TextBlock _size = new() { FontSize = TypeScale.Small };
@@ -121,10 +129,9 @@ public sealed class DonateExcerptWindow : Window
         DockPanel.SetDock(options, Dock.Top);
         DockPanel.SetDock(footer, Dock.Bottom);
 
-        // Both directions. A journal event is one long line and wrapping it would turn the pane
-        // into prose — the Commander is checking a payload, and a payload is read as the lines it
-        // is. Horizontal scrolling is exactly right here and wrong on every other window in this
-        // folder, which is why the reason is written down beside it (#87).
+        // Vertical only, like every other window in this folder and for the reason recorded on
+        // SpendWindow (#87): a ScrollViewer that may scroll horizontally measures its content with
+        // unconstrained width, which makes the wrapping above a no-op.
         var pane = new Border
         {
             BorderThickness = new Thickness(1),
@@ -134,7 +141,7 @@ public sealed class DonateExcerptWindow : Window
             {
                 Name = "ExcerptScroller",
                 Content = _preview,
-                HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
                 VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             },
         };

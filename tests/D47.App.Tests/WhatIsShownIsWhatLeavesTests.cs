@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
+using Avalonia.Media;
 using Avalonia.VisualTree;
 using D47.App.Controls;
 using D47.Core.Diagnostics.Donation;
@@ -90,6 +91,33 @@ public class WhatIsShownIsWhatLeavesTests
         var window = Shown(_ => string.Empty);
 
         Assert.False(Control<CheckBox>(window, "IncludeMySpeech").IsChecked);
+    }
+
+    /// <summary>
+    /// And all of it is readable without going looking for it.
+    /// <para>
+    /// The first cut left the pane unwrapped with a horizontal scrollbar, on the argument that a
+    /// payload reads better as the lines it is. Rendering it against a real session showed what
+    /// that costs: the paragraphs above the payload — what was replaced, what was withheld, what
+    /// the Commander is agreeing to — all ran off the right edge, and putting those in front of
+    /// somebody before they say yes is the entire job of this window.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void NothingSitsOffTheRightEdge()
+    {
+        var window = Shown(_ => string.Empty);
+
+        Assert.Equal(
+            TextWrapping.Wrap,
+            Control<SelectableTextBlock>(window, "Excerpt").TextWrapping);
+
+        // The other half of it, and the reason is recorded on SpendWindow (#87): a ScrollViewer
+        // that may scroll horizontally measures its content with unconstrained width, which makes
+        // the wrapping above a no-op.
+        Assert.Equal(
+            ScrollBarVisibility.Disabled,
+            Control<ScrollViewer>(window, "ExcerptScroller").HorizontalScrollBarVisibility);
     }
 
     /// <summary>
