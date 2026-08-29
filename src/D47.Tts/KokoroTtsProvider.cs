@@ -34,6 +34,7 @@ public sealed class KokoroTtsProvider : ITtsProvider, IDisposable
     private const int ModelSampleRate = 24_000;
 
     private readonly string _folder;
+    private readonly string? _pronunciations;
     private readonly ILogger<KokoroTtsProvider> _logger;
     private readonly Lock _gate = new();
 
@@ -41,10 +42,24 @@ public sealed class KokoroTtsProvider : ITtsProvider, IDisposable
     private Dictionary<string, long>? _vocabulary;
     private Phonemiser? _phonemiser;
 
-    public KokoroTtsProvider(string folder, ILogger<KokoroTtsProvider> logger)
+    /// <param name="folder">Where the model, the voices and the dictionary are.</param>
+    /// <param name="logger">
+    /// Also where the ladder says its work: at Debug it names the rung every segment came off,
+    /// which is the line #153 was investigated without. <c>D47.Tts</c> is the Voice subsystem, so
+    /// turning Voice up is how a Commander turns it on.
+    /// </param>
+    /// <param name="pronunciations">
+    /// The Commander's own corrections (#150), or null where nothing may override the ladder —
+    /// which is what a provider built for an audition rather than for the app wants.
+    /// </param>
+    public KokoroTtsProvider(
+        string folder,
+        ILogger<KokoroTtsProvider> logger,
+        string? pronunciations = null)
     {
         _folder = folder;
         _logger = logger;
+        _pronunciations = pronunciations;
     }
 
     public string Id => ProviderId;
@@ -143,8 +158,15 @@ public sealed class KokoroTtsProvider : ITtsProvider, IDisposable
 
             _session ??= new InferenceSession(Path.Combine(_folder, "model.onnx"));
             _vocabulary ??= ReadVocabulary();
-            _phonemiser ??= new Phonemiser(PhonemeDictionary.Read(
-                Path.Combine(_folder, "phoneme_dict.json"), _logger));
+
+            // The vocabulary before the phonemiser, and not only for tidiness: it is what decides
+            // whether a hand-written IPA override is sayable at all (#150). A symbol with no token
+            // is dropped on the way to the model, so an entry made of them is silence — and an
+            // override that silences a word is worse than the wrong word it was correcting.
+            _phonemiser ??= new Phonemiser(
+                PhonemeDictionary.Read(Path.Combine(_folder, "phoneme_dict.json"), _logger),
+                Overrides(_vocabulary),
+                Note);
 
             _logger.LogInformation(
                 "The local voice is loaded ({Milliseconds} ms)", started.ElapsedMilliseconds);
@@ -152,6 +174,33 @@ public sealed class KokoroTtsProvider : ITtsProvider, IDisposable
             return (_session, _vocabulary, _phonemiser);
         }
     }
+
+    /// <summary>
+    /// The Commander's correction file, watching this voice's own symbol set, or null where this
+    /// provider was built without one.
+    /// </summary>
+    private PronunciationOverrides? Overrides(Dictionary<string, long> vocabulary) =>
+        _pronunciations is null
+            ? null
+            : new PronunciationOverrides(
+                _pronunciations,
+                vocabulary.Keys
+                    .Where(symbol => symbol.Length == 1)
+                    .Select(symbol => symbol[0])
+                    .ToHashSet(),
+
+                // A rejected entry is named once per version of the file, at Warning: it is a
+                // thing to go and fix, and a Commander who edited a file and heard no change
+                // needs to be told why without turning anything up.
+                entry => _logger.LogWarning("{Entry}", entry));
+
+    /// <summary>
+    /// Which rung of the ladder a segment came off. One line per segment is a lot of lines, which
+    /// is why it is Debug and why the Voice subsystem's level is the switch.
+    /// </summary>
+    private void Note(string segment, PhonemeRung rung, string ipa) =>
+        _logger.LogDebug(
+            "\"{Segment}\" came off the {Rung} rung as {Ipa}", segment, rung, ipa);
 
     /// <summary>
     /// The phoneme vocabulary, read from the file rather than transcribed into the source: a
