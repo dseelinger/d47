@@ -462,6 +462,168 @@ public class AnIncidentExcerptTests
         Assert.Contains(told.Log, line => line.Contains("CARRIER ALPHA (ZZ0-001)"));
     }
 
+    /// <summary>
+    /// A squadron is PII in both halves — the Commander's ruling of 2026-08-29: a squadron of one
+    /// is a pseudonym for a person, and name and id both resolve on INARA. The id keeps its type,
+    /// because Elite writes it as a number on every event but one.
+    /// </summary>
+    [Fact]
+    public void ASquadronsNameAndIdBothGo()
+    {
+        var names = new Pseudonyms();
+
+        var startup = Scrubbed(
+            """{"event":"SquadronStartup","SquadronName":"GREYBEARD DELTA","SquadronID":57404,"CurrentRank":3}""",
+            names);
+
+        Assert.DoesNotContain("GREYBEARD DELTA", startup);
+        Assert.DoesNotContain("57404", startup);
+        Assert.Contains("SQUADRON ALPHA", startup);
+        Assert.Contains("\"SquadronID\":900000", startup);
+        Assert.Contains("\"CurrentRank\":3", startup);
+
+        // And the four-character tag another Commander's ship wears, which is the same field
+        // holding a different shape.
+        Assert.Contains(
+            "\"SquadronID\":\"SQ01\"",
+            Scrubbed("""{"event":"ShipTargeted","SquadronID":"OV40","Ship":"python"}""", names));
+    }
+
+    /// <summary>
+    /// A minor faction stays, on the same ruling. It is Frontier's, it belongs to the galaxy rather
+    /// than to anybody, and an excerpt that renamed it would stop being a replay case.
+    /// </summary>
+    [Fact]
+    public void AMinorFactionIsNotASquadron()
+    {
+        var jump = Scrubbed(
+            """{"event":"FSDJump","StarSystem":"Zapalang","SystemFaction":{"Name":"Peraesii Empire Consulate"},"Factions":[{"Name":"Zapalang Silver Power Services","Influence":0.085402}]}""",
+            new Pseudonyms());
+
+        Assert.Contains("Peraesii Empire Consulate", jump);
+        Assert.Contains("Zapalang Silver Power Services", jump);
+    }
+
+    /// <summary>
+    /// A squadron's carrier is identified quite differently from a private one, and the callsign
+    /// rules missed all of it: <c>Callsign</c> holds the squadron tag rather than a
+    /// <c>XXX-XXX</c> callsign, <c>StationName</c> holds that bare tag, and a scan reads
+    /// <c>"GBD FORMIDINE DREAMS | OV40"</c>.
+    /// </summary>
+    [Fact]
+    public void ASquadronsCarrierIsIdentifiedDifferentlyAndStillGoes()
+    {
+        var names = new Pseudonyms();
+
+        var stats = Scrubbed(
+            """{"event":"CarrierStats","CarrierID":3713474048,"CarrierType":"SquadronCarrier","Callsign":"OV40","Name":"GBD FORMIDINE DREAMS","DockingAccess":"squadron"}""",
+            names);
+
+        Assert.DoesNotContain("GBD FORMIDINE DREAMS", stats);
+        Assert.DoesNotContain("OV40", stats);
+        Assert.Contains("SquadronCarrier", stats);
+
+        var signal = Scrubbed(
+            """{"event":"FSSSignalDiscovered","SignalName":"GBD FORMIDINE DREAMS | OV40","SignalType":"FleetCarrier"}""",
+            names);
+
+        Assert.DoesNotContain("OV40", signal);
+
+        // The bare tag where the station says it is a carrier...
+        Assert.DoesNotContain(
+            "OV40",
+            Scrubbed(
+                """{"event":"Docked","StationName":"OV40","StationType":"FleetCarrier","MarketID":3713474048}""",
+                names));
+
+        // ...and where it says nothing at all, which is the case the shape rules cannot reach. It
+        // is covered because CarrierStats above already ruled on that value in this same excerpt.
+        Assert.DoesNotContain(
+            "OV40",
+            Scrubbed("""{"event":"StoredShips","StationName":"OV40","ShipsHere":[]}""", names));
+    }
+
+    /// <summary>
+    /// The hole the symbol exemption opened for itself. <c>$cmdr_decorate:#name=…;</c> is a real
+    /// player wearing a symbol's clothes, and <c>ReceiveText.From</c> had been scrubbed since the
+    /// first version until the rule that spares Frontier's symbols quietly stopped it.
+    /// </summary>
+    [Fact]
+    public void APlayerWearingASymbolsClothesIsStillAPlayer()
+    {
+        var names = new Pseudonyms();
+
+        var chat = Scrubbed(
+            """{"event":"ReceiveText","From":"$cmdr_decorate:#name=CALVIN INSTI;","Message":"hi","Channel":"player"}""",
+            names);
+
+        Assert.DoesNotContain("CALVIN INSTI", chat);
+
+        // The wrapper survives, because it is game state: a replay that undecorates names takes a
+        // different branch on a value that is no longer decorated.
+        Assert.Contains("$cmdr_decorate:#name=", chat);
+
+        // An NPC in the same clothes is left entirely alone — it is a Frontier symbol and a lookup
+        // a replay may key on.
+        Assert.Contains(
+            "$npc_name_decorate:#name=Amilia Sutton;",
+            Scrubbed(
+                """{"event":"ReceiveText","From":"$npc_name_decorate:#name=Amilia Sutton;","Message":"x","Channel":"npc"}""",
+                names));
+    }
+
+    /// <summary>
+    /// And the prose half of that pair, which leaked after the raw half was fixed: the rules run in
+    /// table order, so by the time the localised field is reached its partner already holds a
+    /// stand-in and the real name is only in the map.
+    /// </summary>
+    [Fact]
+    public void BothHalvesOfAPilotsNameReadAsTheSamePerson()
+    {
+        var scrubbed = Scrubbed(
+            """{"event":"ShipTargeted","PilotName":"$RolePanel2_unmanned; $cmdr_decorate:#name=JOHN DEPARAGON;","PilotName_Localised":"unmanned CMDR JOHN DEPARAGON","Ship":"sidewinder"}""",
+            new Pseudonyms());
+
+        Assert.NotNull(scrubbed);
+        Assert.DoesNotContain("JOHN DEPARAGON", scrubbed);
+
+        // One person, one stand-in, in both fields — a person with two is a person a reader of the
+        // report cannot follow.
+        Assert.Contains("CMDR ALPHA", scrubbed);
+        Assert.DoesNotContain("CMDR BRAVO", scrubbed);
+
+        // The game state around the name survives.
+        Assert.Contains("RolePanel2_unmanned", scrubbed);
+        Assert.Contains("unmanned CMDR", scrubbed);
+    }
+
+    /// <summary>
+    /// Two more found by the same sweep: a private group, which people name after themselves, and
+    /// whoever committed a crime against the Commander — a real person every time, since an NPC
+    /// does not generate one of these.
+    /// </summary>
+    [Fact]
+    public void APrivateGroupAndAnOffenderAreBothPeople()
+    {
+        var names = new Pseudonyms();
+
+        var load = Scrubbed(
+            """{"event":"LoadGame","FID":"F735466","Commander":"JOHN DEPARAGON","Group":"BRADFYRD","Ship":"python"}""",
+            names);
+
+        Assert.DoesNotContain("BRADFYRD", load);
+        Assert.DoesNotContain("JOHN DEPARAGON", load);
+        Assert.Contains("\"Ship\":\"python\"", load);
+
+        var crime = Scrubbed(
+            """{"event":"CrimeVictim","Offender":"CALVIN INSTI","CrimeType":"assault","Bounty":400}""",
+            names);
+
+        Assert.DoesNotContain("CALVIN INSTI", crime);
+        Assert.Contains("\"CrimeType\":\"assault\"", crime);
+        Assert.Contains("\"Bounty\":400", crime);
+    }
+
     /// <summary>A field whose name means one thing wherever it appears, replaced wherever it does.</summary>
     [Fact]
     public void ASquadronIsReplacedWhateverEventNamesIt()

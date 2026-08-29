@@ -42,6 +42,14 @@ public enum Scrub
 
     /// <summary>A message body: the words go, the field stays.</summary>
     Body,
+
+    /// <summary>
+    /// A squadron's id, in either shape Elite writes it — the numeric one it keys by, and the
+    /// four-character tag another Commander's ship wears. <b>The stand-in keeps the type</b>: a
+    /// number stays a number, because a replay that parses this field would not survive being
+    /// handed a string.
+    /// </summary>
+    SquadronId,
 }
 
 /// <summary>
@@ -71,7 +79,14 @@ public enum Scrub
 /// carry the same name the Commander chose, and scrubbing only the event that sets it would leave
 /// it in the one event every excerpt contains. And a handful of events name <em>other</em> players
 /// outright — <c>PVPKill</c>, an interdiction, a death — which is the same personal surface
-/// reached by a different door.
+/// reached by a different door — as does the pilot of a ship the Commander targeted or shot,
+/// which Elite writes as a Frontier symbol for an NPC and as <c>$cmdr_decorate:#name=…;</c> for a
+/// person.
+/// <para>
+/// <b>A squadron is on the list twice</b>, name and id, on the Commander's ruling of 2026-08-29: a
+/// squadron of one is a pseudonym for a person, and both halves resolve on INARA. A minor faction
+/// is not — it is Frontier's, it belongs to the galaxy rather than to anybody, and it stays.
+/// </para>
 /// <para>
 /// <b>Those combat events fire on a person and not on a pirate</b>, which is the Commander's ruling
 /// of 2026-08-29: <i>scrub whenever it is a real player's name or Frontier ID</i>. Elite answers
@@ -92,11 +107,11 @@ public static class JournalScrub
     /// strings as <c>Others[]</c>, or a field inside an array of objects as <c>Killers[].Name</c>.
     /// </summary>
     /// <param name="OnlyWhen">
-    /// A boolean field on the event that has to be true, or the rule does not fire. It exists for
-    /// the one question this table cannot answer from a field name — <b>is the person named here a
-    /// person</b> — on the events where Elite answers it itself with <c>IsPlayer</c>. A condition
-    /// read out of the event is still a field list; a condition inferred from the shape of a name
-    /// would be the guesswork this class refuses.
+    /// A condition on the event that has to hold — <c>"Field"</c> for a boolean that must be true,
+    /// <c>"Field=Value"</c> for a string that must match. It exists for the questions this table
+    /// cannot answer from a field name: <b>is the person named here a person</b> (<c>IsPlayer</c>),
+    /// <b>is this station a carrier</b> (<c>StationType</c>). A condition read out of the event is
+    /// still a field list; a condition inferred from the shape of a name would be guesswork.
     /// </param>
     private sealed record Rule(string Path, Scrub Scrub, string? OnlyWhen = null);
 
@@ -109,6 +124,7 @@ public static class JournalScrub
     private static readonly Rule[] Everywhere =
     [
         new("SquadronName", Scrub.Squadron),
+        new("SquadronID", Scrub.SquadronId),
         new("FID", Scrub.FrontierId),
 
         // The fields a fleet carrier's identity arrives in, across twenty-odd events — the
@@ -148,7 +164,6 @@ public static class JournalScrub
         // Identity. Two events say it, under different field names, and both are the front of
         // every journal file.
         ["Commander"] = [new("Name", Scrub.Person)],
-        ["LoadGame"] = [new("Commander", Scrub.Person)],
         ["NewCommander"] = [new("Name", Scrub.Person)],
 
         // Chat. The body is another player's words on a ReceiveText and the Commander's own on a
@@ -211,8 +226,55 @@ public static class JournalScrub
         // A carrier's given name. Two events set or restate it, and CarrierStats restates it
         // constantly — 491 times over the corpus — which is what makes this reachable from any
         // incident window where SetUserShipName's equivalent would not be.
-        ["CarrierStats"] = [new("Name", Scrub.Carrier)],
+        // **A squadron's carrier is identified quite differently**, and the rules above miss all of
+        // it: `Callsign` holds the four-character squadron tag rather than a XXX-XXX callsign,
+        // `StationName` holds that same bare tag, and a scan reads "GBD FORMIDINE DREAMS | OV40".
+        // Found by sweeping the corpus for names known to be real rather than by reading the
+        // schema, which is the only way any of this was ever found.
+        ["CarrierStats"] =
+        [
+            new("Name", Scrub.Carrier),
+            new("Callsign", Scrub.SquadronId),
+        ],
         ["CarrierNameChange"] = [new("Name", Scrub.Carrier)],
+
+        // Who was flying the thing you targeted, or shot. **Overwhelmingly an NPC and sometimes
+        // not**, and Elite marks the difference itself: an NPC arrives as a Frontier symbol, a
+        // person arrives wrapped in `$cmdr_decorate:#name=…;`. The symbol exemption handles the
+        // first and deliberately does not cover the second — see IsGameSymbol.
+        ["ShipTargeted"] =
+        [
+            new("PilotName", Scrub.Person),
+            new("PilotName_Localised", Scrub.Person),
+        ],
+        ["Bounty"] =
+        [
+            new("PilotName", Scrub.Person),
+            new("PilotName_Localised", Scrub.Person),
+        ],
+
+        // The bare tag, where the global StationName rule could not recognise it. Conditioned on
+        // Elite's own word for what the station is, so an ordinary station keeps its name — and
+        // harmless on a private carrier, whose StationName the global already turned into a
+        // stand-in that Pseudonyms.IsStandIn declines to scrub a second time.
+        ["Docked"] = [new("StationName", Scrub.SquadronId, OnlyWhen: "StationType=FleetCarrier")],
+        ["Undocked"] = [new("StationName", Scrub.SquadronId, OnlyWhen: "StationType=FleetCarrier")],
+        ["Location"] = [new("StationName", Scrub.SquadronId, OnlyWhen: "StationType=FleetCarrier")],
+        ["CarrierJump"] = [new("StationName", Scrub.SquadronId, OnlyWhen: "StationType=FleetCarrier")],
+        ["Market"] = [new("StationName", Scrub.SquadronId, OnlyWhen: "StationType=FleetCarrier")],
+        ["DockingRequested"] = [new("StationName", Scrub.SquadronId, OnlyWhen: "StationType=FleetCarrier")],
+        ["DockingGranted"] = [new("StationName", Scrub.SquadronId, OnlyWhen: "StationType=FleetCarrier")],
+        ["DockingDenied"] = [new("StationName", Scrub.SquadronId, OnlyWhen: "StationType=FleetCarrier")],
+        ["DockingCancelled"] = [new("StationName", Scrub.SquadronId, OnlyWhen: "StationType=FleetCarrier")],
+        ["DockingTimeout"] = [new("StationName", Scrub.SquadronId, OnlyWhen: "StationType=FleetCarrier")],
+
+        // A private group's name, which people name after themselves: 78 of the corpus's LoadGame
+        // events carry another Commander's name in this field.
+        ["LoadGame"] = [new("Commander", Scrub.Person), new("Group", Scrub.Person)],
+
+        // Who committed a crime against the Commander. A real person every time — an NPC does not
+        // generate one of these.
+        ["CrimeVictim"] = [new("Offender", Scrub.Person)],
 
         // Events that can name somebody else. **Only where that somebody is a real person**, which
         // is the Commander's ruling of 2026-08-29 and the reason three of these carry a condition:
@@ -348,7 +410,7 @@ public static class JournalScrub
             {
                 // Through the same symbol check as every other value, though a wing mate is never
                 // called one: two roads to the same decision are two roads that eventually differ.
-                if (Text(array[index]) is { } name && !IsSymbol(name))
+                if (Text(array[index]) is { } name && !IsGameSymbol(name))
                 {
                     array[index] = JsonValue.Create(Stand(name, rule.Scrub, names));
                 }
@@ -373,24 +435,52 @@ public static class JournalScrub
     /// Whether a rule's condition holds on this event. Anything missing, or of the wrong type,
     /// answers no — a condition nobody stated is not a condition anybody met.
     /// </summary>
-    private static bool Holds(JsonObject root, string condition) =>
-        root[condition] is JsonValue flag && flag.TryGetValue<bool>(out var set) && set;
+    private static bool Holds(JsonObject root, string condition)
+    {
+        var equals = condition.IndexOf('=', StringComparison.Ordinal);
+
+        if (equals < 0)
+        {
+            return root[condition] is JsonValue flag && flag.TryGetValue<bool>(out var set) && set;
+        }
+
+        return string.Equals(
+            Text(root[condition[..equals]]),
+            condition[(equals + 1)..],
+            StringComparison.Ordinal);
+    }
 
     /// <summary>Replaces one property's value in place, and does nothing where there is none.</summary>
     private static void Replace(JsonObject owner, string field, Scrub scrub, Pseudonyms names, ref int bodies)
     {
-        if (!owner.ContainsKey(field) || Text(owner[field]) is not { } value)
+        if (!owner.ContainsKey(field))
+        {
+            return;
+        }
+
+        // The one field that arrives as a number as often as a string. A stand-in of the wrong type
+        // is not a redaction, it is a corrupt line: a replay reading SquadronID as an integer would
+        // throw on a value that says "SQ01".
+        if (scrub == Scrub.SquadronId
+            && owner[field] is JsonValue number
+            && number.TryGetValue<long>(out var id))
+        {
+            owner[field] = JsonValue.Create(names.SquadronNumber(id));
+            return;
+        }
+
+        if (Text(owner[field]) is not { } value)
         {
             return;
         }
 
         // A body goes whatever it looks like — a token in a Message is still somebody's line, and
-        // the words are not what a replay needs. Everything else leaves a symbol where it found it,
-        // **and leaves that symbol's translation with it**: `X` and `X_Localised` are one datum
-        // rendered twice, so a `KillerName` of `$ShipName_Military_Federation;` makes its partner
-        // "Federal Navy Ship" — a ship class, not a person, and replacing it read as absurd the
-        // first time the corpus was swept for what these rules touch.
-        if (scrub != Scrub.Body && (IsSymbol(value) || TranslatesASymbol(owner, field)))
+        // the words are not what a replay needs. Everything else leaves a game symbol where it
+        // found it, **and leaves that symbol's translation with it**: `X` and `X_Localised` are one
+        // datum rendered twice, so a `KillerName` of `$ShipName_Military_Federation;` makes its
+        // partner "Federal Navy Ship" — a ship class, not a person, and replacing it read as absurd
+        // the first time the corpus was swept for what these rules touch.
+        if (scrub != Scrub.Body && (IsGameSymbol(value) || TranslatesASymbol(owner, field)))
         {
             return;
         }
@@ -400,23 +490,94 @@ public static class JournalScrub
             bodies++;
         }
 
+        // **A decorated name is spliced, not replaced.** The value around it is game state — which
+        // role panel the pilot sat in, whether the ship was unmanned — and the pair has to agree:
+        // `PilotName` carries the decoration and `PilotName_Localised` carries the same person in
+        // prose, so the second reads the first's name rather than earning a stand-in of its own. A
+        // person with two stand-ins in one excerpt is a person a reader cannot follow.
+        if (scrub == Scrub.Person && DecoratedName(value) is { } inside)
+        {
+            owner[field] = JsonValue.Create(
+                value.Replace(inside, names.Person(inside), StringComparison.Ordinal));
+
+            return;
+        }
+
+        // The prose half of that pair, and it cannot splice the same way: the rules run in table
+        // order, so by the time this is reached the decoration beside it already holds a stand-in
+        // and the real name is only in the map. **This was a leak, found by running the rules over
+        // a decorated pair rather than over a decorated field** — PilotName came out as CMDR ALPHA
+        // and PilotName_Localised still said who they were.
+        if (scrub == Scrub.Person && DecoratedName(Partner(owner, field)) is not null)
+        {
+            var prose = value;
+
+            foreach (var (real, stand) in names.Replacements)
+            {
+                prose = prose.Replace(real, stand, StringComparison.OrdinalIgnoreCase);
+            }
+
+            // Whole-value if nothing matched, because a partner that says a person is here and a
+            // value this could not place is the one combination that must not travel intact.
+            owner[field] = JsonValue.Create(
+                ReferenceEquals(prose, value) || prose == value ? names.Person(value) : prose);
+
+            return;
+        }
+
         owner[field] = JsonValue.Create(Stand(value, scrub, names));
     }
+
+    /// <summary>The wrapper Frontier puts a <em>real Commander's</em> name inside.</summary>
+    private const string Decoration = "$cmdr_decorate:#name=";
 
     /// <summary>
     /// Whether a value is one of Frontier's own <c>$symbol;</c> tokens rather than anything a
     /// person is called — <c>$ShipName_Military_Federation;</c> killed the Commander eleven times
-    /// in the corpus, and <c>$npc_name_decorate:#name=...;</c> is how an NPC's name arrives.
+    /// in the corpus, and <c>$npc_name_decorate:#name=…;</c> is how an NPC's name arrives.
     /// <para>
-    /// <b>A symbol is left alone.</b> It is a game fact a replay may key on, replacing it would
-    /// break a lookup, and no player is called one — Frontier's <c>$…;</c> namespace is
-    /// localisation, and a Commander name never enters it. The one rule here that reads a value
-    /// rather than a field name, and it reads its <em>shape</em> rather than guessing at its
-    /// meaning.
+    /// <b>A game symbol is left alone.</b> It is a fact a replay may key on and replacing it would
+    /// break a lookup. The one rule here that reads a value rather than a field name, and it reads
+    /// its <em>shape</em> rather than guessing at its meaning.
+    /// </para>
+    /// <para>
+    /// <b>Except the one that is not a fact at all.</b> <c>$cmdr_decorate:#name=CALVIN INSTI;</c> is
+    /// a real player wearing a symbol's clothes, and it arrives in <c>ReceiveText.From</c>, in
+    /// <c>ShipTargeted.PilotName</c> and in <c>Bounty.PilotName</c> — 15,970 values across the
+    /// corpus. Exempting it was a hole this class opened for itself: <c>From</c> had been scrubbed
+    /// since the first version, and the symbol rule quietly stopped it. Found by sweeping for what
+    /// the rules actually touch rather than by reading them.
     /// </para>
     /// </summary>
-    private static bool IsSymbol(string value) =>
-        value.StartsWith('$') && value.EndsWith(';');
+    private static bool IsGameSymbol(string value) =>
+        value.StartsWith('$')
+        && value.EndsWith(';')
+        && !value.Contains(Decoration, StringComparison.Ordinal);
+
+    /// <summary>
+    /// The Commander's name inside a decoration, or null where there is none. Elite concatenates
+    /// tokens — <c>"$RolePanel2_unmanned; $cmdr_decorate:#name=BRADFYRD;"</c> — so this reads to the
+    /// terminator rather than to the end of the value.
+    /// </summary>
+    private static string? DecoratedName(string? value)
+    {
+        if (value is null)
+        {
+            return null;
+        }
+
+        var at = value.IndexOf(Decoration, StringComparison.Ordinal);
+
+        if (at < 0)
+        {
+            return null;
+        }
+
+        var from = at + Decoration.Length;
+        var end = value.IndexOf(';', from);
+
+        return end > from ? value[from..end] : null;
+    }
 
     /// <summary>
     /// A fleet carrier's identity in the two shapes Elite writes it, and the value untouched where
@@ -444,6 +605,11 @@ public static class JournalScrub
     /// </summary>
     private static string Carrier(string value, Pseudonyms names)
     {
+        if (names.IsStandIn(value))
+        {
+            return value;
+        }
+
         if (IsCallsign(value))
         {
             return names.Callsign(value);
@@ -451,9 +617,23 @@ public static class JournalScrub
 
         var space = value.LastIndexOf(' ');
 
-        return space > 0 && IsCallsign(value[(space + 1)..])
-            ? names.Carrier(value)
-            : value;
+        if (space > 0 && IsCallsign(value[(space + 1)..]))
+        {
+            return names.Carrier(value);
+        }
+
+        // "GBD FORMIDINE DREAMS | OV40" — a squadron's carrier, which wears its squadron's tag
+        // where a private one wears a callsign. The pipe is Frontier's own separator and appears in
+        // no other station name in the corpus.
+        if (value.Contains(" | ", StringComparison.Ordinal))
+        {
+            return names.Carrier(value);
+        }
+
+        // And last, a value this excerpt has already ruled on. It is what covers a squadron
+        // carrier's bare tag on the five events that say nothing about what kind of station they
+        // are: an ordinary station is not in the map and comes back untouched.
+        return names.Known(value, out var seen) ? seen : value;
     }
 
     private static bool IsCallsign(string value) =>
@@ -469,15 +649,20 @@ public static class JournalScrub
     /// true of the one is true of the other.
     /// </summary>
     private static bool TranslatesASymbol(JsonObject owner, string field) =>
+        Partner(owner, field) is { } original && IsGameSymbol(original);
+
+    /// <summary>The unlocalised half of an <c>X</c>/<c>X_Localised</c> pair, seen from the latter.</summary>
+    private static string? Partner(JsonObject owner, string field) =>
         field.EndsWith("_Localised", StringComparison.Ordinal)
-        && Text(owner[field[..^"_Localised".Length]]) is { } original
-        && IsSymbol(original);
+            ? Text(owner[field[..^"_Localised".Length]])
+            : null;
 
     private static string Stand(string value, Scrub scrub, Pseudonyms names) => scrub switch
     {
         Scrub.Person => names.Person(value),
         Scrub.FrontierId => names.FrontierId(value),
         Scrub.Squadron => names.Squadron(value),
+        Scrub.SquadronId => names.IsStandIn(value) ? value : names.SquadronTag(value),
         Scrub.Ship => names.Ship(value),
         Scrub.Carrier => names.Carrier(value),
         Scrub.Callsign => Carrier(value, names),

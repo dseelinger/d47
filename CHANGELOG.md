@@ -109,6 +109,49 @@ to when you scanned something. Between them, 205 lines that a table written from
 have kept. **Across the corpus: 170,747 lines Elite calls a fleet carrier, none of them still
 holding a callsign afterwards, and 2,003 megaship and faction lines untouched.**
 
+### A squadron is PII, and pulling that thread found five more things
+
+The Commander's ruling of 2026-08-29: **a squadron of one is a pseudonym for a person**, and its
+name and its id both resolve on INARA. A minor faction is not — it is Frontier's, it belongs to the
+galaxy rather than to anybody, and it stays. The id keeps its type through the scrub: Elite writes
+it as an integer on every event but one, and a replay handed `"SQ01"` where it expected a number is
+not redacted, it is corrupt.
+
+Asking the corpus what else still named a real person after the rules ran turned up five more, and
+**none of them would have been found by reading the schema.**
+
+- **`$cmdr_decorate:#name=CALVIN INSTI;` — a real player wearing a symbol's clothes.** A hole this
+  build opened for itself: `ReceiveText.From` had been scrubbed since the first version, and the
+  rule sparing Frontier's `$…;` symbols quietly stopped it. 15,970 values across the corpus, in
+  chat, in `ShipTargeted` and in `Bounty`. The decoration is now spliced — the name goes, the
+  wrapper stays, because a replay that undecorates names takes a different branch on a value that
+  is no longer decorated. `$npc_name_decorate:` is untouched: an NPC is not a person.
+- **`PilotName_Localised`, which leaked *after* the raw half was fixed.** Rules run in table order,
+  so by the time the prose half is reached its partner already holds a stand-in and the real name
+  is only in the map. One person now reads as one stand-in in both fields; two would be a person
+  the report's reader cannot follow.
+- **`ShipTargeted.PilotName` and `Bounty.PilotName`** were not on the list at all.
+- **`LoadGame.Group`** — a private group, which people name after themselves. 78 of the corpus's
+  `LoadGame` events carry another Commander's name there.
+- **`CrimeVictim.Offender`** — a real person every time; an NPC does not generate one.
+
+### And a squadron's carrier is not identified like anybody else's
+
+The whole carrier ruleset above is built on the `XXX-XXX` callsign, and **a squadron carrier has
+none**. `Callsign` holds the four-character squadron tag, `StationName` holds that bare tag, and a
+scan reads `GBD FORMIDINE DREAMS | OV40`. Three shapes now, not one — the callsign alone, a name
+with the callsign last, and a name with a tag after a pipe — plus the tag itself wherever the event
+says it is at a carrier.
+
+**The five events that say nothing about what kind of station they are** — `Shipyard`, `Outfitting`,
+`StoredShips`, `StoredModules`, `FCMaterials` — are covered by what the excerpt has already ruled
+on rather than by a shape: a bare `OV40` is indistinguishable from a station's name until some
+other event in the same window says otherwise, and one always does. An ordinary station is not in
+that map and comes back untouched.
+
+Swept the way an excerpt actually scrubs — one set of stand-ins per journal — **3,870 corpus lines
+naming a real person, group or squadron tag, and none of them still naming one afterwards.**
+
 ### One thing the tests could not have found
 
 The pseudonyms cross from the journal half into the log half, or they are worth nothing — a
