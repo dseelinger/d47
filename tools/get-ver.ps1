@@ -433,7 +433,10 @@ Write-Step "Installing $tag"
 # wizard is up, and the line below said "installed" whatever happened next: a cancelled wizard
 # reported success. Waiting is also what makes -Silent necessary rather than a nicety — an
 # unattended run that waits on clicks nobody is there to make is a hang.
-$arguments = if ($Silent) { @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART') } else { @() }
+# The @() is outside the if, as the asset match above already had to learn: an empty array
+# assigned out of an if-expression arrives as $null, and $null.Count is a StrictMode error —
+# which killed every non-silent install at exactly this line (#188).
+$arguments = @(if ($Silent) { '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' })
 
 $process =
     if ($arguments.Count -gt 0) {
