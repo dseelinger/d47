@@ -1,5 +1,6 @@
 using System.Reflection;
 using D47.Core.Audio;
+using D47.Core.Speech;
 
 namespace D47.Core;
 
@@ -22,6 +23,7 @@ public sealed class AppPaths
         SecretsFile = Path.Combine(Data, "secrets.json");
         ViewStateFile = Path.Combine(Data, "view-state.json");
         SpendFile = Path.Combine(Data, "spend.jsonl");
+        PronunciationsFile = Path.Combine(Data, PronunciationOverrides.FileName);
         VrActions = Path.Combine(Data, "vr-actions");
     }
 
@@ -89,6 +91,17 @@ public sealed class AppPaths
     /// row rather than the history, and readable by anything that can read a line at a time.
     /// </summary>
     public string SpendFile { get; }
+
+    /// <summary>
+    /// How the Commander wants a word said, where the local voice gets one wrong (#150).
+    /// <para>
+    /// <b>Optional and absent by default, and nothing here creates it.</b> Deleting it has to
+    /// restore shipped behaviour exactly, which a file d47 writes back on the next start would
+    /// not — so this is a path rather than a folder in <see cref="EnsureCreated"/>, and the
+    /// diagnostics page is where a Commander is told the name.
+    /// </para>
+    /// </summary>
+    public string PronunciationsFile { get; }
 
     /// <summary>
     /// The OpenVR action manifest and its binding files, written here rather than shipped as

@@ -3110,7 +3110,10 @@ public sealed class AppHost : IDisposable
     {
         var shared = _clients.GetValueOrDefault(TtsProviderCatalog.KokoroId);
         var own = shared is null
-            ? new KokoroTtsProvider(KokoroFolder(), _loggerFactory.CreateLogger<KokoroTtsProvider>())
+            ? new KokoroTtsProvider(
+                KokoroFolder(),
+                _loggerFactory.CreateLogger<KokoroTtsProvider>(),
+                Paths.PronunciationsFile)
             : null;
 
         try
@@ -3183,7 +3186,8 @@ public sealed class AppHost : IDisposable
         // which is the state a Commander needs to see in order to fetch them.
         TtsProviderCatalog.KokoroId => new KokoroTtsProvider(
             KokoroFolder(),
-            _loggerFactory.CreateLogger<KokoroTtsProvider>()),
+            _loggerFactory.CreateLogger<KokoroTtsProvider>(),
+            Paths.PronunciationsFile),
 
         _ => null,
     };

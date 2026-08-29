@@ -291,4 +291,38 @@ public class TheStressMarkGoesBeforeTheVowelTests
                 $"\"{said}\" marks a consonant at {i}.");
         }
     }
+
+    /// <summary>
+    /// <b>And the Commander's own corrections go through the same guard.</b> A respelling is run
+    /// down the ladder, so it produces marks the same way every other rung does — which means the
+    /// override file is a new road to the fault this file exists to catch, and it is closed here
+    /// rather than trusted. Raw IPA is deliberately not guarded: a Commander who writes the symbols
+    /// themselves has said where the mark goes.
+    /// </summary>
+    [Fact]
+    public void ARespelledOverrideMarksAVowel()
+    {
+        var folder = Directory.CreateTempSubdirectory("d47-marks").FullName;
+
+        try
+        {
+            var file = Path.Combine(folder, PronunciationOverrides.FileName);
+
+            File.WriteAllText(file, """{ "Deciat": "desh ee at", "Kuk": "kook" }""");
+
+            var said = new Phonemiser(null, new PronunciationOverrides(file))
+                .ToPhonemes("Deciat and Kuk");
+
+            for (var i = said.IndexOf(Mark); i >= 0; i = said.IndexOf(Mark, i + 1))
+            {
+                Assert.True(
+                    i + 1 < said.Length && Vowels.Contains(said[i + 1], StringComparison.Ordinal),
+                    $"\"{said}\" marks a consonant at {i}.");
+            }
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
 }

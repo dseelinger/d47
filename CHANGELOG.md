@@ -27,9 +27,11 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
-## 0.90.0 — 2026-08-29 — The e English does not say
+## 0.90.0 — 2026-08-29 — The e English does not say, and a word the Commander gets the last word on
 
-[#153](https://github.com/dseelinger/d47/issues/153).
+[#153](https://github.com/dseelinger/d47/issues/153) and
+[#150](https://github.com/dseelinger/d47/issues/150). One neighbourhood — everything between an
+utterance and the phonemes a local voice is handed.
 
 ### #153, and the reported word was not the broken one
 
@@ -73,12 +75,42 @@ as lengthens, because *ace* read with a /k/ would be a new wrongness bought with
 Half the proper nouns in the galaxy end consonant-plus-e, and every one of them said *-uh* the day
 it missed the dictionary. *Lave* is in the game's opening credits.
 
+### #150, the escape valve, built early because #153 is why
+
+**A file in `data\` outranks every rung d47 ships with.** `pronunciations.json`, absent by default,
+hot-reloaded, per installation. Edit it, save it, say the word again — the whole feature is
+*without leaving the game* rather than *without recompiling*. Delete it and shipped behaviour comes
+back exactly, which is why nothing writes one back.
+
+Two ways to write an entry, because IPA is expert-hostile. A **respelling** — `"Deciat": "dessy
+at"` — is run down the rest of the ladder as if it were the text, so it needs nothing but an ear;
+capitals in one are for the reader, since the ladder is case-blind. **Raw IPA**, marked `ipa:`,
+goes straight to the tokenizer for the Commander who wants the stress in an exact place.
+
+Keys are whole words, matched longest first, so `Shinrarta Dezhra` is one name and an entry for
+`male` can never reach inside `female` — [#146](https://github.com/dseelinger/d47/issues/146)'s
+lesson applied before it could be learned twice.
+
+**A bad entry degrades to the ladder and is named once.** Once per version of the file rather than
+once per utterance: the file is stamped before it is read, so a Commander hears about a typo when
+they save it and not on every line afterwards. *Unparseable IPA* is a real check rather than a
+guess — the provider hands the layer its own tokenizer vocabulary, so an entry containing a symbol
+this voice has no token for is refused by name. Without that it would have been dropped silently on
+the way to the model, and an override that silences a word is worse than the wrong word it
+corrected. A file that cannot be parsed at all leaves the last good entries standing, because a
+half-written file is what a save looks like from here.
+
+The path is on the Diagnostics page beside the data folder, with whether one has been written yet —
+"I edited it and nothing changed" is usually "you edited the other one". `docs/pronunciations.md`
+is the page, including the line that stops a bug report: cloud providers phonemise inside their own
+service and ignore this entirely.
+
 ### What is still wrong, and is nobody's business here
 
-Two things were found next door and left alone. `change` reads as `tʃæŋ`, because `nge` has no
-consonant spelling and the `ng` inside it matches first; `5.79` loses its decimal point and is
-spelled as three digits. Both predate this work, both are out of what was reported, and neither is
-#153.
+Three things were found next door and left alone. `change` reads as `tʃæŋ` because `nge` has no
+consonant spelling; `5.79` loses its decimal point and is spelled as three digits; a coda `h` is
+voiced, so a respelling like `tah` says the h. All three are dictionary words or out of scope, all
+three predate this work, and none of them is #153 or #150.
 
 ---
 

@@ -175,7 +175,7 @@ public class TheMarksAroundAWordAreNotSpelledTests
         var fell = new List<(string Segment, PhonemeRung Rung)>();
 
         var watched = new Phonemiser(
-            new Shipped(), (segment, rung, _) => fell.Add((segment, rung)));
+            new Shipped(), overrides: null, note: (segment, rung, _) => fell.Add((segment, rung)));
 
         watched.ToPhonemes("Guardian Kamitra GQPI");
 
@@ -193,7 +193,7 @@ public class TheMarksAroundAWordAreNotSpelledTests
     {
         var fell = new List<(string Segment, PhonemeRung Rung)>();
 
-        new Phonemiser(new Shipped(), (segment, rung, _) => fell.Add((segment, rung)))
+        new Phonemiser(new Shipped(), overrides: null, note: (segment, rung, _) => fell.Add((segment, rung)))
             .ToPhonemes("**Guardian**");
 
         Assert.Contains(("Guardian", PhonemeRung.Dictionary), fell);

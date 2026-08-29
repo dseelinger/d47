@@ -18,6 +18,9 @@ public interface IPronunciationDictionary
 /// </summary>
 public enum PhonemeRung
 {
+    /// <summary>The Commander's own override file, which wins over everything.</summary>
+    Override,
+
     /// <summary>The shipped dictionary.</summary>
     Dictionary,
 
@@ -49,6 +52,8 @@ public enum PhonemeRung
 /// per segment:
 /// </para>
 /// <list type="number">
+/// <item>a word the Commander has corrected in <see cref="PronunciationOverrides"/> is said their
+/// way, which is the one rung nothing outranks (#150);</item>
 /// <item>a word the dictionary holds is said the dictionary's way;</item>
 /// <item>a word with an apostrophe inside it is built from its stem — see
 /// <see cref="Contractions"/>, added on the day the voice was first heard aloud saying
@@ -83,6 +88,7 @@ public enum PhonemeRung
 /// </summary>
 public sealed class Phonemiser(
     IPronunciationDictionary? dictionary = null,
+    PronunciationOverrides? overrides = null,
     Action<string, PhonemeRung, string>? note = null)
 {
     /// <summary>What a segment turned out to be, which is what decides the dash beside it.</summary>
@@ -145,11 +151,20 @@ public sealed class Phonemiser(
             return string.Empty;
         }
 
-        return Say(text, SpokenLetters.AccentOf(voiceId));
+        // Before anything is read: the Commander may have corrected a word since the last line was
+        // spoken. Once per utterance rather than once per word, and a stat rather than a read
+        // unless the file has actually moved — see PronunciationOverrides.Refresh.
+        overrides?.Refresh();
+
+        return Say(text, SpokenLetters.AccentOf(voiceId), overrides);
     }
 
-    /// <summary>One line, token by token.</summary>
-    private string Say(string text, SpeechAccent accent)
+    /// <summary>
+    /// One line, with <paramref name="layer"/> as its top rung. Null for the respellings in that
+    /// layer, which go down the rest of the ladder as if they were the text — and must not consult
+    /// the overrides again, or an entry naming itself would never come back.
+    /// </summary>
+    private string Say(string text, SpeechAccent accent, PronunciationOverrides? layer)
     {
         var built = new System.Text.StringBuilder();
 
@@ -163,20 +178,40 @@ public sealed class Phonemiser(
         // words rather than through a second set of rules that could disagree with it.
         var prepared = SpokenNumerals.Expand(text.Replace('’', '\''));
 
-        // Trimmed up front rather than inside the ladder, so what the ladder is handed is the word
-        // and nothing that was written around it.
+        // Trimmed up front rather than inside the ladder, because an override key is matched
+        // against words and the marks around them are not part of the word.
         var tokens = prepared
             .Split([' ', '\t', '\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
-            .Select(Trim);
+            .Select(Trim)
+            .ToList();
 
-        foreach (var token in tokens)
+        var bodies = tokens.Select(token => token.Body).ToList();
+
+        for (var at = 0; at < tokens.Count;)
         {
             if (built.Length > 0)
             {
                 built.Append(' ');
             }
 
-            built.Append(Token(token, accent));
+            // 0. The Commander's own correction, matched over whole words so an entry can never
+            //    capture a substring (#146's lesson, applied in advance).
+            if (layer?.Match(bodies, at) is { } correction)
+            {
+                var ipa = correction.Said.IsIpa
+                    ? correction.Said.Value
+                    : Say(correction.Said.Value, accent, null);
+
+                note?.Invoke(correction.Said.Key, PhonemeRung.Override, ipa);
+
+                built.Append(ipa);
+                built.Append(tokens[at + correction.Words - 1].Tail);
+                at += correction.Words;
+                continue;
+            }
+
+            built.Append(Token(tokens[at], accent));
+            at++;
         }
 
         return built.ToString();

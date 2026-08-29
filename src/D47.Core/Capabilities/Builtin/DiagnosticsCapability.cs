@@ -117,6 +117,14 @@ public static class DiagnosticsCapability
         report.AppendLine($"Installed at: {paths.InstallRoot}");
         report.AppendLine($"Writable data: {paths.Data}");
         report.AppendLine($"Logs: {paths.Logs}");
+
+        // Named here because it is a file rather than a settings row (#150), so the diagnostics
+        // page is the only surface that can say where it is. Whether it exists matters as much as
+        // where it is: "I edited it and nothing changed" is usually "you edited the other one".
+        report.AppendLine(
+            $"Pronunciations: {paths.PronunciationsFile} "
+            + (File.Exists(paths.PronunciationsFile) ? "(present)" : "(none written yet)"));
+
         report.AppendLine("Log levels:");
 
         foreach (var subsystem in Subsystems.All)
