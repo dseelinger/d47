@@ -254,10 +254,19 @@ or say which you meant with -Minor or -Patch.
 
     Write-Step "Handing over to release.ps1 $($kind.ToLowerInvariant()) -PreRelease"
 
-    $handover = @($kind, '-PreRelease', '-Yes')
+    # **A hashtable, and it has to be.** Splatting an *array* passes every element positionally, so
+    # release.ps1 read '-PreRelease' as a second positional argument and refused the whole call —
+    # which is how the first run of this after #170 failed. A hashtable splats by name, which is
+    # what a switch needs. It failed safely and loudly, and only because #172 had just taught this
+    # script to propagate an exit code; a week earlier it would have reported success.
+    $handover = @{
+        Release = $kind
+        PreRelease = $true
+        Yes = $true
+    }
 
-    if ($Tests) { $handover += '-Tests' }
-    if ($Message) { $handover += @('-Message', $Message) }
+    if ($Tests) { $handover['Tests'] = $true }
+    if ($Message) { $handover['Message'] = $Message }
 
     & (Join-Path $PSScriptRoot 'release.ps1') @handover
 

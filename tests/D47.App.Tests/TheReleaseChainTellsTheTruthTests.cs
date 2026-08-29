@@ -106,6 +106,13 @@ public class TheReleaseChainTellsTheTruthTests
         Assert.Contains("if ($LASTEXITCODE -ne 0) {", prerelease, StringComparison.Ordinal);
         Assert.Contains("exit $LASTEXITCODE", prerelease, StringComparison.Ordinal);
 
+        // **And the handover splats by name.** Splatting an array passes every element
+        // positionally, so release.ps1 read '-PreRelease' as a second positional argument and
+        // refused the call — which is how the first real run after #170 failed. This assertion is
+        // text, like the rest here, and text could not have caught it: only running the thing did.
+        Assert.Contains("$handover = @{", prerelease, StringComparison.Ordinal);
+        Assert.DoesNotContain("$handover = @(", prerelease, StringComparison.Ordinal);
+
         // Doing nothing is a different answer from cutting a release, and an exit code is where
         // the difference has to show.
         Assert.Contains("exit 1", prerelease, StringComparison.Ordinal);
