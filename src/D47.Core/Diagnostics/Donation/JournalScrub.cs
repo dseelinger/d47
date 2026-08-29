@@ -61,6 +61,14 @@ public enum Scrub
 /// it in the one event every excerpt contains. And a handful of events name <em>other</em> players
 /// outright — <c>PVPKill</c>, an interdiction, a death — which is the same personal surface
 /// reached by a different door.
+/// <para>
+/// <b>Those combat events fire on a person and not on a pirate</b>, which is the Commander's ruling
+/// of 2026-08-29: <i>scrub whenever it is a real player's name or Frontier ID</i>. Elite answers
+/// that question itself on an interdiction, with <c>IsPlayer</c>, so the rule is conditioned on it
+/// rather than on the shape of a name — a condition read out of the event is still a field list. A
+/// <c>Died</c> carries no such flag and an NPC's generated name looks exactly like a Commander's,
+/// so there "cannot tell" resolves to scrub. Measured over the 912-journal corpus, the difference
+/// is 75 of 90 combat events now passing through untouched.
 /// </para>
 /// </summary>
 public static class JournalScrub
@@ -72,7 +80,14 @@ public static class JournalScrub
     /// One field, and what happens to it. <paramref name="Path"/> is a field name, an array of
     /// strings as <c>Others[]</c>, or a field inside an array of objects as <c>Killers[].Name</c>.
     /// </summary>
-    private sealed record Rule(string Path, Scrub Scrub);
+    /// <param name="OnlyWhen">
+    /// A boolean field on the event that has to be true, or the rule does not fire. It exists for
+    /// the one question this table cannot answer from a field name — <b>is the person named here a
+    /// person</b> — on the events where Elite answers it itself with <c>IsPlayer</c>. A condition
+    /// read out of the event is still a field list; a condition inferred from the shape of a name
+    /// would be the guesswork this class refuses.
+    /// </param>
+    private sealed record Rule(string Path, Scrub Scrub, string? OnlyWhen = null);
 
     /// <summary>
     /// Fields whose name means the same thing wherever it appears, applied to every event at every
@@ -155,12 +170,34 @@ public static class JournalScrub
             new("ShipsRemote[].Name", Scrub.Ship),
         ],
 
-        // Events that name somebody else outright.
+        // Events that can name somebody else. **Only where that somebody is a real person**, which
+        // is the Commander's ruling of 2026-08-29 and the reason three of these carry a condition:
+        // an interdiction is overwhelmingly an NPC, Elite says which with `IsPlayer`, and replacing
+        // Frontier's own generated pirates buys nothing and costs a replay the names it reasons
+        // about. Measured over the 912-journal corpus: 67 interdictions and 23 deaths, not one of
+        // them a player — because the Commander does not fly Open. Plenty of donors will.
         ["PVPKill"] = [new("Victim", Scrub.Person)],
-        ["Interdicted"] = [new("Interdictor", Scrub.Person)],
-        ["EscapeInterdiction"] = [new("Interdictor", Scrub.Person)],
-        ["Interdiction"] = [new("Interdicted", Scrub.Person)],
-        ["Died"] = [new("KillerName", Scrub.Person), new("Killers[].Name", Scrub.Person)],
+        ["Interdicted"] =
+        [
+            new("Interdictor", Scrub.Person, OnlyWhen: "IsPlayer"),
+            new("Interdictor_Localised", Scrub.Person, OnlyWhen: "IsPlayer"),
+        ],
+        ["EscapeInterdiction"] = [new("Interdictor", Scrub.Person, OnlyWhen: "IsPlayer")],
+        ["Interdiction"] = [new("Interdicted", Scrub.Person, OnlyWhen: "IsPlayer")],
+
+        // **The one that cannot be gated, and so is not.** A `Died` carries `KillerName`,
+        // `KillerShip` and `KillerRank` and no player flag at all, and an NPC's generated name —
+        // "Dominic Storin" — has the same shape as a Commander's. Where the event does not say,
+        // "cannot tell" resolves to scrub: over-replacing a Frontier pirate costs a replay a name
+        // nothing reasons about, and under-replacing hands over the one thing this class exists to
+        // keep. `PVPKill` needs no condition for the opposite reason — its victim is a player by
+        // definition.
+        ["Died"] =
+        [
+            new("KillerName", Scrub.Person),
+            new("KillerName_Localised", Scrub.Person),
+            new("Killers[].Name", Scrub.Person),
+        ],
     };
 
     private static readonly JsonSerializerOptions Flat = new() { WriteIndented = false };
@@ -238,6 +275,17 @@ public static class JournalScrub
     /// <summary>Applies one event rule, resolving the three path shapes.</summary>
     private static void Apply(JsonObject root, Rule rule, Pseudonyms names, ref int bodies)
     {
+        // A condition that is absent is a condition that is not met. Elite omits `IsPlayer` from
+        // events it has nothing to say about, and a missing flag read as permission would make the
+        // gate fire on exactly the events nobody has vouched for.
+        if (rule.OnlyWhen is { } flag &&
+            (root[flag] is not JsonValue gate
+             || !gate.TryGetValue<bool>(out var allowed)
+             || !allowed))
+        {
+            return;
+        }
+
         var bracket = rule.Path.IndexOf("[]", StringComparison.Ordinal);
 
         if (bracket < 0)
@@ -257,7 +305,9 @@ public static class JournalScrub
         {
             for (var index = 0; index < array.Count; index++)
             {
-                if (Text(array[index]) is { } name)
+                // Through the same symbol check as every other value, though a wing mate is never
+                // called one: two roads to the same decision are two roads that eventually differ.
+                if (Text(array[index]) is { } name && !IsSymbol(name))
                 {
                     array[index] = JsonValue.Create(Stand(name, rule.Scrub, names));
                 }
@@ -286,6 +336,17 @@ public static class JournalScrub
             return;
         }
 
+        // A body goes whatever it looks like — a token in a Message is still somebody's line, and
+        // the words are not what a replay needs. Everything else leaves a symbol where it found it,
+        // **and leaves that symbol's translation with it**: `X` and `X_Localised` are one datum
+        // rendered twice, so a `KillerName` of `$ShipName_Military_Federation;` makes its partner
+        // "Federal Navy Ship" — a ship class, not a person, and replacing it read as absurd the
+        // first time the corpus was swept for what these rules touch.
+        if (scrub != Scrub.Body && (IsSymbol(value) || TranslatesASymbol(owner, field)))
+        {
+            return;
+        }
+
         if (scrub == Scrub.Body)
         {
             bodies++;
@@ -293,6 +354,32 @@ public static class JournalScrub
 
         owner[field] = JsonValue.Create(Stand(value, scrub, names));
     }
+
+    /// <summary>
+    /// Whether a value is one of Frontier's own <c>$symbol;</c> tokens rather than anything a
+    /// person is called — <c>$ShipName_Military_Federation;</c> killed the Commander eleven times
+    /// in the corpus, and <c>$npc_name_decorate:#name=...;</c> is how an NPC's name arrives.
+    /// <para>
+    /// <b>A symbol is left alone.</b> It is a game fact a replay may key on, replacing it would
+    /// break a lookup, and no player is called one — Frontier's <c>$…;</c> namespace is
+    /// localisation, and a Commander name never enters it. The one rule here that reads a value
+    /// rather than a field name, and it reads its <em>shape</em> rather than guessing at its
+    /// meaning.
+    /// </para>
+    /// </summary>
+    private static bool IsSymbol(string value) =>
+        value.StartsWith('$') && value.EndsWith(';');
+
+    /// <summary>
+    /// Whether this field is the English rendering of a sibling that is a symbol. Elite writes the
+    /// pair everywhere — <c>Message</c> and <c>Message_Localised</c>, <c>Interdictor</c> and
+    /// <c>Interdictor_Localised</c> — and the two always describe the same thing, so whatever is
+    /// true of the one is true of the other.
+    /// </summary>
+    private static bool TranslatesASymbol(JsonObject owner, string field) =>
+        field.EndsWith("_Localised", StringComparison.Ordinal)
+        && Text(owner[field[..^"_Localised".Length]]) is { } original
+        && IsSymbol(original);
 
     private static string Stand(string value, Scrub scrub, Pseudonyms names) => scrub switch
     {

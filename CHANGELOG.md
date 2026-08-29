@@ -60,6 +60,27 @@ and sometimes they are nobody's business. **Another player's words never travel 
 there is no switch for that one: it is the same rule the journal half applies to chat, and a donor
 cannot consent on somebody else's behalf.
 
+### A pirate is not a person
+
+The events that name somebody who is not you — `PVPKill`, an interdiction, a death — fire on a
+person and not on a Frontier pirate. **Elite answers that question itself** on an interdiction,
+with `IsPlayer`, so the rule is conditioned on the flag rather than on the shape of a name: a
+condition read out of the event is still a field list, where a condition inferred from how a name
+looks would be the guesswork this is meant to avoid. A missing flag is not permission. `PVPKill`
+needs no condition — its victim is a player by definition — and a `Died` carries no flag at all,
+so there *cannot tell* resolves to scrub: over-replacing a Frontier pirate costs a replay a name
+nothing reasons about, and under-replacing hands over the one thing this exists to keep.
+
+**And a Frontier symbol is not a name.** `$ShipName_Military_Federation;` killed the Commander
+eleven times in the corpus; replacing it would break a lookup a replay may key on, and no
+Commander is called one. Its translation goes with it — `X` and `X_Localised` are one datum
+rendered twice, and scrubbing only the readable half produced a killer who was
+`$ShipName_Military_Federation;` in one field and `CMDR ALPHA` in the next.
+
+Measured across the 912-journal corpus: **75 of 90 combat events now pass through untouched**,
+where all 90 were being rewritten before. The Commander does not fly Open, so not one of them was
+ever a real person — which is the point. The rule is there for the donors who do.
+
 ### One thing the tests could not have found
 
 The pseudonyms cross from the journal half into the log half, or they are worth nothing — a

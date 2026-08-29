@@ -197,6 +197,116 @@ public class AnIncidentExcerptTests
         Assert.Contains("56978179", loadout);
     }
 
+    /// <summary>
+    /// An interdiction is overwhelmingly a Frontier pirate, and Elite says which with
+    /// <c>IsPlayer</c> — so the rule fires on the person and leaves the NPC alone. Measured over
+    /// the 912-journal corpus: 67 interdictions, not one of them a player, because the Commander
+    /// does not fly Open. Plenty of donors will.
+    /// </summary>
+    [Fact]
+    public void AnInterdictionIsScrubbedOnlyWhenAPersonDidIt()
+    {
+        var pirate = Scrubbed(
+            """{"event":"Interdicted","Submitted":true,"Interdictor":"Richy Reay","IsPlayer":false,"Faction":"Pai Huldr Blue Brothers"}""",
+            new Pseudonyms());
+
+        Assert.Contains("Richy Reay", pirate);
+        Assert.Contains("Pai Huldr Blue Brothers", pirate);
+
+        var person = Scrubbed(
+            """{"event":"Interdicted","Submitted":false,"Interdictor":"Don Tazeme","IsPlayer":true}""",
+            new Pseudonyms());
+
+        Assert.DoesNotContain("Don Tazeme", person);
+        Assert.Contains("CMDR ALPHA", person);
+    }
+
+    /// <summary>
+    /// A condition that is absent is a condition that is not met. Elite omits <c>IsPlayer</c> from
+    /// events it has nothing to say about, and a missing flag read as permission would fire the
+    /// gate on exactly the events nobody has vouched for.
+    /// </summary>
+    [Fact]
+    public void AMissingFlagIsNotPermission()
+    {
+        var scrubbed = Scrubbed(
+            """{"event":"EscapeInterdiction","Interdictor":"Dedy Sofyan"}""",
+            new Pseudonyms());
+
+        Assert.Contains("Dedy Sofyan", scrubbed);
+    }
+
+    /// <summary>
+    /// <c>PVPKill</c> needs no condition for the opposite reason: its victim is a player by
+    /// definition, and the event exists only because one was.
+    /// </summary>
+    [Fact]
+    public void AKillInOpenNeedsNoFlagToBeAPerson()
+    {
+        var scrubbed = Scrubbed(
+            """{"event":"PVPKill","Victim":"Ilse Bruhn","CombatRank":5}""",
+            new Pseudonyms());
+
+        Assert.DoesNotContain("Ilse Bruhn", scrubbed);
+        Assert.Contains("CMDR ALPHA", scrubbed);
+        Assert.Contains("\"CombatRank\":5", scrubbed);
+    }
+
+    /// <summary>
+    /// And the one Elite does not flag. A <c>Died</c> carries no <c>IsPlayer</c>, and an NPC's
+    /// generated name has the same shape as a Commander's — so "cannot tell" resolves to scrub.
+    /// Over-replacing a Frontier pirate costs a replay a name nothing reasons about; under-replacing
+    /// hands over the one thing this class exists to keep.
+    /// </summary>
+    [Fact]
+    public void ADeathScrubsBecauseItCannotTell()
+    {
+        var names = new Pseudonyms();
+
+        var single = Scrubbed(
+            """{"event":"Died","KillerName":"Dominic Storin","KillerShip":"empire_trader","KillerRank":"Expert"}""",
+            names);
+
+        Assert.DoesNotContain("Dominic Storin", single);
+        Assert.Contains("empire_trader", single);
+        Assert.Contains("Expert", single);
+
+        var wing = Scrubbed(
+            """{"event":"Died","Killers":[{"Name":"Cmdr HRC1","Ship":"Vulture","Rank":"Competent"}]}""",
+            names);
+
+        Assert.DoesNotContain("Cmdr HRC1", wing);
+        Assert.Contains("Vulture", wing);
+    }
+
+    /// <summary>
+    /// A Frontier symbol is not a person. <c>$ShipName_Military_Federation;</c> killed the
+    /// Commander eleven times in the corpus — replacing it would break a lookup a replay may key
+    /// on, and no Commander is called one.
+    /// </summary>
+    [Fact]
+    public void AFrontierSymbolIsLeftWhereItIs()
+    {
+        var scrubbed = Scrubbed(
+            """{"event":"Died","KillerName":"$ShipName_Military_Federation;","KillerName_Localised":"Federal Navy Ship","KillerShip":"federation_gunship"}""",
+            new Pseudonyms());
+
+        Assert.Contains("$ShipName_Military_Federation;", scrubbed);
+
+        // And its translation goes with it. `X` and `X_Localised` are one datum rendered twice, so
+        // a killer that is a ship class stays a ship class in both fields — replacing only the
+        // readable half produced "KillerName": "$ShipName_Military_Federation;" beside
+        // "KillerName_Localised": "CMDR ALPHA", which is how this was found.
+        Assert.Contains("Federal Navy Ship", scrubbed);
+
+        // And a message body still goes, symbol or not: the words are not what a replay needs.
+        Assert.DoesNotContain(
+            "$COMMS_entered:",
+            Scrubbed(
+                """{"event":"ReceiveText","From":"","Message":"$COMMS_entered:#name=Eurybia;","Channel":"npc"}""",
+                new Pseudonyms()));
+    }
+
     /// <summary>A field whose name means one thing wherever it appears, replaced wherever it does.</summary>
     [Fact]
     public void ASquadronIsReplacedWhateverEventNamesIt()
