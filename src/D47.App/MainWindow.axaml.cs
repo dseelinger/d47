@@ -879,6 +879,13 @@ public partial class MainWindow : Window
                 // (#164). Null on every ordinary run, and the row is then absent too.
                 _host.FlightRecorder is { } recording
                     ? (recording.Log, (Func<DateTimeOffset>)(() => DateTimeOffset.Now))
+                    : null,
+
+                // And what the debrief drafted from the last session (#162). The core is read at
+                // draw time rather than captured, because a Commander can switch core with the
+                // window open and the "just for this one" button has to mean the one aboard.
+                _host.Debrief is { } debrief
+                    ? (debrief.Book, debrief.Now, (Func<D47.Core.Persona.Persona>)(() => _host.Personas.Current))
                     : null);
 
             // The gap reaction happens in the host, on whatever thread resolved the switch, and
@@ -1015,6 +1022,15 @@ public partial class MainWindow : Window
         if ((_turnInFlight || _host.Audio.IsSpeaking)
             && _host.Router.MatchInterrupting(input) is { } interrupting)
         {
+            // Feedback nobody typed (#162). Only while d47 was actually talking: cancelling a turn
+            // that has not reached the speaker yet is impatience with a model, and being stopped
+            // mid-sentence is the thing worth asking about at the end of the session. It becomes a
+            // question there and never an adjustment here.
+            if (_host.Audio.IsSpeaking)
+            {
+                _host.NoteInterrupted();
+            }
+
             _model.AskText = string.Empty;
             var stopped = await _host.Capabilities.InvokeAsync(interrupting.ToolName, ToolArguments.Empty);
 
