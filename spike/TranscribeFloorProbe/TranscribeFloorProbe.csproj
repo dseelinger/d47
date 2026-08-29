@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>TranscribeFloorProbe</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      The real transcriber, not a copy of it. The whole question is what d47's own per-call cost
+      is, and a probe that rebuilt the Whisper wiring by hand would be measuring the probe.
+    -->
+    <ProjectReference Include="..\..\src\D47.Stt\D47.Stt.csproj" />
+  </ItemGroup>
+
+</Project>

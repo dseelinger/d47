@@ -50,6 +50,27 @@ public class WhisperTranscriberTests
         Assert.Contains("not on disk", transcriber.Unavailable);
     }
 
+    /// <summary>
+    /// Four cores are left for the game, and both ends of the clamp are measured rather than
+    /// chosen (<a href="https://github.com/dseelinger/d47/issues/182">#182</a>).
+    /// <para>
+    /// The floor matters most: four is what whisper.cpp does by itself, so a small machine keeps
+    /// exactly the behaviour it has today and this change can make nothing slower. Dropping below
+    /// it — which a plain <c>processors - 4</c> would do on every machine with fewer than eight
+    /// cores — would be a speed fix that slowed down the machines least able to afford it.
+    /// </para>
+    /// </summary>
+    [Theory]
+    [InlineData(1, 4)]
+    [InlineData(4, 4)]
+    [InlineData(8, 4)]
+    [InlineData(12, 8)]
+    [InlineData(16, 12)]
+    [InlineData(24, 16)]
+    [InlineData(64, 16)]
+    public void TheThreadCountLeavesFourCoresAndNeverGoesBelowWhisperSOwnDefault(int processors, int expected) =>
+        Assert.Equal(expected, WhisperTranscriber.ThreadsFor(processors));
+
     private sealed class CapturingLogger : ILogger<WhisperTranscriber>
     {
         private readonly List<string> _errors = [];

@@ -205,6 +205,9 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
         var builder = factory.CreateBuilder()
             .WithLanguage("en")
 
+            // Or whisper.cpp uses four (#182). See ThreadsFor.
+            .WithThreads(ThreadsFor(Environment.ProcessorCount))
+
             // One segment callback per utterance is what d47 wants; token timestamps
             // and per-token probabilities are work with nothing reading them.
             .WithProbabilities();
@@ -216,6 +219,40 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
 
         return builder.Build();
     }
+
+    /// <summary>
+    /// How many threads inference gets, from how many the machine has
+    /// (<a href="https://github.com/dseelinger/d47/issues/182">#182</a>).
+    /// <para>
+    /// <b>Whisper's own default is <c>min(4, hardware_concurrency)</c>, and nothing here used to
+    /// override it</b> — so a 24-core machine transcribed on four threads. That was most of the
+    /// three seconds #182 measured. Same clip, same model, same 40 hints, on the 24-core machine
+    /// the figures were taken on:
+    /// </para>
+    /// <list type="table">
+    /// <item><description>unset (four threads) — 2,939 ms</description></item>
+    /// <item><description>eight — 1,754 ms</description></item>
+    /// <item><description>twelve — 1,343 ms</description></item>
+    /// <item><description>sixteen — 1,166 ms</description></item>
+    /// <item><description>twenty-four — 1,155 ms</description></item>
+    /// </list>
+    /// <para>
+    /// <b>Four is the floor and sixteen is the ceiling, and both are measured rather than
+    /// chosen.</b> Four is what whisper.cpp already does, so a small machine keeps exactly the
+    /// behaviour it has today and this can make nothing slower. Sixteen is where the curve
+    /// flattens — twenty-four bought 11 ms over sixteen, which is 1% for eight more cores — so
+    /// asking for more would be taking the machine for nothing. The same knee appeared on all
+    /// three models: <c>tiny.en</c> 431→215 ms, <c>base.en</c> 889→401 ms.
+    /// </para>
+    /// <para>
+    /// <b>And four cores are left alone on purpose.</b> d47 runs beside Elite, which is the whole
+    /// point of it; a burst that takes every core for a second is how a transcription becomes a
+    /// stutter in the headset — the same class of surprise as running the model on a GPU that is
+    /// already drawing the game. Shorter and narrower beats longer and wider here: at sixteen
+    /// threads the burst is both less than half as long and still leaves the game a machine.
+    /// </para>
+    /// </summary>
+    internal static int ThreadsFor(int processors) => Math.Clamp(processors - 4, 4, 16);
 
     /// <summary>
     /// Points the processor at the names this utterance might contain, rebuilding it only when
@@ -322,11 +359,14 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
 
             var transcribed = Clean(text.ToString());
 
+            // The thread count is here because this line is where #182 was diagnosed from, and
+            // the one number that turned out to explain it was the one the line did not carry.
             _logger.LogInformation(
-                "Transcribed {Seconds:0.#}s of audio in {Elapsed}ms with {Nouns} name hints",
+                "Transcribed {Seconds:0.#}s of audio in {Elapsed}ms with {Nouns} name hints on {Threads} threads",
                 utterance.Duration.TotalSeconds,
                 stopwatch.ElapsedMilliseconds,
-                properNouns.Count);
+                properNouns.Count,
+                ThreadsFor(Environment.ProcessorCount));
 
             return new Transcription(transcribed)
             {
