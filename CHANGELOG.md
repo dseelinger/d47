@@ -27,6 +27,140 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.86.0 — 2026-08-28 — Four answers that were sure of themselves
+
+Nothing new here, on purpose. Four issues where d47 said something wrong, or said the right thing
+at the wrong moment, or said the right thing far too many times — and the Commander's reason for
+taking them ahead of any capability: *"The first user has adapted to these; the second hasn't. A
+new user's trust forms in the first week, and a wrong answer delivered confidently costs more of it
+than any missing feature."*
+
+### The radius answered was not the radius searched
+
+[#156](https://github.com/dseelinger/d47/issues/156). Asked for the closest place to buy 200
+Landmines near Eurybia — the Liz Ryder tribute — and told, twice, with rising confidence, that there
+was no stock within 150 light years and no buyer out to 250. **The answer was wrong by a factor of
+twenty.** Coleman Relay in Enayex had 5,229 units of them eleven light years away, and d47's own
+data source said so the same hour.
+
+The sweep fetched the **nearest 150 stations and nothing else** — three pages of fifty, sorted by
+distance, no commodity filter — and the ranking then ran locally over whatever those 150 happened
+to stock. Near a bubble system the 150 nearest markets span a few light years, so a commodity none
+of them carried was reported absent from the entire radius. The sweep's own comment said extra
+stations cost *"arithmetic rather than correctness"*: true for the trade planner it was written
+for, and false for a named commodity, where the stations past the horizon are exactly the answer.
+
+**So a named commodity now goes into the request.** The 150-station budget is spent entirely on
+stations that hold stock of the thing, and the horizon stops mattering for the case that had it.
+The general sweep — trade planning, colonisation sourcing — is untouched and asserted untouched:
+those questions have no single commodity to narrow by.
+
+**Three findings, measured against the live service on 2026-08-28**, and one of them corrects the
+issue. Within 15 light years of Eurybia: 449 stations unfiltered, **26** carrying a Landmines row,
+**8** with any supply, **12** with any demand. So the name-only filter shape is *honoured*, not
+silently ignored as reported — that reading came from a count pinned at the endpoint's own 10,000
+cap, which says nothing either way at 250 light years. It is still not the shape to send: a row is
+not stock, and it matches every shelf quoting zero. **And demand bounds are honoured here**, which
+answers the sell side's open question — the note recording them as accepted-and-ignored was
+measured on the *trade* endpoint, which is a different one, and now says so.
+
+**And where the budget still runs out before the radius does, the answer says how far it got.**
+*"Nothing in the 150 markets I could check… those reach 14.2 light years of the 250 you asked
+about, so there is more out there I have not looked at."* The heading on a positive answer names
+the same distance. The honesty rule was already written one function away — *"stations dropped for
+being too old are counted rather than swallowed"* — and the horizon had never been given it.
+
+### A keyword named a capability, and the router guessed the tool
+
+[#161](https://github.com/dseelinger/d47/issues/161). *"What's the Cobra Mk III's jump range?"*,
+asked out loud three times and answered each time with *"JOHN DEPARAGON is in Kamitra, near Hammel
+Terminal, docked at Hammel Terminal."* The model never saw the question.
+
+`jump range` was a Journal keyword; keywords are matched as **contained** phrases and reach a
+capability rather than a tool; and the router then took that capability's first tool with no
+required parameters — a **positional** pick, out of whatever order somebody had declared them in.
+For Journal that is `get_location`. This is the 2026-08-21 carrier defect still live on the other
+road: declared phrases fixed it for the exact wordings written down, and a phrase must be the whole
+utterance, so any padding at all fell back through.
+
+**The mechanism was general, and it was worth measuring before choosing.** Twelve capabilities had
+more than one tool the router could call, so twelve had the same trapdoor — and one had already
+fallen through it with nobody reporting it: Conversation declares `cancel_turn` first, so **every
+phrase it owns cancelled the running turn** instead of answering. *"Which model"* did not report
+the model. It stopped the turn.
+
+Of the three roads the issue put up, **a keyword now names its tool**, and a keyword that names
+none on a capability with several eligible tools *declines* rather than guessing. Narrowing was
+rejected as fixing only the sentences somebody thinks of; naming loses no reachability, because the
+phrases already work this way. A bare string still means the whole capability, which costs nothing
+where there is one answer to give — most of the registry — and a test walks the registry so the
+next capability to declare a keyword and a second argument-free tool fails rather than guessing
+quietly.
+
+**`jump range` itself was also narrowed to `my jump range`**, and that is a decision about the
+*subject* rather than about the tool. Naming `get_ship` would have answered a question about a
+Cobra with the range of the ship the Commander is sitting in — the right tool and the wrong hull.
+Every other keyword in that list carries a possessive or a location word; this one is a general
+Elite topic whose commonest use is not self-referential at all. So the possessive has to be in the
+phrase, and anything else falls through to the model, which has the specification tables.
+
+### Silence until it was over
+
+[#158](https://github.com/dseelinger/d47/issues/158), and the Commander's own widening of it the
+same day: *"Also add the acknowledgement to the galaxy map plot macro."*
+
+*Take us out* ran the panel gate, the walk, and **up to thirty seconds** of watching for the pad
+clamps before a word was said — and the successful line was literally *"Taking us out."*, the
+present tense arriving in the past. The separations boost until the mass lock breaks under a
+twenty-second ceiling, in silence. The galaxy-map plot opens the map, settles the camera for three
+seconds, types, settles, holds and closes, and in a headset you watch the map fly about on its own
+with nothing to connect it to what you asked. That gap is what produces a repeated command, and a
+repeated command mid-macro is its own hazard.
+
+**One rule for all four: acknowledge at accept, verdict when known.** *"Taking us out."*
+*"Separating."* *"Plotting the course to Shinrarta Dezhra."* — the plot names the system, because
+the name is the payload and a misheard one is caught five seconds earlier than the verdict would.
+The launch's success line is now *"We are away."*, which is a verdict rather than an announcement.
+
+**A refusal is still exactly one line, immediately**, which is why the acknowledgement sits inside
+each macro after its own pre-flight rather than in front of them all: *"Taking us out"* followed by
+*"you are not docked"* would be worse than either. The clipboard fallback is refusal-shaped and
+stays single too. It is not awaited — speaking takes seconds and these are macros whose whole value
+is timeliness — and the ordering asserted is that the line was said **before the first key**, not
+merely that two sentences came out.
+
+### The proposal that repeated itself, verbatim, forever
+
+[#154](https://github.com/dseelinger/d47/issues/154), reported with the sentence attached and then:
+*"This is freaking annoying."* Three defects in it, and the annoyance was the designed behaviour of
+the first.
+
+**It was appended after every turn that did not resolve it, unchanged, with no way to quiet it
+short of answering.** The rule was already written down about d47's own lines — `ChecklistItem.Noted`
+exists because *"nagging about every line d47 has no table for is how a Commander learns to stop
+listening"* — and had never been applied here. It is now said **in full once, as a short clause
+twice, then not at all**, while the proposal stays on the panel until it is answered. Going quiet
+is not forgetting. *"Decline everything"* clears the queue outright by voice, alongside the
+*"never mind"* that already did.
+
+The count is advanced by the thing that appends rather than by the line itself, because
+`TurnLoop` asks for it twice a turn — once before the model speaks and once after, which is the
+comparison that makes it a statement of fact instead of a nag — and a line counting its own
+repetitions would decay at double speed.
+
+**The sentence was cut mid-word, by a cap borrowed from the wrong feature.** It died at *"Grade 5
+Dirty Drive Tuning on M."* — `ChecklistLimits.MaxTextLength`, which bounds a checklist *line*,
+applied to a spoken sentence with no ellipsis and no regard for word boundaries. *"on M."* reads as
+a finished clause. Summaries are now **composed to fit** rather than truncated to fit: a ladder of
+whole sentences, most detailed first, and the backstop stops at a word and says so when it fires.
+
+**And what it said was an inventory rather than a description**: six slot names, then three
+modifications with nothing to pair them, two of the slots read out as raw journal fields. A
+revision now says its shape and its size — *"Set six slots on the Cartage (Type-8 Transporter)
+plan: …"* — and names slots only while naming them is possible and useful, through the same wording
+layer the checklist lines use, so a small revision still says exactly what it changes and
+`Slot05_Size5` is never read aloud. The manifest is what the panel's proposal view is for.
+
 ## 0.85.0 — 2026-08-28 — Seven that were asked for, and three that flying them turned up
 
 Seven issues off the queue, and then the local voice was flown to check one of them and gave up

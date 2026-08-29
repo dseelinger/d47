@@ -145,6 +145,18 @@ public sealed class TurnLoop(
     public Func<string?>? Standing { get; set; }
 
     /// <summary>
+    /// Told when <see cref="Standing"/>'s line was actually appended, so the thing that wrote it
+    /// can decay it (#154).
+    /// <para>
+    /// <b>Separate from <see cref="Standing"/> because that is asked twice a turn</b> — the
+    /// before-and-after comparison above is the whole of what makes it a fact rather than a nag —
+    /// and a line that counted its own repetitions would count two for every one said. So the
+    /// appending is reported rather than inferred.
+    /// </para>
+    /// </summary>
+    public Action? StandingSaid { get; set; }
+
+    /// <summary>
     /// How many times in one turn the model may ask for tools and be answered.
     /// <para>
     /// A stop, not a tuning knob. Each round is a billed request, and a model that answers every
@@ -720,6 +732,8 @@ public sealed class TurnLoop(
         {
             yield return new TurnEvent.TextDelta(" " + standingBefore);
             answer = $"{answer} {standingBefore}";
+
+            StandingSaid?.Invoke();
         }
 
         // A model on the Commander's own machine is free, and that is a fact about the address

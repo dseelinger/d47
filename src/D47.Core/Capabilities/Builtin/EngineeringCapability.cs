@@ -50,15 +50,19 @@ public static class EngineeringCapability
             "how good is my frame shift drive craft",
             "what can I engineer on a power plant",
         ],
+        // Each names its tool (#161). All four used to reach get_blueprint, which is the
+        // declaration order rather than a decision — so "my engineering" and "how good is my
+        // roll", which are questions about the modules actually fitted, were answered with a
+        // blueprint's table.
         Keywords =
         [
-            "my engineering",
+            new("my engineering", "get_module_engineering"),
 
             // A phrase rather than the bare word. "blueprint" turns up in sentences that are not
             // about engineering at all, and a single-word keyword hijacks every one of them.
-            "blueprint cost",
-            "how good is my roll",
-            "how good is my craft",
+            new("blueprint cost", "get_blueprint"),
+            new("how good is my roll", "get_module_engineering"),
+            new("how good is my craft", "get_module_engineering"),
         ],
         Tools =
         [

@@ -688,7 +688,14 @@ public static class GalaxyCapability
 
         if (answer.Offers.Count == 0)
         {
-            var nothing = $"Nothing within {query.MaxDistance:0} light years of {near} is {verb} {query.Commodity}";
+            // <b>The radius answered is the radius searched</b> (#156). Where the search ran out
+            // of budget before it ran out of galaxy, saying "nothing within 250 light years" is a
+            // claim about ground it never covered — which is exactly how "No stock of Land Mines
+            // within 150 ly of Eurybia" came to be said about a system with 5,229 units of them
+            // eleven light years away.
+            var nothing = answer.Horizon is { } reached
+                ? $"Nothing in the {answer.Considered} markets I could check is {verb} {query.Commodity}"
+                : $"Nothing within {query.MaxDistance:0} light years of {near} is {verb} {query.Commodity}";
 
             if (query.Tonnes is { } wanted)
             {
@@ -696,6 +703,13 @@ public static class GalaxyCapability
             }
 
             nothing += ".";
+
+            if (answer.Horizon is { } horizon)
+            {
+                nothing +=
+                    $" Those reach {horizon:0.#} light years of the {query.MaxDistance:0} you asked about, "
+                    + "so there is more out there I have not looked at.";
+            }
 
             if (answer.DroppedAsStale > 0)
             {
@@ -732,9 +746,13 @@ public static class GalaxyCapability
             lines.Add(line);
         }
 
+        // The same rule on the way out (#156). A best-of is a claim about everything it looked
+        // at, so the heading names the distance actually reached rather than the one asked for.
+        var reach = answer.Horizon is { } far ? $"{far:0.#}" : $"{query.MaxDistance:0}";
+
         var heading = query.Tonnes is { } load
-            ? $"{verb} {load} tonnes of {query.Commodity} within {query.MaxDistance:0} ly of {near}"
-            : $"{verb} {query.Commodity} within {query.MaxDistance:0} ly of {near}";
+            ? $"{verb} {load} tonnes of {query.Commodity} within {reach} ly of {near}"
+            : $"{verb} {query.Commodity} within {reach} ly of {near}";
 
         var report = $"Best for {heading}: " + string.Join("; ", lines) + ".";
 

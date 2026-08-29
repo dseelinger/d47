@@ -1523,6 +1523,13 @@ public sealed class AppHost : IDisposable
                     Status = () => status.Current,
                     Input = gameInput,
                     Enabled = () => settings.Current.Actions.Keyboard,
+
+                    // Not awaited (#158). Core says the line and goes on pressing keys; the
+                    // arbiter puts it in front of the verdict the same pipeline queues seconds
+                    // later. Awaiting a synthesis here would delay the launch key by the length
+                    // of the sentence, which is the opposite of what the acknowledgement is for.
+                    Acknowledge = said => _ = self?.SayAsync(
+                        new Announcement("action.acknowledge", said)),
                 },
                 () => AutonomousCapability.Describe(autonomous),
                 new NavigationSurface
@@ -1771,6 +1778,7 @@ public sealed class AppHost : IDisposable
             // model (remediation.md 10, item 10). Asked either side of the turn, so it is silent
             // on the turn that resolves it.
             Standing = checklists.Standing,
+            StandingSaid = checklists.SaidStanding,
 
             LiveGameState = () => Join(
                 Situation.Describe(gameState.Active),
@@ -6070,7 +6078,7 @@ public sealed class AppHost : IDisposable
         registry is null
             ? []
             : [
-                .. registry.All.SelectMany(c => c.Descriptor.Keywords),
+                .. registry.All.SelectMany(c => c.Descriptor.Keywords).Select(keyword => keyword.Phrase),
                 .. registry.All.SelectMany(c => c.Descriptor.InterruptKeywords),
                 .. registry.All.SelectMany(c => c.Descriptor.Tools).SelectMany(t => t.Commands)
                     .Select(command => command.Phrase),

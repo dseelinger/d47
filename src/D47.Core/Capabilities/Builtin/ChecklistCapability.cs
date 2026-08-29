@@ -70,13 +70,16 @@ public static class ChecklistCapability
 
         // Phrases, never bare words. "checklist" alone would hijack any sentence containing it,
         // which is the rule JournalCapability documents and the reason the router is phrase-level.
+        // Each names its tool (#161). Two of this capability's argument-free tools *answer* a
+        // pending proposal, so the positional pick was one declaration reorder away from
+        // accepting a build because somebody asked what was on their list.
         Keywords =
         [
-            "what am i working on",
-            "read my checklist",
-            "what is on my checklist",
-            "my checklist",
-            "what am i building",
+            new("what am i working on", "get_checklist"),
+            new("read my checklist", "get_checklist"),
+            new("what is on my checklist", "get_checklist"),
+            new("my checklist", "get_checklist"),
+            new("what am i building", "get_checklist"),
         ],
         Display = new CapabilityDisplay { PanelTitle = "Checklists", Order = 63 },
         Settings = [SummaryRow(checklists)],
@@ -539,6 +542,12 @@ public static class ChecklistCapability
     [
         "decline", "declined", "decline it", "decline the proposal", "decline the proposals",
         "leave my checklist alone",
+
+        // Clearing the queue outright, asked for in #154 alongside the decay: a Commander who has
+        // heard a proposal twice and does not want it needs a way to end the question that is not
+        // answering it one at a time. Omitting the id is already "everything waiting", so these
+        // reach the same handler and simply say so out loud.
+        "decline everything", "decline them all", "decline all of it",
     ];
 
     /// <summary>

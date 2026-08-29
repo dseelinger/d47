@@ -44,8 +44,8 @@ public class TheWordIsCraftExceptWhereItIsNotTests
     {
         var keywords = EngineeringCapability.Create(() => null).Keywords;
 
-        Assert.Contains(keywords, phrase => phrase.Contains("roll", StringComparison.OrdinalIgnoreCase));
-        Assert.Contains(keywords, phrase => phrase.Contains("craft", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(keywords, keyword => keyword.Phrase.Contains("roll", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(keywords, keyword => keyword.Phrase.Contains("craft", StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>

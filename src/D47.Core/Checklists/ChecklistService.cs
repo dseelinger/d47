@@ -1379,19 +1379,91 @@ public sealed class ChecklistService(
     /// It names the proposal rather than counting one, because the identity is what tells the two
     /// cases apart: accepting one of two leaves a different sentence, not the same one again.
     /// </para>
+    /// <para>
+    /// <b>Said in full once, then as a clause, then not at all</b> (#154). It used to be appended
+    /// after every turn that did not resolve it, verbatim and forever, which was reported as
+    /// <i>"this is freaking annoying"</i> and was the designed behaviour rather than a fault. The
+    /// repository had already written the rule down about d47's own lines —
+    /// <see cref="ChecklistItem.Noted"/> exists because <i>"nagging about every line d47 has no
+    /// table for is how a Commander learns to stop listening"</i> — and had not applied it here.
+    /// Going quiet is not forgetting: the proposal stays on the panel, which draws proposals,
+    /// until it is answered.
+    /// </para>
     /// </summary>
     public string? Standing()
     {
         var waiting = proposals.PendingFor(Fid);
 
-        return waiting.Count switch
+        if (waiting.Count == 0)
         {
-            0 => null,
-            1 => $"Still waiting on you: {waiting[0].Summary.TrimEnd('.')}. "
-                 + "Say \"accept\" or \"decline\".",
-            _ => $"Still waiting on you: {waiting.Count} proposals, including "
-                 + $"{waiting[0].Summary.TrimEnd('.')}. Say \"accept\" or \"decline\".",
-        };
+            return null;
+        }
+
+        var told = string.Equals(Queue(waiting), _standingSaidFor, StringComparison.Ordinal)
+            ? _standingSaid
+            : 0;
+
+        if (told >= Quiet)
+        {
+            return null;
+        }
+
+        if (told > 0)
+        {
+            // The clause. It says a decision is outstanding and nothing else — the words that
+            // were already said in full are on the panel, which draws proposals and does not
+            // forget them.
+            return waiting.Count == 1
+                ? "One proposal is still waiting on you. Say \"accept\" or \"decline\"."
+                : $"{waiting.Count} proposals are still waiting on you. Say \"accept\" or \"decline\".";
+        }
+
+        return waiting.Count == 1
+            ? $"Still waiting on you: {waiting[0].Summary.TrimEnd('.')}. "
+              + "Say \"accept\" or \"decline\"."
+            : $"Still waiting on you: {waiting.Count} proposals, including "
+              + $"{waiting[0].Summary.TrimEnd('.')}. Say \"accept\" or \"decline\".";
+    }
+
+    /// <summary>
+    /// How many turns in a row the same standing business is mentioned before it goes quiet, and
+    /// which of those said it in full. One full sentence, two clauses, then nothing.
+    /// </summary>
+    private const int Quiet = 3;
+
+    /// <summary>Which proposals were waiting, so a different set is a different question.</summary>
+    private static string Queue(IEnumerable<ChecklistProposal> waiting) =>
+        string.Join("\n", waiting.Select(proposal => proposal.Id));
+
+    private string _standingSaidFor = string.Empty;
+
+    private int _standingSaid;
+
+    /// <summary>
+    /// Told that <see cref="Standing"/>'s line was actually spoken, which is what advances the
+    /// decay (#154).
+    /// <para>
+    /// <b>Counted here rather than in <see cref="Standing"/> itself</b>, because that is asked
+    /// twice per turn — once before the model speaks and once after — and a line that counted
+    /// itself would decay at double speed and would break the comparison those two calls exist
+    /// to make. So the caller that appends says it appended.
+    /// </para>
+    /// <para>
+    /// A different set of proposals resets the count. Accepting one of two leaves a new question,
+    /// and a new question is owed its full sentence.
+    /// </para>
+    /// </summary>
+    public void SaidStanding()
+    {
+        var queue = Queue(proposals.PendingFor(Fid));
+
+        if (!string.Equals(queue, _standingSaidFor, StringComparison.Ordinal))
+        {
+            _standingSaidFor = queue;
+            _standingSaid = 0;
+        }
+
+        _standingSaid++;
     }
 
     public string Decline(string? id = null)
@@ -1628,10 +1700,6 @@ public sealed class ChecklistService(
         // holding the build knows it is called Oxen; the scope holds an id and nothing else.
         var whose = describing is { Length: > 0 } named ? named : scope.ToString();
 
-        var said = items.Count == 0
-            ? $"Drop {string.Join(", ", replacing)} from the {whose} plan"
-            : $"Set the {whose} plan's {string.Join(", ", replacing)} to {string.Join("; ", items.Select(item => item.Text))}";
-
         return Record(new ChecklistProposal
         {
             Id = "pending",
@@ -1640,9 +1708,110 @@ public sealed class ChecklistService(
             Scope = scope,
             Source = source,
             Items = wanted,
-            Summary = Trim(said),
+            Summary = Summarising(whose, items, replacing),
         });
     }
+
+    /// <summary>
+    /// What a plan proposal <em>says</em>, as against what it contains (#154).
+    /// <para>
+    /// <b>It was a list mash and it was cut in half.</b> The reported line was <i>"Set the Cartage
+    /// (Type-8 Transporter) plan's Armour, MainEngines, LifeSupport, Radar, Slot05_Size5,
+    /// Slot06_Size5 to Grade 5 Heavy Duty on Armour; Deep Plating on Armour; Grade 5 Dirty Drive
+    /// Tuning on M."</i> — six slot names and then three modifications with no pairing between
+    /// them, so nothing said which mod landed where; two of the slots read out as raw journal
+    /// names; and the sentence died mid-word at the 200th character.
+    /// </para>
+    /// <para>
+    /// <b>The voice asks for a decision and the panel holds the manifest.</b> A decision needs the
+    /// shape of the change and its size, which is what the rungs below say — the slot-by-slot
+    /// detail is what the proposal view is for, and it is not lost by being left there. So the
+    /// ladder names everything while everything is short enough to name, and counts once it is
+    /// not, and every rung is a sentence rather than a prefix of one.
+    /// </para>
+    /// </summary>
+    private string Summarising(
+        string whose,
+        IReadOnlyList<ChecklistItem> items,
+        IReadOnlyCollection<string> replacing)
+    {
+        // Through the wording layer, which is the thing that knows Slot05_Size5 is a Class 5
+        // Compartment on this hull and what is fitted in it. Null where it could not say — the
+        // subject is then never spoken at all rather than spoken as a journal field name.
+        var subjects = replacing.Select(subject => Readable(subject, items)).ToList();
+
+        var slots = subjects.Count == 1 ? "one slot" : $"{Count(subjects.Count)} slots";
+
+        // Named while naming them is both possible and useful. Six subjects in a spoken sentence
+        // is an inventory rather than a description — and it was the inventory, with the pairing
+        // between slot and modification left for the Commander to guess at, that made the reported
+        // line unreadable even before the cap cut it in half. The panel's proposal view holds the
+        // whole of it.
+        var named = subjects.Count <= 3 && subjects.All(subject => subject is not null)
+            ? string.Join(", ", subjects)
+            : null;
+
+        if (items.Count == 0)
+        {
+            return named is null
+                ? Fitting($"Drop {slots} from the {whose} plan")
+                : Fitting(
+                    $"Drop {named} from the {whose} plan",
+                    $"Drop {slots} from the {whose} plan");
+        }
+
+        var wanted = items.Select(item => item.Text).ToList();
+        var gist = wanted.Count switch
+        {
+            1 => wanted[0],
+            2 => $"{wanted[0]} and {wanted[1]}",
+            _ => $"{wanted[0]}, {wanted[1]} and {Count(wanted.Count - 2)} more",
+        };
+
+        return Fitting(
+            named is null ? $"Set {slots} on the {whose} plan: {string.Join("; ", wanted)}"
+                          : $"Set the {whose} plan's {named} to {string.Join("; ", wanted)}",
+            $"Set {slots} on the {whose} plan: {string.Join("; ", wanted)}",
+            $"Set {slots} on the {whose} plan: {gist}",
+            $"Set {slots} on the {whose} plan");
+    }
+
+    /// <summary>
+    /// One subject as it should be said: through <see cref="ChecklistWording"/> where an item in
+    /// this proposal is about it, and as written where none is — an engineer's name, most often,
+    /// which is already the way a Commander says it.
+    /// </summary>
+    private string? Readable(string subject, IReadOnlyList<ChecklistItem> items)
+    {
+        var about = items.FirstOrDefault(item =>
+            item.Intent is { } intent
+            && string.Equals(intent.Subject, subject, StringComparison.OrdinalIgnoreCase));
+
+        return about is not null
+            ? ChecklistWording.Subject(about, State)
+            : ChecklistWording.Subject(subject, items.Select(item => item.Hull).FirstOrDefault());
+    }
+
+    /// <summary>
+    /// A small number in words, because these are read aloud and "6 slots" is not how anybody
+    /// says it. Past twelve the digits are easier to take in than the words.
+    /// </summary>
+    private static string Count(int many) => many switch
+    {
+        1 => "one",
+        2 => "two",
+        3 => "three",
+        4 => "four",
+        5 => "five",
+        6 => "six",
+        7 => "seven",
+        8 => "eight",
+        9 => "nine",
+        10 => "ten",
+        11 => "eleven",
+        12 => "twelve",
+        _ => many.ToString(CultureInfo.InvariantCulture),
+    };
 
     /// <summary>
     /// What the checklist should hold for this scope and source once a build is applied: what is
@@ -1686,8 +1855,43 @@ public sealed class ChecklistService(
                + "I cannot make this change myself.";
     }
 
-    private static string Trim(string text) =>
-        text.Length <= ChecklistLimits.MaxTextLength ? text : text[..ChecklistLimits.MaxTextLength];
+    /// <summary>
+    /// The longest wording in the ladder that fits, which is what "composed to fit rather than
+    /// truncated to fit" means in code (#154).
+    /// <para>
+    /// The ladder runs most-detailed first, so a two-slot revision still names both slots and a
+    /// six-slot one says "six slots" instead of losing three of them off the end. Nothing here
+    /// cuts a sentence: each rung is a whole sentence somebody wrote.
+    /// </para>
+    /// </summary>
+    private static string Fitting(params string[] ladder) =>
+        Array.Find(ladder, said => said.Length <= ChecklistLimits.MaxTextLength) ?? Trim(ladder[^1]);
+
+    /// <summary>
+    /// The backstop, and it stops at a word (#154).
+    /// <para>
+    /// <b>This is defect two of the report, and the cap is borrowed from the wrong feature.</b>
+    /// <see cref="ChecklistLimits.MaxTextLength"/> bounds a checklist <em>line</em>; applied to a
+    /// spoken sentence with no ellipsis and no regard for word boundaries it produced <i>"Grade 5
+    /// Dirty Drive Tuning on M."</i> — a request for a decision cut into a different, finished-
+    /// looking sentence. Every path that reaches a Commander now composes something that fits, so
+    /// this should never fire; when it does it says so rather than pretending.
+    /// </para>
+    /// </summary>
+    private static string Trim(string text)
+    {
+        if (text.Length <= ChecklistLimits.MaxTextLength)
+        {
+            return text;
+        }
+
+        const string Ellipsis = "…";
+
+        var cut = text[..(ChecklistLimits.MaxTextLength - Ellipsis.Length)];
+        var lastSpace = cut.LastIndexOf(' ');
+
+        return (lastSpace > 0 ? cut[..lastSpace] : cut).TrimEnd(' ', ',', ';', ':') + Ellipsis;
+    }
 }
 
 /// <summary>

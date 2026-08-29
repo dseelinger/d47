@@ -41,34 +41,51 @@ public static class JournalCapability
             // "what's your operating system" — questions this capability has no business
             // answering, answered from journal data with total confidence. Every phrase here has
             // to be one that can only be a request about the Commander's own game.
+            //
+            // <b>And each one names the tool it means</b> (#161). This capability has six tools
+            // the router could call and used to reach whichever was declared first, which is
+            // get_location — so every keyword below answered with where the Commander was
+            // standing, whatever it had been asked about. See CapabilityKeyword.
             Keywords =
             [
-                "where am i",
-                "where i am",
-                "what system",
-                "which system",
-                "current system",
-                "my location",
-                "am i docked",
-                "what body",
-                "what am i flying",
-                "my ship",
-                "my loadout",
-                "jump range",
-                "where is my carrier",
-                "my carrier",
-                "what ships do i own",
-                "my ships",
-                "my fleet",
-                "stored modules",
-                "module storage",
-                "what materials",
-                "my materials",
-                "my backpack",
-                "ship locker",
-                "session summary",
-                "how have i done",
-                "this session",
+                new("where am i", "get_location"),
+                new("where i am", "get_location"),
+                new("what system", "get_location"),
+                new("which system", "get_location"),
+                new("current system", "get_location"),
+                new("my location", "get_location"),
+                new("am i docked", "get_location"),
+                new("what body", "get_location"),
+                new("what am i flying", "get_ship"),
+                new("my ship", "get_ship"),
+                new("my loadout", "get_ship"),
+
+                // <b>Narrowed from "jump range", which was the worst keyword in this list</b>
+                // (#161). Every other phrase here carries a possessive or a location word, so a
+                // Commander-shaped answer is at least in the right subject; "jump range" is a
+                // general Elite topic and most sentences containing it are about *a ship*, very
+                // often one the Commander does not own. "What's the Cobra Mk III's jump range?"
+                // was answered three times running with where the Commander was docked. Naming
+                // get_ship would have fixed the tool and kept the wrong subject — the answer
+                // would have been *their* ship's range, asked about somebody else's hull — so the
+                // possessive is what has to be in the phrase. Anything else falls through to the
+                // model, which has the specification tables.
+                new("my jump range", "get_ship"),
+
+                new("where is my carrier", "get_fleet"),
+                new("my carrier", "get_fleet"),
+                new("what ships do i own", "get_fleet"),
+                new("my ships", "get_fleet"),
+                new("my fleet", "get_fleet"),
+                new("stored modules", "get_stored_modules"),
+                new("module storage", "get_stored_modules"),
+                new("what materials", "get_materials"),
+                new("my materials", "get_materials"),
+                new("my backpack", "get_materials"),
+                new("ship locker", "get_materials"),
+                new("session summary", "get_session_summary"),
+                new("how have i done", "get_session_summary"),
+                new("this session", "get_session_summary"),
             ],
             Display = new CapabilityDisplay { PanelTitle = "Location", Order = 20 },
             Tools =
@@ -160,9 +177,15 @@ public static class JournalCapability
     /// the model, which is the ordinary outcome and not a failure.
     /// </para>
     /// <para>
-    /// <b>The keywords are left exactly as they are.</b> They are what makes the capability
-    /// reachable at all with no model, and narrowing them to fix this would trade one silent
-    /// wrong answer for a set of silent non-answers.
+    /// <b>The keywords are no longer left as they were</b>, and this paragraph used to say they
+    /// should be: <i>"narrowing them to fix this would trade one silent wrong answer for a set of
+    /// silent non-answers."</i> That reasoning was sound and the outcome was still a confidently
+    /// wrong answer, which is #161 — "what's the Cobra Mk III's jump range?" reached the keyword
+    /// <c>jump range</c>, because a phrase must be the whole utterance and a keyword only has to
+    /// be contained, so padding was enough to break the fix. What the argument missed is that
+    /// narrowing was not the only road: a keyword can name its tool, which loses no reachability
+    /// at all. Each one above now does, and only <c>jump range</c> itself was narrowed — for a
+    /// reason about the subject rather than about the tool, stated where it is.
     /// </para>
     /// </summary>
     private static IReadOnlyList<ToolCommandPhrase> Asking(IReadOnlyList<string> phrases) =>

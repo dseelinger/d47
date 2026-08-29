@@ -52,7 +52,6 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
 
     private readonly Lock _gate = new();
 
-    private Cached? _cached;
 
     /// <param name="book">
     /// The markets the Commander has stood in themselves, or null where none is composed. Their
@@ -115,7 +114,20 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
         CancellationToken cancellationToken)
     {
         var radius = search.Query.MaxDistance;
-        var fetched = await SweepAsync(search.System, radius, cancellationToken).ConfigureAwait(false);
+
+        // The commodity goes into the request (#156). This is the named-commodity path and the
+        // only one that changes: the sweep's 150-station budget is spent on stations that stock
+        // the thing rather than on whichever 150 happen to be nearest.
+        var sweep = await SweepAsync(
+                search.System,
+                radius,
+                cancellationToken,
+                search.Query.Commodity,
+                search.Query.Side == TradeSide.Selling)
+            .ConfigureAwait(false);
+
+        var fetched = sweep.Markets;
+
         var origin = fetched.FirstOrDefault(market =>
             string.Equals(market.System, search.System, StringComparison.OrdinalIgnoreCase)
             && (search.Station is null || market.IsSamePlaceAs(search.Station, search.System)));
@@ -124,6 +136,12 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
         // rather than the station's, and a question asked in light years does not need the pad.
         origin ??= fetched.FirstOrDefault(market =>
             string.Equals(market.System, search.System, StringComparison.OrdinalIgnoreCase));
+
+        // And failing *that*, the coordinates the search itself resolved the reference to (#156).
+        // A commodity-filtered sweep has no reason to return the origin's own stations — they need
+        // not stock the thing — so without this the fix would have bought a right answer and paid
+        // for it in every distance, silently, by falling back to ranking on price.
+        origin ??= Somewhere(search.System, sweep.Reference);
 
         var oldest = _now() - TimeSpan.FromHours(search.MaxPriceAge);
         var usable = new List<MarketSnapshot>(fetched.Count);
@@ -144,8 +162,27 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
             CommodityMarketSearch.Rank(search.Query, usable, origin),
             usable.Count + stale,
             stale,
-            origin is not null);
+            origin is not null)
+        {
+            Horizon = sweep.Horizon,
+        };
     }
+
+    /// <summary>
+    /// A place with coordinates and no market: the reference system itself, as the search resolved
+    /// it. Enough to measure from, which is all an origin is for.
+    /// </summary>
+    private static MarketSnapshot? Somewhere(string system, (double X, double Y, double Z)? at) =>
+        at is not { } found
+            ? null
+            : new MarketSnapshot
+            {
+                Station = system,
+                System = system,
+                X = found.X,
+                Y = found.Y,
+                Z = found.Z,
+            };
 
     /// <summary>
     /// Where to buy everything one construction site still needs (Phase 50).
@@ -165,7 +202,10 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
             return SourcingAnswer.Empty;
         }
 
-        var fetched = await SweepAsync(search.System, search.MaxDistance, cancellationToken).ConfigureAwait(false);
+        // Unfiltered, and #156 leaves it that way on purpose: a build asks about twenty
+        // commodities at once, so there is no single one to narrow the sweep by.
+        var fetched = (await SweepAsync(search.System, search.MaxDistance, cancellationToken)
+            .ConfigureAwait(false)).Markets;
 
         var origin = fetched.FirstOrDefault(market =>
             string.Equals(market.System, search.System, StringComparison.OrdinalIgnoreCase)
@@ -247,7 +287,10 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
         CancellationToken cancellationToken)
     {
         var radius = query.MaxHopDistance;
-        var fetched = await SweepAsync(query.System, radius, cancellationToken).ConfigureAwait(false);
+
+        // Unfiltered, and unchanged by #156: trade planning ranks every commodity at every
+        // market against every other, so there is nothing to filter by.
+        var fetched = (await SweepAsync(query.System, radius, cancellationToken).ConfigureAwait(false)).Markets;
 
         var oldest = _now() - TimeSpan.FromHours(query.MaxPriceAge);
         var merged = new List<MarketSnapshot>(fetched.Count);
@@ -324,37 +367,135 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
         return origin is null ? null : origin.DistanceTo(seen);
     }
 
+    /// <summary>
+    /// One sweep, and the two things a caller needs to know about it besides its markets (#156).
+    /// </summary>
+    /// <param name="Reference">
+    /// The coordinates the search resolved the reference system to, straight out of the response.
+    /// <b>Read rather than derived</b>, because a commodity-filtered sweep may not return the
+    /// origin's own stations at all — they need not stock the thing — and distances measured from
+    /// nothing are the ranking falling back to price with no warning.
+    /// </param>
+    /// <param name="Exhausted">
+    /// Whether the sweep ran out of <em>galaxy</em> rather than out of budget: a short page ended
+    /// it, so everything inside the radius was examined and "nothing within N light years" is a
+    /// claim about N light years. False means the page budget ran out first, and the radius
+    /// answered is not the radius searched.
+    /// </param>
+    private sealed record Sweep(
+        IReadOnlyList<MarketSnapshot> Markets,
+        (double X, double Y, double Z)? Reference,
+        bool Exhausted)
+    {
+        public static readonly Sweep Nothing = new([], null, true);
+
+        /// <summary>
+        /// How far the sweep actually reached, in light years, or null when it reached the whole
+        /// radius it was asked for. This is the number a negative answer has to say.
+        /// </summary>
+        public double? Horizon
+        {
+            get
+            {
+                if (Exhausted || Reference is not { } origin || Markets.Count == 0)
+                {
+                    return null;
+                }
+
+                var from = new MarketSnapshot
+                {
+                    Station = string.Empty,
+                    System = string.Empty,
+                    X = origin.X,
+                    Y = origin.Y,
+                    Z = origin.Z,
+                };
+
+                // The results come back sorted by distance ascending, so the furthest is the last
+                // one — but Max rather than Last, because that ordering is the service's promise
+                // and this is the one number the honesty of a negative answer rests on.
+                return Markets.Max(from.DistanceTo);
+            }
+        }
+    }
+
     private sealed record Cached(
         string System,
         double Radius,
+        string? Commodity,
+        bool Selling,
         DateTimeOffset At,
-        IReadOnlyList<MarketSnapshot> Markets);
+        Sweep Sweep);
 
-    private async Task<IReadOnlyList<MarketSnapshot>> SweepAsync(
+    /// <summary>
+    /// How many sweeps are remembered at once. More than one since #156, because a named-commodity
+    /// search and the general sweep are now different requests and a single slot would make two
+    /// questions asked in one breath evict each other.
+    /// </summary>
+    private const int CacheSlots = 8;
+
+    private readonly List<Cached> _sweeps = [];
+
+    /// <summary>
+    /// The markets to plan over, and the two facts about how they were gathered (#156).
+    /// </summary>
+    /// <param name="commodity">
+    /// <b>Pushed into the request when the question names one.</b> This is the whole of #156. The
+    /// sweep fetches the nearest 150 stations and nothing else, and near a bubble system those 150
+    /// span only a few light years — so a commodity none of them carried was reported absent from
+    /// the entire radius. Asked for the closest place to buy 200 Landmines near Eurybia, d47 said
+    /// there was none within 250 light years while its own data source had 5,229 units 11 light
+    /// years away, and said it twice with rising confidence.
+    /// <para>
+    /// Filtering server-side spends the same 150-station budget entirely on stations that stock
+    /// the thing, which is what makes the horizon stop mattering for the case that had it. The
+    /// general sweep — trade planning, colonisation sourcing — passes null and is untouched:
+    /// those questions have no commodity to filter by, and for them the comment this replaces was
+    /// right that extra stations cost arithmetic rather than correctness.
+    /// </para>
+    /// </param>
+    private async Task<Sweep> SweepAsync(
         string system,
         double radius,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? commodity = null,
+        bool selling = false)
     {
         lock (_gate)
         {
             // A wider cached sweep answers a narrower question: the planner measures every leg
             // itself, so extra stations cost arithmetic rather than correctness.
-            if (_cached is { } cached
-                && string.Equals(cached.System, system, StringComparison.OrdinalIgnoreCase)
-                && cached.Radius >= radius
-                && _now() - cached.At < CacheLife)
+            //
+            // <b>Only within the same filter, though.</b> An unfiltered sweep is the nearest 150
+            // markets and a filtered one is the nearest 150 that stock a named commodity; neither
+            // is a superset of the other, and answering one question with the other's cache is
+            // #156 arriving through the back door.
+            var cached = _sweeps.Find(entry =>
+                string.Equals(entry.System, system, StringComparison.OrdinalIgnoreCase)
+                && entry.Radius >= radius
+                && string.Equals(entry.Commodity, commodity, StringComparison.OrdinalIgnoreCase)
+                && entry.Selling == selling
+                && _now() - entry.At < CacheLife);
+
+            if (cached is not null)
             {
-                _logger.LogDebug("Re-using {Count} cached markets near {System}", cached.Markets.Count, system);
-                return cached.Markets;
+                _logger.LogDebug(
+                    "Re-using {Count} cached markets near {System}", cached.Sweep.Markets.Count, system);
+
+                return cached.Sweep;
             }
         }
 
         var markets = new List<MarketSnapshot>();
+        (double X, double Y, double Z)? reference = null;
+        var exhausted = false;
 
         for (var page = 0; page < Pages; page++)
         {
             using var content = new StringContent(
-                SpanshRequest.Markets(system, radius, PageSize, page), Encoding.UTF8, "application/json");
+                SpanshRequest.Markets(system, radius, PageSize, page, commodity, selling),
+                Encoding.UTF8,
+                "application/json");
 
             using var document = await SendAsync(
                 token => _http.PostAsync("api/stations/search", content, token),
@@ -365,24 +506,40 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
                 break;
             }
 
+            reference ??= SpanshResponse.ReadReferenceCoordinates(document);
+
             var read = SpanshResponse.ReadMarkets(document);
 
             markets.AddRange(read);
 
             // A short page is the last page. Asking for the next one costs another second and
-            // returns nothing.
+            // returns nothing — and it is also the evidence that the radius was examined rather
+            // than merely asked about.
             if (read.Count < PageSize)
             {
+                exhausted = true;
                 break;
             }
         }
 
+        var sweep = new Sweep(markets, reference, exhausted);
+
         lock (_gate)
         {
-            _cached = new Cached(system, radius, _now(), markets);
+            _sweeps.RemoveAll(entry =>
+                string.Equals(entry.System, system, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(entry.Commodity, commodity, StringComparison.OrdinalIgnoreCase)
+                && entry.Selling == selling);
+
+            _sweeps.Add(new Cached(system, radius, commodity, selling, _now(), sweep));
+
+            if (_sweeps.Count > CacheSlots)
+            {
+                _sweeps.RemoveAt(0);
+            }
         }
 
-        return markets;
+        return sweep;
     }
 
     /// <summary>

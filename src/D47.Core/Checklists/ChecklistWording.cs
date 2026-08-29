@@ -199,6 +199,44 @@ public static class ChecklistWording
     }
 
     /// <summary>
+    /// One item's <em>subject</em> as a Commander says it, for a sentence that names slots rather
+    /// than draws lines (#154).
+    /// <para>
+    /// <see cref="Said"/> answers the whole line with the slot swapped inside it; a proposal's
+    /// summary needs the slot on its own. Both go through <c>InSlot</c>, so a spoken proposal and
+    /// the checklist line it becomes cannot call the same slot two different things — and the raw
+    /// journal name is what a Commander was read out loud until this existed: <i>"Armour,
+    /// MainEngines, LifeSupport, Radar, Slot05_Size5, Slot06_Size5"</i>.
+    /// </para>
+    /// </summary>
+    public static string? Subject(ChecklistItem item, CommanderGameState? state)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+
+        if (item.Intent is not { } intent)
+        {
+            return item.Text;
+        }
+
+        if (!ChecklistKeys.SlotShaped(intent.Kind) || item.Scope.Group != ChecklistGroup.Ship)
+        {
+            return intent.Subject;
+        }
+
+        return InSlot(item, intent.Subject, state) ?? Subject(intent.Subject, item.Hull);
+    }
+
+    /// <summary>
+    /// A slot with no item of its own to describe it — the ones a revision is <em>dropping</em>,
+    /// which have no entry in what it proposes. The hull's own layout is the last thing that can
+    /// be said about them; null where even that does not resolve, so a caller can tell "I could
+    /// not put this into words" from "here are the words" rather than being handed
+    /// <c>Slot05_Size5</c> and no way to know (#154).
+    /// </summary>
+    public static string? Subject(string subject, string? hull) =>
+        hull is { Length: > 0 } type ? EliteSpecifications.Slot(type, subject)?.Describe() : null;
+
+    /// <summary>
     /// The module in a slot, as a Commander says it — "7A Shield Generator". Null for a slot
     /// nothing is in, or one on a ship d47 has never been aboard.
     /// </summary>

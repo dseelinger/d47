@@ -70,7 +70,14 @@ public static class UtilitiesCapability
 
             // Phrases, never bare words. "time" alone would hijack any sentence containing it,
             // which is the failure the router's whole-phrase rule exists against.
-            Keywords = ["what is the date", "what's the date", "what time is it"],
+            // Each names its tool (#161): cancel_reminder takes no required argument either,
+            // and it cancels something.
+            Keywords =
+            [
+                new("what is the date", "say_the_time"),
+                new("what's the date", "say_the_time"),
+                new("what time is it", "say_the_time"),
+            ],
 
             Tools =
             [

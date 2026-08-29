@@ -67,7 +67,7 @@ public class FocusPhrasesTests
     /// </summary>
     [Fact]
     public void TheRouterIsGivenExactlyThosePhrases() =>
-        Assert.Equal(FocusCapability.Phrases, FocusCapability.Create(null).Keywords);
+        Assert.Equal(FocusCapability.Phrases, FocusCapability.Create(null).Keywords.Select(keyword => keyword.Phrase));
 
     /// <summary>
     /// <b>And the model is told not to prescribe a workaround.</b> The rule that already stopped

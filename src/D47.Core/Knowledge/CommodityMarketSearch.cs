@@ -72,7 +72,13 @@ public sealed record CommodityOffer(
 /// <b>Local is the arrangement rather than a workaround.</b> Spansh will not sort on a commodity's
 /// price server-side — every sort shape tried answered HTTP 400 — and its demand bounds are
 /// accepted and ignored, so the same 203 stations come back for <c>demand &gt;= 1</c>, for
-/// <c>demand &gt;= 50000</c> and for no bound at all. The sweep returns whole markets anyway (342
+/// <c>demand &gt;= 50000</c> and for no bound at all. <b>That last finding is about the
+/// <em>trade</em> endpoint and does not carry to the station search</b>, which is a different one
+/// and honours both bounds — 12 stations within 15 light years of Eurybia for
+/// <c>demand &gt;= 1</c> against 449 unfiltered, measured 2026-08-28. The ranking still happens
+/// here, because sorting is what is refused; the <em>narrowing</em> moved server-side in #156, and
+/// it had to, since the sweep's station budget was being spent on markets that did not carry the
+/// commodity at all. The sweep returns whole markets anyway (342
 /// priced commodities per station, measured 2026-08-19) and answers in about the same time
 /// whatever it returns, so the bill is the number of requests rather than their size. Ranking here
 /// costs one pass over a list that was already in memory.

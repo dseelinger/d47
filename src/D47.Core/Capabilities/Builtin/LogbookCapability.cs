@@ -58,11 +58,15 @@ public static class LogbookCapability
 
             // Phrases, never bare words. "log" alone would hijack every sentence a Commander says
             // about d47's own diagnostics, which live one folder away and are also called logs.
+            // Each names its tool (#161), and estimate_log is right for all three rather than
+            // merely first: write_log refuses unless a quote has been given, so "write my
+            // commander's log" is answered by quoting it — which is what the declared phrases on
+            // estimate_log already say.
             Keywords =
             [
-                "write my commander's log",
-                "write up my session",
-                "what would a log cost",
+                new("write my commander's log", "estimate_log"),
+                new("write up my session", "estimate_log"),
+                new("what would a log cost", "estimate_log"),
             ],
 
             // The other thing d47 does with the journals rather than with

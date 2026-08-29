@@ -54,7 +54,14 @@ public static class ShipsCapability
         Display = new CapabilityDisplay { PanelTitle = "Ships", Order = 42 },
 
         // Phrases, never bare words. "ships" alone would hijack any sentence containing it.
-        Keywords = ["what have I planned", "read my ship plans", "what am I building"],
+        // Each names its tool (#161): promote_ship_plan and drop_ship_plan take no required
+        // argument either, and both change a plan.
+        Keywords =
+        [
+            new("what have I planned", "get_ship_plans"),
+            new("read my ship plans", "get_ship_plans"),
+            new("what am I building", "get_ship_plans"),
+        ],
 
         Tools =
         [

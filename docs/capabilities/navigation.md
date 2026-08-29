@@ -151,6 +151,11 @@ route you are flying, a stop on a trade plan — copies when you press it.
 Turn on **Try to plot courses in the galaxy map** and Directive 47 will also drive the map for
 you, with your own keys, in this order:
 
+0. Say what it is about to do, naming the system: *"Plotting the course to Shinrarta Dezhra."*
+   This comes before the map key, and it is there because the seven steps below take several
+   seconds — in a headset you watch the map fly about on its own with nothing to connect it to
+   what you asked for. Naming the system also catches a misheard one five seconds earlier than
+   the verdict would, and the name is the whole payload.
 1. Open the galaxy map, and wait until the game reports it showing.
 2. **Up**, then **select** — that is the search box.
 3. Paste the name, then **return** — the map flies to the first match.

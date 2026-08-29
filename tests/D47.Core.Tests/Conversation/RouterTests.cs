@@ -144,9 +144,9 @@ public class KeywordRouterTests
 
         var bare = (from capability in registry.All
                     from keyword in capability.Descriptor.Keywords
-                    where !keyword.Contains(' ', StringComparison.Ordinal)
-                          && !JustifiedSingleWords.Contains(keyword, StringComparer.OrdinalIgnoreCase)
-                    select $"{capability.Descriptor.Id}: '{keyword}'").ToArray();
+                    where !keyword.Phrase.Contains(' ', StringComparison.Ordinal)
+                          && !JustifiedSingleWords.Contains(keyword.Phrase, StringComparer.OrdinalIgnoreCase)
+                    select $"{capability.Descriptor.Id}: '{keyword.Phrase}'").ToArray();
 
         Assert.True(
             bare.Length == 0,
@@ -189,7 +189,7 @@ public class KeywordRouterTests
         {
             foreach (var keyword in capability.Descriptor.Keywords)
             {
-                var match = router.Match(keyword);
+                var match = router.Match(keyword.Phrase);
                 Assert.NotNull(match);
             }
         }

@@ -1,4 +1,4 @@
-namespace D47.Core.Capabilities;
+﻿namespace D47.Core.Capabilities;
 
 /// <summary>How a capability presents itself on the panel.</summary>
 public sealed record CapabilityDisplay
@@ -40,8 +40,11 @@ public sealed record CapabilityDescriptor
 
     public IReadOnlyList<string> Examples { get; init; } = [];
 
-    /// <summary>Vocabulary for the model-free keyword router.</summary>
-    public IReadOnlyList<string> Keywords { get; init; } = [];
+    /// <summary>
+    /// Vocabulary for the model-free keyword router. Each entry may name the tool it means; see
+    /// <see cref="CapabilityKeyword"/> for what happens when it does not.
+    /// </summary>
+    public IReadOnlyList<CapabilityKeyword> Keywords { get; init; } = [];
 
     /// <summary>
     /// Phrases that only mean anything when they were spoken.
@@ -58,7 +61,7 @@ public sealed record CapabilityDescriptor
     /// on a flag is a list that gets read wrong.
     /// </para>
     /// </summary>
-    public IReadOnlyList<string> SpokenKeywords { get; init; } = [];
+    public IReadOnlyList<CapabilityKeyword> SpokenKeywords { get; init; } = [];
 
     /// <summary>
     /// Phrases that only mean anything while there is something to interrupt.

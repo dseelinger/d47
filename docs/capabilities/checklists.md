@@ -189,7 +189,27 @@ The boundary is visible by opening `data\`:
 Accepting is unreachable from the AI entirely. Say it, or press the button:
 
 > "accept the proposal" · "accept that" · "add it to my checklist" · "do it then"
-> "decline the proposal" · "leave my checklist alone"
+> "decline the proposal" · "leave my checklist alone" · "decline everything"
+
+### How often you hear about one
+
+**Once in full, twice as a clause, then not again.** A proposal you have not answered is mentioned
+after a turn that did not resolve it — the full sentence the first time, a short *"one proposal is
+still waiting on you"* for the next two, and after that nothing.
+
+Going quiet is not forgetting. It stays on the Checklist tab, with its count on the bar, until you
+answer it. What stops is the talking.
+
+This used to repeat the full sentence after *every* turn, forever, which is how a Commander learns
+to stop listening — the same reason a line Directive 47 has no table for is noted once and then let
+alone. If you want the queue gone rather than quiet, **"decline everything"** clears it in one.
+
+**And a proposal is described rather than inventoried.** A revision touching six slots says so —
+*"Set six slots on the Cartage's plan: …"* — instead of reading out six slot names and then three
+modifications with nothing to say which went where. Slot names go through the same wording layer
+the checklist lines use, so you hear *"7A Shield Generator"* rather than `Slot01_Size7`, and a small
+revision still names exactly what it changes. The slot-by-slot detail is what the proposal view on
+the panel is for.
 
 ### The Checklist tab
 
