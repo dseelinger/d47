@@ -7,8 +7,19 @@ namespace D47.Core.Diagnostics.Donation;
 /// <b>Consistent, and only within one excerpt.</b> A reader has to be able to follow one person
 /// across a dozen events — a wing that forms, jumps and breaks up is three names and one story —
 /// so the same input always gets the same stand-in here. It is deliberately <em>not</em> stable
-/// across excerpts: two donations from the same Commander must not be joinable on
-/// <c>CMDR ALPHA</c>, which is what a hash or a saved table would make them.
+/// across excerpts, and a hash or a saved table is exactly what would make it so.
+/// </para>
+/// <para>
+/// <b>What that used to buy has been given up on purpose, and the sentence has to change with
+/// it</b> (<a href="https://github.com/dseelinger/d47/issues/176">#176</a>). This said that two
+/// donations from the same Commander could not be joined, and that was true while the envelope
+/// carried nothing. It no longer is: donations from one installation now travel under a random
+/// <see cref="DonorToken"/> so that a journal history can be added to, and anybody holding the
+/// store can group them on it whatever this class does to the body. The weaker claim, which is
+/// still worth stating: <b>donations from one installation accumulate under a random token that
+/// identifies an install, not a person</b>, and the content stand-ins below remain per-donation.
+/// The reversal is argued in #176 rather than left to be inferred from a bucket that groups
+/// neatly, and a donor reads the weaker claim before their first donation rather than after.
 /// </para>
 /// <para>
 /// <b>The map never leaves.</b> <see cref="Replacements"/> exists so the log half can be given the

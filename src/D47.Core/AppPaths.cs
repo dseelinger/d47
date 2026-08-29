@@ -25,6 +25,8 @@ public sealed class AppPaths
         SpendFile = Path.Combine(Data, "spend.jsonl");
         PronunciationsFile = Path.Combine(Data, PronunciationOverrides.FileName);
         VrActions = Path.Combine(Data, "vr-actions");
+        DonorTokenFile = Path.Combine(Data, "donor-token.txt");
+        Donations = Path.Combine(Data, "donations");
     }
 
     /// <summary>
@@ -115,6 +117,31 @@ public sealed class AppPaths
     /// </para>
     /// </summary>
     public string VrActions { get; }
+
+    /// <summary>
+    /// The random per-installation donor token
+    /// (<a href="https://github.com/dseelinger/d47/issues/176">#176</a>), or where it will be
+    /// written the first time a donation is made.
+    /// <para>
+    /// <b>A file of its own, and a plain one.</b> Deleting it is the documented withdrawal route,
+    /// so it has to be a thing a Commander can find and delete without editing JSON around it —
+    /// which rules out both <c>settings.json</c> (append-only, and a token is not something anyone
+    /// typed) and <c>view-state.json</c> (how the panel was left).
+    /// </para>
+    /// </summary>
+    public string DonorTokenFile { get; }
+
+    /// <summary>
+    /// The Commander's own copy of every donation they have made
+    /// (<a href="https://github.com/dseelinger/d47/issues/175">#175</a>) — what was shown, what was
+    /// sent, and the hash that ties the two together.
+    /// <para>
+    /// Written here rather than through a file picker, unlike the excerpt window's "Save a file
+    /// instead…": a receipt is evidence the donor did not ask to be asked about, and one that
+    /// interrupts the send to ask where to put it is one that gets cancelled.
+    /// </para>
+    /// </summary>
+    public string Donations { get; }
 
     public void EnsureCreated()
     {

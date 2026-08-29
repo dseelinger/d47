@@ -95,6 +95,66 @@ That is the whole reason it exists. Every other provider, free ones included, re
 Directive 47 speaks, and that includes re-voiced in-game messages written by other players. With
 Kokoro selected for those slots, nobody's words leave your machine to be spoken.
 
+**Donated excerpts and journal histories** — the newest destination, and the one that reverses a
+sentence Directive 47 used to say about itself. Donation shipped with nowhere to send: an excerpt
+was copied and pasted by a human, and a comment in the code said *there is no backend and there is
+not going to be one*. There is one now, argued in
+[#175](https://github.com/dseelinger/d47/issues/175), because the requirement changed underneath
+that sentence — a donated journal history is 32.5 MB compressed followed by about 85 KB a day, and
+no manual route carries that or can be reached by a stranger.
+
+**It is not the no-telemetry rule bending.** That rule is about ambient collection: crash
+reporters, analytics SDKs, hosted logging, all of which send without anybody asking. A donation
+sends nothing at all until you have read a full description of it and pressed a button, every time
+— no standing consent, nothing remembered, no automatic upload — and the row above says so.
+
+**The address is the switch.** Out of the box there is no donation address, so nothing can be
+uploaded: the donation windows offer a clipboard and a file, exactly as they did before. Set one
+and the same windows gain a send button. Clear it and they lose it again. There is no separate
+toggle because a toggle beside an empty address would be a control with nothing to control.
+
+**What is stored, and for how long.** An incident excerpt is kept for 30 days or until the defect
+it was cut for is closed, whichever comes first — enforced as a rule on the store rather than as a
+number somebody remembers. A donated journal history is kept **indefinitely**, on purpose: it is a
+regression case, and one that expires stops being one. Either goes on request, and either is a
+single delete.
+
+**Directive 47 keeps its own copy of what it sent.** In `data\donations`, beside the executable:
+the exact bytes, and their hash. While a human was the transport, *what is shown is what leaves*
+was something you could see; an upload turns it into a claim about code, and the receipt turns it
+back into something you can test with `certutil -hashfile`. It is also what a deletion request
+quotes.
+
+### Your donations are grouped, and that is a reversal too {#donor-token}
+
+Directive 47 used to say that two donations from the same Commander could not be joined. That was
+true, and it is not any more.
+
+A journal history you add to has to be recognisable as the same history, or it is not an
+accumulation — it is a pile of unrelated blobs. So a send carries a **random number identifying
+this installation**: made on this machine the first time you donate and never before, not derived
+from your Commander name, your Frontier ID or anything about your computer, and used for donations
+and nothing else. The stand-in names inside a donation are unchanged — still per-donation, still
+by field list.
+
+The claim is now weaker and still worth stating: **donations from one installation accumulate
+under a random token that identifies an install, not a person.** You read it here, and in the
+donation window, before the first donation rather than after
+([#176](https://github.com/dseelinger/d47/issues/176)).
+
+**Deleting it is a withdrawal, and it is no harder than consenting was.** Delete
+`data\donor-token.txt` and future donations stop joining the ones already sent. It does not reach
+back: what has gone stays under the old identifier until it is deleted at the store, which is a
+separate ask.
+
+**Two things are accepted rather than solved, and both are said here rather than discovered.**
+A thirteen-month history is easier to re-identify than a ten-minute excerpt — more surface, more
+distinctive routes, more chance one rare system pins the set to a person — and pseudonymised was
+never anonymous. And a second PC, a fresh install with no restore, or a cleared `data\` folder
+starts a second pile under a new number, with nothing saying the two halves are one history. The
+only fix for that would be a token derived from your machine, which is the identifier this whole
+design refuses.
+
 ## Your microphone is not a destination
 
 It is worth saying plainly, because Phase 13 added hands-free listening and "the microphone is
@@ -132,6 +192,21 @@ route that changes a setting, so a sentence that only mentions it gets an answer
 **The model cannot reach this row.** It decides whether anything leaves at all, and a model that
 could switch that back on is a model that could be told to by text it read in an in-game message.
 
+### Where donations are sent {#donation-endpoint}
+
+Empty out of the box, and empty means nothing can be uploaded. There is no address baked into the
+build: the store behind it is Cloudflare R2, which needs a payment method on the account before it
+will activate at all, so there is nothing to point at until somebody has deliberately provisioned
+one. `worker/README.md` in the repository is that provisioning, and the Worker it deploys is the
+only thing that can write to the bucket — there is no storage credential anywhere in Directive 47.
+
+Only `https` addresses are accepted. A scrubbed journal on a plaintext connection is a worse
+outcome than not donating.
+
+**The model cannot reach this row**, for the same reason it cannot reach the update check and then
+some: this one names where a scrubbed journal history goes, and a model that could set it is a
+model that could be told to by an in-game message it read.
+
 ### What Directive 47 remembers about you {#memory}
 
 A read-only summary of the [memory](memory.md) store — how many facts are kept, and how many of them
@@ -150,7 +225,8 @@ that cannot be undone.
 
 The settings panel carries one row per destination, saying the same things this page does
 {#egress-websearch} {#egress-updates} {#egress-diagnostics} {#egress-journal}
-{#egress-tts} {#egress-galaxy} {#egress-communitygoals} {#egress-models} {#egress-notableplaces} — but computed live from your settings
+{#egress-tts} {#egress-galaxy} {#egress-communitygoals} {#egress-models} {#egress-notableplaces}
+{#egress-donation} — but computed live from your settings
 rather than written down once. They are read-only: not something you set, something Directive 47
 says, sitting next to the settings that change it.
 

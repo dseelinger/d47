@@ -309,7 +309,10 @@ public static class BuiltinCapabilities
             backfillGoals ?? (() => null),
             now ?? (() => DateTimeOffset.MinValue)),
 
-        PrivacyCapability.Create(settings, searchAvailable, memories, flight),
+        // The donation identifier is read from the same AppPaths the diagnostics rows already
+        // take, so this list keeps the shape it has — no parameter inserted in the middle, which
+        // is the one edit this file records as silently rebinding everything after it.
+        PrivacyCapability.Create(settings, searchAvailable, memories, flight, paths.DonorTokenFile),
         SettingsCapability.Create(settings),
 
         // LAST, and it has to be last twice over (#50) - for two different reasons, which is what

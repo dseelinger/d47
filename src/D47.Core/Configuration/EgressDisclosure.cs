@@ -37,8 +37,32 @@ public static class EgressDisclosure
 
     public const string JournalFiles = "journal";
 
-    /// <summary>Fetching a speech model, which is the only transfer d47 makes on request.</summary>
+    /// <summary>
+    /// Fetching a speech model. <b>It was "the only transfer d47 makes on request" until
+    /// <a href="https://github.com/dseelinger/d47/issues/175">#175</a></b>; donation is the second,
+    /// and the sentence is corrected here rather than left to be read as still true.
+    /// </summary>
     public const string SpeechModels = "models";
+
+    /// <summary>
+    /// Sending a donated incident excerpt or journal history
+    /// (<a href="https://github.com/dseelinger/d47/issues/175">#175</a>).
+    /// <para>
+    /// <b>This is not the no-telemetry invariant bending, and saying so plainly matters because it
+    /// is the rule everybody reaches for first.</b> architecture.md §1 rules out crash reporters,
+    /// analytics SDKs and hosted logging — all three <i>ambient</i>, all three sending without
+    /// anybody asking. §7 states the operative rule, which is that egress is enumerated, disclosed
+    /// and switchable off. A per-donation upload behind a preview the Commander reads and a press
+    /// they make is that same shape as every other row here, and this is it being enumerated.
+    /// </para>
+    /// <para>
+    /// <b>What it does reverse is a sentence of d47's own</b>, written into
+    /// <see cref="Diagnostics.Donation.ExcerptReport"/> when donation shipped with no destination:
+    /// "there is no backend and there is not going to be one". That was a design commitment rather
+    /// than an invariant, and it was argued rather than quietly stepped around — see #175.
+    /// </para>
+    /// </summary>
+    public const string Donation = "donation";
 
     /// <summary>
     /// Synthesising a spoken line. Added in Phase 11 alongside the second provider, and it
@@ -104,6 +128,7 @@ public static class EgressDisclosure
         SpeechModels,
         Diagnostics,
         JournalFiles,
+        Donation,
     ];
 
     /// <summary>
@@ -123,6 +148,7 @@ public static class EgressDisclosure
         SpeechModels => "Speech model download",
         Diagnostics => "Diagnostics and logs",
         JournalFiles => "Journal files",
+        Donation => "Donated excerpts and journals",
         _ => throw new ArgumentOutOfRangeException(nameof(id), id, "Not an egress disclosure id."),
     };
 
@@ -254,8 +280,56 @@ public static class EgressDisclosure
             "Your journal is read from disk and never uploaded. Facts drawn from it — system, body, station — "
             + "can reach the model as game state when one is configured; see the language model row."),
 
+        Donation => DonationEntry(settings),
+
         _ => throw new ArgumentOutOfRangeException(nameof(id), id, "Not an egress disclosure id."),
     };
+
+    /// <summary>
+    /// What a donation sends, and where.
+    /// <para>
+    /// <b>The address is the switch.</b> There is no separate toggle: with no endpoint configured
+    /// nothing can be posted anywhere, the donation window offers a clipboard and a file and
+    /// nothing else, and this row reads silent. It is the shape the community goals row already
+    /// has — a destination that cannot be reached until somebody deliberately makes it reachable
+    /// is better disclosed as that than as a checkbox somebody might not have noticed.
+    /// </para>
+    /// <para>
+    /// <b>Active is about what the settings permit, not about what is happening.</b> Every other
+    /// row here reads the same way — the speech model row lights up when a model is selected
+    /// rather than mid-download — and a row that only lit up during an upload would tell a
+    /// Commander nothing they could act on beforehand. The text carries the part that matters:
+    /// nothing goes without a press, every time.
+    /// </para>
+    /// </summary>
+    private static EgressEntry DonationEntry(D47Settings settings)
+    {
+        if (settings.Donation.Endpoint is not { Length: > 0 } endpoint)
+        {
+            return EgressEntry.Silent(
+                Donation,
+                NameOf(Donation),
+                "No donation endpoint is set, so nothing can be uploaded. The donation windows can "
+                + "still put an excerpt on the clipboard or write a file, and where that goes "
+                + "afterwards is yours.");
+        }
+
+        return new EgressEntry(
+            Donation,
+            NameOf(Donation),
+            endpoint,
+            "Nothing is sent unless you press send, every time — there is no standing consent, no "
+            + "remembered choice and no automatic upload. What goes when you do press it is exactly "
+            + "the scrubbed text the window showed you: names and Frontier IDs already replaced, "
+            + "other players' in-game messages already dropped. A random identifier for this "
+            + "installation goes with it, so a journal history you add to can be added to rather "
+            + "than piling up as unrelated blobs — it is made on this machine, is not derived from "
+            + "your Commander name or anything else about you, and deleting "
+            + $"{AppPaths.DataFolderName}\\donor-token.txt ends that grouping. d47 writes its own "
+            + "copy of every donation beside the executable, with the hash of what it sent, so you "
+            + "can check that what was shown is what left.",
+            Active: true);
+    }
 
     /// <summary>
     /// What a web search sends, and where.
