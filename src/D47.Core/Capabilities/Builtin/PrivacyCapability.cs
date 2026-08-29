@@ -1,5 +1,6 @@
 using D47.Core.Configuration;
 using D47.Core.Conversation;
+using D47.Core.Diagnostics.Donation;
 
 namespace D47.Core.Capabilities.Builtin;
 
@@ -19,6 +20,27 @@ public static class PrivacyCapability
     public const string MemoryKey = "privacy.memory";
 
     /// <summary>
+    /// The row carrying the wipe for retained audio
+    /// (<a href="https://github.com/dseelinger/d47/issues/164">#164</a>). Registered only in a
+    /// process that was asked to record, so on an ordinary run the recorder is absent from the
+    /// surface rather than present and empty.
+    /// </summary>
+    public const string AudioFlightKey = "privacy.audioFlight";
+
+    /// <summary>
+    /// Where a donation is posted (<a href="https://github.com/dseelinger/d47/issues/175">#175</a>).
+    /// Here rather than beside the donate buttons because it is an address bytes leave for, and
+    /// this is the section that answers what leaves.
+    /// </summary>
+    public const string DonationEndpointKey = "donation.endpoint";
+
+    /// <summary>
+    /// The random per-installation identifier donations are grouped under, and the one press that
+    /// forgets it (<a href="https://github.com/dseelinger/d47/issues/176">#176</a>).
+    /// </summary>
+    public const string DonorKey = "privacy.donor";
+
+    /// <summary>
     /// Throwing away what d47 worked out about the Commander from their journals (Phase 32).
     /// Beside the memory row, because a Commander wanting to be forgotten means both.
     /// </summary>
@@ -34,10 +56,26 @@ public static class PrivacyCapability
     /// store — under the designer and in tests that are not about it — and the row then says so
     /// rather than offering a button that erases nothing.
     /// </param>
+    /// <param name="flight">
+    /// The audio flight recorder's record, or null in a process that was not asked to record —
+    /// which is every ordinary run. Null leaves the row out entirely rather than showing one
+    /// that says nothing has been recorded, because a Commander who never turned this on should
+    /// not have to read that d47 could have.
+    /// </param>
+    /// <param name="donorTokenFile">
+    /// Where the donation identifier lives, or null where nothing composed a data folder — under
+    /// the designer and in tests that are not about it. The row then says there is none, which is
+    /// also the true answer for an installation that has never donated.
+    /// </param>
     public static CapabilityDescriptor Create(
         SettingsService settings,
         Func<bool>? searchAvailable = null,
-        Memory.MemoryBook? memories = null)
+        Memory.MemoryBook? memories = null,
+
+        // Appended, like every optional here: the composition root passes these positionally, so
+        // a parameter added in the middle silently rebinds every argument after it.
+        Diagnostics.Flight.FlightLog? flight = null,
+        string? donorTokenFile = null)
     {
         var canSearch = searchAvailable ?? (() => true);
 
@@ -92,7 +130,7 @@ public static class PrivacyCapability
                             settings.Current, KeyPresent(), InaraKeyPresent(), canSearch()))),
                 },
             ],
-            Settings = BuildSettingRows(KeyPresent, InaraKeyPresent, canSearch, memories),
+            Settings = BuildSettingRows(KeyPresent, InaraKeyPresent, canSearch, memories, flight, donorTokenFile),
         };
     }
 
@@ -100,7 +138,9 @@ public static class PrivacyCapability
         Func<bool> keyPresent,
         Func<bool> inaraKeyPresent,
         Func<bool> searchAvailable,
-        Memory.MemoryBook? memories)
+        Memory.MemoryBook? memories,
+        Diagnostics.Flight.FlightLog? flight,
+        string? donorTokenFile)
     {
         var rows = new List<SettingRow>
         {
@@ -156,6 +196,106 @@ public static class PrivacyCapability
             Binding = new SettingBinding
             {
                 Read = _ => MemoryCapability.Summarise(memories),
+            },
+        });
+
+        // Beside the memory row, and for the same reason it is there rather than in a section of
+        // its own: a Commander who wants what d47 holds about them gone looks in one place, and
+        // an erase button somewhere else is one they would find after the one they were looking
+        // for (#164).
+        //
+        // Info with a Press, like the memory row above — so SettingsService.Apply refuses it and
+        // nothing on the tool surface can reach it. No router phrase either, for the reason that
+        // row has none: this cannot be undone, and a transcriber can produce the sentence that
+        // would trigger it out of a misheard one.
+        //
+        // Registered only where something is recording. A run that was not asked to record has
+        // no row here at all, which is the whole of what "absent from the surface unless enabled"
+        // means.
+        if (flight is not null)
+        {
+            rows.Add(new SettingRow
+            {
+                Key = AudioFlightKey,
+                Label = "Recorded audio",
+                Help =
+                    "What the flight recorder has kept of this flight: the utterances handed to the "
+                    + $"transcriber, and what left the speakers. At most {Diagnostics.Flight.FlightLog.CapBytes / (1024 * 1024)} MB "
+                    + "is held, oldest dropped first, and nothing kept as a test case is dropped. It stays "
+                    + "on this machine — it is never sent anywhere and never joins a donated excerpt, "
+                    + "because voice is biometric. Deleting takes the kept test cases with it.",
+                Kind = SettingKind.Info,
+
+                // No DocsAnchor, like the coverage row it is a sibling of. This is a workbench
+                // aid rather than something a Commander configures, so it gets no section in the
+                // public capability page.
+                PressLabel = "Delete every recording",
+                Press = flight.Empty,
+                Binding = new SettingBinding { Read = _ => flight.Summary() },
+            });
+        }
+
+        // Donation, and both of its rows are here rather than beside the donate buttons: one names
+        // an address bytes leave for and the other names an identifier that travels with them, and
+        // this is the section a Commander opens to ask what leaves.
+        rows.Add(new SettingRow
+        {
+            Key = DonationEndpointKey,
+            Advanced = true,
+            Label = "Where donations are sent",
+            Help =
+                "Empty means nothing can be uploaded: the donation windows offer a clipboard and a "
+                + "file, and where those go is yours. Set it and the same windows gain a send "
+                + "button — which still sends nothing until you press it, every time.",
+            Kind = SettingKind.Text,
+            DefaultDisplay = "nothing set",
+            DocsAnchor = "donation-endpoint",
+
+            // Protected, on the same reasoning as the update-check row above and then some: this
+            // one names where a scrubbed journal goes. A model that could set it is a model that
+            // could be told to by an in-game message, and the payload it would be redirecting is
+            // the Commander's play history.
+            Protected = true,
+            Binding = new SettingBinding
+            {
+                Read = s => s.Donation.Endpoint ?? string.Empty,
+                Write = (s, v) => s with
+                {
+                    Donation = s.Donation with
+                    {
+                        Endpoint = string.IsNullOrWhiteSpace(v) ? null : v.Trim(),
+                    },
+                },
+            },
+        });
+
+        rows.Add(new SettingRow
+        {
+            Key = DonorKey,
+            Advanced = true,
+            Label = "Your donation identifier",
+            Help =
+                "A random number made on this machine the first time you donate, so a journal "
+                + "history you add to can be added to rather than piling up as unrelated blobs. It "
+                + "is not derived from your Commander name or anything else about you, and it is "
+                + "used for donations and nothing else. Forgetting it stops future donations "
+                + "joining the ones already sent — it does not reach back, and what has already "
+                + "gone has to be deleted at the store.",
+            Kind = SettingKind.Info,
+            DocsAnchor = "donor-token",
+
+            // Info with a Press, like the memory row above: SettingsService.Apply refuses that
+            // shape, so nothing on the tool surface can reach it and it needs no protected flag of
+            // its own. No spoken phrase either — this one is destructive in the direction a
+            // Commander means it to be, but "forget me" is a sentence a transcriber invents.
+            PressLabel = donorTokenFile is null ? null : "Forget it",
+            Press = donorTokenFile is null ? null : () => DonorToken.Forget(donorTokenFile),
+            Binding = new SettingBinding
+            {
+                Read = _ => donorTokenFile is null
+                    ? "No donation identifier exists on this installation. One is created the "
+                      + "first time you donate, and never before."
+                    : DonorToken.Summarise(DonorToken.Read(donorTokenFile)),
             },
         });
 

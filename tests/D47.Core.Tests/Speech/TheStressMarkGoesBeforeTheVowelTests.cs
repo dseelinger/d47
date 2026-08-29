@@ -134,6 +134,14 @@ public class TheStressMarkGoesBeforeTheVowelTests
     [InlineData("Python")]
     [InlineData("Anaconda")]
     [InlineData("Imperial")]
+
+    // The silent-e words (#153). A rule that drops the last syllable changes which syllable is
+    // last and whether there are two of them at all, so it reaches everything this file guards.
+    [InlineData("Lave")]
+    [InlineData("Orbite")]
+    [InlineData("Shinrarte")]
+    [InlineData("observe")]
+    [InlineData("Deciate")]
     public void WhereverTheMarkIsTheNextSoundIsAVowel(string word) => MarksAVowel(word);
 
     /// <summary>
@@ -258,17 +266,63 @@ public class TheStressMarkGoesBeforeTheVowelTests
     /// And the whole sentence that was reported, through the ladder, with nothing marking a
     /// consonant anywhere in it.
     /// </summary>
-    [Fact]
-    public void TheReportedSentenceMarksNoConsonant()
+    [Theory]
+    [InlineData("JOHN DEPARAGON is in Kamitra, near Hammel Terminal, docked at Hammel Terminal.")]
+
+    // <b>The other reported sentence, and it is this file's business rather than #153's.</b> The
+    // build that said it was 0.84.4, which still marked the syllable, and "starport" is not in the
+    // dictionary — so the rules answered it, put the mark in front of the "st", and Kokoro rendered
+    // the shape it had never been given as a vowel. That vowel landed between "observe" and
+    // "starport" and was reported as "observ-eh". The word before it was never at fault.
+    [InlineData("Ensure to observe starport protocol during your visit, pilot.")]
+
+    // And a line of decoration, because #153's other half sends words to rungs they were not
+    // reaching before: an emphasised word now comes off the rules or the dictionary, and a mark
+    // that was never produced cannot have been guarded.
+    [InlineData("**Guardian** FSD Booster — engineered, at “Perez Ring”…")]
+    public void TheReportedSentenceMarksNoConsonant(string line)
     {
-        var said = new Phonemiser().ToPhonemes(
-            "JOHN DEPARAGON is in Kamitra, near Hammel Terminal, docked at Hammel Terminal.");
+        var said = new Phonemiser().ToPhonemes(line);
 
         for (var i = said.IndexOf(Mark); i >= 0; i = said.IndexOf(Mark, i + 1))
         {
             Assert.True(
                 i + 1 < said.Length && Vowels.Contains(said[i + 1], StringComparison.Ordinal),
                 $"\"{said}\" marks a consonant at {i}.");
+        }
+    }
+
+    /// <summary>
+    /// <b>And the Commander's own corrections go through the same guard.</b> A respelling is run
+    /// down the ladder, so it produces marks the same way every other rung does — which means the
+    /// override file is a new road to the fault this file exists to catch, and it is closed here
+    /// rather than trusted. Raw IPA is deliberately not guarded: a Commander who writes the symbols
+    /// themselves has said where the mark goes.
+    /// </summary>
+    [Fact]
+    public void ARespelledOverrideMarksAVowel()
+    {
+        var folder = Directory.CreateTempSubdirectory("d47-marks").FullName;
+
+        try
+        {
+            var file = Path.Combine(folder, PronunciationOverrides.FileName);
+
+            File.WriteAllText(file, """{ "Deciat": "desh ee at", "Kuk": "kook" }""");
+
+            var said = new Phonemiser(null, new PronunciationOverrides(file))
+                .ToPhonemes("Deciat and Kuk");
+
+            for (var i = said.IndexOf(Mark); i >= 0; i = said.IndexOf(Mark, i + 1))
+            {
+                Assert.True(
+                    i + 1 < said.Length && Vowels.Contains(said[i + 1], StringComparison.Ordinal),
+                    $"\"{said}\" marks a consonant at {i}.");
+            }
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
         }
     }
 }

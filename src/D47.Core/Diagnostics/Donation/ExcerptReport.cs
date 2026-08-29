@@ -25,9 +25,20 @@ public sealed record ExcerptPaperwork(string Build, DateTimeOffset TakenAt);
 /// them.
 /// </para>
 /// <para>
-/// Markdown, because a scrubbed excerpt is kilobytes and travels inside the GitHub issue itself.
-/// There is no backend and there is not going to be one. The two halves sit in
-/// <c>&lt;details&gt;</c> so an issue stays readable with a hundred log lines pasted into it.
+/// Markdown, because a scrubbed excerpt is kilobytes and a person reads it before it goes. The
+/// two halves sit in <c>&lt;details&gt;</c> so it stays readable with a hundred log lines in it.
+/// </para>
+/// <para>
+/// <b>"There is no backend and there is not going to be one" stood here, and
+/// <a href="https://github.com/dseelinger/d47/issues/175">#175</a> reversed it.</b> That was a
+/// design commitment rather than an invariant, and it was argued rather than quietly stepped
+/// around. What changed underneath it was the requirement: whole-corpus donation
+/// (<a href="https://github.com/dseelinger/d47/issues/174">#174</a>) is 32.5 MB gzipped followed
+/// by about 85 KB a day, and no manual transport carries that or can be reached by a stranger. So
+/// there is a backend — a Worker in front of a bucket, disclosed as
+/// <see cref="Configuration.EgressDisclosure.Donation"/>, dark until somebody presses the thing.
+/// <b>The consent model did not change with it</b>: one rendering, shown in full, leaving on one
+/// yes, and this text is still the whole of what leaves.
 /// </para>
 /// </summary>
 public static class ExcerptReport
@@ -69,17 +80,21 @@ public static class ExcerptReport
 
         report.AppendLine();
         report.AppendLine(
-            // **Weakened, because the old wording promised something no transport here can keep**
-            // (<https://github.com/dseelinger/d47/issues/165>). It said the excerpt lived in this
-            // issue alone and would be deleted on request. Neither half survives contact with a
-            // public repository: a comment is copied to third-party archives within the hour and
-            // mailed whole to every watcher, so deleting it from GitHub recalls nothing. An
-            // erasure promise is only worth what the destination can honour, and the destination
-            // is undecided — so this now says what is true on this machine and stops there.
-            "**Where this came from.** It was scrubbed on the machine it came off, and nothing was "
-            + "sent from there — it was put on a clipboard and pasted here by hand. Anything "
-            + "posted publicly can be copied and archived beyond anyone's reach, so ask about "
-            + "removal wherever this ended up rather than assuming it can be taken back.");
+            // **Weakened once and then narrowed, and both moves were about what a destination can
+            // honour.** #165 took out an erasure promise that no public transport could keep — a
+            // GitHub comment is copied to third-party archives within the hour and mailed whole to
+            // every watcher, so deleting it recalls nothing. #175 answered the destination
+            // question the other way, with a private store where a delete is one object delete —
+            // so the promise is back, and it is bounded to the route it can actually be kept on.
+            // What this must never do is claim erasure over a copy the Commander carried
+            // somewhere themselves, which is why both halves are said.
+            "**Where this came from.** It was scrubbed on the machine it came off, and it says "
+            + "here exactly what would leave. Sent to Directive 47's own store, it is one object "
+            + "and one delete: ask, quoting the receipt d47 kept beside its executable, and it "
+            + "goes — and an incident excerpt goes on its own after thirty days in any case. "
+            + "Copied or saved and taken somewhere public instead, that promise is not "
+            + "transferable: anything posted publicly can be archived beyond anyone's reach, so "
+            + "ask about removal wherever it ended up.");
 
         report.AppendLine();
         Half(

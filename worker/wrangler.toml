@@ -1,0 +1,30 @@
+# d47's donation endpoint (https://github.com/dseelinger/d47/issues/175).
+#
+# Deploying is one command — `wrangler deploy` from this folder — which is the bar CLAUDE.md
+# already holds the build to. What it cannot express is the two retention rules, which are bucket
+# state rather than Worker configuration; those are in README.md, with the commands.
+
+name = "d47-donations"
+main = "src/index.js"
+compatibility_date = "2026-08-29"
+
+# **Off, and not by accident.** workers.dev gives every Worker a public *.workers.dev hostname the
+# moment it deploys. This one is reached by a URL a Commander pastes into a settings row, so it
+# wants exactly one address that is known and can be changed — not a second one that exists
+# whether or not anybody meant it to.
+workers_dev = false
+
+# **No observability, and no telemetry beyond what Cloudflare cannot be stopped from counting.**
+# The whole point of this endpoint is that a donation is one deliberate act; a request log that
+# accumulated who posted what and when would be the ambient collection architecture.md §1 rules
+# out, arriving at the other end of the wire.
+[observability]
+enabled = false
+
+[[r2_buckets]]
+binding = "DONATIONS"
+bucket_name = "d47-donations"
+
+# There is deliberately nothing else here. No KV, no D1, no queue, no secret: the Worker holds no
+# credential of its own, because the binding above IS the credential and it never leaves
+# Cloudflare's side. That is what makes "the Worker is the only writer" true rather than aspired to.

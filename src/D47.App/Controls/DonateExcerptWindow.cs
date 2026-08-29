@@ -4,6 +4,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input.Platform;
 using Avalonia.Layout;
 using Avalonia.Media;
+using D47.App.Donation;
 using D47.App.Theming;
 using D47.Core.Diagnostics.Donation;
 
@@ -26,10 +27,19 @@ namespace D47.App.Controls;
 /// decision rather than a repeat of this one.
 /// </para>
 /// <para>
-/// <b>Nothing here reaches the network.</b> It fills a clipboard, or writes a file the Commander
-/// picked. Where the excerpt goes after that is a paste they perform, into an issue they can see —
-/// which is the property that keeps this on the right side of no-telemetry rather than moving the
-/// line.
+/// <b>Since <a href="https://github.com/dseelinger/d47/issues/175">#175</a> it can also send.</b>
+/// The clipboard and the file are still here — an upload became the default action, not the only
+/// one — and the property that keeps this on the right side of no-telemetry is unchanged, because
+/// it was never "nothing reaches the network". It was that a Commander reads the whole payload and
+/// presses once, every time, with no standing consent and nothing remembered. A send is disclosed
+/// as <see cref="D47.Core.Configuration.EgressDisclosure.Donation"/> and is impossible until an
+/// address is configured.
+/// </para>
+/// <para>
+/// <b>What a send costs, and what buys it back.</b> "What is shown is what leaves" was observable
+/// while the human was the transport; an upload turns it into a claim about code. So d47 writes
+/// its own copy of exactly the bytes it sent, with their hash, into <c>data\donations</c> — see
+/// <see cref="DonationReceipt"/>. The Commander's evidence, and their deletion request's.
 /// </para>
 /// <para>
 /// Built in code rather than as an axaml pair, like <see cref="SpendWindow"/> and
@@ -39,6 +49,7 @@ namespace D47.App.Controls;
 public sealed class DonateExcerptWindow : Window
 {
     private const string CopyLabel = "Copy it for the report";
+    private const string SendLabel = "Send it";
 
     /// <summary>
     /// GitHub's own limit for one comment. Said here rather than found in a browser with the issue
@@ -49,7 +60,18 @@ public sealed class DonateExcerptWindow : Window
     private const int MostCharacters = 60_000;
 
     private readonly Func<ExcerptRequest, string> _build;
+
+    /// <summary>
+    /// The send, or null where nothing composed one. <b>Null is a real state and not a test
+    /// convenience</b>: with no donation address configured there is nowhere to send, and the
+    /// window then offers exactly what it offered before #175 rather than a button that explains
+    /// itself.
+    /// </summary>
+    private readonly Func<string, CancellationToken, Task<DonationSent>>? _send;
+
+    private readonly string? _destination;
     private readonly DateTimeOffset _markedAt;
+    private readonly CancellationTokenSource _sending = new();
 
     /// <summary>
     /// How far back, in spans a person can name (#173). It replaced a pair of minute steppers that
@@ -91,7 +113,11 @@ public sealed class DonateExcerptWindow : Window
     };
 
     private readonly TextBlock _size = new() { FontSize = TypeScale.Small };
-    private readonly Button _copy = new() { Content = CopyLabel, MinWidth = 190 };
+    private readonly Button _copy = new() { Name = "CopyExcerpt", Content = CopyLabel, MinWidth = 190 };
+
+    // Named, like the controls above it, because a test drives this one to assert that what is
+    // sent is the string that was on screen.
+    private readonly Button _sendButton = new() { Name = "SendExcerpt", Content = SendLabel, MinWidth = 190 };
 
     private string _text = string.Empty;
     private IDisposable? _sizeColour;
@@ -101,10 +127,23 @@ public sealed class DonateExcerptWindow : Window
     /// there was one, is already gone: only the instant travels.
     /// </param>
     /// <param name="build">Cuts a window and renders it. Called again on every change here.</param>
-    public DonateExcerptWindow(DateTimeOffset markedAt, Func<ExcerptRequest, string> build)
+    /// <param name="send">
+    /// Sends what is on screen, or null where there is nowhere to send it. Takes the rendered text
+    /// rather than the request that produced it, which is the same "one rendering, used twice"
+    /// rule the clipboard already follows: a payload assembled by a second code path is a second
+    /// artefact, and the Commander only ever read one of them.
+    /// </param>
+    /// <param name="destination">Where a send would go, named on screen before it happens.</param>
+    public DonateExcerptWindow(
+        DateTimeOffset markedAt,
+        Func<ExcerptRequest, string> build,
+        Func<string, CancellationToken, Task<DonationSent>>? send = null,
+        string? destination = null)
     {
         _markedAt = markedAt;
         _build = build;
+        _send = send;
+        _destination = destination;
 
         Title = "Donate an incident excerpt";
         Width = 900;
@@ -158,20 +197,55 @@ public sealed class DonateExcerptWindow : Window
         _span.SelectionChanged += (_, _) => Render();
         _mySpeech.IsCheckedChanged += (_, _) => Render();
 
+        // A send in flight is a request against a daily ceiling and a payload half written at the
+        // store. Closing the window is the Commander saying they are done with it, not a reason to
+        // leave one running with nowhere to report back to.
+        Closed += (_, _) => _sending.Cancel();
+
         Render();
     }
 
     /// <summary>The rendered excerpt as it stands. Public so a test can read what would be copied.</summary>
     internal string Text => _text;
 
+    /// <summary>
+    /// What a Commander reads before they press anything.
+    /// <para>
+    /// <b>It no longer says "paste it into the issue".</b> That named a destination the erasure
+    /// ruling removed (<a href="https://github.com/dseelinger/d47/issues/165">#165</a>): a public
+    /// repository's comments are mirrored by third-party archives within the hour and mailed whole
+    /// to every watcher, so "ask and it is deleted" is a promise no public transport can keep.
+    /// </para>
+    /// <para>
+    /// <b>And it states the weaker linkage claim, in front of the Commander, before the first
+    /// donation</b> (<a href="https://github.com/dseelinger/d47/issues/176">#176</a>). d47 used to
+    /// claim two donations from one Commander could not be joined. They can now, on a random
+    /// installation token, which is what lets a journal history be added to — materially weaker,
+    /// still worth stating, and read here rather than discovered afterwards by somebody who
+    /// consented to the older claim.
+    /// </para>
+    /// </summary>
     private Control Lede()
     {
+        var where = _destination is { } destination
+            ? "Sending it puts it in Directive 47's own store at " + destination + " — one press, "
+              + "nothing standing, nothing remembered. It is kept for thirty days or until the "
+              + "defect closes, whichever is first, and asking for it sooner is one delete. d47 "
+              + "keeps its own copy of exactly what it sent, and the hash, in data\\donations."
+            : "Nothing can be sent from here: no donation address is set. Copy it or save it, and "
+              + "where it goes after that is yours — anything posted publicly can be archived "
+              + "beyond anyone's reach.";
+
         var lede = new TextBlock
         {
             Text = "Everything below is what would go into the report — nothing else, and nothing "
-                   + "is sent from here. Names and Frontier IDs are replaced before you see them, "
-                   + "and other people's in-game messages are dropped. Reach back as far as the "
-                   + "defect needs, read it, then copy it and paste it into the issue yourself.",
+                   + "leaves until you press. Names and Frontier IDs are replaced before you see "
+                   + "them, and other people's in-game messages are dropped. Reach back as far as "
+                   + "the defect needs, and read it.\n\n"
+                   + where + "\n\n"
+                   + "A random number identifying this installation — not you, and not derived from "
+                   + "your Commander name — goes with a send, so donations you make can be grouped "
+                   + "into one history. Deleting data\\donor-token.txt stops that.",
             TextWrapping = TextWrapping.Wrap,
             FontSize = TypeScale.Secondary,
             Margin = new Thickness(0, 0, 0, 12),
@@ -201,9 +275,13 @@ public sealed class DonateExcerptWindow : Window
         var cancel = new Button { Content = "Cancel", MinWidth = 110 };
 
         _copy.Click += async (_, _) => await CopyAsync();
+        _sendButton.Click += async (_, _) => await SendAsync();
         save.Click += async (_, _) => await SaveAsync(save);
         cancel.Click += (_, _) => Close();
 
+        // Send last, which is where this window's default action has always sat, and the copy
+        // beside it rather than instead of it: the upload became the default action, not the only
+        // one. With nowhere to send, the row is exactly the row that shipped before #175.
         var buttons = new StackPanel
         {
             Orientation = Orientation.Horizontal,
@@ -211,6 +289,11 @@ public sealed class DonateExcerptWindow : Window
             HorizontalAlignment = HorizontalAlignment.Right,
             Children = { cancel, save, _copy },
         };
+
+        if (_send is not null)
+        {
+            buttons.Children.Add(_sendButton);
+        }
 
         var footer = new DockPanel { Margin = new Thickness(0, 12, 0, 0) };
 
@@ -235,6 +318,12 @@ public sealed class DonateExcerptWindow : Window
         _text = _build(span.Around(_markedAt, _mySpeech.IsChecked == true));
         _preview.Text = _text;
 
+        // **A changed payload is a fresh decision.** The same rule the corpus window enforces by
+        // throwing its report away: a button reading "Sent" above an excerpt that is no longer the
+        // one that was sent is the one failure a consent step must not have.
+        _sendButton.Content = SendLabel;
+        _sendButton.IsEnabled = true;
+
         // Said because GitHub's own limit is 65,536 characters for one comment, and an excerpt
         // that will not paste is better found here than in a browser with the issue half written.
         var long_ = _text.Length > MostCharacters;
@@ -242,9 +331,13 @@ public sealed class DonateExcerptWindow : Window
         // **Names the real problem rather than only GitHub's.** A comment limit is a transport
         // detail; what actually matters at this size is that nobody reads it, and the yes this
         // window asks for is a yes to something read.
+        // **Still says GitHub's limit, and still leads with the real problem.** A comment limit is
+        // a transport detail and the store has no such ceiling — but the yes this window asks for
+        // is a yes to something read, and that is what stops being true here whichever route the
+        // excerpt takes.
         _size.Text = long_
             ? $"{_text.Length:N0} characters — more than a person reads, and more than one GitHub "
-              + "comment holds. Choose a shorter span, or save a file and attach it."
+              + "comment holds. Choose a shorter span."
             : $"{_text.Length:N0} characters";
 
         // Disposed before rebinding. A binding per keystroke on the steppers would stack up
@@ -281,9 +374,59 @@ public sealed class DonateExcerptWindow : Window
             return;
         }
 
-        _copy.Content = "Copied — paste it into the issue";
+        // **No longer "paste it into the issue".** That named the destination the erasure ruling
+        // removed (#165), and it named it at the one moment the Commander is acting on what it
+        // says. Where a copied excerpt goes is now theirs, and this says only what happened.
+        _copy.Content = "Copied";
         await Task.Delay(TimeSpan.FromSeconds(1.6));
         Close();
+    }
+
+    /// <summary>
+    /// The other yes, and the one #175 made the default. <b>Sends the string that is on screen</b>
+    /// rather than rebuilding it from the controls — one rendering, used three ways now, for the
+    /// reason the clipboard already had: a payload assembled by a second code path is a second
+    /// artefact and the Commander only ever read one of them.
+    /// <para>
+    /// <b>The window does not close on it.</b> The copy closes because a clipboard either has the
+    /// text or does not; a send has an outcome that the Commander has to be able to read, and one
+    /// that names a receipt they may want to go and find. Closing over the top of it would make a
+    /// refused donation indistinguishable from a stored one.
+    /// </para>
+    /// </summary>
+    private async Task SendAsync()
+    {
+        if (_send is not { } send)
+        {
+            return;
+        }
+
+        _sendButton.IsEnabled = false;
+        _sendButton.Content = "Sending…";
+        _size.Text = "Sending. Nothing else is being sent, and nothing is being kept anywhere else.";
+
+        try
+        {
+            var sent = await send(_text, _sending.Token);
+
+            _sendButton.Content = sent.Outcome.Sent ? "Sent" : SendLabel;
+            _sendButton.IsEnabled = !sent.Outcome.Sent;
+
+            _size.Text = sent.Receipt is { } receipt
+                ? $"{sent.Outcome.Said} Your own copy of it is in {receipt}."
+                : $"{sent.Outcome.Said} d47 could not write its own copy of it.";
+        }
+        catch (OperationCanceledException)
+        {
+            // The window closed under it. There is nowhere left to say anything.
+        }
+        finally
+        {
+            // Rebinding rather than leaving the size colour on whatever the last render chose:
+            // this line is now an outcome rather than a character count.
+            _sizeColour?.Dispose();
+            _sizeColour = Themed(_size, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        }
     }
 
     /// <summary>

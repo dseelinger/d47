@@ -873,7 +873,13 @@ public partial class MainWindow : Window
                 _host.Logbook,
 
                 // And the cores the Commander wrote themselves (remediation.md 11, item 9).
-                _host.OwnPersonas);
+                _host.OwnPersonas,
+
+                // And what the audio flight recorder kept, when this process was asked to record
+                // (#164). Null on every ordinary run, and the row is then absent too.
+                _host.FlightRecorder is { } recording
+                    ? (recording.Log, (Func<DateTimeOffset>)(() => DateTimeOffset.Now))
+                    : null);
 
             // The gap reaction happens in the host, on whatever thread resolved the switch, and
             // the affordance it belongs to is a row on this surface. Joined here because this is
@@ -1362,6 +1368,16 @@ public partial class MainWindow : Window
         var paperwork = new ExcerptPaperwork(BuildInfo.Full, DateTimeOffset.Now);
         var folder = host.JournalDirectory ?? D47.Core.Journal.JournalFolder.DefaultPath();
 
+        // **Where a send goes, worked out here and nowhere else** (#175). The dispatch mints the
+        // donation identifier on the first send, seals the envelope, posts it and writes the
+        // receipt; the window's job is still to show what would leave and take a yes. With no
+        // address configured there is nothing to hand it and the window offers what it always did.
+        var dispatch = new Donation.DonationDispatch(
+            host.Paths,
+            () => host.Settings.Current.Donation.Endpoint,
+            new Donation.DonationUpload(log: host.Loggers.CreateLogger("Donation")),
+            host.Loggers.CreateLogger("Donation"));
+
         // **Read from disk, per window, on a worker** (#173). It used to read JournalLog and the
         // newest d47 log, which between them reached the current Elite session and today — so the
         // widest span here would have quietly returned the same events as the narrowest. Seven days
@@ -1383,7 +1399,14 @@ public partial class MainWindow : Window
                         host.GameState.Active?.Identity,
                         host.GameState.Active?.Carrier),
                     paperwork);
-            }).Over(this);
+            },
+
+            // Null where there is nowhere to send, which is what makes the send button appear only
+            // when it can work — the same rule the donate button itself already follows.
+            dispatch.CanSend
+                ? (text, cancel) => dispatch.SendExcerptAsync(text, paperwork, cancel)
+                : null,
+            dispatch.Destination).Over(this);
     }
 
     /// <summary>

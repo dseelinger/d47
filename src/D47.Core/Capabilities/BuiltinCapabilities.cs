@@ -202,7 +202,13 @@ public static class BuiltinCapabilities
         // Optional like the rest. A caller with nothing to say about the build - the designer, and
         // every test that is not about it - gets the version and the data folder, which Core knows
         // by itself, and no buttons at all.
-        Builtin.AboutSurface? about = null) =>
+        Builtin.AboutSurface? about = null,
+
+        // What the audio flight recorder has kept (#164). LAST, by the same rule the two comments
+        // above record the cost of. Null in every process that was not asked to record — which is
+        // every ordinary run, the designer and every test — and the privacy capability then
+        // registers without the row, rather than with a row saying nothing was recorded.
+        Diagnostics.Flight.FlightLog? flight = null) =>
     [
         HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage),
@@ -303,7 +309,10 @@ public static class BuiltinCapabilities
             backfillGoals ?? (() => null),
             now ?? (() => DateTimeOffset.MinValue)),
 
-        PrivacyCapability.Create(settings, searchAvailable, memories),
+        // The donation identifier is read from the same AppPaths the diagnostics rows already
+        // take, so this list keeps the shape it has — no parameter inserted in the middle, which
+        // is the one edit this file records as silently rebinding everything after it.
+        PrivacyCapability.Create(settings, searchAvailable, memories, flight, paths.DonorTokenFile),
         SettingsCapability.Create(settings),
 
         // LAST, and it has to be last twice over (#50) - for two different reasons, which is what

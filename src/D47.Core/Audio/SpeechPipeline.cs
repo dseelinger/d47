@@ -4,6 +4,28 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Audio;
 
 /// <summary>
+/// What one sentence was rendered by, and how long it took
+/// (<a href="https://github.com/dseelinger/d47/issues/164">#164</a>).
+/// <para>
+/// Reported from here because this is the only place that holds all of it at once. The arbiter
+/// knows a clip is playing and the render tap knows what came out of the speakers, and neither
+/// of them knows which provider, which voice, or — for the local voice — which phonemes
+/// produced it. Everything audible converges on this class, which is why the log lines that say
+/// <em>who spoke</em> and <em>what was said</em> already live here.
+/// </para>
+/// </summary>
+/// <param name="Phonemes">
+/// The phoneme string the phonemiser emitted, for a provider that speaks phonemes rather than
+/// text. Null for every other provider, because there is nothing true to put there.
+/// </param>
+public sealed record SynthesisNote(
+    string Text,
+    string Provider,
+    string? Voice,
+    string? Phonemes,
+    TimeSpan Elapsed);
+
+/// <summary>
 /// One reply, spoken. Text deltas in, ordered speech on the arbiter out.
 /// <para>
 /// Synthesis runs ahead of playback and enqueueing stays in order, which is the point. Each
@@ -69,6 +91,13 @@ public sealed class SpeechPipeline : IAsyncDisposable
     /// </summary>
     private readonly bool _captioned;
 
+    /// <summary>
+    /// Told what each sentence was rendered by, or null when nobody is recording. Null on every
+    /// ordinary run: the flight recorder is the only caller, it is off unless asked for, and the
+    /// phoneme trace behind this is not computed at all while it is.
+    /// </summary>
+    private readonly Action<SynthesisNote>? _noted;
+
     private readonly CancellationTokenSource _abandon = new();
     private readonly Task _drain;
 
@@ -88,7 +117,12 @@ public sealed class SpeechPipeline : IAsyncDisposable
         AudioChannel channel = AudioChannel.Speech,
         Func<AudioClip, AudioClip>? colour = null,
         string? speaker = null,
-        bool captioned = true)
+        bool captioned = true,
+
+        // Appended rather than slotted in beside the parameters it most resembles: every caller
+        // here passes positionally, so a parameter added in the middle silently rebinds every
+        // argument after it (remediation.md 11, item 9).
+        Action<SynthesisNote>? noted = null)
     {
         _arbiter = arbiter;
         _tts = tts;
@@ -99,6 +133,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
         _colour = colour;
         _speaker = speaker;
         _captioned = captioned;
+        _noted = noted;
 
         // Shut up has to reach synthesis, not just the queue. Without this, a sentence still
         // rendering when the Commander says stop would arrive a moment later and start
@@ -171,11 +206,14 @@ public sealed class SpeechPipeline : IAsyncDisposable
     {
         try
         {
+            var started = System.Diagnostics.Stopwatch.StartNew();
+
             var clip = await _tts
                 .SynthesizeAsync(sentence, _voice, _abandon.Token)
                 .ConfigureAwait(false);
 
             Record();
+            Note(sentence, started.Elapsed);
 
             return new Spoken(sentence, _colour is null ? clip : _colour(clip));
         }
@@ -265,6 +303,34 @@ public sealed class SpeechPipeline : IAsyncDisposable
     }
 
     /// <summary>
+    /// Hands one sentence's rendering to whoever is recording, and does nothing at all when
+    /// nobody is.
+    /// <para>
+    /// Per sentence rather than per utterance, unlike <see cref="Record"/> beside it: this is
+    /// matched against a clip on the arbiter's queue, and the queue's unit is the sentence.
+    /// </para>
+    /// <para>
+    /// <see cref="ITtsProvider.Phonemes"/> is asked only from inside this guard. It is a second
+    /// run of the phonemiser over the same text, which is cheap but not free, and no run that is
+    /// not recording should pay for it.
+    /// </para>
+    /// </summary>
+    private void Note(string sentence, TimeSpan elapsed)
+    {
+        if (_noted is not { } noted)
+        {
+            return;
+        }
+
+        noted(new SynthesisNote(
+            sentence,
+            _tts.Name,
+            Named(_voice),
+            _tts.Phonemes(sentence, _voice),
+            elapsed));
+    }
+
+    /// <summary>
     /// The voice as a person would say it: the name with the id beside it, the id alone when no
     /// name was resolved, and a plain sentence when there is no voice at all.
     /// </summary>
@@ -299,11 +365,14 @@ public sealed class SpeechPipeline : IAsyncDisposable
     {
         try
         {
+            var started = System.Diagnostics.Stopwatch.StartNew();
+
             var clip = await _tts
                 .SynthesizeAsync(sentence, _voice, _abandon.Token)
                 .ConfigureAwait(false);
 
             Record();
+            Note(sentence, started.Elapsed);
 
             return new Spoken(sentence, _colour is null ? clip : _colour(clip));
         }

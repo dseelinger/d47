@@ -80,6 +80,14 @@ public sealed class VoicePipeline(
 
     public string? Bed { get; set; }
 
+    /// <summary>
+    /// Told what each sentence was rendered by, when something is recording
+    /// (<a href="https://github.com/dseelinger/d47/issues/164">#164</a>). Null on every ordinary
+    /// run, and every pipeline this one opens is wired to it — a reply, a callout, a crew line
+    /// and a re-voiced message are all things a Commander might be reviewing afterwards.
+    /// </summary>
+    public Action<SynthesisNote>? Synthesised { get; set; }
+
     /// <summary>Raised when synthesis failed, so availability can be flipped rather than handled.</summary>
     public event Action<string>? SynthesisFailed;
 
@@ -135,7 +143,8 @@ public sealed class VoicePipeline(
                                 Introduce(Voice),
                                 group,
                                 loggers.CreateLogger<SpeechPipeline>(),
-                                speaker: "D47");
+                                speaker: "D47",
+                                noted: Synthesised);
                             speech.SynthesisFailed += OnSynthesisFailed;
                             speech.VoiceRejected += OnVoiceRejected;
                         }
@@ -233,7 +242,8 @@ public sealed class VoicePipeline(
             channel,
             colour,
             speaker,
-            captioned);
+            captioned,
+            Synthesised);
 
         speech.SynthesisFailed += OnSynthesisFailed;
         speech.VoiceRejected += OnVoiceRejected;

@@ -34,6 +34,7 @@ public sealed class KokoroTtsProvider : ITtsProvider, IDisposable
     private const int ModelSampleRate = 24_000;
 
     private readonly string _folder;
+    private readonly string? _pronunciations;
     private readonly ILogger<KokoroTtsProvider> _logger;
     private readonly Lock _gate = new();
 
@@ -41,10 +42,24 @@ public sealed class KokoroTtsProvider : ITtsProvider, IDisposable
     private Dictionary<string, long>? _vocabulary;
     private Phonemiser? _phonemiser;
 
-    public KokoroTtsProvider(string folder, ILogger<KokoroTtsProvider> logger)
+    /// <param name="folder">Where the model, the voices and the dictionary are.</param>
+    /// <param name="logger">
+    /// Also where the ladder says its work: at Debug it names the rung every segment came off,
+    /// which is the line #153 was investigated without. <c>D47.Tts</c> is the Voice subsystem, so
+    /// turning Voice up is how a Commander turns it on.
+    /// </param>
+    /// <param name="pronunciations">
+    /// The Commander's own corrections (#150), or null where nothing may override the ladder —
+    /// which is what a provider built for an audition rather than for the app wants.
+    /// </param>
+    public KokoroTtsProvider(
+        string folder,
+        ILogger<KokoroTtsProvider> logger,
+        string? pronunciations = null)
     {
         _folder = folder;
         _logger = logger;
+        _pronunciations = pronunciations;
     }
 
     public string Id => ProviderId;
@@ -93,13 +108,53 @@ public sealed class KokoroTtsProvider : ITtsProvider, IDisposable
         CancellationToken cancellationToken = default) =>
         Task.Run(() => Speak(text, voice, cancellationToken), cancellationToken);
 
+    /// <summary>
+    /// The phonemes this line will actually be spoken as
+    /// (<a href="https://github.com/dseelinger/d47/issues/164">#164</a>).
+    /// <para>
+    /// The one provider that has an answer to this, because it is the one that is handed
+    /// phonemes rather than words — which is also why the answer is worth recording: everything
+    /// that can go wrong between the text and the sound goes wrong here.
+    /// </para>
+    /// <para>
+    /// The dictionary without the model. A caller asking what a line would be pronounced as must
+    /// not pay seconds of session load for it, and the recorder asks after the line has already
+    /// been spoken, when the answer is wanted for a row rather than for a sound.
+    /// </para>
+    /// </summary>
+    public string? Phonemes(string text, VoiceSelection voice)
+    {
+        ArgumentNullException.ThrowIfNull(voice);
+
+        if (!KokoroAssets.IsInstalled(_folder))
+        {
+            return null;
+        }
+
+        Phonemiser phonemiser;
+
+        lock (_gate)
+        {
+            phonemiser = LoadPhonemiser();
+        }
+
+        return phonemiser.ToPhonemes(text, VoiceIdFor(voice));
+    }
+
+    /// <summary>
+    /// The voice actually spoken in: the chosen one where Kokoro has it, and its own default
+    /// where it does not. Extracted so the phoneme trace names the same voice the sound did.
+    /// </summary>
+    private static string VoiceIdFor(VoiceSelection voice) =>
+        voice.VoiceId is { Length: > 0 } chosen && KokoroAssets.VoiceIds.Contains(chosen)
+            ? chosen
+            : "af_heart";
+
     private AudioClip Speak(string text, VoiceSelection voice, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var voiceId = voice.VoiceId is { Length: > 0 } chosen && KokoroAssets.VoiceIds.Contains(chosen)
-            ? chosen
-            : "af_heart";
+        var voiceId = VoiceIdFor(voice);
 
         var (session, vocabulary, phonemiser) = Load();
 
@@ -143,14 +198,58 @@ public sealed class KokoroTtsProvider : ITtsProvider, IDisposable
 
             _session ??= new InferenceSession(Path.Combine(_folder, "model.onnx"));
             _vocabulary ??= ReadVocabulary();
-            _phonemiser ??= new Phonemiser(PhonemeDictionary.Read(
-                Path.Combine(_folder, "phoneme_dict.json"), _logger));
+            var phonemiser = LoadPhonemiser();
 
             _logger.LogInformation(
                 "The local voice is loaded ({Milliseconds} ms)", started.ElapsedMilliseconds);
 
-            return (_session, _vocabulary, _phonemiser);
+            return (_session, _vocabulary, phonemiser);
         }
+    }
+
+    /// <summary>
+    /// The Commander's correction file, watching this voice's own symbol set, or null where this
+    /// provider was built without one.
+    /// </summary>
+    private PronunciationOverrides? Overrides(Dictionary<string, long> vocabulary) =>
+        _pronunciations is null
+            ? null
+            : new PronunciationOverrides(
+                _pronunciations,
+                vocabulary.Keys
+                    .Where(symbol => symbol.Length == 1)
+                    .Select(symbol => symbol[0])
+                    .ToHashSet(),
+
+                // A rejected entry is named once per version of the file, at Warning: it is a
+                // thing to go and fix, and a Commander who edited a file and heard no change
+                // needs to be told why without turning anything up.
+                entry => _logger.LogWarning("{Entry}", entry));
+
+    /// <summary>
+    /// Which rung of the ladder a segment came off. One line per segment is a lot of lines, which
+    /// is why it is Debug and why the Voice subsystem's level is the switch.
+    /// </summary>
+    private void Note(string segment, PhonemeRung rung, string ipa) =>
+        _logger.LogDebug(
+            "\"{Segment}\" came off the {Rung} rung as {Ipa}", segment, rung, ipa);
+
+    /// <summary>
+    /// The phonemiser, built once and kept, with the Commander's corrections aboard (#150) so a
+    /// phoneme trace says what would actually be spoken. <b>The caller holds <c>_gate</c></b> — it
+    /// is reached both by a full load and by a phoneme trace that wants no model at all, which is
+    /// why it reads the vocabulary itself: the vocabulary is what decides whether a hand-written
+    /// IPA override is sayable at all, and a symbol with no token is dropped on the way to the
+    /// model — an override that silences a word is worse than the wrong word it was correcting.
+    /// </summary>
+    private Phonemiser LoadPhonemiser()
+    {
+        _vocabulary ??= ReadVocabulary();
+
+        return _phonemiser ??= new Phonemiser(
+            PhonemeDictionary.Read(Path.Combine(_folder, "phoneme_dict.json"), _logger),
+            Overrides(_vocabulary),
+            Note);
     }
 
     /// <summary>

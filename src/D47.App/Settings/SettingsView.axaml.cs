@@ -127,6 +127,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     private (D47.Core.Memory.MemoryBook Book, Func<DateTimeOffset> Now)? _memories;
 
     /// <summary>
+    /// What the audio flight recorder has kept, and the clock a kept test case is stamped with
+    /// (<a href="https://github.com/dseelinger/d47/issues/164">#164</a>). Null in every process
+    /// that was not asked to record — which is every ordinary run — and the row itself is then
+    /// absent, so this never decides whether a button is dead.
+    /// </summary>
+    private (D47.Core.Diagnostics.Flight.FlightLog Log, Func<DateTimeOffset> Now)? _flight;
+
+    /// <summary>
     /// The Commander's log (Phase 33). Null under the designer and in a test that is not
     /// about it, and the row then reads a folder with no way to write into it.
     /// </summary>
@@ -171,7 +179,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         // Appended rather than slotted in beside the macro store it most resembles: the callers
         // pass these positionally, so a parameter added in the middle silently rebinds every
         // argument after it (remediation.md 11, item 9).
-        D47.Core.Persona.OwnPersonaStore? ownPersonas = null)
+        D47.Core.Persona.OwnPersonaStore? ownPersonas = null,
+
+        // At the end, by the rule the comment above records the cost of (#164).
+        (D47.Core.Diagnostics.Flight.FlightLog Log, Func<DateTimeOffset> Now)? flight = null)
     {
         _setUpKeys = setUpKeys;
         _downloadModel = downloadModel;
@@ -186,6 +197,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         _switches = switches;
         _lore = lore;
         _memories = memories;
+        _flight = flight;
         _logbook = logbook;
         _reserved = reservedPhrases ?? [];
 
@@ -1779,6 +1791,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             case SettingKind.Info when row.Key == LogbookCapability.StoreKey && _logbook is not null:
                 return BuildLogbook(row);
 
+            // The ninth row that offers a window, and the only one that also clears what the
+            // window shows. It is above the general pressable case rather than inside it because
+            // reviewing comes first and deleting last: the common act is the one at the top, and
+            // the one that cannot be undone is the one furthest from a stray click (#164).
+            case SettingKind.Info when row.Key == PrivacyCapability.AudioFlightKey && _flight is not null:
+                return BuildAudioFlight(row);
+
             // An Info row that also clears the state it describes. Rendered from the row
             // rather than special-cased by key like the two above, because what is behind
             // this button is a method rather than a window the App has to own.
@@ -1961,6 +1980,63 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             stack.AttachedToVisualTree += (_, _) => book.Changed += OnChanged;
             stack.DetachedFromVisualTree += (_, _) => book.Changed -= OnChanged;
         }
+
+        return (stack, refresh, false);
+    }
+
+    /// <summary>
+    /// What the audio flight recorder holds, the way into reviewing it, and the wipe
+    /// (<a href="https://github.com/dseelinger/d47/issues/164">#164</a>).
+    /// <para>
+    /// Both buttons are built here rather than one of them coming from
+    /// <see cref="BuildPressable"/>, because the order is the point: the summary, then the review
+    /// that is done every flight, then the delete that is done once and cannot be taken back.
+    /// </para>
+    /// </summary>
+    private (Control, Action, bool) BuildAudioFlight(SettingRow row)
+    {
+        var (inset, refresh, _) = BuildInfo(row);
+
+        var open = new Button
+        {
+            Name = "OpenFlightRecorder",
+            Content = "Review the recording",
+            FontSize = TypeScale.Body,
+            Padding = new Thickness(10, 4),
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+
+        open.Click += async (_, _) =>
+        {
+            if (_flight is not { } flight || TopLevel.GetTopLevel(this) is not Window owner)
+            {
+                return;
+            }
+
+            await new Controls.FlightRecorderWindow(flight.Log, flight.Now).Over(owner);
+
+            // Keeping a row changes what the summary says, and the window is where keeping
+            // happens — so the row is re-read on the way out rather than left stating what was
+            // true when it opened.
+            Refresh();
+        };
+
+        var wipe = new Button
+        {
+            Name = $"Press_{row.Key.Replace('.', '_')}",
+            Content = row.PressLabel,
+            FontSize = TypeScale.Body,
+            Padding = new Thickness(10, 4),
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+
+        wipe.Click += (_, _) =>
+        {
+            row.Press!();
+            Refresh();
+        };
+
+        var stack = new StackPanel { Spacing = 8, Children = { inset, open, wipe } };
 
         return (stack, refresh, false);
     }

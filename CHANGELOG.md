@@ -27,6 +27,134 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.90.0 — 2026-08-29 — Four lanes abreast
+
+Six issues in one release, built in four parallel sessions against one main and merged as one:
+[#150](https://github.com/dseelinger/d47/issues/150) and
+[#153](https://github.com/dseelinger/d47/issues/153) (the local voice),
+[#157](https://github.com/dseelinger/d47/issues/157) (the commodity search),
+[#164](https://github.com/dseelinger/d47/issues/164) (the audio flight recorder),
+[#175](https://github.com/dseelinger/d47/issues/175) and
+[#176](https://github.com/dseelinger/d47/issues/176) (where a donation lands, and the name it
+travels under).
+
+### The commodity search's knobs are the model's to turn (#157)
+
+`max_distance` loses its silent 250 ly clamp entirely; `max_price_age_hours` (default 720, ceiling
+8,760) and `include_carriers` become arguments rather than constants. A non-default knob is echoed
+back in the answer — *"Searched out to 500 ly, prices up to 60 days old."* — an unqualified search
+says nothing extra, and a price age past the ceiling is refused by name and number rather than
+narrowed in silence. The tool schema grew 241 bytes; the worst-case profile stands at 40,195 of the
+50,000 ceiling.
+
+### The audio flight recorder (#164)
+
+Set `D47_FLIGHT_RECORDER=1` and d47 retains, in a capped ring, what actually crossed the audio
+boundary in both directions: the buffer each transcription consumed beside what Whisper said it
+heard, and what left the speakers beside the text — with, for the local voice, the phoneme string
+the Phonemiser emitted, which is the column that turns a mispronunciation from an anecdote into a
+diagnosis. A kept row becomes a permanent test case. Unset, the recorder is absent from the surface
+entirely, the coverage recorder's rule. The wipe lives on the Privacy panel; recordings are left
+out of the rolling data snapshots the way `logs\` is; and the audio never joins a donated excerpt,
+because voice is biometric.
+
+### Where a donation lands, and the name it travels under (#175, #176)
+
+"There is no backend" is reversed on purpose: a Cloudflare Worker in `worker/` lands donation
+payloads in R2, capped so it cannot bill, holding no secrets — the bucket binding is the
+credential, and the shipped binary carries none. Until the Commander provisions it (five written
+steps in `worker/README.md`, two of them deliberately manual: activating R2 is the billing act, and
+a delete is verified to delete before the erasure sentence is believed) the endpoint setting is
+empty and no send button exists anywhere in d47. Donations travel under a random per-installation
+identifier — made on first donation, derived from nothing about the Commander, forgettable from the
+Privacy panel — so an accumulating history can accumulate without ever naming a person (#176), and
+an erasure request has something to claim without linkage doing the naming.
+
+### The local voice: the e English does not say, and a word the Commander gets the last word on (#150, #153)
+
+One neighbourhood — everything between an utterance and the phonemes a local voice is handed.
+
+### #153, and the reported word was not the broken one
+
+Three words came out wrong on 2026-08-28 and they failed in two different ways, which turned out to
+be the whole diagnosis.
+
+**`observe` was never at fault, and neither was the rung it was reported against.** It is in the
+shipped dictionary as `əbzˈɜːv`, it was looked up, and it was said that way — asserted now as a
+unit test over the exact logged sentence, which is the check the issue asked for. What was heard as
+*observ-eh* was the word after it. The build speaking at 15:38 was 0.84.4, which still put the
+stress mark at the head of a syllable rather than in front of its vowel, and `starport` is not a
+dictionary word — so the rules answered `ˈstæɹpɑːɹt`, the shape Kokoro renders as an intruded
+vowel, and the intrusion landed in the gap between the two words. `aeda4a3` fixed that at 19:25 the
+same evening, four hours after the report, and shipped in 0.85.0. The report was true, the word it
+named was not, and nothing in the log could have said so.
+
+**So the log says so now.** Every segment names the rung it came off — dictionary, contraction,
+number, designation, rules, spelled, or the Commander's own file — at Debug, under the Voice
+subsystem. Turn Voice up and three wrong words are a read rather than an investigation.
+
+**`Guardian` and `Booster` were spelled out, and the cause was markdown.** A segment is spelled
+only when it is not `All(char.IsLetter)`, and both are ordinary words — but d47's own prose is
+`At a **human tech broker** that carries **Guardian modules**`, from the log verbatim. The token
+trimmer covered ASCII punctuation and nothing else, so `**Guardian` failed the letters test,
+skipped the dictionary *and* the rules, and was read out *gee, you, ay, ar, dee, eye, ay, en*. It
+is the curly-apostrophe bug of `Ship's` a second time, in the same six lines. Markdown emphasis,
+curly quotes, the ellipsis and the em dash are now stripped or carried as phrasing — trimmed
+together rather than one set after the other, because `**Guardian modules**.` ends in `**.` and
+either pass alone is stopped by the other's characters. Every dash is a compound's joint, so
+`Booster—engineered` is two words rather than one unsayable run, and the dash between two spelled
+segments is still voiced.
+
+**And the silent e, which is the rules gap the report was right about.** `lave` parses as `lav.e`,
+so the reduction rule — correct for the a of *Dezhra* — made the e a syllable of its own and
+*Lave* came out *lav-uh*. A final `e` with no onset and no coda is now silent, and it lengthens the
+vowel one sound behind it: *Lave* is `leɪv`, *Hive* is `haɪv`, *Prime* is `pɹaɪm`. It reaches over
+one sound and not two, which is why *serve*, *dense* and *paste* stay short, and it softens as well
+as lengthens, because *ace* read with a /k/ would be a new wrongness bought with the old one. A
+`-le` or `-re` carries an onset and is untouched: that e is one an English speaker says.
+
+Half the proper nouns in the galaxy end consonant-plus-e, and every one of them said *-uh* the day
+it missed the dictionary. *Lave* is in the game's opening credits.
+
+### #150, the escape valve, built early because #153 is why
+
+**A file in `data\` outranks every rung d47 ships with.** `pronunciations.json`, absent by default,
+hot-reloaded, per installation. Edit it, save it, say the word again — the whole feature is
+*without leaving the game* rather than *without recompiling*. Delete it and shipped behaviour comes
+back exactly, which is why nothing writes one back.
+
+Two ways to write an entry, because IPA is expert-hostile. A **respelling** — `"Deciat": "dessy
+at"` — is run down the rest of the ladder as if it were the text, so it needs nothing but an ear;
+capitals in one are for the reader, since the ladder is case-blind. **Raw IPA**, marked `ipa:`,
+goes straight to the tokenizer for the Commander who wants the stress in an exact place.
+
+Keys are whole words, matched longest first, so `Shinrarta Dezhra` is one name and an entry for
+`male` can never reach inside `female` — [#146](https://github.com/dseelinger/d47/issues/146)'s
+lesson applied before it could be learned twice.
+
+**A bad entry degrades to the ladder and is named once.** Once per version of the file rather than
+once per utterance: the file is stamped before it is read, so a Commander hears about a typo when
+they save it and not on every line afterwards. *Unparseable IPA* is a real check rather than a
+guess — the provider hands the layer its own tokenizer vocabulary, so an entry containing a symbol
+this voice has no token for is refused by name. Without that it would have been dropped silently on
+the way to the model, and an override that silences a word is worse than the wrong word it
+corrected. A file that cannot be parsed at all leaves the last good entries standing, because a
+half-written file is what a save looks like from here.
+
+The path is on the Diagnostics page beside the data folder, with whether one has been written yet —
+"I edited it and nothing changed" is usually "you edited the other one". `docs/pronunciations.md`
+is the page, including the line that stops a bug report: cloud providers phonemise inside their own
+service and ignore this entirely.
+
+### What is still wrong, and is nobody's business here
+
+Three things were found next door and left alone. `change` reads as `tʃæŋ` because `nge` has no
+consonant spelling; `5.79` loses its decimal point and is spelled as three digits; a coda `h` is
+voiced, so a respelling like `tah` says the h. All three are dictionary words or out of scope, all
+three predate this work, and none of them is #153 or #150.
+
+---
+
 ## 0.89.0 — 2026-08-29 — A history nobody can read, and a way to say yes to it anyway
 
 [#174](https://github.com/dseelinger/d47/issues/174), which stays open — see the end.
