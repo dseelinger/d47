@@ -717,6 +717,30 @@
                   ToolTip.Tip="Cut the journal and log around an incident, scrubbed, to attach to a bug report"
                   Click="OnDonateClick" />
           <!--
+            Its whole-history sibling (#174). A separate button rather than a wider dial on the one
+            beside it, because the two ask for different consent: that one shows the payload and
+            asks for a yes to what was read, and this one cannot — a corpus is hundreds of
+            megabytes — so it shows a report describing every kind of event in it instead.
+
+            Journal pages only, where Donate excerpt also offers the Log page: a corpus is Elite's
+            journals and nothing else. d47's own log keeps a fortnight against the journals'
+            thirteen months, and it is speech rather than a schema, so it has no field list and its
+            control is the show step — the one control a corpus cannot use.
+          -->
+          <Button x:Name="DonateCorpusButton"
+                  DockPanel.Dock="Left"
+                  Margin="0,0,6,0"
+                  Height="28"
+                  VerticalAlignment="Center"
+                  VerticalContentAlignment="Center"
+                  HorizontalContentAlignment="Center"
+                  Padding="10,0"
+                  IsVisible="False"
+                  Content="Donate corpus…"
+                  FontSize="{StaticResource D47.Type.Secondary}"
+                  ToolTip.Tip="Scrub your whole journal history and read a report describing it, before any of it leaves"
+                  Click="OnDonateCorpusClick" />
+          <!--
             The clear affordance sits inside the field, not beside it. Another sibling in this
             StackPanel would sit outside the border and read as a fourth button in a row that
             already has Copy and the two steppers, rather than as part of the box it empties.

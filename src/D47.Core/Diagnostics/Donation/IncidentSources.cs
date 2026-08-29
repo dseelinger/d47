@@ -131,7 +131,7 @@ public static class IncidentSources
     /// The files that could hold something in the window: every one starting at or before it ends,
     /// back to and including the one that was open when it began.
     /// </summary>
-    private static IEnumerable<string> Overlapping(List<string> files, DateTimeOffset from, DateTimeOffset to)
+    internal static IEnumerable<string> Overlapping(List<string> files, DateTimeOffset from, DateTimeOffset to)
     {
         var started = files.Select(file => (File: file, At: StartedAt(file))).ToList();
 
@@ -189,7 +189,7 @@ public static class IncidentSources
     /// open and Serilog holds today's log open; a reader that forbade either would throw on exactly
     /// the two files an incident is most likely to be in.
     /// </summary>
-    private static IEnumerable<string> ReadLines(string path)
+    internal static IEnumerable<string> ReadLines(string path)
     {
         using var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
         using var reader = new StreamReader(file);
