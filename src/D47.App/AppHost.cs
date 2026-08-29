@@ -2711,10 +2711,21 @@ public sealed class AppHost : IDisposable
     /// is the case for an id the Commander typed themselves and for every voice before the list
     /// has been fetched. Null rather than the id, so the caller decides what to show
     /// (remediation.md 10, item 9).
+    /// <para>
+    /// <b>Every slot's list, not the ship's alone</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/149">#149</a>). This asked
+    /// <see cref="AboardVoices"/> and nothing else, so a voice handed to an NPC out of
+    /// ElevenLabs' pool was looked up in Kokoro's list and written into the log as a bare id. The
+    /// rule is <see cref="VoiceGroups.NameFor"/>, in Core where it can be asserted; this supplies
+    /// the one thing only the host knows, which is what each slot's provider actually answered.
+    /// </para>
+    /// <para>
+    /// Through <see cref="VoicesFor"/> per slot rather than by walking
+    /// <see cref="_voicesByProvider"/>, which is written to from the voice-loading path while
+    /// this is read from the speaking one.
+    /// </para>
     /// </summary>
-    internal string? VoiceNameFor(string id) =>
-        AboardVoices.Voices.FirstOrDefault(voice => string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase))
-            ?.Name;
+    internal string? VoiceNameFor(string id) => VoiceGroups.NameFor(VoicesFor, id);
 
     /// <summary>
     /// How a voice is shown to the Commander, wherever one is shown — the row, its tooltip and
