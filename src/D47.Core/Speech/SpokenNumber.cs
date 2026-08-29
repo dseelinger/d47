@@ -16,6 +16,13 @@ namespace D47.Core.Speech;
 /// spelling.
 /// </para>
 /// <para>
+/// <b>And with its grouping commas, since #183.</b> That was the same fault one character over, and
+/// found by #177's own lane: <c>6,680</c> is not all digits either, so it fell to the spelling rung
+/// too — which does have a reading for a comma, and said <em>six six eight zero</em> with a pause
+/// in the middle of it. The comma says nothing and is dropped; the grouping it describes is
+/// checked, so a token that only looks like a number still falls through honestly.
+/// </para>
+/// <para>
 /// Everything here answers in words rather than in IPA, because the words then go through the
 /// dictionary like any others: <em>eighty</em> is a word d47 already knows how to say, and spelling
 /// it phonetically here would be a second place for it to be wrong.
@@ -83,9 +90,12 @@ public static class SpokenNumber
     /// <summary>The decimal point as it is written. One per number, or it is not one.</summary>
     private const char Point = '.';
 
+    /// <summary>The grouping comma, which since #183 is a number's punctuation rather than a word's.</summary>
+    private const char Grouping = ',';
+
     /// <summary>
-    /// Whether this token is a number's shape: digits, or digits with one decimal point among
-    /// them (#177).
+    /// Whether this token is a number's shape: digits, with one decimal point among them (#177)
+    /// and with grouping commas between them (#183).
     /// <para>
     /// <b>The point is what puts this here rather than in the spelling rung.</b> A decimal is not
     /// all digits, so it used to fall past the number rung to the bottom of the ladder — and the
@@ -93,17 +103,72 @@ public static class SpokenNumber
     /// <em>five, seven, nine</em>.
     /// </para>
     /// <para>
+    /// <b>The comma was the same fault one character over</b> (#183). <c>6,680</c> is not all
+    /// digits either, so it fell the same way — and the spelling rung <em>does</em> have a reading
+    /// for a comma, which made it worse rather than better: it was said <em>six six eight zero</em>
+    /// with a pause where the grouping was. d47 writes grouped numbers wherever credits, tonnages
+    /// and distances get large, which is most of where they appear.
+    /// </para>
+    /// <para>
+    /// <b>The grouping is validated rather than tolerated.</b> A comma every three digits is a
+    /// number; a comma anywhere else is not, and <c>6,68</c> or <c>12,34,567</c> falls through to
+    /// the ladder honestly instead of being read as though the comma were not there. That is the
+    /// difference between owning a shape and guessing at one.
+    /// </para>
+    /// <para>
     /// <b>One point, deliberately.</b> Two of them is a version rather than a decimal —
-    /// <c>0.90.0</c> — which is a different reading, and one nobody has asked for. A grouping comma
-    /// is deliberately not admitted either: <c>6,680</c> is a shape this rung does not yet say and
-    /// pretending otherwise here would say it wrongly rather than spell it.
+    /// <c>0.90.0</c> — which is a different reading, and one nobody has asked for.
     /// </para>
     /// </summary>
-    public static bool Looks(string? token) =>
-        token is { Length: > 0 }
-        && token.Any(char.IsAsciiDigit)
-        && token.All(character => char.IsAsciiDigit(character) || character == Point)
-        && token.Count(character => character == Point) <= 1;
+    public static bool Looks(string? token)
+    {
+        if (token is not { Length: > 0 } || !token.Any(char.IsAsciiDigit))
+        {
+            return false;
+        }
+
+        var point = token.IndexOf(Point, StringComparison.Ordinal);
+
+        // One point at most. Two is a version number, which is a different reading.
+        if (point != token.LastIndexOf(Point))
+        {
+            return false;
+        }
+
+        var whole = point < 0 ? token : token[..point];
+        var fraction = point < 0 ? string.Empty : token[(point + 1)..];
+
+        // A grouping comma groups the whole part. One inside the fraction is not grouping
+        // anything, so it is not this shape.
+        return fraction.All(char.IsAsciiDigit) && IsGrouped(whole);
+    }
+
+    /// <summary>
+    /// Whether the whole part is digits, grouped legally where it is grouped at all (#183).
+    /// <para>
+    /// Ungrouped, any run of digits is admitted, exactly as it was before — the length rules live
+    /// in <see cref="Whole"/> and are none of this method's business. Grouped, the shape is
+    /// one to three digits and then a comma and three digits, repeated: <c>6,680</c> and
+    /// <c>1,234,567</c> are numbers, and <c>6,68</c>, <c>1,2345</c>, <c>,680</c> and
+    /// <c>12,34,567</c> are not.
+    /// </para>
+    /// <para>
+    /// Empty is legal, because <c>.79</c> has no whole part — the ragged end #177 ruled on.
+    /// </para>
+    /// </summary>
+    private static bool IsGrouped(string whole)
+    {
+        if (!whole.Contains(Grouping, StringComparison.Ordinal))
+        {
+            return whole.All(char.IsAsciiDigit);
+        }
+
+        var groups = whole.Split(Grouping);
+
+        return groups[0].Length is >= 1 and <= 3
+               && groups.All(group => group.All(char.IsAsciiDigit))
+               && groups.Skip(1).All(group => group.Length == 3);
+    }
 
     /// <summary>
     /// The digits as words, with the decimal point spoken where there is one.
@@ -126,6 +191,11 @@ public static class SpokenNumber
     /// practice it never arrives, because a token's trailing full stop is trimmed off as phrasing
     /// before the ladder ever sees it.
     /// </para>
+    /// <para>
+    /// <b>The grouping commas are punctuation and say nothing</b> (#183). They are dropped before
+    /// the whole part is read, so <c>6,680</c> says exactly what <c>6680</c> says — which is the
+    /// invariant that makes a comma grouping rather than content.
+    /// </para>
     /// </summary>
     public static string Say(string digits)
     {
@@ -138,10 +208,10 @@ public static class SpokenNumber
 
         if (point < 0)
         {
-            return Whole(digits);
+            return Whole(Ungrouped(digits));
         }
 
-        var whole = digits[..point];
+        var whole = Ungrouped(digits[..point]);
         var fraction = digits[(point + 1)..];
 
         if (fraction.Length == 0)
@@ -153,6 +223,16 @@ public static class SpokenNumber
 
         return whole.Length == 0 ? "point " + said : Whole(whole) + " point " + said;
     }
+
+    /// <summary>
+    /// A whole part with its grouping commas taken out, which is the only thing they were ever
+    /// doing (#183). <see cref="Looks"/> has already refused a grouping that was not a grouping,
+    /// so nothing malformed reaches here to be quietly straightened.
+    /// </summary>
+    private static string Ungrouped(string whole) =>
+        whole.Contains(Grouping, StringComparison.Ordinal)
+            ? whole.Replace(Grouping.ToString(), string.Empty, StringComparison.Ordinal)
+            : whole;
 
     /// <summary>The whole part: the casual reading this rung has always given a run of digits.</summary>
     private static string Whole(string digits)

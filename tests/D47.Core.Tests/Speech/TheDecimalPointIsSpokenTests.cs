@@ -94,10 +94,15 @@ public class TheDecimalPointIsSpokenTests
     /// <b>Two points is a version, not a decimal</b>, and it keeps the reading it had. Admitting it
     /// here would say <c>0.90.0</c> as a number nobody asked for; leaving it spelled is what the
     /// ladder already does for a shape it cannot say.
+    /// <para>
+    /// <b><c>6,680</c> used to be listed here and no longer is.</b> #177 left the grouping comma
+    /// out on purpose, saying a shape this rung did not yet own should be spelled rather than
+    /// guessed at — and #183 is the issue that came back and made it a shape this rung owns. The
+    /// version number is untouched, because two points is still a different reading.
+    /// </para>
     /// </summary>
     [Theory]
     [InlineData("0.90.0")]
-    [InlineData("6,680")]
     public void AShapeThisRungDoesNotOwnIsLeftToTheLadder(string token) =>
         Assert.False(SpokenNumber.Looks(token));
 

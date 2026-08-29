@@ -303,6 +303,11 @@ public class TheStressMarkGoesBeforeTheVowelTests
     // instead — so every mark in one of these is a mark that was not being produced before.
     [InlineData("Perez Ring, LHS 2637 — 5.79 ly, 395 ls out, large pad.")]
     [InlineData("1 ly, 1.5 ly, 0.5, .79 and 128.5 tonnes.")]
+
+    // And the grouped numbers (#183), for exactly the same reason one issue later: "6,680" used to
+    // be spelled and now comes off the number rung, so every mark in one of these is new.
+    [InlineData("That will be 6,680 credits for 1,234 tonnes.")]
+    [InlineData("1,234.5 ly out, 9,876,543,210 credits, and 12,345 ls.")]
     public void TheReportedSentenceMarksNoConsonant(string line)
     {
         var said = new Phonemiser().ToPhonemes(line);
