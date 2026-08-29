@@ -366,6 +366,22 @@ what the others would cost to fetch, so you can see which choices are already pa
 the short push-to-talk clips this is actually asked to transcribe. Move up to Base or Small if
 you want the accuracy and can spend the download.
 
+**What a bigger model costs is time per *sentence*, not time per second of audio.** Whisper reads
+your speech in 30-second windows and pays for the whole window whether you filled it or not, so a
+two-second question and a twenty-second one cost the same — and the model you picked is what sets
+that figure:
+
+| Model | One sentence, spoken |
+|---|---|
+| Tiny (English only) | about 0.2 s |
+| Base (English only) | about 0.4 s |
+| Small (English only) | about 1.2 s |
+
+Measured on a 24-core desktop; a smaller machine is proportionally slower, and anything over 30
+seconds in one breath costs another window. That is the whole delay between you letting go of the
+key and Directive 47 starting to think — so if it feels slow to answer, this row is the first
+place to look.
+
 **Choosing a model downloads it.** Selecting one you do not have starts the transfer there and
 then, with the size and progress on the row; the same thing happens at startup for a model that
 is selected and missing. The choice is the go-ahead — the size is on the row before you make it,

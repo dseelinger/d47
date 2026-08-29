@@ -27,6 +27,44 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.91.1 — unreleased — Four threads on a twenty-four core machine
+
+[#182](https://github.com/dseelinger/d47/issues/182) asked what share of transcription's flat
+three-second cost belonged to the name-hint prompt. The answer is a sixth of it, and the prime
+suspect is acquitted — but the measurement that acquitted it found the floor somewhere nobody had
+looked. **whisper.cpp defaults to `min(4, hardware_concurrency)` threads and d47 had never
+overridden it**, so a 24-core machine was transcribing on four. `small.en` now answers in **one
+second where it took three**; Tiny in 0.2 s, Base in 0.4 s.
+
+Sixteen threads is where the curve flattens — twenty-four bought 11 ms more — and four cores are
+left for Elite on purpose. On a small machine the rule resolves to four, which is exactly what
+whisper.cpp was already doing, so nothing anywhere gets slower. The transcript is identical at
+every thread count; that was checked rather than assumed, because `ggml` reduces across threads
+and the arithmetic is not bit-identical.
+
+The rest is written down in [docs/spikes/transcription-floor.md](docs/spikes/transcription-floor.md),
+because three of the four things it settles are negative results and negative results are what get
+re-litigated. The hints cost about 8 ms each. **Whisper encodes a fixed 30-second window whatever
+you said into it** — a quarter-second of audio costs what twenty-nine seconds costs, and thirty-one
+costs twice that — which is the flat cost the issue inferred, located. Rebuilding the processor on a
+changed hint set costs 90 ms, so caching the encoded prompt is a fix for a problem that is not
+there. And the prompt cap sits exactly on `ProperNouns.Limit`: past sixty hints the cost stops
+rising and never resumes, so raising that cap would buy nothing — the names past it are not slow,
+they are ignored.
+
+**Two things the measurement found and did not fix**, both recorded in the finding: the GPU toggle
+loads without complaint, reports success and runs on the CPU anyway — only CPU natives ship, and
+`UsingGpu` is assigned from the flag that was asked for rather than from anything the native side
+said, which is why #182's "the GPU is genuinely working" reads as it does. And which end of an
+overlong hint list Whisper drops is still unknown; d47 appends the shipped engineers last on the
+reasoning that the Commander's current system should win, and if the tail is what survives, that
+ordering achieves the opposite of what it intends.
+
+The transcription log line now carries the thread count, since that line is where this was
+diagnosed from and the one number that explained it was the one it did not have.
+
+---
+
 ## 0.91.0 — 2026-08-29 — The way back, written down and wired
 
 Fourteen issues, five parallel sessions, one landing.
