@@ -27,7 +27,48 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
-## 0.88.0 — 2026-08-29 — The window said sixty minutes and meant twenty
+## 0.88.0 — 2026-08-29 — The tools that said one thing and did another
+
+Five issues, and one thread runs through all of them: a thing that reported success it had not
+earned, or offered a reach it did not have. None was found by reading the code. Every one came from
+an analysis of what the tools actually do, and two were caught only by driving them.
+
+### The release chain says what it did
+
+[#169](https://github.com/dseelinger/d47/issues/169),
+[#170](https://github.com/dseelinger/d47/issues/170),
+[#171](https://github.com/dseelinger/d47/issues/171),
+[#172](https://github.com/dseelinger/d47/issues/172).
+
+**The tag now names the commit CI greened.** `git tag` with no ref takes HEAD, while the wait
+matched CI's run server-side against the commit it pushed — so anything arriving from another
+terminal mid-wait, or during a confirmation left sitting, took a signed tag CI had never seen.
+`release.yml`'s post-tag rerun was the only thing standing in the way, so **it goes second**: with
+the tag pinned it re-tested a commit `ci.yml` had already greened, and its removal takes a full
+serial suite off every release while closing a hazard of its own — a flaky failure *after* the tag
+leaves a signed tag with no Release behind it, the failure this file already records as costing a
+version number.
+
+**The local suite is opt-in.** `ci.yml` runs the same one on the same commit and the wait refuses to
+tag a red result, so skipping it costs minutes and never a version number. The rule survived the
+polarity flip: `-SkipCi` removes the other half of the check, so it turns the local run back on
+rather than being refused. `prerelease` can pass `-Tests` and `-Message` through now; it could
+previously say nothing at all to the script it hands over to.
+
+**The deepest rollback no longer destroys itself.** At the steady state `data-backup` creates — ten
+held, one per deploy — the pre-restore snapshot is an eleventh and the trim dropped the oldest,
+which is exactly what a Commander reaching for the oldest was about to read. Reproduced end to end
+against the unfixed script first: it dropped the target, `Expand-Archive` threw on a path that no
+longer existed, and `Remove-Item -Force` is not a recycle bin. `-Keep` is range-checked too —
+`-Keep 0` was a delete-all one typo away.
+
+**And the unattended chain sets exit codes.** The pre-release timeout throws rather than returning 0
+while the build it could not mark heads for latest; `prerelease`'s did-nothing stop is nonzero, so a
+caller can tell it from a release; a `gh` that fails says so instead of continuing silently; and
+when every label lookup failed it refuses to decide rather than calling a phase a patch — failing
+toward asking, never toward a guess with a permanent receipt.
+
+### The window said sixty minutes and meant twenty
 
 [#173](https://github.com/dseelinger/d47/issues/173). The excerpt shipped in 0.87.0 with a
 minutes-before / minutes-after control, and **that control was never what bounded it**. Three
