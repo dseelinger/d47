@@ -1016,6 +1016,23 @@ public sealed record SpeechSettings
     public double Rate { get; init; } = 1.0;
 
     /// <summary>
+    /// Which of Kokoro's eight published ONNX builds the local voice runs on (#139).
+    /// <para>
+    /// <b>Null means the default</b>, which is <c>fp32</c> and is what every file written before
+    /// this existed meant too — so an older settings file needs no migration and sounds identical.
+    /// </para>
+    /// <para>
+    /// <b>Written only once the file is on disk</b>, which is the rule the speech-to-text model row
+    /// already enforces and the reason it is enforced here: a row that can name a build d47 cannot
+    /// load is a silent voice on the next launch. It is a record of what was installed rather than
+    /// a request for it, and <see cref="Speech.KokoroAssets.InstalledBuild"/> is what can contradict
+    /// it — that reads the model file's own byte count, so a Commander who replaced the file by
+    /// hand is told the truth rather than what this says.
+    /// </para>
+    /// </summary>
+    public string? LocalVoiceBuild { get; init; }
+
+    /// <summary>
     /// Speaking rate per provider, keyed by provider id, overriding <see cref="Rate"/> where
     /// present (Phase 11: "Differences between providers, such as speed, is maintained
     /// on a per-provider basis").

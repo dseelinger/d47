@@ -142,6 +142,19 @@ public class TheStressMarkGoesBeforeTheVowelTests
     [InlineData("Shinrarte")]
     [InlineData("observe")]
     [InlineData("Deciate")]
+
+    // The three gaps of #179, for the same reason. A rule that drops a coda changes which sounds
+    // are in the syllable, and a rule that moves a schwa in front of a consonant is the very shape
+    // of change that once put a mark in front of one.
+    [InlineData("table")]
+    [InlineData("acre")]
+    [InlineData("gentle")]
+    [InlineData("circle")]
+    [InlineData("Kamitrable")]
+    [InlineData("change")]
+    [InlineData("Deciange")]
+    [InlineData("Shinrartah")]
+    [InlineData("tah")]
     public void WhereverTheMarkIsTheNextSoundIsAVowel(string word) => MarksAVowel(word);
 
     /// <summary>
@@ -227,6 +240,11 @@ public class TheStressMarkGoesBeforeTheVowelTests
     [InlineData("hundred")]
     [InlineData("thirteen")]
     [InlineData("eleven")]
+
+    // "point" joined them with #177, and it is in the table for the same reason the rest are: this
+    // is the fallback for a build whose dictionary never downloaded, and a decimal is said as often
+    // as any number word above it.
+    [InlineData("point")]
     public void TheNumberWordsAreStillAllThere(string word) =>
         Assert.True(SpokenNumber.Sounds.ContainsKey(word), $"\"{word}\" is no longer in the table.");
 
@@ -280,6 +298,11 @@ public class TheStressMarkGoesBeforeTheVowelTests
     // reaching before: an emphasised word now comes off the rules or the dictionary, and a mark
     // that was never produced cannot have been guarded.
     [InlineData("**Guardian** FSD Booster — engineered, at “Perez Ring”…")]
+
+    // And the decimals (#177), which send a shape that used to be spelled to the number rung
+    // instead — so every mark in one of these is a mark that was not being produced before.
+    [InlineData("Perez Ring, LHS 2637 — 5.79 ly, 395 ls out, large pad.")]
+    [InlineData("1 ly, 1.5 ly, 0.5, .79 and 128.5 tonnes.")]
     public void TheReportedSentenceMarksNoConsonant(string line)
     {
         var said = new Phonemiser().ToPhonemes(line);

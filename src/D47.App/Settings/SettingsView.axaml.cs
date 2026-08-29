@@ -2407,10 +2407,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         var offset = clearable ? 1 : 0;
 
-        // Only one row downloads anything, so only one row carries a progress bar. Built here
+        // The rows that download something carry a progress bar, and only those. Built here
         // rather than in a generic slot because a bar every row could show is a bar every row
         // has to explain.
-        var downloads = string.Equals(row.Key, ListeningCapability.ModelKey, StringComparison.Ordinal);
+        //
+        // Two of them now (#139): the speech model row, which has plumbing of its own that
+        // predates the property, and any row declaring FetchChoiceAsync — the local voice build.
+        var downloads = string.Equals(row.Key, ListeningCapability.ModelKey, StringComparison.Ordinal)
+                        || row.FetchChoiceAsync is not null;
 
         var bar = new ProgressBar
         {
@@ -2496,6 +2500,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             return;
         }
 
+        // A row that carries its own fetch (#139). Ahead of the speech model's plumbing rather
+        // than beside it, because the two are alternatives: a row has one thing to download.
+        if (row.FetchChoiceAsync is { } fetch)
+        {
+            await FetchChoiceAsync(row, chosen, combo, bar, message, fetch);
+            return;
+        }
+
         var model = WhisperModels.Find(chosen);
 
         // None, or no downloader behind this view: an ordinary setting with nothing to fetch.
@@ -2545,6 +2557,65 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         {
             Refresh();
             Note(message, $"{model.Id} could not be downloaded: {ex.Message}");
+        }
+        finally
+        {
+            _downloadingModel = false;
+            combo.IsEnabled = true;
+            bar.IsVisible = false;
+        }
+    }
+
+    /// <summary>
+    /// The same flow for a row that carries its own fetch
+    /// (<a href="https://github.com/dseelinger/d47/issues/139">#139</a>).
+    /// <para>
+    /// Everything the speech model row above does, said once for any row rather than a second
+    /// time for each: shut the control while it runs, draw the fraction, and write the setting
+    /// <b>only</b> once the fetch says the choice can be applied. A failure refreshes the row back
+    /// to what is really installed and says why on it — which for the local voice build means the
+    /// Commander keeps the build they had, working, and can see that they did.
+    /// </para>
+    /// </summary>
+    private async Task FetchChoiceAsync(
+        SettingRow row,
+        string? chosen,
+        ComboBox combo,
+        ProgressBar bar,
+        TextBlock message,
+        Func<string?, IProgress<double>, CancellationToken, Task<string?>> fetch)
+    {
+        _downloadingModel = true;
+        combo.IsEnabled = false;
+
+        bar.Value = 0;
+        bar.IsVisible = true;
+
+        Note(message, $"Fetching {row.LabelForChoice(chosen ?? string.Empty)}.");
+
+        try
+        {
+            var progress = new Progress<double>(fraction => bar.Value = fraction);
+            var failure = await fetch(chosen, progress, CancellationToken.None);
+
+            if (failure is null)
+            {
+                Apply(row, chosen, message);
+
+                // Nothing left to say, for the reason the speech model row records: a change
+                // that worked is visible in the control that made it.
+                message.IsVisible = false;
+                message.Text = null;
+                return;
+            }
+
+            Refresh();
+            Note(message, failure);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or IOException or TaskCanceledException)
+        {
+            Refresh();
+            Note(message, $"That could not be downloaded: {ex.Message}");
         }
         finally
         {

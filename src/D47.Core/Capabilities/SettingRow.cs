@@ -481,6 +481,31 @@ public sealed record SettingRow
     public string? PressLabel { get; init; }
 
     /// <summary>
+    /// A <see cref="SettingKind.Choice"/> row whose choices have to be fetched before they can be
+    /// selected (<a href="https://github.com/dseelinger/d47/issues/139">#139</a>).
+    /// <para>
+    /// <b>The choice is the go-ahead</b>, which is the rule the speech model row settled: the size
+    /// is stated in the list it was chosen from, so a confirmation on top of it is a question
+    /// asked twice. Given the chosen value, this fetches whatever backs it and answers null when
+    /// the choice can now be applied, or a sentence saying why it cannot.
+    /// </para>
+    /// <para>
+    /// <b>The setting is written only once that answers null</b>, so a row can never name
+    /// something d47 cannot load — and a failed or cancelled fetch leaves both the file and the
+    /// setting as they were. The speech model row does this with plumbing of its own that predates
+    /// this property; a row that sets this needs none.
+    /// </para>
+    /// <para>
+    /// Core owns no thread, exactly as <see cref="PressAsync"/> above: the Task is the App's.
+    /// </para>
+    /// </summary>
+    public Func<string?, IProgress<double>, CancellationToken, Task<string?>>? FetchChoiceAsync
+    {
+        get;
+        init;
+    }
+
+    /// <summary>
     /// Whether an <see cref="SettingKind.Info"/> row's value belongs on a tooltip rather than
     /// on the page.
     /// <para>

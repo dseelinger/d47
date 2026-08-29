@@ -97,13 +97,20 @@ public class TheSilentFinalEIsNotVoicedTests
 
     /// <summary>
     /// <b>A syllable that ends in an e it says is untouched.</b> <c>-le</c> and <c>-re</c> carry an
-    /// onset, so the e is a syllable an English speaker pronounces and the reduction rule is right
-    /// about it. This is the boundary the rule is drawn at, and it is worth an assertion because
-    /// the obvious cheap version — drop a trailing e — would take these with it.
+    /// onset, so the e is a syllable an English speaker pronounces and the silent-e rule is right
+    /// to leave it alone. This is the boundary the rule is drawn at, and it is worth an assertion
+    /// because the obvious cheap version — drop a trailing e — would take these with it.
+    /// <para>
+    /// <b>The boundary is unchanged; the readings moved with #179.</b> This file pinned
+    /// <c>tˈæblə</c>, which was the shape of the defect that issue then reported: the e is said,
+    /// but English says the schwa in front of the <c>l</c> rather than behind it — <c>tˈeɪbəl</c>.
+    /// What is still asserted here is what this test was always for, that these words keep a
+    /// syllable the silent-e rule would have taken off them.
+    /// </para>
     /// </summary>
     [Theory]
-    [InlineData("table", "tˈæblə")]
-    [InlineData("candle", "kˈændlə")]
+    [InlineData("table", "tˈeɪbəl")]
+    [InlineData("candle", "kˈændəl")]
     public void AnEWithAnOnsetIsStillSaid(string word, string expected) =>
         Assert.Equal(expected, LetterToSound.Pronounce(word));
 

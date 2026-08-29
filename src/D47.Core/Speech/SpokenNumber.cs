@@ -8,6 +8,14 @@ namespace D47.Core.Speech;
 /// designation aloud, and it is shorter, which matters when a system name carries three of them.
 /// </para>
 /// <para>
+/// <b>And with its decimal point, since #177.</b> A decimal is not all digits, so it fell past this
+/// rung entirely and was spelled out — and the spelling rung has no sound for <c>.</c>, so it
+/// dropped it: <c>5.79</c> was <em>five, seven, nine</em>. d47 says decimals constantly — ranges,
+/// tonnages, percentages, credits — so every one of those was wrong in the same way. The shape is a
+/// number's rather than a designation's, which is why it is owned here instead of patched into the
+/// spelling.
+/// </para>
+/// <para>
 /// Everything here answers in words rather than in IPA, because the words then go through the
 /// dictionary like any others: <em>eighty</em> is a word d47 already knows how to say, and spelling
 /// it phonetically here would be a second place for it to be wrong.
@@ -65,23 +73,90 @@ public static class SpokenNumber
             ["fifty"] = "fˈɪfti", ["sixty"] = "sˈɪksti", ["seventy"] = "sˈɛvənti",
             ["eighty"] = "ˈeɪɾi", ["ninety"] = "nˈaɪnti",
             ["hundred"] = "hˈʌndɹɪd", ["oh"] = "ˈoʊ",
+
+            // The decimal point, which is a number word now that this rung says one (#177). Its
+            // reading is the dictionary's own, like every entry above it, so a build whose
+            // dictionary never downloaded says it the same way.
+            ["point"] = "pˈɔɪnt",
         };
 
+    /// <summary>The decimal point as it is written. One per number, or it is not one.</summary>
+    private const char Point = '.';
+
     /// <summary>
-    /// The digits as words.
+    /// Whether this token is a number's shape: digits, or digits with one decimal point among
+    /// them (#177).
+    /// <para>
+    /// <b>The point is what puts this here rather than in the spelling rung.</b> A decimal is not
+    /// all digits, so it used to fall past the number rung to the bottom of the ladder — and the
+    /// spelling rung has no sound for a full stop, so it silently dropped it. <c>5.79 ly</c> was
+    /// <em>five, seven, nine</em>.
+    /// </para>
+    /// <para>
+    /// <b>One point, deliberately.</b> Two of them is a version rather than a decimal —
+    /// <c>0.90.0</c> — which is a different reading, and one nobody has asked for. A grouping comma
+    /// is deliberately not admitted either: <c>6,680</c> is a shape this rung does not yet say and
+    /// pretending otherwise here would say it wrongly rather than spell it.
+    /// </para>
+    /// </summary>
+    public static bool Looks(string? token) =>
+        token is { Length: > 0 }
+        && token.Any(char.IsAsciiDigit)
+        && token.All(character => char.IsAsciiDigit(character) || character == Point)
+        && token.Count(character => character == Point) <= 1;
+
+    /// <summary>
+    /// The digits as words, with the decimal point spoken where there is one.
     /// <para>
     /// <b>A leading zero is spoken digit by digit and that is not a quirk.</b> <c>007</c> is
     /// <em>zero zero seven</em> and never <em>seven</em>: in a designation the zeros are part of
     /// the name, and dropping them says a different name.
     /// </para>
+    /// <para>
+    /// <b>The fraction is said digit by digit and never as a number</b> — <c>5.79</c> is <em>five
+    /// point seven nine</em>, because <em>five point seventy-nine</em> is a different quantity to
+    /// anybody listening. That is the one place a decimal parts company with the casual reading
+    /// above, and it parts company with it in every English dialect.
+    /// </para>
+    /// <para>
+    /// <b>The two ragged ends, ruled while in here</b> (#177 asked for them). A leading point says
+    /// no whole part rather than inventing a zero for it — <c>.79</c> is <em>point seven nine</em>,
+    /// which is what a person reading that aloud says. A trailing point is a full stop somebody
+    /// left inside the token rather than a decimal point, so the number is said without it; in
+    /// practice it never arrives, because a token's trailing full stop is trimmed off as phrasing
+    /// before the ladder ever sees it.
+    /// </para>
     /// </summary>
     public static string Say(string digits)
     {
-        if (string.IsNullOrEmpty(digits) || !digits.All(char.IsAsciiDigit))
+        if (!Looks(digits))
         {
             return digits;
         }
 
+        var point = digits.IndexOf(Point, StringComparison.Ordinal);
+
+        if (point < 0)
+        {
+            return Whole(digits);
+        }
+
+        var whole = digits[..point];
+        var fraction = digits[(point + 1)..];
+
+        if (fraction.Length == 0)
+        {
+            return Whole(whole);
+        }
+
+        var said = string.Join(" ", fraction.Select(digit => Ones[digit - '0']));
+
+        return whole.Length == 0 ? "point " + said : Whole(whole) + " point " + said;
+    }
+
+    /// <summary>The whole part: the casual reading this rung has always given a run of digits.</summary>
+    private static string Whole(string digits)
+    {
         if (digits.Length > 1 && digits[0] == '0')
         {
             return string.Join(" ", digits.Select(d => Ones[d - '0']));
