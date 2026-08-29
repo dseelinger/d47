@@ -19,6 +19,14 @@ public static class PrivacyCapability
     public const string MemoryKey = "privacy.memory";
 
     /// <summary>
+    /// The row carrying the wipe for retained audio
+    /// (<a href="https://github.com/dseelinger/d47/issues/164">#164</a>). Registered only in a
+    /// process that was asked to record, so on an ordinary run the recorder is absent from the
+    /// surface rather than present and empty.
+    /// </summary>
+    public const string AudioFlightKey = "privacy.audioFlight";
+
+    /// <summary>
     /// Throwing away what d47 worked out about the Commander from their journals (Phase 32).
     /// Beside the memory row, because a Commander wanting to be forgotten means both.
     /// </summary>
@@ -34,10 +42,20 @@ public static class PrivacyCapability
     /// store — under the designer and in tests that are not about it — and the row then says so
     /// rather than offering a button that erases nothing.
     /// </param>
+    /// <param name="flight">
+    /// The audio flight recorder's record, or null in a process that was not asked to record —
+    /// which is every ordinary run. Null leaves the row out entirely rather than showing one
+    /// that says nothing has been recorded, because a Commander who never turned this on should
+    /// not have to read that d47 could have.
+    /// </param>
     public static CapabilityDescriptor Create(
         SettingsService settings,
         Func<bool>? searchAvailable = null,
-        Memory.MemoryBook? memories = null)
+        Memory.MemoryBook? memories = null,
+
+        // Appended, like every optional here: the composition root passes these positionally, so
+        // a parameter added in the middle silently rebinds every argument after it.
+        Diagnostics.Flight.FlightLog? flight = null)
     {
         var canSearch = searchAvailable ?? (() => true);
 
@@ -92,7 +110,7 @@ public static class PrivacyCapability
                             settings.Current, KeyPresent(), InaraKeyPresent(), canSearch()))),
                 },
             ],
-            Settings = BuildSettingRows(KeyPresent, InaraKeyPresent, canSearch, memories),
+            Settings = BuildSettingRows(KeyPresent, InaraKeyPresent, canSearch, memories, flight),
         };
     }
 
@@ -100,7 +118,8 @@ public static class PrivacyCapability
         Func<bool> keyPresent,
         Func<bool> inaraKeyPresent,
         Func<bool> searchAvailable,
-        Memory.MemoryBook? memories)
+        Memory.MemoryBook? memories,
+        Diagnostics.Flight.FlightLog? flight)
     {
         var rows = new List<SettingRow>
         {
@@ -158,6 +177,42 @@ public static class PrivacyCapability
                 Read = _ => MemoryCapability.Summarise(memories),
             },
         });
+
+        // Beside the memory row, and for the same reason it is there rather than in a section of
+        // its own: a Commander who wants what d47 holds about them gone looks in one place, and
+        // an erase button somewhere else is one they would find after the one they were looking
+        // for (#164).
+        //
+        // Info with a Press, like the memory row above — so SettingsService.Apply refuses it and
+        // nothing on the tool surface can reach it. No router phrase either, for the reason that
+        // row has none: this cannot be undone, and a transcriber can produce the sentence that
+        // would trigger it out of a misheard one.
+        //
+        // Registered only where something is recording. A run that was not asked to record has
+        // no row here at all, which is the whole of what "absent from the surface unless enabled"
+        // means.
+        if (flight is not null)
+        {
+            rows.Add(new SettingRow
+            {
+                Key = AudioFlightKey,
+                Label = "Recorded audio",
+                Help =
+                    "What the flight recorder has kept of this flight: the utterances handed to the "
+                    + $"transcriber, and what left the speakers. At most {Diagnostics.Flight.FlightLog.CapBytes / (1024 * 1024)} MB "
+                    + "is held, oldest dropped first, and nothing kept as a test case is dropped. It stays "
+                    + "on this machine — it is never sent anywhere and never joins a donated excerpt, "
+                    + "because voice is biometric. Deleting takes the kept test cases with it.",
+                Kind = SettingKind.Info,
+
+                // No DocsAnchor, like the coverage row it is a sibling of. This is a workbench
+                // aid rather than something a Commander configures, so it gets no section in the
+                // public capability page.
+                PressLabel = "Delete every recording",
+                Press = flight.Empty,
+                Binding = new SettingBinding { Read = _ => flight.Summary() },
+            });
+        }
 
         // Beside the memory row, because "forget me" means both halves of what d47 knows about a
         // person and a Commander who found only one of them would reasonably assume they were done.

@@ -234,6 +234,13 @@ public sealed class AppHost : IDisposable
     /// </summary>
     public D47.App.Coverage.CoverageRecorder? CoverageRecorder { get; private set; }
 
+    /// <summary>
+    /// Retains what crossed the audio boundary in both directions, when this process was asked
+    /// to (<a href="https://github.com/dseelinger/d47/issues/164">#164</a>). Null — and therefore
+    /// absent from the settings surface too — in every normal run.
+    /// </summary>
+    public Flight.AudioFlightRecorder? FlightRecorder { get; private set; }
+
     /// <summary>Fetches and installs what <see cref="Updates"/> found.</summary>
     public UpdateInstaller Installer { get; }
 
@@ -1268,6 +1275,26 @@ public sealed class AppHost : IDisposable
         // because VoicePipeline has a primary constructor and cannot subscribe from one.
         audio.ActivityChanged += voice.Settle;
 
+        // Off unless D47_FLIGHT_RECORDER=1 (#164). Created here, with the audio, because both of
+        // its seams are here: the render reference tap for what was played, and — further down —
+        // the buffer handed to the transcriber for what was heard. Before the registry, because
+        // when it is on it adds a settings row, and which rows exist has to be settled before
+        // registration; descriptors are registered once and never mutated.
+        var flight = Flight.AudioFlightRecorder.Create(
+            paths,
+            () => DateTimeOffset.Now,
+            loggerFactory.CreateLogger<Flight.AudioFlightRecorder>());
+
+        if (flight is not null)
+        {
+            flight.Watch(audio, audioSink.ReferenceTap);
+
+            // What each sentence was rendered by — the provider, the voice and, for the local
+            // voice, the phonemes. The tap knows what came out of the speakers and cannot know
+            // any of that; the pipeline knows all of it and never sees the sound.
+            voice.Synthesised = flight.Noted;
+        }
+
         // A track ending is how the next one is asked for. The arbiter reports the end and
         // nothing more: which track comes next is a question about situations and shuffling,
         // and a queue that answered it would be a queue that knows what a station is.
@@ -1710,7 +1737,12 @@ public sealed class AppHost : IDisposable
                         {
                             UseShellExecute = true,
                         }),
-                }));
+                },
+
+                // What the audio flight recorder has kept (#164), so the privacy capability can
+                // carry the row that empties it. Null on every ordinary run, and there is then
+                // no row at all.
+                flight?.Log));
 
         built = capabilities;
 
@@ -2000,6 +2032,8 @@ public sealed class AppHost : IDisposable
 
         host.CoverageRecorder = coverage;
         coverage?.Follow(capabilities, settings);
+
+        host.FlightRecorder = flight;
 
         // Captured audio becomes words on the thread pool, never on the audio thread that
         // produced it. Whisper on a CPU takes hundreds of milliseconds for a short clip; doing
@@ -3877,6 +3911,15 @@ public sealed class AppHost : IDisposable
                 var transcription = await _transcriber
                     .TranscribeAsync(utterance, nouns)
                     .ConfigureAwait(false);
+
+                // The exact buffer the transcriber was given, beside what it came back with
+                // (#164). Here rather than anywhere upstream because this is the point the
+                // ReadFully trap proved is the one that matters: the capture path invented 99%
+                // silence for weeks and every layer above this reported it as a quiet Commander.
+                //
+                // Only the gated utterance is written down. What runs through the microphone
+                // between utterances never reaches this line, so a recording is never a hot mic.
+                FlightRecorder?.Heard(utterance, transcription);
 
                 // A panel is asking for a value and this is the answer to it (Phase 25,
                 // "Say it, or type it").
@@ -6207,6 +6250,11 @@ public sealed class AppHost : IDisposable
         _microphone.Dispose();
         _transcriber.Dispose();
         (Models as IDisposable)?.Dispose();
+
+        // Before the arbiter and the sink it is subscribed to, and before the last clip stops
+        // being writable. It unhooks both seams and drains what it holds, so the last utterance
+        // of a session — often the one being investigated — is on disk (#164).
+        FlightRecorder?.Dispose();
 
         // Stop making noise before tearing anything down. Disposing the sink under a playing
         // clip is how an exit ends in a buzz rather than in silence.
