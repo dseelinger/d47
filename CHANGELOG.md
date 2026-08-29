@@ -27,6 +27,194 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.85.0 — 2026-08-28 — Seven that were asked for, and three that flying them turned up
+
+Seven issues off the queue, and then the local voice was flown to check one of them and gave up
+three more. Both halves are here, because a green suite and a working feature are different claims
+and this release is the second one saying so this week.
+
+### Say the number the filter already computed
+
+Two callouts stated their inputs and withheld the answer those inputs were being compared to
+produce. Both had the number in hand at the moment they spoke, and both threw it away.
+
+**The limpet reminder never said what would silence it** —
+[#140](https://github.com/dseelinger/d47/issues/140), reported as *"doesn't actually tell me how
+many limpets to put in the hold (total) to get it to stop complaining"*. It now solves that total
+from the same comparison that fires it, the threshold inequality run backwards and rounded up, read
+through the same setting on the same examination. *"You have 256 tonnes to fill. Buy 13 and I'll
+stop asking."* Buying exactly that silences it and one fewer does not, asserted at the boundary
+against the number the line itself named — because a Commander who buys the stated number and gets
+nagged anyway has been lied to by arithmetic.
+
+**High grade emissions named three materials with no size on any of them** —
+[#132](https://github.com/dseelinger/d47/issues/132). It read identically at five units of headroom
+and at a hundred and fifty, which is why it read as a broken filter to a Commander sitting at 95 of
+100. The filter was right. It now says the room left for each, from the one capacity lookup that
+also decides what to skip: *"Proto Heat Radiators, 5 short; Proto Light Alloys, 36 short and Proto
+Radiolic Alloys, 20 short."*
+
+**No near-full threshold ships, and that is the decision rather than the omission.** The complaint
+was never *stop talking* but *why are you telling me this*, and a number answers that. A Commander
+finishing one specific roll wants those last five.
+
+### The tower is the tower from the first line, and both halves were real
+
+Three messages from the Commander's own carrier were read out in a stranger's voice
+([#109](https://github.com/dseelinger/d47/issues/109)). The matcher was right and its input was
+late: the callsign is learned at the dock, and docking chatter is by definition the traffic that
+happens **before** the dock. Forty-seven seconds after all three.
+
+So the identity is now taken from the events that come first. `DockingRequested` and `DockingGranted`
+carry everything the existing test needed and simply were not in its list — counted over 935
+journals, **859 and 857** at a fleet carrier and every single one carrying `MarketID`, `StationName`
+and `StationType` together. And the supercruise drop, whose `Type` is the whole decorated string,
+twelve seconds earlier still — kept whole rather than filed as a name it is not, because it exists
+to be matched against rather than said. Neither covers the other: the corpus has approaches with a
+docking request and no drop before it.
+
+**And then flying it found that this changed nothing a Commander could hear.** A re-voiced message
+always carries a speaker, so every such line went to `VoiceCast.ForSender`, and there the role only
+decided which scope the assignment lived in and what to fall back to when the pool was empty. **The
+cast voice was unreachable for any line with a sender on it.** The tower spoke in whichever pool
+voice its callsign happened to hash to, exactly as an unknown NPC would, and the voice cast for it
+was never used for a word the carrier actually said. That is why the report read as an identity
+problem and was one — both halves are real and neither is sufficient. A role the Commander has cast
+now keeps its voice; only the carrier's two are ever cast, and each is one person.
+
+### An alarm on being shot, and an answer for being hunted
+
+**The cue was on the warning that an attack might happen and not on the one saying it is**
+([#136](https://github.com/dseelinger/d47/issues/136)). Four announcements in the whole app set one
+and all four were about something that had not happened yet, so a pirate *announcing* an
+interdiction got a sound before the sentence and being shot did not.
+
+Every urgent danger line now carries one and the routine ones still do not — the existing urgency
+distinction doing the work rather than a second judgement about which dangers are frightening. **Two
+new sounds, and two is a decision rather than a count that grew:** shields, hull and under-attack
+are one situation reported by three sensors and share an alarm; being pulled reuses the interdiction
+sound the Commander already learned; heat gets its own, because nothing is shooting and the answer
+is the throttle rather than the trigger. It is also the only alert here that does not fall.
+
+**Two alarms of the same kind seconds apart now sound once.** The keys differ — correctly, they are
+different warnings, both worth saying — so no cooldown could have caught it. The spacing is on the
+cue and is applied after the key cooldown, so a repeat that is never said cannot silence the next
+warning that is. Only the marker is dropped, never the line.
+
+**And the hitman half** ([#137](https://github.com/dseelinger/d47/issues/137)), measured over 935
+journals with the three shipped lines as controls, which the method reproduced exactly. The family
+that fires when a hunter spots you is **7 of 7**, the strongest signal in the corpus; near-death is
+**2 of 3** and ships on the terms the bounty hunter's single event shipped on, with its n written
+down. Both share the bounty hunter's cue, because the answer is the same and cargo will not buy
+either off.
+
+**The two the Commander actually noticed do not qualify.** *"The eagle is in the nest"* is followed
+by an attack **15%** of the time and cueing it would be the crying wolf the allowlist exists to
+prevent. But 15% of 47 is still a hitman talking about you, so it gets a reaction instead: d47's own
+words, chosen by the id family, off the cue channel, one per ten minutes however long the burst. It
+never says why — of 30 such lines in the corpus, **one** had a failed mission behind it, so a reason
+would be invented. The line handed to the model is d47's own and never the hitman's, which is
+asserted rather than argued, because the reaction is the one thing here that goes through a prompt.
+
+### Male is a word, not a substring of female
+
+Typing **male** in the voice picker listed every female voice
+([#146](https://github.com/dseelinger/d47/issues/146)), because matching was `Contains` and
+`"female".Contains("male")` is true. There was no way to type out of it either: *female* worked and
+*male* could not.
+
+This repository had already ruled on the same failure one surface over — Phase 52, on the spoken
+router: *"a keyword that short hijacks every sentence containing it"*. The equivalent for a search
+box is matching at **word starts**, which fixes *male* without costing `eng` finding *Engineering*
+or `kra` finding *Krait*, where whole-word matching would have broken both. A capital following a
+lower-case letter counts as a word start too, or *multilingual* would silently have stopped finding
+`en-US-AndrewMultilingualNeural`, which most of the Edge catalogue is named like.
+
+**And the fault underneath it.** Gender is a field that the label merely renders, so searching the
+label for it was the wrong question. The picker now offers it as a filter, declared by the row the
+way every other row property is, and absent where the choices carry no gender at all. **Untagged
+voices get an option of their own** rather than being swept in with the men or quietly dropped —
+that is where the filter deliberately differs from the casting rule, which folds them in because
+casting has to put every voice somewhere and a Commander reading a list does not. Both are built on
+one comparison, so the picker's filter and Phase 58's casting are one rule read twice, asserted from
+a single catalogue rather than compared by eye.
+
+### Cobra Mark Three, not em kay eye eye eye
+
+The phoneme ladder ends in *anything left is spelled out*, and a roman numeral is letters with no
+digits and no vowels to parse ([#138](https://github.com/dseelinger/d47/issues/138)). **74 entries
+in the shipped tables carry one**, and each carries it into every armour row underneath it. `Mk` is
+fixed with it, because *em kay three* is no better than what it replaced.
+
+It runs over the whole line rather than inside the per-segment ladder, because the context spans
+segments — `MkII` arrives as one and `Mk II` as two, and both have to sound the same. What it emits
+is ordinary English, so *Mark* and *three* then come out of the dictionary like any other words.
+
+**The half that would have been found in a headset is the other direction.** `I`, `MIX`, `DID`,
+`CIVIC`, `MILD` and `LIVID` are English words built from numeral letters, and a general rule would
+turn prose into numbers in a voice. So the conversion fires only where the context says numeral,
+strictness comes from parsing and rendering back — `MILD` parses as 1449 and 1449 renders as
+`MCDXLIX`, so `MILD` is not a numeral — and two contexts are narrowed further: bare `I` after a
+written-out *Mark* is left alone because *"Mark I saw him"* is a sentence, and `class` requires the
+gas giant after it because *"the class I attended"* is one too.
+
+### Mark the vowel, not the syllable
+
+Reported while flying the numerals, as an intruded vowel before every invented name: *"JOHN **ay**
+DEPARAGON is in **ay** Kamitra, near **ay** Hammel Terminal."* The text was clean and the phonemes
+were clean English, so the sound was being made somewhere neither could show.
+
+**The reported line is what makes the cause certain rather than likely.** Every word an intruded
+vowel was heard before — Deparagon, Kamitra, Hammel, Hammel — is a word the letter-to-sound rules
+answered for. Every word without one — John, is, in, near, Terminal, docked, at — came from the
+dictionary. Four for four and seven for seven, in a single sentence.
+
+And the dictionary says what the difference was. Of its 274,927 entries, **not one** begins with a
+stress mark followed by a consonant: it writes `dʒˈɑːn` and `tˈɜːmɪnəl`, marking the vowel rather
+than the syllable. The rules marked the syllable — `ˈdɛpæɹæɡɑːn` — so every name they produced
+reached Kokoro in a shape it had never once been given, and Kokoro rendered the unfamiliar shape as
+a vowel. Which syllable is stressed is still the old crude first-syllable judgement and is
+untouched; only its position inside the syllable has moved.
+
+**It lived in three places and the fix reached one.** The rules were the reported case; the
+hand-written tables were not. **Eighteen of the thirty number words** marked a consonant — `ˈθəɹti`,
+`ˈsɛvən`, `ˈhʌndɹəd` — and so did `w`, `zero` and `seven` in the spelled letters. Those matter more
+than the names did, because d47 says numbers in most of what it reports: ranges, distances,
+tonnages, credits. The number words are now the shipped dictionary's own entries, which makes them
+derived with a source rather than judged by ear, and settles two the ear had got wrong on their own
+account. The guard drives every rung that produces IPA and asserts one property — wherever a mark
+appears, the next sound is a vowel — so a fourth table cannot be added quietly with the mark in the
+wrong place, which is exactly how the second and third came to be there.
+
+### Say the prepositions weak, which is nine marks and not a revolution
+
+The dictionary stores citation forms, which is right for a lookup and wrong for a sentence: d47
+emphasised the preposition in *"is **in** Kamitra"* and the auxiliary in *"you **have** 256
+tonnes"*.
+
+**This was reached for as a fix for how flat the local voice sounds beside ElevenLabs, and measuring
+it first killed that argument.** Over ten lines d47 actually said, **9 of 84** stress marks land on a
+function word. Eleven percent. The dictionary already leaves most of them weak and the rest sit on
+content words where they belong, so there is no density problem to fix. What is left is worth doing
+on a different argument: the nine are misplaced rather than surplus, and a wrongly stressed
+preposition is heard as a mistake where a correctly stressed noun is heard as nothing at all.
+
+The exclusions are the judgement — no negation, not `one`, no demonstratives — because each would be
+wrong more often than right, which is the whole test for being on the list. **Expect a small
+difference.** The rest of the gap to a hosted voice is 82 million parameters and no text to read,
+and neither is closeable from here.
+
+### Also
+
+- **A question about any ship's jump range is answered with the Commander's location**, filed as
+  [#161](https://github.com/dseelinger/d47/issues/161) rather than fixed here. `jump range` is a
+  keyword, keywords name a capability rather than a tool, and the router takes the capability's
+  first tool with no required parameters — which is `get_location`. It is the 2026-08-21 defect
+  still live on the keyword path, and the decision it needs governs every capability rather than
+  this one sentence.
+
+---
+
 ## 0.84.4 — 2026-08-28 — Four field reports, and the one that was not a bug in the code
 
 ### Take us out, walked the way the panel actually works
