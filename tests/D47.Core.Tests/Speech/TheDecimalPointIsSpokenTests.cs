@@ -51,14 +51,21 @@ public class TheDecimalPointIsSpokenTests
     }
 
     /// <summary>
-    /// <b>And the whole part keeps the casual reading it always had</b>, so the point is the only
-    /// thing this changed. <c>128.5</c> is <em>one twenty-eight point five</em>, which is the
-    /// designation reading the Commander ruled for a run of digits, untouched.
+    /// <b>#177 left the whole part on its casual reading, and #184 overturned that.</b> This test
+    /// asserted <c>128.5</c> as <em>one twenty-eight point five</em> — the designation reading the
+    /// Commander ruled for a run of digits, applied to a decimal because #177 changed only the
+    /// point. #184 ruled that a decimal marks the token as a measured quantity, so its whole part
+    /// takes the full reading instead; see
+    /// <see cref="TheWholePartOfAQuantityIsSaidInFullTests"/> for the ruling and what it costs.
+    /// <para>
+    /// The bare token is untouched and is here to say so: <c>128</c> is still <em>one
+    /// twenty-eight</em>, because nothing about it says it is a quantity.
+    /// </para>
     /// </summary>
     [Theory]
-    [InlineData("128.5", "one twenty-eight point five")]
+    [InlineData("128.5", "one hundred twenty-eight point five")]
     [InlineData("128", "one twenty-eight")]
-    public void TheWholePartIsUnchanged(string written, string expected) =>
+    public void TheWholePartTakesTheReadingItsShapeAsksFor(string written, string expected) =>
         Assert.Equal(expected, SpokenNumber.Say(written));
 
     // ---- The two ragged ends, ruled -----------------------------------------------------------

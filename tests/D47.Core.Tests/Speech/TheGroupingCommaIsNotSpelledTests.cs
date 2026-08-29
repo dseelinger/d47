@@ -21,10 +21,10 @@ namespace D47.Core.Tests.Speech;
 /// <para>
 /// <b>What this file does not assert is the reading</b>, deliberately. Whether <c>6,680</c> is
 /// <em>sixty-six eighty</em> or <em>six thousand six hundred eighty</em> is
-/// <a href="https://github.com/dseelinger/d47/issues/184">#184</a>'s ruling, not this issue's. What
-/// #183 is about is that the comma is grouping rather than content — so the assertion here is that
-/// a grouped number says exactly what the same digits ungrouped say, which is true on both sides of
-/// that ruling and does not have to be rewritten when it lands.
+/// <a href="https://github.com/dseelinger/d47/issues/184">#184</a>'s ruling, not this issue's, and
+/// it is settled in <see cref="TheWholePartOfAQuantityIsSaidInFullTests"/>. What #183 is about is
+/// that the comma is grouping rather than content: nothing in it is spoken, and it adds no digit
+/// that was not written.
 /// </para>
 /// </summary>
 public class TheGroupingCommaIsNotSpelledTests
@@ -60,19 +60,28 @@ public class TheGroupingCommaIsNotSpelledTests
         Assert.True(SpokenNumber.Looks(token), $"\"{token}\" is not being read as a number.");
 
     /// <summary>
-    /// <b>The comma says nothing, which is the ruling this issue actually carries.</b> A grouped
-    /// number is the ungrouped number: the commas describe the digits rather than adding to them.
+    /// <b>The comma adds no digits, which is the half of the ruling this issue carries.</b> A
+    /// grouped number is the same digits as the ungrouped one: the commas describe them rather
+    /// than adding to them.
     /// <para>
-    /// Asserted this way round on purpose. It is true whichever reading #184 settles on for the
-    /// whole part, so it pins the fix without pinning a decision that is not this issue's to make.
+    /// <b>#184 then gave the comma a second job</b>, and it is worth being exact about which is
+    /// which. #183 says the comma is not a <em>digit</em> — nothing in it is spoken. #184 says the
+    /// comma is a <em>signal</em>: a token wearing one is a measured quantity, and its whole part
+    /// takes the full reading rather than the casual designation one. So a grouped number no longer
+    /// says word for word what the bare digits say, and it never did say anything the digits did
+    /// not contain.
+    /// </para>
+    /// <para>
+    /// Which is why these pairs are the combined form: the decimal point has already made both
+    /// sides measured, so what is left between them is the grouping alone — which is exactly the
+    /// claim this test is for.
     /// </para>
     /// </summary>
     [Theory]
-    [InlineData("6,680", "6680")]
-    [InlineData("1,234", "1234")]
-    [InlineData("1,234,567", "1234567")]
     [InlineData("1,234.5", "1234.5")]
     [InlineData("6,680.25", "6680.25")]
+    [InlineData("6,680.0", "6680.0")]
+    [InlineData("1,234,567.89", "1234567.89")]
     public void AGroupedNumberSaysWhatTheUngroupedOneSays(string grouped, string plain) =>
         Assert.Equal(SpokenNumber.Say(plain), SpokenNumber.Say(grouped));
 

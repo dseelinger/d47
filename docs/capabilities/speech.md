@@ -191,6 +191,13 @@ say — or letters mixed with digits — is spelled out. So `COL 385 SECTOR B0-G
 three eighty-five sector bee zero dash gee queue pee eye*, and *Shinrarta Dezhra* is pronounced
 rather than spelled. A voice with a British accent says **zed**.
 
+**A number that wears a decimal point or a grouping comma is read as a measurement rather than as a
+name.** `385` is *three eighty-five*, the way anybody reads a designation aloud — but `1,234.5` is
+*one thousand two hundred thirty-four point five*, because the punctuation says it is a distance
+rather than a catalogue number. The fraction is always said digit by digit: *point five nine* and
+never *point fifty-nine*, which would be a different quantity. A bare figure with a unit after it,
+like `1234 tonnes`, still takes the shorter reading.
+
 Words with an apostrophe in them are built from the word underneath: *Ship's* is *ship* with the
 ending worked out, which is also how *Buzhang's* works and why no list of words could have covered
 it. The dictionary contains no apostrophes at all — not one of its 274,927 entries — so the handful
