@@ -47,6 +47,8 @@ public sealed class Pseudonyms
         FrontierId,
         Squadron,
         Ship,
+        Carrier,
+        Callsign,
     }
 
     /// <summary>How many distinct values have been given a stand-in.</summary>
@@ -77,6 +79,20 @@ public sealed class Pseudonyms
     /// <summary>A ship's given name or its ident — the Commander named both, so both are theirs.</summary>
     public string Ship(string name) => For(name, Kind.Ship);
 
+    /// <summary>A fleet carrier's given name.</summary>
+    public string Carrier(string name) => For(name, Kind.Carrier);
+
+    /// <summary>
+    /// A carrier's callsign. <b>Frontier assigned it and it is still PII</b> — the Commander's
+    /// ruling of 2026-08-29: a callsign is the key INARA and EDSM index carriers by, so it ties a
+    /// carrier to an owner as surely as a name does, and more reliably.
+    /// <para>
+    /// The stand-in keeps the shape Frontier uses, because a replay reads it: a value that no
+    /// longer parses as a callsign is a value the fold takes a different branch on.
+    /// </para>
+    /// </summary>
+    public string Callsign(string callsign) => For(callsign, Kind.Callsign);
+
     /// <summary>
     /// The stand-in for one value, allocating one on first sight.
     /// <para>
@@ -105,6 +121,8 @@ public sealed class Pseudonyms
             Kind.Person => $"CMDR {Word(ordinal)}",
             Kind.FrontierId => $"F{900_000 + ordinal}",
             Kind.Squadron => $"SQUADRON {Word(ordinal)}",
+            Kind.Carrier => $"CARRIER {Word(ordinal)}",
+            Kind.Callsign => $"ZZ0-{(ordinal + 1) % 1000:000}",
             _ => $"SHIP {Word(ordinal)}",
         };
 

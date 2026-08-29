@@ -81,6 +81,34 @@ Measured across the 912-journal corpus: **75 of 90 combat events now pass throug
 where all 90 were being rewritten before. The Commander does not fly Open, so not one of them was
 ever a real person — which is the point. The rule is there for the donors who do.
 
+### A carrier is PII, name and callsign both
+
+The Commander's ruling of 2026-08-29: **both can be looked up on INARA**, and the callsign is the
+key that site indexes carriers by, so it ties a carrier to an owner more reliably than the name
+does. `CarrierStats` restates the name 491 times over the corpus, which is what puts it inside any
+incident window where `SetUserShipName`'s equivalent would never be.
+
+**The callsign travels in twenty-odd events and only five of them say what they are.** `Docked`,
+`Location`, `Market` and the docking handshake carry `StationType`, so a per-event condition would
+have worked there — and `Shipyard`, `Outfitting`, `StoredShips`, `StoredModules` and `FCMaterials`
+carry nothing to condition on at all. Those are the events that list a Commander's whole fleet. So
+the rule is a field list whose treatment guards itself on shape, and it reaches every event.
+
+**Position is what makes a shape rule safe here**, and it was measured rather than assumed. A
+carrier is either the callsign alone — `B0X-79X`, 24 of 968 distinct station names, all 24 carriers
+— or a name with the callsign **last**: `GDS PREDATOR B0X-79X`, `HMS BROTHEL X8H-B0Y`, 15,002
+distinct values and every one a carrier. A megaship wears the same shape at the **front**
+(`MVU-891 Bellmarsh-class Reformatory`, 464 distinct) and a minor faction wears one in the middle,
+off the catalogue number of the star it is named for (`LP 466-235 Gold Boys`, 63 distinct). Both
+are game facts, both stay, and both would have gone under a rule that looked for the shape anywhere.
+
+**Two of the fields were found by sweeping rather than by reading the schema.**
+`SupercruiseDestinationDrop.Type` mixes Frontier symbols, ordinary stations and carriers with
+nothing on the event to tell them apart; `CodexEntry.NearestDestination` says what you were closest
+to when you scanned something. Between them, 205 lines that a table written from the schema would
+have kept. **Across the corpus: 170,747 lines Elite calls a fleet carrier, none of them still
+holding a callsign afterwards, and 2,003 megaship and faction lines untouched.**
+
 ### One thing the tests could not have found
 
 The pseudonyms cross from the journal half into the log half, or they are worth nothing — a

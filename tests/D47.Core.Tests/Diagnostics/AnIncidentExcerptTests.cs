@@ -307,6 +307,161 @@ public class AnIncidentExcerptTests
                 new Pseudonyms()));
     }
 
+    /// <summary>
+    /// A carrier's name and its callsign, ruled PII by the Commander on 2026-08-29: both can be
+    /// looked up on INARA, and the callsign is the key that site indexes carriers by.
+    /// </summary>
+    [Fact]
+    public void ACarriersNameAndCallsignBothGo()
+    {
+        var names = new Pseudonyms();
+
+        var stats = Scrubbed(
+            """{"event":"CarrierStats","CarrierID":3712682240,"Callsign":"B0X-79X","Name":"GDS PREDATOR","DockingAccess":"all"}""",
+            names);
+
+        Assert.DoesNotContain("GDS PREDATOR", stats);
+        Assert.DoesNotContain("B0X-79X", stats);
+        Assert.Contains("CARRIER ALPHA", stats);
+        Assert.Contains("ZZ0-001", stats);
+        Assert.Contains("\"DockingAccess\":\"all\"", stats);
+
+        // The same callsign a second time, in the field it mostly lives in, and on an event with
+        // no carrier in its name at all.
+        var docked = Scrubbed(
+            """{"event":"Docked","StationName":"B0X-79X","StationType":"FleetCarrier","MarketID":3712682240}""",
+            names);
+
+        Assert.Contains("ZZ0-001", docked);
+        Assert.Contains("FleetCarrier", docked);
+    }
+
+    /// <summary>
+    /// And an ordinary station keeps its name. The rule reaches every event because the treatment
+    /// guards itself on the shape Frontier reserves — measured over the corpus: 24 of 968 distinct
+    /// station names match it, and every one of the 24 is a carrier.
+    /// </summary>
+    [Fact]
+    public void AnOrdinaryStationIsNotACarrier()
+    {
+        var docked = Scrubbed(
+            """{"event":"Docked","StationName":"Jameson Memorial","StationType":"Orbis","MarketID":128666762}""",
+            new Pseudonyms());
+
+        Assert.Contains("Jameson Memorial", docked);
+    }
+
+    /// <summary>
+    /// Five of the nineteen events carrying a callsign have no <c>StationType</c> to condition on,
+    /// and they are the ones that list a Commander's whole fleet. A per-event condition would have
+    /// left the callsign exactly there.
+    /// </summary>
+    [Fact]
+    public void TheEventsWithNothingToConditionOnAreCoveredToo()
+    {
+        var names = new Pseudonyms();
+
+        foreach (var line in new[]
+                 {
+                     """{"event":"StoredShips","StationName":"BNH-T2F","ShipsHere":[],"ShipsRemote":[]}""",
+                     """{"event":"Shipyard","StationName":"BNH-T2F","MarketID":3712682240}""",
+                     """{"event":"Outfitting","StationName":"BNH-T2F","MarketID":3712682240}""",
+                     """{"event":"StoredModules","StationName":"BNH-T2F","Items":[]}""",
+                     """{"event":"FCMaterials","CarrierID":"BNH-T2F","CarrierName":"x"}""",
+                 })
+        {
+            var scrubbed = Scrubbed(line, names);
+
+            Assert.DoesNotContain("BNH-T2F", scrubbed);
+            Assert.Contains("ZZ0-001", scrubbed);
+        }
+    }
+
+    /// <summary>
+    /// Somebody else's carrier, seen from across a system, with its name and callsign in one
+    /// string — <c>"HMS BROTHEL X8H-B0Y"</c> is a real signal off the corpus. The shape guard
+    /// cannot help where the callsign is embedded rather than alone, so the whole value goes,
+    /// conditioned on Elite's own word for what the signal is.
+    /// </summary>
+    [Fact]
+    public void AStrangersCarrierGoesWholeWhenElitesSaysItIsOne()
+    {
+        var names = new Pseudonyms();
+
+        var carrier = Scrubbed(
+            """{"event":"FSSSignalDiscovered","SystemAddress":6405910172338,"SignalName":"HMS BROTHEL X8H-B0Y","SignalType":"FleetCarrier","IsStation":true}""",
+            names);
+
+        Assert.DoesNotContain("HMS BROTHEL", carrier);
+        Assert.DoesNotContain("X8H-B0Y", carrier);
+        Assert.Contains("CARRIER ALPHA", carrier);
+
+        // A megaship wears the same shape at the front, and is a game fact. So is a minor faction
+        // named for a catalogue star. 464 and 63 distinct in the corpus, and both would have gone
+        // under a rule that looked for the shape anywhere rather than at the end.
+        Assert.Contains(
+            "MVU-891 Bellmarsh-class Reformatory",
+            Scrubbed(
+                """{"event":"FSSSignalDiscovered","SignalName":"MVU-891 Bellmarsh-class Reformatory","SignalType":"Megaship"}""",
+                names));
+
+        Assert.Contains(
+            "LP 466-235 Gold Boys",
+            Scrubbed("""{"event":"FSDJump","SystemFaction":{"Name":"LP 466-235 Gold Boys"}}""", names));
+
+        // And the drop target, which is where this was found: a field called Type, mixing symbols,
+        // ordinary stations and carriers with nothing on the event to tell them apart.
+        var drop = Scrubbed(
+            """{"event":"SupercruiseDestinationDrop","Type":"GDS PREDATOR B0X-79X","Threat":0}""",
+            names);
+
+        Assert.DoesNotContain("GDS PREDATOR", drop);
+        Assert.DoesNotContain("B0X-79X", drop);
+
+        Assert.Contains(
+            "Ray Gateway",
+            Scrubbed("""{"event":"SupercruiseDestinationDrop","Type":"Ray Gateway","Threat":0}""", names));
+
+        // And what you were nearest to when you scanned something, which was the last residue a
+        // corpus sweep turned up: 11 CodexEntry lines out of 179,378.
+        Assert.DoesNotContain(
+            "GDS PREDATOR",
+            Scrubbed(
+                """{"event":"CodexEntry","Name":"$Codex_Ent_G_Type_Name;","NearestDestination":"GDS PREDATOR B0X-79X"}""",
+                names));
+
+        // Every other signal is a game fact and keeps its name. There are hundreds of thousands of
+        // these, and rewriting them would gut the replay case.
+        var beacon = Scrubbed(
+            """{"event":"FSSSignalDiscovered","SignalName":"$USS_HighGradeEmissions;","SignalType":"USS"}""",
+            names);
+
+        Assert.Contains("$USS_HighGradeEmissions;", beacon);
+    }
+
+    /// <summary>
+    /// And the same hole the Commander's name had: <c>CarrierStats</c> is common but not
+    /// guaranteed to be in a six-minute window, while d47 says the carrier's name and callsign in
+    /// what it tells you about a jump.
+    /// </summary>
+    [Fact]
+    public void TheCarrierIsReplacedInTheLogEvenWhenTheWindowNeverSawIt()
+    {
+        const string spoken =
+            "[12:03:00 INF] D47.Core.Audio.SpeechPipeline: D47 said: GDS PREDATOR (B0X-79X) jumps in 4 minutes.";
+
+        var told = IncidentExcerpt.Take(
+            [],
+            spoken,
+            Window(),
+            Utc,
+            carrier: new CarrierState { Name = "GDS PREDATOR", CallSign = "B0X-79X" });
+
+        Assert.DoesNotContain(told.Log, line => line.Contains("GDS PREDATOR"));
+        Assert.DoesNotContain(told.Log, line => line.Contains("B0X-79X"));
+        Assert.Contains(told.Log, line => line.Contains("CARRIER ALPHA (ZZ0-001)"));
+    }
+
     /// <summary>A field whose name means one thing wherever it appears, replaced wherever it does.</summary>
     [Fact]
     public void ASquadronIsReplacedWhateverEventNamesIt()

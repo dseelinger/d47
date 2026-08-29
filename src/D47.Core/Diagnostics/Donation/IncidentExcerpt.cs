@@ -120,13 +120,19 @@ public sealed record IncidentExcerpt(
     /// whole field list exists to remove.
     /// </para>
     /// </param>
+    /// <param name="carrier">
+    /// The Commander's fleet carrier, likewise from outside the window. Its name and its callsign
+    /// are both PII — a callsign is what INARA and EDSM index carriers by — and the events that
+    /// carry them are as far from an incident as <c>LoadGame</c> is.
+    /// </param>
     public static IncidentExcerpt Take(
         IReadOnlyList<JournalEntry> journal,
         string log,
         ExcerptRequest request,
         TimeZoneInfo zone,
         IReadOnlyList<KeyValuePair<string, string>>? alsoReplace = null,
-        CommanderIdentity? commander = null)
+        CommanderIdentity? commander = null,
+        CarrierState? carrier = null)
     {
         var names = new Pseudonyms();
 
@@ -137,6 +143,22 @@ public sealed record IncidentExcerpt(
         {
             names.Person(commander.Name);
             names.FrontierId(commander.FrontierId);
+        }
+
+        // And the carrier, for the same reason and with the same failure if it is left out: its
+        // name and callsign are PII by the Commander's ruling, the log half says both in what d47
+        // tells you about a jump, and the events that carry them may sit hours outside the window.
+        if (carrier is not null)
+        {
+            if (carrier.Name is { Length: > 0 } named)
+            {
+                names.Carrier(named);
+            }
+
+            if (carrier.CallSign is { Length: > 0 } call)
+            {
+                names.Callsign(call);
+            }
         }
 
         var events = new List<string>();

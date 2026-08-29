@@ -29,6 +29,17 @@ public enum Scrub
     /// <summary>A ship's given name or ident, both of which the Commander chose.</summary>
     Ship,
 
+    /// <summary>A fleet carrier's given name.</summary>
+    Carrier,
+
+    /// <summary>
+    /// A fleet carrier's identity, <b>and only where the value actually holds one</b>. The
+    /// treatment carries its own guard because the fields it lives in hold ordinary station names,
+    /// megaships and enum words the rest of the time — see <c>Carrier</c> below for the two shapes
+    /// it recognises and the corpus measurement behind them.
+    /// </summary>
+    Callsign,
+
     /// <summary>A message body: the words go, the field stays.</summary>
     Body,
 }
@@ -99,6 +110,33 @@ public static class JournalScrub
     [
         new("SquadronName", Scrub.Squadron),
         new("FID", Scrub.FrontierId),
+
+        // The fields a fleet carrier's identity arrives in, across twenty-odd events — the
+        // Commander's ruling of 2026-08-29 is that both its name and its callsign are PII, because
+        // INARA and EDSM index carriers by the callsign. A field list rather than the per-event
+        // conditions this started as, for a measured reason: five of those events — Shipyard,
+        // Outfitting, StoredShips, StoredModules, FCMaterials — carry no StationType to condition
+        // on at all, and they are the ones that list a whole fleet.
+        //
+        // `Type` and `SignalName` look loose in a global list and are not. Both hold enum words and
+        // Frontier symbols most of the time, and Scrub.Callsign guards itself: a value that is
+        // neither of the two carrier shapes is left exactly as it was.
+        new("StationName", Scrub.Callsign),
+        new("Callsign", Scrub.Callsign),
+        new("SignalName", Scrub.Callsign),
+        new("Type", Scrub.Callsign),
+        new("CarrierName", Scrub.Callsign),
+
+        // What you were closest to when you scanned something. Found by sweeping the corpus for
+        // what still held a carrier after the rules above ran — 11 CodexEntry lines out of 179,378,
+        // which is exactly the kind of residue a table written from the schema rather than from the
+        // data would have kept.
+        new("NearestDestination", Scrub.Callsign),
+        new("NearestDestination_Localised", Scrub.Callsign),
+
+        // A number on every event but one. FCMaterials writes the callsign into it as a string,
+        // and Text() answers null for the numeric form, so this fires on that event alone.
+        new("CarrierID", Scrub.Callsign),
     ];
 
     /// <summary>
@@ -169,6 +207,12 @@ public static class JournalScrub
             new("ShipsHere[].Name", Scrub.Ship),
             new("ShipsRemote[].Name", Scrub.Ship),
         ],
+
+        // A carrier's given name. Two events set or restate it, and CarrierStats restates it
+        // constantly — 491 times over the corpus — which is what makes this reachable from any
+        // incident window where SetUserShipName's equivalent would not be.
+        ["CarrierStats"] = [new("Name", Scrub.Carrier)],
+        ["CarrierNameChange"] = [new("Name", Scrub.Carrier)],
 
         // Events that can name somebody else. **Only where that somebody is a real person**, which
         // is the Commander's ruling of 2026-08-29 and the reason three of these carry a condition:
@@ -278,10 +322,7 @@ public static class JournalScrub
         // A condition that is absent is a condition that is not met. Elite omits `IsPlayer` from
         // events it has nothing to say about, and a missing flag read as permission would make the
         // gate fire on exactly the events nobody has vouched for.
-        if (rule.OnlyWhen is { } flag &&
-            (root[flag] is not JsonValue gate
-             || !gate.TryGetValue<bool>(out var allowed)
-             || !allowed))
+        if (rule.OnlyWhen is { } condition && !Holds(root, condition))
         {
             return;
         }
@@ -328,6 +369,13 @@ public static class JournalScrub
         }
     }
 
+    /// <summary>
+    /// Whether a rule's condition holds on this event. Anything missing, or of the wrong type,
+    /// answers no — a condition nobody stated is not a condition anybody met.
+    /// </summary>
+    private static bool Holds(JsonObject root, string condition) =>
+        root[condition] is JsonValue flag && flag.TryGetValue<bool>(out var set) && set;
+
     /// <summary>Replaces one property's value in place, and does nothing where there is none.</summary>
     private static void Replace(JsonObject owner, string field, Scrub scrub, Pseudonyms names, ref int bodies)
     {
@@ -371,6 +419,50 @@ public static class JournalScrub
         value.StartsWith('$') && value.EndsWith(';');
 
     /// <summary>
+    /// A fleet carrier's identity in the two shapes Elite writes it, and the value untouched where
+    /// it is neither. <b>Both shapes are measured over the 912-journal corpus rather than
+    /// assumed</b>, because this is the one rule here that reads a value instead of a field name.
+    /// <list type="bullet">
+    /// <item>
+    /// <b>The callsign alone</b> — <c>B0X-79X</c>. 24 of 968 distinct <c>StationName</c> values are
+    /// shaped like this, and every one of the 24 was seen as a <c>FleetCarrier</c>.
+    /// </item>
+    /// <item>
+    /// <b>A name with the callsign last</b> — <c>GDS PREDATOR B0X-79X</c>, <c>HMS BROTHEL
+    /// X8H-B0Y</c>. 15,002 distinct values end in a callsign-shaped token and every one is a
+    /// carrier. The whole value goes, because a name and its callsign are one identity — and
+    /// somebody else's carrier is no more the donor's to give than their own.
+    /// </item>
+    /// </list>
+    /// <para>
+    /// <b>Position is what makes that safe, and it is the whole of the rule.</b> A megaship wears
+    /// the same shape at the <em>front</em> — <c>MVU-891 Bellmarsh-class Reformatory</c>, 464
+    /// distinct in the corpus — and a minor faction wears one in the middle, off the catalogue
+    /// number of the star it is named for: <c>LP 466-235 Gold Boys</c>, 63 distinct. Both are game
+    /// facts, both stay, and both would have gone under a rule that looked for the shape anywhere.
+    /// </para>
+    /// </summary>
+    private static string Carrier(string value, Pseudonyms names)
+    {
+        if (IsCallsign(value))
+        {
+            return names.Callsign(value);
+        }
+
+        var space = value.LastIndexOf(' ');
+
+        return space > 0 && IsCallsign(value[(space + 1)..])
+            ? names.Carrier(value)
+            : value;
+    }
+
+    private static bool IsCallsign(string value) =>
+        value.Length == 7
+        && value[3] == '-'
+        && value.Where((c, at) => at != 3).All(char.IsAsciiLetterOrDigit)
+        && value.ToUpperInvariant() == value;
+
+    /// <summary>
     /// Whether this field is the English rendering of a sibling that is a symbol. Elite writes the
     /// pair everywhere — <c>Message</c> and <c>Message_Localised</c>, <c>Interdictor</c> and
     /// <c>Interdictor_Localised</c> — and the two always describe the same thing, so whatever is
@@ -387,6 +479,8 @@ public static class JournalScrub
         Scrub.FrontierId => names.FrontierId(value),
         Scrub.Squadron => names.Squadron(value),
         Scrub.Ship => names.Ship(value),
+        Scrub.Carrier => names.Carrier(value),
+        Scrub.Callsign => Carrier(value, names),
         _ => Withheld,
     };
 
