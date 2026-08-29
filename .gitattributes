@@ -18,6 +18,7 @@ tests/fixtures/** -text -diff
 # answers `bad interpreter: /usr/bin/env bash^M` and the script is dead on a fresh clone. It runs
 # in the working tree it was written in, which is the worst way for this to fail.
 tools/get-ver text eol=lf
+tools/get-local text eol=lf
 *.sh text eol=lf
 tools/prerelease text eol=lf
 tools/promote text eol=lf
