@@ -52,12 +52,16 @@
     written before the run that uses it — and until this switch existed the only way to learn
     the number was to work it out by hand, which is the script's own job done twice.
 
-.PARAMETER SkipTests
+.PARAMETER Tests
     Pushes without running `dotnet test -c Release` first. The suite is not skipped, only moved:
     ci.yml runs it on the pushed commit and the wait below will not tag a red one, so this trades
-    a local run for the one that was going to happen anyway. Worth it on a resume, where the tree
-    has not changed since the suite last passed. Refused together with -SkipCi, which would leave
-    nothing between an untested commit and a tag.
+    ci.yml runs the same suite on the same merged commit, and the CI wait below refuses to tag
+    a red one regardless - so the tag is CI-gated with or without this, and leaving it out can
+    never cost a version number. Worth asking for when you want the answer before the push rather
+    than three minutes into it.
+
+    -SkipCi turns this on whatever you passed, because that pair is the one combination that
+    would tag a commit nothing had tested.
 
 .PARAMETER SkipCi
     Pushes the tag without waiting for CI. Only for a run where the CI result is already known,
@@ -66,7 +70,7 @@
 .PARAMETER PreRelease
     Cuts the version, but marks the GitHub Release as a pre-release so nobody is offered it.
     The update checker reads only releases/latest, and GitHub's latest endpoint skips
-    pre-releases - so this build is installable by you and invisible to everyone else. Fly it,
+    pre-releases - so this build is installable by you and invisible to everyone else. Drive it,
     then promote it:
 
         gh release edit vX.Y.Z --prerelease=false --latest
@@ -106,7 +110,7 @@ param(
 
     [switch] $ShowVersion,
 
-    [switch] $SkipTests,
+    [switch] $Tests,
 
     [switch] $SkipCi,
 
@@ -208,11 +212,16 @@ if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
     throw 'The GitHub CLI (gh) is not on PATH. It is needed to wait for CI before tagging.'
 }
 
-# -SkipTests leans on the CI wait, and -SkipCi removes it. Each is defensible on its own and
+# **The rule that survived the polarity flip** (<https://github.com/dseelinger/d47/issues/170>).
+# The local suite is opt-in now, because ci.yml runs the same one on the same commit and the wait
+# below will not tag a red result — so skipping it costs minutes, never a version number. What has
+# not changed is that no path may tag a commit nothing has tested, and -SkipCi is the switch that
+# removes the other half of the check. So it turns the local run back on rather than being refused:
+# a run that says "do not wait for CI" is a run that has to answer for itself.
+#
+# It used to read the other way round: -SkipTests leans on the CI wait, and -SkipCi removes it.
 # together they are a tag on a commit that nothing has run.
-if ($SkipTests -and $SkipCi) {
-    throw '-SkipTests and -SkipCi together would tag a commit nothing has tested. Pick one.'
-}
+$runTests = $Tests -or $SkipCi
 
 # ------------------------------------------------------------------ the version
 #
@@ -338,20 +347,23 @@ else {
 
 # ------------------------------------------------------------------ the gate
 
-if ($SkipTests) {
-    Write-Step 'Skipping dotnet test -c Release (-SkipTests)'
-    Write-Note 'ci.yml runs the same suite on the pushed commit, and the wait below will not tag a red one.'
-    Write-Note 'Nothing is unchecked; a failure is just found later, and on main rather than before the push.'
-}
-else {
+if ($runTests) {
     Write-Step 'dotnet test -c Release'
-    Write-Note 'The release workflow runs this too, and a failure there lands after the tag is published.'
+
+    if ($SkipCi) {
+        Write-Note 'Not optional on this run: -SkipCi removes the wait that would otherwise catch it.'
+    }
 
     Invoke-Native { & dotnet test -c Release --nologo }
 
     if ($LASTEXITCODE -ne 0) {
         throw 'Tests failed. Nothing has been pushed.'
     }
+}
+else {
+    Write-Step 'Leaving the suite to CI'
+    Write-Note 'ci.yml runs the same one on the pushed commit, and the wait below will not tag a red result.'
+    Write-Note 'Nothing is unchecked; a failure is found on main a few minutes later instead. -Tests runs it here.'
 }
 
 # ------------------------------------------------------------------ push
@@ -440,6 +452,14 @@ if (-not $Yes) {
 
 Write-Step "Tagging $next"
 
+# **Named explicitly, and that is the safety property rather than a tidiness one**
+# (<https://github.com/dseelinger/d47/issues/169>). `git tag` with no ref tags whatever HEAD is
+# at this moment, and the CI wait above matched its run server-side against $head — so a commit
+# arriving from another terminal during the wait, or during an attended confirmation that sat for
+# hours, got a signed tag CI had never seen. release.yml's post-tag rerun was the only thing
+# standing between that commit and a published Release, and it is gone now because this line makes
+# it redundant. Order mattered: this first, the deletion second.
+#
 # Signed and annotated, as every published tag of this project is.
 # The annotation goes through a file rather than through -m, because Windows PowerShell
 # re-parses quotes inside a native command's arguments: a CHANGELOG heading containing a
@@ -450,7 +470,7 @@ $annotation = [System.IO.Path]::GetTempFileName()
 
 try {
     [System.IO.File]::WriteAllText($annotation, $Notes, [System.Text.UTF8Encoding]::new($false))
-    Invoke-Git tag -s $next -F $annotation | Out-Null
+    Invoke-Git tag -s $next $head -F $annotation | Out-Null
 }
 finally {
     Remove-Item $annotation -ErrorAction SilentlyContinue
@@ -494,10 +514,17 @@ if ($PreRelease) {
     }
 
     if (-not $published) {
-        Write-Warning "The Release for $next did not appear within 20 minutes, so it is NOT marked as a pre-release."
-        Write-Warning "It may still be building. Mark it by hand once it is up:"
-        Write-Warning "    gh release edit $next --prerelease"
-        return
+        # **Thrown rather than warned** (<https://github.com/dseelinger/d47/issues/172>). This
+        # path used to return, which exits 0 — and release.yml publishes with no prerelease input,
+        # so the build this could not mark lands as plain latest the moment the slow workflow
+        # finishes, and UpdateChecker offers an undriven build to every install. prerelease.ps1
+        # ends on this call and reads its exit code; "probably marked" is not marked.
+        throw @"
+The Release for $next did not appear within 20 minutes, so it is NOT marked as a pre-release.
+It is probably still building — and when it finishes it will be the latest release, which is
+what every install is offered. Mark it the moment it is up:
+    gh release edit $next --prerelease
+"@
     }
 
     gh release edit $next --prerelease | Out-Null

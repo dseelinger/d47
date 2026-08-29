@@ -214,13 +214,28 @@ existing, and no annotation to be had — are found before anything is committed
 three waits are not politeness — each is a rule below that has already cost a version number that
 could not be reused.
 
+**And the tag names that commit rather than whatever HEAD has become**
+([#169](https://github.com/dseelinger/d47/issues/169), 2026-08-29). `git tag` with no ref takes
+HEAD, while the wait matched CI's run against the commit it pushed — so a commit arriving from
+another terminal mid-wait, or during a confirmation left sitting, took a signed tag CI never saw.
+`release.yml` used to re-run the suite after the tag and was the only thing standing in the way;
+pinning the tag made that run redundant and it is gone, which takes a second full suite off every
+release.
+
 Run it from any branch. `-Yes` is the unattended run: it skips the confirmation before the tag,
 and turns every other question into an error naming the switch that would have answered it, because
 `Read-Host` with no console attached does not ask — it hangs. `-ShowVersion` prints the number the
 run would cut, says whether `CHANGELOG.md` has its section yet, and changes nothing; it is how that
-section gets written before the run that reads it. `-SkipTests` leaves the suite to CI, which runs
-the same one on the pushed commit — worth it on a resume, where the tree has not changed since it
-last passed, and refused alongside `-SkipCi`.
+section gets written before the run that reads it.
+
+**The local suite is opt-in, and that is a change of default rather than of rule**
+([#170](https://github.com/dseelinger/d47/issues/170), 2026-08-29). `ci.yml` runs the same suite on
+the same merged commit and the CI wait refuses to tag a red one, so the tag is CI-gated whether or
+not it also ran here — skipping it costs minutes and can never cost a version number. `-Tests` asks
+for it anyway, when you want the answer before the push rather than three minutes into it. What did
+not change is that **no path may tag a commit nothing has tested**: `-SkipCi` removes the other half
+of the check, so it turns the local run back on rather than being refused. It used to read the other
+way round, as `-SkipTests`.
 
 **Four commands sit on top of it, and they are on the Commander's PATH.** *Added 2026-08-27; the fourth on 2026-08-28.*
 Each is a `.ps1` in `tools/` with a bash and a `.cmd` shim beside it that contain no logic, and a
