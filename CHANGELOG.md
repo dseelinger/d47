@@ -27,6 +27,71 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.87.0 — 2026-08-28 — The events behind the complaint, with the words taken out
+
+[#160](https://github.com/dseelinger/d47/issues/160). A defect report arrives as prose, and the
+events that produced it stay on the reporter's machine — so the fix is tested against a
+reconstruction. **d47 can now cut the incident out of what it already holds**: the minimal journal
+sequence, the matching slice of its own log, scrubbed on the machine, shown in full, and handed
+over only on an explicit yes.
+
+Two halves, doing different work. The **journal half is the replay case** — `spike/CorpusReplay`
+already drives any directory of journal lines through the production fold, so a donated excerpt
+joins the suite with no harness changes and the fix cannot regress silently afterwards. The **log
+half is the diagnosis**: what d47 heard, what it decided, what it said, and how long each step
+took. A report wants both.
+
+### The journal is scrubbed by a field list; the log cannot be
+
+The personal surface of a journal is short and enumerable, so it is enumerated — `Commander` and
+`LoadGame`, chat, friends, crew and wing joins, ship names, squadrons. Names and Frontier IDs
+become consistent stand-ins; message bodies are dropped and the event's shape is kept, because a
+`ReceiveText` with no `Message` takes a path no live event ever takes. Everything else travels
+untouched: an `FSDJump` names a star system and an economy, not a person. A line the scrubber
+cannot read is **withheld whole and counted** — a scrubber that passes through what it could not
+read is not a scrubber.
+
+A log is free text and no field list can reach into a sentence, so the rule inverts. **The
+outburst is the bookmark, not the payload**: the instant travels and the words do not. d47's own
+lines travel by default, and for those the show step *is* the control — free text is reviewed as
+free text. The Commander's own speech is **held back unless they say otherwise**, per incident,
+because sometimes the exact words are the bug — a mishearing is reproduced by what was misheard —
+and sometimes they are nobody's business. **Another player's words never travel at all**, and
+there is no switch for that one: it is the same rule the journal half applies to chat, and a donor
+cannot consent on somebody else's behalf.
+
+### One thing the tests could not have found
+
+The pseudonyms cross from the journal half into the log half, or they are worth nothing — a
+scrubbed `LoadGame` three lines above the real name has protected nobody. That worked in every
+test and leaked on the first real session. Elite writes `Commander` and `LoadGame` **once, at the
+front of a file**, so an incident three hours in contains neither and there was no stand-in to
+substitute; d47's log meanwhile names the Commander in what it *says* — *"JOHN DEPARAGON is in
+Eurybia, docked at…"* — 107 times in one day. Who is flying is now handed in from outside the
+window. The Windows account name goes the same way, for the same reason: the log prints it on
+every path, dozens of times in a startup, and a show step that has to catch each one by eye is a
+show step that will miss one.
+
+### One act per donation, and no backend
+
+The excerpt is shown in the window that will hand it over, rendered by **the same code that fills
+the clipboard** — a preview assembled one way and a payload assembled another are two artefacts,
+and the Commander only ever read one of them. Copying closes the window, so the next donation is a
+fresh decision rather than this consent spent twice. There is no standing consent, no remembered
+choice, and nothing that sends anything: a scrubbed excerpt is kilobytes and travels inside the
+GitHub issue itself, pasted there by hand. Having the mechanism does not make it automatic — the
+`promote` rule, applied here.
+
+`Donate excerpt…` sits beside `Copy All` on the Journal, Raw Journal and D47 Log readings, and on
+the desktop window alone. The headset has neither a clipboard to put the result on nor a file
+picker to write it with, and a surface that cannot finish the act does not offer it.
+
+Whole-journal corpus donation stays out of scope on purpose. Storage was never the blocker —
+935 journals are 32.5 MB gzipped, so 500 Commanders would be about 16 GB — consent design is, and
+custody of other people's play histories is not taken on speculatively.
+
+---
+
 ## 0.86.0 — 2026-08-28 — Four answers that were sure of themselves
 
 Nothing new here, on purpose. Four issues where d47 said something wrong, or said the right thing

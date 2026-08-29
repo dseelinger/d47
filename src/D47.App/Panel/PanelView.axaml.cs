@@ -1488,6 +1488,33 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>
+    /// Opens the excerpt review window. Null on every surface but the one that furnished it
+    /// (<a href="https://github.com/dseelinger/d47/issues/160">#160</a>).
+    /// </summary>
+    private Action? _donate;
+
+    /// <summary>
+    /// Offers the two diagnostic readings a way into a bug report: a scrubbed window of Elite's
+    /// events and d47's own log, shown in full and sent nowhere until the Commander says so (#160).
+    /// <para>
+    /// <b>Furnished rather than branched</b>, like <see cref="EnableSearch"/> above, and here that
+    /// is the same safety property <see cref="EnableRawJournal"/> records: the review step is the
+    /// whole of the consent, and the headset has neither a clipboard to put the result on nor a
+    /// file picker to write it with. A surface that cannot complete the act does not offer it.
+    /// </para>
+    /// <para>
+    /// The panel holds the affordance and nothing else. What a window is, where the journal and the
+    /// log come from, and what the running build is called are the host's, which is why this takes
+    /// an <see cref="Action"/> rather than the pieces to build one from.
+    /// </para>
+    /// </summary>
+    public void EnableDonation(Action open)
+    {
+        _donate = open;
+        ApplyChrome();
+    }
+
+    /// <summary>
     /// Adds the Raw Journal reading (#51), on a surface that has somewhere useful to put it.
     /// <para>
     /// <b>Furnished rather than registered, which is what keeps it off the headset.</b> Journal is
@@ -3600,6 +3627,21 @@ public partial class PanelView : UserControl
 
         CopyButton.IsVisible = _searchable && transcript;
 
+        // Only where there is something to cut and somewhere to put it (#160). The two diagnostic
+        // readings are the two halves of an incident — Elite's events and what d47 did with them —
+        // and the Thread page is neither: it is the conversation, which the log already holds a
+        // more exact copy of.
+        //
+        // Null when no host wired it, which is every surface but the desktop window. That is the
+        // same rule the search box follows two lines down and for a stronger reason: a review step
+        // is the whole of the consent here, and a review step on a surface with no clipboard would
+        // be a Commander reading an excerpt they could not then do anything with.
+        DonateButton.IsVisible = transcript
+                                 && _donate is not null
+                                 && Page is TranscriptPage.Log
+                                     or TranscriptPage.Journal
+                                     or TranscriptPage.RawJournal;
+
         SearchRow.IsVisible = _searchable
                               && Mode == PanelMode.Full
                               && ModalPane.Child is null
@@ -3612,6 +3654,12 @@ public partial class PanelView : UserControl
         PageBar.IsVisible = Mode == PanelMode.Full
                             && ModalPane.Child is null
                             && (ModeButton.IsVisible || SearchRow.IsVisible);
+
+    /// <summary>
+    /// Opens the excerpt review window (#160). The panel knows nothing about what is in it — see
+    /// <see cref="EnableDonation"/>.
+    /// </summary>
+    private void OnDonateClick(object? sender, RoutedEventArgs e) => _donate?.Invoke();
 
     private void OnClearTranscriptClick(object? sender, RoutedEventArgs e) => ClearTranscript();
 
