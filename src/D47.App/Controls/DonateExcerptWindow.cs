@@ -38,32 +38,32 @@ namespace D47.App.Controls;
 /// </summary>
 public sealed class DonateExcerptWindow : Window
 {
-    /// <summary>
-    /// How far back the window may reach. An hour is already more than any incident needs and is
-    /// several thousand journal events; the point of a cap is that an excerpt stays something a
-    /// person can actually read before consenting to it, which a whole session is not.
-    /// </summary>
-    private const int MostMinutesBefore = 60;
-
-    /// <summary>
-    /// And forward. Short, because the mark is placed at or just after the symptom — a long tail
-    /// is a Commander donating the flying they did afterwards.
-    /// </summary>
-    private const int MostMinutesAfter = 15;
-
     private const string CopyLabel = "Copy it for the report";
 
     /// <summary>
     /// GitHub's own limit for one comment. Said here rather than found in a browser with the issue
-    /// half written.
+    /// half written — and it doubles as the point past which the claim this window makes starts to
+    /// wear thin, because the consent it asks for is <i>read this and say yes to it</i>
+    /// (<a href="https://github.com/dseelinger/d47/issues/173">#173</a>).
     /// </summary>
     private const int MostCharacters = 60_000;
 
     private readonly Func<ExcerptRequest, string> _build;
     private readonly DateTimeOffset _markedAt;
 
-    private readonly NumericUpDown _before = Minutes("MinutesBefore", 5, MostMinutesBefore, least: 1);
-    private readonly NumericUpDown _after = Minutes("MinutesAfter", 1, MostMinutesAfter, least: 0);
+    /// <summary>
+    /// How far back, in spans a person can name (#173). It replaced a pair of minute steppers that
+    /// implied a reach the sources did not have — see <see cref="ExcerptSpan"/> for why the list
+    /// stops where it does.
+    /// </summary>
+    private readonly ComboBox _span = new()
+    {
+        Name = "Span",
+        ItemsSource = ExcerptSpan.All,
+        SelectedIndex = 0,
+        MinWidth = 190,
+        VerticalAlignment = VerticalAlignment.Center,
+    };
 
     private readonly CheckBox _mySpeech = new()
     {
@@ -155,8 +155,7 @@ public sealed class DonateExcerptWindow : Window
 
         Content = root;
 
-        _before.ValueChanged += (_, _) => Render();
-        _after.ValueChanged += (_, _) => Render();
+        _span.SelectionChanged += (_, _) => Render();
         _mySpeech.IsCheckedChanged += (_, _) => Render();
 
         Render();
@@ -171,8 +170,8 @@ public sealed class DonateExcerptWindow : Window
         {
             Text = "Everything below is what would go into the report — nothing else, and nothing "
                    + "is sent from here. Names and Frontier IDs are replaced before you see them, "
-                   + "and other people's in-game messages are dropped. Read it, then copy it and "
-                   + "paste it into the issue yourself.",
+                   + "and other people's in-game messages are dropped. Reach back as far as the "
+                   + "defect needs, read it, then copy it and paste it into the issue yourself.",
             TextWrapping = TextWrapping.Wrap,
             FontSize = TypeScale.Secondary,
             Margin = new Thickness(0, 0, 0, 12),
@@ -190,8 +189,7 @@ public sealed class DonateExcerptWindow : Window
             Margin = new Thickness(0, 0, 0, 12),
         };
 
-        row.Children.Add(Labelled("Minutes before", _before));
-        row.Children.Add(Labelled("Minutes after", _after));
+        row.Children.Add(Labelled("How far back", _span));
         row.Children.Add(new Border { Padding = new Thickness(8, 0, 0, 0), Child = _mySpeech });
 
         return row;
@@ -232,22 +230,21 @@ public sealed class DonateExcerptWindow : Window
     /// </summary>
     private void Render()
     {
-        var request = new ExcerptRequest(
-            _markedAt,
-            TimeSpan.FromMinutes((double)(_before.Value ?? 5)),
-            TimeSpan.FromMinutes((double)(_after.Value ?? 1)),
-            _mySpeech.IsChecked == true);
+        var span = _span.SelectedItem as ExcerptSpan ?? ExcerptSpan.Default;
 
-        _text = _build(request);
+        _text = _build(span.Around(_markedAt, _mySpeech.IsChecked == true));
         _preview.Text = _text;
 
         // Said because GitHub's own limit is 65,536 characters for one comment, and an excerpt
         // that will not paste is better found here than in a browser with the issue half written.
         var long_ = _text.Length > MostCharacters;
 
+        // **Names the real problem rather than only GitHub's.** A comment limit is a transport
+        // detail; what actually matters at this size is that nobody reads it, and the yes this
+        // window asks for is a yes to something read.
         _size.Text = long_
-            ? $"{_text.Length:N0} characters — too long for one GitHub comment; shorten the window "
-              + "or save a file and attach it"
+            ? $"{_text.Length:N0} characters — more than a person reads, and more than one GitHub "
+              + "comment holds. Choose a shorter span, or save a file and attach it."
             : $"{_text.Length:N0} characters";
 
         // Disposed before rebinding. A binding per keystroke on the steppers would stack up
@@ -334,18 +331,6 @@ public sealed class DonateExcerptWindow : Window
             save.Content = "Could not write it";
         }
     }
-
-    private static NumericUpDown Minutes(string name, int start, int most, int least) => new()
-    {
-        Name = name,
-        Value = start,
-        Minimum = least,
-        Maximum = most,
-        Increment = 1,
-        FormatString = "0",
-        Width = 96,
-        VerticalAlignment = VerticalAlignment.Center,
-    };
 
     private Control Labelled(string caption, Control control)
     {

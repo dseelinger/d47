@@ -89,10 +89,11 @@ public sealed record IncidentExcerpt(
     /// <summary>
     /// Cuts the window out of what is already in memory and scrubs it.
     /// <para>
-    /// <b>Reads no clock and opens no file.</b> The mark comes in on the request and the two halves
-    /// come in as values — the journal from <see cref="JournalLog"/>, which the tick loop already
-    /// feeds, and the log as the text a surface read. So this is drivable from a test with no
-    /// machine underneath it, which is the property the whole excerpt idea rests on.
+    /// <b>Reads no clock and opens no file</b>, and that survived the sources moving to disk
+    /// (<a href="https://github.com/dseelinger/d47/issues/173">#173</a>): <see cref="IncidentSources"/>
+    /// does the reading and this is still handed values. What is on disk and what is done to it stay
+    /// separate questions, which is the property the whole excerpt idea rests on — the scrubbing is
+    /// drivable from a test with no machine underneath it.
     /// </para>
     /// <para>
     /// <b>One <see cref="Pseudonyms"/> across both halves</b>, journal first. The journal is the
@@ -101,12 +102,6 @@ public sealed record IncidentExcerpt(
     /// nothing to substitute.
     /// </para>
     /// </summary>
-    /// <param name="zone">
-    /// The zone the log's timestamps are in. The human-readable file carries a time of day and no
-    /// date — it rolls daily and the filename holds the date — so the window has to be brought to
-    /// local time to select on it. A value rather than <c>TimeZoneInfo.Local</c>, for the reason
-    /// nothing in Core reads a clock.
-    /// </param>
     /// <param name="alsoReplace">
     /// Extra literal substitutions for the log half, longest first. The Windows account name goes
     /// here: see <see cref="LogScrub.Redact"/>.
@@ -132,9 +127,8 @@ public sealed record IncidentExcerpt(
     /// </param>
     public static IncidentExcerpt Take(
         IReadOnlyList<JournalEntry> journal,
-        string log,
+        IReadOnlyList<LogEntry> log,
         ExcerptRequest request,
-        TimeZoneInfo zone,
         IReadOnlyList<KeyValuePair<string, string>>? alsoReplace = null,
         CommanderIdentity? commander = null,
         CarrierState? carrier = null)
@@ -192,13 +186,10 @@ public sealed record IncidentExcerpt(
             }
         }
 
-        var from = TimeOnly.FromDateTime(TimeZoneInfo.ConvertTime(request.From, zone).DateTime);
-        var to = TimeOnly.FromDateTime(TimeZoneInfo.ConvertTime(request.To, zone).DateTime);
-
         var lines = new List<string>();
         var mine = 0;
 
-        foreach (var entry in LogScrub.Parse(log).Where(entry => Within(entry.At, from, to)))
+        foreach (var entry in log.Where(entry => entry.At >= request.From && entry.At <= request.To))
         {
             if (entry.Voice == LogVoice.Commander)
             {
@@ -234,11 +225,7 @@ public sealed record IncidentExcerpt(
                 links));
     }
 
-    /// <summary>
-    /// Whether a time of day falls in the window, <b>wrap-aware</b>. A Commander flying at
-    /// midnight has a window whose start is a larger number than its end, and a plain
-    /// <c>&gt;= from &amp;&amp; &lt;= to</c> answers no to every line in it.
-    /// </summary>
-    private static bool Within(TimeOnly at, TimeOnly from, TimeOnly to) =>
-        from <= to ? at >= from && at <= to : at >= from || at <= to;
+    // The wrap-around-midnight check that used to live here is gone: an entry carries an instant
+    // now rather than a time of day, so a window crossing midnight is an ordinary comparison
+    // (<https://github.com/dseelinger/d47/issues/173>).
 }

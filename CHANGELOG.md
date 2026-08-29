@@ -27,6 +27,68 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.88.0 — 2026-08-29 — The window said sixty minutes and meant twenty
+
+[#173](https://github.com/dseelinger/d47/issues/173). The excerpt shipped in 0.87.0 with a
+minutes-before / minutes-after control, and **that control was never what bounded it**. Three
+ceilings sat underneath, none of them crossable by turning the dial up:
+
+- `JournalSpine` tails the newest journal file, so the journal half reached the start of the current
+  Elite session and stopped.
+- `JournalLog` holds 4,000 events — generous at a measured median of 3 events a minute, and still a
+  hard stop.
+- `LogTail` reads the newest `d47-*.log`, so the log half could not cross midnight.
+
+A Commander who restarted d47 and then asked for an hour got twenty minutes, silently. **The defect
+was never that the window was small; it was that the control implied a reach the sources did not
+have.**
+
+### Both halves read from disk now
+
+`IncidentSources` walks the journal folder and the retained logs for the window asked for. The
+journal side uses the filename as an index — Elite encodes the session's start in it, so a file that
+began after the window ended is never opened — with one care taken: **the lower bound cannot be a
+filename.** A session running six hours has a start long before the window and events inside it, so
+the file that was open when the window began is read whatever its name says.
+
+**And an entry now carries the day it happened on.** The human-readable sink writes a time of day
+and no date, which was survivable while an excerpt could only ever read one file and stops being so
+the moment it reads two: `14:02:11` is then ambiguous between them. The day comes off the filename,
+the offset from the zone the sink wrote in, and the window compares instants — which is why the
+wrap-around-midnight special case the old code needed is simply gone.
+
+`IncidentExcerpt.Take` still opens nothing and reads no clock. What is on disk and what is done to
+it stay separate questions, which is what keeps the scrubbing drivable from a test with no machine
+underneath it.
+
+### And the control says what it means
+
+Named spans — ten minutes, an hour, six hours, twelve — instead of two steppers.
+**The list stops where reading stops, and that number was measured rather than chosen.** Driven
+against a real Commander's journals and logs: six hours came to 48,000 characters, about one GitHub
+comment; twelve came to 734,000; two days to 1.8 million and a week to 5.3. A span nobody can read
+is not a wider version of this feature but a different one, and it is
+[#174](https://github.com/dseelinger/d47/issues/174).
+
+The size line says the real problem now rather than only GitHub's: past sixty thousand characters it
+reads *more than a person reads, and more than one GitHub comment holds*, because the yes this
+window asks for is a yes to something read.
+
+### And it has stopped promising an erasure it cannot perform
+
+The report said *"This excerpt lives in this issue and nowhere else… Ask here and it is deleted."*
+**Both halves were untrue the moment the destination was a public repository**, and 0.87.0 shipped
+them: a comment there is mirrored to third-party archives within the hour and mailed whole to every
+watcher, so deleting it from GitHub recalls nothing. That is why GitHub is out as a destination
+([#165](https://github.com/dseelinger/d47/issues/165)) — not awkwardness, but that no removal
+request could ever be honoured on it.
+
+It now says what is true where the donation is made: scrubbed on that machine, sent from nowhere,
+and a warning that anything posted publicly can be copied beyond reach. **A promise is worth what
+the destination can keep**, and the destination is still being chosen.
+
+---
+
 ## 0.87.0 — 2026-08-28 — The events behind the complaint, with the words taken out
 
 [#160](https://github.com/dseelinger/d47/issues/160). A defect report arrives as prose, and the
