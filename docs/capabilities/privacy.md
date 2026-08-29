@@ -113,9 +113,10 @@ uploaded: the donation windows offer a clipboard and a file, exactly as they did
 and the same windows gain a send button. Clear it and they lose it again. There is no separate
 toggle because a toggle beside an empty address would be a control with nothing to control.
 
-**What is stored, and for how long.** An incident excerpt is kept for 30 days or until the defect
-it was cut for is closed, whichever comes first — enforced as a rule on the store rather than as a
-number somebody remembers. A donated journal history is kept **indefinitely**, on purpose: it is a
+**What is stored, and for how long.** An incident excerpt is deleted 30 days after it arrives,
+by a rule on the store rather than by anybody remembering to. It may well go sooner — there is
+no reason to keep one past the defect it was cut for — but that is somebody deleting it and not
+a rule, so the thirty days is what is promised. A donated journal history is kept **indefinitely**, on purpose: it is a
 regression case, and one that expires stops being one. Either goes on request, and either is a
 single delete.
 

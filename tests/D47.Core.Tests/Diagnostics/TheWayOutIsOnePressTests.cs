@@ -125,6 +125,40 @@ public class TheWayOutIsOnePressTests : IDisposable
     }
 
     /// <summary>
+    /// <b>The receipt promises only what something enforces</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/167">#167</a>, raised by the retention
+    /// lane). It said an excerpt is kept "30 days, or until the defect it was cut for is closed,
+    /// whichever comes first" — and only the thirty days is a mechanism, being a lifecycle rule on
+    /// the store. The other half was an intention written in the register of a guarantee, in the
+    /// one document a donor keeps as evidence of what they were promised.
+    /// </summary>
+    [Fact]
+    public void AnExcerptsReceiptPromisesTheRuleAndNotTheHabit()
+    {
+        var envelope = new DonationEnvelope(
+            DonationEnvelope.CurrentFormat,
+            DonationEnvelope.Excerpt,
+            new string('a', DonorToken.Length),
+            "0.90.0+abcdef",
+            new DateTimeOffset(2026, 8, 29, 14, 25, 30, TimeSpan.Zero),
+            Bytes: 12,
+            Sha256: new string('b', 64));
+
+        var receipt = DonationReceipt.Render(
+            envelope,
+            DonationOutcome.Stored("excerpts/a/one.md.gz"),
+            "https://donate.invalid/donate",
+            "excerpt.md",
+            documentIsPayload: true);
+
+        Assert.Contains("30 days", receipt, StringComparison.Ordinal);
+        Assert.Contains("by a rule on the store", receipt, StringComparison.Ordinal);
+
+        // The claim that nothing enforced. Its absence is the whole assertion.
+        Assert.DoesNotContain("whichever comes first", receipt, StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// <b>And nothing on the tool surface can press it.</b> Info rows are refused by
     /// <see cref="SettingsService.Apply"/> outright, so the erasure needs no protected flag of its
     /// own — which matters more now that the press is destructive at a store rather than only on
