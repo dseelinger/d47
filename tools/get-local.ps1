@@ -52,6 +52,10 @@
     Stop a running d47 first. Without it, a running instance is an error rather than a silent kill:
     the Commander may be mid-flight, and the file lock is the least of what is lost.
 
+    **The refusal comes before the build and the stop comes after it** (#186). A run that cannot
+    finish should say so before it spends five minutes publishing; a session that is going to be
+    killed anyway should get those five minutes rather than lose them to a publish that then failed.
+
 .PARAMETER NoBackup
     Skip the snapshot of `data\`. The snapshot runs before anything is replaced, so a failure here
     stops the install rather than leaving one half done — which is the right way round, and this is
@@ -99,18 +103,14 @@ if (-not (Test-Path $InstallRoot)) {
     Write-Error "There is no installed d47 at $InstallRoot. Install one first: get-ver latest"
 }
 
-# Before the build rather than after it, because a five-minute publish that cannot be copied
-# anywhere is five minutes nobody gets back.
+# The *refusal* is before the build, because a five-minute publish that cannot be copied anywhere is
+# five minutes nobody gets back. **The stop is not** (#186): it happens below, once the build has
+# succeeded and immediately before anything is replaced. Killing the Commander's session up here
+# ended it minutes early on a good run, and ended it for nothing on a run whose publish then failed.
 $running = @(Get-Process d47 -ErrorAction SilentlyContinue)
 
-if ($running.Count -gt 0) {
-    if (-not $Force) {
-        Write-Error "d47 is running (pid $($running.Id -join ', ')). Close it, or pass -Force to stop it."
-    }
-
-    Write-Step 'Stopping d47'
-    $running | Stop-Process -Force
-    $running | Wait-Process -Timeout 20
+if ($running.Count -gt 0 -and -not $Force) {
+    Write-Error "d47 is running (pid $($running.Id -join ', ')). Close it, or pass -Force to stop it."
 }
 
 if ($NoBuild) {
@@ -136,6 +136,21 @@ else {
     }
 }
 
+# Here rather than at the top of the script (#186), and re-read rather than reused: the publish
+# took minutes, and a d47 may have been started during them. Above the snapshot rather than below
+# it, because a snapshot taken while d47 is running is a zip of a data folder being written to.
+$running = @(Get-Process d47 -ErrorAction SilentlyContinue)
+
+if ($running.Count -gt 0) {
+    if (-not $Force) {
+        Write-Error "d47 started while this was building (pid $($running.Id -join ', ')). Close it, or pass -Force. Nothing has been replaced."
+    }
+
+    Write-Step 'Stopping d47'
+    $running | Stop-Process -Force
+    $running | Wait-Process -Timeout 20
+}
+
 # Before the copy and after the build, so a failed publish costs no snapshot and a successful one
 # cannot replace anything until the data it is replacing has been kept. One implementation, invoked
 # rather than repeated: the rules about what is archived live in that file and only there.
@@ -153,7 +168,11 @@ Write-Step "Installing over $InstallRoot"
 function Copy-Payload {
     param([string] $From, [string] $To, [string[]] $Extra)
 
-    robocopy $From $To @Extra /NJH /NJS /NP /NDL | Out-Null
+    # **/R:1 /W:1, and the defaults are why** (#186). Robocopy retries a locked file a million
+    # times, thirty seconds apart, and this nulls its output — so a d47 launched mid-publish turned
+    # the copy into a silent hang measured in years rather than into the failure below. One retry,
+    # one second, then the crisp exit code this already knows how to report.
+    robocopy $From $To @Extra /R:1 /W:1 /NJH /NJS /NP /NDL | Out-Null
 
     # Robocopy's exit code is a bitfield: under 8 is a success of some kind, 8 and above a failure.
     if ($LASTEXITCODE -ge 8) {

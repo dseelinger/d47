@@ -35,6 +35,13 @@
     The commit message for whatever is uncommitted. Required only when there is something to
     commit; the script asks for it if it is needed and not given.
 
+.PARAMETER IncludeUntracked
+    Let the commit step sweep in an unusual number of untracked files. The commit is `git add -A`
+    and stays that way — a release commit has to carry new source files nobody has added yet — but
+    it counts and measures them first, and stops at 200 files or 25 MB. That is the shape of the
+    2026-08-24 accident, where an untracked 217 MB `data\` folder with live secrets went into a
+    release commit. This switch is how a sweep that really is all meant says so.
+
 .PARAMETER Notes
     The tag's annotation — what changed, in a sentence or several. Defaults to the CHANGELOG
     heading for the version being cut, which is where that sentence already lives.
@@ -114,7 +121,9 @@ param(
 
     [switch] $SkipCi,
 
-    [switch] $PreRelease
+    [switch] $PreRelease,
+
+    [switch] $IncludeUntracked
 )
 
 Set-StrictMode -Version Latest
@@ -122,6 +131,13 @@ $ErrorActionPreference = 'Stop'
 
 $Remote = 'origin'
 $Main = 'main'
+
+# Where the `git add -A` sweep stops and asks (#186). Generous for a release commit — a phase
+# landing is tens of new source files and a few hundred kilobytes — and far under the shape of the
+# accident this exists to catch: an untracked 217 MB data folder, thousands of files, live secrets
+# inside it, swept into a release commit on 2026-08-24.
+$MaxUntrackedFiles = 200
+$MaxUntrackedBytes = 25MB
 
 function Write-Step { param([string] $Text) Write-Host "==> $Text" -ForegroundColor Cyan }
 function Write-Note { param([string] $Text) Write-Host "    $Text" -ForegroundColor DarkGray }
@@ -223,6 +239,32 @@ if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
 # together they are a tag on a commit that nothing has run.
 $runTests = $Tests -or $SkipCi
 
+# ------------------------------------------------------------------ the remote
+
+# **Before the version, because the version is worked out from tags** (#186). The tag list was read
+# locally and nothing ever fetched, so a checkout that had not seen the newest tag computed a number
+# that was already taken — and found out at the push, after the commit, the merge and the CI wait.
+# That is exactly the late failure the version-first ordering exists to prevent, arriving by the one
+# road it did not cover. Parallel worktree sessions make two cutters colliding a matter of time.
+#
+# **Best effort on purpose.** An unreachable remote is not a reason to refuse to say what the next
+# number would be — -ShowVersion has to keep working offline — and the push is still the real gate.
+# So a failure here is loud and does not stop the run.
+Write-Step "Fetching tags from $Remote"
+
+try {
+    Invoke-Git fetch $Remote --tags | Out-Null
+    Write-Note 'Local tags are up to date with the remote.'
+}
+catch {
+    # Not --quiet, so git's own lines are printed by Invoke-Git before it throws: the usual cause is
+    # one local tag that disagrees with the published one ("would clobber existing tag"), which
+    # rejects that ref and still fetches the rest. Which of those happened is git's to say, not this
+    # script's to guess — so the wording claims nothing beyond "not cleanly".
+    Write-Warning "The fetch from $Remote did not complete cleanly: $($_.Exception.Message)"
+    Write-Warning "Some tags may be stale. $Remote is still asked about the new tag directly below."
+}
+
 # ------------------------------------------------------------------ the version
 #
 # Worked out before anything is committed or merged, because both of the things that can stop a
@@ -260,6 +302,30 @@ else {
 # A published tag never moves. Stopping here is the whole point of checking.
 if ($tags -contains $next) {
     throw "$next already exists. A published tag never moves — cut the next number instead."
+}
+
+# And asked of the remote directly, rather than trusting the fetch above to have happened (#186).
+# A fetch that failed leaves the local list authoritative about nothing, and this is the one
+# question whose wrong answer is only discovered after the commit, the merge and the CI wait.
+#
+# It does not close the window between here and the tag push — another cutter can still take the
+# number during the suite or the wait — but it closes the one that was open before a single thing
+# had been changed, which is where a stale checkout's collision actually lives.
+$asked = $true
+$onRemote = @()
+
+try {
+    $onRemote = @(Invoke-Git ls-remote --tags $Remote "refs/tags/$next" | Where-Object { $_ })
+}
+catch {
+    # Only a failure to *ask* is a warning; the refusal itself is thrown below, outside the try,
+    # so it cannot be swallowed by the handler meant for the network.
+    $asked = $false
+    Write-Warning "Could not ask $Remote whether $next is taken: $($_.Exception.Message)"
+}
+
+if ($asked -and $onRemote.Count -gt 0) {
+    throw "$next is already tagged on $Remote. A published tag never moves — cut the next number instead."
 }
 
 # ------------------------------------------------------------------ the number, and nothing else
@@ -313,6 +379,63 @@ else {
     Write-Step 'Committing the working tree'
 
     Invoke-Git status --short | ForEach-Object { Write-Note $_ }
+
+    # **What `git add -A` is about to sweep in, said out loud** (#186). On 2026-08-24 it swept an
+    # untracked 217 MB data folder with live secrets into a release commit, and this repository's
+    # own convention is commit-by-explicit-path. The sweep stays — a release commit has to carry new
+    # source files nobody has added yet — but it is measured first, and a sweep that looks like that
+    # one stops the run rather than being narrated past. -IncludeUntracked is how it is meant.
+    $untracked = @(Invoke-Git status --porcelain --untracked-files=all |
+        Where-Object { $_ -match '^\?\? ' } |
+        ForEach-Object { $_.Substring(3).Trim('"') })
+
+    if ($untracked.Count -gt 0) {
+        $bytes = 0
+
+        foreach ($entry in $untracked) {
+            $full = Join-Path $root $entry
+
+            if (Test-Path -LiteralPath $full -PathType Leaf) {
+                $bytes += (Get-Item -LiteralPath $full -Force).Length
+            }
+        }
+
+        $megabytes = [math]::Round($bytes / 1MB, 1)
+        $size = if ($bytes -lt 1MB) { "$([math]::Ceiling($bytes / 1KB)) KB" } else { "$megabytes MB" }
+
+        Write-Note "$($untracked.Count) untracked file$(if ($untracked.Count -ne 1) { 's' }), $size, will be swept in by git add -A"
+
+        # --untracked-files=all above lists files rather than folders, so a 217 MB data folder is
+        # thousands of entries as well as hundreds of megabytes: either count on its own is the
+        # signal, and neither is reachable by an ordinary release.
+        $over = @()
+
+        if ($untracked.Count -gt $MaxUntrackedFiles) {
+            $over += "$($untracked.Count) files, over the $MaxUntrackedFiles this stops at"
+        }
+
+        if ($bytes -gt $MaxUntrackedBytes) {
+            $over += "$megabytes MB, over the $([int] ($MaxUntrackedBytes / 1MB)) MB this stops at"
+        }
+
+        if ($over.Count -gt 0 -and -not $IncludeUntracked) {
+            $untracked | Select-Object -First 10 | ForEach-Object { Write-Note "  $_" }
+
+            if ($untracked.Count -gt 10) {
+                Write-Note "  ... and $($untracked.Count - 10) more"
+            }
+
+            throw @"
+The release commit would sweep in $($over -join ', and '). One swept an untracked
+217 MB data folder with live secrets in on 2026-08-24. Add what belongs, ignore what does not,
+or pass -IncludeUntracked if this really is all meant.
+"@
+        }
+
+        if ($over.Count -gt 0) {
+            Write-Warning "Swept in anyway, because -IncludeUntracked: $($over -join ', and ')."
+        }
+    }
 
     if ([string]::IsNullOrWhiteSpace($Message)) {
         $Message = Request-Value 'Commit message' '-Message'
