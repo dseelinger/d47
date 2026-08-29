@@ -320,6 +320,18 @@ public static class NavigationCapability
                 + $"{reason} Paste it into the map's search box to plot it.");
         }
 
+        // <b>The system's name, said before the map opens</b> (#158, widened by the Commander to
+        // cover this macro). Everything that can refuse — no clipboard, auto-plot off, no usable
+        // bindings — has already returned above as a single line, and each of those is
+        // refusal-shaped rather than an attempt. What follows is several seconds of the galaxy
+        // map flying about on its own, which in a headset is d47 doing something the Commander
+        // has been given no reason to connect to what they asked for.
+        //
+        // <b>It names the system because the name is the payload.</b> A misheard one is caught
+        // here rather than five seconds later, when the map has already been driven to the wrong
+        // place.
+        surface.Actions.Acknowledge($"Plotting the course to {system}.");
+
         // Opened before the first key, so a route that was already in the file cannot pass as
         // the result of this attempt.
         var watch = surface.WatchRoute();

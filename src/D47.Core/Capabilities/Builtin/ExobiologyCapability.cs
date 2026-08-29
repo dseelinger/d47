@@ -54,12 +54,15 @@ public static class ExobiologyCapability
             "is this body worth landing on",
             "what did the scan find here",
         ],
+        // Each names its tool (#161). "exobiology route" asks for a route and used to be
+        // answered with what the scanner found on the body underneath, which is the tool
+        // declared first rather than the one the words name.
         Keywords =
         [
-            "exobiology route",
-            "biology on this body",
-            "worth landing on",
-            "what did the scan find",
+            new("exobiology route", "plot_exobiology_route"),
+            new("biology on this body", "get_body_biology"),
+            new("worth landing on", "get_body_biology"),
+            new("what did the scan find", "get_body_biology"),
         ],
         Tools =
         [

@@ -131,6 +131,11 @@ public static class Separation
         var started = status.ReadAt;
         var boosts = 0;
 
+        // Past every refusal, and the boost loop below has a wall-clock ceiling on it — so this
+        // is the last moment before a Commander could be sitting in silence wondering whether
+        // anything heard them (#158).
+        actions.Acknowledge("Separating.");
+
         try
         {
             var throttled = await actions.Input

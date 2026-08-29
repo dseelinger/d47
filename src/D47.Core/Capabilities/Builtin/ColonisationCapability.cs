@@ -104,17 +104,20 @@ public static class ColonisationCapability
         // Phrases rather than bare words. "construction" alone would hijack any sentence that
         // happens to contain it, and both spellings of "colonisation" belong to the plan as much as
         // to the tracking — the checklist owns "what am I building", and this owns the site.
+        // Each names its tool (#161). All nine used to reach get_construction_sites, so "where
+        // to colonise" — a question about candidate systems — was answered with a list of the
+        // Commander's existing depots, and "left to deliver" with the same.
         Keywords =
         [
-            "construction site",
-            "construction sites",
-            "colonisation site",
-            "colonization site",
-            "left to deliver",
-            "worth colonising",
-            "worth colonizing",
-            "where to colonise",
-            "where to colonize",
+            new("construction site", "get_construction_sites"),
+            new("construction sites", "get_construction_sites"),
+            new("colonisation site", "get_construction_sites"),
+            new("colonization site", "get_construction_sites"),
+            new("left to deliver", "get_construction_needs"),
+            new("worth colonising", "find_colonisation_candidates"),
+            new("worth colonizing", "find_colonisation_candidates"),
+            new("where to colonise", "find_colonisation_candidates"),
+            new("where to colonize", "find_colonisation_candidates"),
         ],
         Tools =
         [

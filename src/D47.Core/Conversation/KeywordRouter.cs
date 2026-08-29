@@ -81,7 +81,7 @@ public sealed class KeywordRouter(
     /// The phrases in play for an input that arrived this way. The spoken-only set is added
     /// rather than substituted: everything matchable by typing is matchable by speaking.
     /// </summary>
-    private static IEnumerable<string> Vocabulary(CapabilityDescriptor descriptor, InputSource source) =>
+    private static IEnumerable<CapabilityKeyword> Vocabulary(CapabilityDescriptor descriptor, InputSource source) =>
         source == InputSource.Spoken
             ? descriptor.Keywords.Concat(descriptor.SpokenKeywords)
             : descriptor.Keywords;
@@ -96,29 +96,64 @@ public sealed class KeywordRouter(
         var candidates =
             from capability in registry.All
             from keyword in Vocabulary(capability.Descriptor, source)
-            where ContainsPhrase(input, keyword)
-            orderby keyword.Length descending
-            select capability;
+            where ContainsPhrase(input, keyword.Phrase)
+            orderby keyword.Phrase.Length descending
+            select (capability, keyword);
 
-        foreach (var capability in candidates)
+        foreach (var (capability, keyword) in candidates)
         {
-            // No *required* parameters, rather than no parameters at all. The router invokes
-            // with empty arguments, so an optional parameter is no obstacle — and the stricter
-            // test made a capability unreachable by voice purely for offering a refinement it
-            // does not need. Spoken help was exactly that: "what can you do" matched nothing,
-            // because get_capabilities takes an optional group to expand.
-            //
-            // Required parameters still disqualify a tool. The router deliberately does not
-            // extract values from free text — a router that guesses at arguments is a router
-            // that calls the right tool with the wrong ones.
-            var tool = capability.Descriptor.Tools.FirstOrDefault(t => !t.Parameters.Any(p => p.Required));
-            if (tool is not null)
+            if (Answering(capability.Descriptor, keyword) is { } tool)
             {
                 return new KeywordMatch(capability.Descriptor.Id, tool.Name);
             }
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Which tool a matched keyword reaches, or null when the router would have to guess (#161).
+    /// <para>
+    /// <b>The keyword's own answer first, and a decline rather than a positional pick.</b> This
+    /// used to take the capability's first tool with no required parameters, and "first" meant
+    /// the order somebody happened to declare them in. Journal declares <c>get_location</c>
+    /// first, so its two dozen keywords all answered with where the Commander was standing —
+    /// <i>"what's the Cobra Mk III's jump range?"</i> among them, which is a question about a hull
+    /// the Commander may not even own. Conversation declares <c>cancel_turn</c> first, so
+    /// <i>"which model"</i> cancelled the turn. Twelve capabilities were built this way and
+    /// nothing in any of them said so.
+    /// </para>
+    /// <para>
+    /// <b>So a capability with several answers has to say which one a phrase means.</b> Where it
+    /// has exactly one the router could call, naming it would be ceremony and a bare string still
+    /// works. Where it has several and the keyword named none, the answer is null: the input falls
+    /// through to the model, which is what already happens to every phrasing nobody wrote down.
+    /// Losing an answer costs a slower reply; guessing costs a confident wrong one, and this
+    /// router is the one answer path with no guardrail block in front of it.
+    /// </para>
+    /// </summary>
+    private static ToolDefinition? Answering(CapabilityDescriptor descriptor, CapabilityKeyword keyword)
+    {
+        // No *required* parameters, rather than no parameters at all. The router invokes
+        // with empty arguments, so an optional parameter is no obstacle — and the stricter
+        // test made a capability unreachable by voice purely for offering a refinement it
+        // does not need. Spoken help was exactly that: "what can you do" matched nothing,
+        // because get_capabilities takes an optional group to expand.
+        //
+        // Required parameters still disqualify a tool. The router deliberately does not
+        // extract values from free text — a router that guesses at arguments is a router
+        // that calls the right tool with the wrong ones.
+        var eligible = descriptor.Tools.Where(t => !t.Parameters.Any(p => p.Required)).ToList();
+
+        if (keyword.ToolName is { Length: > 0 } named)
+        {
+            // A named tool that is not eligible is a declaration bug rather than a phrasing the
+            // Commander got wrong, so it declines here and is caught by the test that walks every
+            // declared keyword.
+            return eligible.FirstOrDefault(t => string.Equals(t.Name, named, StringComparison.Ordinal));
+        }
+
+        return eligible.Count == 1 ? eligible[0] : null;
     }
 
     /// <summary>

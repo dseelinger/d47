@@ -170,6 +170,17 @@ It waits for the panel to actually close before pressing anything else, rather t
 delay: those two keys sent while the panel is still going away arrive with no menu to receive them,
 which is exactly how this failed the first time it was flown.
 
+**You hear it accept before it starts.** Directive 47 says *"Taking us out."* the moment the
+command is accepted — before the first key — and then tells you how it went when it knows:
+*"We are away."* The two sentences do two different jobs. It used to say only the second, and it
+used to say *"Taking us out"* for it, spoken after the ship had already left the pad; the whole of
+the walk and up to thirty seconds of watching for the pad clamps to release happened in silence,
+which is a long time to sit wondering whether you were heard.
+
+A refusal is still one sentence and it comes straight away. Nothing is acknowledged on a road where
+no work follows — being told *"Taking us out"* and then *"you are not docked"* would be worse than
+either on its own.
+
 Everything around the walk is checked against the game rather than assumed. It refuses unless you
 are docked. It confirms the panel is actually open before sending a single direction key, because
 those keys typed into a cockpit instead of a panel are steering inputs. And it watches for your
@@ -188,6 +199,10 @@ guesswork.
 Say **separate and engage** and Directive 47 goes to full throttle, boosts until the mass lock
 breaks, and jumps the moment it does. **Separate and supercruise** is the same thing ending in
 supercruise.
+
+Both say *"Separating."* before the first boost, for the reason *take us out* does: the loop below
+has a ceiling of twenty seconds on it, and silence for that long is indistinguishable from not
+having been heard.
 
 It watches the game rather than counting seconds. Elite reports mass lock continuously, so instead
 of boosting a fixed number of times and hoping, Directive 47 boosts, looks, and stops the instant

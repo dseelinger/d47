@@ -46,13 +46,16 @@ public static class PersonaCapability
         Name = "Persona",
         Summary = "Report which Guardian core is aboard, what it is called, and how to change it.",
         Examples = ["who are you", "which persona is this", "switch to Cora"],
+        // Each names its tool (#161). state_identity is what all five already reached, and
+        // saying so is what stops the next tool declared above it silently taking them —
+        // bind_ship_core and forget_ship_core both take no required argument and both write.
         Keywords =
         [
-            "who are you",
-            "which persona",
-            "what persona",
-            "which core",
-            "who am I talking to",
+            new("who are you", "state_identity"),
+            new("which persona", "state_identity"),
+            new("what persona", "state_identity"),
+            new("which core", "state_identity"),
+            new("who am I talking to", "state_identity"),
         ],
         Display = new CapabilityDisplay { PanelTitle = "Persona", Order = 12 },
         Tools =

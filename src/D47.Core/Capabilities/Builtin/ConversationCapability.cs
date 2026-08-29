@@ -119,14 +119,18 @@ public static class ConversationCapability
             ],
             // Phrases only. "model" and "cost" on their own belong to half the questions a
             // Commander might ask about the game itself.
+            // <b>Each names its tool, and here the positional pick had already gone wrong</b>
+            // (#161). cancel_turn is declared first and takes no argument, so every phrase below
+            // — six questions about which model is running and what it has cost — *cancelled the
+            // turn* instead of answering. Nothing said so, and nothing tested it.
             Keywords =
             [
-                "model status",
-                "which model",
-                "what model",
-                "session cost",
-                "session spend",
-                "what have you cost",
+                new("model status", "get_model_status"),
+                new("which model", "get_model_status"),
+                new("what model", "get_model_status"),
+                new("session cost", "get_model_status"),
+                new("session spend", "get_model_status"),
+                new("what have you cost", "get_model_status"),
             ],
 
             // "Cancel" is as common a verb as "stop" and is kept out of the general vocabulary

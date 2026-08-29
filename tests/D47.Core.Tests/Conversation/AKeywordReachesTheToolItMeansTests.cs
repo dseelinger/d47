@@ -12,10 +12,16 @@ namespace D47.Core.Tests.Conversation;
 /// offered as an answer about a carrier that was somewhere else entirely.
 /// </para>
 /// <para>
-/// <b>The carrier was the symptom.</b> A capability keyword names a <em>capability</em>, and the
-/// router then takes that capability's first tool with no required parameters. For Journal that is
+/// <b>The carrier was the symptom.</b> A capability keyword named a <em>capability</em>, and the
+/// router then took that capability's first tool with no required parameters. For Journal that is
 /// <c>get_location</c> — so every one of its two dozen keywords answered with where the Commander
 /// was standing, whatever it had been asked about.
+/// </para>
+/// <para>
+/// <b>Fixed here in 2026-08-21 with declared phrases, and finished in #161</b>, where the same
+/// mechanism produced <i>"what's the Cobra Mk III's jump range?"</i> answered with the Commander's
+/// docking bay. A keyword now names its tool. See <see cref="AKeywordThatCouldMeanSeveralToolsTests"/>
+/// for the general rule and what happens when one names none.
 /// </para>
 /// </summary>
 public class AKeywordReachesTheToolItMeansTests
@@ -46,24 +52,23 @@ public class AKeywordReachesTheToolItMeansTests
     }
 
     /// <summary>
-    /// The defect itself, pinned before it was fixed: the capability-keyword route takes the
-    /// first tool with no required parameters, which for Journal is <c>get_location</c>. Kept as a
-    /// test of the <em>router</em> rather than of Journal — the rule is general, and the next
-    /// capability to declare a keyword and a second tool inherits it.
+    /// <b>And the keyword route now reaches it too</b> (#161). This test used to assert the
+    /// opposite — <i>"the capability-keyword route takes the first tool with no required
+    /// parameters, which for Journal is get_location"</i> — and pinned that as deliberate, on the
+    /// grounds that the declared phrases above were the fix. They were, for the exact wordings
+    /// somebody wrote down; a keyword only has to be <em>contained</em>, so any padding at all
+    /// fell back through to the positional pick. "my fleet" is still a Journal keyword and "where
+    /// is my fleet carrier" still contains it. It now answers about the carrier either way.
     /// </summary>
     [Fact]
-    public void ACapabilityKeywordStillTakesTheFirstToolWithNoRequiredArguments()
+    public void ACapabilityKeywordNamesTheToolItMeans()
     {
         using var install = new TempInstall();
 
-        // "my fleet" is a Journal keyword and "my fleet carrier" contains it, which is how the
-        // reported question reached the wrong answer. The keyword route still behaves this way on
-        // purpose — it names a capability and cannot name a tool — so the fix is the phrases
-        // declared on the tools above, which are matched first.
         var match = Router(install).Match("where is my fleet carrier");
 
         Assert.NotNull(match);
-        Assert.Equal("get_location", match!.ToolName);
+        Assert.Equal("get_fleet", match!.ToolName);
     }
 
     /// <summary>

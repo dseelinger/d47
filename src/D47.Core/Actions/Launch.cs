@@ -150,6 +150,11 @@ public static class Launch
             resolved[id] = reach.Binding;
         }
 
+        // Everything that could refuse has refused. From here a key is going into the game, so
+        // this is where the Commander is told — in the present tense, which is true here and was
+        // not where the word used to be said (#158).
+        actions.Acknowledge("Taking us out.");
+
         try
         {
             // A panel that is already open is not toggled shut first.
@@ -220,7 +225,10 @@ public static class Launch
             // not is the failure that leaves a Commander talking to a docked ship.
             return await awaitUndocked(cancellationToken).ConfigureAwait(false) switch
             {
-                true => new LaunchOutcome(LaunchEnding.Launched, "Taking us out."),
+                // <b>The verdict, and no longer the acknowledgement</b> (#158). This used to say
+                // "Taking us out." — spoken *after* the ship had left the pad, which is the
+                // present tense arriving in the past, and it was the first thing said either way.
+                true => new LaunchOutcome(LaunchEnding.Launched, "We are away."),
                 false => new LaunchOutcome(
                     LaunchEnding.StillDocked,
                     "I walked the left panel and we are still docked, so assume it did not work. "

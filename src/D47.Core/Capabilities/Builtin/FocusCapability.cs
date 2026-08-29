@@ -114,7 +114,7 @@ public static class FocusCapability
         Name = "Focus the game",
         Summary = "Bring Elite Dangerous to the front, so flight commands can be sent again.",
         Examples = ["set focus to game", "focus the game", "take me back to Elite"],
-        Keywords = Phrases,
+        Keywords = [.. Phrases.Select(phrase => new CapabilityKeyword(phrase))],
 
         // No settings rows and no panel card: it is one action with nothing to configure.
         Display = new CapabilityDisplay { PanelTitle = "Focus the game", Order = 47, ShowOnPanel = false },

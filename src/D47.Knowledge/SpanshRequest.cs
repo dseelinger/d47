@@ -400,7 +400,26 @@ internal static class SpanshRequest
     /// phase wanted anyway.
     /// </para>
     /// </summary>
-    public static string Markets(string referenceSystem, double radius, int size, int page)
+    /// <param name="commodity">
+    /// Narrows the search to stations that actually stock — or want — this, server-side (#156).
+    /// Null for the general sweep, which is what trade planning and colonisation sourcing want.
+    /// </param>
+    /// <param name="selling">
+    /// Which side the bound goes on: supply for a Commander buying, demand for one selling.
+    /// <b>Demand bounds are honoured on this endpoint</b>, measured against Eurybia on
+    /// 2026-08-28 — 12 stations within 15 ly for <c>demand &gt;= 1</c> against 449 unfiltered.
+    /// That had to be probed rather than assumed, because the note on
+    /// <see cref="Core.Knowledge.CommodityMarketSearch"/> records demand bounds being
+    /// <em>accepted and ignored</em> — true, and measured on the <em>trade</em> endpoint, which
+    /// is a different one.
+    /// </param>
+    public static string Markets(
+        string referenceSystem,
+        double radius,
+        int size,
+        int page,
+        string? commodity = null,
+        bool selling = false)
     {
         var buffer = new ArrayBufferWriter<byte>();
 
@@ -413,6 +432,11 @@ internal static class SpanshRequest
             writer.WriteString("min", "0");
             writer.WriteString("max", Number(radius));
             writer.WriteEndObject();
+
+            if (commodity is { Length: > 0 } wanted)
+            {
+                WriteMarketFilter(writer, wanted, selling);
+            }
 
             writer.WriteEndObject();
 
@@ -432,6 +456,40 @@ internal static class SpanshRequest
         }
 
         return Encoding.UTF8.GetString(buffer.WrittenSpan);
+    }
+
+    /// <summary>
+    /// The commodity filter, <b>always with a bound on it</b> (#156).
+    /// <para>
+    /// <b>The bound is what makes the 150-station budget worth spending.</b> The name on its own
+    /// is honoured — 26 stations within 15 ly of Eurybia carry a Landmines row against 449
+    /// unfiltered, measured 2026-08-28 — but a row is not stock: it matches stations quoting
+    /// supply 0 and demand 0, which is most of them. With <c>supply &gt;= 1</c> the same search
+    /// returns 8. The issue reported the name-only shape as silently ignored on the evidence that
+    /// the count stayed at 10,000; that count is the endpoint's own cap and says nothing either
+    /// way, which is why this was measured again at a radius small enough to be under it.
+    /// </para>
+    /// <para>
+    /// The upper bound is deliberately far past anything a market holds. It exists because the
+    /// filter is a range rather than a comparison, not because anything is being excluded by it.
+    /// </para>
+    /// </summary>
+    private static void WriteMarketFilter(Utf8JsonWriter writer, string commodity, bool selling)
+    {
+        writer.WriteStartArray("market");
+        writer.WriteStartObject();
+        writer.WriteString("name", commodity);
+
+        writer.WriteStartObject(selling ? "demand" : "supply");
+        writer.WriteStartArray("value");
+        writer.WriteStringValue("1");
+        writer.WriteStringValue("1000000000");
+        writer.WriteEndArray();
+        writer.WriteString("comparison", "<=>");
+        writer.WriteEndObject();
+
+        writer.WriteEndObject();
+        writer.WriteEndArray();
     }
 
     private static void WriteSignals(Utf8JsonWriter writer, string group, string? name, int? count)

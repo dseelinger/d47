@@ -27,6 +27,32 @@ public sealed record ActionSurface
     /// </summary>
     public required Func<bool> Enabled { get; init; }
 
+    /// <summary>
+    /// Says one line, now, and does not wait for it to be spoken (#158).
+    /// <para>
+    /// <b>Every macro here was silent until its attempt was over.</b> <em>Take us out</em> walks
+    /// the left panel and then watches for the <c>Docked</c> flag to clear for up to thirty
+    /// seconds; the separations boost until the mass lock breaks; the galaxy-map plot opens the
+    /// map, settles the camera for three seconds, types, settles, holds and closes. In all four
+    /// the first sound was the verdict, so a Commander sat through the whole of it with no word
+    /// that the command had even been heard — which is exactly what produces a repeated command,
+    /// and a repeated command mid-macro is its own hazard.
+    /// </para>
+    /// <para>
+    /// <b>After the refusals and before the first key.</b> A refusal is one line, immediately, and
+    /// stays that way: acknowledging first and then refusing would make "you are not docked" into
+    /// two sentences. So each macro acknowledges at the point where work is definitely about to
+    /// follow, which is after its own pre-flight and before it presses anything.
+    /// </para>
+    /// <para>
+    /// <b>Not awaited, on purpose.</b> Speaking a sentence takes seconds and these are macros
+    /// whose whole value is timeliness; blocking the launch key on a synthesis would trade one
+    /// silence for a worse one. The arbiter orders what reaches it, and the verdict is queued
+    /// seconds later by the same pipeline, so the two arrive in the order they were said.
+    /// </para>
+    /// </summary>
+    public Action<string> Acknowledge { get; init; } = _ => { };
+
     public ControlContext Context => ControlContexts.Of(Status());
 
     /// <summary>

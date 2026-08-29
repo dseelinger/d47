@@ -658,4 +658,23 @@ public sealed record CommodityAnswer(
     bool OriginKnown)
 {
     public static readonly CommodityAnswer Empty = new([], 0, 0, false);
+
+    /// <summary>
+    /// How far the search actually reached, in light years, or null when it reached the whole
+    /// radius it was asked for (#156).
+    /// <para>
+    /// <b>The radius answered has to be the radius searched.</b> The sweep behind this fetches a
+    /// fixed number of the nearest stations, so near a bubble system it can run out of budget a
+    /// few light years out — and a Commander was told <i>"No stock of Land Mines for 200 tonnes
+    /// within 150 ly of Eurybia"</i> when the nearest 150 markets reached nothing like that far
+    /// and there were 5,229 units 11 light years away. <i>"Nothing in the markets I checked, and I
+    /// only reached fourteen light years"</i> is a different claim from <i>"nothing within 250
+    /// light years"</i>, and the second must never again be made on the first's evidence.
+    /// </para>
+    /// <para>
+    /// Null is the honest, common case: the search exhausted the radius, so the radius is what it
+    /// can speak for.
+    /// </para>
+    /// </summary>
+    public double? Horizon { get; init; }
 }

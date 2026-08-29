@@ -240,6 +240,27 @@ different answers, and only one of them means you should look further out.
 **Fleet carriers are left out unless you ask for one.** Their prices are set by their owner and
 can be a joke, and the carrier may be a hundred light years away by the time you arrive.
 
+#### The radius answered is the radius searched
+
+**The search asks for the commodity by name.** It fetches a fixed number of the nearest markets —
+150 — and near a busy system those 150 are only a few light years across. So it narrows the request
+to stations that actually hold stock of the thing you asked about, and spends the whole 150 on
+those.
+
+That is there because of what happened without it. Asked for the closest place to buy 200 Landmines
+near Eurybia, Directive 47 said there was none within 250 light years — twice, with rising
+confidence — while its own data source had 5,229 units eleven light years away. The 150 nearest
+markets to Eurybia carried none, and "none of the ones I looked at" had been reported as "none in
+the radius".
+
+**And where it still runs short, it says so.** If the 150 run out before the radius does, a negative
+answer names the distance actually reached rather than the one you asked about:
+
+```text
+Nothing in the 150 markets I could check is buying Land Mines in 200 tonne lots. Those reach
+14.2 light years of the 250 you asked about, so there is more out there I have not looked at.
+```
+
 Nothing extra is fetched for any of this. The trade route planner already pulls whole markets for
 everything in range and already caches them, so asking about two commodities in one evening costs
 one lookup, and the ranking runs here on your own machine.

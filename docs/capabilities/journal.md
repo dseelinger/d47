@@ -78,6 +78,16 @@ from a model that will produce a plausible one.
 > "what materials am I carrying"
 > "how have I done this session"
 
+**Every one of those reaches the thing it names.** This capability has six answers and used to be
+reached as a whole, with the first of the six taken by default — which is *where you are*. So
+"where is my fleet carrier" was answered with where **you** were standing, under your own name,
+with your own route attached, and so was every other question here.
+
+**"My jump range" means yours, and only yours.** Ask about a ship — *"what's the Cobra Mk III's
+jump range?"* — and this capability does not answer at all; the question goes to the model, which
+has the specification tables and knows about hulls you do not own. It used to be caught here and
+answered with your docking bay.
+
 ### What it can tell you
 
 **Where you are** — system, body, docking state, and what you are doing:

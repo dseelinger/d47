@@ -55,11 +55,13 @@ public static class OnFootCapability
             "what would grade 5 on this suit take",
             "where do I find graphene",
         ],
+        // Each names its tool (#161); five here take no required argument, two of which change
+        // a plan rather than report one.
         Keywords =
         [
-            "what am I wearing",
-            "my suit",
-            "suit grade",
+            new("what am I wearing", "get_on_foot_loadout"),
+            new("my suit", "get_on_foot_loadout"),
+            new("suit grade", "get_on_foot_loadout"),
         ],
         Tools =
         [

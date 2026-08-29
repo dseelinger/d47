@@ -60,12 +60,14 @@ public static class EngineerCapability
             "where is Felicity Farseer",
             "who should I unlock next",
         ],
+        // Each names its tool (#161): four tools here take no required argument, and the router
+        // used to answer all four phrases with whichever was declared first.
         Keywords =
         [
-            "which engineers",
-            "my engineers",
-            "engineer progress",
-            "who should I unlock next",
+            new("which engineers", "get_engineer_progress"),
+            new("my engineers", "get_engineer_progress"),
+            new("engineer progress", "get_engineer_progress"),
+            new("who should I unlock next", "get_engineer_route"),
         ],
         Tools =
         [
