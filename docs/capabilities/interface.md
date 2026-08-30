@@ -154,6 +154,19 @@ the phrase list is where Directive 47 meets your words, and the label is where i
 | `guardian` | Guardian teal and gold. |
 | `elite-palette` | Elite, recoloured to match your own HUD. |
 
+##### What the accent is for
+
+**A word or a mark you can press carries the theme's accent** — amber under `elite`, blue under
+`dark`, whatever the theme says. That is the whole of what the colour means, so it is worth knowing
+what it does *not* mean: it is not emphasis, and it is not "this changed".
+
+It applies where nothing else says the control is a control — a bare glyph or a bare word on a
+transparent background. The help mark, the copy mark, the checklist's **+**, the reset marks in
+settings, the way out of mini. Things that already say it by shape keep their own look: checkboxes
+and their labels, the tab strip, scrollbars, and anything that uses the accent as a *background*.
+A control that is switched off keeps its switched-off look, because an accent on something that
+cannot be pressed is the colour making a promise the control cannot keep.
+
 ##### Matching your HUD
 
 `elite-palette` reads the colour matrix Elite applies to its own HUD and uses it on Directive

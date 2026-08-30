@@ -445,7 +445,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         // and a word. Drawn at Small's size so it sits with the header text beside it.
         var reset = new Button
         {
-            Content = Glyphs.Draw(Glyphs.Reset, ThemeManager.TextMutedKey, TypeScale.Small),
+            // Accent, like every other bare glyph whose only affordance is that it can be
+            // pressed (#208). Muted read as "there is nothing here", which is exactly wrong on a
+            // mark that is only drawn once something has been changed.
+            Content = Glyphs.Draw(Glyphs.Reset, ThemeManager.AccentKey, TypeScale.Small),
             Padding = new Thickness(6, 0),
             MinWidth = 0,
             VerticalAlignment = VerticalAlignment.Center,
@@ -454,7 +457,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             IsVisible = CardHasChanges(section),
         };
 
-        Themed(reset, Button.ForegroundProperty, ThemeManager.TextMutedKey);
+        // With the mark rather than against it (#208). A Path with its own stroke ignores the
+        // button's Foreground, so this paints nothing — but a dead property set to the opposite of
+        // what is drawn is a line that tells the next reader the wrong thing.
+        Themed(reset, Button.ForegroundProperty, ThemeManager.AccentKey);
 
         // The word was this button's accessible name by being its content; a Path has no text, so
         // without this a screen reader finds an unnamed button where it used to find "Reset".
@@ -1554,7 +1560,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 // A stroked Path rather than U+21BA (#69). The character was whatever the installed
                 // font carried - a different weight from the marks beside it, and a box on a machine
                 // without it - and it could not be sized or coloured with them.
-                Content = Glyphs.Draw(Glyphs.Reset, ThemeManager.TextMutedKey, TypeScale.Secondary),
+                // Accent, the same rule and the same reason as the card-level one above (#208).
+                Content = Glyphs.Draw(Glyphs.Reset, ThemeManager.AccentKey, TypeScale.Secondary),
                 Padding = new Thickness(4, 0),
                 MinWidth = 0,
                 VerticalAlignment = VerticalAlignment.Center,
@@ -1563,7 +1570,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 IsVisible = false,
             };
 
-            Themed(back, Button.ForegroundProperty, ThemeManager.TextMutedKey);
+            Themed(back, Button.ForegroundProperty, ThemeManager.AccentKey);
             ToolTip.SetTip(back, $"Put {row.Label} back to its default");
 
             // The character used to be this button's accessible name by being its content; a Path

@@ -27,6 +27,63 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.94.0 — 2026-08-30 — A mark you can press says so before you point at it
+
+### Clickable words and marks carry the accent at rest (#208)
+
+Reported against the **help mark**, which was muted until the pointer touched it. The rule asked for
+is one line — *a clickable word or glyph carries the theme accent* — and the finding underneath it
+was that the rule was applied nowhere consistently. Five bare marks, four different answers: the
+mode toggle was accent, help was muted-then-accent, both settings resets were muted, the checklist's
+**+** was the colour of the words around it, and copy was muted.
+
+They are all accent now, at rest, with nothing pointed at them.
+
+**Fixing the help mark deleted code.** It carried a pair of `PointerEntered`/`PointerExited`
+handlers that swapped the stroke — and those are the pattern `Glyphs.Draw` exists to refuse.
+`FindResource` reads a brush **once**, at the moment of the hover, and assigns it to the property;
+that is a local value, so a theme switched after a hover left the mark painted in the old theme's
+colour with nothing able to repaint it. Both handlers and both hooks are gone, and a
+`DynamicResource` is the only mechanism on that stroke now. A test switches theme and watches the
+mark follow — Elite's `#FF7100` to light's `#0A64C8` to dark's `#4C8DFF`, so it fails rather than
+passing on a colour that never moved.
+
+**The hover feedback went with them rather than being replaced.** The colour was saying two things
+at once — *this can be pressed* and *you are pointing at it* — and the resting state spends the
+first. `TurnDetails` and the mode toggle have always been accent at rest and changed nothing on
+hover; the button's own background wash is what says the pointer is there.
+
+**Where the rule stops** is the part worth having written down, because *"clickable things are
+orange"* stated broadly would repaint half the app. In scope: a bare word or mark on a transparent
+background whose **only** affordance is that it can be pressed — nothing about its shape says press
+me, so the colour has to. Out of scope: anything that already says it by shape and carries its own
+chrome — checkboxes and their labels, the tab strip, scrollbar parts, and anything using the accent
+as a *background*, where an accent foreground would vanish into it. And a disabled control keeps its
+disabled treatment, because an accent on something that cannot be pressed is the colour making a
+promise the control cannot keep.
+
+**One mark beyond the issue's own table: copy.** It sits on the transcript bar with no chrome of its
+own, exactly as help does, and it was muted. The issue enumerated five sites and did not list it —
+with no reasoning excluding it, and it meets the stated test — so leaving it would have reproduced
+the finding the report is actually about.
+
+Every change is a **key** and never a literal. Amber is the Elite palette's answer to
+`D47.Accent`, not the value being written.
+
+### prerelease says nothing to release, rather than blaming the changelog
+
+Reported as *"something messed up"*. Nothing had: 0.93.0 had just shipped, and the run being
+complained about was a second one over an empty range. Everything downstream worked perfectly on
+nothing — no commit closed a change request, so the decision was Patch, and the changelog check then
+reported that `## 0.93.1` was missing and exited 1. Every word of that is true and all of it is about
+the wrong thing: it blames the changelog for the absence of a release nobody should be cutting, and
+it reads exactly like the tool having broken. The range is asked first now, above the version
+arithmetic, and an empty one stops there with one sentence and **exit zero** — nothing is wrong and
+nothing was done, which is a different answer from the missing-section refusal below it. A test pins
+the order, because the reason a run stops is the whole of what it is telling you.
+
+---
+
 ## 0.93.0 — 2026-08-30 — The controllers are put down, and the panel learns to be told where to go
 
 Ten issues. Seven are in the headset and the captions get most of them; three are on the desktop.

@@ -160,20 +160,30 @@
               Background="Transparent"
               BorderThickness="0"
               ToolTip.Tip="Open the documentation"
-              Click="OnHelpClick"
-              PointerEntered="OnHelpPointerEntered"
-              PointerExited="OnHelpPointerExited">
+              Click="OnHelpClick">
         <!--
           Width is the ink's own aspect rather than a square: the geometry spans 9.2 units across
           and 18.6 down, so 8.4 by 17 is the box it actually fills. A 17-wide box would leave four
           pixels of nothing on each side of the mark and hang it left of centre.
+
+          **Accent at rest** (#208). It was muted until pointed at, and a pair of handlers swapped
+          the stroke on the way in and out — which is the pattern `Glyphs.Draw` exists to refuse:
+          `FindResource` reads a brush *once*, at the moment of the hover, and assigns it, so a
+          theme switched after a hover left the mark painted in the old theme's colour. Both
+          handlers are gone with the resting colour; a `DynamicResource` is the only mechanism on
+          this stroke now.
+
+          And the hover feedback goes with them rather than being replaced. The colour was saying
+          two things — "this can be pressed" and "you are pointing at it" — and the first is the one
+          worth keeping. `TurnDetails` and `ModeToggle` are accent at rest and change nothing on
+          hover; the button's own background wash is what says the pointer is here.
         -->
         <Path x:Name="HelpGlyph"
               Width="8.4" Height="17"
               Stretch="Uniform"
               HorizontalAlignment="Center"
               VerticalAlignment="Center"
-              Stroke="{DynamicResource D47.TextMuted}"
+              Stroke="{DynamicResource D47.Accent}"
               StrokeThickness="2.8"
               StrokeLineCap="Round"
               StrokeJoin="Round"
