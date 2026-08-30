@@ -116,7 +116,7 @@ and the line is absent entirely until something has been spoken.
 
 #### What it has cost over time {#running-totals}
 
-The line under the panel says what the last turn cost, and **Details** beside it opens the rest:
+The line under the panel says what the last turn cost, and **the banknote** beside it opens the rest:
 the token counts, what the session has come to, and five running totals — **today**, **the last 7
 days**, **the last 30 days**, **this week** (Sunday to Saturday) and **this calendar month**.
 
@@ -154,7 +154,7 @@ later crash. Delete it and the running totals start again from empty; nothing el
 
 #### Starting the figures again {#reset}
 
-**Reset** in the Details window offers six spans — *this session*, and the same five windows the
+**Reset** in that window offers six spans — *this session*, and the same five windows the
 figures list shows. Take one and everything charged inside it stops counting, **in every window
 that contained it**: reset today and today's charges leave this week, the last 7 days, the last 30
 days and this month as well. That falls out of how the figures are worked out — each one is a

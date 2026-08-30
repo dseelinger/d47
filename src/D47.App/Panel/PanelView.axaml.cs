@@ -295,6 +295,17 @@ public partial class PanelView : UserControl
             Theming.ThemeManager.TextMutedKey,
             "Copy this whole page to the clipboard");
 
+        // A banknote rather than the word "Details" (#210). Accent, as the word already was, so it
+        // is consistent with the clickable-things-carry-the-accent change before that lands rather
+        // than needing to move with it. The sentence it used to carry on its tooltip is the same
+        // sentence, and Mark puts it on the accessible name too — which is the whole condition
+        // under which replacing a word with a picture is an improvement.
+        Controls.Glyphs.Mark(
+            TurnDetails,
+            Controls.Glyphs.Spend,
+            Theming.ThemeManager.AccentKey,
+            "Tokens, cost, and what this has come to over time");
+
         Watch(Transcript);
 
         // The three readings of one exchange, registered as the Transcript tab's roots. They are

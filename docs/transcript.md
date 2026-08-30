@@ -156,9 +156,14 @@ the text on the page is selectable, and Ctrl+C already copies a selection, so a 
 **Search** filters and steps. It counts the matches, moves forward and back through them, and
 clears in one press.
 
-**Details** opens the receipt for the most recent turn — the tools it ran, the tokens and
-characters it spent, and the price. It opens a window, so it exists on the desktop and not in a
-headset; the same figures are on the Technical reading, which both surfaces have.
+**The banknote** at the right of the status line opens the receipt for the most recent turn — the
+tools it ran, the tokens and characters it spent, and the price. It was the word *Details* until
+0.93.0; hovering still says what it does, and so does a screen reader. It opens a window, so it
+exists on the desktop and not in a headset; the same figures are on the Technical reading, which
+both surfaces have.
+
+It is a note rather than a coin on purpose. These are dollars on a provider account, not your
+in-game balance, and a coin in a cockpit overlay is the thing that gets read as credits.
 
 **The ask box** takes typing, and Enter sends. The button beside it does the same thing and exists
 so that the first thing you do with Directive 47 is not a guess.

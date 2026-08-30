@@ -372,20 +372,30 @@
         "did that work" stay here and the rest are a click away. The link is docked so the line
         wraps against it rather than pushing it off the row.
       -->
+      <!--
+        A banknote rather than the word "Details" (#210), chosen by the Commander from six drawings
+        on 2026-08-30. The content, the tooltip and the accessible name are all set in code by
+        Glyphs.Mark, which is what keeps the word reachable: a glyph-only control with no accessible
+        name is a control that does not exist for anybody not looking at it.
+
+        Centred rather than padded on one axis. The word was 6,1 around text on a baseline; a mark
+        sits in a box of its own, so the padding is even and the content is centred explicitly —
+        the same correction the help button already carries.
+      -->
       <Button x:Name="TurnDetails"
               DockPanel.Dock="Right"
-              Content="Details"
               IsVisible="False"
               Margin="8,0,0,0"
-              Padding="6,1"
+              Padding="4,2"
               MinWidth="0"
               VerticalAlignment="Center"
+              VerticalContentAlignment="Center"
+              HorizontalContentAlignment="Center"
               Background="Transparent"
               BorderThickness="0"
               Cursor="Hand"
               FontSize="{StaticResource D47.Type.Secondary}"
               Foreground="{DynamicResource D47.Accent}"
-              ToolTip.Tip="Tokens, cost, and what this has come to over time"
               Click="OnTurnDetailsClick" />
       <TextBlock x:Name="TurnLine"
                  Text="{Binding TurnLine}"
