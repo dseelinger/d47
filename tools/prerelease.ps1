@@ -81,17 +81,11 @@ $Root = Split-Path -Parent $PSScriptRoot
 function Write-Step { param([string] $Text) Write-Host "==> $Text" -ForegroundColor Cyan }
 function Write-Note { param([string] $Text) Write-Host "    $Text" -ForegroundColor DarkGray }
 
-# A native command's stderr is a terminating error under ErrorActionPreference Stop, and git and gh
-# both write ordinary progress there. Same trap as release.ps1's and issues.ps1's.
-function Invoke-Native {
-    param([scriptblock] $Command)
-
-    $previous = $ErrorActionPreference
-    $ErrorActionPreference = 'Continue'
-
-    try { & $Command }
-    finally { $ErrorActionPreference = $previous }
-}
+# Invoke-Native, and the `Fixes #N` extraction this run's whole decision rests on
+# (<https://github.com/dseelinger/d47/issues/207>). Both came out of here when `get-local.ps1`
+# needed the same question answered for the same window — two definitions of "worked in this
+# release" would be free to disagree, and one of them decides a version number that never moves.
+. (Join-Path $PSScriptRoot 'issues.lib.ps1')
 
 if ($Minor -and $Patch) {
     throw 'Pick one of -Minor and -Patch, or neither and let it work it out.'
@@ -110,24 +104,11 @@ try {
 
     Write-Step "Since $lastTag"
 
-    <#
-        A phase and a batch of wanted changes are both minors, and since 2026-08-27 they arrive
-        by one road: the issue a commit says it closes.
-
-        **Read out of the commits rather than out of GitHub's closed list, and that is not a
-        preference.** An issue closes when the commit reaching it is pushed, and this decision is
-        made *before* anything is pushed — the changelog has to be written against the version
-        first. So a closed-issue query can never see the issues that the release it is deciding
-        about is the one closing. It said "patch" for a batch of three on 2026-08-27 and was wrong
-        in exactly that way.
-
-        What a commit says it closes is knowable now, so that is what is asked.
-    #>
-    $log = (Invoke-Native { git log "$lastTag..HEAD" --format=%B }) -join "`n"
-
-    $mentioned = [regex]::Matches($log, '(?i)\b(?:fixes|closes|resolves)\s+#(\d+)') |
-        ForEach-Object { [int]$_.Groups[1].Value } |
-        Sort-Object -Unique
+    # A phase and a batch of wanted changes are both minors, and since 2026-08-27 they arrive by
+    # one road: the issue a commit says it closes. Why the commits and not GitHub's closed list is
+    # written down where the extraction lives, in issues.lib.ps1 — it is the reason this run reads
+    # the log at all, and it belongs beside the code rather than beside one of its two callers.
+    $mentioned = Get-ClosedIssueNumbers -Root $Root -Range "$lastTag..HEAD"
 
     # Both spellings of the wanted-change idea, because the repository has two labels for it:
     # `enhancement`, which the Commander has always used, and `change-request`, added on

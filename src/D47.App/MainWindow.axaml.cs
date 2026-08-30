@@ -140,6 +140,16 @@ public partial class MainWindow : Window
         // drawn as a button here and as plain text in the headset, which has no browser to hand.
         Panel.EnableHelp(url => Process.Start(
             new ProcessStartInfo(url) { UseShellExecute = true }));
+
+        // And the same reasoning, for the badge (#207). A build cut from a working tree is a build
+        // for testing, and this is where it says what to test — furnished only here, because what
+        // it opens leads to a browser the headset cannot show. Nothing to list means nothing to
+        // furnish, so a published release keeps the plain mark it has always had.
+        if (BuildInfo.Worked.Count > 0)
+        {
+            Panel.EnableBuildDetails(() =>
+                _ = new Controls.LocalBuildWindow(BuildInfo.Full, BuildInfo.Worked).Over(this));
+        }
         _model.UpdateAccepted += OnUpdateAccepted;
         _model.UpdateDismissed += () => _model.UpdateText = null;
 

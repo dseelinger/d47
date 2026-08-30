@@ -70,6 +70,23 @@
   </ItemGroup>
 
   <!--
+    Which issues a local build worked, for the badge to list
+    (https://github.com/dseelinger/d47/issues/207).
+
+    Nothing in a running d47 can discover this: the answer lives in the git log and only at publish
+    time, so `get-local.ps1` works it out and passes it here. Base64 of JSON, because the value
+    crosses a command line and part of it is text somebody else wrote.
+
+    Carried the same way `DevInstallRoot` above is, and for the same reason: a published release
+    never passes the property, so the attribute is absent from a real build by construction rather
+    than by a run-time check — and a sidecar file beside the executable would change what
+    `get-local` ships, which is exactly `d47.exe` and `runtimes\` and nothing else.
+  -->
+  <ItemGroup Condition="'$(LocalBuildIssues)' != ''">
+    <AssemblyMetadata Include="LocalBuildIssues" Value="$(LocalBuildIssues)" />
+  </ItemGroup>
+
+  <!--
     The mark, in the two places it is read from. ApplicationIcon compiles it into the
     executable's icon resource, which is what Explorer, the taskbar and alt-tab read with
     nothing running. AvaloniaResource is what the windows read at runtime for their title

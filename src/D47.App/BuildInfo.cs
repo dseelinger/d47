@@ -53,6 +53,34 @@ public static class BuildInfo
     public static bool IsLocal => Label is not null;
 
     /// <summary>
+    /// Which issues this build worked, or empty for a build that was not stamped with any
+    /// (<a href="https://github.com/dseelinger/d47/issues/207">#207</a>).
+    /// <para>
+    /// <b>The gate is the attribute, not <see cref="IsLocal"/>.</b> Only <c>get-local.ps1</c>
+    /// passes the property that writes it, so a published release comes back empty by
+    /// construction — which is stronger than checking the label, and means neither this nor
+    /// anything reading it has to be told twice what kind of build it is on.
+    /// </para>
+    /// <para>
+    /// Read once, like everything else here. The answer is compiled in and cannot change while
+    /// the process is running.
+    /// </para>
+    /// </summary>
+    public static IReadOnlyList<LocalBuildIssue> Worked { get; } =
+        LocalBuildNotes.Parse(Metadata(LocalBuildNotes.MetadataKey));
+
+    /// <summary>
+    /// One <c>AssemblyMetadata</c> value off the entry assembly, or null. A test host has no entry
+    /// assembly attributes at all, which is why every caller here has to cope with null rather
+    /// than treat its absence as a fault.
+    /// </summary>
+    private static string? Metadata(string key) =>
+        Assembly.GetEntryAssembly()
+            ?.GetCustomAttributes<AssemblyMetadataAttribute>()
+            .FirstOrDefault(attribute => string.Equals(attribute.Key, key, StringComparison.Ordinal))
+            ?.Value;
+
+    /// <summary>
     /// The label between the version and the commit — <c>0.84.3-local+8b21b3d</c> gives
     /// <c>local</c>. The build metadata is cut first, because the SDK appends it to every build and
     /// a hash is not a label.

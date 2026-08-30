@@ -287,6 +287,24 @@ the first `-` or `+`, so the title bar reads the release number and the updater 
 replace it — **About is the only place that says which one is running**. The way back is
 `get-ver latest`.
 
+**The badge on a local build lists what that build worked**
+([#207](https://github.com/dseelinger/d47/issues/207)). Clicking it opens the issues the commits
+since the newest tag say they close — number, state, labels, and the title for an issue the
+Commander wrote or vouched for. **Baked in at publish time, because nothing in a running d47 can
+discover it**: the answer lives in the git log and only there, so `get-local.ps1` reads it and
+stamps it into an `AssemblyMetadata` attribute the way `DevInstallRoot` already travels. A
+published release never passes the property, so the feature is absent from a real build by
+construction rather than by a run-time check, and `get-local` still copies exactly `d47.exe` and
+`runtimes\`. It sees only what a commit wrote down, and the popup says so.
+
+**`tools/issues.lib.ps1` is where the trust rule lives now**, dot-sourced by `issues.ps1`,
+`prerelease.ps1` and `get-local.ps1`. An issue title is attacker-controlled text whether it is read
+into an agent's context or drawn in d47's own chrome, so the same `Resolve-Trust` decides both —
+and the `Fixes #N` extraction moved with it, because `prerelease` deciding a version number and
+`get-local` listing a badge are the same question asked over the same window. **`get-local` prints
+no title**: a publish step that echoed what it was baking would walk untrusted prose straight back
+into the one channel this repository trusts.
+
 **Both commands snapshot `data\` before they replace anything**, into `data\backups\`, one zip per
 deploy and the last ten kept. *Added 2026-08-28 on the Commander's instruction.* The reason is that
 a build migrates data: swapping the executable back without the data that version was written
