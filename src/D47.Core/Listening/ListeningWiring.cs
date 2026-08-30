@@ -29,6 +29,13 @@ public sealed record SpeechModelPlan
     /// <summary>The model to load or fetch. Null only when unloading.</summary>
     public WhisperModel? Model { get; init; }
 
+    /// <summary>
+    /// Whether the loader should ask for the GPU. Always false until a GPU runtime actually
+    /// ships (#187): only CPU natives are bundled, so a stored preference forwarded here made
+    /// the load site ask for — and the log claim — a device that was never in use. The property
+    /// stays because it is the seam the real GPU path re-lights, and the stored setting stays
+    /// because the settings file is append-only.
+    /// </summary>
     public bool UseGpu { get; init; }
 }
 
@@ -64,6 +71,7 @@ public static class ListeningWiring
         ArgumentNullException.ThrowIfNull(listening);
         ArgumentNullException.ThrowIfNull(models);
 
+        // listening.UseGpu is deliberately not read: see SpeechModelPlan.UseGpu (#187).
         if (WhisperModels.Find(listening.Model) is { } model && models.PathOf(model) is { } path)
         {
             return new SpeechModelPlan
@@ -71,7 +79,6 @@ public static class ListeningWiring
                 Action = SpeechModelAction.Load,
                 Path = path,
                 Model = model,
-                UseGpu = listening.UseGpu,
             };
         }
 
@@ -81,7 +88,6 @@ public static class ListeningWiring
             {
                 Action = SpeechModelAction.Fetch,
                 Model = wanted,
-                UseGpu = listening.UseGpu,
             };
         }
 

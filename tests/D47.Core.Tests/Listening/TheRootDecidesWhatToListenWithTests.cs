@@ -64,13 +64,15 @@ public class TheRootDecidesWhatToListenWithTests
     }
 
     /// <summary>
-    /// The GPU flag rides along with the plan rather than being read separately at the load site,
-    /// so a model loaded on the CPU because two reads of settings disagreed cannot happen.
+    /// The stored GPU preference never reaches the loader (#187). Only CPU natives ship, so a
+    /// plan that forwarded it made the load site ask for — and the log claim — a device that was
+    /// never in use. A settings file holding <c>true</c> from before the row was withdrawn is
+    /// exactly the case this pins.
     /// </summary>
     [Fact]
-    public void TheGpuChoiceTravelsWithThePlan()
+    public void TheStoredGpuPreferenceNeverReachesTheLoader()
     {
-        Assert.True(ListeningWiring.PlanModel(With("small.en", gpu: true), new FakeModelStore("small.en")).UseGpu);
+        Assert.False(ListeningWiring.PlanModel(With("small.en", gpu: true), new FakeModelStore("small.en")).UseGpu);
         Assert.False(ListeningWiring.PlanModel(With("small.en"), new FakeModelStore("small.en")).UseGpu);
     }
 

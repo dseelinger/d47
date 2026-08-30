@@ -610,12 +610,19 @@ public sealed record ListeningSettings
     public string Model { get; init; } = Listening.WhisperModels.DefaultId;
 
     /// <summary>
-    /// Run inference on the GPU. Off by default and deliberately so.
+    /// Run inference on the GPU. Stored, and currently read by nothing (#187).
     /// <para>
-    /// In VR the GPU is already the scarce resource, so a large model running there surfaces as
-    /// dropped frames and reprojection rather than as anything resembling a speech problem —
-    /// which the checklist calls the hardest kind of setting to diagnose. A short push-to-talk
-    /// clip on the small English models absorbs CPU inference fine.
+    /// Only CPU natives ship, so the toggle this held never reached a GPU — the row and the log
+    /// claimed a device that was not in use, and the row was withdrawn rather than left lying.
+    /// The property stays because the settings file is append-only, and it is the value the row
+    /// resumes from if a real GPU runtime ever ships (the tabled half of #187).
+    /// </para>
+    /// <para>
+    /// Off by default, and deliberately so if that day comes: in VR the GPU is already the scarce
+    /// resource, so a large model running there surfaces as dropped frames and reprojection
+    /// rather than as anything resembling a speech problem — which the checklist calls the
+    /// hardest kind of setting to diagnose. A short push-to-talk clip on the small English
+    /// models absorbs CPU inference fine.
     /// </para>
     /// </summary>
     public bool UseGpu { get; init; }

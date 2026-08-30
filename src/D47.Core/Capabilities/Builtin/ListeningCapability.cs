@@ -26,6 +26,13 @@ public static class ListeningCapability
     public const string ModeKey = "listening.mode";
     public const string PreRollKey = "listening.preRoll";
     public const string ModelKey = "listening.model";
+
+    /// <summary>
+    /// Withheld from the surface since #187: only CPU natives ship, so the toggle this key named
+    /// changed nothing while the row and the log both claimed a GPU. The key stays because the
+    /// settings property it names is still stored (the settings file is append-only), and the
+    /// row returns only with a real GPU runtime — the tabled half of #187.
+    /// </summary>
     public const string GpuKey = "listening.useGpu";
     public const string EgressKey = "listening.egress";
     public const string EchoKey = "listening.echoCancellation";
@@ -506,32 +513,11 @@ public static class ListeningCapability
                     },
                 },
             },
-            new SettingRow
-            {
-                Key = GpuKey,
-                Advanced = true,
-                Label = "Run the speech model on the GPU",
-
-                // The cost stated on the row, which the checklist asks for by name. A Commander
-                // who turns this on in VR and then sees reprojection has no reason to connect
-                // the two unless it was said here.
-                Help =
-                    "Faster, but in VR the GPU is already the scarce resource — a large model there "
-                    + "shows up as dropped frames and reprojection rather than as a speech problem. "
-                    + "Needs the CUDA runtime; D47 says so rather than quietly using the CPU.",
-                Kind = SettingKind.Toggle,
-                DefaultDisplay = "off",
-                DocsAnchor = "gpu",
-                AppliesWhen = s => s.Listening.Model != WhisperModels.NoneId,
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Listening.UseGpu ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Listening = s.Listening with { UseGpu = v is not "false" },
-                    },
-                },
-            },
+            // No GPU row. There was one — "Run the speech model on the GPU" — and it was
+            // withdrawn by #187: only CPU natives ship, so the toggle changed nothing while the
+            // row promised "D47 says so rather than quietly using the CPU". A control that does
+            // nothing is worse absent than present, by this file's own rule that a row which
+            // does not apply is absent rather than disabled.
             new SettingRow
             {
                 Key = PreRollKey,

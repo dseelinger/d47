@@ -3,6 +3,7 @@ using System.Text;
 using D47.Core.Listening;
 using Microsoft.Extensions.Logging;
 using Whisper.net;
+using Whisper.net.LibraryLoader;
 using Whisper.net.Logger;
 
 namespace D47.Stt;
@@ -93,8 +94,21 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
     /// <summary>Why it is not ready, when it is not. A state to report, not an exception.</summary>
     public string? Unavailable { get; private set; }
 
-    /// <summary>Whether the loaded model is running on the GPU.</summary>
+    /// <summary>
+    /// Whether inference is actually on the GPU — assigned from the runtime library Whisper.net
+    /// reports having loaded, never from the flag the caller asked with (#187). The two differed
+    /// for months: only CPU natives ship, the CPU runtime accepts a GPU request without
+    /// complaint, and this property repeated the request back as if it were the result.
+    /// </summary>
     public bool UsingGpu { get; private set; }
+
+    /// <summary>
+    /// The flag the current load was asked with, kept apart from <see cref="UsingGpu"/> so the
+    /// already-loaded check compares request against request. Compared against the honest result,
+    /// a GPU request landing on the CPU would look like a change and reload the model on every
+    /// settings pass.
+    /// </summary>
+    private bool _requestedGpu;
 
     /// <summary>
     /// Loads a model file, replacing whatever was loaded before. Returns false with
@@ -113,7 +127,7 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
 
         try
         {
-            if (_loadedFrom == modelPath && UsingGpu == useGpu && _processor is not null)
+            if (_loadedFrom == modelPath && _requestedGpu == useGpu && _processor is not null)
             {
                 return true;
             }
@@ -144,11 +158,24 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
 
                 _loadedFrom = modelPath;
                 Model = modelId;
-                UsingGpu = useGpu;
+                _requestedGpu = useGpu;
+                UsingGpu = RunsOnGpu(useGpu, RuntimeOptions.LoadedLibrary);
                 Unavailable = null;
 
                 _logger.LogInformation(
-                    "Loaded speech model {Model} on {Device}", modelId, useGpu ? "the GPU" : "the CPU");
+                    "Loaded speech model {Model} on {Device}", modelId, UsingGpu ? "the GPU" : "the CPU");
+
+                if (useGpu && !UsingGpu)
+                {
+                    // The load that succeeds on the wrong device — the case the catch below was
+                    // written for and can never see, because the CPU runtime accepts a GPU
+                    // request and loads anyway (#187). Said here, at Warning, because the
+                    // Commander asked for a device they are not getting.
+                    _logger.LogWarning(
+                        "The GPU was asked for, but the native runtime that loaded is {Library} — "
+                        + "inference is on the CPU.",
+                        RuntimeOptions.LoadedLibrary?.ToString() ?? "unknown");
+                }
 
                 return true;
             }
@@ -191,6 +218,18 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
             _one.Release();
         }
     }
+
+    /// <summary>
+    /// Whether a successful load is actually on the GPU: it was asked for, <b>and</b> the native
+    /// library that loaded is one that puts inference there (#187). The request alone proves
+    /// nothing — the CPU runtime accepts <c>UseGpu = true</c> without complaint, which is how
+    /// the old assignment, the request copied back, reported a GPU for months while only CPU
+    /// natives shipped. CoreML and OpenVino count as CPU on purpose: understating what an exotic
+    /// runtime delivers is recoverable, and claiming a GPU not in use is the lie this exists to
+    /// end.
+    /// </summary>
+    internal static bool RunsOnGpu(bool requested, RuntimeLibrary? loaded) =>
+        requested && loaded is RuntimeLibrary.Cuda or RuntimeLibrary.Cuda12 or RuntimeLibrary.Vulkan;
 
     /// <summary>
     /// One processor, optionally primed with the names to expect (remediation.md 10, item 17).
@@ -458,6 +497,7 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
         _loadedFrom = null;
         Model = null;
         UsingGpu = false;
+        _requestedGpu = false;
     }
 
     /// <summary>

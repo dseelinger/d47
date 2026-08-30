@@ -165,31 +165,17 @@ public class ModelChoiceTests
     }
 
     [Fact]
-    public void TheGpuRowDisappearsWhenNoModelIsSelected()
+    public void ThereIsNoGpuRowWhileOnlyCpuNativesShip()
     {
-        var row = Row(ListeningCapability.GpuKey);
+        // #187: the toggle never reached a GPU — no accelerated runtime is bundled — so the row
+        // sat there claiming a device that was not in use. It must stay withdrawn until a real
+        // GPU runtime ships; this is what stops it drifting back in without one.
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
 
-        // A row that does not apply is absent rather than disabled — a greyed-out control still
-        // asserts the setting exists.
-        Assert.False(row.Applies(new D47Settings
-        {
-            Listening = new ListeningSettings { Model = WhisperModels.NoneId },
-        }));
-        Assert.True(row.Applies(new D47Settings
-        {
-            Listening = new ListeningSettings { Model = "base.en" },
-        }));
-    }
-
-    [Fact]
-    public void TheGpuRowStatesItsCostInVr()
-    {
-        // The checklist asks for the cost to be stated on the row, because a Commander who sees
-        // reprojection after enabling this has no reason to connect the two otherwise.
-        var help = Row(ListeningCapability.GpuKey).Help;
-
-        Assert.Contains("VR", help);
-        Assert.Contains("dropped frames", help);
+        Assert.DoesNotContain(
+            surface.Settings.Sections.SelectMany(section => section.Rows),
+            row => row.Key == ListeningCapability.GpuKey);
     }
 
     private static SettingRow Row(string key)

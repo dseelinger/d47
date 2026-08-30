@@ -398,19 +398,23 @@ is worth checking.
 `none` stays a real choice. Pick it and Directive 47 hears you and says, honestly, that it cannot
 turn what it heard into words.
 
-#### Running on the GPU {#gpu}
+#### Everything runs on the CPU {#gpu}
 
-Off by default.
+There is no GPU path in this build — and there used to be a toggle here that claimed otherwise.
 
-Worth knowing before you turn it on: in VR your GPU is already the scarce thing, and a large
-model running there shows up as dropped frames and reprojection rather than as anything that
-looks like a speech problem — a symptom nowhere near its cause. A short push-to-talk clip on the
-small English models runs fine on the CPU, which is why that is the default rather than a
-compromise.
+**"Run the speech model on the GPU" never reached a GPU.** Only CPU natives ship, the CPU
+runtime accepts a GPU request without complaint, and the log repeated the request back — *"on
+the GPU"* — as if it were the result. Flipping the toggle changed nothing but that line. The row
+was withdrawn rather than left lying
+([#187](https://github.com/dseelinger/d47/issues/187)), and the log now reports the device
+actually in use. If your settings file still holds the old preference, it is kept but read by
+nothing.
 
-If the CUDA runtime is not installed, Directive 47 **says so** and leaves transcription
-unavailable rather than quietly using the CPU. A GPU switch that silently does nothing is the
-same undiagnosable problem in the other direction.
+The CPU is not a compromise for this job: a short push-to-talk clip on the small English models
+transcribes in well under a second — the table above — and in VR your GPU is already the scarce
+thing, so a model running there would surface as dropped frames and reprojection, a symptom
+nowhere near its cause. A real GPU path, with its runtime actually present and checked, is a
+recorded want rather than a promise.
 
 ### Seeing that the microphone is open {#indicator}
 

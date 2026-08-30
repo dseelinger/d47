@@ -23,10 +23,12 @@
     <PackageReference Include="Whisper.net" Version="1.9.1" />
 
     <!--
-      The CPU runtime, which is the default and the only one bundled. GPU is opt-in per
-      architecture.md D3 and needs the CUDA runtime present; d47 reports its absence rather
-      than silently falling back, because a GPU toggle that quietly does nothing is the setting
-      the checklist warns is hardest to diagnose.
+      The CPU runtime, and the only runtime there is: no accelerated variant is referenced, so
+      there is no GPU code to load. That is why the GPU settings row was withdrawn (#187) — the
+      old promise here, "d47 reports the CUDA runtime's absence rather than silently falling
+      back", could never fire, because the CPU runtime accepts a GPU request and loads
+      successfully whatever was asked. Adding Whisper.net.Runtime.Cuda is the tabled half of
+      #187, and a licence-gate walk of its transitive graph comes with it.
     -->
     <PackageReference Include="Whisper.net.Runtime" Version="1.9.1" />
   </ItemGroup>
