@@ -157,7 +157,7 @@ public class APickedVoiceShowsOnItsRowTests
         var row = host.View.GetVisualDescendants().OfType<Grid>()
             .Where(grid => grid.ColumnDefinitions.Count == 3)
             .FirstOrDefault(grid => grid.GetVisualDescendants().OfType<TextBlock>()
-                .Any(text => text.Text == "Push-to-talk key"));
+                .Any(text => text.Text == "Push-to-talk"));
 
         Assert.True(row is not null, "the push-to-talk row is not on the page");
 

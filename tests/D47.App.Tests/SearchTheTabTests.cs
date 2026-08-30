@@ -492,7 +492,7 @@ public class SearchTheTabTests
         box.Text = "listening.pushToTalk";
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        Assert.Contains("Push-to-talk key", VisibleRowLabels(host));
+        Assert.Contains("Push-to-talk", VisibleRowLabels(host));
 
         var shown = host.View.GetVisualDescendants().OfType<TextBlock>()
             .Where(block => block.IsEffectivelyVisible)
@@ -504,7 +504,7 @@ public class SearchTheTabTests
         Assert.Contains("listening.pushToTalkKey", shown);
 
         // A query the label carries needs no identifier under it.
-        box.Text = "Push-to-talk key";
+        box.Text = "Push-to-talk";
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         Assert.DoesNotContain(
@@ -559,7 +559,7 @@ public class SearchTheTabTests
         box.Text = "listening.pushToTalk";
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        Assert.Contains("Push-to-talk key", VisibleRowLabels(host));
+        Assert.Contains("Push-to-talk", VisibleRowLabels(host));
 
         host.Close();
     }

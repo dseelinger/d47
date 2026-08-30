@@ -207,13 +207,19 @@ public static class ListeningCapability
             new SettingRow
             {
                 Key = PushToTalkKeyKey,
-                Label = "Push-to-talk key",
+                Label = "Push-to-talk",
                 Help =
-                    "Held, D47 listens. Right shift out of the box, since that is what a Commander on a "
-                    + "stick and throttle has spare. Clear it and D47 never opens the microphone.",
+                    "Held, D47 listens — and pressing it shuts D47 up, whether or not you go on to say "
+                    + "anything. Right shift out of the box, since that is what a Commander on a stick and "
+                    + "throttle has spare. Bind a key, a stick button, or both: with both set, either one "
+                    + "opens the microphone. Clear it and D47 never opens the microphone.",
                 Kind = SettingKind.Hotkey,
                 DefaultDisplay = "RightShift",
                 DocsAnchor = "push-to-talk-key",
+
+                // One row, two properties (#217). The control arms a keystroke listener and a
+                // controller poll at once and stores whichever arrives in the row it belongs to.
+                AlsoBinds = PushToTalkButtonKey,
 
                 // Protected: rebinding or clearing this is removing the Commander's way of
                 // speaking to d47, and it is reachable from the panel and the router instead.
@@ -242,6 +248,11 @@ public static class ListeningCapability
                     + "stays where you put it.",
                 Kind = SettingKind.HotasButton,
                 DocsAnchor = "push-to-talk-button",
+
+                // Held by the key row's control rather than drawn on its own (#217). Kept as a row
+                // because it is still written, still validated as a button and still documented —
+                // what it stopped being is a second question about one thing.
+                DrawnElsewhere = true,
 
                 // Protected for the same reason the key is: rebinding or clearing this takes away
                 // the Commander's way of speaking to d47.

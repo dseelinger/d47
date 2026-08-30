@@ -347,7 +347,7 @@ public class SettingsIsATabTests
         var row = view.GetVisualDescendants().OfType<Grid>()
             .First(grid => grid.ColumnDefinitions.Count == 3
                 && grid.GetVisualDescendants().OfType<TextBlock>()
-                    .Any(text => text.Text == "Push-to-talk key"));
+                    .Any(text => text.Text == "Push-to-talk"));
 
         var bind = row.GetVisualDescendants().OfType<Button>()
             .Where(button => button.Name != D47.App.Settings.SettingsView.RowResetName)

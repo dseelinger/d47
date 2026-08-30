@@ -82,6 +82,51 @@ arithmetic, and an empty one stops there with one sentence and **exit zero** —
 nothing was done, which is a different answer from the missing-section refusal below it. A test pins
 the order, because the reason a run stops is the whole of what it is telling you.
 
+### Push-to-talk is one row that holds a key, a stick button, or both (#217)
+
+It was two rows — *Push-to-talk key* and *Push-to-talk button* — asking one question. It is one now,
+labelled **Push-to-talk**: press **Press to bind** and d47 listens for a keystroke and walks the
+controller at the same time, taking whichever arrives first. With both bound the row reads
+`RightShift, button 11`. **Unbind clears both**, which is what the word says.
+
+**The storage did not merge, and must not.** `listening.pushToTalkKey` and
+`listening.pushToTalkButton` are both still on the record with their own bindings, help and docs
+anchors — `settings.json` is append-only, and a build that merged them would silently discard
+whichever half it dropped on first read. What merged is the question, which was always one: the
+rows' own help already promised *"with both set, either one opens the microphone."*
+
+**`SettingKind.HotasButton` stays a separate kind**, and that is the documented decision holding
+rather than surviving by accident. It is separate because *the capture gesture differs* — a key is
+caught by the window that has focus, a button has to be walked for — and that is exactly as true
+today. One control arming both listeners at once needs both mechanisms to stay as distinct as they
+are.
+
+**Two new row properties carry it, declared on the rows rather than known by the panel.** The key
+row names its companion in `AlsoBinds`; the companion carries `DrawnElsewhere`. A settings surface
+holding its own list of which two rows are really one is a second list to keep in step, and this way
+the reset arrow and the change marker follow for free — both read every key the control holds, so
+resetting a merged row puts both halves back.
+
+**`DrawnElsewhere` is not `AppliesWhen`, and the difference is load-bearing.** A row that does not
+apply is *refused* by `SettingsService.Apply` as well as hidden — right for a setting with no meaning
+in the current configuration, and exactly wrong here, since this row is written every time a stick
+button is bound. It applies; it is simply not its own row on the page.
+
+**Both halves stay `Protected`.** Rebinding or clearing push-to-talk takes away the Commander's way
+of speaking to d47, and protected rows cost no tool-surface bytes, so nothing was traded.
+
+**The modal bind window is gone**, and its words are not. `ButtonBindWindow` was the only caller of
+the controller walk; the walk now runs on a timer the row's own control owns, and `ButtonCapture` is
+untouched and still the authority on what counts as a button — ignoring what was already held when
+the walk started, capturing on release rather than on press, and declining a switch that stays where
+it is put. Its sentences go on the row's message line, which is where the window used to put them.
+
+**The scope stopped at the control, and that was a ruling rather than a shortcut.** #218 and #219
+shrank the bind set to two system-wide keys — show overlay and move overlay — and the Commander ruled
+the 2D panel hotkeys stay keyboard-only: they are pressed at the desk with the window in view. So
+there is no second delivery path to build, and push-to-talk stays the one bind that takes a stick
+button, which is the only one where a stick makes sense.
+
 ### Push-to-talk interrupts, and Stop speaking leaves the surface (#218)
 
 In the Commander's words: *"I don't want to talk while the ship AI is talking. I want it to shut up
