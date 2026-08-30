@@ -890,7 +890,10 @@ public sealed class SteamVrRuntime(
 
         if (placement.RidesTheHead)
         {
-            overlay.PlaceOnHead(placement.AgainstTheHead());
+            // The head goes in so the offset can cancel its roll (#189). It is still written only
+            // when it changed — PlaceOnHead's own guard — and a roll that is holding still is a
+            // frame with no transform call in it, which is what it always was.
+            overlay.PlaceOnHead(placement.AgainstTheHead(Head ?? VrPose.Origin));
         }
         else
         {

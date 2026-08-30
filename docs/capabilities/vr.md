@@ -327,6 +327,16 @@ Captions follow what is actually audible rather than what was generated, so if y
 captions stop with the voice. A caption still sitting there after a silence command is Directive
 47 visibly not having stopped.
 
+**They stay level with the horizon, not with your head.** Captions follow where you are looking —
+turn or look down and they come with you — but they ignore how far your head is *tilted*, so the
+text runs along the same line the cockpit does instead of along your eyeline. Tilt your head
+twenty degrees and the captions stay put and level while your view rolls around them. There is no
+setting for this and deliberately so: a caption is either level or it is wrong, and a tilt dial
+you have to trim by hand is a way of shipping it wrong.
+
+If your captions look level but the *cockpit* does not, that is Elite's own recenter having been
+taken with your head tilted — recenter again with your head straight, and both agree.
+
 #### Caption size {#size}
 
 `small`, `medium` or `large`. Three sizes rather than a number, because a caption is either
