@@ -515,7 +515,7 @@ public static class ListeningCapability
 
                 // Both costs stated, because both are real and neither is guessable from the
                 // label. The figures are measured on the machine #187 was fixed on (RTX 5080,
-                // small.en): 170 ms against 970 ms, and 880 MB of video memory at its peak.
+                // small.en): 189 ms against 924 ms, for 469 MB of video memory.
                 // The VR warning stays — it is why this is off by default — but it is now a
                 // trade-off a Commander can weigh rather than a warning about a switch that
                 // did nothing at all.

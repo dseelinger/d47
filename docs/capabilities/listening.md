@@ -401,16 +401,17 @@ turn what it heard into words.
 #### Running on the GPU {#gpu}
 
 Off by default, and **about five times faster** when you turn it on. Measured on an RTX 5080 with
-Small (English only): **170 ms against 970 ms** for the same sentence.
+Small (English only): **190 ms against 920 ms** for the same sentence.
 
 It costs video memory, which is the part worth thinking about, because that memory comes out of
-whatever else wants the card:
+whatever else wants the card. It is close to the size of the model file, because the weights are
+almost all of it:
 
-| Model | Video memory, at peak |
+| Model | Video memory |
 |---|---|
-| Tiny (English only) | about 330 MB |
-| Base (English only) | about 440 MB |
-| Small (English only) | about 880 MB |
+| Tiny (English only) | about 100 MB |
+| Base (English only) | about 150 MB |
+| Small (English only) | about 470 MB |
 
 **In VR that trade is a real one.** Your GPU is already the scarce thing there, and taking memory
 and time from the game shows up as dropped frames rather than as anything that looks like a
