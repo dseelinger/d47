@@ -411,4 +411,71 @@ public class OneRowForPushToTalkTests
         host.Window.KeyPress(key, Avalonia.Input.RawInputModifiers.None, physical, null);
         Dispatcher.UIThread.RunJobs();
     }
+
+    /// <summary>
+    /// <b>One of each, and no more.</b> Binding a second key replaces the key and leaves the button
+    /// where it is — the two halves are two settings properties holding one value apiece, so there
+    /// is no third slot to land in. Worth pinning rather than assuming: "or both" reads to a
+    /// Commander as though it might mean <em>any number</em>, and the answer is that it means one
+    /// of each.
+    /// </summary>
+    [AvaloniaFact]
+    public void ASecondKeyReplacesTheKeyAndLeavesTheButtonAlone()
+    {
+        var (settings, viewState, paths) = TestSurface.Create();
+
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
+            .FollowSettings(settings);
+
+        var host = SettingsHost.Open(settings, viewState, paths, switches: Editing(paths));
+        var row = Row(host, "Push-to-talk")!;
+
+        settings.Apply(ListeningCapability.PushToTalkButtonKey, $"{Stick}#10", SettingsCaller.Panel);
+        Dispatcher.UIThread.RunJobs();
+
+        Press(host, row, Avalonia.Input.Key.F9, Avalonia.Input.PhysicalKey.F9);
+        Assert.Equal("F9, button 11", Bind(row).Content as string);
+
+        Press(host, row, Avalonia.Input.Key.F10, Avalonia.Input.PhysicalKey.F10);
+
+        Assert.Equal("F10", settings.Current.Listening.PushToTalkKey);
+        Assert.Equal($"{Stick}#10", settings.Current.Listening.PushToTalkButton);
+        Assert.Equal("F10, button 11", Bind(row).Content as string);
+
+        host.Close();
+    }
+
+    /// <summary>
+    /// And there are two slots, one per kind — which is what makes the sentence above true by
+    /// construction rather than by the capture being careful. A stick button can only land in the
+    /// <see cref="SettingKind.HotasButton"/> half, and a key can only land in the other.
+    /// </summary>
+    [Fact]
+    public void ThereAreTwoSlotsAndTheyAreOnePerKind()
+    {
+        var settings = TestSurface.Settings();
+        var row = settings.Find(ListeningCapability.PushToTalkKeyKey)!;
+
+        Assert.Equal(
+            [SettingKind.Hotkey, SettingKind.HotasButton],
+            row.BoundKeys.Select(key => settings.Find(key)!.Kind));
+    }
+
+    /// <summary>
+    /// The caption reads key first whichever order they were bound in, so the row does not
+    /// rearrange itself under a Commander who rebinds one half.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheCaptionReadsKeyThenButtonWhicheverWasBoundFirst()
+    {
+        var (settings, host) = Open();
+
+        settings.Apply(ListeningCapability.PushToTalkButtonKey, $"{Stick}#10", SettingsCaller.Panel);
+        settings.Apply(ListeningCapability.PushToTalkKeyKey, "F9", SettingsCaller.Panel);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal("F9, button 11", Bind(Row(host, "Push-to-talk")!).Content as string);
+
+        host.Close();
+    }
 }

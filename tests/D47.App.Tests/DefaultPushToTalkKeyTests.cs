@@ -59,4 +59,34 @@ public class DefaultPushToTalkKeyTests
         Assert.False(key.Bind(null));
         Assert.Null(key.Gesture);
     }
+
+    /// <summary>
+    /// <b>A combination is a real binding here, both halves of it.</b> The row accepts one and the
+    /// poll honours it: <c>Poll</c> reads the bound virtual-key code <em>and</em> every modifier
+    /// the gesture declared, so <c>Ctrl+D</c> opens the microphone only while both are held. Worth
+    /// pinning because the failure would be silent and one-sided — a control that happily stores
+    /// <c>Ctrl+D</c> over a poll watching only D would open the microphone on every D typed
+    /// anywhere, which is the opposite of what binding a modifier is for.
+    /// </summary>
+    [Theory]
+    [InlineData("Ctrl+D")]
+    [InlineData("Ctrl+Alt+X")]
+    [InlineData("Shift+F9")]
+    [InlineData("RightShift")]
+    [InlineData("F9")]
+    public void ACombinationBindsAndKeepsItsModifiers(string gesture)
+    {
+        var key = new PushToTalkKey(NullLogger<PushToTalkKey>.Instance);
+
+        Assert.True(key.Bind(gesture), $"'{gesture}' did not bind.");
+        Assert.Equal(gesture, key.Gesture);
+
+        // The modifiers are held privately, so what is asserted is the count that reached them —
+        // which is the half a poll watching only the last key would have dropped.
+        var modifiers = (uint[])typeof(PushToTalkKey)
+            .GetField("_modifiers", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+            .GetValue(key)!;
+
+        Assert.Equal(gesture.Count(character => character == '+'), modifiers.Length);
+    }
 }

@@ -115,6 +115,15 @@ button is bound. It applies; it is simply not its own row on the page.
 **Both halves stay `Protected`.** Rebinding or clearing push-to-talk takes away the Commander's way
 of speaking to d47, and protected rows cost no tool-surface bytes, so nothing was traded.
 
+**It is one of each, not any number, and the help says that too.** There is one slot for a key and
+one for a stick button, so a second key changes the key and a second button changes the button.
+Nothing is ever added to a list the Commander cannot see — what the row reads is exactly what is
+bound, and two gestures is the most it will ever say. A combination counts as one key, and it is one
+end to end: `PushToTalkKey.Poll` reads the bound virtual-key code *and* every modifier the gesture
+declared, so `Ctrl+D` opens the microphone only while both are held. That is now pinned, because the
+failure would have been silent and one-sided — a row storing `Ctrl+D` over a poll watching only D
+would open the microphone on every D typed anywhere.
+
 **Bind twice to have both, and the row now says so.** Reported the moment the row was driven — *"it
 says I can bind to both. How?"* — and the answer was always *press the control once per gesture*,
 which nothing on screen mentioned. The help says it in the Commander's own order now.

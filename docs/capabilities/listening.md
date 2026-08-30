@@ -213,10 +213,15 @@ listens for either at once: press a key and it takes the key, press a button on 
 works out which one that was.
 
 **To have both, bind twice — one gesture each time.** Press the control and give it a key; press it
-again and give it a button. Each one is stored on its own, so the second does not replace the first,
+again and give it a button. The two are stored separately, so the second does not replace the first,
 and the row then reads `RightShift, button 11`. Either one opens the microphone, and the last one you
 let go of closes it — so letting go of the key while your thumb is still on the button does not cut
 you off mid-sentence.
+
+**It is one of each, not any number.** There is one slot for a key and one for a stick button. Give
+it a second key and the key changes; give it a second button and the button changes. Nothing is ever
+silently added to a list you cannot see — what the row reads is exactly what is bound, and two
+gestures is the most it will ever say.
 
 **A key on its own, like right shift, binds when you let it go.** Modifiers are the one kind of key
 that cannot be taken the instant they go down, because that is also how a combination starts. Hold
