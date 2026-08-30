@@ -315,13 +315,33 @@ They follow the broadcast closed-caption standard rather than anyone's preferenc
 ```text
 42 characters   the most on one line
  2 lines        the most for one thing said
- 3 lines        the most on screen at once
+ 2 lines        the most on screen at once
 20 per second   reading speed, which decides how long one stays up
 5/6 s .. 7 s    the shortest and longest a caption lingers
 ```
 
 A caption stays up timed from when the **speech ends**, not when it starts. Nobody reads along
 with a voice they can hear; they catch the last line after it has gone.
+
+**A long sentence arrives as several captions, not as its last two lines.** Anything that wraps
+past two lines is shown two at a time, each staying up for as long as your reading speed says it
+takes to read, until the sentence has been shown in full — which is what a caption track does with
+a long line. If Directive 47 starts saying something new while an earlier sentence is still being
+shown, the new one takes over: a caption still working through something the voice finished with
+is no longer captioning.
+
+**Sounds that mean something are captioned too.** The warning tone that plays a moment before an
+urgent callout is written in brackets — `[interdiction alert]`, `[attack alarm]`, `[heat alarm]` —
+so a Commander reading captions gets the same head start a Commander hearing them does. The loop
+tones are not captioned, because the panel already shows the loop state; ambience, music and the
+thinking bed are not, because they are continuous and say nothing.
+
+**And a caption says who is talking when it is not Directive 47.** Your carrier's tower and its
+captain are different people in different voices, and a crew member you address by name answers in
+theirs — so those lines open with `[Tower]`, `[Carrier]` or the crew member's own name. Directive
+47's own lines carry no name: it is the voice the caption band belongs to, and putting a label on
+every line would be noise. In-game messages from other Commanders are not captioned at all — they
+are already written out in full, with their sender, on the Technical page.
 
 Captions follow what is actually audible rather than what was generated, so if you say "stop" the
 captions stop with the voice. A caption still sitting there after a silence command is Directive

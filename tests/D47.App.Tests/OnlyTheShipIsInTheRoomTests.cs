@@ -61,6 +61,15 @@ public class OnlyTheShipIsInTheRoomTests
     /// <summary>
     /// A treated line is still one line on the queue, still on its own channel, and still
     /// carrying its caption. A caption lost here would take the VR subtitles with it.
+    /// <para>
+    /// <b>And the caption now says who is talking</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/201">#201</a>). Anybody over the air is
+    /// somebody other than d47 in a voice a reader has nothing to identify, so the caption opens
+    /// with the role. This fixture is the one shape production does not produce — every real
+    /// <c>Comms</c> line carries a <c>Transcript</c> and is therefore not captioned at all — but
+    /// the treatment is what is under test here, and the prefix is what that treatment now travels
+    /// with.
+    /// </para>
     /// </summary>
     [Fact]
     public async Task TheLinkChangesTheSamplesAndNothingElseAboutTheLine()
@@ -79,7 +88,7 @@ public class OnlyTheShipIsInTheRoomTests
         await voice.AnnounceAsync(new Announcement("message.npc", "Scanning.") { Voice = VoiceRole.Comms });
 
         var speaking = Assert.Single(seen, activity => activity.Channel == AudioChannel.Speech);
-        Assert.Equal("Scanning.", speaking.Caption);
+        Assert.Equal("[Comms] Scanning.", speaking.Caption);
 
         // Same format, and longer by the carrier that stays open after the last word — 200 ms at
         // 48 kHz. The length is asserted because the sink is where a treatment that quietly

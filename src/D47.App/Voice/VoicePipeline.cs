@@ -68,6 +68,19 @@ public sealed class VoicePipeline(
     public VoiceSelection Voice { get; set; } = VoiceSelection.Default;
 
     /// <summary>
+    /// Who to name on the captions of the <em>next turn</em>, or null for the ship's AI
+    /// (<a href="https://github.com/dseelinger/d47/issues/201">#201</a>).
+    /// <para>
+    /// A property beside <see cref="Voice"/> and set the same way, by whoever redirects a turn to
+    /// somebody who is not d47 — which today is a turn addressed to a crew member. It travels with
+    /// the voice because it is the same fact: a reader has no way to tell one synthesised voice
+    /// from another, so a caption in a hired pilot's voice with nothing on it reads as d47 having
+    /// said it.
+    /// </para>
+    /// </summary>
+    public string? CaptionSpeaker { get; set; }
+
+    /// <summary>
     /// An id to what the voice is called, or null where nothing can say (remediation.md 10,
     /// item 9). Set by the host, which is what holds the provider's voice list — Core has no
     /// catalogue and no way to get one.
@@ -144,7 +157,8 @@ public sealed class VoicePipeline(
                                 group,
                                 loggers.CreateLogger<SpeechPipeline>(),
                                 speaker: "D47",
-                                noted: Synthesised);
+                                noted: Synthesised,
+                                captionSpeaker: CaptionSpeaker);
                             speech.SynthesisFailed += OnSynthesisFailed;
                             speech.VoiceRejected += OnVoiceRejected;
                         }
@@ -221,7 +235,8 @@ public sealed class VoicePipeline(
         Func<AudioClip, AudioClip>? colour = null,
         string? speaker = null,
         bool captioned = true,
-        VoiceGroup slot = VoiceGroup.Aboard)
+        VoiceGroup slot = VoiceGroup.Aboard,
+        string? captionSpeaker = null)
     {
         if (Speaker(slot) is not { } provider)
         {
@@ -243,7 +258,8 @@ public sealed class VoicePipeline(
             colour,
             speaker,
             captioned,
-            Synthesised);
+            Synthesised,
+            captionSpeaker);
 
         speech.SynthesisFailed += OnSynthesisFailed;
         speech.VoiceRejected += OnVoiceRejected;
@@ -302,6 +318,11 @@ public sealed class VoicePipeline(
             {
                 Channel = announcement.Channel,
                 Clip = cues().For(alert),
+
+                // Written down as well as heard (#201). A cue's whole job is saying which warning
+                // this is before the sentence arrives, and a Commander reading captions was
+                // getting the sentence and never the marker.
+                Caption = AlertCues.Caption(alert),
             });
         }
 
@@ -335,7 +356,13 @@ public sealed class VoicePipeline(
                 // same reason the radio treatment is: this is the one point where a role and a
                 // synthesiser meet, and a callout knows whose line it is and nothing more
                 // (Phase 57).
-                slot: VoiceGroups.Of(announcement.Voice, announcement.CommsChannel))
+                slot: VoiceGroups.Of(announcement.Voice, announcement.CommsChannel),
+
+                // And who to name on the caption when this is not d47 talking (#201). The
+                // carrier's tower and its captain are captioned — only a re-voiced in-game
+                // message is not — and they arrive in a voice a reader has nothing to identify.
+                // Null for the ship's AI, which is the speaker the band already belongs to.
+                captionSpeaker: VoiceRoles.Called(announcement.Voice))
             .ConfigureAwait(false);
     }
 

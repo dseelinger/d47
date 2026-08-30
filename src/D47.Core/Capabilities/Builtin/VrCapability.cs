@@ -338,9 +338,11 @@ public static class VrCapability
             CaptionRow(
                 CaptionBackgroundKey,
                 "Caption background",
-                "How solid the box behind the text is, from 0.2 to 1. Not fully solid by default: "
+                "How solid the box behind the text is, from 0.6 to 1. Not fully solid by default: "
                 + "a caption sits over a starfield and a station's floodlights, and a box you "
-                + "cannot see through is a hole cut in the cockpit.",
+                + "cannot see through is a hole cut in the cockpit. It does not go below 0.6, "
+                + "because a station floodlight behind a box any more see-through than that "
+                + "leaves nothing you could read.",
                 SettingKind.Number,
                 s => s.Vr.Captions.BackgroundOpacity.ToString("0.##", CultureInfo.InvariantCulture),
                 (s, v) => s with
@@ -576,8 +578,9 @@ public static class VrCapability
         DocsAnchor = anchor,
         Group = "Captions",
         GroupHelp = "What D47 says, written under it, following the closed-caption standard: "
-                    + "at most forty-two characters a line, a rolling three-line window, and a "
-                    + "dwell timed from the end of speech rather than the start of it.",
+                    + "at most forty-two characters a line, a rolling two-line window, a longer "
+                    + "sentence shown two lines at a time until it is done, and a dwell timed "
+                    + "from the end of speech rather than the start of it.",
         AppliesWhen = s => s.Vr.Enabled,
         Binding = new SettingBinding { Read = read, Write = write },
     };

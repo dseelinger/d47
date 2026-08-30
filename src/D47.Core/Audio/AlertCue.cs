@@ -108,3 +108,53 @@ public enum AlertCue
     /// </summary>
     TimerElapsed,
 }
+
+/// <summary>
+/// What each cue is called when it is written down rather than heard
+/// (<a href="https://github.com/dseelinger/d47/issues/201">#201</a>).
+/// <para>
+/// <b>The one sound in d47 that has to be captioned.</b> A cue is played immediately <em>ahead</em>
+/// of an urgent callout, and its whole documented purpose is saying which warning this is before
+/// the sentence has arrived. A hearing Commander gets the marker and then the words; a Commander
+/// reading captions used to get only the words, losing both the warning and the head start — which
+/// is the FCC's "same extent" test failing on the one sound in the app that carries
+/// safety-relevant meaning.
+/// </para>
+/// <para>
+/// <b>Bracketed and lowercase, which is the standard's own form</b> for a sound event rather than
+/// a spoken line — Netflix's SDH guide asks for descriptive bracketed text, and broadcast
+/// captioning has written <c>[alarm]</c> that way for as long as it has written anything. Each cue
+/// names its own situation because each cue <em>is</em> a distinct situation: a Commander who has
+/// learned the four apart by ear knows which one fired, and a reader gets the same.
+/// </para>
+/// <para>
+/// The loop-state cues are deliberately not here, and neither are the thinking bed, ambience or
+/// music. The standard's condition is that a sound event is captioned when it <em>cannot be
+/// visually identified</em>: the loop state is on the panel, and the other three are continuous and
+/// carry no information a caption would be conveying. Captioning them is captioning noise, and a
+/// caption band that flashes before every utterance is one nobody reads.
+/// </para>
+/// </summary>
+public static class AlertCues
+{
+    /// <summary>
+    /// The bracketed line for one cue.
+    /// <para>
+    /// A switch with no default arm rather than a dictionary, so a cue added tomorrow does not
+    /// compile until somebody has decided what it is called — the same discipline
+    /// <see cref="CueLibrary"/> applies to the clip files, and for the same reason: a hole here
+    /// goes wrong as silence, which is the one failure mode a warning cannot afford.
+    /// </para>
+    /// </summary>
+    public static string Caption(AlertCue cue) => cue switch
+    {
+        AlertCue.Interdiction => "[interdiction alert]",
+        AlertCue.Piracy => "[pirate alert]",
+        AlertCue.BountyHunter => "[bounty hunter alert]",
+        AlertCue.UnderFire => "[attack alarm]",
+        AlertCue.Overheating => "[heat alarm]",
+        AlertCue.RivalTerritory => "[territory alert]",
+        AlertCue.TimerElapsed => "[timer chime]",
+        _ => "[alert]",
+    };
+}

@@ -34,6 +34,10 @@ public sealed record CaptionSettings
     /// station's floodlights and the cockpit's own instruments, and text with nothing behind it
     /// is unreadable against half of those — which is why broadcast captioning has always put
     /// it on a box. Enough to read against anything, little enough to see through.
+    /// <para>
+    /// Floored at <see cref="Caption.MinimumBackgroundOpacity"/>, which is a contrast floor
+    /// rather than a taste one — see there.
+    /// </para>
     /// </summary>
     public double BackgroundOpacity { get; init; } = 0.78;
 
@@ -47,7 +51,7 @@ public sealed record CaptionSettings
 
     public CaptionSettings Sane() => this with
     {
-        BackgroundOpacity = Math.Clamp(BackgroundOpacity, 0.2, 1.0),
+        BackgroundOpacity = Math.Clamp(BackgroundOpacity, Caption.MinimumBackgroundOpacity, 1.0),
         CharactersPerSecond = Math.Clamp(CharactersPerSecond, 8, 30),
     };
 }
@@ -75,6 +79,27 @@ public static class Caption
     /// </para>
     /// </summary>
     public const int WindowLines = 2;
+
+    /// <summary>
+    /// How see-through the box behind the text may be made
+    /// (<a href="https://github.com/dseelinger/d47/issues/201">#201</a>).
+    /// <para>
+    /// <b>0.6 is a contrast floor and not a preference.</b> The clamp used to be 0.2, which is
+    /// the value it was added to prevent: against a bright scene — a station floodlight, an
+    /// ice ring, a white hangar wall — a box that see-through leaves an effective backdrop near
+    /// rgb(204,204,204), and <c>#F2F2F2</c> text on that is about <b>1.4:1</b>. WCAG's floor for
+    /// normal text is 4.5:1. That is not a dim caption, it is an invisible one, and a Commander
+    /// who reached it by dragging a slider would have no way to tell it from the captions having
+    /// stopped.
+    /// </para>
+    /// <para>
+    /// Measured against white, which is the worst case rather than the usual one: 0.5 gives about
+    /// 3.5:1 and is still short, 0.6 gives about <b>5.1:1</b> and clears AA. The default stays
+    /// 0.78 — around 9.7:1 — so this only binds on a Commander who deliberately turned it down,
+    /// and it stops them turning it down past the point where there is nothing to read.
+    /// </para>
+    /// </summary>
+    public const double MinimumBackgroundOpacity = 0.6;
 
     public const double AdultReadingSpeed = 20.0;
 
