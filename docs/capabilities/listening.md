@@ -202,11 +202,22 @@ If the one you chose disappears, the status answer names it rather than reportin
 silence. No microphone at all is a feature being off, not a failure — Directive 47 stays fully
 usable typed.
 
-#### Push-to-talk key {#push-to-talk-key}
+#### Push-to-talk {#push-to-talk-key}
 
-The key you hold to talk. **Right shift out of the box** — a Commander on a stick and throttle has
+What you hold to talk. **Right shift out of the box** — a Commander on a stick and throttle has
 a spare thumb and not much else, and it is the right-hand shift specifically, so the left one you
 may already be using in the game is not this.
+
+**One row, and it takes a key, a stick button, or both.** Press **Press to bind** and Directive 47
+listens for either at once: press a key and it takes the key, press a button on your stick and it
+works out which one that was. With both bound the row reads `RightShift, button 11`, either one
+opens the microphone, and the last one you let go of closes it — so letting go of the key while
+your thumb is still on the button does not cut you off mid-sentence.
+
+**Unbind clears both.** That is what the word says, and nobody ends up with two by accident.
+
+There used to be two rows for this. The stick half is [described below](#push-to-talk-button) and
+is unchanged in every respect except that it is no longer a separate question.
 
 Clear the row and Directive 47 never opens the microphone — unless you have also put
 [the row below](#mode) into one of its hands-free settings, which is the whole point of those and
@@ -217,6 +228,12 @@ you found this row.
 
 In the two key-driven settings, nothing is kept unless the key is held.
 
+**Pressing it also shuts Directive 47 up.** The press is the interrupt — every press, in every
+setting, whether or not you go on to say anything. So talking over an answer you have heard enough
+of is one gesture rather than two, and there is no separate stop key to reach for. If you clear
+this row *and* the button below, the [Stop speaking](speech.html#shut-up) row appears on the Speech
+page to give you one back.
+
 Unlike the stop key, this one does not need a modifier — a bare key is the normal arrangement for
 push-to-talk, which is exactly why the collision check above matters. If right shift is bound to
 something in Elite on your setup, the status report above says so by name.
@@ -224,16 +241,14 @@ something in Elite on your setup, the status report above says so by name.
 **The model cannot change this.** A model that could unbind your microphone key has taken away
 how you talk to it.
 
-#### Push-to-talk button {#push-to-talk-button}
+#### The stick half {#push-to-talk-button}
 
-The same thing on your stick or throttle. Press **Press to bind**, then press and release the
-button you want, and Directive 47 works out which one it was — the same gesture as binding a key,
-pointed at a controller.
+**Not a row of its own any more** — it is the **Push-to-talk** row above. This section is about
+what happens when you press a stick button at it, which is worth reading before you try.
 
-**It sits beside the key rather than replacing it.** With both set, *either* opens the microphone,
-and the last one you let go of closes it. So letting go of the key while your thumb is still on
-the button does not cut you off mid-sentence. Binding a button does not unbind your key, because
-you said two things rather than changed your mind about one.
+Press **Press to bind**, then press and release the button you want, and Directive 47 works out
+which one it was. It is stored separately from your key, so binding a button does not unbind the
+key: you said two things rather than changed your mind about one.
 
 **It has to be a button that springs back.** A switch that stays where you put it would hold the
 microphone open until you moved it again, so the capture declines one and says why. Those belong

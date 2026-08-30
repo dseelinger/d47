@@ -46,7 +46,6 @@ public class MovingThePanelByVoiceTests
                 new VrCapability.HeadsetSurface
                 {
                     Report = () => (VrState.Active, null),
-                    Reanchor = () => 0,
                     Nudge = (nudge, steps) =>
                     {
                         nudges.Add(new Moved(nudge, steps));

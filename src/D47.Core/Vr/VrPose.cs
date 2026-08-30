@@ -130,32 +130,6 @@ public static class VrPlacementMath
         VrPose.FromMatrix(grabbedOffset * hand.ToMatrix());
 
     /// <summary>
-    /// Moves a world-locked surface by the change in head pose since it was anchored
-    /// (Phase 9, "Re-anchor the panels").
-    /// <para>
-    /// Elite's in-game recenter moves the cockpit without telling SteamVR, so a world-locked
-    /// surface drifts out of position with no event to hook. The delta is applied to every
-    /// world-locked surface as a group, which is what preserves their relative layout instead
-    /// of stacking them all in front of the Commander — the thing a naive "put it back where
-    /// it started" does, and the reason this takes a whole set rather than one pose.
-    /// </para>
-    /// </summary>
-    public static VrPose Reanchored(VrPose surface, VrPose anchoredAt, VrPose headNow)
-    {
-        // Yaw only. A Commander who leans or looks down while re-anchoring did not mean to
-        // tip every panel by the same amount and hang them over their knees; what they meant
-        // was "put these back in front of me". Height and roll come from where the surfaces
-        // were placed, which is a choice they already made.
-        var turn = Matrix4x4.CreateRotationY(YawOf(headNow) - YawOf(anchoredAt));
-
-        var pivot = Matrix4x4.CreateTranslation(-anchoredAt.Position)
-                    * turn
-                    * Matrix4x4.CreateTranslation(headNow.Position);
-
-        return VrPose.FromMatrix(surface.ToMatrix() * pivot);
-    }
-
-    /// <summary>
     /// The compass direction a pose is facing, in radians. Taken from where the pose sends its
     /// own forward rather than from the quaternion's components, so it is the same number
     /// whichever of the two equivalent quaternions arrived.

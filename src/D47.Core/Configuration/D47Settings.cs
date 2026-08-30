@@ -1420,10 +1420,9 @@ public sealed record HotkeySettings
     /// dragged, and gives them back the moment it is done (Phase 48).
     /// <para>
     /// <b>Its own gesture rather than a row, because placement has to be explicit and has to be
-    /// reachable from where the overlay is visible.</b> The headset's answer to the same question
-    /// is <see cref="Reanchor"/>, which is a gesture for exactly this reason; and a settings page
-    /// cannot be the answer here, since the overlay is hidden whenever d47's own window is the
-    /// thing in front of the Commander.
+    /// reachable from where the overlay is visible.</b> A settings page cannot be the answer here,
+    /// since the overlay is hidden whenever d47's own window is the thing in front of the
+    /// Commander.
     /// </para>
     /// </summary>
     public string? MoveOverlay { get; init; } = "Ctrl+Alt+M";
@@ -1440,8 +1439,8 @@ public sealed record HotkeySettings
     /// mini keeps.
     /// </para>
     /// <para>
-    /// Window-scoped rather than system-wide, unlike <see cref="Reanchor"/> and
-    /// <see cref="ShowOverlay"/>. Those exist for a moment when Elite is filling the screen and
+    /// Window-scoped rather than system-wide, unlike <see cref="ShowOverlay"/> and
+    /// <see cref="MoveOverlay"/>. Those exist for a moment when Elite is filling the screen and
     /// d47 cannot be focused; this one is pressed by somebody looking at the window it acts on.
     /// </para>
     /// </summary>

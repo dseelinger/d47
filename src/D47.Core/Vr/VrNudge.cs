@@ -132,9 +132,9 @@ public static class VrNudges
     /// it at the same time, which is one gesture doing two things and the second one unasked for.
     /// </para>
     /// <para>
-    /// Turning is about the world's vertical through the surface's own centre, which is the same
-    /// pivot idiom <see cref="VrPlacementMath.Reanchored"/> uses. Tilting is about the surface's
-    /// <em>own</em> lateral axis, because tilting is what that axis is for.
+    /// Turning is about the world's vertical through the surface's own centre — translate to the
+    /// origin, rotate, translate back. Tilting is about the surface's <em>own</em> lateral axis,
+    /// because tilting is what that axis is for.
     /// </para>
     /// </summary>
     public static VrPose Apply(VrPose placed, VrNudge nudge, int steps)

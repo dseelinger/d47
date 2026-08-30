@@ -80,7 +80,6 @@ nav_order: 126
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">
-<a class="card" href="reanchor.html"><span class="ct">Re-anchor →</span><span class="cd">What to do when Elite’s own recenter walks off with your cockpit.</span></a>
 <a class="card" href="interface.html"><span class="ct">The window →</span><span class="cd">The same panel on the surface you can point a mouse at.</span></a>
 <a class="card" href="settings.html"><span class="ct">Settings →</span><span class="cd">Where every row on this page lives, and why Settings is desktop-only.</span></a>
 </div>
@@ -176,8 +175,10 @@ tilted to read from below or angled to sit beside you, which is most of what mov
 Picking it up makes it world-locked, because picking something up and putting it down is what
 world-locked means. Directive 47 does not then argue with you about the setting.
 
-If Elite's own recenter moves your cockpit out from under a panel you had placed, that is what
-[re-anchoring](reanchor.md) is for.
+If Elite's own recenter moves your cockpit out from under a panel you had placed, put it back by
+switching that panel's lock to **head**, which brings it to your face, and then nudging it — the
+first nudge sets a head-locked panel down in front of you, at knee height, before it moves. Two
+steps where re-anchoring was one; that command was retired in 0.94.0.
 
 ### Settings
 
@@ -229,7 +230,7 @@ no toggles, no checklist ticks, no combo boxes, no on-panel keyboard, no scrollb
 grip-to-go-back, and no Settings tab. You cannot grab the panel and carry it.
 
 **What still works.** Everything by voice: moving between tabs, going back, scrolling, answering a
-question the panel is already asking, [re-anchoring](reanchor.md), and placing the panel — see
+question the panel is already asking, and placing the panel — see
 [Moving it about](#moving-it-about) above, which is the replacement for the carry.
 
 **It is not forever.** Turn it back on and everything above returns, exactly as it was. A session

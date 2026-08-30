@@ -97,7 +97,6 @@ public sealed class ScenarioWorld : IDisposable
             new VrCapability.HeadsetSurface
             {
                 Report = () => (D47.Core.Vr.VrState.Unavailable, "No SteamVR runtime in a scenario run."),
-                Reanchor = () => 0,
                 Nudge = (_, _) => D47.Core.Vr.VrNudgeOutcome.NoHeadset,
             },
             // NOT ActionSurface.Inert, and that is the point. An inert surface reports nothing

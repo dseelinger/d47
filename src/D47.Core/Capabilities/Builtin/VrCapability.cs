@@ -82,13 +82,6 @@ public static class VrCapability
         public required Func<(VrState State, string? Reason)> Report { get; init; }
 
         /// <summary>
-        /// Snaps every world-locked surface back to the current head pose as a group. Returns
-        /// how many moved, so saying "nothing to re-anchor" is a real answer rather than
-        /// silence that looks like a failure.
-        /// </summary>
-        public required Func<int> Reanchor { get; init; }
-
-        /// <summary>
         /// Moves whichever panel is on screen one or more steps, and says what happened
         /// (<a href="https://github.com/dseelinger/d47/issues/199">#199</a>).
         /// <para>
@@ -145,19 +138,18 @@ public static class VrCapability
                 Handler = (arguments, _) => Task.FromResult(Show(settings, headset, arguments)),
             },
 
-            // **Placing a panel without a controller** (#199). It is here rather than on its own
-            // capability because the argument that split re-anchor off does not apply: the router
-            // reaches this through a declared phrase and its arguments, not by picking a
-            // capability's one argument-free tool, so what else this capability offers cannot
-            // shadow it.
+            // **Placing a panel without a controller** (#199), and since #219 the only way to
+            // move one by voice at all. Re-anchor used to sit on its own capability because the
+            // keyword router answers with a capability's *first* argument-free tool; this one is
+            // reached through a declared phrase and its arguments instead, so what else this
+            // capability offers cannot shadow it and it needs no capability of its own.
             new ToolDefinition
             {
                 Name = "move_headset_panel",
                 Description =
                     "Move the headset panel a step at a time: left, right, up, down, nearer, further, "
                     + "or turn or tilt it. Acts on whichever panel is on screen, and puts it down in "
-                    + "front of the Commander first if it was still riding their head. To put a panel "
-                    + "that has drifted back where it was, use reanchor_headset_surfaces instead.",
+                    + "front of the Commander first if it was still riding their head.",
                 Parameters =
                 [
                     new ToolParameter
@@ -470,8 +462,8 @@ public static class VrCapability
         yield return Row(
             "lock",
             $"{what} locking",
-            "Head-locked follows you and is always in view. World-locked stays where you put it, which is "
-            + "what re-anchoring exists to undo when the cockpit moves out from under it.",
+            "Head-locked follows you and is always in view. World-locked stays where you put it, and "
+            + "stays there when the cockpit moves out from under it.",
             SettingKind.Choice,
             v => v.Lock,
             (v, x) => v with { Lock = x == "world" ? "world" : "head" },

@@ -207,49 +207,6 @@ public sealed class VrHost : IDisposable
     }
 
     /// <summary>
-    /// Snaps every world-locked surface back to the current head pose, as a group.
-    /// <para>
-    /// As a group is the whole point. Elite's recenter turns the cockpit, so putting the
-    /// panels back means turning them all by the same amount — a per-surface "put it back
-    /// where it started" stacks them in front of the Commander, which is a different feature
-    /// and not one anybody asked for (Phase 9).
-    /// </para>
-    /// <para>
-    /// Returns how many moved, so "there is nothing to re-anchor" is a real answer rather than
-    /// silence that looks like a failure.
-    /// </para>
-    /// </summary>
-    public int Reanchor()
-    {
-        if (_runtime.Head is not { } head)
-        {
-            return 0;
-        }
-
-        var moved = 0;
-
-        foreach (var slot in _anchors.Keys.ToArray())
-        {
-            var anchor = _anchors[slot];
-
-            _anchors[slot] = Anchor(
-                VrPlacementMath.Reanchored(anchor.Placed.ToPose(), anchor.PlacedAgainst.ToPose(), head),
-                head);
-
-            moved++;
-        }
-
-        if (moved > 0)
-        {
-            Remember();
-            _panel.Invalidate();
-            _logger.LogInformation("Re-anchored {Count} world-locked surface(s)", moved);
-        }
-
-        return moved;
-    }
-
-    /// <summary>
     /// Moves the panel that is on screen one or more steps
     /// (<a href="https://github.com/dseelinger/d47/issues/199">#199</a>).
     /// <para>
@@ -269,9 +226,9 @@ public sealed class VrHost : IDisposable
     /// could be anywhere including behind them.
     /// </para>
     /// <para>
-    /// Off the tick, like <see cref="Reanchor"/> and by the same route: it is reached from a tool
-    /// handler and from the keyword router. It touches the same anchors the tick does, and takes
-    /// the same latitude that has.
+    /// Off the tick, because it is reached from a tool handler and from the keyword router
+    /// rather than from the frame. It touches the same anchors the tick does, and takes the same
+    /// latitude that has.
     /// </para>
     /// </summary>
     public VrNudgeOutcome Nudge(VrNudge nudge, int steps)
@@ -300,10 +257,10 @@ public sealed class VrHost : IDisposable
         {
             Placed = PoseSettings.From(VrNudges.Apply(anchor.Placed.ToPose(), nudge, steps)),
 
-            // Against the head as it is now, when there is one. A nudge is the Commander saying
-            // "there" about where they are sitting, so re-anchoring straight afterwards should
-            // leave the panel alone rather than undo them. With no head pose the old half stands,
-            // which keeps the anchor a matched pair rather than half of two.
+            // Against the head as it is now, when there is one. Nothing reads this half since
+            // re-anchor was retired (#219) — the anchor is a matched pair on disk and keeping it
+            // one costs a copy, where writing half of it would leave a shape nothing can read
+            // back. With no head pose the old half stands, for the same reason.
             PlacedAgainst = head is { } now ? PoseSettings.From(now) : anchor.PlacedAgainst,
         };
 

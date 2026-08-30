@@ -82,70 +82,9 @@ public static class PersonaCapability
                     + "other personas are available to switch to.",
                 Handler = (_, _) => Task.FromResult(ToolResult.Ok(Describe(host, settings.Current, ships))),
             },
-            ..ships is null ? Array.Empty<ToolDefinition>() : ShipCoreTools(host, ships),
         ],
         Settings = Rows(host, ships),
     };
-
-    /// <summary>
-    /// Binding a core to a ship, and unbinding it (Phase 35, "The binding is the
-    /// Commander's, and unreachable from the model").
-    /// <para>
-    /// <b>Both protected, and this is the case the invariant was written for.</b> Persona
-    /// selection is protected because in-game comms are untrusted input and "switch persona" is
-    /// exactly the shape of thing a hostile message would try. A tool that could bind a core to a
-    /// ship is that same tool with a delay on it: it changes who is speaking one ship swap later,
-    /// and it does so every time that ship is boarded from then on. So it is reachable the way
-    /// every protected act is — a panel button, a phrase, a gesture — and advertised to nothing.
-    /// </para>
-    /// <para>
-    /// Protected also means these cost no tool-surface bytes, which matters: the advertised
-    /// surface is inside a hundred bytes of <see cref="Conversation.ToolProfiles.ComfortableBytes"/>
-    /// and this phase adds no room. What the model <em>may</em> do is read the binding, and that
-    /// arrives in <c>describe_persona</c>'s output rather than as a tool of its own — an existing
-    /// tool saying one sentence more is free.
-    /// </para>
-    /// </summary>
-    private static ToolDefinition[] ShipCoreTools(PersonaHost host, ShipCoreService ships) =>
-    [
-        new ToolDefinition
-        {
-            Name = "bind_ship_core",
-            Description =
-                "Remember the core aboard as this ship's own core. Boarding that ship puts it "
-                + "aboard from then on.",
-            Protected = true,
-            Commands =
-            [
-                new ToolCommandPhrase("remember this core for this ship", NoArguments),
-                new ToolCommandPhrase("remember your core for this ship", NoArguments),
-                new ToolCommandPhrase("bind this core to this ship", NoArguments),
-                new ToolCommandPhrase("you fly this ship", NoArguments),
-                new ToolCommandPhrase("this ship flies with you", NoArguments),
-            ],
-            Handler = (_, _) => Task.FromResult(ToolResult.Ok(ships.Bind(host.Current.Id))),
-        },
-        new ToolDefinition
-        {
-            Name = "forget_ship_core",
-            Description =
-                "Forget which core flies the ship the Commander is in. Boarding it then changes "
-                + "nothing about who is answering them.",
-            Protected = true,
-            Commands =
-            [
-                new ToolCommandPhrase("forget this ship's core", NoArguments),
-                new ToolCommandPhrase("unbind this ship's core", NoArguments),
-                new ToolCommandPhrase("this ship has no core", NoArguments),
-            ],
-            Handler = (_, _) => Task.FromResult(ToolResult.Ok(ships.Forget())),
-        },
-    ];
-
-    /// <summary>A phrase that fills nothing in, which is every phrase here: both acts read the
-    /// ship the Commander is in and the core aboard, and neither takes a value.</summary>
-    private static readonly IReadOnlyDictionary<string, string> NoArguments =
-        new Dictionary<string, string>(StringComparer.Ordinal);
 
     private static IReadOnlyList<SettingRow> Rows(PersonaHost host, ShipCoreService? ships) =>
     [

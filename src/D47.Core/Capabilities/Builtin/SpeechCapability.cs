@@ -880,10 +880,29 @@ public static class SpeechCapability
                 Label = "Stop speaking",
                 Help =
                     "Silences D47 instantly, from anywhere — including while Elite has the foreground. " +
-                    "Press the key combination to bind it.",
+                    "Press the key combination to bind it. Only shown when you have no push-to-talk " +
+                    "bound, because pressing push-to-talk already silences D47.",
                 Kind = SettingKind.Hotkey,
                 DefaultDisplay = "(unbound)",
                 DocsAnchor = "shut-up",
+
+                // Gone from the surface of every Commander who has push-to-talk, which is almost
+                // all of them (#218): a press silences d47 now, so a second key for the same act
+                // is a row that has to be explained rather than one that helps.
+                //
+                // <b>Hidden rather than retired, and the difference is architectural.</b> The
+                // comment below says a model must never be able to unbind the Commander's stop
+                // button; folding stop into push-to-talk would make the stop control depend on
+                // push-to-talk being bound, and push-to-talk can be cleared deliberately — its own
+                // help says "Clear it and D47 never opens the microphone." A Commander who has
+                // done that gets this row back rather than losing every key-driven stop.
+                //
+                // A binding already set stays set and stays registered while the row is hidden.
+                // AppliesWhen refuses writes as well as hiding, so nothing can quietly change it
+                // from behind the fold either.
+                AppliesWhen = s =>
+                    string.IsNullOrWhiteSpace(s.Listening.PushToTalkKey)
+                    && string.IsNullOrWhiteSpace(s.Listening.PushToTalkButton),
 
                 // Claimed from the whole system, so a bare key is refused as it is bound.
                 SystemWide = true,

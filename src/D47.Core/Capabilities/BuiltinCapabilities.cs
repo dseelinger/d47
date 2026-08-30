@@ -298,7 +298,6 @@ public static class BuiltinCapabilities
         CalloutCapability.Create(settings, () => CalloutCapability.Describe(callouts, settings.Current)),
         InterfaceCapability.Create(),
         VrCapability.Create(settings, headset),
-        ReanchorCapability.Create(headset),
         FocusCapability.Create(raiseGame),
         .. ActionCapabilities.All(actions, shipCommands),
         AutonomousCapability.Create(autonomous),

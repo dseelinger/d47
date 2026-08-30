@@ -1,7 +1,7 @@
 ---
 title: HOTAS switches
 group: Acting on the game
-nav_order: 137
+nav_order: 136
 ---
 
 <!--

@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using D47.Core.Listening;
 using Avalonia;
 using Avalonia.Automation;
@@ -987,11 +987,15 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             {
                 // A row that does not apply is absent, not disabled: a greyed-out control still
                 // asserts that the setting exists (Phase 4).
+                // DrawnElsewhere is checked here rather than left to the fold, because it is
+                // not a fold: no "show every setting" reveals it. Another row's control holds it
+                // (#217), and drawing it as well would offer one binding twice.
                 var shown = row.Row.Applies(_settings.Current)
+                            && !row.Row.DrawnElsewhere
                             && !SettingsFold.IsFolded(
                                 row.Row,
                                 _settings.Current,
-                                _settings.IsChanged(row.Row.Key),
+                                row.Row.BoundKeys.Any(_settings.IsChanged),
                                 ShowingEverything)
                             && (Matches(row.Row) || (row.Section >= 0 && named[row.Section]));
 
@@ -1581,7 +1585,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
             back.Click += (_, _) =>
             {
-                _settings!.Reset(row.Key, SettingsCaller.Panel);
+                // Every key the control holds, so resetting a merged row puts both halves back
+                // rather than the one whose key happens to name the row (#217).
+                foreach (var key in row.BoundKeys)
+                {
+                    _settings!.Reset(key, SettingsCaller.Panel);
+                }
+
                 Refresh();
             };
 
@@ -1594,7 +1604,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             refresh = () =>
             {
                 shownBefore();
-                back.IsVisible = _settings?.IsChanged(row.Key) ?? false;
+                back.IsVisible = _settings is { } settings && row.BoundKeys.Any(settings.IsChanged);
             };
         }
 
@@ -1857,11 +1867,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             case SettingKind.Secret:
                 return BuildSecret(row, message);
 
+            // One control for both, which is the whole of #217: what a bind row asks is "press
+            // the thing you want", and which mechanisms are armed to hear it follows from the row
+            // rather than from a second builder.
             case SettingKind.Hotkey:
-                return BuildHotkey(row, message);
-
             case SettingKind.HotasButton:
-                return BuildHotasButton(row, message);
+                return BuildBind(row, message);
 
             default:
                 return BuildText(row, message);
@@ -2885,13 +2896,36 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         return (editor, editor.Refresh, false);
     }
 
-    private (Control, Action, bool) BuildHotkey(SettingRow row, TextBlock message)
+    /// <summary>
+    /// The one bind control (<a href="https://github.com/dseelinger/d47/issues/217">#217</a>).
+    /// <para>
+    /// <b>Which listeners it arms comes from the row, not from a kind-specific builder.</b> A
+    /// <see cref="SettingKind.Hotkey"/> row listens for a keystroke; one naming a
+    /// <see cref="SettingKind.HotasButton"/> row in <see cref="SettingRow.AlsoBinds"/> also polls
+    /// the controller, and takes whichever arrives first. So push-to-talk is one row that holds a
+    /// key, a stick button, or both, and the other five bind rows are the same control with one
+    /// listener armed.
+    /// </para>
+    /// <para>
+    /// <b>Unbind clears every key the control holds</b>, which is what the word says. The
+    /// alternative — a removable chip per bound gesture — is a second idiom on the page for a row
+    /// nobody has both halves of by accident.
+    /// </para>
+    /// </summary>
+    private (Control, Action, bool) BuildBind(SettingRow row, TextBlock message)
     {
         var button = new Button { MinWidth = 150, HorizontalContentAlignment = HorizontalAlignment.Center };
         var clear = new Button { Content = "Unbind" };
 
-        button.Click += async (_, _) => await CaptureHotkeyAsync(row, button, message);
-        clear.Click += (_, _) => Apply(row, null, message);
+        button.Click += async (_, _) => await CaptureBindAsync(row, button, message);
+
+        clear.Click += (_, _) =>
+        {
+            foreach (var key in row.BoundKeys)
+            {
+                Apply(key, null, message);
+            }
+        };
 
         var panel = new StackPanel
         {
@@ -2904,71 +2938,45 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         return (panel, () =>
         {
-            var bound = _settings!.Read(row.Key);
-            button.Content = bound is null ? "Press to bind" : Gestures.Describe(bound);
+            button.Content = BoundAs(row) ?? "Press to bind";
+
+            // A row that can only be filled from a controller is dead without one, and saying so
+            // beats a button that does nothing. A row with a key half stays live either way.
+            button.IsEnabled = row.Kind != SettingKind.HotasButton || _switches is not null;
+
+            if (row.Kind == SettingKind.HotasButton && _switches is null)
+            {
+                button.Content = "No controllers";
+            }
         }, true);
     }
 
     /// <summary>
-    /// The stick's push-to-talk row (Phase 53).
-    /// <para>
-    /// Built like <see cref="BuildHotkey"/> because it is the same gesture — press the thing you
-    /// want — and it reuses the reader and the clock the switch walk already carries rather than
-    /// asking composition for a second pair. With no controllers composed the button says so and
-    /// is disabled, rather than being present and dead.
-    /// </para>
+    /// What a bind row is bound to, in the Commander's words — both halves when it holds two, in
+    /// the order they are pressed for rather than the order they are stored in.
     /// </summary>
-    private (Control, Action, bool) BuildHotasButton(SettingRow row, TextBlock message)
+    private string? BoundAs(SettingRow row)
     {
-        var button = new Button
-        {
-            Name = "BindHotasButton",
-            MinWidth = 150,
-            HorizontalContentAlignment = HorizontalAlignment.Center,
-        };
+        var said = new List<string>();
 
-        var clear = new Button { Content = "Unbind" };
-
-        button.Click += async (_, _) =>
+        foreach (var key in row.BoundKeys)
         {
-            if (_switches is not { } editing || TopLevel.GetTopLevel(this) is not Window owner)
+            var stored = _settings!.Read(key);
+
+            if (string.IsNullOrWhiteSpace(stored))
             {
-                return;
+                continue;
             }
 
-            var window = new Controls.ButtonBindWindow(editing.Reader, editing.Now);
+            said.Add(KindOf(key) == SettingKind.HotasButton
+                ? D47.Core.Hotas.HotasButton.Parse(stored)?.Describe() ?? stored
+                : Gestures.Describe(stored));
+        }
 
-            await window.Over(owner);
-
-            if (window.Result is { } caught)
-            {
-                Apply(row, caught.ToString(), message);
-            }
-        };
-
-        clear.Click += (_, _) => Apply(row, null, message);
-
-        var panel = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 8,
-            HorizontalAlignment = HorizontalAlignment.Right,
-        };
-
-        panel.Children.Add(button);
-        panel.Children.Add(clear);
-
-        return (panel, () =>
-        {
-            var bound = D47.Core.Hotas.HotasButton.Parse(_settings!.Read(row.Key));
-
-            button.Content = _switches is null
-                ? "No controllers"
-                : bound?.Describe() ?? "Press to bind";
-
-            button.IsEnabled = _switches is not null;
-        }, true);
+        return said.Count == 0 ? null : string.Join(", ", said);
     }
+
+    private SettingKind KindOf(string key) => _settings?.Find(key)?.Kind ?? SettingKind.Hotkey;
 
     private async Task ChooseAsync(SettingRow row, Button button, BusyGlyph busy, TextBlock message)
     {
@@ -3032,21 +3040,50 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     }
 
     /// <summary>
-    /// Binds a gesture by listening for one, rather than by offering a list of key names. There
-    /// is no way to type a key that does not exist, and no list to keep in step with a keyboard
-    /// layout (Phase 4, "Hotkey Binding").
+    /// Binds by listening for a gesture, rather than by offering a list of key names. There is no
+    /// way to type a key that does not exist, and no list to keep in step with a keyboard layout
+    /// (Phase 4, "Hotkey Binding").
+    /// <para>
+    /// <b>Both listeners at once where the row has both</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/217">#217</a>): a keystroke arriving at
+    /// this control, and a controller walked for at 10 Hz. Whichever arrives first is what the
+    /// Commander meant, and it is stored against the row that kind belongs to — which is why the
+    /// two settings properties stay separate underneath one question.
+    /// </para>
+    /// <para>
+    /// The stick half is <see cref="ButtonCapture"/>, unchanged and still the authority on what
+    /// counts as a button: it ignores what was already held when the walk started, captures on
+    /// <em>release</em> rather than on press, and declines a switch that stays where it is put with
+    /// its own sentence. That sentence goes on the row's message line, which is where the modal
+    /// bind window used to put it.
+    /// </para>
     /// </summary>
-    private async Task CaptureHotkeyAsync(SettingRow row, Button button, TextBlock message)
+    private async Task CaptureBindAsync(SettingRow row, Button button, TextBlock message)
     {
-        if (TopLevel.GetTopLevel(this) is not { } top)
+        if (TopLevel.GetTopLevel(this) is not { } top || _settings is null)
         {
             return;
         }
 
-        var previous = button.Content;
-        button.Content = "Press a key…";
+        var keys = row.Kind != SettingKind.HotasButton;
 
-        var captured = new TaskCompletionSource<KeyGesture?>();
+        // The stick is armed for a row that is one, or for a row naming one as its other half.
+        var buttonKey = row.Kind == SettingKind.HotasButton
+            ? row.Key
+            : row.BoundKeys.FirstOrDefault(key => KindOf(key) == SettingKind.HotasButton);
+
+        var stick = buttonKey is not null && _switches is not null;
+
+        var previous = button.Content;
+
+        button.Content = (keys, stick) switch
+        {
+            (true, true) => "Press a key or button…",
+            (true, false) => "Press a key…",
+            _ => "Press a button…",
+        };
+
+        var captured = new TaskCompletionSource<(string Key, string? Value)?>();
 
         void OnKey(object? sender, KeyEventArgs e)
         {
@@ -3058,44 +3095,123 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             }
 
             e.Handled = true;
-            captured.TrySetResult(e.Key == Key.Escape ? null : new KeyGesture(e.Key, e.KeyModifiers));
+
+            captured.TrySetResult(e.Key == Key.Escape
+                ? null
+                : (row.Key, new KeyGesture(e.Key, e.KeyModifiers).ToString()));
         }
 
-        // Tunnelling: the gesture belongs to the binding, not to whatever control the click left
-        // focused, so it has to be seen on the way down.
-        //
-        // And handled events too. This is the same top level that carries the push-to-talk
-        // suppressor now that settings is a page of the main window rather than a window of its
-        // own — the suppressor tunnels first and marks the key handled, so without this the one
-        // rebind that could not be made is rebinding push-to-talk to the key it already holds,
-        // which is exactly the rebind somebody attempting it is most likely to try.
-        top.AddHandler(KeyDownEvent, OnKey, RoutingStrategies.Tunnel, handledEventsToo: true);
+        if (keys)
+        {
+            // Tunnelling: the gesture belongs to the binding, not to whatever control the click
+            // left focused, so it has to be seen on the way down.
+            //
+            // And handled events too. This is the same top level that carries the push-to-talk
+            // suppressor now that settings is a page of the main window rather than a window of
+            // its own — the suppressor tunnels first and marks the key handled, so without this
+            // the one rebind that could not be made is rebinding push-to-talk to the key it
+            // already holds, which is exactly the rebind somebody attempting it is most likely
+            // to try.
+            top.AddHandler(KeyDownEvent, OnKey, RoutingStrategies.Tunnel, handledEventsToo: true);
+        }
+
+        var walking = stick ? Walk(_switches!, buttonKey!, message, captured) : null;
 
         try
         {
-            var gesture = await captured.Task;
-
-            if (gesture is not null)
+            if (await captured.Task is { } caught)
             {
-                Apply(row, gesture.ToString(), message);
+                Apply(caught.Key, caught.Value, message);
             }
         }
         finally
         {
-            top.RemoveHandler(KeyDownEvent, OnKey);
+            if (keys)
+            {
+                top.RemoveHandler(KeyDownEvent, OnKey);
+            }
+
+            walking?.Stop();
             button.Content = previous;
             Refresh();
         }
     }
 
-    private bool Apply(SettingRow row, string? value, TextBlock message)
+    /// <summary>
+    /// The controller half of a capture: the same 10 Hz walk the modal bind window ran, on a timer
+    /// this control owns. Faster would be answering a question the runtime cannot ask — the tick
+    /// loop samples push-to-talk at exactly this rate.
+    /// </summary>
+    private DispatcherTimer Walk(
+        SwitchEditing editing,
+        string key,
+        TextBlock message,
+        TaskCompletionSource<(string Key, string? Value)?> captured)
+    {
+        var capture = new D47.Core.Hotas.ButtonCapture();
+        var opened = editing.Now();
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
+
+        void Say(string text)
+        {
+            message.Text = text;
+            message.IsVisible = true;
+        }
+
+        timer.Tick += (_, _) =>
+        {
+            if (editing.Reader.Unavailable is { Length: > 0 } why)
+            {
+                Say(why);
+                timer.Stop();
+                return;
+            }
+
+            // Nothing is read until the device list stops changing: a single enumeration at
+            // startup reported three of six devices on the bench (Phase 21, finding 1).
+            if (!editing.Reader.IsSettled)
+            {
+                Say("Looking for your controllers…");
+                return;
+            }
+
+            var result = capture.Poll(editing.Reader.Poll(), editing.Now() - opened);
+
+            Say(result.Says);
+
+            if (result.Stage == D47.Core.Hotas.ButtonCaptureStage.Captured)
+            {
+                timer.Stop();
+                captured.TrySetResult((key, result.Binding!.Value.ToString()));
+            }
+            else if (result.Stage == D47.Core.Hotas.ButtonCaptureStage.Declined)
+            {
+                // The decline is the answer, and it stays on the line. Cancelling the whole
+                // capture would take the sentence away with it before it had been read.
+                timer.Stop();
+            }
+        };
+
+        timer.Start();
+
+        return timer;
+    }
+
+    private bool Apply(SettingRow row, string? value, TextBlock message) =>
+        Apply(row.Key, value, message);
+
+    /// <summary>
+    /// By key rather than by row, because one control can hold two of them (#217) and the message
+    /// line, the redraw and the refusal are the same for both halves.
+    /// </summary>
+    private bool Apply(string key, string? value, TextBlock message)
     {
         if (_settings is null)
         {
             return false;
         }
 
-        var result = _settings.Apply(row.Key, value, SettingsCaller.Panel);
+        var result = _settings.Apply(key, value, SettingsCaller.Panel);
 
         // Only failures are worth *saying*. A message on every success would make the panel a log.
         message.IsVisible = !result.Ok;

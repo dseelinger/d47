@@ -20,6 +20,13 @@ public enum SettingKind
     /// is a keystroke arriving at a control. The stored form is <c>NonRoamableId#index</c> and is
     /// never typed by hand.
     /// </para>
+    /// <para>
+    /// <b>Still two kinds after #217 merged the two push-to-talk rows into one</b>, and that is the
+    /// paragraph above holding rather than surviving by accident: the merge is of the <em>question
+    /// put to the Commander</em>, not of the mechanisms. One control arms both listeners at once and
+    /// takes whichever arrives first, which needs both mechanisms to stay exactly as distinct as
+    /// they are here. See <see cref="SettingRow.AlsoBinds"/>.
+    /// </para>
     /// </summary>
     HotasButton,
 
@@ -305,6 +312,44 @@ public sealed record SettingRow
     /// </para>
     /// </summary>
     public bool PageOnly { get; init; }
+
+    /// <summary>
+    /// Another row this row's control binds as well as its own
+    /// (<a href="https://github.com/dseelinger/d47/issues/217">#217</a>). Push-to-talk is the only
+    /// one: the key row names the stick-button row, and one control holds both.
+    /// <para>
+    /// <b>Two rows over two properties, drawn as one.</b> <c>settings.json</c> is append-only, so
+    /// <c>listening.pushToTalkKey</c> and <c>listening.pushToTalkButton</c> both stay on the record
+    /// and both keep their own binding, help and docs anchor — a build that merged the storage would
+    /// silently discard whichever half it dropped on first read. What merges is the question the
+    /// Commander is asked, which was always one: <em>what do you press to talk?</em>
+    /// </para>
+    /// <para>
+    /// The companion row carries <see cref="DrawnElsewhere"/>, so exactly one control is built for
+    /// the pair and neither row is shown twice.
+    /// </para>
+    /// </summary>
+    public string? AlsoBinds { get; init; }
+
+    /// <summary>
+    /// This row is real, writable and reachable, and <b>nothing draws it</b> — another row's control
+    /// holds it, through <see cref="AlsoBinds"/>.
+    /// <para>
+    /// <b>Not <see cref="AppliesWhen"/>, and the difference is load-bearing.</b> A row that does not
+    /// apply is refused by <c>SettingsService.Apply</c> as well as being hidden, which is right for a
+    /// setting that has no meaning in the current configuration and exactly wrong here: this row is
+    /// written every time the Commander binds a stick button. It applies; it is simply not its own
+    /// row on the page.
+    /// </para>
+    /// </summary>
+    public bool DrawnElsewhere { get; init; }
+
+    /// <summary>
+    /// Every settings key this row's control writes: its own, and <see cref="AlsoBinds"/> when there
+    /// is one. What "has this row been changed" and "reset this row" both have to ask, since a merged
+    /// row with one half changed is a changed row.
+    /// </summary>
+    public IReadOnlyList<string> BoundKeys => AlsoBinds is null ? [Key] : [Key, AlsoBinds];
 
     /// <summary>
     /// Drawn once at the top of the settings page rather than inside its card

@@ -96,11 +96,14 @@ turn, the quiet loop while it works, and the one command that outranks all of th
 > "shut up"
 > "be quiet"
 
-Or press the stop key, **Ctrl+Alt+X** out of the box, which works from anywhere — including with
-Elite in the foreground.
+**Or press push-to-talk.** Right shift out of the box: pressing it silences Directive 47 the
+instant it goes down, whether or not you go on to say anything. Holding it still opens the
+microphone as it always did, so you can press it and start talking straight over the answer you
+have heard enough of — which is what it is for.
 
-**"stop" is the one to reach for.** One syllable, four letters. An interrupt is judged on how fast
-you can say it, and everything else here is a longer way of saying the same thing.
+**"stop" is the one to reach for when your hands are busy.** One syllable, four letters. An
+interrupt is judged on how fast you can say it, and everything else here is a longer way of saying
+the same thing.
 
 Silence is immediate: whatever is queued is dropped, the current sentence is cut off mid-word, and
 anything still being synthesised is abandoned rather than allowed to arrive a moment later and
@@ -612,12 +615,21 @@ Two are included: `thinking-hum` and `thinking-pulse`.
 
 #### Stop speaking {#shut-up}
 
-The key that silences it, described above. Bound system-wide rather than only when Directive 47
-has focus, because the moment you want it is the moment Elite is in front.
+**You will not normally see this row**, and that is the point of it. Push-to-talk silences
+Directive 47 on the press, so a separate key for the same act is one more thing to bind and explain.
+The row appears only when you have **no push-to-talk at all** — neither a key nor a stick button —
+which is the one arrangement where nothing else would stop the voice from the keyboard.
 
-**The model cannot change this row.** It can be changed from the panel, by hotkey, or by voice —
-but not by anything the model calls. A model able to unbind your stop button has removed the one
-control that outranks it.
+It is unbound out of the box. Bound, it is claimed system-wide rather than only while Directive 47
+has focus, because the moment you want it is the moment Elite is in front — and a system-wide key
+needs a modifier, so a bare letter is refused as you press it.
+
+**A key you had already set is not thrown away** by the row going quiet. It stays in your settings
+and stays live; bind push-to-talk back and it is still there.
+
+**The model cannot change this row.** It can be changed from the panel or by voice — but not by
+anything the model calls. A model able to unbind your stop button has removed the one control that
+outranks it, which is why this is hidden rather than deleted.
 
 #### When a turn fails {#retry}
 

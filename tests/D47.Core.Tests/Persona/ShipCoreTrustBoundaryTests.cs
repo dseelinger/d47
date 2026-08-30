@@ -6,36 +6,70 @@ using Xunit;
 namespace D47.Core.Tests.Persona;
 
 /// <summary>
-/// The boundary this phase turns on (Phase 35, "The binding is the Commander's, and
-/// unreachable from the model"): <b>the model may read a binding and never write one</b>.
+/// The boundary Phase 35 turned on — <b>the model may read a binding and never write one</b> —
+/// now kept by there being nothing to reach
+/// (<a href="https://github.com/dseelinger/d47/issues/219">#219</a>).
 /// <para>
 /// Persona selection is protected because in-game comms and journal text are untrusted
 /// (architecture.md §7) and "switch persona" is exactly the shape of thing a hostile message
 /// would try. Binding is that same act with a delay on it — it changes who is speaking the next
-/// time that ship is boarded, and every time after — so it does not become the way around the
+/// time that ship is boarded, and every time after — so it did not become the way around the
 /// rule.
+/// </para>
+/// <para>
+/// <b>The tools that carried it are gone, and this file changed shape with them.</b> It used to
+/// assert that <c>bind_ship_core</c> and <c>forget_ship_core</c> refused the model, were never
+/// advertised, and were reachable by voice. Binding is a Settings row now and nothing else, so
+/// what those facts asserted is true by absence — which is a stronger guarantee than a refusal,
+/// and the one thing worth checking is that the absence is real rather than that the refusal
+/// still works.
 /// </para>
 /// </summary>
 public class ShipCoreTrustBoundaryTests
 {
     private static CapabilityRegistry Registry(TempInstall install) => TestSurface.For(install).Registry;
 
+    /// <summary>
+    /// <b>Neither tool exists, by any road.</b> Asserted as absence rather than as a refusal,
+    /// because that is what the removal bought: a tool that refuses is a tool somebody can make
+    /// stop refusing, and a tool that is not there is not.
+    /// </summary>
     [Theory]
     [InlineData("bind_ship_core")]
     [InlineData("forget_ship_core")]
-    public async Task TheModelCannotBindACoreToAShip(string tool)
+    public void NeitherHalfIsATooAtAllAnyMore(string gone)
     {
         using var install = new TempInstall();
 
-        var result = await Registry(install)
-            .InvokeAsync(tool, ToolArguments.Empty, TestContext.Current.CancellationToken, ToolCaller.Model);
+        var declared = Registry(install).All
+            .SelectMany(capability => capability.Descriptor.Tools)
+            .Select(tool => tool.Name)
+            .ToHashSet(StringComparer.Ordinal);
 
-        Assert.True(result.IsError);
-        Assert.Contains("not something I can do on my own", result.Content, StringComparison.Ordinal);
+        Assert.DoesNotContain(gone, declared);
     }
 
+    /// <summary>
+    /// And the phrases that reached them reach nothing. A declared phrase outliving its tool
+    /// would be a router match against a name nothing answers to.
+    /// </summary>
+    [Theory]
+    [InlineData("remember this core for this ship")]
+    [InlineData("this ship flies with you")]
+    [InlineData("forget this ship's core")]
+    public void ThePhrasesThatReachedThemReachNothing(string phrase)
+    {
+        using var install = new TempInstall();
+
+        Assert.Null(new KeywordRouter(Registry(install)).MatchToolCommand(phrase));
+    }
+
+    /// <summary>
+    /// Reading is untouched, and it is the half that was always allowed: the binding arrives in
+    /// <c>describe_persona</c>'s output rather than as a tool of its own.
+    /// </summary>
     [Fact]
-    public void NeitherHalfIsEverAdvertised()
+    public void TheModelMayStillReadWhatAShipFliesWith()
     {
         using var install = new TempInstall();
 
@@ -44,31 +78,7 @@ public class ShipCoreTrustBoundaryTests
             .Select(tool => tool.Name)
             .ToHashSet(StringComparer.Ordinal);
 
-        // Not caution — arithmetic. A tool that would refuse every call it received still costs
-        // the cached prefix on every turn of the session (architecture.md §6), and this phase was
-        // handed under a hundred bytes of room.
-        Assert.DoesNotContain("bind_ship_core", advertised);
-        Assert.DoesNotContain("forget_ship_core", advertised);
-
-        // What the model may do instead: read. The binding is one sentence inside a tool that was
-        // already advertised, which is what makes reading free.
         Assert.Contains("describe_persona", advertised);
-    }
-
-    [Theory]
-    [InlineData("remember this core for this ship", "bind_ship_core")]
-    [InlineData("this ship flies with you", "bind_ship_core")]
-    [InlineData("forget this ship's core", "forget_ship_core")]
-    public void BothHalvesAreReachableByVoiceThroughTheModelFreeRouter(string phrase, string tool)
-    {
-        using var install = new TempInstall();
-
-        // A protected tool is unreachable from the tool surface by design, so without a declared
-        // phrase it could not be reached by voice at all — and nothing would report that.
-        var match = new KeywordRouter(Registry(install)).MatchToolCommand(phrase);
-
-        Assert.NotNull(match);
-        Assert.Equal(tool, match.ToolName);
     }
 
     /// <summary>

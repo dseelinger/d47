@@ -93,5 +93,7 @@ public static class SettingsFold
         D47Settings settings,
         Func<SettingRow, bool> changed,
         bool showEverything) =>
-        rows.Count(row => row.Applies(settings) && IsFolded(row, settings, changed(row), showEverything));
+        rows.Count(row => row.Applies(settings)
+                          && !row.DrawnElsewhere
+                          && IsFolded(row, settings, changed(row), showEverything));
 }

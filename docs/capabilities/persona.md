@@ -56,7 +56,7 @@ nav_order: 120
  <text x="770" y="124" text-anchor="middle" font-size="14" fill="var(--text-muted)">you already asked</text>
  <rect x="20" y="166" width="840" height="54" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="440" y="199" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">Nothing is bound until you say so.</text>
- <text x="440" y="242" text-anchor="middle" font-size="15" fill="var(--text-muted)">“remember this core for this ship” — or Ctrl+Alt+B, which works while Elite has the foreground.</text>
+ <text x="440" y="242" text-anchor="middle" font-size="15" fill="var(--text-muted)">You set it on the Settings tab, once per ship, and Directive 47 keeps it.</text>
 </svg>
 </section>
 <section>
@@ -161,19 +161,17 @@ comes aboard.
 
 **Nothing is bound until you say so.** Directive 47 never works one out by watching which core
 happened to be running while you were flying something; a binding that appeared on its own is a
-preference you never stated. Sitting in the ship, say it, press it, or use the gesture:
+preference you never stated.
 
-```text
-"remember this core for this ship"    "you fly this ship"    "this ship flies with you"
-"forget this ship's core"             "this ship has no core"
-```
+**You set it on the Settings tab**, on the rows under Persona. It was also a spoken phrase and a
+`Ctrl+Alt+B` gesture until 0.94.0, and both were retired: it is a thing done once per ship, at the
+desk, and two more roads to it were two more things to keep in step. Settings is desktop-only, so
+this is now a desk job — which is where it was already being done.
 
-`Ctrl+Alt+B` does the same thing, and works while Elite has the foreground — which is when you
-will want it. Pressing it again with that same core already bound takes the binding back.
-
-**The model cannot bind anything.** It can tell you what a ship flies with, and that is all. A
-tool that could bind a core to a ship is a tool that changes who is speaking one ship swap later,
-and Directive 47 reads your journal and your in-game messages, which other people write.
+**The model cannot bind anything**, and now there is nothing for it to reach. It can tell you what
+a ship flies with, and that is all. A tool that could bind a core to a ship is a tool that changes
+who is speaking one ship swap later, and Directive 47 reads your journal and your in-game messages,
+which other people write.
 
 **Boarding a bound ship is silent.** The core changes — its voice, its own memory of talking to
 you, the name it answers to — and it says nothing about it, because you already said what should

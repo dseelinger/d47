@@ -1,7 +1,7 @@
 ---
 title: Acting on its own
 group: Acting on the game
-nav_order: 133
+nav_order: 132
 ---
 
 <!--

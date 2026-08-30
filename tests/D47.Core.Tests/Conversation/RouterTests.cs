@@ -123,15 +123,14 @@ public class KeywordRouterTests
     /// technical enough not to turn up incidentally in an unrelated question — "diagnostics" passes,
     /// "status", "system" and "where" emphatically do not. Adding to this list should feel like a
     /// decision, which is the point of having the list rather than dropping the rule.
+    /// <para>
+    /// It is down to one again. "re-anchor" and "reanchor" earned their place on the grounds that
+    /// the command they reached had to be sayable without thinking — and the command is gone
+    /// (<a href="https://github.com/dseelinger/d47/issues/219">#219</a>), so the exception went
+    /// with it rather than staying as a licence nothing is spending.
+    /// </para>
     /// </summary>
-    /// <summary>
-    /// Single words that are safe because nobody says them by accident. "re-anchor" and
-    /// "reanchor" are here because the alternative is worse than the risk: the case the
-    /// command exists for is a Commander whose panels have drifted somewhere they cannot aim
-    /// at, so it has to be short enough to say without thinking, and neither spelling turns up
-    /// in a sentence about anything else.
-    /// </summary>
-    private static readonly string[] JustifiedSingleWords = ["diagnostics", "re-anchor", "reanchor"];
+    private static readonly string[] JustifiedSingleWords = ["diagnostics"];
 
     [Fact]
     public void KeywordsAreNeverBareCommonWords()
