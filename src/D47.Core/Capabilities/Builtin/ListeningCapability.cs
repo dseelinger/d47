@@ -211,10 +211,10 @@ public static class ListeningCapability
                 Help =
                     "Held, D47 listens — and pressing it shuts D47 up, whether or not you go on to say "
                     + "anything. Right shift out of the box, since that is what a Commander on a stick and "
-                    + "throttle has spare. Bind a key, a stick button, or both — one at a time: press the "
-                    + "control and give it a key, then press it again and give it a button. With both set, "
-                    + "either one opens the microphone. Unbind clears both, and with neither one D47 never "
-                    + "opens the microphone.",
+                    + "throttle has spare. Bind a key, a stick button, or one of each — one at a time: press "
+                    + "the control and give it a key, then press it again and give it a button. Giving it the "
+                    + "same kind twice replaces that one. With both set, either opens the microphone. Unbind "
+                    + "clears both, and with neither one D47 never opens the microphone.",
                 Kind = SettingKind.Hotkey,
                 DefaultDisplay = "RightShift",
                 DocsAnchor = "push-to-talk-key",
