@@ -462,7 +462,7 @@ public sealed class AdventuresPage : UserControl
 
         var reachButton = new Button { Padding = new Thickness(12, 4), MinHeight = TouchTarget };
         var lengthButton = new Button { Padding = new Thickness(12, 4), MinHeight = TouchTarget };
-        var usingButton = new Button { Padding = new Thickness(12, 4), MinHeight = TouchTarget, IsVisible = hasChoice };
+        var usingButton = new Button { Padding = new Thickness(12, 4), MinHeight = TouchTarget };
         var briefButton = new Button { Padding = new Thickness(12, 4), MinHeight = TouchTarget };
         var status = Muted(string.Empty);
         var go = new Button { Content = "Go", Padding = new Thickness(14, 4), MinHeight = TouchTarget };
@@ -586,7 +586,16 @@ public sealed class AdventuresPage : UserControl
 
         page.Children.Add(reachButton);
         page.Children.Add(lengthButton);
-        page.Children.Add(usingButton);
+
+        // Left out rather than hidden when there is nothing to choose between (#202). A hidden
+        // control is still there — still something a ray can find on a surface that was supposed to
+        // carry none — and the IsVisible that hid it is a local value, which outranks the rule that
+        // was meant to take it away. Not building it is the answer to both.
+        if (hasChoice)
+        {
+            page.Children.Add(usingButton);
+        }
+
         page.Children.Add(briefButton);
         page.Children.Add(go);
         page.Children.Add(status);

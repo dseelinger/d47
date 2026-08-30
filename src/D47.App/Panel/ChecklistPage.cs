@@ -84,10 +84,32 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         IsVisible = false,
     };
 
-    private readonly Button _arcsButton = new()
+    /// <summary>
+    /// The goals band, opened and closed (<a href="https://github.com/dseelinger/d47/issues/203">#203</a>).
+    /// <para>
+    /// <b>A checkbox, because it was already a two-state disclosure wearing a button.</b> It held a
+    /// private <c>bool</c> and swapped its own label between <c>Goals (3 running)</c> and
+    /// <c>Hide goals</c>; nothing navigated and nothing opened, which is what the buttons beside it
+    /// do. A checkbox says its state without having to rewrite itself.
+    /// </para>
+    /// <para>
+    /// <b>And that gets the count back.</b> The label swap destroyed it: once the band was open the
+    /// button read <em>Hide goals</em> and how many were running was gone, which is the number that
+    /// made anybody open it. A checkbox holds <c>Goals (3 running)</c> whichever way it is set.
+    /// </para>
+    /// <para>
+    /// <b>It could not become one until #202 was fixed</b>, and that is worth writing down rather
+    /// than being rediscovered. The rule that keeps clickable controls off a mini panel was a style
+    /// selector matching <em>exact</em> <c>Button</c>, with checkboxes deliberately exempted because
+    /// a checkbox marks a checklist line as done — so converting this would have moved it into the
+    /// exemption and made a reported defect correct by rule. The rule is now about the bar this sits
+    /// on rather than about what kind of control it is, so the conversion costs nothing.
+    /// </para>
+    /// </summary>
+    private readonly CheckBox _arcsToggle = new()
     {
-        Padding = new Thickness(12, 4),
         MinHeight = TouchTarget,
+        VerticalAlignment = VerticalAlignment.Center,
         IsVisible = false,
     };
 
@@ -265,9 +287,11 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         _suggestions.Click += (_, _) =>
             _nav.Drill(new NavCrumb(SuggestionsKey, "Suggestions"));
 
-        _arcsButton.Click += (_, _) =>
+        // The checkbox owns the flag rather than mirroring it: nothing else writes _showArcs, so
+        // RebuildArcs never assigns IsChecked back and there is no loop to break.
+        _arcsToggle.IsCheckedChanged += (_, _) =>
         {
-            _showArcs = !_showArcs;
+            _showArcs = _arcsToggle.IsChecked == true;
             Rebuild();
         };
 
@@ -291,7 +315,14 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         // shrink — so the two groups drew over each other, which the strip's 512 made obvious and a
         // narrow desktop window has been doing quietly all along. Wrapping costs a second row only
         // at the widths where the alternative was an unreadable one.
-        var bar = new WrapPanel { Margin = new Thickness(0, 0, 0, 10), ItemSpacing = 8, LineSpacing = 8 };
+        //
+        // **And it is the page's chrome**, marked as such so a surface nothing can be pressed on
+        // does not draw it (#202). The unit is this container rather than the controls on it,
+        // because three of them assign their own IsVisible and a local value outranks the style
+        // rule that used to be the whole mechanism — while a hidden parent hides its children
+        // whatever they say about themselves.
+        var bar = new WrapPanel { Margin = new Thickness(0, 0, 0, 10), ItemSpacing = 8, LineSpacing = 8 }
+            .AsChrome();
 
         var right = new StackPanel
         {
@@ -304,7 +335,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         // way of reading the same list, which is what the bar is for.
         _controls.Children.Add(_scopeButton);
         _controls.Children.Add(_orderButton);
-        _controls.Children.Add(_arcsButton);
+        _controls.Children.Add(_arcsToggle);
         _controls.Children.Add(_transfer);
 
         // The filter group first, so a bar that wraps drops "Add a line" to the second row rather
@@ -615,7 +646,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         if (_goals is null)
         {
-            _arcsButton.IsVisible = false;
+            _arcsToggle.IsVisible = false;
             _band.IsVisible = false;
             return;
         }
@@ -623,8 +654,11 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         var standings = _goals.Standings;
         var running = standings.Count(standing => !standing.IsDone);
 
-        _arcsButton.IsVisible = true;
-        _arcsButton.Content = _showArcs ? "Hide goals" : $"Goals ({running} running)";
+        _arcsToggle.IsVisible = true;
+
+        // The count, whichever way the box is set (#203). It used to read "Hide goals" once open,
+        // which threw away the one number that makes anybody open it.
+        _arcsToggle.Content = $"Goals ({running} running)";
         _band.IsVisible = _showArcs;
 
         if (!_showArcs)

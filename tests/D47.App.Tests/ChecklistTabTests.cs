@@ -192,7 +192,7 @@ public class ChecklistTabTests
 
         var (window, panel) = Open(checklists);
 
-        var ticks = panel.GetVisualDescendants().OfType<CheckBox>().ToList();
+        var ticks = Ticks.On(panel);
 
         // One authored item and one derived one, and exactly one checkbox. Not a disabled tick:
         // a greyed-out control still asserts that ticking is the mechanism here, and it is not.
@@ -240,9 +240,7 @@ public class ChecklistTabTests
 
         var (window, panel) = Open(checklists);
 
-        var lines = panel.GetVisualDescendants().OfType<CheckBox>()
-            .Select(tick => tick.Content as string ?? string.Empty)
-            .ToList();
+        var lines = Ticks.Words(panel);
 
         // Grouped by project in first-appearance order (Phase 42), no headings between
         // them, and nothing lost.

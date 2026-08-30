@@ -66,11 +66,24 @@ public class TheGoalsBandLeavesRoomForTheListTests
     private static ScrollViewer BandScroller(PanelView panel) =>
         panel.GetVisualDescendants().OfType<ScrollViewer>().First(scroller => scroller.Name == "GoalsBand");
 
-    private static Button Band(PanelView panel) =>
+    /// <summary>
+    /// The control that opens the band. A <c>CheckBox</c> since #203 — it was already a two-state
+    /// disclosure with a hand-swapped label, and the label swap was throwing away the running
+    /// count once the band was open.
+    /// </summary>
+    private static CheckBox Band(PanelView panel) =>
         panel.GetVisualDescendants()
-            .OfType<Button>()
-            .First(button => (button.Content as string) is { } word
-                             && (word.StartsWith("Goals", StringComparison.Ordinal) || word == "Hide goals"));
+            .OfType<CheckBox>()
+            .First(box => (box.Content as string)?.StartsWith("Goals", StringComparison.Ordinal) == true);
+
+    /// <summary>Opens or closes it the way a press does, so the page rebuilds around it.</summary>
+    private static void Toggle(PanelView panel)
+    {
+        var band = Band(panel);
+
+        band.IsChecked = band.IsChecked != true;
+        Dispatcher.UIThread.RunJobs();
+    }
 
     /// <summary>Every scroller on the page, so the list's own can be found by what it holds.</summary>
     private static ScrollViewer ListScroller(PanelView panel) =>
@@ -87,10 +100,12 @@ public class TheGoalsBandLeavesRoomForTheListTests
     {
         var (panel, _) = Open();
 
-        Band(panel).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
+        Toggle(panel);
 
-        Assert.Equal("Hide goals", Band(panel).Content);
+        // **The count survives being open** (#203). The label used to swap to "Hide goals", which
+        // threw away the one number that makes anybody open the band in the first place.
+        Assert.True(Band(panel).IsChecked);
+        Assert.StartsWith("Goals (", (string)Band(panel).Content!, StringComparison.Ordinal);
 
         var list = ListScroller(panel);
 
@@ -107,8 +122,7 @@ public class TheGoalsBandLeavesRoomForTheListTests
     {
         var (panel, _) = Open();
 
-        Band(panel).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
+        Toggle(panel);
 
         var band = BandScroller(panel);
 
@@ -144,8 +158,7 @@ public class TheGoalsBandLeavesRoomForTheListTests
     {
         var (panel, _) = Open(360);
 
-        Band(panel).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
+        Toggle(panel);
 
         Assert.True(
             ListScroller(panel).Bounds.Height > 60,
@@ -163,8 +176,7 @@ public class TheGoalsBandLeavesRoomForTheListTests
 
         var (panel, _) = Open(620);
 
-        Band(panel).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
+        Toggle(panel);
 
         _window!.CaptureRenderedFrame()!.Save(
             Path.Combine(TestSurface.CaptureDirectory, "goals-band.png"),

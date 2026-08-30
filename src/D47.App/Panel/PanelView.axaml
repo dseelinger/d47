@@ -42,6 +42,32 @@
     <Style Selector="panel|PanelView.output-only Button">
       <Setter Property="IsVisible" Value="False" />
     </Style>
+
+    <!--
+      And the page's own chrome, as a container (#202).
+
+      **The rule above could not hold on its own, and it failed two ways at once.** A style setter
+      sits at `BindingPriority.Style`, below `LocalValue`, so any control that assigns its own
+      `IsVisible` from code pins the value and the selector never applies — three did, and they are
+      exactly the controls a Commander reported seeing on a mini panel. And it matches *exact*
+      `Button`, so a filter checkbox on a chrome bar was never covered at all.
+
+      **The container is the unit that fixes both.** A hidden parent hides its children whatever
+      they say about themselves, so a page goes on writing `_suggestions.IsVisible = ...` and is
+      right about it; and it covers every control type at once, without having to enumerate them or
+      keep the deliberate exemptions — a checklist line's tick, a scrollbar's parts — out of a list.
+
+      **A style rather than a walk, and the timing is why.** A drill level builds its page on first
+      sight, which is after the class has been set and after the last thing that could have walked
+      the tree — so an imperative pass finds an empty pane and never runs again. A style applies
+      when the control enters the tree, whenever that is.
+
+      What it asks of a page is one thing: mark the container, and never assign its `IsVisible`.
+      See `PageChrome`.
+    -->
+    <Style Selector="panel|PanelView.output-only :is(Control).page-chrome">
+      <Setter Property="IsVisible" Value="False" />
+    </Style>
   </UserControl.Styles>
 
   <UserControl.Resources>

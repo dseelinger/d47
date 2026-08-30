@@ -286,6 +286,12 @@ public partial class PanelView : UserControl
             view.DrawTranscript();
         });
 
+        // `output-only` is set by the host after construction and toggled at runtime — the headset
+        // flips it on every move between the big panel and mini. A page's own chrome is taken by a
+        // style and needs nothing here; the follow button is this view's own and assigns its
+        // visibility from a scroll position, so it has to be re-asked when the class moves (#202).
+        Classes.CollectionChanged += (_, _) => ShowFollowButton();
+
         // Two sheets rather than the words "Copy All" (asked for 2026-08-24). Standard enough to
         // need no learning, and it buys back a row that already carries the search box and two
         // steppers. The word stays on the tooltip and on the accessible name.
@@ -2240,6 +2246,10 @@ public partial class PanelView : UserControl
         // And the ask line goes with them: a chooser has one question in it and a second text box
         // underneath, pointed at the model, is a second question nobody asked.
         AskRow.IsVisible = AskRow.IsVisible && !modal;
+
+        // The transcript's own, which is drawn from a scroll position rather than from the mode —
+        // so it has to be re-asked whenever the surface changes kind, not only when it scrolls.
+        ShowFollowButton();
     }
 
     /// <summary>
@@ -3618,7 +3628,10 @@ public partial class PanelView : UserControl
     {
         var behind = !_following && !AtTheEnd();
 
-        FollowButton.IsVisible = behind;
+        // Not on a surface nothing can be pressed on (#202). This is the assignment that beat the
+        // style rule — a local value outranks a setter — and it is the transcript's own chrome
+        // rather than a furnished page's, so it asks here rather than being marked.
+        FollowButton.IsVisible = behind && !OutputOnly;
 
         if (behind)
         {

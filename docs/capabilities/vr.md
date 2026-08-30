@@ -204,6 +204,13 @@ Ask for either by name, in whichever words come out:
 The two keep their own placements, so parking mini out to one side while the full panel stays in
 front of you works the way you would expect.
 
+**Mini carries no controls, only what they were showing you.** It is 512 pixels wide, chosen so the
+text is readable rather than so there is room — every button on it would be space taken from the
+thing you opened it for. So a page's own bar goes: the checklist's filter, its ordering, its
+import, its Goals tick. What stays is the list itself, **including the tick beside each line**, so
+you can still mark work done from the headset. The big panel keeps the whole bar, and that is the
+one headset surface where a controller can genuinely press it.
+
 #### Motion controllers {#controllers}
 
 **Off out of the box, and that is a withdrawal rather than a preference.** A controller put down
