@@ -104,6 +104,30 @@ try {
 
     Write-Step "Since $lastTag"
 
+    <#
+        **Nothing to release is its own answer, and it has to be given before anything else.**
+
+        Asked for 2026-08-30, after a run that had just shipped v0.93.0 was repeated. Everything
+        below still worked perfectly on an empty range: no commit closed a change request, so the
+        decision was Patch, and the changelog check then reported that `## 0.93.1` was missing and
+        exited nonzero. Every word of that is true and all of it is about the wrong thing — it
+        blames the changelog for the absence of a release nobody should be cutting, and it reads
+        exactly like the tool having broken.
+
+        So the range is asked first. A run with nothing in it stops here, says so in one sentence,
+        and exits **zero**: there is nothing wrong, and nothing was done.
+    #>
+    $since = @(Invoke-Native { git -C $Root log "$lastTag..HEAD" --format=%H } | ForEach-Object { $_ })
+
+    if ($since.Count -eq 0) {
+        Write-Note "Nothing has been committed since $lastTag, so there is nothing to release."
+        Write-Note 'Commit and merge some work first, or promote what is already out: promote'
+
+        return
+    }
+
+    Write-Note "$($since.Count) commit(s) to release"
+
     # A phase and a batch of wanted changes are both minors, and since 2026-08-27 they arrive by
     # one road: the issue a commit says it closes. Why the commits and not GitHub's closed list is
     # written down where the extraction lives, in issues.lib.ps1 — it is the reason this run reads

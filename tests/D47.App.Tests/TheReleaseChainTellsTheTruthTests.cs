@@ -119,6 +119,42 @@ public class TheReleaseChainTellsTheTruthTests
     }
 
     /// <summary>
+    /// <b>An empty range says so, and says it first</b> (asked for 2026-08-30, after a run that had
+    /// just shipped v0.93.0 was repeated).
+    /// <para>
+    /// Everything downstream worked perfectly on nothing: no commit closed a change request, so the
+    /// decision was Patch, and the changelog check then reported that <c>## 0.93.1</c> was missing
+    /// and exited nonzero. Every word of that is true and all of it is about the wrong thing — it
+    /// blames the changelog for the absence of a release nobody should be cutting, and it reads
+    /// exactly like the tool having broken.
+    /// </para>
+    /// <para>
+    /// So the check sits <em>above</em> the version arithmetic, and it exits <b>zero</b>: nothing
+    /// is wrong and nothing was done, which is a different answer from the missing-section refusal
+    /// below it.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void NothingToReleaseIsItsOwnAnswerAndComesFirst()
+    {
+        var prerelease = Tool("prerelease.ps1");
+
+        Assert.Contains("so there is nothing to release", prerelease, StringComparison.Ordinal);
+
+        // Above the changelog check, or the run reports the wrong reason for stopping — which is
+        // the whole of what was reported.
+        Assert.True(
+            prerelease.IndexOf("so there is nothing to release", StringComparison.Ordinal)
+            < prerelease.IndexOf("has no '## $next' section", StringComparison.Ordinal),
+            "prerelease.ps1 reads the changelog before it notices there is nothing to release, so a "
+            + "repeated run blames the changelog for a release that should not be cut at all.");
+
+        // A return rather than an exit, so nothing reading the code hears a failure. The
+        // missing-section path below it still exits 1, and the two must not be confusable.
+        Assert.Contains("Nothing has been committed since", prerelease, StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// <b>A dead gh refuses to decide rather than defaulting to Patch</b> (#172). Every label
     /// lookup failing does not mean nothing landed — it means nothing is known, and shipping a
     /// phase as a patch spends a version number that never moves.
