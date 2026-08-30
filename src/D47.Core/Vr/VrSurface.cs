@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace D47.Core.Vr;
 
 /// <summary>
@@ -139,18 +141,44 @@ public sealed record SurfacePlacement
     /// Where this surface sits relative to the head itself, for a runtime that can hang an
     /// overlay off the headset rather than being told a room position every frame.
     /// <para>
-    /// The same arithmetic as <see cref="Where"/> against a head at the origin, because that is
-    /// what "relative to the head" means. Having it separately is what lets the placement leave
-    /// the tracking universe out of it altogether.
+    /// <b>Derived from <see cref="Where"/> rather than computed beside it</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/189">#189</a>). The offset is by
+    /// definition the pose that, composed with the head, lands the quad where <see cref="Where"/>
+    /// says it goes — so taking it as <c>where · head⁻¹</c> makes the drawn quad and the pose
+    /// every other caller reasons about the same thing by construction. Two parallel derivations
+    /// is how a ray comes to be cast at a surface a degree or two from where it is drawn.
+    /// </para>
+    /// <para>
+    /// It still leaves the tracking universe out of it altogether, which is the point of having
+    /// it: the runtime carries the quad and nothing crosses the seated-versus-standing boundary.
     /// </para>
     /// </summary>
-    public VrPose AgainstTheHead() => VrPlacementMath.HeadLocked(
-        VrPose.Origin,
-        DistanceMetres,
-        DropMetres,
-        PitchDegrees * MathF.PI / 180f,
-        FacesTheEyes);
+    public VrPose AgainstTheHead(VrPose head)
+    {
+        if (!Matrix4x4.Invert(head.ToMatrix(), out var inverse))
+        {
+            // A head pose that cannot be inverted is not a pose. Falling back to the origin gives
+            // the offset this returned before the head was consulted at all, which is a surface
+            // in the right place and not levelled — a downgrade, not a disappearance.
+            return Where(VrPose.Origin);
+        }
 
+        return VrPose.FromMatrix(Where(head).ToMatrix() * inverse);
+    }
+
+    /// <summary>The offset against a head at the origin, which is one that is already level.</summary>
+    public VrPose AgainstTheHead() => AgainstTheHead(VrPose.Origin);
+
+    /// <summary>
+    /// Where this surface goes, given where the head is now.
+    /// <para>
+    /// <b>A head-locked surface hangs off the head's <em>upright</em> frame</b>, not off the
+    /// headset itself (#189). It follows the Commander's yaw and pitch and ignores their roll, so
+    /// it stays level with the horizon rather than level with their head — which is what a
+    /// caption reported as sitting rotated clockwise from the cockpit's own lines was missing.
+    /// See <see cref="VrPlacementMath.Upright"/>.
+    /// </para>
+    /// </summary>
     public VrPose Where(VrPose head)
     {
         if (Lock == SurfaceLock.WorldLocked && Placed is { } placed)
@@ -159,7 +187,7 @@ public sealed record SurfacePlacement
         }
 
         return VrPlacementMath.HeadLocked(
-            head,
+            VrPlacementMath.Upright(head),
             DistanceMetres,
             DropMetres,
             PitchDegrees * MathF.PI / 180f,

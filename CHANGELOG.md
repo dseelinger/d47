@@ -29,11 +29,12 @@ history to match today's layout would be the one edit it must never take.
 
 ## 0.93.0 — 2026-08-30 — The controllers are put down, and the panel learns to be told where to go
 
-Two wanted changes, and they are one change read from both ends.
+Two wanted changes and a defect, all in the headset.
 [#198](https://github.com/dseelinger/d47/issues/198) withdraws motion controller support until
 [#18](https://github.com/dseelinger/d47/issues/18) is understood;
 [#199](https://github.com/dseelinger/d47/issues/199) replaces the one thing that withdrawal takes
-away. Neither is under the moratorium, and the Commander asked for both.
+away; [#189](https://github.com/dseelinger/d47/issues/189) is the captions sitting rotated from
+the cockpit. Neither change request is under the moratorium, and the Commander asked for both.
 
 ### Nothing touches a controller any more, and that is the experiment (#198)
 
@@ -84,6 +85,49 @@ no grip-to-go-back, and no Settings tab. Voice keeps tab and breadcrumb navigati
 scrolling, answering a prompt already open, and re-anchoring. A gesture in flight when the row
 moves is let go rather than frozen — a captured scrollbar released, a lit highlight put out, a
 carried panel put down where it had got to and written.
+
+### Captions sit level with the cockpit rather than with your head (#189)
+
+Reported as caption text rotated slightly clockwise, not lining up with the cockpit's own
+horizontal lines. **Captions are the one surface bolted to the headset** — placed with
+`SetOverlayTransformTrackedDeviceRelative` against the HMD, with an offset whose rotation was
+identity — so the quad's world orientation *was* the headset's orientation, roll included. The
+panel is not: it is world-locked and its resting pose has always pinned roll to zero. A quad glued
+to the head is always level in the *view* and never level with anything else, so any roll between
+the Commander's head and the cockpit showed up as exactly that disagreement. There was no
+roll-stabilisation anywhere in `src/`.
+
+**A head-locked surface now hangs off the head's upright frame.** `VrPlacementMath.Upright` reads
+yaw and pitch off the pose's own forward — which roll leaves untouched, being rotation *about* that
+axis — and rebuilds it with roll zero. The caption follows where the Commander is looking and
+ignores how far their head is tilted.
+
+**It stays attached to the headset, and that is the half worth arguing about.** Placing captions
+absolutely would have handed them a 10 Hz position from the serve, and text that swims a tenth of
+a second behind a turning head is worse than text that is a few degrees off. Only the *correction*
+is resolved on the tick; the compositor still carries the quad at headset rate. `PlaceOnHead`'s
+existing "nothing is written unless it changed" guard survives intact — a roll that is holding
+still is a frame with no transform call in it — so the route the issue expected to have to give up
+was not given up.
+
+**The offset is now derived from `Where` rather than computed beside it**, as `where · head⁻¹`.
+Two parallel derivations of one placement is how a quad comes to be drawn a degree or two from
+where d47 thinks it is, and a ray cast at a head-locked panel would have been the first to find
+out. `AgainstTheHead()` against a head at the origin is still the pure translation it always was.
+
+Looking straight up or straight down is written down as its own case: a vertical forward has no
+compass direction left in it, and a yaw read out of `atan2(0, 0)` is whatever the sign of a zero
+happens to be — which would have swung the captions to the other side of the cockpit for as long as
+the Commander looked at their feet. The head's own up is horizontal at exactly that moment, so it
+carries the yaw instead.
+
+**What this cannot fix, stated because the issue is still `needs-repro`.** Being level with the
+horizon is not the same as agreeing with the cockpit. Elite's cockpit is fixed to whatever pose its
+own recenter was taken at, so a recenter made with a tilted head leaves the cockpit rolled in the
+tracking universe and the captions correctly level against it. If the tilt survives this, that is
+where it is, and the fix is to recenter with a level head. The texture path was checked and cleared
+on the way past: the raster stride is `width * 4` on both sides of the copy, so a shear reading as a
+slight rotation is not available.
 
 ### The panel can be told where to go (#199)
 

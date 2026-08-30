@@ -167,6 +167,57 @@ public static class VrPlacementMath
     }
 
     /// <summary>
+    /// The same pose with its <em>roll</em> taken out: same place, same yaw, same pitch, level
+    /// with the horizon (<a href="https://github.com/dseelinger/d47/issues/189">#189</a>).
+    /// <para>
+    /// <b>What a head-locked surface hangs off.</b> A quad bolted rigidly to the headset is always
+    /// level in the <em>view</em> and never level with anything else — so any roll between the
+    /// Commander's head and the cockpit shows up as the surface and the cockpit's own horizontal
+    /// lines disagreeing by exactly that angle. Captions are the surface that was reported as
+    /// rotated clockwise, and they are the only one head-locked out of the box; the panel is
+    /// world-locked and already has its roll pinned to zero by <see cref="Resting"/>.
+    /// </para>
+    /// <para>
+    /// Yaw and pitch are read off the pose's own forward, which roll leaves untouched — roll is
+    /// rotation <em>about</em> that axis — so the two survive the trip and the third does not,
+    /// which is the whole of what this does.
+    /// </para>
+    /// <para>
+    /// <b>Straight up and straight down are the case worth writing down.</b> A forward that is
+    /// vertical has no compass direction left in it, and reading a yaw of zero out of the
+    /// resulting <c>atan2(0, 0)</c> would swing a caption to face north the moment the Commander
+    /// looked at their feet. At exactly that pitch the pose's own <em>up</em> is horizontal, so it
+    /// carries the yaw instead — pointing along the forward the head is leaning away from, hence
+    /// the sign.
+    /// </para>
+    /// </summary>
+    public static VrPose Upright(VrPose pose)
+    {
+        var forward = Vector3.Transform(-Vector3.UnitZ, pose.Facing);
+        var horizontal = new Vector3(forward.X, 0f, forward.Z);
+
+        if (horizontal.LengthSquared() < 1e-6f)
+        {
+            var up = Vector3.Transform(Vector3.UnitY, pose.Facing);
+
+            horizontal = new Vector3(up.X, 0f, up.Z) * (forward.Y > 0f ? -1f : 1f);
+        }
+
+        // Both vertical at once is a pose with no orientation left to preserve, which a real
+        // tracking frame cannot be. Level and facing the tracking universe's forward is arbitrary
+        // and finite, which the alternative is not.
+        if (horizontal.LengthSquared() < 1e-6f)
+        {
+            return pose with { Orientation = Quaternion.Identity };
+        }
+
+        var yaw = MathF.Atan2(-horizontal.X, -horizontal.Z);
+        var pitch = MathF.Asin(Math.Clamp(forward.Y, -1f, 1f));
+
+        return pose with { Orientation = Quaternion.CreateFromYawPitchRoll(yaw, pitch, 0f) };
+    }
+
+    /// <summary>
     /// Where a world-locked surface goes the first time it is shown, if nobody has ever put it
     /// anywhere (docs/plans/change-requests.md item 9).
     /// <para>
