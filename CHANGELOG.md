@@ -29,7 +29,10 @@ history to match today's layout would be the one edit it must never take.
 
 ## 0.93.0 — 2026-08-30 — The controllers are put down, and the panel learns to be told where to go
 
-Eight issues. Five are in the headset and the captions get most of them; three are on the desktop.
+Ten issues. Seven are in the headset and the captions get most of them; three are on the desktop.
+[#202](https://github.com/dseelinger/d47/issues/202) and
+[#203](https://github.com/dseelinger/d47/issues/203) land together — mini panels stop carrying page
+chrome, which is what had to happen before Goals could become a checkbox.
 [#197](https://github.com/dseelinger/d47/issues/197) lets the cost figures be reset from the Details
 window and [#210](https://github.com/dseelinger/d47/issues/210) turns that window's button into a
 banknote, and [#207](https://github.com/dseelinger/d47/issues/207) makes the local-build badge say
@@ -91,6 +94,59 @@ no grip-to-go-back, and no Settings tab. Voice keeps tab and breadcrumb navigati
 scrolling, answering a prompt already open, and re-anchoring. A gesture in flight when the row
 moves is let go rather than frozen — a captured scrollbar released, a lit highlight put out, a
 carried panel put down where it had got to and written.
+
+### Mini panels carry no page chrome, and Goals is a checkbox (#202, #203)
+
+Two issues in one change, because #203 said so: converting the Goals button to a checkbox would have
+moved it *into* the exemption the mini rule carries for checkboxes and made a reported defect
+correct by rule. **Either fix the rule first or fix both together**, and this is both together.
+
+**The rule was one style selector and it could not hold.** `PanelView.output-only Button` was the
+whole of "a mini panel carries no clickable control", and it failed two ways at once. A style setter
+sits at `BindingPriority.Style`, **below `LocalValue`** — so any control that assigns its own
+`IsVisible` from code pins the value and the selector never applies. Three did, and they are exactly
+what a Commander reported seeing on a 512-wide strip: **Goals**, **Suggestions** and **↓ Newest**.
+And it matched *exact* `Button`, so **Include Partial Grades** — a live filter checkbox on the same
+bar — was never covered at all.
+
+**The unit is a container now.** A page marks its chrome bar, and a style on that class hides it. A
+hidden parent hides its children whatever they say about themselves, so a page goes on writing
+`_suggestions.IsVisible = pending.Count > 0` and is right about it; it covers every control type at
+once without enumerating them; and it survives a rebuild, which per-control hiding would not — pages
+rebuild their contents constantly and build their bars once.
+
+**A style rather than a walk over the tree, and the timing is why.** An imperative pass was written
+first and could not be made to fire late enough: a drill level builds its page on first sight, which
+is after the class has been set and after every event that could have triggered one, so the walk
+found an empty pane and never ran again. A style applies when the control enters the tree, whenever
+that turns out to be. What it asks of a page is one thing, and it is the whole contract: **never
+assign `IsVisible` on a container you marked** — that would be the same defect one level up.
+
+**Keyed on the class and never on the mode**, because the desktop window's own mini is fully
+clickable by design and deliberately never takes the class. A rule that read the mode would strip
+the controls off the one mini where they work.
+
+**The line ticks stay, and that is the distinction the old rule could not draw.** They are inside
+the list rather than on the bar, and a Commander ticks work off from the headset. So does the
+scrollbar. What goes is chrome.
+
+**And no test had ever built a page.** `MiniInTheHeadsetCarriesNoButtonsTests` leaves every host
+surface null, so `EnableChecklist` is never called and `PagePane.Child` is null — it only ever saw
+`PanelView`'s own chrome, which is why the suite was green while the defect was on screen. Worse,
+its third fact asserted that checkboxes survive, so it actively ratified the reported behaviour. The
+new file furnishes a real checklist, drives a real frame, and asserts by the **words on the
+controls** rather than by a count, because a count says nothing about which one survived.
+
+**Then Goals became a checkbox.** It was already a two-state disclosure wearing a button: a private
+`bool`, a hand-swapped label, nothing navigated and nothing opened — unlike Suggestions beside it,
+which drills, or Order and Import/Export, which open choosers and *are* correctly buttons. **And it
+gets the count back**: the label swap read `Hide goals` once open, throwing away the one number that
+made anybody open it. A checkbox holds `Goals (3 running)` whichever way it is set.
+
+One more live leak went with them: the adventure form's *Using* button was constructed
+`IsVisible = hasChoice`, pinned from birth. It is not built at all when there is nothing to choose
+between — a hidden control is still something a ray can find, which the checklist's own code already
+says about a different control.
 
 ### The Details button is a banknote (#210)
 

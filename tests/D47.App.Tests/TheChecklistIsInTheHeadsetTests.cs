@@ -380,7 +380,7 @@ public class TheChecklistIsInTheHeadsetTests
         var page = Page(view);
 
         // One line, one checkbox: the authored one. The derived line has none at all.
-        Assert.Single(page.GetVisualDescendants().OfType<CheckBox>());
+        Assert.Single(Ticks.On(page));
 
         var said = page.GetVisualDescendants().OfType<TextBlock>()
             .Select(block => block.Text ?? string.Empty)
