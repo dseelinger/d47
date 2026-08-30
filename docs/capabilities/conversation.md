@@ -152,6 +152,33 @@ number: one sentence has room to say why, and a three-letter suffix does not.
 The file is only ever appended to, so nothing that has already been written can be lost by a
 later crash. Delete it and the running totals start again from empty; nothing else is affected.
 
+#### Starting the figures again {#reset}
+
+**Reset** in the Details window offers six spans — *this session*, and the same five windows the
+figures list shows. Take one and everything charged inside it stops counting, **in every window
+that contained it**: reset today and today's charges leave this week, the last 7 days, the last 30
+days and this month as well. That falls out of how the figures are worked out — each one is a
+question asked of the ledger rather than a counter kept running — so there is nothing left over to
+disagree.
+
+*This month* does not nest with the rolling windows, and that is right rather than a gap. Reset it
+on the 3rd and three days go; the rest of *the last 30 days* stands, because those charges are
+still inside that span.
+
+**Nothing is deleted.** A single line is added to `data/spend.jsonl` recording the reset and the
+span it covered, and the totals skip anything it covers. The history stays on disk, the file stays
+append-only, and **a reset you did not mean is undone by deleting that one line by hand** — which
+matters, because this is the one figure in Directive 47 that stands for real money.
+
+It asks before it does anything, naming the window and the amount. Every other eraser in Directive
+47 acts on the press; this one is different because it sits where the numbers are, which is where
+you want it and also where a stray click reaches.
+
+*This session* also empties the session block above, which lives in memory rather than in the
+ledger. So does every other span, since a turn's figures carry no timestamp to sort them by — if
+you have been running since before the window you reset began, the session figure reads low until
+the next turn while the running totals stay exact.
+
 With no key stored it says so, rather than going quiet and leaving you to work out why nothing
 answers:
 

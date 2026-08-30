@@ -29,14 +29,42 @@ namespace D47.App.Controls;
 /// </summary>
 public sealed class SpendWindow : Window
 {
+    private readonly SpendTracker _session;
+    private readonly SpeechSpend _speech;
+    private readonly SpendLedger _ledger;
+    private readonly D47Settings _settings;
+    private readonly TimeZoneInfo _zone;
+
+    /// <summary>
+    /// When this process started, so "this session" is a window the ledger can be asked about
+    /// (<a href="https://github.com/dseelinger/d47/issues/197">#197</a>). Null in a fixture that
+    /// is not about resetting, which leaves the Reset button off.
+    /// </summary>
+    private readonly DateTimeOffset? _launchedAt;
+
+    /// <summary>The last turn, kept so the window can be redrawn after a reset.</summary>
+    private readonly TurnCost? _turn;
+
+    /// <summary>Where the sections live, so a reset can replace them rather than reopen the window.</summary>
+    private readonly StackPanel _body = new() { Margin = new Thickness(24), Spacing = 18 };
+
     public SpendWindow(
         TurnCost? turn,
         SpendTracker session,
         SpeechSpend speech,
         SpendLedger ledger,
         D47Settings settings,
-        TimeZoneInfo zone)
+        TimeZoneInfo zone,
+        DateTimeOffset? launchedAt = null)
     {
+        _turn = turn;
+        _session = session;
+        _speech = speech;
+        _ledger = ledger;
+        _settings = settings;
+        _zone = zone;
+        _launchedAt = launchedAt;
+
         Title = "What this has cost";
 
         // 640 rather than 560 because the widest line here is a running total that names both
@@ -57,24 +85,7 @@ public sealed class SpendWindow : Window
 
         Themed(this, BackgroundProperty, ThemeManager.BackgroundKey);
 
-        var body = new StackPanel { Margin = new Thickness(24), Spacing = 18 };
-
-        body.Children.Add(Estimates());
-        body.Children.Add(Section("This turn", TurnRows(turn)));
-        body.Children.Add(Section("This session", SessionRows(session, speech, settings)));
-
-        // Five windows, freshest first. Two are elapsed durations and three are local calendar
-        // ideas; the ledger works out which instants those are, against this zone. SpendPeriods
-        // owns the order and the reason there is no "Last 24 hours" beside Today.
-        body.Children.Add(Section(
-            "Running totals",
-            [.. ledger.Summary(zone).Select(row => Row(
-                row.Period.Name,
-                row.Totals.Any ? Money(row.Totals) : "nothing yet"))]));
-
-        var close = new Button { Content = "Close", MinWidth = 110, HorizontalAlignment = HorizontalAlignment.Right };
-        close.Click += (_, _) => Close();
-        body.Children.Add(close);
+        Draw();
 
         // **Horizontal scrolling disabled, and it is the whole of the fix** (GitHub issue 87).
         // A ScrollViewer that may scroll horizontally measures its content with *unconstrained*
@@ -88,10 +99,151 @@ public sealed class SpendWindow : Window
         Content = new ScrollViewer
         {
             Name = "SpendScroller",
-            Content = body,
+            Content = _body,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
         };
+    }
+
+    /// <summary>
+    /// Every section, from scratch.
+    /// <para>
+    /// <b>Called again after a reset rather than reopening the window</b> (#197). Every figure
+    /// here is a query — over the ledger, or over two in-memory counters — so redrawing is the
+    /// whole of showing the new answer, and a window that closed and came back would lose the
+    /// Commander's place and their resize.
+    /// </para>
+    /// </summary>
+    private void Draw()
+    {
+        _body.Children.Clear();
+
+        _body.Children.Add(Estimates());
+        _body.Children.Add(Section("This turn", TurnRows(_turn)));
+        _body.Children.Add(Section("This session", SessionRows(_session, _speech, _settings)));
+
+        // Five windows, freshest first. Two are elapsed durations and three are local calendar
+        // ideas; the ledger works out which instants those are, against this zone. SpendPeriods
+        // owns the order and the reason there is no "Last 24 hours" beside Today.
+        _body.Children.Add(Section(
+            "Running totals",
+            [.. _ledger.Summary(_zone).Select(row => Row(
+                row.Period.Name,
+                row.Totals.Any ? Money(row.Totals) : "nothing yet"))]));
+
+        _body.Children.Add(Buttons());
+    }
+
+    /// <summary>
+    /// Close, and — on a window that was told when the process started — Reset beside it.
+    /// <para>
+    /// <b>This is the one eraser in the app that asks first, and the departure is deliberate.</b>
+    /// Every other one is an <c>Info</c> settings row with a <c>Press</c> and no confirmation:
+    /// memory, flight recordings, personas. Their safety is that the tool surface cannot reach
+    /// them and no spoken phrase does — not a dialog. This one was asked for here, which is the
+    /// right place because it is where the numbers are, and that puts a control that erases money
+    /// history somewhere a stray click reaches. So it names the window and the figure before it
+    /// does anything, and <see cref="ConfirmWindow"/> already defaults to no.
+    /// </para>
+    /// </summary>
+    private Control Buttons()
+    {
+        var close = new Button { Content = "Close", MinWidth = 110 };
+        close.Click += (_, _) => Close();
+
+        var row = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Spacing = 10,
+        };
+
+        if (_launchedAt is { } launched)
+        {
+            var reset = new Button
+            {
+                Name = "SpendReset",
+                Content = "Reset\u2026",
+                MinWidth = 110,
+                Flyout = Choices(launched),
+            };
+
+            row.Children.Add(reset);
+        }
+
+        row.Children.Add(close);
+
+        return row;
+    }
+
+    /// <summary>
+    /// How far back to reset, as a menu over the button.
+    /// <para>
+    /// <b>The five windows the figures list shows, plus the session, and no others.</b> The
+    /// ask named a 31-day option; the Commander settled it at thirty on 2026-08-30, because the
+    /// reason 31 was wanted — being at the end of a month — is what <c>This month</c> already
+    /// does. A reset list offering a span the figures list does not show would be two lists
+    /// disagreeing about what a window is. <c>SpendPeriods.Resettable</c> owns the set.
+    /// </para>
+    /// </summary>
+    private MenuFlyout Choices(DateTimeOffset launched)
+    {
+        var flyout = new MenuFlyout { Placement = PlacementMode.Top };
+
+        foreach (var window in _ledger.Resettable(_zone, launched))
+        {
+            var item = new MenuItem { Header = window.Name };
+
+            // The window is captured rather than re-derived on click, so what the Commander is
+            // asked about and what is cleared are the same instants — a menu left open across a
+            // midnight would otherwise reset a different span than it offered.
+            item.Click += async (_, _) => await ResetAsync(window);
+
+            flyout.Items.Add(item);
+        }
+
+        return flyout;
+    }
+
+    /// <summary>
+    /// Asks, then resets, then redraws.
+    /// <para>
+    /// <b>The ledger and the session counters go together, from here</b> (#197). Doing one without
+    /// the other is the confusing outcome the issue names: clearing only the counters leaves the
+    /// running totals counting charges the session block says are gone, and clearing only the
+    /// ledger leaves this block quoting figures nothing below it includes. The mark is appended
+    /// rather than the rows deleted — see <c>SpendEntry.ResetFrom</c>.
+    /// </para>
+    /// </summary>
+    private async Task ResetAsync(SpendPeriod window)
+    {
+        var standing = _ledger.Total(window);
+
+        var asked = await new ConfirmWindow(
+            "Reset the figures",
+            standing.Any
+                ? $"Stop counting {window.Name.ToLowerInvariant()} \u2014 {Money(standing)}?\n\n"
+                  + "It leaves every running total that contained it. Nothing is deleted: a mark "
+                  + "is added to data\\spend.jsonl, and removing that line by hand puts the "
+                  + "figures back."
+                : $"There is nothing counted {window.Name.ToLowerInvariant()}. Reset it anyway?",
+            "Reset",
+            "Cancel").AskAsync(this);
+
+        if (!asked)
+        {
+            return;
+        }
+
+        _ledger.Reset(window);
+
+        // Every reset clears these, even one narrower than the session: a TurnCost carries no
+        // instant, so there is nothing here to filter by. SpendTracker.Forget carries the whole
+        // reasoning, including what it costs in the one case where it over-clears.
+        _session.Forget();
+        _speech.Forget();
+
+        Draw();
     }
 
     /// <summary>

@@ -69,6 +69,38 @@ public static class SpendPeriods
     ];
 
     /// <summary>
+    /// The windows the Details dialog offers to <em>reset</em>
+    /// (<a href="https://github.com/dseelinger/d47/issues/197">#197</a>).
+    /// <para>
+    /// <b>The five that are shown, plus the session, and no sixth.</b> The ask named "the last 31
+    /// days, in case we are at the end of the month" and the Commander settled it at thirty on
+    /// 2026-08-30: the reason 31 was wanted is what <see cref="CurrentMonth"/> already does — it is
+    /// calendar-aligned and resets itself on the 1st — and a reset list offering a span the figures
+    /// list does not show would be two lists disagreeing about what a window is.
+    /// </para>
+    /// <para>
+    /// <b>The session leads, and it is the one window that is not a query over the ledger.</b> Its
+    /// figures live in memory and die with the process, so resetting it means two things at once:
+    /// the counters go, and the rows charged since launch stop counting in every window above.
+    /// Half of that would leave the session block showing figures the totals below no longer
+    /// include.
+    /// </para>
+    /// </summary>
+    /// <param name="launchedAt">
+    /// When this process started. The ledger records instants and not session ids, so "the
+    /// session" can only mean "everything since launch" — which is derivable and is not a concept
+    /// the file holds.
+    /// </param>
+    public static IReadOnlyList<SpendPeriod> Resettable(
+        DateTimeOffset now,
+        TimeZoneInfo zone,
+        DateTimeOffset launchedAt) =>
+    [
+        new SpendPeriod("This session", launchedAt, now),
+        .. All(now, zone),
+    ];
+
+    /// <summary>
     /// Midnight in the Commander's own zone, to now. The third caller of
     /// <see cref="StartOfLocalDay"/>, so it inherits both daylight-saving traps already reasoned
     /// about there — a midnight that never happens, and one that happens twice.

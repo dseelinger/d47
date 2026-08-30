@@ -1353,7 +1353,12 @@ public partial class MainWindow : Window
             _host.SpeechSpend,
             _host.SpendLedger,
             _host.Settings.Current,
-            TimeZoneInfo.Local).Over(this);
+            TimeZoneInfo.Local,
+
+            // What makes the Reset button appear, and what "this session" means to it (#197). A
+            // window built without it — every fixture that is not about resetting — carries no
+            // Reset at all rather than one that cannot say what the session was.
+            _host.LaunchedAt).Over(this);
     }
 
     /// <summary>
