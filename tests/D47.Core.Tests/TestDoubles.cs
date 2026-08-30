@@ -293,6 +293,7 @@ public sealed class TestSurface
     {
         Report = () => (D47.Core.Vr.VrState.Unavailable, "No SteamVR runtime in a test."),
         Reanchor = () => 0,
+        Nudge = (_, _) => D47.Core.Vr.VrNudgeOutcome.NoHeadset,
     };
 
     /// <summary>
