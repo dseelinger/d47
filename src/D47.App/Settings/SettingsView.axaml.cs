@@ -3067,6 +3067,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         var keys = row.Kind != SettingKind.HotasButton;
 
+        // Whether a modifier pressed on its own is a binding here. It is on a polled row —
+        // push-to-talk's own default is RightShift — and it is not on one claimed from the
+        // whole system, which refuses a bare key outright.
+        var bare = keys && !row.SystemWide;
+
         // The stick is armed for a row that is one, or for a row naming one as its other half.
         var buttonKey = row.Kind == SettingKind.HotasButton
             ? row.Key
@@ -3085,20 +3090,47 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         var captured = new TaskCompletionSource<(string Key, string? Value)?>();
 
+        // A modifier held on the way down, on a row where one is a binding in its own right.
+        // Null the moment anything else arrives, because then it was a chord after all.
+        Key? held = null;
+
         void OnKey(object? sender, KeyEventArgs e)
         {
-            // A modifier on its own is someone still assembling the chord, not a binding.
-            if (e.Key is Key.LeftCtrl or Key.RightCtrl or Key.LeftShift or Key.RightShift
-                or Key.LeftAlt or Key.RightAlt or Key.LWin or Key.RWin)
+            var modifier = e.Key is Key.LeftCtrl or Key.RightCtrl or Key.LeftShift or Key.RightShift
+                or Key.LeftAlt or Key.RightAlt or Key.LWin or Key.RWin;
+
+            if (modifier)
             {
+                // On a polled row, told apart by which edge it arrives on rather than refused:
+                // pressed, it is still someone assembling a chord; released with nothing else
+                // pressed, it was the binding. Same idiom as the stick walk one method down,
+                // which captures on release for the same reason — it is the edge that answers
+                // the question rather than the one that raises it.
+                //
+                // Not on a system-wide row, where the service refuses a bare key anyway
+                // (it would stop working in every other application, Elite included), so
+                // binding one silently and having it rejected is worse than waiting.
+                held = bare ? e.Key : null;
                 return;
             }
 
+            held = null;
             e.Handled = true;
 
             captured.TrySetResult(e.Key == Key.Escape
                 ? null
                 : (row.Key, new KeyGesture(e.Key, e.KeyModifiers).ToString()));
+        }
+
+        void OnKeyUp(object? sender, KeyEventArgs e)
+        {
+            if (held != e.Key)
+            {
+                return;
+            }
+
+            e.Handled = true;
+            captured.TrySetResult((row.Key, new KeyGesture(e.Key, KeyModifiers.None).ToString()));
         }
 
         if (keys)
@@ -3113,6 +3145,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             // already holds, which is exactly the rebind somebody attempting it is most likely
             // to try.
             top.AddHandler(KeyDownEvent, OnKey, RoutingStrategies.Tunnel, handledEventsToo: true);
+
+            if (bare)
+            {
+                top.AddHandler(KeyUpEvent, OnKeyUp, RoutingStrategies.Tunnel, handledEventsToo: true);
+            }
         }
 
         var walking = stick ? Walk(_switches!, buttonKey!, message, captured) : null;
@@ -3129,6 +3166,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             if (keys)
             {
                 top.RemoveHandler(KeyDownEvent, OnKey);
+                top.RemoveHandler(KeyUpEvent, OnKeyUp);
             }
 
             walking?.Stop();

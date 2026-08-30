@@ -210,9 +210,18 @@ may already be using in the game is not this.
 
 **One row, and it takes a key, a stick button, or both.** Press **Press to bind** and Directive 47
 listens for either at once: press a key and it takes the key, press a button on your stick and it
-works out which one that was. With both bound the row reads `RightShift, button 11`, either one
-opens the microphone, and the last one you let go of closes it — so letting go of the key while
-your thumb is still on the button does not cut you off mid-sentence.
+works out which one that was.
+
+**To have both, bind twice — one gesture each time.** Press the control and give it a key; press it
+again and give it a button. Each one is stored on its own, so the second does not replace the first,
+and the row then reads `RightShift, button 11`. Either one opens the microphone, and the last one you
+let go of closes it — so letting go of the key while your thumb is still on the button does not cut
+you off mid-sentence.
+
+**A key on its own, like right shift, binds when you let it go.** Modifiers are the one kind of key
+that cannot be taken the instant they go down, because that is also how a combination starts. Hold
+one and press something else and you get the combination; press one and release it and you get the
+modifier. Right shift is the default here for exactly that reason — it is a key nothing else wants.
 
 **Unbind clears both.** That is what the word says, and nobody ends up with two by accident.
 
