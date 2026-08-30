@@ -1,3 +1,4 @@
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -153,15 +154,20 @@ public class TheWindowGoesMiniTooTests
             withAsk > 0,
             "The ask line reported no height, so the mini window would be the headset's size with it clipped.");
 
-        // And the sum grows with the rows, which is the half that was got wrong once: the drawn
-        // way out arrived a day after the ask line, and a height that forgets a row it is drawing
-        // takes the difference out of the transcript in silence.
+        // And the way out costs mini nothing since #194, because in mini the transcript is what
+        // is showing and the way out rides StatusRow rather than a row of its own. This assertion
+        // ran the other way round until 2026-08-30 and was right to: the drawn way out arrived a
+        // day after the ask line, and a height that forgets a row it is drawing takes the
+        // difference out of the transcript in silence. The row is still measured — it is what
+        // every other tab draws — it simply is not the thing mini draws.
         panel.EnableModeToggle(_ => { });
         Dispatcher.UIThread.RunJobs();
 
-        Assert.True(
-            panel.MiniExtraHeight(PanelResolution.Mini.Width) > withAsk,
-            "The way out is drawn in mini and costs no height, so it is standing on the transcript.");
+        Assert.False(
+            panel.GetControl<DockPanel>("ModeRow").IsVisible,
+            "Mini spent a row on the way out, which is the row #194 gave back to the transcript.");
+
+        Assert.Equal(withAsk, panel.MiniExtraHeight(PanelResolution.Mini.Width));
 
         window.Close();
     }
@@ -335,16 +341,19 @@ public class TheWindowGoesMiniTooTests
         var asked = new List<PanelMode>();
 
         // Absent until a host furnishes it, so the headset's mini and the click-through overlay
-        // do not draw a button nobody there could press.
+        // do not draw a button nobody there could press. Both of them, since #194 — the row and
+        // the seat are one control between them and neither exists unfurnished.
         Assert.False(panel.GetControl<DockPanel>("ModeRow").IsVisible);
+        Assert.False(panel.GetControl<Button>("ModeToggleSeat").IsVisible);
 
         panel.EnableModeToggle(asked.Add);
         panel.Mode = PanelMode.Mini;
         Dispatcher.UIThread.RunJobs();
 
-        var toggle = panel.GetControl<Button>("ModeToggle");
-
-        Assert.True(panel.GetControl<DockPanel>("ModeRow").IsVisible);
+        // Whichever one is drawing it, rather than a name: mini reads the transcript, so since
+        // #194 this is the seat in StatusRow and no row is spent on it. The test asks the
+        // question the Commander asks — is there a way out — not which control answers.
+        var toggle = WayOut(panel);
 
         // A mark, not a word (asked for 2026-08-24) — so the assertion is on the name it answers
         // to, which is what a screen reader says and what the tooltip shows. A glyph-only control
@@ -359,6 +368,8 @@ public class TheWindowGoesMiniTooTests
         // And it reads the other way round in full, so one word never has to be got backwards.
         panel.Mode = PanelMode.Full;
         Dispatcher.UIThread.RunJobs();
+
+        toggle = WayOut(panel);
 
         Assert.Equal("Shrink to the mini panel", Name(toggle));
 
@@ -407,6 +418,25 @@ public class TheWindowGoesMiniTooTests
 
     private static string? Name(Control control) =>
         Avalonia.Automation.AutomationProperties.GetName(control);
+
+    /// <summary>
+    /// The way out that is actually on screen, whichever of the two is drawing it (#194), and an
+    /// assertion that it is exactly one. Both at once would be two ways out on one surface; neither
+    /// is the hole this control exists to prevent, and a test naming one of them by hand would go
+    /// on passing through either.
+    /// </summary>
+    private static Button WayOut(PanelView panel)
+    {
+        var row = panel.GetControl<Button>("ModeToggle");
+        var seat = panel.GetControl<Button>("ModeToggleSeat");
+        var showing = new[] { row, seat }.Where(button => button.IsEffectivelyVisible).ToArray();
+
+        Assert.True(
+            showing.Length == 1,
+            $"{showing.Length} ways out are drawn; there should be exactly one.");
+
+        return showing[0];
+    }
 
     private static (Window Window, PanelView Panel) Open()
     {

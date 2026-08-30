@@ -320,6 +320,31 @@
         Docked right, so it never pushes the microphone indicator around — the two change on
         completely different clocks.
       -->
+      <!--
+        The way out, seated rather than given a row of its own on the transcript page (#194).
+        First right-docked child, so it takes the outer edge — outboard of Details and the switch
+        annunciator, where a way out belongs.
+
+        It is a second button rather than ModeToggle reparented here: a Visual belongs to exactly
+        one visual tree, so one control cannot sit in both places, and moving it on every tab
+        change would mutate the tree for a saving of one row. The two cannot drift because
+        neither is marked on its own — PanelView.Show marks both in one call, with one handler
+        between them.
+      -->
+      <Button x:Name="ModeToggleSeat"
+              DockPanel.Dock="Right"
+              IsVisible="False"
+              Margin="8,0,0,0"
+              Padding="6,1"
+              MinWidth="0"
+              VerticalAlignment="Center"
+              Background="Transparent"
+              BorderThickness="0"
+              Cursor="Hand"
+              FontSize="{StaticResource D47.Type.Secondary}"
+              Foreground="{DynamicResource D47.Accent}"
+              Click="OnModeToggleClick" />
+
       <Border x:Name="SwitchRow"
               DockPanel.Dock="Right"
               IsVisible="{Binding SwitchesVisible}"
@@ -377,9 +402,12 @@
       control to leave by is one you have to be told about — so there is one, and the other three
       stand beside it rather than being replaced.
 
-      Its own row rather than a seat in StatusRow, because StatusRow is the transcript's: it
-      carries the provenance line and the microphone, and it is hidden on any other tab. A way out
-      that vanished when mini was showing the story would be a way out with a hole in it.
+      This row is now the exception rather than the rule (#194). On the transcript page the way
+      out takes a seat in StatusRow and this row is not drawn at all; everywhere else it is drawn
+      and the seat is not. The reason the row exists has not gone away — StatusRow is the
+      transcript's, hidden on every other tab, so a way out that lived only there would vanish on
+      the tabs that have no turns on them, which is a way out with a hole in it. What changed is
+      that the hole is now filled by this row rather than by refusing the seat.
 
       Hidden unless a host furnishes it, exactly as TurnDetails above is — so the headset's mini is
       untouched and the flat overlay, which the pointer goes straight through, does not draw a
