@@ -20,17 +20,63 @@ public class ModelChoiceTests
         // model ships is the choice of what every new Commander downloads without being asked.
         // That is the reason for the two assertions below: whatever it is, it has to be an
         // English model and the cheapest one in the catalogue.
-        Assert.Equal("tiny.en", new D47Settings().Listening.Model);
+        // Base rather than Tiny since #187's corpus: Tiny heard "Cancel that" as "Cancer that",
+        // and "cancel that" is a declared interrupt phrase, so the barge-in it breaks is the one
+        // a Commander reaches for when d47 will not stop talking. The default is no longer the
+        // cheapest download in the catalogue, deliberately — it is the cheapest one that hears
+        // the words d47 acts on.
+        Assert.Equal("base.en", new D47Settings().Listening.Model);
         Assert.Equal(WhisperModels.DefaultId, new D47Settings().Listening.Model);
 
-        // The shipped selection is one d47 can actually fetch, and it is the cheapest download
-        // in the catalogue — a default nobody edits should be the smallest thing that works.
         var model = WhisperModels.Find(new D47Settings().Listening.Model);
 
         Assert.NotNull(model);
         Assert.True(model.EnglishOnly);
-        Assert.Equal(WhisperModels.All.Min(m => m.ApproximateMegabytes), model.ApproximateMegabytes);
+
+        // Still small enough to fetch on somebody's behalf without asking, which is the rule the
+        // cheapest-in-catalogue assertion used to stand in for.
+        Assert.True(model.ApproximateMegabytes <= 150);
     }
+
+    /// <summary>
+    /// Every model d47 offers is English-only (#187). A multilingual model could never be
+    /// multilingual here — the transcriber pins Whisper to English on every load — and the
+    /// corpus showed the pin does not silence it: asked for English over a held key in a quiet
+    /// room, one answered "Grazie a tutti!", which nothing downstream filters out.
+    /// </summary>
+    [Fact]
+    public void NoMultilingualModelIsOffered()
+    {
+        Assert.All(WhisperModels.All, model => Assert.True(model.EnglishOnly, $"{model.Id} is not English-only"));
+    }
+
+    /// <summary>
+    /// A settings file naming a retired multilingual model runs its English twin rather than
+    /// falling through to no transcription at all, which is what an unknown id means everywhere
+    /// else (see <c>NothingSelectedReleasesWhateverIsLoaded</c>).
+    /// </summary>
+    [Theory]
+    [InlineData("tiny", "tiny.en")]
+    [InlineData("base", "base.en")]
+    [InlineData("small", "small.en")]
+    [InlineData("medium", "medium.en")]
+    public void ARetiredMultilingualModelAdoptsItsEnglishTwin(string retired, string expected)
+    {
+        Assert.Equal(expected, WhisperModels.AdoptedId(retired));
+        Assert.NotNull(WhisperModels.Find(WhisperModels.AdoptedId(retired)));
+
+        // And the row shows what is running rather than a choice this build does not offer.
+        var settings = new D47Settings { Listening = new ListeningSettings { Model = retired } };
+
+        Assert.Equal(expected, Row(ListeningCapability.ModelKey).Binding!.Read!(settings));
+    }
+
+    /// <summary>Anything still offered, and anything unknown, is left exactly as it is.</summary>
+    [Theory]
+    [InlineData("small.en")]
+    [InlineData(WhisperModels.NoneId)]
+    [InlineData("not-a-model")]
+    public void AdoptionTouchesNothingElse(string id) => Assert.Equal(id, WhisperModels.AdoptedId(id));
 
     [Fact]
     public void TheGpuIsOffByDefault()
@@ -69,7 +115,10 @@ public class ModelChoiceTests
     public void EnglishOnlyModelsAreIdentifiedBySuffix()
     {
         Assert.True(WhisperModels.Find("base.en")!.EnglishOnly);
-        Assert.False(WhisperModels.Find("base")!.EnglishOnly);
+
+        // Nothing in the catalogue answers false any more, so the property is asserted against a
+        // model d47 does not offer rather than against a row (#187 retired all four).
+        Assert.False(new WhisperModel("base", "Base (multilingual)", 142).EnglishOnly);
     }
 
     // ---- Egress ---------------------------------------------------------------------------

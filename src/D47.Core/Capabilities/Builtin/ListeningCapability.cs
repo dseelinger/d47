@@ -495,14 +495,17 @@ public static class ListeningCapability
                 DocsAnchor = "model",
                 Binding = new SettingBinding
                 {
-                    Read = s => s.Listening.Model,
+                    // Adopted on the way out, so a file still naming a retired multilingual model
+                    // shows the English twin it is actually running rather than a choice this
+                    // build no longer offers (#187).
+                    Read = s => WhisperModels.AdoptedId(s.Listening.Model) ?? WhisperModels.NoneId,
                     Write = (s, v) => s with
                     {
                         Listening = s.Listening with
                         {
-                            Model = v is null || WhisperModels.Find(v) is null
-                                ? WhisperModels.NoneId
-                                : v,
+                            Model = WhisperModels.AdoptedId(v) is { } wanted && WhisperModels.Find(wanted) is not null
+                                ? wanted
+                                : WhisperModels.NoneId,
                         },
                     },
                 },

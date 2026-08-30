@@ -93,26 +93,65 @@ public static class WhisperModels
             "a03779c86df3323075f5e796cb2ce5029f00ec8869eee3fdfb897afe36c6d002"),
         new("small.en", "Small (English only) — more accurate, slower", 466,
             "c6138d6d58ecc8322097e0f987c32f1be8bb0a18532a3f88f734d1bbf9c41e5d"),
-        new("tiny", "Tiny (multilingual)", 75,
-            "be07e048e1e599ad46341c8d2a135645097a538221678b7acdd1b1919c6e1b21"),
-        new("base", "Base (multilingual)", 142,
-            "60ed5bc3dd14eea856493d334349b405782ddcaf0028d4b5df4088345fba2efe"),
-        new("small", "Small (multilingual)", 466,
-            "1be3a9b2063867b937e64e2ec7483364a79917e157fa98c5d94b5c1fffea987b"),
-        new("medium", "Medium (multilingual) — slow without a GPU", 1500,
-            "6c14d5adee5f86394037b4e4e8b59f1673b6cee10e3cf0b11bbdbee79c156208"),
+        new("medium.en", "Medium (English only) — the most accurate, and wants a GPU", 1463,
+            "cc37e93478338ec7700281a7ac30a10128929eb8f427dda2e865faa8f6da4356"),
     ];
 
     /// <summary>
-    /// What a fresh install selects: the smallest English model, and good enough for the short
-    /// push-to-talk clips this is actually asked to transcribe.
+    /// The multilingual models, retired on 2026-08-30, and what a Commander who had one selected
+    /// gets instead (<a href="https://github.com/dseelinger/d47/issues/187">#187</a>'s corpus).
     /// <para>
-    /// Being the shipped default makes this the one model most Commanders will ever download, so
-    /// it is the cheapest in the catalogue: the first launch fetches it without being asked, and
-    /// 75 MB is a defensible thing to spend on somebody's behalf where 1.5 GB would not be.
+    /// <b>They could never be multilingual here.</b> <c>WhisperTranscriber</c> pins Whisper to
+    /// English on every load, so a multilingual model cost the same download as its <c>.en</c>
+    /// twin and gave back a model handicapped at the one language d47 asks it for.
+    /// </para>
+    /// <para>
+    /// <b>And the corpus showed the pin does not silence them.</b> Measured over 37 clips, a
+    /// multilingual model asked for English answered eight of eight no-speech clips with
+    /// confident foreign sentences — <i>"Grazie a tutti!"</i> for a held key over a quiet room,
+    /// for mouse clicks, for a sigh. Nothing filters those: they are not bracketed, so
+    /// <c>Clean</c> keeps them and <c>SpeechNoise</c> keeps them, and they reach the turn loop as
+    /// something the Commander said. The English-only models answered the same clips with
+    /// silence, or with <i>"(keyboard clicking)"</i>, which d47 already discards.
     /// </para>
     /// </summary>
-    public const string DefaultId = "tiny.en";
+    private static readonly Dictionary<string, string> Retired = new(StringComparer.Ordinal)
+    {
+        ["tiny"] = "tiny.en",
+        ["base"] = "base.en",
+        ["small"] = "small.en",
+        ["medium"] = "medium.en",
+    };
+
+    /// <summary>
+    /// What a stored model id becomes now, which is itself for everything this build still
+    /// offers. A retired id adopts its English twin rather than falling through to "none":
+    /// <see cref="Find"/> answers null for an id it does not know, and a null there means
+    /// <see cref="SpeechModelAction.Unload"/> — so without this a Commander who had
+    /// <c>small</c> selected would silently lose speech-to-text on upgrade.
+    /// </summary>
+    public static string? AdoptedId(string? id) =>
+        id is not null && Retired.TryGetValue(id, out var replacement) ? replacement : id;
+
+    /// <summary>
+    /// What a fresh install selects. <b>Base rather than Tiny since 2026-08-30</b>, on the
+    /// corpus recorded for <a href="https://github.com/dseelinger/d47/issues/187">#187</a>.
+    /// <para>
+    /// Tiny is the cheapest and it mis-hears the words it can least afford to. Over 37 clips it
+    /// answered <i>"Cancel that"</i> with <b><i>"Cancer that"</i></b> — and "cancel that" is a
+    /// declared interrupt phrase, so the keyword router simply does not match it and the barge-in
+    /// fails. It also gave <i>"Plata Rout"</i> for "Plot a route", <i>"Shinrata"</i> for
+    /// Shinrarta Dezhra, and <i>"Halfar is it to DC at?"</i> for "How far is it to Deciat?".
+    /// Base got the first three right and was the <b>cleanest of all five models on non-speech</b>,
+    /// answering held keys and mouse clicks with nothing, or with a bracketed note d47 discards.
+    /// </para>
+    /// <para>
+    /// The download it commits a fresh install to goes from 75 MB to 142 MB, which is the reason
+    /// this was Tiny and is still a defensible thing to spend on somebody's behalf — where the
+    /// 1,463 MB of Medium would not be.
+    /// </para>
+    /// </summary>
+    public const string DefaultId = "base.en";
 
     /// <summary>
     /// The model the Commander has chosen but has not got, or null when there is nothing

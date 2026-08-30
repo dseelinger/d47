@@ -65,7 +65,13 @@ public static class ListeningWiring
         ArgumentNullException.ThrowIfNull(listening);
         ArgumentNullException.ThrowIfNull(models);
 
-        if (WhisperModels.Find(listening.Model) is { } model && models.PathOf(model) is { } path)
+        // Adopted rather than looked up raw: a settings file naming a retired multilingual model
+        // resolves to its English twin here (#187). Read-time rather than a migration that
+        // rewrites the file — nothing is persisted, so there is no ordering to get right and no
+        // way for a rewrite to re-enter this through the settings handlers.
+        var selected = WhisperModels.AdoptedId(listening.Model);
+
+        if (WhisperModels.Find(selected) is { } model && models.PathOf(model) is { } path)
         {
             return new SpeechModelPlan
             {
@@ -76,7 +82,7 @@ public static class ListeningWiring
             };
         }
 
-        if (WhisperModels.AwaitingDownload(listening.Model, models) is { } wanted)
+        if (WhisperModels.AwaitingDownload(selected, models) is { } wanted)
         {
             return new SpeechModelPlan
             {
