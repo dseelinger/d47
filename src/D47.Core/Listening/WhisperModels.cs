@@ -99,7 +99,7 @@ public static class WhisperModels
             "60ed5bc3dd14eea856493d334349b405782ddcaf0028d4b5df4088345fba2efe"),
         new("small", "Small (multilingual)", 466,
             "1be3a9b2063867b937e64e2ec7483364a79917e157fa98c5d94b5c1fffea987b"),
-        new("medium", "Medium (multilingual) — slowest", 1500,
+        new("medium", "Medium (multilingual) — slow without a GPU", 1500,
             "6c14d5adee5f86394037b4e4e8b59f1673b6cee10e3cf0b11bbdbee79c156208"),
     ];
 

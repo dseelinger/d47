@@ -22,15 +22,24 @@
   <ItemGroup>
     <PackageReference Include="Whisper.net" Version="1.9.1" />
 
-    <!--
-      The CPU runtime, and the only runtime there is: no accelerated variant is referenced, so
-      there is no GPU code to load. That is why the GPU settings row was withdrawn (#187) — the
-      old promise here, "d47 reports the CUDA runtime's absence rather than silently falling
-      back", could never fire, because the CPU runtime accepts a GPU request and loads
-      successfully whatever was asked. Adding Whisper.net.Runtime.Cuda is the tabled half of
-      #187, and a licence-gate walk of its transitive graph comes with it.
-    -->
+    <!-- The CPU runtime. Always shipped, and the fallback whenever the GPU one does not load. -->
     <PackageReference Include="Whisper.net.Runtime" Version="1.9.1" />
+
+    <!--
+      The GPU runtime, and Vulkan rather than CUDA on purpose (#187).
+
+      Vulkan is about 58 MB of win-x64 natives against CUDA 11's 148 MB and CUDA 12's more, it
+      runs on AMD and Intel GPUs as well as NVIDIA, and it bundles no vendor runtime at all — it
+      calls whatever Vulkan driver the machine already has. The CUDA packages ship one ~147 MB
+      DLL with no cuBLAS or cudart beside it, which is what NVIDIA's math libraries statically
+      linked in looks like; every one of these packages declares MIT, so the licence gate would
+      pass it either way, and the gate reads nuspec metadata rather than what a binary contains.
+      Vulkan avoids that question rather than answering it.
+
+      Small enough to ship in the installer, which is what keeps this out of the model-download
+      path: 58 MB beside the executable against a 1 GB models folder that is already fetched.
+    -->
+    <PackageReference Include="Whisper.net.Runtime.Vulkan" Version="1.9.1" />
   </ItemGroup>
 
 </Project>

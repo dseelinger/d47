@@ -398,23 +398,35 @@ is worth checking.
 `none` stays a real choice. Pick it and Directive 47 hears you and says, honestly, that it cannot
 turn what it heard into words.
 
-#### Everything runs on the CPU {#gpu}
+#### Running on the GPU {#gpu}
 
-There is no GPU path in this build — and there used to be a toggle here that claimed otherwise.
+Off by default, and **about five times faster** when you turn it on. Measured on an RTX 5080 with
+Small (English only): **170 ms against 970 ms** for the same sentence.
 
-**"Run the speech model on the GPU" never reached a GPU.** Only CPU natives ship, the CPU
-runtime accepts a GPU request without complaint, and the log repeated the request back — *"on
-the GPU"* — as if it were the result. Flipping the toggle changed nothing but that line. The row
-was withdrawn rather than left lying
-([#187](https://github.com/dseelinger/d47/issues/187)), and the log now reports the device
-actually in use. If your settings file still holds the old preference, it is kept but read by
-nothing.
+It costs video memory, which is the part worth thinking about, because that memory comes out of
+whatever else wants the card:
 
-The CPU is not a compromise for this job: a short push-to-talk clip on the small English models
-transcribes in well under a second — the table above — and in VR your GPU is already the scarce
-thing, so a model running there would surface as dropped frames and reprojection, a symptom
-nowhere near its cause. A real GPU path, with its runtime actually present and checked, is a
-recorded want rather than a promise.
+| Model | Video memory, at peak |
+|---|---|
+| Tiny (English only) | about 330 MB |
+| Base (English only) | about 440 MB |
+| Small (English only) | about 880 MB |
+
+**In VR that trade is a real one.** Your GPU is already the scarce thing there, and taking memory
+and time from the game shows up as dropped frames rather than as anything that looks like a
+speech problem — a symptom nowhere near its cause. That is why this is off out of the box rather
+than on. On the desktop window, with headroom to spare, it is close to free.
+
+**If your machine has no GPU D47 can use, it runs on the CPU and says so** — in the log, and in
+what it reports about itself. It does not fail, and it does not claim a device it is not using.
+
+The switch takes effect immediately, both ways: turn it off and the video memory is handed back.
+
+> **This did not work before [#187](https://github.com/dseelinger/d47/issues/187).** The toggle
+> shipped for months with no GPU code behind it at all — the CPU runtime accepted the request,
+> loaded happily, and the log read *"on the GPU"* because it was repeating the request back
+> rather than reporting what happened. If you turned it on and noticed nothing, that is why.
+> D47 now uses Vulkan, which works on AMD and Intel cards as well as NVIDIA.
 
 ### Seeing that the microphone is open {#indicator}
 

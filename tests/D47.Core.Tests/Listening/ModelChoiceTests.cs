@@ -165,17 +165,41 @@ public class ModelChoiceTests
     }
 
     [Fact]
-    public void ThereIsNoGpuRowWhileOnlyCpuNativesShip()
+    public void TheGpuRowDisappearsWhenNoModelIsSelected()
     {
-        // #187: the toggle never reached a GPU — no accelerated runtime is bundled — so the row
-        // sat there claiming a device that was not in use. It must stay withdrawn until a real
-        // GPU runtime ships; this is what stops it drifting back in without one.
-        using var install = new TempInstall();
-        var surface = TestSurface.For(install);
+        var row = Row(ListeningCapability.GpuKey);
 
-        Assert.DoesNotContain(
-            surface.Settings.Sections.SelectMany(section => section.Rows),
-            row => row.Key == ListeningCapability.GpuKey);
+        // A row that does not apply is absent rather than disabled — a greyed-out control still
+        // asserts the setting exists.
+        Assert.False(row.Applies(new D47Settings
+        {
+            Listening = new ListeningSettings { Model = WhisperModels.NoneId },
+        }));
+        Assert.True(row.Applies(new D47Settings
+        {
+            Listening = new ListeningSettings { Model = "base.en" },
+        }));
+    }
+
+    /// <summary>
+    /// Both costs on the row, and the fallback said out loud
+    /// (<a href="https://github.com/dseelinger/d47/issues/187">#187</a>).
+    /// <para>
+    /// The VR warning is why this is off by default. The video-memory cost is the half the old
+    /// row never mentioned, and it is the one that lands on the game. And "runs on the CPU and
+    /// says so" is the promise the old row made and could not keep — it claimed d47 would report
+    /// a missing GPU runtime, while the CPU runtime loaded happily and reported a GPU.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void TheGpuRowStatesBothItsCostsAndItsFallback()
+    {
+        var help = Row(ListeningCapability.GpuKey).Help;
+
+        Assert.Contains("VR", help);
+        Assert.Contains("dropped frames", help);
+        Assert.Contains("video memory", help);
+        Assert.Contains("says so", help);
     }
 
     private static SettingRow Row(string key)

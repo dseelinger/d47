@@ -610,19 +610,20 @@ public sealed record ListeningSettings
     public string Model { get; init; } = Listening.WhisperModels.DefaultId;
 
     /// <summary>
-    /// Run inference on the GPU. Stored, and currently read by nothing (#187).
+    /// Run inference on the GPU. Off by default and deliberately so.
     /// <para>
-    /// Only CPU natives ship, so the toggle this held never reached a GPU — the row and the log
-    /// claimed a device that was not in use, and the row was withdrawn rather than left lying.
-    /// The property stays because the settings file is append-only, and it is the value the row
-    /// resumes from if a real GPU runtime ever ships (the tabled half of #187).
+    /// <b>It reaches a GPU as of #187, and did not before.</b> Only CPU natives shipped, the CPU
+    /// runtime accepts a GPU request without complaint, and the log reported the request rather
+    /// than the result — so the toggle changed one log line and nothing else. It is Vulkan now
+    /// rather than CUDA, which runs on any vendor's card and bundles no vendor runtime.
     /// </para>
     /// <para>
-    /// Off by default, and deliberately so if that day comes: in VR the GPU is already the scarce
-    /// resource, so a large model running there surfaces as dropped frames and reprojection
-    /// rather than as anything resembling a speech problem — which the checklist calls the
-    /// hardest kind of setting to diagnose. A short push-to-talk clip on the small English
-    /// models absorbs CPU inference fine.
+    /// Off by default because the cost is real and lands somewhere else: in VR the GPU is
+    /// already the scarce resource, so a model running there surfaces as dropped frames rather
+    /// than as anything resembling a speech problem — which the checklist calls the hardest kind
+    /// of setting to diagnose. A short push-to-talk clip on the small English models absorbs CPU
+    /// inference fine. Measured on an RTX 5080 with <c>small.en</c>: 170 ms against 970 ms, for
+    /// 880 MB of video memory at peak.
     /// </para>
     /// </summary>
     public bool UseGpu { get; init; }

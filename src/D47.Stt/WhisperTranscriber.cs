@@ -97,8 +97,10 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
     /// <summary>
     /// Whether inference is actually on the GPU — assigned from the runtime library Whisper.net
     /// reports having loaded, never from the flag the caller asked with (#187). The two differed
-    /// for months: only CPU natives ship, the CPU runtime accepts a GPU request without
-    /// complaint, and this property repeated the request back as if it were the result.
+    /// for months: no GPU native was shipped at all, the CPU runtime accepts a GPU request
+    /// without complaint, and this property repeated the request back as if it were the result.
+    /// A GPU runtime ships now, and this still reports the result rather than the request —
+    /// a machine with no capable driver falls through to the CPU and is told so.
     /// </summary>
     public bool UsingGpu { get; private set; }
 
@@ -148,6 +150,18 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
 
             try
             {
+                // Which native libraries may load, named rather than left to the default order,
+                // which also lists CUDA and OpenVino this build does not ship (#187).
+                //
+                // Vulkan is offered whatever the setting says, and that is what makes the toggle
+                // live. The library choice is process-wide and one-shot — Whisper.net keeps the
+                // first one that loads for the rest of the run — so a CPU-only list here would
+                // strand a Commander who switches the GPU on until they restarted d47, while
+                // leaving Vulkan loadable costs nothing measurable: what reserves video memory is
+                // the offload below, not the library. Measured at zero MB idle, and the memory
+                // comes back when the setting goes off again.
+                RuntimeOptions.RuntimeLibraryOrder = [RuntimeLibrary.Vulkan, RuntimeLibrary.Cpu];
+
                 _factory = WhisperFactory.FromPath(modelPath, new WhisperFactoryOptions
                 {
                     UseGpu = useGpu,
@@ -167,9 +181,11 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
 
                 if (useGpu && !UsingGpu)
                 {
-                    // The load that succeeds on the wrong device — the case the catch below was
-                    // written for and can never see, because the CPU runtime accepts a GPU
-                    // request and loads anyway (#187). Said here, at Warning, because the
+                    // The load that succeeds on the wrong device: no Vulkan-capable driver, so
+                    // the loader fell through to the CPU library and whisper loaded on it
+                    // happily. This is the case the catch below was written for and can never
+                    // see, because nothing threw (#187) — and it is the whole defect, since for
+                    // months this path reported a GPU instead. Warning, not Information: the
                     // Commander asked for a device they are not getting.
                     _logger.LogWarning(
                         "The GPU was asked for, but the native runtime that loaded is {Library} — "
@@ -181,9 +197,9 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
             }
             catch (Exception ex)
             {
-                // The GPU case this most often means: the CUDA runtime is not present. Reported
-                // as itself rather than as a silent fall back to CPU — a GPU toggle that quietly
-                // does nothing is the setting the checklist calls hardest to diagnose.
+                // A throw here is the model or the file, not the device: a machine with no usable
+                // GPU falls through to the CPU library and succeeds, which is handled above
+                // rather than here.
                 Unavailable = useGpu
                     ? $"The model could not be loaded on the GPU: {ex.Message} "
                       + "Turn GPU off in Settings to run it on the CPU."
@@ -221,12 +237,18 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
 
     /// <summary>
     /// Whether a successful load is actually on the GPU: it was asked for, <b>and</b> the native
-    /// library that loaded is one that puts inference there (#187). The request alone proves
-    /// nothing — the CPU runtime accepts <c>UseGpu = true</c> without complaint, which is how
-    /// the old assignment, the request copied back, reported a GPU for months while only CPU
-    /// natives shipped. CoreML and OpenVino count as CPU on purpose: understating what an exotic
-    /// runtime delivers is recoverable, and claiming a GPU not in use is the lie this exists to
-    /// end.
+    /// library that loaded is one that puts inference there (#187).
+    /// <para>
+    /// <b>Both halves are load-bearing.</b> The request alone proves nothing — the CPU runtime
+    /// accepts <c>UseGpu = true</c> without complaint, which is how the request copied back
+    /// reported a GPU for months while no GPU native shipped. The loaded library alone proves
+    /// nothing either, now that Vulkan is offered on every load: it is loaded whether or not the
+    /// Commander asked for the GPU, and with the setting off nothing is offloaded to it.
+    /// </para>
+    /// <para>
+    /// CoreML and OpenVino count as CPU on purpose: understating what an exotic runtime delivers
+    /// is recoverable, and claiming a GPU not in use is the lie this exists to end.
+    /// </para>
     /// </summary>
     internal static bool RunsOnGpu(bool requested, RuntimeLibrary? loaded) =>
         requested && loaded is RuntimeLibrary.Cuda or RuntimeLibrary.Cuda12 or RuntimeLibrary.Vulkan;

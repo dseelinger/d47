@@ -27,12 +27,6 @@ public static class ListeningCapability
     public const string PreRollKey = "listening.preRoll";
     public const string ModelKey = "listening.model";
 
-    /// <summary>
-    /// Withheld from the surface since #187: only CPU natives ship, so the toggle this key named
-    /// changed nothing while the row and the log both claimed a GPU. The key stays because the
-    /// settings property it names is still stored (the settings file is append-only), and the
-    /// row returns only with a real GPU runtime — the tabled half of #187.
-    /// </summary>
     public const string GpuKey = "listening.useGpu";
     public const string EgressKey = "listening.egress";
     public const string EchoKey = "listening.echoCancellation";
@@ -513,11 +507,36 @@ public static class ListeningCapability
                     },
                 },
             },
-            // No GPU row. There was one — "Run the speech model on the GPU" — and it was
-            // withdrawn by #187: only CPU natives ship, so the toggle changed nothing while the
-            // row promised "D47 says so rather than quietly using the CPU". A control that does
-            // nothing is worse absent than present, by this file's own rule that a row which
-            // does not apply is absent rather than disabled.
+            new SettingRow
+            {
+                Key = GpuKey,
+                Advanced = true,
+                Label = "Run the speech model on the GPU",
+
+                // Both costs stated, because both are real and neither is guessable from the
+                // label. The figures are measured on the machine #187 was fixed on (RTX 5080,
+                // small.en): 170 ms against 970 ms, and 880 MB of video memory at its peak.
+                // The VR warning stays — it is why this is off by default — but it is now a
+                // trade-off a Commander can weigh rather than a warning about a switch that
+                // did nothing at all.
+                Help =
+                    "Much faster — around five times — but it uses video memory and takes it from "
+                    + "whatever else wants the GPU. In VR that is the game, where the cost shows up "
+                    + "as dropped frames rather than as a speech problem. With no capable GPU, D47 "
+                    + "runs on the CPU and says so rather than claiming otherwise.",
+                Kind = SettingKind.Toggle,
+                DefaultDisplay = "off",
+                DocsAnchor = "gpu",
+                AppliesWhen = s => s.Listening.Model != WhisperModels.NoneId,
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Listening.UseGpu ? "true" : "false",
+                    Write = (s, v) => s with
+                    {
+                        Listening = s.Listening with { UseGpu = v is not "false" },
+                    },
+                },
+            },
             new SettingRow
             {
                 Key = PreRollKey,
