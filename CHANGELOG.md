@@ -27,7 +27,7 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
-## 0.94.0 — 2026-08-30 — A mark you can press says so before you point at it
+## 0.94.0 — 2026-08-30 — One key to talk, and it shuts D47 up on the way in
 
 ### Clickable words and marks carry the accent at rest (#208)
 
