@@ -141,6 +141,17 @@ says so in a sentence rather than opening an empty box. The caveat rides on ever
 empty: **only what a commit wrote down** — work still in the tree, or committed without a
 `Fixes #N`, does not appear.
 
+**Two traps the green suite could not see, both found on the first real `get-local`**, and both now
+guarded. PowerShell variable names are case-insensitive, so `get-local.ps1` setting `$repo` to its
+checkout path *was* setting the shared library's `$Repo` — every `gh` call went out with
+`--repo C:\dev\d47`, failed the way being offline fails, was caught by the fail-soft path that
+exists for being offline, and stamped ten issues as unknown with no symptom but a warning that
+reads like a network problem. The name is `$IssueRepo` now, and a test asserts no caller can shadow
+anything the library puts in their scope. And PowerShell does not evaluate an expression inside a
+native-command argument: `-p:LocalBuildIssues=(Get-BuildNotes …)` passed the flag empty and handed
+MSBuild the base64 as a second project path. It goes through a variable, and the test pins the
+exact publish line.
+
 ### Long answers were captioned from the middle (#200)
 
 **A spoken sentence wrapping past two lines had its leading lines thrown away before anything was

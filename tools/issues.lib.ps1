@@ -34,7 +34,13 @@ $Vouched = @('dseelinger')
 # it. Named here to match CLAUDE.md rather than to introduce a second spelling of the same rule.
 $ReadyLabel = 'ready'
 
-$Repo = 'dseelinger/d47'
+# **Named so a caller cannot take it by accident, and this is not fussiness.** PowerShell
+# variable names are case-insensitive, so a script that sets `$repo` to a checkout path — which
+# `get-local.ps1` does, on its first line of work — is setting *this*. Every `gh` call then went out
+# with `--repo C:\dev\d47`, failed, and was caught by the fail-soft path that exists for being
+# offline: ten issues stamped as unknown, in a run whose only visible symptom was a warning that
+# reads exactly like a network problem (#207, found by driving it).
+$IssueRepo = 'dseelinger/d47'
 
 # gh writes ordinary progress and refusals to stderr, and Windows PowerShell turns any stderr line
 # from a native command into a terminating error while ErrorActionPreference is Stop. This is the
@@ -80,7 +86,7 @@ function Invoke-Gh {
 function Get-ReadyApprover {
     param([int] $Number)
 
-    $raw = Invoke-Gh @('api', '--paginate', '--slurp', "repos/$Repo/issues/$Number/events")
+    $raw = Invoke-Gh @('api', '--paginate', '--slurp', "repos/$IssueRepo/issues/$Number/events")
     $pages = $raw | ConvertFrom-Json
 
     # --slurp yields an array of pages; each page is an array of events. Flattened rather than

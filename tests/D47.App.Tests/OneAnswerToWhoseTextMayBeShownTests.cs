@@ -113,14 +113,64 @@ public class OneAnswerToWhoseTextMayBeShownTests
         var text = File.ReadAllText(Path.Combine(RepositoryRoot(), "tools", "get-local.ps1"));
 
         Assert.Contains("ToBase64String", text, StringComparison.Ordinal);
-        Assert.Contains("-p:LocalBuildIssues=", text, StringComparison.Ordinal);
 
         // Release, never Debug, and the property rides on that same publish rather than on a
         // second one somebody could run in the wrong configuration.
+        //
+        // **A variable, never a parenthesised call.** PowerShell does not evaluate an expression
+        // inside a native-command argument: `-p:Key=(Get-Thing)` passes `-p:Key=` and then the
+        // result as a *separate* argument, which MSBuild read as a second project and refused.
+        // Found by driving it rather than by the suite (#207).
         Assert.Contains(
-            "dotnet publish $project -c Release -p:Version=$version -p:LocalBuildIssues=",
+            "dotnet publish $project -c Release -p:Version=$version -p:LocalBuildIssues=$stamp",
             text,
             StringComparison.Ordinal);
+
+        Assert.DoesNotContain("-p:LocalBuildIssues=(", text, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// <b>No caller shadows the library's repository name</b>, and this guard exists because one
+    /// did (#207).
+    /// <para>
+    /// PowerShell variable names are case-insensitive, so a script that sets <c>$repo</c> to its
+    /// checkout path is setting the library's <c>$Repo</c>. <c>get-local.ps1</c> does exactly that
+    /// on its first line of work, and every <c>gh</c> call then went out with
+    /// <c>--repo C:\dev\d47</c>. It failed the way being offline fails, was caught by the
+    /// fail-soft path that exists for being offline, and stamped ten issues as unknown — with no
+    /// symptom but a warning that reads like a network problem.
+    /// </para>
+    /// <para>
+    /// The name is <c>$IssueRepo</c> now, which no path variable is going to collide with. This
+    /// asserts the collision cannot come back under either spelling.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void NoCallerCanShadowTheLibrarysOwnNames()
+    {
+        var shared = File.ReadAllText(Path.Combine(RepositoryRoot(), "tools", "issues.lib.ps1"));
+
+        // Unindented only, which is exactly the set that lands in the caller's own scope. A local
+        // inside one of the library's functions is scoped to it and collides with nothing.
+        var names = shared
+            .Split('\n')
+            .Where(line => line.StartsWith('$') && line.Contains('='))
+            .Select(line => line[1..line.IndexOf('=', StringComparison.Ordinal)].Trim())
+            .ToList();
+
+        Assert.NotEmpty(names);
+
+        foreach (var script in new[] { "issues.ps1", "prerelease.ps1", "get-local.ps1" })
+        {
+            var text = File.ReadAllText(Path.Combine(RepositoryRoot(), "tools", script));
+
+            foreach (var name in names)
+            {
+                Assert.DoesNotContain(
+                    text.Split('\n').Select(line => line.TrimStart()),
+                    line => line.StartsWith($"${name} =", StringComparison.OrdinalIgnoreCase));
+            }
+        }
     }
 
     /// <summary>

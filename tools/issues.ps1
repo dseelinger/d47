@@ -100,7 +100,7 @@ function Write-Receipt {
 switch ($Command) {
 
     'list' {
-        $raw = Invoke-Gh @('issue', 'list', '--repo', $Repo, '--state', $State,
+        $raw = Invoke-Gh @('issue', 'list', '--repo', $IssueRepo, '--state', $State,
             '--limit', '200', '--json', 'number,title,author,labels,createdAt')
 
         $items = $raw | ConvertFrom-Json
@@ -113,7 +113,7 @@ switch ($Command) {
         $shown = 0
         $withheld = 0
 
-        Write-Host "$($items.Count) $State issue(s) in ${Repo}:`n"
+        Write-Host "$($items.Count) $State issue(s) in ${IssueRepo}:`n"
 
         foreach ($item in $items) {
             $labels = @($item.labels | ForEach-Object { $_.name })
@@ -142,7 +142,7 @@ switch ($Command) {
             Write-Error "Which issue? Usage: issues.ps1 view <number>"
         }
 
-        $raw = Invoke-Gh @('issue', 'view', "$Number", '--repo', $Repo,
+        $raw = Invoke-Gh @('issue', 'view', "$Number", '--repo', $IssueRepo,
             '--json', 'number,title,author,labels,state,createdAt,body,comments')
 
         $item = $raw | ConvertFrom-Json

@@ -140,7 +140,7 @@ function Get-BuildNotes {
         $labels = @()
 
         try {
-            $raw = Invoke-Gh @('issue', 'view', "$number", '--repo', $Repo,
+            $raw = Invoke-Gh @('issue', 'view', "$number", '--repo', $IssueRepo,
                 '--json', 'number,title,author,labels,state')
 
             $item = $raw | ConvertFrom-Json
@@ -213,7 +213,13 @@ else {
         # The count and the numbers, and no title. See Get-BuildNotes for why.
         Write-Note "The badge will list $($worked.Count) issue(s) this build worked: $(($worked | ForEach-Object { "#$_" }) -join ', ')"
 
-        dotnet publish $project -c Release -p:Version=$version -p:LocalBuildIssues=(Get-BuildNotes -Numbers $worked)
+        # Into a variable first, and that is a rule rather than a style. A parenthesised
+        # expression inside a native-command argument is not evaluated into it — PowerShell passes
+        # `-p:LocalBuildIssues=` and then the result as a *separate* argument, which MSBuild reads
+        # as a second project and refuses. Found by driving it (#207).
+        $stamp = Get-BuildNotes -Numbers $worked
+
+        dotnet publish $project -c Release -p:Version=$version -p:LocalBuildIssues=$stamp
     }
     else {
         Write-Note 'No commit since the tag names an issue, so the badge will say so rather than open an empty box.'
