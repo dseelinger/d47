@@ -23,12 +23,22 @@ public sealed class HttpModelStore : IModelStore, IDisposable
     private readonly ILogger<HttpModelStore> _logger;
 
     /// <summary>
-    /// How much is asked for per request. A hundred megabytes is where the throttling measured
-    /// on 2026-08-30 had not yet bitten — each 100 MB range held 16-21 MB/s where the single
-    /// stream fell to 4 — and it is fifteen requests for the largest model d47 offers rather
-    /// than a request per percent.
+    /// How much one worker asks for at a time. Small enough that the throttle measured on
+    /// 2026-08-30 has not arrived by the end of it — 100 MB held 19 MB/s where 300 MB fell to
+    /// 4.5 — and small enough that a short final chunk costs one worker a moment rather than
+    /// leaving three idle through a last long round.
     /// </summary>
-    private const long ChunkBytes = 100L * 1024 * 1024;
+    private const long ChunkBytes = 64L * 1024 * 1024;
+
+    /// <summary>How many chunks are in flight at once. See <see cref="FetchAsync"/> for why four.</summary>
+    private const int Parallelism = 4;
+
+    /// <summary>
+    /// The read buffer, and the one the second pass hashes through. 256 KB rather than 80 KB;
+    /// measured as neutral for throughput, and it is what makes one progress report per whole
+    /// percent land naturally rather than needing a timer.
+    /// </summary>
+    private const int BufferBytes = 262144;
 
     public HttpModelStore(AppPaths paths, ILogger<HttpModelStore> logger)
     {
@@ -187,144 +197,8 @@ public sealed class HttpModelStore : IModelStore, IDisposable
                 offer.Megabytes,
                 WhisperModels.Host);
 
-            string actualHash;
-
-            {
-                var total = offer.Bytes;
-
-                // <b>Asynchronous, and unbuffered.</b> The four-argument constructor defaults to
-                // <c>bufferSize: 4096, useAsync: false</c>, so every <c>WriteAsync</c> of a
-                // network chunk became a run of <em>blocking</em> 4 KB writes on a threadpool
-                // thread. A buffer size of 1 means no buffering, which is what is wanted when the
-                // caller already arrives with a whole chunk in hand.
-                //
-                // <b>Measured, and it changed nothing — which is why it is written down.</b> This
-                // was the leading suspect for a download reported as slow on 2026-08-28, and two
-                // runs of each shape against the real file put both at 60-77 MB/s with the
-                // ordering crossing over: no effect. It is kept because blocking threadpool I/O
-                // through a 4 KB buffer is the wrong shape on a machine that is busy, and it is
-                // recorded as neutral so nobody re-derives it as the fix.
-                await using var file = new FileStream(
-                    pending,
-                    FileMode.Create,
-                    FileAccess.Write,
-                    FileShare.None,
-                    bufferSize: 1,
-                    FileOptions.Asynchronous);
-
-                // Hashed as it lands rather than by re-reading the file afterwards: a second
-                // pass over 500 MB to learn something the first pass already went past is
-                // avoidable work on the slowest thing in the operation.
-                using var sha = SHA256.Create();
-
-                // 256 KB rather than 80. Also measured as neutral; it is here because it is what
-                // makes one report per whole percent land naturally rather than needing a timer.
-                var buffer = new byte[262144];
-                long received = 0;
-                int read;
-
-                // <b>Reported on whole percentage points, not on every read — and this is about
-                // the bar rather than about the transfer.</b>
-                //
-                // <c>Progress&lt;T&gt;</c> captures the UI synchronisation context, so each report
-                // is a post to the Avalonia dispatcher that sets a bar and invalidates its layout.
-                // A 75 MB model produced <b>4,700</b> of them; it now produces <b>101</b>.
-                //
-                // <b>What that does not do is make the download faster, and the measurement is
-                // the reason to say so.</b> <c>Report</c> posts and returns, so the loop never
-                // waits on the dispatcher: driven against a pump doing 300 microseconds of work
-                // per post — 1.4 seconds of queued work behind a transfer that takes one — both
-                // shapes still finished in the same time. What the flood costs is that the queue
-                // drains long after the bytes have landed, so the bar trails the transfer and a
-                // download that has finished can still look like one that is crawling.
-                //
-                // A hundred updates is every update a progress bar can express.
-                var lastPercent = -1;
-
-                // <b>Asked for in chunks, because one long connection is throttled and a short
-                // one is not.</b> Measured against this host on 2026-08-30, on a gigabit line:
-                // the whole 465 MB as a single stream averaged <b>4.1 MB/s and took 119 s</b>,
-                // while the first 100 MB of the same file ran at 24 MB/s and bytes 300-400 MB
-                // ran at 19 MB/s — so it is neither the line nor where the bytes sit in the
-                // file. Fetched as five sequential ranges the same download took <b>28 s</b>,
-                // every chunk holding 16-21 MB/s.
-                //
-                // This is what <a href="https://github.com/dseelinger/d47/issues/84">#84</a> was
-                // originally reported as and did not find. Its progress-flood fix was real and
-                // is untouched above; the 60-77 MB/s it measured the copy loop at simply does not
-                // describe this host any more, and "it was not slow" was closed on that number.
-                //
-                // Sequential rather than parallel: it recovers most of the win, the hash still
-                // sees the file in order, and nothing has to reassemble anything out of sequence.
-                while (received < total)
-                {
-                    var last = Math.Min(received + ChunkBytes, total) - 1;
-
-                    using var request = new HttpRequestMessage(HttpMethod.Get, offer.Url);
-                    request.Headers.Range = new RangeHeaderValue(received, last);
-
-                    using var response = await _http
-                        .SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
-                        .ConfigureAwait(false);
-
-                    response.EnsureSuccessStatusCode();
-
-                    // A host that ignores Range answers 200 with the whole file rather than 206
-                    // with a slice. Writing that after the bytes already on disk would append a
-                    // second copy, so the one safe reading is "start again from nothing".
-                    if (response.StatusCode != HttpStatusCode.PartialContent)
-                    {
-                        if (received > 0)
-                        {
-                            throw new IOException(
-                                $"{WhisperModels.Host} stopped honouring range requests part way through {model.Id}.");
-                        }
-
-                        _logger.LogInformation(
-                            "{Host} did not honour a range request; downloading {Model} in one stream",
-                            WhisperModels.Host,
-                            model.Id);
-                    }
-
-                    await using var source = await response.Content
-                        .ReadAsStreamAsync(cancellationToken)
-                        .ConfigureAwait(false);
-
-                    while ((read = await source.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)) > 0)
-                    {
-                        await file.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
-                        sha.TransformBlock(buffer, 0, read, null, 0);
-
-                        received += read;
-
-                        // A total of zero would make this divide by zero; it also means there is
-                        // no percentage to report, so the bar is left to whatever it shows for
-                        // unknown length rather than being driven from a number that does not
-                        // exist.
-                        var percent = total > 0 ? (int)(received * 100 / total) : -1;
-
-                        if (percent != lastPercent)
-                        {
-                            lastPercent = percent;
-                            progress?.Report(new ModelProgress(model.Id, received, total));
-                        }
-                    }
-
-                    // The whole file arrived on one response, so there is no second range to ask
-                    // for and the loop's own condition cannot know that.
-                    if (response.StatusCode != HttpStatusCode.PartialContent)
-                    {
-                        break;
-                    }
-                }
-
-                // The last one always lands, whatever the arithmetic above did with it: a bar
-                // left at 99% on a finished download is the one report worth spending.
-                progress?.Report(new ModelProgress(model.Id, received, total));
-
-                sha.TransformFinalBlock([], 0, 0);
-                actualHash = Convert.ToHexStringLower(sha.Hash!);
-            }
+            var actualHash = await FetchAsync(model, offer, pending, progress, cancellationToken)
+                .ConfigureAwait(false);
 
             if (offer.Sha256 is { } expected &&
                 !string.Equals(actualHash, expected, StringComparison.OrdinalIgnoreCase))
@@ -362,6 +236,233 @@ public sealed class HttpModelStore : IModelStore, IDisposable
         }
     }
 
+    /// <summary>
+    /// Pulls the file down and answers its SHA-256.
+    /// <para>
+    /// <b>Several short requests at once, because this host throttles a connection rather than a
+    /// caller.</b> Measured against it on 2026-08-30, on a gigabit line, with curl discarding to
+    /// null so neither d47 nor the disk was in the way: the whole 465 MB model on <b>one</b>
+    /// stream averaged 4.1 MB/s and took 119 s, while the <i>first</i> 100 MB of the same file
+    /// ran at 24 MB/s and bytes 300-400 MB ran at 19 MB/s. So neither the line nor the offset is
+    /// the limit — length of connection is. Ranges in parallel then scale almost cleanly:
+    /// </para>
+    /// <list type="table">
+    /// <item><description>one at a time — about 17 MB/s</description></item>
+    /// <item><description>two — 38 MB/s</description></item>
+    /// <item><description>four — 58 MB/s</description></item>
+    /// <item><description>eight — 84 MB/s</description></item>
+    /// </list>
+    /// <para>
+    /// <b>Four is taken and eight is left, deliberately.</b> Eight is measurably faster and these
+    /// files are served free; four already turns the largest model from three and a half minutes
+    /// into well under one, and the rest is worth less than being a good guest. It is one
+    /// constant if that judgement changes.
+    /// </para>
+    /// <para>
+    /// <b>Chunks stay small for the same reason the whole file could not be one request.</b> 300
+    /// MB in a single range measured 4.5 MB/s where 100 MB measured 19: the throttle arrives
+    /// during a transfer, so a worker that takes a huge slice ends up in exactly the state this
+    /// is avoiding. Workers pull 64 MB at a time from a shared cursor, which also balances the
+    /// tail — the last chunk being short costs one worker a moment, not the whole download a
+    /// round.
+    /// </para>
+    /// </summary>
+    private async Task<string> FetchAsync(
+        WhisperModel model,
+        ModelOffer offer,
+        string pending,
+        IProgress<ModelProgress>? progress,
+        CancellationToken cancellationToken)
+    {
+        var total = offer.Bytes;
+
+        // Asked before anything is written, and it is one byte. A host that answers 200 to this
+        // is one that would answer 200 to every worker as well — which would be the whole file
+        // downloaded four times over, on top of itself.
+        var ranged = total > 0 && await SupportsRangesAsync(offer.Url, cancellationToken).ConfigureAwait(false);
+
+        if (!ranged)
+        {
+            _logger.LogInformation(
+                "{Host} did not offer range requests for {Model}; downloading it in one stream",
+                WhisperModels.Host,
+                model.Id);
+        }
+
+        long received = 0;
+        var lastPercent = -1;
+        var reportLock = new object();
+
+        void Advance(int bytes)
+        {
+            var now = Interlocked.Add(ref received, bytes);
+
+            if (total <= 0)
+            {
+                return;
+            }
+
+            // Locked rather than raced: four workers crossing a percentage boundary together
+            // would otherwise send four reports for it, and the point of the whole-percent gate
+            // is that the dispatcher gets about a hundred posts rather than thousands (#84).
+            var percent = (int)(now * 100 / total);
+
+            lock (reportLock)
+            {
+                if (percent == lastPercent)
+                {
+                    return;
+                }
+
+                lastPercent = percent;
+            }
+
+            progress?.Report(new ModelProgress(model.Id, now, total));
+        }
+
+        // Written to a preallocated file at absolute offsets, so the workers never contend for a
+        // position and the chunks may land in any order.
+        using (var handle = File.OpenHandle(
+                   pending,
+                   FileMode.Create,
+                   FileAccess.Write,
+                   FileShare.ReadWrite,
+                   FileOptions.Asynchronous))
+        {
+            if (ranged)
+            {
+                RandomAccess.SetLength(handle, total);
+
+                var next = 0L;
+
+                async Task WorkAsync()
+                {
+                    while (true)
+                    {
+                        var start = Interlocked.Add(ref next, ChunkBytes) - ChunkBytes;
+
+                        if (start >= total)
+                        {
+                            return;
+                        }
+
+                        var last = Math.Min(start + ChunkBytes, total) - 1;
+
+                        using var request = new HttpRequestMessage(HttpMethod.Get, offer.Url);
+                        request.Headers.Range = new RangeHeaderValue(start, last);
+
+                        using var response = await _http
+                            .SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
+                            .ConfigureAwait(false);
+
+                        response.EnsureSuccessStatusCode();
+
+                        if (response.StatusCode != HttpStatusCode.PartialContent)
+                        {
+                            // The probe said ranges were honoured and this one was not, so the
+                            // file on disk can no longer be reasoned about. Louder than a
+                            // fallback: a silent one would write a whole file over a slice.
+                            throw new IOException(
+                                $"{WhisperModels.Host} stopped honouring range requests part way through {model.Id}.");
+                        }
+
+                        await using var source = await response.Content
+                            .ReadAsStreamAsync(cancellationToken)
+                            .ConfigureAwait(false);
+
+                        var buffer = new byte[BufferBytes];
+                        var at = start;
+                        int read;
+
+                        while ((read = await source.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)) > 0)
+                        {
+                            await RandomAccess
+                                .WriteAsync(handle, buffer.AsMemory(0, read), at, cancellationToken)
+                                .ConfigureAwait(false);
+
+                            at += read;
+                            Advance(read);
+                        }
+                    }
+                }
+
+                await Task.WhenAll(Enumerable.Range(0, Parallelism).Select(_ => WorkAsync()))
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                using var response = await _http
+                    .GetAsync(offer.Url, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
+                    .ConfigureAwait(false);
+
+                response.EnsureSuccessStatusCode();
+
+                await using var source = await response.Content
+                    .ReadAsStreamAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+                var buffer = new byte[BufferBytes];
+                var at = 0L;
+                int read;
+
+                while ((read = await source.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)) > 0)
+                {
+                    await RandomAccess
+                        .WriteAsync(handle, buffer.AsMemory(0, read), at, cancellationToken)
+                        .ConfigureAwait(false);
+
+                    at += read;
+                    Advance(read);
+                }
+
+                // Whatever actually arrived, rather than what the catalogue said would.
+                RandomAccess.SetLength(handle, at);
+            }
+        }
+
+        // The last one always lands, whatever the arithmetic above did with it: a bar left at
+        // 99% on a finished download is the one report worth spending.
+        progress?.Report(new ModelProgress(model.Id, Interlocked.Read(ref received), total));
+
+        // <b>Hashed by re-reading, where it used to be hashed as it landed.</b> That was the
+        // right call when the bytes arrived at 4 MB/s and a second pass was pure waste; chunks
+        // now land out of order, so there is no "as it lands" to hash in. The cost was measured
+        // rather than assumed — a second pass over 1.5 GB off an SSD is about a second against
+        // the two and a half minutes the parallel fetch saves on that same file.
+        await using var written = new FileStream(
+            pending, FileMode.Open, FileAccess.Read, FileShare.None, BufferBytes, FileOptions.Asynchronous);
+
+        using var sha = SHA256.Create();
+
+        return Convert.ToHexStringLower(
+            await sha.ComputeHashAsync(written, cancellationToken).ConfigureAwait(false));
+    }
+
+    /// <summary>
+    /// Whether the host will serve a slice, asked with a one-byte request rather than assumed.
+    /// A <c>HEAD</c> would be politer still and is not used: this host answers it without the
+    /// <c>Accept-Ranges</c> header, so the only reliable question is the one being asked for real.
+    /// </summary>
+    private async Task<bool> SupportsRangesAsync(string url, CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.Range = new RangeHeaderValue(0, 0);
+
+            using var response = await _http
+                .SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
+                .ConfigureAwait(false);
+
+            return response.StatusCode == HttpStatusCode.PartialContent;
+        }
+        catch (HttpRequestException)
+        {
+            // Not fatal and not the question being asked: the download itself is about to try
+            // the network again and will report properly if it is really unreachable.
+            return false;
+        }
+    }
     public bool Remove(WhisperModel model)
     {
         var path = Path.Combine(Directory, model.FileName);
