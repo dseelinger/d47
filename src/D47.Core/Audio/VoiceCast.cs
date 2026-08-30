@@ -33,6 +33,40 @@ public enum VoiceRole
 }
 
 /// <summary>
+/// What a role is called on a caption, when the voice is not the one a Commander expects
+/// (<a href="https://github.com/dseelinger/d47/issues/201">#201</a>).
+/// </summary>
+public static class VoiceRoles
+{
+    /// <summary>
+    /// The speaker ID for a captioned line, or null when the speaker needs no naming.
+    /// <para>
+    /// <b>Null for the ship's AI, and that is the standard's own rule rather than a shortcut.</b>
+    /// Netflix's SDH guide asks for a speaker ID "when they cannot be visually identified", and in
+    /// a headset nobody can — there is no face, no mouth and no visual channel for who is talking.
+    /// What settles it is not visibility but ambiguity: d47 is the voice a caption band beside a
+    /// cockpit is understood to belong to, so naming it on every line is the noise the rule exists
+    /// to keep out. The carrier's tower, its captain and a crew member are somebody else, in
+    /// somebody else's voice, and a reader has nothing else to tell them apart by.
+    /// </para>
+    /// <para>
+    /// <see cref="VoiceRole.Comms"/> is here for completeness and reaches nothing: a re-voiced
+    /// in-game message is not captioned at all, being already written on the comms page in full
+    /// with its sender beside it.
+    /// </para>
+    /// </summary>
+    public static string? Called(VoiceRole role) => role switch
+    {
+        VoiceRole.ShipAi => null,
+        VoiceRole.CarrierCaptain => "Carrier",
+        VoiceRole.TowerControl => "Tower",
+        VoiceRole.Crew => "Crew",
+        VoiceRole.Comms => "Comms",
+        _ => null,
+    };
+}
+
+/// <summary>
 /// Which voice fills each role, and which voice belongs to which sender.
 /// <para>
 /// One component rather than a field on each caller, because the sticky assignments are the

@@ -5455,7 +5455,12 @@ public sealed class AppHost : IDisposable
     /// the duration and puts the ship's AI back afterwards, which is why it is a scope rather
     /// than two calls somebody has to remember to pair.
     /// </summary>
-    public sealed class CrewTurn(AppHost host, CrewAddressed addressed, string? persona, VoiceSelection voice)
+    public sealed class CrewTurn(
+        AppHost host,
+        CrewAddressed addressed,
+        string? persona,
+        VoiceSelection voice,
+        string? captionSpeaker)
         : IDisposable
     {
         /// <summary>What to ask, with the name taken off the front.</summary>
@@ -5468,6 +5473,7 @@ public sealed class AppHost : IDisposable
         {
             host.Turns.Persona = persona;
             host.Voice.Voice = voice;
+            host.Voice.CaptionSpeaker = captionSpeaker;
         }
     }
 
@@ -5491,6 +5497,7 @@ public sealed class AppHost : IDisposable
 
         var persona = Turns.Persona;
         var voice = Voice.Voice;
+        var captionSpeaker = Voice.CaptionSpeaker;
 
         _logger.LogInformation("Turn addressed to crew member {Name}", addressed.Member.Name);
 
@@ -5499,7 +5506,12 @@ public sealed class AppHost : IDisposable
         Turns.Persona = CrewAddressing.Brief(addressed.Member, GameState.Active?.Ship.Name);
         Voice.Voice = Cast.ForSender(addressed.Member.Name, isPlayer: false, VoiceRole.Crew);
 
-        return new CrewTurn(this, addressed, persona, voice);
+        // And the caption says who is answering (#201). Their own name rather than the role,
+        // because the crew are people the Commander hired and addressed by name — "[Crew]" would
+        // be less than the journal already told us.
+        Voice.CaptionSpeaker = addressed.Member.Name;
+
+        return new CrewTurn(this, addressed, persona, voice, captionSpeaker);
     }
 
     private string? _voiceScopeSystem;
@@ -5594,6 +5606,11 @@ public sealed class AppHost : IDisposable
                 {
                     Channel = Core.Audio.AudioChannel.Cue,
                     Clip = Cues.For(Core.Audio.AlertCue.TimerElapsed),
+
+                    // Captioned like the warnings are (#201). The issue called this one borderline
+                    // and it is not: it is a discrete sound that means something, played ahead of
+                    // the sentence that says which timer — exactly the shape the alert cues have.
+                    Caption = Core.Audio.AlertCues.Caption(Core.Audio.AlertCue.TimerElapsed),
                 });
             }
 

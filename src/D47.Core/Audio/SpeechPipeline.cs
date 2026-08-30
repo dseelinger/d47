@@ -93,6 +93,28 @@ public sealed class SpeechPipeline : IAsyncDisposable
     private readonly bool _captioned;
 
     /// <summary>
+    /// Who to name on the caption, or null for the speaker a caption band is already understood
+    /// to belong to (<a href="https://github.com/dseelinger/d47/issues/201">#201</a>).
+    /// <para>
+    /// Distinct from <see cref="_speaker"/>, which is the log's answer and is always set — "D47"
+    /// on every ordinary reply. This one is null exactly when no ID is wanted, so the decision
+    /// lives with the caller who knows whose line it is rather than being inferred here from a
+    /// string that happens to read a particular way.
+    /// </para>
+    /// </summary>
+    private readonly string? _captionSpeaker;
+
+    /// <summary>
+    /// Whether the speaker ID has already gone out for this utterance.
+    /// <para>
+    /// Once, on the first captioned sentence, which is where a caption track puts it: an ID is a
+    /// change of speaker, and repeating it on every sentence of one carrier's transmission would
+    /// be announcing a change that did not happen.
+    /// </para>
+    /// </summary>
+    private int _attributed;
+
+    /// <summary>
     /// Told what each sentence was rendered by, or null when nobody is recording. Null on every
     /// ordinary run: the flight recorder is the only caller, it is off unless asked for, and the
     /// phoneme trace behind this is not computed at all while it is.
@@ -123,7 +145,8 @@ public sealed class SpeechPipeline : IAsyncDisposable
         // Appended rather than slotted in beside the parameters it most resembles: every caller
         // here passes positionally, so a parameter added in the middle silently rebinds every
         // argument after it (remediation.md 11, item 9).
-        Action<SynthesisNote>? noted = null)
+        Action<SynthesisNote>? noted = null,
+        string? captionSpeaker = null)
     {
         _arbiter = arbiter;
         _tts = tts;
@@ -135,6 +158,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
         _speaker = speaker;
         _captioned = captioned;
         _noted = noted;
+        _captionSpeaker = captionSpeaker;
 
         // Shut up has to reach synthesis, not just the queue. Without this, a sentence still
         // rendering when the Commander says stop would arrive a moment later and start
@@ -413,6 +437,20 @@ public sealed class SpeechPipeline : IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// The caption text, with a speaker ID in front of it the first time somebody who is not the
+    /// ship's AI says something (#201).
+    /// <para>
+    /// Prepended to the text rather than kept beside it, so it wraps and rolls with the sentence
+    /// as one caption event — which is what a caption track does with a speaker ID, and what
+    /// keeps the whole caption layer ignorant of there being such a thing.
+    /// </para>
+    /// </summary>
+    private string Attributed(string text) =>
+        _captionSpeaker is { Length: > 0 } named && Interlocked.Exchange(ref _attributed, 1) == 0
+            ? $"[{named}] {text}"
+            : text;
+
     private async Task DrainAsync()
     {
         var said = new System.Text.StringBuilder();
@@ -435,7 +473,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
                     Channel = _channel,
                     Clip = spoken.Clip,
                     Group = _group,
-                    Caption = _captioned ? spoken.Text : null,
+                    Caption = _captioned ? Attributed(spoken.Text) : null,
                 });
 
                 // Accumulated here rather than where the text arrived, because this is the point

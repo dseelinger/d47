@@ -18,8 +18,10 @@ namespace D47.App.Headset;
 public sealed class VrCaptionSurface : IVrSurfaceSource, IDisposable
 {
     /// <summary>
-    /// Wide and short: three lines of forty-two characters and nothing else. The height carries
-    /// the box's padding as well as the text, so it is not simply three times a line.
+    /// Wide and short: <see cref="Caption.WindowLines"/> lines of forty-two characters and
+    /// nothing else. The height carries the box's padding as well as the text, so it is not
+    /// simply two times a line — and it is unchanged from when the window held three, which is
+    /// room the box's own padding takes up rather than a stale number.
     /// </summary>
     private static readonly PixelSize Pixels = new(1600, 340);
 

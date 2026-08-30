@@ -29,12 +29,15 @@ history to match today's layout would be the one edit it must never take.
 
 ## 0.93.0 — 2026-08-30 — The controllers are put down, and the panel learns to be told where to go
 
-Two wanted changes and a defect, all in the headset.
+Five issues, all in the headset, and the captions get most of them.
 [#198](https://github.com/dseelinger/d47/issues/198) withdraws motion controller support until
 [#18](https://github.com/dseelinger/d47/issues/18) is understood;
 [#199](https://github.com/dseelinger/d47/issues/199) replaces the one thing that withdrawal takes
-away; [#189](https://github.com/dseelinger/d47/issues/189) is the captions sitting rotated from
-the cockpit. Neither change request is under the moratorium, and the Commander asked for both.
+away. [#189](https://github.com/dseelinger/d47/issues/189) is the captions sitting rotated from the
+cockpit, [#200](https://github.com/dseelinger/d47/issues/200) is long answers being captioned from
+the middle, and [#201](https://github.com/dseelinger/d47/issues/201) is what a full audit against
+the Netflix SDH guide, the FCC and WCAG found beside it. Neither change request is under the
+moratorium, and the Commander asked for both.
 
 ### Nothing touches a controller any more, and that is the experiment (#198)
 
@@ -85,6 +88,95 @@ no grip-to-go-back, and no Settings tab. Voice keeps tab and breadcrumb navigati
 scrolling, answering a prompt already open, and re-anchoring. A gesture in flight when the row
 moves is let go rather than frozen — a captured scrollbar released, a lit highlight put out, a
 carried panel put down where it had got to and written.
+
+### Long answers were captioned from the middle (#200)
+
+**A spoken sentence wrapping past two lines had its leading lines thrown away before anything was
+drawn.** The roll-off ran *inside* the loop that was still adding the wrapped lines, and the whole
+loop was synchronous with one `Changed` at the end — so the window never rendered an intermediate
+state, and a sentence wrapping to eight lines had six of them added and removed between two frames.
+The comment above that loop described consecutive events; there was no timing between the
+iterations, so there were none. The sentence cap is 320 characters and a line holds 42, so this did
+not take a pathological input: **any moderately long answer began in the middle.**
+
+It is a completeness failure in the FCC's own sense — captioning must convey the aural content "to
+the same extent", "in the order spoken", "from the beginning to the end" — and it fails all three.
+Netflix's two-line rule is a limit *per event*, with longer content becoming consecutive events;
+d47 had taken the limit and dropped the events, which turns a formatting rule into data loss.
+
+**The fix is a queue.** Wrapped lines are held and shown two at a time, each event staying up for
+as long as the reading-speed row says it takes to read — the same `DwellFor` that decides how long
+the last one lingers, so there is one rule for how long text stays readable rather than a second
+constant free to disagree with the row. Consecutive *short* sentences still roll up together,
+which is the behaviour that already worked: appending two lines to a two-line window leaves exactly
+those two, so one mechanism serves both.
+
+**Two decisions the issue asked for explicitly rather than by default.** A new utterance replaces
+whatever is still queued: the FCC asks for complete captions *and* synchronous ones, and when a
+reader's chosen speed is slower than the voice those want different things — a caption still
+working through a sentence the voice finished with has stopped captioning and started
+transcribing. What is lost is the tail, which a reader can see moved on, never the head, which they
+cannot. And the voice stopping no longer starts the dwell while lines are still waiting: `Quiet`
+arrives when the audio ends, which for anything past two lines is several events early, so treating
+it as "the reader has finished" would have been the same defect by a second road.
+
+Eight tests, and the four that matter were watched failing against the old code first.
+
+### The caption audit: the alert marker, who is speaking, and a floor that permitted an invisible caption (#201)
+
+Audited against the Netflix English SDH style guide, the FCC's caption quality standards in 47 CFR
+§79.1, and WCAG 2.2. **Every number was already right, to the digit** — 42 characters, two lines,
+20 and 17 characters a second, five sixths of a second to seven, breaks scored after punctuation
+and before conjunctions. What was missing was the part of the standard that is not numbers.
+
+**The alert marker is captioned now.** A cue plays immediately ahead of an urgent callout and its
+whole purpose is saying *which* warning this is before the sentence arrives; a hearing Commander
+got the marker and then the words, and a reading one got only the words — losing both the warning
+and the head start, on the one sound in the app that carries safety-relevant meaning. Each cue is
+written in the standard's own form for a sound event, bracketed and lowercase and naming its own
+situation: `[interdiction alert]`, `[pirate alert]`, `[bounty hunter alert]`, `[attack alarm]`,
+`[heat alarm]`, `[territory alert]`, `[timer chime]`. The timer chime the issue called borderline
+is in, because it is not: a discrete sound that means something, played ahead of the sentence that
+says which timer.
+
+**The loop tones, the thinking bed, ambience and music stay uncaptioned, and that is the standard's
+own line rather than convenience.** A sound event is captioned when it *cannot be visually
+identified* — the loop state is on the panel, and the other three are continuous and carry nothing
+a caption would be conveying. A band that flashes before every utterance is one nobody reads.
+
+**Captions now say who is talking when it is not d47.** The issue asked whether more than one voice
+is ever captioned, and it is: the carrier's tower and its captain are captioned announcements in
+their own voices, and a turn addressed to a crew member is answered in theirs. A reader has no face
+and no mouth to identify a voice by, which is exactly the condition Netflix's rule is written for.
+So those lines open with `[Tower]`, `[Carrier]` or the crew member's own name — **once**, at the top
+of what they say, because a speaker ID marks a change of speaker and repeating it on every sentence
+announces a change that did not happen. **d47's own lines carry no label**: it is the voice the
+caption band is understood to belong to, and naming it on every line is the noise the rule exists to
+keep out. Re-voiced in-game messages remain uncaptioned entirely, already written out with their
+sender on the Technical page.
+
+**The background opacity floor was 0.2, which is the value the clamp was added to prevent.** Against
+a bright scene — a station floodlight, an ice ring, a hangar wall — a box that see-through leaves an
+effective backdrop near rgb(204,204,204), and `#F2F2F2` text on that is about **1.4:1** where WCAG
+asks 4.5:1. That is not a dim caption, it is an invisible one, and a Commander who reached it by
+dragging a slider had no way to tell it from the captions having stopped. The floor is now **0.6**,
+which gives about 5.1:1 against pure white and clears AA on the worst case rather than the usual
+one; 0.5 was measured at 3.5:1 and rejected as still short. The default stays 0.78, so this binds
+only on somebody who deliberately turned it down. The old value is kept in a test as the thing that
+must not come back, since an assertion that only says "the current number is fine" passes again the
+moment somebody lowers it.
+
+**Placement stays a considered deviation.** The FCC's fourth standard asks that captions not block
+important visual content; d47's are head-locked, fixed below eye level and deliberately immovable,
+which is a defensible reading of the same goal and the opposite of a broadcast caption only in
+mechanism. Recorded rather than changed.
+
+**Two documentation errors found while measuring, both corrected.** Three places still claimed a
+three-line window against `WindowLines = 2`. And the angular size comment claimed medium subtends
+"about two degrees of arc"; measured from the real geometry — 1600 px across 0.9 m at 1.6 m, 52 px
+em — it is about **1.0°**, with a cap height near 42 arcmin, small at 33 and large at 54. The sizes
+were fine; only the comment was wrong, which is the sort of wrong that stops the next person
+checking.
 
 ### Captions sit level with the cockpit rather than with your head (#189)
 

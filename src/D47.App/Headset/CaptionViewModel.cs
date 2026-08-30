@@ -13,8 +13,16 @@ public sealed class CaptionViewModel : INotifyPropertyChanged
 {
     /// <summary>
     /// Point sizes for the three sizes the standard leaves to the viewer. Chosen against the
-    /// caption surface's own pixel height rather than against a screen: the quad is 0.9 m wide
-    /// at 1.6 m out, so these are what "medium" subtends at about two degrees of arc.
+    /// caption surface's own pixel height rather than against a screen: the quad is 1600 px across
+    /// 0.9 m, hung 1.6 m out.
+    /// <para>
+    /// <b>Which works out at about one degree of arc for medium</b>, with a cap height near 42
+    /// arcmin — small is 33 and large 54
+    /// (<a href="https://github.com/dseelinger/d47/issues/201">#201</a>). This used to claim two
+    /// degrees, which is about double, and the measured sizes were fine: it was only the comment
+    /// that was wrong. Recorded because a number written down and never checked is the sort of
+    /// wrong that stops the next person checking.
+    /// </para>
     /// </summary>
     private static readonly IReadOnlyDictionary<CaptionSize, double> Sizes =
         new Dictionary<CaptionSize, double>
