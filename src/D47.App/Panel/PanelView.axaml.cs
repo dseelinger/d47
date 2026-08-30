@@ -2079,18 +2079,34 @@ public partial class PanelView : UserControl
         // player and browser uses for full screen and leaving it, so it needs no learning — and
         // the word it replaced is still on the tooltip and on the name a screen reader says, which
         // is what keeps a picture from being a downgrade.
-        ModeRow.IsVisible = _switchMode is not null;
+        // Furnished decides whether there is a way out at all; the tab decides which of the two
+        // draws it (#194). Exactly one is ever visible, and between them they cover every tab —
+        // the seat rides StatusRow, which is the transcript's and hidden elsewhere, so the row
+        // takes every tab the seat cannot.
+        var furnished = _switchMode is not null;
 
-        Controls.Glyphs.Mark(
-            ModeToggle,
-            full ? Controls.Glyphs.Shrink : Controls.Glyphs.Expand,
-            Theming.ThemeManager.AccentKey,
-            full ? "Shrink to the mini panel" : "Expand to the whole panel",
+        ModeRow.IsVisible = furnished && !transcript;
+        ModeToggleSeat.IsVisible = furnished && transcript;
 
-            // Larger than the row's other marks. This is the way out of a surface that has taken
-            // every other control away, so it is the one glyph a Commander has to find rather than
-            // merely recognise.
-            size: 17);
+        // Both marked from one call, which is what keeps two buttons from becoming two
+        // behaviours: same glyph, same tooltip, same name a screen reader says, and one Click
+        // handler between them in the markup.
+        foreach (var toggle in new[] { ModeToggle, ModeToggleSeat })
+        {
+            Controls.Glyphs.Mark(
+                toggle,
+                full ? Controls.Glyphs.Shrink : Controls.Glyphs.Expand,
+                Theming.ThemeManager.AccentKey,
+                full ? "Shrink to the mini panel" : "Expand to the whole panel",
+
+                // Half of the 17 this was, and smaller than the 14 every other mark takes
+                // (#193). It used to be the largest glyph in the app on the reasoning that the
+                // way out is the one a Commander must find rather than merely recognise; the
+                // Commander's answer on meeting it was that it is too big, which settles it.
+                // The tooltip and the automation name are set by this same call and are
+                // unaffected by size, so nothing a screen reader says gets smaller with it.
+                size: 8.5);
+        }
 
         // Mini is "the transcript's tail and the provenance line" and nothing else, so the tabs,
         // the mode control, the breadcrumb and the search box go with the rest of the chrome. A
