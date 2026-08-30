@@ -1,3 +1,5 @@
+using System.Net;
+using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text.Json;
 using D47.Core;
@@ -19,6 +21,14 @@ public sealed class HttpModelStore : IModelStore, IDisposable
 {
     private readonly HttpClient _http;
     private readonly ILogger<HttpModelStore> _logger;
+
+    /// <summary>
+    /// How much is asked for per request. A hundred megabytes is where the throttling measured
+    /// on 2026-08-30 had not yet bitten — each 100 MB range held 16-21 MB/s where the single
+    /// stream fell to 4 — and it is fifteen requests for the largest model d47 offers rather
+    /// than a request per percent.
+    /// </summary>
+    private const long ChunkBytes = 100L * 1024 * 1024;
 
     public HttpModelStore(AppPaths paths, ILogger<HttpModelStore> logger)
     {
@@ -179,17 +189,8 @@ public sealed class HttpModelStore : IModelStore, IDisposable
 
             string actualHash;
 
-            using (var response = await _http
-                       .GetAsync(offer.Url, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
-                       .ConfigureAwait(false))
             {
-                response.EnsureSuccessStatusCode();
-
-                var total = response.Content.Headers.ContentLength ?? offer.Bytes;
-
-                await using var source = await response.Content
-                    .ReadAsStreamAsync(cancellationToken)
-                    .ConfigureAwait(false);
+                var total = offer.Bytes;
 
                 // <b>Asynchronous, and unbuffered.</b> The four-argument constructor defaults to
                 // <c>bufferSize: 4096, useAsync: false</c>, so every <c>WriteAsync</c> of a
@@ -240,22 +241,80 @@ public sealed class HttpModelStore : IModelStore, IDisposable
                 // A hundred updates is every update a progress bar can express.
                 var lastPercent = -1;
 
-                while ((read = await source.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)) > 0)
+                // <b>Asked for in chunks, because one long connection is throttled and a short
+                // one is not.</b> Measured against this host on 2026-08-30, on a gigabit line:
+                // the whole 465 MB as a single stream averaged <b>4.1 MB/s and took 119 s</b>,
+                // while the first 100 MB of the same file ran at 24 MB/s and bytes 300-400 MB
+                // ran at 19 MB/s — so it is neither the line nor where the bytes sit in the
+                // file. Fetched as five sequential ranges the same download took <b>28 s</b>,
+                // every chunk holding 16-21 MB/s.
+                //
+                // This is what <a href="https://github.com/dseelinger/d47/issues/84">#84</a> was
+                // originally reported as and did not find. Its progress-flood fix was real and
+                // is untouched above; the 60-77 MB/s it measured the copy loop at simply does not
+                // describe this host any more, and "it was not slow" was closed on that number.
+                //
+                // Sequential rather than parallel: it recovers most of the win, the hash still
+                // sees the file in order, and nothing has to reassemble anything out of sequence.
+                while (received < total)
                 {
-                    await file.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
-                    sha.TransformBlock(buffer, 0, read, null, 0);
+                    var last = Math.Min(received + ChunkBytes, total) - 1;
 
-                    received += read;
+                    using var request = new HttpRequestMessage(HttpMethod.Get, offer.Url);
+                    request.Headers.Range = new RangeHeaderValue(received, last);
 
-                    // A total of zero would make this divide by zero; it also means there is no
-                    // percentage to report, so the bar is left to whatever it shows for unknown
-                    // length rather than being driven from a number that does not exist.
-                    var percent = total > 0 ? (int)(received * 100 / total) : -1;
+                    using var response = await _http
+                        .SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
+                        .ConfigureAwait(false);
 
-                    if (percent != lastPercent)
+                    response.EnsureSuccessStatusCode();
+
+                    // A host that ignores Range answers 200 with the whole file rather than 206
+                    // with a slice. Writing that after the bytes already on disk would append a
+                    // second copy, so the one safe reading is "start again from nothing".
+                    if (response.StatusCode != HttpStatusCode.PartialContent)
                     {
-                        lastPercent = percent;
-                        progress?.Report(new ModelProgress(model.Id, received, total));
+                        if (received > 0)
+                        {
+                            throw new IOException(
+                                $"{WhisperModels.Host} stopped honouring range requests part way through {model.Id}.");
+                        }
+
+                        _logger.LogInformation(
+                            "{Host} did not honour a range request; downloading {Model} in one stream",
+                            WhisperModels.Host,
+                            model.Id);
+                    }
+
+                    await using var source = await response.Content
+                        .ReadAsStreamAsync(cancellationToken)
+                        .ConfigureAwait(false);
+
+                    while ((read = await source.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)) > 0)
+                    {
+                        await file.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
+                        sha.TransformBlock(buffer, 0, read, null, 0);
+
+                        received += read;
+
+                        // A total of zero would make this divide by zero; it also means there is
+                        // no percentage to report, so the bar is left to whatever it shows for
+                        // unknown length rather than being driven from a number that does not
+                        // exist.
+                        var percent = total > 0 ? (int)(received * 100 / total) : -1;
+
+                        if (percent != lastPercent)
+                        {
+                            lastPercent = percent;
+                            progress?.Report(new ModelProgress(model.Id, received, total));
+                        }
+                    }
+
+                    // The whole file arrived on one response, so there is no second range to ask
+                    // for and the loop's own condition cannot know that.
+                    if (response.StatusCode != HttpStatusCode.PartialContent)
+                    {
+                        break;
                     }
                 }
 
