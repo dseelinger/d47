@@ -202,11 +202,36 @@ public sealed class PushToTalkButton
 /// close the gate while a finger is still down. Releasing on the <em>last</em> release is the only
 /// behaviour that is not surprising.
 /// </para>
+/// <para>
+/// <b>A press interrupts</b> (<a href="https://github.com/dseelinger/d47/issues/218">#218</a>).
+/// The Commander's words: <em>"I don't want to talk while the ship AI is talking. I want it to
+/// shut up and listen."</em> So <see cref="Barge"/> runs on the press edge, and the ordering is
+/// here rather than in a subscription order at the call site, which is a guarantee nothing can
+/// test and anybody can reverse by adding a handler.
+/// </para>
 /// </summary>
 public sealed class PushToTalkSources
 {
     private bool _keyDown;
     private bool _buttonDown;
+
+    /// <summary>
+    /// What a press interrupts — silencing d47, in production — run before
+    /// <see cref="Pressed"/> and before anything is known about what follows.
+    /// <para>
+    /// <b>On the press edge rather than on the tap being recognised, and that is the whole
+    /// design.</b> There is already a notion of a press too short to be speech —
+    /// <c>UtteranceEnd.TooShort</c> — and it is the wrong hook, because it is only knowable at
+    /// <em>release</em>: a Commander who presses and starts speaking immediately would hear d47
+    /// talk over their first half-sentence, which is the exact complaint. Interrupting
+    /// unconditionally is also simpler than detecting a tap, not harder.
+    /// </para>
+    /// <para>
+    /// Fires on every press in both hold and toggle modes. The second press of a toggle silences
+    /// nothing, because nothing is speaking by then.
+    /// </para>
+    /// </summary>
+    public Action? Barge { get; init; }
 
     public event Action? Pressed;
 
@@ -235,6 +260,8 @@ public sealed class PushToTalkSources
 
         if (IsDown)
         {
+            // Before the gate opens, not after. See Barge.
+            Barge?.Invoke();
             Pressed?.Invoke();
         }
         else

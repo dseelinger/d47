@@ -217,6 +217,12 @@ you found this row.
 
 In the two key-driven settings, nothing is kept unless the key is held.
 
+**Pressing it also shuts Directive 47 up.** The press is the interrupt — every press, in every
+setting, whether or not you go on to say anything. So talking over an answer you have heard enough
+of is one gesture rather than two, and there is no separate stop key to reach for. If you clear
+this row *and* the button below, the [Stop speaking](speech.html#shut-up) row appears on the Speech
+page to give you one back.
+
 Unlike the stop key, this one does not need a modifier — a bare key is the normal arrangement for
 push-to-talk, which is exactly why the collision check above matters. If right shift is bound to
 something in Elite on your setup, the status report above says so by name.
@@ -230,8 +236,8 @@ The same thing on your stick or throttle. Press **Press to bind**, then press an
 button you want, and Directive 47 works out which one it was — the same gesture as binding a key,
 pointed at a controller.
 
-**It sits beside the key rather than replacing it.** With both set, *either* opens the microphone,
-and the last one you let go of closes it. So letting go of the key while your thumb is still on
+**It sits beside the key rather than replacing it.** With both set, *either* opens the microphone
+— and *either* silences Directive 47 on the way in — and the last one you let go of closes it. So letting go of the key while your thumb is still on
 the button does not cut you off mid-sentence. Binding a button does not unbind your key, because
 you said two things rather than changed your mind about one.
 

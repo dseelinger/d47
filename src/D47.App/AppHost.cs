@@ -1397,7 +1397,12 @@ public sealed class AppHost : IDisposable
         // key is a P/Invoke, and the asymmetry buys a path that is driveable with nothing
         // plugged in.
         var pushToTalkButton = new D47.Core.Hotas.PushToTalkButton();
-        var sources = new D47.Core.Hotas.PushToTalkSources();
+        var sources = new D47.Core.Hotas.PushToTalkSources
+        {
+            // Push-to-talk interrupts (#218). Hung here rather than beside the gate wiring below,
+            // because the ordering it needs — silence, then open — is the class's own guarantee.
+            Barge = audio.Silence,
+        };
 
         // The only thing that presses a key in the game (architecture.md D4). Built here so
         // there is exactly one, because release_all has to be able to let go of everything and
@@ -2191,6 +2196,8 @@ public sealed class AppHost : IDisposable
         pushToTalkButton.Pressed += sources.ButtonPressed;
         pushToTalkButton.Released += sources.ButtonReleased;
 
+        // Pressed has already silenced whatever d47 was saying by the time it lands here —
+        // see PushToTalkSources.Barge, set where the sources are built.
         sources.Pressed += () => gate.KeyDown(DateTimeOffset.Now);
         sources.Released += () => gate.KeyUp();
 

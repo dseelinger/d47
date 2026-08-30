@@ -82,6 +82,41 @@ arithmetic, and an empty one stops there with one sentence and **exit zero** —
 nothing was done, which is a different answer from the missing-section refusal below it. A test pins
 the order, because the reason a run stops is the whole of what it is telling you.
 
+### Push-to-talk interrupts, and Stop speaking leaves the surface (#218)
+
+In the Commander's words: *"I don't want to talk while the ship AI is talking. I want it to shut up
+and listen."* Pressing push-to-talk now silences d47 on the press edge — the key, the stick button,
+every press, in hold mode and in toggle. Holding it still opens the microphone as it always did, so
+pressing and talking straight over an answer is one gesture instead of two.
+
+**On the press edge, not on the tap being recognised**, and reaching for the other hook is the
+obvious mistake worth writing down. There is already a notion of a press too short to be speech —
+`UtteranceEnd.TooShort` — and it is only knowable at *release*. A Commander who presses and starts
+speaking immediately would have heard d47 over their first half-sentence, which is the complaint
+itself. Silencing unconditionally the moment the press arrives is also simpler than detecting a tap,
+not harder.
+
+**The ordering lives in `PushToTalkSources` rather than in a subscription order.** Silence has to
+land before the gate opens, or the microphone captures d47's own voice in the pre-roll of the
+utterance about to be spoken. Hung as a handler beside the others, that guarantee would be
+subscription order — which nothing can test and any later handler can reverse. It is a `Barge`
+property on the class that already merges the key and the button into one press, so both sources
+get it for free and the order is asserted rather than hoped for.
+
+**Stop speaking is hidden rather than retired, and the difference is architectural.** It was
+`(unbound)` out of the box, so most Commanders never had it, and it is now off the surface of
+everybody who has push-to-talk bound — which is the ask. What it is not is deleted: architecture.md
+§7 says a model must never be able to unbind the Commander's stop button, and folding stop into
+push-to-talk makes stop depend on push-to-talk being bound. Push-to-talk can be cleared deliberately
+— its own help says *"Clear it and D47 never opens the microphone"* — so clearing both bindings puts
+the row back. `AppliesWhen` refuses a write as well as hiding, so nothing can change it from behind
+the fold either, and a key already set stays set, stays registered, and survives the round trip.
+
+**`SystemWideHotkeyTests` moved to a different example row.** It drove all four of its cases through
+Stop speaking, which stopped being usable as the stand-in for *a system-wide row* the moment that row
+learned to hide: every case would have been rejected for the wrong reason. It runs on **Show or hide
+the overlay** now, which is system-wide unconditionally.
+
 ### Re-anchor is withdrawn, and binding a core to a ship is a Settings row (#219)
 
 Two capabilities went, and they went for the same reason: each was reachable four ways when the
