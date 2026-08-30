@@ -300,8 +300,11 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         // see the WrapPanel below. The words stay on the tooltip and on the accessible name.
         var add = new Button { Padding = new Thickness(12, 4), MinHeight = TouchTarget };
 
+        // Accent, like every other bare glyph whose only affordance is that it can be pressed
+        // (#208). It was TextKey, which is the colour of the words around it — so the one thing on
+        // the bar with no chrome of its own was also the one thing not saying it was a control.
         D47.App.Controls.Glyphs.Mark(
-            add, D47.App.Controls.Glyphs.Add, Theming.ThemeManager.TextKey, "Add a line");
+            add, D47.App.Controls.Glyphs.Add, Theming.ThemeManager.AccentKey, "Add a line");
 
         add.Click += (_, _) => AddLine();
 

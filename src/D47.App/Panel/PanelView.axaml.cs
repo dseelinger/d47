@@ -298,7 +298,7 @@ public partial class PanelView : UserControl
         Controls.Glyphs.Mark(
             CopyButton,
             Controls.Glyphs.Copy,
-            Theming.ThemeManager.TextMutedKey,
+            Theming.ThemeManager.AccentKey,
             "Copy this whole page to the clipboard");
 
         // A banknote rather than the word "Details" (#210). Accent, as the word already was, so it
@@ -3842,12 +3842,6 @@ public partial class PanelView : UserControl
             && TopLevel.GetTopLevel(this)?.Clipboard is not null;
 
     private void OnHelpClick(object? sender, RoutedEventArgs e) => OpenHelp();
-
-    private void OnHelpPointerEntered(object? sender, PointerEventArgs e) =>
-        HelpGlyph.Stroke = this.FindResource("D47.Accent") as IBrush;
-
-    private void OnHelpPointerExited(object? sender, PointerEventArgs e) =>
-        HelpGlyph.Stroke = this.FindResource("D47.TextMuted") as IBrush;
 
     private void OnAskClick(object? sender, RoutedEventArgs e) => Model?.Ask();
 
