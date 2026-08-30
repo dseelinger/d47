@@ -29,10 +29,11 @@ history to match today's layout would be the one edit it must never take.
 
 ## 0.93.0 — 2026-08-30 — The controllers are put down, and the panel learns to be told where to go
 
-Seven issues. Five are in the headset and the captions get most of them; two are on the desktop.
+Eight issues. Five are in the headset and the captions get most of them; three are on the desktop.
 [#197](https://github.com/dseelinger/d47/issues/197) lets the cost figures be reset from the Details
-window, and [#207](https://github.com/dseelinger/d47/issues/207) makes the local-build badge say what
-the build worked. [#198](https://github.com/dseelinger/d47/issues/198) withdraws motion controller support until
+window and [#210](https://github.com/dseelinger/d47/issues/210) turns that window's button into a
+banknote, and [#207](https://github.com/dseelinger/d47/issues/207) makes the local-build badge say
+what the build worked. [#198](https://github.com/dseelinger/d47/issues/198) withdraws motion controller support until
 [#18](https://github.com/dseelinger/d47/issues/18) is understood;
 [#199](https://github.com/dseelinger/d47/issues/199) replaces the one thing that withdrawal takes
 away. [#189](https://github.com/dseelinger/d47/issues/189) is the captions sitting rotated from the
@@ -90,6 +91,41 @@ no grip-to-go-back, and no Settings tab. Voice keeps tab and breadcrumb navigati
 scrolling, answering a prompt already open, and re-anchoring. A gesture in flight when the row
 moves is let go rather than frozen — a captured scrollbar released, a lit highlight put out, a
 carried panel put down where it had got to and written.
+
+### The Details button is a banknote (#210)
+
+The word *Details* on the status line is a drawn mark now — a rectangle with a circle in the middle
+of it. Six were drawn and the Commander chose this one the same day.
+
+**Not a coin, and not a currency symbol, and both are worth recording because both look like the
+obvious answer.** The figures behind that button are *real money* — dollars on a provider account,
+not the Commander's in-game balance — and a coin-shaped mark in a cockpit overlay is exactly the
+thing that reads as credits. A symbol has the other problem: the figures are formatted `:C4`, which
+follows the machine's culture, so a `$` is wrong for anybody not billed in dollars. On the one
+figure in the app that must never be misread, a note carries "money" without carrying either. A
+receipt, a coin stack, a price tag and a wallet were also drawn and are recorded in the issue so
+they are not re-proposed.
+
+**Redrawn 18 by 12 rather than given a box of its own.** The chosen drawing spanned 20 by 10, and
+`Glyphs.Draw` puts a mark in a *square* box and stretches uniformly — so a 2:1 note would have
+filled the width, reached seven of fourteen units of height, and read as a short wide bar smaller
+than the marks beside it. `HelpGlyph` solves that with a non-square box, which would have taken this
+off the one path every other mark travels; a normal note proportion keeps it on that path. A test
+pins the ink at 3,6 by 18x12, which also pins where the circle's arc resolved — the two centres it
+could take are three units above and three below its start, and the wrong one changes the aspect
+silently.
+
+**The word survives, and that is the condition.** `Glyphs.Mark` puts the sentence on the tooltip
+*and* on the accessible name: a glyph-only control with no accessible name is a control that does
+not exist for anybody not looking at it, and replacing a word with a picture is only an improvement
+while the word is still reachable. There is a test that says so by name, so a later refactor cannot
+quietly remove the only thing a screen reader has.
+
+The mark is accent, as the word already was, so it is consistent with
+[#208](https://github.com/dseelinger/d47/issues/208) before that lands rather than needing to move
+with it. And *Details* comes off the list in `Glyphs`' own comment of words that stay words — the
+word was kept because no picture says "the figures behind this", and what was asked for was a mark
+for the **subject** rather than for the act.
 
 ### The cost figures can be reset, and a reset leaves every window that held it (#197)
 

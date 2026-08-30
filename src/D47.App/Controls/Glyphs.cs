@@ -26,9 +26,17 @@ namespace D47.App.Controls;
 /// </para>
 /// <para>
 /// <b>Only where the picture is genuinely standard.</b> A glyph a Commander has to learn is worse
-/// than the word it replaced — so <em>Order</em>, <em>Import/Export</em>, <em>Details</em> and the
-/// tab names stay as words. That is the whole of "where possible": it is a test the picture has to
-/// pass, not a target to convert everything to.
+/// than the word it replaced — so <em>Order</em>, <em>Import/Export</em> and the tab names stay as
+/// words. That is the whole of "where possible": it is a test the picture has to pass, not a target
+/// to convert everything to.
+/// </para>
+/// <para>
+/// <b><em>Details</em> was on that list until 2026-08-30 and is not any more</b>
+/// (<a href="https://github.com/dseelinger/d47/issues/210">#210</a>). The word was kept because no
+/// picture says "the figures behind this"; what the Commander asked for, and chose from six
+/// drawings, was a mark for the <em>subject</em> rather than for the act — and a banknote passes the
+/// test the word failed. See <see cref="Spend"/>, including why it is neither a coin nor a currency
+/// symbol.
 /// </para>
 /// </summary>
 public static class Glyphs
@@ -71,6 +79,32 @@ public static class Glyphs
     /// </summary>
     public const string Reset =
         "M 12,4 A 8,8 0 1 0 20,12  M 15,1 L 12,4 L 15,7";
+
+    /// <summary>
+    /// What this has cost: a banknote, a rectangle with a circle in the middle of it
+    /// (<a href="https://github.com/dseelinger/d47/issues/210">#210</a>). The Commander chose it
+    /// from six drawings on 2026-08-30.
+    /// <para>
+    /// <b>Not a coin, and not a currency symbol, and both are worth writing down because both look
+    /// like the obvious choice.</b> The figures behind this button are <em>real money</em> — dollars
+    /// on a provider account, not the Commander's in-game balance — and a coin-shaped mark in a
+    /// cockpit overlay is exactly the thing that reads as credits. A symbol has the other problem:
+    /// the figures are formatted <c>:C4</c>, which follows the machine's culture, so a <c>$</c>
+    /// would be wrong for anybody not billed in dollars. On the one figure in the app that must
+    /// never be misread, a note carries "money" without carrying either.
+    /// </para>
+    /// <para>
+    /// <b>18 across by 12 down, and the proportion is the deliberate part.</b> The drawing that was
+    /// chosen spanned 20 by 10, and <see cref="Draw"/> puts a glyph in a <em>square</em> box and
+    /// stretches uniformly — so a 2:1 note would have filled the width, reached seven of fourteen
+    /// units of height, and read as a short wide bar smaller than the marks beside it. The
+    /// alternative was a non-square box, which is what <c>HelpGlyph</c> does and which would have
+    /// taken this off the one path every other mark travels. Redrawing it as a normal note
+    /// proportion keeps it on that path and still reads as a banknote.
+    /// </para>
+    /// </summary>
+    public const string Spend =
+        "M 3,6 L 21,6 L 21,18 L 3,18 Z  M 12,9 A 3,3 0 1 1 11.99,9";
 
     /// <summary>
     /// One mark, sized and coloured for the row it sits in.
