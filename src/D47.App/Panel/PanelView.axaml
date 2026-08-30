@@ -112,6 +112,7 @@
               Background="Transparent"
               BorderThickness="1"
               BorderBrush="{DynamicResource D47.TextMuted}"
+              PointerPressed="OnBadgePressed"
               ToolTip.Tip="This is a pre-release. It is offered to nobody automatically, and it is not final.">
         <TextBlock x:Name="PreReleaseBadgeText"
                    Text="PRE-RELEASE"

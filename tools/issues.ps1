@@ -47,6 +47,10 @@
     powershell -NoProfile -ExecutionPolicy Bypass -File tools/issues.ps1 view 90
 
 .NOTES
+    The gh plumbing and the trust rule itself live in `issues.lib.ps1`, dot-sourced below, because
+    `get-local.ps1` needs the same answer to "may this text be shown" when it stamps issue titles
+    into a local build (#207).
+
     **What this does not do**, stated because a control whose limits are unwritten gets trusted
     past them. It is a road, not a wall: it keeps the untrusted text out of the road an agent
     normally takes, and `.claude/settings.json` is what makes it the only road by denying the raw
@@ -70,148 +74,11 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-# The one account whose words are instructions. A list rather than a constant so a second
-# maintainer is a line rather than a rewrite - and it is deliberately not read from a file the
-# repository ships, because a trust root that an issue could edit is not a trust root.
-$Vouched = @('dseelinger')
-
-# The only label that promotes somebody else's issue to workable, and only the Commander can apply
-# it. Named here to match CLAUDE.md rather than to introduce a second spelling of the same rule.
-$ReadyLabel = 'ready'
-
-$Repo = 'dseelinger/d47'
-
-# gh writes ordinary progress and refusals to stderr, and Windows PowerShell turns any stderr line
-# from a native command into a terminating error while ErrorActionPreference is Stop. This is the
-# same trap that broke release.ps1's -PreRelease switch on v0.78.0; it is not repeated here.
-function Invoke-Native {
-    param([scriptblock] $Command)
-
-    $previous = $ErrorActionPreference
-    $ErrorActionPreference = 'Continue'
-
-    try { & $Command }
-    finally { $ErrorActionPreference = $previous }
-}
-
-function Invoke-Gh {
-    param([string[]] $Arguments)
-
-    $output = Invoke-Native { & gh @Arguments 2>&1 | ForEach-Object { "$_" } }
-    $code = $LASTEXITCODE
-
-    if ($code -ne 0) {
-        Write-Error "gh $($Arguments -join ' ') failed with exit code ${code}: $($output -join ' ')"
-    }
-
-    return ($output -join "`n")
-}
-
-# Who most recently applied $ReadyLabel, or $null if nobody currently has. Throws when the log
-# cannot be read, which the caller turns into a withholding rather than an allowance.
-#
-# The *events* endpoint rather than the issue's own JSON, because `gh issue view` reports which
-# labels are on an issue and never who put them there - and who put them there is the entire
-# question. --paginate because a long-lived issue's older events would otherwise fall off the first
-# page, and --slurp to collect those pages into one array rather than several concatenated ones.
-#
-# The filtering is done here rather than with `--jq`, and that is not a preference. A jq filter
-# needs double quotes around every string, and Windows PowerShell's legacy native-argument passing
-# re-parses an argument containing them - gh saw three positional arguments and refused. No argument
-# this function passes contains a quote or a space.
-#
-# Ordered oldest-first, so the last match wins: a label can be applied, removed and re-applied, and
-# only the most recent application says anything about the issue as it stands now.
-function Get-ReadyApprover {
-    param([int] $Number)
-
-    $raw = Invoke-Gh @('api', '--paginate', '--slurp', "repos/$Repo/issues/$Number/events")
-    $pages = $raw | ConvertFrom-Json
-
-    # --slurp yields an array of pages; each page is an array of events. Flattened rather than
-    # assumed to be one page, which is the whole reason --paginate is here.
-    $events = @()
-    foreach ($page in $pages) {
-        if ($page -is [System.Array]) { $events += $page } else { $events += , $page }
-    }
-
-    $last = $null
-    foreach ($e in $events) {
-        # StrictMode makes a missing property a terminating error, and most events have no label.
-        $names = $e.PSObject.Properties.Name
-        if ($names -notcontains 'event') { continue }
-        if ($e.event -ne 'labeled' -and $e.event -ne 'unlabeled') { continue }
-        if ($names -notcontains 'label' -or $null -eq $e.label) { continue }
-        if ($e.label.name -ne $ReadyLabel) { continue }
-        $last = $e
-    }
-
-    if ($null -eq $last) { return $null }
-
-    # Currently unlabelled, or an actor GitHub could not name (a deleted account). Neither is an
-    # approval, and neither is an error worth failing the whole run over.
-    if ($last.event -ne 'labeled') { return $null }
-    if (($last.PSObject.Properties.Name) -notcontains 'actor' -or $null -eq $last.actor) { return $null }
-    if ([string]::IsNullOrWhiteSpace($last.actor.login)) { return $null }
-
-    return $last.actor.login
-}
-
-# Two keys open this door, and until 2026-08-27 only one of them was checked for who turned it
-# (#94). An author is an identity GitHub assigns and cannot be forged through the API. A label was
-# only ever a string until you ask who applied it - and `ready` means "approved by the maintainer",
-# which is a claim about a *person*. So the label path now reads the event log and takes the actor.
-#
-# It was never a live hole: applying a label needs triage permission, so a member of the public
-# cannot open the door they are standing at. It was an assumption about how the repository happens
-# to be configured, sitting underneath a control whose whole job is not to assume - and it would
-# have become real, silently, the first time a collaborator, an App or a workflow gained that scope.
-#
-# **It fails closed.** An event log that cannot be read withholds the issue, because a control that
-# opens when it cannot check is not a control. The cost of that is one API call per issue that is
-# *only* vouched by its label - never for the Commander's own, which is nearly all of them.
-function Resolve-Trust {
-    param([string] $Author, [string[]] $Labels, [int] $Number)
-
-    if ($Vouched -contains $Author) {
-        return [pscustomobject]@{ Allowed = $true; Mark = 'yours   '; Why = "written by $Author" }
-    }
-
-    if ($Labels -notcontains $ReadyLabel) {
-        return [pscustomobject]@{ Allowed = $false; Mark = ''; Why = 'not vouched' }
-    }
-
-    try {
-        $approver = Get-ReadyApprover -Number $Number
-    }
-    catch {
-        # To stderr rather than into the receipt: a control that fails closed silently is one
-        # nobody can tell from a control that is working. This text is gh's own and the endpoint's,
-        # never the issue's.
-        Write-Warning "Could not read who applied '$ReadyLabel' to #${Number}: $($_.Exception.Message)"
-
-        return [pscustomobject]@{
-            Allowed = $false; Mark = ''
-            Why     = "labelled $ReadyLabel, but who applied it could not be read"
-        }
-    }
-
-    if ($null -eq $approver) {
-        return [pscustomobject]@{
-            Allowed = $false; Mark = ''
-            Why     = "labelled $ReadyLabel, but no application of it is recorded"
-        }
-    }
-
-    if ($Vouched -notcontains $approver) {
-        return [pscustomobject]@{
-            Allowed = $false; Mark = ''
-            Why     = "labelled $ReadyLabel by $approver, who is not the Commander"
-        }
-    }
-
-    return [pscustomobject]@{ Allowed = $true; Mark = 'ready   '; Why = "labelled $ReadyLabel by $approver" }
-}
+# The gh plumbing, the trust rule and the vouched account, from the one file that holds them
+# (<https://github.com/dseelinger/d47/issues/207>). They lived here until a local build needed the
+# same door at publish time to decide whose issue titles it may stamp into itself — and a trust root
+# copied into a second file is two trust roots that will disagree.
+. (Join-Path $PSScriptRoot 'issues.lib.ps1')
 
 # Number, author, labels, dates - and why it was withheld. Everything here is either a fact GitHub
 # assigns or a login GitHub assigns; no field on this line is prose somebody else wrote. The reason

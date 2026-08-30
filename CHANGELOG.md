@@ -29,8 +29,9 @@ history to match today's layout would be the one edit it must never take.
 
 ## 0.93.0 — 2026-08-30 — The controllers are put down, and the panel learns to be told where to go
 
-Five issues, all in the headset, and the captions get most of them.
-[#198](https://github.com/dseelinger/d47/issues/198) withdraws motion controller support until
+Six issues. Five are in the headset and the captions get most of them; the sixth is on the desktop.
+[#207](https://github.com/dseelinger/d47/issues/207) makes the local-build badge say what the build
+worked. [#198](https://github.com/dseelinger/d47/issues/198) withdraws motion controller support until
 [#18](https://github.com/dseelinger/d47/issues/18) is understood;
 [#199](https://github.com/dseelinger/d47/issues/199) replaces the one thing that withdrawal takes
 away. [#189](https://github.com/dseelinger/d47/issues/189) is the captions sitting rotated from the
@@ -88,6 +89,57 @@ no grip-to-go-back, and no Settings tab. Voice keeps tab and breadcrumb navigati
 scrolling, answering a prompt already open, and re-anchoring. A gesture in flight when the row
 moves is let go rather than frozen — a captured scrollbar released, a lit highlight put out, a
 carried panel put down where it had got to and written.
+
+### The local-build badge says what the build worked (#207)
+
+A build cut from a working tree is a build for testing, and the badge already said it was local.
+What it could not say is **which changes are in it**. Click it now and it lists the issues that
+build worked — as bullets, each number a chip that shows the issue's state, `dseelinger/d47 #205`,
+title and labels on hover, and opens it in a browser when clicked. GitHub's own reference chip,
+minus the avatar: the one element that needs a download and says the least.
+
+**d47 cannot discover this at run time, so it is baked in.** Which issues a working tree closed
+exists only in the git log, at publish time. `get-local.ps1` reads the commits since the newest tag
+for what they say they close — the same window the version stamp is named for — asks GitHub for each
+one's state and labels, and stamps the lot into an `AssemblyMetadata` attribute the way
+`DevInstallRoot` already travels. **A published release never passes the property**, so the whole
+feature is absent from a real build by construction rather than by a run-time check, and
+`get-local`'s rule that it copies exactly `d47.exe` and `runtimes\` is untouched — a sidecar JSON
+file would have been easier to write and would have changed what the command ships.
+
+**Baked at publish rather than fetched on hover**, so the card is instant, works offline, and cannot
+render text that arrived after the build was made.
+
+**An issue title is untrusted text, and the repository already had the door.** `tools/issues.ps1`
+exists to keep a stranger's issue prose out of an agent's context, withholding the title as well as
+the body on the reasoning that *"a title is attacker-controlled text like any other, and 'just the
+title' is how this leaks"*. Drawing one in d47's own chrome is a different risk from feeding it to a
+model, but it is the same text — so **the same `Resolve-Trust` decides both**, and it moved into
+`tools/issues.lib.ps1` rather than being copied, because a control copied is two controls that will
+disagree. An issue the Commander did not write or vouch for is stamped as its number alone and the
+card says the title is withheld. In this repository today that costs nothing; it closes the hole
+before it opens. The `Fixes #N` extraction moved with it, since `prerelease` deciding a version
+number and `get-local` listing a badge are one question over one window — and a test asserts both
+have exactly one definition.
+
+**And nothing in the publish prints a title.** A step that echoed what it was baking would walk
+untrusted prose straight back into the one channel this repository trusts, so what `get-local` says
+out loud is a count and the numbers.
+
+**Desktop only, and by nobody wiring it rather than by something hiding it.** In the headset a click
+would open a browser on a monitor the Commander cannot see — the argument that took the help button
+off that surface. The handler is furnished by the desktop host alone, so the headset's copy has
+nothing to reach; the badge asks `output-only` as well, because [#202](https://github.com/dseelinger/d47/issues/202)
+is open precisely on a local `IsVisible` outranking a style setter, and a control nobody wired
+outranks both.
+
+**The link is built from the number and never from anything stamped.** `UseShellExecute` resolves
+whatever it is given, which is exactly why the string it is given is not somebody else's to write.
+
+A local build whose commits named no issue keeps a badge that is a plain mark, and the empty case
+says so in a sentence rather than opening an empty box. The caveat rides on every path, full or
+empty: **only what a commit wrote down** — work still in the tree, or committed without a
+`Fixes #N`, does not appear.
 
 ### Long answers were captioned from the middle (#200)
 

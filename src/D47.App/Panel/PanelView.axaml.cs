@@ -1672,13 +1672,86 @@ public partial class PanelView : UserControl
         // the title bar and About say another - which is the whole reason that text lives there.
         var marker = D47.Core.Updates.ReleaseChannelText.Short(channel);
 
+        _channel = channel;
         PreReleaseBadge.IsVisible = !OutputOnly && marker is not null;
 
         if (marker is not null)
         {
             PreReleaseBadgeText.Text = marker.ToUpperInvariant();
-            ToolTip.SetTip(PreReleaseBadge, D47.Core.Updates.ReleaseChannelText.Full(channel));
         }
+
+        ShowBuildDetailAffordance();
+    }
+
+    /// <summary>
+    /// Which channel the badge is showing, so the affordance can be settled whichever order the
+    /// host furnishes it in — <see cref="EnableBuildDetails"/> happens at construction and
+    /// <see cref="ShowChannel"/> when GitHub has answered, and neither may depend on being second.
+    /// </summary>
+    private D47.Core.Updates.ReleaseChannel _channel = D47.Core.Updates.ReleaseChannel.Unknown;
+
+    /// <summary>What opens the list of what this build worked, or null where nothing can.</summary>
+    private Action? _openBuildDetails;
+
+    /// <summary>
+    /// Makes the build badge open what this build worked
+    /// (<a href="https://github.com/dseelinger/d47/issues/207">#207</a>).
+    /// <para>
+    /// <b>Furnished by the host rather than gated here</b>, the same way <see cref="EnableHelp"/>
+    /// is and for the stronger version of its reason. In the headset a click would open a browser
+    /// on a monitor the Commander cannot see — the argument that took the help button off that
+    /// surface — so the headset host simply does not make this call and the handler does not
+    /// exist there to be found. That is a firmer gate than a visibility rule: <c>#202</c> is open
+    /// precisely because a local <c>IsVisible</c> outranks a style setter, and a control nobody
+    /// wired outranks both.
+    /// </para>
+    /// </summary>
+    public void EnableBuildDetails(Action open)
+    {
+        _openBuildDetails = open;
+        ShowBuildDetailAffordance();
+    }
+
+    /// <summary>
+    /// Whether the badge is something to press, and it says so with the cursor.
+    /// <para>
+    /// <see cref="OutputOnly"/> is asked as well as the host having furnished anything, because
+    /// the two answer different questions — one surface may never take a pointer, and one build
+    /// may have nothing to show — and a badge on a published release must go on being the plain
+    /// mark it has always been.
+    /// </para>
+    /// </summary>
+    private void ShowBuildDetailAffordance()
+    {
+        var clickable = !OutputOnly && PreReleaseBadge.IsVisible && _openBuildDetails is not null;
+
+        PreReleaseBadge.Cursor = clickable
+            ? new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand)
+            : Avalonia.Input.Cursor.Default;
+
+        // The tip is set here rather than beside the text, so it can say the badge opens something
+        // — which is a fact about the host and the channel together, and neither caller knows both.
+        if (D47.Core.Updates.ReleaseChannelText.Full(_channel) is { } says)
+        {
+            ToolTip.SetTip(
+                PreReleaseBadge,
+                clickable ? $"{says}. Click to see what it worked." : says);
+        }
+    }
+
+    /// <summary>
+    /// The badge, pressed. Nothing happens on a surface no host furnished, which is every surface
+    /// but the desktop window.
+    /// </summary>
+    private void OnBadgePressed(object? sender, Avalonia.Input.PointerPressedEventArgs e)
+    {
+        if (OutputOnly || _openBuildDetails is not { } open)
+        {
+            return;
+        }
+
+        e.Handled = true;
+        open();
     }
 
     /// <summary>
