@@ -27,19 +27,6 @@ public static class InterfaceCapability
 
     public const string FocusAskHotkeyKey = "hotkeys.focusAsk";
 
-    public const string ReanchorHotkeyKey = "hotkeys.reanchor";
-
-    /// <summary>
-    /// The gesture that binds the core aboard to the ship the Commander is in (Phase 35).
-    /// <para>
-    /// Here with the other gestures rather than beside the persona rows it acts on, because this
-    /// is where a Commander looks for a key to change — every hotkey in d47 is on one page, and a
-    /// twelfth one filed somewhere else on the grounds that it is really about personas is a key
-    /// they will not find.
-    /// </para>
-    /// </summary>
-    public const string BindShipCoreHotkeyKey = "hotkeys.bindShipCore";
-
     /// <summary>
     /// Which content set the desktop window is showing (Phase 51).
     /// <para>
@@ -174,25 +161,11 @@ public static class InterfaceCapability
                 s => s.Hotkeys.FocusAsk,
                 (s, v) => s with { Hotkeys = s.Hotkeys with { FocusAsk = v } }),
             HotkeyRow(
-                ReanchorHotkeyKey,
-                "Re-anchor the headset panels",
-                "reanchor",
-                s => s.Hotkeys.Reanchor,
-                (s, v) => s with { Hotkeys = s.Hotkeys with { Reanchor = v } },
-                systemWide: true),
-            HotkeyRow(
                 WindowModeHotkeyKey,
                 "Switch the window between full and mini",
                 "window-mode-key",
                 s => s.Hotkeys.WindowMode,
                 (s, v) => s with { Hotkeys = s.Hotkeys with { WindowMode = v } }),
-            HotkeyRow(
-                BindShipCoreHotkeyKey,
-                "Remember this core for this ship",
-                "bind-ship-core",
-                s => s.Hotkeys.BindShipCore,
-                (s, v) => s with { Hotkeys = s.Hotkeys with { BindShipCore = v } },
-                systemWide: true),
 
             // Seventy-five knobs is not a welcome (#60). Here beside Theme, Zoom and the window
             // rows, whose grammar it copies — "Show the overlay", "Show every setting".

@@ -146,39 +146,6 @@ public class NudgingAPlacedPanelTests
     }
 
     /// <summary>
-    /// <b>A nudge has to survive a re-anchor</b>, or the two most useful things a Commander can
-    /// do to a panel by voice undo each other. Re-anchoring replays <c>Placed</c> against
-    /// <c>PlacedAgainst</c>, so a nudge that also brings the second half up to the head now is
-    /// left alone by a re-anchor from that same place — which is what the Commander means by
-    /// having just said "there".
-    /// </summary>
-    [Fact]
-    public void ANudgeSurvivesAReanchorFromWhereItWasMade()
-    {
-        var head = new VrPose(new Vector3(0, 1.65f, 0), Quaternion.Identity);
-
-        var nudged = VrNudges.Apply(Ahead(), VrNudge.Left, 3);
-        var reanchored = VrPlacementMath.Reanchored(nudged, head, head);
-
-        Assert.Equal(nudged.Position.X, reanchored.Position.X, 4);
-        Assert.Equal(nudged.Position.Y, reanchored.Position.Y, 4);
-        Assert.Equal(nudged.Position.Z, reanchored.Position.Z, 4);
-    }
-
-    /// <summary>And it is carried, not discarded, when the Commander has since turned.</summary>
-    [Fact]
-    public void ANudgeIsCarriedThroughAReanchorAfterTurning()
-    {
-        var placed = new VrPose(new Vector3(0, 1.65f, 0), Quaternion.Identity);
-        var turned = new VrPose(placed.Position, Quaternion.CreateFromYawPitchRoll(MathF.PI / 2f, 0, 0));
-
-        var straight = VrPlacementMath.Reanchored(Ahead(), placed, turned);
-        var nudged = VrPlacementMath.Reanchored(VrNudges.Apply(Ahead(), VrNudge.Up, 4), placed, turned);
-
-        Assert.Equal(straight.Position.Y + (4 * VrNudges.StepMetres), nudged.Position.Y, 4);
-    }
-
-    /// <summary>
     /// The wire vocabulary and the enum are one list. Two of them would be a tool advertising a
     /// value its own parser refuses, which reads as the model hallucinating.
     /// </summary>

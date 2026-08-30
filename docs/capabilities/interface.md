@@ -294,27 +294,9 @@ action unbound.
 
 This one works while Directive 47 has focus.
 
-#### Re-anchor the headset panels {#reanchor}
-
-Puts your world-locked headset panels back in front of you. `Ctrl+Alt+R` out of the box, and it
-works **anywhere** — including with Elite in the foreground, which is the only time you want it.
-See [Re-anchor](reanchor.md).
-
-A key that works everywhere needs a modifier with it. On its own it would stop working in every
-other application, so a bare key is refused when you press it, with a note saying so.
-
 #### Focus the ask box {#focus-ask}
 
 Puts the cursor in the ask box from anywhere in the main window. `Ctrl+L` out of the box.
-
-#### Remember this core for this ship {#bind-ship-core}
-
-Binds the ship you are sitting in to the core aboard, so boarding it puts that core aboard from
-then on. `Ctrl+Alt+B` out of the box, and it works **anywhere** — the moment you want it is a
-moment Elite has the foreground. Press it again with that core already bound and the binding is
-taken back. Directive 47 says what happened out loud, because you are not looking at its window.
-
-See [A core per ship](persona.md#core-for-this-ship).
 
 #### Show the overlay {#overlay}
 

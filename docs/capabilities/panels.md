@@ -1,7 +1,7 @@
 ---
 title: Panels and interface
 group: Acting on the game
-nav_order: 131
+nav_order: 130
 ---
 
 <!--

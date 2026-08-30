@@ -1,7 +1,7 @@
 ---
 title: Focus the game
 group: Interface
-nav_order: 128
+nav_order: 127
 ---
 
 <!--
@@ -57,7 +57,6 @@ nav_order: 128
 <div class="next-title">Where to go next</div>
 <div class="cards">
 <a class="card" href="flight-controls.html"><span class="ct">Flight and navigation →</span><span class="cd">The rule this exists to work around, and why it is not negotiable.</span></a>
-<a class="card" href="reanchor.html"><span class="ct">Re-anchor →</span><span class="cd">The other thing that has to work while Elite holds the foreground.</span></a>
 <a class="card" href="interface.html"><span class="ct">The window →</span><span class="cd">Where Directive 47 lives when it is not behind Elite.</span></a>
 </div>
 </div>
@@ -133,10 +132,10 @@ from the keyword router and never from the model.
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
 ```
 
-Its own capability rather than a tool on an existing one, for the reason
-[re-anchor](reanchor.md) is: the keyword router reaches a capability's *first* argument-free
-tool, so hanging this on a capability that already has one would make it unreachable without a
-model — which is the configuration it exists for.
+Its own capability rather than a tool on an existing one: the keyword router reaches a
+capability's *first* argument-free tool, so hanging this on a capability that already has one would
+make it unreachable without a model — which is the configuration it exists for. Re-anchor was the
+other capability shaped that way, and it was retired in 0.94.0.
 
 `SingleInstance` calls `SetForegroundWindow` too and discards the result. That is not evidence
 this works: a second copy of d47 being launched is one of the cases Windows exempts, and this is

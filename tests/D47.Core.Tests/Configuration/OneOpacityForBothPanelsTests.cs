@@ -114,7 +114,6 @@ public class OneOpacityForBothPanelsTests
                 new VrCapability.HeadsetSurface
                 {
                     Report = () => (D47.Core.Vr.VrState.Unavailable, "No runtime in a test."),
-                    Reanchor = () => 0,
                     Nudge = (_, _) => D47.Core.Vr.VrNudgeOutcome.NoHeadset,
                 })
             .Settings

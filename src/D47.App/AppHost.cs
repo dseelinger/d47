@@ -1609,7 +1609,6 @@ public sealed class AppHost : IDisposable
                     Report = () => self?.Vr is { } vr
                         ? (vr.State, vr.Reason)
                         : (Core.Vr.VrState.Connecting, "Looking for a headset."),
-                    Reanchor = () => self?.Vr?.Reanchor() ?? 0,
                     Nudge = (nudge, steps) =>
                         self?.Vr?.Nudge(nudge, steps) ?? Core.Vr.VrNudgeOutcome.NoHeadset,
                 },

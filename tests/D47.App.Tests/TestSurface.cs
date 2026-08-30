@@ -116,7 +116,6 @@ public static class TestSurface
             new VrCapability.HeadsetSurface
             {
                 Report = () => (D47.Core.Vr.VrState.Unavailable, "No SteamVR runtime in a headless test."),
-                Reanchor = () => 0,
                 Nudge = (_, _) => D47.Core.Vr.VrNudgeOutcome.NoHeadset,
             },
             ActionSurface.Inert,

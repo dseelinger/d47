@@ -82,6 +82,34 @@ arithmetic, and an empty one stops there with one sentence and **exit zero** —
 nothing was done, which is a different answer from the missing-section refusal below it. A test pins
 the order, because the reason a run stops is the whole of what it is telling you.
 
+### Re-anchor is withdrawn, and binding a core to a ship is a Settings row (#219)
+
+Two capabilities went, and they went for the same reason: each was reachable four ways when the
+thing it did was worth one.
+
+**Re-anchor is gone entirely** — the tool, the two spoken phrases, `Ctrl+Alt+R`, the docs page, and
+`VrPlacementMath.Reanchored` with the five tests that guarded it. It existed for a headset session
+where Elite's recenter had turned the cockpit out from under panels put down in the room, and
+#199's nudges have since given that a better answer: *lock it to my head*, then put it down where
+you want it. A gesture that undoes one specific drift is a worse tool than one that puts a panel
+anywhere, and keeping both meant keeping a whole capability, its own hotkey, and a maths function
+whose only caller was that capability.
+
+**Binding a core to a ship keeps its Settings rows and loses everything else.** `bind_ship_core`
+and `forget_ship_core` are no longer tools, the five phrases that reached them reach nothing, and
+`Ctrl+Alt+B` is unregistered. What a ship flies with is still remembered, still per Commander, and
+still readable by the model through `describe_persona` — the *reading* half was always the allowed
+one. It is a thing done once per ship at the desk, which is where it was being done anyway.
+
+**`ShipCoreTrustBoundaryTests` changed shape rather than being deleted**, and that is the part worth
+recording. It used to assert that the two tools refused the model, were never advertised, and were
+reachable by voice. It now asserts they do not exist. That is a stronger guarantee than a refusal:
+a tool that refuses is a tool somebody can make stop refusing.
+
+**`Hotkeys.Reanchor` and `Hotkeys.BindShipCore` stay on the settings record**, unread. The settings
+file is append-only — a property removed is a property that throws when an older `settings.json`
+arrives holding it.
+
 ---
 
 ## 0.93.0 — 2026-08-30 — The controllers are put down, and the panel learns to be told where to go
