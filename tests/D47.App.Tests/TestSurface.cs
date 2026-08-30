@@ -117,6 +117,7 @@ public static class TestSurface
             {
                 Report = () => (D47.Core.Vr.VrState.Unavailable, "No SteamVR runtime in a headless test."),
                 Reanchor = () => 0,
+                Nudge = (_, _) => D47.Core.Vr.VrNudgeOutcome.NoHeadset,
             },
             ActionSurface.Inert,
             () => "No autonomous actions in a headless test.",

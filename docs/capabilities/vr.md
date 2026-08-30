@@ -134,8 +134,29 @@ themselves, and cannot be moved or dragged somewhere you would not see them.
 
 ### Moving it about
 
-Point a controller at the panel, pull the **trigger**, and it comes with you — position and angle
-together, so it feels attached rather than dragged. Let go and it stays.
+**Say where you want it.** The panel moves a step at a time, in whichever direction you name:
+
+> "move the panel left" / "move the panel right" / "move the panel up" / "move the panel down"
+> "move the panel closer" / "move the panel further away"
+> "turn the panel left" / "turn the panel right"
+> "tilt the panel up" / "tilt the panel down"
+
+One step is 5 cm, or 5 degrees for a turn or a tilt. Say it again for another step. **Turning**
+swings the panel's face towards that side; **tilting up** leans it back towards your eyes, which is
+what a panel sitting below them wants.
+
+It acts on whichever panel is on screen — big or mini — and each keeps its own place. If the panel
+was still riding your head when you asked, Directive 47 puts it down in front of you first and then
+moves it, exactly as picking it up with a controller used to.
+
+No model is needed for any of this. The phrases above are matched by name, so they work with no
+provider configured.
+
+**Motion controllers are off out of the box** — see [below](#controllers) for why, and for what
+turning them back on gets you.
+
+With them on, point a controller at the panel, pull the **trigger**, and it comes with you —
+position and angle together, so it feels attached rather than dragged. Let go and it stays.
 
 While a ray is on the panel, Directive 47 asks SteamVR for the trigger and grip of that controller
 at overlay priority, and gives them back the moment the ray leaves. On a default SteamVR install
@@ -182,6 +203,33 @@ Ask for either by name, in whichever words come out:
 
 The two keep their own placements, so parking mini out to one side while the full panel stays in
 front of you works the way you would expect.
+
+#### Motion controllers {#controllers}
+
+**Off out of the box, and that is a withdrawal rather than a preference.** A controller put down
+while Directive 47 was connected to SteamVR, that then went to standby, never woke up on its own —
+every time. Put down while Directive 47 was *not* connected, it always did. That is
+[#18](https://github.com/dseelinger/d47/issues/18), and it is not understood.
+
+Directive 47 read your controllers' positions about ninety times a second for the whole session,
+whether or not you were pointing at anything — around 350,000 times in one hour-long session in
+which no ray ever touched the panel. A read like that running across the moment SteamVR puts a
+controller to sleep is the one interaction the evidence points at, and turning it off is the only
+way to test it.
+
+**What you lose while it is off.** Nothing on the panel can be pressed in the headset: no buttons,
+no toggles, no checklist ticks, no combo boxes, no on-panel keyboard, no scrollbar dragging, no
+grip-to-go-back, and no Settings tab. You cannot grab the panel and carry it.
+
+**What still works.** Everything by voice: moving between tabs, going back, scrolling, answering a
+question the panel is already asking, [re-anchoring](reanchor.md), and placing the panel — see
+[Moving it about](#moving-it-about) above, which is the replacement for the carry.
+
+**It is not forever.** Turn it back on and everything above returns, exactly as it was. A session
+with it on and a session with it off are the experiment; if the fault comes back with it on, that
+is the answer, and if it happens anyway with it off, the controller was never the cause.
+
+> "motion controllers on" / "motion controllers off"
 
 #### Placing a surface
 
@@ -325,6 +373,22 @@ not the same as it appearing: with no runtime installed the setting takes and no
 ```json
 {"type":"object","properties":{"on":{"type":"boolean","description":"True to show D47 in the headset, false to leave SteamVR alone."}},"required":["on"],"additionalProperties":false}
 ```
+
+#### `move_headset_panel`
+
+Moves the panel that is on screen one step at a time. A world-locked panel's position is not in
+`settings.json` at all — it is an anchor pose in view state, written until now only by a completed
+carry — so this is a delta applied to that anchor rather than a settings row. The two placement
+fields that look like the obvious answer, `Drop` and `Pitch`, are read only by the head-locked
+path, and the default lock is world: rows for them would move nothing you could see.
+
+```json
+{"type":"object","properties":{"direction":{"type":"string","description":"Which way. turn-left and turn-right swing the face of the panel towards that side; tilt-up leans it back to face the Commander.","enum":["left","right","up","down","nearer","further","turn-left","turn-right","tilt-up","tilt-down"]},"steps":{"type":"integer","description":"How many steps, 1 to 20. One step is 5 cm or 5 degrees. Defaults to one."}},"required":["direction"],"additionalProperties":false}
+```
+
+Up and down are the room's vertical, not the panel's own, and nearer and further run along the
+floor rather than along the tilted face — otherwise bringing a panel closer would raise it at the
+same time, which is one gesture doing two things.
 
 It exists because asking to see the panel used to reach `get_headset_status`, that being the only
 headset-shaped thing on the surface — so *"show the VR panel"* was answered with *"the overlays

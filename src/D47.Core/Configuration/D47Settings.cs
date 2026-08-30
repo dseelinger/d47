@@ -460,6 +460,37 @@ public sealed record VrSettings
     /// </summary>
     public string Mode { get; init; } = "mini";
 
+    /// <summary>
+    /// Whether d47 touches the motion controllers at all — the action manifest, the trigger, the
+    /// grip, and the ninety-times-a-second pose read behind the aim ray
+    /// (<a href="https://github.com/dseelinger/d47/issues/198">#198</a>).
+    /// <para>
+    /// <b>Off, and that is a withdrawal rather than a preference.</b> Every put-down of a
+    /// controller while d47 was connected to SteamVR and that then reached standby failed to come
+    /// back on its own; every put-down while d47 was not connected came back by itself
+    /// (<a href="https://github.com/dseelinger/d47/issues/18">#18</a>). d47 read controller poses
+    /// on the order of 350,000 times in one 64-minute session in which no ray ever crossed the
+    /// panel — the reading does not depend on pointing at anything — and a pose read running
+    /// across SteamVR's standby transition is the undocumented interaction that correlation
+    /// implicates. Turning it off is the only change that stops d47 touching the device, so it is
+    /// also the test.
+    /// </para>
+    /// <para>
+    /// <b>A switch rather than a deletion, on the Commander's own framing: it is not forever.</b>
+    /// A session with this on and a session with it off are the experiment, and the day #18 is
+    /// understood — or the day the withdrawal is shown not to have helped — turning it back on is
+    /// one line rather than a rebuild from a git history.
+    /// </para>
+    /// <para>
+    /// What it costs while off is known and accepted: nothing on the panel can be pressed in the
+    /// headset, the headset Settings tab is unreachable, and there is no way to grab the panel
+    /// and carry it. Voice keeps tab and breadcrumb navigation, back, scrolling, answering a
+    /// prompt that is already open, re-anchoring, and — since #199 — placing a panel by nudging
+    /// it.
+    /// </para>
+    /// </summary>
+    public bool Controllers { get; init; }
+
     /// <summary>Where the full panel sits and what it looks like.</summary>
     public VrSurfaceSettings Panel { get; init; } = new();
 

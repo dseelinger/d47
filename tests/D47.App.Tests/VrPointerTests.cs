@@ -1,7 +1,3 @@
-using System.Reflection;
-using System.Reflection.Metadata;
-using System.Reflection.Metadata.Ecma335;
-using System.Reflection.PortableExecutable;
 using D47.App.Headset;
 using D47.Vr;
 using Xunit;
@@ -21,7 +17,7 @@ namespace D47.App.Tests;
 /// </para>
 /// <para>
 /// A method nobody calls has no behaviour to be wrong about, so no behavioural test can see it.
-/// That is why these reason about the assembly instead.
+/// That is why these reason about the assembly instead, through <see cref="AssemblyCalls"/>.
 /// </para>
 /// </summary>
 public class VrPointerTests
@@ -48,7 +44,7 @@ public class VrPointerTests
     public void SomethingInTheRuntimeActuallyRegistersForTheTrigger()
     {
         Assert.True(
-            IsCalledInside(typeof(VrActionInput).Assembly, nameof(VrActionInput.Register)),
+            AssemblyCalls.Anything(typeof(VrActionInput).Assembly, nameof(VrActionInput.Register)),
             $"nothing in {typeof(VrActionInput).Assembly.GetName().Name} calls {nameof(VrActionInput.Register)}");
     }
 
@@ -60,7 +56,7 @@ public class VrPointerTests
     public void SomethingInTheAppActuallyReadsTheTrigger()
     {
         Assert.True(
-            IsCalledInside(typeof(VrHost).Assembly, nameof(VrActionInput.TriggerHeld)),
+            AssemblyCalls.Anything(typeof(VrHost).Assembly, nameof(VrActionInput.TriggerHeld)),
             $"nothing in {typeof(VrHost).Assembly.GetName().Name} calls {nameof(VrActionInput.TriggerHeld)}");
     }
 
@@ -75,11 +71,11 @@ public class VrPointerTests
     public void SomethingInTheAppGivesTheControllersBack()
     {
         Assert.True(
-            IsCalledInside(typeof(VrHost).Assembly, nameof(VrActionInput.Release)),
+            AssemblyCalls.Anything(typeof(VrHost).Assembly, nameof(VrActionInput.Release)),
             $"nothing in {typeof(VrHost).Assembly.GetName().Name} calls {nameof(VrActionInput.Release)}");
 
         Assert.True(
-            IsCalledInside(typeof(VrActionInput).Assembly, nameof(VrActionInput.Release)),
+            AssemblyCalls.Anything(typeof(VrActionInput).Assembly, nameof(VrActionInput.Release)),
             $"nothing in {typeof(VrActionInput).Assembly.GetName().Name} calls {nameof(VrActionInput.Release)}");
     }
 
@@ -103,7 +99,7 @@ public class VrPointerTests
 
         // And it is what Release hands over. A shape nobody passes is the empty list again.
         Assert.True(
-            CallsFrom(typeof(VrActionInput).Assembly, nameof(VrActionInput), nameof(VrActionInput.Release), nameof(VrActionInput.ReleaseSet)),
+            AssemblyCalls.Calls(typeof(VrActionInput).Assembly, nameof(VrActionInput), nameof(VrActionInput.Release), nameof(VrActionInput.ReleaseSet)),
             $"{nameof(VrActionInput)}.{nameof(VrActionInput.Release)} does not call {nameof(VrActionInput.ReleaseSet)}");
     }
 
@@ -112,121 +108,4 @@ public class VrPointerTests
         (bool)typeof(T).GetProperty(nameof(IVrSurfaceSource.TakesPointer))!
             .GetGetMethod()!
             .Invoke(System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(typeof(T)), null)!;
-
-    /// <summary>
-    /// Whether any method body in the assembly issues a call to the named method.
-    /// <para>
-    /// The body is searched for the five bytes of a <c>call</c> or <c>callvirt</c> carrying the
-    /// method's own token rather than decoded instruction by instruction. A decoder would be the
-    /// larger half of this file and the question is only ever asked one way round: an operand
-    /// that happens to read as a call to this token is a false positive nothing here can
-    /// produce, and a real call cannot hide from it.
-    /// </para>
-    /// </summary>
-    private static bool IsCalledInside(Assembly assembly, string method)
-    {
-        using var stream = File.OpenRead(assembly.Location);
-        using var pe = new PEReader(stream);
-
-        var metadata = pe.GetMetadataReader();
-
-        // A call to a method in another assembly is a MemberRef rather than a MethodDef, so both
-        // tables are searched. Without the second, asking whether the app calls into D47.Vr always
-        // answers "that method is not here" — a passing assertion about the wrong question.
-        var declared = metadata.MethodDefinitions.FirstOrDefault(
-            handle => metadata.GetString(metadata.GetMethodDefinition(handle).Name) == method);
-
-        var reference = metadata.MemberReferences.FirstOrDefault(
-            handle => metadata.GetString(metadata.GetMemberReference(handle).Name) == method);
-
-        Assert.False(
-            declared.IsNil && reference.IsNil,
-            $"{method} is neither defined nor referenced in {assembly.GetName().Name}");
-
-        var token = MetadataTokens.GetToken(declared.IsNil ? reference : declared);
-
-        foreach (var handle in metadata.MethodDefinitions)
-        {
-            if (BodyCalls(pe, metadata.GetMethodDefinition(handle), token))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Whether one named method's body issues a call to another method defined in the same
-    /// assembly. The narrower question than <see cref="IsCalledInside"/>: not "does anything
-    /// call it" but "does <em>this</em> method", which is what ties a release to its shape.
-    /// </summary>
-    private static bool CallsFrom(Assembly assembly, string type, string caller, string callee)
-    {
-        using var stream = File.OpenRead(assembly.Location);
-        using var pe = new PEReader(stream);
-
-        var metadata = pe.GetMetadataReader();
-
-        var target = metadata.MethodDefinitions.FirstOrDefault(
-            handle => metadata.GetString(metadata.GetMethodDefinition(handle).Name) == callee);
-
-        Assert.False(target.IsNil, $"{callee} is not defined in {assembly.GetName().Name}");
-
-        var token = MetadataTokens.GetToken(target);
-
-        foreach (var handle in metadata.MethodDefinitions)
-        {
-            var definition = metadata.GetMethodDefinition(handle);
-
-            if (metadata.GetString(definition.Name) != caller
-                || metadata.GetString(metadata.GetTypeDefinition(definition.GetDeclaringType()).Name) != type)
-            {
-                continue;
-            }
-
-            if (BodyCalls(pe, definition, token))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Whether a method body carries the five bytes of a <c>call</c> or <c>callvirt</c> with
-    /// the token. Not decoded instruction by instruction: the question is only ever asked one
-    /// way round, and an operand that happens to read as this call is a false positive nothing
-    /// here can produce, while a real call cannot hide from it.
-    /// </summary>
-    private static bool BodyCalls(PEReader pe, MethodDefinition definition, int token)
-    {
-        if (definition.RelativeVirtualAddress == 0)
-        {
-            return false;
-        }
-
-        var il = pe.GetMethodBody(definition.RelativeVirtualAddress).GetILBytes();
-
-        if (il is null)
-        {
-            return false;
-        }
-
-        var wanted = new byte[5];
-        BitConverter.TryWriteBytes(wanted.AsSpan(1), token);
-
-        foreach (var opcode in new byte[] { 0x28, 0x6F })
-        {
-            wanted[0] = opcode;
-
-            if (il.AsSpan().IndexOf(wanted) >= 0)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
 }

@@ -27,6 +27,12 @@ public static class VrCapability
     /// </summary>
     public const string OpacityKey = "vr.opacity";
 
+    /// <summary>
+    /// Whether d47 touches the motion controllers at all. Off out of the box since #198 — see
+    /// <see cref="Configuration.VrSettings.Controllers"/> for the whole of why.
+    /// </summary>
+    public const string ControllersKey = "vr.controllers";
+
     /// <summary>The surface a placement row belongs to, as it appears in the key.</summary>
     public const string PanelSlot = "panel";
 
@@ -81,6 +87,18 @@ public static class VrCapability
         /// silence that looks like a failure.
         /// </summary>
         public required Func<int> Reanchor { get; init; }
+
+        /// <summary>
+        /// Moves whichever panel is on screen one or more steps, and says what happened
+        /// (<a href="https://github.com/dseelinger/d47/issues/199">#199</a>).
+        /// <para>
+        /// The outcome rather than a sentence, so the words live in Core beside every other
+        /// thing d47 says about a surface — see <see cref="Vr.VrNudges.Describe"/>. A host that
+        /// wrote its own would be a second description of one act, free to disagree with the
+        /// first.
+        /// </para>
+        /// </summary>
+        public required Func<VrNudge, int, VrNudgeOutcome> Nudge { get; init; }
     }
 
     public static CapabilityDescriptor Create(SettingsService settings, HeadsetSurface headset) => new()
@@ -125,6 +143,42 @@ public static class VrCapability
                     },
                 ],
                 Handler = (arguments, _) => Task.FromResult(Show(settings, headset, arguments)),
+            },
+
+            // **Placing a panel without a controller** (#199). It is here rather than on its own
+            // capability because the argument that split re-anchor off does not apply: the router
+            // reaches this through a declared phrase and its arguments, not by picking a
+            // capability's one argument-free tool, so what else this capability offers cannot
+            // shadow it.
+            new ToolDefinition
+            {
+                Name = "move_headset_panel",
+                Description =
+                    "Move the headset panel a step at a time: left, right, up, down, nearer, further, "
+                    + "or turn or tilt it. Acts on whichever panel is on screen, and puts it down in "
+                    + "front of the Commander first if it was still riding their head. To put a panel "
+                    + "that has drifted back where it was, use reanchor_headset_surfaces instead.",
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "direction",
+                        Type = ToolParameterType.String,
+                        Description =
+                            "Which way. turn-left and turn-right swing the face of the panel towards "
+                            + "that side; tilt-up leans it back to face the Commander.",
+                        Required = true,
+                        AllowedValues = VrNudges.Names,
+                    },
+                    new ToolParameter
+                    {
+                        Name = "steps",
+                        Type = ToolParameterType.Integer,
+                        Description = "How many steps, 1 to 20. One step is 5 cm or 5 degrees. Defaults to one.",
+                    },
+                ],
+                Commands = [.. NudgePhrases()],
+                Handler = (arguments, _) => Task.FromResult(Move(headset, arguments)),
             },
         ],
         Settings =
@@ -204,6 +258,34 @@ public static class VrCapability
                     },
                 },
             },
+            new SettingRow
+            {
+                Key = ControllersKey,
+                Advanced = true,
+                Label = "Motion controllers",
+                Help = "Whether D47 touches your motion controllers at all - the pointing ray, the "
+                       + "trigger and the grip. Off, and that is a withdrawal rather than a preference: "
+                       + "D47 read controller poses ninety times a second for a whole session whether "
+                       + "or not anything was being pointed at, and that is the untested half of why a "
+                       + "controller put down while D47 was running never woke up again. With it off "
+                       + "nothing on the panel can be pressed in the headset, the headset Settings tab "
+                       + "cannot be reached, and the panel cannot be grabbed and carried - say \"move "
+                       + "the panel left\" instead. Turn it on to see whether the fault comes back.",
+                Kind = SettingKind.Toggle,
+                DocsAnchor = "controllers",
+                AppliesWhen = s => s.Vr.Enabled,
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Vr.Controllers ? "true" : "false",
+                    Write = (s, v) => s with { Vr = s.Vr with { Controllers = v == "true" } },
+                },
+                Commands =
+                [
+                    new SettingCommandPhrase("motion controllers on", "true"),
+                    new SettingCommandPhrase("motion controllers off", "false"),
+                ],
+            },
+
             // **The one the Commander means** (#21). Ruled 2026-08-24: *"whichever panel I'm
             // looking at."* Stores nothing of its own — it resolves vr.mode at the moment it is
             // read or written and lands on that surface's values, so settings.json gains no key
@@ -499,6 +581,67 @@ public static class VrCapability
         AppliesWhen = s => s.Vr.Enabled,
         Binding = new SettingBinding { Read = read, Write = write },
     };
+
+    /// <summary>
+    /// Moves the panel that is on screen (#199).
+    /// <para>
+    /// Nothing is clamped here. <see cref="VrNudges.Steps"/> already decides what a call is
+    /// allowed to do, and a second opinion about it in the capability is a second place for the
+    /// two to disagree.
+    /// </para>
+    /// </summary>
+    private static ToolResult Move(HeadsetSurface headset, ToolArguments arguments)
+    {
+        if (!arguments.TryGetString("direction", out var said) || VrNudges.Parse(said) is not { } nudge)
+        {
+            return ToolResult.Error(
+                $"Say which way to move the panel: {string.Join(", ", VrNudges.Names)}.");
+        }
+
+        var steps = arguments.TryGetInt32("steps", out var asked) ? asked : 1;
+
+        return ToolResult.Ok(VrNudges.Describe(nudge, headset.Nudge(nudge, steps)));
+    }
+
+    /// <summary>
+    /// The phrases that reach <c>move_headset_panel</c> with no model in the path, which is the
+    /// route that has to work: the controller is withdrawn (#198), so voice is the only way a
+    /// Commander in a headset can place a panel, and local-only operation is supported.
+    /// <para>
+    /// One entry per direction and several spellings of each, because a phrase the router does
+    /// not have is a phrase that falls through to a model that may not be there. They cost no
+    /// schema bytes — see <see cref="ToolCommandPhrase"/>.
+    /// </para>
+    /// </summary>
+    private static IEnumerable<ToolCommandPhrase> NudgePhrases()
+    {
+        foreach (var (nudge, spellings) in Spellings())
+        {
+            var arguments = new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["direction"] = VrNudges.Names[(int)nudge],
+            };
+
+            foreach (var spelling in spellings)
+            {
+                yield return new ToolCommandPhrase(spelling, arguments);
+            }
+        }
+    }
+
+    private static IEnumerable<(VrNudge Nudge, string[] Spellings)> Spellings()
+    {
+        yield return (VrNudge.Left, ["move the panel left", "panel left", "nudge the panel left"]);
+        yield return (VrNudge.Right, ["move the panel right", "panel right", "nudge the panel right"]);
+        yield return (VrNudge.Up, ["move the panel up", "panel up", "nudge the panel up", "raise the panel"]);
+        yield return (VrNudge.Down, ["move the panel down", "panel down", "nudge the panel down", "lower the panel"]);
+        yield return (VrNudge.Nearer, ["move the panel closer", "move the panel nearer", "panel closer", "bring the panel closer"]);
+        yield return (VrNudge.Further, ["move the panel away", "move the panel further away", "panel further away", "push the panel away"]);
+        yield return (VrNudge.TurnLeft, ["turn the panel left", "yaw the panel left"]);
+        yield return (VrNudge.TurnRight, ["turn the panel right", "yaw the panel right"]);
+        yield return (VrNudge.TiltUp, ["tilt the panel up", "tilt the panel back"]);
+        yield return (VrNudge.TiltDown, ["tilt the panel down", "tilt the panel forward"]);
+    }
 
     /// <summary>
     /// Turns the headset overlays on or off, and then says what that produced.

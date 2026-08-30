@@ -27,6 +27,111 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.93.0 — 2026-08-30 — The controllers are put down, and the panel learns to be told where to go
+
+Two wanted changes, and they are one change read from both ends.
+[#198](https://github.com/dseelinger/d47/issues/198) withdraws motion controller support until
+[#18](https://github.com/dseelinger/d47/issues/18) is understood;
+[#199](https://github.com/dseelinger/d47/issues/199) replaces the one thing that withdrawal takes
+away. Neither is under the moratorium, and the Commander asked for both.
+
+### Nothing touches a controller any more, and that is the experiment (#198)
+
+Every controller the Commander put down while d47 was connected to SteamVR, that then reached
+standby, failed to wake on its own. Every one put down while d47 was **not** connected woke by
+itself. That is #18, and it is not understood — but d47 was reading controller poses **ninety
+times a second for the whole session**, whether or not anything was being pointed at. In one
+sixty-four-minute session where no ray ever crossed the panel, that is on the order of 350,000
+reads, running straight across the moment SteamVR puts a controller to sleep. Withdrawing is the
+only change that stops d47 touching the device, so it is also the only clean test of it.
+
+**A switch, not a deletion, on the Commander's own framing: it is not forever.** `vr.controllers`
+is off out of the box, so the withdrawal is what ships and turning it back on is deliberate. A
+session with it on and a session with it off are the experiment, which a deletion would have made
+impossible — and the day #18 is understood, or the day this is shown not to have helped, the way
+back is one row.
+
+**"Nothing at all" is meant literally**, and it is asserted rather than promised. The action half
+closes on one skipped call: `TriggerHeld`, `Release` and `BackPressed` each open by testing the
+flag only `Register` sets, so not registering makes all three inert on their first line — no
+manifest written, no application key claimed, no `UpdateActionState`. The pose half is where the
+work was. `VrAimLoop` does not start, and a running one is stopped rather than left when the row
+moves mid-session. `SteamVrRuntime.HandsAndHead` returns before its device loop, so
+`GetTrackedDeviceClass` is not asked of sixty-four slots a frame and neither `Note` nor
+`GripToTip` — which reads render-model strings off the device — is reached at all. `Controllers()`
+is gone rather than gated: nothing had called it, and a public road to the device loop is a road
+somebody adds a caller to. The beam and cursor quads go too, because a beam with nothing driving
+it is a visible artefact of a feature that is off.
+
+**One call stays, and its shape is most of the reduction.** `GetDeviceToAbsoluteTrackingPose`
+fills a whole-universe array and the head pose comes out of it, so captions, resting placement and
+re-anchor all need it. With the row off it is reached only through `ReadHead`, which asks for an
+array one slot long and indexes the headset alone, at the serve's ten hertz rather than the aim
+loop's ninety. That is ten single-slot reads a second and no per-device call of any kind, down
+from ninety whole-array reads with sixty-four device-class queries each.
+
+**The assertions are negatives, so none of them is behavioural.** No amount of running d47 without
+a headset demonstrates that a call is unreachable. So `NothingTouchesAControllerWhileWithdrawnTests`
+reasons about the compiled IL — the technique `VrPointerTests` was already built on, lifted into
+`AssemblyCalls` now that a second file needs it: every per-device call has exactly one caller, that
+caller reads the row in its own body rather than trusting its callers to, the aim loop has exactly
+one place that starts it, and the guides are built only where the row is consulted. Each was proved
+to fail with its gate removed before it was kept.
+
+**What goes with it, known and accepted.** Nothing on the panel can be pressed in the headset: no
+buttons, toggles or checklist ticks, no combo boxes, no on-panel keyboard, no scrollbar dragging,
+no grip-to-go-back, and no Settings tab. Voice keeps tab and breadcrumb navigation, back,
+scrolling, answering a prompt already open, and re-anchoring. A gesture in flight when the row
+moves is let go rather than frozen — a captured scrollbar released, a lit highlight put out, a
+carried panel put down where it had got to and written.
+
+### The panel can be told where to go (#199)
+
+The withdrawal takes away the only way to put a panel anywhere other than its computed rest pose.
+This is the replacement, and it is a delta rather than a row for a reason worth stating: **a
+world-locked panel's position is not in `settings.json` at all.** The two unsurfaced fields that
+look like the obvious answer — `Drop` and `Pitch` — are read only by the head-locked path, and the
+default lock is world, so rows for them would have moved nothing the Commander could see. What
+holds the position is the anchor pose in view state, written until now only by a completed carry.
+
+> "move the panel left" · "raise the panel" · "bring the panel closer" · "turn the panel right" ·
+> "tilt the panel up"
+
+Five centimetres a step, or five degrees for a turn or a tilt, on whichever panel is on screen —
+the big one and the mini one keep their own places. Two of the four axes had to be invented rather
+than exposed: there was no lateral offset anywhere, and yaw was read-only, computed by re-anchor
+and never configurable.
+
+**Every axis comes off the surface's own pose and none of them off the head**, because a panel put
+down in the room stays put while the Commander looks around — resolving "left" against the head
+would make it mean something different depending on which way they happened to be facing. Up and
+down are the room's vertical and near and far run along the floor, both deliberately flattened: a
+panel below eye level is tilted back to be read, so moving it along its own face would raise it
+every time somebody asked for it to come closer. Turning pivots about the world's vertical through
+the surface's own centre; tilting is about the surface's own lateral axis, and stays a trim on the
+derived eye-facing angle rather than an absolute, which is what that derivation was introduced to
+stop going stale.
+
+**Both rotations carry a sign that reads backwards**, and both are asserted on where the face ends
+up pointing rather than on the angle, which is the right size either way. An overlay's visible face
+looks along its own **+Z**, so a positive rotation about X tilts it towards the floor — the bug
+`Resting` once shipped — and a positive rotation about Y swings it towards the Commander's
+**right**.
+
+**A panel still riding the head is put down first**, which is the carry's own ruling rather than a
+new one: picking the panel up has always switched the lock to world, because a Commander who has
+moved it has said where they want it. It rests where a first show would rest it — in front of them,
+at knee height — rather than at whatever stale anchor a previous world-locked spell left behind.
+And a nudge writes the head it was made against, so re-anchoring straight afterwards leaves it
+alone instead of undoing it.
+
+Reachable with no model in the path, which is the configuration that matters here: with the
+controllers withdrawn there is no Settings tab in the headset to open, and local-only operation is
+supported. `move_headset_panel` costs 808 bytes of the advertised surface, which now stands at
+41,009 against a ceiling of 50,000.
+
+---
+
 ## 0.92.0 — 2026-08-29 — The debrief drafts, the Commander adopts, and the voice gets its cores
 
 Six issues, four parallel sessions, zero merge conflicts.

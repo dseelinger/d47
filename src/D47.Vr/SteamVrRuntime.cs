@@ -157,6 +157,26 @@ public sealed class SteamVrRuntime(
     public VrActionInput Actions { get; } = new(logger);
 
     /// <summary>
+    /// Whether d47 may touch the motion controllers at all
+    /// (<a href="https://github.com/dseelinger/d47/issues/198">#198</a>).
+    /// <para>
+    /// Off leaves <see cref="HandsAndHead"/> with no controllers to report, which is the second
+    /// half of the withdrawal and the half that matters: not registering the action manifest
+    /// stops the trigger being <em>claimed</em> and stops nothing being <em>read</em>, and the
+    /// pose read is what runs ninety times a second whether or not a ray is anywhere near the
+    /// panel. Stopping only the manifest would have left the suspected mechanism in place and
+    /// made the test meaningless.
+    /// </para>
+    /// <para>
+    /// A property set by the host rather than a constructor argument, because it is a settings
+    /// row a Commander can move mid-session — a session with it on and a session with it off are
+    /// the A/B this switch exists for, and a rebuilt session to change it would be a worse
+    /// experiment.
+    /// </para>
+    /// </summary>
+    public bool Pointing { get; set; }
+
+    /// <summary>
     /// The aim beam and the cursor: two more overlays, and they have to be overlays rather than
     /// pixels drawn into the panel. The beam moves with the hand at headset rate while the panel
     /// repaints a few times a second, so compositing it in would drag the panel's pixels along at
@@ -220,6 +240,9 @@ public sealed class SteamVrRuntime(
             return false;
         }
 
+        // Here as well as in Bring, so the motion-controller row is a live switch: see Guides.
+        Guides();
+
         var head = ReadHead();
         if (head is { } pose)
         {
@@ -251,6 +274,7 @@ public sealed class SteamVrRuntime(
         _beam = null;
         _cursor = null;
         _beamLength = float.NaN;
+        _guidesFor = null;
 
         foreach (var overlay in _overlays.Values)
         {
@@ -359,13 +383,6 @@ public sealed class SteamVrRuntime(
             : null;
 
     /// <summary>
-    /// Every tracked controller that is genuinely reporting a pose, with the aim already corrected
-    /// off the grip. Both flags are checked in <see cref="VrMatrix.Real"/>, and there is no later
-    /// layer that would catch a slot that is merely zeroed.
-    /// </summary>
-    public IReadOnlyList<VrHand> Controllers() => HandsAndHead().Hands;
-
-    /// <summary>
     /// The controllers and the head from <b>one</b> pose read, for a caller that needs both and is
     /// asking at frame rate (<a href="https://github.com/dseelinger/d47/issues/19">#19</a>).
     /// <para>
@@ -385,6 +402,14 @@ public sealed class SteamVrRuntime(
         if (_system is null)
         {
             return ([], null);
+        }
+
+        // The withdrawal, at the one place a controller is actually read (#198). The head still
+        // has to come back — the panel is placed against it — so this is a narrower read rather
+        // than a refusal, and it goes through ReadHead, which asks for the headset's slot alone.
+        if (!Pointing)
+        {
+            return ([], ReadHead());
         }
 
         // Reused rather than allocated per call: sixty-four entries at frame rate is garbage this
@@ -607,6 +632,52 @@ public sealed class SteamVrRuntime(
             _overlays[key] = overlay;
         }
 
+        Guides();
+
+        logger.LogInformation("Headset overlays are up; {Count} quad(s) claimed", _overlays.Count);
+
+        return VrStart.Started;
+    }
+
+    /// <summary>Which state of <see cref="Pointing"/> the beam and cursor were last built for.</summary>
+    private bool? _guidesFor;
+
+    /// <summary>
+    /// The beam and the cursor, built when there is something to guide and taken down when there
+    /// is not (<a href="https://github.com/dseelinger/d47/issues/198">#198</a>).
+    /// <para>
+    /// Neither is a controller call — they are overlay quads — but a beam with nothing driving it
+    /// is a visible artefact of a feature that is supposed to be off, so the withdrawal takes
+    /// them with it.
+    /// </para>
+    /// <para>
+    /// <b>Called from the serve as well as from <see cref="Bring"/></b>, which is what makes the
+    /// row a live switch rather than one that waits for a session rebuild. Both callers are the
+    /// tick, so overlay creation stays on the one thread that has ever done it. The flag is what
+    /// keeps this a no-op ten times a second: a refused sprite leaves a null that is
+    /// indistinguishable from one never built, so "are they there" cannot be the question.
+    /// </para>
+    /// </summary>
+    private void Guides()
+    {
+        if (_guidesFor == Pointing)
+        {
+            return;
+        }
+
+        _guidesFor = Pointing;
+
+        _beam?.Dispose();
+        _cursor?.Dispose();
+        _beam = null;
+        _cursor = null;
+        _beamLength = float.NaN;
+
+        if (!Pointing)
+        {
+            return;
+        }
+
         // Both fail soft. No beam and no cursor is a panel that can still be pointed at and
         // carried, just without anything on screen saying where — a downgrade, not a failure.
         _beam = Sprite("com.dseelinger.D47.beam", "D47 aim", VrSprites.Beam(),
@@ -614,10 +685,6 @@ public sealed class SteamVrRuntime(
 
         _cursor = Sprite("com.dseelinger.D47.cursor", "D47 cursor", VrSprites.Cursor(),
             VrSprites.CursorSize, VrSprites.CursorSize, VrAim.CursorSizeMetres, sortOrder: 2);
-
-        logger.LogInformation("Headset overlays are up; {Count} quad(s) claimed", _overlays.Count);
-
-        return VrStart.Started;
     }
 
     /// <summary>

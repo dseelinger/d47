@@ -249,6 +249,94 @@ public sealed class VrHost : IDisposable
         return moved;
     }
 
+    /// <summary>
+    /// Moves the panel that is on screen one or more steps
+    /// (<a href="https://github.com/dseelinger/d47/issues/199">#199</a>).
+    /// <para>
+    /// <b>It writes the anchor, not a settings row, and that is the whole of why this exists.</b>
+    /// A world-locked panel's position is not in <c>settings.json</c> at all — the two unsurfaced
+    /// fields that look like the obvious answer, <c>Drop</c> and <c>Pitch</c>, are read only by
+    /// the head-locked path, and the default lock is world. Rows for them would have moved
+    /// nothing a Commander could see.
+    /// </para>
+    /// <para>
+    /// <b>A panel riding the head is put down first, and that is the carry's own ruling rather
+    /// than a new one.</b> Picking the panel up with a controller switches the lock to world,
+    /// because a Commander who has moved it has said where they want it; a nudge is that same
+    /// gesture with the controller withdrawn (#198), so it says the same thing. It rests the
+    /// panel where <see cref="RestIfNeverPlaced"/> would — in front of them, at knee height —
+    /// rather than at whatever stale anchor a previous world-locked spell left behind, which
+    /// could be anywhere including behind them.
+    /// </para>
+    /// <para>
+    /// Off the tick, like <see cref="Reanchor"/> and by the same route: it is reached from a tool
+    /// handler and from the keyword router. It touches the same anchors the tick does, and takes
+    /// the same latitude that has.
+    /// </para>
+    /// </summary>
+    public VrNudgeOutcome Nudge(VrNudge nudge, int steps)
+    {
+        var slot = _panel.Mode == PanelMode.Mini ? VrCapability.MiniSlot : VrCapability.PanelSlot;
+        var head = _runtime.Head is { IsFinite: true } seen ? seen : (VrPose?)null;
+
+        var anchor = _panel.Placement.Lock == SurfaceLock.WorldLocked
+                     && _anchors.TryGetValue(slot, out var existing)
+            ? existing
+            : null;
+
+        var down = anchor is not null;
+
+        if (anchor is null)
+        {
+            if (RestingNow() is not { } rest)
+            {
+                return VrNudgeOutcome.NoHeadset;
+            }
+
+            anchor = Anchor(rest.Where, rest.Head);
+        }
+
+        _anchors[slot] = new SurfaceAnchor
+        {
+            Placed = PoseSettings.From(VrNudges.Apply(anchor.Placed.ToPose(), nudge, steps)),
+
+            // Against the head as it is now, when there is one. A nudge is the Commander saying
+            // "there" about where they are sitting, so re-anchoring straight afterwards should
+            // leave the panel alone rather than undo them. With no head pose the old half stands,
+            // which keeps the anchor a matched pair rather than half of two.
+            PlacedAgainst = head is { } now ? PoseSettings.From(now) : anchor.PlacedAgainst,
+        };
+
+        Remember();
+        _panel.Invalidate();
+
+        if (!down)
+        {
+            var locked = _settings.Apply(VrCapability.LockKey(slot), "world", SettingsCaller.Hotkey);
+
+            if (locked.Status != SettingApplyStatus.Applied)
+            {
+                // Said out loud for the same reason the carry says it: from inside a headset the
+                // panel moves once and then springs back to the head, with nothing anywhere
+                // saying the setting refused.
+                _logger.LogWarning(
+                    "The panel was nudged but {Key} would not go to world: {Status} — {Detail}",
+                    VrCapability.LockKey(slot),
+                    locked.Status,
+                    locked.Message);
+            }
+        }
+
+        _logger.LogInformation(
+            "The {Slot} panel was nudged {Nudge} by {Steps} step(s){Rested}",
+            slot,
+            nudge,
+            VrNudges.Steps(steps),
+            down ? string.Empty : ", having first been put down in front of the Commander");
+
+        return down ? VrNudgeOutcome.Moved : VrNudgeOutcome.PutDown;
+    }
+
     /// <summary>Where a surface was put down, if it has been. Read by the panel each serve.</summary>
     public (VrPose Placed, VrPose Against)? AnchorFor(string slot) =>
         _anchors.TryGetValue(slot, out var anchor)
@@ -300,6 +388,11 @@ public sealed class VrHost : IDisposable
 
     private void Configure()
     {
+        // Before the surfaces, because it decides whether there is a pointer at all (#198).
+        // Pushed rather than polled: the runtime is in D47.Vr and cannot see settings, and a
+        // read of the row from in there would be the dependency direction backwards.
+        _runtime.Pointing = _settings.Current.Vr.Controllers;
+
         _captions.Configure(_settings.Current.Vr.Captions);
         _panel.Configure();
         _panel.ApplyMode();
@@ -366,18 +459,36 @@ public sealed class VrHost : IDisposable
 
             if (_lifecycle.State == VrState.Active)
             {
-                // Here rather than inside the runtime: this is the real application, and only the
-                // real application may claim the d47 application key with SteamVR. Idempotent, so
-                // every tick after the first costs a comparison, and a rebuilt session re-registers
-                // itself without anything having to notice that it was rebuilt.
-                _runtime.Actions.Register(_paths.VrActions);
+                if (_runtime.Pointing)
+                {
+                    // Here rather than inside the runtime: this is the real application, and only
+                    // the real application may claim the d47 application key with SteamVR.
+                    // Idempotent, so every tick after the first costs a comparison, and a rebuilt
+                    // session re-registers itself without anything having to notice that it was
+                    // rebuilt.
+                    _runtime.Actions.Register(_paths.VrActions);
+                }
 
                 RestIfNeverPlaced();
                 Carry();
 
                 // Started after the first Carry rather than before it, so the loop's first frame
                 // has a published geometry to aim at instead of returning empty-handed.
-                _aimLoop ??= new VrAimLoop(Aim, _logger).Start();
+                //
+                // And not started at all while the controllers are withdrawn (#198). The loop is
+                // the ninety-hertz pose read: leaving it running against a runtime that reports
+                // no controllers would still be d47 asking after them every eleven milliseconds,
+                // which is the thing the withdrawal exists to stop. Stopped rather than left, so
+                // moving the row mid-session is the whole switch and not half of one.
+                if (_runtime.Pointing)
+                {
+                    _aimLoop ??= new VrAimLoop(Aim, _logger).Start();
+                }
+                else if (_aimLoop is { } running)
+                {
+                    _aimLoop = null;
+                    running.Dispose();
+                }
             }
         }
         catch (Exception ex)
@@ -422,9 +533,36 @@ public sealed class VrHost : IDisposable
             return;
         }
 
-        if (_runtime.Head is not { IsFinite: true } head)
+        if (RestingNow() is not { } rest)
         {
             return;
+        }
+
+        _anchors[slot] = Anchor(rest.Where, rest.Head);
+        Remember();
+
+        _logger.LogInformation(
+            "The {Slot} panel had never been placed; resting it {Distance:0.00} m ahead with its top at {Top:0.00} m",
+            slot,
+            _panel.Placement.DistanceMetres,
+            rest.Where.Position.Y + (rest.QuadHeight / 2f));
+    }
+
+    /// <summary>
+    /// Where the panel on screen would come to rest right now, and the head it would rest
+    /// against. Null when there is no head pose to place anything against.
+    /// <para>
+    /// Lifted out of <see cref="RestIfNeverPlaced"/> when a nudge needed the same answer
+    /// (<a href="https://github.com/dseelinger/d47/issues/199">#199</a>): moving a panel that is
+    /// still riding the head means putting it down first, and putting it down has to mean exactly
+    /// what it already meant the first time a panel was ever shown.
+    /// </para>
+    /// </summary>
+    private (VrPose Where, VrPose Head, float QuadHeight)? RestingNow()
+    {
+        if (_runtime.Head is not { IsFinite: true } head)
+        {
+            return null;
         }
 
         var placement = _panel.Placement;
@@ -441,14 +579,7 @@ public sealed class VrHost : IDisposable
             VrPlacementMath.KneeHeight(head.Position.Y),
             quadHeight);
 
-        _anchors[slot] = Anchor(resting, head);
-        Remember();
-
-        _logger.LogInformation(
-            "The {Slot} panel had never been placed; resting it {Distance:0.00} m ahead with its top at {Top:0.00} m",
-            slot,
-            placement.DistanceMetres,
-            resting.Position.Y + (quadHeight / 2f));
+        return (resting, head, quadHeight);
     }
 
     /// <summary>
@@ -468,6 +599,15 @@ public sealed class VrHost : IDisposable
     /// </summary>
     private void Carry()
     {
+        // The withdrawal (#198). Everything below reads a hand, decides a press, or moves a
+        // carried panel, and none of it can mean anything with no controller in play — so this is
+        // one early return rather than ten branches that each separately find nothing.
+        if (!_runtime.Pointing)
+        {
+            Withdraw();
+            return;
+        }
+
         // Asked of the surface rather than assumed here. Captions are read rather than touched,
         // and a quad that answers a ray in front of the cockpit is a beam that stops on a label.
         if (!_panel.TakesPointer || _runtime.Head is not { } head)
@@ -640,6 +780,54 @@ public sealed class VrHost : IDisposable
         }
 
         _anchors[slot] = Anchor(VrPlacementMath.Carried(_carrying.Value, carrier.Aim), head);
+    }
+
+    /// <summary>
+    /// Lets go of everything a pointer was holding, because there is no longer a pointer
+    /// (<a href="https://github.com/dseelinger/d47/issues/198">#198</a>).
+    /// <para>
+    /// <b>Written for the mid-session case, which is the one this switch exists to allow.</b>
+    /// Turning the row off is meant to be half of an A/B, so it happens while d47 is running —
+    /// and a gesture in flight at that moment outlives the thing that started it. A captured
+    /// scrollbar stays captured, a lit highlight stays lit, and a carried panel follows a hand
+    /// nothing is reading any more. Each of those reads as the panel having broken rather than as
+    /// a setting having moved.
+    /// </para>
+    /// <para>
+    /// Costs a handful of comparisons on every tick of every session that has the controllers
+    /// off, which is every session out of the box. That is the price of not having a second
+    /// "has it just been switched off" flag to keep in step with the row.
+    /// </para>
+    /// </summary>
+    private void Withdraw()
+    {
+        // Withdrawn first, so the aim loop — if this is the tick that raced its shutdown — stops
+        // placing a ray against geometry this serve has declined to stand behind.
+        Volatile.Write(ref _aimGeometry, null);
+
+        // A claim standing from before the row moved would otherwise stand until the session
+        // ended. See VrActionInput.Release: not calling is not the release.
+        _runtime.Actions.Release();
+
+        if (_scrolling)
+        {
+            _scrolling = false;
+            _panel.ReleaseScroll();
+        }
+
+        _pressed = null;
+
+        if (_carrying is not null)
+        {
+            // Put down where it had got to, and written, exactly as letting go of the trigger
+            // does. The anchor has been kept current all the way through the carry; what is
+            // missing is the one file write that happens on release.
+            _carrying = null;
+            Remember();
+            _logger.LogInformation("The motion controllers were withdrawn mid-carry; the panel is down where it was");
+        }
+
+        _panel.Aim(null, null);
     }
 
     /// <summary>
