@@ -115,6 +115,20 @@ button is bound. It applies; it is simply not its own row on the page.
 **Both halves stay `Protected`.** Rebinding or clearing push-to-talk takes away the Commander's way
 of speaking to d47, and protected rows cost no tool-surface bytes, so nothing was traded.
 
+**Bind twice to have both, and the row now says so.** Reported the moment the row was driven — *"it
+says I can bind to both. How?"* — and the answer was always *press the control once per gesture*,
+which nothing on screen mentioned. The help says it in the Commander's own order now.
+
+**Right shift could not be bound at all, and that is a real fault this uncovered.** Every bind
+capture discarded a bare modifier as *someone still assembling a chord* — the rule since Phase 4 —
+and push-to-talk's own default **is** a bare modifier. So a Commander who cleared the row could not
+put the default back, which is exactly the corner the one who asked was in: bound to a stick button,
+with no way to add the key beside it. It is told apart by the **edge** now rather than refused:
+pressed, a modifier is still a chord being assembled; released with nothing else having arrived, it
+was the binding. The same idiom `ButtonCapture` uses on the stick, for the same reason — it is the
+edge that answers the question rather than the one that raises it. A system-wide row still ignores a
+bare modifier, because the service refuses a bare key there anyway.
+
 **The modal bind window is gone**, and its words are not. `ButtonBindWindow` was the only caller of
 the controller walk; the walk now runs on a timer the row's own control owns, and `ButtonCapture` is
 untouched and still the authority on what counts as a button — ignoring what was already held when

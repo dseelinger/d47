@@ -266,4 +266,149 @@ public class OneRowForPushToTalkTests
         // written — which is what happens every time a stick button is bound.
         Assert.True(button.Applies(settings.Current));
     }
+
+    /// <summary>
+    /// <b>How you end up with both: bind twice, once per gesture.</b> One capture takes whichever
+    /// arrives first and stores it against the half it belongs to, so pressing the control again
+    /// and giving it the other kind adds rather than replaces. Reported as a question —
+    /// <em>"it says I can bind to both. How?"</em> — which is what sent the sentence into the help.
+    /// </summary>
+    [AvaloniaFact]
+    public void BindingAgainAddsTheOtherKindRatherThanReplacingTheFirst()
+    {
+        var (settings, viewState, paths) = TestSurface.Create();
+
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
+            .FollowSettings(settings);
+
+        var host = SettingsHost.Open(settings, viewState, paths, switches: Editing(paths));
+        var row = Row(host, "Push-to-talk")!;
+
+        Unbind(row).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        // The stick half first, as the Commander who asked had it: bound to a button and nothing
+        // else. The walk itself is ButtonCapture's, tested in Core, so it is not re-run here.
+        settings.Apply(ListeningCapability.PushToTalkButtonKey, $"{Stick}#10", SettingsCaller.Panel);
+        Dispatcher.UIThread.RunJobs();
+
+        Press(host, row, Avalonia.Input.Key.F9, Avalonia.Input.PhysicalKey.F9);
+
+        Assert.Equal("F9", settings.Current.Listening.PushToTalkKey);
+        Assert.Equal($"{Stick}#10", settings.Current.Listening.PushToTalkButton);
+        Assert.Equal("F9, button 11", Bind(row).Content as string);
+
+        host.Close();
+    }
+
+    /// <summary>
+    /// <b>Right shift is bindable, and it is the default.</b> A bare modifier used to be swallowed
+    /// on every bind row as "someone still assembling a chord" — so the one key push-to-talk ships
+    /// with could not be put back once it was cleared, which is exactly the corner the Commander
+    /// who reported this was in.
+    /// <para>
+    /// Told apart by the edge rather than refused: pressed, a modifier is still a chord being
+    /// assembled; released with nothing else having arrived, it was the binding. The same idiom
+    /// the stick walk uses, and for the same reason — it is the edge that answers the question.
+    /// </para>
+    /// </summary>
+    [AvaloniaTheory]
+    [InlineData(Avalonia.Input.Key.RightShift, Avalonia.Input.PhysicalKey.ShiftRight, "RightShift")]
+    [InlineData(Avalonia.Input.Key.LeftAlt, Avalonia.Input.PhysicalKey.AltLeft, "LeftAlt")]
+    public void ABareModifierBindsOnItsRelease(
+        Avalonia.Input.Key key, Avalonia.Input.PhysicalKey physical, string stored)
+    {
+        var (settings, host) = Open();
+
+        // Cleared first, so RightShift arriving means this capture rather than the default.
+        settings.Apply(ListeningCapability.PushToTalkKeyKey, "", SettingsCaller.Panel);
+        Dispatcher.UIThread.RunJobs();
+
+        var row = Row(host, "Push-to-talk")!;
+
+        Bind(row).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        host.Window.KeyPress(key, Avalonia.Input.RawInputModifiers.None, physical, null);
+        Dispatcher.UIThread.RunJobs();
+
+        // Still nothing: pressed is not enough, because this is also how a chord starts.
+        Assert.NotEqual(stored, settings.Current.Listening.PushToTalkKey);
+
+        host.Window.KeyRelease(key, Avalonia.Input.RawInputModifiers.None, physical, null);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(stored, settings.Current.Listening.PushToTalkKey);
+
+        host.Close();
+    }
+
+    /// <summary>
+    /// And a chord is still a chord. The modifier is remembered on the way down and forgotten the
+    /// moment anything else arrives, so holding Ctrl to reach Ctrl+D cannot bind Ctrl.
+    /// </summary>
+    [AvaloniaFact]
+    public void AModifierOnTheWayToAChordDoesNotBindItself()
+    {
+        var (settings, host) = Open();
+        var row = Row(host, "Push-to-talk")!;
+
+        Bind(row).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        host.Window.KeyPress(Avalonia.Input.Key.LeftCtrl, Avalonia.Input.RawInputModifiers.None,
+            Avalonia.Input.PhysicalKey.ControlLeft, null);
+        host.Window.KeyPress(Avalonia.Input.Key.D, Avalonia.Input.RawInputModifiers.Control,
+            Avalonia.Input.PhysicalKey.D, null);
+        host.Window.KeyRelease(Avalonia.Input.Key.LeftCtrl, Avalonia.Input.RawInputModifiers.None,
+            Avalonia.Input.PhysicalKey.ControlLeft, null);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal("Ctrl+D", settings.Current.Listening.PushToTalkKey);
+
+        host.Close();
+    }
+
+    /// <summary>
+    /// <b>And a system-wide row still waits.</b> A key claimed from the whole system cannot be a
+    /// bare one — it would stop working in every other application, Elite included — so binding one
+    /// silently and having the service refuse it is worse than the capture going on listening.
+    /// </summary>
+    [AvaloniaFact]
+    public void ASystemWideRowStillIgnoresABareModifier()
+    {
+        var (settings, host) = Open();
+        var row = Row(host, "Show or hide the overlay")!;
+
+        Bind(row).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        host.Window.KeyPress(Avalonia.Input.Key.RightShift, Avalonia.Input.RawInputModifiers.None,
+            Avalonia.Input.PhysicalKey.ShiftRight, null);
+        host.Window.KeyRelease(Avalonia.Input.Key.RightShift, Avalonia.Input.RawInputModifiers.None,
+            Avalonia.Input.PhysicalKey.ShiftRight, null);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal("Ctrl+Alt+O", settings.Current.Hotkeys.ShowOverlay);
+
+        // Still armed, so the Commander's next attempt is heard.
+        Assert.Equal("Press a key…", Bind(row).Content as string);
+
+        host.Window.KeyPress(Avalonia.Input.Key.Escape, Avalonia.Input.RawInputModifiers.None,
+            Avalonia.Input.PhysicalKey.Escape, null);
+        Dispatcher.UIThread.RunJobs();
+
+        host.Close();
+    }
+
+    /// <summary>Arm the row's control and give it one whole keystroke.</summary>
+    private static void Press(
+        SettingsHost host, Grid row, Avalonia.Input.Key key, Avalonia.Input.PhysicalKey physical)
+    {
+        Bind(row).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        host.Window.KeyPress(key, Avalonia.Input.RawInputModifiers.None, physical, null);
+        Dispatcher.UIThread.RunJobs();
+    }
 }
