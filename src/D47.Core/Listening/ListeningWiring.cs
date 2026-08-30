@@ -29,6 +29,7 @@ public sealed record SpeechModelPlan
     /// <summary>The model to load or fetch. Null only when unloading.</summary>
     public WhisperModel? Model { get; init; }
 
+    /// <summary>Whether the loader should offload to the GPU.</summary>
     public bool UseGpu { get; init; }
 }
 

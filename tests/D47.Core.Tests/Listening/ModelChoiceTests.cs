@@ -181,15 +181,25 @@ public class ModelChoiceTests
         }));
     }
 
+    /// <summary>
+    /// Both costs on the row, and the fallback said out loud
+    /// (<a href="https://github.com/dseelinger/d47/issues/187">#187</a>).
+    /// <para>
+    /// The VR warning is why this is off by default. The video-memory cost is the half the old
+    /// row never mentioned, and it is the one that lands on the game. And "runs on the CPU and
+    /// says so" is the promise the old row made and could not keep — it claimed d47 would report
+    /// a missing GPU runtime, while the CPU runtime loaded happily and reported a GPU.
+    /// </para>
+    /// </summary>
     [Fact]
-    public void TheGpuRowStatesItsCostInVr()
+    public void TheGpuRowStatesBothItsCostsAndItsFallback()
     {
-        // The checklist asks for the cost to be stated on the row, because a Commander who sees
-        // reprojection after enabling this has no reason to connect the two otherwise.
         var help = Row(ListeningCapability.GpuKey).Help;
 
         Assert.Contains("VR", help);
         Assert.Contains("dropped frames", help);
+        Assert.Contains("video memory", help);
+        Assert.Contains("says so", help);
     }
 
     private static SettingRow Row(string key)

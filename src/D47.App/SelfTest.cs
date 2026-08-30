@@ -59,6 +59,9 @@ internal static class SelfTest
     private const int ControllerProjectionFailedExitCode = 6;
     private const int CompositionFailedExitCode = 7;
 
+    /// <summary>The GPU natives did not make it into the payload (#187).</summary>
+    private const int GpuRuntimeMissingExitCode = 8;
+
     public static int Run()
     {
         var paths = AppPaths.ForRunningBuild();
@@ -96,13 +99,37 @@ internal static class SelfTest
 
         // Stated up front, pass or fail, because "which files were actually beside the exe"
         // is the first question anyone debugging a load failure asks.
-        var natives = Path.Combine(paths.InstallRoot, "runtimes", "win-x64");
-        logger.LogInformation(
-            "Native folder {Folder}: {Files}",
-            natives,
-            Directory.Exists(natives)
-                ? string.Join(", ", Directory.EnumerateFiles(natives).Select(Path.GetFileName))
-                : "absent");
+        //
+        // Both folders, since #187: the GPU runtime lives in its own one, and a publish that
+        // dropped it would not fail anything. Whisper falls through to the CPU library and
+        // transcribes perfectly well — so the toggle would quietly stop reaching a GPU, which is
+        // the exact defect #187 fixed, arriving the second time as a packaging accident.
+        foreach (var folder in new[]
+                 {
+                     Path.Combine(paths.InstallRoot, "runtimes", "win-x64"),
+                     Path.Combine(paths.InstallRoot, "runtimes", "vulkan", "win-x64"),
+                 })
+        {
+            logger.LogInformation(
+                "Native folder {Folder}: {Files}",
+                folder,
+                Directory.Exists(folder)
+                    ? string.Join(", ", Directory.EnumerateFiles(folder).Select(Path.GetFileName))
+                    : "absent");
+        }
+
+        // Named rather than merely listed. The GPU natives are the ones nothing else would
+        // notice missing, and a release gate that reports "absent" without failing is a log
+        // line nobody reads.
+        var vulkan = Path.Combine(paths.InstallRoot, "runtimes", "vulkan", "win-x64", "ggml-vulkan-whisper.dll");
+
+        if (!File.Exists(vulkan))
+        {
+            Report(
+                $"SELFTEST FAIL: the GPU runtime is missing from this payload ({vulkan}). "
+                + "Transcription would still work, on the CPU, with the GPU setting doing nothing.");
+            return GpuRuntimeMissingExitCode;
+        }
 
         // Cheapest of the three and the only one that touches no user data at all, so it runs
         // first and its answer stands even on a machine with no controllers.

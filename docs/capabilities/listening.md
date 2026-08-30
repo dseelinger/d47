@@ -400,17 +400,33 @@ turn what it heard into words.
 
 #### Running on the GPU {#gpu}
 
-Off by default.
+Off by default, and **about five times faster** when you turn it on. Measured on an RTX 5080 with
+Small (English only): **170 ms against 970 ms** for the same sentence.
 
-Worth knowing before you turn it on: in VR your GPU is already the scarce thing, and a large
-model running there shows up as dropped frames and reprojection rather than as anything that
-looks like a speech problem — a symptom nowhere near its cause. A short push-to-talk clip on the
-small English models runs fine on the CPU, which is why that is the default rather than a
-compromise.
+It costs video memory, which is the part worth thinking about, because that memory comes out of
+whatever else wants the card:
 
-If the CUDA runtime is not installed, Directive 47 **says so** and leaves transcription
-unavailable rather than quietly using the CPU. A GPU switch that silently does nothing is the
-same undiagnosable problem in the other direction.
+| Model | Video memory, at peak |
+|---|---|
+| Tiny (English only) | about 330 MB |
+| Base (English only) | about 440 MB |
+| Small (English only) | about 880 MB |
+
+**In VR that trade is a real one.** Your GPU is already the scarce thing there, and taking memory
+and time from the game shows up as dropped frames rather than as anything that looks like a
+speech problem — a symptom nowhere near its cause. That is why this is off out of the box rather
+than on. On the desktop window, with headroom to spare, it is close to free.
+
+**If your machine has no GPU D47 can use, it runs on the CPU and says so** — in the log, and in
+what it reports about itself. It does not fail, and it does not claim a device it is not using.
+
+The switch takes effect immediately, both ways: turn it off and the video memory is handed back.
+
+> **This did not work before [#187](https://github.com/dseelinger/d47/issues/187).** The toggle
+> shipped for months with no GPU code behind it at all — the CPU runtime accepted the request,
+> loaded happily, and the log read *"on the GPU"* because it was repeating the request back
+> rather than reporting what happened. If you turned it on and noticed nothing, that is why.
+> D47 now uses Vulkan, which works on AMD and Intel cards as well as NVIDIA.
 
 ### Seeing that the microphone is open {#indicator}
 

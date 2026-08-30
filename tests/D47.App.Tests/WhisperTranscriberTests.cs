@@ -1,5 +1,6 @@
 using D47.Stt;
 using Microsoft.Extensions.Logging;
+using Whisper.net.LibraryLoader;
 using Xunit;
 
 namespace D47.App.Tests;
@@ -70,6 +71,25 @@ public class WhisperTranscriberTests
     [InlineData(64, 16)]
     public void TheThreadCountLeavesFourCoresAndNeverGoesBelowWhisperSOwnDefault(int processors, int expected) =>
         Assert.Equal(expected, WhisperTranscriber.ThreadsFor(processors));
+
+    /// <summary>
+    /// "On the GPU" is a claim about what loaded, not about what was asked
+    /// (<a href="https://github.com/dseelinger/d47/issues/187">#187</a>). The request copied
+    /// back is exactly the old bug: the CPU runtime accepts a GPU request without complaint, so
+    /// the toggle read "on the GPU" for months while only CPU natives shipped. A GPU-capable
+    /// library honours the request both ways, and no library at all proves nothing.
+    /// </summary>
+    [Theory]
+    [InlineData(true, RuntimeLibrary.Cpu, false)]
+    [InlineData(true, RuntimeLibrary.CpuNoAvx, false)]
+    [InlineData(true, RuntimeLibrary.Cuda, true)]
+    [InlineData(true, RuntimeLibrary.Cuda12, true)]
+    [InlineData(true, RuntimeLibrary.Vulkan, true)]
+    [InlineData(false, RuntimeLibrary.Cuda, false)]
+    [InlineData(true, null, false)]
+    public void TheGpuClaimNeedsBothTheRequestAndAGpuLibrary(
+        bool requested, RuntimeLibrary? loaded, bool expected) =>
+        Assert.Equal(expected, WhisperTranscriber.RunsOnGpu(requested, loaded));
 
     private sealed class CapturingLogger : ILogger<WhisperTranscriber>
     {
