@@ -622,8 +622,9 @@ public sealed record ListeningSettings
     /// already the scarce resource, so a model running there surfaces as dropped frames rather
     /// than as anything resembling a speech problem — which the checklist calls the hardest kind
     /// of setting to diagnose. A short push-to-talk clip on the small English models absorbs CPU
-    /// inference fine. Measured on an RTX 5080 with <c>small.en</c>: 170 ms against 970 ms, for
-    /// 880 MB of video memory at peak.
+    /// inference fine. Measured on an RTX 5080 with <c>small.en</c>: 189 ms against 924 ms, for
+    /// 469 MB of video memory — close to the model file's own size, since the weights are almost
+    /// all of it.
     /// </para>
     /// </summary>
     public bool UseGpu { get; init; }
