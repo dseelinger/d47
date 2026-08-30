@@ -198,6 +198,23 @@ public sealed class SpeechSpend
         }
     }
 
+    /// <summary>
+    /// Empties the session's speech figures, for a reset performed in the Details dialog
+    /// (<a href="https://github.com/dseelinger/d47/issues/197">#197</a>).
+    /// <para>
+    /// The ledger half is <see cref="Conversation.SpendLedger.Reset"/>'s, and the two are done
+    /// together by one caller — see <see cref="Conversation.SpendTracker.Forget"/>, which carries
+    /// the reasoning for both.
+    /// </para>
+    /// </summary>
+    public void Forget()
+    {
+        lock (_lock)
+        {
+            _charges.Clear();
+        }
+    }
+
     public long TotalCharacters => Charges.Sum(charge => charge.Characters);
 
     public int Utterances => Charges.Sum(charge => charge.Utterances);

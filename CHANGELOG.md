@@ -29,9 +29,10 @@ history to match today's layout would be the one edit it must never take.
 
 ## 0.93.0 — 2026-08-30 — The controllers are put down, and the panel learns to be told where to go
 
-Six issues. Five are in the headset and the captions get most of them; the sixth is on the desktop.
-[#207](https://github.com/dseelinger/d47/issues/207) makes the local-build badge say what the build
-worked. [#198](https://github.com/dseelinger/d47/issues/198) withdraws motion controller support until
+Seven issues. Five are in the headset and the captions get most of them; two are on the desktop.
+[#197](https://github.com/dseelinger/d47/issues/197) lets the cost figures be reset from the Details
+window, and [#207](https://github.com/dseelinger/d47/issues/207) makes the local-build badge say what
+the build worked. [#198](https://github.com/dseelinger/d47/issues/198) withdraws motion controller support until
 [#18](https://github.com/dseelinger/d47/issues/18) is understood;
 [#199](https://github.com/dseelinger/d47/issues/199) replaces the one thing that withdrawal takes
 away. [#189](https://github.com/dseelinger/d47/issues/189) is the captions sitting rotated from the
@@ -89,6 +90,51 @@ no grip-to-go-back, and no Settings tab. Voice keeps tab and breadcrumb navigati
 scrolling, answering a prompt already open, and re-anchoring. A gesture in flight when the row
 moves is let go rather than frozen — a captured scrollbar released, a lit highlight put out, a
 carried panel put down where it had got to and written.
+
+### The cost figures can be reset, and a reset leaves every window that held it (#197)
+
+A **Reset** button in the Details window, offering six spans — *this session*, and the same five the
+figures list shows. Take one and everything charged inside it stops counting **in every window that
+contained it**: reset today and today's charges leave this week, the last 7 days, the last 30 days
+and this month with it.
+
+**That rule was already true and nobody had asked it.** `spend.jsonl` is an append-only ledger of one
+timestamped row per charge, and every period figure is a *query* over it rather than a running
+counter — so a charge that stops counting leaves every window whose span contains its instant, at
+once, with no per-period totals to keep in step. What this adds is the mark and the control.
+
+**Nothing is deleted, settled on 2026-08-30.** A reset appends one line recording the instant and the
+span; totals skip anything a mark covers. The file stays append-only — the invariant the format
+exists for, where a crash mid-write costs the last line rather than the whole history — the act is
+auditable, and **an accidental reset is undone by deleting that one line by hand**. That mattered
+more here than anywhere else: this is the one number in the app that stands for real money. Marks
+compose, a charge made after one counts again, and a mark is written as *priced* despite pricing
+nothing, so a build that predates them reads it as a settled zero rather than turning every total
+covering it into "at least $X, part of it unpriced" — the `get-ver latest` path, costed and bounded.
+
+**Thirty days, not thirty-one.** The ask named "the last 31 days, in case we're at the end of the
+month"; the Commander settled it at thirty the same day, because that is what *This month* already
+does — calendar-aligned, resetting itself on the 1st — and a reset list offering a span the figures
+list does not show would be two lists disagreeing about what a window is.
+
+***This month* does not nest with the rolling windows, and that is correct.** Reset it on the 3rd and
+three days go while the rest of *Last 30 days* stands. Set semantics, not a tree — written down so a
+surviving figure is not later mistaken for a defect and "fixed".
+
+***The session* is the one span that is not a query.** Its figures live in memory and die with the
+process, so a reset does two things: appends the mark from launch time, and empties the counters.
+Half of that is the confusing outcome the issue names — clearing only the counters leaves the running
+totals counting charges the session block says are gone. Every reset clears them, even one narrower
+than the session, because a `TurnCost` carries no instant to filter by; the one case where that
+over-clears is a session running across the boundary, which costs a session figure that reads low
+while every ledger window stays exact.
+
+**It asks first, and that departs from the house idiom on purpose.** Every other eraser in d47 is an
+`Info` settings row with a `Press` and no confirmation — memory, flight recordings, personas — and
+their safety is that the tool surface cannot reach them and no spoken phrase does, not a dialog.
+This one was asked for in the Details window, which is the right place because it is where the
+numbers are, and that puts a control that erases money history somewhere a stray click reaches. So
+it names the window and the figure, and `ConfirmWindow` already defaults to no.
 
 ### The local-build badge says what the build worked (#207)
 

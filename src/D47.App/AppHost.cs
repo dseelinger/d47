@@ -290,6 +290,17 @@ public sealed class AppHost : IDisposable
     public SpendTracker Spend { get; }
 
     /// <summary>
+    /// When this process started, for the one question that needs it: what "this session" means as
+    /// a span of the spend ledger (<a href="https://github.com/dseelinger/d47/issues/197">#197</a>).
+    /// <para>
+    /// The ledger records instants and not session ids, so the session can only be "everything
+    /// since launch" — derivable, and not a concept the file holds. Stamped once here rather than
+    /// asked of the process, so a replay and a real run answer the same way.
+    /// </para>
+    /// </summary>
+    public DateTimeOffset LaunchedAt { get; } = SystemWallClock.Instance.UtcNow;
+
+    /// <summary>
     /// Every charge, kept between runs. What answers "this week" and "this month" — questions the
     /// session-scoped <see cref="Spend"/> cannot be asked.
     /// </summary>

@@ -64,6 +64,41 @@ public sealed record SpendEntry
     /// </para>
     /// </summary>
     public double? AudioSeconds { get; init; }
+
+    /// <summary>
+    /// On a <em>reset mark</em>, the instant its window began. Null on every charge
+    /// (<a href="https://github.com/dseelinger/d47/issues/197">#197</a>).
+    /// <para>
+    /// <b>A mark rather than a deletion, so the file stays append-only.</b> Rewriting the whole
+    /// document to drop rows would spend the invariant this format exists for — a crash mid-write
+    /// costs the last line rather than the file — and it would spend it on the one number in the
+    /// app that represents real money. A mark keeps the history recoverable, makes the act
+    /// auditable, and makes an accidental reset undoable by deleting one line by hand.
+    /// </para>
+    /// <para>
+    /// Together with <see cref="At"/> it is a closed interval, and every charge stamped inside it
+    /// stops counting in <em>every</em> window — which is the rule the ask states, and which the
+    /// query-per-window model already made true by construction: a row leaves exactly the windows
+    /// whose span contains its instant. Marks compose, because a charge is dropped if any of them
+    /// covers it.
+    /// </para>
+    /// </summary>
+    public DateTimeOffset? ResetFrom { get; init; }
+
+    /// <summary>
+    /// What the Commander called the window they reset, for the audit trail. Read by nothing —
+    /// <see cref="ResetFrom"/> and <see cref="At"/> are the whole of what a total consults — and
+    /// written so somebody opening the file can tell one mark from another.
+    /// </summary>
+    public string? ResetWindow { get; init; }
+
+    /// <summary>Whether this row is a reset mark rather than a charge.</summary>
+    [JsonIgnore]
+    public bool IsReset => ResetFrom is not null;
+
+    /// <summary>Whether this mark covers a charge, and so stops it counting anywhere.</summary>
+    public bool Covers(SpendEntry charge) =>
+        ResetFrom is { } from && charge.At >= from && charge.At <= At;
 }
 
 /// <summary>What a window came to, and whether the figure is the whole of it.</summary>
@@ -223,12 +258,58 @@ public sealed class SpendLedger
         }
     }
 
-    /// <summary>What was charged inside a window.</summary>
+    /// <summary>
+    /// Stops counting everything charged inside a window
+    /// (<a href="https://github.com/dseelinger/d47/issues/197">#197</a>).
+    /// <para>
+    /// <b>Appended, not deleted.</b> See <see cref="SpendEntry.ResetFrom"/> for why, and note what
+    /// falls out of it for free: because every period figure is a query rather than a running
+    /// counter, a charge that stops counting leaves <em>every</em> window that contained it at
+    /// once. There are no per-period totals to keep in step, which is the rule the ask states
+    /// already being true.
+    /// </para>
+    /// <para>
+    /// The windows do not nest, and that is correct rather than a gap. <c>Today ⊆ This week ⊆ Last
+    /// 7 days ⊆ Last 30 days</c> lines up, but resetting <c>This month</c> on the 3rd drops three
+    /// days and leaves the rest of <c>Last 30 days</c> standing. It is set semantics, not a tree.
+    /// </para>
+    /// </summary>
+    /// <returns>What the window held, so the caller can say what was cleared.</returns>
+    public SpendTotals Reset(SpendPeriod window)
+    {
+        var cleared = Total(window);
+
+        Append(new SpendEntry
+        {
+            At = _clock.UtcNow,
+            ResetFrom = window.From,
+            ResetWindow = window.Name,
+
+            // **Priced, though it prices nothing**, so a build that predates reset marks reads
+            // this row as a settled zero-dollar charge rather than as an unpriced one — which
+            // would turn every total covering it into "at least $X, part of it unpriced". A
+            // Commander who resets on a local build and then goes back to a release with
+            // `get-ver latest` is the path this is for. Such a build counts one extra turn per
+            // mark and cannot honour it; that is the whole of the cost, and it is bounded.
+            Priced = true,
+        });
+
+        return cleared;
+    }
+
+    /// <summary>What was charged inside a window, less anything a reset has stopped counting.</summary>
     public SpendTotals Total(SpendPeriod window)
     {
         lock (_lock)
         {
-            var inside = _entries.Where(entry => window.Holds(entry.At)).ToList();
+            var marks = _entries.Where(entry => entry.IsReset).ToList();
+
+            // A mark is not a charge, so it is out of the count and the sum before anything else
+            // asks a question about it — including its own window's.
+            var inside = _entries
+                .Where(entry => !entry.IsReset && window.Holds(entry.At))
+                .Where(entry => !marks.Any(mark => mark.Covers(entry)))
+                .ToList();
 
             if (inside.Count == 0)
             {
@@ -247,6 +328,14 @@ public sealed class SpendLedger
     /// <summary>The four windows the dialog reports, against the clock this ledger was given.</summary>
     public IReadOnlyList<(SpendPeriod Period, SpendTotals Totals)> Summary(TimeZoneInfo zone) =>
         [.. SpendPeriods.All(_clock.UtcNow, zone).Select(period => (period, Total(period)))];
+
+    /// <summary>
+    /// The windows the dialog offers to reset, against the same clock (#197). Asked of the ledger
+    /// rather than worked out in the window, so the spans a Commander is offered are pinned to the
+    /// same instant the figures beside them are — and so nothing in the UI reads a clock.
+    /// </summary>
+    public IReadOnlyList<SpendPeriod> Resettable(TimeZoneInfo zone, DateTimeOffset launchedAt) =>
+        SpendPeriods.Resettable(_clock.UtcNow, zone, launchedAt);
 
     /// <summary>
     /// Loads what is on disk, skipping anything that will not parse.

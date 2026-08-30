@@ -203,6 +203,32 @@ public sealed class SpendTracker(SpendLedger? ledger = null)
     public TurnCost? Last => _turns.Count > 0 ? _turns[^1] : null;
 
     /// <summary>
+    /// Empties the session's figures, for a reset performed in the Details dialog
+    /// (<a href="https://github.com/dseelinger/d47/issues/197">#197</a>).
+    /// <para>
+    /// <b>The ledger is not touched here, and must not be.</b> A reset appends a mark to the
+    /// ledger and clears these counters, and doing both from one place is what stops the two
+    /// disagreeing — clearing only these would leave the running totals counting charges the
+    /// session block says are gone, and clearing only the ledger would leave this block quoting
+    /// figures nothing below it includes.
+    /// </para>
+    /// <para>
+    /// <b>It clears everything, even for a reset narrower than the session.</b> A
+    /// <see cref="TurnCost"/> carries no instant, so there is nothing here to filter by — and the
+    /// one case where that over-clears is a session that has run across the boundary being reset,
+    /// which costs a session figure that reads low while every ledger window stays exact. The
+    /// alternative is the confusing outcome rather than the small one.
+    /// </para>
+    /// </summary>
+    public void Forget()
+    {
+        _turns.Clear();
+        RunningTotalDollars = 0m;
+        UnexplainedColdPrefixes = 0;
+        UnmeasuredPrefixes = 0;
+    }
+
+    /// <summary>
     /// <paramref name="coldPrefixExpected"/> is true for the first turn of a session and for the
     /// turn after a model or provider change — the cases where writing cache is correct.
     /// <para>
