@@ -362,25 +362,40 @@ before Directive 47 was willing to call the sound speech.
 Which Whisper model turns your speech into words. The row marks which are already on disk and
 what the others would cost to fetch, so you can see which choices are already paid for.
 
-**Tiny (English only)** is what a fresh install has selected — the smallest one, and enough for
-the short push-to-talk clips this is actually asked to transcribe. Move up to Base or Small if
-you want the accuracy and can spend the download.
+**Base (English only)** is what a fresh install has selected. Tiny is cheaper and is offered, but
+it mis-hears the words Directive 47 acts on — over a recorded corpus it heard *"Cancel that"* as
+*"Cancer that"*, and "cancel that" is one of the phrases that interrupts it, so the model saved
+you 67 MB and cost you the way to shut it up.
+
+**Every model here is English-only.** The multilingual ones were withdrawn: Directive 47 asks
+Whisper for English on every clip, so they cost the same download and gave back a model worse at
+the one language they were being asked for. If your settings still name one, you get its English
+twin automatically and nothing is lost.
 
 **What a bigger model costs is time per *sentence*, not time per second of audio.** Whisper reads
 your speech in 30-second windows and pays for the whole window whether you filled it or not, so a
 two-second question and a twenty-second one cost the same — and the model you picked is what sets
 that figure:
 
-| Model | One sentence, spoken |
-|---|---|
-| Tiny (English only) | about 0.2 s |
-| Base (English only) | about 0.4 s |
-| Small (English only) | about 1.2 s |
+| Model | On the CPU | On the GPU | Video memory |
+|---|---|---|---|
+| Tiny (English only) | about 0.2 s | about 0.13 s | about 100 MB |
+| Base (English only) | about 0.3 s | about 0.12 s | about 140 MB |
+| Small (English only) | about 1.0 s | about 0.17 s | about 470 MB |
+| Medium (English only) | about 3.0 s | about 0.33 s | about 1,460 MB |
 
-Measured on a 24-core desktop; a smaller machine is proportionally slower, and anything over 30
-seconds in one breath costs another window. That is the whole delay between you letting go of the
-key and Directive 47 starting to think — so if it feels slow to answer, this row is the first
-place to look.
+Measured on a 24-core desktop with an RTX 5080; a smaller machine is proportionally slower, and
+anything over 30 seconds in one breath costs another window. That is the whole delay between you
+letting go of the key and Directive 47 starting to think — so if it feels slow to answer, this row
+is the first place to look.
+
+**Medium is the most accurate and effectively wants a GPU.** It was the only model that heard
+*"Deciat"* every time it was said, where the others offered "DCI" and "DC at" — proper nouns are
+where the difference shows, and they are most of what you say to a ship's computer. Three seconds
+a sentence on the CPU is the price without one.
+
+**The device never changes the words.** Running on the GPU is a speed and memory choice only:
+across a 37-clip corpus, every English model produced byte-identical transcripts on CPU and GPU.
 
 **Choosing a model downloads it.** Selecting one you do not have starts the transfer there and
 then, with the size and progress on the row; the same thing happens at startup for a model that
