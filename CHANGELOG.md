@@ -210,6 +210,22 @@ for one of them. The settings property and the row key keep their older spelling
 `settings.json` is append-only — which is also why the Cancel key still stores as
 `speech.shutUpHotkey`, and why a Commander who had already bound one keeps it.
 
+**A cancelled turn says `[cancelled]`, which it did not.** Cancelling threw out of the await like
+anything else, so it landed in the same catch as a bug and was reported as one — *"I couldn't answer
+that. The details are on the Technical page."* Nothing was on the Technical page, because nothing
+had gone wrong, and being sent to look for a fault that does not exist is worse than being told
+nothing. It is written rather than spoken, which is not a detail: Cancel exists to stop the voice,
+so a cancel that answered out loud would be the one command in d47 that does the opposite of what it
+says. Nothing is logged as an error either, and `TurnCancellation` already records that the
+Commander called it off.
+
+**The token decides, not the exception type.** A provider abandoning its own request throws the same
+`TaskCanceledException`, and that *is* a failure — telling the Commander it was cancelled would be
+d47 blaming them for its own timeout. So the rule is *this turn's own token was cancelled* **and**
+what came out was a cancellation; a bug thrown at the same moment as a Cancel press is still
+reported as a bug. `TurnEnding` is that one decision, with tests that fail if either half of it is
+loosened.
+
 **Two smaller corrections came out of it.** The row was `Advanced`, so it sat under the fold; and
 its `DefaultDisplay` claimed `(unbound)` while the property has shipped as `Ctrl+Alt+X` since
 Phase 5 — the docs said one thing and the row said the other. Both fixed.
