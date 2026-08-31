@@ -495,4 +495,40 @@ public class HelpLibraryTests
 
         Assert.True(missing.Length == 0, $"No band behind: {string.Join(", ", missing)}");
     }
+
+    /// <summary>
+    /// <b>A second band on a page must not become the one the panel draws</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/229">#229</a>).
+    /// <para>
+    /// Every capability page is growing a how-to band above its ELI5 one, and
+    /// <see cref="HelpLibrary"/> takes the <em>first</em> <c>d47-eli5</c> div in the file. So the
+    /// how-to band carries its own class, and this asserts that the choice held: the app still
+    /// draws the band that explains why, and picks up nothing from the one above it.
+    /// </para>
+    /// <para>
+    /// Driven through <c>switches.md</c>, the pilot page, and written to fail loudly if the how-to
+    /// band is ever authored under the ELI5 class — which would change what the panel and the
+    /// headset show on that page, with no code change and no other test to notice.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void TheHowToBandIsNotWhatThePanelDraws()
+    {
+        var page = HelpLibrary.PageFor("switches");
+
+        Assert.NotNull(page);
+
+        // The page really does carry both, or this asserts nothing at all.
+        Assert.Contains("d47-howto", page, StringComparison.Ordinal);
+        Assert.Contains("d47-eli5", page, StringComparison.Ordinal);
+
+        var article = HelpLibrary.For("switches");
+
+        Assert.NotNull(article);
+
+        var drawn = string.Join(" ", article.Sections.Select(section => section.Heading));
+
+        Assert.Contains("The switch is a question", drawn, StringComparison.Ordinal);
+        Assert.DoesNotContain("Turn on two rows", drawn, StringComparison.Ordinal);
+    }
 }
