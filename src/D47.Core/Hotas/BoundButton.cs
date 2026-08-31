@@ -1,12 +1,19 @@
 namespace D47.Core.Hotas;
 
 /// <summary>
-/// Push-to-talk on a stick button (Phase 53).
+/// One bound stick button, polled (Phase 53).
 /// <para>
 /// <b>The same shape as the keyboard's <c>PushToTalkKey</c>, one layer down.</b> A polled edge
 /// detector sampled from the tick, raising <see cref="Pressed"/> and <see cref="Released"/>, and
 /// the polling rate is not a risk: the keyboard path already detects push-to-talk on this same
 /// tick, so a button read here is no less responsive than the key it replaces.
+/// </para>
+/// <para>
+/// <b>Named for the job rather than for its first caller</b>, which it stopped being when #221
+/// gave Cancel a stick binding too. Push-to-talk reads both edges and Cancel reads only
+/// <see cref="Pressed"/>; nothing else differs, so there is one of these per binding rather than
+/// one class per binding. The settings property and the row key keep the older names, because
+/// <c>settings.json</c> is append-only.
 /// </para>
 /// <para>
 /// It lives in Core where the keyboard one cannot, because reading a controller is already a Core
@@ -15,7 +22,7 @@ namespace D47.Core.Hotas;
 /// driveable with nothing plugged in.
 /// </para>
 /// </summary>
-public sealed class PushToTalkButton
+public sealed class BoundButton
 {
     private HotasButton? _bound;
     private bool _wasDown;
@@ -203,35 +210,19 @@ public sealed class PushToTalkButton
 /// behaviour that is not surprising.
 /// </para>
 /// <para>
-/// <b>A press interrupts</b> (<a href="https://github.com/dseelinger/d47/issues/218">#218</a>).
-/// The Commander's words: <em>"I don't want to talk while the ship AI is talking. I want it to
-/// shut up and listen."</em> So <see cref="Barge"/> runs on the press edge, and the ordering is
-/// here rather than in a subscription order at the call site, which is a guarantee nothing can
-/// test and anybody can reverse by adding a handler.
+/// <b>A press opens the microphone and does nothing else</b>, and that is a decision rather than
+/// the absence of one. #218 made the press silence d47 as well, so that a Commander could talk
+/// over an answer; #221 took it back out and gave the interrupt its own control. The reason is in
+/// that issue and worth knowing before anybody adds it again: a press that both silences and
+/// listens means every tap meant as <em>be quiet</em> also captures a second of room tone, and a
+/// transcriber primed with the journal's proper nouns does not return nothing for that — it
+/// returns words, and d47 answers them.
 /// </para>
 /// </summary>
 public sealed class PushToTalkSources
 {
     private bool _keyDown;
     private bool _buttonDown;
-
-    /// <summary>
-    /// What a press interrupts — silencing d47, in production — run before
-    /// <see cref="Pressed"/> and before anything is known about what follows.
-    /// <para>
-    /// <b>On the press edge rather than on the tap being recognised, and that is the whole
-    /// design.</b> There is already a notion of a press too short to be speech —
-    /// <c>UtteranceEnd.TooShort</c> — and it is the wrong hook, because it is only knowable at
-    /// <em>release</em>: a Commander who presses and starts speaking immediately would hear d47
-    /// talk over their first half-sentence, which is the exact complaint. Interrupting
-    /// unconditionally is also simpler than detecting a tap, not harder.
-    /// </para>
-    /// <para>
-    /// Fires on every press in both hold and toggle modes. The second press of a toggle silences
-    /// nothing, because nothing is speaking by then.
-    /// </para>
-    /// </summary>
-    public Action? Barge { get; init; }
 
     public event Action? Pressed;
 
@@ -260,8 +251,6 @@ public sealed class PushToTalkSources
 
         if (IsDown)
         {
-            // Before the gate opens, not after. See Barge.
-            Barge?.Invoke();
             Pressed?.Invoke();
         }
         else

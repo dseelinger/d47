@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using System.Reflection;
 using D47.App.Input;
 using D47.App.Logging;
@@ -78,7 +78,7 @@ public sealed class AppHost : IDisposable
         EchoCanceller echo,
         WasapiMicrophone microphone,
         PushToTalkKey pushToTalk,
-        D47.Core.Hotas.PushToTalkButton pushToTalkButton,
+        D47.Core.Hotas.BoundButton pushToTalkButton,
         D47.Core.Hotas.PushToTalkSources pushToTalkSources,
         BindsWatch binds,
         HttpModelStore models,
@@ -226,6 +226,28 @@ public sealed class AppHost : IDisposable
     /// keeps generating — and billing — after the Commander has called it off.
     /// </summary>
     public TurnCancellation Cancellation { get; }
+
+    /// <summary>
+    /// <b>Cancel</b>: stop talking, and abandon the turn that is running
+    /// (<a href="https://github.com/dseelinger/d47/issues/221">#221</a>). Returns whether there
+    /// was a turn to abandon.
+    /// <para>
+    /// <b>Silence first, and the order is load-bearing</b> — the same order <c>cancel_turn</c>
+    /// uses, for the same reason. Cancelling tears down the stream, but whatever already reached
+    /// the audio queue would otherwise play on after the turn behind it is gone, which sounds
+    /// exactly like the cancel not having worked.
+    /// </para>
+    /// <para>
+    /// <b>One method, three callers</b>: the hotkey, the stick button, and the spoken phrases that
+    /// reach <c>cancel_turn</c>. A control that only silenced would leave a web search running and
+    /// still being paid for, which is the case the Commander asked this for.
+    /// </para>
+    /// </summary>
+    public bool CancelNow()
+    {
+        Audio.Silence();
+        return Cancellation.Cancel();
+    }
 
     public UpdateChecker Updates { get; }
 
@@ -627,10 +649,21 @@ public sealed class AppHost : IDisposable
     private readonly PushToTalkKey _pushToTalk;
 
     /// <summary>The stick's half of push-to-talk (Phase 53).</summary>
-    private readonly D47.Core.Hotas.PushToTalkButton _pushToTalkButton;
+    private readonly D47.Core.Hotas.BoundButton _pushToTalkButton;
 
     /// <summary>The two of them as one gate. Either opens it; the last release closes it.</summary>
     private readonly D47.Core.Hotas.PushToTalkSources _pushToTalkSources;
+
+    /// <summary>
+    /// Cancel's stick button (<a href="https://github.com/dseelinger/d47/issues/221">#221</a>).
+    /// <para>
+    /// Built here rather than taken as a constructor argument like push-to-talk's, because nothing
+    /// outside this class ever needs to reach it: push-to-talk's is handed in so composition can
+    /// wire it to the gate's two sources, and this one has a single subscriber which is a method
+    /// on this class.
+    /// </para>
+    /// </summary>
+    private readonly D47.Core.Hotas.BoundButton _cancelButton = new();
 
     /// <summary>
     /// The controllers, for the one question the push-to-talk button has to ask outside the tick:
@@ -1396,13 +1429,8 @@ public sealed class AppHost : IDisposable
         // Both are Core types: reading a controller is already a Core contract where reading a
         // key is a P/Invoke, and the asymmetry buys a path that is driveable with nothing
         // plugged in.
-        var pushToTalkButton = new D47.Core.Hotas.PushToTalkButton();
-        var sources = new D47.Core.Hotas.PushToTalkSources
-        {
-            // Push-to-talk interrupts (#218). Hung here rather than beside the gate wiring below,
-            // because the ordering it needs — silence, then open — is the class's own guarantee.
-            Barge = audio.Silence,
-        };
+        var pushToTalkButton = new D47.Core.Hotas.BoundButton();
+        var sources = new D47.Core.Hotas.PushToTalkSources();
 
         // The only thing that presses a key in the game (architecture.md D4). Built here so
         // there is exactly one, because release_all has to be able to let go of everything and
@@ -2169,7 +2197,14 @@ public sealed class AppHost : IDisposable
             // And the stick, on the same tick (Phase 53). The polling rate is not a risk
             // here for the reason it is not one above: a button read on this tick is no less
             // responsive than the key it replaces.
-            pushToTalkButton.Poll(controllers.Poll());
+            //
+            // One reading for both buttons (#221). Polling the controllers twice on one tick
+            // would be two different answers to one question, and the second binding to arrive
+            // must not be able to change what the first one saw.
+            var buttons = controllers.Poll();
+
+            pushToTalkButton.Poll(buttons);
+            host._cancelButton.Poll(buttons);
 
             // And then, and only then, whether the stick it is bound to turned up (#45). Asked
             // here because this is the only place that has looked; the button answers once per
@@ -2196,10 +2231,13 @@ public sealed class AppHost : IDisposable
         pushToTalkButton.Pressed += sources.ButtonPressed;
         pushToTalkButton.Released += sources.ButtonReleased;
 
-        // Pressed has already silenced whatever d47 was saying by the time it lands here —
-        // see PushToTalkSources.Barge, set where the sources are built.
         sources.Pressed += () => gate.KeyDown(DateTimeOffset.Now);
         sources.Released += () => gate.KeyUp();
+
+        // Cancel, on press and once (#221). Push-to-talk needs both edges because it is held;
+        // this is a press, so the release edge is deliberately not subscribed — a Commander
+        // holding the cancel button down has cancelled once, not twice.
+        host._cancelButton.Pressed += () => host.CancelNow();
 
         // That d47 is listening, said both ways. Both signals have existed since their own
         // phases and neither was ever connected to anything: `listening.wav` ships in
@@ -4650,6 +4688,12 @@ public sealed class AppHost : IDisposable
         var boundButton = _pushToTalkButton.Bind(
             D47.Core.Hotas.HotasButton.Parse(listening.PushToTalkButton));
 
+        // Cancel's stick button, rebound on the same apply (#221). Its key half is registered by
+        // the window, which is where a system-wide registration needs a handle to live in; only
+        // the polled half belongs here.
+        _cancelButton.Bind(
+            D47.Core.Hotas.HotasButton.Parse(Settings.Current.Speech.CancelButton));
+
         // Whether that stick is actually here is asked from the tick, not from here (#45).
         // Nothing has polled yet at this point, so the only answer available on this line is
         // "not seen", which is the question rather than the answer to it.
@@ -6698,6 +6742,7 @@ public sealed class AppHost : IDisposable
         // After the tick has stopped, so a poll cannot land on a disposed capture device.
         _pushToTalk.ForceUp();
         _pushToTalkButton.ForceUp();
+        _cancelButton.ForceUp();
         _microphone.Dispose();
         _transcriber.Dispose();
         (Models as IDisposable)?.Dispose();

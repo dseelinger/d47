@@ -27,7 +27,7 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
-## 0.94.0 — 2026-08-30 — One key to talk, and it shuts D47 up on the way in
+## 0.94.0 — 2026-08-30 — One key to talk, one to call the whole thing off
 
 ### Clickable words and marks carry the accent at rest (#208)
 
@@ -144,46 +144,62 @@ untouched and still the authority on what counts as a button — ignoring what w
 the walk started, capturing on release rather than on press, and declining a switch that stays where
 it is put. Its sentences go on the row's message line, which is where the window used to put them.
 
-**The scope stopped at the control, and that was a ruling rather than a shortcut.** #218 and #219
-shrank the bind set to two system-wide keys — show overlay and move overlay — and the Commander ruled
-the 2D panel hotkeys stay keyboard-only: they are pressed at the desk with the window in view. So
-there is no second delivery path to build, and push-to-talk stays the one bind that takes a stick
-button, which is the only one where a stick makes sense.
+**The scope stopped at the control, and that was a ruling rather than a shortcut.** #219 shrank the
+bind set, and the Commander ruled the 2D panel hotkeys stay keyboard-only: they are pressed at the
+desk with the window in view, so a stick button there is a route nobody takes. That left push-to-talk
+as the one bind taking a stick button — until #221, later the same day, gave Cancel one too and built
+the polled delivery this issue had scoped out. The ruling held; what changed is that a second binding
+turned out to deserve a stick, and it is the one you reach for with your hands full.
 
-### Push-to-talk interrupts, and Stop speaking leaves the surface (#218)
+### Cancel is its own control, on a key or a stick button (#218, #221)
 
-In the Commander's words: *"I don't want to talk while the ship AI is talking. I want it to shut up
-and listen."* Pressing push-to-talk now silences d47 on the press edge — the key, the stick button,
-every press, in hold mode and in toggle. Holding it still opens the microphone as it always did, so
-pressing and talking straight over an answer is one gesture instead of two.
+**The ask, and it changed shape once between the asking and the shipping.** *"I don't want to talk
+while the ship AI is talking. I want it to shut up and listen."* The first answer was to make the
+push-to-talk press silence d47 — one gesture, nothing new to bind. It was driven, and it was wrong.
 
-**On the press edge, not on the tap being recognised**, and reaching for the other hook is the
-obvious mistake worth writing down. There is already a notion of a press too short to be speech —
-`UtteranceEnd.TooShort` — and it is only knowable at *release*. A Commander who presses and starts
-speaking immediately would have heard d47 over their first half-sentence, which is the complaint
-itself. Silencing unconditionally the moment the press arrives is also simpler than detecting a tap,
-not harder.
+**Why it was wrong, measured rather than argued.** A press that both silences and listens means
+every tap meant as *be quiet* also captures a second of a quiet room. d47 primes Whisper with the
+journal's proper nouns, and a primed decoder handed a second of silence does not return nothing: it
+returns words. In the reported session it returned *"Thank you for watching!"*, twice, and d47
+answered both — one of them cancelling the turn behind it.
 
-**The ordering lives in `PushToTalkSources` rather than in a subscription order.** Silence has to
-land before the gate opens, or the microphone captures d47's own voice in the pre-roll of the
-utterance about to be spoken. Hung as a handler beside the others, that guarantee would be
-subscription order — which nothing can test and any later handler can reverse. It is a `Barge`
-property on the class that already merges the key and the button into one press, so both sources
-get it for free and the order is asserted rather than hoped for.
+The prompt is the whole mechanism, and it is worth writing down because it defeats the obvious fix.
+Same audio, `ggml-medium.en`: **unprompted**, every silent clip returns `[BLANK_AUDIO]`, which
+`SpeechNoise` already catches, with `NoSpeechProbability` at **0.94–0.99**. **With 36 name hints**,
+the same clip returns words from the hint vocabulary and reads **0.0001** — which is what real
+speech reads. So the prompt both causes the hallucination and destroys the signal that would catch
+it. `spike/NoSpeechProbe` reproduces it, along with two fixes that do not work: an absolute energy
+floor over the clip discards three of the Commander's real utterances, and routing push-to-talk
+through the adaptive detector is forbidden by `ListenGate.KeyDown` — *"A Commander who wants to be
+certain d47 is listening should not have to trust a detector to agree"* — which its tests enforce.
 
-**Stop speaking is hidden rather than retired, and the difference is architectural.** It was
-`(unbound)` out of the box, so most Commanders never had it, and it is now off the surface of
-everybody who has push-to-talk bound — which is the ask. What it is not is deleted: architecture.md
-§7 says a model must never be able to unbind the Commander's stop button, and folding stop into
-push-to-talk makes stop depend on push-to-talk being bound. Push-to-talk can be cleared deliberately
-— its own help says *"Clear it and D47 never opens the microphone"* — so clearing both bindings puts
-the row back. `AppliesWhen` refuses a write as well as hiding, so nothing can change it from behind
-the fold either, and a key already set stays set, stays registered, and survives the round trip.
+**So push-to-talk is push-to-talk again, and interrupting got its own control.** That removes the
+fault at the root rather than filtering it downstream: a tap meant as *be quiet* is no longer a
+microphone press, so there is no silent second to transcribe.
 
-**`SystemWideHotkeyTests` moved to a different example row.** It drove all four of its cases through
-Stop speaking, which stopped being usable as the stand-in for *a system-wide row* the moment that row
-learned to hide: every case would have been rejected for the wrong reason. It runs on **Show or hide
-the overlay** now, which is system-wide unconditionally.
+**Cancel does more than the row it grew out of.** `Ctrl+Alt+X` out of the box, and one press stops
+the voice **and abandons the turn** — the model stops and so does the spending, which is the case
+the Commander named: a long web search you have changed your mind about. Saying *"be quiet"* never
+did that. `AppHost.CancelNow` is the one implementation, and the spoken `cancel_turn` has always
+done exactly this pair in exactly this order — silence first, because whatever already reached the
+audio queue would otherwise play on after the turn behind it is gone, which sounds like the cancel
+not having worked.
+
+**And it takes a stick button**, which is what makes it usable mid-fight. It is the second binding
+in d47 to take one and the first that fires once — push-to-talk is held and reads both edges; this
+is a press, so the release edge is deliberately not subscribed and holding the button cancels once.
+Both are polled from the tick, because Windows does not deliver controller buttons to a registered
+hotkey, which is still why the interface hotkeys stay keyboard-only. It is drawn through the one
+bind control from #217: one row, a key and a button, `Ctrl+Alt+X, button 8`.
+
+**`PushToTalkButton` is `BoundButton` now.** A polled edge detector with two callers is not named
+for one of them. The settings property and the row key keep their older spellings, because
+`settings.json` is append-only — which is also why the Cancel key still stores as
+`speech.shutUpHotkey`, and why a Commander who had already bound one keeps it.
+
+**Two smaller corrections came out of it.** The row was `Advanced`, so it sat under the fold; and
+its `DefaultDisplay` claimed `(unbound)` while the property has shipped as `Ctrl+Alt+X` since
+Phase 5 — the docs said one thing and the row said the other. Both fixed.
 
 ### Re-anchor is withdrawn, and binding a core to a ship is a Settings row (#219)
 

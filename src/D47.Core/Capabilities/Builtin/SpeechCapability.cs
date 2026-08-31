@@ -32,6 +32,13 @@ public static class SpeechCapability
     public const string BedEnabledKey = "speech.thinkingBed";
     public const string BedKey = "speech.thinkingBedSound";
     public const string ShutUpHotkeyKey = "speech.shutUpHotkey";
+
+    /// <summary>
+    /// Cancel's stick button (#221). Named for the act rather than matching
+    /// <see cref="ShutUpHotkeyKey"/>'s older spelling, because a row key is not settings storage
+    /// and is free to say what the row is now for — the property beside it is the pinned one.
+    /// </summary>
+    public const string CancelButtonKey = "speech.cancelButton";
     public const string RetryAttemptsKey = "speech.retryAttempts";
     public const string RetryWaitKey = "speech.retryWait";
     public const string RetryBackoffKey = "speech.retryBackoff";
@@ -876,45 +883,59 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = ShutUpHotkeyKey,
-                Advanced = true,
-                Label = "Stop speaking",
+                Label = "Cancel",
                 Help =
-                    "Silences D47 instantly, from anywhere — including while Elite has the foreground. " +
-                    "Press the key combination to bind it. Only shown when you have no push-to-talk " +
-                    "bound, because pressing push-to-talk already silences D47.",
+                    "Stops D47 talking and abandons the turn it is working on — including a long web " +
+                    "search you have changed your mind about, which stops the spending rather than just " +
+                    "the voice. Works from anywhere, including while Elite has the foreground. Bind a " +
+                    "key, a stick button, or one of each; giving it the same kind twice replaces that one.",
                 Kind = SettingKind.Hotkey,
-                DefaultDisplay = "(unbound)",
+                DefaultDisplay = "Ctrl+Alt+X",
                 DocsAnchor = "shut-up",
-
-                // Gone from the surface of every Commander who has push-to-talk, which is almost
-                // all of them (#218): a press silences d47 now, so a second key for the same act
-                // is a row that has to be explained rather than one that helps.
-                //
-                // <b>Hidden rather than retired, and the difference is architectural.</b> The
-                // comment below says a model must never be able to unbind the Commander's stop
-                // button; folding stop into push-to-talk would make the stop control depend on
-                // push-to-talk being bound, and push-to-talk can be cleared deliberately — its own
-                // help says "Clear it and D47 never opens the microphone." A Commander who has
-                // done that gets this row back rather than losing every key-driven stop.
-                //
-                // A binding already set stays set and stays registered while the row is hidden.
-                // AppliesWhen refuses writes as well as hiding, so nothing can quietly change it
-                // from behind the fold either.
-                AppliesWhen = s =>
-                    string.IsNullOrWhiteSpace(s.Listening.PushToTalkKey)
-                    && string.IsNullOrWhiteSpace(s.Listening.PushToTalkButton),
 
                 // Claimed from the whole system, so a bare key is refused as it is bound.
                 SystemWide = true,
 
+                // One row over two properties (#217's arrangement, put to its second use by #221):
+                // the control arms a keystroke listener and a controller walk at once.
+                AlsoBinds = CancelButtonKey,
+
                 // Protected for the same reason every hotkey row is: a model that can unbind
                 // the Commander's stop button has removed the one control that outranks it
-                // (architecture.md §7).
+                // (architecture.md §7). More so now that the same press ends the turn.
                 Protected = true,
                 Binding = new SettingBinding
                 {
                     Read = s => s.Speech.ShutUpHotkey,
                     Write = (s, v) => s with { Speech = s.Speech with { ShutUpHotkey = v } },
+                },
+            },
+            new SettingRow
+            {
+                Key = CancelButtonKey,
+                Advanced = true,
+                Label = "Cancel button",
+                Help =
+                    "The same thing on your stick or throttle: press the button you want and D47 works out "
+                    + "which one it was. It sits beside the key rather than replacing it. Needs a button "
+                    + "that springs back, not a switch that stays where you put it.",
+                Kind = SettingKind.HotasButton,
+                DocsAnchor = "shut-up",
+
+                // Held by the Cancel row's own control rather than drawn on its own (#217).
+                DrawnElsewhere = true,
+
+                Protected = true,
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Speech.CancelButton,
+                    Write = (s, v) => s with
+                    {
+                        Speech = s.Speech with
+                        {
+                            CancelButton = string.IsNullOrWhiteSpace(v) ? null : v,
+                        },
+                    },
                 },
             },
             new SettingRow

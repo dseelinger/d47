@@ -1206,15 +1206,39 @@ public sealed record SpeechSettings
     public string? ThinkingBed { get; init; }
 
     /// <summary>
-    /// Instant silence (Phase 5, "Shut up"). System-wide rather than window-scoped,
-    /// because the case this exists for is Elite holding the foreground — a key that only
-    /// works when d47 has focus is gated by definition, and this one is never gated.
+    /// <b>Cancel</b> (Phase 5 as "Shut up"; widened by
+    /// <a href="https://github.com/dseelinger/d47/issues/221">#221</a>). System-wide rather than
+    /// window-scoped, because the case this exists for is Elite holding the foreground — a key
+    /// that only works when d47 has focus is gated by definition, and this one is never gated.
+    /// <para>
+    /// <b>The name is older than the job and stays that way.</b> It bound "shut up" from Phase 5;
+    /// it now abandons the running turn as well, which stops the spending rather than only the
+    /// mouth. <c>settings.json</c> is append-only, so a property is never renamed — a build that
+    /// renamed this would unbind every Commander who had set it.
+    /// </para>
     /// <para>
     /// Protected: it gates nothing dangerous, but a model that can unbind the Commander's
     /// stop button has removed the one control that outranks it.
     /// </para>
     /// </summary>
     public string? ShutUpHotkey { get; init; } = "Ctrl+Alt+X";
+
+    /// <summary>
+    /// The same act on a stick button (#221), beside the key rather than instead of it — the
+    /// arrangement push-to-talk already has, for the reason it has it: a Commander who bound both
+    /// said two things rather than replaced one.
+    /// <para>
+    /// <b>Cancel is the second binding in d47 that takes a stick button, and the first that fires
+    /// once.</b> Push-to-talk needs both edges and is held; this is a press. Both are polled from
+    /// the tick through <c>BoundButton</c>, because Windows does not deliver controller buttons to
+    /// a registered hotkey — which is why the interface hotkeys stay keyboard-only.
+    /// </para>
+    /// <para>
+    /// Unbound out of the box. A Commander on a HOTAS has every button spoken for already, and
+    /// guessing one is how d47 would take a button Elite wanted.
+    /// </para>
+    /// </summary>
+    public string? CancelButton { get; init; }
 
     /// <summary>How many times a failing turn is tried in total. 1 disables retrying.</summary>
     public int RetryAttempts { get; init; } = 3;

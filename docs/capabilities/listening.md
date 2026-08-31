@@ -242,11 +242,11 @@ you found this row.
 
 In the two key-driven settings, nothing is kept unless the key is held.
 
-**Pressing it also shuts Directive 47 up.** The press is the interrupt — every press, in every
-setting, whether or not you go on to say anything. So talking over an answer you have heard enough
-of is one gesture rather than two, and there is no separate stop key to reach for. If you clear
-this row *and* the button below, the [Stop speaking](speech.html#shut-up) row appears on the Speech
-page to give you one back.
+**Pressing it does not silence Directive 47**, and that is deliberate. It did for one release, and
+the cost was that every tap meant as *be quiet* also recorded a second of your quiet room — which a
+speech model does not transcribe as nothing. Interrupting has its own control now:
+[Cancel](speech.html#shut-up), which stops the voice and abandons the turn, and which takes a stick
+button of its own.
 
 Unlike the stop key, this one does not need a modifier — a bare key is the normal arrangement for
 push-to-talk, which is exactly why the collision check above matters. If right shift is bound to
