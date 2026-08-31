@@ -168,13 +168,24 @@ public static class FlavourBriefs
 
         if (announcement.Key.StartsWith(AmbientCallout.KeyPrefix, StringComparison.Ordinal))
         {
+            // **Spoken to the Commander, never narrated** (#222). The old opening — "make one
+            // short unprompted remark about where the Commander is" — made the place the subject,
+            // and a description of a place in the third person is narration; the model obeyed and
+            // wrote scenes. So the Commander is the addressee in the first sentence, the register
+            // family gets its own prohibition beside the three interaction ones, and the authored
+            // stock line rides along as a sample of the voice — this is still a composition
+            // brief, so the sample is explicitly not the script.
             return new FlavourBrief
             {
                 Instruction =
-                    "Make one short unprompted remark about where the Commander is right now — you are "
-                    + $"{AmbientLines.Describe(SituationOf(announcement.Key))}. Nothing has happened; this is you "
-                    + "filling a quiet moment in character. One or two sentences. Do not ask a question, "
-                    + "do not offer help, and do not comment on the Commander's decisions.",
+                    "Say one short idle thing to the Commander while you are "
+                    + $"{AmbientLines.Describe(SituationOf(announcement.Key))}. Nothing has happened; "
+                    + "this is you filling a quiet moment in character, speaking to the Commander — "
+                    + "not describing the view. No scene-setting, no telling them what hangs where, "
+                    + "no atmosphere. One or two sentences. Do not ask a question, do not offer "
+                    + "help, and do not comment on the Commander's decisions. This authored line "
+                    + "has the register wanted — compose your own line in that voice rather than "
+                    + $"rewording it: \"{announcement.Text}\"",
                 NeedsPersona = true,
                 NeedsGameState = true,
 

@@ -311,6 +311,11 @@ question the panel is already asking, and placing the panel — see
 with it on and a session with it off are the experiment; if the fault comes back with it on, that
 is the answer, and if it happens anyway with it off, the controller was never the cause.
 
+**The row wears a warning badge, and the advice on it is deliberate**: when you finish trying it
+on, turn it back off *and restart Directive 47*. Turning it off mid-session stops the pose reads,
+but the session has already touched the controllers by then — the restart is what puts you back in
+a session that never did, which is the state the evidence above calls safe.
+
 > "motion controllers on" / "motion controllers off"
 
 #### Placing a surface

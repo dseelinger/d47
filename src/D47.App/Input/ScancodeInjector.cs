@@ -31,8 +31,18 @@ namespace D47.App.Input;
 /// field accepts it. Neither widening touches the three rules above.
 /// </para>
 /// </summary>
-public sealed class ScancodeInjector(IEliteWindow window, ILogger<ScancodeInjector> logger) : IGameInput, IDisposable
+public sealed class ScancodeInjector(
+    IEliteWindow window,
+    ILogger<ScancodeInjector> logger,
+    Func<D47.Core.Journal.GameStatus>? status = null) : IGameInput, IDisposable
 {
+    /// <summary>
+    /// How old Status.json may be and still count as the game being live (#242). In the game
+    /// Elite rewrites it every few seconds; the file this guards against is yesterday's, still
+    /// saying "in the ship" because <c>IsKnown</c> is one-way and nothing ever unsets it.
+    /// </summary>
+    private static readonly TimeSpan StatusFreshFor = TimeSpan.FromMinutes(10);
+
     private const uint InputKeyboard = 1;
     private const uint InputMouse = 0;
 
@@ -76,6 +86,26 @@ public sealed class ScancodeInjector(IEliteWindow window, ILogger<ScancodeInject
 
     public bool IsGameForeground => window.IsForeground;
 
+    /// <summary>
+    /// Whether the Commander is in the game world right now (#242): in something per the status
+    /// flags, read from a file fresh enough to believe. A caller that supplied no status keeps
+    /// the old contract — the harness and the diagnostics card drive this injector with no
+    /// Status.json to read, and refusing them everything would be gating the wrong thing.
+    /// </summary>
+    private bool Online()
+    {
+        if (status is null)
+        {
+            return true;
+        }
+
+        var current = status();
+
+        return current.CommanderIsInTheGame
+               && current.ReadAt is { } read
+               && DateTimeOffset.Now - read < StatusFreshFor;
+    }
+
     public async Task<InjectionResult> SendAsync(
         IReadOnlyList<InputStep> steps,
         CancellationToken cancellationToken = default)
@@ -88,6 +118,18 @@ public sealed class ScancodeInjector(IEliteWindow window, ILogger<ScancodeInject
         if (!window.IsRunning)
         {
             return new InjectionResult(InjectionOutcome.GameNotFound, "Elite is not running.");
+        }
+
+        // Running is not the same as being in the game (#242). At the main menu the window is
+        // there and holds the foreground, and a keystroke aimed at a ship lands in a menu — so
+        // the game-dependent features come alive when the Commander goes online, not when the
+        // process appears. Here rather than at each call site, for the reason the foreground
+        // check is: a rule enforced per caller is a rule that gets missed.
+        if (!Online())
+        {
+            return new InjectionResult(
+                InjectionOutcome.NotOnline,
+                "Elite is up, but you are not in the game yet, so I did not send that.");
         }
 
         // Checked here rather than at each call site: the number of things that send input
@@ -118,6 +160,16 @@ public sealed class ScancodeInjector(IEliteWindow window, ILogger<ScancodeInject
                     return new InjectionResult(
                         InjectionOutcome.NotForeground,
                         "Elite stopped being the window in front part-way through, so I stopped.");
+                }
+
+                // And the game itself, for the same reason (#242): quitting to the menu keeps
+                // Elite in front, and a macro must not carry on typing into it.
+                if (step.Kind != InputStepKind.Delay && !Online())
+                {
+                    logger.LogInformation("The Commander left the game mid-sequence; stopping");
+                    return new InjectionResult(
+                        InjectionOutcome.NotOnline,
+                        "You left the game part-way through, so I stopped.");
                 }
 
                 if (step.Kind == InputStepKind.Delay)

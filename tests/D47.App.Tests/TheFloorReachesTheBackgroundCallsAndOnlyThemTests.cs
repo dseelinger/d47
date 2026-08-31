@@ -54,23 +54,25 @@ public class TheFloorReachesTheBackgroundCallsAndOnlyThemTests
     }
 
     /// <summary>
-    /// Eight callers, all of them carrying no conversation history and already declaring a cold
-    /// prefix — which is what makes pointing them at a cheap model cost no cache at all.
+    /// Nine callers, all of them carrying no conversation history and already declaring a cold
+    /// prefix — which is what makes pointing them at a cheap model cost no cache at all. The
+    /// ninth arrived with the invented chatter (#244): a scene composed while the Commander is
+    /// not waiting is exactly this class, which is the decision this gate exists to make loud.
     /// </summary>
     [Fact]
-    public void TheBackgroundModelIsReadByTheEightCallsTheCommanderIsNotWaitingOn()
+    public void TheBackgroundModelIsReadByTheNineCallsTheCommanderIsNotWaitingOn()
     {
         var readers = CodeLinesContaining("Turns.BackgroundModel")
             .Where(line => !line.StartsWith("Turns.BackgroundModel =", StringComparison.Ordinal))
             .ToList();
 
-        Assert.Equal(8, readers.Count);
+        Assert.Equal(9, readers.Count);
         Assert.All(readers, line => Assert.Equal("Turns.BackgroundModel,", line));
     }
 
     /// <summary>
     /// Resolved once, where settings are applied, so null means the two are the same model and
-    /// every one of the eight behaves exactly as it did.
+    /// every one of the nine behaves exactly as it did.
     /// </summary>
     [Fact]
     public void TheBackgroundModelFallsBackToTheConversationModelInOnePlace()

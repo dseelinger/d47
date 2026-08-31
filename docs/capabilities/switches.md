@@ -246,7 +246,8 @@ from the settings panel, from the settings hotkey, and by saying one of the fixe
 > "let my switches operate the ship"
 > "stop reading my switches"
 
-Keys are only ever sent while Elite is the window in front.
+Keys are only ever sent while Elite is the window in front — and only while you are actually in
+the game: at the main menu a reconcile is refused and says so, and it runs when you load in.
 
 ### Assigning a switch
 

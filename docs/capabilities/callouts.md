@@ -583,8 +583,10 @@ Commander doing the interdicting.
 
 #### Ambient remarks {#ambient}
 
-The occasional in-character observation about where you are, said because *nothing* has
-happened. Everything else on this page speaks because something did.
+The occasional in-character line **to you**, said because *nothing* has happened. Everything else
+on this page speaks because something did. Spoken to you rather than narrated, on purpose: the
+brief tells the core it is talking to its Commander, not describing the view, so a remark is a
+dry aside in the cockpit and never a scene from a novel.
 
 Three rules keep it from being noise. It waits out an interval — forty-five seconds out of the box,
 and in seconds rather than minutes because the interesting end of the range is finer than a minute.
@@ -596,17 +598,44 @@ remarks on the same situation twice running.
 Seven situations are covered: docked, landed, supercruise, normal space, fuel scooping, in the
 SRV, and on foot.
 
-With a language model configured, the core aboard writes its own line and it is genuinely theirs
-— Chart will tell you about the sky, the Quartermaster about what the run cost. It also knows who
-it is flying with: your [character sheet](conversation.md#character-sheet) goes with every remark,
-and your [About Me](conversation.md#about-me) story with about one in four, so the remarks differ by
-who is flying and not just by wording. Without a model, there are ten written lines per situation,
-shared across all eleven cores rather than one set each. That is consistent rather than a
-compromise: with no model there is no persona flavour anywhere else either.
+The core aboard writes every remark itself and it is genuinely theirs — Chart will tell you about
+the sky, the Quartermaster about what the run cost. It also knows who it is flying with: your
+[character sheet](conversation.md#character-sheet) goes with every remark, and your
+[About Me](conversation.md#about-me) story with about one in four, so the remarks differ by who is
+flying and not just by wording.
+
+**Chatter is model-written or it is nothing.** With no language model configured there are no
+ambient remarks at all, and these rows are absent from this page — a switch governing something
+that cannot happen would be a switch that does nothing. The ten authored lines per situation are
+what the model is shown as a sample of the register, never a stand-in read out in its place: a
+remark the model did not write for this moment is not spoken.
 
 ```text
 The drive note has not changed in some minutes. That is what it sounds like when it is right.
 ```
+
+#### Invented chatter {#npc-chatter}
+
+Made-up radio traffic from people who do not exist: two crews on the local channel about their own
+small business, the dock telling an invented pilot off when you are docked somewhere, and — about
+one exchange in four — one line said to *you* over the open channel. Statements only, never a
+question: **nothing here is ever answered**, by you or by the ship's AI, and none of it enters the
+conversation or the comms record. It is theatre, heard once.
+
+**This is not the game's own NPC traffic.** Elite's real messages — station chatter, pirates,
+your wing — are re-voiced under Speech → *Speak incoming messages*, and they are somebody else's
+words. Invented chatter is Directive 47's own fiction, on its own switch, so you can have either
+without the other.
+
+Each invented speaker gets their own voice from the NPC pool for as long as you stay in the
+system, the same way the real traffic is cast. The exchange is written by the model against where
+you actually are; with no language model configured there is no chatter and these rows are absent,
+the same rule as the ambient remarks above — there are no canned conversations, on purpose.
+
+The interval sits at twenty minutes out of the box — an exchange is a scene rather than a
+sentence, and scenes wear out faster; 0 silences them.
+
+> "stop calling out invented chatter" / "start calling out invented chatter"
 
 **Switching personality off silences these entirely**, which is the one place that switch
 reaches a callout. It is in that item's own acceptance criteria: plain answers, no flavour, no

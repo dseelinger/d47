@@ -115,19 +115,23 @@ public class ACorpusIsSentByTheSameWriterThatSavesItTests : IDisposable
         where T : Avalonia.Controls.Control =>
         window.GetVisualDescendants().OfType<T>().Single(found => found.Name == name);
 
-    private static CorpusDonateWindow.CorpusReading Reading(string report) =>
+    private static HelpImproveWindow.CorpusReading Reading(string report) =>
         new(new CorpusSurvey(null, null, 0, 0, new CorpusTally(0, 0, 0, 0, 0, 0), []), report);
 
-    private static CorpusDonateWindow Shown(
+    private static HelpImproveWindow Shown(
         string report = "### Journal history\nwhat you are agreeing to\n",
         Func<string, IProgress<DonationStep>, CancellationToken, Task<DonationSent>>? send = null,
         string? destination = null)
     {
-        var window = new CorpusDonateWindow(
-            (_, _, _) => Task.FromResult(Reading(report)),
-            (_, _, _) => Task.CompletedTask,
-            send,
-            destination);
+        // The history half of the merged window (#238): with both of its delegates present the
+        // toggle opens checked, so this is the flow on screen.
+        var window = new HelpImproveWindow(
+            new DateTimeOffset(2026, 8, 31, 14, 0, 0, TimeSpan.Zero),
+            _ => string.Empty,
+            destination: destination,
+            read: (_, _, _) => Task.FromResult(Reading(report)),
+            write: (_, _, _) => Task.CompletedTask,
+            sendCorpus: send);
 
         window.Show();
         Dispatcher.UIThread.RunJobs();
@@ -135,7 +139,7 @@ public class ACorpusIsSentByTheSameWriterThatSavesItTests : IDisposable
         return window;
     }
 
-    private static async Task PressAsync(CorpusDonateWindow window, string button)
+    private static async Task PressAsync(HelpImproveWindow window, string button)
     {
         Control<Button>(window, button).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
@@ -376,7 +380,7 @@ public class ACorpusIsSentByTheSameWriterThatSavesItTests : IDisposable
     {
         var lede = Shown().GetVisualDescendants().OfType<TextBlock>()
             .Select(block => block.Text ?? string.Empty)
-            .Single(text => text.Contains("This reads every Elite journal", StringComparison.Ordinal));
+            .Single(text => text.Contains("This reads your Elite journals", StringComparison.Ordinal));
 
         Assert.Contains("nothing here goes to a network", lede, StringComparison.Ordinal);
     }
@@ -394,7 +398,7 @@ public class ACorpusIsSentByTheSameWriterThatSavesItTests : IDisposable
 
         var lede = window.GetVisualDescendants().OfType<TextBlock>()
             .Select(block => block.Text ?? string.Empty)
-            .Single(text => text.Contains("This reads every Elite journal", StringComparison.Ordinal));
+            .Single(text => text.Contains("This reads your Elite journals", StringComparison.Ordinal));
 
         Assert.Contains("https://donate.invalid/donate", lede, StringComparison.Ordinal);
         Assert.DoesNotContain("nothing here goes to a network", lede, StringComparison.Ordinal);

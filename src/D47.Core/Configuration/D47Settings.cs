@@ -275,6 +275,19 @@ public sealed record PersonaSettings
     public bool KeepShipName { get; init; } = true;
 
     /// <summary>
+    /// Whether the cores are allowed an occasional light touch of wit
+    /// (<a href="https://github.com/dseelinger/d47/issues/243">#243</a> — "it's so serious all
+    /// the time").
+    /// <para>
+    /// Off by default, because off is exactly the register that shipped. On adds one line to the
+    /// persona layer of the prompt — permission for humor inside each core's own character, never
+    /// a personality transplant — and reaches everything the core says in character:
+    /// conversation and the flavour briefs alike.
+    /// </para>
+    /// </summary>
+    public bool Humor { get; init; }
+
+    /// <summary>
     /// The voice paired to each core, keyed by persona id (Phase 11, #33). Written by
     /// the background pairing at first startup and by the Commander choosing one by hand;
     /// nothing distinguishes the two, on purpose, because a pairing the Commander has
@@ -840,6 +853,20 @@ public sealed record CalloutSettings
     /// </para>
     /// </summary>
     public int AmbientSeconds { get; init; } = 45;
+
+    /// <summary>
+    /// Invented background chatter (#244): made-up exchanges between people who do not exist —
+    /// passers-by, the dock, the occasional one-way hail. Not the game's own NPC traffic, which
+    /// is <see cref="SpeechSettings.SpeakNpcMessages"/> and somebody else's words.
+    /// </summary>
+    public bool NpcChatter { get; init; } = true;
+
+    /// <summary>
+    /// The shortest gap between two exchanges, in seconds. 0 silences them. Longer than the
+    /// ambient default because an exchange is a scene rather than a sentence, and scenes wear
+    /// out faster.
+    /// </summary>
+    public int NpcChatterSeconds { get; init; } = 1200;
 
     /// <summary>
     /// What this row held when it was in minutes. Kept because unknown keys are rejected on

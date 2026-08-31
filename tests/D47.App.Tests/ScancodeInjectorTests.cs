@@ -35,8 +35,11 @@ public class ScancodeInjectorTests
             throw new InvalidOperationException("the injector must never raise the game itself");
     }
 
-    private static ScancodeInjector Injector(FakeElite elite) =>
-        new(elite, NullLogger<ScancodeInjector>.Instance) { DryRun = true };
+    // No status by default, which is the old contract and stays a real one: the harness and the
+    // diagnostics card drive the injector with no Status.json to read (#242). Every test above
+    // the online ones doubles as proof that a status-less injector refuses nothing new.
+    private static ScancodeInjector Injector(FakeElite elite, Func<D47.Core.Journal.GameStatus>? status = null) =>
+        new(elite, NullLogger<ScancodeInjector>.Instance, status) { DryRun = true };
 
     private static IReadOnlyList<InputStep> Tap() =>
         InputSequence.Tap(new EliteBinding("LandingGearToggle", "Primary", "Keyboard", "Key_L"));
@@ -80,6 +83,63 @@ public class ScancodeInjectorTests
 
         Assert.True(result.Sent);
         Assert.Equal(Tap(), injector.LastSequence);
+    }
+
+    /// <summary>
+    /// Running is not the same as being in the game (#242). At the main menu the window is
+    /// there and holds the foreground, and a keystroke aimed at a ship lands in a menu.
+    /// </summary>
+    [Fact]
+    public async Task NothingIsSentAtTheMainMenu()
+    {
+        var menu = D47.Core.Journal.GameStatus.Unknown with
+        {
+            Flags = D47.Core.Journal.StatusFlags.None,
+            ReadAt = DateTimeOffset.Now,
+        };
+
+        var result = await Injector(new FakeElite(), () => menu)
+            .SendAsync(Tap(), TestContext.Current.CancellationToken);
+
+        Assert.Equal(InjectionOutcome.NotOnline, result.Outcome);
+        Assert.False(result.Sent);
+        Assert.Contains("not in the game", result.Reason, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// A status file from yesterday still says "in the ship", because IsKnown is one-way and
+    /// nothing ever unsets it — so old is treated as the menu, not as the game.
+    /// </summary>
+    [Fact]
+    public async Task AStaleStatusFileDoesNotCountAsBeingInTheGame()
+    {
+        var yesterday = D47.Core.Journal.GameStatus.Unknown with
+        {
+            Flags = D47.Core.Journal.StatusFlags.InMainShip,
+            ReadAt = DateTimeOffset.Now - TimeSpan.FromHours(20),
+        };
+
+        var result = await Injector(new FakeElite(), () => yesterday)
+            .SendAsync(Tap(), TestContext.Current.CancellationToken);
+
+        Assert.Equal(InjectionOutcome.NotOnline, result.Outcome);
+    }
+
+    /// <summary>Going online is what enables the game-dependent features (#242).</summary>
+    [Fact]
+    public async Task GoingOnlineIsWhatTurnsTheKeysBackOn()
+    {
+        var aboard = D47.Core.Journal.GameStatus.Unknown with
+        {
+            Flags = D47.Core.Journal.StatusFlags.InMainShip,
+            ReadAt = DateTimeOffset.Now,
+        };
+
+        using var injector = Injector(new FakeElite(), () => aboard);
+
+        var result = await injector.SendAsync(Tap(), TestContext.Current.CancellationToken);
+
+        Assert.True(result.Sent);
     }
 
     [Fact]

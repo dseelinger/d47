@@ -27,7 +27,7 @@ public class TheDonateButtonIsOnlyWhereItCanWorkTests
 
         if (donation)
         {
-            panel.EnableDonation(() => { });
+            panel.EnableDonation(_ => { });
         }
 
         var window = new Window { Content = panel, Width = 1200, Height = 700 };

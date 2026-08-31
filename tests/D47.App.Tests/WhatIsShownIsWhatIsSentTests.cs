@@ -82,12 +82,12 @@ public class WhatIsShownIsWhatIsSentTests : IDisposable
         where T : Avalonia.Controls.Control =>
         window.GetVisualDescendants().OfType<T>().Single(found => found.Name == name);
 
-    private static DonateExcerptWindow Shown(
+    private static HelpImproveWindow Shown(
         Func<ExcerptRequest, string> build,
         Func<string, CancellationToken, Task<DonationSent>>? send = null,
         string? destination = null)
     {
-        var window = new DonateExcerptWindow(
+        var window = new HelpImproveWindow(
             new DateTimeOffset(2026, 8, 29, 14, 0, 0, TimeSpan.Zero), build, send, destination);
 
         window.Show();
@@ -321,7 +321,7 @@ public class WhatIsShownIsWhatIsSentTests : IDisposable
         Assert.DoesNotContain("comment", words, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static string Words(DonateExcerptWindow window) =>
+    private static string Words(HelpImproveWindow window) =>
         string.Join(
             "\n",
             window.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text)

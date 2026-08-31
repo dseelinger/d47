@@ -20,22 +20,31 @@ namespace D47.Core.Diagnostics.Donation;
 /// </summary>
 /// <param name="Name">What the chooser shows.</param>
 /// <param name="Back">
-/// How far back from now, or null for everything on disk. Null rather than a very large
+/// How far back from now, or null for the whole history on disk. Null rather than a very large
 /// <see cref="TimeSpan"/> so that "everything" is a stated case rather than an arithmetic accident.
 /// </param>
 public sealed record CorpusScope(string Name, TimeSpan? Back)
 {
-    /// <summary>The offer, widest first — the opposite of <see cref="ExcerptSpan.All"/>, and for
-    /// the opposite reason: the whole point here is the biggest one.</summary>
+    /// <summary>
+    /// The offer, narrowest first
+    /// (<a href="https://github.com/dseelinger/d47/issues/241">#241</a>).
+    /// <para>
+    /// It opened widest-first — "the whole point here is the biggest one" — until the Commander
+    /// overturned that: the gentle scope is the opening offer, and the widest is one step away.
+    /// And the widest is <b>"Everything", never "everything on disk"</b>: it means every Elite
+    /// journal, and a Commander reads "on disk" literally, as though d47 were about to take the
+    /// disk's contents rather than the game's history.
+    /// </para>
+    /// </summary>
     public static readonly IReadOnlyList<CorpusScope> All =
     [
-        new("Everything on disk", null),
-        new("The last 12 months", TimeSpan.FromDays(365)),
-        new("The last 3 months", TimeSpan.FromDays(90)),
         new("The last 30 days", TimeSpan.FromDays(30)),
+        new("The last 3 months", TimeSpan.FromDays(90)),
+        new("The last 12 months", TimeSpan.FromDays(365)),
+        new("Everything", null),
     ];
 
-    /// <summary>What the window opens on.</summary>
+    /// <summary>What the window opens on: the gentlest scope, not the biggest (#241).</summary>
     public static CorpusScope Default => All[0];
 
     /// <summary>The instant this scope starts at, given when the Commander asked.</summary>

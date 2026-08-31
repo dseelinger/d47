@@ -185,6 +185,27 @@ public sealed record GameStatus
     public bool InShip => Has(StatusFlags.InMainShip);
 
     /// <summary>
+    /// Whether the Commander is actually in the game world — aboard something, on foot, or a
+    /// passenger — as opposed to Elite merely sitting at its main menu
+    /// (<a href="https://github.com/dseelinger/d47/issues/242">#242</a>).
+    /// <para>
+    /// The menu is the state where the file carries no vehicle flag at all, which is the one
+    /// distinction the flags can draw; a file never seen is not in the game either. <b>This says
+    /// nothing about staleness</b> — <see cref="IsKnown"/> is one-way, so a caller deciding
+    /// whether keys may be pressed also has to ask how old <see cref="ReadAt"/> is, and the
+    /// injector does.
+    /// </para>
+    /// </summary>
+    public bool CommanderIsInTheGame =>
+        IsKnown
+        && (Has(StatusFlags.InMainShip)
+            || Has(StatusFlags.InFighter)
+            || Has(StatusFlags.InSrv)
+            || OnFoot
+            || Has2(StatusFlags2.InTaxi)
+            || Has2(StatusFlags2.InMulticrew));
+
+    /// <summary>
     /// Fuel as a fraction of the tank, which Status.json cannot answer on its own — it reports
     /// the level and never the capacity. The capacity comes from the Loadout event, so this
     /// takes it as an argument rather than pretending to know it.

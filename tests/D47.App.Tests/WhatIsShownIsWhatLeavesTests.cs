@@ -23,9 +23,9 @@ public class WhatIsShownIsWhatLeavesTests
 {
     private static readonly DateTimeOffset Noon = new(2026, 8, 28, 12, 0, 0, TimeSpan.Zero);
 
-    private static DonateExcerptWindow Shown(Func<ExcerptRequest, string> build)
+    private static HelpImproveWindow Shown(Func<ExcerptRequest, string> build)
     {
-        var window = new DonateExcerptWindow(Noon, build);
+        var window = new HelpImproveWindow(Noon, build);
 
         window.Show();
         Dispatcher.UIThread.RunJobs();
@@ -37,7 +37,7 @@ public class WhatIsShownIsWhatLeavesTests
     /// By name, down the visual tree. A window built in code has no name scope to look one up in,
     /// which is the same route <c>CoverageWindow</c> and <c>SpendWindow</c>'s tests already take.
     /// </summary>
-    private static T Control<T>(DonateExcerptWindow window, string name)
+    private static T Control<T>(HelpImproveWindow window, string name)
         where T : Avalonia.Controls.Control =>
         window.GetVisualDescendants().OfType<T>().Single(found => found.Name == name);
 

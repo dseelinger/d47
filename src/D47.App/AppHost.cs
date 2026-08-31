@@ -1436,7 +1436,11 @@ public sealed class AppHost : IDisposable
         // there is exactly one, because release_all has to be able to let go of everything and
         // a second injector would hold keys the first one knows nothing about.
         var eliteWindow = new EliteWindow(loggerFactory.CreateLogger<EliteWindow>());
-        var gameInput = new ScancodeInjector(eliteWindow, loggerFactory.CreateLogger<ScancodeInjector>());
+
+        // With the status alongside the window (#242): running and in front are not the same as
+        // in the game, and the injector is the one place the difference is enforced.
+        var gameInput = new ScancodeInjector(
+            eliteWindow, loggerFactory.CreateLogger<ScancodeInjector>(), () => status.Current);
 
         // Declared here and assigned inside the registry build below, so the capabilities and
         // the prompt's game-state block are looking at one surface rather than two that could
@@ -2540,6 +2544,10 @@ public sealed class AppHost : IDisposable
             // path the live journal reaches the adventure book by.
             .Add(new D47.Core.Adventures.AdventureCallout(adventures))
             .Add(new AmbientCallout())
+
+            // Invented chatter (#244): the marker only — the app composes the exchange, and
+            // with no model the marker composes to nothing. See SpeakPendingCallouts.
+            .Add(new NpcChatterCallout())
             .Add(new IncomingMessages
             {
                 Enabled = () => settings.Speech.SpeakIncomingMessages,
@@ -2620,7 +2628,20 @@ public sealed class AppHost : IDisposable
                     // Silent while personality is off. The checklist puts "no ambient remarks"
                     // in that item's own acceptance criteria, which makes this the one callout
                     // the personality switch reaches.
+                    //
+                    // With no model it is silent too (#245), but that gate is not here: this
+                    // method is static and the provider is runtime state, so the one place that
+                    // holds "chatter is model-written or it is nothing" is the drain in
+                    // SpeakPendingCallouts, which drops an ambient line the model did not write.
                     ambient.Enabled = () => settings.Callouts.Ambient && settings.Llm.PersonalityEnabled;
+                    break;
+
+                case NpcChatterCallout chatter:
+                    chatter.Interval = TimeSpan.FromSeconds(callouts.NpcChatterSeconds);
+
+                    // The ambient pair of gates (#244): theatre is personality by any reading,
+                    // and the no-model half lives at the compose step for the reason above.
+                    chatter.Enabled = () => settings.Callouts.NpcChatter && settings.Llm.PersonalityEnabled;
                     break;
             }
         }
@@ -5356,6 +5377,53 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>
+    /// How long an exchange may spend being written. Looser than <see cref="FlavourBudget"/>
+    /// because this composes a scene rather than rewording one line — and nothing waits behind
+    /// it with an authored fallback, so running out costs silence rather than a worse line.
+    /// </summary>
+    private static readonly TimeSpan ChatterBudget = TimeSpan.FromSeconds(10);
+
+    /// <summary>
+    /// The invented exchange a chatter marker asked for (#244), as one announcement per parsed
+    /// line. Comms role plus a speaker name is what buys the rest: a pooled per-system voice
+    /// per invented name, no line in the conversation history, nothing on the comms record —
+    /// heard once, and that is all it is for.
+    /// </summary>
+    private async Task<IReadOnlyList<Announcement>> ComposeNpcChatterAsync(Announcement marker)
+    {
+        if (Turns.Provider is null || !Settings.Current.Llm.PersonalityEnabled)
+        {
+            return [];
+        }
+
+        var kind = NpcChatter.KindOf(marker.Key);
+
+        using var budget = new CancellationTokenSource(ChatterBudget);
+
+        var script = await FlavourTurn.AskAsync(
+            Turns.Provider,
+            Turns.BackgroundModel,
+            NpcChatter.Speaker,
+            null,
+            NpcChatter.Instruction(kind),
+            Turns.LiveGameState?.Invoke(),
+            Spend,
+            PriceTable.Default,
+            _logger,
+            budget.Token).ConfigureAwait(false);
+
+        return [.. NpcChatter.Parse(script, kind)
+            .Select(line => new Announcement($"{NpcChatter.KeyPrefix}line", line.Text)
+            {
+                Urgency = CalloutUrgency.Routine,
+                Voice = D47.Core.Audio.VoiceRole.Comms,
+                Speaker = line.Name,
+                SpeakerIsPlayer = false,
+                CommsChannel = "npc",
+            })];
+    }
+
+    /// <summary>
     /// Position 4 for a flavour line, to the depth the brief asked for (Phase 43). The
     /// brief decides — in Core, where it can be asserted — and this only reads the two fields.
     /// </summary>
@@ -5734,7 +5802,30 @@ public sealed class AppHost : IDisposable
 
             foreach (var announcement in pending)
             {
-                lines.Add(await VaryAsync(announcement).ConfigureAwait(false));
+                // Invented chatter is composed rather than varied (#244): the marker carries no
+                // text of its own, and the exchange arrives back as one announcement per line,
+                // each in an invented voice. With no model, or a reply that does not parse, it
+                // composes to nothing — there is no authored fallback on purpose (#245).
+                if (announcement.Key.StartsWith(NpcChatter.KeyPrefix, StringComparison.Ordinal))
+                {
+                    lines.AddRange(await ComposeNpcChatterAsync(announcement).ConfigureAwait(false));
+                    continue;
+                }
+
+                var varied = await VaryAsync(announcement).ConfigureAwait(false);
+
+                // An ambient remark the model did not write is not spoken (#245). VaryAsync
+                // hands the same instance back on every road to "no model line" — provider
+                // gone mid-flight, the three-second budget, a refusal, a line about itself —
+                // and for chatter the authored text is a tone sample, not an understudy.
+                // Ambient only: a fuel warning goes out authored, exactly as before.
+                if (ReferenceEquals(varied, announcement)
+                    && announcement.Key.StartsWith(AmbientCallout.KeyPrefix, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                lines.Add(varied);
             }
 
             // Whether the lore remarks in this batch are owed a second part, decided here rather

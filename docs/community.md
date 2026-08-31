@@ -45,10 +45,11 @@ says which lines to take.
 
 ## And one thing that does the scrubbing for you
 
-If a report needs more than an error line, **don't paste it anywhere — use the donation window.**
-It replaces your Commander name and Frontier IDs with stand-ins, drops other players' messages,
-and then shows you the whole thing before anything leaves. There is one for an incident (a few
-minutes around the moment it went wrong) and one for your whole journal history.
+If a report needs more than an error line, **don't paste it anywhere — press "Help improve D47"
+on the Journal page.** It replaces your Commander name and Frontier IDs with stand-ins, drops
+other players' messages, and then shows you the whole thing before anything leaves. One window,
+two shapes: your journal history at the scale you choose, or — with *Include journal history*
+off — a scrubbed excerpt of the few minutes around the moment something went wrong.
 
 **Where it goes is deliberately not a public issue any more.** A comment on a public repository is
 mirrored by third-party archives within the hour and mailed whole to everyone watching, so

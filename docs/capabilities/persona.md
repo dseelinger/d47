@@ -425,6 +425,24 @@ and back — selecting the core that is already running is not a switch, and nev
 
 This row is not reachable by the model, for the same reason the persona row above is not.
 
+#### A little humor {#humor}
+
+Off, the cores are exactly as they shipped — serious throughout. On, one line is added to the
+persona block granting an occasional light touch of wit: dry, brief, in each core's own character,
+never at your expense and never inside a warning.
+
+**Permission, not a personality transplant.** The eleven cores keep their own registers — a dry
+core gets drier wit, not someone else's jokes — and the line reaches everything the core says in
+character: conversation, ambient remarks, the opening brief. The carrier captain and tower are not
+the core and are untouched.
+
+**And not the standard AI fare.** The instruction bans the stock moves outright — similes,
+"it's like…", puns, zany exaggeration, exclamation marks — and asks for understatement and
+timing instead. A model given permission to be funny reaches for decoration first, so the
+permission names what it is not.
+
+> "humor on" / "humor off"
+
 #### Core for this ship
 
 What the ship you are in flies with, and the button that binds it to the core aboard. See

@@ -24,11 +24,17 @@ namespace D47.App.Tests;
 /// </summary>
 public class ACorpusReportDescribesWhatWouldLeaveTests
 {
-    private static CorpusDonateWindow Shown(
-        Func<CorpusScope, IProgress<int>, CancellationToken, Task<CorpusDonateWindow.CorpusReading>> read,
+    private static HelpImproveWindow Shown(
+        Func<CorpusScope, IProgress<int>, CancellationToken, Task<HelpImproveWindow.CorpusReading>> read,
         Func<Stream, IProgress<int>, CancellationToken, Task>? write = null)
     {
-        var window = new CorpusDonateWindow(read, write ?? ((_, _, _) => Task.CompletedTask));
+        // The history half of the merged window (#238): with both of its delegates present the
+        // toggle opens checked, so this is the flow on screen.
+        var window = new HelpImproveWindow(
+            new DateTimeOffset(2026, 8, 31, 14, 0, 0, TimeSpan.Zero),
+            _ => string.Empty,
+            read: read,
+            write: write ?? ((_, _, _) => Task.CompletedTask));
 
         window.Show();
         Dispatcher.UIThread.RunJobs();
@@ -37,14 +43,14 @@ public class ACorpusReportDescribesWhatWouldLeaveTests
     }
 
     /// <summary>By name down the visual tree — a window built in code has no name scope.</summary>
-    private static T Control<T>(CorpusDonateWindow window, string name)
+    private static T Control<T>(HelpImproveWindow window, string name)
         where T : Avalonia.Controls.Control =>
         window.GetVisualDescendants().OfType<T>().Single(found => found.Name == name);
 
-    private static CorpusDonateWindow.CorpusReading Reading(string report) =>
+    private static HelpImproveWindow.CorpusReading Reading(string report) =>
         new(new CorpusSurvey(null, null, 0, 0, new CorpusTally(0, 0, 0, 0, 0, 0), []), report);
 
-    private static async Task PressAsync(CorpusDonateWindow window, string button)
+    private static async Task PressAsync(HelpImproveWindow window, string button)
     {
         Control<Button>(window, button).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 

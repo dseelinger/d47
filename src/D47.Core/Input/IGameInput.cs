@@ -11,6 +11,13 @@ public enum InjectionOutcome
     /// <summary>Elite is not running, or no window could be found.</summary>
     GameNotFound,
 
+    /// <summary>
+    /// Elite is running but the Commander is not in the game — the main menu, or a status file
+    /// too stale to trust (#242). Nothing was sent, on purpose: a keystroke meant for a ship
+    /// lands in a menu it was never aimed at.
+    /// </summary>
+    NotOnline,
+
     /// <summary>The sequence was empty — an unpressable binding reached the injector.</summary>
     NothingToSend,
 
