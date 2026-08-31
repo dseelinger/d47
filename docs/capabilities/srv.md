@@ -9,6 +9,8 @@ nav_order: 131
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">The switches on the buggy — turret, handbrake, drive assist — and getting your ship back.</p>
 <section>
@@ -59,6 +61,10 @@ nav_order: 131
  <text x="440" y="210" text-anchor="middle" font-size="15" fill="var(--text-muted)">Recall is the one action on this page that also works on foot.</text>
 </svg>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

@@ -9,6 +9,8 @@ nav_order: 102
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">Everything Directive 47 knows about your game, read straight from the files Elite already writes.</p>
 <section>
@@ -51,6 +53,10 @@ nav_order: 102
 </svg>
 <p class="body">Two Commanders on one machine stay separate: location, ship, carrier, fleet, materials and session totals are kept per Commander and never merged. And an event Directive 47 does not recognise is skipped and noted rather than breaking the read — an invented figure in your game state is worse than a missing one.</p>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

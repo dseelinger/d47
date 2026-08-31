@@ -9,6 +9,8 @@ nav_order: 120
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">Eleven Guardian cores. You pick one, and it does not know the other ten are there.</p>
 <section>
@@ -98,6 +100,10 @@ nav_order: 120
 </svg>
 <p class="body">Gender is <em>told</em> to the model rather than left to be inferred, because a voice of the wrong gender is not a near miss — it is a different character reading the lines.</p>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

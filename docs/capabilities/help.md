@@ -12,6 +12,8 @@ nav_order: 100
   In the panel this page is also the front door: HelpPageView appends a generated list of every
   page that has a band, so nothing here should try to list them by hand.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">How to ask what something does, and where the answer comes from.</p>
 <section>
@@ -66,6 +68,10 @@ nav_order: 100
 </svg>
 <p class="body">And a page nobody has illustrated yet still has its mark: pressing it, or saying so, brings you here instead — one level broader than you asked for, rather than nothing at all.</p>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

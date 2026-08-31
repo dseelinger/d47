@@ -9,6 +9,8 @@ nav_order: 124
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">The things Directive 47 says without being asked, and what earns the right to interrupt.</p>
 <section>
@@ -73,6 +75,10 @@ nav_order: 124
 </svg>
 <p class="body">One measured refusal worth knowing: Directive 47 never repeats Elite's own <code>Material Content</code> grade while prospecting. Across 1,633 prospects, <code>Low</code> and <code>High</code> rocks have the same distribution — and <strong>45% of the rocks holding a material at 40% or more are graded <code>Low</code></strong>. Passing that on would fly you past the best rock in the cluster.</p>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

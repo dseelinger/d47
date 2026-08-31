@@ -9,6 +9,8 @@ nav_order: 137
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">What time it is in both worlds at once, and timers and alarms that say their own name.</p>
 <section>
@@ -64,6 +66,10 @@ nav_order: 137
 </svg>
 <p class="body">Cancelling is reachable from this tab and from saying so, and from nowhere else — the AI is not offered it and is refused if it asks. Naming one that matches nothing, or two, is answered rather than guessed at: cancelling the wrong alarm of two is worse than being asked which.</p>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

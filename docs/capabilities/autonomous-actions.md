@@ -9,6 +9,8 @@ nav_order: 132
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">Things Directive 47 does to your ship without being asked. There is one so far, and it is off.</p>
 <section>
@@ -60,6 +62,10 @@ nav_order: 132
 </svg>
 <p class="body">Elite has no honk binding, because the discovery scanner is not a button — it is a fire-group weapon. So this holds <em>your</em> fire button for the six seconds the scan takes. It arms on the jump and fires once you are actually in normal space, and if thirty seconds pass without that, the arm expires rather than waiting to surprise you later.</p>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

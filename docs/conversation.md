@@ -246,9 +246,9 @@ them.
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">
-<a class="card" href="capabilities/conversation.html"><span class="ct">Language model &rarr;</span><span class="cd">Choosing a provider, what each one costs, and bringing your own.</span></a>
-<a class="card" href="capabilities/persona.html"><span class="ct">Persona &rarr;</span><span class="cd">The Guardian cores, and switching personality off.</span></a>
-<a class="card" href="capabilities/listening.html"><span class="ct">Listening &rarr;</span><span class="cd">Saying all this out loud instead of typing it.</span></a>
+<a class="card" href="capabilities/conversation.html"><span class="ct">Language model →</span><span class="cd">Choosing a provider, what each one costs, and bringing your own.</span></a>
+<a class="card" href="capabilities/persona.html"><span class="ct">Persona →</span><span class="cd">The Guardian cores, and switching personality off.</span></a>
+<a class="card" href="capabilities/listening.html"><span class="ct">Listening →</span><span class="cd">Saying all this out loud instead of typing it.</span></a>
 </div>
 </div>
 </div></div>

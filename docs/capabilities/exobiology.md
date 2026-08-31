@@ -9,6 +9,8 @@ nav_order: 117
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">Two halves, from two sources, answering two questions — and only one of them may quote money.</p>
 <section>
@@ -70,6 +72,10 @@ nav_order: 117
 </svg>
 <p class="body">The bonus is five times the value, and it is the trade-off nobody should discover after the flight. If undiscovered systems are what you are after, read a system name instead — that works with no network at all, which is the point of it.</p>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

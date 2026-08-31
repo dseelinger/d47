@@ -9,6 +9,8 @@ nav_order: 140
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">A session, or a week, turned into a readable log — where every sentence traces to an event.</p>
 <section>
@@ -75,6 +77,10 @@ nav_order: 140
 </svg>
 <p class="body">Prose over a long session is the largest single request Directive 47 will ever make, so it never happens by itself: no schedule, no trigger, no callout starts one. Working out that price reads your journals here and sends nothing.</p>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

@@ -284,9 +284,9 @@ secret as that capability being switched off rather than as an error.
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">
-<a class="card" href="conversation.html"><span class="ct">Talking to Directive 47 &rarr;</span><span class="cd">What happens between your question and its answer.</span></a>
-<a class="card" href="capabilities/privacy.html"><span class="ct">Privacy &rarr;</span><span class="cd">The full report, worked out from your settings rather than promised here.</span></a>
-<a class="card" href="capabilities/settings.html"><span class="ct">Settings &rarr;</span><span class="cd">Every switch, and what each one turns on.</span></a>
+<a class="card" href="conversation.html"><span class="ct">Talking to Directive 47 →</span><span class="cd">What happens between your question and its answer.</span></a>
+<a class="card" href="capabilities/privacy.html"><span class="ct">Privacy →</span><span class="cd">The full report, worked out from your settings rather than promised here.</span></a>
+<a class="card" href="capabilities/settings.html"><span class="ct">Settings →</span><span class="cd">Every switch, and what each one turns on.</span></a>
 </div>
 </div>
 </div></div>

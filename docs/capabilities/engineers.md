@@ -18,6 +18,8 @@ nav_order: 107
   Colours are the nine Palette roles and nothing else — see .d47-eli5 in assets/main.scss. In
   the panel those same role names resolve against the Commander's live theme instead.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">Who can improve your ship, where they are, and who to go and get next.</p>
 <section>
@@ -96,6 +98,10 @@ nav_order: 107
 </svg>
 <p class="body">Every step of the working is on the page on purpose. A ranking you cannot inspect is an oracle — and when it is wrong, or when you would simply rather go somewhere else, you could not tell a bad answer from a bug.</p>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

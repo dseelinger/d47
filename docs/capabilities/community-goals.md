@@ -9,6 +9,8 @@ nav_order: 118
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">What community goals are running, what tier they have reached, and how you are doing in them.</p>
 <section>
@@ -54,6 +56,10 @@ nav_order: 118
 </svg>
 <p class="body">Inara knows what the world handed in; your journal knows what <em>you</em> handed in. And if the listing fails you do not lose the journal half — the goals you have seen are reported as usual, with the reason for the missing half added at the end.</p>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

@@ -9,6 +9,8 @@ nav_order: 134
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">Typing a message into Elite's chat — the one thing Directive 47 does that other people can see.</p>
 <section>
@@ -58,6 +60,10 @@ nav_order: 134
 </svg>
 <p class="body">Line breaks are flattened to spaces before anything is typed. A newline in the middle of a message would send the first half early and type the second half into the cockpit, where every character is one of your keybinds.</p>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

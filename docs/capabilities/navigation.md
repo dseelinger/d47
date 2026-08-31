@@ -9,6 +9,8 @@ nav_order: 133
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">Putting a system name where you can use it, and — if you let it — driving the map itself.</p>
 <section>
@@ -92,6 +94,10 @@ nav_order: 133
 </svg>
 <p class="body">Elite's own default keyboard preset ships the galaxy map <strong>unbound</strong>, so out of the box you get the clipboard and an explanation naming the key that was missing.</p>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

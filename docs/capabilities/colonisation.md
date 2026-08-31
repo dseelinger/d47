@@ -9,6 +9,8 @@ nav_order: 113
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">What your build still needs, what you are already carrying, and how many runs are left.</p>
 <section>
@@ -68,6 +70,10 @@ nav_order: 113
 </svg>
 <p class="body">Tracking a build needs no key, no account and nothing off this machine — it is subtraction over what Elite has already written to your disk. Finding somewhere to build is a different question, and it goes out to the galaxy index like every other one that leaves.</p>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

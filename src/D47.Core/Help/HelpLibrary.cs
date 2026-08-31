@@ -90,8 +90,33 @@ public static class HelpLibrary
             NavOrder = int.TryParse(FrontMatter(markdown, "nav_order"), out var order) ? order : 0,
             Lede = lede?.Value.Trim() ?? string.Empty,
             Sections = frame.Elements("section").Select(Section).ToArray(),
-            Links = Links(frame, capabilityId),
+
+            // From the band when they are still in it, and from the foot of the page when they
+            // are not (#229). The cards moved out of the band so they stay visible while it is
+            // collapsed, and they took a styling shell of their own — a second d47-eli5 block at
+            // the foot. Reading both is what keeps the panel's "where to go next" working
+            // through that move; without it every page would have quietly lost its feet, which
+            // is the failure shape the comment on Links already warns about one size larger.
+            Links = Links(frame, capabilityId) is { Count: > 0 } inBand
+                ? inBand
+                : Feet(markdown, capabilityId),
         };
+    }
+
+    /// <summary>
+    /// The cards from the foot of a page, when they are not inside the band. Null-safe and quiet:
+    /// a page with none is the ordinary case for anything that never had feet.
+    /// </summary>
+    private static IReadOnlyList<HelpLink> Feet(string markdown, string owner)
+    {
+        var at = markdown.LastIndexOf(BandOpen, StringComparison.Ordinal);
+
+        if (at < 0 || at == markdown.IndexOf(BandOpen, StringComparison.Ordinal))
+        {
+            return [];
+        }
+
+        return Band(markdown[at..]) is { } foot ? Links(XElement.Parse(foot), owner) : [];
     }
 
     /// <summary>

@@ -9,6 +9,8 @@ nav_order: 128
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">The parts of your ship that are switches — gear, lights, scoop, hardpoints, the frame shift drive.</p>
 <section>
@@ -75,6 +77,10 @@ nav_order: 128
  <text x="440" y="220" text-anchor="middle" font-size="16" fill="var(--text-muted)">One that can be talked into opening fire is a different kind of problem.</text>
 </svg>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

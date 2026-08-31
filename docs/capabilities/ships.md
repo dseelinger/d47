@@ -9,6 +9,8 @@ nav_order: 111
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">Your fleet, the hulls you mean to buy, and one build per ship.</p>
 <section>
@@ -75,6 +77,10 @@ nav_order: 111
 </svg>
 <p class="body">Buying the hull is the plan's <em>first step</em> rather than something you have to do before planning at all — which is also why a hull you own is a derived line and one you only intend is an authored one. That is the same rule the checklist draws, because it is the same rule.</p>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

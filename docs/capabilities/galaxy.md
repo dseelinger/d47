@@ -9,6 +9,8 @@ nav_order: 104
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">Looking things up in the galaxy — the first thing D47 does that needs the internet.</p>
 <section>
@@ -65,6 +67,10 @@ nav_order: 104
 </svg>
 <p class="body">You never have to take this page's word for any of it. The Privacy report works the same list out from your actual settings rather than repeating it here, so a page going stale cannot make it wrong.</p>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

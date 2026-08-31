@@ -9,6 +9,8 @@ nav_order: 143
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">Changing things by asking — and the handful D47 will not change however nicely you ask.</p>
 <section>
@@ -55,6 +57,10 @@ nav_order: 143
 </svg>
 <p class="body">Everything here is changeable from the settings panel with no file to hand-edit, and every change takes effect at once — there is no save button and no restart.</p>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

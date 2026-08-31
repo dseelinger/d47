@@ -9,6 +9,8 @@ nav_order: 126
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">Directive 47 drawn over Elite in your own cockpit — beside the game, never inside it.</p>
 <section>
@@ -77,6 +79,10 @@ nav_order: 126
  <text x="440" y="234" text-anchor="middle" font-size="15" fill="var(--text-muted)">They catch the last line after it has gone — and if you say “stop”, the captions stop with the voice.</text>
 </svg>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

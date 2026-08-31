@@ -9,6 +9,8 @@ nav_order: 108
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">What a blueprint costs, what it costs you, and how your own craft actually went.</p>
 <section>
@@ -81,6 +83,10 @@ nav_order: 108
 </svg>
 <p class="body">Rolls remaining are still counted towards a full 1.0 rather than towards 0.85, because the band is where the game stops insisting rather than something to aim at.</p>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

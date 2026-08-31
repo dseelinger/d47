@@ -9,6 +9,8 @@ nav_order: 125
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">How Directive 47 is laid out, and why one design fits a monitor and a metre-wide quad alike.</p>
 <section>
@@ -81,6 +83,10 @@ nav_order: 125
 </svg>
 <p class="body">A system name arriving letter by letter is eleven wrong values on the way to the right one — so what you say lands in one piece. Confident, valid and <em>still</em> not what you meant is the one case no machine can catch, which is what the read-back is for.</p>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

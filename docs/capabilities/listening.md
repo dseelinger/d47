@@ -12,6 +12,8 @@ nav_order: 123
 
   Colours are the nine Palette roles and nothing else — see .d47-eli5 in assets/main.scss.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">Whisper turns your voice into words, on your own machine — and how it decides you were talking to it.</p>
 <section>
@@ -98,6 +100,10 @@ nav_order: 123
  <text x="440" y="196" text-anchor="middle" font-size="15" fill="var(--text-muted)">All five are tested and tell you the result.</text>
 </svg>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

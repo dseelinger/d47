@@ -9,6 +9,8 @@ nav_order: 127
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">Bringing Elite back to the front, so flight commands work again.</p>
 <section>
@@ -53,6 +55,10 @@ nav_order: 127
 </svg>
 <p class="body">Only the spoken phrases reach this. It is not a tool the model can call: your journal, in-game messages, search results and Inara are all untrusted text, and a message that could yank your focus while you were typing is a nuisance at best.</p>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

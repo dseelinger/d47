@@ -9,6 +9,8 @@ nav_order: 106
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">What a hull or a module can do, before anybody buys one. Nothing here touches the network.</p>
 <section>
@@ -67,6 +69,10 @@ nav_order: 106
 </svg>
 <p class="body">The same rule catches modules: a name without a size is not a module. There are thirty-five Frame Shift Drives, differing by an order of magnitude in every figure worth quoting, so a bare name returns the sizes that exist rather than picking one.</p>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

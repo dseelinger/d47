@@ -9,6 +9,8 @@ nav_order: 114
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">A story you fly, told by the ship's AI, moved along by your own journal.</p>
 <section>
@@ -71,6 +73,10 @@ nav_order: 114
 </svg>
 <p class="body">Foreshadowing still happens — it is written <em>into</em> the earlier beats, by the turn that did know the ending. Between beats the ship's AI wonders aloud in character and never states a new fact about the story, so nothing it says on a quiet stretch can contradict a beat you have not reached.</p>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

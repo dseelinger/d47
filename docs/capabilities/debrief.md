@@ -9,6 +9,8 @@ nav_order: 139
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">D47 reads back what you told it off, drafts it as a rule in your own words, and waits for you to say yes.</p>
 <section>
@@ -69,6 +71,7 @@ nav_order: 139
 </svg>
 </section>
 </div></div>
+</details>
 
 When you close Directive 47, it reads the session back, finds the moments you corrected it, and
 drafts standing directions from your own words. It changes nothing. You take, edit or discard

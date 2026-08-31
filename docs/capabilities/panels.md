@@ -9,6 +9,8 @@ nav_order: 130
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">Opening the cockpit panels and walking around them, for when both hands are busy.</p>
 <section>
@@ -62,6 +64,10 @@ nav_order: 130
  <text x="440" y="180" text-anchor="middle" font-size="16" fill="var(--text-muted)">…and on what language your game is in, which is why Navigation goes by the clipboard.</text>
 </svg>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

@@ -9,6 +9,8 @@ nav_order: 122
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">How loud each kind of sound is, and how far it drops out of the way while Directive 47 speaks.</p>
 <section>
@@ -94,6 +96,10 @@ nav_order: 122
 </svg>
 <p class="body">“By voice” never quietly means “by the language model”. Every row here is reachable through the model-free keyword router, which is a different path with a different caller.</p>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

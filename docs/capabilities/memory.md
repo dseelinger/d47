@@ -9,6 +9,8 @@ nav_order: 138
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">A small file of facts about you, where every one of them says where it came from.</p>
 <section>
@@ -77,6 +79,10 @@ nav_order: 138
  <text x="440" y="194" text-anchor="middle" font-size="15" fill="var(--text-muted)">Emptying the file completely is one button, and it lives in Privacy — which is where you would look.</text>
 </svg>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

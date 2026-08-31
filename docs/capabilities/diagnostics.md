@@ -15,6 +15,8 @@ nav_order: 101
   This band is what the Technical and Log file readings of the Transcript page open, so it
   leads with those two rather than with the settings rows.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">The page that still answers when nothing else does — what happened, where it is written down, and how loud.</p>
 <section>
@@ -79,6 +81,10 @@ nav_order: 101
 </svg>
 <p class="body">Trace grows a log file fast. Turn the part back down once you have what you came for — the row and the spoken phrase are the same change, and both survive a restart.</p>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

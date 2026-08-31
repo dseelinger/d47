@@ -9,6 +9,8 @@ nav_order: 121
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">The voice Directive 47 speaks in, what it costs, and the one command that outranks all of it.</p>
 <section>
@@ -75,6 +77,10 @@ nav_order: 121
  <text x="440" y="214" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">Four reasons, but only two of them are yours to fix.</text>
 </svg>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

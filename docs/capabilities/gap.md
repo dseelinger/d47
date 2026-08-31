@@ -9,6 +9,8 @@ nav_order: 112
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">What everything you have planned needs that you are not carrying, ledger by ledger.</p>
 <section>
@@ -65,6 +67,10 @@ nav_order: 112
 </svg>
 <p class="body">Whether hulls and suits you have not bought yet are counted is a switch on the page, not a decision taken once on your behalf. Counting them is honest about the whole ambition; excluding them answers what can be finished tonight. Both are real questions, and which one you are asking changes through the evening.</p>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

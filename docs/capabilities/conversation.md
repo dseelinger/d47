@@ -9,6 +9,8 @@ nav_order: 119
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">Which model answers you, whether anything leaves this machine at all, and what it has cost.</p>
 <section>
@@ -74,6 +76,10 @@ nav_order: 119
 </svg>
 </section>
 
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

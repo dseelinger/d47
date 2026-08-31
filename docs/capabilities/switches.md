@@ -199,6 +199,10 @@ nav_order: 136
 </svg>
 <p class="body">A spare three-position toggle can name <em>pages of Directive 47's own panel</em> instead of ship actions — three detents, three pages. That one presses nothing, reads no binds and checks no foreground, so it works whether the key-injection rows are on or off.</p>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">
@@ -208,7 +212,6 @@ nav_order: 136
 </div>
 </div>
 </div></div>
-</details>
 
 ## The details
 

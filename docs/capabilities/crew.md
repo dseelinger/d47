@@ -9,6 +9,8 @@ nav_order: 103
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">The pilots you have hired, and how to talk to one of them instead of your ship's AI.</p>
 <section>
@@ -59,6 +61,10 @@ nav_order: 103
 </svg>
 <p class="body">A posting to a particular ship is <em>derived, not reported</em>: Elite's assignment event names no ship, so Directive 47 remembers which hull you were sitting in when you assigned somebody. A roster it has never seen says so, rather than saying you have no crew — those are different answers, and only one of them is true.</p>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">

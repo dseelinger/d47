@@ -9,6 +9,8 @@ nav_order: 116
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
 -->
+<details class="d47-band">
+<summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">Some systems mean more than their astrography. It ships knowing about twenty, and keeps whatever you tell it about the rest.</p>
 <section>
@@ -65,6 +67,10 @@ nav_order: 116
 </svg>
 <p class="body">An obscure but real site finds nothing, and a search can appear to agree with something a model half-invented. So if a later search <em>would</em> have corroborated a note, the note still says <em>you told me</em>.</p>
 </section>
+</div></div>
+</details>
+
+<div class="d47-eli5"><div class="d47-frame">
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">
