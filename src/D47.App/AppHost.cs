@@ -1436,7 +1436,11 @@ public sealed class AppHost : IDisposable
         // there is exactly one, because release_all has to be able to let go of everything and
         // a second injector would hold keys the first one knows nothing about.
         var eliteWindow = new EliteWindow(loggerFactory.CreateLogger<EliteWindow>());
-        var gameInput = new ScancodeInjector(eliteWindow, loggerFactory.CreateLogger<ScancodeInjector>());
+
+        // With the status alongside the window (#242): running and in front are not the same as
+        // in the game, and the injector is the one place the difference is enforced.
+        var gameInput = new ScancodeInjector(
+            eliteWindow, loggerFactory.CreateLogger<ScancodeInjector>(), () => status.Current);
 
         // Declared here and assigned inside the registry build below, so the capabilities and
         // the prompt's game-state block are looking at one surface rather than two that could

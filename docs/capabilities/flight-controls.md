@@ -172,6 +172,11 @@ itself your keyboard on the strength of a message another Commander sent you is 
 Keys go out only while Elite is the window in front. Alt-tab to a browser mid-command and the
 rest of the sequence is dropped rather than typed into it.
 
+And only while you are actually **in** the game. Elite sitting at its main menu is running and in
+front, but a keystroke aimed at a ship would land in a menu — so everything that presses keys
+stays off until you go online, says so if asked, and comes alive the moment you load in. Quitting
+to the menu mid-sequence stops the sequence the same way alt-tabbing does.
+
 ### Why it sometimes says no
 
 Two things stop an action, and it tells you which:
