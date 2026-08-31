@@ -5,6 +5,57 @@ nav_order: 133
 ---
 
 <!--
+  The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
+  comment on engineers.md — with one addition and one subtraction.
+
+  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
+  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
+  would silently become what the in-app panel draws on this page. The docs site styles the two
+  identically (main.scss extends one from the other); the app sees only the one below.
+
+  And no rationale in here. Every "because" belongs in the band below. That separation is the
+  whole point of there being two, and it is the thing that will erode first.
+-->
+<details class="d47-band" open>
+<summary>How to use it</summary>
+<div class="d47-howto"><div class="d47-frame">
+<p class="lede">Three steps to a system name where you can use it.</p>
+<section>
+<h2><span class="num">1</span> Say where you want to go.</h2>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
+ <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">plot a route to Shinrarta Dezhra</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">It puts the name on the clipboard, which is the part that always works.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">Say it however you say it — the spelling is worked out for you.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Let it drive the map, if you want that.</h2>
+<svg viewBox="0 0 880 252" role="img" aria-label="Navigation">
+ <rect x="20" y="16" width="840" height="212" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Navigation</text>
+ <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="68" y="98" font-size="16" fill="var(--text)">Let D47 press keys in Elite</text>
+ <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">on</text>
+ <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="68" y="154" font-size="16" fill="var(--text)">Drive the galaxy map</text>
+ <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text)">on</text>
+ <text x="44" y="222" font-size="15" fill="var(--text-muted)">With both on it opens the map, types the name and plots. Without them, you paste.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">!</span> The one that stops people.</h2>
+<svg viewBox="0 0 880 152" role="img" aria-label="The map macro is a fixed key sequence.">
+ <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">The map macro is a fixed key sequence.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">It assumes the default map layout. If yours is different, turn it off and paste the name instead.</text>
+</svg>
+</section>
+</div></div>
+</details>
+
+<!--
   The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.

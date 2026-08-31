@@ -531,4 +531,57 @@ public class HelpLibraryTests
         Assert.Contains("The switch is a question", drawn, StringComparison.Ordinal);
         Assert.DoesNotContain("Turn on two rows", drawn, StringComparison.Ordinal);
     }
+
+    /// <summary>
+    /// <b>The how-to band is swept too</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/229">#229</a>).
+    /// <para>
+    /// Nothing in the app draws it — the panel draws the ELI5 band and only that — which left
+    /// forty-five pages of hand-written SVG that nothing parsed. Every rule the drawing validator
+    /// enforces held on them by good intentions: an element outside the drawable set, a colour
+    /// written as a literal, a font size under the floor. This reads them with the same parser, so
+    /// the two bands are held to one standard rather than to one and a hope.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void EveryHowToBandParsesToo()
+    {
+        var broken = new List<string>();
+        var found = 0;
+
+        foreach (var page in HelpLibrary.Pages)
+        {
+            var markdown = HelpLibrary.PageFor(page);
+
+            if (markdown is null || !markdown.Contains(HelpLibrary.HowToOpen, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            found++;
+
+            try
+            {
+                var band = HelpLibrary.ParseHowTo(markdown, page);
+
+                Assert.NotNull(band);
+
+                // A band with no sections is a band that silently lost its steps — the exact
+                // failure the frame-by-name comment one method up already records once.
+                if (band.Sections.Count == 0)
+                {
+                    broken.Add($"{page}: parsed, and has no sections");
+                }
+            }
+            catch (Exception ex)
+            {
+                broken.Add($"{page}: {ex.Message}");
+            }
+        }
+
+        Assert.True(broken.Count == 0, string.Join(Environment.NewLine, broken));
+
+        // And the sweep is only worth anything if it swept something.
+        Assert.True(found > 40, $"only {found} pages carry a how-to band");
+    }
 }

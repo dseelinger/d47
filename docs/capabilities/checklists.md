@@ -5,6 +5,57 @@ nav_order: 110
 ---
 
 <!--
+  The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
+  comment on engineers.md — with one addition and one subtraction.
+
+  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
+  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
+  would silently become what the in-app panel draws on this page. The docs site styles the two
+  identically (main.scss extends one from the other); the app sees only the one below.
+
+  And no rationale in here. Every "because" belongs in the band below. That separation is the
+  whole point of there being two, and it is the thing that will erode first.
+-->
+<details class="d47-band" open>
+<summary>How to use it</summary>
+<div class="d47-howto"><div class="d47-frame">
+<p class="lede">Three steps to one list that follows you around.</p>
+<section>
+<h2><span class="num">1</span> Put something on it, out loud or on the tab.</h2>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with something being added to the checklist">
+ <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">put "buy a fuel scoop" on my list</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">Or open the Checklist tab and press + to type one in.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">Routes, engineering plans and goals land here on their own.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Tick things off by saying so.</h2>
+<svg viewBox="0 0 880 232" role="img" aria-label="The checklist tab, with items in three groups and one of them ticked">
+ <rect x="20" y="16" width="840" height="200" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <text x="44" y="52" font-size="15" font-weight="700" fill="var(--text-muted)">HERE</text>
+ <rect x="44" y="66" width="22" height="22" rx="4" fill="var(--accent)"/>
+ <text x="84" y="84" font-size="16" fill="var(--text)">buy a fuel scoop</text>
+ <text x="836" y="84" text-anchor="end" font-size="15" fill="var(--text-muted)">done</text>
+ <text x="44" y="128" font-size="15" font-weight="700" fill="var(--text-muted)">NEXT STOP</text>
+ <rect x="44" y="142" width="22" height="22" rx="4" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="84" y="160" font-size="16" fill="var(--text)">grade 3 dirty drive at Farseer</text>
+ <text x="44" y="200" font-size="15" fill="var(--text-muted)">Say "tick off the fuel scoop", or press the box.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">!</span> The one that stops people.</h2>
+<svg viewBox="0 0 880 152" role="img" aria-label="Finishing an item is not removing it, so a finished item stays on the list">
+ <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Ticking is not deleting.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">A finished item stays, so you can see what you did. Say "remove it" to take it off.</text>
+</svg>
+</section>
+</div></div>
+</details>
+
+<!--
   The ELI5 band. Rules, in the comment on engineers.md at length: no blank lines inside this
   block, never four spaces of indent, well-formed XML with no HTML entities, and no text below
   font-size 14. Colours are the nine Palette roles and nothing else.

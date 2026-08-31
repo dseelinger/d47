@@ -5,6 +5,60 @@ nav_order: 124
 ---
 
 <!--
+  The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
+  comment on engineers.md — with one addition and one subtraction.
+
+  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
+  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
+  would silently become what the in-app panel draws on this page. The docs site styles the two
+  identically (main.scss extends one from the other); the app sees only the one below.
+
+  And no rationale in here. Every "because" belongs in the band below. That separation is the
+  whole point of there being two, and it is the thing that will erode first.
+-->
+<details class="d47-band" open>
+<summary>How to use it</summary>
+<div class="d47-howto"><div class="d47-frame">
+<p class="lede">Three steps to being told what you want and nothing else.</p>
+<section>
+<h2><span class="num">1</span> Turn callouts on, then pick the ones you want.</h2>
+<svg viewBox="0 0 880 254" role="img" aria-label="The master callouts toggle above a list of individual callout toggles">
+ <rect x="20" y="20" width="840" height="60" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="46" y="57" font-size="17" font-weight="700" fill="var(--text)">Callouts</text>
+ <rect x="746" y="35" width="68" height="30" rx="15" fill="var(--accent)"/>
+ <circle cx="799" cy="50" r="11" fill="var(--background)"/>
+ <rect x="60" y="96" width="800" height="48" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <text x="86" y="126" font-size="16" fill="var(--text)">Arrival</text>
+ <rect x="756" y="107" width="60" height="26" rx="13" fill="var(--accent)"/>
+ <circle cx="803" cy="120" r="9" fill="var(--background)"/>
+ <rect x="60" y="156" width="800" height="48" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <text x="86" y="186" font-size="16" fill="var(--text)">Limpets</text>
+ <rect x="756" y="167" width="60" height="26" rx="13" fill="var(--border)"/>
+ <circle cx="769" cy="180" r="9" fill="var(--surface)"/>
+ <text x="60" y="238" font-size="15" fill="var(--text-muted)">The individual rows are not there until the master one is on.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Or just say it.</h2>
+<svg viewBox="0 0 880 168" role="img" aria-label="Spoken phrases that turn callouts on and off">
+ <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">stop telling me about limpets</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">"be quiet about arrivals" — "tell me about limpets again" — "no more callouts"</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">Each one names a row. Nothing here needs the panel.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">!</span> The one that stops people.</h2>
+<svg viewBox="0 0 880 152" role="img" aria-label="A callout that never fires is usually a callout whose own row is off">
+ <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Silence usually means its own row is off.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">The master switch being on is not enough. Check the row for the one you are missing.</text>
+</svg>
+</section>
+</div></div>
+</details>
+
+<!--
   The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.

@@ -25,6 +25,22 @@ public static class HelpLibrary
 
     private const string BandOpen = "<div class=\"d47-eli5\">";
 
+    /// <summary>
+    /// The how-to band's opener (<a href="https://github.com/dseelinger/d47/issues/229">#229</a>).
+    /// <para>
+    /// <b>The app never draws this one</b> — <see cref="Band(string, string)"/> is only ever asked
+    /// for it by the test that sweeps the pages. That is the whole point of the second class: the
+    /// panel keeps drawing the band that explains why, and the band that explains how belongs to
+    /// the docs site.
+    /// </para>
+    /// <para>
+    /// It is exposed so that band can be <em>checked</em> rather than drawn. Nothing else parses
+    /// it, so without this every rule the drawing validator enforces — the drawable element set,
+    /// the nine Palette roles, the font-size floor — would hold on 45 pages by good intentions.
+    /// </para>
+    /// </summary>
+    public const string HowToOpen = "<div class=\"d47-howto\">";
+
     private static readonly ConcurrentDictionary<string, HelpArticle?> Cache = new(StringComparer.Ordinal);
 
     /// <summary>
@@ -63,9 +79,26 @@ public static class HelpLibrary
     /// The band out of one page's markdown, or null when it has none — which most pages still do,
     /// and which is a page waiting to be written rather than a fault.
     /// </summary>
-    public static HelpArticle? Parse(string? markdown, string capabilityId)
+    public static HelpArticle? Parse(string? markdown, string capabilityId) =>
+        Parse(markdown, capabilityId, BandOpen);
+
+    /// <summary>
+    /// The <b>how-to</b> band, read by the same parser
+    /// (<a href="https://github.com/dseelinger/d47/issues/229">#229</a>).
+    /// <para>
+    /// <b>Nothing in the app calls this, and that is why it exists.</b> The panel draws the ELI5
+    /// band and only that one; the how-to band belongs to the docs site. Which left forty-five
+    /// pages of hand-written SVG that nothing anywhere parsed — so every rule the drawing
+    /// validator enforces (the drawable element set, the nine Palette roles, the font-size floor)
+    /// held on those pages by good intentions alone. This is what lets the sweep read them.
+    /// </para>
+    /// </summary>
+    public static HelpArticle? ParseHowTo(string? markdown, string capabilityId) =>
+        Parse(markdown, capabilityId, HowToOpen);
+
+    private static HelpArticle? Parse(string? markdown, string capabilityId, string opener)
     {
-        if (markdown is null || Band(markdown) is not { } band)
+        if (markdown is null || Band(markdown, opener) is not { } band)
         {
             return null;
         }
@@ -254,9 +287,9 @@ public static class HelpLibrary
     /// the first <c>&lt;/div&gt;</c> after the opener is the wrong end and the last one in the
     /// file is a different block entirely.
     /// </summary>
-    private static string? Band(string markdown)
+    private static string? Band(string markdown, string opener = BandOpen)
     {
-        var start = markdown.IndexOf(BandOpen, StringComparison.Ordinal);
+        var start = markdown.IndexOf(opener, StringComparison.Ordinal);
 
         if (start < 0)
         {

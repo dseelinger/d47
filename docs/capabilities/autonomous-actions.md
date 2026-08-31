@@ -5,6 +5,57 @@ nav_order: 132
 ---
 
 <!--
+  The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
+  comment on engineers.md — with one addition and one subtraction.
+
+  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
+  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
+  would silently become what the in-app panel draws on this page. The docs site styles the two
+  identically (main.scss extends one from the other); the app sees only the one below.
+
+  And no rationale in here. Every "because" belongs in the band below. That separation is the
+  whole point of there being two, and it is the thing that will erode first.
+-->
+<details class="d47-band" open>
+<summary>How to use it</summary>
+<div class="d47-howto"><div class="d47-frame">
+<p class="lede">One switch, one action, and nothing else happens without you.</p>
+<section>
+<h2><span class="num">1</span> Turn on the arrival honk, if you want it.</h2>
+<svg viewBox="0 0 880 192" role="img" aria-label="The setting that lets Directive 47 fire the discovery scanner on arrival, off out of the box">
+ <rect x="20" y="24" width="840" height="66" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="46" y="63" font-size="17" fill="var(--text)">Honk on arrival</text>
+ <rect x="746" y="42" width="68" height="30" rx="15" fill="var(--border)"/>
+ <circle cx="761" cy="57" r="11" fill="var(--surface)"/>
+ <text x="836" y="63" text-anchor="end" font-size="15" fill="var(--text-muted)">off</text>
+ <text x="20" y="132" font-size="16" fill="var(--text-muted)">Off out of the box. This is the only thing D47 does to your ship unasked.</text>
+ <text x="20" y="168" font-size="16" fill="var(--text-muted)">It needs key injection on as well — the master switch on the Flight page.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Jump somewhere. It fires once, after the drop.</h2>
+<svg viewBox="0 0 880 132" role="img" aria-label="After a jump completes, one press of the discovery scanner, and nothing further">
+ <rect x="20" y="20" width="270" height="66" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="155" y="60" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">JUMP COMPLETES</text>
+ <line x1="302" y1="53" x2="326" y2="53" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <polygon points="340,53 324,45 324,61" fill="var(--accent-muted)"/>
+ <rect x="354" y="20" width="506" height="66" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="607" y="60" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">ONE PRESS OF THE DISCOVERY SCANNER</text>
+ <text x="440" y="120" text-anchor="middle" font-size="15" fill="var(--text-muted)">Once per arrival. Never in supercruise, never twice.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">!</span> The one that stops people.</h2>
+<svg viewBox="0 0 880 152" role="img" aria-label="Elite must be the window in front, and the discovery scanner must be bound to a key">
+ <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Elite must be in front, with the scanner on a key.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">D47 presses your own binding, and never presses anything into another window.</text>
+</svg>
+</section>
+</div></div>
+</details>
+
+<!--
   The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.

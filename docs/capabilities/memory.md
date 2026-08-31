@@ -5,6 +5,58 @@ nav_order: 138
 ---
 
 <!--
+  The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
+  comment on engineers.md — with one addition and one subtraction.
+
+  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
+  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
+  would silently become what the in-app panel draws on this page. The docs site styles the two
+  identically (main.scss extends one from the other); the app sees only the one below.
+
+  And no rationale in here. Every "because" belongs in the band below. That separation is the
+  whole point of there being two, and it is the thing that will erode first.
+-->
+<details class="d47-band" open>
+<summary>How to use it</summary>
+<div class="d47-howto"><div class="d47-frame">
+<p class="lede">Three steps to D47 remembering the right things.</p>
+<section>
+<h2><span class="num">1</span> Tell it something worth keeping.</h2>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
+ <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">remember that I fly in open</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">"I hate mining" — "call me Commander, not Doug"</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">It only writes something down when you tell it to, or when you confirm a debrief.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Read what it has, and take anything out.</h2>
+<svg viewBox="0 0 880 246" role="img" aria-label="The Memory tab">
+ <rect x="20" y="16" width="840" height="210" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="42" rx="8" fill="var(--surface)"/>
+ <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Memory</text>
+ <text x="44" y="92" font-size="16" fill="var(--text)">Flies in open</text>
+ <text x="836" y="92" text-anchor="end" font-size="16" fill="var(--text-muted)">you told me, 27 Aug</text>
+ <text x="44" y="130" font-size="16" fill="var(--text)">Dislikes mining</text>
+ <text x="836" y="130" text-anchor="end" font-size="16" fill="var(--text-muted)">from a debrief, 29 Aug</text>
+ <text x="44" y="168" font-size="16" fill="var(--text)">Prefers metric</text>
+ <text x="836" y="168" text-anchor="end" font-size="16" fill="var(--text-muted)">you told me, 12 Aug</text>
+ <text x="44" y="222" font-size="15" fill="var(--text-muted)">Every line says where it came from. Say "forget" and name one to remove it.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">!</span> The one that stops people.</h2>
+<svg viewBox="0 0 880 152" role="img" aria-label="Memory is not the conversation.">
+ <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Memory is not the conversation.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">The last thing you said is not remembered unless it went in here. Ask what it knows if you are unsure.</text>
+</svg>
+</section>
+</div></div>
+</details>
+
+<!--
   The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.

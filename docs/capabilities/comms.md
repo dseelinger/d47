@@ -5,6 +5,54 @@ nav_order: 134
 ---
 
 <!--
+  The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
+  comment on engineers.md — with one addition and one subtraction.
+
+  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
+  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
+  would silently become what the in-app panel draws on this page. The docs site styles the two
+  identically (main.scss extends one from the other); the app sees only the one below.
+
+  And no rationale in here. Every "because" belongs in the band below. That separation is the
+  whole point of there being two, and it is the thing that will erode first.
+-->
+<details class="d47-band" open>
+<summary>How to use it</summary>
+<div class="d47-howto"><div class="d47-frame">
+<p class="lede">Three steps to sending a message other people can read.</p>
+<section>
+<h2><span class="num">1</span> Turn on key injection, then say what to send.</h2>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
+ <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">tell the wing I am on my way</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">Comms types into Elite's own chat, so key injection has to be on.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">It types; it never picks the words for you.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Check the channel before it goes.</h2>
+<svg viewBox="0 0 880 190" role="img" aria-label="The confirmation showing the channel and the exact text before it is sent">
+ <rect x="20" y="16" width="840" height="158" rx="8" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="44" y="56" font-size="15" font-weight="700" fill="var(--text-muted)">CHANNEL</text>
+ <text x="200" y="56" font-size="17" fill="var(--text)">wing</text>
+ <text x="44" y="100" font-size="15" font-weight="700" fill="var(--text-muted)">MESSAGE</text>
+ <text x="200" y="100" font-size="17" fill="var(--text)">on my way</text>
+ <text x="44" y="148" font-size="16" fill="var(--text-muted)">Local, wing, squadron or a direct message. It says which before it types.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">!</span> The one that stops people.</h2>
+<svg viewBox="0 0 880 152" role="img" aria-label="This is the one thing other people see.">
+ <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">This is the one thing other people see.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">Everything else D47 does is private to your machine. A message is not. It is worth reading twice.</text>
+</svg>
+</section>
+</div></div>
+</details>
+
+<!--
   The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.

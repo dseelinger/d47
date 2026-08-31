@@ -5,6 +5,55 @@ nav_order: 118
 ---
 
 <!--
+  The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
+  comment on engineers.md — with one addition and one subtraction.
+
+  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
+  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
+  would silently become what the in-app panel draws on this page. The docs site styles the two
+  identically (main.scss extends one from the other); the app sees only the one below.
+
+  And no rationale in here. Every "because" belongs in the band below. That separation is the
+  whole point of there being two, and it is the thing that will erode first.
+-->
+<details class="d47-band" open>
+<summary>How to use it</summary>
+<div class="d47-howto"><div class="d47-frame">
+<p class="lede">Two steps to knowing where you stand in a goal.</p>
+<section>
+<h2><span class="num">1</span> Ask what is running.</h2>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
+ <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">what community goals are on</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">This one needs the internet. It is off until you turn web access on.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">Your own contribution comes out of your journal, not the network.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Read the tier and your own share.</h2>
+<svg viewBox="0 0 880 200" role="img" aria-label="A community goal showing its tier, the contribution so far and where the Commander sits">
+ <rect x="20" y="16" width="840" height="168" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <text x="44" y="54" font-size="17" font-weight="700" fill="var(--text)">Alliance Rescue Effort</text>
+ <text x="836" y="54" text-anchor="end" font-size="16" fill="var(--accent)">TIER 4 of 8</text>
+ <rect x="44" y="76" width="792" height="14" rx="7" fill="var(--border)"/>
+ <rect x="44" y="76" width="396" height="14" rx="7" fill="var(--accent)"/>
+ <text x="44" y="128" font-size="16" fill="var(--text)">You have handed in 1,240 tonnes.</text>
+ <text x="44" y="164" font-size="15" fill="var(--text-muted)">Your figure is read from your own journal, so it is right even when the site is slow.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">!</span> The one that stops people.</h2>
+<svg viewBox="0 0 880 152" role="img" aria-label="It needs the internet, and that is off by default.">
+ <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">It needs the internet, and that is off by default.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">With web access off there is nothing to report. The privacy page says exactly what leaves.</text>
+</svg>
+</section>
+</div></div>
+</details>
+
+<!--
   The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.

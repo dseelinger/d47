@@ -5,6 +5,62 @@ nav_order: 102
 ---
 
 <!--
+  The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
+  comment on engineers.md — with one addition and one subtraction.
+
+  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
+  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
+  would silently become what the in-app panel draws on this page. The docs site styles the two
+  identically (main.scss extends one from the other); the app sees only the one below.
+
+  And no rationale in here. Every "because" belongs in the band below. That separation is the
+  whole point of there being two, and it is the thing that will erode first.
+-->
+<details class="d47-band" open>
+<summary>How to use it</summary>
+<div class="d47-howto"><div class="d47-frame">
+<p class="lede">Two steps to seeing what D47 knows about your game.</p>
+<section>
+<h2><span class="num">1</span> Nothing. It is already reading.</h2>
+<svg viewBox="0 0 880 252" role="img" aria-label="Journal">
+ <rect x="20" y="16" width="840" height="212" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Journal</text>
+ <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="68" y="98" font-size="16" fill="var(--text)">Where Elite writes it</text>
+ <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">Saved Games\Frontier Developments</text>
+ <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <text x="68" y="154" font-size="16" fill="var(--text)">What D47 reads</text>
+ <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">events, as they are written</text>
+ <text x="44" y="222" font-size="15" fill="var(--text-muted)">No setting, no permission, no network. It reads the files the game already writes.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Open the Journal page to watch events arrive.</h2>
+<svg viewBox="0 0 880 246" role="img" aria-label="The Journal tab">
+ <rect x="20" y="16" width="840" height="210" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="42" rx="8" fill="var(--surface)"/>
+ <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Journal</text>
+ <text x="44" y="92" font-size="16" fill="var(--text)">FSDJump — Kuwemaki</text>
+ <text x="836" y="92" text-anchor="end" font-size="16" fill="var(--text-muted)">19:31:04</text>
+ <text x="44" y="130" font-size="16" fill="var(--text)">Docked — Jameson Memorial</text>
+ <text x="836" y="130" text-anchor="end" font-size="16" fill="var(--text-muted)">19:22:47</text>
+ <text x="44" y="168" font-size="16" fill="var(--text)">MaterialCollected — Iron</text>
+ <text x="836" y="168" text-anchor="end" font-size="16" fill="var(--text-muted)">19:18:02</text>
+ <text x="44" y="222" font-size="15" fill="var(--text-muted)">Newest last, in the game's own vocabulary.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">!</span> The one that stops people.</h2>
+<svg viewBox="0 0 880 152" role="img" aria-label="It only knows what the game has written down.">
+ <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">It only knows what the game has written down.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">Elite does not journal everything. If a figure looks stale, the event probably never arrived.</text>
+</svg>
+</section>
+</div></div>
+</details>
+
+<!--
   The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.

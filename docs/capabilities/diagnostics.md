@@ -5,6 +5,57 @@ nav_order: 101
 ---
 
 <!--
+  The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
+  comment on engineers.md — with one addition and one subtraction.
+
+  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
+  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
+  would silently become what the in-app panel draws on this page. The docs site styles the two
+  identically (main.scss extends one from the other); the app sees only the one below.
+
+  And no rationale in here. Every "because" belongs in the band below. That separation is the
+  whole point of there being two, and it is the thing that will erode first.
+-->
+<details class="d47-band" open>
+<summary>How to use it</summary>
+<div class="d47-howto"><div class="d47-frame">
+<p class="lede">Two steps to the page that still answers when nothing else does.</p>
+<section>
+<h2><span class="num">1</span> Open the Technical page from the tab strip.</h2>
+<svg viewBox="0 0 880 246" role="img" aria-label="The Technical tab">
+ <rect x="20" y="16" width="840" height="210" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="42" rx="8" fill="var(--surface)"/>
+ <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Technical</text>
+ <text x="44" y="92" font-size="16" fill="var(--text)">Model turn "Answered" at "Medium" effort</text>
+ <text x="836" y="92" text-anchor="end" font-size="16" fill="var(--text-muted)">13,943 in</text>
+ <text x="44" y="130" font-size="16" fill="var(--text)">Transcribed 1.2s of audio</text>
+ <text x="836" y="130" text-anchor="end" font-size="16" fill="var(--text-muted)">318 ms</text>
+ <text x="44" y="168" font-size="16" fill="var(--text)">Silenced</text>
+ <text x="44" y="222" font-size="15" fill="var(--text-muted)">Every line the app wrote this session, newest last.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Ask where the log file is, and open it.</h2>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
+ <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">where are your logs</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">It answers with the folder, and you can open it from the same page.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">Logs live beside the executable in data\logs, never in AppData.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">!</span> The one that stops people.</h2>
+<svg viewBox="0 0 880 152" role="img" aria-label="This page works when the model does not.">
+ <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">This page works when the model does not.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">It reads nothing from the network and needs no key. It is the first thing to look at, not the last.</text>
+</svg>
+</section>
+</div></div>
+</details>
+
+<!--
   The ELI5 band. Editing rules, both about kramdown rather than taste: no blank lines inside
   this block, and never indent a line by four spaces or more — either can end the raw HTML
   span early and leave half a diagram rendered as text. The site needs Ruby to build, which

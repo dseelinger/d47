@@ -5,6 +5,71 @@ nav_order: 107
 ---
 
 <!--
+  The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
+  comment on engineers.md — with one addition and one subtraction.
+
+  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
+  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
+  would silently become what the in-app panel draws on this page. The docs site styles the two
+  identically (main.scss extends one from the other); the app sees only the one below.
+
+  And no rationale in here. Every "because" belongs in the band below. That separation is the
+  whole point of there being two, and it is the thing that will erode first.
+-->
+<details class="d47-band" open>
+<summary>How to use it</summary>
+<div class="d47-howto"><div class="d47-frame">
+<p class="lede">Three steps from locked to a route you can fly.</p>
+<section>
+<h2><span class="num">1</span> Open the Engineers tab and read the Directory.</h2>
+<svg viewBox="0 0 880 246" role="img" aria-label="The Engineers tab">
+ <rect x="20" y="16" width="840" height="210" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="42" rx="8" fill="var(--surface)"/>
+ <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Engineers</text>
+ <text x="44" y="92" font-size="16" fill="var(--text)">READY FOR UNLOCK</text>
+ <text x="836" y="92" text-anchor="end" font-size="16" fill="var(--text-muted)">nothing in your way</text>
+ <text x="44" y="130" font-size="16" fill="var(--text)">UNLOCKED</text>
+ <text x="836" y="130" text-anchor="end" font-size="16" fill="var(--text-muted)">and how far to the next grade</text>
+ <text x="44" y="168" font-size="16" fill="var(--text)">NEEDS A REFERRAL</text>
+ <text x="836" y="168" text-anchor="end" font-size="16" fill="var(--text-muted)">somebody else first</text>
+ <text x="44" y="222" font-size="15" fill="var(--text-muted)">Sorted by what you can do today, not alphabetically.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Press a name to see what unlocking them takes.</h2>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
+ <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">how do I unlock Felicity Farseer</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">Or press the name anywhere it appears — both reach the same page.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">It says the requirement, the system, and how far away it is.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">3</span> Accept the Route, and it becomes a checklist.</h2>
+<svg viewBox="0 0 880 208" role="img" aria-label="The Route tab">
+ <rect x="20" y="16" width="840" height="172" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="42" rx="8" fill="var(--surface)"/>
+ <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Route</text>
+ <text x="44" y="92" font-size="16" fill="var(--text)">1. Felicity Farseer — Deciat</text>
+ <text x="836" y="92" text-anchor="end" font-size="16" fill="var(--text-muted)">48 ly</text>
+ <text x="44" y="130" font-size="16" fill="var(--text)">2. The Dweller — Wyrd</text>
+ <text x="836" y="130" text-anchor="end" font-size="16" fill="var(--text-muted)">31 ly</text>
+ <text x="44" y="184" font-size="15" fill="var(--text-muted)">Accepting it writes one checklist line per stop.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">!</span> The one that stops people.</h2>
+<svg viewBox="0 0 880 152" role="img" aria-label="The Route solves for a ship, not for you.">
+ <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">The Route solves for a ship, not for you.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">It uses your current jump range. Swap ships and ask again — the order can change.</text>
+</svg>
+</section>
+</div></div>
+</details>
+
+<!--
   The ELI5 band. Editing rules, both about kramdown rather than taste: no blank lines inside
   this block, and never indent a line by four spaces or more — either can end the raw HTML
   span early and leave half a diagram rendered as text.

@@ -5,6 +5,71 @@ nav_order: 123
 ---
 
 <!--
+  The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
+  comment on engineers.md — with one addition and one subtraction.
+
+  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
+  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
+  would silently become what the in-app panel draws on this page. The docs site styles the two
+  identically (main.scss extends one from the other); the app sees only the one below.
+
+  And no rationale in here. Every "because" belongs in the band below. That separation is the
+  whole point of there being two, and it is the thing that will erode first.
+-->
+<details class="d47-band" open>
+<summary>How to use it</summary>
+<div class="d47-howto"><div class="d47-frame">
+<p class="lede">Three steps to being heard.</p>
+<section>
+<h2><span class="num">1</span> Pick a microphone and a speech model.</h2>
+<svg viewBox="0 0 880 252" role="img" aria-label="Listening">
+ <rect x="20" y="16" width="840" height="212" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Listening</text>
+ <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <text x="68" y="98" font-size="16" fill="var(--text)">Microphone</text>
+ <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text-muted)">whatever Windows is using</text>
+ <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="68" y="154" font-size="16" fill="var(--text)">Speech model</text>
+ <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text)">small.en — downloaded once</text>
+ <text x="44" y="222" font-size="15" fill="var(--text-muted)">The model is a download. Nothing is transcribed until one is on disk.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Hold push-to-talk and speak.</h2>
+<svg viewBox="0 0 880 252" role="img" aria-label="Push-to-talk">
+ <rect x="20" y="16" width="840" height="212" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Push-to-talk</text>
+ <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="68" y="98" font-size="16" fill="var(--text)">Push-to-talk</text>
+ <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">RightShift</text>
+ <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <text x="68" y="154" font-size="16" fill="var(--text)">Cancel</text>
+ <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">Ctrl+Alt+X</text>
+ <text x="44" y="222" font-size="15" fill="var(--text-muted)">Bind a key, a stick button, or one of each. Cancel is the row underneath.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">3</span> Check it heard you.</h2>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
+ <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">can you hear me</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">It reports the device, the level and what it last transcribed.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">A silent device is named rather than reported as a quiet Commander.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">!</span> The one that stops people.</h2>
+<svg viewBox="0 0 880 152" role="img" aria-label="Windows picks the default microphone, and it is often wrong.">
+ <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Windows picks the default microphone, and it is often wrong.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">A virtual endpoint from VR or streaming software looks like a working mic and sends digital silence.</text>
+</svg>
+</section>
+</div></div>
+</details>
+
+<!--
   The ELI5 band. Editing rules, both about kramdown rather than taste: no blank lines inside
   this block, and never indent a line by four spaces or more — either can end the raw HTML
   span early and leave half a diagram rendered as text. The site needs Ruby to build, which

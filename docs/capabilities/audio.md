@@ -5,6 +5,66 @@ nav_order: 122
 ---
 
 <!--
+  The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
+  comment on engineers.md — with one addition and one subtraction.
+
+  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
+  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
+  would silently become what the in-app panel draws on this page. The docs site styles the two
+  identically (main.scss extends one from the other); the app sees only the one below.
+
+  And no rationale in here. Every "because" belongs in the band below. That separation is the
+  whole point of there being two, and it is the thing that will erode first.
+-->
+<details class="d47-band" open>
+<summary>How to use it</summary>
+<div class="d47-howto"><div class="d47-frame">
+<p class="lede">Three steps to a mix you can hear over the ship.</p>
+<section>
+<h2><span class="num">1</span> Open the Audio mixer and move the five sliders.</h2>
+<svg viewBox="0 0 880 268" role="img" aria-label="The five volume sliders: speech, cues, music, ambience and alerts">
+ <rect x="20" y="16" width="840" height="236" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Audio mixer</text>
+ <text x="44" y="98" font-size="16" fill="var(--text)">Speech</text>
+ <rect x="180" y="86" width="560" height="8" rx="4" fill="var(--border)"/>
+ <rect x="180" y="86" width="440" height="8" rx="4" fill="var(--accent)"/>
+ <circle cx="620" cy="90" r="11" fill="var(--accent)"/>
+ <text x="770" y="98" font-size="15" fill="var(--text-muted)">80%</text>
+ <text x="44" y="142" font-size="16" fill="var(--text)">Cues</text>
+ <rect x="180" y="130" width="560" height="8" rx="4" fill="var(--border)"/>
+ <rect x="180" y="130" width="336" height="8" rx="4" fill="var(--accent)"/>
+ <circle cx="516" cy="134" r="11" fill="var(--accent)"/>
+ <text x="770" y="142" font-size="15" fill="var(--text-muted)">60%</text>
+ <text x="44" y="186" font-size="16" fill="var(--text)">Music</text>
+ <rect x="180" y="174" width="560" height="8" rx="4" fill="var(--border)"/>
+ <rect x="180" y="174" width="224" height="8" rx="4" fill="var(--accent)"/>
+ <circle cx="404" cy="178" r="11" fill="var(--accent)"/>
+ <text x="770" y="186" font-size="15" fill="var(--text-muted)">40%</text>
+ <text x="44" y="230" font-size="15" fill="var(--text-muted)">Ambience and Alerts sit below these two.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Set how far everything else drops while D47 talks.</h2>
+<svg viewBox="0 0 880 156" role="img" aria-label="The ducking row, which lowers every other category while Directive 47 speaks">
+ <rect x="20" y="20" width="840" height="60" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">Duck everything else while D47 speaks</text>
+ <text x="836" y="57" text-anchor="end" font-size="16" fill="var(--accent)">-12 dB</text>
+ <text x="20" y="124" font-size="16" fill="var(--text-muted)">Move a slider while something is playing and you hear the change as you make it.</text>
+ <text x="20" y="148" font-size="16" fill="var(--text-muted)">Nothing has to be re-triggered to audition it.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">!</span> The one that stops people.</h2>
+<svg viewBox="0 0 880 152" role="img" aria-label="The mixer is unreachable by the model, so asking it to turn something down does nothing">
+ <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">The AI cannot touch the mixer.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">Asking it to turn itself down does nothing. Move the slider, or use your Windows mixer.</text>
+</svg>
+</section>
+</div></div>
+</details>
+
+<!--
   The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.

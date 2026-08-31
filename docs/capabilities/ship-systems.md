@@ -5,6 +5,64 @@ nav_order: 129
 ---
 
 <!--
+  The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
+  comment on engineers.md — with one addition and one subtraction.
+
+  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
+  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
+  would silently become what the in-app panel draws on this page. The docs site styles the two
+  identically (main.scss extends one from the other); the app sees only the one below.
+
+  And no rationale in here. Every "because" belongs in the band below. That separation is the
+  whole point of there being two, and it is the thing that will erode first.
+-->
+<details class="d47-band" open>
+<summary>How to use it</summary>
+<div class="d47-howto"><div class="d47-frame">
+<p class="lede">Three steps to moving power without taking a hand off.</p>
+<section>
+<h2><span class="num">1</span> Turn on key injection.</h2>
+<svg viewBox="0 0 880 196" role="img" aria-label="Ship systems">
+ <rect x="20" y="16" width="840" height="156" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Ship systems</text>
+ <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="68" y="98" font-size="16" fill="var(--text)">Let D47 press keys in Elite</text>
+ <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">on</text>
+ <text x="44" y="166" font-size="15" fill="var(--text-muted)">Pips and panic buttons are all your own Elite bindings.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Say where the power goes.</h2>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
+ <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">four pips to engines</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">"balance the pips" — "two to systems, two to weapons"</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">It presses the pip keys the right number of times.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">3</span> And the two you want in a hurry.</h2>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
+ <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">silent running</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">"heat sink" — "silent running off"</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">Both are one press, and both need Elite in front.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">!</span> The one that stops people.</h2>
+<svg viewBox="0 0 880 152" role="img" aria-label="Pips are counted, not read.">
+ <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Pips are counted, not read.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">D47 presses towards what you asked from where it thinks you are. Say "balance the pips" to resync.</text>
+</svg>
+</section>
+</div></div>
+</details>
+
+<!--
   The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.

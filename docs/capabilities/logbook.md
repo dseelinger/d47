@@ -5,6 +5,56 @@ nav_order: 140
 ---
 
 <!--
+  The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
+  comment on engineers.md — with one addition and one subtraction.
+
+  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
+  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
+  would silently become what the in-app panel draws on this page. The docs site styles the two
+  identically (main.scss extends one from the other); the app sees only the one below.
+
+  And no rationale in here. Every "because" belongs in the band below. That separation is the
+  whole point of there being two, and it is the thing that will erode first.
+-->
+<details class="d47-band" open>
+<summary>How to use it</summary>
+<div class="d47-howto"><div class="d47-frame">
+<p class="lede">Two steps to a readable account of what you did.</p>
+<section>
+<h2><span class="num">1</span> Fly. Then ask for the log.</h2>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
+ <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">write up my session</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">"what did I do this week" — "log the last two hours"</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">Every sentence traces to a journal event, so nothing in it is invented.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Read it, and keep it if you want it.</h2>
+<svg viewBox="0 0 880 246" role="img" aria-label="The Commander's log tab">
+ <rect x="20" y="16" width="840" height="210" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="42" rx="8" fill="var(--surface)"/>
+ <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Commander's log</text>
+ <text x="44" y="92" font-size="16" fill="var(--text)">Left Kuwemaki A 3 at 19:04</text>
+ <text x="44" y="130" font-size="16" fill="var(--text)">Sold 42 t of gold at Jameson Memorial</text>
+ <text x="836" y="130" text-anchor="end" font-size="16" fill="var(--text-muted)">1.4 m cr</text>
+ <text x="44" y="168" font-size="16" fill="var(--text)">Unlocked Felicity Farseer</text>
+ <text x="44" y="222" font-size="15" fill="var(--text-muted)">Saved to your own machine, in plain text you can read without D47.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">!</span> The one that stops people.</h2>
+<svg viewBox="0 0 880 152" role="img" aria-label="It writes up what the journal saw, not what you meant.">
+ <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">It writes up what the journal saw, not what you meant.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">A quiet session produces a short log. That is the log being honest rather than being broken.</text>
+</svg>
+</section>
+</div></div>
+</details>
+
+<!--
   The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.

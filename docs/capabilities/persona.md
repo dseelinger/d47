@@ -5,6 +5,64 @@ nav_order: 120
 ---
 
 <!--
+  The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
+  comment on engineers.md — with one addition and one subtraction.
+
+  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
+  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
+  would silently become what the in-app panel draws on this page. The docs site styles the two
+  identically (main.scss extends one from the other); the app sees only the one below.
+
+  And no rationale in here. Every "because" belongs in the band below. That separation is the
+  whole point of there being two, and it is the thing that will erode first.
+-->
+<details class="d47-band" open>
+<summary>How to use it</summary>
+<div class="d47-howto"><div class="d47-frame">
+<p class="lede">Three steps to a ship AI that sounds like yours.</p>
+<section>
+<h2><span class="num">1</span> Pick a core.</h2>
+<svg viewBox="0 0 880 308" role="img" aria-label="Persona">
+ <rect x="20" y="16" width="840" height="268" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Persona</text>
+ <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="68" y="98" font-size="16" fill="var(--text)">Core</text>
+ <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">one of eleven</text>
+ <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <text x="68" y="154" font-size="16" fill="var(--text)">Ship name</text>
+ <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">what you call it</text>
+ <rect x="44" y="182" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <text x="68" y="210" font-size="16" fill="var(--text)">Personality</text>
+ <text x="812" y="210" text-anchor="end" font-size="16" fill="var(--text-muted)">on</text>
+ <text x="44" y="278" font-size="15" fill="var(--text-muted)">Eleven Guardian cores. Each one behaves as though the other ten do not exist.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Bind one to a ship, if you want it to follow the hull.</h2>
+<svg viewBox="0 0 880 252" role="img" aria-label="Persona">
+ <rect x="20" y="16" width="840" height="212" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Persona</text>
+ <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="68" y="98" font-size="16" fill="var(--text)">The ship this core flies</text>
+ <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">Anaconda — Ptarmigan</text>
+ <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <text x="68" y="154" font-size="16" fill="var(--text)">Keep the name across a core change</text>
+ <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">on</text>
+ <text x="44" y="222" font-size="15" fill="var(--text-muted)">Set on the Settings tab, once per ship. D47 never works one out by watching you.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">!</span> The one that stops people.</h2>
+<svg viewBox="0 0 880 152" role="img" aria-label="The AI cannot change its own core.">
+ <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">The AI cannot change its own core.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">Nothing the model can call reaches these rows. It can tell you which core is running, and that is all.</text>
+</svg>
+</section>
+</div></div>
+</details>
+
+<!--
   The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.

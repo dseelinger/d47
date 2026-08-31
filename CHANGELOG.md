@@ -27,6 +27,52 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.95.0 — 2026-08-30 — Every page says how before it says why
+
+### Two bands on every capability page: how to use it, and why it works that way (#229)
+
+**The Commander's rule for what help is for: how to use it, not why it is good.** Every one of the
+45 capability pages now opens on a **How to use it** band — steps, each keyed to a mockup of the
+screen the step is about, and the one gotcha that stops people. The band that was there, which
+explains why the feature is the way it is, is still there under **Why it works this way**, collapsed.
+Both use `<details>`, which is native and needs no script.
+
+**switches.md was built first and signed off before the other forty-four**, which is the whole of
+why this landed in one piece. Forty-five bands written to an unagreed shape is forty-five bands to
+redo.
+
+**The how-to band carries its own class, and that is load-bearing.** `HelpLibrary.Band` takes the
+*first* `d47-eli5` div in a file, so a second band under that class would have silently become what
+the in-app panel and the headset draw — on every page, with no code change and nothing to notice it.
+`main.scss` extends one class from the other, so the two are styled from one description and cannot
+drift apart.
+
+**The cards moved out of the band on the Commander's call**, so *Where to go next* stays visible
+while the why band is collapsed. That would have cost every page its feet in the panel, because
+`HelpLibrary` read them from the band's frame — the failure shape its own comment already warns
+about one size smaller. `Links` falls back to the cards block at the foot of the page now. Doing
+that parsed blocks nothing had parsed before, and found three general pages writing their arrows as
+`&rarr;` — an HTML entity, the one thing the band rules forbid outright.
+
+**And the new bands are checked rather than trusted.** Nothing in the app draws them, so 45 pages of
+hand-written SVG had no parser between them and the site: an element outside the drawable set, a
+colour written as a literal, a font size under the 14 px floor. `ParseHowTo` reads them with the same
+validator the ELI5 bands get, and a sweep holds both to one standard. Verified by breaking one
+colour and watching it name the page and the role.
+
+**Two faults came from rendering the pilot rather than reading it.** The summary marker's CSS escape
+had no terminating space, so it ate the next character and drew a tofu box with `B8` beside it. And
+the position-row mockup was missing the *fourth* dropdown — a picture showing three controls against
+a screen with four is worse than no picture at all.
+
+**What this is not is a gate on the content.** `DocumentationGateTests` asserts a page exists and
+quotes the current tool schema; nothing can assert that a band teaches anything, or that a mockup
+still resembles the app. A drawing of a UI is a claim about that UI, and it stops being true the
+moment a control moves — so when a capability's settings rows change, its mockup is part of that
+change rather than documentation to catch up on later.
+
+---
+
 ## 0.94.0 — 2026-08-30 — One key to talk, one to call the whole thing off
 
 ### Clickable words and marks carry the accent at rest (#208)

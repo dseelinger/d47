@@ -5,6 +5,60 @@ nav_order: 112
 ---
 
 <!--
+  The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
+  comment on engineers.md — with one addition and one subtraction.
+
+  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
+  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
+  would silently become what the in-app panel draws on this page. The docs site styles the two
+  identically (main.scss extends one from the other); the app sees only the one below.
+
+  And no rationale in here. Every "because" belongs in the band below. That separation is the
+  whole point of there being two, and it is the thing that will erode first.
+-->
+<details class="d47-band" open>
+<summary>How to use it</summary>
+<div class="d47-howto"><div class="d47-frame">
+<p class="lede">Two steps to one list of everything you are short of.</p>
+<section>
+<h2><span class="num">1</span> Plan something first. The Gap is the arithmetic on top.</h2>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
+ <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">what am I missing</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">It reads your engineering plans, your builds and your goals together.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">Nothing to configure — it is the sum of what you already asked for.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Read it ledger by ledger.</h2>
+<svg viewBox="0 0 880 308" role="img" aria-label="The gap">
+ <rect x="20" y="16" width="840" height="268" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">The gap</text>
+ <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="68" y="98" font-size="16" fill="var(--text)">Raw materials</text>
+ <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">14 short across 3 plans</text>
+ <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="68" y="154" font-size="16" fill="var(--text)">Commodities</text>
+ <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text)">3,200 t for the build</text>
+ <rect x="44" y="182" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <text x="68" y="210" font-size="16" fill="var(--text)">Credits</text>
+ <text x="812" y="210" text-anchor="end" font-size="16" fill="var(--text-muted)">nothing outstanding</text>
+ <text x="44" y="278" font-size="15" fill="var(--text-muted)">Each ledger says which plan it came from.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">!</span> The one that stops people.</h2>
+<svg viewBox="0 0 880 152" role="img" aria-label="An empty gap means nothing is planned.">
+ <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">An empty gap means nothing is planned.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">The Gap has nothing of its own. With no plans, no builds and no goals, it is correctly blank.</text>
+</svg>
+</section>
+</div></div>
+</details>
+
+<!--
   The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.

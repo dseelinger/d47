@@ -5,6 +5,63 @@ nav_order: 125
 ---
 
 <!--
+  The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
+  comment on engineers.md — with one addition and one subtraction.
+
+  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
+  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
+  would silently become what the in-app panel draws on this page. The docs site styles the two
+  identically (main.scss extends one from the other); the app sees only the one below.
+
+  And no rationale in here. Every "because" belongs in the band below. That separation is the
+  whole point of there being two, and it is the thing that will erode first.
+-->
+<details class="d47-band" open>
+<summary>How to use it</summary>
+<div class="d47-howto"><div class="d47-frame">
+<p class="lede">Three steps to putting the window where you want it.</p>
+<section>
+<h2><span class="num">1</span> Learn the tab strip. Everything is behind it.</h2>
+<svg viewBox="0 0 880 208" role="img" aria-label="The Transcript  Checklist  Ships  Settings tab">
+ <rect x="20" y="16" width="840" height="172" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="42" rx="8" fill="var(--surface)"/>
+ <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Transcript  Checklist  Ships  Settings</text>
+ <text x="44" y="92" font-size="16" fill="var(--text)">The page you land on</text>
+ <text x="836" y="92" text-anchor="end" font-size="16" fill="var(--text-muted)">the conversation</text>
+ <text x="44" y="130" font-size="16" fill="var(--text)">Everything else</text>
+ <text x="836" y="130" text-anchor="end" font-size="16" fill="var(--text-muted)">one press away</text>
+ <text x="44" y="184" font-size="15" fill="var(--text-muted)">The same strip is drawn in the headset, minus the tabs a quad has no room for.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Shrink it to mini when you want it out of the way.</h2>
+<svg viewBox="0 0 880 308" role="img" aria-label="Hotkeys">
+ <rect x="20" y="16" width="840" height="268" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Hotkeys</text>
+ <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="68" y="98" font-size="16" fill="var(--text)">Put the window into mini and back</text>
+ <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">Ctrl+M</text>
+ <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <text x="68" y="154" font-size="16" fill="var(--text)">Open Settings</text>
+ <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">Ctrl+comma</text>
+ <rect x="44" y="182" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <text x="68" y="210" font-size="16" fill="var(--text)">Jump to the ask box</text>
+ <text x="812" y="210" text-anchor="end" font-size="16" fill="var(--text-muted)">Ctrl+L</text>
+ <text x="44" y="278" font-size="15" fill="var(--text-muted)">Mini takes the chrome away. Ctrl+M is the way back, and so is the title bar.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">!</span> The one that stops people.</h2>
+<svg viewBox="0 0 880 152" role="img" aria-label="Mini hides the tab strip too.">
+ <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Mini hides the tab strip too.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">That is the point of it, and it is why the way out is a key rather than a button on the surface.</text>
+</svg>
+</section>
+</div></div>
+</details>
+
+<!--
   The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.

@@ -5,6 +5,59 @@ nav_order: 119
 ---
 
 <!--
+  The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
+  comment on engineers.md — with one addition and one subtraction.
+
+  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
+  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
+  would silently become what the in-app panel draws on this page. The docs site styles the two
+  identically (main.scss extends one from the other); the app sees only the one below.
+
+  And no rationale in here. Every "because" belongs in the band below. That separation is the
+  whole point of there being two, and it is the thing that will erode first.
+-->
+<details class="d47-band" open>
+<summary>How to use it</summary>
+<div class="d47-howto"><div class="d47-frame">
+<p class="lede">Three steps to choosing who answers you.</p>
+<section>
+<h2><span class="num">1</span> Pick a provider and a model.</h2>
+<svg viewBox="0 0 880 200" role="img" aria-label="The provider and model rows, with a key row under them">
+ <rect x="20" y="16" width="840" height="60" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="46" y="53" font-size="17" fill="var(--text)">Provider</text>
+ <rect x="560" y="30" width="278" height="32" rx="4" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="580" y="52" font-size="15" fill="var(--text)">Anthropic</text>
+ <text x="822" y="52" text-anchor="end" font-size="13" fill="var(--text-muted)">▾</text>
+ <rect x="20" y="88" width="840" height="60" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="46" y="125" font-size="17" fill="var(--text)">Model</text>
+ <rect x="560" y="102" width="278" height="32" rx="4" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
+ <text x="580" y="124" font-size="15" fill="var(--text)">claude-opus-5</text>
+ <text x="822" y="124" text-anchor="end" font-size="13" fill="var(--text-muted)">▾</text>
+ <text x="20" y="186" font-size="16" fill="var(--text-muted)">Choose "none" and D47 still works — everything it does itself keeps working.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Put your key in, and ask something.</h2>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
+ <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">what is my current cargo worth</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">The key is stored on this machine and never shown again once saved.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">The status line under the answer says the model, the effort and what it cost.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">!</span> The one that stops people.</h2>
+<svg viewBox="0 0 880 152" role="img" aria-label="No key means no answers, and it says so.">
+ <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">No key means no answers, and it says so.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">A paid provider with no key stored refuses at the first question rather than at setup time.</text>
+</svg>
+</section>
+</div></div>
+</details>
+
+<!--
   The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
