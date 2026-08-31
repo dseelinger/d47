@@ -1105,20 +1105,31 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            // A turn that throws is a bug, not a provider failure — provider failures arrive as
-            // events. Surface it rather than losing it.
-            //
-            // Logged as well as shown, and with the stack trace. The panel gets one line of
-            // message, and the logs are the first thing read on a bug report — a cross-thread
-            // failure here left the log with nothing in it at all, not even at Information,
-            // which made a reproducible crash look like it had happened nowhere.
-            _host?.Loggers.CreateLogger<MainWindow>().LogError(ex, "The turn threw");
+            // Which of the two this is — a turn the Commander called off, or one that threw —
+            // decided in one place and pinned by its own tests (#222).
+            var ending = TurnEnding.For(ex, cancelling.IsCancellationRequested);
 
-            // One voice. The conversation gets a sentence in the same register as everything
-            // else D47 says, and the part that is only useful to somebody debugging goes to the
-            // page for that — a bracketed exception message is not a reply to anybody.
-            _model.Append("\nI couldn't answer that. The details are on the Technical page.");
-            _model.Append($"\n[turn failed: {ex.Message}]", TranscriptKind.Technical);
+            if (ending.Technical is { } technical)
+            {
+                // A turn that throws is a bug, not a provider failure — provider failures arrive
+                // as events. Surface it rather than losing it.
+                //
+                // Logged as well as shown, and with the stack trace. The panel gets one line of
+                // message, and the logs are the first thing read on a bug report — a cross-thread
+                // failure here left the log with nothing in it at all, not even at Information,
+                // which made a reproducible crash look like it had happened nowhere.
+                //
+                // Neither happens for a cancel: nothing went wrong, so there is no stack worth
+                // keeping and nothing for the Technical page to hold. TurnCancellation has already
+                // recorded that the Commander called it off.
+                _host?.Loggers.CreateLogger<MainWindow>().LogError(ex, "The turn threw");
+                _model.Append(technical, TranscriptKind.Technical);
+            }
+
+            // One voice. The conversation gets a line in the same register as everything else D47
+            // says, and the part that is only useful to somebody debugging goes to the page for
+            // that — a bracketed exception message is not a reply to anybody.
+            _model.Append(ending.Conversation);
         }
         finally
         {
