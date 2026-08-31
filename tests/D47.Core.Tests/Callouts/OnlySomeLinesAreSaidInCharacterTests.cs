@@ -77,6 +77,25 @@ public class OnlySomeLinesAreSaidInCharacterTests
     }
 
     /// <summary>
+    /// Spoken to the Commander, never narrated (#222). The old brief asked for "a remark about
+    /// where the Commander is", which made the place the subject — and a description of a place
+    /// in the third person is narration, delivered obediently. The instruction now names the
+    /// addressee, prohibits the register rather than only the interactions, and carries the
+    /// authored line as a sample of the voice rather than as a script.
+    /// </summary>
+    [Fact]
+    public void AnAmbientRemarkSpeaksToTheCommanderWithTheAuthoredLineAsTone()
+    {
+        var brief = FlavourBriefs.For(
+            new Announcement($"{AmbientCallout.KeyPrefix}Docked", "Quiet out here."), personalityEnabled: true);
+
+        Assert.NotNull(brief);
+        Assert.Contains("speaking to the Commander", brief.Instruction, StringComparison.Ordinal);
+        Assert.Contains("No scene-setting", brief.Instruction, StringComparison.Ordinal);
+        Assert.Contains("\"Quiet out here.\"", brief.Instruction, StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// The carrier's two roles are other people entirely. No persona block — handing a Guardian
     /// core the captain's lines would put one of them in two places at once, which is the one
     /// thing the isolation model cannot survive — and no game state.
