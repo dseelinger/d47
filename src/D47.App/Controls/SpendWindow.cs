@@ -119,7 +119,7 @@ public sealed class SpendWindow : Window
         _body.Children.Clear();
 
         _body.Children.Add(Estimates());
-        _body.Children.Add(Section("This turn", TurnRows(_turn)));
+        _body.Children.Add(Section("This response", TurnRows(_turn)));
         _body.Children.Add(Section("This session", SessionRows(_session, _speech, _settings)));
 
         // Five windows, freshest first. Two are elapsed durations and three are local calendar
@@ -267,7 +267,7 @@ public sealed class SpendWindow : Window
     {
         if (turn is not { } cost)
         {
-            return [Row("Nothing yet", "no turn has been answered this session")];
+            return [Row("Nothing yet", "no response has been given this session")];
         }
 
         var usage = cost.Usage;
@@ -297,7 +297,7 @@ public sealed class SpendWindow : Window
     {
         List<Control> rows =
         [
-            Row("Turns", session.TurnCount.ToString("N0")),
+            Row("Responses", session.TurnCount.ToString("N0")),
             Row("Model", session.RunningTotalDollars.ToString("C4")),
         ];
 

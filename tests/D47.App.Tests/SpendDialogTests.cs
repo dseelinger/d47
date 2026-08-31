@@ -139,7 +139,7 @@ public class SpendDialogTests
             .ToList();
 
         var estimates = blocks.FindIndex(text => text.StartsWith("Estimates.", StringComparison.Ordinal));
-        var thisTurn = blocks.FindIndex(text => text == "This turn");
+        var thisTurn = blocks.FindIndex(text => text == "This response");
 
         Assert.True(estimates >= 0, "The spend dialog says nothing about the figures being estimates.");
         Assert.True(
@@ -207,7 +207,7 @@ public class SpendDialogTests
         Assert.Contains("Input", text, StringComparison.Ordinal);
         Assert.Contains("Output", text, StringComparison.Ordinal);
         Assert.Contains("cached", text, StringComparison.Ordinal);
-        Assert.Contains("Turns", text, StringComparison.Ordinal);
+        Assert.Contains("Responses", text, StringComparison.Ordinal);
 
         // Voice is reported beside the model rather than on a surface of its own, so "what has
         // this cost" keeps having one answer.

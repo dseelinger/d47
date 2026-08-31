@@ -705,16 +705,35 @@
           tab with one root shows no control at all. Hidden below the root, where the breadcrumb
           is already answering which stack you are in.
         -->
-        <Button x:Name="ModeButton"
-                DockPanel.Dock="Left"
-                Margin="0,0,12,0"
-                VerticalAlignment="Center"
-                Height="28"
-                Padding="10,0"
-                CornerRadius="4"
-                IsVisible="False"
-                FontSize="{StaticResource D47.Type.Secondary}"
-                Click="OnModeClick" />
+        <!--
+          A real ComboBox (#231), and the comment this replaces was half right. It said a
+          ComboBox cannot be used here because a popup has no top level to hang from on a window
+          that is never shown. That is true of the headset's copy and was applied to both — but
+          the panel is instantiated twice, and only the offscreen copy lives in that window. This
+          one is in the real main window, with a real top level, exactly like Settings.
+
+          The headset's copy is already covered without this knowing: OffscreenSurface intercepts
+          a ray-press on any ComboBox before a pointer event is raised, forces IsDropDownOpen to
+          false and draws its own list on the panel. That interception exists so the panel can
+          contain combo boxes, and this is the control it was waiting for.
+
+          The busy glyph sits beside it rather than inside it, because a ComboBox's content is
+          its selected item and a spinner is not one of the readings.
+        -->
+        <StackPanel x:Name="ModePicker"
+                    DockPanel.Dock="Left"
+                    Orientation="Horizontal"
+                    Spacing="7"
+                    Margin="0,0,12,0"
+                    VerticalAlignment="Center"
+                    IsVisible="False">
+          <ComboBox x:Name="ModeBox"
+                    MinHeight="28"
+                    VerticalAlignment="Center"
+                    CornerRadius="4"
+                    FontSize="{StaticResource D47.Type.Secondary}"
+                    SelectionChanged="OnModeChanged" />
+        </StackPanel>
         <!--
           One search affordance for the surface, on the tab that is selected — not four features
           bolted to four pages (list.md Phase 12). What a match does differs by page and that
@@ -999,7 +1018,12 @@
             Borrowing it would mean giving this tab a drill stack it has no levels for.
           -->
           <Grid x:Name="JournalPane" IsVisible="False" ColumnDefinitions="*,Auto,1.2*">
-            <ScrollViewer Grid.Column="0" x:Name="JournalListScroller">
+            <!--
+              Watched like the transcript's own scroller, because the Newest button acts on
+              whichever of the two is showing (#233). Without this, moving through the list
+              never told the button the Commander had left the newest entry.
+            -->
+            <ScrollViewer Grid.Column="0" x:Name="JournalListScroller" ScrollChanged="OnTranscriptScrolled">
               <ListBox x:Name="JournalList"
                        Background="Transparent"
                        BorderThickness="0"

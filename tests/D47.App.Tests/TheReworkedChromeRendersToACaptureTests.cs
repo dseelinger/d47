@@ -149,8 +149,12 @@ public class TheReworkedChromeRendersToACaptureTests
     {
         var (window, panel) = Open(1200);
 
-        panel.GetControl<Button>("ModeButton")
-            .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        // The box as it sits, not opened (#231). A ComboBox drops its list into a popup, and a
+        // popup is its own top level — so it is not in this window's capture whether it is open
+        // or not. What the picture is for is the control in the row beside the search box.
+        Assert.True(
+            panel.GetControl<StackPanel>("ModePicker").IsVisible,
+            "there was no mode control to photograph");
 
         Save(window, "chrome-modes.png");
         window.Close();

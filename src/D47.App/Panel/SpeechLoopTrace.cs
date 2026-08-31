@@ -75,7 +75,7 @@ public sealed class SpeechLoopTrace(PanelViewModel panel, Func<DateTimeOffset>? 
         LoopState.Speaking => "Speaking the answer.",
         LoopState.Answered => "Answered.",
         LoopState.Unsure => "Answered, but unsure.",
-        LoopState.Failed => "The turn could not be completed.",
+        LoopState.Failed => "The response could not be completed.",
 
         // Idle. Nothing to say about the loop being at rest, and it is entered after every
         // single turn — the one state whose line would be pure volume.

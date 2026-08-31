@@ -146,15 +146,6 @@ public partial class PanelView : UserControl
     private readonly Controls.BusyGlyph _logBusy = new() { IsVisible = false };
 
     /// <summary>
-    /// Which reading the mode button says is showing. Written rather than rebuilt, so the glyph
-    /// beside it survives a navigation — see <see cref="DrawModes"/>.
-    /// </summary>
-    private readonly TextBlock _modeLabel = new()
-    {
-        VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-    };
-
-    /// <summary>
     /// Whether the search affordance belongs on this surface. Only the desktop window says yes.
     /// Held rather than read off a control's visibility, because the controls it governs are now
     /// hidden and shown by the tab as well (remediation.md 10, item 2).
@@ -349,29 +340,14 @@ public partial class PanelView : UserControl
             PanelTab.Transcript,
             new NavCrumb(JournalRoot, "Journal") { Help = TranscriptHelp });
 
-        // The mode button's content, once. See DrawModes for why it is not rebuilt.
+        // Beside the box rather than inside it (#231). A ComboBox draws its own chevron and its
+        // content is whichever reading is selected, so the spinner has to live next to the
+        // control it reports on instead of within it.
         _logBusy.Bind(
             Avalonia.Controls.Shapes.Shape.StrokeProperty,
             this.GetResourceObservable(Theming.ThemeManager.AccentKey));
 
-        ModeButton.Content = new StackPanel
-        {
-            Orientation = Avalonia.Layout.Orientation.Horizontal,
-            Spacing = 7,
-            Children =
-            {
-                _modeLabel,
-                _logBusy,
-
-                // The one thing that says this opens something. Without it the control reads as a
-                // label that happens to be pressable, which is a control nobody presses.
-                new TextBlock
-                {
-                    Text = "▾",
-                    VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-                },
-            },
-        };
+        ModePicker.Children.Add(_logBusy);
 
         Prompts = new PanelPrompts(Nav, Layer)
         {
@@ -1417,7 +1393,7 @@ public partial class PanelView : UserControl
 
         if (ReferenceEquals(scroller, TranscriptScroller))
         {
-            _following = AtTheEnd();
+            _following = AtTheNewest();
             ShowFollowButton();
         }
 
@@ -2491,56 +2467,90 @@ public partial class PanelView : UserControl
         var roots = Nav.Roots(Nav.Tab);
         var showing = Nav.RootKeyOf(Nav.Tab);
 
-        ModeButton.IsVisible = !OutputOnly && roots.Count > 1 && Nav.AtRoot;
+        ModePicker.IsVisible = !OutputOnly && roots.Count > 1 && Nav.AtRoot;
 
         ShowPageBar();
 
-        if (!ModeButton.IsVisible)
+        if (!ModePicker.IsVisible)
         {
             return;
         }
 
-        // The word changes; the controls do not. Built once and then written to, because the glyph
-        // is handed to Busy.While and a content panel rebuilt underneath it leaves the helper
-        // spinning an instance nothing is showing (remediation.md 10, item 5). It also stops a
-        // navigation discarding three controls to change one string.
-        _modeLabel.Text = roots.FirstOrDefault(root => root.Key == showing)?.Word ?? roots[0].Word;
+        // Rebuilt only when the readings themselves changed, not on every navigation. Replacing
+        // the items is what moves the selection, and moving the selection is what would fire
+        // OnModeChanged — so a navigation that only changes which root is current must not touch
+        // the list. Compared by word because that is what the box shows.
+        var words = roots.Select(root => root.Word).ToList();
+
+        if (ModeBox.ItemsSource is not IReadOnlyList<string> shown || !shown.SequenceEqual(words))
+        {
+            _settingMode = true;
+
+            try
+            {
+                ModeBox.ItemsSource = words;
+            }
+            finally
+            {
+                _settingMode = false;
+            }
+        }
+
+        var index = roots.ToList().FindIndex(root => root.Key == showing);
+
+        // Written under the guard, because this runs on every navigation — including the one
+        // OnModeChanged just caused. Without it the box would answer its own change and call
+        // SelectRoot again, which is the loop a programmatic write always risks (#231).
+        _settingMode = true;
+
+        try
+        {
+            ModeBox.SelectedIndex = index < 0 ? 0 : index;
+        }
+        finally
+        {
+            _settingMode = false;
+        }
     }
 
     /// <summary>
-    /// Opens the readings of this page as a chooser in the layer.
+    /// Whether the selection is being written by <see cref="DrawModes"/> rather than chosen by
+    /// the Commander. See the guard there: a programmatic <c>SelectedIndex</c> raises the same
+    /// event a press does, and the navigator would be told about a move it had just made.
+    /// </summary>
+    private bool _settingMode;
+
+    /// <summary>
+    /// The Commander picked a reading from the drop-down.
     /// <para>
-    /// The panel's own idiom rather than a <c>ComboBox</c>, and that is not a preference: a combo
-    /// box drops a popup, a popup needs a top level to hang from, and the headset's host window is
-    /// constructed and never shown. The layer is a panel in this tree, so the geometric hit test
-    /// the headset uses finds it exactly as it finds everything else.
+    /// <b>A real <c>ComboBox</c>, which the panel spent a long time believing it could not have</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/231">#231</a>). The belief was true of
+    /// the headset's copy and got applied to both surfaces: a popup needs a top level, and the
+    /// offscreen host window is never shown, so opening one there exits the process at
+    /// <c>0xC00000FD</c> before any dispatcher work. This copy is in the real window and has a
+    /// real top level. The headset's is covered by <c>OffscreenSurface</c>, which takes the press
+    /// before a pointer event exists and draws the list on the panel itself.
     /// </para>
     /// </summary>
-    private void OnModeClick(object? sender, RoutedEventArgs e)
+    private void OnModeChanged(object? sender, SelectionChangedEventArgs e)
     {
-        var roots = Nav.Roots(Nav.Tab);
-
-        if (roots.Count <= 1)
+        if (_settingMode)
         {
             return;
         }
 
-        Prompts.Choose(
-            new D47.Core.Interface.ChoiceRequest(
-                "panel.mode",
-                "Show",
-                "Show",
-                null,
-                [.. roots.Select(root => new D47.Core.Interface.ChoiceOption(root.Key, root.Word))],
-                Nav.RootKeyOf(Nav.Tab),
-                D47.Core.Interface.ChoiceSurface.Layer)
-            {
-                CurrentWord = "showing now",
-            },
-            // Through the navigator's own event, so a reading reached by a press and one reached
-            // by a spoken phrase are one path rather than two that have to agree. Dropping the
-            // search query and the follow lock is ApplyNavigation's job either way.
-            option => Nav.SelectRoot(option.Key));
+        var roots = Nav.Roots(Nav.Tab);
+        var index = ModeBox.SelectedIndex;
+
+        if (index < 0 || index >= roots.Count)
+        {
+            return;
+        }
+
+        // Through the navigator's own event, so a reading reached by a press and one reached
+        // by a spoken phrase are one path rather than two that have to agree. Dropping the
+        // search query and the follow lock is ApplyNavigation's job either way.
+        Nav.SelectRoot(roots[index].Key);
     }
 
     /// <summary>
@@ -2701,7 +2711,7 @@ public partial class PanelView : UserControl
         // The mode button, which may not exist: it is hidden in mini and below a root, and the
         // log can be the reading a surface is on in either. With nothing drawn the read simply
         // runs unannounced — there is nothing to announce on.
-        if (!ModeButton.IsVisible)
+        if (!ModePicker.IsVisible)
         {
             // Read off this thread, tell the page on it. RefreshLog inside the Task.Run set a
             // bound property from the worker, and a read that outlives its test then raised
@@ -2722,7 +2732,7 @@ public partial class PanelView : UserControl
         // and the draw was not, and the draw is on this thread: five hundred lines becoming runs
         // and then a layout pass is the part a Commander was watching nothing happen during.
         // The continuation resumes here, so the glyph is still up while the page is built.
-        await Controls.Busy.While(ModeButton, _logBusy, async () =>
+        await Controls.Busy.While(ModeBox, _logBusy, async () =>
         {
             // The same split as above: the file work on a worker, the property set here.
             if (_bound is { } bound)
@@ -3555,13 +3565,26 @@ public partial class PanelView : UserControl
 
         try
         {
+            var scroller = Scroller;
+
             // Laid out first. A scroll viewer scrolls to the end of the extent it currently
             // knows about, and the runs were rewritten a moment ago — so without this it goes to
             // where the end was before the line that caused it, which is the "lands one append
             // behind" the subscription order above is already fighting. Forced rather than
             // awaited because the following has to be true when this returns.
-            TranscriptScroller.UpdateLayout();
-            TranscriptScroller.ScrollToEnd();
+            scroller.UpdateLayout();
+
+            // The newest line, not the bottom (#233). Vertical only: ScrollToHome would take the
+            // horizontal offset with it, and the raw journal is a page a Commander scrolls
+            // sideways through.
+            if (NewestAtTop)
+            {
+                scroller.Offset = scroller.Offset.WithY(0);
+            }
+            else
+            {
+                scroller.ScrollToEnd();
+            }
         }
         finally
         {
@@ -3572,19 +3595,51 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>
-    /// Whether the view is at the end of the text, within a line's worth.
+    /// Which way this reading runs, and therefore where its newest line is (#233).
+    /// <para>
+    /// <b>One bit, asked once.</b> The transcript and the log file grow downwards, so their
+    /// newest line is at the bottom and "the end" and "the newest" are the same place. The two
+    /// journal readings are written newest-first — <c>JournalLog</c> says so of the raw one
+    /// outright — so on those the newest line is at the <em>top</em>, and every part of the
+    /// follow mechanism that assumed otherwise sent the Commander to the far end of the file.
+    /// </para>
+    /// </summary>
+    private bool NewestAtTop => Page is TranscriptPage.Journal or TranscriptPage.RawJournal;
+
+    /// <summary>
+    /// The scroller the Newest button acts on, which is not always the transcript's.
+    /// <para>
+    /// Journal takes the pane with a list of its own and hides <see cref="TranscriptScroller"/>
+    /// entirely, so the button was reading the extent of a scroller nobody could see and moving
+    /// it. That is the second half of #233 and a different fault from the direction: on Raw
+    /// Journal the button went the wrong way, and on Journal it went nowhere at all.
+    /// </para>
+    /// </summary>
+    private ScrollViewer Scroller =>
+        Page == TranscriptPage.Journal ? JournalListScroller : TranscriptScroller;
+
+    /// <summary>
+    /// Whether the view is at the newest line of this reading, within a line's worth.
     /// <para>
     /// A tolerance rather than an equality, because a scroll viewer's extent and its offset are
     /// laid-out doubles: a wrapped line, a font fallback or a fractional scale leaves the last
     /// pixel unreachable, and "following" would then switch itself off on a surface that is
-    /// visibly at the bottom.
+    /// visibly at the end.
     /// </para>
     /// </summary>
-    private bool AtTheEnd()
+    private bool AtTheNewest()
     {
-        var slack = Math.Max(1, TranscriptScroller.Extent.Height - TranscriptScroller.Viewport.Height);
+        var scroller = Scroller;
+        var tolerance = Transcript.FontSize;
 
-        return TranscriptScroller.Offset.Y >= slack - Transcript.FontSize;
+        if (NewestAtTop)
+        {
+            return scroller.Offset.Y <= tolerance;
+        }
+
+        var slack = Math.Max(1, scroller.Extent.Height - scroller.Viewport.Height);
+
+        return scroller.Offset.Y >= slack - tolerance;
     }
 
     /// <summary>
@@ -3605,7 +3660,7 @@ public partial class PanelView : UserControl
         // following off on every surface the moment it was shown, which is every surface.
         if (e.OffsetDelta.Y != 0)
         {
-            _following = AtTheEnd();
+            _following = AtTheNewest();
         }
 
         ShowFollowButton();
@@ -3626,7 +3681,7 @@ public partial class PanelView : UserControl
     /// </summary>
     private void ShowFollowButton()
     {
-        var behind = !_following && !AtTheEnd();
+        var behind = !_following && !AtTheNewest();
 
         // Not on a surface nothing can be pressed on (#202). This is the assignment that beat the
         // style rule — a local value outranks a setter — and it is the transcript's own chrome
@@ -3635,7 +3690,10 @@ public partial class PanelView : UserControl
 
         if (behind)
         {
-            FollowButton.Content = "↓ Newest";
+            // The arrow points where the newest line actually is (#233), which is upwards on the
+            // two journal readings. A label that names a direction has to be right about it:
+            // "↓ Newest" over a newest-first page is not merely unhelpful, it is untrue.
+            FollowButton.Content = NewestAtTop ? "↑ Newest" : "↓ Newest";
         }
     }
 
@@ -3791,7 +3849,7 @@ public partial class PanelView : UserControl
     private void ShowPageBar() =>
         PageBar.IsVisible = Mode == PanelMode.Full
                             && ModalPane.Child is null
-                            && (ModeButton.IsVisible || SearchRow.IsVisible);
+                            && (ModePicker.IsVisible || SearchRow.IsVisible);
 
     /// <summary>
     /// Opens the excerpt review window (#160). The panel knows nothing about what is in it — see

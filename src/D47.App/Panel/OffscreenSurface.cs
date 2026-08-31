@@ -413,21 +413,33 @@ public sealed class OffscreenSurface : IDisposable
     /// <summary>
     /// What the panel's own overlays are drawn in.
     /// <para>
-    /// <b>Deliberately not themed</b>, for the same reason the caption layer is not: these are
-    /// read at a metre through a headset, over whatever the cockpit is doing behind them, and
-    /// they have to be legible before they are in keeping. The first cut inherited the theme and
-    /// came out dark grey on dark grey — present in the tree, pressable, and unreadable.
+    /// <b>Themed since #231, and this used to say the opposite.</b> It read "deliberately not
+    /// themed" and gave a real reason: the first cut inherited the theme and came out dark grey
+    /// on dark grey — present in the tree, pressable, and unreadable at a metre. The Commander
+    /// asked for the chooser to follow the theme anyway, so the colours are bound by role now.
+    /// </para>
+    /// <para>
+    /// <b>What keeps the old failure from returning is the scrim, not the palette.</b>
+    /// <see cref="Overlay"/> lays an opaque-enough black behind the card before the card is
+    /// drawn, so the card is read against that rather than against whatever the cockpit is doing
+    /// — which is the thing that was actually missing the first time. Anything added here takes
+    /// its colour from a role for the same reason; a literal would be invisible in one theme.
     /// </para>
     /// </summary>
-    private static readonly IBrush Ink = new SolidColorBrush(Color.FromRgb(0xF2, 0xF2, 0xF2));
+    /// <summary>
+    /// Paints one property from the theme, on the control being built.
+    /// <para>
+    /// <b>Bound rather than assigned</b>, so switching theme repaints it — colour by role, never
+    /// by literal, which is the rule every other surface in d47 already follows (Phase 4).
+    /// </para>
+    /// </summary>
+    private static T Painted<T>(T control, AvaloniaProperty property, string key)
+        where T : Control
+    {
+        control.Bind(property, control.GetResourceObservable(key));
 
-    private static readonly IBrush KeyFill = new SolidColorBrush(Color.FromRgb(0x2C, 0x31, 0x39));
-
-    private static readonly IBrush KeyEdge = new SolidColorBrush(Color.FromRgb(0x50, 0x57, 0x63));
-
-    private static readonly IBrush CardFill = new SolidColorBrush(Color.FromRgb(0x14, 0x16, 0x1A));
-
-    private static readonly IBrush Marked = new SolidColorBrush(Color.FromRgb(0x1F, 0x4A, 0x6B));
+        return control;
+    }
 
     /// <summary>
     /// One pressable thing, dressed so it can be read from across a cockpit.
@@ -438,18 +450,30 @@ public sealed class OffscreenSurface : IDisposable
     /// nobody can press.
     /// </para>
     /// </summary>
-    private static Button Pressable(string label, IBrush? fill = null) => new()
+    private static Button Pressable(string label, bool marked = false)
     {
-        Content = label,
-        Foreground = Ink,
-        Background = fill ?? KeyFill,
-        BorderBrush = KeyEdge,
-        BorderThickness = new Thickness(1),
-        CornerRadius = new CornerRadius(4),
-        FontSize = Theming.TypeScale.Heading,
-        HorizontalContentAlignment = HorizontalAlignment.Center,
-        VerticalContentAlignment = VerticalAlignment.Center,
-    };
+        var button = new Button
+        {
+            Content = label,
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(4),
+            FontSize = Theming.TypeScale.Heading,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center,
+        };
+
+        Painted(button, TemplatedControl.ForegroundProperty, Theming.ThemeManager.TextKey);
+        Painted(button, TemplatedControl.BorderBrushProperty, Theming.ThemeManager.BorderKey);
+
+        // The marked row takes the accent rather than a blue of its own. One row in the list is
+        // "the one you are on", which is exactly what the accent means everywhere else.
+        Painted(
+            button,
+            TemplatedControl.BackgroundProperty,
+            marked ? Theming.ThemeManager.AccentMutedKey : Theming.ThemeManager.SurfaceAltKey);
+
+        return button;
+    }
 
     /// <summary>
     /// Draws a list over the panel and calls back with what was pressed.
@@ -467,7 +491,7 @@ public sealed class OffscreenSurface : IDisposable
         {
             var at = index;
 
-            var row = Pressable(items[index], fill: index == selected ? Marked : null);
+            var row = Pressable(items[index], marked: index == selected);
 
             row.HorizontalAlignment = HorizontalAlignment.Stretch;
             row.HorizontalContentAlignment = HorizontalAlignment.Left;
@@ -540,13 +564,14 @@ public sealed class OffscreenSurface : IDisposable
             Text = typed,
             IsReadOnly = true,
             FontSize = Theming.TypeScale.Heading,
-            Foreground = Ink,
-            Background = new SolidColorBrush(Color.FromRgb(0x0C, 0x0E, 0x11)),
-            BorderBrush = KeyEdge,
             BorderThickness = new Thickness(1),
             Padding = new Thickness(12, 10),
             Margin = new Thickness(0, 0, 0, 14),
         };
+
+        Painted(shown, TemplatedControl.ForegroundProperty, Theming.ThemeManager.TextKey);
+        Painted(shown, TemplatedControl.BackgroundProperty, Theming.ThemeManager.BackgroundKey);
+        Painted(shown, TemplatedControl.BorderBrushProperty, Theming.ThemeManager.BorderKey);
 
         var board = new StackPanel { Spacing = 6 };
 
@@ -594,7 +619,7 @@ public sealed class OffscreenSurface : IDisposable
             shown.Text = typed;
         };
 
-        var done = Pressable("Done", fill: Marked);
+        var done = Pressable("Done", marked: true);
         done.Height = 52;
         done.Padding = new Thickness(24, 0);
 
@@ -626,20 +651,26 @@ public sealed class OffscreenSurface : IDisposable
     }
 
     /// <summary>The card everything on this layer sits in.</summary>
-    private Border Card(Control body) => new()
+    private Border Card(Control body)
     {
-        Child = body,
-        Padding = new Thickness(18),
-        CornerRadius = new CornerRadius(8),
-        BorderThickness = new Thickness(1),
+        var card = new Border
+        {
+            Child = body,
+            Padding = new Thickness(18),
+            CornerRadius = new CornerRadius(8),
+            BorderThickness = new Thickness(1),
 
-        // Short of the panel, so it reads as something over the page rather than a new page.
-        MaxHeight = Math.Max(180, _size.Height - 60),
-        HorizontalAlignment = HorizontalAlignment.Center,
-        VerticalAlignment = VerticalAlignment.Center,
-        Background = CardFill,
-        BorderBrush = KeyEdge,
-    };
+            // Short of the panel, so it reads as something over the page rather than a new page.
+            MaxHeight = Math.Max(180, _size.Height - 60),
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        Painted(card, Border.BackgroundProperty, Theming.ThemeManager.SurfaceKey);
+        Painted(card, Border.BorderBrushProperty, Theming.ThemeManager.BorderKey);
+
+        return card;
+    }
 
     /// <summary>Puts a card over the page, and dims what is behind it.</summary>
     private void Overlay(Control card)

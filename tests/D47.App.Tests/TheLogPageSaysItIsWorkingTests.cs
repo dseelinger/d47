@@ -49,12 +49,12 @@ public class TheLogPageSaysItIsWorkingTests
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        var glyph = (view.GetControl<Button>("ModeButton").Content as StackPanel)!
+        var glyph = view.GetControl<StackPanel>("ModePicker")
             .Children
             .OfType<BusyGlyph>()
             .Single();
 
-        Assert.True(view.GetControl<Button>("ModeButton").IsVisible, "there was no control to announce on");
+        Assert.True(view.GetControl<StackPanel>("ModePicker").IsVisible, "there was no control to announce on");
 
         view.Page = TranscriptPage.Log;
 
@@ -66,7 +66,7 @@ public class TheLogPageSaysItIsWorkingTests
         Assert.True(
             await Eventually(() => glyph.IsVisible),
             "nothing said the log was being read");
-        Assert.False(view.GetControl<Button>("ModeButton").IsEnabled, "the control was still pressable");
+        Assert.False(view.GetControl<ComboBox>("ModeBox").IsEnabled, "the control was still pressable");
 
         release.TrySetResult();
     }
@@ -132,17 +132,17 @@ public class TheLogPageSaysItIsWorkingTests
 
         view.Page = TranscriptPage.Log;
 
-        var glyph = (view.GetControl<Button>("ModeButton").Content as StackPanel)!
+        var glyph = view.GetControl<StackPanel>("ModePicker")
             .Children
             .OfType<BusyGlyph>()
             .Single();
 
         Assert.True(
-            await Eventually(() => !glyph.IsVisible && view.GetControl<Button>("ModeButton").IsEnabled),
+            await Eventually(() => !glyph.IsVisible && view.GetControl<ComboBox>("ModeBox").IsEnabled),
             "the glyph was left spinning after the read failed");
 
         Assert.False(glyph.IsVisible);
-        Assert.True(view.GetControl<Button>("ModeButton").IsEnabled, "a page that failed once can never be opened again");
+        Assert.True(view.GetControl<ComboBox>("ModeBox").IsEnabled, "a page that failed once can never be opened again");
     }
 
     /// <summary>

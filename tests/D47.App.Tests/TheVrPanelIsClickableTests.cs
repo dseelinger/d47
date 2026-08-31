@@ -39,7 +39,13 @@ public class TheVrPanelIsClickableTests
     /// class the thing happens to be.
     /// </summary>
     private static Control Saying(PanelView view, string word) =>
-        view.GetVisualDescendants()
+        // From the visual root rather than from the panel (#231). The readings used to be drawn
+        // into the panel's own layer, so they were descendants of the view; the headset's copy of
+        // a ComboBox is drawn by OffscreenSurface into a layer that is the panel's *sibling*.
+        // Both are inside the tree that gets rasterised, which is what the ray actually sees —
+        // so that tree, and not the panel, is what a test standing in for the ray must search.
+        (view.GetVisualAncestors().OfType<Visual>().LastOrDefault() ?? view)
+            .GetVisualDescendants()
             .OfType<Control>()
             .Last(control => control is Button or RadioButton
                              && control.GetVisualDescendants()
@@ -47,14 +53,21 @@ public class TheVrPanelIsClickableTests
                                  .Any(text => text.Text == word));
 
     /// <summary>
-    /// Opens the readings of this page the way a ray does: a press on the button that offers
+    /// Opens the readings of this page the way a ray does: a press on the control that offers
     /// them. Rendered in between, because a control that has just appeared has no bounds until
     /// the next layout pass and a press aimed at it would land on whatever was there before.
+    /// <para>
+    /// <b>That control is a real <c>ComboBox</c> since #231, and this is the test that says the
+    /// headset survived the change.</b> A press here never reaches the box: <c>OffscreenSurface</c>
+    /// takes it first, forces the drop-down shut and draws the same list on the panel. If that
+    /// interception were ever removed, opening a popup on a window that is never shown would take
+    /// the process down at <c>0xC00000FD</c> — so this failing is not a cosmetic failure.
+    /// </para>
     /// </summary>
     private static void OpenModes(PanelView view, OffscreenSurface surface)
     {
         surface.Render();
-        Assert.True(surface.Click(Centre(view, view.GetControl<Button>("ModeButton"))), "the press landed on something");
+        Assert.True(surface.Click(Centre(view, view.GetControl<ComboBox>("ModeBox"))), "the press landed on something");
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
         surface.Render();
     }
