@@ -855,6 +855,20 @@ public sealed record CalloutSettings
     public int AmbientSeconds { get; init; } = 45;
 
     /// <summary>
+    /// Invented background chatter (#244): made-up exchanges between people who do not exist —
+    /// passers-by, the dock, the occasional one-way hail. Not the game's own NPC traffic, which
+    /// is <see cref="SpeechSettings.SpeakNpcMessages"/> and somebody else's words.
+    /// </summary>
+    public bool NpcChatter { get; init; } = true;
+
+    /// <summary>
+    /// The shortest gap between two exchanges, in seconds. 0 silences them. Longer than the
+    /// ambient default because an exchange is a scene rather than a sentence, and scenes wear
+    /// out faster.
+    /// </summary>
+    public int NpcChatterSeconds { get; init; } = 1200;
+
+    /// <summary>
     /// What this row held when it was in minutes. Kept because unknown keys are rejected on
     /// load — every file written before the change carries it — and read exactly once, by
     /// <see cref="SettingsStore"/>, which converts it and clears it.

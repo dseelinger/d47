@@ -614,6 +614,29 @@ remark the model did not write for this moment is not spoken.
 The drive note has not changed in some minutes. That is what it sounds like when it is right.
 ```
 
+#### Invented chatter {#npc-chatter}
+
+Made-up radio traffic from people who do not exist: two crews on the local channel about their own
+small business, the dock telling an invented pilot off when you are docked somewhere, and — about
+one exchange in four — one line said to *you* over the open channel. Statements only, never a
+question: **nothing here is ever answered**, by you or by the ship's AI, and none of it enters the
+conversation or the comms record. It is theatre, heard once.
+
+**This is not the game's own NPC traffic.** Elite's real messages — station chatter, pirates,
+your wing — are re-voiced under Speech → *Speak incoming messages*, and they are somebody else's
+words. Invented chatter is Directive 47's own fiction, on its own switch, so you can have either
+without the other.
+
+Each invented speaker gets their own voice from the NPC pool for as long as you stay in the
+system, the same way the real traffic is cast. The exchange is written by the model against where
+you actually are; with no language model configured there is no chatter and these rows are absent,
+the same rule as the ambient remarks above — there are no canned conversations, on purpose.
+
+The interval sits at twenty minutes out of the box — an exchange is a scene rather than a
+sentence, and scenes wear out faster; 0 silences them.
+
+> "stop calling out invented chatter" / "start calling out invented chatter"
+
 **Switching personality off silences these entirely**, which is the one place that switch
 reaches a callout. It is in that item's own acceptance criteria: plain answers, no flavour, no
 ambient remarks.

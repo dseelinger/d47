@@ -67,6 +67,10 @@ public static class CalloutCapability
     public const string AmbientKey = "callouts.ambient";
     public const string AmbientSecondsKey = "callouts.ambientSeconds";
 
+    /// <summary>Invented background chatter (#244) — theatre, never the game's own traffic.</summary>
+    public const string NpcChatterKey = "callouts.npcChatter";
+    public const string NpcChatterSecondsKey = "callouts.npcChatterSeconds";
+
     public static CapabilityDescriptor Create(SettingsService settings, Func<string> describe) => new()
     {
         Id = Id,
@@ -304,6 +308,21 @@ public static class CalloutCapability
                 // nothing this toggle could govern, and a row that does not apply is absent
                 // rather than a switch that does nothing.
                 appliesWhen: s => LlmProviderCatalog.Selected(s.Llm.Provider).Id != LlmProviderCatalog.NoneId),
+
+            Toggle(
+                NpcChatterKey,
+                "Invented chatter",
+                "Made-up radio traffic from people who do not exist - passers-by talking to each "
+                + "other, the dock telling somebody off, the occasional one-way word to you. "
+                + "Theatre, written by the model, and never answered. The game's own NPC "
+                + "messages are a different switch, under Speech.",
+                "npc-chatter",
+                "invented chatter",
+                s => s.Callouts.NpcChatter,
+                (s, v) => s with { Callouts = s.Callouts with { NpcChatter = v } },
+
+                // The same rule as the ambient row above (#245): no model, no theatre, no row.
+                appliesWhen: s => LlmProviderCatalog.Selected(s.Llm.Provider).Id != LlmProviderCatalog.NoneId),
         ]);
 
         rows.Add(new SettingRow
@@ -329,6 +348,34 @@ public static class CalloutCapability
                         && seconds >= 0
                             ? Math.Min(seconds, 14400)
                             : new CalloutSettings().AmbientSeconds },
+                },
+            },
+        });
+
+        rows.Add(new SettingRow
+        {
+            Key = NpcChatterSecondsKey,
+            Advanced = true,
+            Label = "At most one invented exchange every",
+            Help = "In seconds. An exchange is a scene rather than a sentence, so the default sits "
+                   + "at twenty minutes; 0 silences them.",
+            Kind = SettingKind.Number,
+            DefaultDisplay = "1200",
+            DocsAnchor = "npc-chatter",
+            AppliesWhen = s => s.Callouts is { Enabled: true, NpcChatter: true }
+                               && LlmProviderCatalog.Selected(s.Llm.Provider).Id != LlmProviderCatalog.NoneId,
+            Binding = new SettingBinding
+            {
+                Read = s => s.Callouts.NpcChatterSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                Write = (s, v) => s with
+                {
+                    // The ambient row's rules (#245's sibling above): four hours is the ceiling,
+                    // and a value that will not parse falls back to the default rather than to
+                    // zero, since zero is the one value that means silence.
+                    Callouts = s.Callouts with { NpcChatterSeconds = int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out var seconds)
+                        && seconds >= 0
+                            ? Math.Min(seconds, 14400)
+                            : new CalloutSettings().NpcChatterSeconds },
                 },
             },
         });
