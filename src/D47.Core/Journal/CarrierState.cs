@@ -12,6 +12,20 @@ namespace D47.Core.Journal;
 /// "you do not have one".
 /// </para>
 /// </summary>
+/// <summary>
+/// One of a carrier's service crew, and whether it is open for business
+/// (<a href="https://github.com/dseelinger/d47/issues/230">#230</a>).
+/// </summary>
+/// <param name="Role">Elite's own word for the service — <c>Refuel</c>, <c>Rearm</c>, and so on.</param>
+/// <param name="Activated">Whether the service has been bought at all.</param>
+/// <param name="Enabled">Whether a bought service is currently switched on.</param>
+/// <param name="Name">The crew member's name, or empty for a service nobody staffs.</param>
+public readonly record struct CarrierService(string Role, bool Activated, bool Enabled, string Name)
+{
+    /// <summary>Whether a Commander docking right now could use this.</summary>
+    public bool IsOpen => Activated && Enabled;
+}
+
 public sealed record CarrierState
 {
     public static readonly CarrierState None = new();
@@ -82,6 +96,49 @@ public sealed record CarrierState
     /// </summary>
     public DateTimeOffset? StatsSeenAt { get; init; }
 
+    /// <summary>
+    /// The rest of what <c>CarrierStats</c> says, for the page that draws it
+    /// (<a href="https://github.com/dseelinger/d47/issues/230">#230</a>).
+    /// <para>
+    /// <b>Added here rather than in a carrier model of its own</b>, and that was the second
+    /// attempt. The first built a parallel <c>CarrierWatch</c> keyed by <c>CarrierID</c> and it
+    /// would have reintroduced the fault this file already records: a squadron's carrier read as
+    /// the Commander's own, which was reported on 2026-08-21 as <i>"That's not where my Fleet
+    /// Carrier is"</i> and fixed with corpus evidence — 152 of the 173 journals carrying both put
+    /// the squadron's last. Everything that discriminates the two lives in this record, so
+    /// anything wanting carrier figures belongs here too.
+    /// </para>
+    /// </summary>
+    public long? Balance { get; init; }
+
+    /// <summary>Total capacity in tonnes, from <c>SpaceUsage.TotalCapacity</c>.</summary>
+    public int? Capacity { get; init; }
+
+    /// <summary>What is left of it, from <c>SpaceUsage.FreeSpace</c>.</summary>
+    public int? FreeSpace { get; init; }
+
+    /// <summary>How far it can jump now, in light years.</summary>
+    public double? JumpRange { get; init; }
+
+    /// <summary>Whether it is booked to be scrapped.</summary>
+    public bool PendingDecommission { get; init; }
+
+    /// <summary>
+    /// The services aboard and whether each is open, in the order Elite reported them.
+    /// <para>
+    /// <b>Bought and switched on are two different states</b>, and only one of them is something a
+    /// Commander can dock and use — so both are kept rather than collapsed into "has refuelling".
+    /// </para>
+    /// </summary>
+    public IReadOnlyList<CarrierService> Services { get; init; } = [];
+
+    /// <summary>Where it is going, and where it will park when it gets there.</summary>
+    public string? DestinationBody { get; init; }
+
+    /// <summary>How full it is, 0 to 1, or null when nothing has said how big it is.</summary>
+    public double? HowFull =>
+        Capacity is > 0 && FreeSpace is { } free ? (Capacity.Value - free) / (double)Capacity.Value : null;
+
     public bool Owned => CallSign is not null;
 
     public bool JumpScheduled => DestinationSystem is not null;
@@ -114,6 +171,23 @@ public sealed record CarrierState
     /// the carrier id, and it says so is a fleet carrier. Both, because a MarketID is unique across
     /// every station in the galaxy and the type check costs nothing to state.
     /// </summary>
+    /// <summary>
+    /// The crew as this stats event reports them.
+    /// <para>
+    /// <b>An empty answer means the event was silent, not that the crew left.</b> The caller keeps
+    /// what it held in that case — reading silence as "they are all gone" is how a page comes to
+    /// report a carrier with nobody aboard the moment Frontier trims an event.
+    /// </para>
+    /// </summary>
+    private static List<CarrierService> Crew(JournalEvent journalEvent) =>
+        [.. journalEvent.Items("Crew")
+            .Select(member => new CarrierService(
+                member.String("CrewRole") ?? string.Empty,
+                member.Bool("Activated"),
+                member.Bool("Enabled"),
+                member.String("CrewName") ?? string.Empty))
+            .Where(service => service.Role.Length > 0)];
+
     private bool SaysMyCallsign(JournalEvent journalEvent) =>
         CarrierId is { } id
         && journalEvent.Long("MarketID") == id
@@ -276,6 +350,14 @@ public sealed record CarrierState
             DockingAccess = journalEvent.String("DockingAccess") ?? DockingAccess,
             CargoTonnes = journalEvent.Object("SpaceUsage")?.Int("Cargo") ?? CargoTonnes,
             StatsSeenAt = journalEvent.Timestamp,
+
+            // The figures the carrier page draws (#230).
+            Balance = journalEvent.Object("Finance")?.Long("CarrierBalance") ?? Balance,
+            Capacity = journalEvent.Object("SpaceUsage")?.Int("TotalCapacity") ?? Capacity,
+            FreeSpace = journalEvent.Object("SpaceUsage")?.Int("FreeSpace") ?? FreeSpace,
+            JumpRange = journalEvent.Double("JumpRangeCurr") ?? JumpRange,
+            PendingDecommission = journalEvent.Bool("PendingDecommission"),
+            Services = Crew(journalEvent) is { Count: > 0 } crew ? crew : Services,
         },
 
         // The callsign read here has never once arrived — 0 of 1,134 across the corpus — and is
@@ -289,14 +371,25 @@ public sealed record CarrierState
             StarSystem = journalEvent.String("StarSystem") ?? StarSystem,
         },
 
+        // The body as well as the system (#230). A carrier parked at a named body and one merely
+        // in the system are different arrivals to plan around.
         "CarrierJumpRequest" => this with
         {
             CarrierId = journalEvent.Long("CarrierID") ?? CarrierId,
             DestinationSystem = journalEvent.String("SystemName") ?? DestinationSystem,
             DepartureTime = ParseDeparture(journalEvent.String("DepartureTime")) ?? DepartureTime,
+
+            // The body as well as the system (#230). A carrier parked at a named body and one
+            // merely in the system are different arrivals to plan around.
+            DestinationBody = journalEvent.String("Body") ?? DestinationBody,
         },
 
-        "CarrierJumpCancelled" => this with { DestinationSystem = null, DepartureTime = null },
+        "CarrierJumpCancelled" => this with
+        {
+            DestinationSystem = null,
+            DepartureTime = null,
+            DestinationBody = null,
+        },
 
         // The carrier has arrived. Written to the owner's journal whether or not they were
         // aboard for it, which is what makes "where is my carrier" answerable after leaving it
@@ -311,6 +404,7 @@ public sealed record CarrierState
             StarSystem = journalEvent.String("StarSystem") ?? DestinationSystem ?? StarSystem,
             DestinationSystem = null,
             DepartureTime = null,
+            DestinationBody = null,
         },
 
         // Tritium in, tritium out. Neither is the whole picture — CarrierStats is — but between

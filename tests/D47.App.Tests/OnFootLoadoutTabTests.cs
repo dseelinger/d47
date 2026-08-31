@@ -111,8 +111,9 @@ public class OnFootLoadoutTabTests
     {
         var surface = Open();
 
+        // Carrier joined them in #230, on the tab that took its name.
         Assert.Equal(
-            ["Ships", "Suits", "Gap"],
+            ["Ships", "Suits", "Gap", "Carrier"],
             surface.Panel.Nav.Roots(PanelTab.Loadout).Select(root => root.Word));
 
         surface.Window.Close();
@@ -378,6 +379,11 @@ public class OnFootLoadoutTabTests
 
         panel.EnableLoadout(ships, checklists, () => null);
 
-        Assert.Equal(["Ships"], panel.Nav.Roots(PanelTab.Loadout).Select(item => item.Word));
+        // Suits and Gap are the on-foot half and are absent; Carrier is not gated on owning one,
+        // because "d47 has not seen a carrier" is a thing the page can say and "you have none" is
+        // not something it can know (#230).
+        Assert.Equal(
+            ["Ships", "Carrier"],
+            panel.Nav.Roots(PanelTab.Loadout).Select(item => item.Word));
     }
 }

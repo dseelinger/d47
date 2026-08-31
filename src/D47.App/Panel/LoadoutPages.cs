@@ -50,6 +50,9 @@ public static class LoadoutPages
     public const string SlotPrefix = "loadout.slot:";
 
     /// <summary>The third mode: what every plan needs that the Commander is not carrying.</summary>
+    /// <summary>The Commander's fleet carrier (#230).</summary>
+    public const string CarrierRoot = "loadout.carrier";
+
     public const string GapRoot = "loadout.gap";
 
     /// <summary>
@@ -64,9 +67,15 @@ public static class LoadoutPages
         NavCrumb crumb,
         IReadOnlyList<ILoadoutMode> modes,
         GapSource? gap,
+        CarrierSource? carrier,
         PanelNavigator nav,
         PanelPrompts prompts)
     {
+        if (crumb.Key == CarrierRoot && carrier is not null)
+        {
+            return new CarrierPage(carrier);
+        }
+
         foreach (var mode in modes)
         {
             if (crumb.Key.StartsWith(mode.SlotPrefix, StringComparison.Ordinal))

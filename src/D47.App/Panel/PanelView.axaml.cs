@@ -865,9 +865,20 @@ public partial class PanelView : UserControl
             });
         }
 
+        // The carrier, on the tab that took its name (#230). Registered whenever the tab is
+        // furnished rather than only for a Commander who owns one: the page says which of "you
+        // have no carrier" and "d47 has not seen one" it means, and only the second is something
+        // it can know before the management panel has been opened once.
+        _carrier = new CarrierSource(() => state()?.Carrier ?? D47.Core.Journal.CarrierState.None);
+
+        // No help declared: no capability page covers the carrier yet, and a root whose page has
+        // no band simply shows no mark. Declaring one that does not exist would put a question
+        // mark on the page that opens nothing.
+        roots.Add(new NavCrumb(LoadoutPages.CarrierRoot, "Carrier"));
+
         Furnish(
             PanelTab.Loadout,
-            crumb => LoadoutPages.Build(crumb, modes, gap, Nav, Prompts),
+            crumb => LoadoutPages.Build(crumb, modes, gap, _carrier, Nav, Prompts),
             [.. roots]);
     }
 
@@ -1002,6 +1013,18 @@ public partial class PanelView : UserControl
             return;
         }
 
+        // The carrier moves on its own events rather than with the ship, so it is compared
+        // separately (#230): a jump booked while the Commander is nowhere near it changes this
+        // page and changes nothing about the hull they are sitting in. Same reference test, and
+        // it is exact for the same reason — CarrierState is replaced rather than mutated.
+        var carrier = _loadoutState?.Invoke()?.Carrier;
+
+        if (!ReferenceEquals(carrier, _carrierSeen))
+        {
+            _carrierSeen = carrier;
+            _carrier?.Invalidate();
+        }
+
         var current = _loadoutState?.Invoke()?.Ship;
 
         if (ReferenceEquals(current, _loadoutSeen))
@@ -1016,6 +1039,7 @@ public partial class PanelView : UserControl
     private ShipsMode? _loadoutMode;
     private Func<D47.Core.Journal.CommanderGameState?>? _loadoutState;
     private D47.Core.Journal.ShipLoadout? _loadoutSeen;
+    private D47.Core.Journal.CarrierState? _carrierSeen;
 
     /// <summary>
     /// Gives this surface the clocks, timers and alarms (Phase 24, "Utilities").
@@ -1567,6 +1591,9 @@ public partial class PanelView : UserControl
     /// Where the Commander dragged the rules between panes, on the one surface that has a mouse
     /// (Phase 55). Null everywhere else, which is what keeps this the window's alone.
     /// </summary>
+    /// <summary>The carrier the Fleet tab draws, once a host furnished the tab (#230).</summary>
+    private CarrierSource? _carrier;
+
     private PaneWidthMemory? _paneWidths;
 
     /// <summary>
