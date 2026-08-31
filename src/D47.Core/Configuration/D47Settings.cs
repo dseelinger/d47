@@ -275,6 +275,19 @@ public sealed record PersonaSettings
     public bool KeepShipName { get; init; } = true;
 
     /// <summary>
+    /// Whether the cores are allowed an occasional light touch of wit
+    /// (<a href="https://github.com/dseelinger/d47/issues/243">#243</a> — "it's so serious all
+    /// the time").
+    /// <para>
+    /// Off by default, because off is exactly the register that shipped. On adds one line to the
+    /// persona layer of the prompt — permission for humor inside each core's own character, never
+    /// a personality transplant — and reaches everything the core says in character:
+    /// conversation and the flavour briefs alike.
+    /// </para>
+    /// </summary>
+    public bool Humor { get; init; }
+
+    /// <summary>
     /// The voice paired to each core, keyed by persona id (Phase 11, #33). Written by
     /// the background pairing at first startup and by the Commander choosing one by hand;
     /// nothing distinguishes the two, on purpose, because a pairing the Commander has

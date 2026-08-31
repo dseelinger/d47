@@ -474,6 +474,33 @@ public class PersonaHostTests
         // whole arrangement exists to guarantee.
         Assert.Null(host.RenderBlock(personalityEnabled: false));
     }
+
+    /// <summary>
+    /// The humor toggle grants a line and never rewrites (#243). Off is the shipped register,
+    /// byte for byte — which is what keeps the toggle honest, and what keeps the cached prompt
+    /// prefix stable for everybody who never touches it.
+    /// </summary>
+    [Fact]
+    public void HumorIsALineGrantedByTheToggleAndAbsentByDefault()
+    {
+        var host = new PersonaHost();
+
+        var shipped = host.RenderBlock(personalityEnabled: true);
+
+        Assert.NotNull(shipped);
+        Assert.DoesNotContain(D47.Core.Persona.Persona.HumorInstruction, shipped, StringComparison.Ordinal);
+
+        host.Apply(new PersonaSettings { Humor = true });
+        var granted = host.RenderBlock(personalityEnabled: true);
+
+        Assert.NotNull(granted);
+        Assert.EndsWith(D47.Core.Persona.Persona.HumorInstruction, granted, StringComparison.Ordinal);
+        Assert.StartsWith(shipped, granted, StringComparison.Ordinal);
+
+        // And back off: the shipped bytes again, not a memory of having been funny.
+        host.Apply(new PersonaSettings());
+        Assert.Equal(shipped, host.RenderBlock(personalityEnabled: true));
+    }
 }
 
 /// <summary>

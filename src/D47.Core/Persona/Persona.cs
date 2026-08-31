@@ -69,7 +69,12 @@ public sealed record Persona(
     /// stated to the model rather than substituted for the name, because a core that has been
     /// renamed still knows what it was called and several of them have opinions about it.
     /// </param>
-    public string RenderBlock(string? shipName = null)
+    /// <param name="humor">
+    /// Whether the Commander has allowed an occasional light touch of wit (#243). After the
+    /// standing instructions, in the recency slot, because permission granted mid-block reads
+    /// as more description and permission granted last reads as the current rule.
+    /// </param>
+    public string RenderBlock(string? shipName = null, bool humor = false)
     {
         var block = new System.Text.StringBuilder(PersonaCatalog.Preamble);
 
@@ -87,8 +92,23 @@ public sealed record Persona(
 
         block.Append("\n\n").Append(StandingInstructions);
 
+        if (humor)
+        {
+            block.Append("\n\n").Append(HumorInstruction);
+        }
+
         return block.ToString();
     }
+
+    /// <summary>
+    /// The one line the humor toggle adds (#243). Permission, not a personality transplant:
+    /// each core's wit is its own, and off means this line is simply absent — the block is
+    /// byte-identical to the shipped register, which is what keeps the toggle honest.
+    /// </summary>
+    public const string HumorInstruction =
+        "The Commander has switched on a little humor: an occasional light touch of wit is "
+        + "welcome, dry and brief, in your own character. Never at the Commander's expense, "
+        + "and never inside a warning.";
 
     /// <summary>
     /// Repeated verbatim at the end of every core's block. The isolation premise is the easiest

@@ -136,6 +136,9 @@ public sealed class PersonaHost
 
     private string? _shipNameOverride;
 
+    /// <summary>Whether the humor line rides the block (#243). Set with the name, on every apply.</summary>
+    private bool _humor;
+
     public PersonaHost(Persona? current = null, IIntroductionMemory? memory = null)
     {
         Current = current ?? PersonaCatalog.Resolve(null);
@@ -251,7 +254,7 @@ public sealed class PersonaHost
     /// </para>
     /// </summary>
     public string? RenderBlock(bool personalityEnabled) =>
-        personalityEnabled ? Current.RenderBlock(_shipNameOverride) : null;
+        personalityEnabled ? Current.RenderBlock(_shipNameOverride, _humor) : null;
 
     /// <summary>
     /// Applies the persona and ship-name settings. Called on every settings change; does
@@ -279,6 +282,7 @@ public sealed class PersonaHost
         PersonaSwitch cause = PersonaSwitch.Selected)
     {
         _shipNameOverride = settings.ShipName;
+        _humor = settings.Humor;
 
         var incoming = PersonaCatalog.Resolve(settings.Id);
 

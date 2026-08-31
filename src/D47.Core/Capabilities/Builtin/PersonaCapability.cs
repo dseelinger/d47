@@ -21,6 +21,9 @@ public static class PersonaCapability
 
     public const string IntroductionsKey = "persona.introductions";
 
+    /// <summary>An occasional light touch of wit, per core character (#243). Off is the shipped register.</summary>
+    public const string HumorKey = "persona.humor";
+
     /// <summary>The row that reads what the ship the Commander is in flies with, and binds it.</summary>
     public const string ShipCoreKey = "persona.shipCore";
 
@@ -177,6 +180,31 @@ public static class PersonaCapability
                 {
                     Persona = s.Persona with { KeepShipName = v is null || bool.TryParse(v, out var on) && on },
                 },
+            },
+        },
+        new SettingRow
+        {
+            Key = HumorKey,
+            Advanced = true,
+            Label = "A little humor",
+            Help =
+                "On, the core is allowed an occasional light touch of wit, in its own character. "
+                + "Off is the register d47 shipped with - serious throughout.",
+            Kind = SettingKind.Toggle,
+            DefaultDisplay = "Off",
+            DocsAnchor = "humor",
+
+            // Not protected, like the name rows: the worst a hostile message can do is make the
+            // ship's AI allow itself a dry aside, and the panel row takes it straight back.
+            Commands =
+            [
+                new SettingCommandPhrase("humor on", "true"),
+                new SettingCommandPhrase("humor off", "false"),
+            ],
+            Binding = new SettingBinding
+            {
+                Read = s => s.Persona.Humor ? "true" : "false",
+                Write = (s, v) => s with { Persona = s.Persona with { Humor = v == "true" } },
             },
         },
         new SettingRow
