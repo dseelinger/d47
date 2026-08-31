@@ -55,12 +55,15 @@
     of a build that has not changed, and refused if there is nothing there.
 
 .PARAMETER Force
-    Stop a running d47 first. Without it, a running instance is an error rather than a silent kill:
-    the Commander may be mid-flight, and the file lock is the least of what is lost.
+    Accepted and does nothing. Stopping a running d47 is what this does by default now, on the
+    Commander's instruction (2026-08-30) — so the switch that used to ask for it has nothing left
+    to ask for. It is still taken rather than refused, because `get-local -Force` is in muscle
+    memory and in this file's own examples, and an error there would be a worse answer than a note.
 
-    **The refusal comes before the build and the stop comes after it** (#186). A run that cannot
-    finish should say so before it spends five minutes publishing; a session that is going to be
-    killed anyway should get those five minutes rather than lose them to a publish that then failed.
+    **What the ordering still buys, and it is the half of #186 that survives.** The stop happens
+    *after* the build, immediately before anything is replaced, and the running set is read again
+    at that moment rather than reused. A session that is going to be killed anyway keeps the five
+    minutes the publish takes, and a publish that then fails kills nothing at all.
 
 .PARAMETER NoBackup
     Skip the snapshot of `data\`. The snapshot runs before anything is replaced, so a failure here
@@ -78,7 +81,6 @@
 
 .EXAMPLE
     tools/get-local.ps1
-    tools/get-local.ps1 -Force
     tools/get-local.ps1 -NoBuild
 #>
 
@@ -178,14 +180,23 @@ if (-not (Test-Path $InstallRoot)) {
     Write-Error "There is no installed d47 at $InstallRoot. Install one first: get-ver latest"
 }
 
-# The *refusal* is before the build, because a five-minute publish that cannot be copied anywhere is
-# five minutes nobody gets back. **The stop is not** (#186): it happens below, once the build has
-# succeeded and immediately before anything is replaced. Killing the Commander's session up here
-# ended it minutes early on a good run, and ended it for nothing on a run whose publish then failed.
+if ($Force) {
+    Write-Note '-Force is no longer needed: a running d47 is stopped before the copy either way.'
+}
+
+# **Said here, done below** (#186, amended 2026-08-30). This used to refuse, and the refusal earned
+# its place up here: a five-minute publish that cannot be copied anywhere is five minutes nobody
+# gets back. Stopping is now the default, so there is nothing left to refuse — but the warning is
+# worth keeping at the top, because "this will close the d47 you are looking at" is the one thing a
+# Commander might want to hear before the build rather than after it.
+#
+# The stop itself is still below, once the build has succeeded and immediately before anything is
+# replaced. Killing the session up here would end it minutes early on a good run, and end it for
+# nothing on a run whose publish then failed.
 $running = @(Get-Process d47 -ErrorAction SilentlyContinue)
 
-if ($running.Count -gt 0 -and -not $Force) {
-    Write-Error "d47 is running (pid $($running.Id -join ', ')). Close it, or pass -Force to stop it."
+if ($running.Count -gt 0) {
+    Write-Note "d47 is running (pid $($running.Id -join ', ')). It will be stopped after the build."
 }
 
 if ($NoBuild) {
@@ -238,11 +249,10 @@ else {
 $running = @(Get-Process d47 -ErrorAction SilentlyContinue)
 
 if ($running.Count -gt 0) {
-    if (-not $Force) {
-        Write-Error "d47 started while this was building (pid $($running.Id -join ', ')). Close it, or pass -Force. Nothing has been replaced."
-    }
+    Write-Step "Stopping d47 (pid $($running.Id -join ', '))"
 
-    Write-Step 'Stopping d47'
+    # -Force here is Stop-Process's own switch and has nothing to do with the parameter above: it
+    # closes a process that owns a window without asking it to agree, which is exactly the case.
     $running | Stop-Process -Force
     $running | Wait-Process -Timeout 20
 }

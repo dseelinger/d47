@@ -237,21 +237,35 @@ not change is that **no path may tag a commit nothing has tested**: `-SkipCi` re
 of the check, so it turns the local run back on rather than being refused. It used to read the other
 way round, as `-SkipTests`.
 
-**Five commands are on the Commander's PATH, four of them on top of `release.ps1`.** *Added
-2026-08-27; the fourth on 2026-08-28 and the fifth on 2026-08-29.* Each is a `.ps1` in `tools/`
-with a bash and a `.cmd` shim beside it that contain no logic, and a pointer in
-`%LOCALAPPDATA%\..\.local\bin` — so `release.ps1` stays the one implementation and there is no
+**Five commands live in `tools/`, four of them on top of `release.ps1`.** *Added 2026-08-27; the
+fourth on 2026-08-28 and the fifth on 2026-08-29.* Each is a `.ps1` with a bash and a `.cmd` shim
+beside it that contain no logic — so `release.ps1` stays the one implementation and there is no
 second description of any rule to disagree with the first. **A new one owes its bash shim an entry
 in `.gitattributes`' `eol=lf` list**: `* text=auto` checks it out with CRLF otherwise, and a
 shebang followed by a carriage return is not an interpreter path.
 
+**They came off the Commander's PATH on 2026-08-30, and the reason is their names.** Until then a
+pointer to each sat in `%LOCALAPPDATA%\..\.local\bin`, so `release`, `promote` and `get-ver` were
+bare global commands — words general enough to collide with any other tool that wants them, on a
+PATH shared by everything. They are run from the checkout now:
+
+```
+tools\get-ver.ps1 prerelease
+tools\get-local.ps1
+```
+
+**One consequence to know**, because it has already cost a confused ten minutes: a pointer resolved
+to whatever the checkout happened to have, so a command typed while `main` was behind ran the old
+code and said so with the old wording. Running it by path makes *which* checkout obvious, which is
+the same argument the repository already makes about there being one implementation.
+
 | Command | What it does |
 |---|---|
 | `prerelease` | Decides **minor or patch**, then runs `release.ps1` with `-PreRelease -Yes` |
-| `promote` | Promotes the newest waiting pre-release to latest (`tools/promote.ps1`). **`release` is the same command** — both names are on the PATH, because the file is `promote.ps1` and that is the word the Commander reaches for |
+| `promote` | Promotes the newest waiting pre-release to latest (`tools/promote.ps1`). **`release` is the same command** — both names sit beside it in `tools/`, because the file is `promote.ps1` and that is the word the Commander reaches for |
 | `get-ver <spec>` | Downloads, verifies and installs a named build — `0.79.0`, `0.79`, `prerelease`, `latest` |
 | `get-local` | Publishes **this working tree** and installs it over the installed d47, so a change can be driven without cutting a release for it |
-| `flight-on` | Starts the installed d47 with the audio flight recorder on, for that run only. Not a release command; it is here because it is the same shape and the same PATH |
+| `flight-on` | Starts the installed d47 with the audio flight recorder on, for that run only. Not a release command; it is here because it is the same shape and sits in the same folder |
 
 **`prerelease` automates the one decision a person gets wrong.** It reads the commits since the
 last tag for what they say they close, asks GitHub for those issues' labels, and calls it a minor
@@ -278,8 +292,25 @@ publish for a reason that is not a preference: a Debug build carries an `Assembl
 at `dev-install\`, compiled in, so copied into the install folder it still reads `dev-install\data`
 and sees none of the Commander's settings, secrets or downloaded models. It copies exactly the two
 things `installer\d47.iss` ships — `d47.exe` and `runtimes\` — never mirrors, and never touches
-`data\`. It refuses while d47 is running unless told to stop it, and runs `--selftest` afterwards,
-which is the gate that catches a payload missing its natives.
+`data\`. It runs `--selftest` afterwards, which is the gate that catches a payload missing its
+natives.
+
+**`get-local` and `get-ver` close a running d47 rather than refusing to run.** *Changed 2026-08-30
+on the Commander's instruction; it was the other way round until then, and `-Force` is what asked
+for it.* That switch is still accepted on both and now does nothing but say so, because it is in
+this repository's own examples and in the habit of anybody who read them. What did **not** change is
+*when* the stop happens: after the build or the download, immediately before anything is replaced,
+with the running set read again at that moment. That ordering is the half of
+[#186](https://github.com/dseelinger/d47/issues/186) that still earns its place — a session about to
+be killed keeps the five minutes a publish takes, and a publish that then fails kills nothing at
+all. Both now say at the top that a running d47 will be stopped, so the warning arrives before the
+wait rather than after it.
+
+**`flight-on` is deliberately not changed with them**, and the difference is worth knowing before
+somebody makes the three consistent. Its refusal is not about sparing a session: d47 holds a
+single-instance mutex, so a second copy launched with the recorder switch surfaces the one already
+running rather than recording, and going ahead would look exactly like the switch not working. That
+is why its escape hatch is `-Restart` rather than `-Force`.
 
 **It does not replace driving a real build before promoting one.** The build it installs is stamped
 `<newest tag>-local` and About shows the whole stamp, but `ReleaseVersion` strips everything from

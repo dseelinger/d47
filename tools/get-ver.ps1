@@ -53,10 +53,17 @@
     Where to put the download. Defaults to a folder under TEMP named for the version.
 
 .PARAMETER Force
-    Stop a running d47 first, the way `get-local` and `flight-on` both do. Without it a running
-    instance is an error rather than a silent kill — the Commander may be mid-flight — and the
-    refusal comes before the download rather than after it. Nothing is checked for `-Zip` or
-    `-DownloadOnly`, which replace nothing a running d47 holds.
+    Accepted and does nothing, the way `get-local`'s now is. Stopping a running d47 before the
+    install is the default since 2026-08-30, on the Commander's instruction, so the switch that
+    used to ask for it has nothing left to ask for — and it is taken rather than refused because
+    it appears in this file's own examples and in the habit of anybody who read them.
+
+    **`flight-on` is deliberately not changed with them.** Its refusal is a different animal: d47
+    holds a single-instance mutex, so a second copy launched with the recorder switch surfaces the
+    one already running rather than recording, and going ahead would look exactly like the switch
+    not working. That is why its escape hatch is named `-Restart` rather than `-Force`.
+
+    Nothing is stopped for `-Zip` or `-DownloadOnly`, which replace nothing a running d47 holds.
 
 .PARAMETER Silent
     Run the installer without its wizard (`/VERYSILENT /SUPPRESSMSGBOXES /NORESTART`). For an
@@ -73,7 +80,7 @@
     tools/get-ver.ps1 0.79
     tools/get-ver.ps1 prerelease -DownloadOnly
     tools/get-ver.ps1 latest
-    tools/get-ver.ps1 latest -Force -Silent
+    tools/get-ver.ps1 latest -Silent
 
 .NOTES
     **What the checksum proves, and what it does not.** Every release publishes a SHA-256 beside its
@@ -285,15 +292,24 @@ function Resolve-Release {
     return $found
 }
 
-# The refusal is here rather than at the install step, so a run that cannot finish says so before
-# the download rather than after it - and only on the road that installs, since -Zip extracts
-# beside itself and -DownloadOnly replaces nothing at all. The stop itself happens later, just
-# before the installer runs; see get-local, where that ordering is the same rule (#186).
+if ($Force) {
+    Write-Note '-Force is no longer needed: a running d47 is stopped before the install either way.'
+}
+
+# **Said here, done later** (#186, amended 2026-08-30). This used to refuse, and the refusal was
+# here rather than at the install step so that a run which could not finish said so before the
+# download rather than after it. Stopping is now the default and there is nothing left to refuse,
+# but the warning keeps its place: "this will close the d47 you are looking at" is worth hearing
+# before a download rather than after one.
+#
+# Only on the road that installs, since -Zip extracts beside itself and -DownloadOnly replaces
+# nothing at all. The stop itself happens later, just before the installer runs; see get-local,
+# where that ordering is the same rule.
 if (-not $Zip -and -not $DownloadOnly) {
     $running = @(Get-Process d47 -ErrorAction SilentlyContinue)
 
-    if ($running.Count -gt 0 -and -not $Force) {
-        Write-Error "d47 is running (pid $($running.Id -join ', ')). Close it, or pass -Force to stop it."
+    if ($running.Count -gt 0) {
+        Write-Note "d47 is running (pid $($running.Id -join ', ')). It will be stopped before the install."
     }
 }
 
@@ -414,11 +430,10 @@ $installedExe = Join-Path $installed 'd47.exe'
 $running = @(Get-Process d47 -ErrorAction SilentlyContinue)
 
 if ($running.Count -gt 0) {
-    if (-not $Force) {
-        Write-Error "d47 is running (pid $($running.Id -join ', ')). Close it, or pass -Force to stop it. The download is at $file."
-    }
+    Write-Step "Stopping d47 (pid $($running.Id -join ', '))"
 
-    Write-Step 'Stopping d47'
+    # -Force here is Stop-Process's own switch and has nothing to do with the parameter above: it
+    # closes a process that owns a window without asking it to agree, which is exactly the case.
     $running | Stop-Process -Force
     $running | Wait-Process -Timeout 20
 }
