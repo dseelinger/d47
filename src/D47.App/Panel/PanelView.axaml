@@ -128,67 +128,9 @@
         the button it sits beside. A Commander in a headset is flying, and a badge about which
         build they are on is chrome they cannot dismiss and did not ask for.
       -->
-      <Border x:Name="PreReleaseBadge"
-              DockPanel.Dock="Right"
-              IsVisible="False"
-              VerticalAlignment="Top"
-              Margin="0,9,6,0"
-              Padding="7,2"
-              CornerRadius="3"
-              Background="Transparent"
-              BorderThickness="1"
-              BorderBrush="{DynamicResource D47.TextMuted}"
-              PointerPressed="OnBadgePressed"
-              ToolTip.Tip="This is a pre-release. It is offered to nobody automatically, and it is not final.">
-        <TextBlock x:Name="PreReleaseBadgeText"
-                   Text="PRE-RELEASE"
-                   FontSize="{StaticResource D47.Type.Small}"
-                   FontWeight="Bold"
-                   Foreground="{DynamicResource D47.TextMuted}" />
-      </Border>
 
-      <Button x:Name="HelpButton"
-              DockPanel.Dock="Right"
-              IsVisible="False"
-              Width="35"
-              Height="35"
-              Padding="0"
-              HorizontalContentAlignment="Center"
-              VerticalContentAlignment="Center"
-              VerticalAlignment="Top"
-              CornerRadius="4"
-              Background="Transparent"
-              BorderThickness="0"
-              ToolTip.Tip="Open the documentation"
-              Click="OnHelpClick">
-        <!--
-          Width is the ink's own aspect rather than a square: the geometry spans 9.2 units across
-          and 18.6 down, so 8.4 by 17 is the box it actually fills. A 17-wide box would leave four
-          pixels of nothing on each side of the mark and hang it left of centre.
 
-          **Accent at rest** (#208). It was muted until pointed at, and a pair of handlers swapped
-          the stroke on the way in and out — which is the pattern `Glyphs.Draw` exists to refuse:
-          `FindResource` reads a brush *once*, at the moment of the hover, and assigns it, so a
-          theme switched after a hover left the mark painted in the old theme's colour. Both
-          handlers are gone with the resting colour; a `DynamicResource` is the only mechanism on
-          this stroke now.
 
-          And the hover feedback goes with them rather than being replaced. The colour was saying
-          two things — "this can be pressed" and "you are pointing at it" — and the first is the one
-          worth keeping. `TurnDetails` and `ModeToggle` are accent at rest and change nothing on
-          hover; the button's own background wash is what says the pointer is here.
-        -->
-        <Path x:Name="HelpGlyph"
-              Width="8.4" Height="17"
-              Stretch="Uniform"
-              HorizontalAlignment="Center"
-              VerticalAlignment="Center"
-              Stroke="{DynamicResource D47.Accent}"
-              StrokeThickness="2.8"
-              StrokeLineCap="Round"
-              StrokeJoin="Round"
-              Data="M 7.4,7.6 A 4.6,4.6 0 1 1 12,12.2 L 12,15.5 M 12,20.2 L 12,20.2" />
-      </Button>
 
       <!--
         The ship AI's face, on the left, where the build line used to be. It earns that space in
@@ -198,10 +140,7 @@
         choice — and present in mini too, since a reduced content set is exactly where a glance
         has to carry more.
       -->
-      <panel:AvatarView x:Name="Avatar"
-                        DockPanel.Dock="Left"
-                        VerticalAlignment="Top"
-                        Margin="0,0,10,0" />
+
     </DockPanel>
 
     <!-- Both banners in one region, so mini hides them with one line and each still decides
@@ -512,6 +451,89 @@
               ToolTip.Tip="Earlier tabs"
               AutomationProperties.Name="Show earlier tabs"
               Click="OnTabsLeftClick" />
+      <!--
+        The turn state, drawn rather than decoded — see AvatarView for why that is not an
+        aesthetic choice. Rightmost on the row, and sized to it.
+      -->
+      <panel:AvatarView x:Name="Avatar"
+                        DockPanel.Dock="Right"
+                        Width="30"
+                        Height="30"
+                        VerticalAlignment="Bottom"
+                        Margin="8,0,0,0" />
+
+      <!--
+        The panel's chrome, on the tab row rather than in a band above it (#234). Three small
+        controls were costing a whole strip of height that the page below did not get, which is
+        nothing on a desktop window and is a real fraction of a headset panel.
+
+        Docked right in this order, so they read right-to-left as avatar, badge, help, and then
+        the tab stepper nearest the tabs it actually scrolls. The avatar is outermost on the
+        Commander's instruction.
+
+        Both the badge and the help mark are furnished by hand and are absent on the headset's
+        copy, so this row has to sit correctly with any of the three missing.
+      -->
+      <Border x:Name="PreReleaseBadge"
+              DockPanel.Dock="Right"
+              IsVisible="False"
+              VerticalAlignment="Bottom"
+              Margin="0,9,6,0"
+              Padding="7,2"
+              CornerRadius="3"
+              Background="Transparent"
+              BorderThickness="1"
+              BorderBrush="{DynamicResource D47.TextMuted}"
+              PointerPressed="OnBadgePressed"
+              ToolTip.Tip="This is a pre-release. It is offered to nobody automatically, and it is not final.">
+        <TextBlock x:Name="PreReleaseBadgeText"
+                   Text="PRE-RELEASE"
+                   FontSize="{StaticResource D47.Type.Small}"
+                   FontWeight="Bold"
+                   Foreground="{DynamicResource D47.TextMuted}" />
+      </Border>
+      <Button x:Name="HelpButton"
+              DockPanel.Dock="Right"
+              IsVisible="False"
+              Width="35"
+              Height="35"
+              Padding="0"
+              HorizontalContentAlignment="Center"
+              VerticalContentAlignment="Center"
+              VerticalAlignment="Bottom"
+              CornerRadius="4"
+              Background="Transparent"
+              BorderThickness="0"
+              ToolTip.Tip="Open the documentation"
+              Click="OnHelpClick">
+        <!--
+          Width is the ink's own aspect rather than a square: the geometry spans 9.2 units across
+          and 18.6 down, so 8.4 by 17 is the box it actually fills. A 17-wide box would leave four
+          pixels of nothing on each side of the mark and hang it left of centre.
+
+          **Accent at rest** (#208). It was muted until pointed at, and a pair of handlers swapped
+          the stroke on the way in and out — which is the pattern `Glyphs.Draw` exists to refuse:
+          `FindResource` reads a brush *once*, at the moment of the hover, and assigns it, so a
+          theme switched after a hover left the mark painted in the old theme's colour. Both
+          handlers are gone with the resting colour; a `DynamicResource` is the only mechanism on
+          this stroke now.
+
+          And the hover feedback goes with them rather than being replaced. The colour was saying
+          two things — "this can be pressed" and "you are pointing at it" — and the first is the one
+          worth keeping. `TurnDetails` and `ModeToggle` are accent at rest and change nothing on
+          hover; the button's own background wash is what says the pointer is here.
+        -->
+        <Path x:Name="HelpGlyph"
+              Width="8.4" Height="17"
+              Stretch="Uniform"
+              HorizontalAlignment="Center"
+              VerticalAlignment="Center"
+              Stroke="{DynamicResource D47.Accent}"
+              StrokeThickness="2.8"
+              StrokeLineCap="Round"
+              StrokeJoin="Round"
+              Data="M 7.4,7.6 A 4.6,4.6 0 1 1 12,12.2 L 12,15.5 M 12,20.2 L 12,20.2" />
+      </Button>
       <Button x:Name="TabsRight"
               DockPanel.Dock="Right"
               Content="&#x203A;"
@@ -584,10 +606,15 @@
                      Content="Checklist"
                      Tapped="OnTabTapped"
                      IsCheckedChanged="OnTabChecked" />
+        <!--
+          Fleet rather than Loadout (#234). Its roots are unchanged - Ships, Suits and Gap - so
+          the root that holds owned vessels keeps the name it already had, and only the tab's own
+          label moved. What that name promises and does not yet deliver is #230.
+        -->
         <RadioButton x:Name="LoadoutTab"
                      Theme="{StaticResource D47.Tab}"
                      IsVisible="False"
-                     Content="Loadout"
+                     Content="Fleet"
                      Tapped="OnTabTapped"
                      IsCheckedChanged="OnTabChecked" />
         <RadioButton x:Name="EngineersTab"

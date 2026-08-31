@@ -776,9 +776,11 @@ public partial class PanelView : UserControl
         {
             var open = checklists.Document.Items.Count(item => item.IsLive && !item.IsComplete);
 
-            ChecklistTab.Content = open > 0
-                ? $"Checklist ({open.ToString(System.Globalization.CultureInfo.InvariantCulture)})"
-                : "Checklist";
+            // The number is gone from the tab (#234). It could not survive the strip collapsing
+            // to marks — a count beside a picture is a badge, and a badge on one of eight tabs is
+            // a thing the Commander has to decode. The checklist page carries it, which is where
+            // somebody wondering how much is left is going anyway.
+            _ = open;
         }
 
         // The store's event, which is the one the page itself listens to — so the tab and the page
@@ -3895,12 +3897,105 @@ public partial class PanelView : UserControl
     /// </summary>
     private void OnTabsResized(object? sender, SizeChangedEventArgs e) => ShowTabSteppers();
 
+    /// <summary>What each tab says when the strip has room for words. Fixed at build.</summary>
+    private static readonly (string Name, string Word, string Glyph)[] TabMarks =
+    [
+        (nameof(TranscriptTab), "Transcript", Controls.Glyphs.Tabs.Transcript),
+        (nameof(RoutingTab), "Routing", Controls.Glyphs.Tabs.Routing),
+        (nameof(ChecklistTab), "Checklist", Controls.Glyphs.Tabs.Checklist),
+        (nameof(LoadoutTab), "Fleet", Controls.Glyphs.Tabs.Fleet),
+        (nameof(EngineersTab), "Engineers", Controls.Glyphs.Tabs.Engineers),
+        (nameof(AdventuresTab), "Adventures", Controls.Glyphs.Tabs.Adventures),
+        (nameof(UtilitiesTab), "Utilities", Controls.Glyphs.Tabs.Utilities),
+        (nameof(SettingsTab), "Settings", Controls.Glyphs.Tabs.Settings),
+    ];
+
+    /// <summary>Whether the strip is currently showing marks instead of words.</summary>
+    private bool _tabsCollapsed;
+
+    /// <summary>
+    /// How wide the strip was the last time it was drawn with words — the number the decision to
+    /// expand again is made against.
+    /// <para>
+    /// <b>Remembered rather than re-measured, because the measurement feeds the decision.</b>
+    /// Collapsing shrinks the extent; asking the shrunken extent whether the words fit gets
+    /// "yes", which expands, which overflows, which collapses. The width the words wanted is the
+    /// only stable thing to compare a viewport against.
+    /// </para>
+    /// </summary>
+    private double _tabWordsWidth;
+
+    /// <summary>
+    /// Three stages, in order: words, marks, then marks that scroll (#234).
+    /// <para>
+    /// Scrolling is the right last resort and was the only one. A Commander on a narrow window
+    /// lost whole tabs off the end of the strip while the ones still visible carried full words —
+    /// so the words go first, and a tab leaves the strip only when even its mark will not fit.
+    /// </para>
+    /// </summary>
     private void ShowTabSteppers()
     {
+        var room = TabsScroller.Viewport.Width;
+
+        if (room > 0)
+        {
+            if (!_tabsCollapsed)
+            {
+                _tabWordsWidth = TabsScroller.Extent.Width;
+            }
+
+            var wanted = _tabsCollapsed ? _tabWordsWidth : TabsScroller.Extent.Width;
+            var collapse = wanted > room + 1;
+
+            if (collapse != _tabsCollapsed)
+            {
+                _tabsCollapsed = collapse;
+                DrawTabMarks();
+                TabsScroller.UpdateLayout();
+            }
+        }
+
         var overflowing = TabsScroller.Extent.Width > TabsScroller.Viewport.Width + 1;
 
         TabsLeft.IsVisible = overflowing;
         TabsRight.IsVisible = overflowing;
+    }
+
+    /// <summary>
+    /// Puts either the word or the mark on every tab.
+    /// <para>
+    /// Through <see cref="Controls.Glyphs.Mark"/>, so the word survives on the tooltip and on the
+    /// name a screen reader says — which is the whole condition under which replacing a word with
+    /// a picture counts as an improvement, and doubly so here, where the Commander did not choose
+    /// to lose the word and the window merely got narrow.
+    /// </para>
+    /// </summary>
+    private void DrawTabMarks()
+    {
+        foreach (var (name, word, glyph) in TabMarks)
+        {
+            if (this.FindControl<RadioButton>(name) is not { } tab)
+            {
+                continue;
+            }
+
+            if (_tabsCollapsed)
+            {
+                Controls.Glyphs.Mark(
+                    tab,
+                    glyph,
+                    Theming.ThemeManager.TextKey,
+                    word,
+                    size: 17,
+                    filled: glyph.StartsWith("F0", StringComparison.Ordinal));
+
+                continue;
+            }
+
+            tab.Content = word;
+            ToolTip.SetTip(tab, null);
+            Avalonia.Automation.AutomationProperties.SetName(tab, word);
+        }
     }
 
     /// <summary>

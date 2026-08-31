@@ -80,11 +80,74 @@ public class TheTabStripFitsAnyWidthTests
     }
 
     /// <summary>
-    /// Nothing but tabs in the strip. The mode control and the search box are what made the row a
-    /// competition, and they are in the pane now.
+    /// Words while they fit, marks when they do not — before any tab leaves the strip (#234).
+    /// <para>
+    /// <b>Scrolling used to be the first resort and is now the last.</b> On a narrow window whole
+    /// tabs went off the end while the ones still visible carried full words, which is the wrong
+    /// thing to spend the width on: a Commander can recognise a mark, and cannot click a tab that
+    /// is not there.
+    /// </para>
     /// </summary>
     [AvaloniaFact]
-    public void TheStripHoldsTabsAndTheSteppersAndNothingElse()
+    public void TheTabsShedTheirWordsBeforeTheyShedTabs()
+    {
+        var wide = Furnished(1400);
+
+        Assert.Equal("Transcript", wide.GetControl<RadioButton>("TranscriptTab").Content);
+
+        var narrow = Furnished(420);
+
+        // The mark, and the word kept where it still has to be reachable.
+        var tab = narrow.GetControl<RadioButton>("TranscriptTab");
+
+        Assert.IsType<Avalonia.Controls.Shapes.Path>(tab.Content);
+        Assert.Equal("Transcript", Avalonia.Automation.AutomationProperties.GetName(tab));
+        Assert.Equal("Transcript", ToolTip.GetTip(tab));
+    }
+
+    /// <summary>
+    /// And the strip goes back to words when the room comes back, without flickering between the
+    /// two on the way.
+    /// <para>
+    /// The decision is made against the width the <em>words</em> wanted, remembered from when they
+    /// were last drawn. Made against the current extent it would feed itself: collapsing shrinks
+    /// the extent, a shrunken extent fits, fitting expands, expanding overflows.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void TheWordsComeBackWhenTheRoomDoes()
+    {
+        var panel = Furnished(420);
+
+        Assert.IsType<Avalonia.Controls.Shapes.Path>(
+            panel.GetControl<RadioButton>("TranscriptTab").Content);
+
+        if (panel.Parent is ContentControl host)
+        {
+            host.Width = 1400;
+        }
+
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal("Transcript", panel.GetControl<RadioButton>("TranscriptTab").Content);
+    }
+
+    /// <summary>
+    /// The strip holds the tabs, the steppers, and the panel's own chrome — and nothing that
+    /// competes with the tabs for width.
+    /// <para>
+    /// <b>The mode control and the search box are still barred</b>, which is what this test was
+    /// written for: they are sized by their content, they grew with it, and below a certain
+    /// window width the row overlapped itself. They live in the pane.
+    /// </para>
+    /// <para>
+    /// <b>The avatar, the badge and the help mark joined it in #234.</b> They are fixed-size and
+    /// docked, so they take the same few pixels at every width — and they were costing a whole
+    /// band of height above the strip to do it.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void TheStripHoldsTabsTheSteppersAndTheChrome()
     {
         var panel = Furnished(1400);
         var strip = panel.GetControl<DockPanel>("TabStrip");
@@ -92,8 +155,15 @@ public class TheTabStripFitsAnyWidthTests
         Assert.All(
             strip.Children,
             child => Assert.True(
-                child is ScrollViewer or Button,
+                child is ScrollViewer or Button or Border or D47.App.Panel.AvatarView,
                 $"{child.GetType().Name} is in the tab strip and should not be"));
+
+        // And the avatar is the rightmost of them, which the Commander asked for by name.
+        var docked = strip.Children
+            .Where(child => DockPanel.GetDock(child) == Dock.Right)
+            .ToList();
+
+        Assert.IsType<D47.App.Panel.AvatarView>(docked[0]);
     }
 
     /// <summary>
