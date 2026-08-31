@@ -118,6 +118,53 @@ $Repo = 'dseelinger/d47'
 function Write-Step { param([string] $Text) Write-Host "==> $Text" -ForegroundColor Cyan }
 function Write-Note { param([string] $Text) Write-Host "    $Text" -ForegroundColor DarkGray }
 
+<#
+    Which checkout is running, and whether it is behind main.
+
+    **This is the trap that made the tools come off the global PATH, arriving by the other road.**
+    A pointer on the PATH resolved to whatever checkout it was built against; taking it away fixed
+    that and left the twin: a script run *by path* is whichever copy that path names, and this
+    repository keeps several worktrees at once. On 2026-08-31 a Commander ran `get-ver` from a
+    worktree that predates 2026-08-30, watched it refuse to install over a running d47, and
+    reported a bug against code that had already been fixed for a day.
+
+    Nothing is refused on the strength of it — a stale checkout still installs correctly, and being
+    behind main is the ordinary state of a branch. What is not ordinary is not knowing which copy
+    just spoke, so it says so, and says it louder when the copy is old.
+
+    Offline: `main` is the local ref, so a checkout that has not fetched in a week compares against
+    what it last saw. A missing ref, a detached HEAD or no git at all simply says less rather than
+    failing - a version installer that cannot run outside a repository would be a worse tool than
+    one that occasionally cannot name itself.
+#>
+function Write-Checkout {
+    $root = Split-Path -Parent $PSScriptRoot
+
+    Write-Note "Running from $root"
+
+    try {
+        $head = (& git -C $root rev-parse --abbrev-ref HEAD 2>$null)
+
+        if ($LASTEXITCODE -ne 0 -or -not $head) { return }
+
+        # Behind main, and not main itself. `--is-ancestor` answers with its exit code, so the
+        # comparison is the code rather than any output.
+        & git -C $root merge-base --is-ancestor HEAD main 2>$null | Out-Null
+        $behind = $LASTEXITCODE -eq 0
+
+        & git -C $root merge-base --is-ancestor main HEAD 2>$null | Out-Null
+        $current = $LASTEXITCODE -eq 0
+
+        if ($behind -and -not $current) {
+            Write-Warning "This checkout ($head) is behind main. It may not have the newest tooling."
+        }
+    }
+    catch {
+        # Said and dropped. Naming the checkout is a courtesy and must never be what stops an
+        # install.
+    }
+}
+
 # gh writes ordinary progress and refusals to stderr, and Windows PowerShell turns any stderr line
 # from a native command into a terminating error while ErrorActionPreference is Stop. Same trap as
 # release.ps1's -PreRelease on v0.78.0 and issues.ps1's; not repeated here.
@@ -291,6 +338,8 @@ function Resolve-Release {
 
     return $found
 }
+
+Write-Checkout
 
 if ($Force) {
     Write-Note '-Force is no longer needed: a running d47 is stopped before the install either way.'
