@@ -2620,6 +2620,11 @@ public sealed class AppHost : IDisposable
                     // Silent while personality is off. The checklist puts "no ambient remarks"
                     // in that item's own acceptance criteria, which makes this the one callout
                     // the personality switch reaches.
+                    //
+                    // With no model it is silent too (#245), but that gate is not here: this
+                    // method is static and the provider is runtime state, so the one place that
+                    // holds "chatter is model-written or it is nothing" is the drain in
+                    // SpeakPendingCallouts, which drops an ambient line the model did not write.
                     ambient.Enabled = () => settings.Callouts.Ambient && settings.Llm.PersonalityEnabled;
                     break;
             }
@@ -5734,7 +5739,20 @@ public sealed class AppHost : IDisposable
 
             foreach (var announcement in pending)
             {
-                lines.Add(await VaryAsync(announcement).ConfigureAwait(false));
+                var varied = await VaryAsync(announcement).ConfigureAwait(false);
+
+                // An ambient remark the model did not write is not spoken (#245). VaryAsync
+                // hands the same instance back on every road to "no model line" — provider
+                // gone mid-flight, the three-second budget, a refusal, a line about itself —
+                // and for chatter the authored text is a tone sample, not an understudy.
+                // Ambient only: a fuel warning goes out authored, exactly as before.
+                if (ReferenceEquals(varied, announcement)
+                    && announcement.Key.StartsWith(AmbientCallout.KeyPrefix, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                lines.Add(varied);
             }
 
             // Whether the lore remarks in this batch are owed a second part, decided here rather

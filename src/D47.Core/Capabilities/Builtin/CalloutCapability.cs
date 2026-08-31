@@ -1,6 +1,7 @@
 using D47.Core.Callouts;
 using System.Globalization;
 using D47.Core.Configuration;
+using D47.Core.Conversation;
 
 namespace D47.Core.Capabilities.Builtin;
 
@@ -291,11 +292,18 @@ public static class CalloutCapability
             Toggle(
                 AmbientKey,
                 "Ambient remarks",
-                "The occasional in-character observation about where you are, said because nothing has happened.",
+                "The occasional in-character line to you, said because nothing has happened. "
+                + "Written by the model in the core's own voice, so it needs a language model "
+                + "configured - with none there are no remarks.",
                 "ambient",
                 "ambient remarks",
                 s => s.Callouts.Ambient,
-                (s, v) => s with { Callouts = s.Callouts with { Ambient = v } }),
+                (s, v) => s with { Callouts = s.Callouts with { Ambient = v } },
+
+                // Chatter is model-written or it is nothing (#245): with no provider there is
+                // nothing this toggle could govern, and a row that does not apply is absent
+                // rather than a switch that does nothing.
+                appliesWhen: s => LlmProviderCatalog.Selected(s.Llm.Provider).Id != LlmProviderCatalog.NoneId),
         ]);
 
         rows.Add(new SettingRow
@@ -307,7 +315,8 @@ public static class CalloutCapability
             Kind = SettingKind.Number,
             DefaultDisplay = "45",
             DocsAnchor = "ambient",
-            AppliesWhen = s => s.Callouts is { Enabled: true, Ambient: true },
+            AppliesWhen = s => s.Callouts is { Enabled: true, Ambient: true }
+                               && LlmProviderCatalog.Selected(s.Llm.Provider).Id != LlmProviderCatalog.NoneId,
             Binding = new SettingBinding
             {
                 Read = s => s.Callouts.AmbientSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture),
@@ -473,7 +482,11 @@ public static class CalloutCapability
         // of a claim d47 made about the Commander, which is a different deal and defaults the other
         // way — so the default is a parameter rather than a constant, and the one caller that
         // passes false says why.
-        bool defaultOn = true) => new()
+        bool defaultOn = true,
+
+        // A parameter for the same reason defaultOn is: almost every callout applies whenever
+        // callouts do, and the ones that need a model (#245) say so at their call site.
+        Func<D47Settings, bool>? appliesWhen = null) => new()
     {
         Key = key,
         Advanced = true,
@@ -501,7 +514,7 @@ public static class CalloutCapability
             new SettingCommandPhrase($"start warning me about {subject}", "true"),
             new SettingCommandPhrase($"start calling out {subject}", "true"),
         ],
-        AppliesWhen = s => s.Callouts.Enabled,
+        AppliesWhen = s => s.Callouts.Enabled && (appliesWhen?.Invoke(s) ?? true),
         Binding = new SettingBinding
         {
             Read = s => read(s) ? "true" : "false",

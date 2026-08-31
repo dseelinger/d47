@@ -583,8 +583,10 @@ Commander doing the interdicting.
 
 #### Ambient remarks {#ambient}
 
-The occasional in-character observation about where you are, said because *nothing* has
-happened. Everything else on this page speaks because something did.
+The occasional in-character line **to you**, said because *nothing* has happened. Everything else
+on this page speaks because something did. Spoken to you rather than narrated, on purpose: the
+brief tells the core it is talking to its Commander, not describing the view, so a remark is a
+dry aside in the cockpit and never a scene from a novel.
 
 Three rules keep it from being noise. It waits out an interval — forty-five seconds out of the box,
 and in seconds rather than minutes because the interesting end of the range is finer than a minute.
@@ -596,13 +598,17 @@ remarks on the same situation twice running.
 Seven situations are covered: docked, landed, supercruise, normal space, fuel scooping, in the
 SRV, and on foot.
 
-With a language model configured, the core aboard writes its own line and it is genuinely theirs
-— Chart will tell you about the sky, the Quartermaster about what the run cost. It also knows who
-it is flying with: your [character sheet](conversation.md#character-sheet) goes with every remark,
-and your [About Me](conversation.md#about-me) story with about one in four, so the remarks differ by
-who is flying and not just by wording. Without a model, there are ten written lines per situation,
-shared across all eleven cores rather than one set each. That is consistent rather than a
-compromise: with no model there is no persona flavour anywhere else either.
+The core aboard writes every remark itself and it is genuinely theirs — Chart will tell you about
+the sky, the Quartermaster about what the run cost. It also knows who it is flying with: your
+[character sheet](conversation.md#character-sheet) goes with every remark, and your
+[About Me](conversation.md#about-me) story with about one in four, so the remarks differ by who is
+flying and not just by wording.
+
+**Chatter is model-written or it is nothing.** With no language model configured there are no
+ambient remarks at all, and these rows are absent from this page — a switch governing something
+that cannot happen would be a switch that does nothing. The ten authored lines per situation are
+what the model is shown as a sample of the register, never a stand-in read out in its place: a
+remark the model did not write for this moment is not spoken.
 
 ```text
 The drive note has not changed in some minutes. That is what it sounds like when it is right.
