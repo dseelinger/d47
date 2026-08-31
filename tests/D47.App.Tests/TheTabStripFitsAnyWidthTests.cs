@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Layout;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
@@ -155,15 +156,20 @@ public class TheTabStripFitsAnyWidthTests
         Assert.All(
             strip.Children,
             child => Assert.True(
-                child is ScrollViewer or Button or Border or D47.App.Panel.AvatarView,
+                child is ScrollViewer or Button or StackPanel,
                 $"{child.GetType().Name} is in the tab strip and should not be"));
 
-        // And the avatar is the rightmost of them, which the Commander asked for by name.
-        var docked = strip.Children
-            .Where(child => DockPanel.GetDock(child) == Dock.Right)
-            .ToList();
+        // The chrome is one row of a fixed height rather than three controls each aligning
+        // themselves, because bottom-aligning three different heights lines up their bottom edges
+        // and nothing a reader looks at.
+        var chrome = panel.GetControl<StackPanel>("ChromeRow");
 
-        Assert.IsType<D47.App.Panel.AvatarView>(docked[0]);
+        Assert.Equal(35, chrome.Height);
+        Assert.All(chrome.Children, child => Assert.Equal(VerticalAlignment.Center, child.VerticalAlignment));
+
+        // And the avatar is last in it, which puts it rightmost — the Commander asked for that by
+        // name.
+        Assert.IsType<D47.App.Panel.AvatarView>(chrome.Children[^1]);
     }
 
     /// <summary>

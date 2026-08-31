@@ -51,6 +51,34 @@ public sealed class AvatarView : UserControl
     private int _frame;
     private LoopState _state = LoopState.Idle;
 
+    /// <summary>
+    /// How big the whole mark is, and everything inside it follows
+    /// (<a href="https://github.com/dseelinger/d47/issues/234">#234</a>).
+    /// <para>
+    /// <b>Set here rather than by a caller writing <c>Width</c>.</b> This control sizes its own
+    /// parts — a 40-unit ring and a 22-unit core inside a 44-unit box — so a host that set only
+    /// the outer box got a ring four pixels wider than the space it was given and drew outside it.
+    /// Which is what moving the avatar onto the tab row did: the row is not 44 tall, and the mark
+    /// was clipped.
+    /// </para>
+    /// </summary>
+    public double Extent
+    {
+        get => Width;
+        set
+        {
+            var scale = value / 44d;
+
+            Width = value;
+            Height = value;
+
+            _ring.Width = 40 * scale;
+            _ring.Height = 40 * scale;
+            _core.Width = 22 * scale;
+            _core.Height = 22 * scale;
+        }
+    }
+
     public AvatarView()
     {
         Width = 44;

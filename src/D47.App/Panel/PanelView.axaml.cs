@@ -1773,6 +1773,22 @@ public partial class PanelView : UserControl
             ? new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand)
             : Avalonia.Input.Cursor.Default;
 
+        // And it says so in colour as well as in the cursor (#234). The cursor only speaks once
+        // the pointer is already on it, which is no use to a Commander deciding whether to move
+        // the pointer at all — so a badge that opens something carries the accent, which is what
+        // everything else pressable on this surface does.
+        //
+        // Only when it is pressable: a badge on a published release opens nothing, and it goes on
+        // being the plain mark it has always been. Bound rather than assigned, so a theme switched
+        // afterwards repaints it — a brush read once at this moment would freeze the old theme's
+        // colour, which is the trap Glyphs.Draw exists to refuse.
+        var key = clickable
+            ? Theming.ThemeManager.AccentKey
+            : Theming.ThemeManager.TextMutedKey;
+
+        PreReleaseBadge.Bind(Border.BorderBrushProperty, this.GetResourceObservable(key));
+        PreReleaseBadgeText.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(key));
+
         // The tip is set here rather than beside the text, so it can say the badge opens something
         // — which is a fact about the host and the channel together, and neither caller knows both.
         if (D47.Core.Updates.ReleaseChannelText.Full(_channel) is { } says)
