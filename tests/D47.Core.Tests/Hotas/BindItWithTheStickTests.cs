@@ -178,7 +178,7 @@ public class BindItWithTheStickTests
 
     private sealed record Edges(List<string> Seen)
     {
-        public static Edges Watching(PushToTalkButton button)
+        public static Edges Watching(BoundButton button)
         {
             var seen = new List<string>();
 
@@ -192,7 +192,7 @@ public class BindItWithTheStickTests
     [Fact]
     public void HoldingTheBoundButtonRaisesTheTwoEdgesOnce()
     {
-        var button = new PushToTalkButton();
+        var button = new BoundButton();
         button.Bind(new HotasButton(Stick, 6));
 
         var edges = Edges.Watching(button);
@@ -210,7 +210,7 @@ public class BindItWithTheStickTests
     [Fact]
     public void AnotherButtonOnTheSameStickDoesNothing()
     {
-        var button = new PushToTalkButton();
+        var button = new BoundButton();
         button.Bind(new HotasButton(Stick, 6));
 
         var edges = Edges.Watching(button);
@@ -224,7 +224,7 @@ public class BindItWithTheStickTests
     [Fact]
     public void TheSameIndexOnAnotherControllerIsADifferentButton()
     {
-        var button = new PushToTalkButton();
+        var button = new BoundButton();
         button.Bind(new HotasButton(Stick, 6));
 
         var edges = Edges.Watching(button);
@@ -242,7 +242,7 @@ public class BindItWithTheStickTests
     [Fact]
     public void AControllerThatVanishesWhileHeldReleases()
     {
-        var button = new PushToTalkButton();
+        var button = new BoundButton();
         button.Bind(new HotasButton(Stick, 6));
 
         var edges = Edges.Watching(button);
@@ -260,7 +260,7 @@ public class BindItWithTheStickTests
     [Fact]
     public void NothingBoundIsNotTheSameAsADeviceThatIsMissing()
     {
-        var button = new PushToTalkButton();
+        var button = new BoundButton();
 
         Assert.Null(button.DevicePresent);
 
@@ -274,7 +274,7 @@ public class BindItWithTheStickTests
     [Fact]
     public void RebindingWhileHeldReleasesFirst()
     {
-        var button = new PushToTalkButton();
+        var button = new BoundButton();
         button.Bind(new HotasButton(Stick, 6));
 
         var edges = Edges.Watching(button);
@@ -377,14 +377,14 @@ public class BindItWithTheStickTests
     [Fact]
     public void NothingIsSaidAboutADeviceNothingHasLookedFor()
     {
-        var button = new PushToTalkButton();
+        var button = new BoundButton();
         button.Bind(new HotasButton(Stick, 6));
 
         // The line the warning used to be raised on. The stick may well be sitting right there.
         Assert.Null(button.MissingDeviceNotice());
 
         // And still nothing while the polls are being counted.
-        for (var i = 0; i < PushToTalkButton.PollsBeforeAbsenceIsCalled - 1; i++)
+        for (var i = 0; i < BoundButton.PollsBeforeAbsenceIsCalled - 1; i++)
         {
             button.Poll([]);
             Assert.Null(button.MissingDeviceNotice());
@@ -398,10 +398,10 @@ public class BindItWithTheStickTests
     [Fact]
     public void ADeviceThatNeverTurnsUpIsReportedOnceTheChancesRunOut()
     {
-        var button = new PushToTalkButton();
+        var button = new BoundButton();
         button.Bind(new HotasButton(Stick, 6));
 
-        for (var i = 0; i < PushToTalkButton.PollsBeforeAbsenceIsCalled; i++)
+        for (var i = 0; i < BoundButton.PollsBeforeAbsenceIsCalled; i++)
         {
             button.Poll([]);
         }
@@ -420,10 +420,10 @@ public class BindItWithTheStickTests
     [Fact]
     public void TheNoticeIsGivenOncePerBinding()
     {
-        var button = new PushToTalkButton();
+        var button = new BoundButton();
         button.Bind(new HotasButton(Stick, 6));
 
-        for (var i = 0; i < PushToTalkButton.PollsBeforeAbsenceIsCalled; i++)
+        for (var i = 0; i < BoundButton.PollsBeforeAbsenceIsCalled; i++)
         {
             button.Poll([]);
         }
@@ -439,7 +439,7 @@ public class BindItWithTheStickTests
         // Binding again is a new question about a new button, so it re-arms.
         button.Bind(new HotasButton(Throttle, 9));
 
-        for (var i = 0; i < PushToTalkButton.PollsBeforeAbsenceIsCalled; i++)
+        for (var i = 0; i < BoundButton.PollsBeforeAbsenceIsCalled; i++)
         {
             button.Poll([]);
         }
@@ -454,10 +454,10 @@ public class BindItWithTheStickTests
     [Fact]
     public void AStickThatIsActuallyThereIsNeverReported()
     {
-        var button = new PushToTalkButton();
+        var button = new BoundButton();
         button.Bind(new HotasButton(Stick, 11));
 
-        for (var i = 0; i < PushToTalkButton.PollsBeforeAbsenceIsCalled * 4; i++)
+        for (var i = 0; i < BoundButton.PollsBeforeAbsenceIsCalled * 4; i++)
         {
             button.Poll([Reading(Stick, 32)]);
             Assert.Null(button.MissingDeviceNotice());
@@ -473,10 +473,10 @@ public class BindItWithTheStickTests
     [Fact]
     public void ADeviceThatArrivesLateIsStillNotReported()
     {
-        var button = new PushToTalkButton();
+        var button = new BoundButton();
         button.Bind(new HotasButton(Stick, 6));
 
-        for (var i = 0; i < PushToTalkButton.PollsBeforeAbsenceIsCalled - 1; i++)
+        for (var i = 0; i < BoundButton.PollsBeforeAbsenceIsCalled - 1; i++)
         {
             button.Poll([]);
         }
@@ -491,10 +491,10 @@ public class BindItWithTheStickTests
     [Fact]
     public void NothingBoundIsNeverAMissingDevice()
     {
-        var button = new PushToTalkButton();
+        var button = new BoundButton();
         button.Bind(null);
 
-        for (var i = 0; i < PushToTalkButton.PollsBeforeAbsenceIsCalled * 2; i++)
+        for (var i = 0; i < BoundButton.PollsBeforeAbsenceIsCalled * 2; i++)
         {
             button.Poll([]);
         }

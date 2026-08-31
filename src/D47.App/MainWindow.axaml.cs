@@ -1162,12 +1162,14 @@ public partial class MainWindow : Window
 
         var gesture = _host.Settings.Current.Speech.ShutUpHotkey;
 
-        if (!_shutUp.Bind(gesture, _host.Audio.Silence) && !string.IsNullOrWhiteSpace(gesture))
+        // Cancel rather than only silence since #221: the same press abandons the turn, so a
+        // Commander who has changed their mind about a long web search stops paying for it.
+        if (!_shutUp.Bind(gesture, () => _host.CancelNow()) && !string.IsNullOrWhiteSpace(gesture))
         {
             // Reported rather than swallowed: the symptom of a failed registration is a key
             // that does nothing, which reads as d47 ignoring the Commander.
             _model.ErrorText =
-                $"The silence hotkey {Gestures.Describe(gesture)} could not be registered system-wide. " +
+                $"The cancel hotkey {Gestures.Describe(gesture)} could not be registered system-wide. " +
                 "Another application is probably holding it — pick another in Settings.";
         }
     }
