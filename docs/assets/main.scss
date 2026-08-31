@@ -467,3 +467,60 @@ hr {
   line-height: 1.5;
   color: var(--text-muted);
 }
+
+/* The two bands (#229). Every page carries the ELI5 band that says why the feature is the way
+   it is; the how-to band above it says how to use it, and is the one a Commander who arrived
+   stuck actually wants.
+
+   The how-to band is a different class rather than a second .d47-eli5, and that is load-bearing:
+   HelpLibrary.Band takes the *first* "<div class=\"d47-eli5\">" in the file, so a second one
+   under that class would silently become what the in-app panel draws. @extend gives it every
+   rule the ELI5 band has — Sass rewrites the descendant selectors too — so the two are styled
+   from one description and cannot drift. */
+.d47-howto { @extend .d47-eli5; }
+
+/* Collapsible without a line of JavaScript, and it degrades to an open block in anything that
+   does not know <details>. */
+details.d47-band {
+  margin: 0 0 2rem;
+}
+
+details.d47-band > summary {
+  cursor: pointer;
+  padding: 0.55rem 0;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+  list-style: none;
+}
+
+/* The default marker is a filled triangle in one browser and an outlined one in the next, so
+   it is replaced rather than styled. */
+details.d47-band > summary::-webkit-details-marker {
+  display: none;
+}
+
+details.d47-band > summary::before {
+  /* The literal glyph rather than B8: a CSS escape needs a terminating space, and without
+     one the next character is eaten into the code point — which draws a tofu box and the
+     leftovers beside it. */
+  content: "▸";
+  display: inline-block;
+  width: 1.1em;
+  transition: transform 0.15s ease;
+}
+
+details.d47-band[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+details.d47-band > summary:hover {
+  color: var(--text);
+}
+
+/* A band that has just been opened starts hard against its summary otherwise. */
+details.d47-band[open] > summary {
+  margin-bottom: 0.75rem;
+}

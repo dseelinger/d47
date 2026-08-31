@@ -5,6 +5,119 @@ nav_order: 136
 ---
 
 <!--
+  The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
+  comment on engineers.md — with one addition and one subtraction.
+
+  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
+  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band
+  under that class would silently become what the in-app panel draws on this page. The docs
+  site styles the two identically (main.scss extends one from the other); the app sees only
+  the one below.
+
+  And no rationale in here. Every "because" belongs in the band below. That separation is the
+  whole point of there being two, and it is the thing that will erode first.
+-->
+<details class="d47-band" open>
+<summary>How to use it</summary>
+<div class="d47-howto"><div class="d47-frame">
+<p class="lede">Four steps, from nothing to a switch that flies the ship.</p>
+<section>
+<h2><span class="num">1</span> Turn on two rows in Settings, then press Assign switches.</h2>
+<svg viewBox="0 0 880 264" role="img" aria-label="Two settings toggles, the second appearing only once the first is on, and an Assign switches button">
+ <rect x="30" y="24" width="820" height="66" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="56" y="63" font-size="17" fill="var(--text)">Let D47 press keys in Elite</text>
+ <rect x="756" y="42" width="68" height="30" rx="15" fill="var(--accent)"/>
+ <circle cx="809" cy="57" r="11" fill="var(--background)"/>
+ <rect x="30" y="106" width="820" height="66" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="56" y="145" font-size="17" fill="var(--text)">Let a HOTAS switch operate the ship</text>
+ <rect x="756" y="124" width="68" height="30" rx="15" fill="var(--accent)"/>
+ <circle cx="809" cy="139" r="11" fill="var(--background)"/>
+ <text x="56" y="206" font-size="15" fill="var(--text-muted)">The second row is not there until the first one is on.</text>
+ <rect x="30" y="220" width="196" height="38" rx="4" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="128" y="245" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">Assign switches</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Press Assign a switch, and walk yours through its positions.</h2>
+<svg viewBox="0 0 880 250" role="img" aria-label="The HOTAS switches window during a walk, showing the instruction to move the switch to each position and pause">
+ <rect x="20" y="20" width="840" height="210" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="20" width="840" height="42" rx="8" fill="var(--surface-alt)"/>
+ <text x="44" y="48" font-size="16" font-weight="700" fill="var(--text)">HOTAS switches</text>
+ <rect x="44" y="82" width="182" height="36" rx="4" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="135" y="106" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">Assign a switch</text>
+ <rect x="242" y="82" width="94" height="36" rx="4" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <text x="289" y="106" text-anchor="middle" font-size="15" fill="var(--text-muted)">Finish</text>
+ <text x="44" y="156" font-size="17" fill="var(--accent)">Move the switch to each position in turn, and pause at each one.</text>
+ <text x="44" y="192" font-size="15" fill="var(--text-muted)">Pause about a second and a half at each one. Then press Finish.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">3</span> Give each position an action and a state.</h2>
+<svg viewBox="0 0 880 344" role="img" aria-label="A switch card with three position rows, each showing a button number and four controls: an action, an on or off state, and a page of Directive 47's own panel">
+ <rect x="20" y="16" width="840" height="312" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Gear</text>
+ <rect x="120" y="32" width="86" height="28" rx="4" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <text x="163" y="52" text-anchor="middle" font-size="14" fill="var(--text-muted)">Remove</text>
+ <text x="44" y="80" font-size="14" fill="var(--text-muted)">VIRPIL Controls #0 Constellation ALPHA-R</text>
+ <text x="44" y="126" font-size="16" fill="var(--text)">button 1</text>
+ <rect x="134" y="104" width="234" height="34" rx="4" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="152" y="127" font-size="15" fill="var(--text)">landing gear</text>
+ <text x="352" y="127" text-anchor="end" font-size="13" fill="var(--text-muted)">▾</text>
+ <rect x="378" y="104" width="96" height="34" rx="4" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="396" y="127" font-size="15" fill="var(--text)">on</text>
+ <text x="458" y="127" text-anchor="end" font-size="13" fill="var(--text-muted)">▾</text>
+ <rect x="484" y="104" width="234" height="34" rx="4" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <text x="502" y="127" font-size="15" fill="var(--text-muted)">(nothing)</text>
+ <text x="702" y="127" text-anchor="end" font-size="13" fill="var(--text-muted)">▾</text>
+ <text x="44" y="182" font-size="16" fill="var(--text)">button 2</text>
+ <rect x="134" y="160" width="234" height="34" rx="4" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <text x="152" y="183" font-size="15" fill="var(--text-muted)">(nothing)</text>
+ <text x="352" y="183" text-anchor="end" font-size="13" fill="var(--text-muted)">▾</text>
+ <rect x="378" y="160" width="96" height="34" rx="4" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <text x="458" y="183" text-anchor="end" font-size="13" fill="var(--text-muted)">▾</text>
+ <rect x="484" y="160" width="234" height="34" rx="4" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <text x="502" y="183" font-size="15" fill="var(--text-muted)">(nothing)</text>
+ <text x="702" y="183" text-anchor="end" font-size="13" fill="var(--text-muted)">▾</text>
+ <text x="44" y="238" font-size="16" fill="var(--text)">button 3</text>
+ <rect x="134" y="216" width="234" height="34" rx="4" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="152" y="239" font-size="15" fill="var(--text)">landing gear</text>
+ <text x="352" y="239" text-anchor="end" font-size="13" fill="var(--text-muted)">▾</text>
+ <rect x="378" y="216" width="96" height="34" rx="4" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="396" y="239" font-size="15" fill="var(--text)">off</text>
+ <text x="458" y="239" text-anchor="end" font-size="13" fill="var(--text-muted)">▾</text>
+ <rect x="484" y="216" width="234" height="34" rx="4" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <text x="502" y="239" font-size="15" fill="var(--text-muted)">(nothing)</text>
+ <text x="702" y="239" text-anchor="end" font-size="13" fill="var(--text-muted)">▾</text>
+ <text x="44" y="286" font-size="15" fill="var(--text-muted)">The state is greyed out until an action is chosen. Leave the middle of a three-position switch as (nothing).</text>
+ <text x="44" y="312" font-size="15" fill="var(--text-muted)">The fourth dropdown sends that position to a page of Directive 47's own panel instead.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">4</span> Press Save.</h2>
+<svg viewBox="0 0 880 120" role="img" aria-label="The Save and Close buttons at the foot of the window, above the path the mappings are written to">
+ <rect x="562" y="24" width="130" height="40" rx="4" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="627" y="50" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">Save</text>
+ <rect x="708" y="24" width="130" height="40" rx="4" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="773" y="50" text-anchor="middle" font-size="16" fill="var(--text-muted)">Close</text>
+ <text x="42" y="50" font-size="16" fill="var(--text)">Nothing is watched until you save.</text>
+ <text x="42" y="96" font-size="15" fill="var(--text-muted)">Flip the switch with Elite in front, and the ship follows.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">!</span> The one that stops people.</h2>
+<svg viewBox="0 0 880 190" role="img" aria-label="Elite must already have the action bound to a key, because Directive 47 presses the Commander's own binding">
+ <rect x="20" y="20" width="840" height="150" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <text x="440" y="66" text-anchor="middle" font-size="20" font-weight="800" fill="var(--danger)">Elite must already have the action bound to a key.</text>
+ <text x="440" y="104" text-anchor="middle" font-size="16" fill="var(--text)">Directive 47 presses your binding. If landing gear is on a key in Elite, this works.</text>
+ <text x="440" y="136" text-anchor="middle" font-size="16" fill="var(--text)">If it is bound only to a joystick button, there is no key to press and nothing happens.</text>
+</svg>
+</section>
+</div></div>
+</details>
+
+<details class="d47-band">
+<summary>Why it works this way</summary>
+<!--
   The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
   the nine Palette roles and nothing else.
@@ -95,6 +208,7 @@ nav_order: 136
 </div>
 </div>
 </div></div>
+</details>
 
 ## The details
 
