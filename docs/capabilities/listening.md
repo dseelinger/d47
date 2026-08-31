@@ -244,9 +244,8 @@ In the two key-driven settings, nothing is kept unless the key is held.
 
 **Pressing it does not silence Directive 47**, and that is deliberate. It did for one release, and
 the cost was that every tap meant as *be quiet* also recorded a second of your quiet room — which a
-speech model does not transcribe as nothing. Interrupting has its own control now:
-[Cancel](speech.html#shut-up), which stops the voice and abandons the turn, and which takes a stick
-button of its own.
+speech model does not transcribe as nothing. Interrupting has its own control now: **Cancel**, the
+row directly below this one, which stops the voice and abandons the turn.
 
 Unlike the stop key, this one does not need a modifier — a bare key is the normal arrangement for
 push-to-talk, which is exactly why the collision check above matters. If right shift is bound to
@@ -285,6 +284,35 @@ UseBoostJuice. D47 cannot tell whether that is the same controller.
 ```
 
 **The model cannot change this one either**, for the same reason.
+
+#### Cancel {#cancel}
+
+**`Ctrl+Alt+X` out of the box.** One press does three things:
+
+- stops Directive 47 talking, instantly, mid-word;
+- **abandons the turn it is working on** — the model stops, and so does the spending. This is the
+  one worth knowing about: a web search that is going to take twenty seconds and cost you money is
+  stopped by this and is not stopped by saying "be quiet";
+- does both from anywhere, including while Elite has the foreground.
+
+**Bind a key, a stick button, or one of each.** The button half is what makes this usable in the
+middle of a fight, and it is the only other binding in Directive 47 that takes one — the interface
+hotkeys stay keyboard-only, because you press those sitting at the window. Giving it the same kind
+twice replaces that one; **Unbind** clears both.
+
+Claimed system-wide rather than only while Directive 47 has focus, because the moment you want it is
+the moment Elite is in front — so the key half needs a modifier, and a bare letter is refused as you
+press it. The stick half has no such rule.
+
+**Push-to-talk does not do this**, and for one release it did. Pressing push-to-talk used to silence
+Directive 47 as well as open the microphone, which sounds tidier than it was: every tap meant as
+*be quiet* also recorded a second of your quiet room, and a speech model handed a second of silence
+does not return nothing — it invents a sentence, and Directive 47 answered it. Push-to-talk is
+push-to-talk again, and interrupting is this.
+
+**The model cannot change this row.** It can be changed from the panel or by voice — but not by
+anything the model calls. A model able to unbind the one control that outranks it has removed the
+one control that outranks it, and that matters more now the same press ends the turn.
 
 #### How D47 decides you are talking to it {#mode}
 

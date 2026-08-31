@@ -480,7 +480,7 @@ public partial class MainWindow : Window
         {
             DescribeHotkeys();
 
-            if (change.Key == SpeechCapability.ShutUpHotkeyKey)
+            if (change.Key == ListeningCapability.CancelHotkeyKey)
             {
                 BindShutUp();
             }

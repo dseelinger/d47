@@ -108,7 +108,7 @@ public class CancelIsItsOwnControlTests
 
         // Bound out of the box, which the row now says. It always was — the property has shipped
         // as Ctrl+Alt+X since Phase 5 — and the row claimed "(unbound)" beside it.
-        var row = settings.Find(SpeechCapability.ShutUpHotkeyKey)!;
+        var row = settings.Find(ListeningCapability.CancelHotkeyKey)!;
 
         Assert.Equal("Ctrl+Alt+X", settings.Current.Speech.ShutUpHotkey);
         Assert.Equal("Ctrl+Alt+X", row.DefaultDisplay);
@@ -126,7 +126,7 @@ public class CancelIsItsOwnControlTests
     {
         var (settings, host) = Open();
 
-        settings.Apply(SpeechCapability.CancelButtonKey, $"{Stick}#7", SettingsCaller.Panel);
+        settings.Apply(ListeningCapability.CancelButtonKey, $"{Stick}#7", SettingsCaller.Panel);
         Dispatcher.UIThread.RunJobs();
 
         var row = Row(host, "Cancel")!;
@@ -145,8 +145,8 @@ public class CancelIsItsOwnControlTests
     /// Commander's stop button has removed the one control that outranks it.
     /// </summary>
     [Theory]
-    [InlineData(SpeechCapability.ShutUpHotkeyKey)]
-    [InlineData(SpeechCapability.CancelButtonKey)]
+    [InlineData(ListeningCapability.CancelHotkeyKey)]
+    [InlineData(ListeningCapability.CancelButtonKey)]
     public void NeitherHalfIsReachableFromTheModel(string key)
     {
         var settings = TestSurface.Settings();
@@ -166,10 +166,10 @@ public class CancelIsItsOwnControlTests
     {
         var settings = TestSurface.Settings();
 
-        Assert.True(settings.Find(SpeechCapability.ShutUpHotkeyKey)!.SystemWide);
+        Assert.True(settings.Find(ListeningCapability.CancelHotkeyKey)!.SystemWide);
         Assert.Equal(
             SettingApplyStatus.Rejected,
-            settings.Apply(SpeechCapability.ShutUpHotkeyKey, "F9", SettingsCaller.Panel).Status);
+            settings.Apply(ListeningCapability.CancelHotkeyKey, "F9", SettingsCaller.Panel).Status);
     }
 
     /// <summary>
@@ -212,9 +212,56 @@ public class CancelIsItsOwnControlTests
     {
         var settings = TestSurface.Settings();
 
-        settings.Apply(SpeechCapability.ShutUpHotkeyKey, "Ctrl+Alt+Q", SettingsCaller.Panel);
+        settings.Apply(ListeningCapability.CancelHotkeyKey, "Ctrl+Alt+Q", SettingsCaller.Panel);
 
         Assert.Equal("Ctrl+Alt+Q", settings.Current.Speech.ShutUpHotkey);
-        Assert.Equal("Ctrl+Alt+Q", settings.Read(SpeechCapability.ShutUpHotkeyKey));
+        Assert.Equal("Ctrl+Alt+Q", settings.Read(ListeningCapability.CancelHotkeyKey));
+    }
+
+    /// <summary>
+    /// <b>Cancel is drawn directly under push-to-talk</b>, which is the Commander's own
+    /// instruction: <em>"the Cancel binding should be right below the PTT binding."</em> They are
+    /// the two controls a Commander binds together, so they are bound in one place — and the row
+    /// moved capability to get there rather than being reordered from a distance.
+    /// <para>
+    /// Read off the drawn page in order, because that is the claim. The registry's row order is
+    /// the mechanism, not the promise.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void CancelSitsDirectlyBelowPushToTalk()
+    {
+        var (_, host) = Open();
+
+        var labels = host.View.GetVisualDescendants().OfType<Grid>()
+            .Where(grid => grid.Classes.Contains(SettingsView.CompactRowClass) && grid.IsEffectivelyVisible)
+            .Select(grid => grid.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault()?.Text)
+            .Where(label => !string.IsNullOrWhiteSpace(label))
+            .ToList();
+
+        var at = labels.IndexOf("Push-to-talk");
+
+        Assert.True(at >= 0, "the push-to-talk row is not on the page");
+        Assert.Equal("Cancel", labels[at + 1]);
+
+        host.Close();
+    }
+
+    /// <summary>
+    /// <b>And the key it is stored under decides which subsystem re-applies it</b>, which is the
+    /// half of the move that was not about layout. A <c>speech.</c> key never reached the listening
+    /// apply that rebinds the polled stick button, so binding one did nothing until something else
+    /// happened to trigger that apply.
+    /// </summary>
+    [Fact]
+    public void BothHalvesRouteToTheListeningSubsystem()
+    {
+        Assert.Equal(
+            SettingsSubsystem.Listening,
+            SettingsFanout.For(ListeningCapability.CancelHotkeyKey).Subsystem);
+
+        Assert.Equal(
+            SettingsSubsystem.Listening,
+            SettingsFanout.For(ListeningCapability.CancelButtonKey).Subsystem);
     }
 }

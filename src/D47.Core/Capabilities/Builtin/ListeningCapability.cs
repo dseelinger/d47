@@ -23,6 +23,23 @@ public static class ListeningCapability
 
     /// <summary>The stick button beside it (Phase 53).</summary>
     public const string PushToTalkButtonKey = "listening.pushToTalkButton";
+
+    /// <summary>
+    /// Cancel's key (<a href="https://github.com/dseelinger/d47/issues/221">#221</a>). It shipped
+    /// as <c>speech.shutUpHotkey</c> for a day and moved here on the Commander's instruction —
+    /// <em>"the Cancel binding should be right below the PTT binding"</em> — which is where a
+    /// Commander binding one looks for the other.
+    /// <para>
+    /// <b>The move fixed a routing fault as well as the layout.</b> A key's own prefix decides
+    /// which subsystem re-applies it (<c>SettingsFanout</c>), so a <c>speech.</c> key never
+    /// reached the listening apply that rebinds the polled button — binding a cancel button did
+    /// nothing until something else happened to trigger that apply. The property behind it stays
+    /// <c>Speech.CancelButton</c>, because <c>settings.json</c> is append-only.
+    /// </para>
+    /// </summary>
+    public const string CancelHotkeyKey = "listening.cancelHotkey";
+
+    public const string CancelButtonKey = "listening.cancelButton";
     public const string ModeKey = "listening.mode";
     public const string PreRollKey = "listening.preRoll";
     public const string ModelKey = "listening.model";
@@ -267,6 +284,67 @@ public static class ListeningCapability
                         Listening = s.Listening with
                         {
                             PushToTalkButton = string.IsNullOrWhiteSpace(v) ? null : v,
+                        },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = CancelHotkeyKey,
+                Label = "Cancel",
+                Help =
+                    "Stops D47 talking and abandons the turn it is working on — including a long web " +
+                    "search you have changed your mind about, which stops the spending rather than just " +
+                    "the voice. Works from anywhere, including while Elite has the foreground. Bind a " +
+                    "key, a stick button, or one of each; giving it the same kind twice replaces that one.",
+                Kind = SettingKind.Hotkey,
+                DefaultDisplay = "Ctrl+Alt+X",
+                DocsAnchor = "cancel",
+
+                // Claimed from the whole system, so a bare key is refused as it is bound.
+                SystemWide = true,
+
+                // One row over two properties (#217's arrangement, put to its second use by #221):
+                // the control arms a keystroke listener and a controller walk at once.
+                AlsoBinds = CancelButtonKey,
+
+                // Protected for the same reason every hotkey row is: a model that can unbind
+                // the Commander's stop button has removed the one control that outranks it
+                // (architecture.md §7). More so now that the same press ends the turn.
+                Protected = true,
+                // Stored under Speech, and read here. The property is Phase 5's and
+                // settings.json is append-only, so what moved is the row rather than the value —
+                // a build that renamed the property would unbind everyone who had set one.
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Speech.ShutUpHotkey,
+                    Write = (s, v) => s with { Speech = s.Speech with { ShutUpHotkey = v } },
+                },
+            },
+            new SettingRow
+            {
+                Key = CancelButtonKey,
+                Advanced = true,
+                Label = "Cancel button",
+                Help =
+                    "The same thing on your stick or throttle: press the button you want and D47 works out "
+                    + "which one it was. It sits beside the key rather than replacing it. Needs a button "
+                    + "that springs back, not a switch that stays where you put it.",
+                Kind = SettingKind.HotasButton,
+                DocsAnchor = "cancel",
+
+                // Held by the Cancel row's own control rather than drawn on its own (#217).
+                DrawnElsewhere = true,
+
+                Protected = true,
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Speech.CancelButton,
+                    Write = (s, v) => s with
+                    {
+                        Speech = s.Speech with
+                        {
+                            CancelButton = string.IsNullOrWhiteSpace(v) ? null : v,
                         },
                     },
                 },

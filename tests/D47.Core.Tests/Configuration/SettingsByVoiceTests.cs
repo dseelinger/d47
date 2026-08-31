@@ -27,17 +27,19 @@ public class SettingsByVoiceTests
     /// </summary>
     private static readonly Dictionary<string, string> NotSettableByPhrase = new(StringComparer.Ordinal)
     {
-        ["speech.shutUpHotkey"] =
+        ["listening.cancelHotkey"] =
             "A key gesture. Dictating one is worse than pressing it, and the panel binds by press.",
+        ["listening.cancelButton"] =
+            "A stick button, and the panel binds it by asking for a press. There is no phrase that "
+            + "names one — a Commander does not know their own NonRoamableId.",
         ["listening.pushToTalkKey"] =
-            "A key gesture, same as the silence key.",
+            "A key gesture, same as the cancel key.",
         ["llm.endpoint"] =
             "A URL. There is no closed set of them, and a misheard host is a silent misconfiguration.",
         ["persona.shipCoreShip"] =
             "A ship id, and every Commander's are different — there is no phrase-to-value pair to "
-            + "write down. Binding keeps its own voice route: the Ctrl+Alt+B gesture and the "
-            + "model-free phrase both bind the core aboard to the ship being flown, which is what "
-            + "Phase 35 built and what remediation 15 item 13 widened rather than replaced.",
+            + "write down. It is set on the Settings tab and nowhere else since #219, which "
+            + "withdrew both the spoken phrases and the Ctrl+Alt+B gesture Phase 35 built.",
         ["persona.shipCore"] =
             "The value is a core and the subject is whichever ship the row above points at, so one "
             + "phrase would have to carry both. Same voice route as the row above.",

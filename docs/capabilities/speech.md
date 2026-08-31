@@ -98,8 +98,9 @@ turn, the quiet loop while it works, and the one command that outranks all of th
 
 **Or press Cancel** — `Ctrl+Alt+X` out of the box, and bindable to a stick button. It stops the
 voice *and* abandons the turn Directive 47 is working on, so a long web search you have changed
-your mind about stops costing you money rather than just going quiet. See
-[Cancel](#shut-up) below.
+your mind about stops costing you money rather than just going quiet. Its row sits directly under
+push-to-talk, on the [Listening](listening.html#cancel) page: they are the two controls you bind
+together, so they are bound in one place.
 
 **"stop" is the one to reach for when your hands are busy.** One syllable, four letters. An
 interrupt is judged on how fast you can say it, and everything else here is a longer way of saying
@@ -612,35 +613,6 @@ Directive 47 ignoring you. It drops under the speech instead of stopping, and it
 the first words arrive rather than when the turn does.
 
 Two are included: `thinking-hum` and `thinking-pulse`.
-
-#### Cancel {#shut-up}
-
-**`Ctrl+Alt+X` out of the box.** One press does three things:
-
-- stops Directive 47 talking, instantly, mid-word;
-- **abandons the turn it is working on** — the model stops, and so does the spending. This is the
-  one worth knowing about: a web search that is going to take twenty seconds and cost you money is
-  stopped by this and is not stopped by saying "be quiet";
-- does both from anywhere, including while Elite has the foreground.
-
-**Bind a key, a stick button, or one of each.** The button half is what makes this usable in the
-middle of a fight, and it is the only other binding in Directive 47 that takes one — the interface
-hotkeys stay keyboard-only, because you press those sitting at the window. Giving it the same kind
-twice replaces that one; **Unbind** clears both.
-
-Claimed system-wide rather than only while Directive 47 has focus, because the moment you want it is
-the moment Elite is in front — so the key half needs a modifier, and a bare letter is refused as you
-press it. The stick half has no such rule.
-
-**Push-to-talk does not do this**, and for one release it did. Pressing push-to-talk used to silence
-Directive 47 as well as open the microphone, which sounds tidier than it was: every tap meant as
-*be quiet* also recorded a second of your quiet room, and a speech model handed a second of silence
-does not return nothing — it invents a sentence, and Directive 47 answered it. Push-to-talk is
-push-to-talk again, and interrupting is this.
-
-**The model cannot change this row.** It can be changed from the panel or by voice — but not by
-anything the model calls. A model able to unbind the one control that outranks it has removed the
-one control that outranks it, and that matters more now the same press ends the turn.
 
 #### When a turn fails {#retry}
 

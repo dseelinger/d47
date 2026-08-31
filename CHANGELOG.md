@@ -192,6 +192,19 @@ Both are polled from the tick, because Windows does not deliver controller butto
 hotkey, which is still why the interface hotkeys stay keyboard-only. It is drawn through the one
 bind control from #217: one row, a key and a button, `Ctrl+Alt+X, button 8`.
 
+**The row sits directly under push-to-talk**, on the Commander's instruction — *"the Cancel binding
+should be right below the PTT binding."* They are the two controls a Commander binds together, so
+they are bound in one place, and the row moved capability to get there rather than being nudged into
+position from a distance: its keys are `listening.cancelHotkey` and `listening.cancelButton` now.
+
+**That move fixed a routing fault as well as the layout, and the fault was mine.** A row key's own
+prefix decides which subsystem re-applies it (`SettingsFanout`), and the polled rebind lives in the
+listening apply — so while the key read `speech.cancelButton`, binding a cancel button did nothing
+until something else happened to trigger that apply. Both halves route to Listening now, asserted.
+The properties behind them stay `Speech.ShutUpHotkey` and `Speech.CancelButton`, because
+`settings.json` is append-only: what moved is the row, never the value, so nobody's binding moved
+with it.
+
 **`PushToTalkButton` is `BoundButton` now.** A polled edge detector with two callers is not named
 for one of them. The settings property and the row key keep their older spellings, because
 `settings.json` is append-only — which is also why the Cancel key still stores as
