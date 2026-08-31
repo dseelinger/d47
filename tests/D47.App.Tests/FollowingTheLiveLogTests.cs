@@ -206,7 +206,7 @@ public class FollowingTheLiveLogTests
         ReadHistory(view);
         Assert.True(Follow(view).IsVisible);
 
-        view.Page = TranscriptPage.Technical;
+        view.Page = TranscriptPage.Log;
         Dispatcher.UIThread.RunJobs();
 
         model.Append("A line on the page just arrived at.\n");

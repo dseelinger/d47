@@ -118,30 +118,31 @@ public class TheConversationLooksLikeOneTests
     {
         var model = Exchange();
         var conversation = Laid(new PanelView { DataContext = model });
-        var technical = Laid(new PanelView { DataContext = model, Page = TranscriptPage.Technical });
 
         Assert.Equal(
             ["Standing by, Commander.", "[Switched to Sentinel]", "where am I", "Holding at Fixture Anchorage."],
             conversation.TranscriptBlocks.Select(Said));
 
-        // The flat reading is untouched, mark and all.
-        Assert.Contains("\n\n> where am I\n", technical.TranscriptShown, StringComparison.Ordinal);
-        Assert.Equal(model.TranscriptText, technical.TranscriptShown);
+        // The buffer is untouched, mark and all — asserted on the buffer rather than through a
+        // page, because the flat reading of the conversation was Details and Details is gone
+        // (#231). What mattered was never that a page drew it; it was that drawing bubbles did
+        // not reach back and change what was written down.
+        Assert.Contains("\n\n> where am I\n", model.TranscriptText, StringComparison.Ordinal);
     }
 
     [AvaloniaFact]
-    public void TheOtherTwoPagesAreStillOneFlatBlock()
+    public void TheLogFileIsStillOneFlatBlock()
     {
         var model = Exchange();
         model.LogSource = () => "12:04 something happened";
 
-        foreach (var page in new[] { TranscriptPage.Technical, TranscriptPage.Log })
-        {
-            var panel = Laid(new PanelView { DataContext = model, Page = page });
+        // One page rather than two. Details was the other flat reading and #231 removed it; the
+        // raw journal is flat as well but is furnished by a host, so an unfurnished panel like
+        // this one cannot reach it — Page declines a root nobody registered.
+        var panel = Laid(new PanelView { DataContext = model, Page = TranscriptPage.Log });
 
-            Assert.Empty(Turns(panel));
-            Assert.True(panel.GetControl<SelectableTextBlock>("Transcript").IsVisible);
-        }
+        Assert.Empty(Turns(panel));
+        Assert.True(panel.GetControl<SelectableTextBlock>("Transcript").IsVisible);
     }
 
     /// <summary>

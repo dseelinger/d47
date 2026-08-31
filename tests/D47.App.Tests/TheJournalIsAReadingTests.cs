@@ -59,52 +59,114 @@ public sealed class TheJournalIsAReadingTests
         panel.GetVisualDescendants().OfType<ListBox>().Single(box => box.Name == "JournalList");
 
     /// <summary>
-    /// <b>The safety property.</b> Raw Journal is furnished by the window and by nothing else, so a
-    /// surface nobody furnished has no such reading. A wall of JSON is there to be selected and
-    /// pasted into a bug report, which is an act with no meaning in mid-air — and the headset gets
-    /// the sentences, which are readable at a metre.
+    /// A surface nobody furnished the raw reading on has only the sentences — which is now the
+    /// only thing that gates it, since the headset is furnished too (#231).
     /// </summary>
     [AvaloniaFact]
-    public void TheHeadsetGetsTheJournalAndNotTheRawOne()
+    public void ASurfaceWithoutTheRawOneHasOnlyTheSentences()
     {
         var (panel, window) = Shown(rawJournal: false);
 
         var words = panel.Nav.Roots(PanelTab.Transcript).Select(crumb => crumb.Word).ToList();
 
-        Assert.Contains("Journal", words);
+        Assert.Contains("Elite Dangerous Journal File", words);
         Assert.DoesNotContain("Raw Journal", words);
 
         window.Close();
     }
 
-    /// <summary>And the window, which furnished it, has both.</summary>
+    /// <summary>
+    /// A furnished surface has both, and the raw one is deliberately <em>not</em> in the picker.
+    /// <para>
+    /// <b>Both halves matter.</b> It stays a registered root so a spoken "raw journal" and a
+    /// switch position that names it still arrive; it is kept out of the drop-down because it is
+    /// the same events as the reading above it, seen another way, and two entries read as two
+    /// subjects. The toggle beside the box is how a Commander crosses between them (#231).
+    /// </para>
+    /// </summary>
     [AvaloniaFact]
-    public void TheWindowGetsBoth()
+    public void TheRawReadingIsARootButNotAnEntryInThePicker()
     {
         var (panel, window) = Shown(rawJournal: true);
 
         var words = panel.Nav.Roots(PanelTab.Transcript).Select(crumb => crumb.Word).ToList();
 
-        Assert.Contains("Journal", words);
+        Assert.Contains("Elite Dangerous Journal File", words);
         Assert.Contains("Raw Journal", words);
+
+        panel.Page = TranscriptPage.Journal;
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        var offered = panel.GetControl<Avalonia.Controls.ComboBox>("ModeBox").ItemsSource
+            as IReadOnlyList<string> ?? [];
+
+        Assert.Contains("Elite Dangerous Journal File", offered);
+        Assert.DoesNotContain("Raw Journal", offered);
+
+        Assert.True(
+            panel.GetControl<Avalonia.Controls.Primitives.ToggleButton>("RawToggle").IsVisible,
+            "the toggle is the only way across, so it has to be on the journal reading");
 
         window.Close();
     }
 
     /// <summary>
-    /// The three older readings keep their internal keys. They are cited from settings, tests and
-    /// the keyword router, and this issue renamed only the word that is drawn and said.
+    /// The toggle crosses between the two, and says which one is showing.
     /// </summary>
     [AvaloniaFact]
-    public void TheOlderReadingsKeepTheirKeys()
+    public void TheToggleCrossesBetweenTheTwoReadings()
+    {
+        var (panel, window) = Shown(rawJournal: true);
+
+        panel.Page = TranscriptPage.Journal;
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        var toggle = panel.GetControl<Avalonia.Controls.Primitives.ToggleButton>("RawToggle");
+
+        Assert.False(toggle.IsChecked);
+
+        toggle.IsChecked = true;
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(TranscriptPage.RawJournal, panel.Page);
+
+        toggle.IsChecked = false;
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(TranscriptPage.Journal, panel.Page);
+
+        window.Close();
+    }
+
+    /// <summary>
+    /// The surviving readings keep their internal keys. They are cited from settings, tests and
+    /// the keyword router, and the renames touched only the word that is drawn and said.
+    /// <para>
+    /// <b>Details is gone with them</b> (#231): it was never a big enough differentiator once the
+    /// log file became a reading of its own. Its key is asserted <em>absent</em> rather than left
+    /// unmentioned, because a stored root that no longer resolves is exactly how a Commander
+    /// would land on a blank page — SelectRoot declines a root nobody registered, so they fall
+    /// back to the conversation instead.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void TheSurvivingReadingsKeepTheirKeysAndDetailsIsGone()
     {
         var (panel, window) = Shown(rawJournal: true);
 
         var keys = panel.Nav.Roots(PanelTab.Transcript).Select(crumb => crumb.Key).ToList();
 
         Assert.Contains("transcript.conversation", keys);
-        Assert.Contains("transcript.technical", keys);
         Assert.Contains("transcript.log", keys);
+        Assert.Contains("transcript.journal", keys);
+        Assert.DoesNotContain("transcript.technical", keys);
+
+        // And a Commander whose stored reading was Details lands on the conversation rather than
+        // on nothing at all.
+        panel.Page = TranscriptPage.Technical;
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(TranscriptPage.Conversation, panel.Page);
 
         window.Close();
     }

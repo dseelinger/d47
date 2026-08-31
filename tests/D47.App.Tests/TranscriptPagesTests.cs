@@ -114,14 +114,13 @@ public class TranscriptPagesTests
     {
         var model = Said();
 
-        var window = Laid(new PanelView { DataContext = model, Page = TranscriptPage.Technical });
+        var window = Laid(new PanelView { DataContext = model, Page = TranscriptPage.Log });
         var headset = Laid(new PanelView { DataContext = model, Page = TranscriptPage.Conversation });
 
-        Assert.Contains("Language model: ready.", Shown(window), StringComparison.Ordinal);
-        Assert.DoesNotContain("Language model: ready.", Shown(headset), StringComparison.Ordinal);
-
-        // Same transcript underneath, which is the half that must not become two.
-        Assert.Contains("HIP 12099 1 b.", Shown(window), StringComparison.Ordinal);
+        // One surface is on the log file and the other on the conversation, and neither can see
+        // the other's page. Details used to be the pair's first half; #231 removed it, so the
+        // contrast is now between two readings of genuinely different things.
+        Assert.DoesNotContain("HIP 12099 1 b.", Shown(window), StringComparison.Ordinal);
         Assert.Contains("HIP 12099 1 b.", Shown(headset), StringComparison.Ordinal);
     }
 
@@ -174,8 +173,8 @@ public class TranscriptPagesTests
 
         // Each surface's own control says Conversation, which is what "each keeps its own" means
         // when one model serves both.
-        Assert.Equal("Thread", PanelModes.Showing(window));
-        Assert.Equal("Thread", PanelModes.Showing(headset));
+        Assert.Equal("Conversation", PanelModes.Showing(window));
+        Assert.Equal("Conversation", PanelModes.Showing(headset));
     }
 
     /// <summary>
@@ -194,7 +193,7 @@ public class TranscriptPagesTests
 
         Assert.Equal(TranscriptPage.Log, window.Page);
         Assert.Equal(TranscriptPage.Conversation, headset.Page);
-        Assert.Equal("Thread", PanelModes.Showing(headset));
+        Assert.Equal("Conversation", PanelModes.Showing(headset));
     }
 
     private static string Shown(PanelView panel) => panel.TranscriptShown;

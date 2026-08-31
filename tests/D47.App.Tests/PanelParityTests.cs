@@ -261,19 +261,23 @@ public class TheVrPanelKeepsUpTests
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
         var conversation = Frame(surface);
 
-        view.Page = TranscriptPage.Technical;
+        view.Page = TranscriptPage.Log;
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
-        var technical = Frame(surface);
+        var log = Frame(surface);
 
-        // Technical is the same runs with the diagnostics left in, so it cannot be the same
-        // picture as the conversation when there is a diagnostic to leave in.
-        Assert.NotEqual(conversation, technical);
+        // The log file is a different thing from the conversation, so it cannot be the same
+        // picture. Details used to be the second reading compared here — the same runs with the
+        // diagnostics left in — and #231 removed it as too small a difference to be a reading of
+        // its own. That is this very property, so the pages compared had to become ones that
+        // genuinely differ.
+        Assert.NotEqual(conversation, log);
 
-        // And a line appended while Technical is showing lands on it.
-        model.Append("[12:00:01] Speaking the answer.\n", TranscriptKind.Technical);
+        // And the journal is a third shape again: a list and the fields beside it, not runs
+        // through the shared scroller.
+        view.Page = TranscriptPage.Journal;
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        Assert.NotEqual(technical, Frame(surface));
+        Assert.NotEqual(log, Frame(surface));
     }
 
     /// <summary>The rendered frame, as something two of them can be compared by.</summary>

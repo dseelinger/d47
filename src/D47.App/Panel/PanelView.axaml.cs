@@ -320,25 +320,42 @@ public partial class PanelView : UserControl
         // rather than a capability's, because no capability owns a tab strip and a Copy All
         // button; the id is a HelpLibrary key rather than a registry id, which is what lets the
         // three general pages be reached the same way as the forty-five.
+        // The readings say what they are, and say it plainly (#231). "Thread" and "D47 Log" were
+        // words this project had got used to rather than words that answer "what am I looking
+        // at"; the journal reading in particular had to say *whose* journal, because d47 keeps a
+        // log of its own and the two were a word apart.
+        //
+        // Where the plain name is too long to say out loud, the crumb carries a short spoken
+        // alias instead of being shortened. See NavCrumb.Spoken: the drawn label and the phrase
+        // used to be one string on purpose, and this is the case that finally pulled them apart.
         Nav.Register(
             PanelTab.Transcript,
-            new NavCrumb(ConversationRoot, "Thread") { Help = TranscriptHelp });
+            new NavCrumb(ConversationRoot, "Conversation")
+            {
+                Help = TranscriptHelp,
+
+                // The word this reading answered to for a year. Kept, because a Commander who
+                // says it is not wrong, they are out of date, and being told nothing happened is
+                // a worse answer than going where they meant.
+                Spoken = ["thread"],
+            });
 
         Nav.Register(
             PanelTab.Transcript,
-            new NavCrumb(TechnicalRoot, "Details") { Help = D47.Core.Capabilities.Builtin.DiagnosticsCapability.Id });
+            new NavCrumb(LogRoot, "Log File")
+            {
+                Help = D47.Core.Capabilities.Builtin.DiagnosticsCapability.Id,
+                Spoken = ["log", "d47 log"],
+            });
 
+        // Elite's own journal, in a form that is not JSON (#51), and named for whose it is.
         Nav.Register(
             PanelTab.Transcript,
-            new NavCrumb(LogRoot, "D47 Log") { Help = D47.Core.Capabilities.Builtin.DiagnosticsCapability.Id });
-
-        // Elite's own journal, in a form that is not JSON (#51). "Raw Journal" and not
-        // "Journal (RAW)": a crumb is matched by the keyword router as well as pressed, and a
-        // parenthetical is not a phrase anybody says - one word order for both routes rather than
-        // a label and a synonym.
-        Nav.Register(
-            PanelTab.Transcript,
-            new NavCrumb(JournalRoot, "Journal") { Help = TranscriptHelp });
+            new NavCrumb(JournalRoot, "Elite Dangerous Journal File")
+            {
+                Help = TranscriptHelp,
+                Spoken = ["journal", "journal file", "elite dangerous journal"],
+            });
 
         // Beside the box rather than inside it (#231). A ComboBox draws its own chevron and its
         // content is whichever reading is selected, so the spinner has to live next to the
@@ -2464,8 +2481,16 @@ public partial class PanelView : UserControl
     /// </summary>
     private void DrawModes()
     {
-        var roots = Nav.Roots(Nav.Tab);
+        // Raw Journal is a root the navigator knows and the picker does not list (#231). It is
+        // still registered, so a spoken "raw journal" and a switch position that names it both
+        // still arrive — but as a reading it is the same reading as the journal, seen another
+        // way, so it is reached by the toggle beside the box rather than by a second entry that
+        // reads as a different subject.
+        var roots = Nav.Roots(Nav.Tab).Where(root => root.Key != RawJournalRoot).ToList();
+
+        // And a Commander who is *on* raw still has the journal selected, for the same reason.
         var showing = Nav.RootKeyOf(Nav.Tab);
+        showing = showing == RawJournalRoot ? JournalRoot : showing;
 
         ModePicker.IsVisible = !OutputOnly && roots.Count > 1 && Nav.AtRoot;
 
@@ -2496,7 +2521,7 @@ public partial class PanelView : UserControl
             }
         }
 
-        var index = roots.ToList().FindIndex(root => root.Key == showing);
+        var index = roots.FindIndex(root => root.Key == showing);
 
         // Written under the guard, because this runs on every navigation — including the one
         // OnModeChanged just caused. Without it the box would answer its own change and call
@@ -2511,6 +2536,58 @@ public partial class PanelView : UserControl
         {
             _settingMode = false;
         }
+
+        DrawRawToggle();
+    }
+
+    /// <summary>
+    /// The journal's Raw toggle: shown on the journal reading, on a surface that was handed the
+    /// raw one (#231).
+    /// <para>
+    /// Guarded like the box above and for the same reason — writing <c>IsChecked</c> raises the
+    /// same event a press does, and a navigation would otherwise answer itself.
+    /// </para>
+    /// </summary>
+    private void DrawRawToggle()
+    {
+        var journal = Page is TranscriptPage.Journal or TranscriptPage.RawJournal;
+
+        // Only where a host furnished the raw reading. Asked of the navigator rather than held as
+        // a flag, so it is the same question EnableRawJournal answers by registering.
+        var furnished = Nav.Roots(PanelTab.Transcript).Any(root => root.Key == RawJournalRoot);
+
+        RawToggle.IsVisible = journal && furnished && Nav.AtRoot && !OutputOnly;
+
+        if (!RawToggle.IsVisible)
+        {
+            return;
+        }
+
+        _settingMode = true;
+
+        try
+        {
+            RawToggle.IsChecked = Page == TranscriptPage.RawJournal;
+        }
+        finally
+        {
+            _settingMode = false;
+        }
+    }
+
+    /// <summary>
+    /// The Commander asked for the file's own JSON, or asked to go back to sentences.
+    /// </summary>
+    private void OnRawToggled(object? sender, RoutedEventArgs e)
+    {
+        if (_settingMode)
+        {
+            return;
+        }
+
+        Page = RawToggle.IsChecked == true
+            ? TranscriptPage.RawJournal
+            : TranscriptPage.Journal;
     }
 
     /// <summary>
@@ -2861,14 +2938,58 @@ public partial class PanelView : UserControl
         JournalDetailScroller.IsVisible = model.JournalDetail;
         JournalSplitter.IsVisible = model.JournalDetail;
 
-        JournalList.ItemsSource = model.Journal.Select(entry => entry.Line).ToList();
+        // Filtered, which is this reading's answer to the search box (#232). Every other reading
+        // on this tab highlights and steps; a list filters, the way the checklist and the
+        // engineer directory do. The count then means what it says, which the old behaviour
+        // conspicuously did not: this page returned from DrawTranscript before the search ran at
+        // all, so the box showed a leftover count from whichever prose page was read last and
+        // the steppers moved nothing.
+        //
+        // Kind as well as the drawn line, because the drawn line is a sentence and the thing a
+        // Commander is hunting is frequently the event's own name: "ShieldState" appears nowhere
+        // in "Shields back up", and typing it should not come back empty on the page whose whole
+        // job is showing that event.
+        var shown = _query.Length == 0
+            ? model.Journal
+            : [.. model.Journal.Where(entry =>
+                entry.Line.Contains(_query, StringComparison.OrdinalIgnoreCase)
+                || entry.Kind.Contains(_query, StringComparison.OrdinalIgnoreCase))];
 
-        if (model.JournalSelected >= 0 && model.JournalSelected < model.Journal.Count)
+        JournalList.ItemsSource = shown.Select(entry => entry.Line).ToList();
+
+        // Against the filtered list rather than the whole one. The model's index counts events,
+        // and with a query in the box the list no longer holds all of them — so the remembered
+        // selection is resolved by identity and dropped when it filtered away.
+        var selected = model.JournalSelected >= 0 && model.JournalSelected < model.Journal.Count
+            ? shown.ToList().IndexOf(model.Journal[model.JournalSelected])
+            : -1;
+
+        JournalList.SelectedIndex = selected;
+
+        JournalDetail.Text = selected >= 0 ? model.JournalDetailText : string.Empty;
+
+        ShowJournalCount(shown.Count, model.Journal.Count);
+    }
+
+    /// <summary>
+    /// What the search box says on a reading that filters (#232): how many lines are left, not
+    /// which of them is current. The steppers are hidden, because there is nothing to step
+    /// through — every line on screen is a hit.
+    /// </summary>
+    private void ShowJournalCount(int shown, int held)
+    {
+        var searching = _query.Length > 0;
+
+        SearchCount.IsVisible = searching;
+        SearchNext.IsVisible = false;
+        SearchPrevious.IsVisible = false;
+
+        if (searching)
         {
-            JournalList.SelectedIndex = model.JournalSelected;
+            SearchCount.Text = shown == 0
+                ? "no lines match"
+                : $"{shown} of {held}";
         }
-
-        JournalDetail.Text = model.JournalDetailText;
     }
 
     /// <summary>
@@ -3849,7 +3970,7 @@ public partial class PanelView : UserControl
     private void ShowPageBar() =>
         PageBar.IsVisible = Mode == PanelMode.Full
                             && ModalPane.Child is null
-                            && (ModePicker.IsVisible || SearchRow.IsVisible);
+                            && (ModePicker.IsVisible || SearchRow.IsVisible || RawToggle.IsVisible);
 
     /// <summary>
     /// Opens the excerpt review window (#160). The panel knows nothing about what is in it — see

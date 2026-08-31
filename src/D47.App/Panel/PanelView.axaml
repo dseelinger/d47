@@ -733,6 +733,27 @@
                     CornerRadius="4"
                     FontSize="{StaticResource D47.Type.Secondary}"
                     SelectionChanged="OnModeChanged" />
+
+          <!--
+            The journal's two readings, as one reading seen two ways (#231). They used to be two
+            entries in the picker, which read as two subjects — and they are the same events, once
+            as sentences and once as the file's own JSON.
+
+            Shown in the headset too, on the Commander's instruction: "Show the toggle. If they
+            don't like it they can toggle it off." That reverses the position Raw Journal shipped
+            with, which was that a wall of JSON is not readable at a metre and exists to be pasted
+            into a bug report. Recorded here so it is not put back as a regression.
+          -->
+          <ToggleButton x:Name="RawToggle"
+                        IsVisible="False"
+                        MinHeight="28"
+                        VerticalAlignment="Center"
+                        Padding="10,0"
+                        CornerRadius="4"
+                        FontSize="{StaticResource D47.Type.Secondary}"
+                        Content="Raw"
+                        ToolTip.Tip="Show the file's own JSON instead of sentences"
+                        IsCheckedChanged="OnRawToggled" />
         </StackPanel>
         <!--
           One search affordance for the surface, on the tab that is selected — not four features
