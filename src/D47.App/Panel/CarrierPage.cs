@@ -14,12 +14,16 @@ namespace D47.App.Panel;
 /// was when the page was built.
 /// </para>
 /// </summary>
-public sealed class CarrierSource(Func<CarrierState> read)
+public sealed class CarrierSource(Func<CarrierState> own, Func<CarrierState> squadron)
 {
-    /// <summary>Raised when the journal moved the carrier on. The page redraws; nothing else cares.</summary>
+    /// <summary>Raised when the journal moved either carrier on. The page redraws; nothing else cares.</summary>
     public event Action? Changed;
 
-    public CarrierState Now => read();
+    /// <summary>The Commander's own.</summary>
+    public CarrierState Now => own();
+
+    /// <summary>Their squadron's, if they are in a squadron that has one.</summary>
+    public CarrierState Squadron => squadron();
 
     public void Invalidate() => Changed?.Invoke();
 }
@@ -28,12 +32,17 @@ public sealed class CarrierSource(Func<CarrierState> read)
 /// The Commander's fleet carrier, on the tab named after it
 /// (<a href="https://github.com/dseelinger/d47/issues/230">#230</a>).
 /// <para>
-/// <b>Their own, and deliberately not a squadron's.</b> Elite writes both to the same journal
-/// seconds apart, and <see cref="CarrierState"/> exists in the shape it does because reading the
-/// last one to arrive told a Commander their carrier was wherever their squadron's happened to be
-/// — reported 2026-08-21, settled against 920 journals. Showing a squadron's carrier here would
-/// need that discrimination extended rather than assumed, so this page shows the one d47 can
-/// vouch for and says nothing about the other.
+/// <b>Both, and never merged.</b> Elite writes the Commander's own and their squadron's to the
+/// same journal seconds apart, and <see cref="CarrierState"/> exists in the shape it does because
+/// reading the last one to arrive told a Commander their carrier was wherever the squadron's
+/// happened to be — reported 2026-08-21, settled against 920 journals. So they are two states with
+/// two filters, and this page draws them as two things under two headings. A reader must never
+/// have to work out which carrier a figure belongs to.
+/// </para>
+/// <para>
+/// <b>The squadron's is drawn second and says less.</b> It is not theirs to spend: the figures
+/// they can act on are their own, and a balance they cannot touch sitting level with one they can
+/// is an invitation to misread it.
 /// </para>
 /// <para>
 /// <b>Every figure carries its age.</b> The stats only refresh when the Commander opens the
@@ -80,6 +89,12 @@ public sealed class CarrierPage : UserControl
     {
         _body.Children.Clear();
 
+        Own();
+        Squadron();
+    }
+
+    private void Own()
+    {
         var carrier = _carrier.Now;
 
         if (!carrier.Owned)
@@ -141,6 +156,51 @@ public sealed class CarrierPage : UserControl
                 $"Figures as of {Ago(seen)}. They only refresh when you open the carrier "
                 + "management panel in the game."));
         }
+    }
+
+    /// <summary>
+    /// The squadron's carrier, under its own heading and only when there is one.
+    /// <para>
+    /// <b>Nothing is said when there is none</b>, rather than "you are in no squadron". d47 cannot
+    /// tell a Commander with no squadron from one whose squadron carrier has not appeared in the
+    /// journal yet, and the two are different facts.
+    /// </para>
+    /// </summary>
+    private void Squadron()
+    {
+        var carrier = _carrier.Squadron;
+
+        if (!carrier.Owned)
+        {
+            return;
+        }
+
+        _body.Children.Add(new Border { Height = 18 });
+        _body.Children.Add(LoadoutPages.Heading("Your squadron's carrier"));
+        _body.Children.Add(Head(carrier));
+        _body.Children.Add(Where(carrier));
+
+        if (carrier.FuelLevel is { } fuel)
+        {
+            _body.Children.Add(Row("Tritium", $"{fuel:N0} t"));
+        }
+
+        if (!string.IsNullOrWhiteSpace(carrier.DockingAccess))
+        {
+            _body.Children.Add(Row("Docking", carrier.DockingAccess));
+        }
+
+        var open = carrier.Services.Where(service => service.IsOpen).Select(Named).ToList();
+
+        if (open.Count > 0)
+        {
+            _body.Children.Add(Row("Services", string.Join(", ", open)));
+        }
+
+        // No balance and no space. Those are the squadron's business, and a figure a Commander
+        // cannot act on drawn level with one they can is a figure waiting to be misread.
+        _body.Children.Add(LoadoutPages.Muted(
+            "Your squadron's, not yours — shown so you know where it is and whether you can dock."));
     }
 
     private Control Head(CarrierState carrier) =>

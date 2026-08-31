@@ -30,6 +30,12 @@ public sealed record CarrierState
 {
     public static readonly CarrierState None = new();
 
+    /// <summary>
+    /// The empty state for a squadron's carrier (#230). Its own starting value rather than
+    /// <see cref="None"/>, because the flag decides which events it will ever accept.
+    /// </summary>
+    public static readonly CarrierState NoSquadron = new() { IsSquadron = true };
+
     /// <summary>The callsign, which is the carrier's stable identity and never changes.</summary>
     public string? CallSign { get; init; }
 
@@ -228,9 +234,72 @@ public sealed record CarrierState
         return name.Length > 0 ? name : null;
     }
 
-    private static bool Mine(JournalEvent journalEvent) =>
-        journalEvent.String("CarrierType") is not { Length: > 0 } type
-        || string.Equals(type, "FleetCarrier", StringComparison.OrdinalIgnoreCase);
+    /// <summary>
+    /// Whether this state is following a squadron's carrier rather than the Commander's own
+    /// (<a href="https://github.com/dseelinger/d47/issues/230">#230</a>).
+    /// <para>
+    /// <b>One record, two instances, two filters.</b> Everything a carrier is — the fold, the
+    /// figures, the callsign learned at the airlock — is identical for both; the only thing that
+    /// differs is which events belong to it. So the discrimination this file already carries is
+    /// extended by one flag rather than copied into a second model, which is the mistake the first
+    /// attempt at #230 made.
+    /// </para>
+    /// </summary>
+    public bool IsSquadron { get; init; }
+
+    /// <summary>
+    /// Whether this event is about the carrier this state is following.
+    /// <para>
+    /// <b>Deliberately asymmetric, and that asymmetry is the whole safety property.</b> An event
+    /// with no <c>CarrierType</c> belongs to the Commander's own carrier: Frontier added the field
+    /// partway through, and all 223 such <c>CarrierLocation</c> events in the corpus are the same
+    /// single carrier id. Handing those to a squadron state as well would conjure a second carrier
+    /// out of every journal written before the field existed — inventing a carrier the Commander
+    /// does not have is a worse failure than missing one they do.
+    /// </para>
+    /// <para>
+    /// So the squadron side takes an event only when Elite says <c>SquadronCarrier</c>, or when the
+    /// event names the id this state already holds. The second clause is what lets a squadron
+    /// carrier learn its callsign at the airlock: a docking event carries a <c>MarketID</c> and no
+    /// <c>CarrierType</c> at all, and identity by id is exactly the reading the own-carrier path
+    /// already uses. It cannot cross the two, because an event that says <c>FleetCarrier</c> is
+    /// refused before the id is consulted.
+    /// </para>
+    /// </summary>
+    private bool Mine(JournalEvent journalEvent)
+    {
+        var type = journalEvent.String("CarrierType");
+        var said = type is { Length: > 0 };
+
+        var fleet = said && string.Equals(type, "FleetCarrier", StringComparison.OrdinalIgnoreCase);
+        var squadron = said && string.Equals(type, "SquadronCarrier", StringComparison.OrdinalIgnoreCase);
+
+        if (!IsSquadron)
+        {
+            return !squadron;
+        }
+
+        if (fleet)
+        {
+            return false;
+        }
+
+        return squadron || Names(journalEvent);
+    }
+
+    /// <summary>
+    /// Whether an event names the carrier id this state already holds.
+    /// <para>
+    /// <b><c>FCMaterials</c> puts a <em>callsign</em> in <c>CarrierID</c></b> — 89 times across the
+    /// corpus, always without a <c>CarrierType</c>. <c>Long</c> answers null for a string, so those
+    /// events match nothing here and fall through inert, which is the right outcome twice over:
+    /// the field is the wrong type to trust, and the carrier a Commander trades materials at is
+    /// frequently not one of theirs at all.
+    /// </para>
+    /// </summary>
+    private bool Names(JournalEvent journalEvent) =>
+        CarrierId is { } id
+        && (journalEvent.Long("CarrierID") == id || journalEvent.Long("MarketID") == id);
 
     public CarrierState Apply(JournalEvent journalEvent)
     {

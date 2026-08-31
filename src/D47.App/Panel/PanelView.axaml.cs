@@ -869,7 +869,9 @@ public partial class PanelView : UserControl
         // furnished rather than only for a Commander who owns one: the page says which of "you
         // have no carrier" and "d47 has not seen one" it means, and only the second is something
         // it can know before the management panel has been opened once.
-        _carrier = new CarrierSource(() => state()?.Carrier ?? D47.Core.Journal.CarrierState.None);
+        _carrier = new CarrierSource(
+            () => state()?.Carrier ?? D47.Core.Journal.CarrierState.None,
+            () => state()?.SquadronCarrier ?? D47.Core.Journal.CarrierState.NoSquadron);
 
         // No help declared: no capability page covers the carrier yet, and a root whose page has
         // no band simply shows no mark. Declaring one that does not exist would put a question
@@ -1018,10 +1020,12 @@ public partial class PanelView : UserControl
         // page and changes nothing about the hull they are sitting in. Same reference test, and
         // it is exact for the same reason — CarrierState is replaced rather than mutated.
         var carrier = _loadoutState?.Invoke()?.Carrier;
+        var squadron = _loadoutState?.Invoke()?.SquadronCarrier;
 
-        if (!ReferenceEquals(carrier, _carrierSeen))
+        if (!ReferenceEquals(carrier, _carrierSeen) || !ReferenceEquals(squadron, _squadronSeen))
         {
             _carrierSeen = carrier;
+            _squadronSeen = squadron;
             _carrier?.Invalidate();
         }
 
@@ -1040,6 +1044,7 @@ public partial class PanelView : UserControl
     private Func<D47.Core.Journal.CommanderGameState?>? _loadoutState;
     private D47.Core.Journal.ShipLoadout? _loadoutSeen;
     private D47.Core.Journal.CarrierState? _carrierSeen;
+    private D47.Core.Journal.CarrierState? _squadronSeen;
 
     /// <summary>
     /// Gives this surface the clocks, timers and alarms (Phase 24, "Utilities").

@@ -148,6 +148,41 @@ public class TheCarrierPageDrawsWhatIsKnownTests
     }
 
     /// <summary>
+    /// The squadron's carrier is drawn under its own heading, and never mixed with the
+    /// Commander's own.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheSquadronsCarrierIsDrawnApartAndSaidToBeTheirs()
+    {
+        var text = Shown(
+            Stats,
+            """
+            {"event":"CarrierStats","CarrierID":3713474048,"CarrierType":"SquadronCarrier",
+             "Callsign":"QRS-11X","Name":"Wandering Home","DockingAccess":"squadronfriends",
+             "FuelLevel":140,"Finance":{"CarrierBalance":9999}}
+            """);
+
+        Assert.Contains("Sacred Fire (BNH-T2F)", text, StringComparison.Ordinal);
+        Assert.Contains("Your squadron's carrier", text, StringComparison.Ordinal);
+        Assert.Contains("Wandering Home (QRS-11X)", text, StringComparison.Ordinal);
+        Assert.Contains("Your squadron's, not yours", text, StringComparison.Ordinal);
+
+        // Its balance is deliberately not drawn: a figure the Commander cannot act on, level with
+        // one they can, is a figure waiting to be misread.
+        Assert.DoesNotContain("9,999", text, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// A Commander with no squadron carrier is told nothing about one. d47 cannot tell "no
+    /// squadron" from "not seen yet", and saying either would be a claim it cannot support.
+    /// </summary>
+    [AvaloniaFact]
+    public void NoSquadronCarrierMeansNoSquadronHeading()
+    {
+        Assert.DoesNotContain("squadron", Shown(Stats), StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
     /// <b>"d47 has not seen one" is a different claim from "you have none"</b>, and only the first
     /// is something d47 can know before the management panel has ever been opened.
     /// </summary>
