@@ -184,6 +184,19 @@ public sealed record SettingRow
     /// <summary>The short form. The capability's documentation page is the long form.</summary>
     public required string Help { get; init; }
 
+    /// <summary>
+    /// A hazard the Commander is accepting by using this row, or null on the rows that carry
+    /// none — which is all of them but one
+    /// (<a href="https://github.com/dseelinger/d47/issues/237">#237</a>).
+    /// <para>
+    /// Drawn with a warning badge, distinct from <see cref="Help"/>'s muted prose, because this
+    /// is the one sentence on the row that must not read as background. Display only: nothing
+    /// about it gates the value, and it is no more reachable from the tool surface than any
+    /// other presentation property.
+    /// </para>
+    /// </summary>
+    public string? Warning { get; init; }
+
     public required SettingKind Kind { get; init; }
 
     /// <summary>

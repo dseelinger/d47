@@ -254,15 +254,16 @@ public static class VrCapability
             {
                 Key = ControllersKey,
                 Advanced = true,
+                // Two sentences and a badge, since #237. The whole case for the withdrawal lives
+                // in #18 and #198 and on the docs page - the row only has to say what the switch
+                // does, what off costs, and the one hazard of on.
                 Label = "Motion controllers",
-                Help = "Whether D47 touches your motion controllers at all - the pointing ray, the "
-                       + "trigger and the grip. Off, and that is a withdrawal rather than a preference: "
-                       + "D47 read controller poses ninety times a second for a whole session whether "
-                       + "or not anything was being pointed at, and that is the untested half of why a "
-                       + "controller put down while D47 was running never woke up again. With it off "
-                       + "nothing on the panel can be pressed in the headset, the headset Settings tab "
-                       + "cannot be reached, and the panel cannot be grabbed and carried - say \"move "
-                       + "the panel left\" instead. Turn it on to see whether the fault comes back.",
+                Help = "Whether D47 uses your motion controllers - the pointing ray, the trigger "
+                       + "and the grip. With it off nothing on the panel can be pressed in the "
+                       + "headset and the panel cannot be grabbed - say \"move the panel left\" "
+                       + "instead.",
+                Warning = "Known bug: with this on, a controller you put down may never wake from "
+                          + "standby. When you finish trying it, turn it back off and restart D47.",
                 Kind = SettingKind.Toggle,
                 DocsAnchor = "controllers",
                 AppliesWhen = s => s.Vr.Enabled,
