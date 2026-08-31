@@ -79,10 +79,10 @@ public class TheOverlayFollowsTheWindowTests
     {
         var (window, follower) = Pair(stories: false);
 
-        window.Page = TranscriptPage.Technical;
+        window.Page = TranscriptPage.Log;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(TranscriptPage.Technical, follower.Page);
+        Assert.Equal(TranscriptPage.Log, follower.Page);
 
         follower.Page = TranscriptPage.Conversation;
         Dispatcher.UIThread.RunJobs();

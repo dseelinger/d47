@@ -211,7 +211,7 @@ public static class ConversationCapability
         report.AppendLine($"Availability: {availability.Current}{(availability.Reason is { } why ? $" — {why}" : "")}");
         report.AppendLine($"Personality: {(settings.Llm.PersonalityEnabled ? "on" : "off")}");
         report.AppendLine(
-            $"Session so far: {spend.TurnCount} turn(s), {spend.RunningTotalDollars:C4}");
+            $"Session so far: {spend.TurnCount} response(s), {spend.RunningTotalDollars:C4}");
 
         // Here rather than on a capability of its own, because the question a Commander asks is
         // "what has this cost" and it has one answer (Phase 19). The unit differs and
@@ -261,7 +261,7 @@ public static class ConversationCapability
             {
                 Key = ProviderKey,
                 Label = "Provider",
-                Help = "Which language model answers. \"None\" keeps every turn on this machine.",
+                Help = "Which language model answers. \"None\" keeps every response on this machine.",
                 Kind = SettingKind.Choice,
                 Choices = LlmProviderCatalog.Ids,
                 ChoiceLabel = id => LlmProviderCatalog.Selected(id).Name,

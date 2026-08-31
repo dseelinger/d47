@@ -27,6 +27,161 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.96.0 — 2026-08-31 — The panel says what it is showing
+
+### A real drop-down for the readings, and the readings say what they are (#231)
+
+**The readings picker was a full-face chooser because of a belief that was half true.** The panel
+said a `ComboBox` could not be used: a popup needs a top level, the headset's host window is
+constructed and never shown, and opening one there is not a polite failure — it recurses until the
+stack is gone and exits at `0xC00000FD`, with no exception and nothing in the log. All of that is
+true, and **all of it is true of the offscreen copy only**. The panel is instantiated twice and the
+desktop one lives in a real window. The headset was already covered: `OffscreenSurface` takes a
+ray-press on any `ComboBox` before a pointer event exists, forces the drop-down shut and draws its
+own list. That interception was built so the panel *could* contain combo boxes, and had been waiting
+for one.
+
+**The readings are named for what they are.** *Thread* is **Conversation**, *D47 Log* is **Log
+File**, and *Journal* is the **Elite Dangerous Journal File** — which had to say whose journal,
+because d47 keeps a log of its own and the two were one word apart. *Details* is gone: it stopped
+being a differentiator the day the log became a reading of its own, and a stored root that no longer
+resolves falls back to the conversation without special-casing, because `SelectRoot` already
+declines a root nobody registered.
+
+**A crumb's word had been doing two jobs, and one label finally pulled them apart.** It is the drawn
+label *and* the phrase the keyword router matches — one word order for both routes rather than a
+label and a synonym, which held right up until a name got long enough that nobody would say it.
+`NavCrumb.Spoken` carries short aliases now, so the box reads *Elite Dangerous Journal File* and the
+Commander still says "journal". *Thread* still works too: somebody who says it is out of date rather
+than wrong.
+
+**Raw Journal is a root the picker does not list.** It stays registered so a spoken "raw journal"
+and a switch position that names it still arrive, and a toggle beside the box crosses to it — the
+same events seen another way, where two entries read as two subjects. **The toggle is in the headset
+too**, reversing the desktop-only position it shipped with, on the Commander's instruction: *"Show
+the toggle. If they don't like it they can toggle it off."*
+
+**And the chooser the headset draws follows the theme.** Those colours were literals on purpose and
+the reason was recorded: the first cut inherited the theme and came out dark grey on dark grey,
+unreadable at a metre. What keeps that from returning is the scrim rather than the palette — the
+card is read against an opaque black rather than against the cockpit.
+
+### Search on the journal reading, which never had any (#232)
+
+Typing in the box reported `1 of 371` and the steppers moved nothing. **It was not a broken search;
+it was no search at all.** `DrawTranscript` returns before the search runs for this page — its own
+comment says everything below that line is about runs of transcript text — and everything below that
+line *is* the search. The count was a leftover from whichever prose page had been read last,
+rendered against a list that knew nothing about it.
+
+A list filters, the way the checklist and the engineer directory do, and the count then means what
+it says. **The event kind is matched as well as the drawn line**, because the thing being hunted is
+frequently the event's own name and `ShieldState` appears nowhere in *"Shields back up"*.
+
+### Newest goes to the newest (#233)
+
+One hard-coded line — `FollowButton.Content = "↓ Newest"` — against two readings that are written
+newest-first. On Raw Journal the button travelled to the far end of the file; on Journal it moved a
+scroller nobody could see, because that reading takes the pane with a list of its own. Direction and
+scroller both follow from the page now, and the arrow points at where the newest line actually is. A
+label that names a direction has to be right about it.
+
+### Tabs shed their words before they shed tabs (#234)
+
+Three stages, in order: **words, marks, then marks that scroll**. Scrolling was the right last resort
+and was the only one — on a narrow window whole tabs went off the end while the ones still visible
+carried full words, which is the wrong thing to spend the width on. A Commander can recognise a mark
+and cannot click a tab that is not there.
+
+Eight marks, each chosen from four drawn candidates, and three were arrived at by rejecting something
+more obvious. **Routing is not a rising line with waypoints on it** — that reads as a stock chart,
+and once seen that way it cannot be unseen. **Engineers is not a cog**: Engineers, Utilities and
+Settings all pull toward a gear, each reads fine alone, and a strip where three of eight are
+variations on one shape is a strip nobody can scan. **Settings is filled rather than stroked**, which
+is the second exception on record to the rule the send arrow is the first of — eight teeth in outline
+at tab size is porridge.
+
+`Glyphs.cs` said the tab names stay as words. That paragraph is amended rather than set aside: the
+word shows whenever the strip has room, so the alternative to a mark is not the word, it is nothing.
+
+**The avatar, the badge and the help mark came down onto the tab row**, where three small controls
+had been costing a whole band of height the page below did not get. They are one row of a fixed
+height rather than three controls each aligning themselves — bottom-aligning things of three
+different heights lines up their bottom edges and nothing a reader looks at. That row is 35 because
+the help mark is, and the mark is 35 because two constraints meet there: the headset presses it with
+a ray so it may not go under the 30-pixel floor, and the glyph inside is centred against the button's
+own box to half a pixel, which shrinking it broke.
+
+**Loadout reads Fleet**, its roots unchanged, and the Checklist tab drops its count — a number beside
+a picture is a badge, and the checklist page carries it anyway.
+
+### The carrier is on the tab that took its name (#230)
+
+The Fleet tab holds a **Carrier** reading: name and callsign, where it is, tritium, jump range,
+space, cargo, balance, docking access, and which services are open. Their squadron's carrier is
+drawn beneath it under its own heading.
+
+**Built on `CarrierState` rather than beside it, and that was the second attempt.** The first added a
+parallel watch keyed by `CarrierID` and would have reintroduced the fault that record already fixes —
+a squadron's carrier read as the Commander's own, reported 2026-08-21 as *"That's not where my Fleet
+Carrier is"*. Everything that tells the two apart lives in that record, so the figures belong there
+too. The parallel model was deleted rather than kept.
+
+**The filter is deliberately asymmetric, and that asymmetry is the safety property.** An event with
+no `CarrierType` goes to the Commander's own, because Frontier added the field partway through;
+handing those to the squadron side as well would conjure a carrier out of every journal written
+before it existed, and inventing a carrier a Commander does not have is worse than missing one they
+do. Checked against the corpus rather than assumed: **no id anywhere claims both types, and no
+`SquadronCarrier` id ever appears without one**. The squadron side consults the id for exactly one
+reason — so a carrier can be named at the airlock, the way #109 fixed for the Commander's own, from a
+docking that carries a `MarketID` and no type at all.
+
+**`FCMaterials` puts a callsign in `CarrierID`** — 89 times across the corpus, always untyped. `Long`
+answers null for a string so they fall through inert, which is right twice over: the field is the
+wrong type to trust, and the carrier a Commander trades materials at is frequently not one of theirs.
+
+Three things the page is careful about. **Bought and switched off is said apart from open for
+business**, because it is the state a Commander can undo and the one they are most likely not to have
+meant. **Cargo is a tonnage and never a manifest** — nothing Elite writes says what those tonnes are.
+And **every figure carries its age**, because the stats only refresh when the carrier management
+panel is opened, so saying them flat would be saying they are current. The squadron's carrier shows
+no balance and no space: those are not theirs to spend, and a figure they cannot act on drawn level
+with one they can is a figure waiting to be misread.
+
+### Turn is Response in everything the Commander reads (#235)
+
+*Turn* is the language of the thing underneath — one cycle of the conversation with the model — and
+it had leaked into the surface, where it means nothing to somebody who has not read the code. User
+facing strings only: the identifiers keep the word, which is accurate internally, and **"LLM Turn
+Price" stays as Phase 3's name** because a published tag never moves.
+
+*Exchange* was proposed and declined as a verb. It is worth recording what the rejected word was
+buying: a turn is **both halves** — what the Commander said, the tool calls, and the reply — and the
+figure under that heading is the cost of all of it. *Response* names only d47's half, so the heading
+describes less than it counts. A known and accepted imprecision rather than an oversight.
+
+### An issue the Commander wrote needs no label
+
+`CLAUDE.md` read *"an unlabelled issue … may not be worked, closed, or named in a `Fixes #N`"* and
+never said **whose** issue. A session took that to cover the Commander's own, declined to write
+`Fixes #N` for six issues the Commander had written and then asked for in chat, and `prerelease`
+duly found no closed issues and worked out a patch for what was plainly a minor.
+
+`Resolve-Trust` had been right the whole time — it allows anything the Commander authored and asks
+for the label only on somebody else's issue — and `tools/issues.ps1` says as much in its own
+description. The prose was the only thing claiming otherwise, and the prose is what an agent reads
+first. **The injection defence is untouched**: a stranger's issue still needs a label a vouched
+account applied, read from the event log, failing closed when the log cannot be read.
+
+### Also
+
+**`get-local` publishes from a window with no closed issues.** `Get-ClosedIssueNumbers` returns
+nothing when no commit since the newest tag says `Fixes #N`, and under StrictMode `$null` has no
+`.Count` — so the badge check threw before the publish started. That window is the ordinary case for
+a build cut mid-change, which is exactly when `get-local` is reached for.
+
+---
+
 ## 0.95.0 — 2026-08-30 — Every page says how before it says why
 
 ### Two bands on every capability page: how to use it, and why it works that way (#229)

@@ -52,7 +52,7 @@ public class ACancelledTurnIsNotAFailureTests
         var ending = TurnEnding.For(new TaskCanceledException("the request timed out"), calledOff: false);
 
         Assert.Equal("\nI couldn't answer that. The details are on the Technical page.", ending.Conversation);
-        Assert.Equal("\n[turn failed: the request timed out]", ending.Technical);
+        Assert.Equal("\n[response failed: the request timed out]", ending.Technical);
     }
 
     /// <summary>
@@ -65,7 +65,7 @@ public class ACancelledTurnIsNotAFailureTests
         var ending = TurnEnding.For(new InvalidOperationException("the calling thread"), calledOff: false);
 
         Assert.Equal("\nI couldn't answer that. The details are on the Technical page.", ending.Conversation);
-        Assert.Equal("\n[turn failed: the calling thread]", ending.Technical);
+        Assert.Equal("\n[response failed: the calling thread]", ending.Technical);
     }
 
     /// <summary>
@@ -78,6 +78,6 @@ public class ACancelledTurnIsNotAFailureTests
     {
         var ending = TurnEnding.For(new InvalidOperationException("a real fault"), calledOff: true);
 
-        Assert.Equal("\n[turn failed: a real fault]", ending.Technical);
+        Assert.Equal("\n[response failed: a real fault]", ending.Technical);
     }
 }

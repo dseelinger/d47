@@ -1,4 +1,4 @@
-namespace D47.Core.Interface;
+﻿namespace D47.Core.Interface;
 
 /// <summary>
 /// The panel's surfaces, as the bar shows them (Phase 25, "One transcript, three
@@ -122,6 +122,25 @@ public sealed record NavCrumb(string Key, string Word, bool Modal = false)
     /// </para>
     /// </summary>
     public string? Help { get; init; }
+
+    /// <summary>
+    /// What the Commander says to reach this level, where saying the drawn word is not something
+    /// anybody would do (<a href="https://github.com/dseelinger/d47/issues/231">#231</a>).
+    /// <para>
+    /// <b>This used to be one string doing two jobs, and there was a reason for that.</b> A crumb
+    /// is matched by the keyword router as well as pressed, and the argument on record was for
+    /// one word order rather than a label and a synonym — two spellings of one thing being two
+    /// things to keep in step. That holds right up until a label grows long enough that nobody
+    /// would say it out loud: "Elite Dangerous Journal File" names the reading exactly and is not
+    /// a phrase a Commander utters in a cockpit.
+    /// </para>
+    /// <para>
+    /// So the label may grow and the spoken route stays short. Empty for every level whose word
+    /// is already sayable, which is nearly all of them — an alias is for the case where the two
+    /// jobs genuinely pull apart, not a second name for everything.
+    /// </para>
+    /// </summary>
+    public IReadOnlyList<string> Spoken { get; init; } = [];
 }
 
 /// <summary>

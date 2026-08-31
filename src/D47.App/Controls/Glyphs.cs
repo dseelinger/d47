@@ -26,9 +26,18 @@ namespace D47.App.Controls;
 /// </para>
 /// <para>
 /// <b>Only where the picture is genuinely standard.</b> A glyph a Commander has to learn is worse
-/// than the word it replaced — so <em>Order</em>, <em>Import/Export</em> and the tab names stay as
-/// words. That is the whole of "where possible": it is a test the picture has to pass, not a target
-/// to convert everything to.
+/// than the word it replaced — so <em>Order</em> and <em>Import/Export</em> stay as words. That is
+/// the whole of "where possible": it is a test the picture has to pass, not a target to convert
+/// everything to.
+/// </para>
+/// <para>
+/// <b>The tab names were on that list and are not any more</b>
+/// (<a href="https://github.com/dseelinger/d47/issues/234">#234</a>), and the rule above is the
+/// reason rather than something set aside. A tab shows its <em>word</em> whenever the strip has
+/// room; the mark appears only when it does not, in place of the tab scrolling out of sight
+/// altogether. So a Commander never has to learn a picture to find a page — they meet it, if at
+/// all, beside the word it stands for, and the alternative to the mark is not the word but
+/// nothing. The Commander chose all eight from drawn candidates on 2026-08-31.
 /// </para>
 /// <para>
 /// <b><em>Details</em> was on that list until 2026-08-30 and is not any more</b>
@@ -107,6 +116,88 @@ public static class Glyphs
         "M 3,6 L 21,6 L 21,18 L 3,18 Z  M 12,9 A 3,3 0 1 1 11.99,9";
 
     /// <summary>
+    /// The eight tab marks (#234). Each was chosen from four drawn candidates, and three of them
+    /// were arrived at by rejecting something more obvious — those reasons are worth keeping.
+    /// </summary>
+    public static class Tabs
+    {
+        /// <summary>A speech bubble. The conversation, and the two file readings beside it.</summary>
+        public const string Transcript = "M 4,5 L 20,5 L 20,15 L 11,15 L 7,19 L 7,15 L 4,15 Z";
+
+        /// <summary>
+        /// A signpost: a post with an arm pointing each way.
+        /// <para>
+        /// <b>Not a rising line with waypoints on it</b>, which was the obvious drawing and reads
+        /// as a stock chart. Seen that way once it cannot be unseen, and nothing about it says
+        /// <em>route</em>.
+        /// </para>
+        /// </summary>
+        public const string Routing = "M 12,3 L 12,21  M 12,6 L 20,6 L 18,9 L 12,9  M 12,12 L 4,12 L 6,15 L 12,15";
+
+        /// <summary>Two ticks beside two lines: the list, and the fact that lines come off it.</summary>
+        public const string Checklist = "M 3,7 L 5,9 L 9,5  M 3,15 L 5,17 L 9,13  M 12,7 L 21,7  M 12,15 L 21,15";
+
+        /// <summary>
+        /// A flagship and two escorts — everything the Commander owns, rather than one hull.
+        /// <para>
+        /// A single ship was chosen first and then changed: the tab is named <em>Fleet</em>, and
+        /// the root beneath it is meant to hold carriers one day
+        /// (<a href="https://github.com/dseelinger/d47/issues/230">#230</a>). A mark saying "this
+        /// ship" would have to be redrawn the moment it does.
+        /// </para>
+        /// </summary>
+        public const string Fleet =
+            "M 12,3 L 16.5,13 L 12,10.8 L 7.5,13 Z  M 5,13 L 7.8,19.5 L 5,18 L 2.2,19.5 Z"
+            + "  M 19,13 L 21.8,19.5 L 19,18 L 16.2,19.5 Z";
+
+        /// <summary>
+        /// An anvil.
+        /// <para>
+        /// <b>Not a cog, and that is a decision about the set rather than about this mark.</b>
+        /// Engineers, Utilities and Settings all pull toward a cog, a wrench or a row of sliders.
+        /// Each reads fine alone; a strip where three of eight are variations on a gear is a strip
+        /// nobody can scan. Settings has the most universal claim on the cog, so it took it.
+        /// </para>
+        /// </summary>
+        public const string Engineers =
+            "M 3,9 L 21,9 L 17,14 L 9,14 L 9,18 L 15,18 L 15,20 L 5,20 L 5,18 L 7,18 L 7,14 L 3,12 Z";
+
+        /// <summary>A compass rose. Stories the Commander flies, rather than a list of jobs.</summary>
+        public const string Adventures = "M 12,3 A 9,9 0 1 1 11.99,3  M 15.5,8.5 L 13,13 L 8.5,15.5 L 11,11 Z";
+
+        /// <summary>A plug: the odds and ends that attach to d47 without being settings.</summary>
+        public const string Utilities =
+            "M 9,3 L 9,8  M 15,3 L 15,8  M 6,8 L 18,8 L 18,13 A 6,6 0 0 1 6,13 Z  M 12,19 L 12,21";
+
+        /// <summary>
+        /// A gear, and the one mark here that is <b>filled</b> rather than stroked.
+        /// <para>
+        /// <b>The second exception on record, and it is the first one's reason again.</b> The send
+        /// arrow is filled because an outlined arrowhead at 17 pixels is a smudge; eight teeth in
+        /// outline fail the same way at tab size, which is smaller still. The solid shape stays a
+        /// gear all the way down.
+        /// </para>
+        /// <para>
+        /// <c>F0</c> is the even-odd fill rule, which is what makes the hub a hole rather than a
+        /// disc: the rim and the bore are two subpaths of one geometry, and under the default rule
+        /// the second would fill in.
+        /// </para>
+        /// <para>
+        /// The teeth are computed rather than drawn by eye, and the first attempt was not a gear at
+        /// all — a circle with eight detached rays around it, which is a sun. A gear's teeth are
+        /// cut into the rim.
+        /// </para>
+        /// </summary>
+        public const string Settings =
+            "F0 M 10.1,1.2 L 13.9,1.2 L 13.9,4.0 L 16.3,5.0 L 18.3,3.0 L 21.0,5.7 L 19.0,7.7"
+            + " L 20.0,10.1 L 22.8,10.1 L 22.8,13.9 L 20.0,13.9 L 19.0,16.3 L 21.0,18.3"
+            + " L 18.3,21.0 L 16.3,19.0 L 13.9,20.0 L 13.9,22.8 L 10.1,22.8 L 10.1,20.0"
+            + " L 7.7,19.0 L 5.7,21.0 L 3.0,18.3 L 5.0,16.3 L 4.0,13.9 L 1.2,13.9 L 1.2,10.1"
+            + " L 4.0,10.1 L 5.0,7.7 L 3.0,5.7 L 5.7,3.0 L 7.7,5.0 L 10.1,4.0 Z"
+            + " M 12,6.8 A 5.2,5.2 0 1 1 11.99,6.8 Z";
+    }
+
+    /// <summary>
     /// One mark, sized and coloured for the row it sits in.
     /// </summary>
     /// <param name="data">One of the constants above.</param>
@@ -118,13 +209,25 @@ public static class Glyphs
     /// Pixels across, square. 14 sits beside secondary text; the microphone uses 13 beside small
     /// text.
     /// </param>
-    public static Path Draw(string data, string brush, double size = 14)
+    public static Path Draw(string data, string brush, double size = 14, bool filled = false)
     {
         var glyph = Made(data, size);
 
         // Bound rather than assigned, so switching theme repaints it — colour by role, never by
         // literal, and never a colour read once at build time (Phase 4).
-        glyph.Bind(Shape.StrokeProperty, glyph.GetResourceObservable(brush));
+        //
+        // A filled mark paints the same role through Fill and carries no stroke at all, rather
+        // than doing both: a stroked outline around a solid shape thickens it by the stroke and
+        // closes up the gaps a gear's teeth depend on.
+        if (filled)
+        {
+            glyph.StrokeThickness = 0;
+            glyph.Bind(Shape.FillProperty, glyph.GetResourceObservable(brush));
+        }
+        else
+        {
+            glyph.Bind(Shape.StrokeProperty, glyph.GetResourceObservable(brush));
+        }
 
         return glyph;
     }
@@ -152,9 +255,10 @@ public static class Glyphs
     /// improvement if the word is still reachable.
     /// </para>
     /// </summary>
-    public static void Mark(Button button, string data, string brush, string says, double size = 14)
+    public static void Mark(
+        Button button, string data, string brush, string says, double size = 14, bool filled = false)
     {
-        button.Content = Draw(data, brush, size);
+        button.Content = Draw(data, brush, size, filled);
 
         ToolTip.SetTip(button, says);
         Avalonia.Automation.AutomationProperties.SetName(button, says);

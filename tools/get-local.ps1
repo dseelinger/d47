@@ -215,7 +215,11 @@ else {
     # What the badge will list, over the same window the version is named for so the two cannot
     # describe different builds (#207). Asked once and carried, rather than re-derived for the
     # count — a second call is a second answer waiting to differ from the first.
-    $worked = if ($tag) { Get-ClosedIssueNumbers -Root $repo -Range "$tag..HEAD" } else { @() }
+    # Forced to an array, and that is the fix rather than a style. Get-ClosedIssueNumbers returns
+    # nothing at all when no commit in the window says "Fixes #N" — and under StrictMode $null has
+    # no .Count, so the publish below threw before it started. A window with no closed issues is
+    # the ordinary case for a build cut mid-change, which is exactly when get-local is wanted.
+    $worked = @(if ($tag) { Get-ClosedIssueNumbers -Root $repo -Range "$tag..HEAD" } else { @() })
 
     Write-Step "Publishing $version"
     Write-Note 'Release. A Debug build would read dev-install\data and see none of your settings.'

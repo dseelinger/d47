@@ -42,5 +42,5 @@ internal readonly record struct TurnEnding(string Conversation, string? Technica
             ? new TurnEnding("\n[cancelled]", null)
             : new TurnEnding(
                 "\nI couldn't answer that. The details are on the Technical page.",
-                $"\n[turn failed: {thrown.Message}]");
+                $"\n[response failed: {thrown.Message}]");
 }

@@ -27,6 +27,18 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>Their fleet carrier, if they have one.</summary>
     public CarrierState Carrier { get; private set; } = CarrierState.None;
 
+    /// <summary>
+    /// Their squadron's carrier, if they are in a squadron that has one
+    /// (<a href="https://github.com/dseelinger/d47/issues/230">#230</a>).
+    /// <para>
+    /// <b>Kept apart from <see cref="Carrier"/> rather than merged into it</b>, which is the whole
+    /// point of it existing. Elite writes both to the same journal seconds apart; reading the last
+    /// one to arrive told a Commander their own carrier was wherever the squadron's happened to
+    /// be. Two states with two filters is how they stay told apart.
+    /// </para>
+    /// </summary>
+    public CarrierState SquadronCarrier { get; private set; } = CarrierState.NoSquadron;
+
     /// <summary>Every other ship they own, and where.</summary>
     public FleetRegistry Fleet { get; internal set; } = FleetRegistry.Empty;
 
@@ -97,6 +109,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         Loadouts = Loadouts.Apply(journalEvent).Remember(Ship, journalEvent.Timestamp);
         OnFoot = OnFoot.Apply(journalEvent);
         Carrier = Carrier.Apply(journalEvent);
+        SquadronCarrier = SquadronCarrier.Apply(journalEvent);
         // After Location, for the reason Colonisation below is: storing a ship happens wherever
         // the Commander is standing, and neither ShipyardSwap nor ShipyardBuy names a place.
         Fleet = Fleet.Apply(journalEvent, Location.StarSystem, Location.StationName);

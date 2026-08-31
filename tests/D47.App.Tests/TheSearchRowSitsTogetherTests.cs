@@ -110,7 +110,7 @@ public class TheSearchRowSitsTogetherTests
 
         // The mode button keeps its own size rather than being squeezed to a sliver.
         Assert.True(
-            panel.GetControl<Button>("ModeButton").Bounds.Width > 60,
+            panel.GetControl<ComboBox>("ModeBox").Bounds.Width > 60,
             "the mode button was squeezed instead");
     }
 

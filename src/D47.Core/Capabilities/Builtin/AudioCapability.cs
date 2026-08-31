@@ -38,7 +38,7 @@ public static class AudioCapability
     /// </summary>
     private static (string Name, string What) Describe(AudioChannel channel) => channel switch
     {
-        AudioChannel.Bed => ("Thinking bed", "the loop that plays underneath a turn while D47 works"),
+        AudioChannel.Bed => ("Thinking bed", "the loop that plays underneath a response while D47 works"),
         AudioChannel.Music => ("Ambient music", "the background layer that follows what you are doing"),
         AudioChannel.Cue => ("Sound cues", "the short markers for listening, thinking and answering"),
         AudioChannel.Speech => ("Speech", "everything D47 says out loud"),

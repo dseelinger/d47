@@ -128,67 +128,9 @@
         the button it sits beside. A Commander in a headset is flying, and a badge about which
         build they are on is chrome they cannot dismiss and did not ask for.
       -->
-      <Border x:Name="PreReleaseBadge"
-              DockPanel.Dock="Right"
-              IsVisible="False"
-              VerticalAlignment="Top"
-              Margin="0,9,6,0"
-              Padding="7,2"
-              CornerRadius="3"
-              Background="Transparent"
-              BorderThickness="1"
-              BorderBrush="{DynamicResource D47.TextMuted}"
-              PointerPressed="OnBadgePressed"
-              ToolTip.Tip="This is a pre-release. It is offered to nobody automatically, and it is not final.">
-        <TextBlock x:Name="PreReleaseBadgeText"
-                   Text="PRE-RELEASE"
-                   FontSize="{StaticResource D47.Type.Small}"
-                   FontWeight="Bold"
-                   Foreground="{DynamicResource D47.TextMuted}" />
-      </Border>
 
-      <Button x:Name="HelpButton"
-              DockPanel.Dock="Right"
-              IsVisible="False"
-              Width="35"
-              Height="35"
-              Padding="0"
-              HorizontalContentAlignment="Center"
-              VerticalContentAlignment="Center"
-              VerticalAlignment="Top"
-              CornerRadius="4"
-              Background="Transparent"
-              BorderThickness="0"
-              ToolTip.Tip="Open the documentation"
-              Click="OnHelpClick">
-        <!--
-          Width is the ink's own aspect rather than a square: the geometry spans 9.2 units across
-          and 18.6 down, so 8.4 by 17 is the box it actually fills. A 17-wide box would leave four
-          pixels of nothing on each side of the mark and hang it left of centre.
 
-          **Accent at rest** (#208). It was muted until pointed at, and a pair of handlers swapped
-          the stroke on the way in and out — which is the pattern `Glyphs.Draw` exists to refuse:
-          `FindResource` reads a brush *once*, at the moment of the hover, and assigns it, so a
-          theme switched after a hover left the mark painted in the old theme's colour. Both
-          handlers are gone with the resting colour; a `DynamicResource` is the only mechanism on
-          this stroke now.
 
-          And the hover feedback goes with them rather than being replaced. The colour was saying
-          two things — "this can be pressed" and "you are pointing at it" — and the first is the one
-          worth keeping. `TurnDetails` and `ModeToggle` are accent at rest and change nothing on
-          hover; the button's own background wash is what says the pointer is here.
-        -->
-        <Path x:Name="HelpGlyph"
-              Width="8.4" Height="17"
-              Stretch="Uniform"
-              HorizontalAlignment="Center"
-              VerticalAlignment="Center"
-              Stroke="{DynamicResource D47.Accent}"
-              StrokeThickness="2.8"
-              StrokeLineCap="Round"
-              StrokeJoin="Round"
-              Data="M 7.4,7.6 A 4.6,4.6 0 1 1 12,12.2 L 12,15.5 M 12,20.2 L 12,20.2" />
-      </Button>
 
       <!--
         The ship AI's face, on the left, where the build line used to be. It earns that space in
@@ -198,10 +140,7 @@
         choice — and present in mini too, since a reduced content set is exactly where a glance
         has to carry more.
       -->
-      <panel:AvatarView x:Name="Avatar"
-                        DockPanel.Dock="Left"
-                        VerticalAlignment="Top"
-                        Margin="0,0,10,0" />
+
     </DockPanel>
 
     <!-- Both banners in one region, so mini hides them with one line and each still decides
@@ -390,7 +329,7 @@
               CornerRadius="3"
               VerticalAlignment="Center"
               Background="{DynamicResource D47.SurfaceAlt}"
-              BorderBrush="{DynamicResource D47.Accent}"
+              BorderBrush="{DynamicResource D47.TextMuted}"
               BorderThickness="1">
         <TextBlock x:Name="SwitchText"
                    Text="{Binding SwitchesText}"
@@ -512,6 +451,108 @@
               ToolTip.Tip="Earlier tabs"
               AutomationProperties.Name="Show earlier tabs"
               Click="OnTabsLeftClick" />
+      <!--
+        The panel's chrome, on the tab row rather than in a band above it (#234). Three small
+        controls were costing a whole strip of height that the page below did not get, which is
+        nothing on a desktop window and is a real fraction of a headset panel.
+
+        **One row of a fixed height, rather than three controls each aligning themselves.** They
+        were docked separately and bottom-aligned, and bottom-aligning things of three different
+        heights lines up their bottom edges and nothing else - the question mark sits in a 35-pixel
+        button, the badge in a 22-pixel border, and the ink came out at three different heights.
+        A container with one height, and every child centred in it, aligns what a reader actually
+        sees.
+
+        Right-to-left: avatar, badge, help, and then the tab stepper nearest the tabs it scrolls.
+        The avatar is outermost on the Commander's instruction. Both the badge and the help mark
+        are furnished by hand and are absent on the headset's copy, so this row has to sit
+        correctly with any of the three missing - which a StackPanel does by giving a hidden child
+        no width.
+      -->
+      <StackPanel x:Name="ChromeRow"
+                  DockPanel.Dock="Right"
+                  Orientation="Horizontal"
+                  Height="35"
+                  VerticalAlignment="Bottom"
+                  Margin="6,0,0,0">
+        <!--
+          Thirty-five, and the row is thirty-five because of it. Two constraints meet on this
+          number: the headset presses this mark with a ray, so it may not go under the 30-pixel
+          floor (Phase 39) - and the glyph inside is centred against the button's own box, which
+          TheHelpGlyphIsCentredInItsButton measures to half a pixel. Shrinking the button moved
+          the ink off centre by more than that, so the size that was proven stays and the row is
+          built around it rather than the other way about.
+        -->
+        <Button x:Name="HelpButton"
+                IsVisible="False"
+                Width="35"
+                Height="35"
+                Padding="0"
+                HorizontalContentAlignment="Center"
+                VerticalContentAlignment="Center"
+                VerticalAlignment="Center"
+                CornerRadius="4"
+                Background="Transparent"
+                BorderThickness="0"
+                ToolTip.Tip="Open the documentation"
+                Click="OnHelpClick">
+          <!--
+            Width is the ink's own aspect rather than a square: the geometry spans 9.2 units across
+            and 18.6 down, so 8.4 by 17 is the box it actually fills. A 17-wide box would leave four
+            pixels of nothing on each side of the mark and hang it left of centre.
+
+            **Accent at rest** (#208). It was muted until pointed at, and a pair of handlers swapped
+            the stroke on the way in and out — which is the pattern `Glyphs.Draw` exists to refuse:
+            `FindResource` reads a brush *once*, at the moment of the hover, and assigns it, so a
+            theme switched after a hover left the mark painted in the old theme's colour. Both
+            handlers are gone with the resting colour; a `DynamicResource` is the only mechanism on
+            this stroke now.
+
+            And the hover feedback goes with them rather than being replaced. The colour was saying
+            two things — "this can be pressed" and "you are pointing at it" — and the first is the one
+            worth keeping. `TurnDetails` and `ModeToggle` are accent at rest and change nothing on
+            hover; the button's own background wash is what says the pointer is here.
+          -->
+          <Path x:Name="HelpGlyph"
+                Width="8.4" Height="17"
+                Stretch="Uniform"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Stroke="{DynamicResource D47.Accent}"
+                StrokeThickness="2.8"
+                StrokeLineCap="Round"
+                StrokeJoin="Round"
+                Data="M 7.4,7.6 A 4.6,4.6 0 1 1 12,12.2 L 12,15.5 M 12,20.2 L 12,20.2" />
+        </Button>
+        <Border x:Name="PreReleaseBadge"
+                IsVisible="False"
+                VerticalAlignment="Center"
+                Margin="0,0,6,0"
+                Padding="7,2"
+                CornerRadius="3"
+                Background="Transparent"
+                BorderThickness="1"
+                BorderBrush="{DynamicResource D47.Accent}"
+                PointerPressed="OnBadgePressed"
+                ToolTip.Tip="This is a pre-release. It is offered to nobody automatically, and it is not final.">
+          <TextBlock x:Name="PreReleaseBadgeText"
+                     Text="PRE-RELEASE"
+                     FontSize="{StaticResource D47.Type.Small}"
+                     FontWeight="Bold"
+                     Foreground="{DynamicResource D47.Accent}" />
+        </Border>
+
+        <!--
+          The turn state. Sized through Extent rather than Width, because this control sizes its
+          own ring and core inside the box it is given - setting only the outer box drew a
+          40-pixel ring in a 30-pixel space.
+        -->
+        <panel:AvatarView x:Name="Avatar"
+                          Extent="30"
+                          VerticalAlignment="Center"
+                          Margin="8,0,0,0" />
+      </StackPanel>
+
       <Button x:Name="TabsRight"
               DockPanel.Dock="Right"
               Content="&#x203A;"
@@ -584,10 +625,15 @@
                      Content="Checklist"
                      Tapped="OnTabTapped"
                      IsCheckedChanged="OnTabChecked" />
+        <!--
+          Fleet rather than Loadout (#234). Its roots are unchanged - Ships, Suits and Gap - so
+          the root that holds owned vessels keeps the name it already had, and only the tab's own
+          label moved. What that name promises and does not yet deliver is #230.
+        -->
         <RadioButton x:Name="LoadoutTab"
                      Theme="{StaticResource D47.Tab}"
                      IsVisible="False"
-                     Content="Loadout"
+                     Content="Fleet"
                      Tapped="OnTabTapped"
                      IsCheckedChanged="OnTabChecked" />
         <RadioButton x:Name="EngineersTab"
@@ -705,16 +751,56 @@
           tab with one root shows no control at all. Hidden below the root, where the breadcrumb
           is already answering which stack you are in.
         -->
-        <Button x:Name="ModeButton"
-                DockPanel.Dock="Left"
-                Margin="0,0,12,0"
-                VerticalAlignment="Center"
-                Height="28"
-                Padding="10,0"
-                CornerRadius="4"
-                IsVisible="False"
-                FontSize="{StaticResource D47.Type.Secondary}"
-                Click="OnModeClick" />
+        <!--
+          A real ComboBox (#231), and the comment this replaces was half right. It said a
+          ComboBox cannot be used here because a popup has no top level to hang from on a window
+          that is never shown. That is true of the headset's copy and was applied to both — but
+          the panel is instantiated twice, and only the offscreen copy lives in that window. This
+          one is in the real main window, with a real top level, exactly like Settings.
+
+          The headset's copy is already covered without this knowing: OffscreenSurface intercepts
+          a ray-press on any ComboBox before a pointer event is raised, forces IsDropDownOpen to
+          false and draws its own list on the panel. That interception exists so the panel can
+          contain combo boxes, and this is the control it was waiting for.
+
+          The busy glyph sits beside it rather than inside it, because a ComboBox's content is
+          its selected item and a spinner is not one of the readings.
+        -->
+        <StackPanel x:Name="ModePicker"
+                    DockPanel.Dock="Left"
+                    Orientation="Horizontal"
+                    Spacing="7"
+                    Margin="0,0,12,0"
+                    VerticalAlignment="Center"
+                    IsVisible="False">
+          <ComboBox x:Name="ModeBox"
+                    MinHeight="28"
+                    VerticalAlignment="Center"
+                    CornerRadius="4"
+                    FontSize="{StaticResource D47.Type.Secondary}"
+                    SelectionChanged="OnModeChanged" />
+
+          <!--
+            The journal's two readings, as one reading seen two ways (#231). They used to be two
+            entries in the picker, which read as two subjects — and they are the same events, once
+            as sentences and once as the file's own JSON.
+
+            Shown in the headset too, on the Commander's instruction: "Show the toggle. If they
+            don't like it they can toggle it off." That reverses the position Raw Journal shipped
+            with, which was that a wall of JSON is not readable at a metre and exists to be pasted
+            into a bug report. Recorded here so it is not put back as a regression.
+          -->
+          <ToggleButton x:Name="RawToggle"
+                        IsVisible="False"
+                        MinHeight="28"
+                        VerticalAlignment="Center"
+                        Padding="10,0"
+                        CornerRadius="4"
+                        FontSize="{StaticResource D47.Type.Secondary}"
+                        Content="Raw"
+                        ToolTip.Tip="Show the file's own JSON instead of sentences"
+                        IsCheckedChanged="OnRawToggled" />
+        </StackPanel>
         <!--
           One search affordance for the surface, on the tab that is selected — not four features
           bolted to four pages (list.md Phase 12). What a match does differs by page and that
@@ -999,7 +1085,12 @@
             Borrowing it would mean giving this tab a drill stack it has no levels for.
           -->
           <Grid x:Name="JournalPane" IsVisible="False" ColumnDefinitions="*,Auto,1.2*">
-            <ScrollViewer Grid.Column="0" x:Name="JournalListScroller">
+            <!--
+              Watched like the transcript's own scroller, because the Newest button acts on
+              whichever of the two is showing (#233). Without this, moving through the list
+              never told the button the Commander had left the newest entry.
+            -->
+            <ScrollViewer Grid.Column="0" x:Name="JournalListScroller" ScrollChanged="OnTranscriptScrolled">
               <ListBox x:Name="JournalList"
                        Background="Transparent"
                        BorderThickness="0"

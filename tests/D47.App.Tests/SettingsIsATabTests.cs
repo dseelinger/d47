@@ -107,10 +107,10 @@ public class SettingsIsATabTests
         var window = new Window { Content = view, Width = 900, Height = 700 };
         window.Show();
 
-        view.Page = TranscriptPage.Technical;
+        view.Page = TranscriptPage.Log;
         view.Tab = PanelTab.Settings;
 
-        Assert.Equal(TranscriptPage.Technical, view.Page);
+        Assert.Equal(TranscriptPage.Log, view.Page);
         Assert.True(Named(view, "TranscriptPane").IsVisible);
 
         window.Close();

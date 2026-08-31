@@ -146,15 +146,6 @@ public partial class PanelView : UserControl
     private readonly Controls.BusyGlyph _logBusy = new() { IsVisible = false };
 
     /// <summary>
-    /// Which reading the mode button says is showing. Written rather than rebuilt, so the glyph
-    /// beside it survives a navigation — see <see cref="DrawModes"/>.
-    /// </summary>
-    private readonly TextBlock _modeLabel = new()
-    {
-        VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-    };
-
-    /// <summary>
     /// Whether the search affordance belongs on this surface. Only the desktop window says yes.
     /// Held rather than read off a control's visibility, because the controls it governs are now
     /// hidden and shown by the tab as well (remediation.md 10, item 2).
@@ -329,49 +320,51 @@ public partial class PanelView : UserControl
         // rather than a capability's, because no capability owns a tab strip and a Copy All
         // button; the id is a HelpLibrary key rather than a registry id, which is what lets the
         // three general pages be reached the same way as the forty-five.
+        // The readings say what they are, and say it plainly (#231). "Thread" and "D47 Log" were
+        // words this project had got used to rather than words that answer "what am I looking
+        // at"; the journal reading in particular had to say *whose* journal, because d47 keeps a
+        // log of its own and the two were a word apart.
+        //
+        // Where the plain name is too long to say out loud, the crumb carries a short spoken
+        // alias instead of being shortened. See NavCrumb.Spoken: the drawn label and the phrase
+        // used to be one string on purpose, and this is the case that finally pulled them apart.
         Nav.Register(
             PanelTab.Transcript,
-            new NavCrumb(ConversationRoot, "Thread") { Help = TranscriptHelp });
+            new NavCrumb(ConversationRoot, "Conversation")
+            {
+                Help = TranscriptHelp,
+
+                // The word this reading answered to for a year. Kept, because a Commander who
+                // says it is not wrong, they are out of date, and being told nothing happened is
+                // a worse answer than going where they meant.
+                Spoken = ["thread"],
+            });
 
         Nav.Register(
             PanelTab.Transcript,
-            new NavCrumb(TechnicalRoot, "Details") { Help = D47.Core.Capabilities.Builtin.DiagnosticsCapability.Id });
+            new NavCrumb(LogRoot, "Log File")
+            {
+                Help = D47.Core.Capabilities.Builtin.DiagnosticsCapability.Id,
+                Spoken = ["log", "d47 log"],
+            });
 
+        // Elite's own journal, in a form that is not JSON (#51), and named for whose it is.
         Nav.Register(
             PanelTab.Transcript,
-            new NavCrumb(LogRoot, "D47 Log") { Help = D47.Core.Capabilities.Builtin.DiagnosticsCapability.Id });
+            new NavCrumb(JournalRoot, "Elite Dangerous Journal File")
+            {
+                Help = TranscriptHelp,
+                Spoken = ["journal", "journal file", "elite dangerous journal"],
+            });
 
-        // Elite's own journal, in a form that is not JSON (#51). "Raw Journal" and not
-        // "Journal (RAW)": a crumb is matched by the keyword router as well as pressed, and a
-        // parenthetical is not a phrase anybody says - one word order for both routes rather than
-        // a label and a synonym.
-        Nav.Register(
-            PanelTab.Transcript,
-            new NavCrumb(JournalRoot, "Journal") { Help = TranscriptHelp });
-
-        // The mode button's content, once. See DrawModes for why it is not rebuilt.
+        // Beside the box rather than inside it (#231). A ComboBox draws its own chevron and its
+        // content is whichever reading is selected, so the spinner has to live next to the
+        // control it reports on instead of within it.
         _logBusy.Bind(
             Avalonia.Controls.Shapes.Shape.StrokeProperty,
             this.GetResourceObservable(Theming.ThemeManager.AccentKey));
 
-        ModeButton.Content = new StackPanel
-        {
-            Orientation = Avalonia.Layout.Orientation.Horizontal,
-            Spacing = 7,
-            Children =
-            {
-                _modeLabel,
-                _logBusy,
-
-                // The one thing that says this opens something. Without it the control reads as a
-                // label that happens to be pressable, which is a control nobody presses.
-                new TextBlock
-                {
-                    Text = "▾",
-                    VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-                },
-            },
-        };
+        ModePicker.Children.Add(_logBusy);
 
         Prompts = new PanelPrompts(Nav, Layer)
         {
@@ -783,9 +776,11 @@ public partial class PanelView : UserControl
         {
             var open = checklists.Document.Items.Count(item => item.IsLive && !item.IsComplete);
 
-            ChecklistTab.Content = open > 0
-                ? $"Checklist ({open.ToString(System.Globalization.CultureInfo.InvariantCulture)})"
-                : "Checklist";
+            // The number is gone from the tab (#234). It could not survive the strip collapsing
+            // to marks — a count beside a picture is a badge, and a badge on one of eight tabs is
+            // a thing the Commander has to decode. The checklist page carries it, which is where
+            // somebody wondering how much is left is going anyway.
+            _ = open;
         }
 
         // The store's event, which is the one the page itself listens to — so the tab and the page
@@ -870,9 +865,22 @@ public partial class PanelView : UserControl
             });
         }
 
+        // The carrier, on the tab that took its name (#230). Registered whenever the tab is
+        // furnished rather than only for a Commander who owns one: the page says which of "you
+        // have no carrier" and "d47 has not seen one" it means, and only the second is something
+        // it can know before the management panel has been opened once.
+        _carrier = new CarrierSource(
+            () => state()?.Carrier ?? D47.Core.Journal.CarrierState.None,
+            () => state()?.SquadronCarrier ?? D47.Core.Journal.CarrierState.NoSquadron);
+
+        // No help declared: no capability page covers the carrier yet, and a root whose page has
+        // no band simply shows no mark. Declaring one that does not exist would put a question
+        // mark on the page that opens nothing.
+        roots.Add(new NavCrumb(LoadoutPages.CarrierRoot, "Carrier"));
+
         Furnish(
             PanelTab.Loadout,
-            crumb => LoadoutPages.Build(crumb, modes, gap, Nav, Prompts),
+            crumb => LoadoutPages.Build(crumb, modes, gap, _carrier, Nav, Prompts),
             [.. roots]);
     }
 
@@ -1007,6 +1015,20 @@ public partial class PanelView : UserControl
             return;
         }
 
+        // The carrier moves on its own events rather than with the ship, so it is compared
+        // separately (#230): a jump booked while the Commander is nowhere near it changes this
+        // page and changes nothing about the hull they are sitting in. Same reference test, and
+        // it is exact for the same reason — CarrierState is replaced rather than mutated.
+        var carrier = _loadoutState?.Invoke()?.Carrier;
+        var squadron = _loadoutState?.Invoke()?.SquadronCarrier;
+
+        if (!ReferenceEquals(carrier, _carrierSeen) || !ReferenceEquals(squadron, _squadronSeen))
+        {
+            _carrierSeen = carrier;
+            _squadronSeen = squadron;
+            _carrier?.Invalidate();
+        }
+
         var current = _loadoutState?.Invoke()?.Ship;
 
         if (ReferenceEquals(current, _loadoutSeen))
@@ -1021,6 +1043,8 @@ public partial class PanelView : UserControl
     private ShipsMode? _loadoutMode;
     private Func<D47.Core.Journal.CommanderGameState?>? _loadoutState;
     private D47.Core.Journal.ShipLoadout? _loadoutSeen;
+    private D47.Core.Journal.CarrierState? _carrierSeen;
+    private D47.Core.Journal.CarrierState? _squadronSeen;
 
     /// <summary>
     /// Gives this surface the clocks, timers and alarms (Phase 24, "Utilities").
@@ -1417,7 +1441,7 @@ public partial class PanelView : UserControl
 
         if (ReferenceEquals(scroller, TranscriptScroller))
         {
-            _following = AtTheEnd();
+            _following = AtTheNewest();
             ShowFollowButton();
         }
 
@@ -1572,6 +1596,9 @@ public partial class PanelView : UserControl
     /// Where the Commander dragged the rules between panes, on the one surface that has a mouse
     /// (Phase 55). Null everywhere else, which is what keeps this the window's alone.
     /// </summary>
+    /// <summary>The carrier the Fleet tab draws, once a host furnished the tab (#230).</summary>
+    private CarrierSource? _carrier;
+
     private PaneWidthMemory? _paneWidths;
 
     /// <summary>
@@ -1745,6 +1772,22 @@ public partial class PanelView : UserControl
         PreReleaseBadge.Cursor = clickable
             ? new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand)
             : Avalonia.Input.Cursor.Default;
+
+        // And it says so in colour as well as in the cursor (#234). The cursor only speaks once
+        // the pointer is already on it, which is no use to a Commander deciding whether to move
+        // the pointer at all — so a badge that opens something carries the accent, which is what
+        // everything else pressable on this surface does.
+        //
+        // Only when it is pressable: a badge on a published release opens nothing, and it goes on
+        // being the plain mark it has always been. Bound rather than assigned, so a theme switched
+        // afterwards repaints it — a brush read once at this moment would freeze the old theme's
+        // colour, which is the trap Glyphs.Draw exists to refuse.
+        var key = clickable
+            ? Theming.ThemeManager.AccentKey
+            : Theming.ThemeManager.TextMutedKey;
+
+        PreReleaseBadge.Bind(Border.BorderBrushProperty, this.GetResourceObservable(key));
+        PreReleaseBadgeText.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(key));
 
         // The tip is set here rather than beside the text, so it can say the badge opens something
         // — which is a fact about the host and the channel together, and neither caller knows both.
@@ -2488,59 +2531,153 @@ public partial class PanelView : UserControl
     /// </summary>
     private void DrawModes()
     {
-        var roots = Nav.Roots(Nav.Tab);
-        var showing = Nav.RootKeyOf(Nav.Tab);
+        // Raw Journal is a root the navigator knows and the picker does not list (#231). It is
+        // still registered, so a spoken "raw journal" and a switch position that names it both
+        // still arrive — but as a reading it is the same reading as the journal, seen another
+        // way, so it is reached by the toggle beside the box rather than by a second entry that
+        // reads as a different subject.
+        var roots = Nav.Roots(Nav.Tab).Where(root => root.Key != RawJournalRoot).ToList();
 
-        ModeButton.IsVisible = !OutputOnly && roots.Count > 1 && Nav.AtRoot;
+        // And a Commander who is *on* raw still has the journal selected, for the same reason.
+        var showing = Nav.RootKeyOf(Nav.Tab);
+        showing = showing == RawJournalRoot ? JournalRoot : showing;
+
+        ModePicker.IsVisible = !OutputOnly && roots.Count > 1 && Nav.AtRoot;
 
         ShowPageBar();
 
-        if (!ModeButton.IsVisible)
+        if (!ModePicker.IsVisible)
         {
             return;
         }
 
-        // The word changes; the controls do not. Built once and then written to, because the glyph
-        // is handed to Busy.While and a content panel rebuilt underneath it leaves the helper
-        // spinning an instance nothing is showing (remediation.md 10, item 5). It also stops a
-        // navigation discarding three controls to change one string.
-        _modeLabel.Text = roots.FirstOrDefault(root => root.Key == showing)?.Word ?? roots[0].Word;
+        // Rebuilt only when the readings themselves changed, not on every navigation. Replacing
+        // the items is what moves the selection, and moving the selection is what would fire
+        // OnModeChanged — so a navigation that only changes which root is current must not touch
+        // the list. Compared by word because that is what the box shows.
+        var words = roots.Select(root => root.Word).ToList();
+
+        if (ModeBox.ItemsSource is not IReadOnlyList<string> shown || !shown.SequenceEqual(words))
+        {
+            _settingMode = true;
+
+            try
+            {
+                ModeBox.ItemsSource = words;
+            }
+            finally
+            {
+                _settingMode = false;
+            }
+        }
+
+        var index = roots.FindIndex(root => root.Key == showing);
+
+        // Written under the guard, because this runs on every navigation — including the one
+        // OnModeChanged just caused. Without it the box would answer its own change and call
+        // SelectRoot again, which is the loop a programmatic write always risks (#231).
+        _settingMode = true;
+
+        try
+        {
+            ModeBox.SelectedIndex = index < 0 ? 0 : index;
+        }
+        finally
+        {
+            _settingMode = false;
+        }
+
+        DrawRawToggle();
     }
 
     /// <summary>
-    /// Opens the readings of this page as a chooser in the layer.
+    /// The journal's Raw toggle: shown on the journal reading, on a surface that was handed the
+    /// raw one (#231).
     /// <para>
-    /// The panel's own idiom rather than a <c>ComboBox</c>, and that is not a preference: a combo
-    /// box drops a popup, a popup needs a top level to hang from, and the headset's host window is
-    /// constructed and never shown. The layer is a panel in this tree, so the geometric hit test
-    /// the headset uses finds it exactly as it finds everything else.
+    /// Guarded like the box above and for the same reason — writing <c>IsChecked</c> raises the
+    /// same event a press does, and a navigation would otherwise answer itself.
     /// </para>
     /// </summary>
-    private void OnModeClick(object? sender, RoutedEventArgs e)
+    private void DrawRawToggle()
     {
-        var roots = Nav.Roots(Nav.Tab);
+        var journal = Page is TranscriptPage.Journal or TranscriptPage.RawJournal;
 
-        if (roots.Count <= 1)
+        // Only where a host furnished the raw reading. Asked of the navigator rather than held as
+        // a flag, so it is the same question EnableRawJournal answers by registering.
+        var furnished = Nav.Roots(PanelTab.Transcript).Any(root => root.Key == RawJournalRoot);
+
+        RawToggle.IsVisible = journal && furnished && Nav.AtRoot && !OutputOnly;
+
+        if (!RawToggle.IsVisible)
         {
             return;
         }
 
-        Prompts.Choose(
-            new D47.Core.Interface.ChoiceRequest(
-                "panel.mode",
-                "Show",
-                "Show",
-                null,
-                [.. roots.Select(root => new D47.Core.Interface.ChoiceOption(root.Key, root.Word))],
-                Nav.RootKeyOf(Nav.Tab),
-                D47.Core.Interface.ChoiceSurface.Layer)
-            {
-                CurrentWord = "showing now",
-            },
-            // Through the navigator's own event, so a reading reached by a press and one reached
-            // by a spoken phrase are one path rather than two that have to agree. Dropping the
-            // search query and the follow lock is ApplyNavigation's job either way.
-            option => Nav.SelectRoot(option.Key));
+        _settingMode = true;
+
+        try
+        {
+            RawToggle.IsChecked = Page == TranscriptPage.RawJournal;
+        }
+        finally
+        {
+            _settingMode = false;
+        }
+    }
+
+    /// <summary>
+    /// The Commander asked for the file's own JSON, or asked to go back to sentences.
+    /// </summary>
+    private void OnRawToggled(object? sender, RoutedEventArgs e)
+    {
+        if (_settingMode)
+        {
+            return;
+        }
+
+        Page = RawToggle.IsChecked == true
+            ? TranscriptPage.RawJournal
+            : TranscriptPage.Journal;
+    }
+
+    /// <summary>
+    /// Whether the selection is being written by <see cref="DrawModes"/> rather than chosen by
+    /// the Commander. See the guard there: a programmatic <c>SelectedIndex</c> raises the same
+    /// event a press does, and the navigator would be told about a move it had just made.
+    /// </summary>
+    private bool _settingMode;
+
+    /// <summary>
+    /// The Commander picked a reading from the drop-down.
+    /// <para>
+    /// <b>A real <c>ComboBox</c>, which the panel spent a long time believing it could not have</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/231">#231</a>). The belief was true of
+    /// the headset's copy and got applied to both surfaces: a popup needs a top level, and the
+    /// offscreen host window is never shown, so opening one there exits the process at
+    /// <c>0xC00000FD</c> before any dispatcher work. This copy is in the real window and has a
+    /// real top level. The headset's is covered by <c>OffscreenSurface</c>, which takes the press
+    /// before a pointer event exists and draws the list on the panel itself.
+    /// </para>
+    /// </summary>
+    private void OnModeChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_settingMode)
+        {
+            return;
+        }
+
+        var roots = Nav.Roots(Nav.Tab);
+        var index = ModeBox.SelectedIndex;
+
+        if (index < 0 || index >= roots.Count)
+        {
+            return;
+        }
+
+        // Through the navigator's own event, so a reading reached by a press and one reached
+        // by a spoken phrase are one path rather than two that have to agree. Dropping the
+        // search query and the follow lock is ApplyNavigation's job either way.
+        Nav.SelectRoot(roots[index].Key);
     }
 
     /// <summary>
@@ -2701,7 +2838,7 @@ public partial class PanelView : UserControl
         // The mode button, which may not exist: it is hidden in mini and below a root, and the
         // log can be the reading a surface is on in either. With nothing drawn the read simply
         // runs unannounced — there is nothing to announce on.
-        if (!ModeButton.IsVisible)
+        if (!ModePicker.IsVisible)
         {
             // Read off this thread, tell the page on it. RefreshLog inside the Task.Run set a
             // bound property from the worker, and a read that outlives its test then raised
@@ -2722,7 +2859,7 @@ public partial class PanelView : UserControl
         // and the draw was not, and the draw is on this thread: five hundred lines becoming runs
         // and then a layout pass is the part a Commander was watching nothing happen during.
         // The continuation resumes here, so the glyph is still up while the page is built.
-        await Controls.Busy.While(ModeButton, _logBusy, async () =>
+        await Controls.Busy.While(ModeBox, _logBusy, async () =>
         {
             // The same split as above: the file work on a worker, the property set here.
             if (_bound is { } bound)
@@ -2851,14 +2988,58 @@ public partial class PanelView : UserControl
         JournalDetailScroller.IsVisible = model.JournalDetail;
         JournalSplitter.IsVisible = model.JournalDetail;
 
-        JournalList.ItemsSource = model.Journal.Select(entry => entry.Line).ToList();
+        // Filtered, which is this reading's answer to the search box (#232). Every other reading
+        // on this tab highlights and steps; a list filters, the way the checklist and the
+        // engineer directory do. The count then means what it says, which the old behaviour
+        // conspicuously did not: this page returned from DrawTranscript before the search ran at
+        // all, so the box showed a leftover count from whichever prose page was read last and
+        // the steppers moved nothing.
+        //
+        // Kind as well as the drawn line, because the drawn line is a sentence and the thing a
+        // Commander is hunting is frequently the event's own name: "ShieldState" appears nowhere
+        // in "Shields back up", and typing it should not come back empty on the page whose whole
+        // job is showing that event.
+        var shown = _query.Length == 0
+            ? model.Journal
+            : [.. model.Journal.Where(entry =>
+                entry.Line.Contains(_query, StringComparison.OrdinalIgnoreCase)
+                || entry.Kind.Contains(_query, StringComparison.OrdinalIgnoreCase))];
 
-        if (model.JournalSelected >= 0 && model.JournalSelected < model.Journal.Count)
+        JournalList.ItemsSource = shown.Select(entry => entry.Line).ToList();
+
+        // Against the filtered list rather than the whole one. The model's index counts events,
+        // and with a query in the box the list no longer holds all of them — so the remembered
+        // selection is resolved by identity and dropped when it filtered away.
+        var selected = model.JournalSelected >= 0 && model.JournalSelected < model.Journal.Count
+            ? shown.ToList().IndexOf(model.Journal[model.JournalSelected])
+            : -1;
+
+        JournalList.SelectedIndex = selected;
+
+        JournalDetail.Text = selected >= 0 ? model.JournalDetailText : string.Empty;
+
+        ShowJournalCount(shown.Count, model.Journal.Count);
+    }
+
+    /// <summary>
+    /// What the search box says on a reading that filters (#232): how many lines are left, not
+    /// which of them is current. The steppers are hidden, because there is nothing to step
+    /// through — every line on screen is a hit.
+    /// </summary>
+    private void ShowJournalCount(int shown, int held)
+    {
+        var searching = _query.Length > 0;
+
+        SearchCount.IsVisible = searching;
+        SearchNext.IsVisible = false;
+        SearchPrevious.IsVisible = false;
+
+        if (searching)
         {
-            JournalList.SelectedIndex = model.JournalSelected;
+            SearchCount.Text = shown == 0
+                ? "no lines match"
+                : $"{shown} of {held}";
         }
-
-        JournalDetail.Text = model.JournalDetailText;
     }
 
     /// <summary>
@@ -3555,13 +3736,26 @@ public partial class PanelView : UserControl
 
         try
         {
+            var scroller = Scroller;
+
             // Laid out first. A scroll viewer scrolls to the end of the extent it currently
             // knows about, and the runs were rewritten a moment ago — so without this it goes to
             // where the end was before the line that caused it, which is the "lands one append
             // behind" the subscription order above is already fighting. Forced rather than
             // awaited because the following has to be true when this returns.
-            TranscriptScroller.UpdateLayout();
-            TranscriptScroller.ScrollToEnd();
+            scroller.UpdateLayout();
+
+            // The newest line, not the bottom (#233). Vertical only: ScrollToHome would take the
+            // horizontal offset with it, and the raw journal is a page a Commander scrolls
+            // sideways through.
+            if (NewestAtTop)
+            {
+                scroller.Offset = scroller.Offset.WithY(0);
+            }
+            else
+            {
+                scroller.ScrollToEnd();
+            }
         }
         finally
         {
@@ -3572,19 +3766,51 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>
-    /// Whether the view is at the end of the text, within a line's worth.
+    /// Which way this reading runs, and therefore where its newest line is (#233).
+    /// <para>
+    /// <b>One bit, asked once.</b> The transcript and the log file grow downwards, so their
+    /// newest line is at the bottom and "the end" and "the newest" are the same place. The two
+    /// journal readings are written newest-first — <c>JournalLog</c> says so of the raw one
+    /// outright — so on those the newest line is at the <em>top</em>, and every part of the
+    /// follow mechanism that assumed otherwise sent the Commander to the far end of the file.
+    /// </para>
+    /// </summary>
+    private bool NewestAtTop => Page is TranscriptPage.Journal or TranscriptPage.RawJournal;
+
+    /// <summary>
+    /// The scroller the Newest button acts on, which is not always the transcript's.
+    /// <para>
+    /// Journal takes the pane with a list of its own and hides <see cref="TranscriptScroller"/>
+    /// entirely, so the button was reading the extent of a scroller nobody could see and moving
+    /// it. That is the second half of #233 and a different fault from the direction: on Raw
+    /// Journal the button went the wrong way, and on Journal it went nowhere at all.
+    /// </para>
+    /// </summary>
+    private ScrollViewer Scroller =>
+        Page == TranscriptPage.Journal ? JournalListScroller : TranscriptScroller;
+
+    /// <summary>
+    /// Whether the view is at the newest line of this reading, within a line's worth.
     /// <para>
     /// A tolerance rather than an equality, because a scroll viewer's extent and its offset are
     /// laid-out doubles: a wrapped line, a font fallback or a fractional scale leaves the last
     /// pixel unreachable, and "following" would then switch itself off on a surface that is
-    /// visibly at the bottom.
+    /// visibly at the end.
     /// </para>
     /// </summary>
-    private bool AtTheEnd()
+    private bool AtTheNewest()
     {
-        var slack = Math.Max(1, TranscriptScroller.Extent.Height - TranscriptScroller.Viewport.Height);
+        var scroller = Scroller;
+        var tolerance = Transcript.FontSize;
 
-        return TranscriptScroller.Offset.Y >= slack - Transcript.FontSize;
+        if (NewestAtTop)
+        {
+            return scroller.Offset.Y <= tolerance;
+        }
+
+        var slack = Math.Max(1, scroller.Extent.Height - scroller.Viewport.Height);
+
+        return scroller.Offset.Y >= slack - tolerance;
     }
 
     /// <summary>
@@ -3605,7 +3831,7 @@ public partial class PanelView : UserControl
         // following off on every surface the moment it was shown, which is every surface.
         if (e.OffsetDelta.Y != 0)
         {
-            _following = AtTheEnd();
+            _following = AtTheNewest();
         }
 
         ShowFollowButton();
@@ -3626,7 +3852,7 @@ public partial class PanelView : UserControl
     /// </summary>
     private void ShowFollowButton()
     {
-        var behind = !_following && !AtTheEnd();
+        var behind = !_following && !AtTheNewest();
 
         // Not on a surface nothing can be pressed on (#202). This is the assignment that beat the
         // style rule — a local value outranks a setter — and it is the transcript's own chrome
@@ -3635,7 +3861,10 @@ public partial class PanelView : UserControl
 
         if (behind)
         {
-            FollowButton.Content = "↓ Newest";
+            // The arrow points where the newest line actually is (#233), which is upwards on the
+            // two journal readings. A label that names a direction has to be right about it:
+            // "↓ Newest" over a newest-first page is not merely unhelpful, it is untrue.
+            FollowButton.Content = NewestAtTop ? "↑ Newest" : "↓ Newest";
         }
     }
 
@@ -3716,12 +3945,105 @@ public partial class PanelView : UserControl
     /// </summary>
     private void OnTabsResized(object? sender, SizeChangedEventArgs e) => ShowTabSteppers();
 
+    /// <summary>What each tab says when the strip has room for words. Fixed at build.</summary>
+    private static readonly (string Name, string Word, string Glyph)[] TabMarks =
+    [
+        (nameof(TranscriptTab), "Transcript", Controls.Glyphs.Tabs.Transcript),
+        (nameof(RoutingTab), "Routing", Controls.Glyphs.Tabs.Routing),
+        (nameof(ChecklistTab), "Checklist", Controls.Glyphs.Tabs.Checklist),
+        (nameof(LoadoutTab), "Fleet", Controls.Glyphs.Tabs.Fleet),
+        (nameof(EngineersTab), "Engineers", Controls.Glyphs.Tabs.Engineers),
+        (nameof(AdventuresTab), "Adventures", Controls.Glyphs.Tabs.Adventures),
+        (nameof(UtilitiesTab), "Utilities", Controls.Glyphs.Tabs.Utilities),
+        (nameof(SettingsTab), "Settings", Controls.Glyphs.Tabs.Settings),
+    ];
+
+    /// <summary>Whether the strip is currently showing marks instead of words.</summary>
+    private bool _tabsCollapsed;
+
+    /// <summary>
+    /// How wide the strip was the last time it was drawn with words — the number the decision to
+    /// expand again is made against.
+    /// <para>
+    /// <b>Remembered rather than re-measured, because the measurement feeds the decision.</b>
+    /// Collapsing shrinks the extent; asking the shrunken extent whether the words fit gets
+    /// "yes", which expands, which overflows, which collapses. The width the words wanted is the
+    /// only stable thing to compare a viewport against.
+    /// </para>
+    /// </summary>
+    private double _tabWordsWidth;
+
+    /// <summary>
+    /// Three stages, in order: words, marks, then marks that scroll (#234).
+    /// <para>
+    /// Scrolling is the right last resort and was the only one. A Commander on a narrow window
+    /// lost whole tabs off the end of the strip while the ones still visible carried full words —
+    /// so the words go first, and a tab leaves the strip only when even its mark will not fit.
+    /// </para>
+    /// </summary>
     private void ShowTabSteppers()
     {
+        var room = TabsScroller.Viewport.Width;
+
+        if (room > 0)
+        {
+            if (!_tabsCollapsed)
+            {
+                _tabWordsWidth = TabsScroller.Extent.Width;
+            }
+
+            var wanted = _tabsCollapsed ? _tabWordsWidth : TabsScroller.Extent.Width;
+            var collapse = wanted > room + 1;
+
+            if (collapse != _tabsCollapsed)
+            {
+                _tabsCollapsed = collapse;
+                DrawTabMarks();
+                TabsScroller.UpdateLayout();
+            }
+        }
+
         var overflowing = TabsScroller.Extent.Width > TabsScroller.Viewport.Width + 1;
 
         TabsLeft.IsVisible = overflowing;
         TabsRight.IsVisible = overflowing;
+    }
+
+    /// <summary>
+    /// Puts either the word or the mark on every tab.
+    /// <para>
+    /// Through <see cref="Controls.Glyphs.Mark"/>, so the word survives on the tooltip and on the
+    /// name a screen reader says — which is the whole condition under which replacing a word with
+    /// a picture counts as an improvement, and doubly so here, where the Commander did not choose
+    /// to lose the word and the window merely got narrow.
+    /// </para>
+    /// </summary>
+    private void DrawTabMarks()
+    {
+        foreach (var (name, word, glyph) in TabMarks)
+        {
+            if (this.FindControl<RadioButton>(name) is not { } tab)
+            {
+                continue;
+            }
+
+            if (_tabsCollapsed)
+            {
+                Controls.Glyphs.Mark(
+                    tab,
+                    glyph,
+                    Theming.ThemeManager.TextKey,
+                    word,
+                    size: 17,
+                    filled: glyph.StartsWith("F0", StringComparison.Ordinal));
+
+                continue;
+            }
+
+            tab.Content = word;
+            ToolTip.SetTip(tab, null);
+            Avalonia.Automation.AutomationProperties.SetName(tab, word);
+        }
     }
 
     /// <summary>
@@ -3791,7 +4113,7 @@ public partial class PanelView : UserControl
     private void ShowPageBar() =>
         PageBar.IsVisible = Mode == PanelMode.Full
                             && ModalPane.Child is null
-                            && (ModeButton.IsVisible || SearchRow.IsVisible);
+                            && (ModePicker.IsVisible || SearchRow.IsVisible || RawToggle.IsVisible);
 
     /// <summary>
     /// Opens the excerpt review window (#160). The panel knows nothing about what is in it — see

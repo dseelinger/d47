@@ -209,7 +209,7 @@ public class SearchTheTabTests
 
         Assert.NotEmpty(Highlighted(view));
 
-        view.Page = TranscriptPage.Technical;
+        view.Page = TranscriptPage.Log;
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(string.Empty, Box(view).Text ?? string.Empty);

@@ -1,4 +1,4 @@
-using D47.Core.Help;
+﻿using D47.Core.Help;
 
 namespace D47.Core.Interface;
 
@@ -143,7 +143,7 @@ public static class PanelPhrases
         // as the phrase not having worked.
         for (var index = nav.Trail.Count - 2; index >= 0; index--)
         {
-            if (Named(input, nav.Trail[index].Word) && nav.JumpTo(index))
+            if (Named(input, nav.Trail[index]) && nav.JumpTo(index))
             {
                 return $"Back to {nav.Trail[^1].Word}.";
             }
@@ -156,7 +156,7 @@ public static class PanelPhrases
         {
             foreach (var root in nav.Roots(nav.Tab))
             {
-                if (Named(input, root.Word) && nav.SelectRoot(root.Key))
+                if (Named(input, root) && nav.SelectRoot(root.Key))
                 {
                     return $"{root.Word}.";
                 }
@@ -187,6 +187,14 @@ public static class PanelPhrases
     /// Whether the phrase names this destination — the word itself, or one of the openers
     /// followed by it, optionally followed by "tab", and nothing else.
     /// </summary>
+    /// <summary>
+    /// Whether the Commander named this level — by its drawn word, or by any shorter phrase it
+    /// offers for saying out loud (#231). See <see cref="NavCrumb.Spoken"/> for why a level may
+    /// need a second name at all.
+    /// </summary>
+    private static bool Named(string input, NavCrumb crumb) =>
+        Named(input, crumb.Word) || crumb.Spoken.Any(alias => Named(input, alias));
+
     private static bool Named(string input, string word)
     {
         var wanted = Normalise(word);

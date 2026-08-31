@@ -146,6 +146,14 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             _view.EnableChecklist(checklists, goals, backfillGoals);
         }
 
+        // The journal's raw reading, in the headset (#231). It shipped desktop-only on the
+        // reasoning that a wall of JSON is not readable at a metre and exists to be pasted into a
+        // bug report — an act with no meaning in mid-air. The Commander overruled that: it is one
+        // toggle beside the reading it belongs to, and "if they don't like it they can toggle it
+        // off". A reading nobody opens costs a Commander nothing; a reading they wanted and could
+        // not reach costs them the flight.
+        _view.EnableRawJournal();
+
         if (adventures is not null)
         {
             // The stories, in the headset (asked for 2026-08-22). Phase 47 made this tab
