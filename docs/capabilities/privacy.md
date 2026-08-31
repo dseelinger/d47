@@ -163,7 +163,7 @@ That is the whole reason it exists. Every other provider, free ones included, re
 Directive 47 speaks, and that includes re-voiced in-game messages written by other players. With
 Kokoro selected for those slots, nobody's words leave your machine to be spoken.
 
-**Donated excerpts and journal histories** — the newest destination, and the one that reverses a
+**Shared excerpts and journal histories** — the newest destination, and the one that reverses a
 sentence Directive 47 used to say about itself. Donation shipped with nowhere to send: an excerpt
 was copied and pasted by a human, and a comment in the code said *there is no backend and there is
 not going to be one*. There is one now, argued in
@@ -177,9 +177,10 @@ sends nothing at all until you have read a full description of it and pressed a 
 — no standing consent, nothing remembered, no automatic upload — and the row above says so.
 
 **The address is the switch.** Out of the box there is no donation address, so nothing can be
-uploaded: the donation windows offer a clipboard and a file, exactly as they did before. Set one
-and the same windows gain a send button. Clear it and they lose it again. There is no separate
-toggle because a toggle beside an empty address would be a control with nothing to control.
+uploaded: the *Help improve D47* window offers a clipboard and a file, exactly as it always did.
+Set one and the same window gains its send buttons. Clear it and they go again. There is no
+separate toggle because a toggle beside an empty address would be a control with nothing to
+control.
 
 **What is stored, and for how long.** An incident excerpt is deleted 30 days after it arrives,
 by a rule on the store rather than by anybody remembering to. It may well go sooner — there is
@@ -208,7 +209,7 @@ by field list.
 
 The claim is now weaker and still worth stating: **donations from one installation accumulate
 under a random token that identifies an install, not a person.** You read it here, and in the
-donation window, before the first donation rather than after
+*Help improve D47* window, before the first send rather than after
 ([#176](https://github.com/dseelinger/d47/issues/176)).
 
 **Withdrawing is one press, and it is no harder than consenting was.** **Forget it, and delete

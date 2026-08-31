@@ -148,7 +148,9 @@ public static class EgressDisclosure
         SpeechModels => "Speech model download",
         Diagnostics => "Diagnostics and logs",
         JournalFiles => "Journal files",
-        Donation => "Donated excerpts and journals",
+        // "Shared", not "Donated" (#239): the Commander's word for the act on every surface they
+        // see. The id stays Donation — ids are declared once and never mutated.
+        Donation => "Shared excerpts and journals",
         _ => throw new ArgumentOutOfRangeException(nameof(id), id, "Not an egress disclosure id."),
     };
 

@@ -1529,16 +1529,15 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>
-    /// Opens the excerpt review window. Null on every surface but the one that furnished it
+    /// Opens the sharing window. Null on every surface but the one that furnished it
     /// (<a href="https://github.com/dseelinger/d47/issues/160">#160</a>).
     /// </summary>
-    private Action? _donate;
-
-    private Action? _donateCorpus;
+    private Action<bool>? _donate;
 
     /// <summary>
-    /// Offers the two diagnostic readings a way into a bug report: a scrubbed window of Elite's
-    /// events and d47's own log, shown in full and sent nowhere until the Commander says so (#160).
+    /// Offers the way into a bug report: a scrubbed window of Elite's events and d47's own log —
+    /// or, where the page shows the journals, the whole history — shown or described in full and
+    /// sent nowhere until the Commander says so (#160, #174, one button since #238).
     /// <para>
     /// <b>Furnished rather than branched</b>, like <see cref="EnableSearch"/> above, and here that
     /// is the same safety property <see cref="EnableRawJournal"/> records: the review step is the
@@ -1546,30 +1545,16 @@ public partial class PanelView : UserControl
     /// file picker to write it with. A surface that cannot complete the act does not offer it.
     /// </para>
     /// <para>
-    /// The panel holds the affordance and nothing else. What a window is, where the journal and the
-    /// log come from, and what the running build is called are the host's, which is why this takes
-    /// an <see cref="Action"/> rather than the pieces to build one from.
+    /// The panel holds the affordance and nothing else — what a window is and where the readings
+    /// come from are the host's. The one thing the panel does say is the argument: whether the
+    /// page the button was pressed on shows Elite's journals, because the history half is the
+    /// journals alone and the Log page does not show them. The two consent shapes inside the
+    /// window stay two shapes; what merged is the surface.
     /// </para>
     /// </summary>
-    public void EnableDonation(Action open)
+    public void EnableDonation(Action<bool> open)
     {
         _donate = open;
-        ApplyChrome();
-    }
-
-    /// <summary>
-    /// Adds the whole-history donation (<a href="https://github.com/dseelinger/d47/issues/174">#174</a>),
-    /// on a surface that can show a report and write a file.
-    /// <para>
-    /// <b>Furnished separately from <see cref="EnableDonation"/>, though both are wired by the same
-    /// host today.</b> They are two consents rather than two sizes of one, and a surface could
-    /// reasonably want the incident excerpt without wanting to offer a Commander the button that
-    /// scrubs thirteen months.
-    /// </para>
-    /// </summary>
-    public void EnableCorpusDonation(Action open)
-    {
-        _donateCorpus = open;
         ApplyChrome();
     }
 
@@ -4095,13 +4080,6 @@ public partial class PanelView : UserControl
                                      or TranscriptPage.Journal
                                      or TranscriptPage.RawJournal;
 
-        // The journal pages only, where the excerpt button also offers the Log. A corpus donation
-        // is Elite's journals and nothing else (#174), so offering it from the page that shows
-        // d47's own log would name a source it does not read.
-        DonateCorpusButton.IsVisible = transcript
-                                       && _donateCorpus is not null
-                                       && Page is TranscriptPage.Journal or TranscriptPage.RawJournal;
-
         SearchRow.IsVisible = _searchable
                               && Mode == PanelMode.Full
                               && ModalPane.Child is null
@@ -4116,13 +4094,12 @@ public partial class PanelView : UserControl
                             && (ModePicker.IsVisible || SearchRow.IsVisible || RawToggle.IsVisible);
 
     /// <summary>
-    /// Opens the excerpt review window (#160). The panel knows nothing about what is in it — see
-    /// <see cref="EnableDonation"/>.
+    /// Opens the sharing window (#160, #238). The panel knows nothing about what is in it — see
+    /// <see cref="EnableDonation"/> — beyond the one thing only it can say: whether this page
+    /// shows Elite's journals, which is what decides if the history half is on offer.
     /// </summary>
-    private void OnDonateClick(object? sender, RoutedEventArgs e) => _donate?.Invoke();
-
-    /// <summary>Opens the whole-history donation (#174). See <see cref="EnableCorpusDonation"/>.</summary>
-    private void OnDonateCorpusClick(object? sender, RoutedEventArgs e) => _donateCorpus?.Invoke();
+    private void OnDonateClick(object? sender, RoutedEventArgs e) =>
+        _donate?.Invoke(Page is TranscriptPage.Journal or TranscriptPage.RawJournal);
 
     private void OnClearTranscriptClick(object? sender, RoutedEventArgs e) => ClearTranscript();
 

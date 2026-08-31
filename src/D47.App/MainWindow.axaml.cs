@@ -166,9 +166,10 @@ public partial class MainWindow : Window
             // The sharper half of that same act (#160). Selecting a wall of JSON and pasting it
             // hands over whatever happened to be on screen, the Commander's name and other
             // people's messages included; this cuts a window around the incident, scrubs it, and
-            // shows exactly what would leave before any of it does.
-            Panel.EnableDonation(() => _ = ShowDonationAsync(host));
-            Panel.EnableCorpusDonation(() => _ = ShowCorpusDonationAsync(host));
+            // shows exactly what would leave before any of it does. One button since #238: the
+            // panel says whether the page it was pressed on offers the journal-history half,
+            // because a history is Elite's journals alone and the Log page does not show them.
+            Panel.EnableDonation(historyOffered => _ = ShowDonationAsync(host, historyOffered));
 
             // The window that can show settings says so; the headset's copy of this same view
             // is handed nothing and therefore has no Settings tab (Phase 12). The second
@@ -1327,7 +1328,25 @@ public partial class MainWindow : Window
         Donation.DonationDispatch.For(
             host.Paths, () => host.Settings.Current.Donation.Endpoint, host.Loggers);
 
-    private async Task ShowDonationAsync(AppHost host)
+    /// <summary>
+    /// One window for both shapes of sharing since #238, offered under one button. The history
+    /// half rides only where the page it was pressed on shows Elite's journals — a corpus is the
+    /// journals alone, and the Log page does not show them (#174).
+    /// <para>
+    /// <b>The history's two passes share one <see cref="Pseudonyms"/> and one range.</b> The
+    /// first counts what is there and keeps a single scrubbed line per event kind; the second
+    /// writes the payload straight into the file the Commander picked. Sharing the stand-ins is
+    /// what makes the samples in the report the lines in the payload, and holding the range from
+    /// the read rather than re-reading the chooser is what stops a report about twelve months
+    /// sitting above a file containing thirteen.
+    /// </para>
+    /// <para>
+    /// <b>The account-name substitution belongs to the excerpt half alone.</b> That list exists
+    /// for the log half of an excerpt, which prints Windows paths; a corpus is Elite's journals
+    /// and they name no profile.
+    /// </para>
+    /// </summary>
+    private async Task ShowDonationAsync(AppHost host, bool historyOffered)
     {
         var profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
@@ -1342,123 +1361,95 @@ public partial class MainWindow : Window
 
         var paperwork = new ExcerptPaperwork(BuildInfo.Full, DateTimeOffset.Now);
         var folder = host.JournalDirectory ?? D47.Core.Journal.JournalFolder.DefaultPath();
+        var now = DateTimeOffset.Now;
 
         var dispatch = DonationDispatchFor(host);
 
-        // **Read from disk, per window, on a worker** (#173). It used to read JournalLog and the
-        // newest d47 log, which between them reached the current Elite session and today — so the
-        // widest span here would have quietly returned the same events as the narrowest. Seven days
-        // of journals is tens of megabytes to walk, which is why this is not on the UI thread and
-        // why it happens per render rather than once: the span is the thing being chosen.
-        await new Controls.DonateExcerptWindow(
-            DateTimeOffset.Now,
-            request =>
-            {
-                var journal = IncidentSources.Journals(folder, request.From, request.To, _host?.Loggers.CreateLogger("Excerpt"));
-                var log = IncidentSources.Logs(host.Paths.Logs, request.From, request.To, TimeZoneInfo.Local);
+        // **Read from disk, per window, on a worker** (#173): the span is the thing being
+        // chosen, so it happens per render rather than once.
+        Func<ExcerptRequest, string> build = request =>
+        {
+            var journal = IncidentSources.Journals(folder, request.From, request.To, _host?.Loggers.CreateLogger("Excerpt"));
+            var log = IncidentSources.Logs(host.Paths.Logs, request.From, request.To, TimeZoneInfo.Local);
 
-                return ExcerptReport.Render(
-                    IncidentExcerpt.Take(
-                        journal,
-                        log,
-                        request,
-                        machine,
+            return ExcerptReport.Render(
+                IncidentExcerpt.Take(
+                    journal,
+                    log,
+                    request,
+                    machine,
+                    host.GameState.Active?.Identity,
+                    host.GameState.Active?.Carrier),
+                paperwork);
+        };
+
+        Func<CorpusScope, IProgress<int>, CancellationToken, Task<Controls.HelpImproveWindow.CorpusReading>>? read = null;
+        Func<Stream, IProgress<int>, CancellationToken, Task>? write = null;
+
+        if (historyOffered)
+        {
+            var logger = _host?.Loggers.CreateLogger("Corpus");
+
+            Pseudonyms? names = null;
+            var from = DateTimeOffset.MinValue;
+
+            read = (scope, progress, cancel) => Task.Run(
+                () =>
+                {
+                    names = IncidentExcerpt.Seeded(
                         host.GameState.Active?.Identity,
-                        host.GameState.Active?.Carrier),
-                    paperwork);
-            },
+                        host.GameState.Active?.Carrier);
 
-            // Null where there is nowhere to send, which is what makes the send button appear only
-            // when it can work — the same rule the donate button itself already follows.
+                    from = scope.From(now);
+
+                    var survey = CorpusDonation.Survey(folder, from, now, names, logger, progress, cancel);
+
+                    return new Controls.HelpImproveWindow.CorpusReading(
+                        survey,
+                        CorpusReport.Render(survey, paperwork));
+                },
+                cancel);
+
+            // **Declared once and used twice** (#181). The Save button writes this into a file
+            // the Commander picked; the Send button hands the same delegate to the dispatch. One
+            // writer, so the file that could have been saved and the bytes that leave are the
+            // same bytes rather than two renderings of one intent.
+            write = (stream, progress, cancel) => Task.Run(
+                () =>
+                {
+                    if (names is not { } standIns)
+                    {
+                        return;
+                    }
+
+                    // **No BOM, and the caller is the one that owns the stream.** A byte order
+                    // mark would sit in front of the first event and stop it parsing as JSON.
+                    using var writer = new StreamWriter(
+                        stream,
+                        new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
+                        bufferSize: 65536,
+                        leaveOpen: true);
+
+                    CorpusDonation.Write(folder, from, now, standIns, writer, logger, progress, cancel);
+                },
+                cancel);
+        }
+
+        // The sends are null where there is nowhere to send, which is what makes each send
+        // button appear only when it can work — the same rule the button itself follows.
+        await new Controls.HelpImproveWindow(
+            now,
+            build,
             dispatch.CanSend
                 ? (text, cancel) => dispatch.SendExcerptAsync(text, paperwork, cancel)
                 : null,
-            dispatch.Destination).Over(this);
-    }
-
-    /// <summary>
-    /// The whole-history donation (<a href="https://github.com/dseelinger/d47/issues/174">#174</a>).
-    /// <para>
-    /// <b>Two passes over the same files, sharing one <see cref="Pseudonyms"/> and one range.</b>
-    /// The first counts what is there and keeps a single scrubbed line per event kind; the second
-    /// writes the payload straight into the file the Commander picked. Sharing the stand-ins is
-    /// what makes the samples in the report the lines in the payload, and holding the range from
-    /// the read rather than re-reading the chooser is what stops a report about twelve months
-    /// sitting above a file containing thirteen.
-    /// </para>
-    /// <para>
-    /// <b>No account name substitution here, unlike <see cref="ShowDonationAsync"/>.</b> That list
-    /// exists for the log half, which prints Windows paths; a corpus is Elite's journals alone and
-    /// they name no profile.
-    /// </para>
-    /// </summary>
-    private async Task ShowCorpusDonationAsync(AppHost host)
-    {
-        var paperwork = new ExcerptPaperwork(BuildInfo.Full, DateTimeOffset.Now);
-        var folder = host.JournalDirectory ?? D47.Core.Journal.JournalFolder.DefaultPath();
-        var logger = _host?.Loggers.CreateLogger("Corpus");
-        var now = DateTimeOffset.Now;
-
-        Pseudonyms? names = null;
-        var from = DateTimeOffset.MinValue;
-
-        var dispatch = DonationDispatchFor(host);
-
-        var read = (CorpusScope scope, IProgress<int> progress, CancellationToken cancel) => Task.Run(
-            () =>
-            {
-                names = IncidentExcerpt.Seeded(
-                    host.GameState.Active?.Identity,
-                    host.GameState.Active?.Carrier);
-
-                from = scope.From(now);
-
-                var survey = CorpusDonation.Survey(folder, from, now, names, logger, progress, cancel);
-
-                return new Controls.CorpusDonateWindow.CorpusReading(
-                    survey,
-                    CorpusReport.Render(survey, paperwork));
-            },
-            cancel);
-
-        // **Declared once and used twice** (#181). The Save button writes this into a file the
-        // Commander picked; the Send button hands the same delegate to the dispatch, which writes
-        // it into a spool it compresses and hashes on the way past. One writer, so the file that
-        // could have been saved and the bytes that leave are the same bytes rather than two
-        // renderings of one intent — which is the corpus form of the rule #160 shipped.
-        var write = (Stream stream, IProgress<int> progress, CancellationToken cancel) => Task.Run(
-            () =>
-            {
-                if (names is not { } standIns)
-                {
-                    return;
-                }
-
-                // **No BOM, and the caller is the one that owns the stream.** A byte order mark
-                // would sit in front of the first event and stop it parsing as JSON, which for a
-                // file whose whole purpose is to be replayed is a payload that fails at line one.
-                using var writer = new StreamWriter(
-                    stream,
-                    new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
-                    bufferSize: 65536,
-                    leaveOpen: true);
-
-                CorpusDonation.Write(folder, from, now, standIns, writer, logger, progress, cancel);
-            },
-            cancel);
-
-        await new Controls.CorpusDonateWindow(
+            dispatch.Destination,
             read,
             write,
-
-            // Null where there is nowhere to send, which is what makes the send button appear only
-            // when it can work — the same rule the excerpt window and the donate button itself
-            // already follow.
-            dispatch.CanSend
+            dispatch.CanSend && write is { } writer
                 ? (report, progress, cancel) =>
-                    dispatch.SendCorpusAsync(report, write, paperwork, progress, cancel)
-                : null,
-            dispatch.Destination).Over(this);
+                    dispatch.SendCorpusAsync(report, writer, paperwork, progress, cancel)
+                : null).Over(this);
     }
 
     private async Task CheckForUpdateAsync(AppHost host)
