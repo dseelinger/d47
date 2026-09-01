@@ -250,10 +250,8 @@ public static class ListeningCapability
                     + "anything. Right shift out of the box, since that is what a Commander on a stick and "
                     + "throttle has spare. Bind a key, a stick button, or one of each — one at a time: press "
                     + "the control and give it a key, then press it again and give it a button. Giving it the "
-                    + "same kind twice replaces that one. Or type a key's name into the box beside it, which "
-                    + "is the only way to reach F13 to F24 — the keys HOTAS software sends and no keyboard "
-                    + "has. With both set, either opens the microphone. Unbind clears both, and with neither "
-                    + "one D47 never opens the microphone.",
+                    + "same kind twice replaces that one. With both set, either opens the microphone. Unbind "
+                    + "clears both, and with neither one D47 never opens the microphone.",
                 Kind = SettingKind.Hotkey,
                 DefaultDisplay = "RightShift",
                 DocsAnchor = "push-to-talk-key",

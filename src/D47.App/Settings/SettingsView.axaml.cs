@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using D47.Core.Listening;
 using Avalonia;
 using Avalonia.Automation;
@@ -164,21 +164,25 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     {
         InitializeComponent();
 
-        // Two chevrons apart and two together (#223). Marked here rather than in the axaml
-        // because Mark sets the tooltip *and* the accessible name from one string, and a
-        // glyph-only control without an accessible name does not exist for anybody who is not
-        // looking at it. Accent, because a clickable thing carries the accent (#208).
+        // A plus and a minus (#223, reworked on the Commander's instruction 2026-09-01). Marked
+        // here rather than in the axaml because Mark sets the tooltip *and* the accessible name
+        // from one string, and a glyph-only control without an accessible name does not exist for
+        // anybody who is not looking at it. Accent, because a clickable thing carries the accent
+        // (#208).
+        //
+        // The words are the Commander's own: the names of the things, rather than the sentences
+        // the chevrons needed in order to explain themselves.
         Controls.Glyphs.Mark(
             ExpandAll,
             Controls.Glyphs.ExpandAll,
             ThemeManager.AccentKey,
-            "Open every section");
+            "Expand all");
 
         Controls.Glyphs.Mark(
             CollapseAll,
             Controls.Glyphs.CollapseAll,
             ThemeManager.AccentKey,
-            "Shut every section");
+            "Collapse all");
     }
 
     /// <summary>
@@ -3027,50 +3031,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         button.Click += async (_, _) => await CaptureBindAsync(row, button, message);
 
-        // **The third route** (<a href="https://github.com/dseelinger/d47/issues/221">#221</a>):
-        // press a key, press a stick button, or type a name. It exists for the twelve keys that
-        // cannot be pressed — F13 to F24, which HOTAS software emits precisely because no
-        // keyboard has them — and it is beside the capture rather than instead of it, because a
-        // stick that is already mapped really does send F23 to the focused window and the capture
-        // really does catch it.
-        //
-        // Not offered on a row that only takes a controller button: there is no name to type for
-        // one, and a box that cannot be used is a box that has to be explained.
-        var typed = new TextBox
-        {
-            Width = 96,
-            PlaceholderText = "or type F23",
-            FontSize = TypeScale.Secondary,
-            VerticalContentAlignment = VerticalAlignment.Center,
-            IsVisible = row.Kind != SettingKind.HotasButton,
-        };
-
-        // Enter rather than every keystroke: half of "F23" is "F2", which is a real key, so
-        // applying as it is typed would bind the wrong one on the way to the right one.
-        typed.KeyDown += (_, e) =>
-        {
-            if (e.Key != Key.Enter)
-            {
-                return;
-            }
-
-            e.Handled = true;
-
-            if (Gestures.TryType(typed.Text, out var stored, out var refusal))
-            {
-                if (Apply(row, stored, message))
-                {
-                    typed.Text = string.Empty;
-                }
-
-                return;
-            }
-
-            // The row's own message line, which is where a refused capture already says why.
-            message.IsVisible = true;
-            message.Text = refusal;
-        };
-
         clear.Click += (_, _) =>
         {
             foreach (var key in row.BoundKeys)
@@ -3085,7 +3045,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Spacing = 8,
             HorizontalAlignment = HorizontalAlignment.Right,
         };
-        panel.Children.Add(typed);
         panel.Children.Add(button);
         panel.Children.Add(clear);
 

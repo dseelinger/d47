@@ -79,39 +79,17 @@ by that same factor. Hence *about*, and hence the row's help saying the times ar
 spoken reply **on this machine**. A stable number nobody understands is worth less than an
 approximate one they do.
 
-### A key can be bound by typing its name, which is the only road to F13–F24 (#221)
-
-The bind row gains a third route beside pressing a key and pressing a stick button: **type the
-name into the box and press Enter**. `F23`, `f23` and ` F23 ` are one key, `Ctrl+F13` parses, and
-what the row shows back is what you typed — the value goes through the same `KeyGesture` call the
-capture makes, so a typed key and a pressed one are the same bytes in the settings file.
-
-**It exists for twelve keys that cannot be pressed.** F13 upward are what HOTAS software hands
-out — VoiceAttack, TARGET, VIRPIL — precisely because no keyboard has them and nothing else binds
-them. There is no F23 to press, so the capture control was the wrong instrument for the one range
-that matters most on a stick and throttle. The support was already there: F1–F24 have always
-mapped to their virtual-key codes and push-to-talk polls exactly that code, so this was an
-input-method gap rather than a capability one.
-
-**And those twelve no longer need a modifier on a system-wide row.** That rule exists to stop you
-claiming a key the game needs — bind a bare `R` everywhere and Elite never sees it again. F13–F24
-are the exact keys nothing else listens for, which is why stick software chose them, so asking
-for `Ctrl+F23` would be protecting a key that needs no protection. Everything else is refused
-exactly as before.
-
-**A name Windows does not have is refused rather than stored**, because a gesture no key can ever
-match is a push-to-talk that silently never opens the microphone. `F25` says where the range
-ends: Win32 defines `VK_F1` through `VK_F24` and stops, so software that appears to send F25 is
-sending something else.
-
 ### Expand all and Collapse all, above the settings cards (#223)
 
-Two chevron pairs at the top of the card column — apart to open every section, together to shut
-them all. They sit above the scroller rather than among the cards, because a control that scrolls
-out of sight is one you learn not to rely on; that is the same argument that keeps them out of
-the nav column, which disappears below 900 pixels. Each carries its sentence on the tooltip and
-on the accessible name, since a glyph-only control without one does not exist for anybody who is
-not looking at it.
+A plus and a minus at the top of the card column — **Expand all** and **Collapse all**. They sit
+above the scroller rather than among the cards, because a control that scrolls out of sight is one
+you learn not to rely on; that is the same argument that keeps them out of the nav column, which
+disappears below 900 pixels. Each carries its name on the tooltip and on the accessible name,
+since a glyph-only control without one does not exist for anybody who is not looking at it.
+
+**They were two chevron pairs first, and the Commander asked for the plus and the minus** — a
+doubled chevron reads as *scroll* before it reads as *unfold*, where plus and minus have meant open
+and shut in every tree control for thirty years and carry no second meaning at all.
 
 **They move cards and leave the fold alone.** *Show every setting* is a different axis: it
 decides which rows a calm page shows at all, it is a preference you set, and its own rule is that

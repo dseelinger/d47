@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Media;
@@ -65,19 +65,25 @@ public static class Glyphs
         "M 4,10 L 10,10 L 10,4  M 20,10 L 14,10 L 14,4  M 20,14 L 14,14 L 14,20  M 4,14 L 10,14 L 10,20";
 
     /// <summary>
-    /// Open every card: two chevrons pointing apart
+    /// Open every card: a plus
     /// (<a href="https://github.com/dseelinger/d47/issues/223">#223</a>).
     /// <para>
+    /// <b>It was two chevrons pointing apart, and the Commander asked for a plus and a minus
+    /// instead</b> (2026-09-01). The chevron pair reads as <i>scroll</i> before it reads as
+    /// <i>unfold</i>, and doubling it does not fix that — where plus and minus are what every
+    /// tree control has meant by open and shut for thirty years, and they carry no second
+    /// meaning at all.
+    /// </para>
+    /// <para>
     /// <b>Not <see cref="Expand"/>, which is a different verb.</b> Those four brackets are the
-    /// full-screen mark — make this thing bigger — and these two chevrons are the one every tree
-    /// and outline uses for unfolding what is inside. A pair that only works as a pair, like the
-    /// two above it: apart is open, together is shut.
+    /// full-screen mark — make this thing bigger — and this is about what is inside a card. The
+    /// pair still only works as a pair.
     /// </para>
     /// </summary>
-    public const string ExpandAll = "M 7,6 L 12,11 L 17,6  M 7,13 L 12,18 L 17,13";
+    public const string ExpandAll = "M 12,5 L 12,19  M 5,12 L 19,12";
 
-    /// <summary>Shut every card: the same two chevrons pointing together.</summary>
-    public const string CollapseAll = "M 7,11 L 12,6 L 17,11  M 7,18 L 12,13 L 17,18";
+    /// <summary>Shut every card: the same stroke without the upright.</summary>
+    public const string CollapseAll = "M 5,12 L 19,12";
 
     /// <summary>Two sheets, one behind the other. The clipboard mark, near enough universally.</summary>
     public const string Copy =

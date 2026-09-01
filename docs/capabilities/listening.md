@@ -283,16 +283,6 @@ may already be using in the game is not this.
 listens for either at once: press a key and it takes the key, press a button on your stick and it
 works out which one that was.
 
-**Or type a key's name into the box beside it**, and press Enter. `F23`, `f23` and `Ctrl+F13` all
-read the same, and what the row shows back is what you typed. This is the only way to reach **F13
-to F24** — the keys HOTAS software hands out precisely because no keyboard has them, which is also
-why you cannot press one to bind it. A name Windows does not have is refused rather than stored,
-and it says so: there is no F25, because the range ends at F24 and always has.
-
-Those twelve are also the one place a system-wide binding does not need a modifier. The rule that
-asks for one exists to stop you taking a key the game needs, and nothing else in the world listens
-for F23.
-
 **To have both, bind twice — one gesture each time.** Press the control and give it a key; press it
 again and give it a button. The two are stored separately, so the second does not replace the first,
 and the row then reads `RightShift, button 11`. Either one opens the microphone, and the last one you
