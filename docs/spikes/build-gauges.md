@@ -116,12 +116,48 @@ data, so there is one alias and a generator that names every remaining gap each 
 
 **Genuine absence — the rest, and it did not ship.** `GuardianModule_Sturdy` — Anti-Guardian Zone
 Resistance — is offered to nine module types and costed by nothing. EDEngineer carries no Guardian
-weapon recipes at all. EDSY holds a name, `maxgrade: 1` and three materials, and marks *both* the
-blueprint's Frontier symbol and all three materials `// TODO` as its own guesses; FDevIDs'
+weapon recipes at all. EDSY holds a name, `maxgrade: 1` and three materials, and marks the
+blueprint's Frontier symbol `// TODO` as its own guess; FDevIDs'
 `material.csv` has no row for Hardened Surface Fragments, Caustic Crystal or Tactical Core Chip, so
 the ingredients cannot be keyed to `Materials.tsv` at all and a recipe whose ingredients cannot be
 keyed cannot be costed, gathered or put on a checklist. `special_choke_canister` and
 `special_super_penetrator` are in the same state.
+
+### Re-measured 2026-09-01, and two things above were wrong
+
+Run again against all four sources while working
+[#127](https://github.com/dseelinger/d47/issues/127). The conclusion holds — it is still blocked —
+but not for quite the reason this section gave.
+
+| source | the recipe | the three materials |
+|---|---|---|
+| EDEngineer `blueprints.json` | no `Guardian*` blueprint symbol at all | absent from `entryData.json` |
+| coriolis-data `modifications/` | no `GuardianModule_Sturdy`; its `Weapon_Sturdy` is Sturdy Mount, a different blueprint | absent |
+| FDevIDs `material`, `microresources`, `commodity`, `rare_commodity` | — | **no row**, searched by display name and by symbol |
+| EDSY `eddb.js` | present, and see below | named, and see below |
+| the 941-journal corpus | — | no occurrence of any spelling |
+
+**EDSY does not call the materials guesses.** Its rows read
+`hasufr : { name:'Hardened Surface Fragments', mattype:'mfc', matgrp:0, rarity:1, fdid:null,
+fdname:'TG_Abrasion03' }, // TODO: matgrp,fdid` — and likewise `TG_CausticCrystal` and
+`UnknownCoreChip`. The `TODO` is on the material *group* and the numeric id; the Frontier symbol is
+asserted. So the block is not "EDSY admits it is guessing" but **one source asserting something no
+other source corroborates**, which is a lead rather than an authority — the same standing this
+repository gives any single source on game data.
+
+**And the quantities cannot be read even taking the symbols on trust.** The entry is
+`misc_agzr : { name:'Anti-Guardian Zone Resistance', maxgrade:1, mats:[ {hasufr:2}, {cacr:1},
+{tacoch:1} ], fdname:'GuardianModule_Sturdy' }, // TODO: fdname`. `mats` is one group per grade
+everywhere else in that file: of the **65** entries carrying both fields this is the **only one**
+where the counts disagree, and of the four ungraded ones the other three have exactly one group. So
+either it is three grades and `maxgrade` is wrong, or it is one grade costing all three materials
+and the shape is wrong. That difference is what a Commander would go and gather, and nothing on
+disk settles it.
+
+**The block is now machine-checked** rather than remembered:
+`OfferedButNotCostedTests.WhenTheseThreeSymbolsResolveThisIssueCanBeBuilt` asserts that
+`Materials.tsv` still has none of the three symbols, and fails — on good news — the day a
+regeneration gains them.
 
 So that half stays as the sentence already shipped — *"Frontier engineers this and I have no
 recipe for it"* — which is a true claim about d47 rather than a false one about Elite.

@@ -978,8 +978,11 @@ def main() -> None:
     # Every offer still without a recipe, named rather than counted, because this is the gap
     # Phase 38 item 10 is about and a list can be checked against the outfitting screen.
     # The remainder is genuine absence: EDEngineer carries no Guardian weapon recipes at all, so
-    # Anti-Guardian Zone Resistance has no ingredients here — and EDSY's symbol for it, and for all
-    # three of its materials, is one EDSY itself marks `// TODO`. A guess is not a recipe.
+    # Anti-Guardian Zone Resistance has no ingredients here. EDSY has an entry and it cannot be
+    # used: it marks the blueprint's own symbol `// TODO`, its three materials are asserted by
+    # nothing else — FDevIDs has no row for any of them, by name or by symbol, re-checked
+    # 2026-09-01 — and its `maxgrade` disagrees with its `mats` count, which is true of no other
+    # entry in that file. A lead is not a recipe. See docs/spikes/build-gauges.md §4.
     costed: dict[str, set] = {}
 
     for row in recipes:

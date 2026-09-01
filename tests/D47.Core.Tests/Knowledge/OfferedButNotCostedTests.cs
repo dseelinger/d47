@@ -22,9 +22,33 @@ namespace D47.Core.Tests.Knowledge;
 /// Supercharged drive against the ordinary one — so the recipe was on disk all along, filed under
 /// a sibling name. That is a join, it is settled by the corpus rather than by a resemblance, and
 /// it is closed. The rest is genuine absence: EDEngineer carries no Guardian weapon recipes at
-/// all, and nothing d47 reads names Anti-Guardian Zone Resistance's materials — FDevIDs has no row
-/// for any of the three, and EDSY marks both the blueprint's symbol and every one of those
-/// materials <c>// TODO</c> as its own guess. So that half stays uncosted and stays honest.
+/// all, and FDevIDs — the naming authority — has no row for any of the three materials. So that
+/// half stays uncosted and stays honest.
+/// </para>
+/// <para>
+/// <b>Re-measured 2026-09-01 against all four sources, and it is still blocked</b>
+/// (<a href="https://github.com/dseelinger/d47/issues/127">#127</a>). Two things this file used to
+/// say were wrong, and both mattered to whether the block could be lifted.
+/// </para>
+/// <para>
+/// <b>EDSY does not mark the materials as guesses.</b> Its rows read
+/// <c>hasufr : { name:'Hardened Surface Fragments', … fdname:'TG_Abrasion03' }, // TODO:
+/// matgrp,fdid</c> — the marker is on the material <em>group</em> and the numeric id, not on the
+/// symbol. So EDSY does assert a Frontier symbol for each of the three, and the block is that
+/// <b>nothing corroborates it</b>: FDevIDs has no such row by name or by symbol, EDEngineer's
+/// <c>entryData.json</c> has never heard of them, coriolis has no <c>GuardianModule_Sturdy</c> at
+/// all (its <c>Weapon_Sturdy</c> is Sturdy Mount, a different blueprint), and 941 journals across
+/// three Commanders contain no occurrence of any spelling. One source saying it is a lead.
+/// </para>
+/// <para>
+/// <b>And EDSY's quantities cannot be read even if the symbols were taken on trust.</b> Its entry
+/// is <c>misc_agzr : { name:'Anti-Guardian Zone Resistance', maxgrade:1, mats:[ {hasufr:2},
+/// {cacr:1}, {tacoch:1} ], fdname:'GuardianModule_Sturdy' }, // TODO: fdname</c>. <c>mats</c> is
+/// one group per grade everywhere in that file — of the 65 entries carrying both fields,
+/// <b>this is the only one where the counts disagree</b>, and of the four ungraded ones the other
+/// three have exactly one group. So either it is three grades and <c>maxgrade</c> is wrong, or it
+/// is one grade costing all three materials and the shape is wrong, and the difference is what a
+/// Commander would go and gather.
 /// </para>
 /// </summary>
 public class OfferedButNotCostedTests
@@ -141,6 +165,33 @@ public class OfferedButNotCostedTests
         foreach (var material in new[] { "Hardened Surface Fragments", "Caustic Crystal", "Tactical Core Chip" })
         {
             Assert.Empty(MaterialCatalogue.Near(material));
+        }
+    }
+
+    /// <summary>
+    /// <b>The tripwire</b> (#127, 2026-09-01). Everything above asserts that d47 is honest about a
+    /// gap; this asserts the gap is still <em>there</em>, by the symbols EDSY names rather than by
+    /// the display names above — because those are what a regenerated <c>Materials.tsv</c> would
+    /// carry the day FDevIDs gains the rows.
+    /// <para>
+    /// Written to fail on good news. The block is upstream and nobody here can lift it, so the
+    /// alternative to this test is somebody remembering to go and look; a suite that runs on every
+    /// push does not forget. When it fails, the recipe can be built and the issue can close.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void WhenTheseThreeSymbolsResolveThisIssueCanBeBuilt()
+    {
+        foreach (var symbol in new[] { "TG_Abrasion03", "TG_CausticCrystal", "UnknownCoreChip" })
+        {
+            Assert.True(
+                MaterialCatalogue.Find(symbol) is null,
+                $"Materials.tsv now names {symbol}. That was the block on "
+                + "https://github.com/dseelinger/d47/issues/127: Anti-Guardian Zone Resistance's "
+                + "ingredients can be keyed now, so the recipe can be costed and this test's whole "
+                + "family is ready to be inverted. EDSY's quantities still need settling first — "
+                + "its maxgrade and its mats count disagree, and it is the only entry in that file "
+                + "where they do.");
         }
     }
 }
