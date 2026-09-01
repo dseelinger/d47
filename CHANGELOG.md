@@ -27,6 +27,35 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.98.1 — 2026-08-31 — What was heard is what was said
+
+### Barging in drops the pre-roll, which held d47 and not the Commander (#195)
+
+Talking over d47 came back with a junk syllable behind Whisper's speaker-change hyphen — *-Huk,*
+*-Shet course* — measured four times likelier on a barge-in. The pre-roll ring the gate drains on
+opening holds up to half a second captured **while d47 was rendering**: post-cancellation residue,
+landing at the front of the utterance where the first-token bias is strongest. The gate has known
+d47 was speaking since Phase 11 — `FarEndActive`, live-wired, consulted only by the continuous
+modes — so opening now leaves the ring alone when the far end is active. A Commander pressing to
+interrupt starts speaking at or after the press, which is why the pre-roll's job — the word from
+before the key was noticed — does not exist in that moment. With d47 quiet, nothing changes.
+
+### A word hallucinated from silence is refused by an unprompted second opinion (#196)
+
+`medium.en` answered mouse clicks with *you* and a silent clip with *Fop.*, and nothing stripped
+either: letters, no brackets. Both obvious fixes were already measured dead by
+`spike/NoSpeechProbe` — an absolute energy rule fails because real speech peaks overlap room
+tone, and the prompted pass's own no-speech signal is destroyed by the very name hints that cause
+the hallucination. What separates the populations is an **unprompted tiny.en pass**: real speech
+0.017–0.26 against room tone 0.946–0.958, flat at about 350 ms whatever the clip length.
+
+So the transcriber carries a no-speech probe — tiny.en beside the loaded model, promptless, on
+its own semaphore — run in parallel with the prompted pass so the gate costs nothing in latency.
+A non-empty transcript the probe scores past 0.6 is emptied, so every downstream path handles the
+established nothing-heard shape rather than a new one; the flight recorder keeps what Whisper
+actually said first, which is how a wrong refusal would be caught. No tiny.en on disk means no
+gate and one log line saying so — never a refusal.
+
 ## 0.98.0 — 2026-08-31 — The crew knows whose deck it is
 
 ### Docked is the ship secured, and the deck answers as two people (#220)
