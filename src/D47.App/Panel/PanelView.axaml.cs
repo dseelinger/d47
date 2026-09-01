@@ -2591,9 +2591,11 @@ public partial class PanelView : UserControl
         // a flag, so it is the same question EnableRawJournal answers by registering.
         var furnished = Nav.Roots(PanelTab.Transcript).Any(root => root.Key == RawJournalRoot);
 
-        RawToggle.IsVisible = journal && furnished && Nav.AtRoot && !OutputOnly;
+        // The box, not the switch: the label lives beside the knob, and hiding one without the
+        // other would leave a word floating in the bar.
+        RawToggleBox.IsVisible = journal && furnished && Nav.AtRoot && !OutputOnly;
 
-        if (!RawToggle.IsVisible)
+        if (!RawToggleBox.IsVisible)
         {
             return;
         }
@@ -4091,7 +4093,7 @@ public partial class PanelView : UserControl
     private void ShowPageBar() =>
         PageBar.IsVisible = Mode == PanelMode.Full
                             && ModalPane.Child is null
-                            && (ModePicker.IsVisible || SearchRow.IsVisible || RawToggle.IsVisible);
+                            && (ModePicker.IsVisible || SearchRow.IsVisible || RawToggleBox.IsVisible);
 
     /// <summary>
     /// Opens the sharing window (#160, #238). The panel knows nothing about what is in it — see

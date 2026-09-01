@@ -795,17 +795,29 @@
             (2026-08-31): a button that changes colour reads as a pressed button, and the
             settings page has already taught what a switch looks like - the same control, the
             same accent, no On/Off words, the label doing the work.
+
+            The label sits beside the knob rather than inside the switch, because a
+            ToggleSwitch stacks its Content above the knob - one word wrapped onto two lines in
+            a 28-pixel bar. The settings page keeps its labels outside the control for the same
+            reason, so this does what it does: a TextBlock, then a bare switch, and the box is
+            what shows and hides.
           -->
-          <ToggleSwitch x:Name="RawToggle"
-                        IsVisible="False"
-                        VerticalAlignment="Center"
-                        Margin="6,0,0,0"
-                        FontSize="{StaticResource D47.Type.Secondary}"
-                        OnContent="{x:Null}"
-                        OffContent="{x:Null}"
-                        Content="Raw"
-                        ToolTip.Tip="Show the file's own JSON instead of sentences"
-                        IsCheckedChanged="OnRawToggled" />
+          <StackPanel x:Name="RawToggleBox"
+                      Orientation="Horizontal"
+                      VerticalAlignment="Center"
+                      Margin="6,0,0,0"
+                      IsVisible="False"
+                      ToolTip.Tip="Show the file's own JSON instead of sentences">
+            <TextBlock Text="Raw"
+                       VerticalAlignment="Center"
+                       Margin="0,0,6,0"
+                       FontSize="{StaticResource D47.Type.Secondary}" />
+            <ToggleSwitch x:Name="RawToggle"
+                          VerticalAlignment="Center"
+                          OnContent="{x:Null}"
+                          OffContent="{x:Null}"
+                          IsCheckedChanged="OnRawToggled" />
+          </StackPanel>
         </StackPanel>
         <!--
           One search affordance for the surface, on the tab that is selected — not four features

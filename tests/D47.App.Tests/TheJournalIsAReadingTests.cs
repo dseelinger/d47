@@ -103,8 +103,10 @@ public sealed class TheJournalIsAReadingTests
         Assert.Contains("Elite Dangerous Journal File", offered);
         Assert.DoesNotContain("Raw Journal", offered);
 
+        // The box rather than the switch: the label sits beside the knob and the two show and
+        // hide together, so the box is what carries the visibility.
         Assert.True(
-            panel.GetControl<Avalonia.Controls.Primitives.ToggleButton>("RawToggle").IsVisible,
+            panel.GetControl<Avalonia.Controls.StackPanel>("RawToggleBox").IsVisible,
             "the toggle is the only way across, so it has to be on the journal reading");
 
         window.Close();
