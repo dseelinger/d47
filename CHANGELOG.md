@@ -79,13 +79,16 @@ by that same factor. Hence *about*, and hence the row's help saying the times ar
 spoken reply **on this machine**. A stable number nobody understands is worth less than an
 approximate one they do.
 
-### Expand all and Collapse all, above the settings cards (#223)
+### Expand all and Collapse all, beside Show every setting (#223)
 
-A plus and a minus at the top of the card column — **Expand all** and **Collapse all**. They sit
-above the scroller rather than among the cards, because a control that scrolls out of sight is one
-you learn not to rely on; that is the same argument that keeps them out of the nav column, which
-disappears below 900 pixels. Each carries its name on the tooltip and on the accessible name,
-since a glyph-only control without one does not exist for anybody who is not looking at it.
+A plus and a minus at the top of the card column — **Expand all** and **Collapse all** — on the same
+line as *Show every setting*, holding the left where that row's label and switch hold the right.
+Both answer the same question about what the whole page draws, so they belong on one line rather
+than in two strips a row apart. They stay above the scroller, because a control that scrolls out of
+sight is one you learn not to rely on; that is the same argument that keeps them out of the nav
+column, which disappears below 900 pixels. Each carries its name on the tooltip and on the
+accessible name, since a glyph-only control without one does not exist for anybody who is not
+looking at it.
 
 **They were two chevron pairs first, and the Commander asked for the plus and the minus** — a
 doubled chevron reads as *scroll* before it reads as *unfold*, where plus and minus have meant open
@@ -129,6 +132,38 @@ as background, so it is not something to put behind a press.
 **And it broke seven tests, which is the useful part.** Each had learned to exclude the reset glyph
 by name while taking the first button in a row; a second chrome mark broke all of them, and a third
 would have again. `IsRowChrome` is the question every one of them was actually asking.
+
+### Five smaller things on surfaces you look at every session
+
+**The reset mark is redrawn.** The three-quarter arc with its arrowhead folded back over the gap
+read, at fourteen pixels, as a comma with a tick on it. It is a fuller turn with the head clear of
+the arc — chosen from seven drawings, which is the only instrument that can settle whether a mark
+says *undo*.
+
+**The power bar labels its own points.** The white tick marks the retracted draw and the blue fill
+is the deployed one, and the words naming the tick sat at the far left of the line beneath, joined
+to everything else by interpuncts — so the Commander who asked for that tick could not remember what
+it marked. The retracted share is written under the tick now, the plant's limit under the end of the
+track, and the total draw under wherever it lands. Each label *ends* at its point rather than
+centring on it, because the draw may be over 100% and would otherwise be written past the end of the
+track it describes.
+
+**Output device leads the Speech card.** Every other row there is about *how* D47 sounds; that one
+is about whether you hear it at all. It also caught a real coupling: the provider key rows were
+inserted at a fixed index that meant *after the provider* only while the provider happened to be
+first, so moving anything above it would have put every API-key row above the provider that needs
+them. They are inserted after the row they belong to now, found rather than counted.
+
+**The data-folder strip is off the foot of the Settings tab.** It was permanently on screen behind
+every card to answer a question asked once. The About card already named the folder and could not
+open it, so it takes the sentence and the button — About stopped being down there when it became an
+area in the nav (#50), and this is the rest of that move.
+
+**And a row's words sit level with its control.** Measured: a 17-pixel label centred at 8.5 against
+a 32-pixel switch centred at 16. The control had always been centred and the caption was stretched,
+so the words sat at the top of a height the control set. Invisible until the help moved behind a
+glyph — a caption that was a label over two lines of grey prose filled the row, and there was no
+spare height for anything to float in.
 
 ### The conversation box walks what you have already sent (#224)
 
