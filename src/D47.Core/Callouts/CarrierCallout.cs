@@ -187,10 +187,11 @@ public sealed class CarrierCallout : ICallout
     /// the bare rank, which is still correct and merely less familiar. No honorific beyond the
     /// rank: "sir" and "ma'am" are a guess about the Commander that nothing in the journal
     /// supports, and guessing wrong about somebody's own crew is worse than not guessing.
+    /// By surname since #247 — see <see cref="CommanderAddress"/>.
     /// </para>
     /// </summary>
     private static string Owner(CommanderGameState state) =>
-        state.Identity.Name is { Length: > 0 } name ? $"Commander {name}" : "Commander";
+        CommanderAddress.Said(state.Identity.Name);
 
     /// <summary>
     /// What to call it out loud: the name the Commander gave it, falling back to the callsign.

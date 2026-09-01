@@ -346,6 +346,35 @@ public class CarrierCalloutTests
     }
 
     /// <summary>
+    /// Rank and surname (#247): the crew's owner is "Commander DeParagon", never "Commander
+    /// John DeParagon" — rank plus full name is how a form letter talks.
+    /// </summary>
+    [Fact]
+    public void TheCrewAddressTheOwnerBySurname()
+    {
+        var callout = new CarrierCallout();
+        var state = new CommanderGameState(new CommanderIdentity("F1", "John DeParagon"));
+
+        state.Apply(Event("CarrierStats",
+            ("Callsign", CallSign),
+            ("Name", "Long Way Home"),
+            ("CarrierID", 3700000000L),
+            ("FuelLevel", 900)));
+
+        var docked = Event("Docked", ("StationName", CallSign));
+        state.Apply(docked);
+
+        var spoken = callout.Examine(Context(state, priming: false, docked)).ToArray();
+
+        Assert.Equal(2, spoken.Length);
+        Assert.All(spoken, line =>
+        {
+            Assert.Contains("Commander DeParagon", line.Text, StringComparison.Ordinal);
+            Assert.DoesNotContain("John", line.Text, StringComparison.Ordinal);
+        });
+    }
+
+    /// <summary>
     /// And with no name to use it is the bare rank rather than an invented one. The journal
     /// header is the only source, and a crew calling their owner by a guessed name is worse than
     /// one calling them by their rank.

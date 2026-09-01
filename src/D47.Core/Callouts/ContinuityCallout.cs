@@ -120,9 +120,7 @@ public sealed class ContinuityCallout : ICallout
     /// that said "Commander ." would be worse than one that said nothing.
     /// </summary>
     public string Compose(DateTimeOffset now, string? name) =>
-        string.IsNullOrWhiteSpace(name)
-            ? $"Good {TimeOfDay(now)}, Commander. Ready to go."
-            : $"Good {TimeOfDay(now)}, Commander {name.Trim()}. Ready to go.";
+        $"Good {TimeOfDay(now)}, {Journal.CommanderAddress.Said(name)}. Ready to go.";
 
     /// <summary>
     /// Morning until noon, afternoon until six, evening after — the three a person uses, on the
