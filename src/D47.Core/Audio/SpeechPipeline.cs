@@ -239,8 +239,21 @@ public sealed class SpeechPipeline : IAsyncDisposable
     /// the panel all read <c>5.79 ly</c>, which is how it should be written down.
     /// </para>
     /// </summary>
-    private void Render(string sentence) =>
-        _rendered.Writer.TryWrite(SynthesizeAsync(sentence, SpokenUnits.Rewrite(sentence)));
+    private void Render(string sentence)
+    {
+        // Markdown first, and for the whole sentence rather than the spoken half alone: a model
+        // writes **bold** without being asked, a voice reads the asterisks aloud, and a caption
+        // or a "said:" line carrying them is markup on a surface that renders none. See
+        // PlainSpeech; the conversation history keeps what the model actually wrote.
+        var plain = PlainSpeech.Strip(sentence);
+
+        if (plain.Length == 0)
+        {
+            return;
+        }
+
+        _rendered.Writer.TryWrite(SynthesizeAsync(plain, SpokenUnits.Rewrite(plain)));
+    }
 
     private async Task<Spoken?> SynthesizeAsync(string sentence, string spoken)
     {
