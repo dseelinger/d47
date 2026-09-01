@@ -198,11 +198,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             ThemeManager.AccentKey,
             "Expand all");
 
+        // Filled, alone among these: a minus has no height, and a stretched-to-fit geometry with
+        // no height collapses to nothing. See the note on Glyphs.CollapseAll.
         Controls.Glyphs.Mark(
             CollapseAll,
             Controls.Glyphs.CollapseAll,
             ThemeManager.AccentKey,
-            "Collapse all");
+            "Collapse all",
+            filled: true);
     }
 
     /// <summary>
@@ -343,16 +346,60 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         {
             var strip = new StackPanel { Spacing = 12, Margin = new Thickness(18, 0, 18, 6) };
 
+            var first = true;
+
             foreach (var row in pageRows)
             {
                 var view = BuildRow(SectionOwning(settings, row), row);
 
                 _rows.Add(view);
+
+                // **Beside the first page row rather than docked above the scroller** (the
+                // Commander's instruction, 2026-09-01). Open-and-shut and "Show every setting" are
+                // both about what the whole page draws, and two controls answering one question
+                // belong on one line. A grid rather than a stack, so the row keeps whatever width
+                // it wants and the glyphs take only what they need.
+                if (first)
+                {
+                    var line = new Grid
+                    {
+                        ColumnDefinitions = new ColumnDefinitions
+                        {
+                            new(GridLength.Auto),
+                            new(new GridLength(1, GridUnitType.Star)),
+                        },
+                    };
+
+                    Detach(BulkExpand);
+
+                    BulkExpand.Margin = new Thickness(0, 0, 12, 0);
+                    BulkExpand.VerticalAlignment = VerticalAlignment.Center;
+
+                    Grid.SetColumn(BulkExpand, 0);
+                    Grid.SetColumn(view.Container, 1);
+
+                    line.Children.Add(BulkExpand);
+                    line.Children.Add(view.Container);
+
+                    strip.Children.Add(line);
+                    first = false;
+                    continue;
+                }
+
                 strip.Children.Add(view.Container);
             }
 
             Cards.Children.Add(strip);
             _pageStrip = strip;
+        }
+        else
+        {
+            // No page row to sit beside — the glyphs still have a page to open and shut, so they
+            // go back where they were declared rather than disappearing.
+            Detach(BulkExpand);
+
+            BulkExpand.Margin = new Thickness(18, 0, 18, 6);
+            Cards.Children.Add(BulkExpand);
         }
 
         foreach (var section in settings.Sections)
@@ -1023,6 +1070,22 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         foreach (var section in _sections)
         {
             section.Expand?.Invoke(expanded);
+        }
+    }
+
+    /// <summary>
+    /// Takes a control out of whatever is holding it, so it can be put somewhere else.
+    /// <para>
+    /// The bulk glyphs are declared in the axaml, docked above the scroller, and are moved into
+    /// the page strip on every rebuild — a control belongs to one parent, and adding it to a
+    /// second without this throws rather than moving it.
+    /// </para>
+    /// </summary>
+    private static void Detach(Control control)
+    {
+        if (control.Parent is Avalonia.Controls.Panel panel)
+        {
+            panel.Children.Remove(control);
         }
     }
 

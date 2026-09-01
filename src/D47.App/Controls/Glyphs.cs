@@ -83,14 +83,35 @@ public static class Glyphs
     public const string ExpandAll = "M 12,5 L 12,19  M 5,12 L 19,12";
 
     /// <summary>
-    /// Shut every card: the same stroke without the upright.
+    /// Shut every card: a minus, drawn as a filled bar rather than as a stroked line.
+    /// <para>
+    /// <b>It was <c>M 5,12 L 19,12</c> and it rendered as a dot</b> (reported 2026-09-01).
+    /// <see cref="Made"/> fits the geometry to the control with <c>Stretch.Uniform</c>, which
+    /// scales by the smaller of the two ratios — and a horizontal line has <b>no height at all</b>,
+    /// so the height ratio is a division by zero and the whole mark collapses. Measured: defining
+    /// bounds 14 × 0, rendered bounds 0 × 0. What was left on screen was the round cap of a
+    /// zero-length stroke, which is a dot.
+    /// </para>
+    /// <para>
+    /// <b>So the bar carries its own thickness</b> — a stadium two units tall and, with the round
+    /// ends, exactly fourteen wide. That is the same two units the plus is stroked at and the same
+    /// fourteen across, so the pair matches without either of them knowing about the other. It is
+    /// the one mark here that is <see cref="Draw"/>n filled for a reason other than legibility:
+    /// a shape with area cannot be flattened away.
+    /// </para>
+    /// <para>
+    /// <b>The general fault is still in <see cref="Made"/></b> and is deliberately not fixed here:
+    /// any future one-dimensional mark will vanish the same way, and correcting it means
+    /// normalising every glyph in the file by hand rather than by stretch.
+    /// </para>
     /// <para>
     /// <see cref="ExpandAll"/> and <see cref="Add"/> are the same path today and are deliberately
     /// two constants: one means <i>open what is inside this</i> and the other means <i>make
     /// another one</i>, and a change to either verb's mark must not move the other.
     /// </para>
     /// </summary>
-    public const string CollapseAll = "M 5,12 L 19,12";
+    public const string CollapseAll =
+        "M 6,11 L 18,11 A 1,1 0 0 1 18,13 L 6,13 A 1,1 0 0 1 6,11 Z";
 
     /// <summary>
     /// What this row is: a lower-case <c>i</c> in a circle
