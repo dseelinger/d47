@@ -138,7 +138,7 @@ public class CarrierCalloutTests
     }
 
     [Fact]
-    public void DockingAtYourOwnCarrierIsTheTowerSpeaking()
+    public void DockingAtYourOwnCarrierIsTheTowerAndThenTheCaptain()
     {
         var callout = new CarrierCallout();
 
@@ -146,13 +146,40 @@ public class CarrierCalloutTests
             .Examine(Context(WithCarrier(), priming: false, Event("Docked", ("StationName", CallSign))))
             .ToArray();
 
-        var arrival = Assert.Single(spoken);
-        Assert.Equal(CarrierCallout.ArrivalKey, arrival.Key);
-        Assert.Equal(VoiceRole.TowerControl, arrival.Voice);
+        // Two people, two keys (#220): the tower acknowledges the moment Docked actually is,
+        // and the captain makes it a welcome. Distinct keys, so one cooldown cannot swallow
+        // the other half of the exchange.
+        Assert.Equal(2, spoken.Length);
+        Assert.Equal(CarrierCallout.SecuredKey, spoken[0].Key);
+        Assert.Equal(VoiceRole.TowerControl, spoken[0].Voice);
+        Assert.Equal(CarrierCallout.HomeKey, spoken[1].Key);
+        Assert.Equal(VoiceRole.CarrierCaptain, spoken[1].Voice);
+
+        // Docked is the ship down and made fast. The grant happened minutes earlier, and
+        // Elite's own docking-granted message from the carrier is already re-voiced as the
+        // tower — the doubled sentence was the reported defect.
+        Assert.DoesNotContain("docking granted", spoken[0].Text, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("secured", spoken[0].Text, StringComparison.OrdinalIgnoreCase);
 
         // The name the Commander gave it, not the callsign, when there is one. Both come from
         // the journal and neither is invented.
-        Assert.Contains("Long Way Home", arrival.Text, StringComparison.Ordinal);
+        Assert.Contains("Long Way Home", spoken[0].Text, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The words wait for the ship to be down. The grant itself is Elite's own message from the
+    /// carrier, already re-voiced as the tower — answering it with a second tower would be the
+    /// duplication #220 reported, from the other direction.
+    /// </summary>
+    [Fact]
+    public void DockingGrantedItselfSaysNothing()
+    {
+        var callout = new CarrierCallout();
+
+        Assert.Empty(callout.Examine(Context(
+            WithCarrier(),
+            priming: false,
+            Event("DockingGranted", ("StationName", CallSign)))));
     }
 
     /// <summary>
@@ -191,13 +218,14 @@ public class CarrierCalloutTests
         // that teaches d47 the callsign is the same docking the tower answers.
         state.Apply(docked);
 
-        var arrival = Assert.Single(callout.Examine(Context(state, priming: false, docked)));
+        var spoken = callout.Examine(Context(state, priming: false, docked)).ToArray();
 
-        Assert.Equal(CarrierCallout.ArrivalKey, arrival.Key);
-        Assert.Equal(VoiceRole.TowerControl, arrival.Voice);
+        Assert.Equal(2, spoken.Length);
+        Assert.Equal(CarrierCallout.SecuredKey, spoken[0].Key);
+        Assert.Equal(VoiceRole.TowerControl, spoken[0].Voice);
 
         // The callsign, because no CarrierStats ever named it. Frontier's own string either way.
-        Assert.Contains(CallSign, arrival.Text, StringComparison.Ordinal);
+        Assert.Contains(CallSign, spoken[0].Text, StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -299,8 +327,10 @@ public class CarrierCalloutTests
         var docked = Event("Docked", ("StationName", CallSign));
         state.Apply(docked);
 
-        var welcome = Assert.Single(callout.Examine(Context(state, priming: false, docked)));
-        Assert.Contains("Commander Fixture", welcome.Text, StringComparison.Ordinal);
+        // Both halves of the docked exchange address the owner by name (#220 kept this).
+        var docking = callout.Examine(Context(state, priming: false, docked)).ToArray();
+        Assert.Equal(2, docking.Length);
+        Assert.All(docking, line => Assert.Contains("Commander Fixture", line.Text, StringComparison.Ordinal));
 
         var undocked = Event("Undocked", ("StationName", CallSign));
         state.Apply(undocked);
@@ -335,9 +365,13 @@ public class CarrierCalloutTests
         var docked = Event("Docked", ("StationName", CallSign));
         state.Apply(docked);
 
-        var welcome = Assert.Single(callout.Examine(Context(state, priming: false, docked)));
+        var spoken = callout.Examine(Context(state, priming: false, docked)).ToArray();
 
-        Assert.Contains("Commander", welcome.Text, StringComparison.Ordinal);
-        Assert.DoesNotContain("Commander ,", welcome.Text, StringComparison.Ordinal);
+        Assert.Equal(2, spoken.Length);
+        Assert.All(spoken, line =>
+        {
+            Assert.Contains("Commander", line.Text, StringComparison.Ordinal);
+            Assert.DoesNotContain("Commander ,", line.Text, StringComparison.Ordinal);
+        });
     }
 }

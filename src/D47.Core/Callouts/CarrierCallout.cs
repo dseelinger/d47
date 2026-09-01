@@ -27,8 +27,20 @@ public sealed class CarrierCallout : ICallout
 {
     public string Id => "carrier";
 
-    /// <summary>Docked at, or departed from, the Commander's own carrier.</summary>
-    public const string ArrivalKey = "carrier.arrival";
+    /// <summary>
+    /// Docked at the Commander's own carrier — the ship down and made fast, which is what the
+    /// <c>Docked</c> event actually is (<a href="https://github.com/dseelinger/d47/issues/220">#220</a>).
+    /// <para>
+    /// It was one tower line saying <i>"docking granted"</i>, which was wrong twice over: the
+    /// grant happened minutes earlier, and Elite's own docking-granted message from the carrier
+    /// is already re-voiced as the tower, so d47 was inventing a second tower saying the same
+    /// thing. Two keys now, the <see cref="InboundKey"/> exchange shape applied to the deck:
+    /// the tower acknowledges the moment this event is, and the captain makes it a welcome.
+    /// </para>
+    /// </summary>
+    public const string SecuredKey = "carrier.secured";
+
+    public const string HomeKey = "carrier.home";
 
     public const string DepartureKey = "carrier.departure";
 
@@ -69,8 +81,12 @@ public sealed class CarrierCallout : ICallout
                     if (!context.IsPriming)
                     {
                         yield return Tower(
-                            ArrivalKey,
-                            $"{Called(state.Carrier)}, docking granted. Welcome home, {Owner(state)}.");
+                            SecuredKey,
+                            $"Ship secured aboard {Called(state.Carrier)}, {Owner(state)}.");
+
+                        yield return Captain(
+                            HomeKey,
+                            $"Welcome home, {Owner(state)}. I'll meet you in the hangar.");
                     }
 
                     break;

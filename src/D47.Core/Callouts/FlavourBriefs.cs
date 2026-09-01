@@ -298,14 +298,51 @@ public static class FlavourBriefs
 
         if (announcement.Voice is VoiceRole.CarrierCaptain or VoiceRole.TowerControl)
         {
+            var speaker =
+                $"You are {(announcement.Voice == VoiceRole.CarrierCaptain
+                    ? "the captain of the Commander's fleet carrier"
+                    : "the tower controller aboard the Commander's fleet carrier")}. You are a "
+                + "professional, not a character — brief, competent and human. One short sentence. "
+                + "Never mention being an AI.";
+
+            // The docked exchange composes rather than rewords (#220). "Drinks are on me" and
+            // "I'll meet you in the hangar" are not rewordings of each other — they are
+            // different things a captain says in the same situation — so these two name a
+            // situation and a range instead of a sentence to paraphrase. An open instruction is
+            // looser than a rewording one, which is why both carry their own guardrails: no
+            // invented facts, and the authored line rides as the register sample and the only
+            // source for the owner's name. Everything else the crew says stays a rewording.
+            if (announcement.Key is CarrierCallout.SecuredKey or CarrierCallout.HomeKey)
+            {
+                return new FlavourBrief
+                {
+                    Speaker = speaker,
+                    Instruction = announcement.Key == CarrierCallout.SecuredKey
+                        ? "The owner of this carrier has just set their ship down on the deck. "
+                          + "Acknowledge it in one short sentence: the moment is the ship being "
+                          + "secured — do not say docking was granted, that happened minutes ago "
+                          + "and was already announced. Invent no facts: no crew names, no deck "
+                          + "reports, no events. Address the owner exactly as this authored line "
+                          + "does, and treat it as a register sample rather than a script: "
+                          + $"\"{announcement.Text}\""
+                        : "The owner of this carrier has just docked aboard, and the tower has "
+                          + "acknowledged their ship secured. Say one short welcoming thing a "
+                          + "captain might say to the owner — hospitality in your own words, "
+                          + "different each time: meeting them below, something waiting for them, "
+                          + "plain gladness the ship is back. Invent no facts: no named crew, no "
+                          + "events aboard, no reports and no promises about the ship. Address "
+                          + "the owner exactly as this authored line does, and treat it as a "
+                          + "register sample rather than a script: "
+                          + $"\"{announcement.Text}\"",
+                    NeedsPersona = false,
+                    NeedsGameState = false,
+                    NeedsAboutMe = false,
+                };
+            }
+
             return new FlavourBrief
             {
-                Speaker =
-                    $"You are {(announcement.Voice == VoiceRole.CarrierCaptain
-                        ? "the captain of the Commander's fleet carrier"
-                        : "the tower controller aboard the Commander's fleet carrier")}. You are a "
-                    + "professional, not a character — brief, competent and human. One short sentence. "
-                    + "Never mention being an AI.",
+                Speaker = speaker,
                 Instruction = $"Say this in your own words, once: \"{announcement.Text}\"",
                 NeedsPersona = false,
                 NeedsGameState = false,
