@@ -319,15 +319,19 @@ Yuri Grom controls this system, and you fly for Edmund Mahon. You are exposed he
 ```
 
 Said once as you enter the condition, then silent for as long as it lasts. And **explained once
-per Power**: the next time you drop into that same Power's space — the next station, the next
-signal source — it is four words rather than the lecture:
+per day, full stop** — across restarts and whichever core is aboard, remembered in
+`view-state.json`. Every exposure after the first that day, whoever controls the space, is four
+words rather than the lecture:
 
 ```text
 Hostile territory. Be on guard.
 ```
 
-A different rival Power gets its own explanation, once, because which Power it is is the
-information then. It waits until you are
+It began as once per Power per session, and a day of re-launching proved the fourth hearing was
+not information either. One name is trimmed for the ear: the journal writes *A. Lavigny-Duval*,
+and a voice reading "A." is reading punctuation, so she is spoken as *Lavigny-Duval*.
+
+It waits until you are
 in normal space rather than saying it as you arrive, because arriving happens in supercruise and
 nothing can reach you there — that is measured, not assumed: across every Power security contact in
 912 journals, none of them happened in supercruise and two thirds happened in normal space.
@@ -632,8 +636,11 @@ system, the same way the real traffic is cast. The exchange is written by the mo
 you actually are; with no language model configured there is no chatter and these rows are absent,
 the same rule as the ambient remarks above — there are no canned conversations, on purpose.
 
-The interval sits at twenty minutes out of the box — an exchange is a scene rather than a
-sentence, and scenes wear out faster; 0 silences them.
+The gap between exchanges is a range, not a tick: each wait lands somewhere between the least and
+the most time rows — twenty to forty minutes out of the box — because overheard traffic on a
+fixed cadence stops sounding overheard. Setting the two equal pins it; 0 on the least silences
+them. An exchange is a scene rather than a sentence, and scenes wear out faster, which is why the
+floor sits well above the ambient remarks'.
 
 > "stop calling out invented chatter" / "start calling out invented chatter"
 

@@ -869,6 +869,14 @@ public sealed record CalloutSettings
     public int NpcChatterSeconds { get; init; } = 1200;
 
     /// <summary>
+    /// And the longest, asked for 2026-08-31: the gap between exchanges varies inside the
+    /// range rather than ticking like a clock, because a fixed cadence is the one thing
+    /// overheard traffic must not have. Equal to the minimum pins it; below the minimum reads
+    /// as the minimum.
+    /// </summary>
+    public int NpcChatterMaxSeconds { get; init; } = 2400;
+
+    /// <summary>
     /// What this row held when it was in minutes. Kept because unknown keys are rejected on
     /// load — every file written before the change carries it — and read exactly once, by
     /// <see cref="SettingsStore"/>, which converts it and clears it.

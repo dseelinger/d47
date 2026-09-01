@@ -70,6 +70,7 @@ public static class CalloutCapability
     /// <summary>Invented background chatter (#244) — theatre, never the game's own traffic.</summary>
     public const string NpcChatterKey = "callouts.npcChatter";
     public const string NpcChatterSecondsKey = "callouts.npcChatterSeconds";
+    public const string NpcChatterMaxSecondsKey = "callouts.npcChatterMaxSeconds";
 
     public static CapabilityDescriptor Create(SettingsService settings, Func<string> describe) => new()
     {
@@ -356,9 +357,9 @@ public static class CalloutCapability
         {
             Key = NpcChatterSecondsKey,
             Advanced = true,
-            Label = "At most one invented exchange every",
-            Help = "In seconds. An exchange is a scene rather than a sentence, so the default sits "
-                   + "at twenty minutes; 0 silences them.",
+            Label = "The least time between invented exchanges",
+            Help = "In seconds. Each gap lands somewhere between this and the row below, so the "
+                   + "chatter never ticks like a clock; 0 silences them.",
             Kind = SettingKind.Number,
             DefaultDisplay = "1200",
             DocsAnchor = "npc-chatter",
@@ -376,6 +377,31 @@ public static class CalloutCapability
                         && seconds >= 0
                             ? Math.Min(seconds, 14400)
                             : new CalloutSettings().NpcChatterSeconds },
+                },
+            },
+        });
+
+        rows.Add(new SettingRow
+        {
+            Key = NpcChatterMaxSecondsKey,
+            Advanced = true,
+            Label = "The most time between invented exchanges",
+            Help = "In seconds. Equal to the row above pins a fixed cadence; anything below it "
+                   + "reads as equal.",
+            Kind = SettingKind.Number,
+            DefaultDisplay = "2400",
+            DocsAnchor = "npc-chatter",
+            AppliesWhen = s => s.Callouts is { Enabled: true, NpcChatter: true }
+                               && LlmProviderCatalog.Selected(s.Llm.Provider).Id != LlmProviderCatalog.NoneId,
+            Binding = new SettingBinding
+            {
+                Read = s => s.Callouts.NpcChatterMaxSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                Write = (s, v) => s with
+                {
+                    Callouts = s.Callouts with { NpcChatterMaxSeconds = int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out var seconds)
+                        && seconds >= 0
+                            ? Math.Min(seconds, 14400)
+                            : new CalloutSettings().NpcChatterMaxSeconds },
                 },
             },
         });

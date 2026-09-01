@@ -13,9 +13,12 @@ public class NpcChatterCalloutTests
 {
     private static readonly DateTimeOffset T0 = new(3311, 1, 1, 12, 0, 0, TimeSpan.Zero);
 
+    // Longest pinned to the interval, so the timing tests drive a fixed cadence; the range is
+    // its own test below.
     private static NpcChatterCallout Callout() => new()
     {
         Interval = TimeSpan.FromMinutes(20),
+        Longest = TimeSpan.FromMinutes(20),
         Settle = TimeSpan.Zero,
     };
 
@@ -77,6 +80,41 @@ public class NpcChatterCalloutTests
         _ = callout.Examine(Context(T0)).ToArray();
 
         Assert.Empty(callout.Examine(Context(T0 + TimeSpan.FromHours(2), priming: true)));
+    }
+
+    /// <summary>
+    /// The gap between exchanges varies inside [Interval, Longest] rather than ticking
+    /// (asked for 2026-08-31) — and deterministically, off the pick counter, because a
+    /// recorded session has to replay to the same spacing.
+    /// </summary>
+    [Fact]
+    public void TheGapVariesInsideTheRangeAndReplaysTheSame()
+    {
+        var callout = new NpcChatterCallout
+        {
+            Interval = TimeSpan.FromMinutes(20),
+            Longest = TimeSpan.FromMinutes(40),
+            Settle = TimeSpan.Zero,
+        };
+
+        _ = callout.Examine(Context(T0)).ToArray();
+
+        // Nineteen minutes is inside no possible gap; forty is past every one. Whatever the
+        // hash dealt this cycle, the floor and the ceiling hold.
+        Assert.Empty(callout.Examine(Context(T0 + TimeSpan.FromMinutes(19))));
+        Assert.Single(callout.Examine(Context(T0 + (TimeSpan.FromMinutes(40) + TimeSpan.FromSeconds(1)))).ToArray());
+
+        // And the same drive again lands on the same cycle boundaries: the spacing comes off
+        // the pick counter, never a clock or a seed.
+        var replay = new NpcChatterCallout
+        {
+            Interval = TimeSpan.FromMinutes(20),
+            Longest = TimeSpan.FromMinutes(40),
+            Settle = TimeSpan.Zero,
+        };
+
+        _ = replay.Examine(Context(T0)).ToArray();
+        Assert.Single(replay.Examine(Context(T0 + (TimeSpan.FromMinutes(40) + TimeSpan.FromSeconds(1)))).ToArray());
     }
 
     /// <summary>

@@ -56,6 +56,15 @@ public sealed record ViewState
     public bool StartMenuOffered { get; init; }
 
     /// <summary>
+    /// The local day (<c>yyyy-MM-dd</c>) the rival-territory warning last gave its full
+    /// explanation, or null (asked for 2026-08-31). Once per day, across sessions and whichever
+    /// core is aboard; the shortened form carries every exposure after. Here rather than in
+    /// settings for the reason the introductions are: nothing is chosen, and losing it costs one
+    /// repeated sentence.
+    /// </summary>
+    public string? RivalExplainedOn { get; init; }
+
+    /// <summary>
     /// Where the Commander put the flat mini panel, or null if they never moved it
     /// (Phase 48).
     /// <para>

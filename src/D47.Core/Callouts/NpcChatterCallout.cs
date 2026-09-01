@@ -37,6 +37,14 @@ public sealed class NpcChatterCallout : ICallout
     public TimeSpan Interval { get; set; } = TimeSpan.FromMinutes(20);
 
     /// <summary>
+    /// And the longest (asked for 2026-08-31): each cycle waits somewhere inside
+    /// [<see cref="Interval"/>, <see cref="Longest"/>], because a fixed cadence is the one
+    /// thing overheard traffic must not have. At or below <see cref="Interval"/> it pins the
+    /// cadence, which is also what keeps every older test and setting meaning what it did.
+    /// </summary>
+    public TimeSpan Longest { get; set; } = TimeSpan.FromMinutes(40);
+
+    /// <summary>
     /// How long a situation has to hold first — the ambient rule, for the ambient reason: a
     /// docked exchange arriving as the Commander lifts off is worse than silence.
     /// </summary>
@@ -71,7 +79,7 @@ public sealed class NpcChatterCallout : ICallout
             yield break;
         }
 
-        if (context.Now - _situationSince < Settle || context.Now - _lastSpokenAt < Interval)
+        if (context.Now - _situationSince < Settle || context.Now - _lastSpokenAt < Gap())
         {
             yield break;
         }
@@ -89,6 +97,24 @@ public sealed class NpcChatterCallout : ICallout
             Cooldown = Interval,
             Variant = _picks - 1,
         };
+    }
+
+    /// <summary>
+    /// This cycle's wait, somewhere in [<see cref="Interval"/>, <see cref="Longest"/>].
+    /// Deterministic off the pick counter — a Knuth multiplicative hash, because no Core
+    /// component reads a clock or a seed and a recorded session has to replay to the same
+    /// spacing — and stable within a cycle, since <c>_picks</c> only moves on emission.
+    /// </summary>
+    private TimeSpan Gap()
+    {
+        if (Longest <= Interval)
+        {
+            return Interval;
+        }
+
+        var fraction = unchecked((uint)_picks * 2654435761u) / 4294967296.0;
+
+        return Interval + (Longest - Interval) * fraction;
     }
 
     /// <summary>

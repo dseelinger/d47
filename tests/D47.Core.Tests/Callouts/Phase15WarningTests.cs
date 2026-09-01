@@ -244,33 +244,21 @@ public class Phase15WarningTests
     }
 
     /// <summary>
-    /// The explanation is given once per Power (reported 2026-08-21, after hearing it at every
-    /// signal source in Patreus space). The next drop into the same Power's space gets the four
-    /// words; a different Power gets its own explanation, because which one it is is the
-    /// information then.
+    /// The full explanation plays once per local day, collectively — across sessions, cores and
+    /// rivals alike (asked for 2026-08-31; it was once per Power per session from 2026-08-21,
+    /// and a day of re-launching proved the fourth hearing is not information either). Every
+    /// exposure after the first is the four words; the next day earns the sentence back.
     /// </summary>
     [Fact]
-    public void TheExplanationIsGivenOncePerPowerAndThenShortened()
+    public void TheExplanationIsGivenOncePerDayAndThenShortened()
     {
         var callout = new RivalTerritoryCallout();
 
         var first = Assert.Single(callout.Examine(Context(InRivalSpace())));
         Assert.Contains("Yuri Grom controls this system", first.Text, StringComparison.Ordinal);
 
-        // Back into supercruise, which ends the condition, then down again in another of Grom's systems.
-        var leaving = StateFrom(
-            """{"timestamp":"3311-01-01T00:00:00Z","event":"Powerplay","Power":"Edmund Mahon","Rank":3,"Merits":10}""",
-            """{"timestamp":"3311-01-01T00:10:00Z","event":"FSDJump","StarSystem":"Sol","ControllingPower":"Yuri Grom"}""");
-        Assert.Empty(callout.Examine(Context(leaving, atSecond: 600)));
-
-        var again = StateFrom(
-            """{"timestamp":"3311-01-01T00:00:00Z","event":"Powerplay","Power":"Edmund Mahon","Rank":3,"Merits":10}""",
-            """{"timestamp":"3311-01-01T00:10:00Z","event":"FSDJump","StarSystem":"Sol","ControllingPower":"Yuri Grom"}""",
-            """{"timestamp":"3311-01-01T00:11:00Z","event":"SupercruiseExit","StarSystem":"Sol","Body":"Earth"}""");
-        var second = Assert.Single(callout.Examine(Context(again, atSecond: 660)));
-        Assert.Equal("Hostile territory. Be on guard.", second.Text);
-        Assert.Equal(AlertCue.RivalTerritory, second.Cue);
-
+        // Out of the condition, then down into a different rival's space the same day. Which
+        // Power it is has changed and the day rule still wins: the four words, not the lecture.
         var elsewhere = StateFrom(
             """{"timestamp":"3311-01-01T00:00:00Z","event":"Powerplay","Power":"Edmund Mahon","Rank":3,"Merits":10}""",
             """{"timestamp":"3311-01-01T00:20:00Z","event":"FSDJump","StarSystem":"Cubeo","ControllingPower":"Denton Patreus"}""");
@@ -280,8 +268,43 @@ public class Phase15WarningTests
             """{"timestamp":"3311-01-01T00:00:00Z","event":"Powerplay","Power":"Edmund Mahon","Rank":3,"Merits":10}""",
             """{"timestamp":"3311-01-01T00:20:00Z","event":"FSDJump","StarSystem":"Cubeo","ControllingPower":"Denton Patreus"}""",
             """{"timestamp":"3311-01-01T00:21:00Z","event":"SupercruiseExit","StarSystem":"Cubeo","Body":"Cubeo 1"}""");
-        var third = Assert.Single(callout.Examine(Context(patreus, atSecond: 1260)));
-        Assert.Contains("Denton Patreus controls this system", third.Text, StringComparison.Ordinal);
+        var second = Assert.Single(callout.Examine(Context(patreus, atSecond: 1260)));
+        Assert.Equal("Hostile territory. Be on guard.", second.Text);
+        Assert.Equal(AlertCue.RivalTerritory, second.Cue);
+
+        // Twenty-six hours on is past every possible local midnight: a new day, and the full
+        // sentence has earned its place again.
+        var leaving = StateFrom(
+            """{"timestamp":"3311-01-01T00:00:00Z","event":"Powerplay","Power":"Edmund Mahon","Rank":3,"Merits":10}""",
+            """{"timestamp":"3311-01-02T02:00:00Z","event":"FSDJump","StarSystem":"Sol","ControllingPower":"Yuri Grom"}""");
+        Assert.Empty(callout.Examine(Context(leaving, atSecond: 26 * 3600)));
+
+        var nextDay = StateFrom(
+            """{"timestamp":"3311-01-01T00:00:00Z","event":"Powerplay","Power":"Edmund Mahon","Rank":3,"Merits":10}""",
+            """{"timestamp":"3311-01-02T02:00:00Z","event":"FSDJump","StarSystem":"Sol","ControllingPower":"Yuri Grom"}""",
+            """{"timestamp":"3311-01-02T02:01:00Z","event":"SupercruiseExit","StarSystem":"Sol","Body":"Earth"}""");
+        var third = Assert.Single(callout.Examine(Context(nextDay, atSecond: 26 * 3600 + 60)));
+        Assert.Contains("Yuri Grom controls this system", third.Text, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The journal writes "A. Lavigny-Duval", and a voice reading "A." is reading punctuation
+    /// (asked for 2026-08-31). The surname is the name as spoken; every other Power comes
+    /// through untouched.
+    /// </summary>
+    [Fact]
+    public void AnInitialledPowerIsSpokenBySurname()
+    {
+        var duval = StateFrom(
+            """{"timestamp":"3311-01-01T00:00:00Z","event":"Powerplay","Power":"Li Yong-Rui","Rank":3,"Merits":10}""",
+            """{"timestamp":"3311-01-01T00:01:00Z","event":"FSDJump","StarSystem":"Achenar","ControllingPower":"A. Lavigny-Duval"}""",
+            """{"timestamp":"3311-01-01T00:02:00Z","event":"SupercruiseExit","StarSystem":"Achenar","Body":"Achenar 3"}""");
+
+        var spoken = Assert.Single(new RivalTerritoryCallout().Examine(Context(duval)));
+
+        Assert.StartsWith("Lavigny-Duval controls this system", spoken.Text, StringComparison.Ordinal);
+        Assert.Contains("you fly for Li Yong-Rui", spoken.Text, StringComparison.Ordinal);
+        Assert.DoesNotContain("A. ", spoken.Text, StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -392,7 +415,10 @@ public class Phase15WarningTests
             atSecond: 60)));
 
         var second = Assert.Single(callout.Examine(Context(elsewhere, atSecond: 61)));
-        Assert.Contains("Li Yong-Rui", second.Text, StringComparison.Ordinal);
+
+        // Announced — a new rival's space is a new exposure and the edge fires — but shortened:
+        // the full explanation is once per day now, whoever controls the space (2026-08-31).
+        Assert.Equal("Hostile territory. Be on guard.", second.Text);
     }
 
     // ---- The cues -----------------------------------------------------------------------

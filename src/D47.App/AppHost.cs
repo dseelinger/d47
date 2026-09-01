@@ -1089,7 +1089,7 @@ public sealed class AppHost : IDisposable
             () => unlocksRef);
 
         var callouts = BuildCallouts(
-            loaded, loggerFactory, checklists, lore, loreVisits, memoryBook, adventureBook);
+            loaded, loggerFactory, checklists, lore, loreVisits, memoryBook, adventureBook, viewState);
 
         // Acting on the game without being asked (Phase 10, item 2). Each member is off
         // until its own row is switched on, which is why the runner reads the setting per tick
@@ -2476,7 +2476,8 @@ public sealed class AppHost : IDisposable
         LoreBook lore,
         LoreVisits loreVisits,
         MemoryBook memories,
-        D47.Core.Adventures.AdventureBook adventures)
+        D47.Core.Adventures.AdventureBook adventures,
+        ViewStateStore viewState)
     {
         var engine = new CalloutEngine(loggers.CreateLogger<CalloutEngine>())
             .Add(new DangerCallout())
@@ -2522,7 +2523,14 @@ public sealed class AppHost : IDisposable
             // Low on purpose. It is a standing condition rather than news, and it stands down for
             // anything above it — a remark about enemy territory arriving as somebody opens fire
             // is worse than silence (Phase 15).
-            .Add(new RivalTerritoryCallout())
+            // The full explanation once per local day, across sessions and cores alike (asked
+            // for 2026-08-31) — so the day lives in view-state.json, read-modify-write like the
+            // introductions, and losing the file costs one repeated sentence.
+            .Add(new RivalTerritoryCallout
+            {
+                LastExplainedDay = () => viewState.Load().RivalExplainedOn,
+                RememberExplainedDay = day => viewState.Save(viewState.Load() with { RivalExplainedOn = day }),
+            })
 
             // Phase 23. Below the warnings and above the ambient line: it is news, but it is news
             // about a place that will still be there in a minute.
@@ -2638,6 +2646,7 @@ public sealed class AppHost : IDisposable
 
                 case NpcChatterCallout chatter:
                     chatter.Interval = TimeSpan.FromSeconds(callouts.NpcChatterSeconds);
+                    chatter.Longest = TimeSpan.FromSeconds(callouts.NpcChatterMaxSeconds);
 
                     // The ambient pair of gates (#244): theatre is personality by any reading,
                     // and the no-model half lives at the compose step for the reason above.

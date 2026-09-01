@@ -51,14 +51,22 @@ public sealed class RivalTerritoryCallout : ICallout
     private static readonly TimeSpan Cooldown = TimeSpan.FromMinutes(15);
 
     /// <summary>
-    /// The Powers whose space has been explained this session. The first drop into a rival's
-    /// space says who controls it and who the Commander flies for; every one after that, for the
-    /// same Power, is the four words that matter. Reported 2026-08-21: the full explanation was
-    /// arriving at every station and signal source in Patreus space, and by the third hearing it
-    /// is not information. A <em>different</em> rival gets its own explanation once, because
-    /// which Power it is <em>is</em> the information then.
+    /// The local day the full explanation last played, and how to remember a new one. Wired by
+    /// the app to <c>view-state.json</c>, so "once" is once <b>across sessions and cores alike</b>
+    /// (asked for 2026-08-31): the first exposure of the day says who controls the space and who
+    /// the Commander flies for, and every one after — any rival, any session, whichever core is
+    /// aboard — is the four words that matter. It was once per Power per session (2026-08-21),
+    /// and a day of re-launching proved the fourth hearing is not information either.
+    /// <para>
+    /// Unwired, the day is held in memory, so the replay harness and the corpus spike still
+    /// explain at most once a run with no file anywhere.
+    /// </para>
     /// </summary>
-    private readonly HashSet<string> _explained = new(StringComparer.Ordinal);
+    public Func<string?>? LastExplainedDay { get; set; }
+
+    public Action<string>? RememberExplainedDay { get; set; }
+
+    private string? _sessionExplainedDay;
 
     private bool _wasExposed;
     private DateTimeOffset? _quietUntil;
@@ -97,8 +105,24 @@ public sealed class RivalTerritoryCallout : ICallout
 
         var power = location!.ControllingPower!;
 
-        var text = _explained.Add(power)
-            ? $"{power} controls this system, and you fly for {state!.Pledge.Power}. You are exposed here."
+        // The Commander's local day, off the injected clock — no Core component reads one.
+        var today = context.Now.LocalDateTime.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+        var full = !string.Equals(LastExplainedDay is { } last ? last() : _sessionExplainedDay, today, StringComparison.Ordinal);
+
+        if (full)
+        {
+            if (RememberExplainedDay is { } remember)
+            {
+                remember(today);
+            }
+            else
+            {
+                _sessionExplainedDay = today;
+            }
+        }
+
+        var text = full
+            ? $"{SaidName(power)} controls this system, and you fly for {SaidName(state!.Pledge.Power!)}. You are exposed here."
             : "Hostile territory. Be on guard.";
 
         yield return new Announcement($"territory.rival.{location.StarSystem}", text)
@@ -107,6 +131,16 @@ public sealed class RivalTerritoryCallout : ICallout
             Cooldown = Cooldown,
         };
     }
+
+    /// <summary>
+    /// "A. Lavigny-Duval" is how the journal writes her, and a voice reading "A." is reading
+    /// punctuation (asked for 2026-08-31). The initial goes; every other Power's name is already
+    /// a spoken one, and a name that carries no initial comes through untouched.
+    /// </summary>
+    private static string SaidName(string power) =>
+        power.Length > 3 && char.IsAsciiLetterUpper(power[0]) && power[1] == '.' && power[2] == ' '
+            ? power[3..]
+            : power;
 
     /// <summary>
     /// Whether something is already shooting, or about to. Read from the same two sources the
