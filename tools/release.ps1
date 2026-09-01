@@ -24,6 +24,32 @@
     The version is computed from the newest v* tag rather than read from any file: the tag is
     where the version lives, and the release workflow takes it from there too.
 
+    Branch and tag protection, and why this script still pushes both
+    ----------------------------------------------------------------
+    <https://github.com/dseelinger/d47/issues/93>. This pushes `main` directly and pushes a tag,
+    and a rule on either would refuse it — the first after the commit and the merge, the second
+    after the CI wait as well. So there are now three things checked before anything is mutated,
+    where there were two: the tag not existing, an annotation being available, and the remote
+    being willing to take the push and the tag.
+
+    **The pipeline is unchanged, and that is the recorded decision rather than an omission.**
+    As configured today, `main history` restricts deletion and non-fast-forward on the default
+    branch, and `released tags` restricts deletion, non-fast-forward and update on `refs/tags/v*`.
+    None of the five stops this script: they forbid moving and deleting refs, which is the rule
+    this repository already keeps by hand — *a published tag never moves* — written down where
+    GitHub enforces it. Creating a tag and pushing a merge commit are untouched.
+
+    If that ever changes, there are two ways out and the choice is the Commander's. **An actor
+    exemption** for whoever cuts releases keeps "one command, once" true and is the cheaper one.
+    **Opening a pull request and waiting** is honest under protection but changes the shape of the
+    command and adds a wait that can hang unattended, which is the thing `-Yes` exists to prevent.
+    The preflight below is what turns that from a discovery mid-run into a sentence before it.
+
+    **The release workflow is not affected**, checked separately because it runs under a different
+    token: `release.yml` triggers on the pushed tag, holds `contents: write`, and creates a GitHub
+    Release. It never pushes, updates or deletes a ref, so a ruleset on `refs/tags/v*` has nothing
+    of its to refuse.
+
 .PARAMETER Release
     Patch or Minor, case-insensitive.
 
@@ -348,6 +374,158 @@ if ($ShowVersion) {
     return
 }
 
+# ------------------------------------------------------------------ what the remote will allow
+
+# **The third thing that can stop a run** (<https://github.com/dseelinger/d47/issues/93>), asked
+# here for the reason the version is worked out here: both of the pushes below are refusable by a
+# rule that is knowable now, and finding out at the push leaves a merge commit on local main
+# behind a failure nothing had to discover the hard way.
+#
+# The two that can be refused are not equally expensive. A rejected `push main` costs an unpick;
+# a rejected `push <tag>` arrives after the commit, the merge and the CI wait, and the script's
+# own rule is that an existing tag stops it dead — so the obvious retry hits that instead.
+#
+# **What is checked is rulesets, and that is a real limit.** `gh ruleset` reads rulesets and knows
+# nothing about classic branch protection, so a repository protected the older way passes this and
+# is refused at the push exactly as before. The rollback below is what makes that survivable; this
+# is what makes it unlikely.
+#
+# **Asking is best-effort, refusing is not.** No gh, no network or no authentication is a warning
+# and the run goes on — the push is still the real gate — which is the same shape as the tag
+# question above. A rule that *is* read and *does* block stops the run here, named.
+$BlocksPush = @('pull_request', 'update', 'required_status_checks', 'required_linear_history')
+
+# **`deletion` and `non_fast_forward` are deliberately not in that list**, and this repository is
+# why: both are configured on main today and neither stops an ordinary push. A check that refused
+# on them would refuse every run, which is worse than the fault it is meant to catch.
+
+# **And a tag is not a branch about `update`.** Creating a ref that does not exist is governed by
+# `creation`; `update` governs moving one that does. `released tags` here carries `update` — that
+# is the rule enforcing "a published tag never moves", and it applies to every `refs/tags/v*` this
+# script has ever cut. Listing it as a blocker refused every run, which is what the first draft
+# did and what driving it against the real repository caught.
+$BlocksTag = @('creation')
+
+# The rules a ruleset applies, and the refs it applies them to, out of `gh ruleset view`. Text
+# rather than JSON because that command offers no `--json`, so the shape is the parse: one
+# `include: [...]` list of ref patterns, then a `Rules` heading and a rule per line.
+function Read-Ruleset {
+    param([string] $Id)
+
+    $view = Invoke-Native { & gh ruleset view $Id 2>&1 | ForEach-Object { "$_" } }
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "gh ruleset view $Id failed: $($view -join ' ')"
+    }
+
+    $patterns = @()
+    $rules = @()
+    $inRules = $false
+
+    foreach ($row in $view) {
+        if ($row -match 'include:\s*\[(.*?)\]') {
+            $patterns += @($Matches[1] -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+        }
+
+        if ($row -match '^\s*Rules\s*$') {
+            $inRules = $true
+            continue
+        }
+
+        if ($inRules -and $row -match '^\s*-\s+([a-z_]+)\s*$') {
+            $rules += $Matches[1]
+        }
+    }
+
+    return [pscustomobject]@{ Patterns = $patterns; Rules = $rules }
+}
+
+# Which of a ruleset's ref patterns cover this tag. `~ALL` is GitHub's own wildcard; the rest are
+# fnmatch ref patterns, and -like reads the `*` in `refs/tags/v*` the same way.
+function Test-CoversTag {
+    param([string[]] $Patterns, [string] $Tag)
+
+    foreach ($pattern in $Patterns) {
+        if ($pattern -eq '~ALL' -or "refs/tags/$Tag" -like $pattern) {
+            return $true
+        }
+    }
+
+    return $false
+}
+
+function Get-BranchRules {
+    param([string] $Branch)
+
+    # `gh ruleset check` answers for the current actor, which is the question — a rule somebody
+    # else cannot bypass and this account can is not a rule that stops this run.
+    $text = Invoke-Native { & gh ruleset check $Branch 2>&1 | ForEach-Object { "$_" } }
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "gh ruleset check $Branch failed: $($text -join ' ')"
+    }
+
+    return @($text | ForEach-Object {
+        if ($_ -match '^\s*-\s+([a-z_]+)\s*$') { $Matches[1] }
+    })
+}
+
+function Get-TagRules {
+    param([string] $Tag)
+
+    # `gh ruleset check` takes a branch and prefixes refs/heads/, so a tag ref answers "0 rules"
+    # however protected it is. The rulesets have to be read and matched against the tag by hand.
+    $listed = Invoke-Native { & gh ruleset list 2>&1 | ForEach-Object { "$_" } }
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "gh ruleset list failed: $($listed -join ' ')"
+    }
+
+    $rules = @()
+
+    foreach ($line in $listed) {
+        if ($line -notmatch '^(\d+)\s') { continue }
+
+        $ruleset = Read-Ruleset $Matches[1]
+
+        if (Test-CoversTag $ruleset.Patterns $Tag) {
+            $rules += $ruleset.Rules
+        }
+    }
+
+    return @($rules | Sort-Object -Unique)
+}
+
+Write-Step 'Checking the remote will take a push and a tag'
+
+try {
+    $onMain = @(Get-BranchRules $Main | Where-Object { $BlocksPush -contains $_ })
+    $onTag = @(Get-TagRules $next | Where-Object { $BlocksTag -contains $_ })
+
+    if ($onMain.Count -gt 0) {
+        throw ("A rule on $Main would refuse the push: $($onMain -join ', '). " +
+               'Nothing has been changed. Either exempt this account from that ruleset, or take ' +
+               'the work to main through a pull request and run this from main afterwards.')
+    }
+
+    if ($onTag.Count -gt 0) {
+        throw ("A rule on refs/tags/$next would refuse the tag: $($onTag -join ', '). " +
+               'Nothing has been changed, which is the point of asking now: that push comes ' +
+               'after the commit, the merge and the CI wait.')
+    }
+
+    Write-Note "No ruleset stops this account pushing $Main or creating $next."
+}
+catch [System.Management.Automation.RuntimeException] {
+    # Only a failure to *ask* is survivable, and the refusals above are thrown as plain strings
+    # rather than by a cmdlet, so they are re-thrown rather than swallowed by the handler meant
+    # for gh being absent.
+    if ($_.Exception.Message -like 'A rule on *') { throw }
+
+    Write-Warning "Could not ask which rules apply: $($_.Exception.Message)"
+    Write-Note 'Going on: the push is still the real gate, and a refusal there is put back below.'
+}
+
 # ------------------------------------------------------------------ the annotation
 
 if ([string]::IsNullOrWhiteSpace($Notes)) {
@@ -453,11 +631,18 @@ or pass -IncludeUntracked if this really is all meant.
 
 # ------------------------------------------------------------------ merge
 
+# Where main stood before this run touched it, and the whole of the undo at the push below. Null
+# when the work was already on main, because then the commit *is* the work and there is nothing
+# to put back (#93).
+$before = $null
+
 if ($branch -eq $Main) {
     Write-Step "Already on $Main, nothing to merge"
 }
 else {
     Write-Step "Merging $branch into $Main"
+
+    $before = (Invoke-Git rev-parse $Main) | Select-Object -First 1
 
     Invoke-Git checkout $Main | Out-Null
 
@@ -493,7 +678,31 @@ else {
 
 Write-Step "Pushing $Main to $Remote"
 
-Invoke-Git push $Remote $Main | Out-Null
+# **And put local main back if the remote refuses it** (#93). The preflight above asks about
+# rulesets and cannot see classic branch protection, a permission changed since it asked, or a
+# rule added while the suite ran — so the unforeseen case is made cheap rather than merely
+# unlikely: main returns to where this run found it and the checkout returns to the branch, which
+# still holds every commit. Nothing is lost, and there is nothing to unpick by hand.
+try {
+    Invoke-Git push $Remote $Main | Out-Null
+}
+catch {
+    if ($before) {
+        Write-Warning "$Remote refused the push. Putting $Main back where this run found it."
+
+        Invoke-Git reset --hard $before | Out-Null
+        Invoke-Git checkout $branch | Out-Null
+
+        Write-Note "$Main is at $($before.Substring(0, 12)) again, and you are back on $branch."
+        Write-Note 'Every commit is still on that branch. Nothing was tagged.'
+    }
+    else {
+        Write-Warning "$Remote refused the push, and this run committed straight onto $Main."
+        Write-Note 'That commit is the work, so it is left alone. Nothing was tagged.'
+    }
+
+    throw
+}
 
 $head = (Invoke-Git rev-parse HEAD) | Select-Object -First 1
 

@@ -27,6 +27,41 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.98.4 — 2026-09-01 — The remote is asked before anything is moved
+
+### A release run asks whether it may push before it commits anything (#93)
+
+`release.ps1` pushes `main` directly and pushes a tag, and a branch or tag rule refuses either —
+the first *after* the commit and the merge, the second after the CI wait as well. That is the
+same late-failure shape the version check was moved to the front for, and nothing checked it.
+
+So there are three questions asked before anything is mutated now, where there were two: the tag
+not existing, an annotation being available, and **the remote being willing to take the push and
+the tag**. A rule that would refuse either stops the run where nothing has been changed, and says
+which rule it was. It asks GitHub and never the console, so an unattended `-Yes` run still cannot
+hang.
+
+**The pipeline is unchanged, and that is the finding rather than an omission.** The two rulesets
+configured here — deletion and non-fast-forward on `main`, deletion, non-fast-forward and update
+on `refs/tags/v*` — are all about *moving and deleting* refs. That is this repository's own rule,
+*a published tag never moves*, written where GitHub enforces it, and none of it stops creating a
+tag or pushing a merge commit.
+
+**The first draft would have refused every run.** It listed `update` as a tag blocker, which
+reads right and is wrong: creating a ref that does not exist is governed by `creation`, while
+`update` governs moving one that does — and `update` on a *branch* really does stop a push, so
+the asymmetry is easy to miss. Driving it against this repository caught it; both halves are
+pinned by tests now.
+
+**And a refused push puts `main` back.** The preflight reads rulesets, so it cannot see classic
+branch protection, a permission changed since it asked, or a rule added while the suite ran. In
+that case `main` returns to where the run found it and the checkout returns to the work branch,
+which still holds every commit — nothing lost, nothing to unpick, and the run still fails.
+
+The release workflow was checked separately, because it runs under a different token: it triggers
+on the pushed tag, holds `contents: write`, and creates a Release without ever pushing, updating
+or deleting a ref — so a ruleset on `refs/tags/v*` has nothing of its to refuse.
+
 ## 0.98.3 — 2026-09-01 — A refused raise names its fault
 
 ### Bringing Elite forward works from behind it again, and a refusal is now a diagnosis (#107)

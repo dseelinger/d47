@@ -191,6 +191,106 @@ public class TheReleaseChainTellsTheTruthTests
         Assert.Contains("[ValidateRange(1, 100)]", backup, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// <b>Protection is asked about before anything is mutated</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/93">#93</a>). The script pushes main
+    /// directly and pushes a tag, and a rule on either refuses it — the first after the commit and
+    /// the merge, the second after the CI wait as well. That is the same late-failure shape the
+    /// version check was moved to the front for, and it is asserted the same way: by position.
+    /// </summary>
+    [Fact]
+    public void TheRemoteIsAskedBeforeAnythingIsCommittedOrMerged()
+    {
+        var script = Tool("release.ps1");
+
+        var asked = script.IndexOf("Write-Step 'Checking the remote will take a push and a tag'", StringComparison.Ordinal);
+        var committed = script.IndexOf("Invoke-Git add -A", StringComparison.Ordinal);
+        var merged = script.IndexOf("Invoke-Git merge --no-ff", StringComparison.Ordinal);
+
+        Assert.True(asked > 0, "the preflight is gone");
+        Assert.True(asked < committed, "the remote is asked after the commit, which is the fault");
+        Assert.True(asked < merged, "the remote is asked after the merge, which is the fault");
+    }
+
+    /// <summary>
+    /// <b>And it asks GitHub rather than the console</b> (#93). Every question this script asks a
+    /// person goes through <c>Request-Value</c>, which <c>-Yes</c> turns into an error — because
+    /// <c>Read-Host</c> with no console attached does not ask, it hangs. A preflight that asked
+    /// would put a hang in front of every unattended run.
+    /// </summary>
+    [Fact]
+    public void ThePreflightNeverAsksAPerson()
+    {
+        var script = Tool("release.ps1");
+
+        var from = script.IndexOf("Write-Step 'Checking the remote will take a push and a tag'", StringComparison.Ordinal);
+        var to = script.IndexOf("------------------ the annotation", StringComparison.Ordinal);
+
+        Assert.True(from > 0 && to > from);
+
+        var preflight = script[from..to];
+
+        Assert.DoesNotContain("Request-Value", preflight, StringComparison.Ordinal);
+        Assert.DoesNotContain("Read-Host", preflight, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// <b>The rules this repository actually has must not refuse a run</b> (#93). <c>main
+    /// history</c> restricts deletion and non-fast-forward on main; <c>released tags</c> restricts
+    /// deletion, non-fast-forward and <c>update</c> on <c>refs/tags/v*</c>. All five are about
+    /// moving and deleting refs — the rule this project keeps by hand written where GitHub
+    /// enforces it — and none of them stops creating a tag or pushing a merge commit.
+    /// <para>
+    /// <b>The first draft listed <c>update</c> as a tag blocker and refused every run</b>, caught
+    /// by driving it against this repository rather than by reading it. Creating a ref that does
+    /// not exist is <c>creation</c>; <c>update</c> governs moving one that does. The asymmetry is
+    /// real — <c>update</c> on a *branch* does stop a push — so both halves are pinned here.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void TheRulesThisRepositoryHasAreNotTreatedAsBlockers()
+    {
+        var script = Tool("release.ps1");
+
+        Assert.Contains(
+            "$BlocksPush = @('pull_request', 'update', 'required_status_checks', 'required_linear_history')",
+            script,
+            StringComparison.Ordinal);
+
+        Assert.Contains("$BlocksTag = @('creation')", script, StringComparison.Ordinal);
+
+        // Neither list may name the two that are configured on main today.
+        var push = script[script.IndexOf("$BlocksPush = @(", StringComparison.Ordinal)..];
+        var lists = push[..push.IndexOf("$BlocksTag = @(", StringComparison.Ordinal)];
+
+        Assert.DoesNotContain("'deletion'", lists, StringComparison.Ordinal);
+        Assert.DoesNotContain("'non_fast_forward'", lists, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// <b>A refused push puts main back</b> (#93). The preflight reads rulesets and cannot see
+    /// classic branch protection, a permission changed since it asked, or a rule added while the
+    /// suite ran — so the unforeseen case costs nothing to unpick rather than leaving a merge
+    /// commit on local main behind a failure.
+    /// </summary>
+    [Fact]
+    public void ARefusedPushLeavesNoMergeBehindOnMain()
+    {
+        var script = Tool("release.ps1");
+
+        Assert.Contains("$before = (Invoke-Git rev-parse $Main)", script, StringComparison.Ordinal);
+        Assert.Contains("Invoke-Git reset --hard $before", script, StringComparison.Ordinal);
+        Assert.Contains("Invoke-Git checkout $branch", script, StringComparison.Ordinal);
+
+        // And the failure is still a failure: rolling back and carrying on would tag a commit the
+        // remote never took.
+        var from = script.IndexOf("Write-Step \"Pushing $Main to $Remote\"", StringComparison.Ordinal);
+        var to = script.IndexOf("$head = (Invoke-Git rev-parse HEAD)", StringComparison.Ordinal);
+
+        Assert.True(from > 0 && to > from);
+        Assert.Contains("throw", script[from..to], StringComparison.Ordinal);
+    }
+
     /// <summary>A workflow's lines with its comments taken out, so prose is not read as a step.</summary>
     private static string[] Steps(string workflow) =>
         [.. workflow.Split('\n').Where(line => !line.TrimStart().StartsWith('#'))];
