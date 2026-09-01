@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Media;
@@ -65,19 +65,96 @@ public static class Glyphs
         "M 4,10 L 10,10 L 10,4  M 20,10 L 14,10 L 14,4  M 20,14 L 14,14 L 14,20  M 4,14 L 10,14 L 10,20";
 
     /// <summary>
-    /// Open every card: two chevrons pointing apart
+    /// Open every card: a plus
     /// (<a href="https://github.com/dseelinger/d47/issues/223">#223</a>).
     /// <para>
+    /// <b>It was two chevrons pointing apart, and the Commander asked for a plus and a minus
+    /// instead</b> (2026-09-01). The chevron pair reads as <i>scroll</i> before it reads as
+    /// <i>unfold</i>, and doubling it does not fix that — where plus and minus are what every
+    /// tree control has meant by open and shut for thirty years, and they carry no second
+    /// meaning at all.
+    /// </para>
+    /// <para>
     /// <b>Not <see cref="Expand"/>, which is a different verb.</b> Those four brackets are the
-    /// full-screen mark — make this thing bigger — and these two chevrons are the one every tree
-    /// and outline uses for unfolding what is inside. A pair that only works as a pair, like the
-    /// two above it: apart is open, together is shut.
+    /// full-screen mark — make this thing bigger — and this is about what is inside a card. The
+    /// pair still only works as a pair.
     /// </para>
     /// </summary>
-    public const string ExpandAll = "M 7,6 L 12,11 L 17,6  M 7,13 L 12,18 L 17,13";
+    public const string ExpandAll = "M 12,5 L 12,19  M 5,12 L 19,12";
 
-    /// <summary>Shut every card: the same two chevrons pointing together.</summary>
-    public const string CollapseAll = "M 7,11 L 12,6 L 17,11  M 7,18 L 12,13 L 17,18";
+    /// <summary>
+    /// Shut every card: a minus, drawn as a filled bar rather than as a stroked line.
+    /// <para>
+    /// <b>It was <c>M 5,12 L 19,12</c> and it rendered as a dot</b> (reported 2026-09-01).
+    /// <see cref="Made"/> fits the geometry to the control with <c>Stretch.Uniform</c>, which
+    /// scales by the smaller of the two ratios — and a horizontal line has <b>no height at all</b>,
+    /// so the height ratio is a division by zero and the whole mark collapses. Measured: defining
+    /// bounds 14 × 0, rendered bounds 0 × 0. What was left on screen was the round cap of a
+    /// zero-length stroke, which is a dot.
+    /// </para>
+    /// <para>
+    /// <b>So the bar carries its own thickness</b> — a stadium two units tall and, with the round
+    /// ends, exactly fourteen wide. That is the same two units the plus is stroked at and the same
+    /// fourteen across, so the pair matches without either of them knowing about the other. It is
+    /// the one mark here that is <see cref="Draw"/>n filled for a reason other than legibility:
+    /// a shape with area cannot be flattened away.
+    /// </para>
+    /// <para>
+    /// <b>The general fault is still in <see cref="Made"/></b> and is deliberately not fixed here:
+    /// any future one-dimensional mark will vanish the same way, and correcting it means
+    /// normalising every glyph in the file by hand rather than by stretch.
+    /// </para>
+    /// <para>
+    /// <see cref="ExpandAll"/> and <see cref="Add"/> are the same path today and are deliberately
+    /// two constants: one means <i>open what is inside this</i> and the other means <i>make
+    /// another one</i>, and a change to either verb's mark must not move the other.
+    /// </para>
+    /// </summary>
+    public const string CollapseAll =
+        "M 6,11 L 18,11 A 1,1 0 0 1 18,13 L 6,13 A 1,1 0 0 1 6,11 Z";
+
+    /// <summary>
+    /// What this row is: a lower-case <c>i</c> in a circle
+    /// (asked for 2026-09-01 — <i>"That is WAY too much text"</i>).
+    /// <para>
+    /// <b>The help moved behind it because the rows were unreadable.</b> Push-to-talk's help runs
+    /// to eleven lines, and eleven lines of grey prose under every row is a page nobody scans —
+    /// the setting a Commander came for is buried in the explanation of the setting above it. The
+    /// text is unchanged and one press away.
+    /// </para>
+    /// <para>
+    /// <b>An <c>i</c> rather than a <c>?</c>.</b> The question mark is already spoken for on this
+    /// surface: it is the card's way out to the documentation site, and two marks that both mean
+    /// <i>help</i> and do different things is worse than either alone. This one says <i>about this
+    /// row</i>; that one says <i>the long form, on the web</i>. The callout carries both, which is
+    /// how they stay told apart.
+    /// </para>
+    /// <para>
+    /// The dot is a zero-length segment: <see cref="Made"/> strokes with a round cap, so it draws
+    /// as a dot without needing a second filled shape.
+    /// </para>
+    /// <para>
+    /// <b>Two semicircles rather than one nearly-closed arc.</b> The other round mark here is
+    /// written <c>A 9,9 0 1 1 11.99,3</c> — an arc that ends a hundredth of a unit from where it
+    /// began — which leaves which circle is meant to be inferred from the flags. Two half turns
+    /// say it outright, and the shape cannot come out subtly wrong.
+    /// </para>
+    /// <para>
+    /// <b>It came out looking like a flat tyre, and the radius was not why</b> (reported
+    /// 2026-09-01). <see cref="Made"/> stretches the <em>geometry</em> to the control and then
+    /// strokes it two units wide, so <b>half the stroke always lands outside the box</b> — one
+    /// unit, about 0.9 of a pixel at this size, measured. <b>Every mark in this file does it.</b>
+    /// Only a closed curve makes it visible: a clipped arc reads as a flat edge where a clipped
+    /// line end reads as nothing at all.
+    /// </para>
+    /// <para>
+    /// So the fix is on the button, which had four pixels of horizontal padding and none
+    /// vertical — which is exactly where it was cut. The smaller radius here is only that a
+    /// slightly smaller circle sits better beside the pills.
+    /// </para>
+    /// </summary>
+    public const string Info =
+        "M 12,4 A 8,8 0 0 1 12,20 A 8,8 0 0 1 12,4  M 12,8 L 12,8  M 12,11.5 L 12,16";
 
     /// <summary>Two sheets, one behind the other. The clipboard mark, near enough universally.</summary>
     public const string Copy =
@@ -100,9 +177,22 @@ public static class Glyphs
     /// installed font happened to have: a different weight from the four marks beside it, hung off
     /// a baseline rather than centred in its box, and a hollow rectangle on a machine without it.
     /// </para>
+    /// <para>
+    /// <b>Redrawn 2026-09-01 — <i>"this glyph is dumb"</i>.</b> It was a three-quarter arc opening
+    /// at the top with the arrowhead folded back over the gap, which at fourteen pixels read as a
+    /// comma with a tick on it. This is a fuller turn with the head clear of the arc, chosen from
+    /// seven drawings. The direction is unchanged and is still the point.
+    /// </para>
+    /// <para>
+    /// <b>Inside its own bounds on purpose.</b> <see cref="Made"/> stretches the geometry to the
+    /// control and then strokes it two units wide, so half that stroke lands outside — which is
+    /// what made the info mark look like a flat tyre until the button was given vertical padding.
+    /// The arrowhead here is the outermost thing on three sides, and it is a line end rather than
+    /// a curve, so a clipped pixel of it reads as nothing.
+    /// </para>
     /// </summary>
     public const string Reset =
-        "M 12,4 A 8,8 0 1 0 20,12  M 15,1 L 12,4 L 15,7";
+        "M 5,9.2 A 8.5,8.5 0 1 1 4.5,13.5  M 9.6,8.9 L 4.8,9.1 L 5.0,4.3";
 
     /// <summary>
     /// What this has cost: a banknote, a rectangle with a circle in the middle of it
@@ -247,18 +337,45 @@ public static class Glyphs
         return glyph;
     }
 
-    private static Path Made(string data, double size) => new()
+    /// <summary>
+    /// <b>The box is the mark's own shape, not always a square</b> (reported 2026-09-01 — the
+    /// minus <i>"is at the top of the square block"</i>).
+    /// <para>
+    /// <c>Stretch.Uniform</c> fits the geometry inside the control and then puts it at the box's
+    /// <em>top left</em> rather than in the middle of it — measured: a 14 × 2 bar in a 14 × 14
+    /// Path renders at <c>0, 0, 14, 2</c>. Every other mark here is near enough square, so the
+    /// gap was nothing and nobody saw it; a minus is two units tall in a fourteen-unit box and
+    /// hung off the top edge.
+    /// </para>
+    /// <para>
+    /// So the Path is given the shape of what it holds — the longer side is <paramref name="size"/>
+    /// and the shorter is whatever the geometry's own proportions make it — and the alignments
+    /// below, which were always there, do the centring. A square mark is unchanged to the pixel.
+    /// </para>
+    /// </summary>
+    private static Path Made(string data, double size)
     {
-        Width = size,
-        Height = size,
-        Stretch = Stretch.Uniform,
-        StrokeThickness = 2,
-        StrokeLineCap = PenLineCap.Round,
-        StrokeJoin = PenLineJoin.Round,
-        Data = Geometry.Parse(data),
-        VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-    };
+        var geometry = Geometry.Parse(data);
+        var bounds = geometry.Bounds;
+
+        // Both sides, for a geometry with no area at all. A mark like that cannot be drawn and is
+        // refused by EveryMarkHasTwoDimensionsTests; this only stops the arithmetic below dividing
+        // by zero on the way to finding out.
+        var longest = Math.Max(Math.Max(bounds.Width, bounds.Height), 0.001);
+
+        return new()
+        {
+            Width = size * bounds.Width / longest,
+            Height = size * bounds.Height / longest,
+            Stretch = Stretch.Uniform,
+            StrokeThickness = 2,
+            StrokeLineCap = PenLineCap.Round,
+            StrokeJoin = PenLineJoin.Round,
+            Data = geometry,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+        };
+    }
 
     /// <summary>
     /// Puts a mark on a button and keeps the word where a word still belongs: on the tooltip, and

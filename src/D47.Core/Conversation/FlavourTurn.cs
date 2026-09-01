@@ -87,6 +87,16 @@ public static class FlavourTurn
     /// whose answer is a whole story in JSON.
     /// </param>
     /// <param name="effort">Low for a remark; the generator asks for more, because a story is a reasoning problem.</param>
+    /// <param name="sampling">
+    /// How adventurous the sampler may be (<a href="https://github.com/dseelinger/d47/issues/98">#98</a>).
+    /// <para>
+    /// <b>Defaulted to <see cref="LlmSampling.InCharacter"/>, which is what this method is named
+    /// for.</b> Every caller that arrived here before #98 was asking for one short line in a
+    /// core's voice, and warm is what that line wants — so the default is the class rather than a
+    /// shrug. The three that are not in character say so: the adventure generator, voice casting,
+    /// and a lore lookup, each of which is checked against something afterwards.
+    /// </para>
+    /// </param>
     /// <param name="webSearch">
     /// Whether the provider may search the web while writing this line (Phase 23, "Look
     /// it up, and say where the answer came from").
@@ -116,7 +126,8 @@ public static class FlavourTurn
         CancellationToken cancellationToken = default,
         bool webSearch = false,
         int? maxOutputTokens = null,
-        ThinkingEffort effort = ThinkingEffort.Low)
+        ThinkingEffort effort = ThinkingEffort.Low,
+        LlmSampling? sampling = null)
     {
         if (provider is null)
         {
@@ -133,6 +144,11 @@ public static class FlavourTurn
             // reasoning problem, and spending Max effort on ambient chatter would cost more than
             // the turns the Commander actually asked for; a whole story is the one exception.
             Effort = effort,
+
+            // In character unless the caller says otherwise (#98). Null here means the caller
+            // never thought about it, and for this method that reading is right rather than
+            // suspicious — see the parameter's note.
+            Sampling = sampling ?? LlmSampling.InCharacter,
 
             // Short on purpose, and now with room to think first
             // (<a href="https://github.com/dseelinger/d47/issues/97">#97</a>). See AnswerBudget.

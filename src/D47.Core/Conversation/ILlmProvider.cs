@@ -249,6 +249,20 @@ public sealed record LlmRequest
     public required ThinkingEffort Effort { get; init; }
 
     /// <summary>
+    /// How adventurous the sampler may be for this call
+    /// (<a href="https://github.com/dseelinger/d47/issues/98">#98</a>).
+    /// <para>
+    /// <b>Required, and that is the fix rather than an inconvenience.</b> The defect was that
+    /// nothing anywhere sent a sampling field, so a creative site and a mechanical one took the
+    /// same unchosen default; a property with a default here would recreate exactly that, one
+    /// forgotten line at a time. There are few enough construction sites that every one of them
+    /// can name its class — and <see cref="LlmSampling.Unstated"/> is how a call says it wants
+    /// the endpoint's own default, out loud.
+    /// </para>
+    /// </summary>
+    public required LlmSampling Sampling { get; init; }
+
+    /// <summary>
     /// A cockpit reply is a few sentences. The SDK's own guidance is not to lowball this, but
     /// "deliberately short outputs" is the stated exception and this is one — the reply is
     /// going to be spoken aloud to someone flying a ship.

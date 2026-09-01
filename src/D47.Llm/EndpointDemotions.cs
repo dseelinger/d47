@@ -111,6 +111,20 @@ internal enum Demotable
     ModernTokenLimit,
 
     /// <summary>
+    /// <c>temperature</c> (<a href="https://github.com/dseelinger/d47/issues/98">#98</a>).
+    /// Dropping it puts a call back on the endpoint's own default, which is precisely where every
+    /// call was before #98 — so the cost of losing it is the state d47 shipped in for a year, and
+    /// it is never worth a failed turn.
+    /// <para>
+    /// <b>The field most likely to be refused, and by the endpoints d47 most wants to reach.</b>
+    /// Reasoning models reject it outright on several servers, and every Anthropic model from the
+    /// 4.7 generation on has removed it. The Anthropic path knows that in advance and does not
+    /// spend a turn learning it; this is for the servers nobody has a table for.
+    /// </para>
+    /// </summary>
+    Sampling,
+
+    /// <summary>
     /// Anthropic's <c>thinking</c> and <c>output_config.effort</c>, which are one entry because
     /// they are one capability: both arrived with the 4.6 generation and a model that rejects
     /// either rejects both. Dropping them costs the effort router its lever on that model, and

@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using D47.Core;
 using D47.Core.Capabilities;
 using D47.Core.Configuration;
@@ -237,7 +237,8 @@ public sealed class TestSurface
         CapabilityRegistry? built = null;
 
         var registry = CapabilityRegistry.Build(BuiltinCapabilities.All(
-            install.Paths, verbosity, state, service, availability, spend, Version, SilentSpeech(), new D47.Core.Conversation.TurnCancellation(NullLogger<D47.Core.Conversation.TurnCancellation>.Instance),
+            install.Paths, verbosity, state, service, availability, spend, Version, SilentSpeech(), NoFleet(), Capabilities.Builtin.SpokenNamesSurface.Inert,
+            new D47.Core.Conversation.TurnCancellation(NullLogger<D47.Core.Conversation.TurnCancellation>.Instance),
             new D47.Core.Callouts.CalloutEngine(NullLogger<D47.Core.Callouts.CalloutEngine>.Instance),
             () => built!,
             SilentListening(),
@@ -306,6 +307,14 @@ public sealed class TestSurface
         Silence = onSilence ?? (() => { }),
         Beds = () => [.. D47.Core.Audio.CueLibrary.Load().BedNames],
     };
+
+    /// <summary>
+    /// The fleet surface, every member supplied and none of them doing anything (#128). The
+    /// record's own Inert, so adding a member to it without adding it there fails HostSurfaceTests
+    /// rather than quietly leaving this double behind the surface that ships.
+    /// </summary>
+    public static Capabilities.Builtin.ShipsCapability.ShipsSurface NoFleet() =>
+        Capabilities.Builtin.ShipsCapability.ShipsSurface.Inert;
 
     /// <summary>
     /// The listening surface with no microphone behind it: no devices, not capturing, no

@@ -1,3 +1,5 @@
+﻿using D47.Core.Conversation;
+
 namespace D47.Core.Lore;
 
 /// <summary>
@@ -33,6 +35,18 @@ public static class LoreLookup
     /// nothing is waiting on it.
     /// </summary>
     public static readonly TimeSpan Budget = TimeSpan.FromSeconds(45);
+
+    /// <summary>
+    /// Cold (<a href="https://github.com/dseelinger/d47/issues/98">#98</a>), and here beside the
+    /// instruction rather than at the call site for the reason the rest of this class is here:
+    /// the property that matters is assertable against a value instead of against a running app.
+    /// <para>
+    /// <b>The opposite of the remark it follows, in the same breath.</b> The arrival line is d47
+    /// speaking and this is d47 quoting — the instruction spends four of its sentences telling
+    /// the model not to guess, and warmth is the sampler being invited to do exactly that.
+    /// </para>
+    /// </summary>
+    public static readonly LlmSampling Sampling = LlmSampling.Lore;
 
     /// <summary>
     /// What the model is asked. Authored by d47 and carrying only the system's name — untrusted

@@ -1,4 +1,4 @@
-using D47.Core.Callouts;
+﻿using D47.Core.Callouts;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
@@ -27,6 +27,17 @@ public static class BuiltinCapabilities
         SpendTracker spend,
         string version,
         SpeechCapability.SpeechSurface speech,
+
+        // What the App does for the fleet: describing what is stored, and rebuilding it
+        // from every journal on disk when the Commander says it does not look right (#128).
+        // Positional and required, like the surfaces around it — an optional here would
+        // have to go at the end, where it would sit among the null-means-absent ones and
+        // read as the same kind of thing.
+        ShipsCapability.ShipsSurface fleet,
+
+        // What this Commander has met and how a misheard name is recovered (#134). Positional
+        // beside the surfaces around it, for the reason recorded on `fleet`.
+        Builtin.SpokenNamesSurface heard,
         Conversation.TurnCancellation cancellation,
         CalloutEngine callouts,
         Func<CapabilityRegistry> registry,
@@ -238,7 +249,8 @@ public static class BuiltinCapabilities
             trade,
             () => gameState.Active?.Location.StationName,
             commodities,
-            now),
+            now,
+            heard),
         RouteCapability.Create(
             routes,
             trade,
@@ -251,7 +263,7 @@ public static class BuiltinCapabilities
         EngineeringCapability.Create(() => gameState.Active, galaxy, clipboard),
         OnFootCapability.Create(() => gameState.Active, onFoot),
         ChecklistCapability.Create(checklists, ships, onFoot),
-        ShipsCapability.Create(ships),
+        ShipsCapability.Create(ships, fleet),
         GapCapability.Create(ships, onFoot, () => gameState.Active),
         ColonisationCapability.Create(
             () => gameState.Active,
@@ -361,6 +373,7 @@ public static class BuiltinCapabilities
             about?.StartMenuWanted,
             about?.SetUpKeys,
             about?.ShowCommunity,
-            about?.Channel),
+            about?.Channel,
+            about?.OpenDataFolder),
     ];
 }

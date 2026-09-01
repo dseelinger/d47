@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -350,7 +350,7 @@ public class SettingsIsATabTests
                     .Any(text => text.Text == "Push-to-talk"));
 
         var bind = row.GetVisualDescendants().OfType<Button>()
-            .Where(button => button.Name != D47.App.Settings.SettingsView.RowResetName)
+            .Where(button => !D47.App.Settings.SettingsView.IsRowChrome(button))
             .First(button => (button.Content as string) != "Unbind");
 
         bind.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));

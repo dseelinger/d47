@@ -1,4 +1,4 @@
----
+﻿---
 title: Ships
 group: Knowledge
 nav_order: 111
@@ -187,6 +187,35 @@ way every other suggestion does.
 
 That separation is what lets you rearrange a build without your checklist reordering itself under
 you, and reorder your checklist without the build forgetting what you decided.
+
+### What is fitted, remembered {#remembered}
+
+**What is actually fitted is a third thing, in a third file.** `data/loadouts.json` holds what each
+of your ships was last seen carrying, straight from the game — every ship you have sat in, not just
+the one you are in now. Intent is authored and a loadout is derived, so the two never borrow from
+each other.
+
+**It is a cache and nothing depends on it surviving.** Delete it and Directive 47 rebuilds what it
+can from your journals; it exists so that a ship you last flew a year ago is still answerable
+today, which reading the newest journals alone could never manage. A ship you sell is dropped from
+it at the sale — and dropped again if the game ever hands its id to something new, because Elite
+reuses ship ids and an inherited module list would be worse than knowing nothing.
+
+**A sale you made while Directive 47 was closed still lands.** The file records how far through
+your journals it has been read, so the next start picks up exactly where it left off — however
+long that is. Come back after a year away and the first start takes a few seconds longer while it
+reads the gap, and says so in the log.
+
+**Not look right? Rescan.** The Ships card in Settings says how many ships are remembered and how
+stale the oldest of them is, and offers **Rescan my journals**: it reads every journal on disk
+again and rebuilds the lot from scratch. A ship nothing in your journals supports stops existing,
+and one that has been sitting there wrong is put back the way the game described it. It takes a few
+seconds — about three on a year of flying — and you can do it as often as you like.
+
+Nothing else is touched. Your plans, your checklist and your settings are not read and not written,
+and a rescan that finds no journals at all changes nothing rather than emptying the file: a journal
+folder that has moved reads exactly like a fleet that has been sold, and only one of those should
+be believed.
 
 ### One build per ship
 

@@ -1,4 +1,4 @@
-using Anthropic;
+﻿using Anthropic;
 using Anthropic.Exceptions;
 using Anthropic.Models.Messages;
 using D47.Core.Conversation;
@@ -80,6 +80,28 @@ public sealed class AnthropicLlmProvider : ILlmProvider
     /// </summary>
     private static readonly HashSet<string> LegacyThinkingModels =
         new(StringComparer.Ordinal) { "claude-haiku-4-5" };
+
+    // ---- No temperature goes to Anthropic, and that is the finding rather than an omission ----
+    //
+    // #98 opened by saying "Anthropic's path takes temperature too, but interacts with
+    // effort/thinking, so the omission rules Phase 54 already wrote apply here". That premise is
+    // no longer true of any model a Commander would choose. Sampling was removed with the 4.7
+    // generation: temperature, top_p and top_k return a 400 on Opus 5, Opus 4.8, Opus 4.7,
+    // Sonnet 5 and Fable 5, and the pinned SDK says so itself — MessageCreateParams.Temperature
+    // is marked obsolete with "Models released after Claude Opus 4.6 do not support setting
+    // temperature. A value of 1.0 will be accepted for backwards compatibility, all other values
+    // will be rejected with a 400 error."
+    //
+    // So there is a set that would still take it — Opus 4.6, Sonnet 4.6, Haiku 4.5 — and it is
+    // deliberately not built. Reaching it means suppressing the SDK's own deprecation warning in
+    // a repository where warnings are errors, in order to send a field to three models this file
+    // already treats as legacy in two other lists. The sampling LlmRequest carries is honoured on
+    // the OpenAI-shaped paths, where it lands on every local runner and gateway d47 can reach;
+    // here it is read and not sent, which is a decision with a date on it rather than the silence
+    // #98 was about.
+    //
+    // What would change this: a model that reinstates the field. It arrives as a request that
+    // works rather than as a demotion, so nothing here has to guard against it.
 
     /// <summary>
     /// The ceiling on searches in one turn. Three, which is two things at once.

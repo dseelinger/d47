@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
@@ -52,8 +52,11 @@ public class TheLocalVoiceRowIsOnThePageTests
 
         Control? at = caption;
 
-        // Up until the container also holds the row's own controls.
-        while (at is not null && at.GetVisualDescendants().OfType<Button>().Any() is false)
+        // Up until the container also holds the row's own controls. Chrome does not count: the
+        // header beside the label now carries the info glyph, so "any button at all" would stop
+        // one level too early and find nothing the row is about.
+        while (at is not null && at.GetVisualDescendants().OfType<Button>()
+                   .Any(button => !D47.App.Settings.SettingsView.IsRowChrome(button)) is false)
         {
             at = at.GetVisualParent() as Control;
         }

@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using D47.Core.Checklists;
 using D47.Core.Interface;
 using D47.Core.Journal;
@@ -314,6 +314,18 @@ public sealed class ShipsMode(
         if (seen.SeenAt is { } when)
         {
             lines.Add(new LoadoutLine($"As you left it, {Age(when)}.", LoadoutTone.Muted));
+
+            // **Said where the doubt is, not only where the fix is**
+            // (<a href="https://github.com/dseelinger/d47/issues/128">#128</a>). A Commander
+            // looking at a figure that does not match the ship in front of them has no way to know
+            // that anything can be done about it — and this is the one line on the page that
+            // already admits the figures may be out of date, so the offer belongs beside it.
+            //
+            // Only on a remembered ship: the one being flown reports no age at all, because "now"
+            // is the honest tense there and a rescan would answer a question nobody has.
+            lines.Add(new LoadoutLine(
+                "Not look right? Rescan your journals on the Ships card in Settings.",
+                LoadoutTone.Muted));
         }
 
         if (loadout.MaxJumpRange is { } range)
@@ -489,6 +501,21 @@ public sealed class ShipsMode(
             power.Fits ? LoadoutTone.Body : LoadoutTone.Danger)
         {
             Marks = [new LoadoutMark(power.Retracted / made, $"{Percent(power.RetractedShare)} retracted")],
+
+            // **Three figures under the points they belong to** (the Commander's instruction,
+            // 2026-09-01). What the tick means was unguessable from a legend at the far left of
+            // the line beneath — so the retracted share is written under the tick, the plant's own
+            // limit under the end of the track, and the total draw under wherever it lands.
+            //
+            // **The draw is clamped for its position and not for its words.** A build 18% over its
+            // plant has nowhere further along the bar to be written, and the figure is the whole
+            // point of the gauge, so it sits at the end and says 118%.
+            Scale =
+            [
+                new LoadoutMark(power.Retracted / made, Percent(power.RetractedShare)),
+                new LoadoutMark(1, "100%"),
+                new LoadoutMark(power.Deployed / made, Percent(power.DeployedShare)),
+            ],
             Note = power.Overage is { } over
                 ? $"{Megawatts(over)} over with the hardpoints out."
                 : null,

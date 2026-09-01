@@ -101,6 +101,38 @@ public sealed class AdventureGeneratorTests
         Assert.Contains("Asked what to do next, say where the next beat is", AdventureContext.Label);
     }
 
+    /// <summary>
+    /// <b>Every generation turn asks for no warmth</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/98">#98</a>), the refusal pass included.
+    /// A story is the one output here that looks creative and is not: the beats are validated
+    /// against the real galaxy and re-asked where they cannot stand, so this call's failure is
+    /// naming places that do not exist. Variety comes from the systems within reach.
+    /// <para>
+    /// The refusal pass is not endangered by asking the same question the same way twice, because
+    /// it is not the same question: it goes back with the refusals <em>and</em> the beats that
+    /// stood, which is what the test below holds.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task EveryGenerationTurnAsksForNoWarmth()
+    {
+        var provider = new RoundScriptedLlmProvider(
+            RoundScriptedLlmProvider.Saying(Spine),
+            RoundScriptedLlmProvider.Saying(FarBeats),
+            RoundScriptedLlmProvider.Saying(GoodBeats));
+
+        var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+        Assert.Equal(3, provider.CallCount);
+
+        Assert.All(
+            provider.Requests,
+            request => Assert.Equal(LlmSampling.Adventure, request.Sampling));
+
+        Assert.Equal(0.0, provider.Requests[0].Sampling.Temperature);
+    }
+
     [Fact]
     public async Task TheRefusalPassIsShownTheDraftItIsFixing()
     {

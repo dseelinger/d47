@@ -1,4 +1,4 @@
-namespace D47.Core.Journal;
+﻿namespace D47.Core.Journal;
 
 /// <summary>
 /// One Commander's derived state — everything Phase 7 knows about them, folded from the
@@ -44,6 +44,14 @@ public sealed class CommanderGameState(CommanderIdentity identity)
 
     /// <summary>Every module they have in storage, and where.</summary>
     public ModuleStore Modules { get; private set; } = ModuleStore.Empty;
+
+    /// <summary>
+    /// Every place they have met, as a catalogue to match a misheard name against
+    /// (<a href="https://github.com/dseelinger/d47/issues/134">#134</a>). Folded live so a system
+    /// they jumped into a minute ago is already sayable, and seeded from the file so one they flew
+    /// to last summer still is.
+    /// </summary>
+    public Listening.SpokenNames Names { get; internal set; } = Listening.SpokenNames.Empty;
 
     public MaterialsInventory Materials { get; private set; } = MaterialsInventory.Empty;
 
@@ -106,7 +114,14 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         // After Ship and in one place, so every route that changes the flown ship is remembered by
         // the same line — the Loadout, the rename, and the EngineerCraft that Elite writes no
         // Loadout for. Dated off the event, because Core reads no clock.
-        Loadouts = Loadouts.Apply(journalEvent).Remember(Ship, journalEvent.Timestamp);
+        //
+        // **Remembered first and forgotten second**, which was the other way round until #128 and
+        // is a measured correction rather than a tidy-up. Of 34 ShipyardNew events on the corpus,
+        // one hands out the id of the ship the Commander is sitting in — so filing the flown ship
+        // after the forget put the old ship straight back under the new ship's id, which is
+        // exactly the inheritance the whole reuse rule exists to prevent. Selling never collides
+        // this way (0 of 72: you cannot sell what you are flying), so nothing else changes.
+        Loadouts = Loadouts.Remember(Ship, journalEvent.Timestamp).Apply(journalEvent);
         OnFoot = OnFoot.Apply(journalEvent);
         Carrier = Carrier.Apply(journalEvent);
         SquadronCarrier = SquadronCarrier.Apply(journalEvent);
@@ -114,6 +129,11 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         // the Commander is standing, and neither ShipyardSwap nor ShipyardBuy names a place.
         Fleet = Fleet.Apply(journalEvent, Location.StarSystem, Location.StationName);
         Modules = Modules.Apply(journalEvent);
+
+        // Names of places, and only places — see SpokenNames.Apply, which reads named fields
+        // rather than scraping the event, because the line between a place Elite wrote and words
+        // another player typed is the whole of the trust rule here.
+        Names = Names.Apply(journalEvent);
         Materials = Materials.Apply(journalEvent);
         Engineers = Engineers.Apply(journalEvent);
         Ranks = Ranks.Apply(journalEvent);

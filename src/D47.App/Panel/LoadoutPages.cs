@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Automation;
@@ -698,10 +698,24 @@ public static class LoadoutPages
 
         stack.Children.Add(Bar(gauge));
 
+        // The figures under the points they belong to, where the gauge supplied any.
+        if (gauge.Scale.Count > 0)
+        {
+            stack.Children.Add(Scale(gauge));
+        }
+
         // What the marks are, and anything wrong with the figures. One line, muted, under the bar.
+        //
+        // A mark whose figure is already written under its own point is left out of it: the scale
+        // is the legend now, and repeating it here is the sentence the scale was built to replace.
         var said = string.Join(
             " · ",
-            gauge.Marks.Select(mark => mark.Label).Append(gauge.Note).Where(text => text is { Length: > 0 }));
+            gauge.Marks
+                .Where(mark => !gauge.Scale.Any(tick =>
+                    string.Equals(tick.Label, mark.Label, StringComparison.Ordinal)))
+                .Select(mark => mark.Label)
+                .Append(gauge.Note)
+                .Where(text => text is { Length: > 0 }));
 
         if (said.Length > 0)
         {
@@ -709,6 +723,57 @@ public static class LoadoutPages
         }
 
         return stack;
+    }
+
+    /// <summary>
+    /// The figures written under the points on the bar they belong to
+    /// (the Commander's instruction, 2026-09-01).
+    /// <para>
+    /// <b>Each label ends at its point.</b> The alternative — centring on it — puts half of the
+    /// last figure past the end of the track, and the last figure is the total draw, which is
+    /// exactly the one that may be over 100% and off the end already.
+    /// </para>
+    /// <para>
+    /// <b>Layered rather than laid out in a row</b>, the same way the hairlines are: a scale entry
+    /// can sit anywhere along the bar, and two of them that had to agree on an order would have to
+    /// agree about a case — retracted above 100%, a total draw below it — that the arithmetic does
+    /// not forbid.
+    /// </para>
+    /// </summary>
+    private static Control Scale(LoadoutGauge gauge)
+    {
+        var row = new Grid();
+
+        foreach (var tick in gauge.Scale)
+        {
+            var at = Math.Clamp(double.IsFinite(tick.At) ? tick.At : 0, 0, 1);
+
+            var over = new Grid
+            {
+                ColumnDefinitions = new ColumnDefinitions
+                {
+                    new(new GridLength(at, GridUnitType.Star)),
+                    new(new GridLength(1 - at, GridUnitType.Star)),
+                },
+            };
+
+            var text = new TextBlock
+            {
+                Text = tick.Label,
+                FontSize = TypeScale.Small,
+                HorizontalAlignment = HorizontalAlignment.Right,
+            };
+
+            Themed(text, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+
+            Grid.SetColumn(text, 0);
+            over.Children.Add(text);
+
+            Grid.SetColumnSpan(over, 2);
+            row.Children.Add(over);
+        }
+
+        return row;
     }
 
     /// <summary>
@@ -780,8 +845,29 @@ public static class LoadoutPages
             };
 
             Themed(hairline, Border.BackgroundProperty, ThemeManager.TextKey);
-            Grid.SetColumn(hairline, 0);
-            over.Children.Add(hairline);
+
+            // **The mark says what it is** (asked 2026-09-01 — *"I can't remember what the white
+            // bar on the blue line is for"*). Its label was already printed, under the bar, in a
+            // line that joins every mark and the note with interpuncts — so on the power gauge the
+            // words "81% retracted" sit at the far left while the thing they name sits four fifths
+            // of the way across. Nothing connected them.
+            //
+            // Hung on a transparent widening rather than on the two-pixel line: a hairline is a
+            // hard thing to put a pointer on, and a tip nobody can reach is not a tip.
+            var reach = new Border
+            {
+                Width = 12,
+                Background = Brushes.Transparent,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                Margin = new Thickness(0, 0, -5, 0),
+                Child = hairline,
+            };
+
+            ToolTip.SetTip(reach, mark.Label);
+            AutomationProperties.SetName(reach, mark.Label);
+
+            Grid.SetColumn(reach, 0);
+            over.Children.Add(reach);
 
             Grid.SetColumnSpan(over, 2);
             track.Children.Add(over);

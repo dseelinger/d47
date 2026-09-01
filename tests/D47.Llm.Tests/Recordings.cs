@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using D47.Core.Conversation;
 
 namespace D47.Llm.Tests;
@@ -137,6 +137,7 @@ internal static class Recordings
     {
         Model = model,
         Effort = ThinkingEffort.Medium,
+        Sampling = LlmSampling.Conversation,
         Prompt = new PromptAssembly
         {
             History = [new ConversationMessage(ConversationRole.User, ask)],

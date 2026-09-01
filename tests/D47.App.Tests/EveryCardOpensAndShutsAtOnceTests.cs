@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -76,7 +76,11 @@ public class EveryCardOpensAndShutsAtOnceTests
 
     private static void Press(SettingsView view, string name)
     {
-        view.FindControl<Button>(name)!.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        // Found in the tree rather than by FindControl: the two glyphs are built in code now
+        // (2026-09-01) so they carry no axaml namescope, and FindControl answers null.
+        view.GetVisualDescendants().OfType<Button>()
+            .Single(button => button.Name == name)
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Jobs();
     }
 

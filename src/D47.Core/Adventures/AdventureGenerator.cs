@@ -415,7 +415,13 @@ public sealed class AdventureGenerator(
             logger,
             cancellationToken,
             maxOutputTokens: budget,
-            effort: ThinkingEffort.Medium).ConfigureAwait(false);
+            effort: ThinkingEffort.Medium,
+
+            // Cold, although what comes back is a story (#98). Every beat is validated against
+            // the real galaxy and re-asked where it cannot stand, so this call's failure is
+            // naming places that do not exist rather than being dull — and the variety comes
+            // from the systems within reach, which are different every time.
+            sampling: LlmSampling.Adventure).ConfigureAwait(false);
 
         return reply is null ? null : Unfence(reply);
     }

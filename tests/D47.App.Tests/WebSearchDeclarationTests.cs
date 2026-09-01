@@ -1,4 +1,4 @@
-using Anthropic.Models.Messages;
+﻿using Anthropic.Models.Messages;
 using D47.Core.Conversation;
 using D47.Llm;
 using Xunit;
@@ -26,6 +26,7 @@ public class WebSearchDeclarationTests
     {
         Model = model,
         Effort = ThinkingEffort.Medium,
+        Sampling = LlmSampling.Conversation,
         WebSearch = webSearch,
         Prompt = new PromptAssembly
         {
@@ -154,6 +155,7 @@ public class WebSearchWireShapeTests
         {
             Model = model,
             Effort = ThinkingEffort.Medium,
+            Sampling = LlmSampling.Conversation,
             WebSearch = true,
             Prompt = new PromptAssembly
             {

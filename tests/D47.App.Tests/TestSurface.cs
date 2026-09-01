@@ -1,4 +1,4 @@
-using D47.Core;
+﻿using D47.Core;
 using D47.Core.Audio;
 using D47.Core.Callouts;
 using D47.Core.Capabilities;
@@ -67,7 +67,8 @@ public static class TestSurface
         D47.Core.Persona.PersonaHost? personas = null,
         IReadOnlyList<VoiceInfo>? voices = null,
         LongPress? localVoice = null,
-        D47.Core.Diagnostics.Recording.RecordingLog? recording = null)
+        D47.Core.Diagnostics.Recording.RecordingLog? recording = null,
+        LongPress? rescan = null)
     {
         var root = TempFolders.Create("d47-app-tests");
         var paths = new AppPaths(root);
@@ -101,6 +102,15 @@ public static class TestSurface
                 LocalVoiceState = () => "Not downloaded. About 350 MB, fetched once.",
                 DownloadLocalVoice = () => localVoice ?? ((_, _) => Task.FromResult<string?>(null)),
             },
+            new ShipsCapability.ShipsSurface
+            {
+                // Both supplied, for the reason the speech surface above records: a null host
+                // delegate makes its row ABSENT, and a test bound to a surface with no rescan
+                // button could not tell a missing button from a working one (#128).
+                Remembered = () => "Two ships, the oldest last seen 3 months ago.",
+                Rescan = () => rescan ?? ((_, _) => Task.FromResult<string?>(null)),
+            },
+            SpokenNamesSurface.Inert,
             new TurnCancellation(NullLogger<TurnCancellation>.Instance),
             new CalloutEngine(NullLogger<CalloutEngine>.Instance),
             () => built!,
@@ -175,9 +185,10 @@ public static class TestSurface
         D47.Core.Persona.PersonaHost? personas = null,
         IReadOnlyList<VoiceInfo>? voices = null,
         LongPress? localVoice = null,
-        D47.Core.Diagnostics.Recording.RecordingLog? recording = null)
+        D47.Core.Diagnostics.Recording.RecordingLog? recording = null,
+        LongPress? rescan = null)
     {
-        var (settings, viewState, paths, _, _) = CreateFull(coverage, personas, voices, localVoice, recording);
+        var (settings, viewState, paths, _, _) = CreateFull(coverage, personas, voices, localVoice, recording, rescan);
         return (settings, viewState, paths);
     }
 

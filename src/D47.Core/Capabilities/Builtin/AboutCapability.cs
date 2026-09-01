@@ -1,4 +1,4 @@
-using D47.Core.Storage;
+﻿using D47.Core.Storage;
 
 namespace D47.Core.Capabilities.Builtin;
 
@@ -103,7 +103,11 @@ public static class AboutCapability
         Func<bool>? startMenuWanted = null,
         Action? setUpKeys = null,
         Action? showCommunity = null,
-        Func<Updates.ReleaseChannel>? channel = null)
+        Func<Updates.ReleaseChannel>? channel = null,
+
+        // Opens the folder the row above it names. Optional and therefore last, like the rest:
+        // null under the designer, and the row then states the path with no button beside it.
+        Action? openDataFolder = null)
     {
         var rows = new List<SettingRow>
         {
@@ -121,7 +125,20 @@ public static class AboutCapability
                 "build",
                 "The exact commit this was built from. Quote it in a bug report — a version alone "
                 + "cannot tell two builds of the same release apart."),
-            Stated(DataFolderKey, "Data folder", paths.Data, "data-folder", "Where D47 keeps everything it writes."),
+            new SettingRow
+            {
+                Key = DataFolderKey,
+                Label = "Data folder",
+                Help =
+                    "Where D47 keeps everything it writes. Settings are saved as you go, to "
+                    + $"{paths.SettingsFile}. Keys are encrypted separately in secrets.json, and "
+                    + "how the panel is left is remembered in view-state.json.",
+                Kind = SettingKind.Info,
+                DocsAnchor = "data-folder",
+                PressLabel = openDataFolder is null ? null : "Open data folder",
+                Press = openDataFolder,
+                Binding = new SettingBinding { Read = _ => paths.Data },
+            },
             Stated(AttributionKey, "Attribution", Attribution, "attribution", "Frontier's own wording, verbatim."),
         };
 
@@ -315,6 +332,18 @@ public sealed record AboutSurface
     public Action? ShowCommunity { get; init; }
 
     /// <summary>
+    /// Opens the folder D47 writes to, or null where nothing composed one — under the designer,
+    /// and in a test with no shell to open it with.
+    /// <para>
+    /// <b>It used to be a button in a strip along the foot of the whole Settings tab</b>, beside a
+    /// sentence naming the settings file, permanently on screen behind every card (moved on the
+    /// Commander's instruction, 2026-09-01). About stopped being down there when it became an area
+    /// in the nav (#50) and the button stayed behind; this is the rest of that move.
+    /// </para>
+    /// </summary>
+    public Action? OpenDataFolder { get; init; }
+
+    /// <summary>
     /// Every member supplied, each doing nothing — the surface a test binds when the test is
     /// not about About (<a href="https://github.com/dseelinger/d47/issues/79">#79</a>).
     /// <para>
@@ -342,5 +371,6 @@ public sealed record AboutSurface
         StartMenuWanted = () => true,
         SetUpKeys = () => { },
         ShowCommunity = () => { },
+        OpenDataFolder = () => { },
     };
 }

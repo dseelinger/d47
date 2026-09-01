@@ -386,6 +386,23 @@ public sealed class TurnLoop(
     /// <summary>The persona block, or null for "personality off". Never reaches the guardrails.</summary>
     public string? Persona { get; set; }
 
+    /// <summary>
+    /// What this Commander's transcriber reliably gets wrong, applied to a spoken utterance before
+    /// anything reads it (<a href="https://github.com/dseelinger/d47/issues/134">#134</a>).
+    /// <para>
+    /// <b>Before routing and before any tool call</b>, which is the point of it being here rather
+    /// than inside one capability: a correction learned from <i>"how far is Eurebia"</i> has to fix
+    /// <i>"the Eurebia Blue Mafia"</i> too, and that is only true if the rewrite happens to the
+    /// sentence rather than to an argument.
+    /// </para>
+    /// <para>
+    /// <b>Spoken input only.</b> Typed text is not a mishearing — a Commander who types a word can
+    /// see what they typed, and silently rewriting it would be d47 correcting their spelling
+    /// without being asked.
+    /// </para>
+    /// </summary>
+    public Func<string, string>? Heard { get; set; }
+
     public string? AboutMe { get; set; }
 
     /// <summary>
@@ -450,6 +467,22 @@ public sealed class TurnLoop(
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         availability.BeginTurn();
+
+        // 0. What the transcriber got wrong, put right before anything reads the sentence (#134).
+        //    Ahead of the settings phrase below deliberately: a correction that fired after
+        //    routing would fix a tool argument and leave every other road still mishearing.
+        if (source == InputSource.Spoken && Heard is { } heard)
+        {
+            var corrected = heard(input);
+
+            if (!string.Equals(corrected, input, StringComparison.Ordinal))
+            {
+                logger.LogInformation(
+                    "Heard \"{Said}\" and read it as \"{Meant}\"", input, corrected);
+
+                input = corrected;
+            }
+        }
 
         // 1. A declared settings phrase is the most specific thing an input can be, and the one
         //    path allowed to reach a protected row without hands on the panel.
@@ -638,6 +671,11 @@ public sealed class TurnLoop(
             {
                 Model = chosenModel,
                 Effort = effort,
+
+                // Warm, on every round including the last one (#98). A round that has had its
+                // tools withdrawn is still the same core answering the same question, and
+                // changing how it speaks partway through one turn would be audible.
+                Sampling = LlmSampling.Conversation,
 
                 // Withdrawn on the last round with the tools, and for the same reason: that
                 // round exists to force an answer out of what is already known. A model that

@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using D47.Core.Listening;
 using Avalonia;
 using Avalonia.Automation;
@@ -60,6 +60,26 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// (<a href="https://github.com/dseelinger/d47/issues/61">#61</a>).
     /// </summary>
     public const string RowResetName = "RowReset";
+
+    /// <summary>
+    /// The prefix on a row's info glyph, which carries the row key so two rows' callouts are
+    /// distinguishable (asked for 2026-09-01).
+    /// </summary>
+    public const string RowInfoPrefix = "Info_";
+
+    /// <summary>
+    /// Whether a button is the row's <em>chrome</em> rather than the control the row is about —
+    /// the reset glyph and the info glyph.
+    /// <para>
+    /// <b>One predicate rather than a list of exclusions in every caller.</b> Two tests once took
+    /// the first Button in a row and got the reset glyph; adding the info glyph broke seven more
+    /// that had each learned to exclude the reset one by name. A third mark would have broken them
+    /// again. This is the question they were all asking.
+    /// </para>
+    /// </summary>
+    public static bool IsRowChrome(Button button) =>
+        button?.Name is { } name
+        && (name == RowResetName || name.StartsWith(RowInfoPrefix, StringComparison.Ordinal));
 
     /// <summary>
     /// Whether a jump has revealed the folded rows for this session
@@ -164,21 +184,69 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     {
         InitializeComponent();
 
-        // Two chevrons apart and two together (#223). Marked here rather than in the axaml
-        // because Mark sets the tooltip *and* the accessible name from one string, and a
-        // glyph-only control without an accessible name does not exist for anybody who is not
-        // looking at it. Accent, because a clickable thing carries the accent (#208).
-        Controls.Glyphs.Mark(
-            ExpandAll,
-            Controls.Glyphs.ExpandAll,
-            ThemeManager.AccentKey,
-            "Open every section");
+    }
 
+    /// <summary>The container holding the two bulk glyphs, so a test can tell them from a reset.</summary>
+    public const string BulkName = "BulkExpand";
+
+    /// <summary>
+    /// A plus and a minus, beside "Show every setting"
+    /// (#223, moved onto that row on the Commander's instruction 2026-09-01).
+    /// <para>
+    /// <b>Built here rather than declared in the axaml, and that is the fix rather than a
+    /// preference.</b> It was declared above the scroller and moved into this line on each
+    /// rebuild — and a control carries its first container's sizing with it: measured, it asked
+    /// for <b>664 of the line's 700 pixels</b> and left the row zero, so the caption and the
+    /// control drew on top of each other at the far right. Built where it is used, it asks for
+    /// what its two buttons need.
+    /// </para>
+    /// <para>
+    /// Marked rather than labelled, and marked in code because <c>Glyphs.Mark</c> sets the tooltip
+    /// <em>and</em> the accessible name from one string: a glyph-only control without one does not
+    /// exist for anybody who is not looking at it. The words are the Commander's own — the names
+    /// of the things, rather than the sentences the chevrons needed to explain themselves.
+    /// </para>
+    /// </summary>
+    private Control BulkControls()
+    {
+        var open = new Button
+        {
+            Name = "ExpandAll",
+            Height = 28,
+            Padding = new Thickness(8, 0),
+            VerticalContentAlignment = VerticalAlignment.Center,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+        };
+
+        var shut = new Button
+        {
+            Name = "CollapseAll",
+            Height = 28,
+            Padding = new Thickness(8, 0),
+            VerticalContentAlignment = VerticalAlignment.Center,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+        };
+
+        open.Click += (_, _) => SetEveryCard(true);
+        shut.Click += (_, _) => SetEveryCard(false);
+
+        Controls.Glyphs.Mark(open, Controls.Glyphs.ExpandAll, ThemeManager.AccentKey, "Expand all");
+
+        // Filled, alone among these: a minus has no height, and a stretched-to-fit geometry with
+        // no height collapses to nothing. See the note on Glyphs.CollapseAll.
         Controls.Glyphs.Mark(
-            CollapseAll,
-            Controls.Glyphs.CollapseAll,
-            ThemeManager.AccentKey,
-            "Shut every section");
+            shut, Controls.Glyphs.CollapseAll, ThemeManager.AccentKey, "Collapse all", filled: true);
+
+        return new StackPanel
+        {
+            Name = BulkName,
+            Orientation = Orientation.Horizontal,
+            Spacing = 2,
+            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Margin = new Thickness(0, 0, 12, 0),
+            Children = { open, shut },
+        };
     }
 
     /// <summary>
@@ -229,10 +297,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         _debrief = debrief;
         _logbook = logbook;
         _reserved = reservedPhrases ?? [];
-
-        StorageLine.Text =
-            $"Saved as you go, to {paths.SettingsFile}. Keys are encrypted separately in secrets.json, "
-            + "and how this panel is left is remembered in view-state.json.";
 
         Build();
 
@@ -317,18 +381,60 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         if (pageRows.Count > 0)
         {
-            var strip = new StackPanel { Spacing = 12, Margin = new Thickness(18, 0, 18, 6) };
+            // Flush with the cards rather than inset from them. The strip used to hold a row
+            // whose control was thrown to the far right anyway, so eighteen pixels of inset was
+            // invisible; now that the two ends of this line are the things being aligned to, the
+            // plus wants to sit over the card's left edge and the switch over its right.
+            var strip = new StackPanel { Spacing = 12, Margin = new Thickness(0, 0, 0, 6) };
+
+            var first = true;
 
             foreach (var row in pageRows)
             {
                 var view = BuildRow(SectionOwning(settings, row), row);
 
                 _rows.Add(view);
+
+                // **Beside the first page row rather than docked above the scroller** (the
+                // Commander's instruction, 2026-09-01). Open-and-shut and "Show every setting" are
+                // both about what the whole page draws, and two controls answering one question
+                // belong on one line. A grid rather than a stack, so the row keeps whatever width
+                // it wants and the glyphs take only what they need.
+                if (first)
+                {
+                    // **A DockPanel rather than a grid with a star column.** A star cannot be
+                    // resolved against an unbounded width, and the cards sit in a ScrollViewer that
+                    // scrolls horizontally — so measure hands its contents infinity and the row's
+                    // own three-star caption and two-star control were laid out against it. A
+                    // DockPanel gives its fill child what is actually left, which is the finite
+                    // width the row had as a plain child of the strip.
+                    var line = new DockPanel();
+                    var bulk = BulkControls();
+
+                    DockPanel.SetDock(bulk, Dock.Left);
+
+                    line.Children.Add(bulk);
+                    line.Children.Add(view.Container);
+
+                    strip.Children.Add(line);
+                    first = false;
+                    continue;
+                }
+
                 strip.Children.Add(view.Container);
             }
 
             Cards.Children.Add(strip);
             _pageStrip = strip;
+        }
+        else
+        {
+            // No page row to sit beside — the glyphs still have a page to open and shut, so they
+            // go on their own line rather than disappearing.
+            var alone = BulkControls();
+
+            alone.Margin = new Thickness(18, 0, 18, 6);
+            Cards.Children.Add(alone);
         }
 
         foreach (var section in settings.Sections)
@@ -465,7 +571,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             // pressed (#208). Muted read as "there is nothing here", which is exactly wrong on a
             // mark that is only drawn once something has been changed.
             Content = Glyphs.Draw(Glyphs.Reset, ThemeManager.AccentKey, TypeScale.Small),
-            Padding = new Thickness(6, 0),
+
+            // Room for the stroke, which Made puts half of outside the box — see the note on
+            // Glyphs.Reset. It matters now that the mark is a fuller circle: a clipped arc
+            // reads as a flat edge where a clipped line end read as nothing.
+            Padding = new Thickness(6, 2),
             MinWidth = 0,
             VerticalAlignment = VerticalAlignment.Center,
             Background = Brushes.Transparent,
@@ -870,12 +980,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         Cards.Width = Math.Clamp(available, Floor, Ceiling);
 
-        // And the pair of bulk controls above them takes the same width (#223), so it sits over
-        // the cards rather than out at the column's right edge. The cards are left-aligned inside
-        // a column that is usually wider than they are, so a right-aligned strip in the column
-        // floats away from the thing it acts on — which is exactly how a control reads as
-        // belonging to something else.
-        BulkExpand.Width = Cards.Width;
+        // The bulk glyphs used to be widened to match, so that a right-aligned strip above the
+        // cards sat over them rather than floating at the column's edge. They are beside "Show
+        // every setting" now and that assignment was the whole of the overlap: measured, it made
+        // the container ask for 664 of the line's 700 pixels and left the row zero to draw in.
     }
 
     /// <summary>The nav column's width, and the point below which it is not worth its space.</summary>
@@ -998,6 +1106,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         }
     }
 
+    // Kept as members rather than folded into BulkControls' handlers: SettingsIsATabTests drives
+    // the bulk controls through them, and a lambda has no name for a test to reach.
     private void OnExpandAllClick(object? sender, RoutedEventArgs e) => SetEveryCard(true);
 
     private void OnCollapseAllClick(object? sender, RoutedEventArgs e) => SetEveryCard(false);
@@ -1006,14 +1116,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     {
         _viewState = _viewState.With(capabilityId, expanded);
         _viewStateStore?.Save(_viewState);
-    }
-
-    private void OnOpenDataFolderClick(object? sender, RoutedEventArgs e)
-    {
-        if (_paths is not null)
-        {
-            Process.Start(new ProcessStartInfo(_paths.Data) { UseShellExecute = true });
-        }
     }
 
     /// <summary>
@@ -1175,9 +1277,28 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Paint(label, row.Row.Label);
         }
 
+        if (row.Spoken is { } spoken)
+        {
+            Paint(spoken, row.Row.Help);
+        }
+
+        // **The help is behind a glyph, so a query that only it answers has to bring it out.**
+        // Matches() has always tested the help text, and since the callout it is no longer on
+        // screen — so a row could stay behind a filter with every visible word on it disagreeing
+        // with the query, which reads as the filter being broken rather than as a match the
+        // Commander cannot see. That is the same rule, and the same reason, as the key line below.
         if (row.Help is { } help)
         {
-            Paint(help, row.Row.Help);
+            var inTheHelp = _query.Length > 0
+                && row.Row.Help.Contains(_query, StringComparison.OrdinalIgnoreCase)
+                && !row.Row.Label.Contains(_query, StringComparison.OrdinalIgnoreCase);
+
+            help.IsVisible = inTheHelp;
+
+            if (inTheHelp)
+            {
+                Paint(help, row.Row.Help);
+            }
         }
 
         if (row.KeyLine is not { } keyLine)
@@ -1605,13 +1726,22 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             header.Children.Add(pill);
         }
 
+        // **The help is behind a glyph now** (asked for 2026-09-01 — *"That is WAY too much
+        // text"*). Push-to-talk's runs to eleven lines, and eleven lines of grey prose under every
+        // row is a page nobody scans: the setting a Commander came for is buried in the
+        // explanation of the setting above it. Not a word of it is cut; it is one press away.
+        //
+        // <b>This block still exists, and it is not the one in the callout.</b> A TextBlock has
+        // one parent, and this one is the row's own — hidden until a search matches words only it
+        // holds, which is the same evidence rule the key line already follows. A row that survived
+        // a filter with nothing on it matching reads as the filter being broken.
         var help = new TextBlock
         {
             Text = row.Help,
             FontSize = TypeScale.Secondary,
             Margin = new Thickness(0, 2, 0, 0),
             TextWrapping = TextWrapping.Wrap,
-            IsVisible = !string.IsNullOrWhiteSpace(row.Help),
+            IsVisible = false,
         };
         Themed(help, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
 
@@ -1659,6 +1789,22 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         //
         // Absent on a secret, where there is no default to go back to and forgetting a key is a
         // different and destructive act.
+        // The callout's own copy of the words. Painted alongside the inline one so a query is
+        // marked wherever the Commander is looking at them.
+        var spoken = new TextBlock
+        {
+            Text = row.Help,
+            FontSize = TypeScale.Secondary,
+            TextWrapping = TextWrapping.Wrap,
+            MaxWidth = 420,
+        };
+        Themed(spoken, TextBlock.ForegroundProperty, ThemeManager.TextKey);
+
+        if (!string.IsNullOrWhiteSpace(row.Help))
+        {
+            header.Children.Add(Explains(capability, row, spoken));
+        }
+
         if (row is { Kind: not SettingKind.Secret, Binding.Write: not null })
         {
             var back = new Button
@@ -1673,7 +1819,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 // without it - and it could not be sized or coloured with them.
                 // Accent, the same rule and the same reason as the card-level one above (#208).
                 Content = Glyphs.Draw(Glyphs.Reset, ThemeManager.AccentKey, TypeScale.Secondary),
-                Padding = new Thickness(4, 0),
+
+                // The same room the card-level one above needs, and for the same reason.
+                Padding = new Thickness(4, 2),
                 MinWidth = 0,
                 VerticalAlignment = VerticalAlignment.Center,
                 Background = Brushes.Transparent,
@@ -1759,17 +1907,34 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             // character per line. Three-fifths to the words, two-fifths to the control, and the
             // control right-aligned inside its share so short ones - a toggle, a stepper - sit
             // exactly where they did before.
+            // **A page row is measured, not proportioned** (the Commander's instruction,
+            // 2026-09-01: *"put the toggle switch next to its label ... they don't look related
+            // that way"*). The proportional columns below are right for a card, where forty rows
+            // share one grid and a column of controls that lines up is the whole point. A page row
+            // is on its own above the cards, and the same rule threw its switch to the far side of
+            // the window with nothing in between — so a reader has to work out which label it
+            // belongs to. Sized to what it holds and pushed to the right as one group, the label
+            // and the switch read as one thing, and the expand pair holds the left.
             var grid = new Grid
             {
-                ColumnDefinitions =
-                [
-                    new ColumnDefinition(3, GridUnitType.Star),
-                    new ColumnDefinition(16, GridUnitType.Pixel),
+                ColumnDefinitions = row.PageTop
+                    ?
+                    [
+                        new ColumnDefinition(GridLength.Auto),
+                        new ColumnDefinition(12, GridUnitType.Pixel),
+                        new ColumnDefinition(GridLength.Auto),
+                    ]
+                    :
+                    [
+                        new ColumnDefinition(3, GridUnitType.Star),
+                        new ColumnDefinition(16, GridUnitType.Pixel),
 
-                    // The floor is the width the controls are already built to; below it the
-                    // caption yields instead, which is the lesser of the two bad narrow cases.
-                    new ColumnDefinition(2, GridUnitType.Star) { MinWidth = StandardControlWidth },
-                ],
+                        // The floor is the width the controls are already built to; below it the
+                        // caption yields instead, which is the lesser of the two bad narrow cases.
+                        new ColumnDefinition(2, GridUnitType.Star) { MinWidth = StandardControlWidth },
+                    ],
+
+                HorizontalAlignment = row.PageTop ? HorizontalAlignment.Right : HorizontalAlignment.Stretch,
             };
 
             // Load-bearing rather than decorative: RowWidthTests asserts the caption keeps the
@@ -1777,10 +1942,25 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             // Selecting on "three columns" instead caught control templates — a TextBox is itself
             // a three-column grid, inner-left content, text, inner-right content — and a glyph
             // put inside a box was read as a settings row starving its own caption.
-            grid.Classes.Add(CompactRowClass);
+            //
+            // Not on a page row, which no longer has shares to keep: it is two Auto columns.
+            if (!row.PageTop)
+            {
+                grid.Classes.Add(CompactRowClass);
+            }
 
             Grid.SetColumn(caption, 0);
             Grid.SetColumn(control, 2);
+
+            // **Both halves centred, not just the control** (asked 2026-09-01: *"now align them
+            // vertically"*). The control has always been centred in the row; the caption was
+            // stretched, so its words sat at the top of a height the control had set — measured on
+            // the page row, a 17-pixel label centred at 8.5 against a switch centred at 16.
+            //
+            // Invisible until the help moved behind a glyph earlier the same day: a caption that
+            // was a label over two lines of grey prose filled the row, and there was no spare
+            // height for anything to float in.
+            caption.VerticalAlignment = VerticalAlignment.Center;
             control.VerticalAlignment = VerticalAlignment.Center;
             control.HorizontalAlignment = HorizontalAlignment.Right;
             grid.Children.Add(caption);
@@ -1805,8 +1985,85 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Body = body,
             Label = label,
             Help = help,
+            Spoken = spoken,
             KeyLine = keyLine,
         };
+    }
+
+    /// <summary>
+    /// The row's help, behind a lower-case <c>i</c> in a circle
+    /// (asked for 2026-09-01 — <i>"use an info glyph … which goes away when clicked outside"</i>).
+    /// <para>
+    /// <b>A <see cref="Flyout"/> rather than a popup this class opens and closes.</b> Light
+    /// dismissal is the whole of what was asked for — click anywhere else and it goes — and a
+    /// flyout has it, along with Escape, placement that stays on screen, and a focus scope. Hand
+    /// rolling those is how a callout ends up stuck open behind a scrolled card.
+    /// </para>
+    /// <para>
+    /// <b>It carries the way out to the web page too.</b> The row already knew its anchor and
+    /// nothing in the panel had ever offered it — <c>DocsAnchor</c> was read by the documentation
+    /// gate and by no drawn control. So the short form is in the callout and the long form is one
+    /// more press away, which is the split <see cref="DocsSite"/> already describes.
+    /// </para>
+    /// </summary>
+    private Control Explains(CapabilityDescriptor capability, SettingRow row, TextBlock spoken)
+    {
+        var page = new Button
+        {
+            Content = "Help",
+            FontSize = TypeScale.Secondary,
+            Padding = new Thickness(0),
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Cursor = new Cursor(StandardCursorType.Hand),
+        };
+
+        Themed(page, ForegroundProperty, ThemeManager.AccentKey);
+
+        // The row's own anchor where it has one, the capability's page where it does not — a
+        // row with no anchor still has somewhere to send the Commander, and it is better than
+        // a link that is missing on the rows that most need explaining.
+        page.Click += (_, _) => Process.Start(new ProcessStartInfo(
+            DocsSite.Capability(capability.Id, row.DocsAnchor)) { UseShellExecute = true });
+
+        var inside = new StackPanel
+        {
+            Spacing = 10,
+            Children = { spoken, page },
+        };
+
+        var button = new Button
+        {
+            Name = RowInfoPrefix + row.Key.Replace('.', '_'),
+            // The muted accent the pills beside it carry, not the bright one (asked for
+            // 2026-09-01). This is a mark that says "there is more here if you want it", which is
+            // a quieter thing than the reset glyph next to it — that one only appears on a row the
+            // Commander has changed, and is worth noticing when it does.
+            Content = Glyphs.Draw(Glyphs.Info, ThemeManager.AccentMutedKey, TypeScale.Secondary),
+
+            // Room above and below for the stroke. Made stretches the geometry to the box and then
+            // strokes it two units wide, so half of that lands outside the control — with no
+            // vertical padding the header clipped it flat top and bottom.
+            Padding = new Thickness(4, 2),
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            VerticalAlignment = VerticalAlignment.Center,
+            Cursor = new Cursor(StandardCursorType.Hand),
+            Flyout = new Flyout
+            {
+                Content = new Border { Padding = new Thickness(4), Child = inside },
+                Placement = PlacementMode.BottomEdgeAlignedLeft,
+                ShowMode = FlyoutShowMode.Standard,
+            },
+        };
+
+        // A Path has no text, so a screen reader would find an unnamed button — the same fault,
+        // and the same fix, as the reset glyph and the run-composed captions.
+        AutomationProperties.SetName(button, $"About {row.Label}");
+        ToolTip.SetTip(button, $"About {row.Label}");
+
+        return button;
     }
 
     /// <summary>
@@ -3027,50 +3284,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         button.Click += async (_, _) => await CaptureBindAsync(row, button, message);
 
-        // **The third route** (<a href="https://github.com/dseelinger/d47/issues/221">#221</a>):
-        // press a key, press a stick button, or type a name. It exists for the twelve keys that
-        // cannot be pressed — F13 to F24, which HOTAS software emits precisely because no
-        // keyboard has them — and it is beside the capture rather than instead of it, because a
-        // stick that is already mapped really does send F23 to the focused window and the capture
-        // really does catch it.
-        //
-        // Not offered on a row that only takes a controller button: there is no name to type for
-        // one, and a box that cannot be used is a box that has to be explained.
-        var typed = new TextBox
-        {
-            Width = 96,
-            PlaceholderText = "or type F23",
-            FontSize = TypeScale.Secondary,
-            VerticalContentAlignment = VerticalAlignment.Center,
-            IsVisible = row.Kind != SettingKind.HotasButton,
-        };
-
-        // Enter rather than every keystroke: half of "F23" is "F2", which is a real key, so
-        // applying as it is typed would bind the wrong one on the way to the right one.
-        typed.KeyDown += (_, e) =>
-        {
-            if (e.Key != Key.Enter)
-            {
-                return;
-            }
-
-            e.Handled = true;
-
-            if (Gestures.TryType(typed.Text, out var stored, out var refusal))
-            {
-                if (Apply(row, stored, message))
-                {
-                    typed.Text = string.Empty;
-                }
-
-                return;
-            }
-
-            // The row's own message line, which is where a refused capture already says why.
-            message.IsVisible = true;
-            message.Text = refusal;
-        };
-
         clear.Click += (_, _) =>
         {
             foreach (var key in row.BoundKeys)
@@ -3085,7 +3298,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Spacing = 8,
             HorizontalAlignment = HorizontalAlignment.Right,
         };
-        panel.Children.Add(typed);
         panel.Children.Add(button);
         panel.Children.Add(clear);
 
@@ -3514,7 +3726,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         /// <summary>The row's words, held so a query can be painted into them and taken out again.</summary>
         public TextBlock? Label { get; init; }
 
+        /// <summary>
+        /// The inline copy, drawn only when a search matched words only it holds. See Evidence.
+        /// </summary>
         public TextBlock? Help { get; init; }
+
+        /// <summary>The callout's copy — what a Commander reads when they press the glyph.</summary>
+        public TextBlock? Spoken { get; init; }
 
         /// <summary>The settings key, drawn only when it is why this row survived. See Evidence.</summary>
         public TextBlock? KeyLine { get; init; }

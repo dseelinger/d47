@@ -17,18 +17,45 @@ public sealed record DonationForgotten(ErasureOutcome Outcome, string? Receipt);
 
 /// <summary>
 /// How far a corpus send has got, for a window to say
-/// (<a href="https://github.com/dseelinger/d47/issues/181">#181</a>).
+/// (<a href="https://github.com/dseelinger/d47/issues/181">#181</a>), and how far through the
+/// upload it is (<a href="https://github.com/dseelinger/d47/issues/212">#212</a>).
 /// <para>
-/// Two steps rather than a percentage, because they are two different waits and only one of them
-/// can be counted: assembling the payload is journal files, and there is a number for that; the
-/// upload afterwards is one POST of tens of megabytes with nothing to report until it answers.
-/// A bar that sat at "reading 936 files" through a two-minute upload would be saying the wrong
-/// thing rather than saying nothing.
+/// <b>Two steps rather than one percentage, and that half was right.</b> They are two different
+/// waits: assembling the payload is journal files, and there is a number for that; the upload
+/// afterwards is one POST. A single bar over both would sit at "reading 936 files" through a
+/// two-minute upload, which is saying the wrong thing rather than saying nothing.
+/// </para>
+/// <para>
+/// <b>What was wrong was that the second step carried nothing at all.</b> It was reported once,
+/// before the request began, so a donation of up to 356 MB sat behind one static sentence for its
+/// whole duration — which is indistinguishable from a hang, and it is the longest and least
+/// reversible step in the feature. So sending carries a byte count and a total, and
+/// <see cref="Fraction"/> is what a bar binds to.
+/// </para>
+/// <para>
+/// <b>The total is the compressed length, because that is what is on the wire.</b> A history is
+/// 383 MB raw and 32.5 MB gzipped, so a bar counting to the figure the report states would finish
+/// at eight percent — and a window that shows the number has to say which of the two it means.
 /// </para>
 /// </summary>
 /// <param name="Sending">False while the payload is being assembled, true once it is on the wire.</param>
 /// <param name="Files">How many journal files have been read.</param>
-public sealed record DonationStep(bool Sending, int Files);
+/// <param name="Sent">
+/// How many compressed bytes have been handed to the network stack. Nought until sending, and
+/// never a claim about what the store has — see <see cref="MeteredStream"/>.
+/// </param>
+/// <param name="Total">How many there are altogether. Nought until sending.</param>
+public sealed record DonationStep(bool Sending, int Files, long Sent = 0, long Total = 0)
+{
+    /// <summary>
+    /// How far along, nought to one — or <b>null where there is nothing to draw</b>: the preparing
+    /// step, which is counted in files rather than in bytes, and an upload with no length. Null
+    /// rather than nought, because a bar sitting at the left is a claim that no progress has been
+    /// made, and absence is the honest shape for "this step is not the one being measured".
+    /// </summary>
+    public double? Fraction =>
+        Sending && Total > 0 ? Math.Clamp((double)Sent / Total, 0, 1) : null;
+}
 
 /// <summary>
 /// Everything between "the Commander pressed send" and "the store has it"
@@ -251,12 +278,20 @@ public sealed class DonationDispatch
             await spool.FlushAsync(cancel);
             spool.Position = 0;
 
-            progress?.Report(new DonationStep(Sending: true, files));
+            // The denominator, read once, off the spool that holds exactly what will be posted.
+            var wire = spool.Length;
+
+            progress?.Report(new DonationStep(Sending: true, files, Sent: 0, Total: wire));
 
             envelope = DonationEnvelope.For(
                 DonationEnvelope.Corpus, donor, paperwork, bytes, sha256);
 
-            outcome = await _upload.SendAsync(endpoint, envelope, spool, cancel);
+            outcome = await _upload.SendAsync(
+                endpoint,
+                envelope,
+                spool,
+                progress is null ? null : new Uploading(progress, files, wire),
+                cancel);
         }
         catch (OperationCanceledException)
         {
@@ -355,6 +390,37 @@ public sealed class DonationDispatch
         }
 
         return new DonationForgotten(outcome, receipt);
+    }
+
+    /// <summary>
+    /// Turns the upload's byte count into the step a window reads
+    /// (<a href="https://github.com/dseelinger/d47/issues/212">#212</a>).
+    /// <para>
+    /// <b>Deliberately not a <see cref="Progress{T}"/>.</b> That one posts each report to the
+    /// context it captured, independently — so with no context, which is any send driven off the
+    /// pool, the reports can arrive out of order and the bar goes backwards. This hands each one
+    /// straight on and leaves the marshalling to the caller's own progress, which is the one that
+    /// knows which thread has the window.
+    /// </para>
+    /// </summary>
+    private sealed class Uploading : IProgress<long>
+    {
+        private readonly IProgress<DonationStep> _steps;
+        private readonly int _files;
+        private readonly long _total;
+
+        public Uploading(IProgress<DonationStep> steps, int files, long total)
+        {
+            _steps = steps;
+            _files = files;
+            _total = total;
+        }
+
+        // The file count travels on through the send. It stopped rising when the spool was
+        // finished, and a window that showed it going back to nought would be saying the reading
+        // started again.
+        public void Report(long sent) =>
+            _steps.Report(new DonationStep(Sending: true, _files, sent, _total));
     }
 
     /// <summary>

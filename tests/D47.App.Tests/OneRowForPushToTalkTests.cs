@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -50,7 +50,7 @@ public class OneRowForPushToTalkTests
 
     private static Button Bind(Grid row) =>
         row.GetVisualDescendants().OfType<Button>()
-            .First(button => button.Name != SettingsView.RowResetName
+            .First(button => !SettingsView.IsRowChrome(button)
                              && button.Content as string != "Unbind");
 
     private static Button Unbind(Grid row) =>

@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using D47.Core.Conversation;
 using Xunit;
 
@@ -41,6 +41,7 @@ public class PromptOnTheWireTests
     {
         Model = model,
         Effort = ThinkingEffort.Medium,
+        Sampling = LlmSampling.Conversation,
         Prompt = new PromptAssembly { History = history, LiveGameState = liveGameState },
     };
 

@@ -1,4 +1,4 @@
-namespace D47.Core.Journal;
+﻿namespace D47.Core.Journal;
 
 /// <summary>
 /// The Commander being tailed changed (Phase 44).
@@ -70,6 +70,18 @@ public sealed class GameStateStore
     public Func<string, ShipLoadouts?>? RestoreLoadouts { get; init; }
 
     /// <summary>
+    /// Every place this Commander has met, on the same terms as <see cref="RestoreLoadouts"/>
+    /// (<a href="https://github.com/dseelinger/d47/issues/134">#134</a>). Null where nothing
+    /// composed one.
+    /// <para>
+    /// The live fold only sees this session, and the whole point of the catalogue is depth: a
+    /// Commander is far likelier to be misheard about a system they visited last summer than one
+    /// they are standing in.
+    /// </para>
+    /// </summary>
+    public Func<string, Listening.SpokenNames?>? RestoreNames { get; init; }
+
+    /// <summary>
     /// Raised when the Commander whose journal is being tailed changes (Phase 44, "One
     /// switch signal"). From nobody to somebody is an adoption; from one to another is a switch.
     /// <para>
@@ -88,6 +100,32 @@ public sealed class GameStateStore
     /// </para>
     /// </summary>
     public event Action<CommanderSwitch>? CommanderChanged;
+
+    /// <summary>
+    /// Replaces what every known Commander's ships were last seen holding, from a re-derivation of
+    /// the journals (<a href="https://github.com/dseelinger/d47/issues/128">#128</a>).
+    /// <para>
+    /// <b>Every known Commander, not only the ones the rescan mentions.</b> A Commander whose
+    /// ships have all been sold comes back from a rescan with nothing, and skipping them would
+    /// leave exactly the stale row the Commander pressed the button to be rid of. Whether the
+    /// rescan is worth acting on at all is decided before this is called — it is a repair, and a
+    /// repair handed an empty answer by a folder that has moved would be a wipe.
+    /// </para>
+    /// <para>
+    /// A Commander the rescan found and this store has never seen is ignored rather than created:
+    /// a bucket exists because their journal established an identity, and inventing one here would
+    /// put a Commander in the panel who has not logged in.
+    /// </para>
+    /// </summary>
+    public void ReplaceLoadouts(IReadOnlyDictionary<string, ShipLoadouts> loadouts)
+    {
+        ArgumentNullException.ThrowIfNull(loadouts);
+
+        foreach (var (fid, state) in _byFrontierId)
+        {
+            state.Loadouts = loadouts.TryGetValue(fid, out var ships) ? ships : ShipLoadouts.Empty;
+        }
+    }
 
     public void Apply(JournalEvent journalEvent) => Apply(journalEvent, null);
 
@@ -130,6 +168,11 @@ public sealed class GameStateStore
                 if (RestoreLoadouts?.Invoke(identity.FrontierId) is { IsKnown: true } loadouts)
                 {
                     state.Loadouts = loadouts;
+                }
+
+                if (RestoreNames?.Invoke(identity.FrontierId) is { IsKnown: true } names)
+                {
+                    state.Names = names;
                 }
 
                 _byFrontierId[identity.FrontierId] = state;

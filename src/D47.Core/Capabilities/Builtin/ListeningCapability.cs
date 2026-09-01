@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using D47.Core.Configuration;
 using D47.Core.Input;
 using D47.Core.Listening;
@@ -73,8 +73,28 @@ public static class ListeningCapability
     /// What the app supplies from outside Core: the devices, and the answers only the live
     /// input path can give.
     /// </summary>
+    /// <summary>
+    /// The key of the row that shows what D47 has learned about this Commander's transcriber
+    /// (<a href="https://github.com/dseelinger/d47/issues/134">#134</a>).
+    /// </summary>
+    public const string CorrectionsKey = "listening.corrections";
+
     public sealed record ListeningSurface
     {
+        /// <summary>
+        /// What d47 has learned this transcriber gets wrong, as a few lines to read (#134). Null
+        /// where nothing composed one, and the row is then absent.
+        /// <para>
+        /// <b>Readable, because an alias table that cannot be read is a mystery generator.</b> A
+        /// Commander whose words are being rewritten before anything sees them has to be able to
+        /// find the rule doing it — and to throw it away.
+        /// </para>
+        /// </summary>
+        public Func<string>? Corrections { get; init; }
+
+        /// <summary>Forgets every learned correction. The other half of "readable and clearable".</summary>
+        public Action? ForgetCorrections { get; init; }
+
         /// <summary>Input device ids. Empty when the machine has none.</summary>
         public required Func<IReadOnlyList<string>> InputDevices { get; init; }
 
@@ -230,10 +250,8 @@ public static class ListeningCapability
                     + "anything. Right shift out of the box, since that is what a Commander on a stick and "
                     + "throttle has spare. Bind a key, a stick button, or one of each — one at a time: press "
                     + "the control and give it a key, then press it again and give it a button. Giving it the "
-                    + "same kind twice replaces that one. Or type a key's name into the box beside it, which "
-                    + "is the only way to reach F13 to F24 — the keys HOTAS software sends and no keyboard "
-                    + "has. With both set, either opens the microphone. Unbind clears both, and with neither "
-                    + "one D47 never opens the microphone.",
+                    + "same kind twice replaces that one. With both set, either opens the microphone. Unbind "
+                    + "clears both, and with neither one D47 never opens the microphone.",
                 Kind = SettingKind.Hotkey,
                 DefaultDisplay = "RightShift",
                 DocsAnchor = "push-to-talk-key",
@@ -665,6 +683,32 @@ public static class ListeningCapability
                                 : s.Listening.PreRollMilliseconds,
                         },
                     },
+                },
+            },
+            new SettingRow
+            {
+                Key = CorrectionsKey,
+                Label = "Names it has learned to hear",
+                Help =
+                    "Proper nouns are where speech recognition fails hardest and most quietly: a "
+                    + "misheard system name does not come back as an error, it comes back as a "
+                    + "plausible English word and the answer is confidently about the wrong "
+                    + "place.\n\n"
+                    + "When a name D47 cannot find turns out to be one of these, it asks you which "
+                    + "you meant, runs your question again, and remembers the word — so every "
+                    + "later sentence containing it is put right too, not just the one you asked. "
+                    + "It learns one only when you correct it, never on its own, and never for a "
+                    + "word that already means something.\n\n"
+                    + "Everything here stays on this machine and belongs to the Commander flying.",
+                Kind = SettingKind.Info,
+                DocsAnchor = "corrections",
+                PressLabel = surface.ForgetCorrections is null ? null : "Forget them all",
+                Press = surface.ForgetCorrections,
+                Binding = new SettingBinding
+                {
+                    Read = _ => surface.Corrections?.Invoke()
+                                ?? "Nothing yet. D47 learns one of these only when you correct a "
+                                   + "name it misheard.",
                 },
             },
         ],

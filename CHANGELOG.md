@@ -1,4 +1,4 @@
-# Changelog
+﻿# Changelog
 
 What changed in each release of Directive 47, newest first.
 
@@ -79,39 +79,20 @@ by that same factor. Hence *about*, and hence the row's help saying the times ar
 spoken reply **on this machine**. A stable number nobody understands is worth less than an
 approximate one they do.
 
-### A key can be bound by typing its name, which is the only road to F13–F24 (#221)
+### Expand all and Collapse all, beside Show every setting (#223)
 
-The bind row gains a third route beside pressing a key and pressing a stick button: **type the
-name into the box and press Enter**. `F23`, `f23` and ` F23 ` are one key, `Ctrl+F13` parses, and
-what the row shows back is what you typed — the value goes through the same `KeyGesture` call the
-capture makes, so a typed key and a pressed one are the same bytes in the settings file.
+A plus and a minus at the top of the card column — **Expand all** and **Collapse all** — on the same
+line as *Show every setting*, holding the left where that row's label and switch hold the right.
+Both answer the same question about what the whole page draws, so they belong on one line rather
+than in two strips a row apart. They stay above the scroller, because a control that scrolls out of
+sight is one you learn not to rely on; that is the same argument that keeps them out of the nav
+column, which disappears below 900 pixels. Each carries its name on the tooltip and on the
+accessible name, since a glyph-only control without one does not exist for anybody who is not
+looking at it.
 
-**It exists for twelve keys that cannot be pressed.** F13 upward are what HOTAS software hands
-out — VoiceAttack, TARGET, VIRPIL — precisely because no keyboard has them and nothing else binds
-them. There is no F23 to press, so the capture control was the wrong instrument for the one range
-that matters most on a stick and throttle. The support was already there: F1–F24 have always
-mapped to their virtual-key codes and push-to-talk polls exactly that code, so this was an
-input-method gap rather than a capability one.
-
-**And those twelve no longer need a modifier on a system-wide row.** That rule exists to stop you
-claiming a key the game needs — bind a bare `R` everywhere and Elite never sees it again. F13–F24
-are the exact keys nothing else listens for, which is why stick software chose them, so asking
-for `Ctrl+F23` would be protecting a key that needs no protection. Everything else is refused
-exactly as before.
-
-**A name Windows does not have is refused rather than stored**, because a gesture no key can ever
-match is a push-to-talk that silently never opens the microphone. `F25` says where the range
-ends: Win32 defines `VK_F1` through `VK_F24` and stops, so software that appears to send F25 is
-sending something else.
-
-### Expand all and Collapse all, above the settings cards (#223)
-
-Two chevron pairs at the top of the card column — apart to open every section, together to shut
-them all. They sit above the scroller rather than among the cards, because a control that scrolls
-out of sight is one you learn not to rely on; that is the same argument that keeps them out of
-the nav column, which disappears below 900 pixels. Each carries its sentence on the tooltip and
-on the accessible name, since a glyph-only control without one does not exist for anybody who is
-not looking at it.
+**They were two chevron pairs first, and the Commander asked for the plus and the minus** — a
+doubled chevron reads as *scroll* before it reads as *unfold*, where plus and minus have meant open
+and shut in every tree control for thirty years and carry no second meaning at all.
 
 **They move cards and leave the fold alone.** *Show every setting* is a different axis: it
 decides which rows a calm page shows at all, it is a preference you set, and its own rule is that
@@ -123,6 +104,66 @@ Expand all with the fold on opens every card and still does not show every row.
 They persist, exactly as clicking each header by hand does. That buries a card's own
 `StartCollapsed` default, so **a card's reset now forgets what has been said about whether it is
 open** — nothing moves on screen, and the next launch decides again.
+
+### A row's help is behind an info glyph, not under every row
+
+*"That is WAY too much text."* Push-to-talk's help runs to eleven lines, and eleven lines of grey
+prose under every row is a page nobody scans — the setting a Commander came for is buried in the
+explanation of the setting above it.
+
+Every row with something to say now carries a lower-case **i** in a circle beside its label. Press
+it and the words appear in a callout; click anywhere else and the callout goes. **Not a word is
+cut** — it is one press away instead of always there.
+
+**An `i` rather than a `?`**, because the question mark is already spoken for on this surface: it
+is the card's way out to the documentation site, and two marks that both mean *help* and do
+different things is worse than either alone. This one says *about this row*; that one says *the long
+form, on the web*. The callout carries **both** — a **Help** link that opens the row's own anchor on
+the site, which is a thing `DocsAnchor` has always known and no drawn control had ever offered.
+
+**A search that only the help answers brings the help back out.** The filter has always tested the
+help text, and it is no longer on screen — so without this a row could survive a query with every
+visible word on it disagreeing, which reads as the filter being broken rather than as a match the
+Commander cannot see. The same rule, and the same reason, as the settings key already had.
+
+**The warning line stays where it was.** A row's hazard is the one sentence on it that must not read
+as background, so it is not something to put behind a press.
+
+**And it broke seven tests, which is the useful part.** Each had learned to exclude the reset glyph
+by name while taking the first button in a row; a second chrome mark broke all of them, and a third
+would have again. `IsRowChrome` is the question every one of them was actually asking.
+
+### Five smaller things on surfaces you look at every session
+
+**The reset mark is redrawn.** The three-quarter arc with its arrowhead folded back over the gap
+read, at fourteen pixels, as a comma with a tick on it. It is a fuller turn with the head clear of
+the arc — chosen from seven drawings, which is the only instrument that can settle whether a mark
+says *undo*.
+
+**The power bar labels its own points.** The white tick marks the retracted draw and the blue fill
+is the deployed one, and the words naming the tick sat at the far left of the line beneath, joined
+to everything else by interpuncts — so the Commander who asked for that tick could not remember what
+it marked. The retracted share is written under the tick now, the plant's limit under the end of the
+track, and the total draw under wherever it lands. Each label *ends* at its point rather than
+centring on it, because the draw may be over 100% and would otherwise be written past the end of the
+track it describes.
+
+**Output device leads the Speech card.** Every other row there is about *how* D47 sounds; that one
+is about whether you hear it at all. It also caught a real coupling: the provider key rows were
+inserted at a fixed index that meant *after the provider* only while the provider happened to be
+first, so moving anything above it would have put every API-key row above the provider that needs
+them. They are inserted after the row they belong to now, found rather than counted.
+
+**The data-folder strip is off the foot of the Settings tab.** It was permanently on screen behind
+every card to answer a question asked once. The About card already named the folder and could not
+open it, so it takes the sentence and the button — About stopped being down there when it became an
+area in the nav (#50), and this is the rest of that move.
+
+**And a row's words sit level with its control.** Measured: a 17-pixel label centred at 8.5 against
+a 32-pixel switch centred at 16. The control had always been centred and the caption was stretched,
+so the words sat at the top of a height the control set. Invisible until the help moved behind a
+glyph — a caption that was a label over two lines of grey prose filled the row, and there was no
+spare height for anything to float in.
 
 ### The conversation box walks what you have already sent (#224)
 
@@ -222,6 +263,224 @@ which still holds every commit — nothing lost, nothing to unpick, and the run 
 The release workflow was checked separately, because it runs under a different token: it triggers
 on the pushed tag, holds `contents: write`, and creates a Release without ever pushing, updating
 or deleting a ref — so a ruleset on `refs/tags/v*` has nothing of its to refuse.
+
+### A long upload draws a bar, and the sentence beside it stays (#212)
+
+A journal history is up to 356 MB, and it moved behind one static line reported **once**, before
+the request began — which is what a hang looks like, and it is the longest and least reversible
+step in the feature. `DonationStep` carried a boolean and a file count, so even a window that
+wanted to draw a bar had nothing to draw it from.
+
+It carries bytes and a total now, and `MeteredStream` — the read-side twin of `TallyStream` —
+reports the spool's position as the body goes out. The window draws the fraction in the shape
+`SettingsView.RunPressAsync` already uses, and the Cancel button that was always there is now an
+escape a Commander can tell they have.
+
+**The sentence is kept rather than replaced.** *"Nothing else is being sent, and nothing is being
+kept anywhere else"* is doing work about scope that a percentage cannot do, so the bar sits under
+it. The number beside it says **compressed**, because the report above states the history's own
+size and the two differ by about twelve to one — a figure counting to 32.5 MB with nothing to
+explain it reads as most of it having gone missing.
+
+**What it measures is bytes handed to the network stack, not bytes the store acknowledged**, and
+nothing on this side of the socket can know the second one. So the bar goes the moment the send
+returns, whichever way it went: the outcome is what says whether the donation landed, and a full
+bar standing over *"the endpoint refused it"* would be the one claim this path must not make
+loosely.
+
+**A late progress report is dropped now**, which was the same defect one layer up. `Progress<T>`
+posts, a send can complete without ever yielding, and the losing order put a finished-looking
+status line on top of an outcome that had already been read.
+
+The excerpt send is deliberately unchanged: a few kilobytes would draw a bar that was gone before
+anybody saw it.
+
+### The creative calls and the mechanical ones stop sharing one unchosen sampler (#98)
+
+There was **no `temperature`, `top_p` or `top_k` anywhere in `D47.Llm`** — not on the Anthropic
+path, not on either OpenAI-shaped one. So the character of every line d47 spoke was decided by a
+default it had never chosen, which varies by provider and by model, and a flat-reading Guardian
+core could have been a sampling artefact rather than a persona problem with no way to tell.
+
+`LlmSampling` names the classes d47 already had and states each one's value and its reason. A turn
+and a line in character ask for **0.9** — the middle of the band reported for character writing,
+where below about 0.7 reads flat. Voice casting, the Commander's log, a lore lookup and adventure
+generation ask for **nought**: each is either a mechanical question about d47's own configuration
+or an answer validated against the world afterwards, and warmth in those buys invention in the one
+field that has to be exact. `LlmRequest.Sampling` is **required**, because a property with a
+default is how this defect would come back one forgotten line at a time.
+
+**Adventures are cold although what comes back is a story**, and that is the call rather than an
+oversight: the beats are checked against the real galaxy and re-asked where they cannot stand, so
+this call's observed failure is naming places that do not exist. The variety comes from the systems
+within reach, which are different every time.
+
+**One call says nothing on purpose.** The key check asks a single token in order to learn whether a
+key works, against a gateway that may validate fields d47 has never met — and a rejected field
+there reads as a rejected key, sending a Commander to their account page for another one that will
+fail in exactly the same way.
+
+**And the field does not go to Anthropic at all, which is the finding rather than an omission.**
+The issue opened expecting it to; sampling was removed with the 4.7 generation and returns a 400 on
+Opus 5, Opus 4.8, Opus 4.7, Sonnet 5 and Fable 5. The pinned SDK says so itself — its `Temperature`
+property is marked obsolete with *"Models released after Claude Opus 4.6 do not support setting
+temperature"* — so reaching the three older models that would still take it means suppressing a
+deprecation warning in a repository where warnings are errors, to send a field to models this code
+already treats as legacy in two other lists. It is read and not sent, with the date and the reason
+written where somebody will look. Where the choices land is the OpenAI-shaped paths: OpenAI itself,
+gateways, and every local runner.
+
+A server that refuses the field loses the field rather than the turn, through `EndpointDemotions`
+like everything else optional — and **the refusal is read as sampling before it is read as
+effort**, because a reasoning model rejecting temperature usually names both in one sentence, and
+taking the wrong one off would drop the effort router's lever while leaving the refused field on
+the retry.
+
+### Every ship you have flown is remembered in a file, not for 25 journals (#128)
+
+The memory shipped in v0.41.1 off the report *"It WAS seen. Don't get amnesia"* — and it was
+rebuilt at every start by replaying the newest **25 journal files**, so a ship not sat in inside
+that window was forgotten on the next launch, and re-forgotten on every launch afterwards. That is
+the same amnesia, one level below where it was fixed.
+
+`data\loadouts.json` is the long memory now: every ship, keyed per Commander on the Frontier id
+with the key inside the document, written when the picture changes rather than only on a `Loadout`
+— Elite writes none after engineering, so a store that waited for one would miss every roll. It is
+**a cache and not a source of truth**, which is said in the file's own doc so nobody treats it like
+`settings.json`: deleting it costs a rebuild from the journals and nothing else. It is **not
+`ships.json`** either — that holds the plan, and intent is authored where a loadout is derived.
+
+**The backfill keeps its job and changes meaning.** It is seeded with the file rather than
+rebuilding over it, so its 25 files became *catch up on the gap since d47 last ran* — and that
+seeding is what makes forgetting work across a restart, because the sale is replayed through the
+same fold the live path uses.
+
+**And the gap is measured rather than guessed at, which closes the one hole this feature had.** A
+sale d47 was closed for is not lost — the `ShipyardSell` is still on disk in an older journal —
+but the walk had no way to know how far back to look, so a sale older than 25 files survived
+forever under an id the game may since have handed to something else. The file carries the journal
+timestamp it was folded through, and the catch-up reaches exactly that far and no further: 25 files
+stays as the **floor** for a run with no watermark to work from, and there is no ceiling.
+
+**Unbounded because it was measured, not because nobody thought about it.** The cost is
+proportional to how long d47 has been away rather than to how much history exists. On the
+943-journal, 382 MB corpus: the whole of it — 716,653 events — reads and folds in **3.1 seconds**,
+300 files in 996 ms, 100 in 432 ms, and the 25-file floor in about 190 ms. A run an hour after the
+last one still walks 25 files. A cap would buy a fraction of a second back on the rarest start
+there is and put the hole straight back.
+
+**And the Commander can run it themselves — *"not look right? Do a rescan"*.** The Ships card in
+Settings says how many ships are remembered and how stale the oldest of them is, and offers
+**Rescan my journals** with a bar behind it. Where the catch-up at startup is *seeded* with the
+file so a session lands on top of what is known, a rescan **throws the file away and derives the
+answer again** — so a ship nothing in the journals supports stops existing, and one that has been
+sitting there wrong is put back the way the game described it. That is what makes it a repair
+rather than another pass of the same thing.
+
+**The offer is made where the doubt is, not only where the fix is.** The Loadout page already says
+*"As you left it, three months ago"* on a ship you are not in — the one line that admits the
+figures may be out of date — so the nudge sits beside it. A repair nobody can find is a repair
+nobody performs, and the settings card is not where a Commander is standing when they notice.
+
+**A rescan that read no journals changes nothing**, and that guard is the whole difference between
+a repair and a wipe: a journal folder that has moved reads exactly like a fleet that has genuinely
+been sold, and only one of those should be believed. The press reports the file count for that
+reason rather than the ship count. It is *Info with a press*, a shape `SettingsService.Apply`
+refuses to write, so nothing on the tool surface can start minutes of disk reading with a sentence
+somebody put in a chat channel.
+
+**Forgetting is the half a file makes load-bearing, and it now happens on three events rather than
+one.** A rolling window expired a stale row by itself; a file does not, and `ShipID` is reused —
+17 of 55 sold ships had their id come back alive. Measured on the 943-journal corpus: `ShipyardSell`
+names `SellShipID` on all 72 of its occurrences; one `ShipyardBuy` of 34 carries a `SellShipID`,
+which is a part exchange — a sale wearing another event's name, and previously missed; and
+`ShipyardNew` names `NewShipID` on all 34, with **12 of the 34 reusing an id that had already been
+alive**. A purchase is unambiguous proof the id belongs to something else now, so it is a second
+and independent chance to forget a sale d47 was not running for.
+
+**And the fold remembered before it forgot, which was one measurement away from being wrong.** Of
+those 34 purchases, **one hands out the id of the ship the Commander is sitting in** — so filing
+the flown ship after the forget put the old ship straight back under the new id. Replayed over the
+whole corpus, the shipped order produces exactly one inheritance (a Sidewinder's modules surviving
+under a newly bought Cobra Mk V on 2025-12-30) and the corrected order produces none. Harmless
+while the window expired it a day later; permanent once there is a file.
+
+**The fleet snapshot is not the corrective #128 expected it to be, and the corpus is why.** The
+issue proposed reconciling against `StoredShips` for a sale outside the catch-up window, noting the
+trap that the flown ship is absent from it. The trap is not the only problem: simulating that rule
+over all 1,112 snapshots would have **wrongly forgotten 140 ships across 50 snapshots** — ships a
+later snapshot proves were still owned, with no sale in between, one snapshot alone accounting for
+eight. 54 snapshots are empty, and one sequence runs 7 ships → 0 → 14 inside 90 minutes. So a
+snapshot deletes nothing here, and the acceptance criterion *"a ship absent from a fleet snapshot
+while being flown is not deleted"* holds by there being no such path at all.
+
+**Half of #128 is deliberately not built.** Asking about another ship by name through `get_ship`
+is tabled under the 2026-08-29 moratorium, on the Commander's own note on the issue.
+
+### A misheard name asks, retries, and is remembered against the word (#134)
+
+*"How far are we from Eurebia?"* — *"I don't have a system called Eurebia on record, Commander.
+Could be a misspelling."* That sentence is not a fixed string, it is the model narrating a bare
+nothing politely, and **a polite dead end is still a dead end**: the Commander has to spot the
+mishearing themselves, work out the spelling, and say the whole question again.
+
+**Proper nouns are where speech recognition fails hardest and most silently** — a misheard system
+name does not arrive as an error or a low-confidence marker, it arrives as a plausible English word
+and the answer is confidently about the wrong place. `ProperNouns` biases the transcriber against
+exactly this, but it holds sixty names and the galaxy holds four hundred billion, so a name the
+Commander has not been near lately could never have been on it. Biasing cannot cover the galaxy;
+the recovery path had to exist.
+
+**The catalogue the galaxy does not have is on the Commander's own disk.** Every system they have
+jumped to, station they have docked at and faction they have met — measured on this corpus at
+**15,216 distinct names** (4,829 systems, 968 stations, 9,422 factions) in about 300 KB, mined from
+943 journals in seconds. And the reported case is in there: *Eurybia* **and** *Eurybia Blue Mafia*
+are both names this Commander has met, so the mishearing that started this was recoverable from
+their own history all along. Nothing leaves the machine to do it.
+
+**Edit distance is the wrong model for a transcriber, and that was measured rather than argued.**
+Typing errors are near in spelling; hearing errors are near in *sound*. Over the real catalogue,
+`Eurebia` → *Eurybia* is one edit and both rungs find it — but the issue's own counter-example,
+`"Dessy at"` → *Deciat*, is **four** edits: `Catalogue.Near` returns nothing at all, and a phonetic
+rung returns exactly one candidate, the right one. So `NearSpoken` adds sound-alikes below the two
+precise rungs and ranks them by spelling, which puts *Jameson Memorial* at the head of the five
+things that key like `"Jamison Memorial"`. **A limit, recorded rather than papered over:** it keys
+the whole name, so a transcriber that moved the word boundaries defeats it — `"shin arta desha"`
+finds *Shinrarta Dezhra* under neither rung, which is the case biasing is still for.
+
+**The confirmation is the retry, and it needed no new dialogue machinery.** The failing lookup hands
+back a sentence that invites a correction rather than a bare nothing; the Commander says which; the
+model re-runs the same tool because that is what it was asked to do. What is left is noticing that
+the second call succeeded where the first failed — and **learning only from a name that actually
+resolved**, never from one d47 offered, because an offer is a guess and a resolved lookup is the
+Commander having steered it there. One retry, then it asks for the letters: a correction is itself
+spoken and can itself be misheard, and two people who cannot hear each other repeat themselves
+indefinitely.
+
+**What is remembered is the word, not the answer** — the Commander's own instruction, and the part
+that carries the design. Correct it once about *Eurebia* and *"who runs the Eurybia Blue Mafia"*
+comes out right too, because the rewrite happens to the sentence before routing and before any tool
+call rather than to one argument afterwards. An alias against the *system* would have fixed one
+question.
+
+**A wrong alias is worse than the mishearing it fixes** — permanent, invisible, and quietly
+rewriting every later sentence containing that token — so the guards are in the store rather than in
+a caller's memory. Never a word that already means something: a place this Commander has met, a
+phrase the keyword router answers to, or anything short enough to be an English word by accident.
+`Eurebia` is capturable precisely because it is not a word. Whole tokens only, so an alias for `Sol`
+cannot rewrite *solid*. **Spoken input only** — a Commander who types a word can see what they
+typed. And nothing is learned from what another player wrote: the catalogue reads named place fields
+rather than scraping the event, so a chat message naming a system contributes neither its sender,
+its words, nor the system it named.
+
+**Local, per Commander, readable and clearable.** `data\heard-names.json`, keyed on the Frontier id
+inside the document, with a row on the Listening card that lists what has been learned and a
+**Forget them all** beside it — an alias table that cannot be read is a mystery generator. Clearing
+the corrections leaves the names, which are not a claim about anything.
+
+**Half of #134 the issue asked to be measured, and half of #126 it asked to be shared.** The
+faction-name spell-check #126 wants is the same catalogue; #126 is tabled, so this builds it once
+and leaves it there for when that is untabled.
 
 ## 0.98.3 — 2026-09-01 — A refused raise names its fault
 

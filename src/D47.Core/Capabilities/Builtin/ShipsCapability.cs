@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using D47.Core.Ships;
 
 namespace D47.Core.Capabilities.Builtin;
@@ -34,12 +34,67 @@ public static class ShipsCapability
     private static readonly IReadOnlyDictionary<string, string> Nothing =
         new Dictionary<string, string>(StringComparer.Ordinal);
 
+    /// <summary>
+    /// The key of the row that repairs what is remembered
+    /// (<a href="https://github.com/dseelinger/d47/issues/128">#128</a>).
+    /// </summary>
+    public const string RescanKey = "ships.remembered";
+
+    /// <summary>
+    /// What only the App can do for this capability
+    /// (<a href="https://github.com/dseelinger/d47/issues/128">#128</a>): read every journal on
+    /// disk again and rebuild what each ship was last seen holding.
+    /// </summary>
+    public sealed record ShipsSurface
+    {
+        /// <summary>
+        /// A sentence describing the stored picture as it stands — how many ships, and how stale
+        /// the oldest of them is. Read at draw time rather than captured, so the row says what is
+        /// true now rather than what was true when the surface was assembled.
+        /// </summary>
+        public Func<string>? Remembered { get; init; }
+
+        /// <summary>
+        /// The rescan, or null where nothing composed one.
+        /// <para>
+        /// <b>A delegate that answers a press rather than a press</b>, which is the trap
+        /// <c>SpeechCapability.DownloadLocalVoice</c> records: rows are built before the App has
+        /// finished constructing itself, so a press asked for here would answer null and the
+        /// button would be dropped permanently. Whether the delegate exists is knowable now;
+        /// what it returns is not.
+        /// </para>
+        /// </summary>
+        public Func<LongPress?>? Rescan { get; init; }
+
+        /// <summary>
+        /// Every member supplied and none of them doing anything, for a test registry to bind.
+        /// <para>
+        /// <b>Constructed here rather than inline at each call site</b>, so that
+        /// <c>HostSurfaceTests</c> can assert every property on the record is non-null: add a
+        /// member without adding it here and that test fails, at the moment the omission is made
+        /// rather than at a Commander's next launch. It is the same reason a null delegate makes
+        /// its row absent rather than dead — see #78.
+        /// </para>
+        /// </summary>
+        public static ShipsSurface Inert => new()
+        {
+            Remembered = () => "Nothing is remembered in a test.",
+            Rescan = () => (_, _) => Task.FromResult<string?>(null),
+        };
+    }
+
     /// <param name="ships">
     /// The Commander's builds, or null under the designer and in tests that are not about them —
     /// the capability still registers, so its documentation page exists, and every tool answers
     /// that nothing is planned rather than throwing.
     /// </param>
-    public static CapabilityDescriptor Create(ShipPlanService? ships = null) => new()
+    /// <param name="surface">
+    /// What the App does for this capability, or null under the designer — the row is then absent
+    /// rather than present and doing nothing.
+    /// </param>
+    public static CapabilityDescriptor Create(
+        ShipPlanService? ships = null,
+        ShipsSurface? surface = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -131,7 +186,56 @@ public static class ShipsCapability
                 Handler = (arguments, _) => Task.FromResult(Drop(ships, arguments)),
             },
         ],
+
+        Settings = Rows(surface),
     };
+
+    /// <summary>
+    /// One row, and it is a repair rather than a preference
+    /// (<a href="https://github.com/dseelinger/d47/issues/128">#128</a>).
+    /// <para>
+    /// <b>Info with a press, which is a shape that cannot be reached from the tool surface.</b>
+    /// <c>SettingsService.Apply</c> refuses to write a row with no binding to write, so this needs
+    /// no protected flag of its own — and it should not be reachable by a model: it is minutes of
+    /// disk reading started by a sentence somebody could put in a chat channel.
+    /// </para>
+    /// <para>
+    /// <b>It says what is stored before it offers to rebuild it</b>, because the question a
+    /// Commander arrives with is <i>does this look right</i>, and a button with nothing above it
+    /// cannot be answered without pressing it.
+    /// </para>
+    /// </summary>
+    private static IReadOnlyList<SettingRow> Rows(ShipsSurface? surface) =>
+    [
+        new SettingRow
+        {
+            Key = RescanKey,
+            Label = "What is fitted, remembered",
+            Help =
+                "What each of your ships was last seen carrying, kept in data\\loadouts.json so a "
+                + "ship you last flew months ago is still answerable. It is filled in as you fly "
+                + "and caught up from your journals each time D47 starts.\n\n"
+                + "Not look right? Rescan. That reads every journal on disk again and rebuilds "
+                + "the lot from scratch — a ship nothing in your journals supports stops existing, "
+                + "and one that has been sitting there wrong is put back the way the game "
+                + "described it. Nothing else is touched: your plans, your checklist and your "
+                + "settings are not read and not written. It costs a few seconds and can be done "
+                + "as often as you like.",
+            Kind = SettingKind.Info,
+            DocsAnchor = "remembered",
+            PressLabel = surface?.Rescan is null ? null : "Rescan my journals",
+            PressAsync = surface?.Rescan is null
+                ? null
+                : (progress, cancellationToken) =>
+                    surface.Rescan.Invoke() is { } rescan
+                        ? rescan(progress, cancellationToken)
+                        : Task.FromResult<string?>(null),
+            Binding = new SettingBinding
+            {
+                Read = _ => surface?.Remembered?.Invoke() ?? "Nothing is remembered yet.",
+            },
+        },
+    ];
 
     /// <summary>
     /// What the model is told about the fleet on every turn, below the cache breakpoint.
