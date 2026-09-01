@@ -52,7 +52,7 @@ public sealed class RecordingLog
 {
     /// <summary>
     /// What the rolling window costs at most. A session is tens of megabytes at 16 kHz mono, so
-    /// this is a few flights rather than a number anybody has to think about — which is the
+    /// this is a few sessions rather than a number anybody has to think about — which is the
     /// point of stating it rather than leaving the sizing question open.
     /// </summary>
     public const long CapBytes = 200L * 1024 * 1024;
@@ -241,7 +241,7 @@ public sealed class RecordingLog
         {
             if (_rows.Count == 0)
             {
-                return "Nothing recorded yet this flight.";
+                return "Nothing recorded yet this session.";
             }
 
             var heard = _rows.Count(row => row.Direction == RecordingDirection.Heard);

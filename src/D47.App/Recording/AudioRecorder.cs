@@ -24,7 +24,7 @@ namespace D47.App.Recording;
 /// is wrong here for a reason this repository has already recorded: the Commander flies the
 /// installed Release build, and the headset is where the evidence happens. So it takes the
 /// coverage recorder's shape — an environment variable rather than a setting, nothing on the
-/// surface at all when it is unset, and no file written. Flip it on for a flight, review, flip
+/// surface at all when it is unset, and no file written. Flip it on for a session, review, flip
 /// it off.
 /// </para>
 /// <para>

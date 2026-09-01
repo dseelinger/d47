@@ -62,7 +62,7 @@ public static class PrivacyCapability
     /// store — under the designer and in tests that are not about it — and the row then says so
     /// rather than offering a button that erases nothing.
     /// </param>
-    /// <param name="flight">
+    /// <param name="recording">
     /// The audio recorder's record, or null in a process that was not asked to record —
     /// which is every ordinary run. Null leaves the row out entirely rather than showing one
     /// that says nothing has been recorded, because a Commander who never turned this on should
