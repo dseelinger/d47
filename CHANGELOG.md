@@ -223,6 +223,37 @@ The release workflow was checked separately, because it runs under a different t
 on the pushed tag, holds `contents: write`, and creates a Release without ever pushing, updating
 or deleting a ref — so a ruleset on `refs/tags/v*` has nothing of its to refuse.
 
+### A long upload draws a bar, and the sentence beside it stays (#212)
+
+A journal history is up to 356 MB, and it moved behind one static line reported **once**, before
+the request began — which is what a hang looks like, and it is the longest and least reversible
+step in the feature. `DonationStep` carried a boolean and a file count, so even a window that
+wanted to draw a bar had nothing to draw it from.
+
+It carries bytes and a total now, and `MeteredStream` — the read-side twin of `TallyStream` —
+reports the spool's position as the body goes out. The window draws the fraction in the shape
+`SettingsView.RunPressAsync` already uses, and the Cancel button that was always there is now an
+escape a Commander can tell they have.
+
+**The sentence is kept rather than replaced.** *"Nothing else is being sent, and nothing is being
+kept anywhere else"* is doing work about scope that a percentage cannot do, so the bar sits under
+it. The number beside it says **compressed**, because the report above states the history's own
+size and the two differ by about twelve to one — a figure counting to 32.5 MB with nothing to
+explain it reads as most of it having gone missing.
+
+**What it measures is bytes handed to the network stack, not bytes the store acknowledged**, and
+nothing on this side of the socket can know the second one. So the bar goes the moment the send
+returns, whichever way it went: the outcome is what says whether the donation landed, and a full
+bar standing over *"the endpoint refused it"* would be the one claim this path must not make
+loosely.
+
+**A late progress report is dropped now**, which was the same defect one layer up. `Progress<T>`
+posts, a send can complete without ever yielding, and the losing order put a finished-looking
+status line on top of an outcome that had already been read.
+
+The excerpt send is deliberately unchanged: a few kilobytes would draw a bar that was gone before
+anybody saw it.
+
 ## 0.98.3 — 2026-09-01 — A refused raise names its fault
 
 ### Bringing Elite forward works from behind it again, and a refusal is now a diagnosis (#107)

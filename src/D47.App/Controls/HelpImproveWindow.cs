@@ -1,3 +1,4 @@
+﻿using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -167,9 +168,28 @@ public sealed class HelpImproveWindow : Window
 
     private readonly TextBlock _status = new()
     {
+        // Named, like the buttons and the choosers, because what this line says during a send is
+        // now a claim a test has to be able to read (#212).
+        Name = "SendStatus",
         FontSize = TypeScale.Small,
         VerticalAlignment = VerticalAlignment.Center,
         TextWrapping = TextWrapping.Wrap,
+    };
+
+    /// <summary>
+    /// How far the upload has got (#212). <b>Shown only while the bytes are moving</b>, and only
+    /// for the history send: an excerpt is a few kilobytes and would draw a bar that was gone
+    /// before anybody saw it. In the shape <c>SettingsView.RunPressAsync</c> already uses — a
+    /// fraction between nought and one, under the line that says what is happening in words.
+    /// </summary>
+    private readonly ProgressBar _bar = new()
+    {
+        Name = "SendProgress",
+        Height = 3,
+        Minimum = 0,
+        Maximum = 1,
+        IsVisible = false,
+        Margin = new Thickness(0, 4, 16, 0),
     };
 
     private readonly Button _copy = new() { Name = "CopyExcerpt", Content = CopyLabel, MinWidth = 190 };
@@ -336,6 +356,7 @@ public sealed class HelpImproveWindow : Window
 
         _size.IsVisible = !history;
         _status.IsVisible = history;
+        _bar.IsVisible = false;
 
         _copy.IsVisible = !history;
         _saveExcerpt.IsVisible = !history;
@@ -477,7 +498,12 @@ public sealed class HelpImproveWindow : Window
         DockPanel.SetDock(buttons, Dock.Right);
 
         footer.Children.Add(buttons);
-        footer.Children.Add(new StackPanel { Children = { _size, _status } });
+
+        // The bar under the sentence rather than in place of it (#212): "Nothing else is being
+        // sent, and nothing is being kept anywhere else" is doing work about scope that a
+        // percentage cannot do. The stack fills what the buttons left, so the bar is as wide as
+        // the words above it without anybody measuring anything.
+        footer.Children.Add(new StackPanel { Children = { _size, _status, _bar } });
 
         return footer;
     }
@@ -798,6 +824,11 @@ public sealed class HelpImproveWindow : Window
     /// The history send (#181). <b>Sends what the report on screen describes</b>, assembled by
     /// the same writer the Save button uses. The window does not close on it, for the excerpt
     /// send's reason.
+    /// <para>
+    /// <b>The upload draws a bar, and the sentence stays</b> (#212). Up to 356 MB used to move
+    /// behind one static line reported once before the request began, which is what a hang looks
+    /// like — and the Cancel button beside it was an escape nobody could tell they needed.
+    /// </para>
     /// </summary>
     private async Task SendCorpusAsync()
     {
@@ -816,9 +847,43 @@ public sealed class HelpImproveWindow : Window
         _sendCorpusButton.Content = "Sending…";
         _saveCorpus.IsEnabled = false;
 
-        var progress = new Progress<DonationStep>(step => _status.Text = step.Sending
-            ? "Sending. Nothing else is being sent, and nothing is being kept anywhere else."
-            : $"Preparing what you are sharing — {step.Files:N0} journal files so far");
+        _bar.Value = 0;
+        _bar.IsVisible = false;
+
+        // **A report that arrives after the outcome is dropped.** Progress<T> posts, the send may
+        // complete without ever yielding, and the losing order puts "Sending — 30.5 MB of 30.5 MB"
+        // and a full bar on top of "the endpoint refused it" — which is the one thing this window
+        // exists not to say. Both this and the finally run on the UI thread, so a plain flag is
+        // the whole of the guard.
+        var reporting = true;
+
+        var progress = new Progress<DonationStep>(step =>
+        {
+            if (!reporting)
+            {
+                return;
+            }
+
+            _status.Text = step switch
+            {
+                { Sending: false } =>
+                    $"Preparing what you are sharing — {step.Files:N0} journal files so far",
+
+                // **"Compressed" is not decoration.** The report above states the history's own
+                // size — 383 MB — and what goes on the wire is a twelfth of it, so a number
+                // counting to 32.5 MB with nothing to explain it reads as most of it missing.
+                { Total: > 0 } =>
+                    $"Sending — {Size(step.Sent)} of {Size(step.Total)} compressed. Nothing else "
+                    + "is being sent, and nothing is being kept anywhere else.",
+
+                _ => "Sending. Nothing else is being sent, and nothing is being kept anywhere else.",
+            };
+
+            // Absent where there is nothing to measure rather than sitting at nought, which is
+            // what the preparing step is — it has a rising file count and no denominator.
+            _bar.IsVisible = step.Fraction is not null;
+            _bar.Value = step.Fraction ?? 0;
+        });
 
         var landed = false;
 
@@ -840,8 +905,14 @@ public sealed class HelpImproveWindow : Window
         }
         finally
         {
+            reporting = false;
+
             Busy(false);
             _saveCorpus.IsEnabled = _reading is not null;
+
+            // Gone the moment the bytes stop moving, whichever way it went. A full bar over a
+            // refusal would be the one claim this path must not make loosely.
+            _bar.IsVisible = false;
 
             // Offered again only where it did not land. A "Sent" button that invites a second
             // press is a second thirty-megabyte upload nobody asked for.
@@ -871,6 +942,16 @@ public sealed class HelpImproveWindow : Window
         _read_.IsEnabled = !busy;
         _stop.Content = busy ? "Stop" : "Cancel";
     }
+
+    /// <summary>
+    /// Megabytes for a payload and kilobytes for a small one — the same shape, to one decimal,
+    /// that <c>CorpusReport</c> states the history's own size in, so the two numbers a Commander
+    /// has on screen at once are read in the same units (#212).
+    /// </summary>
+    private static string Size(long bytes) =>
+        bytes >= 1024L * 1024L
+            ? $"{(bytes / (1024.0 * 1024.0)).ToString("0.#", CultureInfo.InvariantCulture)} MB"
+            : $"{(bytes / 1024.0).ToString("0.#", CultureInfo.InvariantCulture)} KB";
 
     private Control Labelled(string caption, Control control)
     {

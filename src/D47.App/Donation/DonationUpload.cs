@@ -141,18 +141,31 @@ public sealed class DonationUpload
     /// length of the request, so a stream that cannot answer <see cref="Stream.Length"/> is not
     /// one this can send.
     /// </param>
+    /// <param name="sent">
+    /// Told how far the body has got, or null to say nothing
+    /// (<a href="https://github.com/dseelinger/d47/issues/212">#212</a>). <b>Here rather than in
+    /// the caller</b>, because the body is what this class is handed and wrapping it anywhere else
+    /// would mean a second thing that has to agree about the declared length. See
+    /// <see cref="MeteredStream"/> for what the number does and does not claim.
+    /// </param>
     public Task<DonationOutcome> SendAsync(
         string endpoint,
         DonationEnvelope envelope,
         Stream compressed,
+        IProgress<long>? sent = null,
         CancellationToken cancel = default)
     {
-        var content = new StreamContent(compressed);
+        // Taken before the wrap, off the stream that knows: the metered one answers the same, and
+        // reading it from the thing being measured is one fewer place for the two to disagree.
+        var length = compressed.Length - compressed.Position;
+
+        var content = new StreamContent(
+            sent is null ? compressed : new MeteredStream(compressed, sent));
 
         // Said rather than left to be inferred. StreamContent works it out from a seekable stream
         // anyway, and a donation that reached the endpoint chunked would be refused with 411 for
         // a reason nobody could see from here.
-        content.Headers.ContentLength = compressed.Length - compressed.Position;
+        content.Headers.ContentLength = length;
 
         return SendAsync(endpoint, envelope, content, cancel);
     }
