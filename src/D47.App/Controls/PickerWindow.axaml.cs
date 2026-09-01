@@ -363,10 +363,29 @@ public partial class PickerWindow : Window
                 ? $"No {FacetBox.SelectionBoxItem} choices here. Choose {_request.Facet!.Options[0].Label} to see everything."
                 : $"Nothing matches \"{filter}\"{(facet is null ? string.Empty : $" under {FacetBox.SelectionBoxItem}")}. {(_request.AllowsFreeText ? "Use it anyway, or clear the box to see everything." : "Clear the box to see everything.")}";
 
-        // A closed vocabulary means the typed text is a filter and nothing else, so there has to
-        // be something selected for the button to accept.
-        AcceptButton.IsEnabled = _request.AllowsFreeText || matches.Length > 0;
+        ShowWhetherAnythingCanBeTaken();
     }
+
+    /// <summary>
+    /// Whether <b>Use this</b> has anything to take — the same question
+    /// <see cref="Accept"/> asks, so the button cannot be pressed into the branch that does
+    /// nothing (<a href="https://github.com/dseelinger/d47/issues/190">#190</a>).
+    /// <para>
+    /// It read <c>AllowsFreeText || matches.Length > 0</c>, which is a question about the
+    /// <em>list</em> where <see cref="Accept"/> asks about the <em>selection</em> — so with the
+    /// highlight dropped the button stayed lit, and pressing it closed nothing, said nothing and
+    /// left the dialog sitting there. An enabled control wired to a handler that cannot commit
+    /// was the whole defect.
+    /// </para>
+    /// <para>
+    /// Called from the filter, from the facet and from the selection itself, because all three
+    /// move the answer and only the first two run <see cref="ApplyFilter"/>.
+    /// </para>
+    /// </summary>
+    private void ShowWhetherAnythingCanBeTaken() =>
+        AcceptButton.IsEnabled =
+            Choices.SelectedIndex >= 0
+            || (_request.AllowsFreeText && !string.IsNullOrWhiteSpace(FilterBox.Text));
 
     /// <summary>
     /// The predicate for the facet option currently chosen, or null when there is no facet or when
@@ -379,7 +398,40 @@ public partial class PickerWindow : Window
             ? facet.Options[FacetBox.SelectedIndex].Matches
             : null;
 
-    private void OnFilterChanged(object? sender, TextChangedEventArgs e) => ApplyFilter();
+    /// <summary>
+    /// Typing re-filters and then puts the highlight back on something visible
+    /// (<a href="https://github.com/dseelinger/d47/issues/190">#190</a>).
+    /// <para>
+    /// <b>The fixup below existed on the facet path and not on this one</b>, which is the path
+    /// every Commander types into. A keystroke that narrows the list past the selected row makes
+    /// Avalonia drop the selection, and nothing put it back: the list showed one obvious answer,
+    /// nothing was highlighted, and <b>Use this</b> was lit and inert. Word-start matching (#146)
+    /// made that common — it is strictly narrower than the substring matching it replaced, so
+    /// rows leave the list on keystrokes where they used to survive.
+    /// </para>
+    /// <para>
+    /// <b>Only once something has been typed.</b> An empty box is the state the picker opens in,
+    /// and highlighting the first row there would let Enter commit a value the Commander never
+    /// looked at — a picker opened by accident on a row with nothing stored must still take
+    /// nothing.
+    /// </para>
+    /// <para>
+    /// <b>What this costs the free-text rows</b>, stated because it is a real change: typed text
+    /// now commits only when it matches nothing in the list, since a selection wins over it.
+    /// That is the case free text was written for — naming a voice the catalogue does not list —
+    /// and the case it used to fire in by accident was any dropped highlight at all, which wrote
+    /// the raw contents of the search box into the setting as an id.
+    /// </para>
+    /// </summary>
+    private void OnFilterChanged(object? sender, TextChangedEventArgs e)
+    {
+        ApplyFilter();
+
+        if (!string.IsNullOrEmpty(FilterBox.Text))
+        {
+            HighlightSomethingVisible();
+        }
+    }
 
     /// <summary>
     /// Choosing a facet re-filters and puts the highlight back on something visible. Without the
@@ -389,13 +441,26 @@ public partial class PickerWindow : Window
     private void OnFacetChanged(object? sender, SelectionChangedEventArgs e)
     {
         ApplyFilter();
+        HighlightSomethingVisible();
+    }
 
+    /// <summary>
+    /// Puts the highlight on the top match when the last one has been filtered away. Does nothing
+    /// where something is still selected — the row objects are stable, so a selection that
+    /// survived a keystroke is the Commander's own and is not moved.
+    /// </summary>
+    private void HighlightSomethingVisible()
+    {
         if (Choices.SelectedIndex < 0 && _visible.Count > 0)
         {
             Choices.SelectedIndex = 0;
             Choices.ScrollIntoView(0);
         }
     }
+
+    /// <summary>The selection is half of what <b>Use this</b> can take, so it says so (#190).</summary>
+    private void OnChoiceChanged(object? sender, SelectionChangedEventArgs e) =>
+        ShowWhetherAnythingCanBeTaken();
 
     private void OnFilterKeyDown(object? sender, KeyEventArgs e)
     {

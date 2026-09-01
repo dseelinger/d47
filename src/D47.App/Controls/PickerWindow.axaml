@@ -113,7 +113,8 @@
                BorderBrush="{DynamicResource D47.Border}"
                BorderThickness="1"
                DoubleTapped="OnChoiceDoubleTapped"
-               KeyDown="OnFilterKeyDown">
+               KeyDown="OnFilterKeyDown"
+               SelectionChanged="OnChoiceChanged">
         <ListBox.ItemTemplate>
           <DataTemplate x:DataType="controls:PickerChoice">
             <DockPanel>

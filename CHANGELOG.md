@@ -29,6 +29,32 @@ history to match today's layout would be the one edit it must never take.
 
 ## 0.98.2 — 2026-09-01 — The carrier's own two voices, and a jump nobody is making
 
+### Use this takes the row you can see, or it is shut (#190)
+
+The button in every picker — voice, model, microphone, persona, theme — stopped working once you
+typed. A keystroke that narrows the list past the highlighted row makes Avalonia drop the
+selection, and nothing put it back: the list showed one obvious answer, nothing was highlighted,
+and `Accept` fell off the end of itself. No close, no result, no message, from a button that was
+still lit. Enter and a double-click route to the same place, so every road out of the dialog was
+dead at once.
+
+It had a second face on the rows that allow a value of their own. There the dropped highlight sent
+the other branch, which committed **the raw contents of the search box** as an id — accepted
+verbatim, written to settings, and then unresolvable by the row's derived caption. To a Commander
+that also reads as *"Use this did not work"*, by a completely different mechanism.
+
+Two changes, and both were needed. Typing now puts the highlight on the top match when the last
+one has been filtered away — the fixup the facet path has had since #146 and the text path, which
+is the one everybody types into, never got. And the button now asks the same question `Accept`
+asks: it is lit when something is selected, or when free text has been typed on a row that takes
+it, and shut otherwise. An enabled control wired to a handler that cannot commit was the whole
+defect in one line.
+
+What free text costs is stated rather than left to be discovered: typed text now commits only when
+it matches nothing in the list, which is the case it was written for. A picker opened on a row with
+nothing stored still takes nothing until you choose — the button is shut, rather than lit and
+inert.
+
 ### The engineer filter shows what that engineer does, not what your rank lets you have (#205)
 
 An 8A power plant planned for **Armoured G5** and **Thermal Spread** showed only Thermal Spread.
