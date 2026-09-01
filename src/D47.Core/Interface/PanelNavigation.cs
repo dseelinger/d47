@@ -130,14 +130,17 @@ public sealed record NavCrumb(string Key, string Word, bool Modal = false)
     /// <b>This used to be one string doing two jobs, and there was a reason for that.</b> A crumb
     /// is matched by the keyword router as well as pressed, and the argument on record was for
     /// one word order rather than a label and a synonym — two spellings of one thing being two
-    /// things to keep in step. That holds right up until a label grows long enough that nobody
-    /// would say it out loud: "Elite Dangerous Journal File" names the reading exactly and is not
-    /// a phrase a Commander utters in a cockpit.
+    /// things to keep in step. That holds right up until the label stops being what a Commander
+    /// would say. The Transcript readings are both cases: "Elite Dangerous Journal File" named
+    /// the reading exactly and was not a phrase anybody utters in a cockpit, and when "In Ship"
+    /// replaced "Conversation" (<a href="https://github.com/dseelinger/d47/issues/250">#250</a>)
+    /// the old label was still a word Commanders reach for.
     /// </para>
     /// <para>
-    /// So the label may grow and the spoken route stays short. Empty for every level whose word
-    /// is already sayable, which is nearly all of them — an alias is for the case where the two
-    /// jobs genuinely pull apart, not a second name for everything.
+    /// So the label answers "what am I looking at" and the spoken route answers "how do I ask for
+    /// it" — a name too long to say, or one the label has moved on from. Empty for every level
+    /// whose word does both jobs, which is nearly all of them: an alias is for where they
+    /// genuinely pull apart, not a second name for everything.
     /// </para>
     /// </summary>
     public IReadOnlyList<string> Spoken { get; init; } = [];

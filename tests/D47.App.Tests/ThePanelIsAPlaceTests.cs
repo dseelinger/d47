@@ -63,7 +63,7 @@ public class ThePanelIsAPlaceTests
         // And there is no second tab strip: the readings are one drop-down inside the pane, not
         // more tabs beside it (remediation.md 10, item 1).
         //
-        // Three since #231: Conversation, Log File and the Elite Dangerous Journal File are
+        // Three since #231, renamed in #250: In Ship, Log File and Journal File are
         // registered for every surface, and Details was removed. **Raw Journal is not registered
         // here**, and its absence is the assertion worth having — it is furnished by a host, so an
         // unfurnished panel like this one must not have it. TheJournalIsAReadingTests says so

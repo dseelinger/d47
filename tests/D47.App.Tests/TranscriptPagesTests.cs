@@ -171,10 +171,10 @@ public class TranscriptPagesTests
         var window = Laid(new PanelView { DataContext = model });
         var headset = Laid(new PanelView { DataContext = model });
 
-        // Each surface's own control says Conversation, which is what "each keeps its own" means
+        // Each surface's own control says In Ship, which is what "each keeps its own" means
         // when one model serves both.
-        Assert.Equal("Conversation", PanelModes.Showing(window));
-        Assert.Equal("Conversation", PanelModes.Showing(headset));
+        Assert.Equal("In Ship", PanelModes.Showing(window));
+        Assert.Equal("In Ship", PanelModes.Showing(headset));
     }
 
     /// <summary>
@@ -193,7 +193,7 @@ public class TranscriptPagesTests
 
         Assert.Equal(TranscriptPage.Log, window.Page);
         Assert.Equal(TranscriptPage.Conversation, headset.Page);
-        Assert.Equal("Conversation", PanelModes.Showing(headset));
+        Assert.Equal("In Ship", PanelModes.Showing(headset));
     }
 
     private static string Shown(PanelView panel) => panel.TranscriptShown;
