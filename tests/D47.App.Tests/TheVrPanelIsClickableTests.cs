@@ -92,7 +92,7 @@ public class TheVrPanelIsClickableTests
 
         OpenModes(view, surface);
 
-        surface.Click(Centre(view, Saying(view, "Conversation")));
+        surface.Click(Centre(view, Saying(view, "In Ship")));
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(TranscriptPage.Conversation, view.Page);

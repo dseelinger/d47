@@ -69,7 +69,7 @@ public sealed class TheJournalIsAReadingTests
 
         var words = panel.Nav.Roots(PanelTab.Transcript).Select(crumb => crumb.Word).ToList();
 
-        Assert.Contains("Elite Dangerous Journal File", words);
+        Assert.Contains("Journal File", words);
         Assert.DoesNotContain("Raw Journal", words);
 
         window.Close();
@@ -91,7 +91,7 @@ public sealed class TheJournalIsAReadingTests
 
         var words = panel.Nav.Roots(PanelTab.Transcript).Select(crumb => crumb.Word).ToList();
 
-        Assert.Contains("Elite Dangerous Journal File", words);
+        Assert.Contains("Journal File", words);
         Assert.Contains("Raw Journal", words);
 
         panel.Page = TranscriptPage.Journal;
@@ -100,7 +100,7 @@ public sealed class TheJournalIsAReadingTests
         var offered = panel.GetControl<Avalonia.Controls.ComboBox>("ModeBox").ItemsSource
             as IReadOnlyList<string> ?? [];
 
-        Assert.Contains("Elite Dangerous Journal File", offered);
+        Assert.Contains("Journal File", offered);
         Assert.DoesNotContain("Raw Journal", offered);
 
         // The box rather than the switch: the label sits beside the knob and the two show and

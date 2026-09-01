@@ -325,19 +325,24 @@ public partial class PanelView : UserControl
         // at"; the journal reading in particular had to say *whose* journal, because d47 keeps a
         // log of its own and the two were a word apart.
         //
-        // Where the plain name is too long to say out loud, the crumb carries a short spoken
-        // alias instead of being shortened. See NavCrumb.Spoken: the drawn label and the phrase
-        // used to be one string on purpose, and this is the case that finally pulled them apart.
+        // The last two are now named for what a Commander goes there to see rather than for what
+        // they are made of (#250). "Conversation" described the material; "In Ship" is where the
+        // exchange happened. And once "Log File" and "Journal File" sit next to each other, the
+        // journal no longer has to say whose it is — the pair reads as the distinction.
+        //
+        // Where the plain name is not what a Commander would say, the crumb carries a short
+        // spoken alias instead of being bent to fit. See NavCrumb.Spoken: the drawn label and the
+        // phrase used to be one string on purpose, and these are the cases that pulled them apart.
         Nav.Register(
             PanelTab.Transcript,
-            new NavCrumb(ConversationRoot, "Conversation")
+            new NavCrumb(ConversationRoot, "In Ship")
             {
                 Help = TranscriptHelp,
 
-                // The word this reading answered to for a year. Kept, because a Commander who
-                // says it is not wrong, they are out of date, and being told nothing happened is
-                // a worse answer than going where they meant.
-                Spoken = ["thread"],
+                // The words this reading answered to before it was In Ship. Kept, because a
+                // Commander who says one is not wrong, they are out of date, and being told
+                // nothing happened is a worse answer than going where they meant.
+                Spoken = ["conversation", "thread"],
             });
 
         Nav.Register(
@@ -348,10 +353,11 @@ public partial class PanelView : UserControl
                 Spoken = ["log", "d47 log"],
             });
 
-        // Elite's own journal, in a form that is not JSON (#51), and named for whose it is.
+        // Elite's own journal, in a form that is not JSON (#51). "Elite Dangerous" came off the
+        // front in #250; the alias below still answers to it, for free.
         Nav.Register(
             PanelTab.Transcript,
-            new NavCrumb(JournalRoot, "Elite Dangerous Journal File")
+            new NavCrumb(JournalRoot, "Journal File")
             {
                 Help = TranscriptHelp,
                 Spoken = ["journal", "journal file", "elite dangerous journal"],
