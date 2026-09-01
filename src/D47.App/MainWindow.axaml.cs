@@ -68,6 +68,10 @@ public partial class MainWindow : Window
     {
         _host = host;
 
+        // The frame border in the theme's own dark, not the system's light (2026-08-31) — the
+        // dialogs get the same through Dialogs.Over.
+        Windowing.DarkWindowBorder.Apply(this);
+
         // The host's model, not one of this window's own. The headset overlay binds a second
         // instantiation of the same view to it, and a model owned by the window would make
         // the overlay a guest of a surface that can be closed.

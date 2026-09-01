@@ -156,8 +156,21 @@ public sealed class HelpImproveWindow : Window
         Margin = new Thickness(0, 0, 0, 12),
     };
 
-    private readonly TextBlock _size = new() { FontSize = TypeScale.Small, VerticalAlignment = VerticalAlignment.Center };
-    private readonly TextBlock _status = new() { FontSize = TypeScale.Small, VerticalAlignment = VerticalAlignment.Center };
+    // Wrapped, because these carry whole sentences — the no-address explanation clipped
+    // mid-word under the Cancel button before this said so (seen 2026-08-31).
+    private readonly TextBlock _size = new()
+    {
+        FontSize = TypeScale.Small,
+        VerticalAlignment = VerticalAlignment.Center,
+        TextWrapping = TextWrapping.Wrap,
+    };
+
+    private readonly TextBlock _status = new()
+    {
+        FontSize = TypeScale.Small,
+        VerticalAlignment = VerticalAlignment.Center,
+        TextWrapping = TextWrapping.Wrap,
+    };
 
     private readonly Button _copy = new() { Name = "CopyExcerpt", Content = CopyLabel, MinWidth = 190 };
     private readonly Button _saveExcerpt = new() { Content = "Save a file instead…", MinWidth = 160 };

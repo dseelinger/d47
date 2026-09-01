@@ -17,6 +17,7 @@ public static class Dialogs
     public static Task Over(this Window dialog, Window owner)
     {
         ZoomHost.Match(dialog, owner);
+        DarkWindowBorder.Apply(dialog);
 
         return dialog.ShowDialog(owner);
     }
@@ -25,6 +26,7 @@ public static class Dialogs
     public static Task<TResult> Over<TResult>(this Window dialog, Window owner)
     {
         ZoomHost.Match(dialog, owner);
+        DarkWindowBorder.Apply(dialog);
 
         return dialog.ShowDialog<TResult>(owner);
     }
