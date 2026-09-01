@@ -234,6 +234,11 @@ public sealed class HelpImproveWindow : Window
         _includeHistory.IsVisible = HistoryOffered;
         _includeHistory.IsChecked = HistoryOffered;
 
+        // "Instead" needs a send to be instead of (asked 2026-08-31, from a window with no
+        // address set and a button that dangled). With nowhere to send, Save is not the
+        // alternative — it is the act.
+        _saveCorpus.Content = sendCorpus is null ? "Save it to a file…" : "Save it instead…";
+
         var root = new DockPanel { Margin = new Thickness(20) };
 
         var options = Options();
@@ -527,7 +532,13 @@ public sealed class HelpImproveWindow : Window
             + "Choose how much of your history to include, then press Read my journals. "
             + "Reading a full history takes a few seconds and happens entirely on this machine.";
 
-        _status.Text = string.Empty;
+        // The question a Commander actually asked at this window (2026-08-31): which button
+        // sends? With no address, none — and the status line is where the answer belongs,
+        // because the lede said it mid-paragraph and mid-paragraph is where it was missed.
+        _status.Text = _sendCorpus is null
+            ? "No send button: no address is set (Privacy and egress → Where donations are "
+              + "sent). Save writes the scrubbed file, and where it goes is yours."
+            : string.Empty;
     }
 
     private async Task ReadAsync()
