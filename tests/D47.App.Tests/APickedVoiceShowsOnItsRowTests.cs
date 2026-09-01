@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
@@ -162,7 +162,7 @@ public class APickedVoiceShowsOnItsRowTests
         Assert.True(row is not null, "the push-to-talk row is not on the page");
 
         var bind = row!.GetVisualDescendants().OfType<Button>()
-            .First(button => button.Name != SettingsView.RowResetName
+            .First(button => !SettingsView.IsRowChrome(button)
                              && button.Content as string != "Unbind");
 
         var unbind = row.GetVisualDescendants().OfType<Button>()

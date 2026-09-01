@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.VisualTree;
@@ -105,10 +105,10 @@ public class VoiceRowFitsItsColumnTests
     {
         var host = Open();
 
-        // Not the reset glyph beside the label, which is a different button about a different
-        // thing (#61).
+        // Not the reset glyph or the info glyph beside the label — those are different buttons
+        // about different things (#61, and the 2026-09-01 callout).
         var button = RowFor(host, "Voice").GetVisualDescendants().OfType<Button>()
-            .First(control => control.Name != D47.App.Settings.SettingsView.RowResetName);
+            .First(control => !D47.App.Settings.SettingsView.IsRowChrome(control));
 
         Assert.Contains("Bill", ToolTip.GetTip(button) as string ?? string.Empty, StringComparison.Ordinal);
 

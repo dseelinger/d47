@@ -62,6 +62,26 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     public const string RowResetName = "RowReset";
 
     /// <summary>
+    /// The prefix on a row's info glyph, which carries the row key so two rows' callouts are
+    /// distinguishable (asked for 2026-09-01).
+    /// </summary>
+    public const string RowInfoPrefix = "Info_";
+
+    /// <summary>
+    /// Whether a button is the row's <em>chrome</em> rather than the control the row is about —
+    /// the reset glyph and the info glyph.
+    /// <para>
+    /// <b>One predicate rather than a list of exclusions in every caller.</b> Two tests once took
+    /// the first Button in a row and got the reset glyph; adding the info glyph broke seven more
+    /// that had each learned to exclude the reset one by name. A third mark would have broken them
+    /// again. This is the question they were all asking.
+    /// </para>
+    /// </summary>
+    public static bool IsRowChrome(Button button) =>
+        button?.Name is { } name
+        && (name == RowResetName || name.StartsWith(RowInfoPrefix, StringComparison.Ordinal));
+
+    /// <summary>
     /// Whether a jump has revealed the folded rows for this session
     /// (<a href="https://github.com/dseelinger/d47/issues/60">#60</a>).
     /// <para>
@@ -1179,9 +1199,28 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Paint(label, row.Row.Label);
         }
 
+        if (row.Spoken is { } spoken)
+        {
+            Paint(spoken, row.Row.Help);
+        }
+
+        // **The help is behind a glyph, so a query that only it answers has to bring it out.**
+        // Matches() has always tested the help text, and since the callout it is no longer on
+        // screen — so a row could stay behind a filter with every visible word on it disagreeing
+        // with the query, which reads as the filter being broken rather than as a match the
+        // Commander cannot see. That is the same rule, and the same reason, as the key line below.
         if (row.Help is { } help)
         {
-            Paint(help, row.Row.Help);
+            var inTheHelp = _query.Length > 0
+                && row.Row.Help.Contains(_query, StringComparison.OrdinalIgnoreCase)
+                && !row.Row.Label.Contains(_query, StringComparison.OrdinalIgnoreCase);
+
+            help.IsVisible = inTheHelp;
+
+            if (inTheHelp)
+            {
+                Paint(help, row.Row.Help);
+            }
         }
 
         if (row.KeyLine is not { } keyLine)
@@ -1609,13 +1648,22 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             header.Children.Add(pill);
         }
 
+        // **The help is behind a glyph now** (asked for 2026-09-01 — *"That is WAY too much
+        // text"*). Push-to-talk's runs to eleven lines, and eleven lines of grey prose under every
+        // row is a page nobody scans: the setting a Commander came for is buried in the
+        // explanation of the setting above it. Not a word of it is cut; it is one press away.
+        //
+        // <b>This block still exists, and it is not the one in the callout.</b> A TextBlock has
+        // one parent, and this one is the row's own — hidden until a search matches words only it
+        // holds, which is the same evidence rule the key line already follows. A row that survived
+        // a filter with nothing on it matching reads as the filter being broken.
         var help = new TextBlock
         {
             Text = row.Help,
             FontSize = TypeScale.Secondary,
             Margin = new Thickness(0, 2, 0, 0),
             TextWrapping = TextWrapping.Wrap,
-            IsVisible = !string.IsNullOrWhiteSpace(row.Help),
+            IsVisible = false,
         };
         Themed(help, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
 
@@ -1663,6 +1711,22 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         //
         // Absent on a secret, where there is no default to go back to and forgetting a key is a
         // different and destructive act.
+        // The callout's own copy of the words. Painted alongside the inline one so a query is
+        // marked wherever the Commander is looking at them.
+        var spoken = new TextBlock
+        {
+            Text = row.Help,
+            FontSize = TypeScale.Secondary,
+            TextWrapping = TextWrapping.Wrap,
+            MaxWidth = 420,
+        };
+        Themed(spoken, TextBlock.ForegroundProperty, ThemeManager.TextKey);
+
+        if (!string.IsNullOrWhiteSpace(row.Help))
+        {
+            header.Children.Add(Explains(capability, row, spoken));
+        }
+
         if (row is { Kind: not SettingKind.Secret, Binding.Write: not null })
         {
             var back = new Button
@@ -1809,8 +1873,77 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Body = body,
             Label = label,
             Help = help,
+            Spoken = spoken,
             KeyLine = keyLine,
         };
+    }
+
+    /// <summary>
+    /// The row's help, behind a lower-case <c>i</c> in a circle
+    /// (asked for 2026-09-01 — <i>"use an info glyph … which goes away when clicked outside"</i>).
+    /// <para>
+    /// <b>A <see cref="Flyout"/> rather than a popup this class opens and closes.</b> Light
+    /// dismissal is the whole of what was asked for — click anywhere else and it goes — and a
+    /// flyout has it, along with Escape, placement that stays on screen, and a focus scope. Hand
+    /// rolling those is how a callout ends up stuck open behind a scrolled card.
+    /// </para>
+    /// <para>
+    /// <b>It carries the way out to the web page too.</b> The row already knew its anchor and
+    /// nothing in the panel had ever offered it — <c>DocsAnchor</c> was read by the documentation
+    /// gate and by no drawn control. So the short form is in the callout and the long form is one
+    /// more press away, which is the split <see cref="DocsSite"/> already describes.
+    /// </para>
+    /// </summary>
+    private Control Explains(CapabilityDescriptor capability, SettingRow row, TextBlock spoken)
+    {
+        var page = new Button
+        {
+            Content = "Help",
+            FontSize = TypeScale.Secondary,
+            Padding = new Thickness(0),
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Cursor = new Cursor(StandardCursorType.Hand),
+        };
+
+        Themed(page, ForegroundProperty, ThemeManager.AccentKey);
+
+        // The row's own anchor where it has one, the capability's page where it does not — a
+        // row with no anchor still has somewhere to send the Commander, and it is better than
+        // a link that is missing on the rows that most need explaining.
+        page.Click += (_, _) => Process.Start(new ProcessStartInfo(
+            DocsSite.Capability(capability.Id, row.DocsAnchor)) { UseShellExecute = true });
+
+        var inside = new StackPanel
+        {
+            Spacing = 10,
+            Children = { spoken, page },
+        };
+
+        var button = new Button
+        {
+            Name = RowInfoPrefix + row.Key.Replace('.', '_'),
+            Content = Glyphs.Draw(Glyphs.Info, ThemeManager.AccentKey, TypeScale.Secondary),
+            Padding = new Thickness(4, 0),
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            VerticalAlignment = VerticalAlignment.Center,
+            Cursor = new Cursor(StandardCursorType.Hand),
+            Flyout = new Flyout
+            {
+                Content = new Border { Padding = new Thickness(4), Child = inside },
+                Placement = PlacementMode.BottomEdgeAlignedLeft,
+                ShowMode = FlyoutShowMode.Standard,
+            },
+        };
+
+        // A Path has no text, so a screen reader would find an unnamed button — the same fault,
+        // and the same fix, as the reset glyph and the run-composed captions.
+        AutomationProperties.SetName(button, $"About {row.Label}");
+        ToolTip.SetTip(button, $"About {row.Label}");
+
+        return button;
     }
 
     /// <summary>
@@ -3473,7 +3606,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         /// <summary>The row's words, held so a query can be painted into them and taken out again.</summary>
         public TextBlock? Label { get; init; }
 
+        /// <summary>
+        /// The inline copy, drawn only when a search matched words only it holds. See Evidence.
+        /// </summary>
         public TextBlock? Help { get; init; }
+
+        /// <summary>The callout's copy — what a Commander reads when they press the glyph.</summary>
+        public TextBlock? Spoken { get; init; }
 
         /// <summary>The settings key, drawn only when it is why this row survived. See Evidence.</summary>
         public TextBlock? KeyLine { get; init; }

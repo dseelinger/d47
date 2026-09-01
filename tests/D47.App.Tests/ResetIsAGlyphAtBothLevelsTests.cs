@@ -1,4 +1,4 @@
-using Avalonia.Automation;
+﻿using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Controls.Shapes;
@@ -47,6 +47,10 @@ public sealed class ResetIsAGlyphAtBothLevelsTests
             .. host.View.GetVisualDescendants()
                 .OfType<Button>()
                 .Where(button => button.Content is Path)
+
+                // The info glyph is a Path on every row and is not a reset (2026-09-01).
+                .Where(button => button.Name?.StartsWith(
+                    D47.App.Settings.SettingsView.RowInfoPrefix, StringComparison.Ordinal) is not true)
                 .Where(button => bulk is null || !button.GetVisualAncestors().Contains(bulk)),
         ];
     }

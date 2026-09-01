@@ -102,6 +102,34 @@ They persist, exactly as clicking each header by hand does. That buries a card's
 `StartCollapsed` default, so **a card's reset now forgets what has been said about whether it is
 open** — nothing moves on screen, and the next launch decides again.
 
+### A row's help is behind an info glyph, not under every row
+
+*"That is WAY too much text."* Push-to-talk's help runs to eleven lines, and eleven lines of grey
+prose under every row is a page nobody scans — the setting a Commander came for is buried in the
+explanation of the setting above it.
+
+Every row with something to say now carries a lower-case **i** in a circle beside its label. Press
+it and the words appear in a callout; click anywhere else and the callout goes. **Not a word is
+cut** — it is one press away instead of always there.
+
+**An `i` rather than a `?`**, because the question mark is already spoken for on this surface: it
+is the card's way out to the documentation site, and two marks that both mean *help* and do
+different things is worse than either alone. This one says *about this row*; that one says *the long
+form, on the web*. The callout carries **both** — a **Help** link that opens the row's own anchor on
+the site, which is a thing `DocsAnchor` has always known and no drawn control had ever offered.
+
+**A search that only the help answers brings the help back out.** The filter has always tested the
+help text, and it is no longer on screen — so without this a row could survive a query with every
+visible word on it disagreeing, which reads as the filter being broken rather than as a match the
+Commander cannot see. The same rule, and the same reason, as the settings key already had.
+
+**The warning line stays where it was.** A row's hazard is the one sentence on it that must not read
+as background, so it is not something to put behind a press.
+
+**And it broke seven tests, which is the useful part.** Each had learned to exclude the reset glyph
+by name while taking the first button in a row; a second chrome mark broke all of them, and a third
+would have again. `IsRowChrome` is the question every one of them was actually asking.
+
 ### The conversation box walks what you have already sent (#224)
 
 Up steps back through the lines sent from the box this session, down steps forward again, and

@@ -82,8 +82,39 @@ public static class Glyphs
     /// </summary>
     public const string ExpandAll = "M 12,5 L 12,19  M 5,12 L 19,12";
 
-    /// <summary>Shut every card: the same stroke without the upright.</summary>
+    /// <summary>
+    /// Shut every card: the same stroke without the upright.
+    /// <para>
+    /// <see cref="ExpandAll"/> and <see cref="Add"/> are the same path today and are deliberately
+    /// two constants: one means <i>open what is inside this</i> and the other means <i>make
+    /// another one</i>, and a change to either verb's mark must not move the other.
+    /// </para>
+    /// </summary>
     public const string CollapseAll = "M 5,12 L 19,12";
+
+    /// <summary>
+    /// What this row is: a lower-case <c>i</c> in a circle
+    /// (asked for 2026-09-01 — <i>"That is WAY too much text"</i>).
+    /// <para>
+    /// <b>The help moved behind it because the rows were unreadable.</b> Push-to-talk's help runs
+    /// to eleven lines, and eleven lines of grey prose under every row is a page nobody scans —
+    /// the setting a Commander came for is buried in the explanation of the setting above it. The
+    /// text is unchanged and one press away.
+    /// </para>
+    /// <para>
+    /// <b>An <c>i</c> rather than a <c>?</c>.</b> The question mark is already spoken for on this
+    /// surface: it is the card's way out to the documentation site, and two marks that both mean
+    /// <i>help</i> and do different things is worse than either alone. This one says <i>about this
+    /// row</i>; that one says <i>the long form, on the web</i>. The callout carries both, which is
+    /// how they stay told apart.
+    /// </para>
+    /// <para>
+    /// The dot is a zero-length segment: <see cref="Made"/> strokes with a round cap, so it draws
+    /// as a dot without needing a second filled shape.
+    /// </para>
+    /// </summary>
+    public const string Info =
+        "M 12,3 A 9,9 0 1 1 11.99,3  M 12,7.5 L 12,7.5  M 12,11 L 12,16.5";
 
     /// <summary>Two sheets, one behind the other. The clipboard mark, near enough universally.</summary>
     public const string Copy =
