@@ -248,7 +248,7 @@ public interface ITtsProvider
     /// than the text itself. Null for every provider that takes text, which is all of them
     /// except the local voice.
     /// <para>
-    /// It exists for the audio flight recorder
+    /// It exists for the audio recorder
     /// (<a href="https://github.com/dseelinger/d47/issues/164">#164</a>). A mispronunciation
     /// heard in the headset is otherwise reconstructed backwards to the phonemes that caused it,
     /// one guess at a time; recorded beside the audio it is a diagnosis. Null is the honest

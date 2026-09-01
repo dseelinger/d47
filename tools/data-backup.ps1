@@ -20,7 +20,7 @@
       `logs\`      Churn, and the running app holds today's file open. Read them where they are.
       `updates\`   Downloaded installers, re-fetchable by name with `get-ver`.
       `backups\`   Itself, or each snapshot would contain every snapshot before it.
-      `flight\`    The audio flight recorder's clips (#164). Disposable evidence rather than
+      `flight\`    The audio recorder's clips (#164). Disposable evidence rather than
                    Commander data, capped and off unless it was asked for.
 
     `audio\` is **kept**: the Commander's own cues, beds and ambience are theirs and nothing else

@@ -5,7 +5,7 @@
 regardless of device or audio length: measure the name-hint prompt's share."*
 
 Taken with `spike/TranscribeFloorProbe`, which drives `WhisperTranscriber` directly — the shipped
-class, not a copy of it — against the audio flight recorder's own kept clips
+class, not a copy of it — against the audio recorder's own kept clips
 ([#164](https://github.com/dseelinger/d47/issues/164)) and the installed `ggml` models. Same clip,
 same model, one variable at a time. Every figure is a median of five or seven calls with the range
 beside it, and the first call after a load is thrown away.

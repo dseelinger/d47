@@ -1,13 +1,13 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using D47.Core.Audio;
-using D47.Core.Diagnostics.Flight;
+using D47.Core.Diagnostics.Recording;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Diagnostics;
 
 /// <summary>
-/// The audio flight recorder's ring
+/// The audio recorder's ring
 /// (<a href="https://github.com/dseelinger/d47/issues/164">#164</a>).
 /// <para>
 /// Three properties, and every one of them is a promise rather than a nicety. The cap is enforced
@@ -40,15 +40,15 @@ public class TheRecordingHasACapTests : IDisposable
     /// </summary>
     private const long SmallCap = 200_000;
 
-    private FlightLog Log(long cap = SmallCap) => new(_folder, NullLogger.Instance, cap);
+    private RecordingLog Log(long cap = SmallCap) => new(_folder, NullLogger.Instance, cap);
 
     /// <summary>
     /// One clip, sized so that a handful of them crosses the cap without the test writing two
     /// hundred megabytes. Sixteen bits per sample at 16 kHz is the heard side's real shape.
     /// </summary>
-    private static FlightCapture Capture(
+    private static RecordingCapture Capture(
         int minute,
-        FlightDirection direction = FlightDirection.Heard,
+        RecordingDirection direction = RecordingDirection.Heard,
         string text = "hello",
         int samples = 16_000) =>
         new(direction, Noon.AddMinutes(minute), WavWriter.ToBytes(new float[samples], 16_000), TimeSpan.FromSeconds(1))
@@ -78,8 +78,8 @@ public class TheRecordingHasACapTests : IDisposable
     {
         var log = Log();
 
-        var heard = log.Add(Capture(0, FlightDirection.Heard));
-        var said = log.Add(Capture(0, FlightDirection.Spoken));
+        var heard = log.Add(Capture(0, RecordingDirection.Heard));
+        var said = log.Add(Capture(0, RecordingDirection.Spoken));
 
         Assert.NotEqual(heard.Id, said.Id);
         Assert.Equal(2, log.Rows.Count);
@@ -118,7 +118,7 @@ public class TheRecordingHasACapTests : IDisposable
 
         var first = log.Add(Capture(0, text: "the one that matters", samples: big));
 
-        Assert.NotNull(log.Keep(first.Id, FlightKeepKind.Mishear, "the one that mattered", Noon));
+        Assert.NotNull(log.Keep(first.Id, RecordingKeepKind.Mishear, "the one that mattered", Noon));
 
         for (var minute = 1; minute < 12; minute++)
         {
@@ -138,15 +138,15 @@ public class TheRecordingHasACapTests : IDisposable
         var log = Log();
         var row = log.Add(Capture(0, text: "set course for Colonel"));
 
-        var kept = log.Keep(row.Id, FlightKeepKind.Mishear, "set course for Colonia", Noon);
+        var kept = log.Keep(row.Id, RecordingKeepKind.Mishear, "set course for Colonia", Noon);
 
         Assert.NotNull(kept);
-        Assert.Equal(FlightKeepKind.Mishear, kept.Kept!.Kind);
+        Assert.Equal(RecordingKeepKind.Mishear, kept.Kept!.Kind);
 
-        var corpus = Path.Combine(_folder, FlightLog.KeptFolderName, "mishears.json");
+        var corpus = Path.Combine(_folder, RecordingLog.KeptFolderName, "mishears.json");
 
         Assert.True(File.Exists(corpus));
-        Assert.True(File.Exists(Path.Combine(_folder, FlightLog.KeptFolderName, row.Clip)));
+        Assert.True(File.Exists(Path.Combine(_folder, RecordingLog.KeptFolderName, row.Clip)));
 
         using var read = JsonDocument.Parse(File.ReadAllText(corpus));
         var entry = Assert.Single(read.RootElement.EnumerateArray());
@@ -165,8 +165,8 @@ public class TheRecordingHasACapTests : IDisposable
     {
         var log = Log();
 
-        var row = log.Add(new FlightCapture(
-            FlightDirection.Spoken,
+        var row = log.Add(new RecordingCapture(
+            RecordingDirection.Spoken,
             Noon,
             WavWriter.ToBytes(new float[16_000], 16_000),
             TimeSpan.FromSeconds(1))
@@ -177,11 +177,11 @@ public class TheRecordingHasACapTests : IDisposable
             Voice = "af_heart",
         });
 
-        log.Keep(row.Id, FlightKeepKind.Pronunciation, "əbzˈɜːvətɹi", Noon);
+        log.Keep(row.Id, RecordingKeepKind.Pronunciation, "əbzˈɜːvətɹi", Noon);
 
-        var corpus = Path.Combine(_folder, FlightLog.KeptFolderName, "pronunciations.json");
+        var corpus = Path.Combine(_folder, RecordingLog.KeptFolderName, "pronunciations.json");
 
-        Assert.False(File.Exists(Path.Combine(_folder, FlightLog.KeptFolderName, "mishears.json")));
+        Assert.False(File.Exists(Path.Combine(_folder, RecordingLog.KeptFolderName, "mishears.json")));
 
         using var read = JsonDocument.Parse(File.ReadAllText(corpus));
         var entry = Assert.Single(read.RootElement.EnumerateArray());
@@ -197,11 +197,11 @@ public class TheRecordingHasACapTests : IDisposable
         var log = Log();
         var row = log.Add(Capture(0, text: "set course for Colonel"));
 
-        log.Keep(row.Id, FlightKeepKind.Mishear, "set course for Colonia", Noon);
-        log.Keep(row.Id, FlightKeepKind.Mishear, "set course for Sol", Noon);
+        log.Keep(row.Id, RecordingKeepKind.Mishear, "set course for Colonia", Noon);
+        log.Keep(row.Id, RecordingKeepKind.Mishear, "set course for Sol", Noon);
 
         using var read = JsonDocument.Parse(
-            File.ReadAllText(Path.Combine(_folder, FlightLog.KeptFolderName, "mishears.json")));
+            File.ReadAllText(Path.Combine(_folder, RecordingLog.KeptFolderName, "mishears.json")));
 
         var entry = Assert.Single(read.RootElement.EnumerateArray());
 
@@ -214,7 +214,7 @@ public class TheRecordingHasACapTests : IDisposable
         var log = Log();
         var row = log.Add(Capture(0));
 
-        log.Keep(row.Id, FlightKeepKind.Mishear, "anything", Noon);
+        log.Keep(row.Id, RecordingKeepKind.Mishear, "anything", Noon);
         log.Empty();
 
         Assert.Empty(log.Rows);
@@ -227,12 +227,12 @@ public class TheRecordingHasACapTests : IDisposable
     {
         // The real cap here rather than the small one, because what this asserts is that the
         // stated number is the one the Commander is shown.
-        var log = Log(FlightLog.CapBytes);
+        var log = Log(RecordingLog.CapBytes);
 
         Assert.Contains("Nothing recorded", log.Summary(), StringComparison.Ordinal);
 
         log.Add(Capture(0));
-        log.Add(Capture(1, FlightDirection.Spoken));
+        log.Add(Capture(1, RecordingDirection.Spoken));
 
         var summary = log.Summary();
 

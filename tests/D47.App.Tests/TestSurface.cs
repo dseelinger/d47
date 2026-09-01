@@ -1,4 +1,4 @@
-﻿using D47.Core;
+using D47.Core;
 using D47.Core.Audio;
 using D47.Core.Callouts;
 using D47.Core.Capabilities;
@@ -59,7 +59,7 @@ public static class TestSurface
     /// run, and a controllable one for the test about what the row shows while it is running.
     /// </param>
     /// <param name="flight">
-    /// What the audio flight recorder has kept, which is what makes the Privacy recording row
+    /// What the audio recorder has kept, which is what makes the Privacy recording row
     /// exist at all (#164). Null on every normal run, and on every test that is not about it.
     /// </param>
     public static (SettingsService Settings, ViewStateStore ViewState, AppPaths Paths, CapabilityRegistry Registry, SecretStore Secrets) CreateFull(
@@ -67,7 +67,7 @@ public static class TestSurface
         D47.Core.Persona.PersonaHost? personas = null,
         IReadOnlyList<VoiceInfo>? voices = null,
         LongPress? localVoice = null,
-        D47.Core.Diagnostics.Flight.FlightLog? flight = null)
+        D47.Core.Diagnostics.Recording.RecordingLog? recording = null)
     {
         var root = TempFolders.Create("d47-app-tests");
         var paths = new AppPaths(root);
@@ -153,7 +153,7 @@ public static class TestSurface
             // rows reached a release that could not start. Same trap the ship cores above are
             // real for, one capability along.
             about: D47.Core.Capabilities.Builtin.AboutSurface.Inert,
-            flight: flight));
+            recording: recording));
 
         built = registry;
 
@@ -175,9 +175,9 @@ public static class TestSurface
         D47.Core.Persona.PersonaHost? personas = null,
         IReadOnlyList<VoiceInfo>? voices = null,
         LongPress? localVoice = null,
-        D47.Core.Diagnostics.Flight.FlightLog? flight = null)
+        D47.Core.Diagnostics.Recording.RecordingLog? recording = null)
     {
-        var (settings, viewState, paths, _, _) = CreateFull(coverage, personas, voices, localVoice, flight);
+        var (settings, viewState, paths, _, _) = CreateFull(coverage, personas, voices, localVoice, recording);
         return (settings, viewState, paths);
     }
 

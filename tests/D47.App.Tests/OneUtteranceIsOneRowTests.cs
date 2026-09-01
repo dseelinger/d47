@@ -1,6 +1,6 @@
-using D47.App.Flight;
+using D47.App.Recording;
 using D47.Core.Audio;
-using D47.Core.Diagnostics.Flight;
+using D47.Core.Diagnostics.Recording;
 using D47.Core.Listening;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -8,7 +8,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The spoken side of the audio flight recorder
+/// The spoken side of the audio recorder
 /// (<a href="https://github.com/dseelinger/d47/issues/164">#164</a>), driven with no audio device.
 /// <para>
 /// The recorder's whole job here is stitching: the tap produces a continuous stream of what went
@@ -81,7 +81,7 @@ public class OneUtteranceIsOneRowTests : IDisposable
     /// <summary>A clock that moves a second per read, so two rows cannot share an identity.</summary>
     private DateTimeOffset Now() => Noon.AddSeconds(Interlocked.Increment(ref _tick));
 
-    private FlightLog Log() => new(_folder, NullLogger.Instance);
+    private RecordingLog Log() => new(_folder, NullLogger.Instance);
 
     private static AudioRequest Speech(string caption) =>
         new()
@@ -100,7 +100,7 @@ public class OneUtteranceIsOneRowTests : IDisposable
         var arbiter = new AudioArbiter(sink, NullLogger<AudioArbiter>.Instance).Start();
         var tap = new Tap();
 
-        using (var recorder = AudioFlightRecorder.Regardless(log, Now, NullLogger.Instance))
+        using (var recorder = AudioRecorder.Regardless(log, Now, NullLogger.Instance))
         {
             recorder.Watch(arbiter, tap);
 
@@ -118,7 +118,7 @@ public class OneUtteranceIsOneRowTests : IDisposable
 
         var row = Assert.Single(log.Rows);
 
-        Assert.Equal(FlightDirection.Spoken, row.Direction);
+        Assert.Equal(RecordingDirection.Spoken, row.Direction);
         Assert.Equal("You are in Sol.", row.Text);
 
         // The two frames that arrived while it was playing, and not the one that arrived
@@ -138,7 +138,7 @@ public class OneUtteranceIsOneRowTests : IDisposable
         var arbiter = new AudioArbiter(sink, NullLogger<AudioArbiter>.Instance).Start();
         var tap = new Tap();
 
-        using (var recorder = AudioFlightRecorder.Regardless(log, Now, NullLogger.Instance))
+        using (var recorder = AudioRecorder.Regardless(log, Now, NullLogger.Instance))
         {
             recorder.Watch(arbiter, tap);
 
@@ -172,7 +172,7 @@ public class OneUtteranceIsOneRowTests : IDisposable
         var arbiter = new AudioArbiter(sink, NullLogger<AudioArbiter>.Instance).Start();
         var tap = new Tap();
 
-        using (var recorder = AudioFlightRecorder.Regardless(log, Now, NullLogger.Instance))
+        using (var recorder = AudioRecorder.Regardless(log, Now, NullLogger.Instance))
         {
             recorder.Watch(arbiter, tap);
 
@@ -208,7 +208,7 @@ public class OneUtteranceIsOneRowTests : IDisposable
         var arbiter = new AudioArbiter(sink, NullLogger<AudioArbiter>.Instance).Start();
         var tap = new Tap();
 
-        using (var recorder = AudioFlightRecorder.Regardless(log, Now, NullLogger.Instance))
+        using (var recorder = AudioRecorder.Regardless(log, Now, NullLogger.Instance))
         {
             recorder.Watch(arbiter, tap);
 
@@ -241,7 +241,7 @@ public class OneUtteranceIsOneRowTests : IDisposable
             samples[i] = 0.5f;
         }
 
-        using (var recorder = AudioFlightRecorder.Regardless(log, Now, NullLogger.Instance))
+        using (var recorder = AudioRecorder.Regardless(log, Now, NullLogger.Instance))
         {
             recorder.Heard(
                 new Utterance(samples, 16_000),
@@ -254,7 +254,7 @@ public class OneUtteranceIsOneRowTests : IDisposable
 
         var row = Assert.Single(log.Rows);
 
-        Assert.Equal(FlightDirection.Heard, row.Direction);
+        Assert.Equal(RecordingDirection.Heard, row.Direction);
         Assert.Equal("set course for Colonel", row.Text);
         Assert.Equal("base.en", row.Model);
         Assert.Equal(TimeSpan.FromMilliseconds(340), row.Elapsed);

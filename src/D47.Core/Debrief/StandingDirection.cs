@@ -127,7 +127,7 @@ public sealed record StandingDirection(string Key, string Text)
     public string? SaidUnder { get; init; }
 
     /// <summary>
-    /// The flight recorder row this line came from, where the recorder was on
+    /// The audio recorder row this line came from, where the recorder was on
     /// (<a href="https://github.com/dseelinger/d47/issues/164">#164</a>) — so a proposal can be
     /// checked against the exact audio rather than against a transcriber's best guess at it. Null
     /// is the ordinary case and costs nothing: the transcript alone is what the pass reads.

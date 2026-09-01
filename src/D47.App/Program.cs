@@ -21,7 +21,7 @@ internal static class Program
         // this line (#180). It is the environment variable's road without a shell: a shortcut can
         // carry a switch, and nothing about the gate moves — unasked-for there is still no row, no
         // pane and no file.
-        Flight.AudioFlightRecorder.ReadCommandLine(args);
+        Recording.AudioRecorder.ReadCommandLine(args);
 
         // A crash must not be silent. Without this the process dies, the ProcessExit handler
         // still runs, and the log ends "stopped cleanly" - so an unhandled exception is

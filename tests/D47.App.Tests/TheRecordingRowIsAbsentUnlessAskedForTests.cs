@@ -7,14 +7,14 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Theming;
 using D47.Core.Audio;
-using D47.Core.Diagnostics.Flight;
+using D47.Core.Diagnostics.Recording;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.App.Tests;
 
 /// <summary>
-/// The audio flight recorder's one settings row, through the surface a Commander actually sees
+/// The audio recorder's one settings row, through the surface a Commander actually sees
 /// (<a href="https://github.com/dseelinger/d47/issues/164">#164</a>).
 /// <para>
 /// Asserted here rather than against the descriptor, because "entirely absent from the surface
@@ -27,7 +27,7 @@ public class TheRecordingRowIsAbsentUnlessAskedForTests : IDisposable
 {
     private const string WipeButton = "Press_privacy_audioFlight";
 
-    private const string ReviewButton = "OpenFlightRecorder";
+    private const string ReviewButton = "OpenAudioRecorder";
 
     private static readonly DateTimeOffset Noon = new(2026, 8, 29, 12, 0, 0, TimeSpan.Zero);
 
@@ -70,10 +70,10 @@ public class TheRecordingRowIsAbsentUnlessAskedForTests : IDisposable
     [AvaloniaFact]
     public void Recording_draws_the_summary_the_review_and_the_wipe()
     {
-        var log = new FlightLog(_folder, NullLogger.Instance);
+        var log = new RecordingLog(_folder, NullLogger.Instance);
 
-        log.Add(new FlightCapture(
-            FlightDirection.Heard,
+        log.Add(new RecordingCapture(
+            RecordingDirection.Heard,
             Noon,
             WavWriter.ToBytes(new float[16_000], 16_000),
             TimeSpan.FromSeconds(1))
@@ -81,12 +81,12 @@ public class TheRecordingRowIsAbsentUnlessAskedForTests : IDisposable
             Text = "set course for Colonia",
         });
 
-        var (settings, viewState, paths) = TestSurface.Create(flight: log);
+        var (settings, viewState, paths) = TestSurface.Create(recording: log);
 
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
 
-        var host = SettingsHost.Open(settings, viewState, paths, flight: (log, () => Noon));
+        var host = SettingsHost.Open(settings, viewState, paths, recording: (log, () => Noon));
 
         Assert.Contains(ReviewButton, ButtonNames(host.View));
         Assert.Contains(WipeButton, ButtonNames(host.View));
@@ -103,10 +103,10 @@ public class TheRecordingRowIsAbsentUnlessAskedForTests : IDisposable
     [AvaloniaFact]
     public void Pressing_the_wipe_deletes_the_recording_and_the_row_says_so()
     {
-        var log = new FlightLog(_folder, NullLogger.Instance);
+        var log = new RecordingLog(_folder, NullLogger.Instance);
 
-        log.Add(new FlightCapture(
-            FlightDirection.Heard,
+        log.Add(new RecordingCapture(
+            RecordingDirection.Heard,
             Noon,
             WavWriter.ToBytes(new float[16_000], 16_000),
             TimeSpan.FromSeconds(1))
@@ -114,12 +114,12 @@ public class TheRecordingRowIsAbsentUnlessAskedForTests : IDisposable
             Text = "set course for Colonia",
         });
 
-        var (settings, viewState, paths) = TestSurface.Create(flight: log);
+        var (settings, viewState, paths) = TestSurface.Create(recording: log);
 
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
 
-        var host = SettingsHost.Open(settings, viewState, paths, flight: (log, () => Noon));
+        var host = SettingsHost.Open(settings, viewState, paths, recording: (log, () => Noon));
 
         var wipe = host.View.GetVisualDescendants()
             .OfType<Button>()

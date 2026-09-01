@@ -210,7 +210,7 @@ public class AudioArbiterTests
     }
 
     [Fact]
-    public void SilenceAnnouncesItselfSoInFlightSynthesisCanBeAbandoned()
+    public void SilenceAnnouncesItselfSoInRecordedSynthesisCanBeAbandoned()
     {
         var (arbiter, _) = Build();
         var announced = 0;

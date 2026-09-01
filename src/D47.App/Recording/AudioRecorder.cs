@@ -1,11 +1,11 @@
 using System.Collections.Concurrent;
 using D47.Core;
 using D47.Core.Audio;
-using D47.Core.Diagnostics.Flight;
+using D47.Core.Diagnostics.Recording;
 using D47.Core.Listening;
 using Microsoft.Extensions.Logging;
 
-namespace D47.App.Flight;
+namespace D47.App.Recording;
 
 /// <summary>
 /// What actually crossed the audio boundary, in both directions, retained in a capped ring
@@ -36,10 +36,10 @@ namespace D47.App.Flight;
 /// "show it before it leaves" cannot make safe enough to be worth it.
 /// </para>
 /// </summary>
-public sealed class AudioFlightRecorder : IDisposable
+public sealed class AudioRecorder : IDisposable
 {
     /// <summary>Set this to <c>1</c> to turn recording, the review pane and the wipe row on.</summary>
-    public const string EnvironmentVariable = "D47_FLIGHT_RECORDER";
+    public const string EnvironmentVariable = "D47_RECORD_AUDIO";
 
     /// <summary>
     /// The same switch with no shell in it
@@ -59,7 +59,28 @@ public sealed class AudioFlightRecorder : IDisposable
     /// refused.
     /// </para>
     /// </summary>
-    public const string Flag = "--flight-recorder";
+    public const string Flag = "--record-audio";
+
+    /// <summary>
+    /// What the switch and the variable were called before
+    /// (<a href="https://github.com/dseelinger/d47/issues/214">#214</a>), still accepted.
+    /// <para>
+    /// <b>Because the only things in the field that carry them are shortcuts a Commander made by
+    /// hand</b>, and the failure of dropping them is the quiet kind: d47 starts normally and
+    /// simply does not record, which is noticed later, while looking for a pane that is not
+    /// there. Neither name is a setting and neither is remembered anywhere, so keeping them costs
+    /// two comparisons.
+    /// </para>
+    /// <para>
+    /// They are not silent, though. Arriving by the old name says so once in the log, with the
+    /// new name in it — a compatibility shim that never mentions itself is one nobody ever stops
+    /// depending on.
+    /// </para>
+    /// </summary>
+    public const string RetiredFlag = "--flight-recorder";
+
+    /// <summary>The variable's own old name. Same reasoning as <see cref="RetiredFlag"/>.</summary>
+    public const string RetiredEnvironmentVariable = "D47_FLIGHT_RECORDER";
 
     /// <summary>
     /// Whether the command line carried <see cref="Flag"/>. Set once from <c>Program.Main</c>,
@@ -68,6 +89,9 @@ public sealed class AudioFlightRecorder : IDisposable
     /// leave a recorder that records with no row to review it from.
     /// </summary>
     internal static bool Switched { get; private set; }
+
+    /// <summary>Whether whatever turned this on used a name that has been retired (#214).</summary>
+    internal static bool ByRetiredName { get; private set; }
 
     /// <summary>
     /// Reads the command line for <see cref="Flag"/>. Called once from <c>Program.Main</c>, above
@@ -80,6 +104,11 @@ public sealed class AudioFlightRecorder : IDisposable
         ArgumentNullException.ThrowIfNull(args);
 
         Switched = args.Contains(Flag, StringComparer.Ordinal);
+
+        var old = args.Contains(RetiredFlag, StringComparer.Ordinal);
+
+        ByRetiredName = old && !Switched;
+        Switched = Switched || old;
     }
 
     /// <summary>
@@ -92,11 +121,11 @@ public sealed class AudioFlightRecorder : IDisposable
     /// <summary>How many synthesis notes are held waiting for their playback to start.</summary>
     private const int NoteMemory = 64;
 
-    private readonly FlightLog _log;
+    private readonly RecordingLog _log;
     private readonly Func<DateTimeOffset> _now;
     private readonly ILogger _logger;
     private readonly Lock _gate = new();
-    private readonly BlockingCollection<FlightCapture> _pending = [];
+    private readonly BlockingCollection<RecordingCapture> _pending = [];
     private readonly Thread _writer;
     private readonly Queue<SynthesisNote> _notes = new();
 
@@ -105,7 +134,7 @@ public sealed class AudioFlightRecorder : IDisposable
     private Open? _open;
     private volatile bool _closed;
 
-    private AudioFlightRecorder(FlightLog log, Func<DateTimeOffset> now, ILogger logger)
+    private AudioRecorder(RecordingLog log, Func<DateTimeOffset> now, ILogger logger)
     {
         _log = log;
         _now = now;
@@ -118,7 +147,7 @@ public sealed class AudioFlightRecorder : IDisposable
         _writer = new Thread(Write)
         {
             IsBackground = true,
-            Name = "d47 flight recorder",
+            Name = "d47 audio recorder",
         };
 
         _writer.Start();
@@ -144,7 +173,7 @@ public sealed class AudioFlightRecorder : IDisposable
     /// A recorder if this process asked for one, otherwise null — so every caller's check is
     /// "is there one", and there is no disabled object quietly doing nothing on the audio thread.
     /// </summary>
-    public static AudioFlightRecorder? Create(AppPaths paths, Func<DateTimeOffset> now, ILogger logger)
+    public static AudioRecorder? Create(AppPaths paths, Func<DateTimeOffset> now, ILogger logger)
     {
         ArgumentNullException.ThrowIfNull(paths);
         ArgumentNullException.ThrowIfNull(logger);
@@ -154,22 +183,40 @@ public sealed class AudioFlightRecorder : IDisposable
             return null;
         }
 
+        // **The folder on disk keeps the old word** (#214). Everything else in this family was
+        // renamed because "flight" competes with Elite's own vocabulary on every read — but this
+        // string is where a Commander's clips already are, and renaming it would either orphan
+        // them or need a migration, which is a different act from a rename. Same reasoning as the
+        // settings key beside it, which is frozen for the same kind of reason.
         var folder = Path.Combine(paths.Data, "flight");
 
         logger.LogInformation(
-            "The audio flight recorder is on; up to {Megabytes} MB is retained in {Folder}",
-            FlightLog.CapBytes / (1024 * 1024),
+            "The audio recorder is on; up to {Megabytes} MB is retained in {Folder}",
+            RecordingLog.CapBytes / (1024 * 1024),
             folder);
 
-        return Regardless(new FlightLog(folder, logger), now, logger);
+        if (AskedByItsOldName)
+        {
+            // Said once, with the new name in it. A shim that never mentions itself is one
+            // nobody ever stops depending on (#214).
+            logger.LogInformation(
+                "That was asked for by its old name. {Flag} and {Variable} are what they are "
+                + "called now; {RetiredFlag} and {RetiredVariable} still work.",
+                Flag,
+                EnvironmentVariable,
+                RetiredFlag,
+                RetiredEnvironmentVariable);
+        }
+
+        return Regardless(new RecordingLog(folder, logger), now, logger);
     }
 
     /// <summary>
     /// A recorder without consulting the environment, so a test can exercise the stitching
     /// without setting a process-wide variable that every other test in the run would also see.
     /// </summary>
-    internal static AudioFlightRecorder Regardless(
-        FlightLog log,
+    internal static AudioRecorder Regardless(
+        RecordingLog log,
         Func<DateTimeOffset> now,
         ILogger logger) =>
         new(log, now, logger);
@@ -179,10 +226,19 @@ public sealed class AudioFlightRecorder : IDisposable
     /// neither is remembered, so it is off again the next time d47 starts on its own.
     /// </summary>
     public static bool Enabled =>
-        Switched || Environment.GetEnvironmentVariable(EnvironmentVariable) == "1";
+        Switched
+        || Environment.GetEnvironmentVariable(EnvironmentVariable) == "1"
+        || Environment.GetEnvironmentVariable(RetiredEnvironmentVariable) == "1";
+
+    /// <summary>
+    /// Whether recording was turned on by a name that has been retired, so the log can say what
+    /// the name is now (#214). Asked once, where the recorder is built.
+    /// </summary>
+    private static bool AskedByItsOldName =>
+        ByRetiredName || Environment.GetEnvironmentVariable(RetiredEnvironmentVariable) == "1";
 
     /// <summary>What has been recorded, for the review pane and the settings row.</summary>
-    public FlightLog Log => _log;
+    public RecordingLog Log => _log;
 
     /// <summary>
     /// Starts listening to the two seams. Separate from construction for the reason the arbiter's
@@ -216,8 +272,8 @@ public sealed class AudioFlightRecorder : IDisposable
 
         var wav = WavWriter.ToBytes(utterance.Samples, utterance.SampleRate);
 
-        Queue(new FlightCapture(
-            FlightDirection.Heard,
+        Queue(new RecordingCapture(
+            RecordingDirection.Heard,
             _now(),
             wav,
             utterance.Duration)
@@ -253,7 +309,7 @@ public sealed class AudioFlightRecorder : IDisposable
     /// </summary>
     private void OnActivity(AudioActivity activity)
     {
-        FlightCapture? finished = null;
+        RecordingCapture? finished = null;
 
         lock (_gate)
         {
@@ -343,7 +399,7 @@ public sealed class AudioFlightRecorder : IDisposable
         return _notes.Dequeue();
     }
 
-    private FlightCapture? Close(Open open)
+    private RecordingCapture? Close(Open open)
     {
         var pcm = open.Pcm.ToArray();
         open.Pcm.Dispose();
@@ -357,8 +413,8 @@ public sealed class AudioFlightRecorder : IDisposable
 
         var format = open.Format ?? AudioFormat.Standard;
 
-        return new FlightCapture(
-            FlightDirection.Spoken,
+        return new RecordingCapture(
+            RecordingDirection.Spoken,
             open.When,
             WavWriter.ToBytes(pcm, format),
             format.DurationOf(pcm.Length))
@@ -388,7 +444,7 @@ public sealed class AudioFlightRecorder : IDisposable
             {
                 // A full disk, or a folder the Commander has open. Recording is a workbench aid
                 // and stopping the app over one would be the wrong trade.
-                _logger.LogWarning(ex, "Could not write a flight recorder clip");
+                _logger.LogWarning(ex, "Could not write a audio recorder clip");
             }
         }
     }
@@ -413,7 +469,7 @@ public sealed class AudioFlightRecorder : IDisposable
             tap.Rendered -= OnRendered;
         }
 
-        FlightCapture? last = null;
+        RecordingCapture? last = null;
 
         lock (_gate)
         {
@@ -434,7 +490,7 @@ public sealed class AudioFlightRecorder : IDisposable
 
         if (!_writer.Join(TimeSpan.FromSeconds(5)))
         {
-            _logger.LogWarning("The flight recorder was still writing at shutdown; some clips were dropped");
+            _logger.LogWarning("The audio recorder was still writing at shutdown; some clips were dropped");
         }
 
         _pending.Dispose();
@@ -445,7 +501,7 @@ public sealed class AudioFlightRecorder : IDisposable
     /// right answer there: what arrives after shutdown has begun is a clip nobody will review,
     /// and throwing out of the audio thread's callback would be a worse trade than losing it.
     /// </summary>
-    private void Queue(FlightCapture capture)
+    private void Queue(RecordingCapture capture)
     {
         if (_closed)
         {

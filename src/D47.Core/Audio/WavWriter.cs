@@ -3,7 +3,7 @@ namespace D47.Core.Audio;
 /// <summary>
 /// The other half of <see cref="WavReader"/>: 16-bit PCM out, as a file anything can open.
 /// <para>
-/// It exists for the audio flight recorder (<a href="https://github.com/dseelinger/d47/issues/164">#164</a>),
+/// It exists for the audio recorder (<a href="https://github.com/dseelinger/d47/issues/164">#164</a>),
 /// which retains what crossed the audio boundary in both directions. A retained clip has to be
 /// playable in whatever the Commander already has — the whole point of keeping it is that a
 /// person can listen to it and hear what d47 heard — so it is a plain WAV rather than a raw

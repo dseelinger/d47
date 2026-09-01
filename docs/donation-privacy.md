@@ -83,7 +83,7 @@ for one, and why there is no backend beyond the store that use needs.
 - **Your own speech, unless you choose it.** Per donation, per incident, as a decision you make on
   the window rather than a default you have to notice.
 - **Any audio at all.** Voice is biometric, and no donation has ever carried a recording. The audio
-  flight recorder writes only to your own disk and its clips can never join a donation.
+  audio recorder writes only to your own disk and its clips can never join a donation.
 - **Anything ambient.** No crash reporter, no analytics, no metrics endpoint, and the donation
   endpoint keeps no request log — so there is no record anywhere of who reached it or when.
 

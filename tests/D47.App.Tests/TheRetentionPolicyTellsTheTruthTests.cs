@@ -2,7 +2,7 @@ using D47.App.Logging;
 using D47.Core;
 using D47.Core.Configuration;
 using D47.Core.Diagnostics;
-using D47.Core.Diagnostics.Flight;
+using D47.Core.Diagnostics.Recording;
 using Xunit;
 
 namespace D47.App.Tests;
@@ -63,7 +63,7 @@ public class TheRetentionPolicyTellsTheTruthTests
     }
 
     /// <summary>
-    /// The flight recorder's ring is the sharpest number on the page — a rolling recording of the
+    /// The audio recorder's ring is the sharpest number on the page — a rolling recording of the
     /// audio in somebody's home — and it is the one #168 said must never be a number a person
     /// remembers to apply.
     /// </summary>
@@ -71,7 +71,7 @@ public class TheRetentionPolicyTellsTheTruthTests
     public void ThePageStatesTheAudioRingTheWriterEnforces()
     {
         Assert.Contains(
-            $"**{FlightLog.CapBytes / (1024 * 1024)} MB**",
+            $"**{RecordingLog.CapBytes / (1024 * 1024)} MB**",
             Policy,
             StringComparison.Ordinal);
     }

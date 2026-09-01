@@ -1,4 +1,4 @@
-﻿using System.Threading.Channels;
+using System.Threading.Channels;
 using D47.Core.Speech;
 using Microsoft.Extensions.Logging;
 
@@ -116,7 +116,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
 
     /// <summary>
     /// Told what each sentence was rendered by, or null when nobody is recording. Null on every
-    /// ordinary run: the flight recorder is the only caller, it is off unless asked for, and the
+    /// ordinary run: the audio recorder is the only caller, it is off unless asked for, and the
     /// phoneme trace behind this is not computed at all while it is.
     /// </summary>
     private readonly Action<SynthesisNote>? _noted;

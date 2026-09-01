@@ -19,7 +19,7 @@ namespace D47.Tts.Tests;
 public class ConcurrencyIsBoundedTests
 {
     [Fact]
-    public async Task NoMoreThanThreeSynthesesAreInFlightAtOnce()
+    public async Task NoMoreThanThreeSynthesesAreInRecordingAtOnce()
     {
         var concurrent = 0;
         var peak = 0;

@@ -8,14 +8,14 @@ using Avalonia.VisualTree;
 using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Audio;
-using D47.Core.Diagnostics.Flight;
+using D47.Core.Diagnostics.Recording;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.App.Tests;
 
 /// <summary>
-/// The half of the audio flight recorder that earns it
+/// The half of the audio recorder that earns it
 /// (<a href="https://github.com/dseelinger/d47/issues/164">#164</a>): turning a row into a
 /// regression test, from the window a Commander does it in.
 /// <para>
@@ -43,16 +43,16 @@ public class NothingBecomesATestCaseWithoutYouTests : IDisposable
         }
     }
 
-    private FlightLog Log() => new(_folder, NullLogger.Instance);
+    private RecordingLog Log() => new(_folder, NullLogger.Instance);
 
-    private static FlightCapture Heard(string text) =>
-        new(FlightDirection.Heard, Noon, WavWriter.ToBytes(new float[16_000], 16_000), TimeSpan.FromSeconds(1))
+    private static RecordingCapture Heard(string text) =>
+        new(RecordingDirection.Heard, Noon, WavWriter.ToBytes(new float[16_000], 16_000), TimeSpan.FromSeconds(1))
         {
             Text = text,
         };
 
-    private static FlightCapture Said(string text, string phonemes) =>
-        new(FlightDirection.Spoken, Noon, WavWriter.ToBytes(new float[16_000], 16_000), TimeSpan.FromSeconds(1))
+    private static RecordingCapture Said(string text, string phonemes) =>
+        new(RecordingDirection.Spoken, Noon, WavWriter.ToBytes(new float[16_000], 16_000), TimeSpan.FromSeconds(1))
         {
             Text = text,
             Phonemes = phonemes,
@@ -63,12 +63,12 @@ public class NothingBecomesATestCaseWithoutYouTests : IDisposable
     /// A themed window, for the reason the coverage list's tests are themed: without it every
     /// dynamic resource falls back and the surface under test is not the drawn one.
     /// </summary>
-    private static FlightRecorderWindow Open(FlightLog log)
+    private static AudioRecorderWindow Open(RecordingLog log)
     {
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(TestSurface.Create().Settings);
 
-        var window = new FlightRecorderWindow(log, () => Noon);
+        var window = new AudioRecorderWindow(log, () => Noon);
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
@@ -80,17 +80,17 @@ public class NothingBecomesATestCaseWithoutYouTests : IDisposable
         surface.GetVisualDescendants().OfType<T>().Single(found => found.Name == name);
 
     /// <summary>Picks the first row in the list, which is what puts a detail pane on screen.</summary>
-    private static void Select(FlightRecorderWindow window)
+    private static void Select(AudioRecorderWindow window)
     {
         window.GetVisualDescendants()
             .OfType<Button>()
-            .First(button => button.Name == "FlightRow")
+            .First(button => button.Name == "RecordingRow")
             .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
         Dispatcher.UIThread.RunJobs();
     }
 
-    private static void Press(FlightRecorderWindow window, string name)
+    private static void Press(AudioRecorderWindow window, string name)
     {
         Named<Button>(window, name).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
@@ -105,17 +105,17 @@ public class NothingBecomesATestCaseWithoutYouTests : IDisposable
         var window = Open(log);
 
         Select(window);
-        Named<TextBox>(window, "FlightExpected").Text = "set course for Colonia";
-        Press(window, "FlightKeep");
+        Named<TextBox>(window, "RecordingExpected").Text = "set course for Colonia";
+        Press(window, "RecordingKeep");
 
         var row = Assert.Single(log.Rows);
 
         Assert.NotNull(row.Kept);
-        Assert.Equal(FlightKeepKind.Mishear, row.Kept.Kind);
+        Assert.Equal(RecordingKeepKind.Mishear, row.Kept.Kind);
         Assert.Equal("set course for Colonia", row.Kept.Expected);
 
         using var corpus = JsonDocument.Parse(
-            File.ReadAllText(Path.Combine(_folder, FlightLog.KeptFolderName, "mishears.json")));
+            File.ReadAllText(Path.Combine(_folder, RecordingLog.KeptFolderName, "mishears.json")));
 
         Assert.Single(corpus.RootElement.EnumerateArray());
 
@@ -135,13 +135,13 @@ public class NothingBecomesATestCaseWithoutYouTests : IDisposable
         var window = Open(log);
 
         Select(window);
-        Named<TextBox>(window, "FlightExpected").Text = "əbzˈɜːvətɹi";
-        Press(window, "FlightKeep");
+        Named<TextBox>(window, "RecordingExpected").Text = "əbzˈɜːvətɹi";
+        Press(window, "RecordingKeep");
 
         var row = Assert.Single(log.Rows);
 
-        Assert.Equal(FlightKeepKind.Pronunciation, row.Kept!.Kind);
-        Assert.True(File.Exists(Path.Combine(_folder, FlightLog.KeptFolderName, "pronunciations.json")));
+        Assert.Equal(RecordingKeepKind.Pronunciation, row.Kept!.Kind);
+        Assert.True(File.Exists(Path.Combine(_folder, RecordingLog.KeptFolderName, "pronunciations.json")));
 
         window.Close();
     }
@@ -159,14 +159,14 @@ public class NothingBecomesATestCaseWithoutYouTests : IDisposable
         var window = Open(log);
 
         Select(window);
-        Press(window, "FlightKeep");
+        Press(window, "RecordingKeep");
 
         Assert.Null(Assert.Single(log.Rows).Kept);
-        Assert.False(Directory.Exists(Path.Combine(_folder, FlightLog.KeptFolderName)));
+        Assert.False(Directory.Exists(Path.Combine(_folder, RecordingLog.KeptFolderName)));
 
         Assert.Contains(
             "Type what you actually said first",
-            Named<TextBlock>(window, "FlightKept").Text ?? string.Empty,
+            Named<TextBlock>(window, "RecordingKept").Text ?? string.Empty,
             StringComparison.Ordinal);
 
         window.Close();

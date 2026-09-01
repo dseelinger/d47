@@ -148,7 +148,7 @@ public sealed class SpendWindow : Window
     /// <para>
     /// <b>This is the one eraser in the app that asks first, and the departure is deliberate.</b>
     /// Every other one is an <c>Info</c> settings row with a <c>Press</c> and no confirmation:
-    /// memory, flight recordings, personas. Their safety is that the tool surface cannot reach
+    /// memory, audio recordings, personas. Their safety is that the tool surface cannot reach
     /// them and no spoken phrase does — not a dialog. This one was asked for here, which is the
     /// right place because it is where the numbers are, and that puts a control that erases money
     /// history somewhere a stray click reaches. So it names the window and the figure before it

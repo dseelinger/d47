@@ -1,7 +1,7 @@
-namespace D47.Core.Diagnostics.Flight;
+namespace D47.Core.Diagnostics.Recording;
 
 /// <summary>Which way across the audio boundary one row went.</summary>
-public enum FlightDirection
+public enum RecordingDirection
 {
     /// <summary>The exact buffer handed to the transcriber, beside what it claimed it heard.</summary>
     Heard,
@@ -11,7 +11,7 @@ public enum FlightDirection
 }
 
 /// <summary>What a kept row was kept as, which decides which corpus it joins.</summary>
-public enum FlightKeepKind
+public enum RecordingKeepKind
 {
     /// <summary>A mishear: (WAV, the words that were actually said). Corpus replay, for audio.</summary>
     Mishear,
@@ -30,7 +30,7 @@ public enum FlightKeepKind
 /// What it should have been — the words for a mishear, the IPA for a mispronunciation. Typed by
 /// the Commander: it is the half of a test case that the recording cannot supply.
 /// </param>
-public sealed record FlightKeep(FlightKeepKind Kind, DateTimeOffset When, string Expected);
+public sealed record RecordingKeep(RecordingKeepKind Kind, DateTimeOffset When, string Expected);
 
 /// <summary>
 /// One utterance in one direction: the clip, the text, and everything that would otherwise have
@@ -44,12 +44,12 @@ public sealed record FlightKeep(FlightKeepKind Kind, DateTimeOffset When, string
 /// voice has phonemes to state, because only the local voice is given them by d47.
 /// </para>
 /// </summary>
-public sealed record FlightRow
+public sealed record RecordingRow
 {
     /// <summary>Sortable, unique, and the clip's file name. Oldest sorts first by construction.</summary>
     public required string Id { get; init; }
 
-    public required FlightDirection Direction { get; init; }
+    public required RecordingDirection Direction { get; init; }
 
     public required DateTimeOffset When { get; init; }
 
@@ -82,14 +82,14 @@ public sealed record FlightRow
     /// window on purpose — that is what keeping means — so it is exempt from the cap and is
     /// copied out of the ring rather than referenced inside it.
     /// </summary>
-    public FlightKeep? Kept { get; init; }
+    public RecordingKeep? Kept { get; init; }
 
     /// <summary>The clip's file name inside the recorder's folder.</summary>
     public string Clip => $"{Id}.wav";
 
     /// <summary>One line, for a list. The direction reads as an arrow because that is the fact.</summary>
     public string Line =>
-        $"{(Direction == FlightDirection.Heard ? "heard" : "said")}  "
+        $"{(Direction == RecordingDirection.Heard ? "heard" : "said")}  "
         + $"{When:HH:mm:ss}  {Duration.TotalSeconds:0.0}s  "
         + (Text is { Length: > 0 } said ? said : "(nothing)");
 }

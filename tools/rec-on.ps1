@@ -1,10 +1,10 @@
 ﻿<#
 .SYNOPSIS
-    Starts the installed d47 with the audio flight recorder on, for that run only.
+    Starts the installed d47 with the audio recorder on, for that run only.
 
 .DESCRIPTION
     The recorder has been reachable since #164 and the road to it was a shell incantation:
-    `$env:D47_FLIGHT_RECORDER = '1'` followed by the full path to the executable, which requires
+    `$env:D47_RECORD_AUDIO = '1'` followed by the full path to the executable, which requires
     knowing PowerShell's syntax, knowing where d47 is installed, and knowing that the variable
     only reaches a d47 started from that same shell. Nobody launching from the Start menu ever
     gets there, and the first real attempt to use the recorder failed on exactly that (#180).
@@ -31,8 +31,8 @@
     so a second install can be targeted rather than assumed.
 
 .EXAMPLE
-    flight-on
-    flight-on -Restart
+    rec-on
+    rec-on -Restart
 #>
 
 param(
@@ -68,12 +68,12 @@ if ($running.Count -gt 0) {
     $running | Wait-Process -Timeout 20
 }
 
-Write-Step 'Starting d47 with the flight recorder on'
+Write-Step 'Starting d47 with the audio recorder on'
 
 # The switch rather than the variable, because a switch survives the launch: an environment
 # variable set here reaches only a child of this shell, which is how the road being replaced came
 # to depend on where d47 was started from.
-Start-Process -FilePath $exe -ArgumentList '--flight-recorder'
+Start-Process -FilePath $exe -ArgumentList '--record-audio'
 
 Write-Note "What crossed the audio boundary is kept in $(Join-Path $InstallRoot 'data\flight')."
 Write-Note 'Review it, and wipe it, in Settings under Privacy: "Recorded audio".'

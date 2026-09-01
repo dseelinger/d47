@@ -25,7 +25,14 @@ public static class PrivacyCapability
     /// process that was asked to record, so on an ordinary run the recorder is absent from the
     /// surface rather than present and empty.
     /// </summary>
-    public const string AudioFlightKey = "privacy.audioFlight";
+    /// <summary>
+    /// The wipe row's key. <b>The string keeps the old word</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/214">#214</a>) because
+    /// <c>settings.json</c> is append-only: a renamed key is a Commander's own answer silently
+    /// dropped. The constant beside it says what the feature is called now, which is the half
+    /// that can move.
+    /// </summary>
+    public const string AudioRecordingKey = "privacy.audioFlight";
 
     /// <summary>
     /// Where a donation is posted (<a href="https://github.com/dseelinger/d47/issues/175">#175</a>).
@@ -56,7 +63,7 @@ public static class PrivacyCapability
     /// rather than offering a button that erases nothing.
     /// </param>
     /// <param name="flight">
-    /// The audio flight recorder's record, or null in a process that was not asked to record —
+    /// The audio recorder's record, or null in a process that was not asked to record —
     /// which is every ordinary run. Null leaves the row out entirely rather than showing one
     /// that says nothing has been recorded, because a Commander who never turned this on should
     /// not have to read that d47 could have.
@@ -86,7 +93,7 @@ public static class PrivacyCapability
 
         // Appended, like every optional here: the composition root passes these positionally, so
         // a parameter added in the middle silently rebinds every argument after it.
-        Diagnostics.Flight.FlightLog? flight = null,
+        Diagnostics.Recording.RecordingLog? recording = null,
         string? donorTokenFile = null,
 
         // Appended, like every optional here and for the reason the parameter above records: the
@@ -147,7 +154,7 @@ public static class PrivacyCapability
                 },
             ],
             Settings = BuildSettingRows(
-                KeyPresent, InaraKeyPresent, canSearch, memories, flight, donorTokenFile, forgetDonations),
+                KeyPresent, InaraKeyPresent, canSearch, memories, recording, donorTokenFile, forgetDonations),
         };
     }
 
@@ -156,7 +163,7 @@ public static class PrivacyCapability
         Func<bool> inaraKeyPresent,
         Func<bool> searchAvailable,
         Memory.MemoryBook? memories,
-        Diagnostics.Flight.FlightLog? flight,
+        Diagnostics.Recording.RecordingLog? recording,
         string? donorTokenFile,
         LongPress? forgetDonations)
     {
@@ -230,15 +237,15 @@ public static class PrivacyCapability
         // Registered only where something is recording. A run that was not asked to record has
         // no row here at all, which is the whole of what "absent from the surface unless enabled"
         // means.
-        if (flight is not null)
+        if (recording is not null)
         {
             rows.Add(new SettingRow
             {
-                Key = AudioFlightKey,
+                Key = AudioRecordingKey,
                 Label = "Recorded audio",
                 Help =
-                    "What the flight recorder has kept of this flight: the utterances handed to the "
-                    + $"transcriber, and what left the speakers. At most {Diagnostics.Flight.FlightLog.CapBytes / (1024 * 1024)} MB "
+                    "What the audio recorder has kept of this recording: the utterances handed to the "
+                    + $"transcriber, and what left the speakers. At most {Diagnostics.Recording.RecordingLog.CapBytes / (1024 * 1024)} MB "
                     + "is held, oldest dropped first, and nothing kept as a test case is dropped. It stays "
                     + "on this machine — it is never sent anywhere and never joins a donated excerpt, "
                     + "because voice is biometric. Deleting takes the kept test cases with it.",
@@ -248,8 +255,8 @@ public static class PrivacyCapability
                 // aid rather than something a Commander configures, so it gets no section in the
                 // public capability page.
                 PressLabel = "Delete every recording",
-                Press = flight.Empty,
-                Binding = new SettingBinding { Read = _ => flight.Summary() },
+                Press = recording.Empty,
+                Binding = new SettingBinding { Read = _ => recording.Summary() },
             });
         }
 

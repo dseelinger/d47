@@ -29,6 +29,36 @@ history to match today's layout would be the one edit it must never take.
 
 ## 0.99.0 — 2026-09-01 — Three columns, two groups, and a release that asks first
 
+### The flight recorder is the audio recorder (#214)
+
+It borrowed aviation's black-box metaphor inside a product about aviation, so the borrowed sense
+and Elite's literal one competed on every read: *"It takes me about 20 seconds to remember that
+you're using that in reference to FlightRecorder."* `FlightRow` was the worst of them — one row is
+one utterance, and nothing in the word "flight" suggests text, phonemes, a provider, a voice, a
+direction and a clip.
+
+`AudioFlightRecorder` is `AudioRecorder`, `FlightLog` is `RecordingLog`, `FlightRow` is
+`RecordingRow`, and the rest of the family follows. `D47_FLIGHT_RECORDER` is `D47_RECORD_AUDIO`,
+`--flight-recorder` is `--record-audio`, and `flight-on` is `rec-on`.
+
+**The old switch and the old variable still work.** The only things in the field carrying them are
+desktop shortcuts made by hand, and dropping them fails the quiet way — d47 starts normally and
+simply does not record, which you notice later, looking for a pane that is not there. A run started
+by the old name says once in the log what the name is now, because a shim that never mentions
+itself is one nobody stops depending on.
+
+**Two places keep the old word on purpose.** The settings key `privacy.audioFlight`, because
+`settings.json` is append-only and a renamed key is your own answer silently dropped; and the clips
+folder `data\flight\`, because renaming it would orphan recordings you already have. Both say so
+where they are written.
+
+**Elite's own flight vocabulary did not move**, which was the whole risk: 293 `Flight` sites across
+43 files are two unrelated families, and `FlightMode`, `FlightAssist` and the flight controls page
+belong to the ship rather than the recorder. Renamed by identifier rather than by word, mapped
+through placeholders once per file so no replacement could re-consume its own output, then read by
+hand — which is how the one misfiled case turned up: the three `FlightKey` sites were the tail of
+`AudioFlightKey` and belonged to the recorder after all.
+
 ### The voice build picker says the wait in seconds, not multiples of realtime (#216)
 
 `uint8 — 169 MB, about 5.4× realtime` is now `uint8 — 169 MB, about 1.3 s before it speaks`.

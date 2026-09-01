@@ -34,7 +34,7 @@ namespace D47.App.Controls;
 /// <b>Each proposal carries the sentence it came from.</b> That is what makes it checkable rather
 /// than merely plausible — a Commander reading "Shorter answers in combat." underneath their own
 /// "no, shorter answers when I'm in a fight" can tell at a glance whether d47 understood them.
-/// Where the audio flight recorder was running, the clip id is named too, so the proposal can be
+/// Where the audio recorder was running, the clip id is named too, so the proposal can be
 /// checked against what was actually said rather than against a transcriber's best guess at it.
 /// </para>
 /// <para>
@@ -273,7 +273,7 @@ public sealed class DebriefWindow : Window
             // Where the recorder was running. The transcript alone is enough to draft from; this
             // is what lets a Commander check the draft against the audio rather than against a
             // transcriber's guess at it (#164).
-            stack.Children.Add(Muted($"Recorded as {clip} in the flight recorder."));
+            stack.Children.Add(Muted($"Recorded as {clip} in the audio recorder."));
         }
 
         stack.Children.Add(new StackPanel

@@ -32,8 +32,8 @@ runs, so there is data here that belongs to somebody else. Who holds it and on w
 | The readable log | `data\logs\d47-*.log` | **90 days**, and at most **4 MB** of any one day | `LoggingSetup` |
 | The machine-parsing log | `data\logs\d47-*.jsonl` | **14 days**, and at most **4 MB** of any one day | `LoggingSetup` |
 | What d47 remembers about you | `data\memories.json` | **90 days** by default — the row says *Three months* — and *Never* is one of the choices | `MemoryStore.Expire`, on the tick |
-| Audio flight recorder clips | `data\flight\` | a rolling **200 MB**, oldest evicted first on every write | `FlightLog` |
-| Flight rows you pressed *keep* on | `data\flight\kept\` | **until the wipe**, and eviction never reaches them | `FlightLog`, deliberately |
+| Audio recorder clips | `data\flight\` | a rolling **200 MB**, oldest evicted first on every write | `RecordingLog` |
+| Recordings you pressed *keep* on | `data\flight\kept\` | **until the wipe**, and eviction never reaches them | `RecordingLog`, deliberately |
 | Snapshots of `data\` | `data\backups\*.zip` | **the last 10 deploys**, one per deploy | `tools/data-backup.ps1` |
 | A downloaded update | `data\updates\` | **until the first start after it installs** | `UpdateInstaller` |
 | Your own copies of what you donated | `data\donations\` | **kept until you delete it** | nothing — it is your receipt |
@@ -51,8 +51,8 @@ with a runaway loop in it, and ninety days multiplied by an unbounded day is unb
 hits the ceiling stops rather than rolling on to a second file, so the pile cannot exceed 360 MB of
 `.log` and 56 MB of `.jsonl` however badly a day goes.
 
-**The flight recorder is the sharpest thing on this page and it is off unless you turn it on.**
-It exists only while `D47_FLIGHT_RECORDER=1` is set, and what it holds is a rolling recording of
+**The audio recorder is the sharpest thing on this page and it is off unless you turn it on.**
+It exists only while `D47_RECORD_AUDIO=1` is set, and what it holds is a rolling recording of
 audio in your home: what the transcriber was handed, and what came out of the speakers. That is
 more sensitive than the journal, the log, or anything else d47 has ever written down, which is why
 the cap is enforced by the code that writes rather than by anybody's discipline, and why it shipped
@@ -112,7 +112,7 @@ anywhere, and deleting the file is the whole of deleting them.
 
 - **Another player's words.** In-game chat is dropped from a donation rather than scrubbed, because
   a donor cannot consent on somebody else's behalf.
-- **A microphone between utterances.** The flight recorder sees the gated utterance the transcriber
+- **A microphone between utterances.** The audio recorder sees the gated utterance the transcriber
   was given and nothing else; the half-second ring push-to-talk runs on at rest is never written.
 - **Audio in a donation.** Voice is biometric, and it is the one payload that showing it before it
   leaves cannot make safe enough to be worth it — so no excerpt and no journal history has ever
@@ -124,8 +124,8 @@ anywhere, and deleting the file is the whole of deleting them.
 
 - **The memory store** has an expiry setting of its own — *Three months* out of the box, and a
   month, a year or *Never* are the other choices — and a wipe on the Privacy panel.
-- **The flight recorder** has a wipe on the same panel, and stops existing the moment
-  `D47_FLIGHT_RECORDER` is unset.
+- **The audio recorder** has a wipe on the same panel, and stops existing the moment
+  `D47_RECORD_AUDIO` is unset.
 - **The logs and the snapshots** are files. Delete them; d47 writes the next one and nothing breaks.
 - **A donation you have already sent** is the one thing you cannot reach yourself. The
   [donation privacy notice](donation-privacy.html) says how to have it deleted, and your receipt in

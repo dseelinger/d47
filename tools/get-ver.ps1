@@ -58,7 +58,7 @@
     used to ask for it has nothing left to ask for — and it is taken rather than refused because
     it appears in this file's own examples and in the habit of anybody who read them.
 
-    **`flight-on` is deliberately not changed with them.** Its refusal is a different animal: d47
+    **`rec-on` is deliberately not changed with them.** Its refusal is a different animal: d47
     holds a single-instance mutex, so a second copy launched with the recorder switch surfaces the
     one already running rather than recording, and going ahead would look exactly like the switch
     not working. That is why its escape hatch is named `-Restart` rather than `-Force`.

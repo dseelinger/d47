@@ -1,4 +1,4 @@
-using D47.App.Flight;
+using D47.App.Recording;
 using D47.Core;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -6,11 +6,11 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The audio flight recorder is reachable without a shell
+/// The audio recorder is reachable without a shell
 /// (<a href="https://github.com/dseelinger/d47/issues/180">#180</a>).
 /// <para>
 /// The first real attempt to use #164 failed on the road rather than on the recorder: the
-/// instruction was <c>D47_FLIGHT_RECORDER=1</c>, which is bash prefix syntax on a Windows machine,
+/// instruction was <c>D47_RECORD_AUDIO=1</c>, which is bash prefix syntax on a Windows machine,
 /// and the working incantation needed PowerShell's spelling, the install path, and the knowledge
 /// that a variable only reaches a d47 started from that same shell. A switch needs none of the
 /// three and a desktop shortcut can carry it.
@@ -35,7 +35,7 @@ public class TheRecorderHasARoadWithNoShellInItTests : IDisposable
     {
         GC.SuppressFinalize(this);
 
-        AudioFlightRecorder.ReadCommandLine([]);
+        AudioRecorder.ReadCommandLine([]);
 
         if (Directory.Exists(_folder))
         {
@@ -47,9 +47,9 @@ public class TheRecorderHasARoadWithNoShellInItTests : IDisposable
     [Fact]
     public void TheSwitchTurnsRecordingOn()
     {
-        AudioFlightRecorder.ReadCommandLine(["--flight-recorder"]);
+        AudioRecorder.ReadCommandLine(["--record-audio"]);
 
-        Assert.True(AudioFlightRecorder.Enabled);
+        Assert.True(AudioRecorder.Enabled);
     }
 
     /// <summary>
@@ -59,9 +59,9 @@ public class TheRecorderHasARoadWithNoShellInItTests : IDisposable
     [Fact]
     public void AnOrdinaryLaunchLeavesItOff()
     {
-        AudioFlightRecorder.ReadCommandLine(["--selftest"]);
+        AudioRecorder.ReadCommandLine(["--selftest"]);
 
-        Assert.False(AudioFlightRecorder.Enabled);
+        Assert.False(AudioRecorder.Enabled);
     }
 
     /// <summary>
@@ -70,30 +70,56 @@ public class TheRecorderHasARoadWithNoShellInItTests : IDisposable
     /// recording for a reason nobody typed.
     /// </summary>
     [Theory]
-    [InlineData("--flight-recorderer")]
+    [InlineData("--record-audioer")]
+    [InlineData("--record")]
+    [InlineData("--Record-Audio")]
+    [InlineData("record-audio")]
     [InlineData("--flight-record")]
     [InlineData("--Flight-Recorder")]
     [InlineData("flight-recorder")]
     public void ANearMissIsNotTheSwitch(string argument)
     {
-        AudioFlightRecorder.ReadCommandLine([argument]);
+        AudioRecorder.ReadCommandLine([argument]);
 
-        Assert.False(AudioFlightRecorder.Enabled);
+        Assert.False(AudioRecorder.Enabled);
+    }
+
+    /// <summary>
+    /// <b>The name it had before still works</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/214">#214</a>). The only things in the
+    /// field carrying it are desktop shortcuts a Commander made by hand, and dropping it would
+    /// fail the quiet way: d47 starts normally and simply does not record, which is noticed later
+    /// while looking for a pane that is not there.
+    /// </summary>
+    [Fact]
+    public void TheRetiredSwitchStillTurnsItOnAndSaysSo()
+    {
+        AudioRecorder.ReadCommandLine([AudioRecorder.RetiredFlag]);
+
+        Assert.True(AudioRecorder.Enabled);
+        Assert.True(AudioRecorder.ByRetiredName);
+
+        // And the current name is not reported as the old one, which is what makes the log line
+        // above worth having rather than noise on every run.
+        AudioRecorder.ReadCommandLine([AudioRecorder.Flag]);
+
+        Assert.True(AudioRecorder.Enabled);
+        Assert.False(AudioRecorder.ByRetiredName);
     }
 
     /// <summary>
     /// The switch is the spelling the helper on the PATH passes, so the two cannot drift apart —
-    /// <c>tools/flight-on.ps1</c> hands this exact string to the installed executable.
+    /// <c>tools/rec-on.ps1</c> hands this exact string to the installed executable.
     /// </summary>
     [Fact]
     public void TheHelperPassesTheSwitchThisReads()
     {
-        var script = Path.Combine(Repository(), "tools", "flight-on.ps1");
+        var script = Path.Combine(Repository(), "tools", "rec-on.ps1");
 
-        Assert.True(File.Exists(script), $"tools/flight-on.ps1 is missing (looked in {script}).");
+        Assert.True(File.Exists(script), $"tools/rec-on.ps1 is missing (looked in {script}).");
 
         Assert.Contains(
-            $"'{AudioFlightRecorder.Flag}'",
+            $"'{AudioRecorder.Flag}'",
             File.ReadAllText(script),
             StringComparison.Ordinal);
     }
@@ -105,9 +131,9 @@ public class TheRecorderHasARoadWithNoShellInItTests : IDisposable
     [Fact]
     public void NoRecorderIsComposedWhenNobodyAsked()
     {
-        AudioFlightRecorder.ReadCommandLine([]);
+        AudioRecorder.ReadCommandLine([]);
 
-        var recorder = AudioFlightRecorder.Create(
+        var recorder = AudioRecorder.Create(
             new AppPaths(_folder), () => DateTimeOffset.UnixEpoch, NullLogger.Instance);
 
         Assert.Null(recorder);

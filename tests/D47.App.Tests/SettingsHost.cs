@@ -1,4 +1,4 @@
-﻿using Avalonia.Controls;
+using Avalonia.Controls;
 using D47.App.Panel;
 using D47.Core.Interface;
 using D47.App.Settings;
@@ -64,7 +64,7 @@ internal sealed class SettingsHost
         double height = DefaultHeight,
 
         // At the end, so no existing caller's positional width and height move (#164).
-        (D47.Core.Diagnostics.Flight.FlightLog Log, Func<DateTimeOffset> Now)? flight = null)
+        (D47.Core.Diagnostics.Recording.RecordingLog Log, Func<DateTimeOffset> Now)? recording = null)
     {
         // The whole page, for every test that is about a row rather than about the fold
         // (https://github.com/dseelinger/d47/issues/60). These tests press controls, read labels
@@ -92,7 +92,7 @@ internal sealed class SettingsHost
                 reservedPhrases,
                 switches,
                 downloadModel,
-                flight: flight);
+                recording: recording);
             return view;
         });
 

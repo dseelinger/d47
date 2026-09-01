@@ -223,7 +223,7 @@ public sealed class AppHost : IDisposable
     public KeywordRouter Router { get; }
 
     /// <summary>
-    /// The handle on the turn in flight. A surface must run its turns under
+    /// The handle on the turn in recording. A surface must run its turns under
     /// <see cref="TurnCancellation.Begin"/>, or "cancel" has nothing to cancel and the model
     /// keeps generating — and billing — after the Commander has called it off.
     /// </summary>
@@ -264,7 +264,7 @@ public sealed class AppHost : IDisposable
     /// to (<a href="https://github.com/dseelinger/d47/issues/164">#164</a>). Null — and therefore
     /// absent from the settings surface too — in every normal run.
     /// </summary>
-    public Flight.AudioFlightRecorder? FlightRecorder { get; private set; }
+    public Recording.AudioRecorder? AudioRecorder { get; private set; }
 
     /// <summary>Fetches and installs what <see cref="Updates"/> found.</summary>
     public UpdateInstaller Installer { get; }
@@ -1376,24 +1376,24 @@ public sealed class AppHost : IDisposable
         // because VoicePipeline has a primary constructor and cannot subscribe from one.
         audio.ActivityChanged += voice.Settle;
 
-        // Off unless D47_FLIGHT_RECORDER=1 (#164). Created here, with the audio, because both of
+        // Off unless D47_RECORD_AUDIO=1 (#164). Created here, with the audio, because both of
         // its seams are here: the render reference tap for what was played, and — further down —
         // the buffer handed to the transcriber for what was heard. Before the registry, because
         // when it is on it adds a settings row, and which rows exist has to be settled before
         // registration; descriptors are registered once and never mutated.
-        var flight = Flight.AudioFlightRecorder.Create(
+        var recording = Recording.AudioRecorder.Create(
             paths,
             () => DateTimeOffset.Now,
-            loggerFactory.CreateLogger<Flight.AudioFlightRecorder>());
+            loggerFactory.CreateLogger<Recording.AudioRecorder>());
 
-        if (flight is not null)
+        if (recording is not null)
         {
-            flight.Watch(audio, audioSink.ReferenceTap);
+            recording.Watch(audio, audioSink.ReferenceTap);
 
             // What each sentence was rendered by — the provider, the voice and, for the local
             // voice, the phonemes. The tap knows what came out of the speakers and cannot know
             // any of that; the pipeline knows all of it and never sees the sound.
-            voice.Synthesised = flight.Noted;
+            voice.Synthesised = recording.Noted;
         }
 
         // A track ending is how the next one is asked for. The arbiter reports the end and
@@ -1860,10 +1860,10 @@ public sealed class AppHost : IDisposable
                         }),
                 },
 
-                // What the audio flight recorder has kept (#164), so the privacy capability can
+                // What the audio recorder has kept (#164), so the privacy capability can
                 // carry the row that empties it. Null on every ordinary run, and there is then
                 // no row at all.
-                flight?.Log,
+                recording?.Log,
 
                 // **Withdrawal, and it now reaches the store rather than only this machine**
                 // (#167). The press asks the endpoint to delete every donation made under this
@@ -2192,7 +2192,7 @@ public sealed class AppHost : IDisposable
         host.CoverageRecorder = coverage;
         coverage?.Follow(capabilities, settings);
 
-        host.FlightRecorder = flight;
+        host.AudioRecorder = recording;
 
         // Captured audio becomes words on the thread pool, never on the audio thread that
         // produced it. Whisper on a CPU takes hundreds of milliseconds for a short clip; doing
@@ -2877,7 +2877,7 @@ public sealed class AppHost : IDisposable
             {
                 var models = await asking(CancellationToken.None).ConfigureAwait(false);
 
-                // Only if the address has not moved again while this was in flight. A slow
+                // Only if the address has not moved again while this was in recording. A slow
                 // handshake landing after the Commander retargeted the row would fill the picker
                 // with the previous endpoint's models, which is the exact staleness this avoids.
                 if (string.Equals(_endpointModelsFor, address, StringComparison.Ordinal))
@@ -4235,7 +4235,7 @@ public sealed class AppHost : IDisposable
                 //
                 // Only the gated utterance is written down. What runs through the microphone
                 // between utterances never reaches this line, so a recording is never a hot mic.
-                FlightRecorder?.Heard(utterance, transcription);
+                AudioRecorder?.Heard(utterance, transcription);
 
                 // **A word hallucinated from silence is refused here** (#196). The name-hint
                 // prompt is what turns silence into a plausible word and what destroys the
@@ -5893,7 +5893,7 @@ public sealed class AppHost : IDisposable
 
                 // An ambient remark the model did not write is not spoken (#245). VaryAsync
                 // hands the same instance back on every road to "no model line" — provider
-                // gone mid-flight, the three-second budget, a refusal, a line about itself —
+                // gone mid-recording, the three-second budget, a refusal, a line about itself —
                 // and for chatter the authored text is a tone sample, not an understudy.
                 // Ambient only: a fuel warning goes out authored, exactly as before.
                 if (ReferenceEquals(varied, announcement)
@@ -6925,7 +6925,7 @@ public sealed class AppHost : IDisposable
         // Before the arbiter and the sink it is subscribed to, and before the last clip stops
         // being writable. It unhooks both seams and drains what it holds, so the last utterance
         // of a session — often the one being investigated — is on disk (#164).
-        FlightRecorder?.Dispose();
+        AudioRecorder?.Dispose();
 
         // Stop making noise before tearing anything down. Disposing the sink under a playing
         // clip is how an exit ends in a buzz rather than in silence.

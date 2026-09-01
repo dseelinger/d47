@@ -22,7 +22,7 @@ public class TurnCancellationTests
     }
 
     [Fact]
-    public void CancellingATurnInFlightTripsItsToken()
+    public void CancellingATurnInRecordingTripsItsToken()
     {
         var cancellation = New();
         var source = cancellation.Begin(TestContext.Current.CancellationToken);

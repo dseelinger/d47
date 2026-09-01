@@ -1,14 +1,14 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
-namespace D47.Core.Diagnostics.Flight;
+namespace D47.Core.Diagnostics.Recording;
 
 /// <summary>One utterance, ready to be written down. Everything but the identity, which the log issues.</summary>
 /// <param name="Wav">The clip as a whole file, header and all, so it is playable where it lands.</param>
-public sealed record FlightCapture(
-    FlightDirection Direction,
+public sealed record RecordingCapture(
+    RecordingDirection Direction,
     DateTimeOffset When,
     byte[] Wav,
     TimeSpan Duration)
@@ -27,7 +27,7 @@ public sealed record FlightCapture(
 }
 
 /// <summary>
-/// The capped ring the audio flight recorder writes to, and the two corpora a kept row joins
+/// The capped ring the audio recorder writes to, and the two corpora a kept row joins
 /// (<a href="https://github.com/dseelinger/d47/issues/164">#164</a>).
 /// <para>
 /// <b>The cap is enforced here, by the writer, rather than by anybody remembering.</b> That is
@@ -44,11 +44,11 @@ public sealed record FlightCapture(
 /// wipe still takes them — a wipe that left recordings behind would not be one.
 /// </para>
 /// <para>
-/// Owns no thread and reads no clock: every timestamp arrives on a <see cref="FlightCapture"/>,
+/// Owns no thread and reads no clock: every timestamp arrives on a <see cref="RecordingCapture"/>,
 /// and whoever calls this decides which thread it happens on (architecture.md, invariants).
 /// </para>
 /// </summary>
-public sealed class FlightLog
+public sealed class RecordingLog
 {
     /// <summary>
     /// What the rolling window costs at most. A session is tens of megabytes at 16 kHz mono, so
@@ -75,7 +75,7 @@ public sealed class FlightLog
     private readonly long _cap;
     private readonly Lock _gate = new();
 
-    private List<FlightRow> _rows;
+    private List<RecordingRow> _rows;
 
     /// <param name="cap">
     /// What the rolling window costs at most. <b>The default is the policy</b> — no caller in the
@@ -83,7 +83,7 @@ public sealed class FlightLog
     /// so that a test can prove eviction happens without writing two hundred megabytes to do it,
     /// which is the difference between the rule being asserted and being taken on trust.
     /// </param>
-    public FlightLog(string folder, ILogger logger, long cap = CapBytes)
+    public RecordingLog(string folder, ILogger logger, long cap = CapBytes)
     {
         _folder = folder;
         _logger = logger;
@@ -95,7 +95,7 @@ public sealed class FlightLog
     public string Folder => _folder;
 
     /// <summary>Newest first, which is the order a review pane wants and the reverse of the ring's.</summary>
-    public IReadOnlyList<FlightRow> Rows
+    public IReadOnlyList<RecordingRow> Rows
     {
         get
         {
@@ -126,11 +126,11 @@ public sealed class FlightLog
     /// which is the moment a scheduled sweep would have missed.
     /// </para>
     /// </summary>
-    public FlightRow Add(FlightCapture capture)
+    public RecordingRow Add(RecordingCapture capture)
     {
         ArgumentNullException.ThrowIfNull(capture);
 
-        var row = new FlightRow
+        var row = new RecordingRow
         {
             Id = Identify(capture),
             Direction = capture.Direction,
@@ -168,7 +168,7 @@ public sealed class FlightLog
     /// </para>
     /// </summary>
     /// <returns>The row as it now stands, or null if it has been evicted since it was listed.</returns>
-    public FlightRow? Keep(string id, FlightKeepKind kind, string expected, DateTimeOffset when)
+    public RecordingRow? Keep(string id, RecordingKeepKind kind, string expected, DateTimeOffset when)
     {
         lock (_gate)
         {
@@ -179,7 +179,7 @@ public sealed class FlightLog
                 return null;
             }
 
-            var kept = _rows[index] with { Kept = new FlightKeep(kind, when, expected) };
+            var kept = _rows[index] with { Kept = new RecordingKeep(kind, when, expected) };
             _rows[index] = kept;
 
             var into = Path.Combine(_folder, KeptFolderName);
@@ -223,7 +223,7 @@ public sealed class FlightLog
             try
             {
                 Directory.Delete(_folder, recursive: true);
-                _logger.LogInformation("Emptied the audio flight recorder");
+                _logger.LogInformation("Emptied the audio recorder");
             }
             catch (Exception ex)
             {
@@ -244,7 +244,7 @@ public sealed class FlightLog
                 return "Nothing recorded yet this flight.";
             }
 
-            var heard = _rows.Count(row => row.Direction == FlightDirection.Heard);
+            var heard = _rows.Count(row => row.Direction == RecordingDirection.Heard);
             var kept = _rows.Count(row => row.Kept is not null);
             var megabytes = (_rows.Sum(row => row.Bytes) + KeptBytes()) / (1024d * 1024d);
 
@@ -258,9 +258,9 @@ public sealed class FlightLog
     /// Sortable to the millisecond, with the direction in it so a heard row and a said row
     /// landing in the same millisecond cannot collide over one file name.
     /// </summary>
-    private string Identify(FlightCapture capture)
+    private string Identify(RecordingCapture capture)
     {
-        var stem = $"{capture.When:yyyyMMdd-HHmmss-fff}-{(capture.Direction == FlightDirection.Heard ? "heard" : "said")}";
+        var stem = $"{capture.When:yyyyMMdd-HHmmss-fff}-{(capture.Direction == RecordingDirection.Heard ? "heard" : "said")}";
 
         if (!_rows.Exists(row => string.Equals(row.Id, stem, StringComparison.Ordinal)))
         {
@@ -301,7 +301,7 @@ public sealed class FlightLog
         }
     }
 
-    private void Delete(FlightRow row)
+    private void Delete(RecordingRow row)
     {
         try
         {
@@ -318,12 +318,12 @@ public sealed class FlightLog
     /// is read by a person as often as by the suite, so it stays a formatted array rather than
     /// becoming an append-only log nobody can skim.
     /// </summary>
-    private void Append(FlightKeepKind kind, FlightRow row)
+    private void Append(RecordingKeepKind kind, RecordingRow row)
     {
         var file = Path.Combine(
             _folder,
             KeptFolderName,
-            kind == FlightKeepKind.Mishear ? MishearsFileName : PronunciationsFileName);
+            kind == RecordingKeepKind.Mishear ? MishearsFileName : PronunciationsFileName);
 
         var entries = new List<KeptCase>();
 
@@ -379,7 +379,7 @@ public sealed class FlightLog
         }
     }
 
-    private List<FlightRow> Read()
+    private List<RecordingRow> Read()
     {
         var file = Path.Combine(_folder, IndexFileName);
 
@@ -390,7 +390,7 @@ public sealed class FlightLog
 
         try
         {
-            var rows = JsonSerializer.Deserialize<List<FlightRow>>(File.ReadAllText(file), Json) ?? [];
+            var rows = JsonSerializer.Deserialize<List<RecordingRow>>(File.ReadAllText(file), Json) ?? [];
 
             // A row whose clip went with a manual delete of the folder is not a row any more.
             // Reconciling on load rather than trusting the index keeps the cap arithmetic true.
@@ -398,7 +398,7 @@ public sealed class FlightLog
         }
         catch (Exception ex) when (ex is JsonException or IOException)
         {
-            _logger.LogWarning(ex, "The flight recorder index could not be read; starting a fresh one");
+            _logger.LogWarning(ex, "The audio recorder index could not be read; starting a fresh one");
             return [];
         }
     }
@@ -413,7 +413,7 @@ public sealed class FlightLog
         }
         catch (IOException ex)
         {
-            _logger.LogWarning(ex, "Could not write the flight recorder index");
+            _logger.LogWarning(ex, "Could not write the audio recorder index");
         }
     }
 

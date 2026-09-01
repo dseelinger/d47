@@ -127,12 +127,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     private (D47.Core.Memory.MemoryBook Book, Func<DateTimeOffset> Now)? _memories;
 
     /// <summary>
-    /// What the audio flight recorder has kept, and the clock a kept test case is stamped with
+    /// What the audio recorder has kept, and the clock a kept test case is stamped with
     /// (<a href="https://github.com/dseelinger/d47/issues/164">#164</a>). Null in every process
     /// that was not asked to record — which is every ordinary run — and the row itself is then
     /// absent, so this never decides whether a button is dead.
     /// </summary>
-    private (D47.Core.Diagnostics.Flight.FlightLog Log, Func<DateTimeOffset> Now)? _flight;
+    private (D47.Core.Diagnostics.Recording.RecordingLog Log, Func<DateTimeOffset> Now)? _recording;
 
     /// <summary>
     /// What the debrief drafted, the clock an adoption is stamped with, and which core is aboard
@@ -206,7 +206,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         D47.Core.Persona.OwnPersonaStore? ownPersonas = null,
 
         // At the end, by the rule the comment above records the cost of (#164).
-        (D47.Core.Diagnostics.Flight.FlightLog Log, Func<DateTimeOffset> Now)? flight = null,
+        (D47.Core.Diagnostics.Recording.RecordingLog Log, Func<DateTimeOffset> Now)? recording = null,
 
         // At the end, by the rule the comment above records the cost of (#162).
         (D47.Core.Debrief.DebriefBook Book, Func<DateTimeOffset> Now,
@@ -225,7 +225,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         _switches = switches;
         _lore = lore;
         _memories = memories;
-        _flight = flight;
+        _recording = recording;
         _debrief = debrief;
         _logbook = logbook;
         _reserved = reservedPhrases ?? [];
@@ -1933,8 +1933,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             // window shows. It is above the general pressable case rather than inside it because
             // reviewing comes first and deleting last: the common act is the one at the top, and
             // the one that cannot be undone is the one furthest from a stray click (#164).
-            case SettingKind.Info when row.Key == PrivacyCapability.AudioFlightKey && _flight is not null:
-                return BuildAudioFlight(row);
+            case SettingKind.Info when row.Key == PrivacyCapability.AudioRecordingKey && _recording is not null:
+                return BuildAudioRecording(row);
 
             // The tenth, and the only one behind which nothing is written down by D47 at all until
             // the Commander presses something. Taking a proposal is the act that makes it their
@@ -2168,21 +2168,21 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     }
 
     /// <summary>
-    /// What the audio flight recorder holds, the way into reviewing it, and the wipe
+    /// What the audio recorder holds, the way into reviewing it, and the wipe
     /// (<a href="https://github.com/dseelinger/d47/issues/164">#164</a>).
     /// <para>
     /// Both buttons are built here rather than one of them coming from
     /// <see cref="BuildPressable"/>, because the order is the point: the summary, then the review
-    /// that is done every flight, then the delete that is done once and cannot be taken back.
+    /// that is done every recording, then the delete that is done once and cannot be taken back.
     /// </para>
     /// </summary>
-    private (Control, Action, bool) BuildAudioFlight(SettingRow row)
+    private (Control, Action, bool) BuildAudioRecording(SettingRow row)
     {
         var (inset, refresh, _) = BuildInfo(row);
 
         var open = new Button
         {
-            Name = "OpenFlightRecorder",
+            Name = "OpenAudioRecorder",
             Content = "Review the recording",
             FontSize = TypeScale.Body,
             Padding = new Thickness(10, 4),
@@ -2191,12 +2191,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         open.Click += async (_, _) =>
         {
-            if (_flight is not { } flight || TopLevel.GetTopLevel(this) is not Window owner)
+            if (_recording is not { } recording || TopLevel.GetTopLevel(this) is not Window owner)
             {
                 return;
             }
 
-            await new Controls.FlightRecorderWindow(flight.Log, flight.Now).Over(owner);
+            await new Controls.AudioRecorderWindow(recording.Log, recording.Now).Over(owner);
 
             // Keeping a row changes what the summary says, and the window is where keeping
             // happens — so the row is re-read on the way out rather than left stating what was

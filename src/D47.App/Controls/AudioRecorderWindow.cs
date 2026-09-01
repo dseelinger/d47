@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -6,14 +6,14 @@ using Avalonia.Layout;
 using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
 using D47.App.Theming;
-using D47.Core.Diagnostics.Flight;
+using D47.Core.Diagnostics.Recording;
 
 namespace D47.App.Controls;
 
 /// <summary>
-/// The review surface for the audio flight recorder
+/// The review surface for the audio recorder
 /// (<a href="https://github.com/dseelinger/d47/issues/164">#164</a>): every utterance that
-/// crossed the audio boundary this flight, what d47 made of it, and the button that turns one
+/// crossed the audio boundary this recording, what d47 made of it, and the button that turns one
 /// into a regression test.
 /// <para>
 /// A window rather than more of the Privacy card, for the reason the coverage list is one: a
@@ -30,24 +30,24 @@ namespace D47.App.Controls;
 /// adoption gate applied to test cases: d47 does not get to grade its own homework.
 /// </para>
 /// </summary>
-public sealed class FlightRecorderWindow : Window
+public sealed class AudioRecorderWindow : Window
 {
-    private readonly FlightLog _log;
+    private readonly RecordingLog _log;
     private readonly Func<DateTimeOffset> _now;
     private readonly StackPanel _list = new() { Spacing = 1 };
     private readonly StackPanel _detail = new() { Spacing = 6 };
     private readonly TextBlock _summary = new();
 
-    private FlightRow? _selected;
+    private RecordingRow? _selected;
 
-    public FlightRecorderWindow(FlightLog log, Func<DateTimeOffset> now)
+    public AudioRecorderWindow(RecordingLog log, Func<DateTimeOffset> now)
     {
         ArgumentNullException.ThrowIfNull(log);
 
         _log = log;
         _now = now;
 
-        Title = "Audio flight recorder";
+        Title = "Audio recorder";
         Width = 860;
         Height = 700;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
@@ -55,14 +55,14 @@ public sealed class FlightRecorderWindow : Window
 
         Themed(this, BackgroundProperty, ThemeManager.BackgroundKey);
 
-        _summary.Name = "FlightSummary";
+        _summary.Name = "RecordingSummary";
         _summary.FontSize = TypeScale.Body;
         _summary.TextWrapping = TextWrapping.Wrap;
         Themed(_summary, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
 
         var folder = new Button
         {
-            Name = "FlightFolder",
+            Name = "RecordingFolder",
             Content = "Open the folder",
             FontSize = TypeScale.Body,
             Padding = new Thickness(10, 4),
@@ -70,7 +70,7 @@ public sealed class FlightRecorderWindow : Window
 
         folder.Click += (_, _) => Launch(_log.Folder);
 
-        var close = new Button { Name = "FlightClose", Content = "Close", MinWidth = 110 };
+        var close = new Button { Name = "RecordingClose", Content = "Close", MinWidth = 110 };
         close.Click += (_, _) => Close();
 
         Content = new DockPanel
@@ -83,7 +83,7 @@ public sealed class FlightRecorderWindow : Window
                     [DockPanel.DockProperty] = Dock.Top,
                     Spacing = 4,
                     Margin = new Thickness(0, 0, 0, 16),
-                    Children = { Heading("Audio flight recorder"), _summary },
+                    Children = { Heading("Audio recorder"), _summary },
                 },
                 new StackPanel
                 {
@@ -105,7 +105,7 @@ public sealed class FlightRecorderWindow : Window
                 },
                 new ScrollViewer
                 {
-                    Name = "FlightScroller",
+                    Name = "RecordingScroller",
                     HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
                     Content = _list,
                 },
@@ -153,11 +153,11 @@ public sealed class FlightRecorderWindow : Window
         ShowDetail();
     }
 
-    private Control Row(FlightRow row)
+    private Control Row(RecordingRow row)
     {
         var mark = new TextBlock
         {
-            Text = row.Direction == FlightDirection.Heard ? "heard" : "said",
+            Text = row.Direction == RecordingDirection.Heard ? "heard" : "said",
             FontSize = TypeScale.Small,
             Width = 52,
             VerticalAlignment = VerticalAlignment.Center,
@@ -171,7 +171,7 @@ public sealed class FlightRecorderWindow : Window
         Themed(
             mark,
             TextBlock.ForegroundProperty,
-            row.Direction == FlightDirection.Heard ? ThemeManager.AccentKey : ThemeManager.TextMutedKey);
+            row.Direction == RecordingDirection.Heard ? ThemeManager.AccentKey : ThemeManager.TextMutedKey);
 
         var text = new TextBlock
         {
@@ -198,7 +198,7 @@ public sealed class FlightRecorderWindow : Window
 
         var button = new Button
         {
-            Name = "FlightRow",
+            Name = "RecordingRow",
             Tag = row.Id,
             HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Stretch,
@@ -258,13 +258,13 @@ public sealed class FlightRecorderWindow : Window
         if (row.Kept is { } kept)
         {
             _detail.Children.Add(Muted(
-                $"Kept as a {(kept.Kind == FlightKeepKind.Mishear ? "mishear" : "pronunciation")} case "
+                $"Kept as a {(kept.Kind == RecordingKeepKind.Mishear ? "mishear" : "pronunciation")} case "
                 + $"on {kept.When:yyyy-MM-dd HH:mm} — expected: {kept.Expected}"));
         }
 
         var play = new Button
         {
-            Name = "FlightPlay",
+            Name = "RecordingPlay",
             Content = "Play it",
             FontSize = TypeScale.Body,
             Padding = new Thickness(10, 4),
@@ -272,11 +272,11 @@ public sealed class FlightRecorderWindow : Window
 
         play.Click += (_, _) => Launch(Path.Combine(_log.Folder, row.Clip));
 
-        var mishear = row.Direction == FlightDirection.Heard;
+        var mishear = row.Direction == RecordingDirection.Heard;
 
         var expected = new TextBox
         {
-            Name = "FlightExpected",
+            Name = "RecordingExpected",
             PlaceholderText = mishear
                 ? "What you actually said"
                 : "The phonemes it should have been said as",
@@ -287,7 +287,7 @@ public sealed class FlightRecorderWindow : Window
 
         var keep = new Button
         {
-            Name = "FlightKeep",
+            Name = "RecordingKeep",
             Content = mishear ? "Keep as a mishear case" : "Keep as a pronunciation case",
             FontSize = TypeScale.Body,
             Padding = new Thickness(10, 4),
@@ -295,7 +295,7 @@ public sealed class FlightRecorderWindow : Window
 
         var complaint = new TextBlock
         {
-            Name = "FlightKept",
+            Name = "RecordingKept",
             FontSize = TypeScale.Secondary,
             VerticalAlignment = VerticalAlignment.Center,
             TextWrapping = TextWrapping.Wrap,
@@ -316,7 +316,7 @@ public sealed class FlightRecorderWindow : Window
                 return;
             }
 
-            var kind = mishear ? FlightKeepKind.Mishear : FlightKeepKind.Pronunciation;
+            var kind = mishear ? RecordingKeepKind.Mishear : RecordingKeepKind.Pronunciation;
 
             _selected = _log.Keep(row.Id, kind, wanted.Trim(), _now());
             Refresh();
@@ -338,7 +338,7 @@ public sealed class FlightRecorderWindow : Window
     /// nothing for the ones it does not — a said row has no transcription model and a heard row
     /// has no voice, and printing "(none)" for either is noise in a line meant to be scanned.
     /// </summary>
-    private static string Provenance(FlightRow row)
+    private static string Provenance(RecordingRow row)
     {
         var parts = new List<string> { $"{row.When:yyyy-MM-dd HH:mm:ss}", $"{row.Duration.TotalSeconds:0.0}s" };
 

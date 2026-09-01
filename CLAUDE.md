@@ -281,7 +281,7 @@ the same argument the repository already makes about there being one implementat
 | `promote` | Promotes the newest waiting pre-release to latest (`tools/promote.ps1`). **`release` is the same command** — both names sit beside it in `tools/`, because the file is `promote.ps1` and that is the word the Commander reaches for |
 | `get-ver <spec>` | Downloads, verifies and installs a named build — `0.79.0`, `0.79`, `prerelease`, `latest` |
 | `get-local` | Publishes **this working tree** and installs it over the installed d47, so a change can be driven without cutting a release for it |
-| `flight-on` | Starts the installed d47 with the audio flight recorder on, for that run only. Not a release command; it is here because it is the same shape and sits in the same folder |
+| `rec-on` | Starts the installed d47 with the audio recorder on, for that run only. Not a release command; it is here because it is the same shape and sits in the same folder |
 
 **`prerelease` automates the one decision a person gets wrong.** It reads the commits since the
 last tag for what they say they close, asks GitHub for those issues' labels, and calls it a minor
@@ -322,7 +322,7 @@ be killed keeps the five minutes a publish takes, and a publish that then fails 
 all. Both now say at the top that a running d47 will be stopped, so the warning arrives before the
 wait rather than after it.
 
-**`flight-on` is deliberately not changed with them**, and the difference is worth knowing before
+**`rec-on` is deliberately not changed with them**, and the difference is worth knowing before
 somebody makes the three consistent. Its refusal is not about sparing a session: d47 holds a
 single-instance mutex, so a second copy launched with the recorder switch surfaces the one already
 running rather than recording, and going ahead would look exactly like the switch not working. That
@@ -427,11 +427,22 @@ running app, and which have changed since they last were, to `data/coverage.md`.
 aid for knowing what is left to try by hand — off, and entirely absent from the surface,
 unless that variable is set.
 
-**The audio flight recorder takes the same shape, and since 2026-08-29 it has a road with no shell
-in it** ([#180](https://github.com/dseelinger/d47/issues/180)). `D47_FLIGHT_RECORDER=1` still works
-and `--flight-recorder` on the command line does the same thing — which is what a desktop shortcut
-can carry, and what `flight-on` passes. The gate is unchanged and deliberately so: both roads are
+**The audio recorder takes the same shape, and since 2026-08-29 it has a road with no shell
+in it** ([#180](https://github.com/dseelinger/d47/issues/180)). `D47_RECORD_AUDIO=1` still works
+and `--record-audio` on the command line does the same thing — which is what a desktop shortcut
+can carry, and what `rec-on` passes. The gate is unchanged and deliberately so: both roads are
 per-run, neither is remembered, and unasked-for there is no row, no review pane and no file. **A
 permanent settings toggle is a recorded non-option** — it would put "d47 can record audio" in front
 of every installation forever, which is the reading the gating exists to spare a Commander who
 never asked for it.
+
+**It was the *flight* recorder until 2026-09-01**, and everything about it renamed on the same day
+([#214](https://github.com/dseelinger/d47/issues/214)): the black-box metaphor was borrowed from
+aviation inside a product about aviation, so the borrowed sense and Elite's literal one competed on
+every read — `FlightRow` worst of all, since one row is one utterance and nothing in the word says
+so. `D47_FLIGHT_RECORDER` and `--flight-recorder` are still accepted, because the only things in
+the field carrying them are shortcuts made by hand, and a run started by the old name says once in
+the log what the name is now. **Two things kept the old word on purpose**: the settings key
+`privacy.audioFlight`, because `settings.json` is append-only, and the clips folder `datalight`,
+because renaming it would orphan recordings a Commander already has. Elite's own flight vocabulary
+— `FlightMode`, `FlightAssist`, the flight controls page — was never in scope and did not move.

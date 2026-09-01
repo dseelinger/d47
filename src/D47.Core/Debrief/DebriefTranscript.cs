@@ -43,7 +43,7 @@ public enum DebriefSpeaker
 /// <param name="Who">Which of the three voices it was.</param>
 /// <param name="Text">What was said, verbatim.</param>
 /// <param name="Clip">
-/// The audio flight recorder's row id for this line, where the recorder was running
+/// The audio recorder's row id for this line, where the recorder was running
 /// (<a href="https://github.com/dseelinger/d47/issues/164">#164</a>). Null is the ordinary case
 /// and costs nothing: the transcript alone is enough to draft a direction from, and the clip only
 /// ever anchors a proposal to the exact audio for a Commander who wants to hear it back.

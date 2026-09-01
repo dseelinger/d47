@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Text;
 using Avalonia;
 using Avalonia.Controls;
@@ -874,9 +874,9 @@ public partial class MainWindow : Window
                 // And the cores the Commander wrote themselves (remediation.md 11, item 9).
                 _host.OwnPersonas,
 
-                // And what the audio flight recorder kept, when this process was asked to record
+                // And what the audio recorder kept, when this process was asked to record
                 // (#164). Null on every ordinary run, and the row is then absent too.
-                _host.FlightRecorder is { } recording
+                _host.AudioRecorder is { } recording
                     ? (recording.Log, (Func<DateTimeOffset>)(() => DateTimeOffset.Now))
                     : null,
 

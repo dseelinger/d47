@@ -1,4 +1,4 @@
-﻿using D47.Core.Debrief;
+using D47.Core.Debrief;
 using D47.Core.Memory;
 using Xunit;
 
@@ -116,7 +116,7 @@ public class DebriefExtractorTests
     /// absent where it was not. The transcript alone is what the pass reads either way (#164).
     /// </summary>
     [Fact]
-    public void AFlightRecorderRowAnchorsTheProposalWhereThereIsOne()
+    public void AAudioRecorderRowAnchorsTheProposalWhereThereIsOne()
     {
         var drafted = DebriefExtractor.Extract(
             [new DebriefLine(Now, DebriefSpeaker.Commander, "stop calling it the Anaconda", "heard-0041")],
