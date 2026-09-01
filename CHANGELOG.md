@@ -27,6 +27,42 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.98.2 — 2026-09-01 — The carrier's own two voices, and a jump nobody is making
+
+### Overheard chatter aboard your carrier speaks in the voices you cast for it (#249)
+
+Invented chatter (#244) puts a controller on the radio whenever the Commander is docked, and
+where that dock is their own fleet carrier the controller *is* their tower — a post they have
+already chosen a voice for. It came out in a pooled per-system stranger's voice instead, so the
+same person spoke in two voices depending on whether the line was authored or invented, and the
+cast voice was the one that lost.
+
+The rule it broke was a real one and still is: an invented speaker is an invented nobody, and a
+cast role overrides the per-sender draw (#109), so handing roles out freely would put the
+carrier's voice in a stranger's mouth. **So the exception is scoped to the two posts that are not
+invented.** While the Commander is at their carrier — set down on its deck, or sharing the space
+around it — the model is told those two speak under the exact names *Tower* and *Captain*, and
+`NpcChatter.Parse` hands those lines back carrying `VoiceRole.TowerControl` or
+`VoiceRole.CarrierCaptain`. Everybody else in the exchange is still nobody, in the pooled voice
+they always had. *Captain Reyes* is a pilot with a rank and does not match.
+
+**Docked at anything else disqualifies it**, which is the whole reason the test is not "same
+system". A carrier parked over Jameson Memorial while the Commander sits on a pad inside the
+station is near their carrier and being talked to by the *station's* tower; casting that tower as
+their own would be the same fault pointed the other way. Supercruise and hyperspace are not that
+space either.
+
+### And nobody invents a departure it is not making (#249)
+
+The carrier's people had been discussing a jump that was never scheduled. d47 knows better —
+`CarrierState.JumpScheduled` and the destination the game state already carries — so with no jump
+on the books the instruction says outright that it is going nowhere and that nobody may say or
+imply otherwise, and a line that says so anyway takes **the whole exchange** with it rather than
+just itself. That is stricter than the unsayable-line drop above it on purpose: a refusal removed
+leaves an exchange that still makes sense, while a fabricated departure is the subject of the
+scene replying to it. The rule holds wherever the carrier is parked, since the live game state
+names it either way, and a freighter crew's own jump is still their own business.
+
 ## 0.98.1 — 2026-08-31 — What was heard is what was said
 
 ### Barging in drops the pre-roll, which held d47 and not the Commander (#195)

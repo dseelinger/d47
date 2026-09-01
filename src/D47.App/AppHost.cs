@@ -5430,6 +5430,14 @@ public sealed class AppHost : IDisposable
     /// line. Comms role plus a speaker name is what buys the rest: a pooled per-system voice
     /// per invented name, no line in the conversation history, nothing on the comms record —
     /// heard once, and that is all it is for.
+    /// <para>
+    /// <b>Except the Commander's own carrier's two posts</b> (#249), which are people he has
+    /// cast a voice for rather than invented nobodies: those lines come back from
+    /// <see cref="NpcChatter.Parse"/> carrying a role, and a role is what
+    /// <see cref="VoiceCast.ForSender"/> answers before it draws from the pool. Read fresh per
+    /// exchange, because where the carrier is and whether it is going anywhere both change
+    /// under this.
+    /// </para>
     /// </summary>
     private async Task<IReadOnlyList<Announcement>> ComposeNpcChatterAsync(Announcement marker)
     {
@@ -5439,6 +5447,7 @@ public sealed class AppHost : IDisposable
         }
 
         var kind = NpcChatter.KindOf(marker.Key);
+        var carrier = NpcChatterCarrier.Of(GameState.Active?.Carrier, GameState.Active?.Location);
 
         using var budget = new CancellationTokenSource(ChatterBudget);
 
@@ -5447,18 +5456,18 @@ public sealed class AppHost : IDisposable
             Turns.BackgroundModel,
             NpcChatter.Speaker,
             null,
-            NpcChatter.Instruction(kind),
+            NpcChatter.Instruction(kind, carrier),
             Turns.LiveGameState?.Invoke(),
             Spend,
             PriceTable.Default,
             _logger,
             budget.Token).ConfigureAwait(false);
 
-        return [.. NpcChatter.Parse(script, kind)
+        return [.. NpcChatter.Parse(script, kind, carrier)
             .Select(line => new Announcement($"{NpcChatter.KeyPrefix}line", line.Text)
             {
                 Urgency = CalloutUrgency.Routine,
-                Voice = D47.Core.Audio.VoiceRole.Comms,
+                Voice = line.Role ?? D47.Core.Audio.VoiceRole.Comms,
                 Speaker = line.Name,
                 SpeakerIsPlayer = false,
                 CommsChannel = "npc",

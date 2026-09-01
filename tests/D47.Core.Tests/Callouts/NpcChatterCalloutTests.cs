@@ -1,3 +1,4 @@
+using D47.Core.Audio;
 using D47.Core.Callouts;
 using D47.Core.Journal;
 using Xunit;
@@ -207,5 +208,163 @@ public class NpcChatterScriptTests
 
         Assert.Equal(2, lines.Count);
         Assert.DoesNotContain(lines, line => line.Text.Contains("language model", StringComparison.OrdinalIgnoreCase));
+    }
+
+    // The Commander's own carrier (#249): its two posts speak in the voices he cast for them,
+    // and nobody invents a jump it is not making.
+
+    private static readonly CarrierState Mine = CarrierState.None with
+    {
+        CallSign = "K7Q-B4Z",
+        Name = "Nomad's Rest",
+        CarrierId = 3_700_123_456,
+        StarSystem = "Shinrarta Dezhra",
+    };
+
+    private static JournalLocation At(
+        string system,
+        bool docked = false,
+        string? station = null,
+        string? stationType = null,
+        FlightMode mode = FlightMode.Normal,
+        long? marketId = null) =>
+        new(system, null, docked, station) { Mode = mode, StationType = stationType, MarketId = marketId };
+
+    [Fact]
+    public void TheCarrierIsAtHandOnItsDeckOrInItsSpaceAndNowhereElse()
+    {
+        // Set down on it, identified by the market id the docking wrote.
+        Assert.True(NpcChatterCarrier.Of(
+            Mine,
+            At("Shinrarta Dezhra", docked: true, station: "K7Q-B4Z", stationType: "FleetCarrier",
+                mode: FlightMode.Docked, marketId: 3_700_123_456)).Present);
+
+        // And sharing the space around it.
+        Assert.True(NpcChatterCarrier.Of(Mine, At("Shinrarta Dezhra")).Present);
+
+        // Supercruise is not that space, whatever the system says.
+        Assert.False(NpcChatterCarrier.Of(
+            Mine, At("Shinrarta Dezhra", mode: FlightMode.Supercruise)).Present);
+
+        // Nor is a pad inside somebody else's station in the same system — that tower is theirs,
+        // and casting it as the carrier's is the reported fault pointed the other way.
+        Assert.False(NpcChatterCarrier.Of(
+            Mine,
+            At("Shinrarta Dezhra", docked: true, station: "Jameson Memorial",
+                stationType: "Orbis", mode: FlightMode.Docked, marketId: 128_666_762)).Present);
+
+        // A carrier parked elsewhere is owned and not at hand.
+        var away = NpcChatterCarrier.Of(Mine, At("Sol"));
+
+        Assert.True(away.Owned);
+        Assert.False(away.Present);
+
+        // And no carrier at all is none of the above.
+        Assert.False(NpcChatterCarrier.Of(CarrierState.None, At("Sol")).Owned);
+        Assert.False(NpcChatterCarrier.Of(null, null).Owned);
+    }
+
+    [Fact]
+    public void ItsTowerAndCaptainCarryTheCastRolesAndNobodyElseDoes()
+    {
+        var here = NpcChatterCarrier.Of(Mine, At("Shinrarta Dezhra"));
+
+        var lines = NpcChatter.Parse(
+            "Tower: Pad four is yours, Rikkard. Mind the strut this time.\n"
+            + "Ana Rikkard: One scrape, and I hear about it for a year.\n"
+            + "Carrier Captain: The strut remembers, Rikkard.\n"
+            + "Captain Reyes: Some of us have cargo to shift.",
+            NpcChatterKind.Controller,
+            here);
+
+        Assert.Equal(4, lines.Count);
+        Assert.Equal(VoiceRole.TowerControl, lines[0].Role);
+        Assert.Equal(VoiceRole.CarrierCaptain, lines[2].Role);
+
+        // An invented pilot is an invented nobody, rank or no rank: "Captain Reyes" is a person
+        // with a title, not the captain of this ship.
+        Assert.Null(lines[1].Role);
+        Assert.Null(lines[3].Role);
+
+        // And away from his carrier, a controller called Tower is a station's.
+        var elsewhere = NpcChatter.Parse(
+            "Tower: Pad four is yours, Rikkard.\nAna Rikkard: On my way.",
+            NpcChatterKind.Controller,
+            NpcChatterCarrier.Of(Mine, At("Sol", docked: true, station: "Abraham Lincoln",
+                stationType: "Orbis", mode: FlightMode.Docked)));
+
+        Assert.All(elsewhere, line => Assert.Null(line.Role));
+    }
+
+    [Fact]
+    public void AnInventedDepartureTakesTheWholeExchangeWithIt()
+    {
+        var here = NpcChatterCarrier.Of(Mine, At("Shinrarta Dezhra"));
+
+        // Its own tower needs no subject: "we" is the carrier.
+        Assert.Empty(NpcChatter.Parse(
+            "Tower: Last call, we jump in twenty minutes.\n"
+            + "Ana Rikkard: Then I am not unloading first.",
+            NpcChatterKind.Controller,
+            here));
+
+        // Somebody else has to say which carrier they mean — and then it goes the same way,
+        // whether or not the Commander is anywhere near it.
+        Assert.Empty(NpcChatter.Parse(
+            "Ana Rikkard: Heard Nomad's Rest is casting off tonight.\n"
+            + "Vera Kolt: Always is, that one.",
+            NpcChatterKind.Passersby,
+            NpcChatterCarrier.Of(Mine, At("Sol"))));
+
+        // A freighter crew's own jump is their own business and survives.
+        var theirs = NpcChatter.Parse(
+            "Ana Rikkard: I jump for Sol as soon as the pad clears.\n"
+            + "Vera Kolt: Take the long way, the lane is thick tonight.",
+            NpcChatterKind.Passersby,
+            here);
+
+        Assert.Equal(2, theirs.Count);
+    }
+
+    [Fact]
+    public void AJumpThatIsActuallyScheduledMayBeTalkedAbout()
+    {
+        var leaving = NpcChatterCarrier.Of(
+            Mine with { DestinationSystem = "Sol" }, At("Shinrarta Dezhra"));
+
+        Assert.True(leaving.JumpScheduled);
+
+        var lines = NpcChatter.Parse(
+            "Tower: Last call, we jump for Sol in twenty minutes.\n"
+            + "Ana Rikkard: Then I am not unloading first.",
+            NpcChatterKind.Controller,
+            leaving);
+
+        Assert.Equal(2, lines.Count);
+    }
+
+    [Fact]
+    public void TheInstructionNamesTheTwoPostsAndRefusesTheJumpItIsNotMaking()
+    {
+        var here = NpcChatterCarrier.Of(Mine, At("Shinrarta Dezhra"));
+
+        var controller = NpcChatter.Instruction(NpcChatterKind.Controller, here);
+
+        Assert.Contains("own fleet carrier Nomad's Rest", controller, StringComparison.Ordinal);
+        Assert.Contains("exactly Tower or exactly Captain", controller, StringComparison.Ordinal);
+        Assert.Contains("no jump scheduled", controller, StringComparison.Ordinal);
+
+        // The jump rule holds wherever the carrier is: the live game state names it parked three
+        // hundred light years away just as clearly.
+        var away = NpcChatter.Instruction(
+            NpcChatterKind.Passersby, NpcChatterCarrier.Of(Mine, At("Sol")));
+
+        Assert.Contains("no jump scheduled", away, StringComparison.Ordinal);
+        Assert.DoesNotContain("exactly Tower", away, StringComparison.Ordinal);
+
+        // And a Commander with no carrier hears about neither.
+        var none = NpcChatter.Instruction(NpcChatterKind.Passersby, NpcChatterCarrier.None);
+
+        Assert.DoesNotContain("carrier", none, StringComparison.OrdinalIgnoreCase);
     }
 }
