@@ -4146,14 +4146,54 @@ public partial class PanelView : UserControl
 
     private void OnAskClick(object? sender, RoutedEventArgs e) => Model?.Ask();
 
+    /// <summary>
+    /// Enter sends; the arrows walk what has been sent
+    /// (<a href="https://github.com/dseelinger/d47/issues/224">#224</a>).
+    /// <para>
+    /// <b>Enter stays first and stays unambiguous.</b> A history walk that ever swallowed a send
+    /// would be a much worse defect than no history, so it is answered before anything else is
+    /// considered and returns rather than falling through.
+    /// </para>
+    /// <para>
+    /// <b>The list lives on the view model</b>, which is where both roads to sending meet — the
+    /// button and this key. What the view adds is the caret: a recalled line is one the Commander
+    /// is about to edit or send, so the cursor belongs at the end of it rather than wherever it
+    /// happened to be.
+    /// </para>
+    /// <para>
+    /// <b>Desktop only, and no headset case to think about.</b> This row is drawn where a host
+    /// furnished it and the flat overlay is click-through, so keyboard history on a control only
+    /// the window has is the whole of it.
+    /// </para>
+    /// </summary>
     private void OnAskBoxKeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key == Key.Enter)
         {
             e.Handled = true;
             Model?.Ask();
+
+            return;
+        }
+
+        if (e.Key == Key.Up && Model?.WalkBack() == true)
+        {
+            e.Handled = true;
+            CaretToEnd();
+        }
+        else if (e.Key == Key.Down && Model?.WalkForward() == true)
+        {
+            e.Handled = true;
+            CaretToEnd();
         }
     }
+
+    /// <summary>
+    /// The cursor after a recalled line, which is the end of it. Avalonia leaves the caret where
+    /// it was when the text changes underneath it, so without this an Up from an empty box puts
+    /// the cursor at the front of the recalled question.
+    /// </summary>
+    private void CaretToEnd() => AskBox.CaretIndex = AskBox.Text?.Length ?? 0;
 
     private void OnUpdateNowClick(object? sender, RoutedEventArgs e) => Model?.AcceptUpdate();
 

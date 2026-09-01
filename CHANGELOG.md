@@ -29,6 +29,25 @@ history to match today's layout would be the one edit it must never take.
 
 ## 0.99.0 — 2026-09-01 — Three columns, two groups, and a release that asks first
 
+### The conversation box walks what you have already sent (#224)
+
+Up steps back through the lines sent from the box this session, down steps forward again, and
+**stepping down past the newest gives back the half-typed question the walk interrupted** rather
+than emptying the box. That is the detail most implementations miss and the one you notice:
+losing a draft to a stray arrow press is worse than having no history at all.
+
+Up stops at the oldest instead of wrapping — a long history that quietly returned to the newest
+reads as the key having missed. Consecutive duplicates collapse, blank sends are never
+remembered, and editing a recalled line leaves the entry as it was sent: the edit is a new draft,
+not a rewrite of what you asked. Sending ends the walk, so the next Up starts from the newest.
+
+**Enter is answered first and returns**, because a history walk that ever swallowed a send would
+be a much worse defect than no history. The list lives on the view model, which is where the box
+and the send button meet — history kept in the key handler would miss every line sent by
+clicking — and it is **not written down anywhere**: the transcript is the record kept on purpose,
+and a second copy of your questions in `data\` would be a new place for that text to be that
+nobody asked for. It dies with the process and is capped at two hundred lines.
+
 ### The spend window is three columns: label, amount, and where the money went (#226)
 
 Money and detail used to share a cell. The voice line read as three facts wrapped into a

@@ -154,6 +154,35 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     private string? _updateText;
     private bool _updateBusy;
     private string _askText = string.Empty;
+
+    /// <summary>
+    /// What has been sent from the box this session, oldest first
+    /// (<a href="https://github.com/dseelinger/d47/issues/224">#224</a>).
+    /// <para>
+    /// <b>Not persisted, deliberately.</b> The transcript already holds what was said and is the
+    /// record kept on purpose; a second copy of the Commander's questions living in <c>data\</c>
+    /// would be a new place for that text to be that nobody asked for. This dies with the process,
+    /// which is the right lifetime for a typing convenience.
+    /// </para>
+    /// <para>
+    /// <b>Here rather than on the view</b>, because the box and the send button both arrive
+    /// through <see cref="Ask"/> — history kept in the key handler would miss every line sent by
+    /// clicking.
+    /// </para>
+    /// </summary>
+    private readonly List<string> _sent = [];
+
+    /// <summary>Where the walk is, or -1 for "not walking, the box holds the Commander's own text".</summary>
+    private int _walk = -1;
+
+    /// <summary>
+    /// What was in the box when the walk started, restored by stepping down past the newest.
+    /// <para>
+    /// <b>The detail most implementations miss</b>, and the one a Commander notices: losing a
+    /// half-typed question to a stray arrow press is worse than having no history at all.
+    /// </para>
+    /// </summary>
+    private string? _draft;
     private bool _canAsk = true;
     private bool _hasAsked;
     private string _transcriptText = string.Empty;
@@ -691,7 +720,103 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         return all.Length <= lines ? TranscriptText : string.Join('\n', all[^lines..]);
     }
 
-    public void Ask() => AskRequested?.Invoke();
+    /// <summary>How many sent lines are kept. Far past what anyone arrows through, and bounded (#224).</summary>
+    private const int MostRemembered = 200;
+
+    /// <summary>
+    /// Send what is in the box, and remember it (#224).
+    /// <para>
+    /// <b>Remembered before the host is told, and whatever the host then does with it.</b> A turn
+    /// the host declines — because one is already in flight, say — was still a line the Commander
+    /// typed and sent, and the arrow that recalls it is a typing convenience rather than a record
+    /// of what d47 answered. The transcript is the record.
+    /// </para>
+    /// </summary>
+    public void Ask()
+    {
+        var line = _askText?.Trim();
+
+        if (!string.IsNullOrEmpty(line)
+            && (_sent.Count == 0 || !string.Equals(_sent[^1], line, StringComparison.Ordinal)))
+        {
+            // Consecutive duplicates collapse: asking the same thing twice should not need two
+            // presses to get past it.
+            _sent.Add(line);
+
+            if (_sent.Count > MostRemembered)
+            {
+                _sent.RemoveAt(0);
+            }
+        }
+
+        // Sending ends the walk and drops the held draft, so the next Up starts from the newest.
+        _walk = -1;
+        _draft = null;
+
+        AskRequested?.Invoke();
+    }
+
+    /// <summary>
+    /// The previous sent line, on Up. False when there is nothing to walk, so the key is left
+    /// alone rather than swallowed (#224).
+    /// <para>
+    /// <b>It stops at the oldest rather than wrapping.</b> Wrapping silently returns a long
+    /// history to the newest, which reads as the key having missed.
+    /// </para>
+    /// </summary>
+    public bool WalkBack()
+    {
+        if (_sent.Count == 0)
+        {
+            return false;
+        }
+
+        if (_walk < 0)
+        {
+            _draft = _askText;
+            _walk = _sent.Count;
+        }
+
+        if (_walk == 0)
+        {
+            return true;
+        }
+
+        _walk--;
+        AskText = _sent[_walk];
+
+        return true;
+    }
+
+    /// <summary>
+    /// Forward again, on Down — and past the newest, back to the draft the walk interrupted.
+    /// <para>
+    /// False when no walk is under way, because Down in a box the Commander is typing in is not
+    /// this feature's key.
+    /// </para>
+    /// </summary>
+    public bool WalkForward()
+    {
+        if (_walk < 0)
+        {
+            return false;
+        }
+
+        _walk++;
+
+        if (_walk >= _sent.Count)
+        {
+            AskText = _draft ?? string.Empty;
+            _walk = -1;
+            _draft = null;
+
+            return true;
+        }
+
+        AskText = _sent[_walk];
+
+        return true;
+    }
 
     public void AcceptUpdate() => UpdateAccepted?.Invoke();
 
