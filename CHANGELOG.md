@@ -29,6 +29,31 @@ history to match today's layout would be the one edit it must never take.
 
 ## 0.98.2 — 2026-09-01 — The carrier's own two voices, and a jump nobody is making
 
+### A hold lets go the moment Elite stops being the window in front (#206)
+
+d47 could hold a modifier key physically down for **5.3 seconds, autonomously, with nothing
+asked for**: the discovery scanner's charge on arrival, with whatever modifiers the Commander's
+own bind carries underneath it. Every shortcut pressed during that window reached Windows as a
+different chord and silently did nothing — Win+Shift+S with a stray Ctrl under it matches no
+shell hotkey, nothing is logged, and pressing it again a moment later works perfectly, which
+reads as flaky Windows rather than as d47.
+
+The injector has always re-checked the foreground between steps, and a hold is **one step** — so
+alt-tabbing mid-charge did not shorten it. The wait now watches while it waits, on the same two
+questions the step loop asks: Elite in front, and the Commander in the game. Either going false
+ends the hold within about fifty milliseconds and the release that already ran in a `finally`
+runs there. The charge itself is untouched; 5.3 seconds is what the scanner needs.
+
+The watch waits whatever is left of the hold rather than a fixed slice, so a hundred wakeups
+cannot add up to a longer charge than was asked for. And the injector is now disposed on the way
+out — it was a local in the composition root that nothing ever disposed, so the exit release its
+own summary calls "the last chance to let go" had no caller. Two of the three safety nets that
+class documents were prose; both are real now.
+
+Left for a drive rather than guessed at: whether a long hold could re-press instead of holding.
+That is a question about how Elite reads a chord over time, and a wrong answer breaks the honk
+silently.
+
 ### Overheard chatter aboard your carrier speaks in the voices you cast for it (#249)
 
 Invented chatter (#244) puts a controller on the radio whenever the Commander is docked, and

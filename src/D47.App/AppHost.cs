@@ -81,6 +81,7 @@ public sealed class AppHost : IDisposable
         D47.Core.Hotas.BoundButton pushToTalkButton,
         D47.Core.Hotas.PushToTalkSources pushToTalkSources,
         BindsWatch binds,
+        ScancodeInjector gameInput,
         HttpModelStore models,
         WhisperTranscriber transcriber,
         string version,
@@ -119,6 +120,7 @@ public sealed class AppHost : IDisposable
         _pushToTalk = pushToTalk;
         _pushToTalkButton = pushToTalkButton;
         _pushToTalkSources = pushToTalkSources;
+        _gameInput = gameInput;
         Models = models;
         _transcriber = transcriber;
         Version = version;
@@ -653,6 +655,17 @@ public sealed class AppHost : IDisposable
 
     /// <summary>The two of them as one gate. Either opens it; the last release closes it.</summary>
     private readonly D47.Core.Hotas.PushToTalkSources _pushToTalkSources;
+
+    /// <summary>
+    /// The one thing that presses a key in the game, held only so that shutting down lets go of
+    /// whatever it is holding (<a href="https://github.com/dseelinger/d47/issues/206">#206</a>).
+    /// <para>
+    /// Everything that <em>uses</em> it reaches it through the action surface; this field exists
+    /// because it was a local in the composition root and nothing disposed it, so the release
+    /// its own summary calls "the last chance to let go" had no caller.
+    /// </para>
+    /// </summary>
+    private readonly ScancodeInjector _gameInput;
 
     /// <summary>
     /// Cancel's stick button (<a href="https://github.com/dseelinger/d47/issues/221">#221</a>).
@@ -2039,6 +2052,7 @@ public sealed class AppHost : IDisposable
             pushToTalkButton,
             sources,
             binds,
+            gameInput,
             models,
             transcriber,
             version,
@@ -6885,6 +6899,13 @@ public sealed class AppHost : IDisposable
         // The loop stops before anything it polls is torn down, so a tick cannot land on a
         // disposed sink or a closed file handle on the way out.
         _ticking?.Dispose();
+
+        // And then let go of the game (#206). After the tick and not before it: the autonomous
+        // drain and the switch reconciler both press keys on the tick, and a send landing on a
+        // disposed injector is the same class of fault as a stranded key. In practice the
+        // per-send finally has already released everything; this is the net for the send that
+        // did not get that far.
+        _gameInput.Dispose();
 
         // After the tick, so a serve cannot land on a destroyed overlay handle. A quad nobody
         // gave back stays floating in the cockpit after the app that put it there has gone.

@@ -21,6 +21,14 @@ namespace D47.App.Input;
 /// loss, and on exit. A stranded key here is a throttle that will not stop.
 /// </para>
 /// <para>
+/// <b>Two of those three were prose until #206.</b> Focus loss ended a sequence only between
+/// steps, so a hold — the one step that lasts, and the one a Commander's own modifiers sit
+/// under — ran to its end whatever happened; <see cref="WaitAsync"/> now watches while it
+/// waits. And exit was never wired at all: this was built as a local in the composition root
+/// and nothing ever disposed it, so the release below could not run. Both are real now, which
+/// is the standard this paragraph was already claiming.
+/// </para>
+/// <para>
 /// <b>Two deliberate widenings of "scancodes only", each with its reason.</b> Mouse buttons go
 /// through the same <c>SendInput</c> call, because Elite's own default keyboard preset binds
 /// the fire groups to <c>Mouse_1</c> and <c>Mouse_2</c> — a keyboard-only injector cannot fire
@@ -174,7 +182,14 @@ public sealed class ScancodeInjector(
 
                 if (step.Kind == InputStepKind.Delay)
                 {
-                    await WaitAsync(step.Delay, cancellationToken).ConfigureAwait(false);
+                    // The wait watches for itself (#206). A hold is one step, so the checks
+                    // above are the last word until it ends — and the honk's is 5.3 seconds
+                    // long with a Commander's own modifiers underneath it.
+                    if (await WaitAsync(step.Delay, cancellationToken).ConfigureAwait(false) is { } stopped)
+                    {
+                        return stopped;
+                    }
+
                     continue;
                 }
 
@@ -245,12 +260,73 @@ public sealed class ScancodeInjector(
     /// </summary>
     private static readonly TimeSpan PreciseBelow = TimeSpan.FromMilliseconds(50);
 
-    private static async Task WaitAsync(TimeSpan delay, CancellationToken cancellationToken)
+    /// <summary>
+    /// How often a long hold looks up to see whether it is still allowed to be holding anything
+    /// (<a href="https://github.com/dseelinger/d47/issues/206">#206</a>). Fifty milliseconds is
+    /// the longest a modifier can go on being pressed into a window that is no longer Elite,
+    /// and about a hundred wakeups across the honk — which costs nothing worth measuring.
+    /// </summary>
+    private static readonly TimeSpan WatchEvery = TimeSpan.FromMilliseconds(50);
+
+    /// <summary>
+    /// Waits out one delay step, and gives up on it the moment the sequence stops being allowed
+    /// to hold a key. Null means the wait ran its course; anything else is the refusal that
+    /// ended it, which the caller returns and the <c>finally</c> above releases behind.
+    /// <para>
+    /// <b>Why the honk needed this</b> (#206). Elite's discovery scanner is a 5.3-second hold,
+    /// fired autonomously on arrival, and a Commander whose scanner bind carries a modifier had
+    /// that modifier physically down for the whole charge. Every shortcut pressed meanwhile
+    /// reached Windows as a different chord and silently did nothing — Win+Shift+S with a
+    /// stray Ctrl under it matches no shell hotkey, and nothing anywhere says why.
+    /// </para>
+    /// <para>
+    /// <b>The deadline is a stopwatch, not a count of chunks.</b> Each wake waits whatever is
+    /// left of the hold, capped at <see cref="WatchEvery"/>, so the overshoot is one wake's
+    /// worth however coarse the timer turns out to be. A hundred fixed-length waits would each
+    /// round up and add up, and the honk is a hundred of them.
+    /// <b>Measured, the naive version would also have passed here</b> — this machine's
+    /// <see cref="Task.Delay(TimeSpan, CancellationToken)"/> lands within a couple of
+    /// milliseconds. But the grain is a machine-wide setting that anything running can raise or
+    /// drop, and a hold whose length depends on what else is open is not a length. This costs a
+    /// subtraction.
+    /// </para>
+    /// </summary>
+    private async Task<InjectionResult?> WaitAsync(TimeSpan delay, CancellationToken cancellationToken)
     {
         if (delay > PreciseBelow)
         {
-            await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
-            return;
+            var holding = System.Diagnostics.Stopwatch.GetTimestamp();
+
+            while (true)
+            {
+                var left = delay - System.Diagnostics.Stopwatch.GetElapsedTime(holding);
+
+                if (left <= TimeSpan.Zero)
+                {
+                    return null;
+                }
+
+                await Task.Delay(left < WatchEvery ? left : WatchEvery, cancellationToken).ConfigureAwait(false);
+
+                // The same two guards the step loop keeps, asked on the same terms — a hold is
+                // a step that lasts, and there is no reason for it to be the one step during
+                // which they stop being true.
+                if (!window.IsForeground)
+                {
+                    logger.LogInformation("Elite lost the foreground mid-hold; letting go");
+                    return new InjectionResult(
+                        InjectionOutcome.NotForeground,
+                        "Elite stopped being the window in front while I was holding a key, so I let go.");
+                }
+
+                if (!Online())
+                {
+                    logger.LogInformation("The Commander left the game mid-hold; letting go");
+                    return new InjectionResult(
+                        InjectionOutcome.NotOnline,
+                        "You left the game while I was holding a key, so I let go.");
+                }
+            }
         }
 
         var started = System.Diagnostics.Stopwatch.GetTimestamp();
@@ -265,6 +341,10 @@ public sealed class ScancodeInjector(
             cancellationToken.ThrowIfCancellationRequested();
             Thread.SpinWait(200);
         }
+
+        // Nothing to watch for down here: fifty milliseconds is shorter than the alt-tab it
+        // would be watching for, and the step loop asks both questions the moment this returns.
+        return null;
     }
 
     private bool Send(InputStep step)
