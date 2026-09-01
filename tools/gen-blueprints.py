@@ -127,6 +127,10 @@ COLUMNS = ["kind", "module", "name", "grade", "engineers", "ingredients", "effec
 MTYPE_COLUMNS = ["mtype", "blueprints"]
 
 
+# Engineering d47 knows is real and will not describe. See `DISPUTED_OFFERS`.
+DISPUTED_COLUMNS = ["symbol", "name", "mtypes"]
+
+
 # A module type EDSY splits and EDEngineer does not, mapped to the type whose recipes are its own.
 #
 # **One entry, and it is measured rather than reasoned.** EDSY files the Supercharged (SCO) drive
@@ -482,8 +486,13 @@ def edsy_offers(database: str) -> tuple[list[list[str]], dict[str, str]]:
         if label:
             by_label.setdefault(relax(label), []).append(symbol)
 
+    # EDSY's own label for every symbol, so a withheld blueprint can still be *named* — which is
+    # the whole of what the fourth state says out loud.
+    titles = {symbol: label for symbol, label in known.values() if label}
+
     types = edsy_section(database, "mtype")
     built = []
+    disputed: dict[str, list[str]] = {}
 
     for found in re.finditer(r"\n\t\t(\w+)\s*:\s*\{", types):
         depth, at = 1, found.end()
@@ -508,21 +517,32 @@ def edsy_offers(database: str) -> tuple[list[list[str]], dict[str, str]]:
 
         # Paint is not engineering. EDSY carries the four Decorative blueprints because it models
         # what can be applied to a module; a Commander planning a build is not choosing a colour.
-        offered = sorted({
+        wanted = {
             known[item][0]
             for item in listed("blueprints") + listed("expeffects")
             if item in known and not known[item][0].startswith("Decorative_")
+        }
 
-            # Engineering two trackers describe differently is not offered at all (#127). Here,
-            # at the one place the offer table is built, so nothing downstream has to remember:
-            # a symbol dropped here is invisible to the costing, to the uncosted report and to
-            # every surface that reads either.
-            and known[item][0] not in DISPUTED_OFFERS
-        })
+        # Engineering two trackers describe differently is not *offered* at all (#127) — dropped
+        # here, at the one place the offer table is built, so nothing downstream has to remember:
+        # a symbol taken out here is invisible to the costing, to the uncosted report and to every
+        # surface that reads either.
+        #
+        # It is recorded rather than forgotten, though. "There is engineering here and my sources
+        # disagree about it" is a fourth thing d47 can say, and it is a truer answer than the
+        # silence a bare drop leaves behind — the Guardian FSD Booster's only blueprint is one of
+        # these, and without this it would read as a module Frontier does not engineer.
+        offered = sorted(wanted - DISPUTED_OFFERS)
+
+        for symbol in sorted(wanted & DISPUTED_OFFERS):
+            disputed.setdefault(symbol, []).append(found.group(1))
 
         built.append([found.group(1), ",".join(offered)])
 
-    return sorted(built), by_label
+    return sorted(built), by_label, {
+        symbol: (titles.get(symbol, symbol), sorted(set(types)))
+        for symbol, types in disputed.items()
+    }
 
 
 def coriolis_recipes() -> tuple[dict[str, dict[str, int]], dict[str, dict[str, int]]]:
@@ -547,7 +567,7 @@ def main() -> None:
     by_name, ambiguous = materials()
     blueprints, specials = coriolis_recipes()
     fdnames = symbols()
-    offers, by_label = edsy_offers(edsy_database())
+    offers, by_label, disputed = edsy_offers(edsy_database())
 
     built: list[list[str]] = []
     unresolved: list[str] = []
@@ -1060,6 +1080,16 @@ def main() -> None:
     # EliteSpecifications.tsv carries against every module — see edsy_offers.
     text += ["[mtypes]", "\t".join(MTYPE_COLUMNS)]
     text += ["\t".join(row) for row in offers]
+
+    # The fourth state, as its own section: engineering that is real and that d47 will not
+    # describe. Kept apart from the offers above because it must never be read as one — nothing
+    # here can be costed, planned or gathered for, and the only thing d47 does with it is say
+    # that it is there.
+    text += ["[disputed]", "\t".join(DISPUTED_COLUMNS)]
+    text += [
+        "\t".join([symbol, name, ",".join(types)])
+        for symbol, (name, types) in sorted(disputed.items())
+    ]
 
     OUTPUT.write_text("\n".join(text) + "\n", encoding="utf-8", newline="\n")
 

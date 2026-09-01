@@ -175,10 +175,12 @@ An earlier pass the same day shipped it costed at the intersection of the two, a
 worse answer: a recipe missing an ingredient sends a Commander to a workshop with the wrong pile
 and nothing on the page ever hinted the list might be short.
 
-**The rule has a price and it is paid by the Guardian FSD Booster**, whose only offer this was:
-that module now reads as taking no engineering, which is a claim about Elite rather than about
-d47 — the exact distinction §4 exists to draw. Recorded here and asserted in
-`OfferedButNotCostedTests` so it stays a decision rather than becoming a surprise.
+**Which needed a fourth state**, because the drop alone left the Guardian FSD Booster — whose only
+blueprint this is — reading as a module Frontier does not engineer, the exact claim §4 exists to
+keep d47 out of making. `Blueprints.tsv` carries a `[disputed]` section naming the blueprint and
+the types it belongs to, `BlueprintCatalogue.DisputedFor` reads it, and the module page says
+*"Frontier engineers this, my two sources disagree about what it costs, and I will not guess."*
+It is deliberately not a `Blueprint`: nothing there can be costed, planned or gathered for.
 
 **The grades came from the capacities**, through Frontier's published ladder
 (300/250/200/150/100 = grades 1 to 5), validated on the 16 Thargoid materials in the same screen

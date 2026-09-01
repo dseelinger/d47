@@ -1254,3 +1254,6 @@ ukws	Misc_LightWeight,Misc_Reinforced,Misc_Shielded,Sensor_FastScan,Sensor_LongR
 upd	Misc_LightWeight,Misc_PointDefenseCapacity,Misc_Reinforced,Misc_Shielded
 upwa	
 usb	ShieldBooster_Explosive,ShieldBooster_HeavyDuty,ShieldBooster_Kinetic,ShieldBooster_Resistive,ShieldBooster_Thermic,special_shieldbooster_chunky,special_shieldbooster_efficient,special_shieldbooster_explosive,special_shieldbooster_kinetic,special_shieldbooster_thermic,special_shieldbooster_toughened
+[disputed]
+symbol	name	mtypes
+GuardianModule_Sturdy	Anti-Guardian Zone Resistance	cpd,cpp,hexgg,hexgp,hexgs,ifsdb,ihrp,imrp,isrp

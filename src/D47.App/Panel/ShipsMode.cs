@@ -2248,16 +2248,37 @@ public sealed class ShipsMode(
         // `Blueprints.tsv` — built from EDEngineer's recipes — carries a row for neither, because
         // EDEngineer has no Guardian weapon recipes at all. So a non-empty offer with no recipes
         // behind it is exactly "Frontier engineers this and I cannot cost it".
-        return Unrecipied(module.Item) switch
+        // **And a fourth, for engineering d47 will not describe rather than cannot price**
+        // (<a href="https://github.com/dseelinger/d47/issues/127">#127</a>). Two sources describe
+        // Anti-Guardian Zone Resistance and they disagree about what it costs, so it is withheld
+        // from the offer table entirely — which left the Guardian FSD Booster, whose only
+        // blueprint it is, reading as a module Frontier does not engineer. That is the claim about
+        // Elite this whole method exists to stop d47 making, so the withholding says so itself.
+        var withheld = EliteSpecifications.Module(module.Item) is { } specification
+            ? BlueprintCatalogue.DisputedFor(specification.Type)
+            : [];
+
+        return (Unrecipied(module.Item), withheld) switch
         {
-            [] => [new ChoiceOption(
+            ([], []) => [new ChoiceOption(
                 string.Empty,
                 $"Keep {what} — I have no engineering for this module. Click to close.")],
 
-            var missing => [new ChoiceOption(
+            ([], var disputed) => [new ChoiceOption(
+                string.Empty,
+                $"Keep {what} — Frontier engineers this ({string.Join(", ", disputed)}), my two "
+                + "sources disagree about what it costs, and I will not guess. Click to close.")],
+
+            (var missing, []) => [new ChoiceOption(
                 string.Empty,
                 $"Keep {what} — Frontier engineers this ({string.Join(", ", missing)}) and I have "
                 + "no recipe for it. Click to close.")],
+
+            var (missing, disputed) => [new ChoiceOption(
+                string.Empty,
+                $"Keep {what} — Frontier engineers this. I have no recipe for "
+                + $"{string.Join(", ", missing)}, and my sources disagree about "
+                + $"{string.Join(", ", disputed)}. Click to close.")],
         };
     }
 

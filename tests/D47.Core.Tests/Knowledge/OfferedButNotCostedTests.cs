@@ -154,12 +154,45 @@ public class OfferedButNotCostedTests
             BlueprintCatalogue.All,
             recipe => recipe.Symbols.Contains("GuardianModule_Sturdy", StringComparer.OrdinalIgnoreCase));
 
-        // <b>The cost of the rule, asserted rather than discovered later.</b> The Guardian FSD
-        // Booster's only offer was this one, so it now reads as a module that takes no
-        // engineering — which is a claim about Elite, and the kind of claim this whole file
-        // exists to keep d47 out of making. It is the Commander's ruling and it is written down
-        // here so the next reader meets it as a decision rather than as a surprise.
+        // The Guardian FSD Booster's only offer was this one, so nothing is offered to it now.
         Assert.Empty(BlueprintCatalogue.OfferedTo("ifsdb")!);
+    }
+
+    /// <summary>
+    /// <b>The fourth state.</b> Withholding a blueprint left the Guardian FSD Booster — whose
+    /// only one it is — reading as a module Frontier does not engineer, which is a claim about
+    /// Elite and the kind this file exists to keep d47 out of making. So the withholding says so
+    /// itself: the name, and the fact that d47 will not describe it.
+    /// </summary>
+    [Fact]
+    public void WhatIsWithheldIsStillNameableAsWithheld()
+    {
+        foreach (var type in new[] { "hexgg", "hexgp", "hexgs", "cpp", "cpd", "ifsdb", "ihrp", "imrp", "isrp" })
+        {
+            Assert.Equal(["Anti-Guardian Zone Resistance"], BlueprintCatalogue.DisputedFor(type));
+        }
+
+        // The name a Commander reads, not the symbol a journal writes.
+        Assert.DoesNotContain("GuardianModule_Sturdy", BlueprintCatalogue.DisputedFor("ifsdb"));
+
+        // Reached the way the panel reaches it — from a fitted module rather than from a type
+        // code — because a lookup that works on the code and not on the module is a sentence
+        // nobody ever sees.
+        var booster = EliteSpecifications.Module("int_guardianfsdbooster_size3");
+
+        Assert.NotNull(booster);
+        Assert.Empty(BlueprintCatalogue.OfferedTo(booster.Type)!);
+        Assert.Equal(["Anti-Guardian Zone Resistance"], BlueprintCatalogue.DisputedFor(booster.Type));
+
+        // And it is nobody else's business: a module with ordinary engineering says nothing.
+        Assert.Empty(BlueprintCatalogue.DisputedFor("hmc"));
+        Assert.Empty(BlueprintCatalogue.DisputedFor(null));
+
+        // Emphatically not a recipe. Nothing here can be costed, planned or gathered for — the
+        // fourth state is a sentence, and a Blueprint would be a promise.
+        Assert.DoesNotContain(
+            BlueprintCatalogue.All,
+            recipe => recipe.Name == "Anti-Guardian Zone Resistance");
     }
 
     [Fact]

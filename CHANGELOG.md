@@ -50,10 +50,15 @@ three states available**: a Commander gathers exactly what d47 asks for, flies t
 cannot roll, and nothing on the page ever suggested the list might be short. An offer with no
 recipe is still a claim, and this is a blueprint d47 cannot describe consistently.
 
-**The rule has a price, and it is the Guardian FSD Booster.** That module's only offer was this
-one, so it now reads as taking no engineering — a claim about Elite rather than about d47, which
-is the distinction this whole area exists to draw. It is asserted in the tests rather than left to
-be discovered.
+**So the module page has a fourth thing to say.** A module can take no engineering, or take some
+d47 can cost, or take some no source prices — and this is a fourth: *"Frontier engineers this
+(Anti-Guardian Zone Resistance), my two sources disagree about what it costs, and I will not
+guess."* Without it the Guardian FSD Booster, whose only blueprint this is, read as a module
+Frontier does not engineer — a claim about Elite rather than about d47, which is the distinction
+this whole area exists to draw.
+
+It is a sentence and not a recipe, kept in its own section of the table and reachable through
+nothing that costs, plans or gathers. All d47 does with it is say that it is there.
 
 **The three materials stay, and are new.** Hardened Surface Fragments, Caustic Crystal and
 Tactical Core Chip are named, categorised and capped now, at grades read from their capacities

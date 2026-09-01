@@ -204,6 +204,10 @@ public static class BlueprintCatalogue
     private static readonly Lazy<IReadOnlyDictionary<string, IReadOnlyList<string>>> Offers =
         new(LoadOffers, LazyThreadSafetyMode.ExecutionAndPublication);
 
+    /// <summary>Module type to the names of the engineering d47 withholds — see <see cref="DisputedFor"/>.</summary>
+    private static readonly Lazy<IReadOnlyDictionary<string, IReadOnlyList<string>>> Disputed =
+        new(LoadDisputed, LazyThreadSafetyMode.ExecutionAndPublication);
+
     public static IReadOnlyList<Blueprint> All => Loaded.Value;
 
     /// <summary>
@@ -225,6 +229,29 @@ public static class BlueprintCatalogue
         moduleType is { Length: > 0 } type && Offers.Value.TryGetValue(type, out var offered)
             ? offered
             : null;
+
+    /// <summary>
+    /// Engineering this module type really has and d47 will not describe
+    /// (<a href="https://github.com/dseelinger/d47/issues/127">#127</a>), by the name its sources
+    /// agree it goes by. Empty for almost everything.
+    /// <para>
+    /// <b>The fourth state, and it exists because the other three were all wrong for this.</b>
+    /// A module can take no engineering, or take some d47 can cost, or take some no source
+    /// prices — and Anti-Guardian Zone Resistance is a fourth thing: two trackers describe it and
+    /// they disagree about what it costs. Shipping the agreed part would send a Commander to a
+    /// workshop with a pile that might be short; dropping it silently made the Guardian FSD
+    /// Booster, whose only blueprint this is, read as a module Frontier does not engineer.
+    /// </para>
+    /// <para>
+    /// <b>Deliberately not a <see cref="Blueprint"/>.</b> Nothing here can be costed, planned,
+    /// gathered for or put on a checklist — it is a name and the fact that it is there, which is
+    /// the whole of what d47 is entitled to say about it.
+    /// </para>
+    /// </summary>
+    public static IReadOnlyList<string> DisputedFor(string? moduleType) =>
+        moduleType is { Length: > 0 } type && Disputed.Value.TryGetValue(type, out var withheld)
+            ? withheld
+            : [];
 
     /// <summary>
     /// Every recipe a module can take, by the module's own specification. Empty where it takes
@@ -464,6 +491,62 @@ public static class BlueprintCatalogue
         }
 
         return built;
+    }
+
+    /// <summary>
+    /// The <c>[disputed]</c> section, turned inside out: the table lists one row per withheld
+    /// blueprint with the types it belongs to, and every caller asks by type.
+    /// </summary>
+    private static IReadOnlyDictionary<string, IReadOnlyList<string>> LoadDisputed()
+    {
+        var built = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+
+        using var stream = typeof(BlueprintCatalogue).GetTypeInfo().Assembly
+            .GetManifestResourceStream(ResourceName);
+
+        if (stream is null)
+        {
+            return new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        using var reader = new StreamReader(stream);
+
+        var inside = false;
+
+        while (reader.ReadLine() is { } line)
+        {
+            if (line.StartsWith('['))
+            {
+                inside = line.StartsWith("[disputed]", StringComparison.Ordinal);
+                continue;
+            }
+
+            if (!inside || line.Length == 0 || line[0] == '#'
+                || line.StartsWith("symbol	", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var cells = line.Split('	');
+
+            // The name, not the symbol: what this is for is saying the thing out loud, and
+            // `GuardianModule_Sturdy` is not what a Commander sees on the engineer's screen.
+            if (Text(cells, 1) is not { Length: > 0 } name)
+            {
+                continue;
+            }
+
+            foreach (var type in Split(cells, 2))
+            {
+                built.TryAdd(type, []);
+                built[type].Add(name);
+            }
+        }
+
+        return built.ToDictionary(
+            pair => pair.Key,
+            pair => (IReadOnlyList<string>)pair.Value,
+            StringComparer.OrdinalIgnoreCase);
     }
 
     private static IReadOnlyList<Blueprint> Load()
