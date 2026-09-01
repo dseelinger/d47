@@ -9,7 +9,7 @@
 # its figures are pre-patch and are restated here to what the game charges, measured over
 # 16 upgrade events and four locker deltas — see docs/spikes/journal-corpus-on-foot.md §3.
 # Game data is Frontier's, used under their media usage rules; see NOTICE.
-# Rows: 1173 (bartender 4, experimental 154, merchant 56, modification 786, suit 14, synthesis 65, tech-broker 51, unlock 22, weapon 20). Built: 2026-09-01.
+# Rows: 1172 (bartender 4, experimental 154, merchant 56, modification 786, suit 14, synthesis 65, tech-broker 51, unlock 22, weapon 20). Built: 2026-09-01.
 kind	module	name	grade	engineers	ingredients	effects	guid	symbol	mtypes
 bartender	Unlock	Kit Fowler		Domino Green	push*5,opinionpolls*40				
 bartender	Unlock	Oden Geiger		Terra Velasquez	financialprojections*15,geneticsample*20,employeegeneticdata*20,geneticresearch*20				
@@ -1183,7 +1183,6 @@ weapon	Weapon	Reload speed		Jude Navarro,Uma Laszlo	operationalmanual*5,producti
 weapon	Weapon	Scope		Wellington Beck,Oden Geiger	spectralanalysisdata*5,biometricdata*3,opticallens*5,opticalfibre*3				
 weapon	Weapon	Stability		Domino Green,Oden Geiger	mininganalytics*5,riskassessments*8,viscoelasticpolymer*5,microhydraulics*5	Stability|+30%|good			
 weapon	Weapon	Stowed reloading		Kit Fowler,Uma Laszlo	digitaldesigns*5,operationalmanual*5,productionschedule*5,circuitboard*3,encryptedmemorychip*8				
-experimental	Guardian Module	Anti-Guardian Zone Resistance		Ram Tah	tg_abrasion03*2,tg_causticcrystal*1			GuardianModule_Sturdy	hexgg,hexgp,hexgs,cpp,cpd,ifsdb,ihrp,imrp,isrp
 [mtypes]
 mtype	blueprints
 cbh	Armour_Advanced,Armour_Explosive,Armour_HeavyDuty,Armour_Kinetic,Armour_Thermic,special_armour_chunky,special_armour_explosive,special_armour_kinetic,special_armour_thermic
@@ -1192,16 +1191,16 @@ cfsd	FSD_FastBoot,FSD_LongRange,FSD_Shielded,special_fsd_cooled,special_fsd_fuel
 cfsdo	FSD_FastBoot,FSD_LongRange,FSD_Shielded,special_fsd_cooled,special_fsd_fuelcapacity,special_fsd_heavy,special_fsd_lightweight,special_fsd_toughened
 cft	
 cls	Misc_LightWeight,Misc_Reinforced,Misc_Shielded
-cpd	GuardianModule_Sturdy,PowerDistributor_HighCapacity,PowerDistributor_HighFrequency,PowerDistributor_PriorityEngines,PowerDistributor_PrioritySystems,PowerDistributor_PriorityWeapons,PowerDistributor_Shielded,special_powerdistributor_capacity,special_powerdistributor_efficient,special_powerdistributor_fast,special_powerdistributor_lightweight,special_powerdistributor_toughened
-cpp	GuardianModule_Sturdy,PowerPlant_Armoured,PowerPlant_Boosted,PowerPlant_Stealth,special_powerplant_cooled,special_powerplant_highcharge,special_powerplant_lightweight,special_powerplant_toughened
+cpd	PowerDistributor_HighCapacity,PowerDistributor_HighFrequency,PowerDistributor_PriorityEngines,PowerDistributor_PrioritySystems,PowerDistributor_PriorityWeapons,PowerDistributor_Shielded,special_powerdistributor_capacity,special_powerdistributor_efficient,special_powerdistributor_fast,special_powerdistributor_lightweight,special_powerdistributor_toughened
+cpp	PowerPlant_Armoured,PowerPlant_Boosted,PowerPlant_Stealth,special_powerplant_cooled,special_powerplant_highcharge,special_powerplant_lightweight,special_powerplant_toughened
 cs	Sensor_LightWeight,Sensor_LongRange,Sensor_WideAngle
 ct	Engine_Dirty,Engine_Reinforced,Engine_Tuned,special_engine_cooled,special_engine_haulage,special_engine_lightweight,special_engine_overloaded,special_engine_toughened
 hc	Weapon_Efficient,Weapon_HighCapacity,Weapon_LightWeight,Weapon_LongRange,Weapon_Overcharged,Weapon_RapidFire,Weapon_ShortRange,Weapon_Sturdy,special_auto_loader,special_dispersal_field,special_force_shell,special_high_yield_shell,special_smart_rounds,special_thermal_cascade,special_weapon_damage,special_weapon_efficient,special_weapon_lightweight,special_weapon_rateoffire,special_weapon_toughened
 hel	Weapon_Efficient,Weapon_LightWeight,Weapon_LongRange,Weapon_Overcharged,Weapon_PlasmaConversion,Weapon_ShortRange,Weapon_Sturdy,special_concordant_sequence,special_regeneration_sequence,special_thermal_conduit,special_thermal_vent,special_thermalshock,special_weapon_damage,special_weapon_efficient,special_weapon_lightweight,special_weapon_toughened
 hex	Weapon_HighCapacity
-hexgg	GuardianModule_Sturdy,Weapon_RapidFire
-hexgp	GuardianModule_Sturdy,Weapon_Overcharged
-hexgs	GuardianModule_Sturdy,Weapon_LongRange
+hexgg	Weapon_RapidFire
+hexgp	Weapon_Overcharged
+hexgs	Weapon_LongRange
 hexsc	
 hextp	
 hexxc	Weapon_Overcharged,special_auto_loader
@@ -1225,14 +1224,14 @@ iex
 ifa	
 ifh	
 ifs	FuelScoop_ScoopRateEnhanced,Misc_Shielded
-ifsdb	GuardianModule_Sturdy
+ifsdb	
 ifsdi	FSDinterdictor_Expanded,FSDinterdictor_LongRange
 iftlc	Misc_LightWeight,Misc_Reinforced,Misc_Shielded
 ihblc	Misc_LightWeight,Misc_Reinforced,Misc_Shielded
-ihrp	GuardianModule_Sturdy,HullReinforcement_Advanced,HullReinforcement_Explosive,HullReinforcement_HeavyDuty,HullReinforcement_Kinetic,HullReinforcement_Thermic,special_hullreinforcement_chunky,special_hullreinforcement_explosive,special_hullreinforcement_kinetic,special_hullreinforcement_thermic
+ihrp	HullReinforcement_Advanced,HullReinforcement_Explosive,HullReinforcement_HeavyDuty,HullReinforcement_Kinetic,HullReinforcement_Thermic,special_hullreinforcement_chunky,special_hullreinforcement_explosive,special_hullreinforcement_kinetic,special_hullreinforcement_thermic
 imahrp	
 imlc	
-imrp	GuardianModule_Sturdy,MRP_HeavyDuty
+imrp	MRP_HeavyDuty
 inlc	
 ipc	
 iplc	Misc_LightWeight,Misc_Reinforced,Misc_Shielded
@@ -1243,7 +1242,7 @@ isbs
 iscb	ShieldCellBank_Rapid,ShieldCellBank_Specialised,special_shieldcell_efficient,special_shieldcell_gradual,special_shieldcell_lightweight,special_shieldcell_oversized,special_shieldcell_toughened
 isg	ShieldGenerator_Kinetic,ShieldGenerator_Optimised,ShieldGenerator_Reinforced,ShieldGenerator_Thermic,special_shield_efficient,special_shield_health,special_shield_kinetic,special_shield_lightweight,special_shield_regenerative,special_shield_resistive,special_shield_thermic,special_shield_toughened
 islc	
-isrp	GuardianModule_Sturdy
+isrp	
 iss	Sensor_Expanded
 ucl	Misc_ChaffCapacity,Misc_LightWeight,Misc_Reinforced,Misc_Shielded
 ucs	Misc_LightWeight,Misc_Reinforced,Misc_Shielded,Sensor_FastScan,Sensor_LongRange,Sensor_WideAngle

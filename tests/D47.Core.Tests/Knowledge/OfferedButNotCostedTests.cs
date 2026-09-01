@@ -26,27 +26,27 @@ namespace D47.Core.Tests.Knowledge;
 /// half stays uncosted and stays honest.
 /// </para>
 /// <para>
-/// <b>Closed 2026-09-01, and the file keeps its name because the shape it tests is still the
-/// disagreement between an offer list and a recipe list.</b> Every ordinary road was checked
-/// again first and every one was empty: FDevIDs has no row for any of the three materials by
-/// name or by symbol, EDEngineer has no Guardian blueprint symbol at all, coriolis has no
-/// <c>GuardianModule_Sturdy</c> (its <c>Weapon_Sturdy</c> is Sturdy Mount, a different
-/// blueprint), and 941 journals across three Commanders contain no occurrence of any spelling.
+/// <b>The Guardian half is not uncosted any more — it is withheld</b>
+/// (<a href="https://github.com/dseelinger/d47/issues/127">#127</a>, ruled 2026-09-01).
+/// EDEngineer has no Guardian blueprint symbol at all and coriolis has none either, so the only
+/// two sources that describe Anti-Guardian Zone Resistance are EDSY and ED Odyssey Materials
+/// Helper. They agree that it exists, that it is Ram Tah's, that it has one grade, and on two of
+/// its three ingredients. They disagree about the third — EDSY lists a Tactical Core Chip and
+/// EDOMH does not — and EDSY is malformed in exactly that spot: <c>maxgrade:1</c> against three
+/// <c>mats</c> groups, the only entry of the 65 carrying both fields where the counts disagree.
 /// </para>
 /// <para>
-/// <b>What broke the deadlock was a second tracker.</b> ED Odyssey Materials Helper's
-/// <c>locale/material/horizons/manufactured.csv</c> (MIT) names all three symbols exactly as
-/// EDSY does, independently, and it is the key EDOMH counts a journal inventory by — so a wrong
-/// one would show a permanent zero to every user who gathered one. On the Commander's ruling —
-/// <i>"go with what EDSY and EDOMH agree on"</i> — the intersection ships and the disagreement
-/// does not: both name two Hardened Surface Fragments and one Caustic Crystal, EDSY alone adds a
-/// Tactical Core Chip, and that third ingredient is left out. The warrant per column lives in
-/// <c>tools/curated_materials.py</c>; the recipe's lives in <c>tools/gen-blueprints.py</c>.
+/// <b>The Commander's rule:</b> <i>"If the two trackers don't agree on an engineering item,
+/// remove that from d47's offered engineering."</i> So the offer goes as well as the recipe.
+/// A recipe missing an ingredient is the worst of the three states available — a Commander
+/// gathers exactly what d47 asks for, flies to the workshop and cannot roll — and an offer with
+/// no recipe is still a claim d47 is not in a position to make about a blueprint its two
+/// describers describe differently.
 /// </para>
 /// <para>
-/// <b>The risk it takes is understating</b>, and it is written down rather than buried: if EDSY
-/// is right about the third ingredient, a Commander gathers what d47 asks for and cannot roll.
-/// That is the first thing to check if the blueprint ever refuses.
+/// <b>The three materials stay</b>, because both trackers agree on all three symbols and they
+/// are real: a Commander who gathers one has it named, graded and counted. See
+/// <c>tools/curated_materials.py</c> for the warrant per column.
 /// </para>
 /// </summary>
 public class OfferedButNotCostedTests
@@ -54,36 +54,19 @@ public class OfferedButNotCostedTests
     private static string? TypeOf(string symbol) => EliteSpecifications.Module(symbol)?.Type;
 
     [Fact]
-    public void TheGaussCannonIsOfferedEngineeringAndOneOfItIsNowCosted()
+    public void TheGaussCannonIsOfferedEngineeringNobodyHasCosted()
     {
         var type = TypeOf("hpt_guardian_gausscannon_fixed_medium");
 
         Assert.Equal("hexgg", type);
 
-        // EDSY says two blueprints are offered to it.
-        var offered = BlueprintCatalogue.OfferedTo(type);
+        // Rapid Fire, and only Rapid Fire. Anti-Guardian Zone Resistance is withheld at the
+        // offer table itself, so nothing downstream has to know it exists.
+        Assert.Equal(["Weapon_RapidFire"], BlueprintCatalogue.OfferedTo(type));
 
-        Assert.NotNull(offered);
-        Assert.Contains("GuardianModule_Sturdy", offered);
-        Assert.Contains("Weapon_RapidFire", offered);
-
-        // The reported line, and it draws now: the page said "no engineering" about a module
-        // whose one blueprint the Commander was standing in front of.
-        var costed = Assert.Single(
-            BlueprintCatalogue.For(EliteSpecifications.Module("hpt_guardian_gausscannon_fixed_medium"))!);
-
-        Assert.Equal("Anti-Guardian Zone Resistance", costed.Name);
-        Assert.Equal("Ram Tah", Assert.Single(costed.Engineers));
-
-        Assert.Equal(
-            [("tg_abrasion03", 2), ("tg_causticcrystal", 1)],
-            costed.Ingredients.Select(item => (item.Symbol, item.Size)));
-
-        // And Rapid Fire is still uncosted, which is the honest half staying honest: EDEngineer
-        // has no Guardian weapon recipes and nothing has changed about that.
-        Assert.DoesNotContain(
-            BlueprintCatalogue.For(EliteSpecifications.Module("hpt_guardian_gausscannon_fixed_medium"))!,
-            recipe => recipe.Symbols.Contains("Weapon_RapidFire", StringComparer.OrdinalIgnoreCase));
+        // And d47 holds no recipe for that one, which is the honest gap this file is named for:
+        // EDEngineer carries no Guardian weapon recipes at all.
+        Assert.Empty(BlueprintCatalogue.For(EliteSpecifications.Module("hpt_guardian_gausscannon_fixed_medium"))!);
     }
 
     [Fact]
@@ -136,8 +119,8 @@ public class OfferedButNotCostedTests
     [Fact]
     public void EveryGuardianHardpointIsInTheSameState()
     {
-        // All three, because the recipe belongs to the blueprint rather than to the weapon: a
-        // fix that reached the Gauss Cannon alone would be a fix keyed on the wrong thing.
+        // One offer each and no recipe behind it, all three the same shape — the recipe belongs
+        // to the blueprint rather than to the weapon, so anything true of one is true of them.
         foreach (var symbol in new[]
                  {
                      "hpt_guardian_gausscannon_fixed_medium",
@@ -149,38 +132,34 @@ public class OfferedButNotCostedTests
 
             Assert.NotNull(module);
             Assert.NotEmpty(BlueprintCatalogue.OfferedTo(module.Type)!);
-
-            var costed = Assert.Single(BlueprintCatalogue.For(module)!);
-
-            Assert.Equal("Anti-Guardian Zone Resistance", costed.Name);
-            Assert.NotEmpty(costed.Ingredients);
+            Assert.DoesNotContain("GuardianModule_Sturdy", BlueprintCatalogue.OfferedTo(module.Type)!);
+            Assert.Empty(BlueprintCatalogue.For(module)!);
         }
     }
 
     [Fact]
-    public void AntiGuardianZoneResistanceIsCostedEverywhereItIsOffered()
+    public void AntiGuardianZoneResistanceIsOfferedNowhereAndCostedNowhere()
     {
-        // Nine module types, and the recipe reaches all of them: three Guardian weapons, the
-        // power plant and distributor, the FSD booster and the three reinforcement packages.
-        var offered = new[] { "hexgg", "hexgp", "hexgs", "cpp", "cpd", "ifsdb", "ihrp", "imrp", "isrp" };
+        // Withheld at the offer table, so it is absent from both halves rather than present in
+        // one — an offer with no recipe would still be a claim about a blueprint whose two
+        // describers disagree.
+        var everywhere = new[] { "hexgg", "hexgp", "hexgs", "cpp", "cpd", "ifsdb", "ihrp", "imrp", "isrp" };
 
-        var recipe = Assert.Single(
-            BlueprintCatalogue.All,
-            entry => entry.Symbols.Contains("GuardianModule_Sturdy", StringComparer.OrdinalIgnoreCase));
-
-        foreach (var type in offered)
+        foreach (var type in everywhere)
         {
-            Assert.Contains("GuardianModule_Sturdy", BlueprintCatalogue.OfferedTo(type) ?? []);
-            Assert.Contains(type, recipe.ModuleTypes);
+            Assert.DoesNotContain("GuardianModule_Sturdy", BlueprintCatalogue.OfferedTo(type) ?? []);
         }
 
-        // **A one-off cost, not a per-application one**, which is a claim about the arithmetic
-        // rather than about what the game's menus call it. A modification is multiplied by
-        // EngineeringRules.RollsFor — five crafts at rank 1 — and both sources report two
-        // fragments where all 786 modification rows in this table cost exactly one of each per
-        // application. A source reporting two is reporting a total, so filing it as a
-        // modification would send a Commander after ten.
-        Assert.Equal(BlueprintKind.Experimental, recipe.Kind);
+        Assert.DoesNotContain(
+            BlueprintCatalogue.All,
+            recipe => recipe.Symbols.Contains("GuardianModule_Sturdy", StringComparer.OrdinalIgnoreCase));
+
+        // <b>The cost of the rule, asserted rather than discovered later.</b> The Guardian FSD
+        // Booster's only offer was this one, so it now reads as a module that takes no
+        // engineering — which is a claim about Elite, and the kind of claim this whole file
+        // exists to keep d47 out of making. It is the Commander's ruling and it is written down
+        // here so the next reader meets it as a decision rather than as a surprise.
+        Assert.Empty(BlueprintCatalogue.OfferedTo("ifsdb")!);
     }
 
     [Fact]
@@ -211,12 +190,11 @@ public class OfferedButNotCostedTests
             Assert.Equal(symbol, MaterialCatalogue.Find(name)?.Symbol);
         }
 
-        // Tactical Core Chip is nameable and is deliberately not in the recipe: EDSY lists it as
-        // a third ingredient and EDOMH does not, so it falls outside what the two agree on.
+        // Named and nothing more. No recipe anywhere asks for any of the three, because the one
+        // that would is withheld — the materials are here so a Commander who gathers one is told
+        // what it is and what it counts against, which is true whatever happens to the blueprint.
         Assert.DoesNotContain(
-            BlueprintCatalogue.All
-                .Single(entry => entry.Symbols.Contains("GuardianModule_Sturdy", StringComparer.OrdinalIgnoreCase))
-                .Ingredients,
-            item => item.Symbol == "unknowncorechip");
+            BlueprintCatalogue.All.SelectMany(recipe => recipe.Ingredients),
+            item => item.Symbol is "tg_abrasion03" or "tg_causticcrystal" or "unknowncorechip");
     }
 }

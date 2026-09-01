@@ -163,20 +163,22 @@ every user who gathered one. It also carries the family around them (`tg_abrasio
 `tg_abrasion02`, `tg_causticshard`, `tg_causticgeneratorparts`), which is what a table derived
 from the game looks like rather than what copying EDSY's three-line entry would produce.
 
-**What the two agree on ships; what they disagree on does not.** Both give the recipe as two
-Hardened Surface Fragments and one Caustic Crystal at a single grade, from Ram Tah. EDSY alone
-adds a Tactical Core Chip, and it is the source whose entry is malformed in exactly that spot, so
-that ingredient is left out — on the Commander's ruling, *"go with what EDSY and EDOMH agree
-on"*. **The risk taken is understating**: if EDSY is right, a Commander gathers what d47 asks for
-and cannot roll, and that is the first thing to check if the blueprint ever refuses.
+**What they disagree on is withheld entirely**, on the Commander's rule of 2026-09-01: *"If the
+two trackers don't agree on an engineering item, remove that from d47's offered engineering."*
+Both give the recipe as two Hardened Surface Fragments and one Caustic Crystal at a single grade
+from Ram Tah; EDSY alone adds a Tactical Core Chip, and it is the source malformed in exactly that
+spot. So the blueprint is dropped from the offer table itself — not costed, and not offered
+either, because an offer with no recipe is still a claim and this is a blueprint d47 cannot
+describe consistently.
 
-**The quantity settled itself against this repository's own strongest measurement.** Both sources
-say two fragments, and every one of the 786 modification rows in `Blueprints.tsv` costs exactly
-one of each ingredient per application — asserted on every run. A source reporting two for a
-modification is therefore reporting a *total*, so the recipe is filed as an `experimental`, whose
-cost is a one-off. Filed as a modification it would be multiplied by `EngineeringRules.RollsFor`
-— five crafts at rank 1 — and send a Commander after ten fragments for a blueprint that wants
-two.
+An earlier pass the same day shipped it costed at the intersection of the two, and that was the
+worse answer: a recipe missing an ingredient sends a Commander to a workshop with the wrong pile
+and nothing on the page ever hinted the list might be short.
+
+**The rule has a price and it is paid by the Guardian FSD Booster**, whose only offer this was:
+that module now reads as taking no engineering, which is a claim about Elite rather than about
+d47 — the exact distinction §4 exists to draw. Recorded here and asserted in
+`OfferedButNotCostedTests` so it stays a decision rather than becoming a surprise.
 
 **The grades came from the capacities**, through Frontier's published ladder
 (300/250/200/150/100 = grades 1 to 5), validated on the 16 Thargoid materials in the same screen

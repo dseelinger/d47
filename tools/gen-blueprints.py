@@ -147,54 +147,32 @@ MTYPE_COLUMNS = ["mtype", "blueprints"]
 # symbol. A rule that cannot tell those apart is a rule that invents game data.
 MTYPE_ALIASES = {"cfsdo": "cfsd"}
 
-# The one recipe no source d47 reads carries
-# (<https://github.com/dseelinger/d47/issues/127>), added 2026-09-01 on the Commander's ruling:
-# *"go with what EDSY and EDOMH agree on"*.
+# Engineering two trackers describe differently, removed from what d47 offers at all
+# (<https://github.com/dseelinger/d47/issues/127>).
 #
-# **EDEngineer has no Guardian weapon recipes at all** and coriolis has no `GuardianModule_Sturdy`
-# — its `Weapon_Sturdy` is Sturdy Mount, a different blueprint — so Anti-Guardian Zone Resistance
-# was offered to nine module types and costed by nothing. What is written here is the
-# **intersection** of the two sources that do carry it, and the parts they disagree on are left
-# out rather than averaged.
+# **The Commander's rule, given 2026-09-01:** *"If the two trackers don't agree on an engineering
+# item, remove that from d47's offered engineering."* It replaces a looser one from the same day
+# — take what they agree on — which shipped this blueprint costed at the intersection of the two
+# and left the disagreement out of the ingredient list. That is a worse failure than silence: a
+# Commander gathers exactly what d47 asks for, flies to the workshop and cannot roll, and nothing
+# on the page ever suggested the list might be short.
 #
-# - **grade 1** — EDSY's `maxgrade:1`; EDOMH draws it as G1.
-# - **Ram Tah** — EDOMH's own travel plan names him, and Ram Tah's in-game specialisation list
-#   carries GUARDIAN MODULE. EDSY holds no engineer for it either way.
-# - **2 Hardened Surface Fragments and 1 Caustic Crystal** — both sources, exactly.
+# **`GuardianModule_Sturdy` — Anti-Guardian Zone Resistance.** EDEngineer has no Guardian
+# blueprint symbol at all and coriolis has none either, so the only two sources that describe it
+# are EDSY and ED Odyssey Materials Helper. They agree that it exists, that it is Ram Tah's, that
+# it has one grade, and on two of its ingredients — and they disagree about a third, Tactical Core
+# Chip, which EDSY lists and EDOMH does not. EDSY is also malformed in exactly that spot:
+# `maxgrade:1` against three `mats` groups, the only entry of the 65 carrying both fields where
+# the counts disagree.
 #
-# **Tactical Core Chip is deliberately absent, and this is the judgement call.** EDSY lists it as
-# a third ingredient; EDOMH does not, with its own "hide completed" filter turned off and none
-# held. So it is one source against one, and the one asserting it is malformed in exactly that
-# spot: `maxgrade:1` with three `mats` groups, where `mats` is one group per grade everywhere
-# else in that file — the only such entry of the 65 that carry both fields. **The risk this
-# takes is understating**: if EDSY is right, a Commander gathers what d47 asks for and cannot
-# roll. Recorded here rather than buried, because that is the thing to check first if the
-# blueprint ever refuses.
+# So d47 says nothing about it. The offer is dropped as well as the recipe, because an offer with
+# no recipe is still a claim — *"Frontier engineers this and I cannot cost it"* — and d47 is not
+# in a position to make even that one about a blueprint whose two describers disagree.
 #
-# **It is filed as an experimental, and that is a claim about the cost rather than about the
-# game's menus.** Both sources draw it as a grade-1 blueprint, and `kind` here has never been
-# about what a screen calls something: a `modification` costs its ingredients *per application*
-# and is multiplied by `EngineeringRules.RollsFor`, while an `experimental` is a one-off. The two
-# sources say two Hardened Surface Fragments, and this table's own strongest measurement says
-# that cannot be a per-application figure — **786 modification rows, and every ingredient size in
-# every one of them is 1**, asserted on each run. A source reporting 2 for a modification is
-# therefore reporting a total, so the one-off shape is the one that reproduces it. Filed as a
-# modification instead, d47 would multiply by five rolls at rank 1 and send a Commander after ten
-# fragments for a blueprint that wants two.
-CURATED_RECIPES = [
-    [
-        "experimental",
-        "Guardian Module",
-        "Anti-Guardian Zone Resistance",
-        "",
-        "Ram Tah",
-        "tg_abrasion03*2,tg_causticcrystal*1",
-        "",
-        "",
-        "GuardianModule_Sturdy",
-        "hexgg,hexgp,hexgs,cpp,cpd,ifsdb,ihrp,imrp,isrp",
-    ],
-]
+# **This is not the same as the honest-gap machinery below**, which is for engineering d47 knows
+# is real and cannot price. This is for engineering d47 cannot describe consistently, and the
+# difference is whether the Commander is told something.
+DISPUTED_OFFERS = {"GuardianModule_Sturdy"}
 
 
 # Where coriolis and EDSY spell the same roll differently, and EDSY's is the spelling a module
@@ -534,6 +512,12 @@ def edsy_offers(database: str) -> tuple[list[list[str]], dict[str, str]]:
             known[item][0]
             for item in listed("blueprints") + listed("expeffects")
             if item in known and not known[item][0].startswith("Decorative_")
+
+            # Engineering two trackers describe differently is not offered at all (#127). Here,
+            # at the one place the offer table is built, so nothing downstream has to remember:
+            # a symbol dropped here is invisible to the costing, to the uncosted report and to
+            # every surface that reads either.
+            and known[item][0] not in DISPUTED_OFFERS
         })
 
         built.append([found.group(1), ",".join(offered)])
@@ -571,7 +555,6 @@ def main() -> None:
     withdrawn: list[str] = []
     unpriced: list[str] = []
     respelled: list[str] = []
-    curated_retired: list[str] = []
     counts: collections.Counter = collections.Counter()
 
     for entry in entries:
@@ -1004,34 +987,6 @@ def main() -> None:
     unnamed = [line for line in unnamed
                if line not in {f"{row[1]} / {row[2]}" for row in recipes if row[8]}]
 
-    # The curated recipes, added here and not earlier because the pass above overwrites every
-    # row's module types from its module *name*, and a curated row's whole point is that it
-    # carries a symbol and a set of types nothing upstream names (#127). Added to both lists,
-    # which hold the same objects, so the uncosted report below counts it as costed rather than
-    # reporting the gap it closes.
-    for curated in CURATED_RECIPES:
-        row = list(curated)
-
-        # A recipe naming a material the table does not carry cannot be totalled — the same rule
-        # the EDEngineer ingredients are held to above, and the join that keeps the two
-        # generators honest about each other.
-        for ingredient in row[5].split(","):
-            symbol = ingredient.split("*")[0]
-
-            if symbol not in set(by_name.values()):
-                raise SystemExit(
-                    f"curated recipe {row[2]!r} wants {symbol!r}, which is in no Materials.tsv "
-                    "row — add it to CURATED in tools/gen-materials.py and rerun that first"
-                )
-
-        if any(existing[8] == row[8] and existing[3] == row[3]
-               for existing in recipes if existing is not row):
-            # A source has caught up. Saying so is the point: this list is meant to shrink.
-            curated_retired.append(row[8])
-            continue
-
-        built.append(row)
-        recipes.append(row)
 
     # A variant type inherits the recipes of the type it is a variant of, but only for the
     # blueprints EDSY says it takes. See MTYPE_ALIASES for why there is exactly one of these and
@@ -1173,12 +1128,8 @@ def main() -> None:
         for code, name in uncosted:
             print(f"    {code} is offered {name}")
 
-    print(f"Curated recipes carried, because no source d47 reads has one (#127): "
-          f"{len(CURATED_RECIPES) - len(curated_retired)} of {len(CURATED_RECIPES)}")
-
-    if curated_retired:
-        print("A source now carries these, so drop them from CURATED_RECIPES in this file: "
-              + ", ".join(curated_retired))
+    print("Engineering withheld because two trackers describe it differently (#127): "
+          + (", ".join(sorted(DISPUTED_OFFERS)) if DISPUTED_OFFERS else "none"))
 
     print("Per kind: " + ", ".join(f"{kind}={count}" for kind, count in sorted(counts.items())))
     print(f"Ingredient references resolved: "

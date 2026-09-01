@@ -29,75 +29,44 @@ history to match today's layout would be the one edit it must never take.
 
 ## 0.98.2 — 2026-09-01 — The carrier's own two voices, and a jump nobody is making
 
-### Anti-Guardian Zone Resistance is costed, after five sources and a ruling (#127)
+### Engineering two trackers describe differently is withheld, not guessed at (#127)
 
 A Guardian Gauss Cannon read as having no engineering. It has one blueprint — Anti-Guardian Zone
-Resistance — and d47 could not price it, because **no source d47 reads carried the recipe**:
-EDEngineer has no Guardian blueprint symbol at all, coriolis has none either (its `Weapon_Sturdy`
-is Sturdy Mount, a different thing), and FDevIDs — the naming authority for materials — has no row
-for any of its three ingredients, by display name or by symbol. Nor do 941 journals across three
-Commanders. Phase 38 shipped the honest sentence instead, and this was its one unfinished item.
+Resistance — and **no source d47 reads carried the recipe**: EDEngineer has no Guardian blueprint
+symbol at all, coriolis has none either, and FDevIDs has no row for any of its three materials, by
+display name or by symbol. Nor do 941 journals across three Commanders. Phase 38 shipped the
+honest sentence instead, and this was its one unfinished item.
 
-**A second tracker broke the deadlock.** ED Odyssey Materials Helper's material table (MIT) names
-all three symbols exactly as EDSY does, arrived at independently — and its spelling is
-load-bearing in its own app, being the key it counts a journal inventory by, so a wrong one would
-show a permanent zero to anyone who gathered one. It also carries the family around them, which is
-what a table derived from the game looks like rather than what copying EDSY's three-line entry
-would produce.
+A second tracker — ED Odyssey Materials Helper, whose material table is MIT — turned out to name
+all three material symbols exactly as EDSY does, arrived at independently. The two agree that the
+blueprint exists, that it is Ram Tah's, that it has one grade, and on two of its three
+ingredients. **They disagree about the third**, and the source asserting it is malformed in
+exactly that spot.
 
-On the Commander's ruling — *"go with what EDSY and EDOMH agree on"* — **the intersection ships
-and the disagreement does not**. Both give it as two Hardened Surface Fragments and one Caustic
-Crystal, one grade, from Ram Tah. EDSY alone adds a Tactical Core Chip, and it is the source whose
-entry is malformed in exactly that spot, so that ingredient is left out. **The risk that takes is
-understating**: if EDSY is right, a Commander gathers what d47 asks for and cannot roll. It is
-written down in three places rather than buried, and it is the first thing to check if the
-blueprint ever refuses.
+So d47 says nothing about it. On the Commander's rule — *"if the two trackers don't agree on an
+engineering item, remove that from d47's offered engineering"* — the blueprint is dropped from the
+offer table itself, not merely left uncosted. **A recipe missing an ingredient is the worst of the
+three states available**: a Commander gathers exactly what d47 asks for, flies to the workshop and
+cannot roll, and nothing on the page ever suggested the list might be short. An offer with no
+recipe is still a claim, and this is a blueprint d47 cannot describe consistently.
 
-**The quantity settled itself against d47's own strongest measurement.** Both sources say two
-fragments, and all 786 modification rows in the table cost exactly one of each per application —
-asserted on every run since Phase 14. A source reporting two is therefore reporting a *total*, so
-the recipe is filed as a one-off cost. Filed as a modification it would be multiplied by the roll
-count — five crafts at rank 1 — and send a Commander after ten fragments for a blueprint that
-wants two.
+**The rule has a price, and it is the Guardian FSD Booster.** That module's only offer was this
+one, so it now reads as taking no engineering — a claim about Elite rather than about d47, which
+is the distinction this whole area exists to draw. It is asserted in the tests rather than left to
+be discovered.
 
-The three materials are nameable and capped now too, at grades read from their capacities through
-Frontier's ladder and validated against the 16 Thargoid materials in the same screen that FDevIDs
-*does* key — the capacity agrees with the published rarity in all 16. That overrules EDSY on
-Tactical Core Chip, which it calls grade 2 against a capacity of 100.
-
-They live in `tools/curated_materials.py`, read by both generators that build a material table so
-the two cannot disagree, and **each retires itself**: the day FDevIDs names one, the real row wins
-and the run says to delete the curated one.
+**The three materials stay, and are new.** Hardened Surface Fragments, Caustic Crystal and
+Tactical Core Chip are named, categorised and capped now, at grades read from their capacities
+through Frontier's ladder and validated against the 16 Thargoid materials in the same screen that
+FDevIDs *does* key — the capacity agrees with the published rarity in all 16. That overrules EDSY
+on Tactical Core Chip, which it calls grade 2 against a capacity of 100. A Commander who gathers
+one is told what it is and what it counts against, whatever happens to the blueprint. They live in
+`tools/curated_materials.py`, read by both generators that build a material table so the two
+cannot disagree, and **each retires itself** the day FDevIDs names it.
 
 The same regeneration picked up what the sources have added since August — Plasma Conversion on
 three laser types, an enhanced fuel-scoop rate, Heavy Duty on module reinforcement, and a new
 commodity. Those are offers with no recipe behind them yet, and the page says so in the usual way.
-
-### Use this takes the row you can see, or it is shut (#190)
-
-The button in every picker — voice, model, microphone, persona, theme — stopped working once you
-typed. A keystroke that narrows the list past the highlighted row makes Avalonia drop the
-selection, and nothing put it back: the list showed one obvious answer, nothing was highlighted,
-and `Accept` fell off the end of itself. No close, no result, no message, from a button that was
-still lit. Enter and a double-click route to the same place, so every road out of the dialog was
-dead at once.
-
-It had a second face on the rows that allow a value of their own. There the dropped highlight sent
-the other branch, which committed **the raw contents of the search box** as an id — accepted
-verbatim, written to settings, and then unresolvable by the row's derived caption. To a Commander
-that also reads as *"Use this did not work"*, by a completely different mechanism.
-
-Two changes, and both were needed. Typing now puts the highlight on the top match when the last
-one has been filtered away — the fixup the facet path has had since #146 and the text path, which
-is the one everybody types into, never got. And the button now asks the same question `Accept`
-asks: it is lit when something is selected, or when free text has been typed on a row that takes
-it, and shut otherwise. An enabled control wired to a handler that cannot commit was the whole
-defect in one line.
-
-What free text costs is stated rather than left to be discovered: typed text now commits only when
-it matches nothing in the list, which is the case it was written for. A picker opened on a row with
-nothing stored still takes nothing until you choose — the button is shut, rather than lit and
-inert.
 
 ### The engineer filter shows what that engineer does, not what your rank lets you have (#205)
 

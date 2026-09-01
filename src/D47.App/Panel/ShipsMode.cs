@@ -1582,11 +1582,12 @@ public sealed class ShipsMode(
     /// is the part that was wrong.
     /// </para>
     /// <para>
-    /// <b>The example this used to give was <c>GuardianModule_Sturdy</c>, and it is no longer
-    /// one</b> (<a href="https://github.com/dseelinger/d47/issues/127">#127</a>): Anti-Guardian
-    /// Zone Resistance is costed since 2026-09-01, so a Guardian hardpoint reaches this method
-    /// with a recipe and never gets here. What still does are the offers no source prices —
-    /// <c>Weapon_RapidFire</c> on that same cannon among them.
+    /// <b><c>GuardianModule_Sturdy</c> used to be the example and is no longer offered at all</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/127">#127</a>, ruled 2026-09-01): the
+    /// only two sources describing Anti-Guardian Zone Resistance disagree about what it costs, so
+    /// d47 withholds it rather than offering something it cannot state. What still reaches this
+    /// method is engineering d47 knows is real and cannot price — <c>Weapon_RapidFire</c> on that
+    /// same cannon among them — which is a different thing from engineering it cannot describe.
     /// </para>
     /// </summary>
     private static IReadOnlyList<string> Unrecipied(string? variant)
