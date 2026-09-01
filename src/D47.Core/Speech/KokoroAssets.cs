@@ -53,10 +53,51 @@ public static class KokoroAssets
     /// </param>
     public sealed record KokoroBuild(string Id, KokoroAsset Asset, double RealtimeMultiple)
     {
-        /// <summary>What the picker shows: the size and the speed, together and never apart.</summary>
+        /// <summary>
+        /// How long a Commander waits before this build starts speaking, for a line of the length
+        /// the benchmark used (<a href="https://github.com/dseelinger/d47/issues/216">#216</a>).
+        /// <para>
+        /// <b>Derived rather than measured, because the ratio is what was measured.</b> The runs
+        /// timed a 7.2-second comms line; dividing gives what that costs in waiting, which is the
+        /// same fact said in the unit a Commander experiences it in.
+        /// </para>
+        /// </summary>
+        public double SecondsBeforeSpeaking => ReferenceLineSeconds / RealtimeMultiple;
+
+        /// <summary>
+        /// What the picker shows: the size and the wait, together and never apart.
+        /// <para>
+        /// <b>Seconds rather than "× realtime", reported 2026-08-30</b> — <i>"Nx realtime — that
+        /// means nothing to me."</i> It is a synthesis-engineering unit meaning seconds of speech
+        /// produced per second of computing, so the row needed explaining before it conveyed
+        /// anything, and a picker row that needs explaining has failed at the only job it has. It
+        /// also expressed the good thing as a number going <em>up</em> while the thing a Commander
+        /// cares about — waiting — goes down. The spread reads as 1.3 to 4.2 seconds of lag now,
+        /// which is a difference a person can feel and choose against; 5.4 against 1.7 is not.
+        /// </para>
+        /// <para>
+        /// <b>The hedge is load-bearing.</b> These figures are less stable than the ratio they
+        /// replace: the ordering repeated across every pass and the absolutes did not — fp32
+        /// measured ×9.0 on a quiet machine and ×4.4 on a busy one, so a figure in seconds is
+        /// wrong by that same factor on different hardware. "about" stays, and the row's help says
+        /// <em>on this machine</em>. A stable number nobody understands is worth less than an
+        /// approximate one they do, which is the trade this makes deliberately.
+        /// </para>
+        /// </summary>
         public string Label =>
-            $"{Id} — {Asset.Megabytes:0} MB, about {RealtimeMultiple:0.0}× realtime";
+            $"{Id} — {Asset.Megabytes:0} MB, about {SecondsBeforeSpeaking:0.0} s before it speaks";
     }
+
+    /// <summary>
+    /// The line every build was timed against: 7.2 seconds of speech, a realistic d47 utterance
+    /// (#139's <c>spike/KokoroProbe bench</c>).
+    /// <para>
+    /// <b>Named because a bare number of seconds has no referent.</b> The wait scales with the
+    /// length of the line, so "about 1.3 s" is only meaningful against a stated reference — and
+    /// the reference belongs in one place rather than repeated on eight rows.
+    /// </para>
+    /// </summary>
+    public const double ReferenceLineSeconds = 7.2;
 
     /// <summary>The build every Commander gets unless they choose otherwise. Unchanged by #139.</summary>
     public const string DefaultBuildId = "fp32";

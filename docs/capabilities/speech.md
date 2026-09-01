@@ -227,24 +227,28 @@ moment, so the voices are there to choose from immediately rather than after a r
 
 **Kokoro publishes eight builds of the same model, and you can choose which one you run.** There is
 a **Local voice model build** row under Advanced, and it appears once the local voice is installed.
-Each choice states what it costs on disk and how fast it rendered speech on this machine, together
-— because **size does not predict speed here, and it points the wrong way**:
+Each choice states what it costs on disk and **how long you wait before it starts speaking**,
+together — because **size does not predict speed here, and it points the wrong way**:
 
-| build | size | speed |
+| build | size | wait before it speaks |
 |---|---|---|
-| `uint8` | 169 MB | about 5.4× realtime — **the fastest** |
-| `q4` | 291 MB | about 4.5× |
-| `fp32` | 310 MB | about 4.4× — **the default** |
-| `q4f16` | 147 MB | about 4.2× |
-| `fp16` | 155 MB | about 3.5× |
-| `uint8f16` | 108 MB | about 3.5× |
-| `q8f16` | 82 MB | about 1.8× |
-| `quantized` | 88 MB | about 1.7× |
+| `uint8` | 169 MB | about 1.3 s — **the fastest** |
+| `q4` | 291 MB | about 1.6 s |
+| `fp32` | 310 MB | about 1.6 s — **the default** |
+| `q4f16` | 147 MB | about 1.7 s |
+| `fp16` | 155 MB | about 2.1 s |
+| `uint8f16` | 108 MB | about 2.1 s |
+| `q8f16` | 82 MB | about 4.0 s |
+| `quantized` | 88 MB | about 4.2 s |
 
 Read that table before assuming a smaller download is a worse voice or a slower one. The **smallest
 two builds are the slowest by a factor of two and a half**, and `q4` is a *quantised* build that is
-within 6% of the full one's size. The figures compare the builds with each other on one machine on
-one day; treat the ordering as the finding and the multiples as approximate.
+within 6% of the full one's size.
+
+The seconds are for a typical spoken reply — the benchmark timed a 7.2-second comms line — measured
+on one machine on one day. **Treat the gap between the builds as the finding and the seconds
+themselves as approximate**: the ordering repeated across every run and the absolutes did not, so on
+faster hardware every figure here is smaller by the same factor.
 
 **How they sound has not been ranked.** Speed and size are measurements; quality is not, because
 every quantised build renders the same line to a *different length* than `fp32` does, so there is

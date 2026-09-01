@@ -29,6 +29,26 @@ history to match today's layout would be the one edit it must never take.
 
 ## 0.99.0 — 2026-09-01 — Three columns, two groups, and a release that asks first
 
+### The voice build picker says the wait in seconds, not multiples of realtime (#216)
+
+`uint8 — 169 MB, about 5.4× realtime` is now `uint8 — 169 MB, about 1.3 s before it speaks`.
+
+Reported plainly: *"Nx realtime — that means nothing to me."* It is a synthesis-engineering unit —
+seconds of speech produced per second of computing — so the row had to be explained before it
+conveyed anything, and a picker row that needs explaining has failed at the only job it has. It
+also expressed the good thing as a number going **up** while the thing you actually feel, waiting,
+goes down.
+
+The eight builds now read as **1.3 to 4.2 seconds of lag**, which is a difference a person can feel
+and choose against. `5.4` against `1.7` is not.
+
+**The hedge is load-bearing and stays.** These figures are less stable than the ratio they replace:
+the ordering repeated across every measurement pass and the absolutes did not — the same build timed
+×9.0 on a quiet machine and ×4.4 on a busy one — so on different hardware every second here is wrong
+by that same factor. Hence *about*, and hence the row's help saying the times are for a typical
+spoken reply **on this machine**. A stable number nobody understands is worth less than an
+approximate one they do.
+
 ### A key can be bound by typing its name, which is the only road to F13–F24 (#221)
 
 The bind row gains a third route beside pressing a key and pressing a stick button: **type the

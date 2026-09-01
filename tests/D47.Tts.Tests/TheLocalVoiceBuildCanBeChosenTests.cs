@@ -75,19 +75,62 @@ public class TheLocalVoiceBuildCanBeChosenTests
             KokoroAssets.Builds.Select(build => build.Asset.Bytes).Distinct().Count());
 
     /// <summary>
-    /// <b>The label carries speed and size together, never one without the other.</b> That is the
-    /// whole point of the row: a list of eight builds by file size would tell a Commander almost
-    /// nothing true about what they were choosing.
+    /// <b>The label carries the wait and the size together, never one without the other.</b> That
+    /// is the whole point of the row: a list of eight builds by file size would tell a Commander
+    /// almost nothing true about what they were choosing.
+    /// <para>
+    /// <b>And the wait is in seconds, not multiples of realtime</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/216">#216</a>). Reported as <i>"Nx
+    /// realtime — that means nothing to me"</i>: it is a synthesis-engineering unit, it needs
+    /// explaining before the row conveys anything, and it expresses the good thing as a number
+    /// going up while the thing a Commander feels goes down.
+    /// </para>
     /// </summary>
     [Fact]
-    public void EveryLabelSaysBothSizeAndSpeed()
+    public void EveryLabelSaysBothSizeAndTheWait()
     {
         foreach (var build in KokoroAssets.Builds)
         {
             Assert.Contains("MB", build.Label, StringComparison.Ordinal);
-            Assert.Contains("realtime", build.Label, StringComparison.Ordinal);
+            Assert.Contains("s before it speaks", build.Label, StringComparison.Ordinal);
             Assert.StartsWith(build.Id, build.Label, StringComparison.Ordinal);
+
+            // The unit that meant nothing, asserted absent so a later tidy-up cannot put it back.
+            Assert.DoesNotContain("realtime", build.Label, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("×", build.Label, StringComparison.Ordinal);
         }
+    }
+
+    /// <summary>
+    /// <b>The seconds are the measured ratio said in the unit a Commander waits in</b> (#216), and
+    /// the spread is what makes the row worth reading: 1.3 seconds against 4.2 is a difference a
+    /// person can feel, where 5.4 against 1.7 is not.
+    /// </summary>
+    [Fact]
+    public void TheWaitIsTheBenchmarkLineDividedByTheMeasuredSpeed()
+    {
+        foreach (var build in KokoroAssets.Builds)
+        {
+            Assert.Equal(
+                KokoroAssets.ReferenceLineSeconds / build.RealtimeMultiple,
+                build.SecondsBeforeSpeaking,
+                6);
+        }
+
+        var fastest = KokoroAssets.Builds.MinBy(build => build.SecondsBeforeSpeaking)!;
+        var slowest = KokoroAssets.Builds.MaxBy(build => build.SecondsBeforeSpeaking)!;
+
+        Assert.Equal("uint8", fastest.Id);
+        Assert.Equal("quantized", slowest.Id);
+
+        Assert.Contains("1.3 s", fastest.Label, StringComparison.Ordinal);
+        Assert.Contains("4.2 s", slowest.Label, StringComparison.Ordinal);
+
+        // Faster is a smaller number now, which is the whole reason for the change: the ordering
+        // by wait is the reverse of the ordering by ratio, and both say the same thing.
+        Assert.Equal(
+            KokoroAssets.Builds.OrderByDescending(build => build.RealtimeMultiple).Select(build => build.Id),
+            KokoroAssets.Builds.OrderBy(build => build.SecondsBeforeSpeaking).Select(build => build.Id));
     }
 
     /// <summary>

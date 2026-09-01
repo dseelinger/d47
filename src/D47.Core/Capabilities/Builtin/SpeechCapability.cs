@@ -545,8 +545,10 @@ public static class SpeechCapability
                 Help =
                     "Kokoro publishes eight builds of the same model and they are not interchangeable "
                     + "on size alone — the smallest is the slowest, and one quantised build is nearly "
-                    + "as large as the full one. Each choice states what it costs on disk and how fast "
-                    + "it rendered speech on this machine. Choosing a different one downloads it, "
+                    + "as large as the full one. Each choice states what it costs on disk and how long "
+                    + "you wait before it starts speaking — for a typical spoken reply, timed on this "
+                    + "machine, so treat the gap between them as the real figure rather than the "
+                    + "seconds themselves. Choosing a different one downloads it, "
                     + "checks it, and replaces the one you have; a failed download leaves the build "
                     + "you were using in place. How they SOUND has not been ranked — fp32 is the "
                     + "reference and the default.",

@@ -58,12 +58,17 @@ public class TheBuildRowOffersAllEightTests
     }
 
     /// <summary>
-    /// <b>Speed and size on every choice, together.</b> The issue's own argument: listing eight
-    /// builds by their file size would tell a Commander almost nothing true about what they were
-    /// choosing, because the smallest is the slowest.
+    /// <b>The wait and the size on every choice, together.</b> The issue's own argument: listing
+    /// eight builds by their file size would tell a Commander almost nothing true about what they
+    /// were choosing, because the smallest is the slowest.
+    /// <para>
+    /// <b>In seconds since <a href="https://github.com/dseelinger/d47/issues/216">#216</a></b>,
+    /// where it was multiples of realtime — a unit that had to be explained before the row said
+    /// anything, and that ran the wrong way round from what a Commander feels.
+    /// </para>
     /// </summary>
     [Fact]
-    public void EveryChoiceStatesItsSizeAndItsSpeed()
+    public void EveryChoiceStatesItsSizeAndTheWait()
     {
         var row = Row(Surface(null))!;
 
@@ -72,7 +77,8 @@ public class TheBuildRowOffersAllEightTests
             var label = row.LabelForChoice(id, new D47Settings());
 
             Assert.Contains("MB", label, StringComparison.Ordinal);
-            Assert.Contains("realtime", label, StringComparison.Ordinal);
+            Assert.Contains("s before it speaks", label, StringComparison.Ordinal);
+            Assert.DoesNotContain("realtime", label, StringComparison.OrdinalIgnoreCase);
         }
     }
 
