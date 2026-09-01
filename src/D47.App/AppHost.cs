@@ -1714,7 +1714,9 @@ public sealed class AppHost : IDisposable
                 // The same window object the injector asks about before every key. One thing
                 // knows how to find Elite, and now it also knows how to raise it — a second
                 // finder would be a second answer to "is that Elite" and they would disagree.
-                eliteWindow.Raise,
+                // On a worker because Raise verifies its landing with short waits (#107), and
+                // this delegate is invoked on the UI thread, which the VR host also posts to.
+                () => Task.Run(eliteWindow.Raise),
 
                 new SwitchSurface
                 {

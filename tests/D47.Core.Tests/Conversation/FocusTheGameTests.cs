@@ -23,7 +23,7 @@ public class FocusTheGameTests
                 FocusCapability.Create(() =>
                 {
                     calls.Add(1);
-                    return answer;
+                    return Task.FromResult(answer);
                 }),
             ]);
 

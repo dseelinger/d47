@@ -106,8 +106,14 @@ public static class FocusCapability
     /// tests that are not about it. The capability still registers, and its tool then says it
     /// cannot act rather than being absent, which is what a capability being off looks like
     /// (Phase 3).
+    /// <para>
+    /// A task rather than a value since #107: the raise talks to Win32 and verifies its landing
+    /// with short waits, and the thread that asked — the UI thread, for both spoken and typed
+    /// input — must not be the one that sleeps. The App passes a worker; Core, which owns no
+    /// threads, only awaits it.
+    /// </para>
     /// </param>
-    public static CapabilityDescriptor Create(Func<FocusResult>? raise) => new()
+    public static CapabilityDescriptor Create(Func<Task<FocusResult>>? raise) => new()
     {
         Id = Id,
         Group = "Interface",
@@ -127,9 +133,9 @@ public static class FocusCapability
                     "Bring Elite Dangerous to the foreground. Reachable by spoken phrase only, never by "
                     + "the model.",
                 Protected = true,
-                Handler = (_, _) => Task.FromResult(raise is null
+                Handler = async (_, _) => raise is null
                     ? ToolResult.Ok("I have no way to reach the game window on this machine.")
-                    : ToolResult.Ok(Describe(raise()))),
+                    : ToolResult.Ok(Describe(await raise().ConfigureAwait(false))),
             },
         ],
     };

@@ -83,8 +83,9 @@ public static class BuiltinCapabilities
 
         // Puts Elite in front (docs/plans/change-requests.md item 10). Null under the designer and
         // in tests that are not about it; the phrase then answers that it cannot reach the game
-        // window rather than going quiet, which is the one thing this must never do.
-        Func<Builtin.FocusResult>? raiseGame = null,
+        // window rather than going quiet, which is the one thing this must never do. A task since
+        // #107, so the caller's thread is never the one that waits on Win32.
+        Func<Task<Builtin.FocusResult>>? raiseGame = null,
 
         // The Commander's mapped HOTAS switches (Phase 21). Null under the designer and
         // in tests that are not about them; the capability still registers, so its rows and its
