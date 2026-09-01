@@ -328,6 +328,26 @@ proportional to how long d47 has been away rather than to how much history exist
 last one still walks 25 files. A cap would buy a fraction of a second back on the rarest start
 there is and put the hole straight back.
 
+**And the Commander can run it themselves — *"not look right? Do a rescan"*.** The Ships card in
+Settings says how many ships are remembered and how stale the oldest of them is, and offers
+**Rescan my journals** with a bar behind it. Where the catch-up at startup is *seeded* with the
+file so a session lands on top of what is known, a rescan **throws the file away and derives the
+answer again** — so a ship nothing in the journals supports stops existing, and one that has been
+sitting there wrong is put back the way the game described it. That is what makes it a repair
+rather than another pass of the same thing.
+
+**The offer is made where the doubt is, not only where the fix is.** The Loadout page already says
+*"As you left it, three months ago"* on a ship you are not in — the one line that admits the
+figures may be out of date — so the nudge sits beside it. A repair nobody can find is a repair
+nobody performs, and the settings card is not where a Commander is standing when they notice.
+
+**A rescan that read no journals changes nothing**, and that guard is the whole difference between
+a repair and a wipe: a journal folder that has moved reads exactly like a fleet that has genuinely
+been sold, and only one of those should be believed. The press reports the file count for that
+reason rather than the ship count. It is *Info with a press*, a shape `SettingsService.Apply`
+refuses to write, so nothing on the tool surface can start minutes of disk reading with a sentence
+somebody put in a chat channel.
+
 **Forgetting is the half a file makes load-bearing, and it now happens on three events rather than
 one.** A rolling window expired a stale row by itself; a file does not, and `ShipID` is reused —
 17 of 55 sold ships had their id come back alive. Measured on the 943-journal corpus: `ShipyardSell`

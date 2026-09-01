@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using D47.Core.Checklists;
 using D47.Core.Interface;
 using D47.Core.Journal;
@@ -314,6 +314,18 @@ public sealed class ShipsMode(
         if (seen.SeenAt is { } when)
         {
             lines.Add(new LoadoutLine($"As you left it, {Age(when)}.", LoadoutTone.Muted));
+
+            // **Said where the doubt is, not only where the fix is**
+            // (<a href="https://github.com/dseelinger/d47/issues/128">#128</a>). A Commander
+            // looking at a figure that does not match the ship in front of them has no way to know
+            // that anything can be done about it — and this is the one line on the page that
+            // already admits the figures may be out of date, so the offer belongs beside it.
+            //
+            // Only on a remembered ship: the one being flown reports no age at all, because "now"
+            // is the honest tense there and a rescan would answer a question nobody has.
+            lines.Add(new LoadoutLine(
+                "Not look right? Rescan your journals on the Ships card in Settings.",
+                LoadoutTone.Muted));
         }
 
         if (loadout.MaxJumpRange is { } range)

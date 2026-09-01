@@ -322,6 +322,119 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
     }
 
     /// <summary>
+    /// <b>A rescan rebuilds rather than catches up</b>, which is the whole difference between it
+    /// and the walk at startup (#128). The startup walk is seeded with the file so a session lands
+    /// on top of what is known; this one throws the file away and derives the answer again, so a
+    /// ship nothing on disk supports stops existing. That is what makes it a repair.
+    /// </summary>
+    [Fact]
+    public void ARescanDropsAShipNothingInTheJournalsSupports()
+    {
+        // A file holding a ship no journal will mention — the state a Commander presses the
+        // button because of.
+        var invented = State(
+            store: null,
+            Boarding("2026-01-02T01:00:00Z", "type9_military", 99, "int_engine_size7_class5"));
+
+        var store = Store();
+        store.Save([invented], Folded);
+
+        Journal("2026-01-03T100000",
+            """{"timestamp":"2026-01-03T10:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+            Boarding("2026-01-03T10:05:00Z", "anaconda", 51, "int_engine_size7_class2"));
+
+        var found = LoadoutBackfill.Rescan(_root, NullLogger.Instance);
+
+        Assert.Equal(1, found.Files);
+        Assert.Equal(1, found.Ships);
+
+        // The invented ship is gone and the real one is there — where a catch-up, being seeded
+        // with the file, would have kept both.
+        Assert.Null(found.ByCommander["F1"].For(99));
+        Assert.NotNull(found.ByCommander["F1"].For(51));
+    }
+
+    /// <summary>
+    /// <b>A rescan that read no journals reports nought files</b>, and that is the number the
+    /// caller has to act on rather than the ship count. A folder that has moved, or a Commander
+    /// pointed at the wrong one, answers exactly as a fleet that has genuinely been sold would —
+    /// and replacing a good file with that answer would be a wipe rather than a repair.
+    /// </summary>
+    [Fact]
+    public void ARescanOfAFolderWithNoJournalsFindsNothingAndSaysSo()
+    {
+        Assert.Equal(0, LoadoutBackfill.Rescan(_root, NullLogger.Instance).Files);
+
+        Assert.Equal(
+            0,
+            LoadoutBackfill.Rescan(Path.Combine(_root, "not-there"), NullLogger.Instance).Files);
+    }
+
+    /// <summary>
+    /// <b>A rescan replaces every known Commander, including one it found nothing for.</b> A
+    /// Commander whose ships have all been sold comes back with nothing, and skipping them would
+    /// leave exactly the stale row the button was pressed to be rid of.
+    /// </summary>
+    [Fact]
+    public void ReplacingLoadoutsEmptiesACommanderTheRescanFoundNothingFor()
+    {
+        var gameState = new GameStateStore();
+
+        gameState.Apply(Event(
+            """{"timestamp":"2026-08-20T00:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}"""));
+
+        gameState.Apply(Event(Boarding("2026-08-20T01:00:00Z", "anaconda", 51, "a")));
+
+        Assert.NotNull(gameState.Active!.Loadouts.For(51));
+
+        gameState.ReplaceLoadouts(new Dictionary<string, ShipLoadouts>(StringComparer.Ordinal));
+
+        Assert.Null(gameState.Active.Loadouts.For(51));
+
+        // And a Commander the rescan found but this store has never seen is not invented: a
+        // bucket exists because a journal established an identity.
+        gameState.ReplaceLoadouts(new Dictionary<string, ShipLoadouts>(StringComparer.Ordinal)
+        {
+            ["F2"] = ShipLoadouts.Empty,
+        });
+
+        Assert.Single(gameState.All);
+    }
+
+    /// <summary>
+    /// <b>The bar moves and it finishes at one.</b> A walk of a year of journals takes seconds, so
+    /// a press that reported nothing would be the defect the local voice download already had.
+    /// </summary>
+    [Fact]
+    public void ARescanReportsHowFarItHasGot()
+    {
+        for (var day = 1; day < 6; day++)
+        {
+            Journal(
+                $"2026-01-{day:00}T100000",
+                $$"""{"timestamp":"2026-01-{{day:00}}T10:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""");
+        }
+
+        var seen = new List<double>();
+
+        LoadoutBackfill.Rescan(_root, NullLogger.Instance, new Steps(seen));
+
+        Assert.Equal(0, seen[0]);
+        Assert.Equal(1, seen[^1]);
+
+        for (var nth = 1; nth < seen.Count; nth++)
+        {
+            Assert.True(seen[nth] >= seen[nth - 1], $"step {nth} went backwards to {seen[nth]}");
+        }
+    }
+
+    /// <summary>Collects what it is told, in order. Not a Progress&lt;T&gt;, which posts.</summary>
+    private sealed class Steps(List<double> seen) : IProgress<double>
+    {
+        public void Report(double value) => seen.Add(value);
+    }
+
+    /// <summary>
     /// <b>Engineering updates the stored loadout with no <c>Loadout</c> event involved.</b> Elite
     /// writes none after a roll — measured at 6,485 <c>EngineerCraft</c> events with not one
     /// followed by a <c>Loadout</c> within five seconds — so a store that waited for one would

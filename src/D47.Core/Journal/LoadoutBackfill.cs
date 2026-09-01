@@ -151,10 +151,16 @@ public static class LoadoutBackfill
     /// files, because a continuation journal re-emits <c>Fileheader</c> and not <c>Commander</c>.
     /// </para>
     /// </summary>
+    /// <param name="progress">
+    /// How far through the files it has got, nought to one, or null to say nothing (#128). Only
+    /// the Commander's own rescan asks for it: the catch-up at startup is a fraction of a second
+    /// and has nothing watching it.
+    /// </param>
     public static IReadOnlyDictionary<string, ShipLoadouts> FromHistory(
         IReadOnlyList<string> files,
         ILogger logger,
-        IReadOnlyDictionary<string, ShipLoadouts>? stored = null)
+        IReadOnlyDictionary<string, ShipLoadouts>? stored = null,
+        IProgress<double>? progress = null)
     {
         ArgumentNullException.ThrowIfNull(files);
         ArgumentNullException.ThrowIfNull(logger);
@@ -175,6 +181,10 @@ public static class LoadoutBackfill
         // here, so a caller asking for a wide catch-up is not quietly given 25 files back.
         for (var i = 0; i < files.Count; i++)
         {
+            // Before the file rather than after it, so a walk of 943 starts at nought rather than
+            // sitting empty through the first one.
+            progress?.Report((double)i / Math.Max(1, files.Count));
+
             var reader = new JournalReader(files[i], logger);
 
             while (reader.Poll() is { Count: > 0 } batch)
@@ -222,8 +232,69 @@ public static class LoadoutBackfill
                 ships.Ships.Values.Min(ship => ship.SeenAt));
         }
 
+        progress?.Report(1);
+
         return remembered
             .Where(entry => entry.Value.IsKnown)
             .ToDictionary(entry => entry.Key, entry => entry.Value, StringComparer.Ordinal);
     }
+
+    /// <summary>
+    /// Everything, from the first journal on disk, discarding what was stored
+    /// (<a href="https://github.com/dseelinger/d47/issues/128">#128</a>). <b>The Commander's own
+    /// repair</b>, for when what is drawn does not look right.
+    /// <para>
+    /// <b>It rebuilds rather than catching up, which is the whole difference.</b> The startup walk
+    /// is seeded with the file so that a session's worth of events lands on top of what is already
+    /// known; this one throws the file away and derives the answer again from the journals, so a
+    /// ship that nothing on disk supports stops existing. That is what makes it a repair rather
+    /// than another pass of the same thing.
+    /// </para>
+    /// <para>
+    /// <b>It reports how many files it read, and the caller needs that rather than the ship
+    /// count.</b> A folder that has moved, or a Commander pointed at the wrong one, reads nothing
+    /// and would otherwise look identical to a fleet that has genuinely been sold — and replacing
+    /// a good file with that answer is the one thing a repair must not do.
+    /// </para>
+    /// </summary>
+    public static LoadoutRescan Rescan(
+        string directory,
+        ILogger logger,
+        IProgress<double>? progress = null)
+    {
+        ArgumentNullException.ThrowIfNull(logger);
+
+        if (!Directory.Exists(directory))
+        {
+            logger.LogWarning("Asked to rescan {Directory}, which is not there", directory);
+            return new LoadoutRescan(0, 0, new Dictionary<string, ShipLoadouts>(StringComparer.Ordinal));
+        }
+
+        var files = Directory.EnumerateFiles(directory, JournalFolder.FilePattern)
+            .OrderBy(Path.GetFileName, StringComparer.Ordinal)
+            .ToList();
+
+        logger.LogInformation("Rescanning {Files} journal files at the Commander's request", files.Count);
+
+        var found = FromHistory(files, logger, stored: null, progress);
+
+        return new LoadoutRescan(
+            files.Count,
+            found.Values.Sum(ships => ships.Ships.Count),
+            found);
+    }
 }
+
+/// <summary>
+/// What a rescan found (<a href="https://github.com/dseelinger/d47/issues/128">#128</a>).
+/// </summary>
+/// <param name="Files">
+/// How many journals were read. <b>Nought is the answer that must not be acted on</b> — see
+/// <see cref="LoadoutBackfill.Rescan"/>.
+/// </param>
+/// <param name="Ships">How many ships were found across every Commander, for the sentence.</param>
+/// <param name="ByCommander">The picture itself, keyed on the Frontier id.</param>
+public sealed record LoadoutRescan(
+    int Files,
+    int Ships,
+    IReadOnlyDictionary<string, ShipLoadouts> ByCommander);

@@ -502,6 +502,15 @@ public sealed class AppHost : IDisposable
     public string? JournalDirectory { get; private set; }
 
     /// <summary>
+    /// The stored loadouts, for the row that describes them and the press that rebuilds them
+    /// (<a href="https://github.com/dseelinger/d47/issues/128">#128</a>).
+    /// </summary>
+    private LoadoutStore? _loadouts;
+
+    /// <summary>Whether a rescan is already running. One at a time, like the model download.</summary>
+    private int _rescanning;
+
+    /// <summary>
     /// The last plan each planner produced (Phase 37). Set during composition, like the
     /// three books above, because the file it reads lives beside the executable rather than
     /// anywhere Core can find on its own.
@@ -1644,6 +1653,17 @@ public sealed class AppHost : IDisposable
                         ? host.VerifySpeechKeyAsync(provider, token)
                         : Task.FromResult(SecretCheck.Unreachable("D47 is still starting up.")),
                 },
+                new ShipsCapability.ShipsSurface
+                {
+                    // Read at draw time, so the row says what is stored now rather than what was
+                    // stored when the surface was assembled — including straight after a rescan.
+                    Remembered = () => self?.RememberedShips() ?? "Nothing is remembered yet.",
+
+                    // The delegate answers a press rather than being one, for the reason
+                    // SpeechCapability.DownloadLocalVoice records: rows are built before `self`
+                    // exists, so a press asked for here would be null and stay null.
+                    Rescan = () => self is null ? null : self.RescanLoadoutsAsync,
+                },
                 cancellation,
                 callouts,
                 () => built ?? throw new InvalidOperationException(
@@ -2211,6 +2231,7 @@ public sealed class AppHost : IDisposable
         host.Adventures = (adventureBook, adventureGenerator);
         host.Galaxy = galaxy;
         host.JournalDirectory = journalDirectory;
+        host._loadouts = loadouts;
         host.Plans = planBook;
         host.Controllers = controllers;
         host.Commodities = commodityBoard;
@@ -3315,6 +3336,112 @@ public sealed class AppHost : IDisposable
     /// thing that could call it.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// What is stored about the fleet, as a sentence for the settings row
+    /// (<a href="https://github.com/dseelinger/d47/issues/128">#128</a>).
+    /// <para>
+    /// <b>The age of the oldest entry is the number worth showing.</b> A count on its own says
+    /// nothing about whether it is right; "the oldest was last seen fourteen months ago" is what
+    /// tells a Commander whether the answer they are looking at is worth acting on.
+    /// </para>
+    /// </summary>
+    internal string RememberedShips()
+    {
+        if (GameState.Active?.Loadouts is not { IsKnown: true } ships)
+        {
+            return "No ship has been seen inside yet. Board one and D47 will remember it.";
+        }
+
+        var oldest = ships.Ships.Values.Min(ship => ship.SeenAt);
+        var count = ships.Ships.Count;
+
+        return count == 1
+            ? $"One ship, last seen {TelemetryDelta.Spoken(DateTimeOffset.Now - oldest)} ago."
+            : $"{count.ToString("N0", System.Globalization.CultureInfo.InvariantCulture)} ships, the "
+              + $"oldest last seen {TelemetryDelta.Spoken(DateTimeOffset.Now - oldest)} ago.";
+    }
+
+    /// <summary>
+    /// Reads every journal on disk again and rebuilds what each ship was last seen holding
+    /// (<a href="https://github.com/dseelinger/d47/issues/128">#128</a>). <b>The Commander's own
+    /// repair</b>, for when what is drawn does not look right.
+    /// <para>
+    /// <b>Off the UI thread, because it is disk-bound and long.</b> The whole of a 943-journal,
+    /// 382 MB history reads and folds in about three seconds; the bar is what makes that legible
+    /// rather than a freeze.
+    /// </para>
+    /// <para>
+    /// <b>A rescan that read no journals changes nothing</b>, and that guard is the difference
+    /// between a repair and a wipe: a folder that has moved, or a Commander pointed at the wrong
+    /// one, answers exactly as a fleet that has genuinely been sold would.
+    /// </para>
+    /// </summary>
+    internal async Task<string?> RescanLoadoutsAsync(
+        IProgress<double> progress,
+        CancellationToken cancellationToken)
+    {
+        if (JournalDirectory is not { Length: > 0 } directory || _loadouts is not { } store)
+        {
+            return "There is no journal folder to read.";
+        }
+
+        if (Interlocked.Exchange(ref _rescanning, 1) == 1)
+        {
+            return "A rescan is already running.";
+        }
+
+        try
+        {
+            var found = await Task.Run(
+                () => LoadoutBackfill.Rescan(
+                    directory,
+                    _loggerFactory.CreateLogger(nameof(LoadoutBackfill)),
+                    progress),
+                cancellationToken).ConfigureAwait(false);
+
+            if (found.Files == 0)
+            {
+                _logger.LogWarning("A rescan read no journals from {Directory}; nothing was changed", directory);
+
+                return $"I could not read any journals in {directory}, so nothing was changed. "
+                       + "Check the journal folder and try again.";
+            }
+
+            GameState.ReplaceLoadouts(found.ByCommander);
+
+            // Dated off the newest thing the walk saw rather than off the clock, so the next
+            // start's catch-up begins where this left off. Nothing seen at all is still a real
+            // rescan — it means the journals hold no ships — and the stamp says so.
+            var through = found.ByCommander.Values
+                .SelectMany(ships => ships.Ships.Values)
+                .Select(ship => ship.SeenAt)
+                .DefaultIfEmpty(DateTimeOffset.Now)
+                .Max();
+
+            store.Save(GameState.All, through);
+
+            _logger.LogInformation(
+                "A rescan read {Files} journals and remembered {Ships} ship(s)", found.Files, found.Ships);
+
+            return found.Ships == 0
+                ? $"Read {found.Files} journals and found no ships in them. Nothing is remembered now."
+                : $"Read {found.Files} journals. {found.Ships} ship(s) remembered.";
+        }
+        catch (OperationCanceledException)
+        {
+            return "The rescan was stopped. Nothing was changed.";
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _logger.LogWarning(ex, "A rescan of {Directory} could not be completed", directory);
+            return "I could not read the journals through. Nothing was changed.";
+        }
+        finally
+        {
+            _ = Interlocked.Exchange(ref _rescanning, 0);
+        }
+    }
+
     private async Task<string?> DownloadLocalVoice(
         IProgress<double> progress,
         CancellationToken cancellationToken)

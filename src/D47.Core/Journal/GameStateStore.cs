@@ -1,4 +1,4 @@
-namespace D47.Core.Journal;
+﻿namespace D47.Core.Journal;
 
 /// <summary>
 /// The Commander being tailed changed (Phase 44).
@@ -88,6 +88,32 @@ public sealed class GameStateStore
     /// </para>
     /// </summary>
     public event Action<CommanderSwitch>? CommanderChanged;
+
+    /// <summary>
+    /// Replaces what every known Commander's ships were last seen holding, from a re-derivation of
+    /// the journals (<a href="https://github.com/dseelinger/d47/issues/128">#128</a>).
+    /// <para>
+    /// <b>Every known Commander, not only the ones the rescan mentions.</b> A Commander whose
+    /// ships have all been sold comes back from a rescan with nothing, and skipping them would
+    /// leave exactly the stale row the Commander pressed the button to be rid of. Whether the
+    /// rescan is worth acting on at all is decided before this is called — it is a repair, and a
+    /// repair handed an empty answer by a folder that has moved would be a wipe.
+    /// </para>
+    /// <para>
+    /// A Commander the rescan found and this store has never seen is ignored rather than created:
+    /// a bucket exists because their journal established an identity, and inventing one here would
+    /// put a Commander in the panel who has not logged in.
+    /// </para>
+    /// </summary>
+    public void ReplaceLoadouts(IReadOnlyDictionary<string, ShipLoadouts> loadouts)
+    {
+        ArgumentNullException.ThrowIfNull(loadouts);
+
+        foreach (var (fid, state) in _byFrontierId)
+        {
+            state.Loadouts = loadouts.TryGetValue(fid, out var ships) ? ships : ShipLoadouts.Empty;
+        }
+    }
 
     public void Apply(JournalEvent journalEvent) => Apply(journalEvent, null);
 

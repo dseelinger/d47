@@ -1,4 +1,4 @@
-using D47.Core.Audio;
+﻿using D47.Core.Audio;
 using D47.Core.Callouts;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
@@ -32,6 +32,7 @@ public class InterruptingCommandTests
             new SpendTracker(),
             "1.0.0-test",
             TestSurface.SilentSpeech(onSilence),
+            TestSurface.NoFleet(),
             new TurnCancellation(NullLogger<TurnCancellation>.Instance),
             new CalloutEngine(NullLogger<CalloutEngine>.Instance),
             () => built!,
@@ -192,6 +193,7 @@ public class InterruptingCommandTests
             new SpendTracker(),
             "1.0.0-test",
             TestSurface.SilentSpeech(),
+            TestSurface.NoFleet(),
             new TurnCancellation(NullLogger<TurnCancellation>.Instance),
             new CalloutEngine(NullLogger<CalloutEngine>.Instance),
             () => built!,
@@ -238,6 +240,7 @@ public class InterruptingCommandTests
             new SpendTracker(),
             "1.0.0-test",
             TestSurface.SilentSpeech(() => silenced++),
+            TestSurface.NoFleet(),
             new TurnCancellation(NullLogger<TurnCancellation>.Instance),
             new CalloutEngine(NullLogger<CalloutEngine>.Instance),
             () => built!,

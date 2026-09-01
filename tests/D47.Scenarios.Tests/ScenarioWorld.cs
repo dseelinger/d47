@@ -1,4 +1,4 @@
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using D47.Core;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
@@ -82,6 +82,7 @@ public sealed class ScenarioWorld : IDisposable
                 Voices = _ => [],
                 VoiceLabel = (_, id) => id,
             },
+            ShipsCapability.ShipsSurface.Inert,
             new TurnCancellation(NullLogger<TurnCancellation>.Instance),
             new D47.Core.Callouts.CalloutEngine(NullLogger<D47.Core.Callouts.CalloutEngine>.Instance),
             () => built!,
