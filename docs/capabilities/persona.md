@@ -436,10 +436,12 @@ core gets drier wit, not someone else's jokes — and the line reaches everythin
 character: conversation, ambient remarks, the opening brief. The carrier captain and tower are not
 the core and are untouched.
 
-**And not the standard AI fare.** The instruction bans the stock moves outright — similes,
-"it's like…", puns, zany exaggeration, exclamation marks — and asks for understatement and
-timing instead. A model given permission to be funny reaches for decoration first, so the
-permission names what it is not.
+**And not the standard AI fare.** The instruction bans the stock moves as hard rules — similes
+and borrowed images of any kind, puns, whimsy, zany exaggeration, exclamation marks, "…" pauses
+for comic effect — and tells the model what to do at the moment of temptation: when "like" or
+"as if" is about to introduce a comparison, cut the comparison and let the plain fact land dry.
+A model given permission to be funny reaches for decoration first, so the permission names what
+it is not, and names it as bans rather than taste.
 
 > "humor on" / "humor off"
 
