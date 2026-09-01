@@ -27,6 +27,125 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.97.0 — 2026-08-31 — Invented voices, and the store goes live
+
+### Phase 61 — Invented chatter: people who do not exist, talking on the radio (#244)
+
+**The galaxy now mutters.** Now and then — twenty to forty minutes apart, never on a fixed tick —
+an exchange is overheard: two crews on the local channel about their own small business, the dock
+telling an invented pilot off while you are docked somewhere, and about one exchange in four, a
+line or two said to *you* over the open channel. Statements only, never a question, and **nothing
+here is ever answered**: the lines ride the comms voice with invented speaker names, so each gets
+its own pooled per-system voice, and none of it enters the conversation, the comms record, or a
+prompt. Theatre, heard once.
+
+**This is not the game's own NPC traffic** — Elite's real messages are re-voiced under Speech and
+are somebody else's words. Invented chatter is d47's own fiction on its own switch, and the two
+stay distinguishable on the settings page. The callout emits an empty-text marker on the ambient
+timing rules; the app composes it with the background model against where the Commander actually
+is; the reply is parsed strictly — `Name: words`, at most four lines, a fragment is silence — and
+a model given a hunter's freedom is still bound: no real people, no players, nobody asking the
+Commander for anything. The gap between exchanges is dealt deterministically off the pick counter
+inside the least/most range, because no Core component reads a clock or a seed and a recorded
+session has to replay to the same spacing.
+
+### Chatter is model-written or it is nothing (#245)
+
+**An ambient remark the model did not write is not spoken.** The authored lines stopped being an
+understudy and became what they always should have been: a tone sample the brief shows the model,
+and nothing more. Every road to "no model line" — no provider, the three-second budget, a refusal,
+a line about itself — now ends in silence rather than a stock sentence, enforced at the one drain
+everything audible passes through. With no language model configured the chatter rows are absent
+from Settings entirely, because a switch governing something that cannot happen is a switch that
+does nothing. The carrier captain and tower keep their authored floor deliberately: they are
+rewording briefs over d47's own lines, and whether the rule reaches them is left for the Commander
+to rule on.
+
+### An ambient remark speaks to the Commander instead of narrating (#222)
+
+*"Kuwemaki hangs under us in normal space, a steady pull through the dark"* was the model doing
+exactly as told: the brief asked for *"a remark about where the Commander is"*, which made the
+place the subject, and a place described in the third person is a novel's narrator. The
+instruction now names the addressee in its first sentence, bans scene-setting beside the three
+interaction bans it always had, and hands the authored stock line over as a sample of the register
+rather than a script — still a composition brief, and now one that knows what it is composing.
+
+### A little humor, when the Commander switches it on (#243)
+
+**"It's so serious all the time."** A toggle in Persona adds one line after the standing
+instructions — permission for an occasional dry aside in each core's own character, never at the
+Commander's expense, never inside a warning. Off is the shipped block byte for byte. The first
+drive taught the second half: the model took the permission and reached straight for *"like it's
+waiting for applause instead of fuel"*, so the bans are hard rules now — no similes or borrowed
+images of any kind, no puns, no whimsy, no exclamation marks, no comic ellipses — with the escape
+route named at the moment of temptation: cut the comparison and let the plain fact land dry.
+
+### Help improve D47: one window, one button, why-first, and the journal scale (#238, #239, #240, #241)
+
+The two Donate buttons and their two windows are one of each, and the name says what it is for —
+**"Donate" read as a request for money or a kidney**, on the Commander's own account. An *Include
+journal history* toggle decides which flow the one window runs, and the merge is of the surface,
+never the consent: the excerpt keeps its read-the-payload yes and closes on the copy, the history
+keeps its report and its Read step, and the Log page still offers only the excerpt, because a
+history is Elite's journals and that page does not show them.
+
+The lede leads with **why** — real journals are how defects get found and fixed — and then the
+three promises that were always true and always buried: entirely voluntary, scrubbed before you
+ever see the result, removable in one press. The scale opens on the journal scale, gentlest first,
+and the widest option says **"Everything"** rather than *"everything on disk"*, because a
+Commander reads "on disk" literally. Privacy and egress says *Shared*, not *Donated*.
+
+### The send address ships in the build, and the store goes live
+
+The journal-history store stopped being an address a Commander pastes in and became part of the
+build. The truth the change uncovered: **there was never a working endpoint at all** — no custom
+domain was ever attached, and the Worker's own hostname was switched off by its config, so the
+"paste the address here" row asked every installation a question whose one answer did not resolve.
+The route is on now (production only), `wrangler.toml` says so in case a deploy would silently
+turn it back off, and the row is retired: the disclosure row always names the destination in full,
+and **the press is the whole of the switch** — nothing is sent until the Commander presses, every
+time, with Cloudflare's own protections standing in front of the Worker, per the Commander's
+ruling. Driven end to end the same night: an excerpt sent, the receipt's hash checked, Forget
+pressed, and the store asked directly — *"The specified key does not exist."*
+
+### The main menu is not the game: keys wait for the Commander to go online (#242)
+
+Running and in front were the injector's whole test, and Elite at its main menu passes both — so a
+keystroke aimed at a ship landed in a menu. A third refusal sits between them now: **NotOnline**,
+when the status flags say the Commander is aboard nothing, on foot nowhere, and a passenger of no
+one — with a freshness window, because `IsKnown` is one-way and a status file from yesterday still
+reads "in the ship". It re-checks mid-sequence, because quitting to the menu keeps Elite in front
+and a macro must not carry on typing into it. One choke point, every road that presses keys.
+
+### The Motion controllers row says less, and wears the warning (#237)
+
+Two sentences instead of seven — the row says what the switch does and what off costs, and the
+whole case for the withdrawal stays in #18, #198 and the docs. The hazard is a **warning badge**
+now, the first of its kind on a settings row, with the advice stated outright: when you finish
+trying it on, turn it back off and restart d47.
+
+### Lavigny-Duval, once a day (#246)
+
+The journal writes *A. Lavigny-Duval* and a voice reading "A." is reading punctuation — the
+surname is the name as spoken. And the territory lecture — *"…controls this system, and you fly
+for… You are exposed here"* — plays **once per local day, across sessions and whichever core is
+aboard**, remembered in `view-state.json`; every exposure after it, whoever the rival, is four
+words: *Hostile territory. Be on guard.* That overturns once-per-Power-per-session, on a day of
+re-launching that proved the fourth hearing is not information either.
+
+### Fixes from the first drive (#222's sibling reports, unnumbered)
+
+**Nobody says "asterisk asterisk".** A model writes `**bold**` without being asked and a voice
+read the markup aloud through a whole docking report. Markdown is stripped where everything
+audible converges — speaker, caption and said-record alike — while prose that merely contains the
+characters (`snake_case`, `5 * 3`) survives, and the conversation history keeps what the model
+actually wrote. **Raw is a switch**, the same ToggleSwitch the settings page taught, with its
+label beside the knob rather than wrapped above it. **The bright line under the dialogs** was
+Windows 11 drawing its native one-pixel frame border in the system's colour against d47's dark
+chrome — told by the fact that only maximising removed it — and the frame now wears the theme on
+every window. The sharing window's status line answers the question actually asked at it — which
+button sends — and its Save says "instead" only when there is a send to be instead of.
+
 ## 0.96.0 — 2026-08-31 — The panel says what it is showing
 
 ### A real drop-down for the readings, and the readings say what they are (#231)
