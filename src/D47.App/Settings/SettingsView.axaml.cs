@@ -257,10 +257,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         _logbook = logbook;
         _reserved = reservedPhrases ?? [];
 
-        StorageLine.Text =
-            $"Saved as you go, to {paths.SettingsFile}. Keys are encrypted separately in secrets.json, "
-            + "and how this panel is left is remembered in view-state.json.";
-
         Build();
 
         settings.Changed += OnSettingsChanged;
@@ -361,22 +357,21 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 // it wants and the glyphs take only what they need.
                 if (first)
                 {
-                    var line = new Grid
-                    {
-                        ColumnDefinitions = new ColumnDefinitions
-                        {
-                            new(GridLength.Auto),
-                            new(new GridLength(1, GridUnitType.Star)),
-                        },
-                    };
+                    // **A DockPanel, and that is the whole of the bug that shipped** (reported
+                    // 2026-09-01 — *"things are running off to the right"*). This was a grid with a
+                    // star column, and a star cannot be resolved against an unbounded width: the
+                    // cards sit in a ScrollViewer that scrolls horizontally, so measure hands its
+                    // contents infinity, and the row's own three-star caption and two-star control
+                    // were laid out against it. A DockPanel gives its fill child what is actually
+                    // left, which is the finite width the row had when it was a plain child of the
+                    // strip.
+                    var line = new DockPanel();
 
                     Detach(BulkExpand);
 
                     BulkExpand.Margin = new Thickness(0, 0, 12, 0);
                     BulkExpand.VerticalAlignment = VerticalAlignment.Center;
-
-                    Grid.SetColumn(BulkExpand, 0);
-                    Grid.SetColumn(view.Container, 1);
+                    DockPanel.SetDock(BulkExpand, Dock.Left);
 
                     line.Children.Add(BulkExpand);
                     line.Children.Add(view.Container);
@@ -1097,14 +1092,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     {
         _viewState = _viewState.With(capabilityId, expanded);
         _viewStateStore?.Save(_viewState);
-    }
-
-    private void OnOpenDataFolderClick(object? sender, RoutedEventArgs e)
-    {
-        if (_paths is not null)
-        {
-            Process.Start(new ProcessStartInfo(_paths.Data) { UseShellExecute = true });
-        }
     }
 
     /// <summary>

@@ -337,18 +337,45 @@ public static class Glyphs
         return glyph;
     }
 
-    private static Path Made(string data, double size) => new()
+    /// <summary>
+    /// <b>The box is the mark's own shape, not always a square</b> (reported 2026-09-01 — the
+    /// minus <i>"is at the top of the square block"</i>).
+    /// <para>
+    /// <c>Stretch.Uniform</c> fits the geometry inside the control and then puts it at the box's
+    /// <em>top left</em> rather than in the middle of it — measured: a 14 × 2 bar in a 14 × 14
+    /// Path renders at <c>0, 0, 14, 2</c>. Every other mark here is near enough square, so the
+    /// gap was nothing and nobody saw it; a minus is two units tall in a fourteen-unit box and
+    /// hung off the top edge.
+    /// </para>
+    /// <para>
+    /// So the Path is given the shape of what it holds — the longer side is <paramref name="size"/>
+    /// and the shorter is whatever the geometry's own proportions make it — and the alignments
+    /// below, which were always there, do the centring. A square mark is unchanged to the pixel.
+    /// </para>
+    /// </summary>
+    private static Path Made(string data, double size)
     {
-        Width = size,
-        Height = size,
-        Stretch = Stretch.Uniform,
-        StrokeThickness = 2,
-        StrokeLineCap = PenLineCap.Round,
-        StrokeJoin = PenLineJoin.Round,
-        Data = Geometry.Parse(data),
-        VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-    };
+        var geometry = Geometry.Parse(data);
+        var bounds = geometry.Bounds;
+
+        // Both sides, for a geometry with no area at all. A mark like that cannot be drawn and is
+        // refused by EveryMarkHasTwoDimensionsTests; this only stops the arithmetic below dividing
+        // by zero on the way to finding out.
+        var longest = Math.Max(Math.Max(bounds.Width, bounds.Height), 0.001);
+
+        return new()
+        {
+            Width = size * bounds.Width / longest,
+            Height = size * bounds.Height / longest,
+            Stretch = Stretch.Uniform,
+            StrokeThickness = 2,
+            StrokeLineCap = PenLineCap.Round,
+            StrokeJoin = PenLineJoin.Round,
+            Data = geometry,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+        };
+    }
 
     /// <summary>
     /// Puts a mark on a button and keeps the word where a word still belongs: on the tooltip, and

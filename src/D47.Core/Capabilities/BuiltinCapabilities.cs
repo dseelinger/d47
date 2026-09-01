@@ -373,6 +373,7 @@ public static class BuiltinCapabilities
             about?.StartMenuWanted,
             about?.SetUpKeys,
             about?.ShowCommunity,
-            about?.Channel),
+            about?.Channel,
+            about?.OpenDataFolder),
     ];
 }

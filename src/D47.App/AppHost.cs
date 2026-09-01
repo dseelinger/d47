@@ -1970,6 +1970,11 @@ public sealed class AppHost : IDisposable
                         {
                             UseShellExecute = true,
                         }),
+
+                    // Moved off the foot of the Settings tab and onto the row that names the
+                    // folder (2026-09-01). Same shell call it always made.
+                    OpenDataFolder = () => System.Diagnostics.Process.Start(
+                        new System.Diagnostics.ProcessStartInfo(paths.Data) { UseShellExecute = true }),
                 },
 
                 // What the audio recorder has kept (#164), so the privacy capability can

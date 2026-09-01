@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="D47.App.Settings.SettingsView"
              Background="{DynamicResource D47.Background}"
@@ -58,38 +58,13 @@
 
     <DockPanel Grid.Column="1">
 
-      <!-- Where all this ends up. A settings panel that will not say where it writes is a
-           settings panel you have to go and find out about. -->
-      <Border DockPanel.Dock="Bottom"
-              BorderBrush="{DynamicResource D47.Border}"
-              BorderThickness="0,1,0,0"
-              Padding="28,10">
-        <DockPanel>
-          <Button x:Name="OpenDataFolder"
-                  DockPanel.Dock="Right"
-                  Content="Open data folder"
-                  FontSize="{StaticResource D47.Type.Body}"
-                  Padding="10,4"
-                  Click="OnOpenDataFolderClick" />
-          <!-- About was here, beside the data folder, on the reasoning that both answer "where is
-               this thing and what is it". It is an area in the nav now (#50), where a Commander
-               looks for it - and the button is gone rather than kept, because two ways in that can
-               drift is the thing this repository keeps writing rules about. -->
-          <!--
-            One line, trimmed, with the whole thing on the tooltip. Wrapped, it was the footer's
-            fill child: the buttons took what they needed and this took the rest, which at a high
-            zoom in a small window was about one word wide and forty lines tall. It is a path to
-            refer to rather than to read, so losing the end of it costs nothing that hovering
-            does not give back.
-          -->
-          <TextBlock x:Name="StorageLine"
-                     FontSize="{StaticResource D47.Type.Secondary}"
-                     VerticalAlignment="Center"
-                     TextWrapping="NoWrap"
-                     TextTrimming="CharacterEllipsis"
-                     Foreground="{DynamicResource D47.TextMuted}" />
-        </DockPanel>
-      </Border>
+      <!--
+        The strip that used to run along the foot of this tab - where the data folder is, and a
+        button to open it - is gone (the Commander's instruction, 2026-09-01). It was permanently
+        on screen behind every card to answer a question asked once. Both halves are on the About
+        card now, which is where a Commander looks for "where is this thing"; About itself stopped
+        being down here when it became an area in the nav (#50), and this is the rest of that move.
+      -->
 
       <!--
         Open and shut every card (#223). Docked above the scroller rather than dropped in with
