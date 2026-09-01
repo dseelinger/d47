@@ -27,6 +27,45 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.98.0 — 2026-08-31 — The crew knows whose deck it is
+
+### Docked is the ship secured, and the deck answers as two people (#220)
+
+The tower said *"docking granted"* at the moment docking **completed** — words written for an
+event minutes earlier, and a sentence Elite's own carrier message had already delivered through
+the same re-voiced tower voice. The `Docked` moment is now the inbound pair's exchange shape
+applied to the deck: the tower acknowledges the ship secured — the thing `Docked` actually is —
+and the captain makes it a welcome on a key of his own, so one cooldown cannot swallow the other
+half. The arrival pair also stopped being a rewording brief: *"drinks are on me"* and *"I'll meet
+you in the hangar"* are not rewordings of each other, so the brief names a situation and a range,
+bans invented facts outright, and hands the authored line over as the register sample. The
+authored lines still read well alone, because they are what is spoken when there is no model to
+ask — and `DockingGranted` itself stays silent, by test.
+
+### Commander DeParagon, never Commander John DeParagon (#247)
+
+Rank and surname is how a crew addresses its owner; rank plus full name is how a form letter
+talks. One helper holds the rule — the last word of the journal's name, casing untouched because
+*DEPARAGON* cannot be re-cased without guessing — and the spoken sites route through it: the
+carrier crew and the session greeting. The drawn journal records deliberately do not, because a
+reading is a faithful record of what the event said.
+
+### The carrier and its patrol speak to the owner, not to a visiting pilot (#248)
+
+Canned comms from the Commander's own carrier ride a rewording brief now: varied by the model,
+addressed to the owner by surname, the boilerplate's facts kept and nothing added. The same road
+for a **System Authority vessel** while the Commander shares a system with their carrier —
+courteous to the owner whose assets the patrol is protecting, subordinate to nobody, and a clean
+scan said without the canned *"…this time"* taunt. The COMMS page keeps the original as sent, on
+the Commander's instruction; the voice is what changes.
+
+**The trust rule bends nowhere.** In-game text reaches a model only when the `Message` field
+carries Frontier's own `$…;` localisation key, which no player can write — the same trust class
+as a journal event's schema. Free text keeps the verbatim road whoever sends it, because a sender
+is a name and a name can be worn; the model-guard's exemption is scoped to exactly the two keys
+the reader mints under that proof, and the fallback with no model is the localised line spoken
+exactly as before.
+
 ## 0.97.0 — 2026-08-31 — Invented voices, and the store goes live
 
 ### Phase 61 — Invented chatter: people who do not exist, talking on the radio (#244)
