@@ -790,13 +790,19 @@
             with, which was that a wall of JSON is not readable at a metre and exists to be pasted
             into a bug report. Recorded here so it is not put back as a regression.
           -->
-          <ToggleButton x:Name="RawToggle"
+          <!--
+            A ToggleSwitch rather than a ToggleButton, on the Commander's instruction
+            (2026-08-31): a button that changes colour reads as a pressed button, and the
+            settings page has already taught what a switch looks like - the same control, the
+            same accent, no On/Off words, the label doing the work.
+          -->
+          <ToggleSwitch x:Name="RawToggle"
                         IsVisible="False"
-                        MinHeight="28"
                         VerticalAlignment="Center"
-                        Padding="10,0"
-                        CornerRadius="4"
+                        Margin="6,0,0,0"
                         FontSize="{StaticResource D47.Type.Secondary}"
+                        OnContent="{x:Null}"
+                        OffContent="{x:Null}"
                         Content="Raw"
                         ToolTip.Tip="Show the file's own JSON instead of sentences"
                         IsCheckedChanged="OnRawToggled" />
