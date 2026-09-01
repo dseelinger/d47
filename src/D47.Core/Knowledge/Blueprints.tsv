@@ -9,7 +9,7 @@
 # its figures are pre-patch and are restated here to what the game charges, measured over
 # 16 upgrade events and four locker deltas — see docs/spikes/journal-corpus-on-foot.md §3.
 # Game data is Frontier's, used under their media usage rules; see NOTICE.
-# Rows: 1172 (bartender 4, experimental 154, merchant 56, modification 786, suit 14, synthesis 65, tech-broker 51, unlock 22, weapon 20). Built: 2026-08-20.
+# Rows: 1173 (bartender 4, experimental 154, merchant 56, modification 786, suit 14, synthesis 65, tech-broker 51, unlock 22, weapon 20). Built: 2026-09-01.
 kind	module	name	grade	engineers	ingredients	effects	guid	symbol	mtypes
 bartender	Unlock	Kit Fowler		Domino Green	push*5,opinionpolls*40				
 bartender	Unlock	Oden Geiger		Terra Velasquez	financialprojections*15,geneticsample*20,employeegeneticdata*20,geneticresearch*20				
@@ -1183,6 +1183,7 @@ weapon	Weapon	Reload speed		Jude Navarro,Uma Laszlo	operationalmanual*5,producti
 weapon	Weapon	Scope		Wellington Beck,Oden Geiger	spectralanalysisdata*5,biometricdata*3,opticallens*5,opticalfibre*3				
 weapon	Weapon	Stability		Domino Green,Oden Geiger	mininganalytics*5,riskassessments*8,viscoelasticpolymer*5,microhydraulics*5	Stability|+30%|good			
 weapon	Weapon	Stowed reloading		Kit Fowler,Uma Laszlo	digitaldesigns*5,operationalmanual*5,productionschedule*5,circuitboard*3,encryptedmemorychip*8				
+experimental	Guardian Module	Anti-Guardian Zone Resistance		Ram Tah	tg_abrasion03*2,tg_causticcrystal*1			GuardianModule_Sturdy	hexgg,hexgp,hexgs,cpp,cpd,ifsdb,ihrp,imrp,isrp
 [mtypes]
 mtype	blueprints
 cbh	Armour_Advanced,Armour_Explosive,Armour_HeavyDuty,Armour_Kinetic,Armour_Thermic,special_armour_chunky,special_armour_explosive,special_armour_kinetic,special_armour_thermic
@@ -1196,7 +1197,7 @@ cpp	GuardianModule_Sturdy,PowerPlant_Armoured,PowerPlant_Boosted,PowerPlant_Stea
 cs	Sensor_LightWeight,Sensor_LongRange,Sensor_WideAngle
 ct	Engine_Dirty,Engine_Reinforced,Engine_Tuned,special_engine_cooled,special_engine_haulage,special_engine_lightweight,special_engine_overloaded,special_engine_toughened
 hc	Weapon_Efficient,Weapon_HighCapacity,Weapon_LightWeight,Weapon_LongRange,Weapon_Overcharged,Weapon_RapidFire,Weapon_ShortRange,Weapon_Sturdy,special_auto_loader,special_dispersal_field,special_force_shell,special_high_yield_shell,special_smart_rounds,special_thermal_cascade,special_weapon_damage,special_weapon_efficient,special_weapon_lightweight,special_weapon_rateoffire,special_weapon_toughened
-hel	Weapon_Efficient,Weapon_LightWeight,Weapon_LongRange,Weapon_Overcharged,Weapon_ShortRange,Weapon_Sturdy,special_concordant_sequence,special_regeneration_sequence,special_thermal_conduit,special_thermal_vent,special_thermalshock,special_weapon_damage,special_weapon_efficient,special_weapon_lightweight,special_weapon_toughened
+hel	Weapon_Efficient,Weapon_LightWeight,Weapon_LongRange,Weapon_Overcharged,Weapon_PlasmaConversion,Weapon_ShortRange,Weapon_Sturdy,special_concordant_sequence,special_regeneration_sequence,special_thermal_conduit,special_thermal_vent,special_thermalshock,special_weapon_damage,special_weapon_efficient,special_weapon_lightweight,special_weapon_toughened
 hex	Weapon_HighCapacity
 hexgg	GuardianModule_Sturdy,Weapon_RapidFire
 hexgp	GuardianModule_Sturdy,Weapon_Overcharged
@@ -1212,10 +1213,10 @@ hmr	Weapon_HighCapacity,Weapon_LightWeight,Weapon_RapidFire,Weapon_Sturdy,specia
 hmtl	Weapon_LongRange,special_incendiary_rounds
 hmtm	
 hpa	Weapon_Efficient,Weapon_Focused,Weapon_LightWeight,Weapon_LongRange,Weapon_Overcharged,Weapon_RapidFire,Weapon_ShortRange,Weapon_Sturdy,special_blinding_shell,special_dispersal_field,special_lock_breaker,special_phasing_sequence,special_plasma_slug,special_thermal_conduit,special_weapon_damage,special_weapon_efficient,special_weapon_lightweight,special_weapon_rateoffire,special_weapon_toughened
-hpl	Weapon_Efficient,Weapon_Focused,Weapon_LightWeight,Weapon_LongRange,Weapon_Overcharged,Weapon_RapidFire,Weapon_ShortRange,Weapon_Sturdy,special_concordant_sequence,special_emissive_munitions,special_phasing_sequence,special_scramble_spectrum,special_thermalshock,special_weapon_damage,special_weapon_efficient,special_weapon_lightweight,special_weapon_rateoffire,special_weapon_toughened
+hpl	Weapon_Efficient,Weapon_Focused,Weapon_LightWeight,Weapon_LongRange,Weapon_Overcharged,Weapon_PlasmaConversion,Weapon_RapidFire,Weapon_ShortRange,Weapon_Sturdy,special_concordant_sequence,special_emissive_munitions,special_phasing_sequence,special_scramble_spectrum,special_thermalshock,special_weapon_damage,special_weapon_efficient,special_weapon_lightweight,special_weapon_rateoffire,special_weapon_toughened
 hrg	Weapon_HighCapacity,Weapon_LightWeight,Weapon_LongRange,Weapon_ShortRange,Weapon_Sturdy,special_feedback_cascade_cooled,special_plasma_slug_cooled,special_super_penetrator,special_super_penetrator_cooled,special_weapon_damage,special_weapon_efficient,special_weapon_lightweight,special_weapon_rateoffire,special_weapon_toughened
 htp	Weapon_LightWeight,Weapon_Sturdy,special_deep_cut_payload,special_mass_lock,special_reverberating_cascade,special_weapon_damage,special_weapon_efficient,special_weapon_lightweight,special_weapon_toughened
-hul	Weapon_Efficient,Weapon_Focused,Weapon_LightWeight,Weapon_LongRange,Weapon_Overcharged,Weapon_RapidFire,Weapon_ShortRange,Weapon_Sturdy,special_concordant_sequence,special_distortion_field,special_phasing_sequence,special_scramble_spectrum,special_thermalshock,special_weapon_damage,special_weapon_efficient,special_weapon_lightweight,special_weapon_rateoffire,special_weapon_toughened
+hul	Weapon_Efficient,Weapon_Focused,Weapon_LightWeight,Weapon_LongRange,Weapon_Overcharged,Weapon_PlasmaConversion,Weapon_RapidFire,Weapon_ShortRange,Weapon_Sturdy,special_concordant_sequence,special_distortion_field,special_phasing_sequence,special_scramble_spectrum,special_thermalshock,special_weapon_damage,special_weapon_efficient,special_weapon_lightweight,special_weapon_rateoffire,special_weapon_toughened
 iafmu	Misc_Shielded
 iclc	Misc_LightWeight,Misc_Reinforced,Misc_Shielded
 icr	CargoRack_IncreasedCapacity
@@ -1223,7 +1224,7 @@ idlc
 iex	
 ifa	
 ifh	
-ifs	Misc_Shielded
+ifs	FuelScoop_ScoopRateEnhanced,Misc_Shielded
 ifsdb	GuardianModule_Sturdy
 ifsdi	FSDinterdictor_Expanded,FSDinterdictor_LongRange
 iftlc	Misc_LightWeight,Misc_Reinforced,Misc_Shielded
@@ -1231,7 +1232,7 @@ ihblc	Misc_LightWeight,Misc_Reinforced,Misc_Shielded
 ihrp	GuardianModule_Sturdy,HullReinforcement_Advanced,HullReinforcement_Explosive,HullReinforcement_HeavyDuty,HullReinforcement_Kinetic,HullReinforcement_Thermic,special_hullreinforcement_chunky,special_hullreinforcement_explosive,special_hullreinforcement_kinetic,special_hullreinforcement_thermic
 imahrp	
 imlc	
-imrp	GuardianModule_Sturdy
+imrp	GuardianModule_Sturdy,MRP_HeavyDuty
 inlc	
 ipc	
 iplc	Misc_LightWeight,Misc_Reinforced,Misc_Shielded

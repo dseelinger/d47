@@ -14,10 +14,11 @@ public class MaterialGradeTests
     [Fact]
     public void TheTableCoversTheWholeMaterialSet()
     {
-        // 137 is what the canonical id list contains. A table that quietly shrank — a
-        // regeneration against a truncated download, say — would show up as milestones going
-        // silent for materials that used to work, which nothing else would report.
-        Assert.Equal(137, MaterialGrades.Count);
+        // 137 from the canonical id list, and three the id list does not name at all — see
+        // tools/curated_materials.py and #127. A table that quietly shrank — a regeneration
+        // against a truncated download, say — would show up as milestones going silent for
+        // materials that used to work, which nothing else would report.
+        Assert.Equal(140, MaterialGrades.Count);
     }
 
     [Theory]

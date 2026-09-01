@@ -7,7 +7,7 @@
 # on exactly the 33 Components. One barter figure is overruled against the game — see
 # docs/spikes/journal-corpus-on-foot.md §2. Game data is Frontier's, used under their
 # media usage rules — see NOTICE.
-# Rows: 731 (material 137, ship-locker 196, cargo 256, rare-cargo 142). Trader lines: 23. Built: 2026-08-16.
+# Rows: 735 (material 140, ship-locker 196, cargo 257, rare-cargo 142). Trader lines: 23. Built: 2026-09-01.
 symbol	name	ledger	category	grade	line	origins	settlements	buildings	containers	barter
 advancedcatalysers	Advanced Catalysers	cargo	Technology							
 advancedmedicines	Advanced Medicines	cargo	Medicines							
@@ -66,6 +66,7 @@ copper	Copper	cargo	Metals
 coralsap	Coral Sap	cargo	Salvage							
 cropharvesters	Crop Harvesters	cargo	Machinery							
 cryolite	Cryolite	cargo	Minerals							
+curatedcommodity	Curated Commodity Package	cargo	Industrial Materials							
 damagedescapepod	Damaged Escape Pod	cargo	Salvage							
 datacore	Data Core	cargo	Salvage							
 diagnosticsensor	Hardware Diagnostic Sensor	cargo	Technology			Markets (Kanwar Gateway, Xiripa)				
@@ -376,7 +377,9 @@ symmetrickeys	Open Symmetric Keys	material	Encoded	3	encoded-encryption-files	Su
 technetium	Technetium	material	Raw	4	raw-2	Surface prospecting				
 tellurium	Tellurium	material	Raw	4	raw-5	Surface prospecting				
 temperedalloys	Tempered Alloys	material	Manufactured	1	manufactured-thermic	Ship salvage (combat ships)				
+tg_abrasion03	Hardened Surface Fragments	material	Manufactured	1						
 tg_biomechanicalconduits	Bio-Mechanical Conduits	material	Manufactured	3		Ship salvage (Thargoid ships)				
+tg_causticcrystal	Caustic Crystal	material	Manufactured	4						
 tg_compositiondata	Thargoid Material Composition Data	material	Encoded	3		Base scanning (Thargoid uplink devices)				
 tg_propulsionelement	Propulsion Elements	material	Manufactured	5		Ship salvage (Thargoid ships)				
 tg_residuedata	Thargoid Residue Data	material	Encoded	4		Base scanning (Thargoid uplink devices)				
@@ -390,6 +393,7 @@ tin	Tin	material	Raw	3	raw-4	Surface prospecting
 tungsten	Tungsten	material	Raw	3	raw-5	Surface prospecting				
 uncutfocuscrystals	Flawed Focus Crystals	material	Manufactured	2	manufactured-crystals	Signal source				
 unknowncarapace	Thargoid Carapace	material	Manufactured	2		Thargoid scavengers				
+unknowncorechip	Tactical Core Chip	material	Manufactured	5						
 unknownenergycell	Thargoid Energy Cell	material	Manufactured	3		Thargoid scavengers				
 unknownenergysource	Sensor Fragment	material	Manufactured	5		Thargoid Scavengers, Destroyed Thargoid Sensor; Needed for Professor Palin (25)				
 unknownorganiccircuitry	Thargoid Organic Circuitry	material	Manufactured	5		Thargoid scavengers				

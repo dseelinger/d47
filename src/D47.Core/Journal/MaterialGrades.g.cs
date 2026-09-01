@@ -4,7 +4,7 @@
 //   derived rather than written, and why d47 needs it at all.
 //
 //   Source: https://raw.githubusercontent.com/EDCD/FDevIDs/master/material.csv
-//   Materials: 137
+//   Materials: 140
 // </auto-generated>
 
 namespace D47.Core.Journal;
@@ -129,7 +129,9 @@ public static partial class MaterialGrades
         ["technetium"] = 4, // Raw grade 4
         ["tellurium"] = 4, // Raw grade 4
         ["temperedalloys"] = 1, // Manufactured grade 1
+        ["tg_abrasion03"] = 1, // Manufactured grade 1
         ["tg_biomechanicalconduits"] = 3, // Manufactured grade 3
+        ["tg_causticcrystal"] = 4, // Manufactured grade 4
         ["tg_compositiondata"] = 3, // Encoded grade 3
         ["tg_propulsionelement"] = 5, // Manufactured grade 5
         ["tg_residuedata"] = 4, // Encoded grade 4
@@ -143,6 +145,7 @@ public static partial class MaterialGrades
         ["tungsten"] = 3, // Raw grade 3
         ["uncutfocuscrystals"] = 2, // Manufactured grade 2
         ["unknowncarapace"] = 2, // Manufactured grade 2
+        ["unknowncorechip"] = 5, // Manufactured grade 5
         ["unknownenergycell"] = 3, // Manufactured grade 3
         ["unknownenergysource"] = 5, // Manufactured grade 5
         ["unknownorganiccircuitry"] = 5, // Manufactured grade 5

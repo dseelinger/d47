@@ -123,11 +123,11 @@ the ingredients cannot be keyed to `Materials.tsv` at all and a recipe whose ing
 keyed cannot be costed, gathered or put on a checklist. `special_choke_canister` and
 `special_super_penetrator` are in the same state.
 
-### Re-measured 2026-09-01, and two things above were wrong
+### Re-measured 2026-09-01, and closed by a fifth source
 
 Run again against all four sources while working
-[#127](https://github.com/dseelinger/d47/issues/127). The conclusion holds — it is still blocked —
-but not for quite the reason this section gave.
+[#127](https://github.com/dseelinger/d47/issues/127). Two things this section said were wrong, and
+the deadlock broke on a source it had never consulted.
 
 | source | the recipe | the three materials |
 |---|---|---|
@@ -154,10 +154,39 @@ either it is three grades and `maxgrade` is wrong, or it is one grade costing al
 and the shape is wrong. That difference is what a Commander would go and gather, and nothing on
 disk settles it.
 
-**The block is now machine-checked** rather than remembered:
-`OfferedButNotCostedTests.WhenTheseThreeSymbolsResolveThisIssueCanBeBuilt` asserts that
-`Materials.tsv` still has none of the three symbols, and fails — on good news — the day a
-regeneration gains them.
+**And a fifth source settled the symbols.** ED Odyssey Materials Helper
+([jixxed/ed-odyssey-materials-helper](https://github.com/jixxed/ed-odyssey-materials-helper),
+source MIT) carries all three in `locale/material/horizons/manufactured.csv`, spelled exactly as
+EDSY spells them and arrived at independently — and its spelling is load-bearing in its own app,
+being the key it counts a journal inventory by, so a wrong one would show a permanent zero to
+every user who gathered one. It also carries the family around them (`tg_abrasion01`,
+`tg_abrasion02`, `tg_causticshard`, `tg_causticgeneratorparts`), which is what a table derived
+from the game looks like rather than what copying EDSY's three-line entry would produce.
+
+**What the two agree on ships; what they disagree on does not.** Both give the recipe as two
+Hardened Surface Fragments and one Caustic Crystal at a single grade, from Ram Tah. EDSY alone
+adds a Tactical Core Chip, and it is the source whose entry is malformed in exactly that spot, so
+that ingredient is left out — on the Commander's ruling, *"go with what EDSY and EDOMH agree
+on"*. **The risk taken is understating**: if EDSY is right, a Commander gathers what d47 asks for
+and cannot roll, and that is the first thing to check if the blueprint ever refuses.
+
+**The quantity settled itself against this repository's own strongest measurement.** Both sources
+say two fragments, and every one of the 786 modification rows in `Blueprints.tsv` costs exactly
+one of each ingredient per application — asserted on every run. A source reporting two for a
+modification is therefore reporting a *total*, so the recipe is filed as an `experimental`, whose
+cost is a one-off. Filed as a modification it would be multiplied by `EngineeringRules.RollsFor`
+— five crafts at rank 1 — and send a Commander after ten fragments for a blueprint that wants
+two.
+
+**The grades came from the capacities**, through Frontier's published ladder
+(300/250/200/150/100 = grades 1 to 5), validated on the 16 Thargoid materials in the same screen
+that FDevIDs *does* key: the capacity agrees with the published rarity in all 16, across grades 2
+to 5. That overrules EDSY on Tactical Core Chip, which it calls rarity 2 against a capacity of
+100.
+
+The three materials live in `tools/curated_materials.py`, read by both `gen-materials.py` and
+`gen-material-grades.py` so the two shipped tables cannot disagree about them, and each is
+dropped automatically the day FDevIDs names it.
 
 So that half stays as the sentence already shipped — *"Frontier engineers this and I have no
 recipe for it"* — which is a true claim about d47 rather than a false one about Elite.

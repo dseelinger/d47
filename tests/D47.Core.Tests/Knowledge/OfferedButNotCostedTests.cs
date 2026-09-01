@@ -26,29 +26,27 @@ namespace D47.Core.Tests.Knowledge;
 /// half stays uncosted and stays honest.
 /// </para>
 /// <para>
-/// <b>Re-measured 2026-09-01 against all four sources, and it is still blocked</b>
-/// (<a href="https://github.com/dseelinger/d47/issues/127">#127</a>). Two things this file used to
-/// say were wrong, and both mattered to whether the block could be lifted.
+/// <b>Closed 2026-09-01, and the file keeps its name because the shape it tests is still the
+/// disagreement between an offer list and a recipe list.</b> Every ordinary road was checked
+/// again first and every one was empty: FDevIDs has no row for any of the three materials by
+/// name or by symbol, EDEngineer has no Guardian blueprint symbol at all, coriolis has no
+/// <c>GuardianModule_Sturdy</c> (its <c>Weapon_Sturdy</c> is Sturdy Mount, a different
+/// blueprint), and 941 journals across three Commanders contain no occurrence of any spelling.
 /// </para>
 /// <para>
-/// <b>EDSY does not mark the materials as guesses.</b> Its rows read
-/// <c>hasufr : { name:'Hardened Surface Fragments', … fdname:'TG_Abrasion03' }, // TODO:
-/// matgrp,fdid</c> — the marker is on the material <em>group</em> and the numeric id, not on the
-/// symbol. So EDSY does assert a Frontier symbol for each of the three, and the block is that
-/// <b>nothing corroborates it</b>: FDevIDs has no such row by name or by symbol, EDEngineer's
-/// <c>entryData.json</c> has never heard of them, coriolis has no <c>GuardianModule_Sturdy</c> at
-/// all (its <c>Weapon_Sturdy</c> is Sturdy Mount, a different blueprint), and 941 journals across
-/// three Commanders contain no occurrence of any spelling. One source saying it is a lead.
+/// <b>What broke the deadlock was a second tracker.</b> ED Odyssey Materials Helper's
+/// <c>locale/material/horizons/manufactured.csv</c> (MIT) names all three symbols exactly as
+/// EDSY does, independently, and it is the key EDOMH counts a journal inventory by — so a wrong
+/// one would show a permanent zero to every user who gathered one. On the Commander's ruling —
+/// <i>"go with what EDSY and EDOMH agree on"</i> — the intersection ships and the disagreement
+/// does not: both name two Hardened Surface Fragments and one Caustic Crystal, EDSY alone adds a
+/// Tactical Core Chip, and that third ingredient is left out. The warrant per column lives in
+/// <c>tools/curated_materials.py</c>; the recipe's lives in <c>tools/gen-blueprints.py</c>.
 /// </para>
 /// <para>
-/// <b>And EDSY's quantities cannot be read even if the symbols were taken on trust.</b> Its entry
-/// is <c>misc_agzr : { name:'Anti-Guardian Zone Resistance', maxgrade:1, mats:[ {hasufr:2},
-/// {cacr:1}, {tacoch:1} ], fdname:'GuardianModule_Sturdy' }, // TODO: fdname</c>. <c>mats</c> is
-/// one group per grade everywhere in that file — of the 65 entries carrying both fields,
-/// <b>this is the only one where the counts disagree</b>, and of the four ungraded ones the other
-/// three have exactly one group. So either it is three grades and <c>maxgrade</c> is wrong, or it
-/// is one grade costing all three materials and the shape is wrong, and the difference is what a
-/// Commander would go and gather.
+/// <b>The risk it takes is understating</b>, and it is written down rather than buried: if EDSY
+/// is right about the third ingredient, a Commander gathers what d47 asks for and cannot roll.
+/// That is the first thing to check if the blueprint ever refuses.
 /// </para>
 /// </summary>
 public class OfferedButNotCostedTests
@@ -56,7 +54,7 @@ public class OfferedButNotCostedTests
     private static string? TypeOf(string symbol) => EliteSpecifications.Module(symbol)?.Type;
 
     [Fact]
-    public void TheGaussCannonIsOfferedEngineeringNobodyHasCosted()
+    public void TheGaussCannonIsOfferedEngineeringAndOneOfItIsNowCosted()
     {
         var type = TypeOf("hpt_guardian_gausscannon_fixed_medium");
 
@@ -66,11 +64,26 @@ public class OfferedButNotCostedTests
         var offered = BlueprintCatalogue.OfferedTo(type);
 
         Assert.NotNull(offered);
-        Assert.NotEmpty(offered);
         Assert.Contains("GuardianModule_Sturdy", offered);
+        Assert.Contains("Weapon_RapidFire", offered);
 
-        // And d47 holds a recipe for neither, which is why the page had nothing to draw.
-        Assert.Empty(BlueprintCatalogue.For(EliteSpecifications.Module("hpt_guardian_gausscannon_fixed_medium"))!);
+        // The reported line, and it draws now: the page said "no engineering" about a module
+        // whose one blueprint the Commander was standing in front of.
+        var costed = Assert.Single(
+            BlueprintCatalogue.For(EliteSpecifications.Module("hpt_guardian_gausscannon_fixed_medium"))!);
+
+        Assert.Equal("Anti-Guardian Zone Resistance", costed.Name);
+        Assert.Equal("Ram Tah", Assert.Single(costed.Engineers));
+
+        Assert.Equal(
+            [("tg_abrasion03", 2), ("tg_causticcrystal", 1)],
+            costed.Ingredients.Select(item => (item.Symbol, item.Size)));
+
+        // And Rapid Fire is still uncosted, which is the honest half staying honest: EDEngineer
+        // has no Guardian weapon recipes and nothing has changed about that.
+        Assert.DoesNotContain(
+            BlueprintCatalogue.For(EliteSpecifications.Module("hpt_guardian_gausscannon_fixed_medium"))!,
+            recipe => recipe.Symbols.Contains("Weapon_RapidFire", StringComparer.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -123,8 +136,8 @@ public class OfferedButNotCostedTests
     [Fact]
     public void EveryGuardianHardpointIsInTheSameState()
     {
-        // Named rather than counted, because this is the gap a regenerated Blueprints.tsv should
-        // close — and when it does, this test is what says so.
+        // All three, because the recipe belongs to the blueprint rather than to the weapon: a
+        // fix that reached the Gauss Cannon alone would be a fix keyed on the wrong thing.
         foreach (var symbol in new[]
                  {
                      "hpt_guardian_gausscannon_fixed_medium",
@@ -136,62 +149,74 @@ public class OfferedButNotCostedTests
 
             Assert.NotNull(module);
             Assert.NotEmpty(BlueprintCatalogue.OfferedTo(module.Type)!);
-            Assert.Empty(BlueprintCatalogue.For(module)!);
+
+            var costed = Assert.Single(BlueprintCatalogue.For(module)!);
+
+            Assert.Equal("Anti-Guardian Zone Resistance", costed.Name);
+            Assert.NotEmpty(costed.Ingredients);
         }
     }
 
     [Fact]
-    public void AntiGuardianZoneResistanceIsNamedNowhereD47Reads()
+    public void AntiGuardianZoneResistanceIsCostedEverywhereItIsOffered()
     {
-        // **Why the other half of item 10 did not ship, asserted rather than written down.**
-        // Every module EDSY offers `GuardianModule_Sturdy` to has no recipe for it, and the
-        // reason is that the recipe exists in none of d47's three sources — so shipping one
-        // would mean writing Frontier's game data out of somebody's memory of it, which is the
-        // thing the guardrails exist to prevent.
+        // Nine module types, and the recipe reaches all of them: three Guardian weapons, the
+        // power plant and distributor, the FSD booster and the three reinforcement packages.
         var offered = new[] { "hexgg", "hexgp", "hexgs", "cpp", "cpd", "ifsdb", "ihrp", "imrp", "isrp" };
+
+        var recipe = Assert.Single(
+            BlueprintCatalogue.All,
+            entry => entry.Symbols.Contains("GuardianModule_Sturdy", StringComparer.OrdinalIgnoreCase));
 
         foreach (var type in offered)
         {
             Assert.Contains("GuardianModule_Sturdy", BlueprintCatalogue.OfferedTo(type) ?? []);
+            Assert.Contains(type, recipe.ModuleTypes);
         }
 
-        Assert.DoesNotContain(
-            BlueprintCatalogue.All,
-            recipe => recipe.Symbols.Contains("GuardianModule_Sturdy", StringComparer.OrdinalIgnoreCase));
-
-        // And the materials EDSY names for it are in no naming source either, which is the second
-        // half of the same problem: a recipe whose ingredients cannot be keyed cannot be costed,
-        // gathered or put on a checklist.
-        foreach (var material in new[] { "Hardened Surface Fragments", "Caustic Crystal", "Tactical Core Chip" })
-        {
-            Assert.Empty(MaterialCatalogue.Near(material));
-        }
+        // **A one-off cost, not a per-application one**, which is a claim about the arithmetic
+        // rather than about what the game's menus call it. A modification is multiplied by
+        // EngineeringRules.RollsFor — five crafts at rank 1 — and both sources report two
+        // fragments where all 786 modification rows in this table cost exactly one of each per
+        // application. A source reporting two is reporting a total, so filing it as a
+        // modification would send a Commander after ten.
+        Assert.Equal(BlueprintKind.Experimental, recipe.Kind);
     }
 
-    /// <summary>
-    /// <b>The tripwire</b> (#127, 2026-09-01). Everything above asserts that d47 is honest about a
-    /// gap; this asserts the gap is still <em>there</em>, by the symbols EDSY names rather than by
-    /// the display names above — because those are what a regenerated <c>Materials.tsv</c> would
-    /// carry the day FDevIDs gains the rows.
-    /// <para>
-    /// Written to fail on good news. The block is upstream and nobody here can lift it, so the
-    /// alternative to this test is somebody remembering to go and look; a suite that runs on every
-    /// push does not forget. When it fails, the recipe can be built and the issue can close.
-    /// </para>
-    /// </summary>
     [Fact]
-    public void WhenTheseThreeSymbolsResolveThisIssueCanBeBuilt()
+    public void ItsMaterialsAreNameableAndCappedLikeAnyOther()
     {
-        foreach (var symbol in new[] { "TG_Abrasion03", "TG_CausticCrystal", "UnknownCoreChip" })
+        // The half that was blocked longest: a recipe whose ingredients cannot be keyed cannot
+        // be costed, gathered or put on a checklist. FDevIDs still names none of these — they
+        // are carried by tools/curated_materials.py, on two trackers agreeing (#127).
+        foreach (var (symbol, name, grade) in new[]
+                 {
+                     ("tg_abrasion03", "Hardened Surface Fragments", 1),
+                     ("tg_causticcrystal", "Caustic Crystal", 4),
+                     ("unknowncorechip", "Tactical Core Chip", 5),
+                 })
         {
-            Assert.True(
-                MaterialCatalogue.Find(symbol) is null,
-                $"Materials.tsv now names {symbol}. That was the block on "
-                + "https://github.com/dseelinger/d47/issues/127: Anti-Guardian Zone Resistance's "
-                + "ingredients can be keyed now, so the recipe can be costed and this test's whole "
-                + "family is ready to be inverted. EDSY's quantities still need settling first — "
-                + "its maxgrade and its mats count disagree, and it is the only entry in that file "
-                + "where they do.");
+            var material = MaterialCatalogue.Find(symbol);
+
+            Assert.NotNull(material);
+            Assert.Equal(name, material.Name);
+            Assert.Equal(MaterialLedger.Material, material.Ledger);
+            Assert.Equal("Manufactured", material.Category);
+
+            // The grade is the capacity, which is the whole reason the row has to exist rather
+            // than the name being aliased onto something near it.
+            Assert.Equal(grade, material.Grade);
+
+            // And a Commander who says the name gets the same row.
+            Assert.Equal(symbol, MaterialCatalogue.Find(name)?.Symbol);
         }
+
+        // Tactical Core Chip is nameable and is deliberately not in the recipe: EDSY lists it as
+        // a third ingredient and EDOMH does not, so it falls outside what the two agree on.
+        Assert.DoesNotContain(
+            BlueprintCatalogue.All
+                .Single(entry => entry.Symbols.Contains("GuardianModule_Sturdy", StringComparer.OrdinalIgnoreCase))
+                .Ingredients,
+            item => item.Symbol == "unknowncorechip");
     }
 }

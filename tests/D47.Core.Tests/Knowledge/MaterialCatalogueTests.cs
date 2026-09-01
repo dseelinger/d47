@@ -23,7 +23,8 @@ public class MaterialCatalogueTests
 
         // Every bucket populated. An empty one means a source moved and the generator wrote a
         // table that parses perfectly and answers half the questions.
-        Assert.Equal(137, byLedger[MaterialLedger.Material]);
+        // 137 keyed by FDevIDs, plus the three it does not name (#127).
+        Assert.Equal(140, byLedger[MaterialLedger.Material]);
         Assert.True(byLedger[MaterialLedger.ShipLocker] > 150);
         Assert.True(byLedger[MaterialLedger.Cargo] > 200);
         Assert.True(byLedger[MaterialLedger.RareCargo] > 100);

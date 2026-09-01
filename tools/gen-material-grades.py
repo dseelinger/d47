@@ -38,6 +38,12 @@ import io
 import urllib.request
 from pathlib import Path
 
+# The materials FDevIDs does not name, from the one place gen-materials.py reads them too
+# (<https://github.com/dseelinger/d47/issues/127>). Both tables are built from the same
+# authority and asserted against each other, so a curated row in one and not the other is two
+# shipped tables disagreeing.
+from curated_materials import CURATED
+
 SOURCE = "https://raw.githubusercontent.com/EDCD/FDevIDs/master/material.csv"
 
 OUTPUT = Path(__file__).resolve().parent.parent / "src" / "D47.Core" / "Journal" / "MaterialGrades.g.cs"
@@ -94,6 +100,17 @@ def main() -> None:
             raise SystemExit(f"{symbol} has unexpected category {category!r}")
 
         entries.append((symbol.lower(), grade, category))
+
+    named = {symbol for symbol, _grade, _category in entries}
+
+    for symbol, _name, category, grade in CURATED:
+        if symbol in named:
+            # FDevIDs has caught up. Its row wins and the curated one is reported as droppable
+            # rather than silently shadowing the authority.
+            print(f"FDevIDs now names {symbol}, so drop it from tools/curated_materials.py")
+            continue
+
+        entries.append((symbol, grade, category))
 
     entries.sort()
 

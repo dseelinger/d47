@@ -1577,10 +1577,16 @@ public sealed class ShipsMode(
     /// "I have no recipe" is a claim about d47, and only the second is true.
     /// </para>
     /// <para>
-    /// A symbol with no row anywhere cannot be named — <c>GuardianModule_Sturdy</c> is Frontier's
-    /// spelling for Anti-Guardian Zone Resistance and nothing d47 ships says so — so it is dropped
-    /// rather than de-underscored into a plausible-looking invention. The sentence still says the
-    /// engineering is there, which is the part that was wrong.
+    /// A symbol with no row anywhere cannot be named, so it is dropped rather than de-underscored
+    /// into a plausible-looking invention. The sentence still says the engineering is there, which
+    /// is the part that was wrong.
+    /// </para>
+    /// <para>
+    /// <b>The example this used to give was <c>GuardianModule_Sturdy</c>, and it is no longer
+    /// one</b> (<a href="https://github.com/dseelinger/d47/issues/127">#127</a>): Anti-Guardian
+    /// Zone Resistance is costed since 2026-09-01, so a Guardian hardpoint reaches this method
+    /// with a recipe and never gets here. What still does are the offers no source prices —
+    /// <c>Weapon_RapidFire</c> on that same cannon among them.
     /// </para>
     /// </summary>
     private static IReadOnlyList<string> Unrecipied(string? variant)

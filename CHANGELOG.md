@@ -29,6 +29,50 @@ history to match today's layout would be the one edit it must never take.
 
 ## 0.98.2 — 2026-09-01 — The carrier's own two voices, and a jump nobody is making
 
+### Anti-Guardian Zone Resistance is costed, after five sources and a ruling (#127)
+
+A Guardian Gauss Cannon read as having no engineering. It has one blueprint — Anti-Guardian Zone
+Resistance — and d47 could not price it, because **no source d47 reads carried the recipe**:
+EDEngineer has no Guardian blueprint symbol at all, coriolis has none either (its `Weapon_Sturdy`
+is Sturdy Mount, a different thing), and FDevIDs — the naming authority for materials — has no row
+for any of its three ingredients, by display name or by symbol. Nor do 941 journals across three
+Commanders. Phase 38 shipped the honest sentence instead, and this was its one unfinished item.
+
+**A second tracker broke the deadlock.** ED Odyssey Materials Helper's material table (MIT) names
+all three symbols exactly as EDSY does, arrived at independently — and its spelling is
+load-bearing in its own app, being the key it counts a journal inventory by, so a wrong one would
+show a permanent zero to anyone who gathered one. It also carries the family around them, which is
+what a table derived from the game looks like rather than what copying EDSY's three-line entry
+would produce.
+
+On the Commander's ruling — *"go with what EDSY and EDOMH agree on"* — **the intersection ships
+and the disagreement does not**. Both give it as two Hardened Surface Fragments and one Caustic
+Crystal, one grade, from Ram Tah. EDSY alone adds a Tactical Core Chip, and it is the source whose
+entry is malformed in exactly that spot, so that ingredient is left out. **The risk that takes is
+understating**: if EDSY is right, a Commander gathers what d47 asks for and cannot roll. It is
+written down in three places rather than buried, and it is the first thing to check if the
+blueprint ever refuses.
+
+**The quantity settled itself against d47's own strongest measurement.** Both sources say two
+fragments, and all 786 modification rows in the table cost exactly one of each per application —
+asserted on every run since Phase 14. A source reporting two is therefore reporting a *total*, so
+the recipe is filed as a one-off cost. Filed as a modification it would be multiplied by the roll
+count — five crafts at rank 1 — and send a Commander after ten fragments for a blueprint that
+wants two.
+
+The three materials are nameable and capped now too, at grades read from their capacities through
+Frontier's ladder and validated against the 16 Thargoid materials in the same screen that FDevIDs
+*does* key — the capacity agrees with the published rarity in all 16. That overrules EDSY on
+Tactical Core Chip, which it calls grade 2 against a capacity of 100.
+
+They live in `tools/curated_materials.py`, read by both generators that build a material table so
+the two cannot disagree, and **each retires itself**: the day FDevIDs names one, the real row wins
+and the run says to delete the curated one.
+
+The same regeneration picked up what the sources have added since August — Plasma Conversion on
+three laser types, an enhanced fuel-scoop rate, Heavy Duty on module reinforcement, and a new
+commodity. Those are offers with no recipe behind them yet, and the page says so in the usual way.
+
 ### Use this takes the row you can see, or it is shut (#190)
 
 The button in every picker — voice, model, microphone, persona, theme — stopped working once you

@@ -98,6 +98,10 @@ from pathlib import Path
 
 import edengineer_names
 
+# The three curated materials and the whole warrant for them, in the one place both this and
+# gen-material-grades.py read (#127).
+from curated_materials import CURATED
+
 FDEV_IDS = "https://raw.githubusercontent.com/EDCD/FDevIDs/master/"
 
 EDENGINEER = ("https://raw.githubusercontent.com/msarilar/EDEngineer/master/"
@@ -389,6 +393,19 @@ def main() -> None:
 
             by_name.setdefault(name, []).append(ledger)
 
+    # The curated three, after the authority has had its say and before anything is checked, so
+    # they are held to every rule below rather than exempted from it (#127).
+    retired = []
+
+    for symbol, name, category, grade in CURATED:
+        if symbol in {row[0] for row in built}:
+            retired.append(symbol)
+            continue
+
+        built.append([symbol, name, "material", category, str(grade), "", "", *BLANK])
+        by_name.setdefault(name, []).append("material")
+        counts["material"] = counts.get("material", 0) + 1
+
     edengineer_names.check(by_name, spelled)
     lines = check_lines(built)
 
@@ -455,6 +472,14 @@ def main() -> None:
         # Loud on purpose. Each of these is something EDEngineer models and FDevIDs has no
         # symbol for, so d47 cannot key it to anything the journal writes.
         print(f"No FDevIDs symbol, recorded as known but unkeyed: {', '.join(unkeyed)}")
+
+    # Louder still, in the good direction: the authority has caught up and a curated row can go.
+    print(f"Curated rows carried, FDevIDs still naming none of them (#127): "
+          f"{len(CURATED) - len(retired)} of {len(CURATED)}")
+
+    if retired:
+        print("FDevIDs now names these, so drop them from CURATED in this file: "
+              + ", ".join(retired))
 
 
 if __name__ == "__main__":
