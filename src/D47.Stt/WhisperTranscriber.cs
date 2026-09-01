@@ -46,6 +46,18 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
     private WhisperProcessor? _processor;
 
     /// <summary>
+    /// The no-speech probe (#196): tiny.en, promptless, on its own semaphore so it can run
+    /// beside the prompted pass. Kept apart from the main factory because the two answer
+    /// different questions — the main pass answers "what was said", and this answers "was
+    /// anything said at all" from weights the name hints never touch.
+    /// </summary>
+    private WhisperFactory? _probeFactory;
+    private WhisperProcessor? _probe;
+    private string? _probeFrom;
+    private bool _probeMissingSaid;
+    private readonly SemaphoreSlim _probeOne = new(1, 1);
+
+    /// <summary>
     /// The names the current processor was built to expect, or null for none. Compared rather
     /// than recomputed, so a conversation in one system costs one processor
     /// (remediation.md 10, item 17).
@@ -451,6 +463,117 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
         }
     }
 
+    /// <summary>The file the probe runs on: tiny.en, looked for beside whatever model is loaded.</summary>
+    private const string ProbeFileName = "ggml-tiny.en.bin";
+
+    /// <summary>
+    /// An unprompted second opinion on whether the clip contains speech at all
+    /// (<a href="https://github.com/dseelinger/d47/issues/196">#196</a>): the smallest
+    /// <c>NoSpeechProbability</c> across the clip's segments, from tiny.en with no prompt — or
+    /// null where no answer is possible: tiny.en not on disk, nothing loaded, the probe failing.
+    /// Null means "taken at its word", never "refused".
+    /// <para>
+    /// <b>Unprompted is the whole design, and it is measured rather than argued</b>
+    /// (spike/NoSpeechProbe). The name-hint prompt is what turns silence into hint-vocabulary
+    /// words <em>and</em> what destroys the prompted pass's own no-speech signal — 0.96
+    /// unprompted against 0.0001 primed, on the same room tone — so the ruling has to come from
+    /// a pass the prompt never touches. The populations it separates: real speech 0.017–0.26
+    /// against room tone 0.946–0.958, at a flat ~350 ms whatever the clip length. The smallest
+    /// segment is the aggregate because a clip is speech if any segment is — a real sentence
+    /// with a silent tail must not be refused for its tail.
+    /// </para>
+    /// <para>
+    /// Its own semaphore rather than <see cref="_one"/>, so a caller runs it in parallel with
+    /// the prompted pass and the gate costs nothing in latency.
+    /// </para>
+    /// </summary>
+    public async Task<double?> NoSpeechAsync(Utterance utterance, CancellationToken cancellationToken = default)
+    {
+        if (_disposed || _loadedFrom is not { } loadedFrom)
+        {
+            return null;
+        }
+
+        await _probeOne.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+        try
+        {
+            if (_disposed || !EnsureProbe(loadedFrom))
+            {
+                return null;
+            }
+
+            var noSpeech = 1d;
+            var segments = 0;
+
+            await foreach (var segment in _probe!
+                               .ProcessAsync(utterance.Samples, cancellationToken)
+                               .ConfigureAwait(false))
+            {
+                noSpeech = Math.Min(noSpeech, segment.NoSpeechProbability);
+                segments++;
+            }
+
+            return segments == 0 ? null : noSpeech;
+        }
+        catch (OperationCanceledException)
+        {
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "The no-speech probe failed; the utterance is taken at its word");
+            return null;
+        }
+        finally
+        {
+            _probeOne.Release();
+        }
+    }
+
+    /// <summary>
+    /// The probe's own load, lazy and beside the main model's file. Missing is a state to
+    /// mention once rather than a failure: the gate simply does not exist on that install.
+    /// </summary>
+    private bool EnsureProbe(string loadedFrom)
+    {
+        var path = Path.Combine(Path.GetDirectoryName(loadedFrom) ?? string.Empty, ProbeFileName);
+
+        if (_probe is not null && string.Equals(_probeFrom, path, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        _probe?.Dispose();
+        _probe = null;
+        _probeFactory?.Dispose();
+        _probeFactory = null;
+        _probeFrom = null;
+
+        if (!File.Exists(path))
+        {
+            if (!_probeMissingSaid)
+            {
+                _probeMissingSaid = true;
+                _logger.LogInformation(
+                    "No {File} beside the loaded model, so a word hallucinated from silence goes unchecked (#196)",
+                    ProbeFileName);
+            }
+
+            return false;
+        }
+
+        // Four threads flat: the probe's cost is already ~350 ms on tiny weights, and it runs
+        // beside the main pass, which is the one the thread budget was measured for.
+        _probeFactory = WhisperFactory.FromPath(path, new WhisperFactoryOptions());
+        _probe = _probeFactory.CreateBuilder().WithLanguage("en").WithThreads(4).WithProbabilities().Build();
+        _probeFrom = path;
+
+        _logger.LogInformation("No-speech probe loaded from {File}", ProbeFileName);
+
+        return true;
+    }
+
     /// <summary>
     /// Whisper emits leading spaces on every segment, and emits bracketed annotations —
     /// "[BLANK_AUDIO]", "(wind blowing)" — for stretches with no speech in them. Those are
@@ -546,6 +669,24 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
             _one.Release();
             _one.Dispose();
             _nativeLogSubscription.Dispose();
+        }
+
+        // The probe under its own gate, after _disposed has stopped new callers: a wait here is
+        // at most one in-flight probe finishing. It survives Unload on purpose — a model change
+        // does not invalidate tiny weights — so this is the one place it is ever torn down.
+        _probeOne.Wait();
+
+        try
+        {
+            _probe?.Dispose();
+            _probe = null;
+            _probeFactory?.Dispose();
+            _probeFactory = null;
+        }
+        finally
+        {
+            _probeOne.Release();
+            _probeOne.Dispose();
         }
     }
 }

@@ -4137,6 +4137,14 @@ public sealed class AppHost : IDisposable
     /// Turns one captured utterance into words and hands them on. Fire-and-forget from the
     /// audio thread's point of view: it returns immediately and the work happens on the pool.
     /// </summary>
+    /// <summary>
+    /// Where the no-speech probe's refusal starts (#196). The measured populations
+    /// (spike/NoSpeechProbe, unprompted tiny.en): real speech 0.017–0.26 against room tone
+    /// 0.946–0.958 — 0.6 splits them with a wide margin on both sides, and errs toward keeping
+    /// a real "Stop." over eating one.
+    /// </summary>
+    private const double NoSpeechFloor = 0.6;
+
     private void TranscribeAsync(Utterance utterance)
     {
         // The microphone has closed and the words are being worked out. Its own state because it
@@ -4195,6 +4203,11 @@ public sealed class AppHost : IDisposable
                 // they fly go in with every utterance (Phase 6).
                 var nouns = ProperNouns.From(GameState.Active, _route?.Invoke());
 
+                // The unprompted second opinion, beside the prompted pass rather than after it
+                // (#196): tiny.en answers in ~350 ms while the main model is still working, so
+                // the gate below costs nothing in latency.
+                var probe = _transcriber.NoSpeechAsync(utterance);
+
                 var transcription = await _transcriber
                     .TranscribeAsync(utterance, nouns)
                     .ConfigureAwait(false);
@@ -4207,6 +4220,26 @@ public sealed class AppHost : IDisposable
                 // Only the gated utterance is written down. What runs through the microphone
                 // between utterances never reaches this line, so a recording is never a hot mic.
                 FlightRecorder?.Heard(utterance, transcription);
+
+                // **A word hallucinated from silence is refused here** (#196). The name-hint
+                // prompt is what turns silence into a plausible word and what destroys the
+                // prompted pass's own no-speech signal, so the ruling comes from the unprompted
+                // probe. Refusal is the transcript becoming empty, so every downstream path —
+                // the entry loop's heard-nothing case, the wake word, the turn — handles it as
+                // the established nothing-heard shape rather than a new one. The flight
+                // recorder above has already kept what Whisper actually said, which is how a
+                // wrong refusal would be caught.
+                if (transcription.Text.Length > 0
+                    && await probe.ConfigureAwait(false) is { } noSpeech
+                    && noSpeech >= NoSpeechFloor)
+                {
+                    _logger.LogInformation(
+                        "Refused as no-speech: the unprompted probe read {Probability:0.###} against \"{Text}\"",
+                        noSpeech,
+                        transcription.Text);
+
+                    transcription = transcription with { Text = string.Empty };
+                }
 
                 // A panel is asking for a value and this is the answer to it (Phase 25,
                 // "Say it, or type it").
