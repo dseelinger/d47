@@ -27,6 +27,33 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.98.3 — 2026-09-01 — A refused raise names its fault
+
+### Bringing Elite forward works from behind it again, and a refusal is now a diagnosis (#107)
+
+Phase 27's `AttachThreadInput` fix failed in the field — from the headset, on the Commander's own
+ask — and the log's one sentence covered four different faults: *"Windows refused to bring Elite
+forward, with and without attaching."* Which fault it was turned out to be the whole question, so
+the raise now answers it. A failed attach carries its Win32 error; an attach that engaged says
+whether it reached Elite's own window thread or the foreground's only; and a refusal names what
+held the foreground — handle, title, class, owning process and thread, and whether that thread was
+answering messages, which is the one documented failure mode no log line showed.
+
+Three things changed underneath the words. **The foreground checks compare by owning process
+rather than exact handle**: where injected keys land is a property of the focused process, so
+VR-Elite presenting a different top-level window of its own is still Elite — and if that was the
+whole story, the old code was raising Elite successfully and reporting refusal anyway. **Two more
+legal roads try before the refusal sentence**: the attach joins both threads, and alt-tab
+emulation goes last — no synthesised input, nothing machine-wide, Elite never minimised, and the
+route stays reachable by spoken phrase only. **And the raise moved off the UI thread**, dropping
+its input-queue attachment before it verifies the landing, so a refused raise can no longer stall
+the window the Commander is working in, or the game.
+
+Reproduced knowingly on the desktop before shipping: without the ancestry exemption the plain call
+is refused and the attach road carries it. The Commander reports the raise working; if Windows
+ever refuses again, the log now says which step lost and to whom, and the honest sentence — the
+flashing taskbar button — still stands behind it all.
+
 ## 0.98.2 — 2026-09-01 — The carrier's own two voices, and a jump nobody is making
 
 ### Engineering two trackers describe differently is withheld, not guessed at (#127)
