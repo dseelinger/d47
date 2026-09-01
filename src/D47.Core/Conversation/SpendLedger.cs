@@ -101,6 +101,38 @@ public sealed record SpendEntry
         ResetFrom is { } from && charge.At >= from && charge.At <= At;
 }
 
+/// <summary>
+/// What one model or one voice provider cost inside a window
+/// (<a href="https://github.com/dseelinger/d47/issues/226">#226</a>).
+/// <para>
+/// <b>Nothing new is stored for this.</b> Every row already carries its kind, its provider, its
+/// model and its price; what threw the breakdown away was the query, which summed and forgot. So
+/// this is the same shape the reset was — a query that keeps something it used to discard.
+/// </para>
+/// </summary>
+/// <param name="Model">
+/// The model that answered, or the provider that spoke. Empty on a row written before either was
+/// recorded, which groups under the provider alone rather than being dropped.
+/// </param>
+/// <param name="Priced">
+/// False when any row in this group had no rate behind it. Carried per group rather than only for
+/// the window, because *"part of it unpriced"* over a whole window does not say which part — and
+/// naming the model d47 has no rate for is the difference between a disclaimer and something the
+/// Commander can act on.
+/// </param>
+public sealed record SpendShare(
+    SpendKind Kind,
+    string Provider,
+    string Model,
+    decimal Dollars,
+    long Characters,
+    int Charges,
+    bool Priced)
+{
+    /// <summary>What to call it: the model where there is one, and the provider where there is not.</summary>
+    public string Name => string.IsNullOrWhiteSpace(Model) ? Provider : Model;
+}
+
 /// <summary>What a window came to, and whether the figure is the whole of it.</summary>
 /// <param name="Complete">
 /// False when any row in the window had no price behind it. The figure is then a floor rather
@@ -115,6 +147,21 @@ public sealed record SpendTotals(
     bool Complete)
 {
     public static readonly SpendTotals Nothing = new(0m, 0m, 0, 0, Complete: true);
+
+    /// <summary>
+    /// What each model and each voice provider came to inside this window, most expensive first
+    /// (<a href="https://github.com/dseelinger/d47/issues/226">#226</a>).
+    /// <para>
+    /// <b>An init property rather than a sixth positional parameter</b>, so every existing caller
+    /// and every test that builds a total by hand keeps compiling and reads the same. Empty is a
+    /// window with nothing in it, which is what <see cref="Nothing"/> is.
+    /// </para>
+    /// <para>
+    /// <b>Ordered by spend, because alphabetical buries the answer.</b> The column exists to say
+    /// where the money went, and the model that cost the most is the one that says it.
+    /// </para>
+    /// </summary>
+    public IReadOnlyList<SpendShare> Shares { get; init; } = [];
 
     public decimal Dollars => ModelDollars + VoiceDollars;
 
@@ -321,13 +368,49 @@ public sealed class SpendLedger
                 inside.Where(e => e.Kind == SpendKind.Voice).Sum(e => e.Dollars),
                 inside.Count(e => e.Kind == SpendKind.Model),
                 inside.Sum(e => e.Characters),
-                inside.All(e => e.Priced));
+                inside.All(e => e.Priced))
+            {
+                // **From `inside` and from nothing else** (#226). A second pass over `_entries`
+                // would be one line shorter and would include the charges a reset dropped, so the
+                // breakdown would disagree with the figure standing beside it. A breakdown that
+                // does not add up to its own total teaches a Commander to distrust both, which is
+                // the worst thing this column can do.
+                Shares = [.. inside
+                    .GroupBy(entry => (entry.Kind, entry.ProviderId, entry.Model))
+                    .Select(group => new SpendShare(
+                        group.Key.Kind,
+                        group.Key.ProviderId,
+                        group.Key.Model,
+                        group.Sum(entry => entry.Dollars),
+                        group.Sum(entry => entry.Characters),
+                        group.Count(),
+                        group.All(entry => entry.Priced)))
+                    .OrderByDescending(share => share.Dollars)
+                    .ThenBy(share => share.Name, StringComparer.OrdinalIgnoreCase)],
+            };
         }
     }
 
-    /// <summary>The four windows the dialog reports, against the clock this ledger was given.</summary>
+    /// <summary>Every window the dialog reports, against the clock this ledger was given.</summary>
     public IReadOnlyList<(SpendPeriod Period, SpendTotals Totals)> Summary(TimeZoneInfo zone) =>
-        [.. SpendPeriods.All(_clock.UtcNow, zone).Select(period => (period, Total(period)))];
+        [.. Immediate(zone), .. Windows(zone)];
+
+    /// <summary>
+    /// The windows that read beside the turn and the session — today, and nothing else
+    /// (<a href="https://github.com/dseelinger/d47/issues/227">#227</a>).
+    /// <para>
+    /// <b>Two members rather than the dialog slicing <see cref="Summary"/>.</b> Which windows
+    /// belong together is <see cref="SpendPeriods"/>' answer, and taking the first entry off a
+    /// list would make it positional — a re-order there would move a window into the wrong group
+    /// with nothing to notice. It also keeps the clock in here: the dialog reads none.
+    /// </para>
+    /// </summary>
+    public IReadOnlyList<(SpendPeriod Period, SpendTotals Totals)> Immediate(TimeZoneInfo zone) =>
+        [.. SpendPeriods.Immediate(_clock.UtcNow, zone).Select(period => (period, Total(period)))];
+
+    /// <summary>The four a Commander compares, each calendar window beside its rolling twin (#227).</summary>
+    public IReadOnlyList<(SpendPeriod Period, SpendTotals Totals)> Windows(TimeZoneInfo zone) =>
+        [.. SpendPeriods.Windows(_clock.UtcNow, zone).Select(period => (period, Total(period)))];
 
     /// <summary>
     /// The windows the dialog offers to reset, against the same clock (#197). Asked of the ledger

@@ -74,6 +74,83 @@ public class ResettingTheSpendFiguresTests : IDisposable
         Priced = true,
     };
 
+    /// <summary>
+    /// <b>The breakdown adds up to the figure beside it</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/226">#226</a>), which is the whole
+    /// property of the details column: a Commander who cannot reconcile the two learns to trust
+    /// neither.
+    /// </summary>
+    [Fact]
+    public void EveryModelsShareSumsToTheWindowsOwnTotal()
+    {
+        var clock = new StoppedClock(Now);
+        var ledger = Ledger(clock);
+
+        ledger.Append(Model(Now.AddHours(-1), 0.25m));
+        ledger.Append(Model(Now.AddHours(-2), 0.50m) with { Model = "claude-haiku-4-5" });
+        ledger.Append(Model(Now.AddHours(-3), 1.00m));
+
+        ledger.Append(new SpendEntry
+        {
+            At = Now.AddHours(-1),
+            Kind = SpendKind.Voice,
+            ProviderId = "kokoro",
+            Model = "Kokoro",
+            Characters = 226,
+            Priced = true,
+        });
+
+        var today = ledger.Total(SpendPeriods.Today(Now, Utc));
+
+        Assert.Equal(today.Dollars, today.Shares.Sum(share => share.Dollars));
+
+        // Most expensive first, because the column exists to say where the money went and
+        // alphabetical would bury it.
+        Assert.Equal(
+            ["claude-opus-5", "claude-haiku-4-5", "Kokoro"],
+            today.Shares.Select(share => share.Name));
+
+        // The two opus charges are one group, not two rows.
+        Assert.Equal(1.25m, today.Shares[0].Dollars);
+        Assert.Equal(2, today.Shares[0].Charges);
+
+        // A free provider is a group with a figure of zero rather than an absence — it was used,
+        // and a provider that shows nothing looks like one that was not.
+        Assert.Equal(SpendKind.Voice, today.Shares[2].Kind);
+        Assert.Equal(226, today.Shares[2].Characters);
+        Assert.True(today.Shares[2].Priced);
+    }
+
+    /// <summary>
+    /// <b>And a reset takes a model out of the breakdown as well as out of the total</b> (#226).
+    /// The breakdown is computed from the same filtered collection the sum is, so this cannot
+    /// drift — but a later refactor reaching for <c>_entries</c> a second time would pass every
+    /// other test in this file and fail this one.
+    /// </summary>
+    [Fact]
+    public void AResetRemovesAModelFromTheBreakdownAndNotOnlyFromTheFigure()
+    {
+        var clock = new StoppedClock(Now);
+        var ledger = Ledger(clock);
+
+        ledger.Append(Model(Now.AddDays(-20), 2.00m) with { Model = "claude-sonnet-4" });
+        ledger.Append(Model(Now.AddHours(-1), 0.25m));
+
+        Assert.Equal(
+            ["claude-sonnet-4", "claude-opus-5"],
+            ledger.Total(SpendPeriods.Rolling("Last 30 days", Now, 30)).Shares.Select(share => share.Name));
+
+        ledger.Reset(SpendPeriods.Today(Now, Utc));
+
+        var thirty = ledger.Total(SpendPeriods.Rolling("Last 30 days", Now, 30));
+
+        Assert.Equal(["claude-sonnet-4"], thirty.Shares.Select(share => share.Name));
+        Assert.Equal(thirty.Dollars, thirty.Shares.Sum(share => share.Dollars));
+
+        // And the mark itself is not a charge, so it never appears as a group of its own.
+        Assert.DoesNotContain(thirty.Shares, share => string.IsNullOrEmpty(share.Name));
+    }
+
     /// <summary>What each window comes to, by name, so an assertion reads as the dialog does.</summary>
     private static Dictionary<string, decimal> Windows(SpendLedger ledger) =>
         ledger.Summary(Utc).ToDictionary(row => row.Period.Name, row => row.Totals.Dollars);
@@ -273,7 +350,7 @@ public class ResettingTheSpendFiguresTests : IDisposable
         var offered = Ledger(clock).Resettable(Utc, Now.AddHours(-1));
 
         Assert.Equal(
-            ["This session", "Today", "Last 7 days", "Last 30 days", "This week", "This month"],
+            ["This session", "Today", "This week", "Last 7 days", "This month", "Last 30 days"],
             offered.Select(period => period.Name));
 
         // Thirty, not thirty-one. Settled on 2026-08-30: the reason 31 was asked for is what

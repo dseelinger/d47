@@ -27,7 +27,54 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
-## 0.98.4 — 2026-09-01 — The remote is asked before anything is moved
+## 0.99.0 — 2026-09-01 — Three columns, two groups, and a release that asks first
+
+### The spend window is three columns: label, amount, and where the money went (#226)
+
+Money and detail used to share a cell. The voice line read as three facts wrapped into a
+paragraph with the figure buried in the middle of it, while a running total held `$0.0196` in a
+column three units wide and nothing else.
+
+They are separate columns now, the amounts right-aligned in the mono face the window already
+uses, so a column of figures reads as a column. The third names **every model and every voice
+provider used in that period**, most expensive first — because the column exists to say where
+the money went, and alphabetical would bury it.
+
+Nothing new is stored for it. Every row already carried its kind, its provider, its model and its
+price; what threw the breakdown away was the query, which summed and forgot. **The breakdown is
+computed from the same filtered rows the total is** — after reset marks have been applied — so it
+cannot disagree with the figure standing beside it. A breakdown that does not add up to its own
+total teaches a Commander to distrust both.
+
+Two things it fixes on the way past. A **free provider is named** rather than implied: Kokoro
+appears with what it spoke and `(free)`, because a provider that was used and shows nothing looks
+like one that was not. And an **unpriced model can finally say which one it is** — the window's
+old caveat was *"part of it unpriced"*, which never said what part.
+
+**A cost figure is never truncated.** The first capture of the new layout came back reading
+`$1.5021 — $1`: the money column does not wrap, and the model-and-voice sentence had been put in
+it. The column holds one amount now, and the split is not lost — the details name each provider
+with its own figure, which is more than the sentence said. A window holding a model with no rate
+marks its figure as a floor and lets the details say which model.
+
+### Turn, session and today read together; each calendar window sits beside its rolling twin (#227)
+
+*What this has cost* was five sections down a page and five windows in an order that interleaved
+calendar and rolling by accident, so the two readings of "a week" sat three rows apart.
+
+It is two groups now. **Now** holds the turn, the session and today — one row each, which is what
+the details column made possible — because those three answer one question: what is this costing
+me right now. **Running totals** holds the four a Commander compares, paired: *This week* beside
+*Last 7 days*, *This month* beside *Last 30 days*. On the 3rd of a month a pair differs by an
+order of magnitude, and adjacency is what makes that legible rather than alarming.
+
+Which windows belong in which group lives beside the order that arranges them, rather than being
+a slice the dialog takes off the front — a list re-ordered later would otherwise move a window
+into the wrong group with nothing to notice.
+
+**Cold prefixes keep a row of their own.** It is the one item in this window that asks the
+Commander to *do* something — a count there means something is defeating the cache — and folded
+into a details cell beside token counts it would be something nobody reads.
 
 ### A release run asks whether it may push before it commits anything (#93)
 

@@ -139,7 +139,7 @@ public class TheDetailsDialogResetsTheFiguresTests : IDisposable
             .ToList();
 
         Assert.Equal(
-            ["This session", "Today", "Last 7 days", "Last 30 days", "This week", "This month"],
+            ["This session", "Today", "This week", "Last 7 days", "This month", "Last 30 days"],
             offered);
 
         Assert.DoesNotContain(offered, name => name.Contains("31", StringComparison.Ordinal));

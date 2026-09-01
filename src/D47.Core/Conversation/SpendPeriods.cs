@@ -36,13 +36,14 @@ public readonly record struct SpendPeriod(string Name, DateTimeOffset From, Date
 public static class SpendPeriods
 {
     /// <summary>
-    /// Every window, in the order the dialog lists them — freshest first.
+    /// Every window, in the order the dialog lists them: <see cref="Immediate"/> then
+    /// <see cref="Windows"/>.
     /// <para>
-    /// <b>Today leads, and the list therefore no longer reads as two rolling then two calendar.</b>
-    /// That grouping is not worth keeping over putting the most-read figure at the top: the same
-    /// instinct that closes these windows at both ends — the charge a Commander most wants to see
-    /// is the one that was just made — puts the freshest window first. Every row is labelled, so
-    /// nothing is ambiguous about the order.
+    /// <b>Today still leads, and it no longer leads a single run of five</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/227">#227</a>). The freshest window is
+    /// first for the reason it always was — the charge a Commander most wants to see is the one
+    /// that was just made — and it is first *of its own group*, beside the turn and the session.
+    /// The four below it are pairs. See the two members for each half of that.
     /// </para>
     /// <para>
     /// <b>There is deliberately no "Last 24 hours" beside Today, and it should not be added later
@@ -60,12 +61,44 @@ public static class SpendPeriods
     /// </para>
     /// </summary>
     public static IReadOnlyList<SpendPeriod> All(DateTimeOffset now, TimeZoneInfo zone) =>
+        [.. Immediate(now, zone), .. Windows(now, zone)];
+
+    /// <summary>
+    /// The window that reads beside the turn and the session rather than beside the others
+    /// (<a href="https://github.com/dseelinger/d47/issues/227">#227</a>).
+    /// <para>
+    /// <b>Today is the only one of the five that is not a comparison.</b> The dialog groups it
+    /// with this turn and this session, because those three answer one question — what is this
+    /// costing me right now — and the four below answer a different one. That grouping is a fact
+    /// about which windows belong together, so it lives here beside the order rather than being a
+    /// slice the dialog takes off the front: a list this class re-ordered later would silently
+    /// move Today into the wrong group.
+    /// </para>
+    /// </summary>
+    public static IReadOnlyList<SpendPeriod> Immediate(DateTimeOffset now, TimeZoneInfo zone) =>
+        [Today(now, zone)];
+
+    /// <summary>
+    /// The four spans a Commander compares, <b>each calendar window beside its rolling twin</b>
+    /// (#227).
+    /// <para>
+    /// This week, Last 7 days, This month, Last 30 days — in that order, and the pairing is the
+    /// reason for it. The two readings of "a week" used to sit three rows apart, interleaved by
+    /// accident; on the 3rd of a month the calendar and rolling figures differ by an order of
+    /// magnitude, and adjacency is what makes that difference legible rather than alarming.
+    /// </para>
+    /// <para>
+    /// <b>Recorded so a later tidy-up does not re-sort them</b> into freshest-first or
+    /// alphabetical. Neither reads better here: the point of the four is the comparison, and a
+    /// sort that separates a pair destroys it.
+    /// </para>
+    /// </summary>
+    public static IReadOnlyList<SpendPeriod> Windows(DateTimeOffset now, TimeZoneInfo zone) =>
     [
-        Today(now, zone),
-        Rolling("Last 7 days", now, 7),
-        Rolling("Last 30 days", now, 30),
         CurrentWeek(now, zone),
+        Rolling("Last 7 days", now, 7),
         CurrentMonth(now, zone),
+        Rolling("Last 30 days", now, 30),
     ];
 
     /// <summary>

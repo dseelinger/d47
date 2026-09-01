@@ -197,20 +197,33 @@ public class SpendPeriodTests
     }
 
     /// <summary>
-    /// Today leads the list, because the freshest window is the most-read one — the same instinct
-    /// that closes every window at both ends.
+    /// <b>Two groups, and each calendar window beside its rolling twin</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/227">#227</a>). Today leads, because the
+    /// freshest window is the most-read one and it reads beside the turn and the session; the four
+    /// below it are pairs, and the pairing is the order.
+    /// <para>
+    /// The old arrangement — Today, Last 7 days, Last 30 days, This week, This month — interleaved
+    /// calendar and rolling by accident, so the two readings of "a week" sat three rows apart. On
+    /// the 3rd of a month they differ by an order of magnitude, and adjacency is what makes that
+    /// legible rather than alarming.
+    /// </para>
     /// </summary>
     [Fact]
-    public void TodayIsFirstAndTheListIsFive()
+    public void TheWindowsAreTwoGroupsAndEachCalendarOneSitsBesideItsRollingTwin()
     {
         var now = new DateTimeOffset(2026, 8, 17, 9, 30, 0, TimeSpan.Zero);
-        var all = SpendPeriods.All(now, London);
 
-        Assert.Equal(5, all.Count);
-        Assert.Equal("Today", all[0].Name);
+        Assert.Equal(["Today"], SpendPeriods.Immediate(now, London).Select(period => period.Name));
+
         Assert.Equal(
-            ["Today", "Last 7 days", "Last 30 days", "This week", "This month"],
-            all.Select(period => period.Name));
+            ["This week", "Last 7 days", "This month", "Last 30 days"],
+            SpendPeriods.Windows(now, London).Select(period => period.Name));
+
+        // And All is still the two of them in that order, because Resettable and the ledger's own
+        // summary read it.
+        Assert.Equal(
+            ["Today", "This week", "Last 7 days", "This month", "Last 30 days"],
+            SpendPeriods.All(now, London).Select(period => period.Name));
     }
 
     /// <summary>

@@ -119,17 +119,26 @@ public sealed class SpendWindow : Window
         _body.Children.Clear();
 
         _body.Children.Add(Estimates());
-        _body.Children.Add(Section("This response", TurnRows(_turn)));
-        _body.Children.Add(Section("This session", SessionRows(_session, _speech, _settings)));
 
-        // Five windows, freshest first. Two are elapsed durations and three are local calendar
-        // ideas; the ledger works out which instants those are, against this zone. SpendPeriods
-        // owns the order and the reason there is no "Last 24 hours" beside Today.
+        // **Two groups, one row each** (#227). The turn, the session and today answer one
+        // question — what is this costing me right now — and the four below answer another, so
+        // they are read together rather than as five sections down a page. Which windows belong
+        // in which group is SpendPeriods' answer and not this file's.
+        _body.Children.Add(Section(
+            "Now",
+            [
+                TurnRow(_turn),
+                SessionRow(_session, _speech, _settings),
+                .. _ledger.Immediate(_zone).Select(WindowRow),
+                .. ColdPrefixRow(_session),
+            ]));
+
+        // Each calendar window beside its rolling twin: This week, Last 7 days, This month, Last
+        // 30 days. On the 3rd of a month a pair differs by an order of magnitude, and adjacency
+        // is what makes that legible — see SpendPeriods.Windows, which owns the order.
         _body.Children.Add(Section(
             "Running totals",
-            [.. _ledger.Summary(_zone).Select(row => Row(
-                row.Period.Name,
-                row.Totals.Any ? Money(row.Totals) : "nothing yet"))]));
+            [.. _ledger.Windows(_zone).Select(WindowRow)]));
 
         _body.Children.Add(Buttons());
     }
@@ -263,61 +272,154 @@ public sealed class SpendWindow : Window
         return totals.Complete ? line : $"at least {line}, part of it unpriced";
     }
 
-    private static IReadOnlyList<Control> TurnRows(TurnCost? turn)
+    /// <summary>
+    /// This turn, on one row (#227): what it cost, and the tokens behind it in the details cell.
+    /// <para>
+    /// <b>Four rows became one, and nothing was dropped.</b> Input, cached, output and cost were
+    /// four labelled lines because there was nowhere else for them; with a details column they
+    /// are one line that reads left to right. The Commander confirmed one row each on 2026-08-30.
+    /// </para>
+    /// </summary>
+    private static Control TurnRow(TurnCost? turn)
     {
         if (turn is not { } cost)
         {
-            return [Row("Nothing yet", "no response has been given this session")];
+            return Row("Turn", string.Empty, "no response has been given this session");
         }
 
         var usage = cost.Usage;
 
-        List<Control> rows =
-        [
-            Row("Input", $"{usage.TotalInputTokens:N0} tokens"),
-            Row("  of which cached", $"{usage.CacheReadInputTokens:N0} read, {usage.CacheCreationInputTokens:N0} written"),
-            Row("Output", $"{usage.OutputTokens:N0} tokens"),
-            Row("Cost", cost.Priced ? $"{cost.Dollars:C4}" : "unpriced model — no rate for it"),
-        ];
+        var detail = $"{usage.TotalInputTokens:N0} in, {usage.OutputTokens:N0} out, "
+                     + $"{usage.CacheReadInputTokens:N0} cached read, {usage.CacheCreationInputTokens:N0} written";
 
         if (usage.WebSearchRequests > 0)
         {
             // Billed separately from tokens and not small: one search costs more than an entire
-            // cheap turn, so it is named rather than folded into the figure above.
-            rows.Insert(3, Row("Web searches", usage.WebSearchRequests.ToString("N0")));
+            // cheap turn, so it is named rather than folded into the figure beside it.
+            detail += $", {usage.WebSearchRequests:N0} web searches";
         }
 
-        return rows;
+        return Row("Turn", cost.Priced ? $"{cost.Dollars:C4}" : "unpriced", detail);
     }
 
-    private static IReadOnlyList<Control> SessionRows(
-        SpendTracker session,
-        SpeechSpend speech,
-        D47Settings settings)
+    /// <summary>
+    /// This session, on one row (#227). The money is the model and the voice together, rendered by
+    /// <see cref="Money"/> so the split reads the same here as it does for every window below.
+    /// </summary>
+    private static Control SessionRow(SpendTracker session, SpeechSpend speech, D47Settings settings)
     {
-        List<Control> rows =
-        [
-            Row("Responses", session.TurnCount.ToString("N0")),
-            Row("Model", session.RunningTotalDollars.ToString("C4")),
-        ];
+        var detail = $"{session.TurnCount:N0} {(session.TurnCount == 1 ? "turn" : "turns")}";
 
-        if (speech.Describe(settings) is { } voice)
+        // **The voice sentence is kept whole rather than reduced to a character count.** It already
+        // names every provider that spoke and what each cost — which is what the details column is
+        // for — and it is the only place a free provider is told apart from an unpriced one.
+        if (speech.Describe(settings) is { Length: > 0 } voice)
         {
-            rows.Add(Row("Voice", voice));
+            detail += $", {voice}";
         }
 
-        if (session.UnexplainedColdPrefixes > 0)
-        {
-            // A caching regression rather than a cost curiosity: a profile switch is the only
-            // sanctioned cause of a cold prefix, so a count here means something is defeating
-            // the cache — a mutated descriptor, a prompt whose bytes vary per turn.
-            rows.Add(Row(
-                "Cold prefixes",
-                $"{session.UnexplainedColdPrefixes:N0} with no cause — caching is being defeated"));
-        }
-
-        return rows;
+        return Row("Session", session.RunningTotalDollars.ToString("C4"), detail);
     }
+
+    /// <summary>
+    /// One window's figure and the models behind it (#226). "nothing yet" sits in the details
+    /// cell rather than the money one, so an empty window does not put words in a column of
+    /// amounts.
+    /// </summary>
+    private static Control WindowRow((SpendPeriod Period, SpendTotals Totals) window)
+    {
+        var totals = window.Totals;
+
+        return totals.Any
+            ? Row(window.Period.Name, Amount(totals), Behind(totals))
+            : Row(window.Period.Name, string.Empty, "nothing yet");
+    }
+
+    /// <summary>
+    /// Every model and voice provider used in a window, most expensive first (#226).
+    /// <para>
+    /// <b>A free provider is named rather than implied.</b> Kokoro and Edge Neural cost nothing,
+    /// and a provider that was used and shows no figure looks like a provider that was not used —
+    /// so it says <c>(free)</c> and how much it spoke.
+    /// </para>
+    /// <para>
+    /// <b>And an unpriced model can finally say which one it is.</b> The window's own caveat is
+    /// "part of it unpriced", which does not name the part; a row per model does.
+    /// </para>
+    /// <para>
+    /// <b>Capped, and it says when it caps.</b> A period holds however many models it holds, and
+    /// a silent truncation in a cost report is the one place that must not happen.
+    /// </para>
+    /// </summary>
+    private static string Behind(SpendTotals totals)
+    {
+        const int Most = 6;
+
+        var said = totals.Shares.Take(Most).Select(share =>
+        {
+            var what = share.Kind == SpendKind.Voice
+                ? $"{share.Name} {share.Characters:N0} chars"
+                : share.Name;
+
+            if (!share.Priced)
+            {
+                return $"{what} (no rate for it)";
+            }
+
+            return share.Dollars > 0m ? $"{what} {share.Dollars:C4}" : $"{what} (free)";
+        });
+
+        var line = string.Join(", ", said);
+
+        return totals.Shares.Count > Most
+            ? $"{line}, and {totals.Shares.Count - Most:N0} more"
+            : line;
+    }
+
+    /// <summary>
+    /// <b>The one thing in this window that asks the Commander to do something</b>, so it keeps a
+    /// row of its own rather than being folded into a details cell beside token counts (#227).
+    /// <para>
+    /// A caching regression rather than a cost curiosity: a profile switch is the only sanctioned
+    /// cause of a cold prefix, so a count here means something is defeating the cache — a mutated
+    /// descriptor, a prompt whose bytes vary per turn. It appears only when the count is non-zero,
+    /// as it already did.
+    /// </para>
+    /// </summary>
+    /// <summary>
+    /// A window's figure and nothing else, for the money column
+    /// (<a href="https://github.com/dseelinger/d47/issues/226">#226</a>).
+    /// <para>
+    /// <b>The column holds one amount, and the first capture of the three-column layout is why.</b>
+    /// <see cref="Money"/> renders the model-and-voice split as a sentence — <c>"$1.5021 — $1.4411
+    /// model, $0.0610 voice"</c> — and a sentence in a right-aligned mono column that does not wrap
+    /// came out as <c>"$1.5021 — $1"</c>. A cost figure clipped mid-string is the one thing a
+    /// window about money must never do, and the split is not lost: the details cell names every
+    /// model and every provider with its own figure, which is more than the sentence said.
+    /// </para>
+    /// <para>
+    /// <b>An incomplete window says so with a sign rather than a clause.</b> "at least $X, part of
+    /// it unpriced" does not say <em>which</em> part; the details cell now does, model by model, so
+    /// this only has to mark the figure as a floor.
+    /// </para>
+    /// </summary>
+    private static string Amount(SpendTotals totals)
+    {
+        var figure = totals.Dollars.ToString("C4", System.Globalization.CultureInfo.CurrentCulture);
+
+        return totals.Complete ? figure : $"≥ {figure}";
+    }
+
+    private static IReadOnlyList<Control> ColdPrefixRow(SpendTracker session) =>
+        session.UnexplainedColdPrefixes > 0
+            ?
+            [
+                Row(
+                    "Cold prefixes",
+                    session.UnexplainedColdPrefixes.ToString("N0"),
+                    "with no cause — caching is being defeated"),
+            ]
+            : [];
 
     /// <summary>
     /// Said once, at the top, rather than as a suffix on each of a dozen figures.
@@ -375,16 +477,29 @@ public sealed class SpendWindow : Window
     }
 
     /// <summary>
-    /// A caption and its figure, on one row. The figure is monospaced and right-aligned so a
-    /// column of them can be compared down the page rather than read one at a time.
+    /// A label, an amount and the detail behind it, on one row
+    /// (<a href="https://github.com/dseelinger/d47/issues/226">#226</a>).
+    /// <para>
+    /// <b>Money and detail used to share a cell</b>, so the voice line read as three facts wrapped
+    /// into a paragraph with the figure buried in the middle of it — while a running total held
+    /// <c>$0.0196</c> in a column three units wide and nothing else. A column of amounts is
+    /// readable as a column only when it is one.
+    /// </para>
+    /// <para>
+    /// The amount is monospaced and <b>right-aligned</b>, which is what lines the decimal points
+    /// up; the window is already set in a mono face, so this costs nothing. Both text cells wrap
+    /// rather than clip — the details cell holds a model per line and the window scrolls
+    /// downward, which is the direction growth is safe in (#87).
+    /// </para>
     /// </summary>
-    private static Control Row(string caption, string value)
+    private static Control Row(string caption, string money, string detail = "")
     {
         var grid = new Grid
         {
             ColumnDefinitions =
             [
                 new ColumnDefinition(2, GridUnitType.Star),
+                new ColumnDefinition(1.4, GridUnitType.Star),
                 new ColumnDefinition(3, GridUnitType.Star),
             ],
         };
@@ -394,16 +509,30 @@ public sealed class SpendWindow : Window
 
         var figure = new TextBlock
         {
-            Text = value,
+            Text = money,
+            FontSize = TypeScale.Secondary,
+            FontFamily = new FontFamily("Cascadia Mono,Consolas,monospace"),
+            HorizontalAlignment = HorizontalAlignment.Right,
+            TextWrapping = TextWrapping.NoWrap,
+            Margin = new Thickness(0, 0, 8, 0),
+        };
+        Themed(figure, TextBlock.ForegroundProperty, ThemeManager.TextKey);
+
+        var behind = new TextBlock
+        {
+            Text = detail,
             FontSize = TypeScale.Secondary,
             FontFamily = new FontFamily("Cascadia Mono,Consolas,monospace"),
             TextWrapping = TextWrapping.Wrap,
         };
-        Themed(figure, TextBlock.ForegroundProperty, ThemeManager.TextKey);
+        Themed(behind, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
 
         Grid.SetColumn(figure, 1);
+        Grid.SetColumn(behind, 2);
+
         grid.Children.Add(label);
         grid.Children.Add(figure);
+        grid.Children.Add(behind);
 
         return grid;
     }

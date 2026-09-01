@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
+using Avalonia.Media;
 using Avalonia.Headless.XUnit;
 using Avalonia.VisualTree;
 using D47.App.Controls;
@@ -139,16 +140,60 @@ public class SpendDialogTests
             .ToList();
 
         var estimates = blocks.FindIndex(text => text.StartsWith("Estimates.", StringComparison.Ordinal));
-        var thisTurn = blocks.FindIndex(text => text == "This response");
+        var firstGroup = blocks.FindIndex(text => text == "Now");
 
         Assert.True(estimates >= 0, "The spend dialog says nothing about the figures being estimates.");
         Assert.True(
-            estimates < thisTurn,
+            estimates < firstGroup,
             "The estimates line must come before the first figure — a Commander who reads the first "
             + "number and closes the window never reaches a footnote.");
 
         // The reason, not just the disclaimer. A caveat that does not say why reads as boilerplate.
         Assert.Contains("published rates", blocks[estimates], StringComparison.Ordinal);
+
+        window.Close();
+    }
+
+    /// <summary>
+    /// <b>The money column holds an amount and nothing else</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/226">#226</a>).
+    /// <para>
+    /// The first draft put <see cref="SpendWindow"/>'s model-and-voice sentence in that column,
+    /// which is right-aligned, monospaced and does not wrap — so the capture came back reading
+    /// <c>"$1.5021 — $1"</c>. A cost figure clipped mid-string is the one thing a window about
+    /// money must never do, and it was invisible to every assertion in this file because the
+    /// string was correct and the cell was not.
+    /// </para>
+    /// <para>
+    /// Nothing is lost by the column being narrow: the details cell names every model and every
+    /// provider with its own figure, which is more than the sentence said.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void TheMoneyColumnCannotBeClipped()
+    {
+        var window = Dialog(out _);
+        window.Show();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        var amounts = window.GetVisualDescendants().OfType<TextBlock>()
+            .Where(block => Grid.GetColumn(block) == 1 && block.TextWrapping == TextWrapping.NoWrap)
+            .Select(block => block.Text ?? string.Empty)
+            .Where(text => text.Length > 0)
+            .ToList();
+
+        Assert.NotEmpty(amounts);
+
+        foreach (var amount in amounts)
+        {
+            Assert.DoesNotContain("—", amount, StringComparison.Ordinal);
+            Assert.DoesNotContain("model", amount, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("voice", amount, StringComparison.OrdinalIgnoreCase);
+
+            // What is left is a figure, optionally marked as a floor for a window holding a model
+            // d47 has no rate for. The details cell is what names that model.
+            Assert.Matches(@"^(≥ )?[^A-Za-z]*[\d][^A-Za-z]*$", amount);
+        }
 
         window.Close();
     }
@@ -174,20 +219,44 @@ public class SpendDialogTests
     /// All five windows are named, whether or not anything was spent in them. A window that is
     /// silent because it is empty and one that is silent because it was not computed look the
     /// same, and only one of those is acceptable.
+    /// <para>
+    /// <b>And they are in two groups now</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/227">#227</a>): Today reads beside the
+    /// turn and the session under <em>Now</em>, and the four below it are pairs — each calendar
+    /// window beside its rolling twin, which is the whole point of the order.
+    /// </para>
     /// </summary>
     [AvaloniaFact]
-    public void AllFiveRunningTotalsAreListed()
+    public void AllFiveRunningTotalsAreListedInTheirTwoGroups()
     {
         var window = Dialog(out _);
         window.Show();
 
-        var text = Words(window);
+        var blocks = window.GetVisualDescendants().OfType<TextBlock>()
+            .Select(block => block.Text ?? string.Empty)
+            .ToList();
 
-        Assert.Contains("Today", text, StringComparison.Ordinal);
-        Assert.Contains("Last 7 days", text, StringComparison.Ordinal);
-        Assert.Contains("Last 30 days", text, StringComparison.Ordinal);
-        Assert.Contains("This week", text, StringComparison.Ordinal);
-        Assert.Contains("This month", text, StringComparison.Ordinal);
+        foreach (var name in new[] { "Today", "This week", "Last 7 days", "This month", "Last 30 days" })
+        {
+            Assert.Contains(name, blocks);
+        }
+
+        // Today is in the first group with the turn and the session, and every other window is
+        // below the second heading.
+        var now = blocks.IndexOf("Now");
+        var running = blocks.IndexOf("Running totals");
+
+        Assert.True(now >= 0 && running > now);
+        Assert.InRange(blocks.IndexOf("Turn"), now, running);
+        Assert.InRange(blocks.IndexOf("Session"), now, running);
+        Assert.InRange(blocks.IndexOf("Today"), now, running);
+
+        // The pairs, in order, and adjacent — which is the ask. A sort that separated one would
+        // undo the change rather than tidy it.
+        Assert.Equal(
+            ["This week", "Last 7 days", "This month", "Last 30 days"],
+            blocks.Skip(running).Where(text =>
+                text is "This week" or "Last 7 days" or "This month" or "Last 30 days"));
 
         window.Close();
     }
@@ -195,6 +264,11 @@ public class SpendDialogTests
     /// <summary>
     /// The figures the line stopped carrying are all here — including the token counts, which
     /// were the bulk of what made it a wall.
+    /// <para>
+    /// <b>They moved again in #226 and #227</b>, from four labelled rows into one row's details
+    /// cell. That is the whole risk of collapsing the sections, so it is asserted rather than
+    /// eyeballed: every figure that had a row of its own is still on the page.
+    /// </para>
     /// </summary>
     [AvaloniaFact]
     public void TheTurnsFiguresSurvivedTheMove()
@@ -204,14 +278,16 @@ public class SpendDialogTests
 
         var text = Words(window);
 
-        Assert.Contains("Input", text, StringComparison.Ordinal);
-        Assert.Contains("Output", text, StringComparison.Ordinal);
+        Assert.Contains(" in,", text, StringComparison.Ordinal);
+        Assert.Contains(" out,", text, StringComparison.Ordinal);
         Assert.Contains("cached", text, StringComparison.Ordinal);
-        Assert.Contains("Responses", text, StringComparison.Ordinal);
+        Assert.Contains("turn", text, StringComparison.OrdinalIgnoreCase);
 
         // Voice is reported beside the model rather than on a surface of its own, so "what has
-        // this cost" keeps having one answer.
-        Assert.Contains("Voice", text, StringComparison.Ordinal);
+        // this cost" keeps having one answer. It lost its own label with the sections and kept
+        // its whole sentence, which is what names the providers and tells free from unpriced.
+        Assert.Contains("characters spoken", text, StringComparison.Ordinal);
+        Assert.Contains("ElevenLabs", text, StringComparison.Ordinal);
 
         window.Close();
     }
