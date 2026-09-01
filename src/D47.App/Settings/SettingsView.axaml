@@ -92,6 +92,36 @@
       </Border>
 
       <!--
+        Open and shut every card (#223). Docked above the scroller rather than dropped in with
+        the cards, because a control that scrolls out of sight is one a Commander learns not to
+        rely on - the same argument that keeps this pair out of the nav column, which disappears
+        below 900 pixels.
+
+        Glyphs rather than words, and marked in code so the tooltip and the accessible name come
+        from one string: a glyph-only control with no accessible name does not exist for anybody
+        who is not looking at it.
+      -->
+      <Grid x:Name="BulkExpand"
+            DockPanel.Dock="Top"
+            HorizontalAlignment="Left"
+            Margin="28,12,28,0">
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="2">
+          <Button x:Name="ExpandAll"
+                  Height="28"
+                  Padding="8,0"
+                  VerticalContentAlignment="Center"
+                  HorizontalContentAlignment="Center"
+                  Click="OnExpandAllClick" />
+          <Button x:Name="CollapseAll"
+                  Height="28"
+                  Padding="8,0"
+                  VerticalContentAlignment="Center"
+                  HorizontalContentAlignment="Center"
+                  Click="OnCollapseAllClick" />
+        </StackPanel>
+      </Grid>
+
+      <!--
         Horizontal scrolling is on, and the cards have a floor as well as a ceiling. Zoom shrinks
         the space the panel is laid out in - at 175% in a 900-pixel window a row gets 197 - and
         below about 420 a row cannot hold its caption and its control side by side. Without a

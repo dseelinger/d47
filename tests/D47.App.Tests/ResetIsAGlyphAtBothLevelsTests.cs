@@ -25,10 +25,31 @@ namespace D47.App.Tests;
 /// </summary>
 public sealed class ResetIsAGlyphAtBothLevelsTests
 {
-    private static IReadOnlyList<Button> ResetButtons(SettingsHost host) =>
-        [.. host.View.GetVisualDescendants()
-            .OfType<Button>()
-            .Where(button => button.Content is Path)];
+    /// <summary>
+    /// The drawn resets — every glyph button on the page that is not one of the two bulk
+    /// controls above the cards
+    /// (<a href="https://github.com/dseelinger/d47/issues/223">#223</a>).
+    /// <para>
+    /// <b>"Every button whose content is a Path" used to be the whole rule, and #223 made it
+    /// false.</b> Expand all and Collapse all are glyph buttons on this page and are not resets,
+    /// so both tests below caught them and failed — correctly, on the old rule. The
+    /// discriminator is structural rather than textual: a reset sits in a card header or on a
+    /// row, and the pair sits in <c>BulkExpand</c>. Filtering on the accessible name would have
+    /// made <see cref="EveryResetStillSaysWhatItIs"/> assert itself.
+    /// </para>
+    /// </summary>
+    private static IReadOnlyList<Button> ResetButtons(SettingsHost host)
+    {
+        var bulk = host.View.FindControl<Control>("BulkExpand");
+
+        return
+        [
+            .. host.View.GetVisualDescendants()
+                .OfType<Button>()
+                .Where(button => button.Content is Path)
+                .Where(button => bulk is null || !button.GetVisualAncestors().Contains(bulk)),
+        ];
+    }
 
     /// <summary>
     /// Neither reset is text. Asserted as "no reset button has a string for content" rather than by

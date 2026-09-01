@@ -289,6 +289,28 @@ public sealed record ViewState
         ExpandedCards = Without(ExpandedCards, capabilityId, add: expanded),
     };
 
+    /// <summary>
+    /// Forgets what the Commander said about one card, so
+    /// <see cref="CapabilityDisplay.StartCollapsed"/> decides again
+    /// (<a href="https://github.com/dseelinger/d47/issues/223">#223</a>).
+    /// <para>
+    /// <b>Because Collapse all buries that default otherwise.</b> Every card whose state has been
+    /// written stops falling back to it — permanently, and one press of a bulk control writes all
+    /// of them at once. Resetting a card is the Commander saying they want its defaults, and this
+    /// is one of them.
+    /// </para>
+    /// <para>
+    /// It does not touch what is on screen. The card stays as it is until the next launch, which
+    /// is what makes this a restored default rather than a card that shuts itself while being
+    /// reset.
+    /// </para>
+    /// </summary>
+    public ViewState Forgetting(string capabilityId) => this with
+    {
+        CollapsedCards = Without(CollapsedCards, capabilityId, add: false),
+        ExpandedCards = Without(ExpandedCards, capabilityId, add: false),
+    };
+
     private static IReadOnlyList<string> Without(IReadOnlyList<string> ids, string id, bool add)
     {
         var next = ids.Where(existing => !string.Equals(existing, id, StringComparison.Ordinal)).ToList();

@@ -163,6 +163,22 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     public SettingsView()
     {
         InitializeComponent();
+
+        // Two chevrons apart and two together (#223). Marked here rather than in the axaml
+        // because Mark sets the tooltip *and* the accessible name from one string, and a
+        // glyph-only control without an accessible name does not exist for anybody who is not
+        // looking at it. Accent, because a clickable thing carries the accent (#208).
+        Controls.Glyphs.Mark(
+            ExpandAll,
+            Controls.Glyphs.ExpandAll,
+            ThemeManager.AccentKey,
+            "Open every section");
+
+        Controls.Glyphs.Mark(
+            CollapseAll,
+            Controls.Glyphs.CollapseAll,
+            ThemeManager.AccentKey,
+            "Shut every section");
     }
 
     /// <summary>
@@ -470,6 +486,15 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         reset.Click += (_, _) =>
         {
             _settings!.ResetCard(section.Capability.Id, SettingsCaller.Panel);
+
+            // And forget what has been said about whether this card is open (#223). Collapse all
+            // writes a state for every card, and a card with a written state never falls back to
+            // its own StartCollapsed again — so without this, one press of a bulk control buries
+            // that default permanently and nothing anywhere brings it back. Nothing moves on
+            // screen; the next launch decides.
+            _viewState = _viewState.Forgetting(section.Capability.Id);
+            _viewStateStore?.Save(_viewState);
+
             Refresh();
         };
 
@@ -844,6 +869,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         var available = e.NewSize.Width - 56;
 
         Cards.Width = Math.Clamp(available, Floor, Ceiling);
+
+        // And the pair of bulk controls above them takes the same width (#223), so it sits over
+        // the cards rather than out at the column's right edge. The cards are left-aligned inside
+        // a column that is usually wider than they are, so a right-aligned strip in the column
+        // floats away from the thing it acts on — which is exactly how a control reads as
+        // belonging to something else.
+        BulkExpand.Width = Cards.Width;
     }
 
     /// <summary>The nav column's width, and the point below which it is not worth its space.</summary>
@@ -928,6 +960,47 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         SetActiveSection(topmost);
     }
+
+    /// <summary>
+    /// Open every card, or shut every card
+    /// (<a href="https://github.com/dseelinger/d47/issues/223">#223</a>).
+    /// <para>
+    /// <b>A loop over the action each card already has.</b> <c>Expand</c> is stored on the section
+    /// and is already called programmatically by the help-jump path, which has to unfold the card
+    /// it lands on — so there is no new state here, and the chevron, the remembered set and the
+    /// view state all move because they move for a header press.
+    /// </para>
+    /// <para>
+    /// <b>These move cards and leave the fold alone</b>, which is the one thing to get right. The
+    /// fold is a different axis: <see cref="SettingsFold"/> decides which *rows* a calm page shows
+    /// at all, it is a persisted preference the Commander set, and its own rule is that folding is
+    /// a pure display decision. A chrome button that flipped a setting as a side effect would be a
+    /// different kind of act from opening a card, and the two are separately meaningful — every
+    /// card open and still the calm row set is a reasonable thing to want.
+    /// </para>
+    /// <para>
+    /// The cost of that separation, stated rather than discovered: pressing this with the fold on
+    /// opens every card and still does not show every row. The answer to that reading badly is to
+    /// make the fold's own control easier to find, never to have one button drive two axes.
+    /// </para>
+    /// <para>
+    /// <b>It persists, exactly as clicking each header by hand does</b>, because it is a thing the
+    /// Commander pressed on purpose. That does bury <c>Display.StartCollapsed</c> — a card whose
+    /// state has been written never falls back to its default again — so the page's own reset
+    /// clears the remembered states, which is what lets that default come back.
+    /// </para>
+    /// </summary>
+    private void SetEveryCard(bool expanded)
+    {
+        foreach (var section in _sections)
+        {
+            section.Expand?.Invoke(expanded);
+        }
+    }
+
+    private void OnExpandAllClick(object? sender, RoutedEventArgs e) => SetEveryCard(true);
+
+    private void OnCollapseAllClick(object? sender, RoutedEventArgs e) => SetEveryCard(false);
 
     private void RememberCollapse(string capabilityId, bool expanded)
     {

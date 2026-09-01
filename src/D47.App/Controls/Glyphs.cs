@@ -64,6 +64,21 @@ public static class Glyphs
     public const string Shrink =
         "M 4,10 L 10,10 L 10,4  M 20,10 L 14,10 L 14,4  M 20,14 L 14,14 L 14,20  M 4,14 L 10,14 L 10,20";
 
+    /// <summary>
+    /// Open every card: two chevrons pointing apart
+    /// (<a href="https://github.com/dseelinger/d47/issues/223">#223</a>).
+    /// <para>
+    /// <b>Not <see cref="Expand"/>, which is a different verb.</b> Those four brackets are the
+    /// full-screen mark — make this thing bigger — and these two chevrons are the one every tree
+    /// and outline uses for unfolding what is inside. A pair that only works as a pair, like the
+    /// two above it: apart is open, together is shut.
+    /// </para>
+    /// </summary>
+    public const string ExpandAll = "M 7,6 L 12,11 L 17,6  M 7,13 L 12,18 L 17,13";
+
+    /// <summary>Shut every card: the same two chevrons pointing together.</summary>
+    public const string CollapseAll = "M 7,11 L 12,6 L 17,11  M 7,18 L 12,13 L 17,18";
+
     /// <summary>Two sheets, one behind the other. The clipboard mark, near enough universally.</summary>
     public const string Copy =
         "M 9,9 L 20,9 L 20,20 L 9,20 Z  M 15,9 L 15,4 L 4,4 L 4,15 L 9,15";

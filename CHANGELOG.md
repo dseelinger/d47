@@ -29,6 +29,26 @@ history to match today's layout would be the one edit it must never take.
 
 ## 0.99.0 — 2026-09-01 — Three columns, two groups, and a release that asks first
 
+### Expand all and Collapse all, above the settings cards (#223)
+
+Two chevron pairs at the top of the card column — apart to open every section, together to shut
+them all. They sit above the scroller rather than among the cards, because a control that scrolls
+out of sight is one you learn not to rely on; that is the same argument that keeps them out of
+the nav column, which disappears below 900 pixels. Each carries its sentence on the tooltip and
+on the accessible name, since a glyph-only control without one does not exist for anybody who is
+not looking at it.
+
+**They move cards and leave the fold alone.** *Show every setting* is a different axis: it
+decides which rows a calm page shows at all, it is a preference you set, and its own rule is that
+folding writes nothing. A chrome button that flipped a setting as a side effect would be a
+different kind of act from opening a card — and the two are separately meaningful, since every
+card open with the calm row set is a reasonable thing to want. The cost is honest: pressing
+Expand all with the fold on opens every card and still does not show every row.
+
+They persist, exactly as clicking each header by hand does. That buries a card's own
+`StartCollapsed` default, so **a card's reset now forgets what has been said about whether it is
+open** — nothing moves on screen, and the next launch decides again.
+
 ### The conversation box walks what you have already sent (#224)
 
 Up steps back through the lines sent from the box this session, down steps forward again, and
