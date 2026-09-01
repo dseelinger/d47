@@ -381,7 +381,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         if (pageRows.Count > 0)
         {
-            var strip = new StackPanel { Spacing = 12, Margin = new Thickness(18, 0, 18, 6) };
+            // Flush with the cards rather than inset from them. The strip used to hold a row
+            // whose control was thrown to the far right anyway, so eighteen pixels of inset was
+            // invisible; now that the two ends of this line are the things being aligned to, the
+            // plus wants to sit over the card's left edge and the switch over its right.
+            var strip = new StackPanel { Spacing = 12, Margin = new Thickness(0, 0, 0, 6) };
 
             var first = true;
 
@@ -1903,17 +1907,34 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             // character per line. Three-fifths to the words, two-fifths to the control, and the
             // control right-aligned inside its share so short ones - a toggle, a stepper - sit
             // exactly where they did before.
+            // **A page row is measured, not proportioned** (the Commander's instruction,
+            // 2026-09-01: *"put the toggle switch next to its label ... they don't look related
+            // that way"*). The proportional columns below are right for a card, where forty rows
+            // share one grid and a column of controls that lines up is the whole point. A page row
+            // is on its own above the cards, and the same rule threw its switch to the far side of
+            // the window with nothing in between — so a reader has to work out which label it
+            // belongs to. Sized to what it holds and pushed to the right as one group, the label
+            // and the switch read as one thing, and the expand pair holds the left.
             var grid = new Grid
             {
-                ColumnDefinitions =
-                [
-                    new ColumnDefinition(3, GridUnitType.Star),
-                    new ColumnDefinition(16, GridUnitType.Pixel),
+                ColumnDefinitions = row.PageTop
+                    ?
+                    [
+                        new ColumnDefinition(GridLength.Auto),
+                        new ColumnDefinition(12, GridUnitType.Pixel),
+                        new ColumnDefinition(GridLength.Auto),
+                    ]
+                    :
+                    [
+                        new ColumnDefinition(3, GridUnitType.Star),
+                        new ColumnDefinition(16, GridUnitType.Pixel),
 
-                    // The floor is the width the controls are already built to; below it the
-                    // caption yields instead, which is the lesser of the two bad narrow cases.
-                    new ColumnDefinition(2, GridUnitType.Star) { MinWidth = StandardControlWidth },
-                ],
+                        // The floor is the width the controls are already built to; below it the
+                        // caption yields instead, which is the lesser of the two bad narrow cases.
+                        new ColumnDefinition(2, GridUnitType.Star) { MinWidth = StandardControlWidth },
+                    ],
+
+                HorizontalAlignment = row.PageTop ? HorizontalAlignment.Right : HorizontalAlignment.Stretch,
             };
 
             // Load-bearing rather than decorative: RowWidthTests asserts the caption keeps the
@@ -1921,7 +1942,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             // Selecting on "three columns" instead caught control templates — a TextBox is itself
             // a three-column grid, inner-left content, text, inner-right content — and a glyph
             // put inside a box was read as a settings row starving its own caption.
-            grid.Classes.Add(CompactRowClass);
+            //
+            // Not on a page row, which no longer has shares to keep: it is two Auto columns.
+            if (!row.PageTop)
+            {
+                grid.Classes.Add(CompactRowClass);
+            }
 
             Grid.SetColumn(caption, 0);
             Grid.SetColumn(control, 2);
