@@ -1951,6 +1951,16 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
             Grid.SetColumn(caption, 0);
             Grid.SetColumn(control, 2);
+
+            // **Both halves centred, not just the control** (asked 2026-09-01: *"now align them
+            // vertically"*). The control has always been centred in the row; the caption was
+            // stretched, so its words sat at the top of a height the control had set — measured on
+            // the page row, a 17-pixel label centred at 8.5 against a switch centred at 16.
+            //
+            // Invisible until the help moved behind a glyph earlier the same day: a caption that
+            // was a label over two lines of grey prose filled the row, and there was no spare
+            // height for anything to float in.
+            caption.VerticalAlignment = VerticalAlignment.Center;
             control.VerticalAlignment = VerticalAlignment.Center;
             control.HorizontalAlignment = HorizontalAlignment.Right;
             grid.Children.Add(caption);
