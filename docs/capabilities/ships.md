@@ -188,6 +188,17 @@ way every other suggestion does.
 That separation is what lets you rearrange a build without your checklist reordering itself under
 you, and reorder your checklist without the build forgetting what you decided.
 
+**What is actually fitted is a third thing, in a third file.** `data/loadouts.json` holds what each
+of your ships was last seen carrying, straight from the game — every ship you have sat in, not just
+the one you are in now. Intent is authored and a loadout is derived, so the two never borrow from
+each other.
+
+**It is a cache and nothing depends on it surviving.** Delete it and Directive 47 rebuilds what it
+can from your journals; it exists so that a ship you last flew a year ago is still answerable
+today, which reading the newest journals alone could never manage. A ship you sell is dropped from
+it at the sale — and dropped again if the game ever hands its id to something new, because Elite
+reuses ship ids and an inherited module list would be worse than knowing nothing.
+
 ### One build per ship
 
 Comparing a combat fit against an exploration fit for the same hull is a planner feature this

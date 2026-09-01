@@ -31,25 +31,44 @@ public static class LoadoutBackfill
     /// <summary>
     /// How many journal files back to look. The same window <see cref="FleetBackfill"/> uses, and
     /// for the same reason: far enough to cross the gap since d47 last ran, near enough that
-    /// startup does not read a year of history. A ship not sat in inside that window stays
-    /// unknown, which is the honest answer and is what the surface already renders.
+    /// startup does not read a year of history.
+    /// <para>
+    /// <b>Its job is unchanged and its meaning is not</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/128">#128</a>). This window used to
+    /// <em>be</em> the memory, so a ship not sat in inside it was forgotten on every launch;
+    /// <see cref="LoadoutStore"/> is the long memory now and this is the catch-up over the gap
+    /// since d47 last ran. The number did not need to change with the meaning: what it has to
+    /// cover is a gap between sessions rather than a Commander's whole history.
+    /// </para>
     /// </summary>
     private const int MaxLookback = 25;
 
-    public static IReadOnlyDictionary<string, ShipLoadouts> FromHistory(string directory, ILogger logger)
+    /// <param name="stored">
+    /// What <see cref="LoadoutStore"/> held, to start from rather than to rebuild over
+    /// (<a href="https://github.com/dseelinger/d47/issues/128">#128</a>). Empty before the file
+    /// existed, and empty on a first run.
+    /// </param>
+    public static IReadOnlyDictionary<string, ShipLoadouts> FromHistory(
+        string directory,
+        ILogger logger,
+        IReadOnlyDictionary<string, ShipLoadouts>? stored = null)
     {
         ArgumentNullException.ThrowIfNull(logger);
 
         if (!Directory.Exists(directory))
         {
             logger.LogWarning("No journal folder at {Directory}", directory);
-            return new Dictionary<string, ShipLoadouts>(StringComparer.Ordinal);
+
+            // The file still answers. A folder that has moved is not a reason to forget every
+            // ship in it, which is what returning nothing here used to mean.
+            return stored ?? new Dictionary<string, ShipLoadouts>(StringComparer.Ordinal);
         }
 
         return FromHistory(
             [.. Directory.EnumerateFiles(directory, JournalFolder.FilePattern)
                 .OrderBy(Path.GetFileName, StringComparer.Ordinal)],
-            logger);
+            logger,
+            stored);
     }
 
     /// <summary>
@@ -63,12 +82,21 @@ public static class LoadoutBackfill
     /// </summary>
     public static IReadOnlyDictionary<string, ShipLoadouts> FromHistory(
         IReadOnlyList<string> files,
-        ILogger logger)
+        ILogger logger,
+        IReadOnlyDictionary<string, ShipLoadouts>? stored = null)
     {
         ArgumentNullException.ThrowIfNull(files);
         ArgumentNullException.ThrowIfNull(logger);
 
-        var remembered = new Dictionary<string, ShipLoadouts>(StringComparer.Ordinal);
+        // **Seeded rather than rebuilt** (#128), and that is what makes forgetting work across a
+        // restart. The window replays ShipyardSell, the part-exchange ShipyardBuy and ShipyardNew
+        // through the same fold the live path uses — so a ship sold while d47 was closed is
+        // removed from the long memory rather than surviving in it under an id the game may have
+        // handed to something else.
+        var remembered = stored is null
+            ? new Dictionary<string, ShipLoadouts>(StringComparer.Ordinal)
+            : new Dictionary<string, ShipLoadouts>(stored, StringComparer.Ordinal);
+
         var flying = new Dictionary<string, ShipLoadout>(StringComparer.Ordinal);
         var commander = string.Empty;
 
@@ -100,9 +128,11 @@ public static class LoadoutBackfill
 
                     var known = remembered.TryGetValue(commander, out var existing) ? existing : ShipLoadouts.Empty;
 
+                    // Remembered then forgotten, in the order CommanderGameState folds them and
+                    // for the measured reason recorded there.
                     remembered[commander] = known
-                        .Apply(journalEvent)
-                        .Remember(ship, journalEvent.Timestamp);
+                        .Remember(ship, journalEvent.Timestamp)
+                        .Apply(journalEvent);
                 }
             }
         }

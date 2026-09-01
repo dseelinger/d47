@@ -295,6 +295,53 @@ effort**, because a reasoning model rejecting temperature usually names both in 
 taking the wrong one off would drop the effort router's lever while leaving the refused field on
 the retry.
 
+### Every ship you have flown is remembered in a file, not for 25 journals (#128)
+
+The memory shipped in v0.41.1 off the report *"It WAS seen. Don't get amnesia"* — and it was
+rebuilt at every start by replaying the newest **25 journal files**, so a ship not sat in inside
+that window was forgotten on the next launch, and re-forgotten on every launch afterwards. That is
+the same amnesia, one level below where it was fixed.
+
+`data\loadouts.json` is the long memory now: every ship, keyed per Commander on the Frontier id
+with the key inside the document, written when the picture changes rather than only on a `Loadout`
+— Elite writes none after engineering, so a store that waited for one would miss every roll. It is
+**a cache and not a source of truth**, which is said in the file's own doc so nobody treats it like
+`settings.json`: deleting it costs a rebuild from the journals and nothing else. It is **not
+`ships.json`** either — that holds the plan, and intent is authored where a loadout is derived.
+
+**The backfill keeps its job and changes meaning.** It is seeded with the file rather than
+rebuilding over it, so its 25 files became *catch up on the gap since d47 last ran* — and that
+seeding is what makes forgetting work across a restart, because the sale is replayed through the
+same fold the live path uses.
+
+**Forgetting is the half a file makes load-bearing, and it now happens on three events rather than
+one.** A rolling window expired a stale row by itself; a file does not, and `ShipID` is reused —
+17 of 55 sold ships had their id come back alive. Measured on the 943-journal corpus: `ShipyardSell`
+names `SellShipID` on all 72 of its occurrences; one `ShipyardBuy` of 34 carries a `SellShipID`,
+which is a part exchange — a sale wearing another event's name, and previously missed; and
+`ShipyardNew` names `NewShipID` on all 34, with **12 of the 34 reusing an id that had already been
+alive**. A purchase is unambiguous proof the id belongs to something else now, so it is a second
+and independent chance to forget a sale d47 was not running for.
+
+**And the fold remembered before it forgot, which was one measurement away from being wrong.** Of
+those 34 purchases, **one hands out the id of the ship the Commander is sitting in** — so filing
+the flown ship after the forget put the old ship straight back under the new id. Replayed over the
+whole corpus, the shipped order produces exactly one inheritance (a Sidewinder's modules surviving
+under a newly bought Cobra Mk V on 2025-12-30) and the corrected order produces none. Harmless
+while the window expired it a day later; permanent once there is a file.
+
+**The fleet snapshot is not the corrective #128 expected it to be, and the corpus is why.** The
+issue proposed reconciling against `StoredShips` for a sale outside the catch-up window, noting the
+trap that the flown ship is absent from it. The trap is not the only problem: simulating that rule
+over all 1,112 snapshots would have **wrongly forgotten 140 ships across 50 snapshots** — ships a
+later snapshot proves were still owned, with no sale in between, one snapshot alone accounting for
+eight. 54 snapshots are empty, and one sequence runs 7 ships → 0 → 14 inside 90 minutes. So a
+snapshot deletes nothing here, and the acceptance criterion *"a ship absent from a fleet snapshot
+while being flown is not deleted"* holds by there being no such path at all.
+
+**Half of #128 is deliberately not built.** Asking about another ship by name through `get_ship`
+is tabled under the 2026-08-29 moratorium, on the Commander's own note on the issue.
+
 ## 0.98.3 — 2026-09-01 — A refused raise names its fault
 
 ### Bringing Elite forward works from behind it again, and a refusal is now a diagnosis (#107)

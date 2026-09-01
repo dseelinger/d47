@@ -106,7 +106,14 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         // After Ship and in one place, so every route that changes the flown ship is remembered by
         // the same line — the Loadout, the rename, and the EngineerCraft that Elite writes no
         // Loadout for. Dated off the event, because Core reads no clock.
-        Loadouts = Loadouts.Apply(journalEvent).Remember(Ship, journalEvent.Timestamp);
+        //
+        // **Remembered first and forgotten second**, which was the other way round until #128 and
+        // is a measured correction rather than a tidy-up. Of 34 ShipyardNew events on the corpus,
+        // one hands out the id of the ship the Commander is sitting in — so filing the flown ship
+        // after the forget put the old ship straight back under the new ship's id, which is
+        // exactly the inheritance the whole reuse rule exists to prevent. Selling never collides
+        // this way (0 of 72: you cannot sell what you are flying), so nothing else changes.
+        Loadouts = Loadouts.Remember(Ship, journalEvent.Timestamp).Apply(journalEvent);
         OnFoot = OnFoot.Apply(journalEvent);
         Carrier = Carrier.Apply(journalEvent);
         SquadronCarrier = SquadronCarrier.Apply(journalEvent);

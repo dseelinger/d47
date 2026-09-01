@@ -852,9 +852,25 @@ public sealed class AppHost : IDisposable
         var recoveredFleets = new Lazy<IReadOnlyDictionary<string, FleetRegistry>>(
             () => FleetBackfill.FromHistory(journalDirectory, loggerFactory.CreateLogger(nameof(FleetBackfill))));
 
-        // The same deal for what is *in* those ships, and lazy for the same reason.
+        // What every ship the Commander has flown was last seen holding, kept between sessions
+        // (#128). The memory itself shipped in v0.41.1 and was rebuilt from 25 journals at every
+        // start, so a ship not flown inside that window was forgotten on the next launch and
+        // re-forgotten on every launch after it. A cache rather than a source of truth: deleting
+        // it costs a rebuild from the journals and nothing else.
+        var loadouts = new LoadoutStore(
+            Path.Combine(paths.Data, "loadouts.json"),
+            loggerFactory.CreateLogger<LoadoutStore>());
+
+        loadouts.Load();
+
+        // The same deal for what is *in* those ships, and lazy for the same reason — seeded with
+        // the file, so the window's job is catching up on the gap since d47 last ran rather than
+        // being the whole memory. That seeding is also what makes a sale stick across a restart:
+        // ShipyardSell and ShipyardNew are replayed through the same fold and take the ship out
+        // of the long memory.
         var recoveredLoadouts = new Lazy<IReadOnlyDictionary<string, ShipLoadouts>>(
-            () => LoadoutBackfill.FromHistory(journalDirectory, loggerFactory.CreateLogger(nameof(LoadoutBackfill))));
+            () => LoadoutBackfill.FromHistory(
+                journalDirectory, loggerFactory.CreateLogger(nameof(LoadoutBackfill)), loadouts.All));
 
         var gameState = new GameStateStore
         {
@@ -1194,6 +1210,14 @@ public sealed class AppHost : IDisposable
             if (events.Any(journalEvent => journalEvent.Kind == "ScanOrganic"))
             {
                 sampling.Save(gameState.All);
+            }
+
+            // The same cadence and the same reasoning for the ships (#128). Which events can
+            // change the picture is asked of ShipLoadouts rather than restated here, so there is
+            // one list — and it is not only Loadout: Elite writes none after engineering.
+            if (events.Any(ShipLoadouts.MayChange))
+            {
+                loadouts.Save(gameState.All);
             }
 
             // The Commander's lore notes are hand-editable, so they are polled like the checklist
