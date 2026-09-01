@@ -432,6 +432,16 @@ public sealed class ResponsesLlmProvider : ILlmProvider, IDisposable
                 json.WriteEndObject();
             }
 
+            // What the call class asked for (#98), on the same terms the Chat Completions path
+            // states them. This endpoint is the one most likely to refuse it — a reasoning model
+            // on the Responses API rejects sampling outright — which is exactly what the demotion
+            // above it is for, and why the field is asked for rather than assumed away.
+            if (request.Sampling.Temperature is { } temperature
+                && EndpointDemotions.Allows(_endpoint.BaseUrl, Demotable.Sampling))
+            {
+                json.WriteNumber("temperature", temperature);
+            }
+
             json.WriteBoolean("store", false);
             json.WriteBoolean("stream", true);
 

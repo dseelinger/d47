@@ -1,4 +1,4 @@
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Reflection;
 using D47.App.Input;
 using D47.App.Logging;
@@ -5563,7 +5563,10 @@ public sealed class AppHost : IDisposable
             PriceTable.Default,
             _logger,
             cancellationToken,
-            webSearch: true);
+            webSearch: true,
+
+            // Cold, and the reason lives beside the instruction in Core (#98).
+            sampling: LoreLookup.Sampling);
 
     /// <summary>
     /// The second half of an arrival remark: a web search, and what it found (Phase 23,
@@ -5612,7 +5615,10 @@ public sealed class AppHost : IDisposable
                 PriceTable.Default,
                 _logger,
                 budget.Token,
-                webSearch: true).ConfigureAwait(false);
+                webSearch: true,
+
+                // The same cold sampling the notes window asks for, from the same place.
+                sampling: LoreLookup.Sampling).ConfigureAwait(false);
 
             // Dropped rather than spoken when the Commander has moved on. They may be interdicted
             // or three jumps away by now, and a sentence about a system they left is worse than
@@ -6383,6 +6389,12 @@ public sealed class AppHost : IDisposable
                 History = [new ConversationMessage(ConversationRole.User, "Reply with the single word OK.")],
             },
             Effort = ThinkingEffort.Low,
+
+            // Nothing said about sampling, on purpose (#98). This asks one token in order
+            // to learn whether a key works, against a gateway that may validate fields d47
+            // has never met — and a rejected field here reads as a rejected key, which sends
+            // a Commander to their account page for another one that will fail the same way.
+            Sampling = LlmSampling.Unstated,
 
             // Enough room to say one word, rather than exactly one token. A model that thinks
             // before answering spends this budget on the thinking and stops, which arrives here

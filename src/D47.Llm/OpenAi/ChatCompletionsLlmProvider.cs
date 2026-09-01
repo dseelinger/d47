@@ -381,6 +381,16 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
                 json.WriteString("reasoning_effort", Translate(request.Effort));
             }
 
+            // What the call class asked for (#98), where it asked for anything and the endpoint
+            // has not refused the field. This is where sampling actually lands: the Anthropic
+            // models d47 would be pointed at have removed it, and the servers reached through
+            // here — local runners, gateways, OpenAI itself — mostly still take it.
+            if (request.Sampling.Temperature is { } temperature
+                && EndpointDemotions.Allows(_endpoint.BaseUrl, Demotable.Sampling))
+            {
+                json.WriteNumber("temperature", temperature);
+            }
+
             json.WriteBoolean("stream", true);
 
             if (EndpointDemotions.Allows(_endpoint.BaseUrl, Demotable.StreamUsage))
@@ -502,6 +512,13 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
 
         return said switch
         {
+            // Named before reasoning_effort, because a server refusing sampling on a reasoning
+            // model tends to say so by naming both ("temperature is not supported with
+            // reasoning_effort"), and taking the wrong one off would drop the effort router's
+            // lever and leave the field that was actually refused on the retry.
+            _ when said.Contains("temperature", StringComparison.Ordinal)
+                   || said.Contains("top_p", StringComparison.Ordinal) => Demotable.Sampling,
+
             _ when said.Contains("reasoning_effort", StringComparison.Ordinal) => Demotable.ReasoningEffort,
             _ when said.Contains("stream_options", StringComparison.Ordinal)
                    || said.Contains("include_usage", StringComparison.Ordinal) => Demotable.StreamUsage,

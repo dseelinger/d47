@@ -560,7 +560,12 @@ public static class VoicePairing
             spend,
             prices,
             logger,
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken,
+
+            // Cold (#98). The same argument the missing persona block makes above, made to the
+            // sampler: this is a mechanical question about d47's own configuration, never spoken
+            // aloud, and answered in a fixed format that is then parsed line by line.
+            sampling: LlmSampling.VoiceCasting).ConfigureAwait(false);
 
         var chosen = new Dictionary<string, string>(StringComparer.Ordinal);
 

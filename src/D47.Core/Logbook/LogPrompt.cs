@@ -230,6 +230,10 @@ public static class LogPrompt
             // "do not add anything" buys thinking tokens the Commander pays for to consider
             // material that is not in the list.
             Effort = ThinkingEffort.Low,
+
+            // Cold, for the same reason the effort is low (#98): the whole difficulty of this
+            // task is not adding anything, and warmth is the sampler being invited to.
+            Sampling = LlmSampling.Log,
             MaxOutputTokens = LogLengths.Tokens(length),
             WebSearch = false,
         };

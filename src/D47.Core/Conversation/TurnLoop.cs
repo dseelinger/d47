@@ -639,6 +639,11 @@ public sealed class TurnLoop(
                 Model = chosenModel,
                 Effort = effort,
 
+                // Warm, on every round including the last one (#98). A round that has had its
+                // tools withdrawn is still the same core answering the same question, and
+                // changing how it speaks partway through one turn would be audible.
+                Sampling = LlmSampling.Conversation,
+
                 // Withdrawn on the last round with the tools, and for the same reason: that
                 // round exists to force an answer out of what is already known. A model that
                 // could still search could still spend a penny and come back with more to

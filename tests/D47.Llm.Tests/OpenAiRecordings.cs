@@ -1,4 +1,4 @@
-using D47.Core.Conversation;
+﻿using D47.Core.Conversation;
 
 namespace D47.Llm.Tests;
 
@@ -34,7 +34,10 @@ internal static class OpenAiRecordings
     public static string Done() => "data: [DONE]\n\n";
 
     /// <summary>A prompt with nothing in it but one question, which is the smallest real turn.</summary>
-    public static LlmRequest Ask(string model = "test-model", string question = "How much fuel?") => new()
+    public static LlmRequest Ask(
+        string model = "test-model",
+        string question = "How much fuel?",
+        LlmSampling? sampling = null) => new()
     {
         Model = model,
         Prompt = new PromptAssembly
@@ -42,6 +45,10 @@ internal static class OpenAiRecordings
             History = [new ConversationMessage(ConversationRole.User, question)],
         },
         Effort = ThinkingEffort.Low,
+
+        // The class an ordinary turn is (#98). Overridable, because what a mechanical caller
+        // puts on the wire is now a thing worth driving from a test.
+        Sampling = sampling ?? LlmSampling.Conversation,
     };
 
     public static async Task<List<LlmStreamEvent>> DrainAsync(

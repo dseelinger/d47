@@ -254,6 +254,47 @@ status line on top of an outcome that had already been read.
 The excerpt send is deliberately unchanged: a few kilobytes would draw a bar that was gone before
 anybody saw it.
 
+### The creative calls and the mechanical ones stop sharing one unchosen sampler (#98)
+
+There was **no `temperature`, `top_p` or `top_k` anywhere in `D47.Llm`** — not on the Anthropic
+path, not on either OpenAI-shaped one. So the character of every line d47 spoke was decided by a
+default it had never chosen, which varies by provider and by model, and a flat-reading Guardian
+core could have been a sampling artefact rather than a persona problem with no way to tell.
+
+`LlmSampling` names the classes d47 already had and states each one's value and its reason. A turn
+and a line in character ask for **0.9** — the middle of the band reported for character writing,
+where below about 0.7 reads flat. Voice casting, the Commander's log, a lore lookup and adventure
+generation ask for **nought**: each is either a mechanical question about d47's own configuration
+or an answer validated against the world afterwards, and warmth in those buys invention in the one
+field that has to be exact. `LlmRequest.Sampling` is **required**, because a property with a
+default is how this defect would come back one forgotten line at a time.
+
+**Adventures are cold although what comes back is a story**, and that is the call rather than an
+oversight: the beats are checked against the real galaxy and re-asked where they cannot stand, so
+this call's observed failure is naming places that do not exist. The variety comes from the systems
+within reach, which are different every time.
+
+**One call says nothing on purpose.** The key check asks a single token in order to learn whether a
+key works, against a gateway that may validate fields d47 has never met — and a rejected field
+there reads as a rejected key, sending a Commander to their account page for another one that will
+fail in exactly the same way.
+
+**And the field does not go to Anthropic at all, which is the finding rather than an omission.**
+The issue opened expecting it to; sampling was removed with the 4.7 generation and returns a 400 on
+Opus 5, Opus 4.8, Opus 4.7, Sonnet 5 and Fable 5. The pinned SDK says so itself — its `Temperature`
+property is marked obsolete with *"Models released after Claude Opus 4.6 do not support setting
+temperature"* — so reaching the three older models that would still take it means suppressing a
+deprecation warning in a repository where warnings are errors, to send a field to models this code
+already treats as legacy in two other lists. It is read and not sent, with the date and the reason
+written where somebody will look. Where the choices land is the OpenAI-shaped paths: OpenAI itself,
+gateways, and every local runner.
+
+A server that refuses the field loses the field rather than the turn, through `EndpointDemotions`
+like everything else optional — and **the refusal is read as sampling before it is read as
+effort**, because a reasoning model rejecting temperature usually names both in one sentence, and
+taking the wrong one off would drop the effort router's lever while leaving the refused field on
+the retry.
+
 ## 0.98.3 — 2026-09-01 — A refused raise names its fault
 
 ### Bringing Elite forward works from behind it again, and a refusal is now a diagnosis (#107)
