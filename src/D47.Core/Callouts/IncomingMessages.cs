@@ -93,6 +93,24 @@ public sealed partial class IncomingMessages : ICallout
     /// </summary>
     private static bool IsAPlayerChannel(string channel) => VoiceGroups.IsAPerson(channel);
 
+    /// <summary>
+    /// A Frontier-canned line from the Commander's own carrier, on its way to the rewording
+    /// brief rather than the verbatim reader (#248). One key for all of them: two canned
+    /// messages are two events, and the cooldown is zero for the reason every message's is.
+    /// </summary>
+    public const string CarrierCannedKey = "carrier.comms";
+
+    /// <summary>The same road for a System Authority vessel patrolling near the Commander's own carrier.</summary>
+    public const string AuthorityCannedKey = "authority.comms";
+
+    /// <summary>
+    /// Whether the Commander currently shares a system with their own carrier (#248's second
+    /// half, asked in the same chat): the condition under which a System Authority vessel's
+    /// canned line is worth the owner treatment. False until the app wires it, which keeps the
+    /// replay harness and every existing test exactly as they were.
+    /// </summary>
+    public Func<bool> AuthorityNearOwnCarrier { get; set; } = () => false;
+
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
         // Never from the backlog. Starting d47 after an hour of flying should not read out an
@@ -173,6 +191,55 @@ public sealed partial class IncomingMessages : ICallout
             && sender.Contains(own, StringComparison.OrdinalIgnoreCase))
         {
             return null;
+        }
+
+        // **A canned line from the Commander's own carrier is Frontier's string, not somebody
+        // else's words** (#248). Elite writes canned traffic with a `$…;` key in Message and
+        // player free text with none, so a $-keyed message from the own carrier is the same
+        // trust class as a journal event — it may ride a rewording brief the way d47's own
+        // authored lines do, which is what turns "docking granted—welcome back" boilerplate
+        // into the tower talking to its owner. Free text from the same sender keeps the
+        // verbatim road below, because a sender is a name and a name can be worn.
+        //
+        // The transcript keeps the original, on the Commander's instruction: the comms page
+        // records what Elite actually sent, while the voice says the reworded line — the same
+        // split the ship AI's own varied callouts already live with. The fallback with no model
+        // is the localised line spoken exactly as it is today.
+        if (IsMyCarrier(sender)
+            && journalEvent.String("Message") is { Length: > 1 } key
+            && key[0] == '$'
+            && journalEvent.String("Message_Localised") is { Length: > 0 })
+        {
+            return new Announcement(CarrierCannedKey, text)
+            {
+                Voice = VoiceRole.TowerControl,
+                CommsChannel = channel,
+                Transcript = $"{sender}: {text}\n",
+                Cooldown = TimeSpan.Zero,
+            };
+        }
+
+        // **And the patrol around it** (#248's second half). A System Authority vessel's canned
+        // line, while the Commander shares a system with their own carrier, takes the same road
+        // for the same reason — the $-keys on both fields prove Frontier wrote every word. The
+        // raw From is matched rather than the localised one, so the treatment is the same in
+        // any language. The Speaker stays, so the line keeps its pooled per-system voice.
+        if (AuthorityNearOwnCarrier()
+            && journalEvent.String("From") is { } authority
+            && authority.StartsWith("$ShipName_Police", StringComparison.OrdinalIgnoreCase)
+            && journalEvent.String("Message") is { Length: > 1 } policeKey
+            && policeKey[0] == '$'
+            && journalEvent.String("Message_Localised") is { Length: > 0 })
+        {
+            return new Announcement(AuthorityCannedKey, text)
+            {
+                Voice = VoiceRole.Comms,
+                Speaker = sender,
+                SpeakerIsPlayer = false,
+                CommsChannel = channel,
+                Transcript = $"{sender}: {text}\n",
+                Cooldown = TimeSpan.Zero,
+            };
         }
 
         return new Announcement($"message.{channel}", Spoken(sender, text, isPlayer))

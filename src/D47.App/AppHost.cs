@@ -5683,6 +5683,16 @@ public sealed class AppHost : IDisposable
                 // same state and on the same pass as the other two, so nothing can be current while
                 // another is stale.
                 callout.CarrierDisplayName = carrier.DisplayName;
+
+                // Whether the Commander shares a system with their own carrier (#248's second
+                // half): the condition under which a System Authority vessel's canned line gets
+                // the owner treatment. A delegate over live state rather than a captured value,
+                // so a carrier jumping away mid-session is obeyed on the next message.
+                callout.AuthorityNearOwnCarrier = () =>
+                    GameState.Active is { } active
+                    && active.Carrier.Owned
+                    && active.Carrier.StarSystem is { Length: > 0 } parked
+                    && string.Equals(parked, active.Location.StarSystem, StringComparison.OrdinalIgnoreCase);
             }
         }
 

@@ -34,6 +34,111 @@ public class IncomingMessageTests
         IncludeNpcs = () => npcs,
     };
 
+    /// <summary>
+    /// A Frontier-canned line from the Commander's own carrier rides the rewording brief
+    /// (#248): the <c>$…;</c> key is what proves no player wrote it, so it is the one kind of
+    /// received text allowed near a model — and the two fields that mark somebody else's words
+    /// are absent, which is also exactly what lets the brief fire.
+    /// </summary>
+    [Fact]
+    public void ACannedLineFromYourOwnCarrierGoesToTheBriefNotTheVerbatimReader()
+    {
+        var reader = Reader();
+        reader.CarrierCallSign = "K7Q-B4W";
+
+        var read = reader.Read(Message(
+            "K7Q-B4W Ellipsis",
+            "$CarrierDockingGranted;",
+            "npc",
+            localised: "Commander JOHN DEPARAGON, docking granted—welcome back home."));
+
+        Assert.NotNull(read);
+        Assert.Equal(IncomingMessages.CarrierCannedKey, read.Key);
+        Assert.Equal(VoiceRole.TowerControl, read.Voice);
+
+        // The comms page keeps the original as sent (the Commander's instruction) while the
+        // voice says the reworded line — so both marker fields stay, and the brief fires
+        // anyway, because the guard's exemption is exactly these $-key-proven kinds.
+        Assert.Equal("npc", read.CommsChannel);
+        Assert.NotNull(read.Transcript);
+        Assert.Contains("docking granted", read.Transcript, StringComparison.OrdinalIgnoreCase);
+        Assert.NotNull(FlavourBriefs.For(read, personalityEnabled: true));
+    }
+
+    /// <summary>
+    /// The patrol around the carrier gets the same road (#248's second half): a System
+    /// Authority vessel's canned line, while the Commander shares a system with their own
+    /// carrier, is reworded courteously — the owner of the assets being protected is not
+    /// taunted about a clean scan.
+    /// </summary>
+    [Fact]
+    public void AuthorityCannedNearYourOwnCarrierGetsTheOwnerTreatment()
+    {
+        var reader = Reader();
+        reader.AuthorityNearOwnCarrier = () => true;
+
+        var read = reader.Read(Message(
+            "$ShipName_Police_Independent;",
+            "$Police_Scan_NothingFound;",
+            "npc",
+            localised: "We didn't find anything on you... this time."));
+
+        Assert.NotNull(read);
+        Assert.Equal(IncomingMessages.AuthorityCannedKey, read.Key);
+        Assert.Equal(VoiceRole.Comms, read.Voice);
+        Assert.NotNull(read.Transcript);
+
+        var brief = FlavourBriefs.For(read, personalityEnabled: true);
+
+        Assert.NotNull(brief);
+        Assert.Contains("not subordinate", brief.Instruction, StringComparison.Ordinal);
+    }
+
+    /// <summary>Away from the carrier there is no owner context, and it is just a message.</summary>
+    [Fact]
+    public void AuthorityCannedAwayFromTheCarrierIsJustAMessage()
+    {
+        var read = Reader().Read(Message(
+            "$ShipName_Police_Independent;",
+            "$Police_Scan_NothingFound;",
+            "npc",
+            localised: "We didn't find anything on you... this time."));
+
+        Assert.NotNull(read);
+        Assert.NotEqual(IncomingMessages.AuthorityCannedKey, read.Key);
+        Assert.Null(FlavourBriefs.For(read, personalityEnabled: true));
+    }
+
+    /// <summary>
+    /// Free text from the same sender keeps the verbatim road and stays away from the model:
+    /// a sender is a name, and a name can be worn.
+    /// </summary>
+    [Fact]
+    public void FreeTextFromYourOwnCarrierStaysVerbatimAndAwayFromTheModel()
+    {
+        var reader = Reader();
+        reader.CarrierCallSign = "K7Q-B4W";
+
+        var read = reader.Read(Message("K7Q-B4W Ellipsis", "docking granted", "npc"));
+
+        Assert.NotNull(read);
+        Assert.Equal(VoiceRole.TowerControl, read.Voice);
+        Assert.NotNull(read.Transcript);
+        Assert.Null(FlavourBriefs.For(read, personalityEnabled: true));
+    }
+
+    /// <summary>Somebody else's carrier gets no owner treatment: it is just a message.</summary>
+    [Fact]
+    public void ACannedLineFromSomebodyElsesCarrierIsJustAMessage()
+    {
+        var read = Reader().Read(Message(
+            "X9Z-11B Nomad", "$CarrierDockingGranted;", "npc", localised: "Docking granted."));
+
+        Assert.NotNull(read);
+        Assert.NotEqual(IncomingMessages.CarrierCannedKey, read.Key);
+        Assert.Equal(VoiceRole.Comms, read.Voice);
+    }
+
     [Fact]
     public void APlayerMessageIsSpokenInThatPlayersVoice()
     {

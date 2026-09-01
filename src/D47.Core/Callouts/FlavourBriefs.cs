@@ -161,7 +161,17 @@ public static class FlavourBriefs
         // Both fields say it and either is enough: `CommsChannel` is set exactly by the chat
         // reader, and `Transcript` is non-null exactly for a line already written on the comms
         // page. Nothing else in d47 sets either.
-        if (announcement.CommsChannel is not null || announcement.Transcript is not null)
+        //
+        // **Two keys are exempt, and the exemption is narrower than it looks** (#248). The
+        // reader mints them only for a message whose `Message` field carries Frontier's own
+        // `$…;` localisation key — canned traffic, which no player can write — from the
+        // Commander's own carrier or a System Authority vessel. That is Frontier's string in
+        // the same trust class as a journal event's schema, not somebody else's words; the rule
+        // above is about the attacker being any player in range, and a player cannot reach
+        // these. The fields stay set because the comms page keeps the original as sent (the
+        // Commander's instruction), while the voice says the reworded line.
+        if ((announcement.CommsChannel is not null || announcement.Transcript is not null)
+            && announcement.Key is not (IncomingMessages.CarrierCannedKey or IncomingMessages.AuthorityCannedKey))
         {
             return null;
         }
@@ -296,6 +306,33 @@ public static class FlavourBriefs
             };
         }
 
+        // A System Authority vessel's canned line, spoken while the Commander shares a system
+        // with their own carrier (#248's second half). Frontier's words by the same $-key proof
+        // as the carrier's — and a different register on purpose: law enforcement is courteous
+        // to the owner whose assets it is protecting, and subordinate to nobody.
+        if (string.Equals(announcement.Key, IncomingMessages.AuthorityCannedKey, StringComparison.Ordinal))
+        {
+            return new FlavourBrief
+            {
+                Speaker =
+                    "You are the officer on watch aboard a System Authority vessel patrolling "
+                    + "the space around a privately owned fleet carrier. Professional law "
+                    + "enforcement — brief, courteous, watchful. One short sentence. Never "
+                    + "mention being an AI.",
+                Instruction =
+                    "The pilot in your patrol area owns the fleet carrier you are covering. Say "
+                    + "this in your own words, once: keep every fact, add none, and use no name "
+                    + "you were not given. The canned attitude is yours to replace — a scan that "
+                    + "found nothing is said courteously, not as a taunt. Courteous to the owner "
+                    + "whose assets you are here to protect — you are not subordinate to them, "
+                    + "and the law is still the law: "
+                    + $"\"{announcement.Text}\"",
+                NeedsPersona = false,
+                NeedsGameState = false,
+                NeedsAboutMe = false,
+            };
+        }
+
         if (announcement.Voice is VoiceRole.CarrierCaptain or VoiceRole.TowerControl)
         {
             var speaker =
@@ -334,6 +371,29 @@ public static class FlavourBriefs
                           + "the owner exactly as this authored line does, and treat it as a "
                           + "register sample rather than a script: "
                           + $"\"{announcement.Text}\"",
+                    NeedsPersona = false,
+                    NeedsGameState = false,
+                    NeedsAboutMe = false,
+                };
+            }
+
+            // A canned line Elite sent from the Commander's own carrier (#248): Frontier's
+            // string, allowed near a model precisely because no player wrote it — see
+            // IncomingMessages, where the $-key is what proves that. The rewording carries the
+            // owner framing, because the boilerplate addresses a visiting pilot and the
+            // listener owns the deck.
+            if (string.Equals(announcement.Key, IncomingMessages.CarrierCannedKey, StringComparison.Ordinal))
+            {
+                return new FlavourBrief
+                {
+                    Speaker = speaker,
+                    Instruction =
+                        "Your station just addressed its own owner with this canned line. Say it "
+                        + "in your own words, once, to the owner of this carrier — not a visiting "
+                        + "pilot: keep every fact in it, add none, and give them the respect the "
+                        + "deck they own is owed. Address them by rank and surname alone — "
+                        + "\"Commander\" and the last word of their name, never the full name: "
+                        + $"\"{announcement.Text}\"",
                     NeedsPersona = false,
                     NeedsGameState = false,
                     NeedsAboutMe = false,
