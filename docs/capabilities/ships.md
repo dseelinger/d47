@@ -199,6 +199,11 @@ today, which reading the newest journals alone could never manage. A ship you se
 it at the sale — and dropped again if the game ever hands its id to something new, because Elite
 reuses ship ids and an inherited module list would be worse than knowing nothing.
 
+**A sale you made while Directive 47 was closed still lands.** The file records how far through
+your journals it has been read, so the next start picks up exactly where it left off — however
+long that is. Come back after a year away and the first start takes a few seconds longer while it
+reads the gap, and says so in the log.
+
 ### One build per ship
 
 Comparing a combat fit against an exploration fit for the same hull is a planner feature this

@@ -30,6 +30,23 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
 
     private LoadoutStore Store() => new(File_, NullLogger<LoadoutStore>.Instance);
 
+    /// <summary>
+    /// How far a save says the file has been folded. Off the journal rather than off a clock,
+    /// like everything else dated here — it is what the next catch-up walks back to.
+    /// </summary>
+    private static readonly DateTimeOffset Folded = new(2026, 8, 20, 5, 0, 0, TimeSpan.Zero);
+
+    /// <summary>A journal named the way Elite names them, since the walk selects on that.</summary>
+    private string Journal(string stamp, params string[] lines)
+    {
+        var file = Path.Combine(_root, $"Journal.{stamp}.01.log");
+
+        System.IO.File.WriteAllLines(
+            file, [.. lines.Select(line => line.ReplaceLineEndings(" "))]);
+
+        return file;
+    }
+
     private static JournalEvent Event(string json)
     {
         Assert.True(JournalEvent.TryParse(json, NullLogger.Instance, out var parsed));
@@ -87,7 +104,7 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
             Boarding("2026-08-20T02:00:00Z", "anaconda", 51, "int_engine_size7_class2"));
 
         var writing = Store();
-        writing.Save([flown]);
+        writing.Save([flown], Folded);
 
         // A different process, a different store, and nothing else on disk.
         var reading = Store();
@@ -119,7 +136,7 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
             """{"timestamp":"2026-08-20T03:00:00Z","event":"ShipyardSell","SellShipID":42}""");
 
         var writing = Store();
-        writing.Save([flown]);
+        writing.Save([flown], Folded);
 
         var reading = Store();
         reading.Load();
@@ -185,7 +202,7 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
             Boarding("2026-08-20T02:00:00Z", "anaconda", 51, "int_engine_size7_class2"));
 
         var store = Store();
-        store.Save([flown]);
+        store.Save([flown], Folded);
 
         Assert.NotNull(store.For("F1")!.For(42));
 
@@ -208,6 +225,103 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
     }
 
     /// <summary>
+    /// <b>A sale thirty journals back is still found</b>, which is what the watermark buys: the
+    /// event never went anywhere, so the walk reaches to wherever the file left off rather than to
+    /// a fixed number of files. Before this the sale simply survived, under an id the game may
+    /// since have handed to something else.
+    /// </summary>
+    [Fact]
+    public void ASaleFarOutsideTheOldWindowIsStillFound()
+    {
+        var flown = State(
+            store: null,
+            Boarding("2026-01-02T01:00:00Z", "type9_military", 42, "int_engine_size7_class5"),
+            Boarding("2026-01-02T02:00:00Z", "anaconda", 51, "int_engine_size7_class2"));
+
+        var store = Store();
+        store.Save([flown], new DateTimeOffset(2026, 1, 2, 3, 0, 0, TimeSpan.Zero));
+
+        // The sale, and then forty quiet journals after it — well past the 25 the window used to
+        // be, and past the 25 it still falls back to when nothing says otherwise.
+        var journals = new List<string>
+        {
+            Journal("2026-01-03T100000",
+                """{"timestamp":"2026-01-03T10:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+                """{"timestamp":"2026-01-03T10:05:00Z","event":"ShipyardSell","SellShipID":42}"""),
+        };
+
+        for (var day = 4; day < 44; day++)
+        {
+            journals.Add(Journal(
+                $"2026-01-{day:00}T100000",
+                $$"""{"timestamp":"2026-01-{{day:00}}T10:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}"""));
+        }
+
+        var window = LoadoutBackfill.Window(journals, store.FoldedThrough);
+
+        // Wider than the floor, because the gap is wider than the floor.
+        Assert.True(window.Count > 25, $"walked {window.Count} files");
+
+        var caught = LoadoutBackfill.FromHistory(window, NullLogger.Instance, store.All);
+
+        Assert.Null(caught["F1"].For(42));
+        Assert.NotNull(caught["F1"].For(51));
+    }
+
+    /// <summary>
+    /// <b>And the walk is the gap rather than the history.</b> A Commander who ran d47 an hour ago
+    /// pays for the floor and nothing more, however many journals sit behind it — which is what
+    /// makes an unbounded catch-up affordable rather than merely correct.
+    /// </summary>
+    [Fact]
+    public void AShortGapWalksTheFloorAndNotTheHistory()
+    {
+        var journals = new List<string>();
+
+        for (var day = 1; day < 60; day++)
+        {
+            journals.Add(Journal($"2026-01-{day:00}T100000"));
+        }
+
+        var recent = LoadoutBackfill.Window(journals, new DateTimeOffset(2026, 2, 27, 0, 0, 0, TimeSpan.Zero));
+
+        Assert.Equal(25, recent.Count);
+
+        // Nothing said at all — a first run, or a file somebody deleted — is the same floor.
+        Assert.Equal(25, LoadoutBackfill.Window(journals, since: null).Count);
+
+        // And a stamp older than every file walks all of them rather than guessing.
+        Assert.Equal(
+            journals.Count,
+            LoadoutBackfill.Window(journals, new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero)).Count);
+    }
+
+    /// <summary>
+    /// <b>One file before the cutoff, not the cutoff itself.</b> A journal is named for when its
+    /// session started, so the file holding the event that prompted the write is very often named
+    /// earlier than the stamp — and a walk beginning after it would skip the very events it was
+    /// sent to find.
+    /// </summary>
+    [Fact]
+    public void TheWalkStartsOneFileBeforeTheStamp()
+    {
+        var journals = new List<string>();
+
+        for (var day = 1; day < 60; day++)
+        {
+            journals.Add(Journal($"2026-01-{day:00}T100000"));
+        }
+
+        // The stamp lands on day 20, five hours after that day's session opened — so the event
+        // that produced it is in day 20's file even though day 21's is the first named at or
+        // after it. Starting at day 21 would skip the very events the walk was sent to find.
+        var window = LoadoutBackfill.Window(
+            journals, new DateTimeOffset(2026, 1, 20, 15, 0, 0, TimeSpan.Zero));
+
+        Assert.Equal(journals[19], window[0]);
+    }
+
+    /// <summary>
     /// <b>Engineering updates the stored loadout with no <c>Loadout</c> event involved.</b> Elite
     /// writes none after a roll — measured at 6,485 <c>EngineerCraft</c> events with not one
     /// followed by a <c>Loadout</c> within five seconds — so a store that waited for one would
@@ -226,7 +340,7 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
             """);
 
         var store = Store();
-        store.Save([state]);
+        store.Save([state], Folded);
 
         var reading = Store();
         reading.Load();
@@ -283,13 +397,13 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
         var first = State(store: null, Boarding("2026-08-20T01:00:00Z", "anaconda", 51, "a"));
 
         var store = Store();
-        store.Save([first]);
+        store.Save([first], Folded);
 
         var other = new GameStateStore();
         other.Apply(Event("""{"timestamp":"2026-08-21T00:00:00Z","event":"Commander","FID":"F2","Name":"Braben"}"""));
         other.Apply(Event(Boarding("2026-08-21T01:00:00Z", "python", 7, "b")));
 
-        store.Save([other.Active!]);
+        store.Save([other.Active!], Folded);
 
         var reading = Store();
         reading.Load();
@@ -360,7 +474,7 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
             Boarding("2026-08-20T01:00:00Z", "anaconda", 51, "int_engine_size7_class5"));
 
         var store = Store();
-        store.Save([flown]);
+        store.Save([flown], Folded);
 
         var reading = Store();
         reading.Load();

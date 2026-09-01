@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
@@ -55,7 +55,37 @@ public sealed class LoadoutStore(string path, ILogger<LoadoutStore> logger)
 
     private Dictionary<string, ShipLoadouts> _byCommander = new(StringComparer.Ordinal);
 
+    private DateTimeOffset? _foldedThrough;
+
     public string Path => path;
+
+    /// <summary>
+    /// The journal timestamp this file has already been folded through, or null for a file that
+    /// predates the stamp or was never written
+    /// (<a href="https://github.com/dseelinger/d47/issues/128">#128</a>).
+    /// <para>
+    /// <b>This is what makes a sale d47 was closed for findable rather than permanent.</b> The
+    /// event is still on disk in an older journal; without a watermark the catch-up has no way to
+    /// know how far back to look and falls back to a fixed number of files, so a sale older than
+    /// that survives in the file forever under an id the game may since have handed to something
+    /// else. With one, the walk reaches exactly as far as the gap and no further.
+    /// </para>
+    /// <para>
+    /// <b>Off the journal and never off a clock</b>, like everything else dated in this namespace:
+    /// it is the timestamp of the event that prompted the write, so the replay harness can drive
+    /// this at 100x and a backfill over month-old files still compares correctly.
+    /// </para>
+    /// </summary>
+    public DateTimeOffset? FoldedThrough
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _foldedThrough;
+            }
+        }
+    }
 
     /// <summary>What was on disk for this Commander, or null if nothing was.</summary>
     public ShipLoadouts? For(string frontierId)
@@ -113,12 +143,14 @@ public sealed class LoadoutStore(string path, ILogger<LoadoutStore> logger)
             lock (_gate)
             {
                 _byCommander = loaded;
+                _foldedThrough = document?.FoldedThrough;
             }
 
             logger.LogInformation(
-                "Loaded stored loadouts for {Count} Commanders, {Ships} ship(s) in all",
+                "Loaded stored loadouts for {Count} Commanders, {Ships} ship(s) in all, folded through {Through:u}",
                 loaded.Count,
-                loaded.Values.Sum(ships => ships.Ships.Count));
+                loaded.Values.Sum(ships => ships.Ships.Count),
+                document?.FoldedThrough);
         }
         catch (Exception ex) when (ex is IOException or JsonException or NotSupportedException)
         {
@@ -146,7 +178,11 @@ public sealed class LoadoutStore(string path, ILogger<LoadoutStore> logger)
     /// file; whoever flew today is updated.
     /// </para>
     /// </summary>
-    public void Save(IEnumerable<CommanderGameState> commanders)
+    /// <param name="foldedThrough">
+    /// The timestamp of the journal event that prompted this write, which becomes the watermark
+    /// the next catch-up walks back to. See <see cref="FoldedThrough"/>.
+    /// </param>
+    public void Save(IEnumerable<CommanderGameState> commanders, DateTimeOffset foldedThrough)
     {
         ArgumentNullException.ThrowIfNull(commanders);
 
@@ -169,8 +205,15 @@ public sealed class LoadoutStore(string path, ILogger<LoadoutStore> logger)
             merged[commander.Identity.FrontierId] = commander.Loadouts;
         }
 
+        // Never backwards. A tick that folds a backlog can hand this an event older than one
+        // already written — the priming replay does exactly that — and a watermark that went
+        // backwards would only ever cost a wider walk, but it would also stop meaning what it
+        // says.
+        var stamp = _foldedThrough is { } held && held > foldedThrough ? held : foldedThrough;
+
         var document = new Document
         {
+            FoldedThrough = stamp,
             Commanders = [.. merged.Select(entry => Dehydrate(entry.Key, entry.Value))],
         };
 
@@ -187,6 +230,7 @@ public sealed class LoadoutStore(string path, ILogger<LoadoutStore> logger)
         lock (_gate)
         {
             _byCommander = merged;
+            _foldedThrough = stamp;
         }
     }
 
@@ -303,6 +347,9 @@ public sealed class LoadoutStore(string path, ILogger<LoadoutStore> logger)
 
     private sealed class Document
     {
+        /// <summary>See <see cref="FoldedThrough"/>. Absent in a file written before it existed.</summary>
+        public DateTimeOffset? FoldedThrough { get; set; }
+
         public IReadOnlyList<CommanderRecord> Commanders { get; set; } = [];
     }
 

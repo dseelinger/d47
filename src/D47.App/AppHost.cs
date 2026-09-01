@@ -870,7 +870,10 @@ public sealed class AppHost : IDisposable
         // of the long memory.
         var recoveredLoadouts = new Lazy<IReadOnlyDictionary<string, ShipLoadouts>>(
             () => LoadoutBackfill.FromHistory(
-                journalDirectory, loggerFactory.CreateLogger(nameof(LoadoutBackfill)), loadouts.All));
+                journalDirectory,
+                loggerFactory.CreateLogger(nameof(LoadoutBackfill)),
+                loadouts.All,
+                loadouts.FoldedThrough));
 
         var gameState = new GameStateStore
         {
@@ -1215,9 +1218,12 @@ public sealed class AppHost : IDisposable
             // The same cadence and the same reasoning for the ships (#128). Which events can
             // change the picture is asked of ShipLoadouts rather than restated here, so there is
             // one list — and it is not only Loadout: Elite writes none after engineering.
-            if (events.Any(ShipLoadouts.MayChange))
+            if (events.LastOrDefault(ShipLoadouts.MayChange) is { } changed)
             {
-                loadouts.Save(gameState.All);
+                // Stamped with that event's own time rather than with the clock, so the
+                // watermark the next catch-up walks back to means what it says even when
+                // this tick is replaying a backlog from yesterday.
+                loadouts.Save(gameState.All, changed.Timestamp);
             }
 
             // The Commander's lore notes are hand-editable, so they are polled like the checklist

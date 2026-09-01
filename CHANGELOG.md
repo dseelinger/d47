@@ -314,6 +314,20 @@ rebuilding over it, so its 25 files became *catch up on the gap since d47 last r
 seeding is what makes forgetting work across a restart, because the sale is replayed through the
 same fold the live path uses.
 
+**And the gap is measured rather than guessed at, which closes the one hole this feature had.** A
+sale d47 was closed for is not lost — the `ShipyardSell` is still on disk in an older journal —
+but the walk had no way to know how far back to look, so a sale older than 25 files survived
+forever under an id the game may since have handed to something else. The file carries the journal
+timestamp it was folded through, and the catch-up reaches exactly that far and no further: 25 files
+stays as the **floor** for a run with no watermark to work from, and there is no ceiling.
+
+**Unbounded because it was measured, not because nobody thought about it.** The cost is
+proportional to how long d47 has been away rather than to how much history exists. On the
+943-journal, 382 MB corpus: the whole of it — 716,653 events — reads and folds in **3.1 seconds**,
+300 files in 996 ms, 100 in 432 ms, and the 25-file floor in about 190 ms. A run an hour after the
+last one still walks 25 files. A cap would buy a fraction of a second back on the rarest start
+there is and put the hole straight back.
+
 **Forgetting is the half a file makes load-bearing, and it now happens on three events rather than
 one.** A rolling window expired a stale row by itself; a file does not, and `ShipID` is reused —
 17 of 55 sold ships had their id come back alive. Measured on the 943-journal corpus: `ShipyardSell`
