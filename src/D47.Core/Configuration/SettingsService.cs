@@ -585,7 +585,8 @@ public sealed class SettingsService
         // and refusing it on the row that was just pressed puts the reason in front of the
         // Commander who pressed it, rather than somewhere they are not looking.
         if (row.Kind == SettingKind.Hotkey && row.SystemWide
-            && normalised is { Length: > 0 } gesture && !gesture.Contains('+'))
+            && normalised is { Length: > 0 } gesture && !gesture.Contains('+')
+            && !NothingElseBinds(gesture))
         {
             return new SettingApplyResult(
                 SettingApplyStatus.Rejected,
@@ -709,6 +710,30 @@ public sealed class SettingsService
                 return true;
         }
     }
+
+    /// <summary>
+    /// Whether a bare key is one the modifier rule was never about
+    /// (<a href="https://github.com/dseelinger/d47/issues/221">#221</a>).
+    /// <para>
+    /// <b>F13 to F24, and nothing else.</b> The rule above exists to stop a Commander claiming a
+    /// key the game needs — press <c>R</c> system-wide and Elite never sees it again. These
+    /// twelve are the exact keys nothing else binds, which is precisely why HOTAS software emits
+    /// them: no keyboard has them, so no application listens for them. Requiring
+    /// <c>Ctrl+F23</c> asks for a modifier to protect a key that needs no protection, and it
+    /// makes the one range a Commander must type harder to use than the range they can press.
+    /// </para>
+    /// <para>
+    /// <b>Matched on the stored string, because Core has no key vocabulary and should not grow
+    /// one.</b> A gesture is stored in Avalonia's spelling and <c>F23</c> is spelled <c>F23</c>;
+    /// the app is where a key becomes a name, and this is the one fact about that name Core needs.
+    /// The ceiling is Win32's: <c>VK_F24</c> is the last of them.
+    /// </para>
+    /// </summary>
+    private static bool NothingElseBinds(string gesture) =>
+        gesture.Length is 3 or 4
+        && gesture[0] is 'F' or 'f'
+        && int.TryParse(gesture[1..], CultureInfo.InvariantCulture, out var number)
+        && number is >= 13 and <= 24;
 
     private static string Describe(string? value) => value ?? "(default)";
 }
