@@ -63,6 +63,35 @@ public class ListenGateTests
         Assert.Equal(0.75f, captured.Samples[^1]);
     }
 
+    /// <summary>
+    /// Barging in drops the pre-roll (#195). On a talk-over the ring holds up to half a second
+    /// captured while d47 was rendering — post-cancellation residue, not the Commander's first
+    /// word — and it lands at the front of the utterance, where Whisper's first-token bias
+    /// turned it into "-Huk," and "-Shet course". A Commander pressing to interrupt starts
+    /// speaking at or after the press, so the pre-roll's job does not exist in this case.
+    /// </summary>
+    [Fact]
+    public void BargingInDropsThePreRollResidueRatherThanTranscribingIt()
+    {
+        var gate = Gate();
+        gate.PreRoll = TimeSpan.FromMilliseconds(500);
+        gate.FarEndActive = true;
+
+        Utterance? captured = null;
+        gate.Captured += utterance => captured = utterance;
+
+        // Residue of d47's own voice, ringed while it was still speaking.
+        gate.Write(Block(TimeSpan.FromMilliseconds(400), 0.25f));
+
+        gate.KeyDown(Start);
+        gate.Write(Block(TimeSpan.FromMilliseconds(800), 0.75f));
+        gate.KeyUp();
+
+        Assert.NotNull(captured);
+        Assert.Equal(TimeSpan.FromMilliseconds(800), captured!.Duration);
+        Assert.All(captured.Samples, sample => Assert.Equal(0.75f, sample));
+    }
+
     [Fact]
     public void ThePreRollNeverGrowsPastItsWindow()
     {

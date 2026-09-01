@@ -535,7 +535,21 @@ public sealed class ListenGate(int sampleRate, ILogger<ListenGate> logger) : ICa
             // The retroactive part. Everything already in the ring is speech that happened
             // before the key was noticed — or before the detector was willing to call it speech
             // — and it belongs to this utterance.
-            _open.AddRange(RingContents());
+            //
+            // **Unless d47 is audibly speaking right now** (#195). On a barge-in the ring holds
+            // up to half a second captured while d47 was rendering — post-cancellation residue,
+            // not the Commander's first word — and it lands at the front of the utterance,
+            // where Whisper's first-token bias is strongest. The measured result was a junk
+            // syllable behind Whisper's speaker-change hyphen ("-Huk, …"), four times likelier
+            // when talking over d47, and sometimes the first real word mangled with it
+            // ("-Shet course"). A Commander pressing to interrupt starts speaking at or after
+            // the press, so the pre-roll's job — the word from before the key was noticed —
+            // does not exist in this case, and residue is all the ring can hold.
+            if (!FarEndActive)
+            {
+                _open.AddRange(RingContents());
+            }
+
             _ringWritten = 0;
             _ringNext = 0;
 
