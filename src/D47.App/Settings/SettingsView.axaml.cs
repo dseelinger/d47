@@ -184,28 +184,69 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     {
         InitializeComponent();
 
-        // A plus and a minus (#223, reworked on the Commander's instruction 2026-09-01). Marked
-        // here rather than in the axaml because Mark sets the tooltip *and* the accessible name
-        // from one string, and a glyph-only control without an accessible name does not exist for
-        // anybody who is not looking at it. Accent, because a clickable thing carries the accent
-        // (#208).
-        //
-        // The words are the Commander's own: the names of the things, rather than the sentences
-        // the chevrons needed in order to explain themselves.
-        Controls.Glyphs.Mark(
-            ExpandAll,
-            Controls.Glyphs.ExpandAll,
-            ThemeManager.AccentKey,
-            "Expand all");
+    }
+
+    /// <summary>The container holding the two bulk glyphs, so a test can tell them from a reset.</summary>
+    public const string BulkName = "BulkExpand";
+
+    /// <summary>
+    /// A plus and a minus, beside "Show every setting"
+    /// (#223, moved onto that row on the Commander's instruction 2026-09-01).
+    /// <para>
+    /// <b>Built here rather than declared in the axaml, and that is the fix rather than a
+    /// preference.</b> It was declared above the scroller and moved into this line on each
+    /// rebuild — and a control carries its first container's sizing with it: measured, it asked
+    /// for <b>664 of the line's 700 pixels</b> and left the row zero, so the caption and the
+    /// control drew on top of each other at the far right. Built where it is used, it asks for
+    /// what its two buttons need.
+    /// </para>
+    /// <para>
+    /// Marked rather than labelled, and marked in code because <c>Glyphs.Mark</c> sets the tooltip
+    /// <em>and</em> the accessible name from one string: a glyph-only control without one does not
+    /// exist for anybody who is not looking at it. The words are the Commander's own — the names
+    /// of the things, rather than the sentences the chevrons needed to explain themselves.
+    /// </para>
+    /// </summary>
+    private Control BulkControls()
+    {
+        var open = new Button
+        {
+            Name = "ExpandAll",
+            Height = 28,
+            Padding = new Thickness(8, 0),
+            VerticalContentAlignment = VerticalAlignment.Center,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+        };
+
+        var shut = new Button
+        {
+            Name = "CollapseAll",
+            Height = 28,
+            Padding = new Thickness(8, 0),
+            VerticalContentAlignment = VerticalAlignment.Center,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+        };
+
+        open.Click += (_, _) => SetEveryCard(true);
+        shut.Click += (_, _) => SetEveryCard(false);
+
+        Controls.Glyphs.Mark(open, Controls.Glyphs.ExpandAll, ThemeManager.AccentKey, "Expand all");
 
         // Filled, alone among these: a minus has no height, and a stretched-to-fit geometry with
         // no height collapses to nothing. See the note on Glyphs.CollapseAll.
         Controls.Glyphs.Mark(
-            CollapseAll,
-            Controls.Glyphs.CollapseAll,
-            ThemeManager.AccentKey,
-            "Collapse all",
-            filled: true);
+            shut, Controls.Glyphs.CollapseAll, ThemeManager.AccentKey, "Collapse all", filled: true);
+
+        return new StackPanel
+        {
+            Name = BulkName,
+            Orientation = Orientation.Horizontal,
+            Spacing = 2,
+            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Margin = new Thickness(0, 0, 12, 0),
+            Children = { open, shut },
+        };
     }
 
     /// <summary>
@@ -357,23 +398,18 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 // it wants and the glyphs take only what they need.
                 if (first)
                 {
-                    // **A DockPanel, and that is the whole of the bug that shipped** (reported
-                    // 2026-09-01 — *"things are running off to the right"*). This was a grid with a
-                    // star column, and a star cannot be resolved against an unbounded width: the
-                    // cards sit in a ScrollViewer that scrolls horizontally, so measure hands its
-                    // contents infinity, and the row's own three-star caption and two-star control
-                    // were laid out against it. A DockPanel gives its fill child what is actually
-                    // left, which is the finite width the row had when it was a plain child of the
-                    // strip.
+                    // **A DockPanel rather than a grid with a star column.** A star cannot be
+                    // resolved against an unbounded width, and the cards sit in a ScrollViewer that
+                    // scrolls horizontally — so measure hands its contents infinity and the row's
+                    // own three-star caption and two-star control were laid out against it. A
+                    // DockPanel gives its fill child what is actually left, which is the finite
+                    // width the row had as a plain child of the strip.
                     var line = new DockPanel();
+                    var bulk = BulkControls();
 
-                    Detach(BulkExpand);
+                    DockPanel.SetDock(bulk, Dock.Left);
 
-                    BulkExpand.Margin = new Thickness(0, 0, 12, 0);
-                    BulkExpand.VerticalAlignment = VerticalAlignment.Center;
-                    DockPanel.SetDock(BulkExpand, Dock.Left);
-
-                    line.Children.Add(BulkExpand);
+                    line.Children.Add(bulk);
                     line.Children.Add(view.Container);
 
                     strip.Children.Add(line);
@@ -390,11 +426,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         else
         {
             // No page row to sit beside — the glyphs still have a page to open and shut, so they
-            // go back where they were declared rather than disappearing.
-            Detach(BulkExpand);
+            // go on their own line rather than disappearing.
+            var alone = BulkControls();
 
-            BulkExpand.Margin = new Thickness(18, 0, 18, 6);
-            Cards.Children.Add(BulkExpand);
+            alone.Margin = new Thickness(18, 0, 18, 6);
+            Cards.Children.Add(alone);
         }
 
         foreach (var section in settings.Sections)
@@ -940,12 +976,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         Cards.Width = Math.Clamp(available, Floor, Ceiling);
 
-        // And the pair of bulk controls above them takes the same width (#223), so it sits over
-        // the cards rather than out at the column's right edge. The cards are left-aligned inside
-        // a column that is usually wider than they are, so a right-aligned strip in the column
-        // floats away from the thing it acts on — which is exactly how a control reads as
-        // belonging to something else.
-        BulkExpand.Width = Cards.Width;
+        // The bulk glyphs used to be widened to match, so that a right-aligned strip above the
+        // cards sat over them rather than floating at the column's edge. They are beside "Show
+        // every setting" now and that assignment was the whole of the overlap: measured, it made
+        // the container ask for 664 of the line's 700 pixels and left the row zero to draw in.
     }
 
     /// <summary>The nav column's width, and the point below which it is not worth its space.</summary>
@@ -1068,22 +1102,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         }
     }
 
-    /// <summary>
-    /// Takes a control out of whatever is holding it, so it can be put somewhere else.
-    /// <para>
-    /// The bulk glyphs are declared in the axaml, docked above the scroller, and are moved into
-    /// the page strip on every rebuild — a control belongs to one parent, and adding it to a
-    /// second without this throws rather than moving it.
-    /// </para>
-    /// </summary>
-    private static void Detach(Control control)
-    {
-        if (control.Parent is Avalonia.Controls.Panel panel)
-        {
-            panel.Children.Remove(control);
-        }
-    }
-
+    // Kept as members rather than folded into BulkControls' handlers: SettingsIsATabTests drives
+    // the bulk controls through them, and a lambda has no name for a test to reach.
     private void OnExpandAllClick(object? sender, RoutedEventArgs e) => SetEveryCard(true);
 
     private void OnCollapseAllClick(object? sender, RoutedEventArgs e) => SetEveryCard(false);
