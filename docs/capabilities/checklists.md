@@ -320,6 +320,11 @@ it too — and it is still there next time you start. The search box is not: wha
 you were that minute, and one restored from last week is a list that looks broken until you find the
 box.
 
+The engineer filter shows **what that engineer does**, not what your standing with them lets you
+have done today. A Grade 5 roll they offer is on the page whether you are grade 5 with them or
+grade 1, and the line says which — *"Hera Tani rolls this at grade 5, and you are grade 4 with
+them"*. There is no switch for it, because you came to the workshop to find out what is there.
+
 ##### Include Partial Grades {#partial-grades}
 
 Beside the engineer filter, and only there, is a checkbox. It decides which of two questions the

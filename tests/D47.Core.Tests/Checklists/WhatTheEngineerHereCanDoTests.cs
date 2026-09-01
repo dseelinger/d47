@@ -350,6 +350,81 @@ public class WhatTheEngineerHereCanDoTests
         Assert.Empty(here.Partial);
     }
 
+    /// <summary>
+    /// <b>The cell the matrix was missing</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/205">#205</a>): a module carrying both a
+    /// blueprint and an effect, at a rank below the grade.
+    /// <para>
+    /// The three effect tests above all fly at rank 5, where the rank gate can never fire, and the
+    /// one rank test has no effect beside it — so the two features were tested on disjoint axes and
+    /// this fell between them. Reported as <i>Armoured G5 and Thermal Spread planned on an 8A power
+    /// plant, and only Thermal Spread on the page</i>.
+    /// </para>
+    /// <para>
+    /// <b>They part company here, and that is correct</b>: an effect is bought outright at any
+    /// standing, so a rank that blocks the blueprint blocks nothing about the effect. What was
+    /// wrong was further downstream — the page showed <c>Ready</c> alone, so the blueprint was
+    /// invisible and the effect looked like a stray errand. Both are on the page now; see
+    /// <see cref="ChecklistService.OfferedHere"/>.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void AnEffectDoesNotFollowItsBlueprintOutOfRank()
+    {
+        var state = Flying("Laksak", rank: 1).Active!;
+
+        var here = Assert.Single(EngineersHere.For(
+            [Booster("TinyHardpoint5", grade: 3), Effect("TinyHardpoint5", "Force Block")],
+            state));
+
+        // Grade 3 Heavy Duty is Lei Cheung's work; rank 1 is what stops it today.
+        Assert.Single(here.OutOfRank);
+        Assert.Single(here.Ready);
+        Assert.Empty(here.Partial);
+
+        Assert.Equal(ChecklistIntentKind.Blueprint, here.OutOfRank[0].Intent?.Kind);
+        Assert.Equal(ChecklistIntentKind.Experimental, here.Ready[0].Intent?.Kind);
+    }
+
+    /// <summary>
+    /// And through the filter the Commander actually reads (#205, ruled 2026-09-01): the engineer
+    /// row shows <b>what this engineer does</b>, rank or no rank. It showed <c>Ready</c> alone, and
+    /// no control anywhere readmitted the out-of-rank band — so the line the Commander came to the
+    /// workshop for was the one line they could not see.
+    /// </summary>
+    [Fact]
+    public void TheHereFilterShowsWorkThisEngineerDoesEvenBelowTheRankForIt()
+    {
+        using var install = new TempInstall();
+        var checklists = TestSurface.Checklists(install.Paths, Flying("Laksak", rank: 1));
+
+        checklists.AdoptPlan(
+            ChecklistScope.Ship(51),
+            ChecklistSource.EngineeringPlan,
+            [Booster("TinyHardpoint5", grade: 3), Effect("TinyHardpoint5", "Force Block")],
+            ["TinyHardpoint5"]);
+
+        var items = checklists.Document.Items.Where(item => item.IsLive).ToList();
+
+        var blueprint = Assert.Single(items, item => item.Intent?.Kind == ChecklistIntentKind.Blueprint);
+        var effect = Assert.Single(items, item => item.Intent?.Kind == ChecklistIntentKind.Experimental);
+
+        // Both, and the blueprint is the half that used to vanish.
+        Assert.True(checklists.OfferedHere(blueprint));
+        Assert.True(checklists.OfferedHere(effect));
+
+        // Visible and explained rather than visible and misleading. Named through the engineer
+        // whose system this is, which is the half the verdict cannot reach: this plan names no
+        // engineer, so ChecklistEvaluator has no rank to gate against and calls the line
+        // ordinary open work.
+        Assert.Equal(
+            "Lei Cheung rolls this at grade 3, and you are grade 1 with them",
+            checklists.RankHere(blueprint));
+
+        // An effect is bought outright, so nothing about it is waiting on a grade.
+        Assert.Null(checklists.RankHere(effect));
+    }
+
     /// <summary>And an effect on a slot with no blueprint line at all has no sibling to follow.</summary>
     [Fact]
     public void AnEffectOnItsOwnIsUnaffected()

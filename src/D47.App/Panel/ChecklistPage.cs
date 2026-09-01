@@ -884,7 +884,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         // the same line is reachable in Laksak and not in Sol.
         if (Chosen == ChecklistService.HereKey)
         {
-            return _checklists.CanBeDoneHere(item);
+            return _checklists.OfferedHere(item);
         }
 
         return Chosen.Equals(item.Kind.ToString(), StringComparison.OrdinalIgnoreCase)
@@ -961,6 +961,15 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             && _checklists.PartlyHere(item) is { } reach)
         {
             aside.Add(reach);
+        }
+
+        // And why a line this engineer does cannot be rolled today (#205). No toggle beside it,
+        // because it is not a second question the way partial work is — the line is this
+        // engineer's work either way, and this is the sentence that stops it reading as work the
+        // Commander could start.
+        if (Chosen == ChecklistService.HereKey && _checklists.RankHere(item) is { } standing)
+        {
+            aside.Add(standing);
         }
 
         if (ChecklistNextAction.For(item.State) is { } next)

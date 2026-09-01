@@ -53,7 +53,7 @@ public class FilteringToWhatCanBeDoneHereTests
 
         // A note is nobody's to roll: EngineersHere only ever offers blueprint and experimental
         // intents, which is the same rule the spoken answer follows.
-        Assert.False(checklists.CanBeDoneHere(note));
+        Assert.False(checklists.OfferedHere(note));
     }
 
     /// <summary>

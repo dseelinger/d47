@@ -826,15 +826,34 @@ public sealed class ChecklistService(
     public const string HereKey = "here";
 
     /// <summary>
-    /// Whether this item is one an engineer in this system could roll now.
+    /// Whether an engineer in this system does this work at all — <b>which is not the same
+    /// question as whether the Commander could have it rolled today</b>, and is the one the row
+    /// is for (<a href="https://github.com/dseelinger/d47/issues/205">#205</a>, ruled 2026-09-01).
     /// <para>
-    /// <c>Ready</c> only, matching what the spoken <c>here</c> parameter has meant since
-    /// 2026-08-20. The out-of-rank band answers a different question — <i>why can I not do this
-    /// here</i> — and folding it in would quietly change an answer that has already shipped.
+    /// It was <c>Ready</c> alone until then, so the out-of-rank band was unreachable from the
+    /// page: a Commander standing at Hera Tani with Armoured G5 on their list saw the module's
+    /// experimental effect and no sign of the blueprint itself, and no control anywhere readmitted
+    /// it. The Commander's ruling: <i>"I don't care if I have attained the correct rank with an
+    /// engineer. I still want to see it, because what the engineer can do is what I'm after, not
+    /// what can I do based on my relationship with the engineer."</i>
+    /// </para>
+    /// <para>
+    /// <b>Nothing is hidden by rank now, and nothing is claimed either.</b> The line says why it
+    /// cannot be rolled today — see <see cref="RankHere"/> — so it arrives visible and explained
+    /// rather than visible and misleading.
+    /// </para>
+    /// <para>
+    /// <b>The partial band keeps its toggle</b>, because it answers a genuinely different
+    /// question — work somebody else has to finish — and the Commander asked for that control by
+    /// name. And the spoken <c>here</c> parameter is deliberately untouched: its own description
+    /// says <i>could craft today</i>, and a sentence cannot show a line and its reason at once
+    /// the way a page can.
     /// </para>
     /// </summary>
-    public bool CanBeDoneHere(ChecklistItem item) =>
-        Here().SelectMany(engineer => engineer.Ready).Any(ready => ready.Id.Same(item.Id))
+    public bool OfferedHere(ChecklistItem item) =>
+        Here().Any(engineer =>
+            engineer.Ready.Any(ready => ready.Id.Same(item.Id))
+            || engineer.OutOfRank.Any(waiting => waiting.Id.Same(item.Id)))
         || (IncludePartialGrades && PartlyHere(item) is not null);
 
     /// <summary>
@@ -855,6 +874,47 @@ public sealed class ChecklistService(
             {
                 return found.Describe(engineer.Engineer.Name);
             }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Why a line this engineer <em>does</em> cannot be rolled today — the grade it asks for
+    /// against the Commander's standing with them (#205). Null for anything not held back that
+    /// way.
+    /// <para>
+    /// <b>Said here rather than left to the verdict</b>, which cannot always say it.
+    /// <c>ChecklistEvaluator</c> reaches a rank through the engineer the <em>plan</em> names, so a
+    /// build that named nobody — the common case for a plan typed against a hull rather than
+    /// against a workshop — produces an ordinary open line with no mention of a gate. Standing in
+    /// the engineer's system is what supplies the missing name, and it is the one thing the
+    /// evaluator has no way of knowing.
+    /// </para>
+    /// </summary>
+    public string? RankHere(ChecklistItem item)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+
+        if (item.Intent?.Grade is not { } wanted)
+        {
+            return null;
+        }
+
+        foreach (var engineer in Here())
+        {
+            if (!engineer.OutOfRank.Any(waiting => waiting.Id.Same(item.Id)))
+            {
+                continue;
+            }
+
+            var grade = wanted.ToString(CultureInfo.InvariantCulture);
+
+            return engineer.Rank is { } rank
+                ? $"{engineer.Engineer.Name} rolls this at grade {grade}, and you are "
+                  + $"grade {rank.ToString(CultureInfo.InvariantCulture)} with them"
+                : $"{engineer.Engineer.Name} rolls this at grade {grade}, and your grade with "
+                  + "them is not in your journal yet";
         }
 
         return null;

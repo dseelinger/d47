@@ -29,6 +29,35 @@ history to match today's layout would be the one edit it must never take.
 
 ## 0.98.2 — 2026-09-01 — The carrier's own two voices, and a jump nobody is making
 
+### The engineer filter shows what that engineer does, not what your rank lets you have (#205)
+
+An 8A power plant planned for **Armoured G5** and **Thermal Spread** showed only Thermal Spread.
+Both lines were on the list the whole time: the blueprint sat in the out-of-rank band, which the
+page did not draw and no control readmitted, so the one line the Commander went to that workshop
+for was the one line they could not see — and the effect beside it read as a stray errand.
+
+Rank gates a graded blueprint and never an experimental, which is Frontier's rule and correct.
+What was wrong is what the page did with it. **The engineer filter now shows every line that
+engineer works on, whatever your standing with them**, on the Commander's ruling: *"I don't care
+if I have attained the correct rank with an engineer. I still want to see it, because what the
+engineer can do is what I'm after, not what can I do based on my relationship with the
+engineer."*
+
+Visible and explained rather than visible and misleading: the line says *"Lei Cheung rolls this at
+grade 3, and you are grade 1 with them"*. That sentence has to come from the filter rather than
+from the line's own verdict, because the verdict reaches a rank through the engineer the *plan*
+names — and a build typed against a hull rather than against a workshop names nobody. Standing in
+the engineer's system is what supplies the missing name.
+
+There is no switch beside it. Partial grades keep theirs, because *"somebody else has to finish
+this"* is a genuinely different question; a rank is not a different question, it is the same work
+with a date on it.
+
+**The test matrix is the other half of the fix.** The three tests for a module carrying both a
+blueprint and an effect all flew at rank 5, where the gate cannot fire, and the one rank test had
+no effect beside it. Two features, two disjoint axes, and the defect lived in the cell neither
+covered. That cell is now a test, and so is the drawn page.
+
 ### A hold lets go the moment Elite stops being the window in front (#206)
 
 d47 could hold a modifier key physically down for **5.3 seconds, autonomously, with nothing
