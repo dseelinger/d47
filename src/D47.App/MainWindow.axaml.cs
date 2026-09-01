@@ -1330,7 +1330,7 @@ public partial class MainWindow : Window
     /// </summary>
     private static Donation.DonationDispatch DonationDispatchFor(AppHost host) =>
         Donation.DonationDispatch.For(
-            host.Paths, () => host.Settings.Current.Donation.Endpoint, host.Loggers);
+            host.Paths, static () => D47.Core.Configuration.DonationSettings.Address, host.Loggers);
 
     /// <summary>
     /// One window for both shapes of sharing since #238, offered under one button. The history

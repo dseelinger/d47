@@ -282,7 +282,7 @@ public static class EgressDisclosure
             "Your journal is read from disk and never uploaded. Facts drawn from it — system, body, station — "
             + "can reach the model as game state when one is configured; see the language model row."),
 
-        Donation => DonationEntry(settings),
+        Donation => DonationEntry(),
 
         _ => throw new ArgumentOutOfRangeException(nameof(id), id, "Not an egress disclosure id."),
     };
@@ -290,11 +290,10 @@ public static class EgressDisclosure
     /// <summary>
     /// What a donation sends, and where.
     /// <para>
-    /// <b>The address is the switch.</b> There is no separate toggle: with no endpoint configured
-    /// nothing can be posted anywhere, the donation window offers a clipboard and a file and
-    /// nothing else, and this row reads silent. It is the shape the community goals row already
-    /// has — a destination that cannot be reached until somebody deliberately makes it reachable
-    /// is better disclosed as that than as a checkbox somebody might not have noticed.
+    /// <b>The address ships in the build now</b> (2026-08-31, on the Commander's instruction),
+    /// so this row always names <see cref="DonationSettings.Address"/> and the press is the
+    /// whole of the switch. It used to read silent until an address was pasted into a settings
+    /// row — a question every installation was asked whose one answer only the project knew.
     /// </para>
     /// <para>
     /// <b>Active is about what the settings permit, not about what is happening.</b> Every other
@@ -304,22 +303,12 @@ public static class EgressDisclosure
     /// nothing goes without a press, every time.
     /// </para>
     /// </summary>
-    private static EgressEntry DonationEntry(D47Settings settings)
+    private static EgressEntry DonationEntry()
     {
-        if (settings.Donation.Endpoint is not { Length: > 0 } endpoint)
-        {
-            return EgressEntry.Silent(
-                Donation,
-                NameOf(Donation),
-                "No donation endpoint is set, so nothing can be uploaded. The donation windows can "
-                + "still put an excerpt on the clipboard or write a file, and where that goes "
-                + "afterwards is yours.");
-        }
-
         return new EgressEntry(
             Donation,
             NameOf(Donation),
-            endpoint,
+            DonationSettings.Address,
             "Nothing is sent unless you press send, every time — there is no standing consent, no "
             + "remembered choice and no automatic upload. What goes when you do press it is exactly "
             + "the scrubbed text the window showed you: names and Frontier IDs already replaced, "

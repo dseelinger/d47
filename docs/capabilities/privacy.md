@@ -176,11 +176,12 @@ reporters, analytics SDKs, hosted logging, all of which send without anybody ask
 sends nothing at all until you have read a full description of it and pressed a button, every time
 — no standing consent, nothing remembered, no automatic upload — and the row above says so.
 
-**The address is the switch.** Out of the box there is no donation address, so nothing can be
-uploaded: the *Help improve D47* window offers a clipboard and a file, exactly as it always did.
-Set one and the same window gains its send buttons. Clear it and they go again. There is no
-separate toggle because a toggle beside an empty address would be a control with nothing to
-control.
+**The press is the switch.** The address ships in the build — Directive 47's own store, named in
+full by the disclosure row — and the send buttons are simply there. What was never true and still
+is not: nothing uploads on its own. Every send is one deliberate press over a payload or a report
+you just read, no standing consent, nothing remembered. It read differently until 2026-08-31,
+when the paste-an-address row was retired: the address was the switch only because the row asked
+every installation for a URL only the project knew.
 
 **What is stored, and for how long.** An incident excerpt is deleted 30 days after it arrives,
 by a rule on the store rather than by anybody remembering to. It may well go sooner — there is
@@ -276,18 +277,16 @@ could switch that back on is a model that could be told to by text it read in an
 
 ### Where donations are sent {#donation-endpoint}
 
-Empty out of the box, and empty means nothing can be uploaded. There is no address baked into the
-build: the store behind it is Cloudflare R2, which needs a payment method on the account before it
-will activate at all, so there is nothing to point at until somebody has deliberately provisioned
-one. `worker/README.md` in the repository is that provisioning, and the Worker it deploys is the
-only thing that can write to the bucket — there is no storage credential anywhere in Directive 47.
+The address ships in the build: Directive 47's own store, behind a Cloudflare Worker that is the
+only thing able to write to the bucket — there is no storage credential anywhere in Directive 47,
+and the disclosure row above names the address in full. There used to be a settings row here to
+paste an address into, and it is gone on the project's own ruling (2026-08-31): it asked every
+installation for the one URL only the project knew, and the switch it doubled as was never the
+real guard. The real guard is unchanged — **nothing is sent until you press, every time**, and
+the address travels over `https` only.
 
-Only `https` addresses are accepted. A scrubbed journal on a plaintext connection is a worse
-outcome than not donating.
-
-**The model cannot reach this row**, for the same reason it cannot reach the update check and then
-some: this one names where a scrubbed journal history goes, and a model that could set it is a
-model that could be told to by an in-game message it read.
+Because the address is compiled in rather than stored, there is nothing here for the model — or
+anything else — to redirect: changing where a donation goes now means changing the code.
 
 ### What Directive 47 remembers about you {#memory}
 

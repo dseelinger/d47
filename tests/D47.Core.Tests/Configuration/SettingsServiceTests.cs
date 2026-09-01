@@ -585,7 +585,7 @@ public class SettingsSurfaceShapeTests
 public class EgressDisclosureTests
 {
     [Fact]
-    public void WithEveryDestinationOffTheCountIsZeroAndNoRowIsActive()
+    public void WithEverySwitchOffOnlyTheBuiltInDonationRoadStaysActive()
     {
         var settings = new D47Settings
         {
@@ -607,8 +607,12 @@ public class EgressDisclosureTests
         var entries = EgressDisclosure.For(settings, llmKeyPresent: false);
         var described = EgressDisclosure.Describe(settings, false);
 
-        Assert.All(entries, entry => Assert.False(entry.Active));
-        Assert.Contains($"0 of {entries.Count} destinations are active", described, StringComparison.Ordinal);
+        // One row stays active by design (2026-08-31): the donation address ships in the build,
+        // so the destination always exists and the press is its only switch. Everything else
+        // reaches zero, which is the property this test has always held.
+        var active = Assert.Single(entries, entry => entry.Active);
+        Assert.Equal(EgressDisclosure.Donation, active.Id);
+        Assert.Contains($"1 of {entries.Count} destinations are active", described, StringComparison.Ordinal);
 
         // Counted, never claimed. The zero case used to get a sentence of its own — "Nothing is
         // leaving this machine right now" — which reads as a property of d47 rather than of

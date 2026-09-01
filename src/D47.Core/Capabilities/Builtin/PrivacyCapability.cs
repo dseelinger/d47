@@ -32,7 +32,6 @@ public static class PrivacyCapability
     /// Here rather than beside the donate buttons because it is an address bytes leave for, and
     /// this is the section that answers what leaves.
     /// </summary>
-    public const string DonationEndpointKey = "donation.endpoint";
 
     /// <summary>
     /// The random per-installation identifier donations are grouped under, and the one press that
@@ -254,40 +253,12 @@ public static class PrivacyCapability
             });
         }
 
-        // Donation, and both of its rows are here rather than beside the donate buttons: one names
-        // an address bytes leave for and the other names an identifier that travels with them, and
-        // this is the section a Commander opens to ask what leaves.
-        rows.Add(new SettingRow
-        {
-            Key = DonationEndpointKey,
-            Advanced = true,
-            Label = "Where donations are sent",
-            Help =
-                "Empty means nothing can be uploaded: the donation windows offer a clipboard and a "
-                + "file, and where those go is yours. Set it and the same windows gain a send "
-                + "button — which still sends nothing until you press it, every time.",
-            Kind = SettingKind.Text,
-            DefaultDisplay = "nothing set",
-            DocsAnchor = "donation-endpoint",
-
-            // Protected, on the same reasoning as the update-check row above and then some: this
-            // one names where a scrubbed journal goes. A model that could set it is a model that
-            // could be told to by an in-game message, and the payload it would be redirecting is
-            // the Commander's play history.
-            Protected = true,
-            Binding = new SettingBinding
-            {
-                Read = s => s.Donation.Endpoint ?? string.Empty,
-                Write = (s, v) => s with
-                {
-                    Donation = s.Donation with
-                    {
-                        Endpoint = string.IsNullOrWhiteSpace(v) ? null : v.Trim(),
-                    },
-                },
-            },
-        });
-
+        // Donation. The identifier row is here rather than beside the donate buttons because
+        // this is the section a Commander opens to ask what leaves. There used to be an address
+        // row above it — "Where donations are sent" — and it is gone on the Commander's
+        // instruction (2026-08-31): the address ships in the build (DonationSettings.Address),
+        // because a row asking every installation for the one URL only the project knows was a
+        // question with exactly one answer. The disclosure row below still names where.
         rows.Add(new SettingRow
         {
             Key = DonorKey,

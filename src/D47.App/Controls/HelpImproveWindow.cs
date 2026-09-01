@@ -546,11 +546,13 @@ public sealed class HelpImproveWindow : Window
             + "Reading a full history takes a few seconds and happens entirely on this machine.";
 
         // The question a Commander actually asked at this window (2026-08-31): which button
-        // sends? With no address, none — and the status line is where the answer belongs,
-        // because the lede said it mid-paragraph and mid-paragraph is where it was missed.
+        // sends? With nowhere to send, none — and the status line is where the answer belongs,
+        // because the lede said it mid-paragraph and mid-paragraph is where it was missed. Since
+        // the address started shipping in the build this is a state only a test constructs, and
+        // it stays honest for the day that changes.
         _status.Text = _sendCorpus is null
-            ? "No send button: no address is set (Privacy and egress → Where donations are "
-              + "sent). Save writes the scrubbed file, and where it goes is yours."
+            ? "No send button: this window was opened with nowhere to send. Save writes the "
+              + "scrubbed file, and where it goes is yours."
             : string.Empty;
     }
 

@@ -1530,20 +1530,19 @@ public sealed record UpdateSettings
 public sealed record DonationSettings
 {
     /// <summary>
-    /// The endpoint a donation is posted to, or null where there is none and donations can only
-    /// be copied or saved.
-    /// <para>
-    /// <b>Null out of the box, and that is not a placeholder for a missing decision.</b> The store
-    /// behind this is R2, which requires a payment method on an account that currently has none —
-    /// a deliberate act rather than a footnote — so there is no address to bake in until the
-    /// Commander has performed it. A shipped build with a default here would be a build sending
-    /// donations somewhere before anybody chose to.
-    /// </para>
-    /// <para>
-    /// <b>Reachable from the panel and not from the model.</b> Its row is protected: an address
-    /// the model could set is an address a hostile in-game message could set, and this one names
-    /// where a scrubbed journal goes.
-    /// </para>
+    /// Where a donation is posted: Directive 47's own store, baked into the build (2026-08-31,
+    /// on the Commander's instruction). One known address rather than a row to paste it into —
+    /// the row asked every installation a question with exactly one answer, and until the day it
+    /// was removed the answer did not resolve at all, because the Worker's route was off. What
+    /// guards the road never was the address: nothing is sent until the Commander presses, every
+    /// time, and Cloudflare's own protections stand in front of the Worker.
+    /// </summary>
+    public const string Address = "https://d47-donations.dseelinger.workers.dev";
+
+    /// <summary>
+    /// The address a Commander once pasted in, before the build carried its own. <b>No longer
+    /// read anywhere.</b> Kept because settings are append-only: unknown keys are rejected on
+    /// load, so a property that was ever written cannot be removed.
     /// </summary>
     public string? Endpoint { get; init; }
 }

@@ -8,11 +8,14 @@ name = "d47-donations"
 main = "src/index.js"
 compatibility_date = "2026-08-29"
 
-# **Off, and not by accident.** workers.dev gives every Worker a public *.workers.dev hostname the
-# moment it deploys. This one is reached by a URL a Commander pastes into a settings row, so it
-# wants exactly one address that is known and can be changed — not a second one that exists
-# whether or not anybody meant it to.
-workers_dev = false
+# **On since 2026-08-31, and the reversal is deliberate** — this line read false, on the argument
+# that a URL a Commander pastes into a settings row wants exactly one address, not a second one
+# that exists whether or not anybody meant it to. That settings row is gone: the address ships in
+# the build (DonationSettings.Address in D47.Core), so the workers.dev hostname IS the one
+# address, and the Commander ruled Cloudflare's own protections enough for what a public hostname
+# invites. False here would silently turn the shipped address off on the next deploy, which is
+# the one thing this file must not do now.
+workers_dev = true
 
 # **No observability, and no telemetry beyond what Cloudflare cannot be stopped from counting.**
 # The whole point of this endpoint is that a donation is one deliberate act; a request log that

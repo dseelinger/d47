@@ -165,11 +165,12 @@ public class ModelChoiceTests
     }
 
     [Fact]
-    public void EveryDestinationCanStillBeTurnedOffWithListeningConfigured()
+    public void EverySwitchableDestinationCanStillBeTurnedOffWithListeningConfigured()
     {
-        // Every provider off, with listening set up: reaching zero active destinations has to
-        // stay possible, or turning everything off stops being reachable the moment the
-        // Commander wants to talk to d47.
+        // Every provider off, with listening set up: turning everything switchable off has to
+        // stay reachable the moment the Commander wants to talk to d47. The floor is one, not
+        // zero, since 2026-08-31: the donation store's address ships in the build, so that row
+        // is active in every configuration — and its only switch is the press, every time.
         var settings = new D47Settings
         {
             Llm = new LlmSettings { Provider = Core.Conversation.LlmProviderCatalog.NoneId },
@@ -182,9 +183,10 @@ public class ModelChoiceTests
 
         var entries = EgressDisclosure.For(settings, llmKeyPresent: false);
 
-        Assert.DoesNotContain(entries, entry => entry.Active);
+        var active = Assert.Single(entries, entry => entry.Active);
+        Assert.Equal(EgressDisclosure.Donation, active.Id);
         Assert.Contains(
-            $"0 of {entries.Count} destinations are active",
+            $"1 of {entries.Count} destinations are active",
             EgressDisclosure.Describe(settings, false));
     }
 

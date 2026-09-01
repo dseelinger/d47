@@ -1862,7 +1862,7 @@ public sealed class AppHost : IDisposable
                 async (_, cancel) =>
                 {
                     var forgotten = await Donation.DonationDispatch
-                        .For(paths, () => settings.Current.Donation.Endpoint, loggerFactory)
+                        .For(paths, static () => DonationSettings.Address, loggerFactory)
                         .ForgetAsync(cancel);
 
                     return forgotten.Receipt is { } receipt
