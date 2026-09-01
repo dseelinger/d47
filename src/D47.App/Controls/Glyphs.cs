@@ -112,9 +112,28 @@ public static class Glyphs
     /// The dot is a zero-length segment: <see cref="Made"/> strokes with a round cap, so it draws
     /// as a dot without needing a second filled shape.
     /// </para>
+    /// <para>
+    /// <b>Two semicircles rather than one nearly-closed arc.</b> The other round mark here is
+    /// written <c>A 9,9 0 1 1 11.99,3</c> — an arc that ends a hundredth of a unit from where it
+    /// began — which leaves which circle is meant to be inferred from the flags. Two half turns
+    /// say it outright, and the shape cannot come out subtly wrong.
+    /// </para>
+    /// <para>
+    /// <b>It came out looking like a flat tyre, and the radius was not why</b> (reported
+    /// 2026-09-01). <see cref="Made"/> stretches the <em>geometry</em> to the control and then
+    /// strokes it two units wide, so <b>half the stroke always lands outside the box</b> — one
+    /// unit, about 0.9 of a pixel at this size, measured. <b>Every mark in this file does it.</b>
+    /// Only a closed curve makes it visible: a clipped arc reads as a flat edge where a clipped
+    /// line end reads as nothing at all.
+    /// </para>
+    /// <para>
+    /// So the fix is on the button, which had four pixels of horizontal padding and none
+    /// vertical — which is exactly where it was cut. The smaller radius here is only that a
+    /// slightly smaller circle sits better beside the pills.
+    /// </para>
     /// </summary>
     public const string Info =
-        "M 12,3 A 9,9 0 1 1 11.99,3  M 12,7.5 L 12,7.5  M 12,11 L 12,16.5";
+        "M 12,4 A 8,8 0 0 1 12,20 A 8,8 0 0 1 12,4  M 12,8 L 12,8  M 12,11.5 L 12,16";
 
     /// <summary>Two sheets, one behind the other. The clipboard mark, near enough universally.</summary>
     public const string Copy =

@@ -1924,8 +1924,16 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         var button = new Button
         {
             Name = RowInfoPrefix + row.Key.Replace('.', '_'),
-            Content = Glyphs.Draw(Glyphs.Info, ThemeManager.AccentKey, TypeScale.Secondary),
-            Padding = new Thickness(4, 0),
+            // The muted accent the pills beside it carry, not the bright one (asked for
+            // 2026-09-01). This is a mark that says "there is more here if you want it", which is
+            // a quieter thing than the reset glyph next to it — that one only appears on a row the
+            // Commander has changed, and is worth noticing when it does.
+            Content = Glyphs.Draw(Glyphs.Info, ThemeManager.AccentMutedKey, TypeScale.Secondary),
+
+            // Room above and below for the stroke. Made stretches the geometry to the box and then
+            // strokes it two units wide, so half of that lands outside the control — with no
+            // vertical padding the header clipped it flat top and bottom.
+            Padding = new Thickness(4, 2),
             Background = Brushes.Transparent,
             BorderThickness = new Thickness(0),
             VerticalAlignment = VerticalAlignment.Center,
