@@ -70,6 +70,18 @@ public sealed class GameStateStore
     public Func<string, ShipLoadouts?>? RestoreLoadouts { get; init; }
 
     /// <summary>
+    /// Every place this Commander has met, on the same terms as <see cref="RestoreLoadouts"/>
+    /// (<a href="https://github.com/dseelinger/d47/issues/134">#134</a>). Null where nothing
+    /// composed one.
+    /// <para>
+    /// The live fold only sees this session, and the whole point of the catalogue is depth: a
+    /// Commander is far likelier to be misheard about a system they visited last summer than one
+    /// they are standing in.
+    /// </para>
+    /// </summary>
+    public Func<string, Listening.SpokenNames?>? RestoreNames { get; init; }
+
+    /// <summary>
     /// Raised when the Commander whose journal is being tailed changes (Phase 44, "One
     /// switch signal"). From nobody to somebody is an adoption; from one to another is a switch.
     /// <para>
@@ -156,6 +168,11 @@ public sealed class GameStateStore
                 if (RestoreLoadouts?.Invoke(identity.FrontierId) is { IsKnown: true } loadouts)
                 {
                     state.Loadouts = loadouts;
+                }
+
+                if (RestoreNames?.Invoke(identity.FrontierId) is { IsKnown: true } names)
+                {
+                    state.Names = names;
                 }
 
                 _byFrontierId[identity.FrontierId] = state;

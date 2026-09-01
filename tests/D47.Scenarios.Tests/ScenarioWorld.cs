@@ -83,6 +83,7 @@ public sealed class ScenarioWorld : IDisposable
                 VoiceLabel = (_, id) => id,
             },
             ShipsCapability.ShipsSurface.Inert,
+            SpokenNamesSurface.Inert,
             new TurnCancellation(NullLogger<TurnCancellation>.Instance),
             new D47.Core.Callouts.CalloutEngine(NullLogger<D47.Core.Callouts.CalloutEngine>.Instance),
             () => built!,

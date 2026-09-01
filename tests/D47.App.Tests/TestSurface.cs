@@ -110,6 +110,7 @@ public static class TestSurface
                 Remembered = () => "Two ships, the oldest last seen 3 months ago.",
                 Rescan = () => rescan ?? ((_, _) => Task.FromResult<string?>(null)),
             },
+            SpokenNamesSurface.Inert,
             new TurnCancellation(NullLogger<TurnCancellation>.Instance),
             new CalloutEngine(NullLogger<CalloutEngine>.Instance),
             () => built!,

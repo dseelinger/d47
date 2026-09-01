@@ -1,4 +1,4 @@
----
+﻿---
 title: Listening
 group: Voice
 nav_order: 123
@@ -494,6 +494,33 @@ It exists because the key is sampled ten times a second, so a key-down is notice
 after it happened — and without this the first syllable of every sentence is clipped, which is
 where the proper nouns are. It does the same job hands free, where what it covers is the moment
 before Directive 47 was willing to call the sound speech.
+
+#### Names it has learned to hear {#corrections}
+
+Proper nouns are where speech recognition fails hardest and most quietly. A misheard system name
+does not come back as an error or as a low-confidence marker — it comes back as a plausible English
+word, and the answer is confidently about the wrong place. Directive 47 already biases the
+transcriber towards the names around you, but that list holds sixty and the galaxy holds four
+hundred billion, so a name you have not been near lately cannot be on it.
+
+**So there is a recovery.** Ask about a system it cannot find and it will not shrug politely: it
+looks through the places *you* have actually been — every system, station and faction in your own
+journals — for one that sounds like what it heard, offers those back, and runs your question again
+when you say which. Nothing is sent anywhere to do it; those names came off your own disk.
+
+**What it remembers is the word, not the answer.** Correct it once about *Eurebia* and it has
+learned that word, so *"the Eurybia Blue Mafia"* comes out right too, and so does every other
+sentence containing it. An alias against the system would have fixed one question.
+
+**It only ever learns when you correct it**, and it refuses to learn a word that already means
+something — a place you have visited, or a phrase Directive 47 answers to. A wrong entry here would
+be permanent, invisible and would quietly rewrite everything you said afterwards, which is a worse
+failure than the mishearing it came from. It is also spoken input only: if you *type* a name, that
+is what you meant.
+
+This row lists what it has learned, and **Forget them all** clears the lot. Everything here stays on
+this machine and belongs to the Commander flying — nothing is learned from a chat message, a mission
+description, or anything another player wrote.
 
 #### Speech model {#model}
 

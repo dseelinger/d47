@@ -34,6 +34,10 @@ public static class BuiltinCapabilities
         // have to go at the end, where it would sit among the null-means-absent ones and
         // read as the same kind of thing.
         ShipsCapability.ShipsSurface fleet,
+
+        // What this Commander has met and how a misheard name is recovered (#134). Positional
+        // beside the surfaces around it, for the reason recorded on `fleet`.
+        Builtin.SpokenNamesSurface heard,
         Conversation.TurnCancellation cancellation,
         CalloutEngine callouts,
         Func<CapabilityRegistry> registry,
@@ -245,7 +249,8 @@ public static class BuiltinCapabilities
             trade,
             () => gameState.Active?.Location.StationName,
             commodities,
-            now),
+            now,
+            heard),
         RouteCapability.Create(
             routes,
             trade,

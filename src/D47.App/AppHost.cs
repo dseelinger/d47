@@ -507,6 +507,21 @@ public sealed class AppHost : IDisposable
     /// </summary>
     private LoadoutStore? _loadouts;
 
+    /// <summary>
+    /// What this Commander has met and what their transcriber gets wrong (#134), for the settings
+    /// row that shows it, the pre-pass that applies it and the lookup that learns it.
+    /// </summary>
+    private HeardNamesStore? _heardNames;
+
+    /// <summary>
+    /// The one name a lookup is waiting to be corrected about. Per process and never written
+    /// down: it is the state of one exchange, not of an installation.
+    /// </summary>
+    private readonly MishearingWatch _mishearings = new();
+
+    /// <summary>The outstanding mishearing, for the capability that asks about it.</summary>
+    internal MishearingWatch Mishearings => _mishearings;
+
     /// <summary>Whether a rescan is already running. One at a time, like the model download.</summary>
     private int _rescanning;
 
@@ -872,6 +887,16 @@ public sealed class AppHost : IDisposable
 
         loadouts.Load();
 
+        // Every place this Commander has met, and what their transcriber gets wrong about them
+        // (#134). Proper nouns are where speech recognition fails hardest and most silently, and
+        // this is the catalogue a misheard one is matched against — 400 billion systems exist and
+        // d47 ships no list, but the few thousand a Commander has actually stood in are on disk.
+        var heardNames = new HeardNamesStore(
+            Path.Combine(paths.Data, "heard-names.json"),
+            loggerFactory.CreateLogger<HeardNamesStore>());
+
+        heardNames.Load();
+
         // The same deal for what is *in* those ships, and lazy for the same reason — seeded with
         // the file, so the window's job is catching up on the gap since d47 last ran rather than
         // being the whole memory. That seeding is also what makes a sale stick across a restart:
@@ -883,6 +908,25 @@ public sealed class AppHost : IDisposable
                 loggerFactory.CreateLogger(nameof(LoadoutBackfill)),
                 loadouts.All,
                 loadouts.FoldedThrough));
+
+        // The same deal for the names, and lazy for the same reason. The first run reads
+        // everything — a name met last summer is one the Commander may say tomorrow, and depth is
+        // the whole point of the catalogue — and every run after it walks only the gap.
+        var recoveredNames = new Lazy<IReadOnlyDictionary<string, SpokenNames>>(() =>
+        {
+            var found = SpokenNameMiner.FromHistory(
+                journalDirectory,
+                loggerFactory.CreateLogger(nameof(SpokenNameMiner)),
+                heardNames.All.ToDictionary(
+                    entry => entry.Key, entry => entry.Value.Names, StringComparer.Ordinal),
+                heardNames.FoldedThrough);
+
+            // Written straight back, so the expensive first walk happens once rather than at
+            // every start until something else prompts a save.
+            heardNames.RememberNames(found, DateTimeOffset.Now);
+
+            return found;
+        });
 
         var gameState = new GameStateStore
         {
@@ -896,6 +940,10 @@ public sealed class AppHost : IDisposable
             // And Loadout describes one ship, so without this every parked ship's slots read as
             // never seen the moment the Commander swapped out of it.
             RestoreLoadouts = fid => recoveredLoadouts.Value.TryGetValue(fid, out var seen) ? seen : null,
+
+            // And the names, so a failing lookup has something to match against on the very first
+            // question of the session rather than after a few jumps.
+            RestoreNames = fid => recoveredNames.Value.TryGetValue(fid, out var names) ? names : null,
         };
 
         // The settings follow whoever the journal says is flying (Phase 44). Subscribed
@@ -1664,6 +1712,15 @@ public sealed class AppHost : IDisposable
                     // exists, so a press asked for here would be null and stay null.
                     Rescan = () => self is null ? null : self.RescanLoadoutsAsync,
                 },
+
+                // How a misheard proper noun is recovered (#134). The catalogue is read at call
+                // time, because a system the Commander jumped into a minute ago is one they may be
+                // about to ask about — and the watch is the App's, since it is the state of one
+                // exchange rather than of an installation.
+                new SpokenNamesSurface(
+                    () => gameState.Active?.Names ?? SpokenNames.Empty,
+                    self?.Mishearings ?? new MishearingWatch(),
+                    (heard, meant) => self?.LearnCorrection(heard, meant)),
                 cancellation,
                 callouts,
                 () => built ?? throw new InvalidOperationException(
@@ -1688,6 +1745,11 @@ public sealed class AppHost : IDisposable
                         transcriber.Unavailable ?? "No speech model is selected."),
                     Binds = () => binds.Current,
                     InstalledModels = () => models.Installed(),
+
+                    // Read at draw time, so the row shows what has been learned rather than what
+                    // had been when the surface was assembled (#134).
+                    Corrections = () => self?.LearnedCorrections() ?? "Nothing yet.",
+                    ForgetCorrections = () => self?.ForgetCorrections(),
 
                     // What the gate policy is actually doing, which is the question a Commander
                     // running hands free is asking when they ask this one (Phase 13).
@@ -2232,6 +2294,7 @@ public sealed class AppHost : IDisposable
         host.Galaxy = galaxy;
         host.JournalDirectory = journalDirectory;
         host._loadouts = loadouts;
+        host._heardNames = heardNames;
         host.Plans = planBook;
         host.Controllers = controllers;
         host.Commodities = commodityBoard;
@@ -2785,6 +2848,11 @@ public sealed class AppHost : IDisposable
         // for. Both null is the router's own answer, unchanged.
         Turns.EffortFloor = current.Llm.EffortFloor;
         Turns.EffortCeiling = current.Llm.EffortCeiling;
+
+        // What the transcriber gets wrong, put right before anything reads the sentence (#134).
+        // Assigned here like every other per-session property, so a correction learned this
+        // afternoon is applied to the next thing said without a restart.
+        Turns.Heard = HeardAsMeant;
 
         // Position 4, both halves: the turn path is cached above the breakpoint, so the story's
         // thirteen hundred tokens are paid once per edit rather than per turn (Phase 43).
@@ -3345,6 +3413,63 @@ public sealed class AppHost : IDisposable
     /// tells a Commander whether the answer they are looking at is worth acting on.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// The Frontier id of whoever is flying, or empty before anybody has been identified
+    /// (<a href="https://github.com/dseelinger/d47/issues/134">#134</a>). Everything the listening
+    /// store holds is keyed on it, because two Commanders share one journal folder and neither
+    /// may be handed the other's corrections.
+    /// </summary>
+    private string Flying => GameState.Active?.Identity.FrontierId ?? string.Empty;
+
+    /// <summary>What d47 has learned this transcriber gets wrong, for the settings row (#134).</summary>
+    internal string LearnedCorrections() =>
+        Flying.Length == 0 || _heardNames is not { } store
+            ? "Nothing yet. D47 learns one of these only when you correct a name it misheard."
+            : store.AliasesFor(Flying).Summarise();
+
+    /// <summary>Drops every learned correction for whoever is flying (#134).</summary>
+    internal void ForgetCorrections()
+    {
+        if (Flying is { Length: > 0 } fid)
+        {
+            _heardNames?.ForgetCorrections(fid, DateTimeOffset.Now);
+        }
+    }
+
+    /// <summary>
+    /// The transcript pre-pass (<a href="https://github.com/dseelinger/d47/issues/134">#134</a>):
+    /// what this Commander's transcriber reliably gets wrong, put right before anything reads the
+    /// sentence.
+    /// </summary>
+    internal string HeardAsMeant(string spoken) =>
+        Flying.Length == 0 || _heardNames is not { } store
+            ? spoken
+            : store.AliasesFor(Flying).Apply(spoken);
+
+    /// <summary>
+    /// Records a correction the Commander steered d47 to
+    /// (<a href="https://github.com/dseelinger/d47/issues/134">#134</a>).
+    /// <para>
+    /// <b>Whether it is kept is the store's decision.</b> Everything that must not be aliased — a
+    /// word that already names a place this Commander has met, a phrase the keyword router answers
+    /// to, anything that is not a single word — is refused there, in one place, rather than by
+    /// each caller remembering to ask.
+    /// </para>
+    /// </summary>
+    internal void LearnCorrection(string heard, string meant)
+    {
+        if (Flying is { Length: > 0 } fid)
+        {
+            _heardNames?.Learn(
+                fid,
+                heard,
+                meant,
+                DateTimeOffset.Now,
+                word => ReservedPhrases.Any(phrase =>
+                    phrase.Contains(word, StringComparison.OrdinalIgnoreCase)));
+        }
+    }
+
     internal string RememberedShips()
     {
         if (GameState.Active?.Loadouts is not { IsKnown: true } ships)

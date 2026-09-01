@@ -1,4 +1,4 @@
-namespace D47.Core.Knowledge;
+﻿namespace D47.Core.Knowledge;
 
 /// <summary>
 /// Matching something a Commander said against a closed list of names the search service
@@ -152,6 +152,119 @@ public static class Catalogue
 
         return [.. fragments.Concat(misspellings).Take(5)];
     }
+
+    /// <summary>
+    /// The same, with a third rung for names that arrived through a microphone
+    /// (<a href="https://github.com/dseelinger/d47/issues/134">#134</a>).
+    /// <para>
+    /// <b>Edit distance is the wrong model for a transcriber, and this is measured rather than
+    /// argued.</b> Typing errors are near in spelling; hearing errors are near in <em>sound</em>,
+    /// and the two are not the same set. Run over this Commander's own 15,216 journal names:
+    /// <c>"Eurebia"</c> for <c>Eurybia</c> is one edit and both rungs find it, but
+    /// <c>"Dessy at"</c> for <c>Deciat</c> is <b>four</b> edits — the misspelling rung returns
+    /// nothing at all, and the sound-alike rung returns exactly one candidate, the right one.
+    /// </para>
+    /// <para>
+    /// <b>Last, and ranked by edit distance inside its own rung.</b> A phonetic key is deliberately
+    /// loose — <c>"Jamison Memorial"</c> keys the same as <i>Jing Comms Co</i> — so it goes below
+    /// the two precise rungs, and within itself the closest spelling comes first, which puts
+    /// <i>Jameson Memorial</i> at the head of those five.
+    /// </para>
+    /// <para>
+    /// <b>A limit, recorded rather than papered over.</b> It keys the whole name, so a transcriber
+    /// that moved the word boundaries defeats it: <c>"shin arta desha"</c> finds
+    /// <i>Shinrarta Dezhra</i> under neither rung. That case wants the biasing
+    /// <c>ProperNouns</c> already does, and is why this is a recovery rather than a replacement
+    /// for it.
+    /// </para>
+    /// </summary>
+    public static IReadOnlyList<string> NearSpoken(IReadOnlyList<string> catalogue, string spoken)
+    {
+        ArgumentNullException.ThrowIfNull(catalogue);
+
+        var written = Near(catalogue, spoken);
+
+        if (written.Count >= 5 || Sound(spoken) is not { Length: > 0 } key)
+        {
+            return written;
+        }
+
+        var relaxed = Relax(spoken);
+
+        var sounded = catalogue
+            .Except(written)
+            .Where(name => string.Equals(Sound(name), key, StringComparison.Ordinal))
+            .OrderBy(name => Distance(Relax(name), relaxed, int.MaxValue))
+            .ThenBy(name => name, StringComparer.OrdinalIgnoreCase);
+
+        return [.. written.Concat(sounded).Take(5)];
+    }
+
+    /// <summary>
+    /// What a name sounds like, as a Soundex key
+    /// (<a href="https://github.com/dseelinger/d47/issues/134">#134</a>).
+    /// <para>
+    /// <b>Soundex rather than something cleverer, because it was measured and it was enough.</b>
+    /// It catches both of the mishearings this repository has actually written down — the reported
+    /// <c>Eurebia</c> and the counter-example <c>"Dessy at"</c> that edit distance misses — over a
+    /// real 15,216-name catalogue, and it does it with one candidate each. Double Metaphone is
+    /// several hundred lines for a case nobody has produced.
+    /// </para>
+    /// <para>
+    /// Keyed over the <see cref="Relax"/>ed form, so punctuation and spacing are already gone: a
+    /// transcriber writes "Hutton Orbital" and "hutton orbital" indifferently, and neither is a
+    /// difference in sound.
+    /// </para>
+    /// </summary>
+    public static string Sound(string name)
+    {
+        var relaxed = Relax(name ?? string.Empty);
+
+        if (relaxed.Length == 0)
+        {
+            return string.Empty;
+        }
+
+        var key = new System.Text.StringBuilder(4);
+        key.Append(char.ToUpperInvariant(relaxed[0]));
+
+        var previous = Code(relaxed[0]);
+
+        foreach (var letter in relaxed.Skip(1))
+        {
+            var code = Code(letter);
+
+            if (code != '0' && code != previous)
+            {
+                key.Append(code);
+
+                if (key.Length == 4)
+                {
+                    break;
+                }
+            }
+
+            // H and W are transparent: they do not code, and they do not break a run either, so
+            // "Ashcroft" keys its two consonants as one the way it is said.
+            if (letter is not ('h' or 'w'))
+            {
+                previous = code;
+            }
+        }
+
+        return key.Append('0', 4 - key.Length).ToString();
+    }
+
+    private static char Code(char letter) => letter switch
+    {
+        'b' or 'f' or 'p' or 'v' => '1',
+        'c' or 'g' or 'j' or 'k' or 'q' or 's' or 'x' or 'z' => '2',
+        'd' or 't' => '3',
+        'l' => '4',
+        'm' or 'n' => '5',
+        'r' => '6',
+        _ => '0',
+    };
 
     /// <summary>
     /// Levenshtein distance, abandoned once it passes <paramref name="budget"/>.

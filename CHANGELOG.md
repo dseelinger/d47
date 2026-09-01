@@ -1,4 +1,4 @@
-# Changelog
+﻿# Changelog
 
 What changed in each release of Directive 47, newest first.
 
@@ -375,6 +375,71 @@ while being flown is not deleted"* holds by there being no such path at all.
 
 **Half of #128 is deliberately not built.** Asking about another ship by name through `get_ship`
 is tabled under the 2026-08-29 moratorium, on the Commander's own note on the issue.
+
+### A misheard name asks, retries, and is remembered against the word (#134)
+
+*"How far are we from Eurebia?"* — *"I don't have a system called Eurebia on record, Commander.
+Could be a misspelling."* That sentence is not a fixed string, it is the model narrating a bare
+nothing politely, and **a polite dead end is still a dead end**: the Commander has to spot the
+mishearing themselves, work out the spelling, and say the whole question again.
+
+**Proper nouns are where speech recognition fails hardest and most silently** — a misheard system
+name does not arrive as an error or a low-confidence marker, it arrives as a plausible English word
+and the answer is confidently about the wrong place. `ProperNouns` biases the transcriber against
+exactly this, but it holds sixty names and the galaxy holds four hundred billion, so a name the
+Commander has not been near lately could never have been on it. Biasing cannot cover the galaxy;
+the recovery path had to exist.
+
+**The catalogue the galaxy does not have is on the Commander's own disk.** Every system they have
+jumped to, station they have docked at and faction they have met — measured on this corpus at
+**15,216 distinct names** (4,829 systems, 968 stations, 9,422 factions) in about 300 KB, mined from
+943 journals in seconds. And the reported case is in there: *Eurybia* **and** *Eurybia Blue Mafia*
+are both names this Commander has met, so the mishearing that started this was recoverable from
+their own history all along. Nothing leaves the machine to do it.
+
+**Edit distance is the wrong model for a transcriber, and that was measured rather than argued.**
+Typing errors are near in spelling; hearing errors are near in *sound*. Over the real catalogue,
+`Eurebia` → *Eurybia* is one edit and both rungs find it — but the issue's own counter-example,
+`"Dessy at"` → *Deciat*, is **four** edits: `Catalogue.Near` returns nothing at all, and a phonetic
+rung returns exactly one candidate, the right one. So `NearSpoken` adds sound-alikes below the two
+precise rungs and ranks them by spelling, which puts *Jameson Memorial* at the head of the five
+things that key like `"Jamison Memorial"`. **A limit, recorded rather than papered over:** it keys
+the whole name, so a transcriber that moved the word boundaries defeats it — `"shin arta desha"`
+finds *Shinrarta Dezhra* under neither rung, which is the case biasing is still for.
+
+**The confirmation is the retry, and it needed no new dialogue machinery.** The failing lookup hands
+back a sentence that invites a correction rather than a bare nothing; the Commander says which; the
+model re-runs the same tool because that is what it was asked to do. What is left is noticing that
+the second call succeeded where the first failed — and **learning only from a name that actually
+resolved**, never from one d47 offered, because an offer is a guess and a resolved lookup is the
+Commander having steered it there. One retry, then it asks for the letters: a correction is itself
+spoken and can itself be misheard, and two people who cannot hear each other repeat themselves
+indefinitely.
+
+**What is remembered is the word, not the answer** — the Commander's own instruction, and the part
+that carries the design. Correct it once about *Eurebia* and *"who runs the Eurybia Blue Mafia"*
+comes out right too, because the rewrite happens to the sentence before routing and before any tool
+call rather than to one argument afterwards. An alias against the *system* would have fixed one
+question.
+
+**A wrong alias is worse than the mishearing it fixes** — permanent, invisible, and quietly
+rewriting every later sentence containing that token — so the guards are in the store rather than in
+a caller's memory. Never a word that already means something: a place this Commander has met, a
+phrase the keyword router answers to, or anything short enough to be an English word by accident.
+`Eurebia` is capturable precisely because it is not a word. Whole tokens only, so an alias for `Sol`
+cannot rewrite *solid*. **Spoken input only** — a Commander who types a word can see what they
+typed. And nothing is learned from what another player wrote: the catalogue reads named place fields
+rather than scraping the event, so a chat message naming a system contributes neither its sender,
+its words, nor the system it named.
+
+**Local, per Commander, readable and clearable.** `data\heard-names.json`, keyed on the Frontier id
+inside the document, with a row on the Listening card that lists what has been learned and a
+**Forget them all** beside it — an alias table that cannot be read is a mystery generator. Clearing
+the corrections leaves the names, which are not a claim about anything.
+
+**Half of #134 the issue asked to be measured, and half of #126 it asked to be shared.** The
+faction-name spell-check #126 wants is the same catalogue; #126 is tabled, so this builds it once
+and leaves it there for when that is untabled.
 
 ## 0.98.3 — 2026-09-01 — A refused raise names its fault
 

@@ -1,6 +1,7 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 using D47.Core.Knowledge;
+using D47.Core.Listening;
 
 namespace D47.Core.Capabilities.Builtin;
 
@@ -16,6 +17,45 @@ namespace D47.Core.Capabilities.Builtin;
 /// (see <see cref="SystemSummary"/>).
 /// </para>
 /// </summary>
+/// <summary>
+/// What the App knows about hearing a proper noun right
+/// (<a href="https://github.com/dseelinger/d47/issues/134">#134</a>): the names this Commander has
+/// met, whether one is outstanding, and what to do when a correction lands.
+/// </summary>
+/// <param name="Names">
+/// Their own catalogue, read at call time rather than captured — a system they jumped into a
+/// minute ago is one they may be about to say.
+/// </param>
+/// <param name="Watch">Which name is being waited on, and whether they have been asked once already.</param>
+/// <param name="Learn">
+/// Told about a correction that resolved. Whether it is kept is the store's decision, not this
+/// caller's: a token that already means something is never aliased.
+/// </param>
+public sealed record SpokenNamesSurface(
+    Func<Listening.SpokenNames> Names,
+    Listening.MishearingWatch Watch,
+    Action<string, string> Learn)
+{
+    /// <summary>
+    /// Every member supplied and none of them learning anything, for a test registry to bind.
+    /// A Commander who has met nothing gets the wording that asks them to spell it out, which is
+    /// the honest answer with no catalogue behind it.
+    /// </summary>
+    public static SpokenNamesSurface Inert => new(
+        () => Listening.SpokenNames.Empty,
+        new Listening.MishearingWatch(),
+        (_, _) => { });
+
+    /// <summary>A name resolved: learn the correction if one was outstanding.</summary>
+    public void Confirm(string resolved)
+    {
+        if (Watch.Confirmed(resolved) is { } correction)
+        {
+            Learn(correction.Heard, correction.Meant);
+        }
+    }
+}
+
 public static class GalaxyCapability
 {
     /// <summary>The descriptor's id, named once so a help link cannot spell it differently.</summary>
@@ -77,7 +117,12 @@ public static class GalaxyCapability
         ITradePlanService? trade = null,
         Func<string?>? currentStation = null,
         CommodityBoard? board = null,
-        Func<DateTimeOffset>? now = null) => new()
+        Func<DateTimeOffset>? now = null,
+
+        // What this Commander has met, and what their transcriber gets wrong (#134). Null under
+        // the designer and in a test that is not about it, and a failing lookup then says what it
+        // always said rather than asking a question nothing can answer.
+        SpokenNamesSurface? heard = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -192,7 +237,7 @@ public static class GalaxyCapability
                     },
                 ],
                 Handler = (arguments, cancellationToken) =>
-                    DistanceAsync(galaxy, currentSystem, settings, arguments, cancellationToken),
+                    DistanceAsync(galaxy, currentSystem, settings, heard, arguments, cancellationToken),
             },
             new ToolDefinition
             {
@@ -500,10 +545,54 @@ public static class GalaxyCapability
         }
     }
 
+    /// <summary>
+    /// <b>A name that will not resolve now asks rather than shrugging</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/134">#134</a>).
+    /// <para>
+    /// The reported failure was <i>"How far are we from Eurebia?"</i> answered with <i>"I don't
+    /// have a system called Eurebia on record — could be a misspelling"</i>. That sentence is the
+    /// model narrating a bare nothing politely, and a polite dead end is still a dead end: the
+    /// Commander has to spot the mishearing, work out the spelling and say the whole question
+    /// again. What comes back now names the near ones and invites the correction, so the model
+    /// re-runs the lookup instead of apologising.
+    /// </para>
+    /// <para>
+    /// <b>Which of the two names failed is not knowable from here</b>, and the wording says so
+    /// rather than guessing: the service answers "no" to the pair. The destination is the one
+    /// offered near names, because it is the one the Commander just said out loud — <c>from</c> is
+    /// almost always where they are standing, which came from the journal and cannot be misheard.
+    /// </para>
+    /// </summary>
+    private static ToolResult CouldNotFind(
+        SpokenNamesSurface? heard,
+        string from,
+        string to,
+        string current)
+    {
+        // Where the Commander is standing was written by Elite, not said by anybody. If it is the
+        // half that did not resolve, no amount of asking about spelling helps.
+        if (!string.Equals(from, current, StringComparison.OrdinalIgnoreCase)
+            && heard?.Names() is { IsKnown: true } catalogue
+            && !catalogue.Knows(to)
+            && catalogue.Knows(from))
+        {
+            return ToolResult.Error(Ask(heard, from));
+        }
+
+        return heard is null
+            ? ToolResult.Error($"I couldn't find one of those systems — '{from}' or '{to}'.")
+            : ToolResult.Error(Ask(heard, to));
+
+        static string Ask(SpokenNamesSurface heard, string spoken) =>
+            MishearingWatch.Ask(
+                "system", spoken, heard.Names().Near(spoken), heard.Watch.Rejected(spoken));
+    }
+
     private static async Task<ToolResult> DistanceAsync(
         IGalaxyService? galaxy,
         Func<string?> currentSystem,
         Configuration.SettingsService settings,
+        SpokenNamesSurface? heard,
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
@@ -533,8 +622,13 @@ public static class GalaxyCapability
 
             if (distance is null)
             {
-                return ToolResult.Error($"I couldn't find one of those systems — '{from}' or '{to}'.");
+                return CouldNotFind(heard, from, to, currentSystem() ?? string.Empty);
             }
+
+            // **The correction is the retry, and this is where it is noticed** (#134). A name that
+            // resolved after one that did not is the Commander having steered d47 to the right
+            // word, which is the only evidence worth learning from — an offer d47 made is a guess.
+            heard?.Confirm(to);
 
             return ToolResult.Ok(
                 $"{to} is {distance.Value.ToString("N2", CultureInfo.InvariantCulture)} light years from {from}.");
