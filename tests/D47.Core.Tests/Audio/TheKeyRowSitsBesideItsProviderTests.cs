@@ -1,4 +1,4 @@
-using D47.Core.Audio;
+﻿using D47.Core.Audio;
 using D47.Core.Capabilities.Builtin;
 using Xunit;
 
@@ -33,11 +33,17 @@ public class TheKeyRowSitsBesideItsProviderTests
         var needKeys = TtsProviderCatalog.All.Where(provider => provider.NeedsKey).ToArray();
 
         Assert.NotEmpty(needKeys);
-        Assert.Equal(SpeechCapability.ProviderKey, keys[0]);
+
+        // Output device took the top of the card on 2026-09-01 — every other row here is about
+        // *how* D47 sounds and that one is about whether the Commander hears it at all. What this
+        // test is for is unchanged: the key rows sit immediately behind the provider that needs
+        // them, wherever in the card that pair happens to start.
+        Assert.Equal(SpeechCapability.OutputDeviceKey, keys[0]);
+        Assert.Equal(SpeechCapability.ProviderKey, keys[1]);
 
         Assert.Equal(
             [.. needKeys.Select(SpeechCapability.KeyRowFor)],
-            keys.Skip(1).Take(needKeys.Length));
+            keys.Skip(2).Take(needKeys.Length));
     }
 
     /// <summary>
@@ -50,7 +56,7 @@ public class TheKeyRowSitsBesideItsProviderTests
         var keys = Keys();
         var needKeys = TtsProviderCatalog.All.Count(provider => provider.NeedsKey);
 
-        Assert.Equal(SpeechCapability.VoiceKey, keys[needKeys + 1]);
-        Assert.Equal(SpeechCapability.RateKey, keys[needKeys + 2]);
+        Assert.Equal(SpeechCapability.VoiceKey, keys[needKeys + 2]);
+        Assert.Equal(SpeechCapability.RateKey, keys[needKeys + 3]);
     }
 }

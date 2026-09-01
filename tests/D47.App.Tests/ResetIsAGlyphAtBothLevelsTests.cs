@@ -139,20 +139,28 @@ public sealed class ResetIsAGlyphAtBothLevelsTests
     }
 
     /// <summary>
-    /// The mark is a closed shape with an arrowhead, drawn anticlockwise from the top. Pinned as
-    /// geometry rather than as a picture, because the one thing a test cannot say about a glyph is
-    /// whether it reads as "undo" — that needs eyes, and the same circle drawn the other way is
-    /// "refresh", which is a different promise about a button that throws work away.
+    /// The mark is an arc and a separate arrowhead. Pinned as geometry rather than as a picture,
+    /// because the one thing a test cannot say about a glyph is whether it reads as "undo" — that
+    /// needs eyes, and the circle read the other way is "refresh", which is a different promise
+    /// about a button that throws work away.
+    /// <para>
+    /// <b>The sweep flag used to be pinned as a proxy for that, and it is not one</b> (redrawn
+    /// 2026-09-01). It says which way the <em>pen</em> travels; what a reader sees is where the
+    /// arrowhead is and which way it points, and the two need not agree. The mark this file now
+    /// holds is written clockwise with the head at the top of the gap pointing back — and it was
+    /// chosen off a drawing, which is the only instrument that can settle it.
+    /// </para>
     /// </summary>
     [Fact]
     public void TheMarkIsAnArcAndAnArrowhead()
     {
-        Assert.Contains(" A 8,8 ", Glyphs.Reset);
+        Assert.Contains(" A ", Glyphs.Reset);
 
-        // sweep-flag 0: anticlockwise from the top. Refresh is the same arc with this flipped.
-        Assert.Contains("0 1 0", Glyphs.Reset);
-
-        // Two subpaths: the circle, then the head.
+        // Two subpaths: the arc, then the head.
         Assert.Equal(2, Glyphs.Reset.Split('M', StringSplitOptions.RemoveEmptyEntries).Length);
+
+        // Nearly a full turn rather than the three-quarter arc it replaced, which at fourteen
+        // pixels read as a comma with a tick on it.
+        Assert.Contains(" 0 1 ", Glyphs.Reset);
     }
 }

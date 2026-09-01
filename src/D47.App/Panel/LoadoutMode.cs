@@ -1,4 +1,4 @@
-using D47.Core.Loadout;
+﻿using D47.Core.Loadout;
 
 namespace D47.App.Panel;
 
@@ -126,6 +126,24 @@ public sealed record LoadoutGauge(string Name, string Reading, double Fill, Load
 {
     /// <summary>The other figures on the same bar. Empty for a gauge with one number.</summary>
     public IReadOnlyList<LoadoutMark> Marks { get; init; } = [];
+
+    /// <summary>
+    /// Figures written <b>under the point on the bar they belong to</b>, rather than joined into a
+    /// sentence beneath it (the Commander's instruction, 2026-09-01).
+    /// <para>
+    /// <b>It exists because the bar could not explain itself.</b> The white tick sat four fifths of
+    /// the way along the power bar and the words naming it — <i>81% retracted</i> — sat at the far
+    /// left of the line underneath, in a run of clauses joined by interpuncts. Asked what the tick
+    /// was for, the Commander who commissioned it could not remember. A figure under its own point
+    /// needs no legend.
+    /// </para>
+    /// <para>
+    /// <b>Each label ends at its point</b>, so nothing can run off the right-hand edge — the one
+    /// that matters is the total draw, which is allowed to be over 100% and would otherwise be
+    /// written past the end of the track it is describing.
+    /// </para>
+    /// </summary>
+    public IReadOnlyList<LoadoutMark> Scale { get; init; } = [];
 
     /// <summary>What the figures mean, or what is wrong with them. Null where the reading says it.</summary>
     public string? Note { get; init; }

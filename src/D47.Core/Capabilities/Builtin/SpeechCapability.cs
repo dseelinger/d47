@@ -413,6 +413,27 @@ public static class SpeechCapability
     {
         var rows = new List<SettingRow>
         {
+            // **First on the card** (the Commander's instruction, 2026-09-01, "for now — a
+            // consolidation is coming"). Every other row here is about *how* D47 sounds; this one
+            // is about *whether the Commander hears it at all*, which is the question that has to
+            // be settled before any of the rest is worth setting.
+            new SettingRow
+            {
+                Key = OutputDeviceKey,
+                Label = "Output device",
+                Help = "Where D47 speaks. Defaults to whatever Windows is using.",
+                Kind = SettingKind.Choice,
+                DefaultDisplay = "(the system default)",
+                AllowsFreeText = true,
+                ChoiceSource = _ => surface.OutputDevices?.Invoke() ?? [],
+                ChoiceLabel = id => surface.DeviceLabel?.Invoke(id) ?? id,
+                DocsAnchor = "output-device",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Speech.OutputDevice,
+                    Write = (s, v) => s with { Speech = s.Speech with { OutputDevice = v } },
+                },
+            },
             new SettingRow
             {
                 Key = ProviderKey,
@@ -804,23 +825,6 @@ public static class SpeechCapability
             },
             new SettingRow
             {
-                Key = OutputDeviceKey,
-                Label = "Output device",
-                Help = "Where D47 speaks. Defaults to whatever Windows is using.",
-                Kind = SettingKind.Choice,
-                DefaultDisplay = "(the system default)",
-                AllowsFreeText = true,
-                ChoiceSource = _ => surface.OutputDevices?.Invoke() ?? [],
-                ChoiceLabel = id => surface.DeviceLabel?.Invoke(id) ?? id,
-                DocsAnchor = "output-device",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Speech.OutputDevice,
-                    Write = (s, v) => s with { Speech = s.Speech with { OutputDevice = v } },
-                },
-            },
-            new SettingRow
-            {
                 Key = CuesKey,
                 Advanced = true,
                 Label = "Loop-state cues",
@@ -1043,9 +1047,12 @@ public static class SpeechCapability
         // what makes its key relevant, and the row that answers a choice belongs where the choice
         // was made: appended, it sat below sixteen rows about rates, cues and retries, so the
         // dropdown asked for a key and the box to put it in was off the bottom of the screen.
-        // Index 1 rather than a sort, because "after the provider" is the whole requirement.
+        // **Found rather than counted** (2026-09-01). It was index 1, which meant "after the
+        // provider" only for as long as the provider was first — and the moment Output device took
+        // the top of the card, index 1 put every key row *above* the provider that needs it. The
+        // requirement was always "after the provider row", so that is what it now says.
         rows.InsertRange(
-            1,
+            rows.FindIndex(row => row.Key == ProviderKey) + 1,
             from provider in TtsProviderCatalog.All
             where provider.NeedsKey
             select new SettingRow

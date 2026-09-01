@@ -156,9 +156,22 @@ public static class Glyphs
     /// installed font happened to have: a different weight from the four marks beside it, hung off
     /// a baseline rather than centred in its box, and a hollow rectangle on a machine without it.
     /// </para>
+    /// <para>
+    /// <b>Redrawn 2026-09-01 — <i>"this glyph is dumb"</i>.</b> It was a three-quarter arc opening
+    /// at the top with the arrowhead folded back over the gap, which at fourteen pixels read as a
+    /// comma with a tick on it. This is a fuller turn with the head clear of the arc, chosen from
+    /// seven drawings. The direction is unchanged and is still the point.
+    /// </para>
+    /// <para>
+    /// <b>Inside its own bounds on purpose.</b> <see cref="Made"/> stretches the geometry to the
+    /// control and then strokes it two units wide, so half that stroke lands outside — which is
+    /// what made the info mark look like a flat tyre until the button was given vertical padding.
+    /// The arrowhead here is the outermost thing on three sides, and it is a line end rather than
+    /// a curve, so a clipped pixel of it reads as nothing.
+    /// </para>
     /// </summary>
     public const string Reset =
-        "M 12,4 A 8,8 0 1 0 20,12  M 15,1 L 12,4 L 15,7";
+        "M 5,9.2 A 8.5,8.5 0 1 1 4.5,13.5  M 9.6,8.9 L 4.8,9.1 L 5.0,4.3";
 
     /// <summary>
     /// What this has cost: a banknote, a rectangle with a circle in the middle of it

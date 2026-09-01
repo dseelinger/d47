@@ -489,7 +489,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             // pressed (#208). Muted read as "there is nothing here", which is exactly wrong on a
             // mark that is only drawn once something has been changed.
             Content = Glyphs.Draw(Glyphs.Reset, ThemeManager.AccentKey, TypeScale.Small),
-            Padding = new Thickness(6, 0),
+
+            // Room for the stroke, which Made puts half of outside the box — see the note on
+            // Glyphs.Reset. It matters now that the mark is a fuller circle: a clipped arc
+            // reads as a flat edge where a clipped line end read as nothing.
+            Padding = new Thickness(6, 2),
             MinWidth = 0,
             VerticalAlignment = VerticalAlignment.Center,
             Background = Brushes.Transparent,
@@ -1741,7 +1745,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 // without it - and it could not be sized or coloured with them.
                 // Accent, the same rule and the same reason as the card-level one above (#208).
                 Content = Glyphs.Draw(Glyphs.Reset, ThemeManager.AccentKey, TypeScale.Secondary),
-                Padding = new Thickness(4, 0),
+
+                // The same room the card-level one above needs, and for the same reason.
+                Padding = new Thickness(4, 2),
                 MinWidth = 0,
                 VerticalAlignment = VerticalAlignment.Center,
                 Background = Brushes.Transparent,

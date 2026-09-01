@@ -501,6 +501,21 @@ public sealed class ShipsMode(
             power.Fits ? LoadoutTone.Body : LoadoutTone.Danger)
         {
             Marks = [new LoadoutMark(power.Retracted / made, $"{Percent(power.RetractedShare)} retracted")],
+
+            // **Three figures under the points they belong to** (the Commander's instruction,
+            // 2026-09-01). What the tick means was unguessable from a legend at the far left of
+            // the line beneath — so the retracted share is written under the tick, the plant's own
+            // limit under the end of the track, and the total draw under wherever it lands.
+            //
+            // **The draw is clamped for its position and not for its words.** A build 18% over its
+            // plant has nowhere further along the bar to be written, and the figure is the whole
+            // point of the gauge, so it sits at the end and says 118%.
+            Scale =
+            [
+                new LoadoutMark(power.Retracted / made, Percent(power.RetractedShare)),
+                new LoadoutMark(1, "100%"),
+                new LoadoutMark(power.Deployed / made, Percent(power.DeployedShare)),
+            ],
             Note = power.Overage is { } over
                 ? $"{Megawatts(over)} over with the hardpoints out."
                 : null,
