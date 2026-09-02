@@ -231,10 +231,16 @@ public static class NpcChatter
     /// <summary>
     /// The format contract every kind shares. Exact, because the reply is parsed rather than
     /// spoken whole: a line that does not read <c>Name: words</c> is dropped without ceremony.
+    /// <para>
+    /// <b>One spelling per speaker is asked for</b> (#256), the same request the carrier's two
+    /// posts already get. It is a request rather than a guarantee, which is why
+    /// <see cref="OneNamePerPerson"/> sits underneath it.
+    /// </para>
     /// </summary>
     private const string Contract =
         "Write only the exchange, one line per speaker turn, each formatted exactly as "
-        + "Name: words — an invented plain name or call sign, a colon, what they say. No other "
+        + "Name: words — an invented plain name or call sign, a colon, what they say. A speaker "
+        + "keeps one name, written the same way on every line of theirs. No other "
         + "text, no quotation marks, no stage directions. Use the live game state only for where "
         + "this is happening; invent everything else. Never name or imitate a real person or "
         + "another player. Nobody asks the Commander to do anything, nobody asks the Commander a "
@@ -349,11 +355,11 @@ public static class NpcChatter
         }
 
         var about = carrier ?? NpcChatterCarrier.None;
-        var lines = new List<NpcChatterLine>();
+        var heard = new List<(string Spelled, string Text)>();
 
         foreach (var raw in script.Split('\n'))
         {
-            if (lines.Count == MostLines)
+            if (heard.Count == MostLines)
             {
                 break;
             }
@@ -373,6 +379,17 @@ public static class NpcChatter
                 continue;
             }
 
+            heard.Add((name, text));
+        }
+
+        // Names are settled over the whole exchange before any line is judged, because the
+        // exchange is the only place where two spellings are knowably one person (#256).
+        var named = OneNamePerPerson(heard.Select(line => line.Spelled), about);
+        var lines = new List<NpcChatterLine>(heard.Count);
+
+        foreach (var (spelled, text) in heard)
+        {
+            var name = named[spelled];
             var role = RoleOf(name, about);
 
             if (MovesTheCarrier(text, role, about))
@@ -385,6 +402,66 @@ public static class NpcChatter
 
         return lines.Count >= (kind == NpcChatterKind.Hail ? 1 : 2) ? lines : [];
     }
+
+    /// <summary>
+    /// One name per person across an exchange
+    /// (<a href="https://github.com/dseelinger/d47/issues/256">#256</a>): what each spelling the
+    /// model wrote is folded onto.
+    /// <para>
+    /// The model introduces a man as <c>Courier Vance</c> and has him answer as <c>Vance</c>, and
+    /// the cast keys its per-system table on the string — so one person in a four-line scene was
+    /// two voices, drawn as two people, and both entries sat in the table until the next jump.
+    /// The exchange is a closed set of two to four lines between two speakers, and <b>it is the
+    /// only place the two spellings are knowably the same man</b>; outside it, two names that
+    /// share a word are two names, which is why this is done here and not in the cast.
+    /// </para>
+    /// <para>
+    /// The rule: a name folds onto a longer one it is a whole leading or trailing word of, and
+    /// onto the longest such form when there are several and they nest. It does not fold when
+    /// the longer forms are genuinely different people — <c>Vance</c> beside <c>Mara Vance</c>
+    /// and <c>Tom Vance</c> stays as written, because a wrong fold is the reported fault pointed
+    /// the other way. The carrier's two posts take no part: a line that carries a role is one
+    /// person by role already, and <c>Captain Reyes</c> is a pilot with a rank rather than a
+    /// second spelling of the captain.
+    /// </para>
+    /// </summary>
+    private static Dictionary<string, string> OneNamePerPerson(
+        IEnumerable<string> spellings,
+        NpcChatterCarrier carrier)
+    {
+        var names = spellings.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        var named = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var name in names)
+        {
+            named[name] = name;
+
+            if (RoleOf(name, carrier) is not null)
+            {
+                continue;
+            }
+
+            var longer = names
+                .Where(other => other.Length > name.Length
+                    && RoleOf(other, carrier) is null
+                    && IsAWordOf(name, other))
+                .OrderByDescending(other => other.Length)
+                .ThenBy(other => other, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (longer.Count > 0 && longer.Skip(1).All(other => IsAWordOf(other, longer[0])))
+            {
+                named[name] = longer[0];
+            }
+        }
+
+        return named;
+    }
+
+    /// <summary>Whether <paramref name="shorter"/> is the leading or trailing whole word(s) of <paramref name="longer"/>.</summary>
+    private static bool IsAWordOf(string shorter, string longer) =>
+        longer.StartsWith(shorter + " ", StringComparison.OrdinalIgnoreCase)
+        || longer.EndsWith(" " + shorter, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// Which of the carrier's two posts this speaker is, if either. Only while the Commander is
