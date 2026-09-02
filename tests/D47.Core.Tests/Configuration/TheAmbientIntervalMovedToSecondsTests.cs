@@ -61,12 +61,28 @@ public class TheAmbientIntervalMovedToSecondsTests
         Assert.Equal(90, loaded.Callouts.AmbientSeconds);
     }
 
+    /// <summary>
+    /// The ceiling arrived after the floor (<a
+    /// href="https://github.com/dseelinger/d47/issues/258">#258</a>), so a file written before it
+    /// carries only the floor — and a floor above the new ceiling's default reads as a pinned
+    /// cadence, which is exactly what that file already had.
+    /// </summary>
+    [Fact]
+    public void AFileFromBeforeTheCeilingKeepsTheCadenceItChose()
+    {
+        var loaded = Load("""{ "callouts": { "ambientSeconds": 600 } }""");
+
+        Assert.Equal(600, loaded.Callouts.AmbientSeconds);
+        Assert.Equal(90, loaded.Callouts.AmbientMaxSeconds);
+    }
+
     [Fact]
     public void TheDefaultsAreTheOnesTheCommanderAskedFor()
     {
         var fresh = new CalloutSettings();
 
         Assert.Equal(45, fresh.AmbientSeconds);
+        Assert.Equal(90, fresh.AmbientMaxSeconds);
         Assert.Equal(3, fresh.RouteEveryNJumps);
         Assert.Equal(30, fresh.LongJumpSeconds);
     }

@@ -592,8 +592,11 @@ on this page speaks because something did. Spoken to you rather than narrated, o
 brief tells the core it is talking to its Commander, not describing the view, so a remark is a
 dry aside in the cockpit and never a scene from a novel.
 
-Three rules keep it from being noise. It waits out an interval — forty-five seconds out of the box,
-and in seconds rather than minutes because the interesting end of the range is finer than a minute.
+Three rules keep it from being noise. It waits out an interval — and that interval is a range, not
+a tick: each gap lands somewhere between the least and the most time rows, forty-five to ninety
+seconds out of the box, because the same voice arriving on a beat is the most clocklike thing this
+app could do. Setting the two equal pins it; 0 on the least silences them. In seconds rather than
+minutes because the interesting end of the range is finer than a minute.
 It waits for the situation to have settled for ninety seconds rather than firing on the
 transition, because Status.json flips several times a minute during an approach and a remark
 about being docked that arrives as you are lifting off is worse than silence. And it never
@@ -641,6 +644,13 @@ the most time rows — twenty to forty minutes out of the box — because overhe
 fixed cadence stops sounding overheard. Setting the two equal pins it; 0 on the least silences
 them. An exchange is a scene rather than a sentence, and scenes wear out faster, which is why the
 floor sits well above the ambient remarks'.
+
+The lines of one exchange are spoken with air between them — somewhere between six tenths of a
+second and one and seven tenths, and never the same gap twice, because two people who never once
+leave a pause read as a script being performed rather than as traffic overheard. It is not a
+settings row on purpose: the beat is something to get right rather than something to adjust. **An
+urgent callout waiting behind an exchange cuts those pauses short**, so a fuel or danger warning is
+never held up by a courier chatting.
 
 > "stop calling out invented chatter" / "start calling out invented chatter"
 
