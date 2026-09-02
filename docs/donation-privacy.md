@@ -1,7 +1,7 @@
 ---
 title: Donation privacy notice
 group: General help
-nav_order: 7
+nav_order: 9
 ---
 
 **Read this before you donate anything.** It says who ends up holding your data, why they are

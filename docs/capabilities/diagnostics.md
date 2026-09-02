@@ -139,7 +139,7 @@ nav_order: 101
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">
-<a class="card" href="../transcript.html"><span class="ct">The Transcript page →</span><span class="cd">The other three readings, and every control around all four.</span></a>
+<a class="card" href="../log-file.html"><span class="ct">Log File →</span><span class="cd">The reading that shows this log, and what it does and does not let you do to it.</span></a>
 <a class="card settings" href="conversation.html"><span class="ct">Language model →</span><span class="cd">Where the figures on the receipt come from, and what they cost.</span></a>
 <a class="card" href="privacy.html"><span class="ct">Privacy →</span><span class="cd">What is in a log, and what never reaches one.</span></a>
 </div>

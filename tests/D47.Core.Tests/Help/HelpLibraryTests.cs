@@ -406,22 +406,46 @@ public class HelpLibraryTests
     }
 
     /// <summary>
-    /// The page about the Transcript page (asked for 2026-08-23), which is where the help mark on
-    /// the default reading now goes. Its three cards are the three settings sections that decide
-    /// what that page says — and each has to be marked, or the jump is an ordinary drill.
+    /// The page about the conversation reading (asked for 2026-08-23), which is where the help
+    /// mark on it goes. Its three cards are the three settings sections that decide what that
+    /// reading says — and each has to be marked, or the jump is an ordinary drill.
     /// </summary>
+    /// <remarks>
+    /// It was <c>general-transcript</c>, one page covering three readings, until #262 split it
+    /// into one page each. The settings cards stayed with this one: Listening, Language model and
+    /// Speech decide what the <em>conversation</em> says, and neither of the file readings has an
+    /// answer that depends on them.
+    /// </remarks>
     [Fact]
-    public void TheTranscriptPageOffersThreeSettingsSections()
+    public void TheInShipPageOffersThreeSettingsSections()
     {
-        var article = HelpLibrary.For("general-transcript");
+        var article = HelpLibrary.For("general-in-ship");
 
         Assert.NotNull(article);
-        Assert.Equal("The Transcript page", article.Title);
+        Assert.Equal("In Ship", article.Title);
         Assert.Equal(4, article.Sections.Count);
 
         Assert.Equal(
             new[] { "listening", "conversation", "speech" },
             article.Links.Select(link => link.Settings).ToArray());
+    }
+
+    /// <summary>
+    /// And the two readings that are files have pages of their own (#262), each about the reading
+    /// rather than about a capability. The log file's used to open Diagnostics — the right subject
+    /// and the wrong question, since a Commander pressing the mark is asking what is in front of
+    /// them rather than how to change a log level.
+    /// </summary>
+    [Theory]
+    [InlineData("general-log-file", "Log File")]
+    [InlineData("general-journal-file", "Journal File")]
+    public void EachFileReadingHasAPageOfItsOwn(string id, string title)
+    {
+        var article = HelpLibrary.For(id);
+
+        Assert.NotNull(article);
+        Assert.Equal(title, article.Title);
+        Assert.NotEmpty(article.Sections);
     }
 
     /// <summary>
