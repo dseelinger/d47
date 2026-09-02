@@ -1225,6 +1225,7 @@ public partial class PanelView : UserControl
 
         _routeState = surface.Route;
         _routeHere = surface.Here;
+        _routeRange = surface.JumpRange;
 
         Furnish(
             PanelTab.Routing,
@@ -1265,7 +1266,7 @@ public partial class PanelView : UserControl
     /// </summary>
     public void TickRouting()
     {
-        if (_routeProgress is not { } page || Tab != PanelTab.Routing)
+        if (Tab != PanelTab.Routing)
         {
             return;
         }
@@ -1273,22 +1274,39 @@ public partial class PanelView : UserControl
         var route = _routeState?.Invoke();
         var here = _routeHere?.Invoke();
 
-        if (ReferenceEquals(route, _routeSeen) && string.Equals(here, _routeWhere, StringComparison.Ordinal))
+        // And the ship's range, which the plan forms quote (#253). Watched here rather than left
+        // to the two above, because a refit changes what the placeholder should say without the
+        // Commander having moved or the route having changed.
+        var range = _routeRange?.Invoke();
+
+        if (ReferenceEquals(route, _routeSeen)
+            && string.Equals(here, _routeWhere, StringComparison.Ordinal)
+            && Nullable.Equals(range, _routeRangeSeen))
         {
             return;
         }
 
         _routeSeen = route;
         _routeWhere = here;
-        page.Refresh();
+        _routeRangeSeen = range;
+
+        // The progress page only where a host furnished one — the plan forms are furnished
+        // separately, and a surface with one and not the other used to return before either.
+        _routeProgress?.Refresh();
+
+        // RefreshSupplied rather than Refresh: this fires on every jump, and rebuilding the page
+        // then would throw away a half-typed destination.
+        _routePlan?.RefreshSupplied();
     }
 
     private RouteProgressPage? _routeProgress;
     private RoutePlanPage? _routePlan;
     private Func<D47.Core.Journal.NavRoute>? _routeState;
     private Func<string?>? _routeHere;
+    private Func<double?>? _routeRange;
     private D47.Core.Journal.NavRoute? _routeSeen;
     private string? _routeWhere;
+    private double? _routeRangeSeen;
 
     /// <summary>
     /// Gives this surface a tab, built by <paramref name="build"/> the first time it is selected,

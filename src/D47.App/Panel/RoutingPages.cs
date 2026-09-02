@@ -33,7 +33,12 @@ public sealed record RoutingSurface(
     RoutePlanBook? Plans = null,
     Func<bool>? LookupsEnabled = null,
     Action? OpenSettings = null,
-    CommodityBoard? Commodities = null);
+    CommodityBoard? Commodities = null,
+
+    // The jump range of the ship being flown, for the placeholder that says d47 will supply it
+    // (#253). Read fresh, because it changes on a swap and on a refit — and it is the same value
+    // RouteCapability falls back to, so the figure drawn is the figure sent.
+    Func<double?>? JumpRange = null);
 
 /// <summary>
 /// The Routing tab (Phase 37).
@@ -105,7 +110,9 @@ public static class RoutingPages
                 plans,
                 nav,
                 surface.LookupsEnabled ?? (() => false),
-                surface.OpenSettings)
+                surface.OpenSettings,
+                surface.Here,
+                surface.JumpRange)
             : Missing("Plotting is not available on this surface.");
 
     private static Control Course(RoutingSurface surface) =>

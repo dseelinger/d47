@@ -4,6 +4,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
+using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Capabilities;
 using D47.Core.Interface;
@@ -40,6 +41,15 @@ public sealed class RoutePlanPage : UserControl
     private readonly PanelNavigator _nav;
     private readonly Func<bool> _lookupsEnabled;
     private readonly Action? _openSettings;
+    private readonly Func<string?>? _here;
+    private readonly Func<double?>? _jumpRange;
+
+    /// <summary>
+    /// The fields whose placeholder quotes a live figure (#253), kept so
+    /// <see cref="Refresh"/> can re-read them. Jump range changes on a ship swap and on a refit,
+    /// and where you are changes on every jump.
+    /// </summary>
+    private readonly List<FormField> _supplied = [];
 
     private readonly StackPanel _cards = new() { Spacing = 12 };
 
@@ -48,13 +58,17 @@ public sealed class RoutePlanPage : UserControl
         RoutePlanBook plans,
         PanelNavigator nav,
         Func<bool> lookupsEnabled,
-        Action? openSettings = null)
+        Action? openSettings = null,
+        Func<string?>? here = null,
+        Func<double?>? jumpRange = null)
     {
         _registry = registry;
         _plans = plans;
         _nav = nav;
         _lookupsEnabled = lookupsEnabled;
         _openSettings = openSettings;
+        _here = here;
+        _jumpRange = jumpRange;
 
         Content = new ScrollViewer
         {
@@ -78,6 +92,10 @@ public sealed class RoutePlanPage : UserControl
             _cards.Children.Add(SwitchedOff());
             return;
         }
+
+        // Cleared with the cards, or a rebuild leaves the previous set of fields in here to be
+        // refreshed forever after they stopped being on screen.
+        _supplied.Clear();
 
         _cards.Children.Add(JumpCard());
         _cards.Children.Add(RichesCard());
@@ -114,9 +132,22 @@ public sealed class RoutePlanPage : UserControl
 
     private Control JumpCard()
     {
-        var to = Field("Destination", "Colonia");
-        var from = Field("From", "where you are now");
-        var range = Field("Jump range (ly)", "this ship's");
+        // Destination was "Colonia" — an example, drawn in the same grey and the same slot as the
+        // 60 below it, where the grey text genuinely is what happens if you type nothing. So the
+        // one field that had to be filled looked the most like it had been answered already (#253).
+        var to = Field("Destination", "a system", FieldNeed.Required);
+
+        // The two d47 answers for itself, quoting the figure the tool call will actually use —
+        // RouteCapability resolves `from` and `jump_range` from exactly these.
+        var from = Field("From", "where you are now", FieldNeed.Supplied, () => _here?.Invoke(), width: 300);
+        var range = Field(
+            "Jump range (ly)",
+            "this ship's",
+            FieldNeed.Supplied,
+            () => _jumpRange?.Invoke() is { } ly
+                ? ly.ToString("0.##", System.Globalization.CultureInfo.CurrentCulture) + " ly"
+                : null);
+
         var efficiency = Field("Efficiency", "60");
 
         var form = new StackPanel
@@ -161,7 +192,8 @@ public sealed class RoutePlanPage : UserControl
                 ("jump_range", range.Text),
                 ("efficiency", efficiency.Text)),
             () => string.IsNullOrWhiteSpace(to.Text) ? "Name a destination first." : null,
-            NeutronPlotterHelp);
+            NeutronPlotterHelp,
+            FormField.Legend(required: true, supplied: true));
     }
 
     /// <summary>
@@ -205,7 +237,10 @@ public sealed class RoutePlanPage : UserControl
 
     private Control TradeCard()
     {
-        var capital = Field("Credits to trade with", "required");
+        // The tell that started #253: somebody hit exactly this problem, had nowhere to put the
+        // answer, and put the word "required" in the placeholder — where it vanishes the moment
+        // the Commander types, which is when it still needs to be true.
+        var capital = Field("Credits to trade with", "how much", FieldNeed.Required);
         var hops = Field("Hops", "5");
         var maxHop = Field("Longest leg (ly)", "40");
         var loop = new CheckBox { Content = "End where it started" };
@@ -248,13 +283,19 @@ public sealed class RoutePlanPage : UserControl
             () => string.IsNullOrWhiteSpace(capital.Text)
                 ? "Say how many credits to trade with. It is never inferred."
                 : null,
-            TradeHelp);
+            TradeHelp,
+            FormField.Legend(required: true));
     }
 
     /// <summary>
     /// One planner: its form, its button, whatever it last answered, and the pending state that
     /// a submitted job needs and a spoken answer never did.
     /// </summary>
+    /// <param name="legend">
+    /// The key to the marks on this form (#253), or null where the form marks nothing — Road to
+    /// Riches has four fields and none of them is required, and a legend naming a mark that is not
+    /// on the card sends a Commander looking for something that is not there.
+    /// </param>
     private Control Plottable(
         string title,
         Control form,
@@ -262,7 +303,8 @@ public sealed class RoutePlanPage : UserControl
         string tool,
         Func<ToolArguments> arguments,
         Func<string?> validate,
-        string help)
+        string help,
+        Control? legend = null)
     {
         var plot = new Button { Content = "Plot", Padding = new Thickness(14, 4), MinHeight = 30 };
         var cancel = new Button
@@ -351,6 +393,11 @@ public sealed class RoutePlanPage : UserControl
 
         var body = new StackPanel { Spacing = 8, Children = { form, actions, status } };
 
+        if (legend is not null)
+        {
+            body.Children.Insert(1, legend);
+        }
+
         return Card(title, body, help);
     }
 
@@ -360,32 +407,6 @@ public sealed class RoutePlanPage : UserControl
             // Typed with separators because that is how a Commander writes fifty million, and
             // the tool wants a number.
             .ToDictionary(pair => pair.Name, pair => pair.Value!.Replace(",", string.Empty).Trim(), StringComparer.Ordinal));
-
-    /// <summary>A labelled box, and the text in it. Two things, so the caller keeps both.</summary>
-    private sealed class FormField(string label, string placeholder)
-    {
-        private readonly TextBox _box = new()
-        {
-            PlaceholderText = placeholder,
-            Width = 190,
-            MinHeight = 30,
-            HorizontalAlignment = HorizontalAlignment.Left,
-        };
-
-        public string? Text => _box.Text;
-
-        public Control Control => Draw(label, _box);
-
-        private static Control Draw(string label, TextBox box)
-        {
-            var stack = new StackPanel { Spacing = 3 };
-
-            stack.Children.Add(Text(label, TypeScale.Small, ThemeManager.TextMutedKey));
-            stack.Children.Add(box);
-
-            return stack;
-        }
-    }
 
     private static StackPanel Row(FormField left, FormField? right)
     {
@@ -401,7 +422,39 @@ public sealed class RoutePlanPage : UserControl
         return row;
     }
 
-    private static FormField Field(string label, string placeholder) => new(label, placeholder);
+    private FormField Field(
+        string label,
+        string placeholder,
+        FieldNeed need = FieldNeed.Optional,
+        Func<string?>? supplied = null,
+        double width = 190)
+    {
+        var field = new FormField(label, placeholder, need, supplied, width);
+
+        if (need == FieldNeed.Supplied)
+        {
+            _supplied.Add(field);
+        }
+
+        return field;
+    }
+
+    /// <summary>
+    /// Re-reads every placeholder that quotes a live figure (#253). Called from
+    /// <c>PanelView.TickRouting</c>, which already watches for the Commander having moved.
+    /// <para>
+    /// <b>Not <see cref="Refresh"/>, which rebuilds the page.</b> This runs whenever the
+    /// Commander jumps, and rebuilding then would throw away whatever they were part way through
+    /// typing into one of these forms.
+    /// </para>
+    /// </summary>
+    public void RefreshSupplied()
+    {
+        foreach (var field in _supplied)
+        {
+            field.Refresh();
+        }
+    }
 
     private static TextBlock Text(string text, double size, string colourKey, bool wrap = false)
     {
