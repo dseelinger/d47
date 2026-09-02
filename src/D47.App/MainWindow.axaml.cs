@@ -479,25 +479,21 @@ public partial class MainWindow : Window
         // Marked rather than appended, so it reads as the panel and not as whoever is aboard.
         _host.Noted += text => Avalonia.Threading.Dispatcher.UIThread.Post(() => _model.Mark(text));
 
-        // In-game comms, in the conversation since #260 - which is a reversal, and the reasoning
-        // it overturns is worth keeping. They were held off the conversation because a station and
-        // a police interceptor are not talking to the Commander's companion, and because a station
-        // approach brings a lot of them and the conversation is the page that has to stay
-        // readable. That argument was never wrong; it simply no longer has anywhere to send them.
+        // In-game comms are deliberately not written to the transcript (#260), and the reasoning
+        // is the one they were kept off the conversation with in the first place: a station and a
+        // police interceptor are not talking to the Commander's companion, and a station approach
+        // brings a lot of them. The page they were kept on instead has gone.
         //
-        // **Dropping them was tried first, and it loses something.** The Journal File reading does
-        // hold every ReceiveText - but it draws one as the line "Receive Text", because
-        // JournalSentence gives that kind no sentence, so the sender and the message are only in
-        // the fields pane beside it. A Commander does not read their comms by selecting an event
-        // and inspecting its JSON.
+        // **Putting them in the conversation was tried, and the drawn page refused it.** The
+        // conversation is bubbles, and a comms line arrives in the ship's voice - so it merged
+        // into whatever d47 had just said and rendered as one sentence: "Holding at Jameson
+        // Memorial, Commander.Jameson Memorial: Docking granted, pad 07." Even given a run of its
+        // own it would sit in d47's bubble, which says d47 said it.
         //
-        // So they go where the rule two handlers up already puts everything audible: what was
-        // heard and what can be read back are the same set. A re-voiced message is spoken aloud,
-        // and a page omitting a line d47 has just said out loud is the more surprising of the two.
-        // Announcement.Transcript carries the sender for exactly this - a voice arriving in a
-        // headset does not need to say whose it is, and a written line does.
-        _host.Transcribed += text => Avalonia.Threading.Dispatcher.UIThread.Post(
-            () => _model.Append(text));
+        // They are in the Journal File reading, which is where Elite's own events belong and
+        // where a Commander goes to ask what just happened. That reading draws the sender and the
+        // message now - it drew the bare words "Receive Text" until #260, which is what made this
+        // look like a choice between the conversation and nothing.
 
         _host.Settings.Changed += change => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {

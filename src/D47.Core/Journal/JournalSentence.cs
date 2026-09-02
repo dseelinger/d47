@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
+using D47.Core.Callouts;
 
 namespace D47.Core.Journal;
 
@@ -397,9 +398,22 @@ public static class JournalSentence
             "DropshipDeploy" => "Deployed by dropship",
 
             // ---- Comms and crew -----------------------------------------------------------
-            // ReceiveText and SendText deliberately have no sentence: the message itself is the
-            // content and the page renders it in a muted colour, unformatted, because a player
-            // who types ** must see ** rather than bold (#51).
+            // The message itself is the content, so the sentence is the sender and the words
+            // (#260). It said here that these two deliberately had no sentence because "the page
+            // renders it in a muted colour, unformatted" — the page never did, so a message drew
+            // as the bare words "Receive Text" and the only way to read one was to select the
+            // event and look at its JSON. That was found the day the transcript stopped carrying
+            // comms and this reading became the only place they were.
+            //
+            // Safe to draw as prose, which is what the old note was really guarding: the journal
+            // list renders plain strings into a ListBox and never through TranscriptMarkup, so a
+            // player who types ** sees ** rather than bold.
+            "ReceiveText" => Message(raw) is { } heard
+                ? Attributed(Sender(raw, "From"), heard)
+                : "Message received",
+            "SendText" => Message(raw) is { } sent
+                ? Attributed(Sender(raw, "To") is { } to ? $"To {to}" : null, sent)
+                : "Message sent",
             "CrewHire" => "Hired crew",
             "CrewFire" => "Dismissed crew",
             "CrewAssign" => "Assigned crew",
@@ -502,6 +516,58 @@ public static class JournalSentence
             _ => Spaced(entry.Kind),
         };
     }
+
+    /// <summary>
+    /// A comms line, named where Elite said who it was from and bare where it did not (#260).
+    /// <para>
+    /// <b>The bare case is not rare and is not an error.</b> Elite writes a <c>ReceiveText</c>
+    /// with an empty <c>From</c> for its own system notices — <em>"Entered Channel: Tarakah"</em>
+    /// — and in a quiet session those are most of them. Prefixing one with a colon and nothing in
+    /// front of it is exactly how the first version of this read against real journals.
+    /// </para>
+    /// </summary>
+    private static string Attributed(string? sender, string message) =>
+        sender is { Length: > 0 } named ? $"{named}: {message}" : message;
+
+    /// <summary>
+    /// Who a comms event was from or to, undecorated, or null where Elite named nobody.
+    /// <para>
+    /// Elite wraps names as <c>$cmdr_decorate:#name=Vex;</c>, and
+    /// <see cref="IncomingMessages.Undecorate"/> already owns the unwrapping — the spoken route
+    /// and the written one must not disagree about what somebody is called.
+    /// </para>
+    /// </summary>
+    private static string? Sender(JsonElement raw, string property)
+    {
+        var named = Blank(raw.String(property + "_Localised")) ?? Blank(raw.String(property));
+
+        return named is null ? null : Blank(IncomingMessages.Undecorate(named));
+    }
+
+    /// <summary>
+    /// What a comms event said, or null where there is nothing this line may draw (#260).
+    /// <para>
+    /// <b>The localised form and nothing else, which is a trust boundary rather than a
+    /// formatting preference.</b> Elite writes <c>Message_Localised</c> only for its own strings
+    /// — a station's docking reply, an NPC's line, a channel notice. A message another player
+    /// typed arrives in <c>Message</c> alone, and that text is untrusted: the journal is named in
+    /// the invariants beside in-game comms for exactly this reason.
+    /// </para>
+    /// <para>
+    /// So a player's words never reach the summary line, and the event draws as
+    /// <em>Message received</em> with the words themselves in the fields pane beside it, where
+    /// they are plainly somebody's data rather than d47's prose. That is the rule
+    /// <c>AMessageFromAnotherPlayerIsNeverFormattedIntoASentence</c> has asserted since #51: the
+    /// summary line must never let a message impersonate d47's own line format. What changed in
+    /// #260 is only that Frontier's own text stopped being caught by the same net — a station
+    /// saying "Docking request granted." drew as the bare words "Receive Text".
+    /// </para>
+    /// <para>
+    /// It also drops Elite's unlocalised <c>$id;</c> tokens by construction, which is the rule
+    /// <see cref="IncomingMessages"/> applies to these two events on the way to the speaker.
+    /// </para>
+    /// </summary>
+    private static string? Message(JsonElement raw) => Blank(raw.String("Message_Localised"));
 
     /// <summary>
     /// The localised name where Elite supplies one, then the raw. Frontier writes

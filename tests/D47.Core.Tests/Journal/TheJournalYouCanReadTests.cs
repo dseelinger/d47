@@ -221,4 +221,64 @@ public class TheJournalYouCanReadTests
         Assert.DoesNotContain("not bold", said, StringComparison.Ordinal);
         Assert.DoesNotContain("CMDR Hostile", said, StringComparison.Ordinal);
     }
+
+    /// <summary>
+    /// Comms read as the sender and what they said
+    /// (<a href="https://github.com/dseelinger/d47/issues/260">#260</a>).
+    /// <para>
+    /// <b>This reading is the only place comms are written down.</b> They were on the Technical
+    /// reading until #231 withdrew it, and the transcript stopped carrying them in #260 — the
+    /// conversation is drawn as bubbles, so a station's line arrived in d47's own bubble and
+    /// merged into whatever it had just said. The comment here used to claim these two kinds
+    /// deliberately had no sentence because the page rendered the message itself; the page never
+    /// did, so a message drew as the bare words "Receive Text".
+    /// </para>
+    /// <para>
+    /// <b>Frontier's own text only</b>, which is why the test above still holds unchanged: a
+    /// message another player typed has no <c>Message_Localised</c>, so it never reaches this
+    /// line. What #260 changed is that a station and an NPC stopped being caught by that net.
+    /// </para>
+    /// <para>
+    /// <b>The empty sender is the case that matters</b>, and it was wrong in the first draft
+    /// against real journals: Elite writes <c>From</c> as an empty string for its own channel
+    /// notices, which produced a line beginning with a bare colon. Those notices are most of the
+    /// comms events in a quiet session.
+    /// </para>
+    /// </summary>
+    [Theory]
+
+    // Elite's own channel notice: no sender at all, and the words are only in the localised form.
+    [InlineData(
+        """{ "timestamp":"2026-08-02T12:55:41Z", "event":"ReceiveText", "From":"", "Message":"$COMMS_entered:#name=Wyrd;", "Message_Localised":"Entered Channel: Wyrd", "Channel":"npc" }""",
+        "Entered Channel: Wyrd")]
+
+    // An NPC, whose name arrives wrapped in a localisation decorator.
+    [InlineData(
+        """{ "timestamp":"2026-08-02T12:56:44Z", "event":"ReceiveText", "From":"$npc_name_decorate:#name=Tim O'Shea;", "From_Localised":"Tim O'Shea", "Message":"$MinerCriticalDamage01;", "Message_Localised":"No, no, nooooooo!", "Channel":"npc" }""",
+        "Tim O'Shea: No, no, nooooooo!")]
+
+    // A station: named plainly, and the message localised.
+    [InlineData(
+        """{ "timestamp":"2026-08-02T13:02:11Z", "event":"ReceiveText", "From":"$STATION_Evans Port;", "From_Localised":"Evans Port", "Message":"$STATION_docking_granted;", "Message_Localised":"Docking request granted.", "Channel":"npc" }""",
+        "Evans Port: Docking request granted.")]
+
+    // Another Commander, whose words are untrusted and stay out of the line entirely — even
+    // though the sender is known and the message is harmless. The rule is about where text came
+    // from, not about whether this particular text looks dangerous.
+    [InlineData(
+        """{ "timestamp":"2026-08-02T13:10:04Z", "event":"ReceiveText", "From":"Fixture Vex", "Message":"o7", "Channel":"starsystem" }""",
+        "Message received")]
+
+    // A token Elite never localised. Saying it is worse than saying nothing, which is the rule
+    // IncomingMessages already applies on the way to the speaker.
+    [InlineData(
+        """{ "timestamp":"2026-08-02T13:11:00Z", "event":"ReceiveText", "From":"", "Message":"$Pirate_Attack;", "Channel":"npc" }""",
+        "Message received")]
+
+    // And the Commander's own typing, which is free text like anybody else's.
+    [InlineData(
+        """{ "timestamp":"2026-08-02T13:12:40Z", "event":"SendText", "To":"Fixture Vex", "Message":"o7 fly safe" }""",
+        "Message sent")]
+    public void CommsSayWhoSpokeAndWhatTheySaid(string line, string expected) =>
+        Assert.Equal(expected, Said(line));
 }
