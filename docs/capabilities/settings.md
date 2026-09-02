@@ -19,7 +19,7 @@ nav_order: 143
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Three steps to changing something without opening a menu.</p>
+<p class="intro">Three steps to changing something without opening a menu.</p>
 <section>
 <h2><span class="num">1</span> Just ask.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
@@ -63,7 +63,7 @@ nav_order: 143
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">Changing things by asking — and the handful D47 will not change however nicely you ask.</p>
+<p class="intro">Changing things by asking — and the handful D47 will not change however nicely you ask.</p>
 <section>
 <h2><span class="num">1</span> Some settings have a safety catch.</h2>
 <svg viewBox="0 0 880 208" role="img" aria-label="Some settings are protected: Directive 47's AI cannot change them, and you still can">

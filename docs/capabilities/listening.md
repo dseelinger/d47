@@ -19,7 +19,7 @@ nav_order: 123
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Three steps to being heard.</p>
+<p class="intro">Three steps to being heard.</p>
 <section>
 <h2><span class="num">1</span> Pick a microphone and a speech model.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Listening">
@@ -80,7 +80,7 @@ nav_order: 123
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">Whisper turns your voice into words, on your own machine — and how it decides you were talking to it.</p>
+<p class="intro">Whisper turns your voice into words, on your own machine — and how it decides you were talking to it.</p>
 <section>
 <h2><span class="num">1</span> Four ways to open the microphone, and two of them change what is kept.</h2>
 <svg viewBox="0 0 880 296" role="img" aria-label="Four listening modes: hold a key, toggle a key, listen whenever anyone speaks, or listen when you say its name">

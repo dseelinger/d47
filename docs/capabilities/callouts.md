@@ -19,7 +19,7 @@ nav_order: 124
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Three steps to being told what you want and nothing else.</p>
+<p class="intro">Three steps to being told what you want and nothing else.</p>
 <section>
 <h2><span class="num">1</span> Turn callouts on, then pick the ones you want.</h2>
 <svg viewBox="0 0 880 254" role="img" aria-label="The master callouts toggle above a list of individual callout toggles">
@@ -66,7 +66,7 @@ nav_order: 124
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">The things Directive 47 says without being asked, and what earns the right to interrupt.</p>
+<p class="intro">The things Directive 47 says without being asked, and what earns the right to interrupt.</p>
 <section>
 <h2><span class="num">1</span> NPCs announce themselves. It listens.</h2>
 <svg viewBox="0 0 880 246" role="img" aria-label="An attack warning arrives a median of six seconds before the first shot and is right 88% of the time">

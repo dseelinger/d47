@@ -35,7 +35,7 @@ public class HelpLinksTests
     {
         CapabilityId = "engineers",
         Title = "Engineers",
-        Lede = "A lede.",
+        Intro = "An intro.",
         Sections = [],
         Links = links,
     };

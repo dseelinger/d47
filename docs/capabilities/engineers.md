@@ -19,7 +19,7 @@ nav_order: 107
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Three steps from locked to a route you can fly.</p>
+<p class="intro">Three steps from locked to a route you can fly.</p>
 <section>
 <h2><span class="num">1</span> Open the Engineers tab and read the Directory.</h2>
 <svg viewBox="0 0 880 246" role="img" aria-label="The Engineers tab">
@@ -86,7 +86,7 @@ nav_order: 107
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">Who can improve your ship, where they are, and who to go and get next.</p>
+<p class="intro">Who can improve your ship, where they are, and who to go and get next.</p>
 <section>
 <h2><span class="num">1</span> Two lists.</h2>
 <svg viewBox="0 0 880 250" role="img" aria-label="The tab has two roots, the Directory and the Route">

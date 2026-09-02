@@ -19,7 +19,7 @@ nav_order: 118
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Two steps to knowing where you stand in a goal.</p>
+<p class="intro">Two steps to knowing where you stand in a goal.</p>
 <section>
 <h2><span class="num">1</span> Ask what is running.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
@@ -61,7 +61,7 @@ nav_order: 118
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">What community goals are running, what tier they have reached, and how you are doing in them.</p>
+<p class="intro">What community goals are running, what tier they have reached, and how you are doing in them.</p>
 <section>
 <h2><span class="num">1</span> Your journal already knows most of this.</h2>
 <svg viewBox="0 0 880 246" role="img" aria-label="The journal carries the whole community goal board, and an Inara key only adds goals running where you have not been">

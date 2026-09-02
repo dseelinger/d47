@@ -13,7 +13,7 @@ nav_order: 1
   Colours are the nine Palette roles and nothing else — see .d47-eli5 in assets/main.scss.
 -->
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">Download it, check it, run it. No administrator. Nothing to install first.</p>
+<p class="intro">Download it, check it, run it. No administrator. Nothing to install first.</p>
 <section>
 <h2><span class="num">1</span> Two ways to get it. Same result.</h2>
 <svg viewBox="0 0 880 240" role="img" aria-label="The installer and the portable zip both produce one folder">

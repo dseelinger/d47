@@ -19,7 +19,7 @@ nav_order: 126
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Three steps to D47 in the headset.</p>
+<p class="intro">Three steps to D47 in the headset.</p>
 <section>
 <h2><span class="num">1</span> Start SteamVR first, then D47.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Headset">
@@ -80,7 +80,7 @@ nav_order: 126
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">Directive 47 drawn over Elite in your own cockpit — beside the game, never inside it.</p>
+<p class="intro">Directive 47 drawn over Elite in your own cockpit — beside the game, never inside it.</p>
 <section>
 <h2><span class="num">1</span> It attaches. It never starts anything.</h2>
 <svg viewBox="0 0 880 240" role="img" aria-label="Directive 47 waits for SteamVR and a headset to appear, and never launches SteamVR or hooks Elite">

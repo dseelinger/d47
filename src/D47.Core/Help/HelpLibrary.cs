@@ -113,7 +113,7 @@ public static class HelpLibrary
             .FirstOrDefault(child => (string?)child.Attribute("class") == "d47-frame")
             ?? root;
 
-        var lede = frame.Elements("p").FirstOrDefault(p => (string?)p.Attribute("class") == "lede");
+        var intro = frame.Elements("p").FirstOrDefault(p => (string?)p.Attribute("class") == "intro");
 
         return new HelpArticle
         {
@@ -121,7 +121,7 @@ public static class HelpLibrary
             Title = FrontMatter(markdown, "title") ?? capabilityId,
             Group = FrontMatter(markdown, "group") ?? string.Empty,
             NavOrder = int.TryParse(FrontMatter(markdown, "nav_order"), out var order) ? order : 0,
-            Lede = lede?.Value.Trim() ?? string.Empty,
+            Intro = intro?.Value.Trim() ?? string.Empty,
             Sections = frame.Elements("section").Select(Section).ToArray(),
 
             // From the band when they are still in it, and from the foot of the page when they

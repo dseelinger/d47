@@ -19,7 +19,7 @@ nav_order: 110
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Three steps to one list that follows you around.</p>
+<p class="intro">Three steps to one list that follows you around.</p>
 <section>
 <h2><span class="num">1</span> Put something on it, out loud or on the tab.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with something being added to the checklist">
@@ -63,7 +63,7 @@ nav_order: 110
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">One list of everything you are working on, and one place it can be changed.</p>
+<p class="intro">One list of everything you are working on, and one place it can be changed.</p>
 <section>
 <h2><span class="num">1</span> Everything lands in one list.</h2>
 <svg viewBox="0 0 880 280" role="img" aria-label="Your own lines, your ship builds and your construction sites all arrive in a single list">

@@ -38,7 +38,7 @@ public class InShipHelpCaptureTests
             .Select(text => text.Text ?? string.Empty)
             .ToList();
 
-        // The lede, the four headings and the three cards — which together are the whole claim
+        // The intro, the four headings and the three cards — which together are the whole claim
         // that this page is about this reading rather than about the language model.
         //
         // It is about **one** reading since #262. The heading below used to be "Three readings in

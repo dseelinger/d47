@@ -17,7 +17,7 @@ nav_order: 201
   read three planners' worth of prose and had to work out which third was theirs.
 -->
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">A route across the galaxy that detours through neutron stars — the one thing the in-game galaxy map will not plot for you.</p>
+<p class="intro">A route across the galaxy that detours through neutron stars — the one thing the in-game galaxy map will not plot for you.</p>
 <section>
 <h2><span class="num">1</span> The galaxy map plots this too. Badly, and not very far.</h2>
 <svg viewBox="0 0 880 262" role="img" aria-label="The galaxy map plots a straight line in short hops; the Neutron Plotter detours through neutron stars and reaches across the galaxy">

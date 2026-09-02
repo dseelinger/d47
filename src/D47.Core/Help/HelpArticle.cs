@@ -112,7 +112,7 @@ public sealed record HelpArticle
     public int NavOrder { get; init; }
 
     /// <summary>The one line under the title. Always present; a band without one is malformed.</summary>
-    public required string Lede { get; init; }
+    public required string Intro { get; init; }
 
     public required IReadOnlyList<HelpSection> Sections { get; init; }
 

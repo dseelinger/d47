@@ -19,7 +19,7 @@ nav_order: 132
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">One switch, one action, and nothing else happens without you.</p>
+<p class="intro">One switch, one action, and nothing else happens without you.</p>
 <section>
 <h2><span class="num">1</span> Turn on the arrival honk, if you want it.</h2>
 <svg viewBox="0 0 880 192" role="img" aria-label="The setting that lets Directive 47 fire the discovery scanner on arrival, off out of the box">
@@ -63,7 +63,7 @@ nav_order: 132
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">Things Directive 47 does to your ship without being asked. There is one so far, and it is off.</p>
+<p class="intro">Things Directive 47 does to your ship without being asked. There is one so far, and it is off.</p>
 <section>
 <h2><span class="num">1</span> Nothing said it, so nothing permitted it.</h2>
 <svg viewBox="0 0 880 236" role="img" aria-label="Every other action is permitted by the sentence you said, while an action firing on a journal event has none">

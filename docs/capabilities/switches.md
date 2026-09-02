@@ -20,7 +20,7 @@ nav_order: 136
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Four steps, from nothing to a switch that flies the ship.</p>
+<p class="intro">Four steps, from nothing to a switch that flies the ship.</p>
 <section>
 <h2><span class="num">1</span> Turn on two rows in Settings, then press Assign switches.</h2>
 <svg viewBox="0 0 880 264" role="img" aria-label="Two settings toggles, the second appearing only once the first is on, and an Assign switches button">
@@ -123,7 +123,7 @@ nav_order: 136
   the nine Palette roles and nothing else.
 -->
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">A maintained toggle on your stick that means a <em>state</em> rather than a press.</p>
+<p class="intro">A maintained toggle on your stick that means a <em>state</em> rather than a press.</p>
 <section>
 <h2><span class="num">1</span> The switch is a question, not a command.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Flipping a switch asks Elite whether it is already in that state, and presses a key only if it is not">

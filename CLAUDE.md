@@ -9,9 +9,9 @@ Avoid mannered prose. Read the spec, don't guess.
 |---|---|
 | How is it built? Why not X? | `architecture.md` — stack, dependency direction, trust boundaries, packaging. §10 lists alternatives already rejected, with reasons |
 | What has shipped, and when? | `CHANGELOG.md` — the permanent record, newest first. The only file allowed to describe the state of the product |
-| What is broken, planned, or wanted? | GitHub Issues — one per defect (`bug`), wanted change (`change-request`) or unbuilt phase (`phase`) |
+| What is broken, planned, or wanted? | GitHub Issues — one per defect (`bug`), wanted change (`change-request`) or unbuilt phase (`phase`). Read them through `tools/issues.ps1`; `gh issue view` and `gh issue list` are denied |
 
-**The repository holds no project-management state.** No queue for planned work. Use GitHub ussues only.
+**The repository holds no project-management state.** No queue for planned work. Use GitHub issues only.
 
 ## Layout
 
@@ -39,6 +39,7 @@ release commands, plus the Python table generators. `docs/` is the published sit
 - **Build and release stay frictionless.** If a workflow needs a checklist to run, fix the workflow.
 - **Every registered capability needs a documentation page.** CI enforces it.
 - **An issue title says its subject plainly, first.** It is scanned in a list of twenty and cited in a commit. A colon is the usual shape: subject, then the sharp part. Length is fine; vagueness is not. A `phase` issue is titled by its subject, never "Phase 61".
+- **A shipped phase number never moves.** Several hundred code comments cite `Phase N`, and `CHANGELOG.md` is what fixes the subject each one names. A number is allocated on the commit that ships it. 22 is retired rather than free; 56 and 59 are already spent.
 - Use SemVer.
 
 ## Build
@@ -75,7 +76,7 @@ tools\get-local.ps1
 
 Each is a `.ps1` with bash and `.cmd` shims that hold no logic. A new bash shim needs an `eol=lf` entry in `.gitattributes`.
 
-- **Additional functionalityh is a minor release.** Bug fixes, UI tweaks, and corrections to intended vs. implemented functionality are patches.
+- **Additional functionality is a minor release.** Bug fixes, UI tweaks, and corrections to intended vs. implemented functionality are patches.
 - **A published tag never moves.** It is a receipt for one exact `d47.exe` and its checksum. Fixes ship as the next patch.
 - **Never promote a release.** Cutting one may be done on request; deciding a build is fit for everyone is the maintainer's, typed on purpose. A plain `release.ps1` with no `-PreRelease` goes straight to latest, so the flag is not optional.
 - **Drive every build by hand before promoting it.** A green suite and a working feature are different claims.

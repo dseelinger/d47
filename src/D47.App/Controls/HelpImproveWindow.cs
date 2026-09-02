@@ -29,7 +29,7 @@ namespace D47.App.Controls;
 /// scope change and arms nothing until the journals have been read.
 /// </para>
 /// <para>
-/// <b>The lede leads with why, then the three promises</b>
+/// <b>The intro leads with why, then the three promises</b>
 /// (<a href="https://github.com/dseelinger/d47/issues/240">#240</a>): voluntary, scrubbed,
 /// removable. They were all already true and already said; they were buried mid-paragraph, and
 /// the first thing a Commander reads should be the reason anyone would do this at all.
@@ -150,7 +150,7 @@ public sealed class HelpImproveWindow : Window
         TextWrapping = TextWrapping.Wrap,
     };
 
-    private readonly TextBlock _lede = new()
+    private readonly TextBlock _intro = new()
     {
         TextWrapping = TextWrapping.Wrap,
         FontSize = TypeScale.Secondary,
@@ -258,7 +258,7 @@ public sealed class HelpImproveWindow : Window
         Themed(this, BackgroundProperty, ThemeManager.BackgroundKey);
         Themed(_preview, TextBlock.ForegroundProperty, ThemeManager.TextKey);
         Themed(_corpusPreview, TextBlock.ForegroundProperty, ThemeManager.TextKey);
-        Themed(_lede, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(_intro, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
         Themed(_size, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
         Themed(_status, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
 
@@ -277,19 +277,28 @@ public sealed class HelpImproveWindow : Window
         var options = Options();
         var footer = Footer();
 
-        // The mark, above everything and on the right (#252). It opens the site, because a
-        // dialog has no panel to take to a help level — see SiteHelpMark for the ruling and the
-        // two roads not taken.
+        // The two glyphs, above everything and on the right — ⓘ then ?, which is the order they
+        // deepen in (#269). The mark opens the site because a dialog has no panel to take to a
+        // help level; see SiteHelpMark for that ruling and the two roads not taken. The glyph
+        // beside it holds the reasoning the intro used to carry inline.
         // LastChildFill off, or the single Right-docked child becomes the fill child and lands on
         // the left — which is exactly where it first appeared.
         var marked = new DockPanel { Margin = new Thickness(0, 0, 0, 6), LastChildFill = false };
         var mark = SiteHelpMark.For(DocsSite.Page(HelpPage), "HelpImproveHelp");
+        var info = InfoGlyph.For(Reasoning, DocsSite.Page(HelpPage), "HelpImproveInfo");
 
-        DockPanel.SetDock(mark, Dock.Right);
-        marked.Children.Add(mark);
+        var glyphs = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 6,
+            Children = { info, mark },
+        };
+
+        DockPanel.SetDock(glyphs, Dock.Right);
+        marked.Children.Add(glyphs);
 
         DockPanel.SetDock(marked, Dock.Top);
-        DockPanel.SetDock(_lede, Dock.Top);
+        DockPanel.SetDock(_intro, Dock.Top);
         DockPanel.SetDock(options, Dock.Top);
         DockPanel.SetDock(footer, Dock.Bottom);
 
@@ -313,7 +322,7 @@ public sealed class HelpImproveWindow : Window
         Themed(pane, Border.BorderBrushProperty, ThemeManager.BorderKey);
 
         root.Children.Add(marked);
-        root.Children.Add(_lede);
+        root.Children.Add(_intro);
         root.Children.Add(options);
         root.Children.Add(footer);
         root.Children.Add(pane);
@@ -378,7 +387,7 @@ public sealed class HelpImproveWindow : Window
         _saveCorpus.IsVisible = history;
         _sendCorpusButton.IsVisible = history && _sendCorpus is not null;
 
-        _lede.Text = LedeText(history);
+        _intro.Text = IntroText(history);
 
         if (history)
         {
@@ -395,81 +404,113 @@ public sealed class HelpImproveWindow : Window
     public const string HelpPage = D47.Core.Help.HelpLibrary.GeneralPrefix + "help-improve";
 
     /// <summary>
-    /// Why first, then the three promises, then the mechanics of the shape being offered
-    /// (#240). The promises are the same three whichever way the toggle sits, because they were
-    /// already true of both flows — the wording just stopped hiding them.
+    /// The disclosures, and nothing else (#269). One line saying nothing happens without a press,
+    /// then a bullet per thing a Commander is agreeing to: what the scrub does to the payload,
+    /// where it goes, how long it is kept, what d47 keeps here, and what travels with a send.
     /// <para>
-    /// <b>Trimmed by kind rather than by length</b> (#252). The Commander called this a wall of
-    /// text and they were right, but only half of it could move: what a replay case is for, how
-    /// the scrub decides, why a history is offered as a report rather than as itself — that is
-    /// explanation, and it is behind the mark now. Every statement of <em>what leaves and where it
-    /// goes</em> stayed, because moving that behind a <c>?</c> would weaken the consent this window
-    /// exists to obtain. A Commander who never presses the mark has still read it, which is what
-    /// the first bullet promises them.
+    /// <b>The trim has been run twice, and the line it stops at is the same both times.</b> #252
+    /// took the mechanism to the site — what a replay case is for, how the scrub decides, why a
+    /// history is a report. #269 took the reasoning that was still attached to each fact, into the
+    /// <c>ⓘ</c> beside the mark. What has never moved, and must not, is any statement of
+    /// <em>what leaves and where it goes</em>: a Commander who presses neither glyph has still
+    /// read all of it, and that is the consent this window exists to obtain.
     /// </para>
     /// <para>
-    /// So what came out is the reasoning attached to each fact — "because a regression case that
-    /// expires stops being one", "a history runs to hundreds of megabytes and nobody reads that" —
-    /// and never a fact.
+    /// <b>The test for a line belonging here is whether it would still be true if nobody agreed
+    /// with it.</b> "Your name and IDs are replaced" is a fact about the payload and stays.
+    /// "Sharing what your ship saw is the most useful thing you can hand this project" is an
+    /// argument for pressing, and is behind the glyph — see <see cref="Reasoning"/>.
     /// </para>
     /// </summary>
-    private string LedeText(bool history)
+    private string IntroText(bool history)
     {
-        var promises =
-            "Real journals are how defects get found and fixed — sharing what your ship actually "
-            + "saw is the most useful thing you can hand this project. Three things hold, "
-            + "whichever way you share:\n"
-            + "  •  Entirely voluntary — nothing is read, written or sent until you press, every "
-            + "time. There is no standing consent and nothing is remembered.\n"
-            + "  •  Scrubbed — your name and IDs are replaced, and other people's words are "
-            + "dropped, before you ever see the result.\n"
-            + "  •  Removable — if you change your mind, taking it back is one press in Privacy "
-            + "and egress.\n\n";
+        // Voluntariness is the frame rather than a bullet: it governs every line under it, and as
+        // a bullet it read as one disclosure among five instead of the condition on all of them.
+        const string opening =
+            "Nothing is read, written or sent until you press — every time, with no standing "
+            + "consent and nothing remembered.\n";
+
+        const string scrubbed =
+            "  •  Scrubbed before you see it: your name and IDs replaced, other people's words "
+            + "dropped.\n";
+
+        // "Not derived from" rather than the shorter "not your Commander name", which was tried
+        // for the line-fit and is a weaker claim: it denies only that the number *is* the name,
+        // where what a Commander needs told is that it is not computed from it either.
+        const string token =
+            "  •  A random number identifying this installation — not you, and not derived from "
+            + "your Commander name — goes with a send. Delete data\\donor-token.txt to stop that.";
 
         if (history)
         {
-            var where = _destination is { } destination
-                ? "Nothing is written or sent until you press. Sending it puts it in Directive 47's "
-                  + "own store at " + destination + " — one press, nothing standing. A journal "
-                  + "history is kept until you ask for it back; asking is one press of Forget in "
-                  + "Privacy and egress. d47 keeps the report you are reading, and the hash of "
-                  + "what it sent, in data\\donations."
-                : "Nothing is written or sent until you save it, and nothing here goes to a "
-                  + "network: no send address is set, so where the file goes afterwards is yours.";
-
-            return promises
-                   + "This reads your Elite journals as far back as the scale says, scrubs them, "
-                   + "and shows you a report about them rather than the thing itself. The report "
-                   + "names every kind of event included and shows a real scrubbed line of "
-                   + "each.\n\n"
-                   + where
-                   + (_destination is null
-                       ? string.Empty
-                       : "\n\nA random number identifying this installation — not you, and not "
-                         + "derived from your Commander name — goes with a send, so a history you "
-                         + "add to is recognisable as the same history. Deleting "
-                         + "data\\donor-token.txt stops that.");
+            return opening
+                   + scrubbed
+                   + "  •  You review a report about the history, not the history itself.\n"
+                   + (_destination is { } destination
+                       ? "  •  Sent, it goes to Directive 47's own store at " + destination + "\n"
+                         + "  •  It is kept until you ask for it back: one press of Forget in "
+                         + "Privacy and egress.\n"
+                         + "  •  d47 keeps the report you are reading, and the hash of what it "
+                         + "sent, in data\\donations.\n"
+                         + token
+                       // "goes to a network" verbatim: #181 made this sentence conditional rather
+                       // than deleting it, and a test guards the wording it settled on.
+                       : "  •  No send address is set, so nothing here goes to a network. Save it, "
+                         + "and where the file goes afterwards is yours.");
         }
 
-        var excerptWhere = _destination is { } excerptDestination
-            ? "Sending it puts it in Directive 47's own store at " + excerptDestination + " — one "
-              + "press, nothing standing, nothing remembered. A rule on the store deletes it "
-              + "after thirty days without anybody having to remember to, and asking for it "
-              + "sooner is one press in Privacy and egress. d47 keeps its own copy of exactly "
-              + "what it sent, and the hash, in data\\donations."
-            : "Nothing can be sent from here: no send address is set. Copy it or save it, and "
-              + "where it goes after that is yours — anything posted publicly can be archived "
-              + "beyond anyone's reach.";
-
-        return promises
-               + "Everything below is what would go into the report — nothing else, and nothing "
-               + "leaves until you press. Reach back as far as the defect needs, and read it.\n\n"
-               + excerptWhere
-               + "\n\n"
-               + "A random number identifying this installation — not you, and not derived from "
-               + "your Commander name — goes with a send, so what you share can be grouped into "
-               + "one history. Deleting data\\donor-token.txt stops that.";
+        return opening
+               + scrubbed
+               + "  •  Everything below is what would go, and nothing else.\n"
+               + (_destination is { } excerptDestination
+                   ? "  •  Sent, it goes to Directive 47's own store at " + excerptDestination
+                     + "\n"
+                     + "  •  A rule there deletes it after thirty days; sooner is one press in "
+                     + "Privacy and egress.\n"
+                     + "  •  d47 keeps its own copy of what it sent, and the hash, in "
+                     + "data\\donations.\n"
+                     + token
+                   // The excerpt path has always shown the token line whether or not there is
+                   // anywhere to send, which reads oddly beside "nothing can be sent from here"
+                   // — and is deliberately left as it was. #269 trims prose; which disclosures
+                   // appear under which condition is a separate question and not this one's to
+                   // answer quietly on a consent surface.
+                   : "  •  No send address is set, so nothing can be sent from here. Copy or save "
+                     + "it, and where it goes afterwards is yours — anything posted publicly can "
+                     + "be archived beyond anyone's reach.\n"
+                     + token);
     }
+
+    /// <summary>
+    /// What the <c>ⓘ</c> holds (#269): the arguments for pressing, which the intro used to carry a
+    /// sentence of each alongside the facts.
+    /// <para>
+    /// <b>Not a disclosure among them</b>, by construction — nothing here says what leaves, where
+    /// it goes, or how long it lasts. Adding one would put a term of the consent behind a press,
+    /// which is the failure both trims were careful to avoid.
+    /// </para>
+    /// <para>
+    /// It stops short of the site page rather than reproducing it: the glyph's own button opens
+    /// <c>help-improve.html</c>, where the same three points are written once, at length, with the
+    /// diagrams.
+    /// </para>
+    /// </summary>
+    internal const string Reasoning =
+        "Why real journals\n"
+        + "A defect is nearly always about a situation — a callout that fires when it should not, "
+        + "a ship state nobody anticipated, an event Frontier added that the parser had never "
+        + "seen. Reproducing one from a description means guessing at the situation; from the "
+        + "journal that produced it, the replay harness runs the same events in the same order.\n"
+        + "\n"
+        + "What the scrub does\n"
+        + "It works from a list of fields it keeps, rather than a list of fields to remove. A "
+        + "field nobody has thought about is dropped by default, which is the only way it stays "
+        + "right as Elite adds events.\n"
+        + "\n"
+        + "Why a history is shown as a report\n"
+        + "A history runs to hundreds of megabytes. Nobody reads that, and agreeing to something "
+        + "unread is not consent — so d47 names every kind of event included and shows one real "
+        + "scrubbed line of each. An excerpt is small enough to show whole, so it is shown whole.";
 
     private Control Options()
     {
@@ -602,7 +643,7 @@ public sealed class HelpImproveWindow : Window
 
         // The question a Commander actually asked at this window (2026-08-31): which button
         // sends? With nowhere to send, none — and the status line is where the answer belongs,
-        // because the lede said it mid-paragraph and mid-paragraph is where it was missed. Since
+        // because the intro said it mid-paragraph and mid-paragraph is where it was missed. Since
         // the address started shipping in the build this is a state only a test constructs, and
         // it stays honest for the day that changes.
         _status.Text = _sendCorpus is null

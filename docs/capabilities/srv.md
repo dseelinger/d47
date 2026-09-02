@@ -19,7 +19,7 @@ nav_order: 131
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Three steps to driving the buggy by voice.</p>
+<p class="intro">Three steps to driving the buggy by voice.</p>
 <section>
 <h2><span class="num">1</span> Turn on key injection, and get in an SRV.</h2>
 <svg viewBox="0 0 880 196" role="img" aria-label="SRV">
@@ -70,7 +70,7 @@ nav_order: 131
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">The switches on the buggy — turret, handbrake, drive assist — and getting your ship back.</p>
+<p class="intro">The switches on the buggy — turret, handbrake, drive assist — and getting your ship back.</p>
 <section>
 <h2><span class="num">1</span> Recall and dismiss are the same key.</h2>
 <svg viewBox="0 0 880 230" role="img" aria-label="One Elite binding both recalls a ship that is away and dismisses one that is here, so the outcome cannot be reported">

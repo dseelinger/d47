@@ -19,7 +19,7 @@ nav_order: 109
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Two steps to knowing what a suit upgrade really costs.</p>
+<p class="intro">Two steps to knowing what a suit upgrade really costs.</p>
 <section>
 <h2><span class="num">1</span> Ask about what you are wearing.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
@@ -66,7 +66,7 @@ nav_order: 109
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">What you are wearing, what an on-foot upgrade really costs, and where its materials come from.</p>
+<p class="intro">What you are wearing, what an on-foot upgrade really costs, and where its materials come from.</p>
 <section>
 <h2><span class="num">1</span> Two axes, and neither one is the ship model.</h2>
 <svg viewBox="0 0 880 262" role="img" aria-label="A grade is bought at Pioneer Supplies and can be raised; a modification is applied by an engineer and is permanent">

@@ -19,7 +19,7 @@ nav_order: 100
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Two steps to finding out what something does.</p>
+<p class="intro">Two steps to finding out what something does.</p>
 <section>
 <h2><span class="num">1</span> Ask, in the words you already have.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
@@ -66,7 +66,7 @@ nav_order: 100
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">How to ask what something does, and where the answer comes from.</p>
+<p class="intro">How to ask what something does, and where the answer comes from.</p>
 <section>
 <h2><span class="num">1</span> Two ways to ask, and both mean “this page”.</h2>
 <svg viewBox="0 0 880 254" role="img" aria-label="The mark in the corner and the spoken word both open help for the page you are on">

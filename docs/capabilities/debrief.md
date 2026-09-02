@@ -19,7 +19,7 @@ nav_order: 139
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Three steps from telling D47 off to a rule it keeps.</p>
+<p class="intro">Three steps from telling D47 off to a rule it keeps.</p>
 <section>
 <h2><span class="num">1</span> Say what annoyed you, in your own words.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
@@ -62,7 +62,7 @@ nav_order: 139
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">D47 reads back what you told it off, drafts it as a rule in your own words, and waits for you to say yes.</p>
+<p class="intro">D47 reads back what you told it off, drafts it as a rule in your own words, and waits for you to say yes.</p>
 <section>
 <h2><span class="num">1</span> It listens for corrections, and only yours.</h2>
 <svg viewBox="0 0 880 268" role="img" aria-label="Three voices reach the session record; only the Commander's is read for corrections">

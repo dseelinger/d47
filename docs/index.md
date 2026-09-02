@@ -21,7 +21,7 @@ nav_order: 0
   Colours are the nine Palette roles and nothing else — see .d47-eli5 in assets/main.scss.
 -->
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">Directive 47 is a voice you can talk to while you fly.</p>
+<p class="intro">Directive 47 is a voice you can talk to while you fly.</p>
 <section>
 <h2><span class="num">1</span> The game keeps a journal. D47 reads it.</h2>
 <svg viewBox="0 0 880 250" role="img" aria-label="Elite Dangerous writes a journal file, which Directive 47 reads">

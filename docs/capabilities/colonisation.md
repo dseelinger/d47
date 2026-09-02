@@ -19,7 +19,7 @@ nav_order: 113
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Three steps to knowing how many runs are left.</p>
+<p class="intro">Three steps to knowing how many runs are left.</p>
 <section>
 <h2><span class="num">1</span> Start a build in the game, then ask.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
@@ -62,7 +62,7 @@ nav_order: 113
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">What your build still needs, what you are already carrying, and how many runs are left.</p>
+<p class="intro">What your build still needs, what you are already carrying, and how many runs are left.</p>
 <section>
 <h2><span class="num">1</span> The sum you would otherwise do on paper.</h2>
 <svg viewBox="0 0 880 262" role="img" aria-label="What the site needs minus what is in your hold is what is left to find, divided by your capacity">

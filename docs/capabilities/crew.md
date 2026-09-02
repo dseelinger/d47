@@ -19,7 +19,7 @@ nav_order: 103
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Two steps to talking to somebody other than the ship.</p>
+<p class="intro">Two steps to talking to somebody other than the ship.</p>
 <section>
 <h2><span class="num">1</span> Hire a pilot in the game. D47 reads your roster.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
@@ -59,7 +59,7 @@ nav_order: 103
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">The pilots you have hired, and how to talk to one of them instead of your ship's AI.</p>
+<p class="intro">The pilots you have hired, and how to talk to one of them instead of your ship's AI.</p>
 <section>
 <h2><span class="num">1</span> The name has to be at the front.</h2>
 <svg viewBox="0 0 880 240" role="img" aria-label="Opening with a crew member's name sends the turn to them; mentioning them later is a question for your ship's AI">

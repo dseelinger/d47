@@ -378,15 +378,15 @@ public class ACorpusIsSentByTheSameWriterThatSavesItTests : IDisposable
     [AvaloniaFact]
     public void WithNoAddressItStillSaysNothingGoesToANetwork()
     {
-        var lede = Shown().GetVisualDescendants().OfType<TextBlock>()
+        var intro = Shown().GetVisualDescendants().OfType<TextBlock>()
             .Select(block => block.Text ?? string.Empty)
-            .Single(text => text.Contains("This reads your Elite journals", StringComparison.Ordinal));
+            .Single(text => text.Contains("Nothing is read, written or sent", StringComparison.Ordinal));
 
-        Assert.Contains("nothing here goes to a network", lede, StringComparison.Ordinal);
+        Assert.Contains("nothing here goes to a network", intro, StringComparison.Ordinal);
     }
 
     /// <summary>
-    /// With an address, the lede names it before anything is pressed, and states the linkage claim
+    /// With an address, the intro names it before anything is pressed, and states the linkage claim
     /// — the same two things the excerpt window says, in the same words.
     /// </summary>
     [AvaloniaFact]
@@ -396,13 +396,13 @@ public class ACorpusIsSentByTheSameWriterThatSavesItTests : IDisposable
             send: (_, _, _) => Task.FromResult(new DonationSent(DonationOutcome.Stored("k"), null)),
             destination: "https://donate.invalid/donate");
 
-        var lede = window.GetVisualDescendants().OfType<TextBlock>()
+        var intro = window.GetVisualDescendants().OfType<TextBlock>()
             .Select(block => block.Text ?? string.Empty)
-            .Single(text => text.Contains("This reads your Elite journals", StringComparison.Ordinal));
+            .Single(text => text.Contains("Nothing is read, written or sent", StringComparison.Ordinal));
 
-        Assert.Contains("https://donate.invalid/donate", lede, StringComparison.Ordinal);
-        Assert.DoesNotContain("nothing here goes to a network", lede, StringComparison.Ordinal);
-        Assert.Contains("random number identifying this installation", lede, StringComparison.Ordinal);
+        Assert.Contains("https://donate.invalid/donate", intro, StringComparison.Ordinal);
+        Assert.DoesNotContain("nothing here goes to a network", intro, StringComparison.Ordinal);
+        Assert.Contains("random number identifying this installation", intro, StringComparison.Ordinal);
     }
 
     /// <summary>

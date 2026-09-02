@@ -29,6 +29,30 @@ history to match today's layout would be the one edit it must never take.
 
 ## 0.102.0 — 2026-09-02 — The two chatters are named for who is speaking
 
+### Help improve D47 opens with the disclosures and nothing else (#269)
+
+The window still led with a paragraph arguing for pressing before it said what pressing does. #252
+trimmed it once and got the mechanism onto the site; what stayed was every fact **plus** the
+sentence of reasoning attached to each fact, which is most of a wall of text by volume and none of
+it by weight.
+
+**The intro is now a fact per line** — what the scrub replaces and drops, where a send goes, how long
+it is kept, what d47 keeps here, and the per-installation number that travels with it. Six lines
+where there were fifteen, and the first thing read is the one that governs all of them: *nothing is
+read, written or sent until you press*.
+
+**An ⓘ sits beside the ?**, and the pair reads left to right in the order they deepen: the intro is
+the facts, the glyph is the reasoning — why real journals find defects, what the scrub keeps rather
+than removes, why a history is offered as a report about itself — and the glyph's own button opens
+the full page on the site. A flyout rather than a second dialog, so dismissing it costs nothing a
+Commander had already chosen on the window behind it.
+
+**What did not move is any statement of what leaves and where it goes.** That line has now held
+through two trims, and it is what the window exists to obtain: a Commander who presses neither glyph
+has still read every term. Tests assert the split in both directions, because the invisible half is
+the one that rots — a disclosure drifting behind the glyph, or an argument drifting back into the
+intro.
+
 ### In Ship chatter and NPC chatter
 
 **Ambient remarks** are **In Ship chatter**, and **invented chatter** is **NPC chatter**. The old
@@ -1067,7 +1091,7 @@ never the consent: the excerpt keeps its read-the-payload yes and closes on the 
 keeps its report and its Read step, and the Log page still offers only the excerpt, because a
 history is Elite's journals and that page does not show them.
 
-The lede leads with **why** — real journals are how defects get found and fixed — and then the
+The intro leads with **why** — real journals are how defects get found and fixed — and then the
 three promises that were always true and always buried: entirely voluntary, scrubbed before you
 ever see the result, removable in one press. The scale opens on the journal scale, gentlest first,
 and the widest option says **"Everything"** rather than *"everything on disk"*, because a

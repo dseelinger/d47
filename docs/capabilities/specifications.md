@@ -19,7 +19,7 @@ nav_order: 106
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Two steps to the figures before anybody buys anything.</p>
+<p class="intro">Two steps to the figures before anybody buys anything.</p>
 <section>
 <h2><span class="num">1</span> Ask about a hull or a module by name.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
@@ -66,7 +66,7 @@ nav_order: 106
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">What a hull or a module can do, before anybody buys one. Nothing here touches the network.</p>
+<p class="intro">What a hull or a module can do, before anybody buys one. Nothing here touches the network.</p>
 <section>
 <h2><span class="num">1</span> The order of the answer is part of the answer.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="A ship specification leads with pad size, gives slots as sizes, and quotes the hull cost alone">

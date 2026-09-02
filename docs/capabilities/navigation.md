@@ -19,7 +19,7 @@ nav_order: 133
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Three steps to a system name where you can use it.</p>
+<p class="intro">Three steps to a system name where you can use it.</p>
 <section>
 <h2><span class="num">1</span> Say where you want to go.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
@@ -63,7 +63,7 @@ nav_order: 133
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">Putting a system name where you can use it, and — if you let it — driving the map itself.</p>
+<p class="intro">Putting a system name where you can use it, and — if you let it — driving the map itself.</p>
 <section>
 <h2><span class="num">1</span> The clipboard is the part that always works.</h2>
 <svg viewBox="0 0 880 230" role="img" aria-label="The system name always goes on the clipboard first, and driving the map is a convenience on top of it">

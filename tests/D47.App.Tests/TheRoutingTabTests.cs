@@ -436,7 +436,7 @@ public class TheRoutingTabTests
         // And they are not three copies of one page, which is what the tab's single mark was.
         Assert.Equal(
             3,
-            pages.Select(page => D47.Core.Help.HelpLibrary.For(page.Item1)!.Lede).Distinct().Count());
+            pages.Select(page => D47.Core.Help.HelpLibrary.For(page.Item1)!.Intro).Distinct().Count());
     }
 
     /// <summary>

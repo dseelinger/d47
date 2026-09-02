@@ -19,7 +19,7 @@ nav_order: 108
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Three steps to knowing what a blueprint really costs you.</p>
+<p class="intro">Three steps to knowing what a blueprint really costs you.</p>
 <section>
 <h2><span class="num">1</span> Ask about a blueprint by name.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
@@ -59,7 +59,7 @@ nav_order: 108
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">What a blueprint costs, what it costs you, and how your own craft actually went.</p>
+<p class="intro">What a blueprint costs, what it costs you, and how your own craft actually went.</p>
 <section>
 <h2><span class="num">1</span> Two halves, and only one of them is about you.</h2>
 <svg viewBox="0 0 880 268" role="img" aria-label="A shipped table and your journal combine into one answer">

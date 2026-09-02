@@ -19,7 +19,7 @@ nav_order: 122
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Three steps to a mix you can hear over the ship.</p>
+<p class="intro">Three steps to a mix you can hear over the ship.</p>
 <section>
 <h2><span class="num">1</span> Open the Audio mixer and move the five sliders.</h2>
 <svg viewBox="0 0 880 268" role="img" aria-label="The five volume sliders: speech, cues, music, ambience and alerts">
@@ -72,7 +72,7 @@ nav_order: 122
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">How loud each kind of sound is, and how far it drops out of the way while Directive 47 speaks.</p>
+<p class="intro">How loud each kind of sound is, and how far it drops out of the way while Directive 47 speaks.</p>
 <section>
 <h2><span class="num">1</span> Five categories, and everything audible is one of them.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Speech, alerts, sound cues, the thinking bed and ambient music, each with its own level and mute">

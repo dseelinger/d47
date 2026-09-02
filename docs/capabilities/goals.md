@@ -19,7 +19,7 @@ nav_order: 141
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Three steps to something that tracks its own progress.</p>
+<p class="intro">Three steps to something that tracks its own progress.</p>
 <section>
 <h2><span class="num">1</span> Say what you are working towards.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
@@ -64,7 +64,7 @@ nav_order: 141
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">Your checklist holds this week. Goals hold this year — and work out their own progress.</p>
+<p class="intro">Your checklist holds this week. Goals hold this year — and work out their own progress.</p>
 <section>
 <h2><span class="num">1</span> Two different questions, kept apart.</h2>
 <svg viewBox="0 0 880 214" role="img" aria-label="The checklist holds what you are doing this week and goals hold what you are doing this year">

@@ -19,7 +19,7 @@ nav_order: 114
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Three steps to a story that runs while you fly.</p>
+<p class="intro">Three steps to a story that runs while you fly.</p>
 <section>
 <h2><span class="num">1</span> Ask for one, in the Adventures tab or out loud.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a request for an adventure typed into it">
@@ -63,7 +63,7 @@ nav_order: 114
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">A story you fly, told by the ship's AI, moved along by your own journal.</p>
+<p class="intro">A story you fly, told by the ship's AI, moved along by your own journal.</p>
 <section>
 <h2><span class="num">1</span> A story, not a list of stops.</h2>
 <svg viewBox="0 0 880 300" role="img" aria-label="A spine of premise, want, stake, turn and ending, with beats hung on real places">

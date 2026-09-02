@@ -13,7 +13,7 @@ nav_order: 203
   Colours are the nine Palette roles and nothing else — see .d47-eli5 in assets/main.scss.
 -->
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">A circuit of markets worked out here, from the station you are docked at — and the one number Directive 47 will not read from your journal.</p>
+<p class="intro">A circuit of markets worked out here, from the station you are docked at — and the one number Directive 47 will not read from your journal.</p>
 <section>
 <h2><span class="num">1</span> Your balance is asked for, never taken.</h2>
 <svg viewBox="0 0 880 250" role="img" aria-label="Jump range and cargo capacity come from the journal; the credit balance is typed every time and never saved">

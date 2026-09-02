@@ -19,7 +19,7 @@ nav_order: 142
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Three steps to knowing exactly what leaves your machine.</p>
+<p class="intro">Three steps to knowing exactly what leaves your machine.</p>
 <section>
 <h2><span class="num">1</span> Read the destinations. There is one row per place.</h2>
 <svg viewBox="0 0 880 308" role="img" aria-label="Privacy">

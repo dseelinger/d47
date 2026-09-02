@@ -19,7 +19,7 @@ nav_order: 105
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Three steps to a route worth flying.</p>
+<p class="intro">Three steps to a route worth flying.</p>
 <section>
 <h2><span class="num">1</span> Turn web access on. Routes are worked out elsewhere.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Route planning">
@@ -75,7 +75,7 @@ nav_order: 105
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">A neutron route, a Road to Riches loop, or a trade run that does not have to empty the hold.</p>
+<p class="intro">A neutron route, a Road to Riches loop, or a trade run that does not have to empty the hold.</p>
 <section>
 <h2><span class="num">1</span> Plotting is not searching. It is a job.</h2>
 <svg viewBox="0 0 880 240" role="img" aria-label="A search is a request and a reply; a plot is submitted and waited on; a trade route is computed locally">

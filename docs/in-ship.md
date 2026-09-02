@@ -22,7 +22,7 @@ nav_order: 4
   the one a Commander lands on.
 -->
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">The reading you land on: you and the ship's AI, everything said, in order.</p>
+<p class="intro">The reading you land on: you and the ship's AI, everything said, in order.</p>
 <section>
 <h2><span class="num">1</span> This reading is the conversation, drawn as one.</h2>
 <svg viewBox="0 0 880 268" role="img" aria-label="Your question on the right, the answer on the left, and a note about the conversation across the middle">
