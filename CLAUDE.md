@@ -9,7 +9,7 @@ Avoid mannered prose. Read the spec, don't guess.
 |---|---|
 | How is it built? Why not X? | `architecture.md` — stack, dependency direction, trust boundaries, packaging. §10 lists alternatives already rejected, with reasons |
 | What has shipped, and when? | `CHANGELOG.md` — the permanent record, newest first. The only file allowed to describe the state of the product |
-| What is broken, planned, or wanted? | GitHub Issues — one per defect (`bug`), wanted change (`change-request`) or unbuilt phase (`phase`). Read them through `tools/issues.ps1`; `gh issue view` and `gh issue list` are denied |
+| What is broken, planned, or wanted? | GitHub Issues — one per defect (`bug`), wanted change (`change-request`) or unbuilt phase (`phase`). Read them through `tools/issues.ps1`, because it withholds unvouched prose. Nothing blocks `gh issue view` or `gh issue list` any more — the rule is a convention the reader keeps, not a gate |
 
 **The repository holds no project-management state.** No queue for planned work. Use GitHub issues only.
 

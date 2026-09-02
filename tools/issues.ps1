@@ -53,10 +53,12 @@
 
     **What this does not do**, stated because a control whose limits are unwritten gets trusted
     past them. It is a road, not a wall: it keeps the untrusted text out of the road an agent
-    normally takes, and `.claude/settings.json` is what makes it the only road by denying the raw
-    ones. Neither stops a shell command creative enough to go around both — `curl` against the API,
-    a nested interpreter, a GitHub MCP server added later. A PreToolUse hook inspecting the whole
-    command string is the layer that would, and it is deliberately not built yet.
+    normally takes, and nothing closes the other roads — the raw `gh issue view` and `gh issue
+    list` are open, so this is the road taken by convention rather than the only one there is.
+    Nor does it stop a shell command that goes around it — `curl` against the API, a nested
+    interpreter, a GitHub MCP server added later. A PreToolUse hook inspecting the whole command
+    string is the layer that would, and with the raw commands open the case for it is stronger
+    than it was; it is deliberately not built yet.
 #>
 
 param(
