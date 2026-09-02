@@ -27,6 +27,60 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.104.0 — 2026-09-02 — d47 can say which journal events it handles
+
+### One list names the journal events d47 acts on, and a gate keeps it honest (#270)
+
+"Does d47 handle `<event>`?" had no trustworthy answer. Dispatch on an event's name was spread
+across dozens of files in three syntactic shapes — `case "Docked":`, `Kind == "Docked"`,
+`Kind is "Docked" or "Undocked"` — and a grep over two of the three missed `DockingGranted`, which
+`CarrierState` plainly handles. A check that under-reports is worse than none: it reports a gap
+that is not one and hides one that is. And a new Elite event that nothing matched fell through
+every consumer with no error and no log line, which is the right runtime behaviour and the reason
+the first sign was a Commander noticing d47 had stayed quiet.
+
+**`HandledEvents`, in Core, is the list.** Two blocks rather than one, because "handled" hides the
+question a Commander actually asks. The Journal File reading has a sentence for nearly every event
+Elite writes and hides nine more as noise; counting those as handled would have answered "yes" for
+`Screenshot` and made the diff against a corpus near-empty. So `ActedOn` is what something reacts
+to — folded into game state, spoken about, planned from, written into the logbook — and
+`NarratedOnly` is what only the reading knows. "Why did it say nothing when X happened" is answered
+by X being in the second block far more often than by X being absent.
+
+**The gate reads the source with the compiler, not with grep**, because grep is what the issue
+caught under-reporting. `HandledEventsGateTests` compiles every `.cs` under `src/` with Roslyn,
+asks the semantic model for every read of `JournalEvent.Kind` — the one question grep cannot
+answer, since a dozen other types have a `Kind` — and follows each read to the names it is compared
+against: `==`, `is` with any `or`, `not` and parentheses, both kinds of `switch`, property and
+tuple patterns, membership in a collection whose initializer lists the names, a local the kind is
+copied into, an argument followed into one of d47's own methods, and **a copy stored in a record**,
+after which every read of that property is a read of the kind. That last one is what found the
+reading's noise list: the kind goes into a `JournalEntry` and is tested against
+`JournalSentence.Noise` from there — eight names the first pass missed, and exactly the drift the
+gate exists for. It fails in both directions, and it fails on a comparison it cannot resolve — a
+parameter, a method's result, a prefix test — rather than leaving it out. Three seconds, and a
+test rather than a CI step for the same reason the other three gates are.
+
+Broken three ways before it shipped, to prove it catches them: a name removed from the list, a
+`== "FooBar"` added to a callout, and a `StartsWith("Carrier")`. Each failed the build naming the
+file and line, and the last one said to list the names instead.
+
+**`spike/CorpusReplay` now ends with the corpus subtracted from the list**, which is the second
+thing the issue asked to make cheap and the one that finds defects nobody reported. Its first run:
+944 journals, 716,736 events, 222 distinct kinds; **8 that nothing in d47 handles** —
+`BackpackChange` (2,835), `Backpack` (768), `FSSBodySignals` (429), `FCMaterials` (89),
+`SellWeapon` (6), `SquadronApplicationApproved` (2), `CancelDropship` (1), `GameModeChange` (1) —
+and 114 that only the reading knows. `SellWeapon` beside a handled `BuyWeapon`, and
+`FSSBodySignals` beside a folded `SAASignalsFound`, are the shape of gap the issue predicted. None
+is fixed here: this is the instrument, not the fixes it suggests.
+
+The gate adds `Microsoft.CodeAnalysis.CSharp` to `D47.Core.Tests` — MIT, test-only, and inside
+`PackageLicenceGateTests`' walk like everything else in the solution. The donation scrubber's table
+is deliberately not counted: it reads the event name out of raw JSON, and taking a person's name
+out of a `Friends` event is not reacting to one.
+
+---
+
 ## 0.103.0 — 2026-09-02 — Captions can sit in the cockpit instead of on your face
 
 ### Captions can be world-locked, low between the console and your feet (#204)

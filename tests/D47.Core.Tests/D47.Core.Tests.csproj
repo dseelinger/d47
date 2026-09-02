@@ -15,6 +15,12 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="xunit.v3" Version="3.2.2" />
+
+    <!--
+      The gate that binds HandledEvents to the code (#270) reads the source with the compiler
+      rather than with grep, because grep is what under-reported it. MIT, like the rest.
+    -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.9.0" />
   </ItemGroup>
 
 </Project>
