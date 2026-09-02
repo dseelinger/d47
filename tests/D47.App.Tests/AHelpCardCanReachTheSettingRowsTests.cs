@@ -44,13 +44,13 @@ public class AHelpCardCanReachTheSettingRowsTests
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(PanelView.TranscriptHelp, view.Nav.Help);
-        Assert.Equal("general-transcript", PanelView.TranscriptHelp);
+        Assert.Equal(PanelView.InShipHelp, view.Nav.Help);
+        Assert.Equal("general-in-ship", PanelView.InShipHelp);
 
         var article = HelpLibrary.For(view.Nav.Help!);
 
         Assert.NotNull(article);
-        Assert.Equal("The Transcript page", article.Title);
+        Assert.Equal("In Ship", article.Title);
 
         window.Close();
     }

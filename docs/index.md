@@ -167,7 +167,7 @@ and is not covered by that licence.
 <div class="cards">
 <a class="card" href="install.html"><span class="ct">Installing →</span><span class="cd">Getting a build, checking it is really ours, and where it keeps its files.</span></a>
 <a class="card" href="conversation.html"><span class="ct">Talking to Directive 47 →</span><span class="cd">What happens between your question and its answer.</span></a>
-<a class="card" href="transcript.html"><span class="ct">The Transcript page →</span><span class="cd">The page you land on: every control around the conversation, and what decides the answers.</span></a>
+<a class="card" href="in-ship.html"><span class="ct">In Ship →</span><span class="cd">The reading you land on: every control around the conversation, and what decides the answers.</span></a>
 <a class="card" href="capabilities/help.html"><span class="ct">Everything it can do →</span><span class="cd">One page per capability. The nav on the left is the whole list.</span></a>
 </div>
 </div>

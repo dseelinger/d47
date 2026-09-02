@@ -69,24 +69,79 @@ public sealed class HelpNamesTheReadingsTests
     }
 
     /// <summary>
-    /// Every reading is named on the page its <c>?</c> opens. This is the self-maintaining half:
-    /// rename a reading without touching the help and it fails, naming the word that went missing.
+    /// Every reading is named on the page its own <c>?</c> opens. This is the self-maintaining
+    /// half: rename a reading without touching its help and it fails, naming the word that went
+    /// missing.
+    /// <para>
+    /// <b>Its own page since #262.</b> There was one page for three readings and this asserted
+    /// against that one file — so a reading could be named on a page about a different reading and
+    /// pass. The map below is the same wiring <c>PanelView</c> registers, written out, because a
+    /// test that read the wiring could not catch the two disagreeing.
+    /// </para>
     /// </summary>
     [AvaloniaFact]
-    public void EveryReadingIsNamedOnTheTranscriptPage()
+    public void EveryReadingIsNamedOnItsOwnHelpPage()
     {
-        var page = File.ReadAllText(Path.Combine(RepositoryRoot(), "docs", "transcript.md"));
+        var pages = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["In Ship"] = "in-ship.md",
+            ["Log File"] = "log-file.md",
+            ["Journal File"] = "journal-file.md",
+
+            // Both journal readings share one page, which is the same reason Raw Journal is not
+            // an entry in the picker: the same events seen another way, not a fourth subject.
+            ["Raw Journal"] = "journal-file.md",
+        };
 
         foreach (var reading in Readings())
         {
             Assert.True(
+                pages.TryGetValue(reading, out var file),
+                $"""
+                 The Transcript reading "{reading}" has no help page in this test's map. A new
+                 reading needs one — see #262, which split the single crammed page into one per
+                 reading.
+                 """);
+
+            var page = File.ReadAllText(Path.Combine(RepositoryRoot(), "docs", file!));
+
+            Assert.True(
                 page.Contains(reading, StringComparison.Ordinal),
                 $"""
-                 The Transcript reading "{reading}" is not named anywhere in docs/transcript.md,
-                 which is the page its ? opens. Rename the reading in the help too, or say why
-                 the page does not mention it.
+                 The Transcript reading "{reading}" is not named anywhere in docs/{file}, which is
+                 the page its ? opens. Rename the reading in the help too, or say why the page does
+                 not mention it.
                  """);
         }
+    }
+
+    /// <summary>
+    /// And each reading's mark opens its own page rather than one shared one (#262). Asserted
+    /// through the registration, because the mark is only ever as context-sensitive as what the
+    /// crumb was given.
+    /// </summary>
+    [AvaloniaFact]
+    public void EachReadingsMarkOpensItsOwnPage()
+    {
+        var panel = new PanelView { DataContext = new PanelViewModel() };
+        var window = new Window { Content = panel, Width = 1180, Height = 800 };
+
+        panel.EnableRawJournal();
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var help = panel.Nav.Roots(PanelTab.Transcript)
+            .ToDictionary(crumb => crumb.Word, crumb => crumb.Help, StringComparer.Ordinal);
+
+        window.Close();
+
+        Assert.Equal(PanelView.InShipHelp, help["In Ship"]);
+        Assert.Equal(PanelView.LogFileHelp, help["Log File"]);
+        Assert.Equal(PanelView.JournalHelp, help["Journal File"]);
+        Assert.Equal(PanelView.JournalHelp, help["Raw Journal"]);
+
+        // Three pages for four readings, and no reading left on somebody else's.
+        Assert.Equal(3, help.Values.Distinct(StringComparer.Ordinal).Count());
     }
 
     /// <summary>

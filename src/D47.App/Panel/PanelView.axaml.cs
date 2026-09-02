@@ -76,11 +76,40 @@ public partial class PanelView : UserControl
     public const string RawJournalRoot = "transcript.rawjournal";
 
     /// <summary>
-    /// The help the Transcript tab's default reading offers: a page about the page, rather than
-    /// about any one capability (asked for 2026-08-23). Named here so the test that checks where
-    /// the mark goes and the registration that sends it there cannot spell it differently.
+    /// The help the conversation reading offers: a page about the page, rather than about any one
+    /// capability (asked for 2026-08-23). Named here so the test that checks where the mark goes
+    /// and the registration that sends it there cannot spell it differently.
     /// </summary>
-    public const string TranscriptHelp = D47.Core.Help.HelpLibrary.GeneralPrefix + "transcript";
+    /// <remarks>
+    /// <b>One page per reading, on the Commander's instruction</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/262">#262</a>): <em>"The transcript tab
+    /// should have 3 different Help pages depending on context — In Ship, Log File, Journal File.
+    /// And not try to cram it all into one ELI5 page."</em>
+    /// <para>
+    /// There was one page for three readings and it was already too full to be about any of them:
+    /// it described the conversation's bubbles, the log file's working indicator and the journal's
+    /// two panes in the same four sections, so a Commander pressing <c>?</c> on the journal got
+    /// three quarters of an answer about somewhere else. The mark is context-sensitive by
+    /// construction — <see cref="NavCrumb.Help"/> is per crumb — so this was one page short of
+    /// what the mechanism already offered.
+    /// </para>
+    /// </remarks>
+    public const string InShipHelp = D47.Core.Help.HelpLibrary.GeneralPrefix + "in-ship";
+
+    /// <summary>
+    /// The log file reading's own page (#262). It used to open the Diagnostics capability, which
+    /// is the right subject and the wrong question: that page is about log levels and where files
+    /// live, and a Commander pressing <c>?</c> is asking what the thing in front of them is. It
+    /// links to Diagnostics for the capability.
+    /// </summary>
+    public const string LogFileHelp = D47.Core.Help.HelpLibrary.GeneralPrefix + "log-file";
+
+    /// <summary>
+    /// The journal readings' page (#262), shared by both of them. Raw Journal is the same events
+    /// seen another way rather than a fourth subject — the reason it is not an entry in the
+    /// picker — so it is the same answer, and the page explains the switch between them.
+    /// </summary>
+    public const string JournalHelp = D47.Core.Help.HelpLibrary.GeneralPrefix + "journal-file";
 
     private PanelViewModel? _bound;
 
@@ -342,7 +371,7 @@ public partial class PanelView : UserControl
             PanelTab.Transcript,
             new NavCrumb(ConversationRoot, "In Ship")
             {
-                Help = TranscriptHelp,
+                Help = InShipHelp,
 
                 // The words this reading answered to before it was In Ship. Kept, because a
                 // Commander who says one is not wrong, they are out of date, and being told
@@ -354,7 +383,7 @@ public partial class PanelView : UserControl
             PanelTab.Transcript,
             new NavCrumb(LogRoot, "Log File")
             {
-                Help = D47.Core.Capabilities.Builtin.DiagnosticsCapability.Id,
+                Help = LogFileHelp,
                 Spoken = ["log", "d47 log"],
             });
 
@@ -364,7 +393,7 @@ public partial class PanelView : UserControl
             PanelTab.Transcript,
             new NavCrumb(JournalRoot, "Journal File")
             {
-                Help = TranscriptHelp,
+                Help = JournalHelp,
                 Spoken = ["journal", "journal file", "elite dangerous journal"],
             });
 
@@ -1581,7 +1610,7 @@ public partial class PanelView : UserControl
     {
         Nav.Register(
             PanelTab.Transcript,
-            new NavCrumb(RawJournalRoot, "Raw Journal") { Help = TranscriptHelp });
+            new NavCrumb(RawJournalRoot, "Raw Journal") { Help = JournalHelp });
 
         DrawModes();
     }

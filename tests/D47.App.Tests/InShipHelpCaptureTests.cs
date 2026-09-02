@@ -9,7 +9,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// What the Transcript page's help actually looks like, captured (asked for 2026-08-23).
+/// What the In Ship reading's help actually looks like, captured (asked for 2026-08-23).
 /// <para>
 /// A band parses and still draws badly: a figure whose labels collide, a section taller than the
 /// panel, a diagram that comes out empty because a headless render has none of the application's
@@ -17,10 +17,10 @@ namespace D47.App.Tests;
 /// Commander presses through to and leaves the frame beside the other captures.
 /// </para>
 /// </summary>
-public class TranscriptHelpCaptureTests
+public class InShipHelpCaptureTests
 {
     [AvaloniaFact]
-    public void TheBandDrawsItsFourStepsAndThreeCards()
+    public void TheBandDrawsItsFourSectionsAndThreeCards()
     {
         var view = new PanelView { DataContext = new PanelViewModel() };
         view.EnableSettings(() => new TextBlock { Text = "settings" }, _ => { });
@@ -39,12 +39,16 @@ public class TranscriptHelpCaptureTests
             .ToList();
 
         // The lede, the four headings and the three cards — which together are the whole claim
-        // that this page is about the page rather than about the language model.
-        Assert.Contains(shown, text => text.StartsWith("The page you land on", StringComparison.Ordinal));
-        Assert.Contains("Three readings in the drop-down, and a fourth behind a switch.", shown);
+        // that this page is about this reading rather than about the language model.
+        //
+        // It is about **one** reading since #262. The heading below used to be "Three readings in
+        // the drop-down, and a fourth behind a switch", which is the shape the Commander asked to
+        // be rid of: a page that opens by explaining the other three is not a page about this one.
+        Assert.Contains(shown, text => text.StartsWith("The reading you land on", StringComparison.Ordinal));
+        Assert.Contains("This reading is the conversation, drawn as one.", shown);
         Assert.Contains("Two ways in, and the microphone always says which.", shown);
-        Assert.Contains("Finding a line again, and taking it with you.", shown);
-        Assert.Contains("Three settings stand behind every answer on this page.", shown);
+        Assert.Contains("The controls around it.", shown);
+        Assert.Contains("Three settings stand behind every answer here.", shown);
         Assert.Contains("Listening", shown);
         Assert.Contains("Language model", shown);
         Assert.Contains("Speech", shown);
@@ -62,10 +66,10 @@ public class TranscriptHelpCaptureTests
 
         // And the long-form link is the address this page actually has. A general page is not
         // under capabilities/, and a card pointing there is a 404 at the foot of every band.
-        Assert.Contains("https://dseelinger.github.io/d47/transcript.html", shown);
+        Assert.Contains("https://dseelinger.github.io/d47/in-ship.html", shown);
 
         window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "help-transcript.png"),
+            Path.Combine(TestSurface.CaptureDirectory, "help-in-ship.png"),
             new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
 
         window.Close();

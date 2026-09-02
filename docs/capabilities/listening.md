@@ -173,7 +173,7 @@ nav_order: 123
 <div class="next-title">Where to go next</div>
 <div class="cards">
 <a class="card settings" href="speech.html"><span class="ct">Speech →</span><span class="cd">The other half of talking: the voice that reads the answer back.</span></a>
-<a class="card" href="../transcript.html"><span class="ct">The Transcript page →</span><span class="cd">What the microphone badge is telling you, and the rest of the controls there.</span></a>
+<a class="card" href="../in-ship.html"><span class="ct">In Ship →</span><span class="cd">What the microphone badge is telling you, and the rest of the controls there.</span></a>
 <a class="card" href="privacy.html"><span class="ct">Privacy →</span><span class="cd">Everything that reaches a network, counted rather than promised.</span></a>
 </div>
 </div>
