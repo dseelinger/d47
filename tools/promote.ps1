@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Promotes the newest pre-release to latest, so the update checker starts offering it.
 
@@ -128,12 +128,22 @@ $target =
         # thing on a tidy day and not on 2026-08-27, when v0.78.1 was still flagged pre-release after
         # v0.79.0 had been promoted past it - so the plain reading would have offered every Commander
         # a downgrade, which is the one thing this script exists to not do by accident.
+        # **`$candidate`, and the name is the whole of a bug that waited a hundred releases.**
+        # This said `$version`, and PowerShell variable names are case-insensitive — so it was the
+        # script's own `[string] $Version` parameter, type constraint and all. Assigning a
+        # `[version]` to it coerced the object back to a string, and `-gt` then compared two
+        # strings.
+        #
+        # Which agreed with a version comparison for every release this project has ever cut, and
+        # stopped agreeing at exactly v0.100.0: "0.100.0" -gt "0.99.0" is False, because "1" sorts
+        # before "9". The Commander spotted the shape of it before the cause — "funny it started
+        # when we rolled over from 99 to 100".
         $waiting = @(
             $releases |
                 Where-Object { $_.isPrerelease } |
                 Where-Object {
-                    $version = ConvertTo-Version -Tag $_.tagName
-                    $version -and (-not $latestVersion -or $version -gt $latestVersion)
+                    $candidate = ConvertTo-Version -Tag $_.tagName
+                    $candidate -and (-not $latestVersion -or $candidate -gt $latestVersion)
                 }
         )
 
