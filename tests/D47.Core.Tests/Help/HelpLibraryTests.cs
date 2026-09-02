@@ -56,7 +56,7 @@ public class HelpLibraryTests
 
         Assert.NotNull(article);
         Assert.Equal("Engineers", article.Title);
-        Assert.Equal("Who can improve your ship, where they are, and who to go and get next.", article.Lede);
+        Assert.Equal("Who can improve your ship, where they are, and who to go and get next.", article.Intro);
         Assert.Equal(4, article.Sections.Count);
 
         Assert.Equal(["1", "2", "3", "4"], article.Sections.Select(s => s.Number));
@@ -150,21 +150,21 @@ public class HelpLibraryTests
             ---
 
             <div class="d47-eli5"><div class="d47-frame">
-            <p class="lede">The first.</p>
+            <p class="intro">The first.</p>
             <section><h2><span class="num">1</span> One.</h2></section>
             </div></div>
 
             ## The details
 
             <div class="d47-eli5"><div class="d47-frame">
-            <p class="lede">The second, which must not be read.</p>
+            <p class="intro">The second, which must not be read.</p>
             </div></div>
             """;
 
         var article = HelpLibrary.Parse(Page, "two-blocks");
 
         Assert.NotNull(article);
-        Assert.Equal("The first.", article.Lede);
+        Assert.Equal("The first.", article.Intro);
         Assert.Single(article.Sections);
     }
 
@@ -211,7 +211,7 @@ public class HelpLibraryTests
         ---
 
         <div class="d47-eli5"><div class="d47-frame">
-        <p class="lede">A lede.</p>
+        <p class="intro">An intro.</p>
         <section><h2><span class="num">1</span> A step.</h2>{figure}</section>
         </div></div>
         """;
@@ -282,7 +282,7 @@ public class HelpLibraryTests
         ---
 
         <div class="d47-eli5"><div class="d47-frame">
-        <p class="lede">A lede.</p>
+        <p class="intro">An intro.</p>
         <section><h2><span class="num">1</span> A step.</h2></section>
         <div class="next"><div class="next-title">Where to go next</div><div class="cards">{cards}</div></div>
         </div></div>
@@ -303,7 +303,7 @@ public class HelpLibraryTests
             ---
 
             <div class="d47-eli5">
-            <p class="lede">Straight in.</p>
+            <p class="intro">Straight in.</p>
             <section><h2><span class="num">1</span> A step.</h2></section>
             <div class="next"><div class="cards">
             <a class="card" href="ships.html"><span class="ct">Ships →</span><span class="cd">The fleet.</span></a>
@@ -314,7 +314,7 @@ public class HelpLibraryTests
         var article = HelpLibrary.Parse(Page, "no-frame");
 
         Assert.NotNull(article);
-        Assert.Equal("Straight in.", article.Lede);
+        Assert.Equal("Straight in.", article.Intro);
         Assert.Single(article.Sections);
         Assert.Equal("A step.", article.Sections[0].Heading);
         Assert.Equal("ships", Assert.Single(article.Links).Article);
@@ -362,7 +362,7 @@ public class HelpLibraryTests
         var article = HelpLibrary.Parse(
             """
             <div class="d47-eli5"><div class="d47-frame">
-            <p class="lede">A lede.</p>
+            <p class="intro">An intro.</p>
             <div class="cards">
             <a class="card settings" href="speech.html"><span class="ct">Speech →</span><span class="cd">A blurb.</span></a>
             <a class="card" href="ships.html"><span class="ct">Ships →</span></a>
@@ -386,7 +386,7 @@ public class HelpLibraryTests
         var article = HelpLibrary.Parse(
             """
             <div class="d47-eli5"><div class="d47-frame">
-            <p class="lede">A lede.</p>
+            <p class="intro">An intro.</p>
             <div class="cards">
             <a class="card settings" href="speech.html"><span class="ct">Speech →</span></a>
             <a class="card" href="ships.html"><span class="ct">Ships →</span></a>
@@ -461,7 +461,7 @@ public class HelpLibraryTests
         const string Cards =
             """
             <div class="d47-eli5"><div class="d47-frame">
-            <p class="lede">A lede.</p>
+            <p class="intro">An intro.</p>
             <div class="cards">
             <a class="card" href="conversation.html"><span class="ct">Beside →</span></a>
             <a class="card" href="capabilities/speech.html"><span class="ct">Below →</span></a>

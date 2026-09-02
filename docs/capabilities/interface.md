@@ -19,7 +19,7 @@ nav_order: 125
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Three steps to putting the window where you want it.</p>
+<p class="intro">Three steps to putting the window where you want it.</p>
 <section>
 <h2><span class="num">1</span> Learn the tab strip. Everything is behind it.</h2>
 <svg viewBox="0 0 880 208" role="img" aria-label="The Transcript  Checklist  Ships  Settings tab">
@@ -69,7 +69,7 @@ nav_order: 125
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">How Directive 47 is laid out, and why one design fits a monitor and a metre-wide quad alike.</p>
+<p class="intro">How Directive 47 is laid out, and why one design fits a monitor and a metre-wide quad alike.</p>
 <section>
 <h2><span class="num">1</span> The tab is the top of the stack, not the first step into it.</h2>
 <svg viewBox="0 0 880 258" role="img" aria-label="A tab sits above a stack of levels, and pressing the tab you are already on returns to its top">

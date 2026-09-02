@@ -19,7 +19,7 @@ nav_order: 112
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Two steps to one list of everything you are short of.</p>
+<p class="intro">Two steps to one list of everything you are short of.</p>
 <section>
 <h2><span class="num">1</span> Plan something first. The Gap is the arithmetic on top.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
@@ -66,7 +66,7 @@ nav_order: 112
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">What everything you have planned needs that you are not carrying, ledger by ledger.</p>
+<p class="intro">What everything you have planned needs that you are not carrying, ledger by ledger.</p>
 <section>
 <h2><span class="num">1</span> Not a wishlist. The arithmetic between two of them.</h2>
 <svg viewBox="0 0 880 232" role="img" aria-label="The gap is your plans minus what is in your hold">

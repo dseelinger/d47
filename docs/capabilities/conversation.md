@@ -19,7 +19,7 @@ nav_order: 119
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Three steps to choosing who answers you.</p>
+<p class="intro">Three steps to choosing who answers you.</p>
 <section>
 <h2><span class="num">1</span> Pick a provider and a model.</h2>
 <svg viewBox="0 0 880 200" role="img" aria-label="The provider and model rows, with a key row under them">
@@ -65,7 +65,7 @@ nav_order: 119
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">Which model answers you, whether anything leaves this machine at all, and what it has cost.</p>
+<p class="intro">Which model answers you, whether anything leaves this machine at all, and what it has cost.</p>
 <section>
 <h2><span class="num">1</span> You choose where your turns go — including nowhere.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Four providers: none, Anthropic, OpenAI, or a model you run yourself">

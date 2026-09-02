@@ -1091,7 +1091,7 @@ never the consent: the excerpt keeps its read-the-payload yes and closes on the 
 keeps its report and its Read step, and the Log page still offers only the excerpt, because a
 history is Elite's journals and that page does not show them.
 
-The lede leads with **why** — real journals are how defects get found and fixed — and then the
+The intro leads with **why** — real journals are how defects get found and fixed — and then the
 three promises that were always true and always buried: entirely voluntary, scrubbed before you
 ever see the result, removable in one press. The scale opens on the journal scale, gentlest first,
 and the widest option says **"Everything"** rather than *"everything on disk"*, because a

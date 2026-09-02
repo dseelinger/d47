@@ -19,7 +19,7 @@ nav_order: 116
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Two steps to a system that means something.</p>
+<p class="intro">Two steps to a system that means something.</p>
 <section>
 <h2><span class="num">1</span> Arrive somewhere, or ask by name.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
@@ -59,7 +59,7 @@ nav_order: 116
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">Some systems mean more than their astrography. It ships knowing about twenty, and keeps whatever you tell it about the rest.</p>
+<p class="intro">Some systems mean more than their astrography. It ships knowing about twenty, and keeps whatever you tell it about the rest.</p>
 <section>
 <h2><span class="num">1</span> Once per system per day.</h2>
 <svg viewBox="0 0 880 240" role="img" aria-label="A system with lore attached is remarked on once a day, so a return visit the same evening is silent">

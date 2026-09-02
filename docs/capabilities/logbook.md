@@ -19,7 +19,7 @@ nav_order: 140
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Two steps to a readable account of what you did.</p>
+<p class="intro">Two steps to a readable account of what you did.</p>
 <section>
 <h2><span class="num">1</span> Fly. Then ask for the log.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
@@ -62,7 +62,7 @@ nav_order: 140
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">A session, or a week, turned into a readable log — where every sentence traces to an event.</p>
+<p class="intro">A session, or a week, turned into a readable log — where every sentence traces to an event.</p>
 <section>
 <h2><span class="num">1</span> The model is never handed your journal.</h2>
 <svg viewBox="0 0 880 232" role="img" aria-label="The journal is computed into a numbered list of facts, and only that list reaches the model">

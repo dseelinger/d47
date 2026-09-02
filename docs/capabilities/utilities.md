@@ -19,7 +19,7 @@ nav_order: 137
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Two steps to timers that say their own name.</p>
+<p class="intro">Two steps to timers that say their own name.</p>
 <section>
 <h2><span class="num">1</span> Ask what time it is, in either world.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
@@ -59,7 +59,7 @@ nav_order: 137
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">What time it is in both worlds at once, and timers and alarms that say their own name.</p>
+<p class="intro">What time it is in both worlds at once, and timers and alarms that say their own name.</p>
 <section>
 <h2><span class="num">1</span> Two dates. One instant.</h2>
 <svg viewBox="0 0 880 250" role="img" aria-label="The same moment written twice, 1286 years apart">

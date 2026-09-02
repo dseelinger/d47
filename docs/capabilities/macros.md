@@ -19,7 +19,7 @@ nav_order: 135
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Three steps to a name that runs a sequence.</p>
+<p class="intro">Three steps to a name that runs a sequence.</p>
 <section>
 <h2><span class="num">1</span> Turn on key injection, then write the macro.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Macros">
@@ -63,7 +63,7 @@ nav_order: 135
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">Your own named sequences of ship actions. Say the name, and they run in order.</p>
+<p class="intro">Your own named sequences of ship actions. Say the name, and they run in order.</p>
 <section>
 <h2><span class="num">1</span> You write them down, not out loud.</h2>
 <svg viewBox="0 0 880 236" role="img" aria-label="Every other capability has a fixed vocabulary, but composing a new sequence does not, so macros are authored in the panel or the file">

@@ -21,7 +21,7 @@ nav_order: 6
   documenting one would be the exact fault #251 was about.
 -->
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">What the game did, in the order it did it — Elite's own journal, as sentences you can read.</p>
+<p class="intro">What the game did, in the order it did it — Elite's own journal, as sentences you can read.</p>
 <section>
 <h2><span class="num">1</span> Elite writes it. Directive 47 only reads it.</h2>
 <svg viewBox="0 0 880 250" role="img" aria-label="Elite writes the journal file; the reading shows it as sentences, newest first">

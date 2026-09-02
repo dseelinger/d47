@@ -13,7 +13,7 @@ nav_order: 3
   Colours are the nine Palette roles and nothing else — see .d47-eli5 in assets/main.scss.
 -->
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">Two paths, always in the same order — and it always tells you which one answered.</p>
+<p class="intro">Two paths, always in the same order — and it always tells you which one answered.</p>
 <section>
 <h2><span class="num">1</span> The router gets first refusal.</h2>
 <svg viewBox="0 0 880 300" role="img" aria-label="A question goes to the keyword router first and only then to the language model">

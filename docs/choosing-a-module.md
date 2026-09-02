@@ -17,7 +17,7 @@ nav_order: 204
   about the list of every module that fits.
 -->
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">Every module that fits this slot, what the figures beside each one mean, and why nothing here touches your ship.</p>
+<p class="intro">Every module that fits this slot, what the figures beside each one mean, and why nothing here touches your ship.</p>
 <section>
 <h2><span class="num">1</span> Nothing on this page changes your ship.</h2>
 <svg viewBox="0 0 880 250" role="img" aria-label="Choosing a module writes to a plan; the plan reaches the checklist only when promoted, and the ship only at a station">

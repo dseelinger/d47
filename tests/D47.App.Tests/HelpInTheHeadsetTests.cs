@@ -251,7 +251,7 @@ public class HelpInTheHeadsetTests
             Assert.True(figure.Bounds.Height > 80, $"a figure is only {figure.Bounds.Height} px down");
         }
 
-        // The lede and every heading reached the surface too.
+        // The intro and every heading reached the surface too.
         var said = view.GetVisualDescendants().OfType<TextBlock>()
             .Select(block => block.Text ?? string.Empty)
             .ToList();

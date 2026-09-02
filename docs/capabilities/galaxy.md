@@ -19,7 +19,7 @@ nav_order: 104
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Two steps to looking something up in the galaxy.</p>
+<p class="intro">Two steps to looking something up in the galaxy.</p>
 <section>
 <h2><span class="num">1</span> Turn web access on. It is off out of the box.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Web access">
@@ -63,7 +63,7 @@ nav_order: 104
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">Looking things up in the galaxy — the first thing D47 does that needs the internet.</p>
+<p class="intro">Looking things up in the galaxy — the first thing D47 does that needs the internet.</p>
 <section>
 <h2><span class="num">1</span> Off until you turn it on.</h2>
 <svg viewBox="0 0 880 236" role="img" aria-label="Two separate switches, both off by default">

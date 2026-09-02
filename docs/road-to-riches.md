@@ -13,7 +13,7 @@ nav_order: 202
   Colours are the nine Palette roles and nothing else — see .d47-eli5 in assets/main.scss.
 -->
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">A tour of the most valuable bodies near you, in the order that flies best — and back home if you want it.</p>
+<p class="intro">A tour of the most valuable bodies near you, in the order that flies best — and back home if you want it.</p>
 <section>
 <h2><span class="num">1</span> It plans stops, not a destination.</h2>
 <svg viewBox="0 0 880 254" role="img" aria-label="The other planners go from here to there; this one draws a circuit of high-value bodies and returns">

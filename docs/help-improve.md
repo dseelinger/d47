@@ -21,7 +21,7 @@ nav_order: 10
   and where it goes, because a Commander who never presses the mark must still have read it.
   This page takes the mechanism. Do not move a disclosure here to shorten the dialog.
 
-  **Three levels since #269, and this page is the deepest of them.** The dialog's lede is the
+  **Three levels since #269, and this page is the deepest of them.** The dialog's intro is the
   disclosures alone; the ⓘ beside the ? holds the reasoning — why real journals, what the scrub
   keeps, why a history is a report — in about a paragraph each; this page is all of it at length
   with the diagrams, and the ⓘ's own button is what opens it. So the glyph and the sections below
@@ -29,7 +29,7 @@ nav_order: 10
   promising something the long form no longer says.
 -->
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">What the two things you can share actually are, and what happens to them.</p>
+<p class="intro">What the two things you can share actually are, and what happens to them.</p>
 <section>
 <h2><span class="num">1</span> Two shapes, and the toggle picks which.</h2>
 <svg viewBox="0 0 880 268" role="img" aria-label="One incident excerpt, or a scrubbed history of many journals, chosen by the Include journal history toggle">

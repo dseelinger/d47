@@ -18,7 +18,7 @@ nav_order: 5
   about, and this page is on the "what am I looking at" side of it.
 -->
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">Everything Directive 47 wrote this session, as it wrote it — the reading that still answers when nothing else does.</p>
+<p class="intro">Everything Directive 47 wrote this session, as it wrote it — the reading that still answers when nothing else does.</p>
 <section>
 <h2><span class="num">1</span> One file, every part of the app at once.</h2>
 <svg viewBox="0 0 880 292" role="img" aria-label="Eight subsystems all writing into one log file, which this reading shows">

@@ -19,7 +19,7 @@ nav_order: 144
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Two steps to what this build is and where it keeps things.</p>
+<p class="intro">Two steps to what this build is and where it keeps things.</p>
 <section>
 <h2><span class="num">1</span> Scroll to the bottom of Settings.</h2>
 <svg viewBox="0 0 880 308" role="img" aria-label="About">

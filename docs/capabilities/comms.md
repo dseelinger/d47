@@ -19,7 +19,7 @@ nav_order: 134
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Three steps to sending a message other people can read.</p>
+<p class="intro">Three steps to sending a message other people can read.</p>
 <section>
 <h2><span class="num">1</span> Turn on key injection, then say what to send.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
@@ -60,7 +60,7 @@ nav_order: 134
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">Typing a message into Elite's chat — the one thing Directive 47 does that other people can see.</p>
+<p class="intro">Typing a message into Elite's chat — the one thing Directive 47 does that other people can see.</p>
 <section>
 <h2><span class="num">1</span> This one leaves your ship.</h2>
 <svg viewBox="0 0 880 240" role="img" aria-label="Every other action affects only your own ship, while a message goes out under your Commander name">

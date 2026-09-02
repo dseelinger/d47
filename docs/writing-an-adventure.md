@@ -16,7 +16,7 @@ nav_order: 205
   how one is flown; this is the form, which is the half nobody can guess at from the tab.
 -->
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">A story is a name and a list of beats. Everything else on this form is optional, and the beats are the only part that does anything.</p>
+<p class="intro">A story is a name and a list of beats. Everything else on this form is optional, and the beats are the only part that does anything.</p>
 <section>
 <h2><span class="num">1</span> Three things are required. The rest is flavour.</h2>
 <svg viewBox="0 0 880 256" role="img" aria-label="A key, a name and at least one beat are required; the opening line and the five spine questions are optional">

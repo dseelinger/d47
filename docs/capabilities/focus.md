@@ -19,7 +19,7 @@ nav_order: 127
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Two steps to getting the game back in front.</p>
+<p class="intro">Two steps to getting the game back in front.</p>
 <section>
 <h2><span class="num">1</span> Say it, from anywhere.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
@@ -63,7 +63,7 @@ nav_order: 127
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">Bringing Elite back to the front, so flight commands work again.</p>
+<p class="intro">Bringing Elite back to the front, so flight commands work again.</p>
 <section>
 <h2><span class="num">1</span> The one action that could not be left to the rule.</h2>
 <svg viewBox="0 0 880 240" role="img" aria-label="Keys go out only while Elite is in front, so alt-tabbing away turns every flight command off">

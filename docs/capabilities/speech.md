@@ -19,7 +19,7 @@ nav_order: 121
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Three steps to a voice you want to listen to.</p>
+<p class="intro">Three steps to a voice you want to listen to.</p>
 <section>
 <h2><span class="num">1</span> Pick a provider and a voice.</h2>
 <svg viewBox="0 0 880 308" role="img" aria-label="Speech">
@@ -83,7 +83,7 @@ nav_order: 121
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">The voice Directive 47 speaks in, what it costs, and the one command that outranks all of it.</p>
+<p class="intro">The voice Directive 47 speaks in, what it costs, and the one command that outranks all of it.</p>
 <section>
 <h2><span class="num">1</span> “Stop” is the one to reach for.</h2>
 <svg viewBox="0 0 880 240" role="img" aria-label="Stop is the shortest interrupt, and it ends the speaking while the turn keeps running">

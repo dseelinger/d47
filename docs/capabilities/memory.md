@@ -19,7 +19,7 @@ nav_order: 138
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Three steps to D47 remembering the right things.</p>
+<p class="intro">Three steps to D47 remembering the right things.</p>
 <section>
 <h2><span class="num">1</span> Tell it something worth keeping.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
@@ -64,7 +64,7 @@ nav_order: 138
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">A small file of facts about you, where every one of them says where it came from.</p>
+<p class="intro">A small file of facts about you, where every one of them says where it came from.</p>
 <section>
 <h2><span class="num">1</span> Three labels, and nothing ever promotes one to another.</h2>
 <svg viewBox="0 0 880 262" role="img" aria-label="Three memory labels: your word from the panel, noticed from the journal, and unverified written in conversation">

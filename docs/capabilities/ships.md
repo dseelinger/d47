@@ -19,7 +19,7 @@ nav_order: 111
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Three steps to a build you are working towards.</p>
+<p class="intro">Three steps to a build you are working towards.</p>
 <section>
 <h2><span class="num">1</span> Open the Ships tab. Your fleet is already there.</h2>
 <svg viewBox="0 0 880 246" role="img" aria-label="The Ships tab">
@@ -81,7 +81,7 @@ nav_order: 111
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">Your fleet, the hulls you mean to buy, and one build per ship.</p>
+<p class="intro">Your fleet, the hulls you mean to buy, and one build per ship.</p>
 <section>
 <h2><span class="num">1</span> The build owns what. The checklist owns when.</h2>
 <svg viewBox="0 0 880 232" role="img" aria-label="A build and a checklist are separate, and nothing crosses between them unasked">

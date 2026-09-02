@@ -19,7 +19,7 @@ nav_order: 120
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Three steps to a ship AI that sounds like yours.</p>
+<p class="intro">Three steps to a ship AI that sounds like yours.</p>
 <section>
 <h2><span class="num">1</span> Pick a core.</h2>
 <svg viewBox="0 0 880 308" role="img" aria-label="Persona">
@@ -70,7 +70,7 @@ nav_order: 120
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">Eleven Guardian cores. You pick one, and it does not know the other ten are there.</p>
+<p class="intro">Eleven Guardian cores. You pick one, and it does not know the other ten are there.</p>
 <section>
 <h2><span class="num">1</span> Eleven separate characters, not one with eleven costumes.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Five of the eleven cores, each with its own transcript, all reading one shared instrument panel">

@@ -19,7 +19,7 @@ nav_order: 129
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Three steps to moving power without taking a hand off.</p>
+<p class="intro">Three steps to moving power without taking a hand off.</p>
 <section>
 <h2><span class="num">1</span> Turn on key injection.</h2>
 <svg viewBox="0 0 880 196" role="img" aria-label="Ship systems">
@@ -70,7 +70,7 @@ nav_order: 129
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">Moving power around, and the two panic buttons: silent running and heat sinks.</p>
+<p class="intro">Moving power around, and the two panic buttons: silent running and heat sinks.</p>
 <section>
 <h2><span class="num">1</span> One request is one press, so ask for four.</h2>
 <svg viewBox="0 0 880 226" role="img" aria-label="Four pips to engines is sent as four separate presses of your own power key">

@@ -19,7 +19,7 @@ nav_order: 130
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Two steps to opening a cockpit panel without letting go.</p>
+<p class="intro">Two steps to opening a cockpit panel without letting go.</p>
 <section>
 <h2><span class="num">1</span> Turn on key injection.</h2>
 <svg viewBox="0 0 880 196" role="img" aria-label="Panels">
@@ -60,7 +60,7 @@ nav_order: 130
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">Opening the cockpit panels and walking around them, for when both hands are busy.</p>
+<p class="intro">Opening the cockpit panels and walking around them, for when both hands are busy.</p>
 <section>
 <h2><span class="num">1</span> It walks a panel with the keys you already use.</h2>
 <svg viewBox="0 0 880 240" role="img" aria-label="Saying down, select and back moves through an open cockpit panel the same way your own UI keys do">

@@ -19,7 +19,7 @@ nav_order: 101
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Two steps to the page that still answers when nothing else does.</p>
+<p class="intro">Two steps to the page that still answers when nothing else does.</p>
 <section>
 <h2><span class="num">1</span> On the Transcript page, pick Log File from the drop-down.</h2>
 <svg viewBox="0 0 880 246" role="img" aria-label="The Transcript readings drop-down with Log File chosen, and the log below it">
@@ -69,7 +69,7 @@ nav_order: 101
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">The page that still answers when nothing else does — what happened, where it is written down, and how loud.</p>
+<p class="intro">The page that still answers when nothing else does — what happened, where it is written down, and how loud.</p>
 <section>
 <h2><span class="num">1</span> Two files, and they are not the same thing.</h2>
 <svg viewBox="0 0 880 250" role="img" aria-label="The Log File reading is what Directive 47 wrote; the Journal File reading is what the game wrote">

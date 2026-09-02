@@ -19,7 +19,7 @@ nav_order: 115
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Two steps to reading a system name.</p>
+<p class="intro">Two steps to reading a system name.</p>
 <section>
 <h2><span class="num">1</span> Ask about any name, including one nobody has visited.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
@@ -66,7 +66,7 @@ nav_order: 115
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">What a system's own name says about it — read off the string, four thousand light years from anything.</p>
+<p class="intro">What a system's own name says about it — read off the string, four thousand light years from anything.</p>
 <section>
 <h2><span class="num">1</span> The one thing here that needs nothing at all.</h2>
 <svg viewBox="0 0 880 226" role="img" aria-label="Reading a system name needs no key, account, network or journal, which is the point of it">

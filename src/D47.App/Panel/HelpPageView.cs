@@ -241,7 +241,7 @@ public sealed class HelpFigureView : Control
 }
 
 /// <summary>
-/// A whole help band as a panel page: the lede, then the numbered steps with their pictures.
+/// A whole help band as a panel page: the intro, then the numbered steps with their pictures.
 /// <para>
 /// Drawn over whatever the Commander was looking at rather than as a tab of its own, because the
 /// question is always about <em>this</em> page (asked for 2026-08-22). It is pushed as a modal
@@ -289,18 +289,18 @@ public static class HelpPageView
     {
         var stack = new StackPanel { Spacing = 26, Margin = new Thickness(0, 4, 0, 24) };
 
-        if (article.Lede.Length > 0)
+        if (article.Intro.Length > 0)
         {
-            var lede = new TextBlock
+            var intro = new TextBlock
             {
-                Text = article.Lede,
+                Text = article.Intro,
                 FontSize = TypeScale.Subheading + 2,
                 FontWeight = FontWeight.SemiBold,
                 TextWrapping = TextWrapping.Wrap,
             };
 
-            LoadoutPages.Themed(lede, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
-            stack.Children.Add(lede);
+            LoadoutPages.Themed(intro, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
+            stack.Children.Add(intro);
         }
 
         foreach (var section in article.Sections)
@@ -467,7 +467,7 @@ public static class HelpPageView
             foreach (var page in group)
             {
                 var id = page.CapabilityId;
-                block.Children.Add(Pressable(page.Title, page.Lede, () => nav.Take(Crumb(id))));
+                block.Children.Add(Pressable(page.Title, page.Intro, () => nav.Take(Crumb(id))));
             }
         }
 

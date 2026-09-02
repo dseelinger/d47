@@ -19,7 +19,7 @@ nav_order: 128
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Three steps to flying the ship by voice.</p>
+<p class="intro">Three steps to flying the ship by voice.</p>
 <section>
 <h2><span class="num">1</span> Turn on the master switch.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Flight and navigation">
@@ -63,7 +63,7 @@ nav_order: 128
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">The parts of your ship that are switches — gear, lights, scoop, hardpoints, the frame shift drive.</p>
+<p class="intro">The parts of your ship that are switches — gear, lights, scoop, hardpoints, the frame shift drive.</p>
 <section>
 <h2><span class="num">1</span> It presses your keys, not its own.</h2>
 <svg viewBox="0 0 880 240" role="img" aria-label="Directive 47 reads the bindings you already use and sends those keys to Elite">

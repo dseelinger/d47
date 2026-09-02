@@ -19,7 +19,7 @@ nav_order: 117
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Two steps to knowing what a plant is worth before you land.</p>
+<p class="intro">Two steps to knowing what a plant is worth before you land.</p>
 <section>
 <h2><span class="num">1</span> Scan something, or ask about a genus by name.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
@@ -66,7 +66,7 @@ nav_order: 117
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">Two halves, from two sources, answering two questions — and only one of them may quote money.</p>
+<p class="intro">Two halves, from two sources, answering two questions — and only one of them may quote money.</p>
 <section>
 <h2><span class="num">1</span> Keeping the halves apart is the whole design.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="The scan half names genera and cannot price them; the route half names species and can">

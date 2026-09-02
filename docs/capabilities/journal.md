@@ -19,7 +19,7 @@ nav_order: 102
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="lede">Two steps to seeing what D47 knows about your game.</p>
+<p class="intro">Two steps to seeing what D47 knows about your game.</p>
 <section>
 <h2><span class="num">1</span> Nothing. It is already reading.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Journal">
@@ -68,7 +68,7 @@ nav_order: 102
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="lede">Everything Directive 47 knows about your game, read straight from the files Elite already writes.</p>
+<p class="intro">Everything Directive 47 knows about your game, read straight from the files Elite already writes.</p>
 <section>
 <h2><span class="num">1</span> The answer comes off your own disk.</h2>
 <svg viewBox="0 0 880 246" role="img" aria-label="Game state is read from the journal on your disk rather than from a website or produced by a model">
