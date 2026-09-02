@@ -415,11 +415,11 @@ public partial class PanelView : UserControl
         };
 
         _tabs[PanelTab.Transcript] = TranscriptTab;
-        _tabs[PanelTab.Routing] = RoutingTab;
-        _tabs[PanelTab.Checklist] = ChecklistTab;
-        _tabs[PanelTab.Adventures] = AdventuresTab;
         _tabs[PanelTab.Loadout] = LoadoutTab;
         _tabs[PanelTab.Engineers] = EngineersTab;
+        _tabs[PanelTab.Checklist] = ChecklistTab;
+        _tabs[PanelTab.Routing] = RoutingTab;
+        _tabs[PanelTab.Adventures] = AdventuresTab;
         _tabs[PanelTab.Utilities] = UtilitiesTab;
         _tabs[PanelTab.Settings] = SettingsTab;
 

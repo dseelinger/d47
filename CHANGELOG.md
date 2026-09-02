@@ -29,6 +29,16 @@ history to match today's layout would be the one edit it must never take.
 
 ## 0.102.0 — 2026-09-02 — The two chatters are named for who is speaking
 
+### The panel's tabs run Transcript, Fleet, Engineers, Checklist, Routing, Adventures, Utilities, Settings (#272)
+
+The bar had Routing second, beside the transcript, since Phase 37, on the grounds that a route is
+read while flying and should not be far along. **Fleet and Engineers now follow the transcript,
+then Checklist and Routing**, with Adventures, Utilities and Settings where they were. The order is
+the Commander's, and it is one order everywhere it is read: the bar in the window and in the
+headset, and the list of destinations a HOTAS switch position may name, which is bar order. A
+position already bound is unaffected, because it is bound to a root by name rather than by place
+in that list.
+
 ### The Help improve D47 info flyout wraps its text instead of scrolling sideways (#271)
 
 Pressing the ⓘ from 0.102.0 showed every paragraph clipped at its right edge with a horizontal

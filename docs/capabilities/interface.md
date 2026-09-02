@@ -495,7 +495,7 @@ to have. See [Settings](settings.md).
 One bar along the top, and each tab is a surface of its own:
 
 ```text
-Transcript   Routing   Checklist   Loadout   Engineers   Utilities   Settings
+Transcript   Fleet   Engineers   Checklist   Routing   Adventures   Utilities   Settings
 ```
 
 **The two surfaces do not carry the same tabs.** In the headset the panel is Transcript,

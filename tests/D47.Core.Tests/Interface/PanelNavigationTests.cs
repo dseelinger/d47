@@ -299,12 +299,12 @@ public class PanelNavigationTests
         var nav = Furnished();
 
         Assert.Equal(
-            new[] { "conversation", "technical", "checklist", "fleet", "locker" },
+            new[] { "conversation", "technical", "fleet", "locker", "checklist" },
             nav.Destinations.Select(page => page.Root.Key));
 
-        Assert.Equal(PanelTab.Loadout, nav.Destinations[^1].Tab);
-        Assert.Equal("Suits and weapons (Loadout)", nav.Destinations[^1].Describe());
-        Assert.Equal("Checklist", nav.Destinations[2].Describe());
+        Assert.Equal(PanelTab.Checklist, nav.Destinations[^1].Tab);
+        Assert.Equal("Checklist", nav.Destinations[^1].Describe());
+        Assert.Equal("Suits and weapons (Loadout)", nav.Destinations[3].Describe());
     }
 
     /// <summary>
