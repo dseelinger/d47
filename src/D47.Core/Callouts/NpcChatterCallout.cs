@@ -84,6 +84,16 @@ public sealed class NpcChatterCallout : ICallout
             yield break;
         }
 
+        // Not on the heels of the other kind (#257), the ambient guard for the ambient reason
+        // and one of its own: a marker held here never reaches Drain, so it is never composed,
+        // never sent and never billed. Above the mutations below, so nothing is spent — _picks
+        // not moving is what makes this deal the same pairing and the same Variant when it does
+        // fire, which is what a recorded session replays to.
+        if (CalloutEngine.ChatterOwesQuiet(context.LastChatter, context.Now, Interval))
+        {
+            yield break;
+        }
+
         var kind = KindFor(_picks, context.Status.Has(StatusFlags.Docked));
 
         _picks++;
@@ -96,6 +106,11 @@ public sealed class NpcChatterCallout : ICallout
             Urgency = CalloutUrgency.Routine,
             Cooldown = Interval,
             Variant = _picks - 1,
+
+            // Said because nothing happened, and the rate the Commander asked for it at — the
+            // flag the engine spaces on and the clamp that bounds how long it may hold this
+            // (#257).
+            Chatter = Interval,
         };
     }
 
@@ -104,6 +119,24 @@ public sealed class NpcChatterCallout : ICallout
     /// Deterministic off the pick counter — a Knuth multiplicative hash, because no Core
     /// component reads a clock or a seed and a recorded session has to replay to the same
     /// spacing — and stable within a cycle, since <c>_picks</c> only moves on emission.
+    /// <para>
+    /// <b>Offset by one against the ambient callout's, on purpose</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/257">#257</a>). The two hashes are
+    /// otherwise identical, they are indexed by counters that start together, and the fraction at
+    /// zero is exactly zero — so both callouts served exactly their <see cref="Interval"/> on
+    /// their first cycle, both are seeded on the same first live tick, and since the two pairs of
+    /// rows were given the same numbers on purpose, the first remark and the first exchange of
+    /// every session were due on the same tick, every session, by construction. The shared
+    /// ninety-second <see cref="Settle"/> then released both together after every situation change.
+    /// </para>
+    /// <para>
+    /// The offset de-correlates the two spreads at no cost: still off the pick counter, still no
+    /// clock and no seed, so a recorded session replays to the same spacing as before for any
+    /// given counter. <b>The floor is what guarantees the air; this is what stops the guarantee
+    /// having to fire every cycle</b> — which would be a fixed ninety-second couplet followed by
+    /// several minutes of silence, on repeat. A cadence, which is the one thing the spread exists
+    /// to prevent.
+    /// </para>
     /// </summary>
     private TimeSpan Gap()
     {
@@ -112,10 +145,17 @@ public sealed class NpcChatterCallout : ICallout
             return Interval;
         }
 
-        var fraction = unchecked((uint)_picks * 2654435761u) / 4294967296.0;
+        var fraction = unchecked((uint)(_picks + Offset) * 2654435761u) / 4294967296.0;
 
         return Interval + (Longest - Interval) * fraction;
     }
+
+    /// <summary>
+    /// How far this callout's spread is wound on from the ambient one's. One, which is all it
+    /// takes: the hash deals a different fraction for every counter, so one step apart is as
+    /// de-correlated as any other and is the smallest change that says what it is for.
+    /// </summary>
+    private const int Offset = 1;
 
     /// <summary>
     /// Which pairing this exchange is. Deterministic off the pick counter, because no Core
