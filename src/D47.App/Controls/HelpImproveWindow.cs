@@ -277,6 +277,18 @@ public sealed class HelpImproveWindow : Window
         var options = Options();
         var footer = Footer();
 
+        // The mark, above everything and on the right (#252). It opens the site, because a
+        // dialog has no panel to take to a help level — see SiteHelpMark for the ruling and the
+        // two roads not taken.
+        // LastChildFill off, or the single Right-docked child becomes the fill child and lands on
+        // the left — which is exactly where it first appeared.
+        var marked = new DockPanel { Margin = new Thickness(0, 0, 0, 6), LastChildFill = false };
+        var mark = SiteHelpMark.For(DocsSite.Page(HelpPage), "HelpImproveHelp");
+
+        DockPanel.SetDock(mark, Dock.Right);
+        marked.Children.Add(mark);
+
+        DockPanel.SetDock(marked, Dock.Top);
         DockPanel.SetDock(_lede, Dock.Top);
         DockPanel.SetDock(options, Dock.Top);
         DockPanel.SetDock(footer, Dock.Bottom);
@@ -300,6 +312,7 @@ public sealed class HelpImproveWindow : Window
 
         Themed(pane, Border.BorderBrushProperty, ThemeManager.BorderKey);
 
+        root.Children.Add(marked);
         root.Children.Add(_lede);
         root.Children.Add(options);
         root.Children.Add(footer);
@@ -378,10 +391,27 @@ public sealed class HelpImproveWindow : Window
         }
     }
 
+    /// <summary>The page the mark opens (#252). A general page rather than a capability's.</summary>
+    public const string HelpPage = D47.Core.Help.HelpLibrary.GeneralPrefix + "help-improve";
+
     /// <summary>
     /// Why first, then the three promises, then the mechanics of the shape being offered
     /// (#240). The promises are the same three whichever way the toggle sits, because they were
     /// already true of both flows — the wording just stopped hiding them.
+    /// <para>
+    /// <b>Trimmed by kind rather than by length</b> (#252). The Commander called this a wall of
+    /// text and they were right, but only half of it could move: what a replay case is for, how
+    /// the scrub decides, why a history is offered as a report rather than as itself — that is
+    /// explanation, and it is behind the mark now. Every statement of <em>what leaves and where it
+    /// goes</em> stayed, because moving that behind a <c>?</c> would weaken the consent this window
+    /// exists to obtain. A Commander who never presses the mark has still read it, which is what
+    /// the first bullet promises them.
+    /// </para>
+    /// <para>
+    /// So what came out is the reasoning attached to each fact — "because a regression case that
+    /// expires stops being one", "a history runs to hundreds of megabytes and nobody reads that" —
+    /// and never a fact.
+    /// </para>
     /// </summary>
     private string LedeText(bool history)
     {
@@ -401,18 +431,17 @@ public sealed class HelpImproveWindow : Window
             var where = _destination is { } destination
                 ? "Nothing is written or sent until you press. Sending it puts it in Directive 47's "
                   + "own store at " + destination + " — one press, nothing standing. A journal "
-                  + "history is kept until you ask for it back, because a regression case that "
-                  + "expires stops being one; asking is one press of Forget in Privacy and egress, "
-                  + "and it does not need you to post anywhere. d47 keeps the report you are "
-                  + "reading, and the hash of what it sent, in data\\donations."
+                  + "history is kept until you ask for it back; asking is one press of Forget in "
+                  + "Privacy and egress. d47 keeps the report you are reading, and the hash of "
+                  + "what it sent, in data\\donations."
                 : "Nothing is written or sent until you save it, and nothing here goes to a "
                   + "network: no send address is set, so where the file goes afterwards is yours.";
 
             return promises
                    + "This reads your Elite journals as far back as the scale says, scrubs them, "
-                   + "and then shows you a report about them rather than the thing itself — a "
-                   + "history runs to hundreds of megabytes and nobody reads that. The report "
-                   + "names every kind of event included and shows a real scrubbed line of each.\n\n"
+                   + "and shows you a report about them rather than the thing itself. The report "
+                   + "names every kind of event included and shows a real scrubbed line of "
+                   + "each.\n\n"
                    + where
                    + (_destination is null
                        ? string.Empty

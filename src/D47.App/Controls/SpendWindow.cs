@@ -167,6 +167,15 @@ public sealed class SpendWindow : Window
             Spacing = 10,
         };
 
+        // The mark, on the left of the row so it is not mistaken for one of the two controls that
+        // do something (#252). It goes to the running totals rather than the top of the Language
+        // model page: that page is long, and the half a Commander holding a receipt wants is a
+        // third of the way down it.
+        row.Children.Add(SiteHelpMark.For(
+            DocsSite.Capability(
+                D47.Core.Capabilities.Builtin.ConversationCapability.Id, "running-totals"),
+            "SpendHelp"));
+
         if (_launchedAt is { } launched)
         {
             var reset = new Button
