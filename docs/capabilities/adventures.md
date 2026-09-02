@@ -214,8 +214,7 @@ scan beat is satisfied by the approach as well, and a story cannot strand a Comm
 they had already been.
 
 **No counts where you read.** The card says the story's name and where it is — *not yet begun*, the
-current beat's title, or *finished*. *Beat 3 of 7* is checklist language and lives in the Technical
-transcript only.
+current beat's title, or *finished*. *Beat 3 of 7* is checklist language and stays off the card.
 
 ### Stopping, and starting again
 

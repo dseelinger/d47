@@ -21,16 +21,16 @@ nav_order: 101
 <div class="d47-howto"><div class="d47-frame">
 <p class="lede">Two steps to the page that still answers when nothing else does.</p>
 <section>
-<h2><span class="num">1</span> Open the Technical page from the tab strip.</h2>
-<svg viewBox="0 0 880 246" role="img" aria-label="The Technical tab">
+<h2><span class="num">1</span> On the Transcript page, pick Log File from the drop-down.</h2>
+<svg viewBox="0 0 880 246" role="img" aria-label="The Transcript readings drop-down with Log File chosen, and the log below it">
  <rect x="20" y="16" width="840" height="210" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <rect x="20" y="16" width="840" height="42" rx="8" fill="var(--surface)"/>
- <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Technical</text>
- <text x="44" y="92" font-size="16" fill="var(--text)">Model turn "Answered" at "Medium" effort</text>
- <text x="836" y="92" text-anchor="end" font-size="16" fill="var(--text-muted)">13,943 in</text>
- <text x="44" y="130" font-size="16" fill="var(--text)">Transcribed 1.2s of audio</text>
- <text x="836" y="130" text-anchor="end" font-size="16" fill="var(--text-muted)">318 ms</text>
- <text x="44" y="168" font-size="16" fill="var(--text)">Silenced</text>
+ <rect x="20" y="16" width="840" height="46" rx="8" fill="var(--surface)"/>
+ <rect x="32" y="24" width="176" height="30" rx="6" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="46" y="45" font-size="16" font-weight="700" fill="var(--accent)">Log File</text>
+ <text x="44" y="96" font-size="16" fill="var(--text)">Journal folder C:\Users\...\Elite Dangerous</text>
+ <text x="836" y="96" text-anchor="end" font-size="16" fill="var(--text-muted)">tailing</text>
+ <text x="44" y="134" font-size="16" fill="var(--text)">Registered 45 capabilities exposing 98 tools</text>
+ <text x="44" y="172" font-size="16" fill="var(--text)">Audio output open on the system default device</text>
  <text x="44" y="222" font-size="15" fill="var(--text-muted)">Every line the app wrote this session, newest last.</text>
 </svg>
 </section>
@@ -63,28 +63,28 @@ nav_order: 101
 
   Colours are the nine Palette roles and nothing else — see .d47-eli5 in assets/main.scss.
 
-  This band is what the Technical and Log file readings of the Transcript page open, so it
-  leads with those two rather than with the settings rows.
+  This band is what the Log File reading of the Transcript page opens, so it leads with that
+  reading — and with what it is not — rather than with the settings rows.
 -->
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">The page that still answers when nothing else does — what happened, where it is written down, and how loud.</p>
 <section>
-<h2><span class="num">1</span> Two readings, and they are not the same thing.</h2>
-<svg viewBox="0 0 880 250" role="img" aria-label="Technical shows the working behind one turn; Log file shows what the whole application wrote to disk">
+<h2><span class="num">1</span> Two files, and they are not the same thing.</h2>
+<svg viewBox="0 0 880 250" role="img" aria-label="The Log File reading is what Directive 47 wrote; the Journal File reading is what the game wrote">
  <rect x="20" y="30" width="410" height="150" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="225" y="70" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">TECHNICAL</text>
- <text x="225" y="104" text-anchor="middle" font-size="15" fill="var(--text-muted)">one turn, taken apart:</text>
- <text x="225" y="128" text-anchor="middle" font-size="15" fill="var(--text-muted)">what answered, what it looked up,</text>
- <text x="225" y="152" text-anchor="middle" font-size="15" fill="var(--text-muted)">and what it cost</text>
+ <text x="225" y="70" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">LOG FILE</text>
+ <text x="225" y="104" text-anchor="middle" font-size="15" fill="var(--text-muted)">what Directive 47 wrote:</text>
+ <text x="225" y="128" text-anchor="middle" font-size="15" fill="var(--text-muted)">startup, the model, the headset,</text>
+ <text x="225" y="152" text-anchor="middle" font-size="15" fill="var(--text-muted)">every part at once</text>
  <rect x="450" y="30" width="410" height="150" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="655" y="70" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">LOG FILE</text>
- <text x="655" y="104" text-anchor="middle" font-size="15" fill="var(--text-muted)">the whole application, on disk:</text>
- <text x="655" y="128" text-anchor="middle" font-size="15" fill="var(--text-muted)">startup, the game, the headset,</text>
- <text x="655" y="152" text-anchor="middle" font-size="15" fill="var(--text-muted)">every part at once</text>
- <text x="440" y="216" text-anchor="middle" font-size="15" fill="var(--text-muted)">"Why did it say that" is the left one. "Why will it not start" is the right one.</text>
- <text x="440" y="240" text-anchor="middle" font-size="15" fill="var(--text-muted)">The log is a file, so clearing is refused there — that control would be offering to delete it.</text>
+ <text x="655" y="70" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">JOURNAL FILE</text>
+ <text x="655" y="104" text-anchor="middle" font-size="15" fill="var(--text-muted)">what the game wrote:</text>
+ <text x="655" y="128" text-anchor="middle" font-size="15" fill="var(--text-muted)">docking, jumping, damage,</text>
+ <text x="655" y="152" text-anchor="middle" font-size="15" fill="var(--text-muted)">the things that happened</text>
+ <text x="440" y="216" text-anchor="middle" font-size="15" fill="var(--text-muted)">"Why will it not start" is the left one. "What did the game just do" is the right one.</text>
+ <text x="440" y="240" text-anchor="middle" font-size="15" fill="var(--text-muted)">Both are files, so clearing is refused on the log — that control would be offering to delete it.</text>
 </svg>
 </section>
 <section>
@@ -139,8 +139,8 @@ nav_order: 101
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">
-<a class="card" href="../transcript.html"><span class="ct">The Transcript page →</span><span class="cd">The other reading, and every control around all three.</span></a>
-<a class="card settings" href="conversation.html"><span class="ct">Language model →</span><span class="cd">Where the figures on the Technical reading come from, and what they cost.</span></a>
+<a class="card" href="../transcript.html"><span class="ct">The Transcript page →</span><span class="cd">The other three readings, and every control around all four.</span></a>
+<a class="card settings" href="conversation.html"><span class="ct">Language model →</span><span class="cd">Where the figures on the receipt come from, and what they cost.</span></a>
 <a class="card" href="privacy.html"><span class="ct">Privacy →</span><span class="cd">What is in a log, and what never reaches one.</span></a>
 </div>
 </div>

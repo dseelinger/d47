@@ -597,11 +597,11 @@ keyboard you never have to use.
 
 ### The transcript {#transcript}
 
-The transcript tab has three **modes**, on the segmented control at the right of the tab bar.
-They are three readings of one exchange rather than three destinations, which is why they are
-modes and not three tabs of their own.
+The transcript tab has four **readings**, three of them on a drop-down at the right of the tab
+bar and the fourth on a switch beside it. They are readings of one session rather than four
+destinations, which is why they are a drop-down and not four tabs of their own.
 
-**Conversation** is you and the ship's AI, and nothing else. It is what opens.
+**In Ship** is you and the ship's AI, and nothing else. It is what opens.
 
 It is drawn as a conversation, the way the messaging app on your phone draws one: a turn to a
 bubble, **yours on the right in the theme's own colour** and **the ship's on the left**. When D47
@@ -612,44 +612,20 @@ The headset's big panel does the same. The mini panel does too and spends less o
 sides and the same colours, with the gutter and most of the padding given back, because a surface
 512 pixels across cannot afford to say twice over which side a turn is on.
 
-Only this page. **Technical** and **Log file** are one flat block of text as they have always
-been — a diagnostic feed and a file are not conversations between anybody, and the `> ` in front
-of your own words there is how a flat page says who spoke.
-
-**Technical** is the same with the diagnostics left in — the version banner, where things are
-installed, whether the language model came up. This is what the panel used to show all the time.
-
-It also carries **the speech loop, as it happens**: the microphone opening, what you said being
-turned into words, the answer being worked out, the answer being spoken. Each stage is a line
-that stays, so when something stops part-way, what it got as far as is still on the page above
-it. That is the difference between this and the microphone indicator beside the ask box — the
-indicator says what is true right now, and this says what happened.
-
-```text
-[21:04:07] Microphone open, listening.
-[21:04:09] Turning what you said into words.
-[21:04:10] Working on an answer.
-[21:04:12] Speaking the answer.
-```
-
-**Errors from the speech path land here too**, with the cause attached rather than only the
-sentence:
-
-```text
-[error] Could not start capture — device in use by another application
-```
-
-Errors only, and only from speech. Warnings and the rest of the running commentary stay in the
-log file, because a page that repeats another page is one nobody reads.
+Only this reading. The other three are one flat block of text — a file is not a conversation
+between anybody, and the `> ` in front of your own words is how a flat page says who spoke.
 
 **Log file** is today's log, read when you open the page rather than tailed continuously: a log
 nobody is looking at is not worth a file read per tick, and one you *are* looking at is open
 because something already went wrong. Switch away and back to re-read it.
 
-One asymmetry between the three is kept rather than smoothed over: Conversation and Technical are
-the same turns at two verbosities, and **Log file is a file read off disk** — which is why it,
-alone of the three, carries a working indicator, and why this is three modes rather than a single
-toggle.
+**Journal File** is Elite's own journal read as sentences, with the chosen line's fields beside
+the list; **Raw**, the switch next to the drop-down, is the same events as the JSON the game
+wrote. Both are newest-first, which is the file's own order and the opposite of the two above.
+
+One asymmetry is kept rather than smoothed over: In Ship is held in memory and the other three
+are **read off disk** — which is why the log carries a working indicator, and why this is a
+drop-down rather than a single toggle.
 
 Which mode you are on belongs to the surface you are looking at, not to the transcript. The
 desktop window can sit on the log while the headset panel shows the conversation — same
@@ -714,9 +690,9 @@ than carrying "I have scrolled up" across with you.
 The transcript is selectable text. Drag across it and press <kbd>Ctrl</kbd>+<kbd>C</kbd>, exactly
 as anywhere else — including across lines that arrive while you are selecting.
 
-On **Conversation** a selection is made within one turn, which is what a page drawn as bubbles
-can do and what every messaging application does with the same shape. On **Technical** and
-**Log file** it runs across the whole page, as before. Either way, **Copy** takes the lot.
+On **In Ship** a selection is made within one response, which is what a page drawn as bubbles
+can do and what every messaging application does with the same shape. On the flat readings it
+runs across the whole page. Either way, **Copy** takes the lot.
 
 **Copy**, beside the search box, takes the whole page as it is currently shown: the conversation
 without the diagnostics, or with them, or the log file. A search query highlights on these pages
