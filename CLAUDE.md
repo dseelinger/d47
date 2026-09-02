@@ -35,6 +35,7 @@ release commands, plus the Python table generators. `docs/` is the published sit
 ## Conventions
 
 - **Surgical changes: every changed line traces to the task.** Match the surrounding style. Remove only what your change orphaned; unrelated dead code gets mentioned, not deleted.
+- **Report the outcome, not the running commentary.** A few lines: what changed, where it is, whether the  suite is green, and any caveat that costs the reader later. Design alternatives, review findings and wrong turns go in the commit message and `CHANGELOG.md`.
 - **Structure only where it buys quality.** A project exists to enforce a dependency boundary or to be independently testable, not to express a taxonomy.
 - **Build and release stay frictionless.** If a workflow needs a checklist to run, fix the workflow.
 - **Every registered capability needs a documentation page.** CI enforces it.
