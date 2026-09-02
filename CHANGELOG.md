@@ -27,6 +27,85 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.101.0 — 2026-09-02 — Nothing arrives on a beat, and the panel opens where you left it
+
+Four wanted changes, and they are two subjects. Two are about the pacing of speech nobody asked
+for — remarks that ticked like a clock and an invented conversation that came out rapid fire.
+Two are about the panel forgetting, every launch, which reading of itself you were looking at.
+
+### Ambient remarks have the spread invented chatter already had (#258)
+
+The gap between two remarks now lands somewhere in [**The least time between ambient remarks**,
+**The most time between ambient remarks**] rather than on the interval exactly — 45 to 90
+seconds out of the box, keeping the doubling the chatter pair has. The argument was already written
+down for the other row and it was stronger here: *a fixed cadence is the one thing overheard traffic
+must not have*, and where chatter is a rotating cast of strangers who disguise a beat, this is the
+same voice every time at a fraction of the gap. It was the most clocklike thing in the app.
+
+Off the pick counter by the same Knuth hash the chatter spacing uses, because no Core component
+reads a clock or a seed and a recorded session has to replay to the same spacing. The two edge
+cases are chatter's exactly — a maximum at the minimum pins the cadence, one below it reads as
+the minimum — since two rows of the same kind disagreeing about their own edges is worse than
+neither having the feature. `ambientSeconds` keeps its name and its meaning, so a settings file
+written before today loads with its floor above the new ceiling's default and keeps the fixed
+cadence it chose.
+
+### The lines of an invented exchange are spoken with air between them (#259)
+
+Reported driving 0.98.1, as *"like watching an episode of the Gilmore Girls"*: a four-line scene
+was four utterances butted together across about two seconds, because nothing put a gap anywhere.
+Each line after the first now waits between six tenths of a second and one and seven tenths, off
+the line's position and never the same twice.
+
+Four things were settled rather than drifted into. The beat is the same whoever speaks — a
+handover between two people genuinely is a longer beat than one person carrying on, and it is more
+machinery than a four-line scene earns. It is a rule in the speaking loop rather than a field on
+`Announcement`, which keeps the record narrow instead of inviting every callout to ask for pauses.
+It is not a settings row, on purpose. And the captions needed nothing at all: the caption layer
+already starts a reading dwell when the voice stops rather than blanking the quad, and that dwell
+outlasts any beat here.
+
+**The pause yields, which is the half that mattered most.** The speaking lock is held for a whole
+batch, so air added inside one is air the *next* batch waits through — and the next batch is
+where a danger or fuel callout would be. The queue is read without draining it, and the pause is
+taken in slices that ask again on every one, so an alert arriving mid-gap does not serve out the
+rest of it. A Commander hearing about the heat two seconds late because a courier was chatting
+would have been the worse defect.
+
+### The Raw switch is where you left it (#267)
+
+The journal's **Raw** switch keeps its position across launches. Both directions: a Commander who
+reads the file gets the file, and one who does not never sees it.
+
+**The trap is that raw is a root, not a toggle.** Raw Journal is registered on the Transcript tab
+exactly like the journal is — the picker declines to list it and normalises it away, but the
+navigator holds it as a root all the same — so remembering it as a *root* would have opened a
+wall of JSON on the tab the panel starts on. What is kept is the switch's position, applied when
+the journal reading is opened. And arriving *from* raw is the one move it must not undo: turning
+the switch off looks identical to opening the reading, so the previous reading is kept alongside
+the current one, and without that there would have been no way out of raw at all.
+
+### Every tab opens on the reading it was left on (#268)
+
+Leaving Routing on **Course**, or the Transcript on **Log File**, and closing d47 now comes back
+there. Settings comes back scrolled to the section you left it at. Half of this already worked and
+knowing which half was the whole diagnosis: the navigator has always kept one current root per tab,
+so a tab switch returned to the mode it left — nothing wrote it down, so every launch started
+at the first reading each tab furnished. The settings nav is the same fact in different clothes: it
+is a scroll-spy, so its selection is a scroll offset.
+
+Which tab was showing is deliberately **not** remembered; the panel still opens on the transcript.
+Restoring a settings section scrolls and **unfolds nothing** — the help-link jump expands the
+card it lands on because a link to a folded card goes nowhere, and arriving at the page you left is
+not that act.
+
+**And the settings page now re-reads before it writes.** It saved the view-state snapshot taken
+when the page was built, so collapsing a card wrote back a copy from build time and undid anything
+any other writer had recorded since. That was already live against the pane widths and the
+checklist filter; it would have eaten these readings on the first card a Commander closed.
+
+---
+
 ## 0.100.0 — 2026-09-01 — The Transcript says where you are, and the forms say what they want
 
 A release about the surface telling the truth about itself. It started with two words on a
