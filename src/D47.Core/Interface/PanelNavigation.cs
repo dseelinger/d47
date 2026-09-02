@@ -21,24 +21,26 @@ public enum PanelTab
     /// <summary>The conversation, at two verbosities, and today's log file.</summary>
     Transcript,
 
-    /// <summary>
-    /// Where the Commander is going, in three readings (Phase 37): the plan, the route
-    /// being flown, and getting a system name into the game.
-    /// <para>
-    /// Second, beside the transcript rather than out among the ledgers, because it is read while
-    /// flying rather than administered between trips.
-    /// </para>
-    /// </summary>
-    Routing,
-
-    /// <summary>What the Commander is working on, in their own order (Phase 17).</summary>
-    Checklist,
-
     /// <summary>Ships, suits and weapons, and the arithmetic between them (Phases 26-27).</summary>
     Loadout,
 
     /// <summary>Who unlocks what, and how far away they are (Phase 28).</summary>
     Engineers,
+
+    /// <summary>What the Commander is working on, in their own order (Phase 17).</summary>
+    Checklist,
+
+    /// <summary>
+    /// Where the Commander is going, in three readings (Phase 37): the plan, the route
+    /// being flown, and getting a system name into the game.
+    /// <para>
+    /// Second, beside the transcript rather than out among the ledgers, from Phase 37 until
+    /// 2026-09-02, on the grounds that it is read while flying rather than administered between
+    /// trips. <b>Moved after Fleet, Engineers and Checklist on the Commander's instruction</b>
+    /// (#272); the order here is the bar's, so it moved here.
+    /// </para>
+    /// </summary>
+    Routing,
 
     /// <summary>
     /// Stories the Commander flies, told by the ship's AI (Phase 47). Deliberately not a
