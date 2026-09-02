@@ -240,7 +240,11 @@ public sealed class OverlayPanel : Window
     /// already routes a spoken tab to all three.
     /// </para>
     /// </summary>
-    public bool Scroll(PanelScrollStep step) => IsVisible && _view.Scroll(step);
+    public PanelScrollOutcome Scroll(PanelScrollStep step) =>
+        // A strip nobody can see has nothing to scroll, which is a different answer from being at
+        // the end of something (#263) — and the one that lets a hidden surface stay silent while
+        // the window it is beside answers for the phrase.
+        IsVisible ? _view.Scroll(step) : PanelScrollOutcome.NothingToScroll;
 
     /// <summary>Whether the strip is in place mode — taking clicks so it can be dragged.</summary>
     public bool IsPlacing => _placing;

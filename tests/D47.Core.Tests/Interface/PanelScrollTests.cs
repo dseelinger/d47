@@ -81,4 +81,56 @@ public class PanelScrollTests
             Assert.Equal(step, PanelScroll.Match(phrase));
         }
     }
+    /// <summary>
+    /// A matched phrase is always answered, and the answer says which of the three things happened
+    /// (<a href="https://github.com/dseelinger/d47/issues/263">#263</a>).
+    /// <para>
+    /// <b>Reported from a real session.</b> Saying "page down" with nothing to scroll produced a
+    /// language model turn — 23,966 tokens in, $0.0124 — that replied "No tool for keystrokes on
+    /// my end, Commander." The phrase had matched; the host answered only where something moved,
+    /// so everything else fell through to a model that was never meant to see it.
+    /// </para>
+    /// <para>
+    /// The intent was already written at the branch that declined: a Commander who says "page
+    /// down" at the bottom should hear that they are at the bottom. It had no way to travel.
+    /// </para>
+    /// </summary>
+    [Theory]
+
+    // Something moved, which is the ordinary case and reads exactly as it always did.
+    [InlineData(PanelScrollStep.PageDown, new[] { PanelScrollOutcome.Moved }, "Page down.")]
+    [InlineData(PanelScrollStep.PageUp, new[] { PanelScrollOutcome.Moved }, "Page up.")]
+    [InlineData(PanelScrollStep.LineDown, new[] { PanelScrollOutcome.Moved }, "Scrolled down.")]
+    [InlineData(PanelScrollStep.LineUp, new[] { PanelScrollOutcome.Moved }, "Scrolled up.")]
+
+    // A page that exists and is at the end the Commander asked for. The direction is named,
+    // because "already at the bottom" for a page up would be a worse answer than none.
+    [InlineData(PanelScrollStep.PageDown, new[] { PanelScrollOutcome.AlreadyThere }, "Already at the bottom.")]
+    [InlineData(PanelScrollStep.LineDown, new[] { PanelScrollOutcome.AlreadyThere }, "Already at the bottom.")]
+    [InlineData(PanelScrollStep.PageUp, new[] { PanelScrollOutcome.AlreadyThere }, "Already at the top.")]
+    [InlineData(PanelScrollStep.LineUp, new[] { PanelScrollOutcome.AlreadyThere }, "Already at the top.")]
+
+    // No page at all — the one that used to reach the model, because it looked identical to
+    // "already there" from outside.
+    [InlineData(PanelScrollStep.PageDown, new[] { PanelScrollOutcome.NothingToScroll }, "There is nothing to scroll here.")]
+
+    // Three surfaces, one phrase, said once into the room. A move anywhere wins.
+    [InlineData(
+        PanelScrollStep.PageDown,
+        new[] { PanelScrollOutcome.NothingToScroll, PanelScrollOutcome.AlreadyThere, PanelScrollOutcome.Moved },
+        "Page down.")]
+
+    // And being at the end of a real page beats there being no page: the surface showing
+    // something is the one that answers for the room.
+    [InlineData(
+        PanelScrollStep.PageUp,
+        new[] { PanelScrollOutcome.NothingToScroll, PanelScrollOutcome.AlreadyThere },
+        "Already at the top.")]
+
+    // Nobody registered at all, which is every surface saying nothing rather than a phrase that
+    // was not a scroll — it still gets an answer rather than a model turn.
+    [InlineData(PanelScrollStep.PageDown, new PanelScrollOutcome[0], "There is nothing to scroll here.")]
+    public void AMatchedPhraseIsAlwaysAnswered(
+        PanelScrollStep step, PanelScrollOutcome[] outcomes, string expected) =>
+        Assert.Equal(expected, PanelScroll.Answer(step, outcomes));
 }

@@ -145,7 +145,8 @@ public sealed class VrHost : IDisposable
     public D47.Core.Interface.PanelNavigator Nav => _panel.Nav;
 
     /// <summary>How far down the headset panel is, so a spoken scroll can move it (#34).</summary>
-    public bool Scroll(D47.Core.Interface.PanelScrollStep step) => _panel.Scroll(step);
+    public D47.Core.Interface.PanelScrollOutcome Scroll(D47.Core.Interface.PanelScrollStep step) =>
+        _panel.Scroll(step);
 
     /// <summary>
     /// Builds the headset path and subscribes it to the tick loop.

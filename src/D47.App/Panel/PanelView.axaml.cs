@@ -1433,23 +1433,25 @@ public partial class PanelView : UserControl
     /// landed rather than waiting to be told.
     /// </para>
     /// <para>
-    /// False when there is nothing to scroll — no scroller in the region, or a layout that has not
-    /// happened yet — so the phrase falls through to whatever else wanted it rather than being
-    /// silently eaten.
+    /// <b>Three answers rather than two</b> (#263). <see cref="PanelScrollOutcome.NothingToScroll"/>
+    /// is no scroller in the region, or a layout that has not happened yet;
+    /// <see cref="PanelScrollOutcome.AlreadyThere"/> is a page that exists and is at that end. They
+    /// were one <c>false</c>, which the caller could only read as "not a scroll" — so a Commander
+    /// at the bottom of a page had their sentence handed to the language model.
     /// </para>
     /// </summary>
-    public bool Scroll(PanelScrollStep step)
+    public PanelScrollOutcome Scroll(PanelScrollStep step)
     {
         if (ActiveScroller() is not { } scroller)
         {
-            return false;
+            return PanelScrollOutcome.NothingToScroll;
         }
 
         var viewport = scroller.Viewport.Height;
 
         if (viewport <= 0 || scroller.Extent.Height <= viewport)
         {
-            return false;
+            return PanelScrollOutcome.NothingToScroll;
         }
 
         // A page is a screenful less one line, so the line a Commander was reading when they said
@@ -1469,10 +1471,11 @@ public partial class PanelView : UserControl
 
         if (Math.Abs(wanted - was) < 0.5)
         {
-            // Already at that end. Answered as "nothing happened" rather than as a move, because a
-            // Commander who says "page down" at the bottom should hear that they are at the bottom
-            // rather than watch nothing and wonder whether they were heard.
-            return false;
+            // Already at that end, and said so rather than merely not moving: a Commander who says
+            // "page down" at the bottom should hear that they are at the bottom rather than watch
+            // nothing and wonder whether they were heard. Until #263 this was the same answer as
+            // "there is nothing here to scroll", and both of them reached the model.
+            return PanelScrollOutcome.AlreadyThere;
         }
 
         scroller.Offset = scroller.Offset.WithY(wanted);
@@ -1483,7 +1486,7 @@ public partial class PanelView : UserControl
             ShowFollowButton();
         }
 
-        return true;
+        return PanelScrollOutcome.Moved;
     }
 
     /// <summary>

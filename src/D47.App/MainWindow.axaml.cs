@@ -490,10 +490,10 @@ public partial class MainWindow : Window
         // Memorial, Commander.Jameson Memorial: Docking granted, pad 07." Even given a run of its
         // own it would sit in d47's bubble, which says d47 said it.
         //
-        // They are in the Journal File reading, which is where Elite's own events belong and
-        // where a Commander goes to ask what just happened. That reading draws the sender and the
-        // message now - it drew the bare words "Receive Text" until #260, which is what made this
-        // look like a choice between the conversation and nothing.
+        // They are logged instead (#264), which puts them in the Log File reading - the
+        // Commander's own call, and the same place everything else the speech path does is
+        // written down. AppHost.SayAsync is where that happens. They are in the Journal File
+        // reading as well, since Elite writes every one of them into its own journal.
 
         _host.Settings.Changed += change => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {

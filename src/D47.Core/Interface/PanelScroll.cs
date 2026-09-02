@@ -15,6 +15,33 @@ public enum PanelScrollStep
 }
 
 /// <summary>
+/// What happened when a surface was asked to scroll
+/// (<a href="https://github.com/dseelinger/d47/issues/263">#263</a>).
+/// <para>
+/// <b>Three outcomes, where there used to be a bool.</b> A surface that did not move said
+/// <c>false</c> for two quite different reasons — already at that end, and nothing on this page
+/// scrolls at all — and the caller could not tell them apart, so it treated both as "the phrase
+/// was not a scroll" and let the sentence fall through to the language model. What came back was a
+/// model guessing at a phrase it was never meant to see, at the cost of a turn.
+/// </para>
+/// <para>
+/// The intent was already written down at the branch that returned false: a Commander who says
+/// "page down" at the bottom should hear that they are at the bottom. It just had no way to travel.
+/// </para>
+/// </summary>
+public enum PanelScrollOutcome
+{
+    /// <summary>Nothing on this surface scrolls — no scroller, or the content fits.</summary>
+    NothingToScroll,
+
+    /// <summary>There is a page, and it is already at the end the Commander asked for.</summary>
+    AlreadyThere,
+
+    /// <summary>The page moved.</summary>
+    Moved,
+}
+
+/// <summary>
 /// Scrolling the panel by saying so (<a href="https://github.com/dseelinger/d47/issues/34">#34</a>).
 /// <para>
 /// <b>Dragging the scrollbar was the whole of it, and on one surface there was nothing at all.</b>
@@ -83,6 +110,52 @@ public static class PanelScroll
         var said = Normalise(spoken);
 
         return said.Length > 0 && Phrases.TryGetValue(said, out var step) ? step : null;
+    }
+
+    /// <summary>
+    /// What to say back, given what every surface did with the step
+    /// (<a href="https://github.com/dseelinger/d47/issues/263">#263</a>).
+    /// <para>
+    /// <b>A matched phrase is always answered.</b> This used to be "answer only if something
+    /// moved", and the rest fell through to the language model — which cost a request to be told
+    /// it had no tool for keystrokes. The vocabulary above is sixteen exact phrases, closed and
+    /// unambiguous, so a match is a request to scroll and there is nothing else it could have been
+    /// meant for.
+    /// </para>
+    /// <para>
+    /// <b>A move anywhere wins, and being at the end of a real page beats there being no page.</b>
+    /// A Commander says a phrase once, into a room with up to three surfaces in it: what they want
+    /// to hear is what happened to the one they are reading, and the surface that is showing
+    /// something is the one that answers for the room.
+    /// </para>
+    /// <para>
+    /// Here rather than in the host so it can be asserted against the words themselves. The host
+    /// gathers the outcomes; what they mean out loud is a question about this vocabulary.
+    /// </para>
+    /// </summary>
+    public static string Answer(PanelScrollStep step, IEnumerable<PanelScrollOutcome> outcomes)
+    {
+        var seen = outcomes.ToList();
+
+        if (seen.Contains(PanelScrollOutcome.Moved))
+        {
+            return step switch
+            {
+                PanelScrollStep.PageDown => "Page down.",
+                PanelScrollStep.PageUp => "Page up.",
+                PanelScrollStep.LineDown => "Scrolled down.",
+                _ => "Scrolled up.",
+            };
+        }
+
+        if (!seen.Contains(PanelScrollOutcome.AlreadyThere))
+        {
+            return "There is nothing to scroll here.";
+        }
+
+        return step is PanelScrollStep.PageDown or PanelScrollStep.LineDown
+            ? "Already at the bottom."
+            : "Already at the top.";
     }
 
     /// <summary>

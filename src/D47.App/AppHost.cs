@@ -582,18 +582,6 @@ public sealed class AppHost : IDisposable
     public event Action<string>? Noted;
 
     /// <summary>
-    /// Raised with a line for the transcript — in-game comms, which are neither the
-    /// conversation nor a diagnostic.
-    /// <para>
-    /// Separate from <see cref="Said"/> because that one is d47 talking and lands on the
-    /// conversation page, and a station clearing the Commander to dock is not part of a
-    /// conversation with their companion. The wording comes from
-    /// <see cref="Announcement.Transcript"/>, so what is written and what is heard can differ:
-    /// the ear gets the words and the page gets the sender as well.
-    /// </para>
-    /// </summary>
-    public event Action<string>? Transcribed;
-
     /// <summary>
     /// Something the Commander said that no turn is going to write down (change-requests.md 31).
     /// <para>
@@ -730,6 +718,16 @@ public sealed class AppHost : IDisposable
 
     /// <summary>For surfaces that need a logger of their own — the theme manager, so far.</summary>
     public ILoggerFactory Loggers => _loggerFactory;
+
+    /// <summary>
+    /// Where in-game comms are written down (#264). A category rather than a type, because there
+    /// is no <c>Comms</c> class to name and the category is what binds a line to the Voice level
+    /// row — see <see cref="Core.Diagnostics.Subsystems.SourcePrefixes"/>, which maps
+    /// <c>D47.App.Voice</c> to <c>Voice</c>.
+    /// </summary>
+    private Microsoft.Extensions.Logging.ILogger Comms => _comms ??= _loggerFactory.CreateLogger("D47.App.Voice.Comms");
+
+    private Microsoft.Extensions.Logging.ILogger? _comms;
 
     /// <summary>
     /// Set when settings could not be loaded. Surfaced on the panel rather than swallowed:
@@ -4777,7 +4775,7 @@ public sealed class AppHost : IDisposable
     /// through <see cref="_navigators"/>, because a scroll position is the view's and a navigator
     /// has never held one.
     /// </summary>
-    private readonly List<Func<Core.Interface.PanelScrollStep, bool>> _scrollers = [];
+    private readonly List<Func<Core.Interface.PanelScrollStep, Core.Interface.PanelScrollOutcome>> _scrollers = [];
 
     /// <summary>
     /// Adds a surface to the ones a spoken scroll moves (#34).
@@ -4788,7 +4786,7 @@ public sealed class AppHost : IDisposable
     /// from the tick.
     /// </para>
     /// </summary>
-    public void RouteScrolling(Func<Core.Interface.PanelScrollStep, bool> scroll) =>
+    public void RouteScrolling(Func<Core.Interface.PanelScrollStep, Core.Interface.PanelScrollOutcome> scroll) =>
         _scrollers.Add(scroll);
 
     /// <summary>
@@ -4800,9 +4798,15 @@ public sealed class AppHost : IDisposable
     /// a strip said it once, into the room.
     /// </para>
     /// <para>
-    /// It answers only where something actually moved. A surface already at that end scrolls
-    /// nothing and says so, so "page down" at the bottom of the page falls through and is heard
-    /// rather than swallowed into silence that looks like not being heard at all.
+    /// <b>A matched phrase is always answered here and never reaches the model</b> (#263). It used
+    /// to answer only where something moved, on the reasoning that falling through was better than
+    /// silence — which was right about silence and wrong about the destination. What a Commander
+    /// actually got for "page down" at the bottom of a page was a language model turn, costing a
+    /// request, explaining that it had no tool for keystrokes.
+    /// </para>
+    /// <para>
+    /// The vocabulary is sixteen exact phrases, closed and unambiguous, so a match is a request to
+    /// scroll and there is nothing else it could have been meant for.
     /// </para>
     /// </summary>
     public string? Scroll(string spoken)
@@ -4812,20 +4816,13 @@ public sealed class AppHost : IDisposable
             return null;
         }
 
-        // Every one of them, and the answer is about the phrase rather than about any one
-        // surface's share of it.
-        var moved = _scrollers.Count(scroll => scroll(step));
-
-        return moved > 0 ? Describe(step) : null;
+        // Every one of them, and then what that means out loud is asked of the vocabulary rather
+        // than decided here: the wording belongs beside the phrases it answers, where it can be
+        // asserted without an AppHost.
+        return Core.Interface.PanelScroll.Answer(
+            step,
+            _scrollers.Select(scroll => scroll(step)));
     }
-
-    private static string Describe(Core.Interface.PanelScrollStep step) => step switch
-    {
-        Core.Interface.PanelScrollStep.PageDown => "Page down.",
-        Core.Interface.PanelScrollStep.PageUp => "Page up.",
-        Core.Interface.PanelScrollStep.LineDown => "Scrolled down.",
-        _ => "Scrolled up.",
-    };
 
     /// <summary>
     /// Moves every surface the phrase named somewhere, and says what happened — or null when it
@@ -5635,12 +5632,25 @@ public sealed class AppHost : IDisposable
             ? cast.ForSender(speaker, announcement.SpeakerIsPlayer, announcement.Voice)
             : cast.For(announcement.Voice);
 
-        // Written before it is spoken, and whether or not the speaking works. A message that
-        // could not be synthesised is still a message that arrived, and the page is the only
-        // place left to see it.
+        // Written before it is spoken, and whether or not the speaking works: a message that
+        // could not be synthesised is still a message that arrived.
+        //
+        // **Into the log, on the Commander's instruction** (#264): "In-game comms should appear in
+        // the Log File - voice related stuff." It was an event onto the Technical reading until
+        // #260 deleted that page, and putting it in the conversation was tried and drew badly -
+        // that page is bubbles, so a station's line arrived in d47's own voice and merged into
+        // whatever it had just said.
+        //
+        // Under a Voice category rather than the host's own, which is what makes the Voice level
+        // row govern it: a station approach brings a lot of these, and a Commander who wants the
+        // log quieter can turn them down with everything else the speech path says. Subsystems
+        // maps "D47.App.Voice" to Voice, and the category is the routing key.
+        //
+        // The wording is Announcement.Transcript rather than what is spoken, so what is written
+        // and what is heard can differ: the ear gets the words and the log gets the sender too.
         if (announcement.Transcript is { Length: > 0 } line)
         {
-            Transcribed?.Invoke(line);
+            Comms.LogInformation("{Message}", line.TrimEnd());
         }
         else if (announcement.ConversationLine is { Length: > 0 } spoken)
         {

@@ -36,14 +36,14 @@ public class ScrollingBySayingSoTests
         // At the end, because the transcript follows the newest line until told otherwise.
         var bottom = scroller.Offset.Y;
 
-        Assert.True(panel.Scroll(PanelScrollStep.PageUp));
+        Assert.Equal(PanelScrollOutcome.Moved, panel.Scroll(PanelScrollStep.PageUp));
         Dispatcher.UIThread.RunJobs();
 
         var up = scroller.Offset.Y;
 
         Assert.True(up < bottom, "Page up did not move the transcript.");
 
-        Assert.True(panel.Scroll(PanelScrollStep.PageDown));
+        Assert.Equal(PanelScrollOutcome.Moved, panel.Scroll(PanelScrollStep.PageDown));
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(scroller.Offset.Y > up, "Page down did not move the transcript back.");
@@ -87,31 +87,41 @@ public class ScrollingBySayingSoTests
     /// standing still would swallow the phrase, and a Commander at the bottom of a page would watch
     /// nothing and wonder whether they had been heard.
     /// </summary>
+    /// <remarks>
+    /// <b>Which kind of "no" this is matters</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/263">#263</a>). It was the same
+    /// <c>false</c> as the test below until then, so the caller could not tell "you are at the
+    /// bottom" from "there is nothing here", read both as "not a scroll", and handed the
+    /// Commander's sentence to the language model.
+    /// </remarks>
     [AvaloniaFact]
     public void AtTheEndItDeclinesRatherThanPretending()
     {
         var (window, panel) = Open();
 
-        Assert.False(panel.Scroll(PanelScrollStep.PageDown));
+        Assert.Equal(PanelScrollOutcome.AlreadyThere, panel.Scroll(PanelScrollStep.PageDown));
 
         var scroller = panel.GetControl<ScrollViewer>("TranscriptScroller");
 
         scroller.Offset = scroller.Offset.WithY(0);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.False(panel.Scroll(PanelScrollStep.PageUp));
+        Assert.Equal(PanelScrollOutcome.AlreadyThere, panel.Scroll(PanelScrollStep.PageUp));
 
         window.Close();
     }
 
-    /// <summary>A page with nothing over the fold has nothing to scroll, and says so.</summary>
+    /// <summary>
+    /// A page with nothing over the fold has nothing to scroll, and says so — which is a different
+    /// answer from being at the end of one, and the difference is what the Commander hears (#263).
+    /// </summary>
     [AvaloniaFact]
     public void APageThatFitsIsNotScrolled()
     {
         var (window, panel) = Open(lines: 1);
 
-        Assert.False(panel.Scroll(PanelScrollStep.PageDown));
-        Assert.False(panel.Scroll(PanelScrollStep.PageUp));
+        Assert.Equal(PanelScrollOutcome.NothingToScroll, panel.Scroll(PanelScrollStep.PageDown));
+        Assert.Equal(PanelScrollOutcome.NothingToScroll, panel.Scroll(PanelScrollStep.PageUp));
 
         window.Close();
     }
@@ -142,7 +152,7 @@ public class ScrollingBySayingSoTests
 
         var transcript = panel.GetControl<ScrollViewer>("TranscriptScroller").Offset.Y;
 
-        Assert.True(panel.Scroll(PanelScrollStep.PageDown));
+        Assert.Equal(PanelScrollOutcome.Moved, panel.Scroll(PanelScrollStep.PageDown));
         Dispatcher.UIThread.RunJobs();
 
         var page = panel.GetControl<Border>("PagePane")
@@ -209,7 +219,7 @@ public class ScrollingBySayingSoTests
 
         var before = Pixels(headset);
 
-        Assert.True(headset.Scroll(PanelScrollStep.PageUp), "The headset panel declined to scroll.");
+        Assert.Equal(PanelScrollOutcome.Moved, headset.Scroll(PanelScrollStep.PageUp));
 
         var after = Pixels(headset);
 
@@ -236,7 +246,7 @@ public class ScrollingBySayingSoTests
 
         // Hidden, it declines: a phrase must not be swallowed by a surface nobody can see, or the
         // Commander gets silence from the one that was showing too.
-        Assert.False(strip.Scroll(PanelScrollStep.PageUp));
+        Assert.Equal(PanelScrollOutcome.NothingToScroll, strip.Scroll(PanelScrollStep.PageUp));
 
         strip.Show();
         Dispatcher.UIThread.RunJobs();
@@ -244,7 +254,7 @@ public class ScrollingBySayingSoTests
         model.Append("And the newest line, with somewhere to put it.");
         Dispatcher.UIThread.RunJobs();
 
-        Assert.True(strip.Scroll(PanelScrollStep.PageUp), "The strip declined to scroll.");
+        Assert.Equal(PanelScrollOutcome.Moved, strip.Scroll(PanelScrollStep.PageUp));
 
         strip.Close();
     }

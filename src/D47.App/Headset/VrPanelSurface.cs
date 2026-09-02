@@ -268,13 +268,16 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     /// hands SteamVR an identical image.
     /// </para>
     /// </summary>
-    public bool Scroll(D47.Core.Interface.PanelScrollStep step)
+    public D47.Core.Interface.PanelScrollOutcome Scroll(D47.Core.Interface.PanelScrollStep step)
     {
-        var moved = _view.Scroll(step);
+        var outcome = _view.Scroll(step);
 
-        _dirty |= moved;
+        // Dirty only for a move, which is the same bargain as before and is now said precisely:
+        // "already at the bottom" changes no pixel, and re-rendering for it would hand SteamVR an
+        // identical image (#263).
+        _dirty |= outcome == D47.Core.Interface.PanelScrollOutcome.Moved;
 
-        return moved;
+        return outcome;
     }
 
     /// <summary>Which mode the Commander has the panel in. Read from settings, never held here.</summary>
