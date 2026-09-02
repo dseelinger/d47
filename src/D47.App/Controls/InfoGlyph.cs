@@ -14,10 +14,10 @@ namespace D47.App.Controls;
 /// and kept every fact on the surface, which was right and still left a paragraph of *why* attached
 /// to each fact. Reasoning is not a disclosure — a Commander who never reads it has still been told
 /// what leaves and where it goes — so it belongs behind a press. What it must never hold is a
-/// disclosure; see <c>HelpImproveWindow.LedeText</c> for the line that rule is drawn on.
+/// disclosure; see <c>HelpImproveWindow.IntroText</c> for the line that rule is drawn on.
 /// </para>
 /// <para>
-/// <b>Three levels, increasing in detail, and the glyphs say which is which.</b> The lede is the
+/// <b>Three levels, increasing in detail, and the glyphs say which is which.</b> The intro is the
 /// facts, this flyout is the reasoning, and the <c>?</c> beside it opens the whole page with its
 /// diagrams. So this flyout ends by pointing at that page rather than repeating it — one authored
 /// copy, on the site, exactly as <see cref="SiteHelpMark"/> already assumed.

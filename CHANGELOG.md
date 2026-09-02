@@ -36,12 +36,12 @@ trimmed it once and got the mechanism onto the site; what stayed was every fact 
 sentence of reasoning attached to each fact, which is most of a wall of text by volume and none of
 it by weight.
 
-**The lede is now a fact per line** — what the scrub replaces and drops, where a send goes, how long
+**The intro is now a fact per line** — what the scrub replaces and drops, where a send goes, how long
 it is kept, what d47 keeps here, and the per-installation number that travels with it. Six lines
 where there were fifteen, and the first thing read is the one that governs all of them: *nothing is
 read, written or sent until you press*.
 
-**An ⓘ sits beside the ?**, and the pair reads left to right in the order they deepen: the lede is
+**An ⓘ sits beside the ?**, and the pair reads left to right in the order they deepen: the intro is
 the facts, the glyph is the reasoning — why real journals find defects, what the scrub keeps rather
 than removes, why a history is offered as a report about itself — and the glyph's own button opens
 the full page on the site. A flyout rather than a second dialog, so dismissing it costs nothing a
@@ -51,7 +51,7 @@ Commander had already chosen on the window behind it.
 through two trims, and it is what the window exists to obtain: a Commander who presses neither glyph
 has still read every term. Tests assert the split in both directions, because the invisible half is
 the one that rots — a disclosure drifting behind the glyph, or an argument drifting back into the
-lede.
+intro.
 
 ### In Ship chatter and NPC chatter
 

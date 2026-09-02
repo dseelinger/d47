@@ -29,7 +29,7 @@ namespace D47.App.Controls;
 /// scope change and arms nothing until the journals have been read.
 /// </para>
 /// <para>
-/// <b>The lede leads with why, then the three promises</b>
+/// <b>The intro leads with why, then the three promises</b>
 /// (<a href="https://github.com/dseelinger/d47/issues/240">#240</a>): voluntary, scrubbed,
 /// removable. They were all already true and already said; they were buried mid-paragraph, and
 /// the first thing a Commander reads should be the reason anyone would do this at all.
@@ -150,7 +150,7 @@ public sealed class HelpImproveWindow : Window
         TextWrapping = TextWrapping.Wrap,
     };
 
-    private readonly TextBlock _lede = new()
+    private readonly TextBlock _intro = new()
     {
         TextWrapping = TextWrapping.Wrap,
         FontSize = TypeScale.Secondary,
@@ -258,7 +258,7 @@ public sealed class HelpImproveWindow : Window
         Themed(this, BackgroundProperty, ThemeManager.BackgroundKey);
         Themed(_preview, TextBlock.ForegroundProperty, ThemeManager.TextKey);
         Themed(_corpusPreview, TextBlock.ForegroundProperty, ThemeManager.TextKey);
-        Themed(_lede, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(_intro, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
         Themed(_size, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
         Themed(_status, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
 
@@ -280,7 +280,7 @@ public sealed class HelpImproveWindow : Window
         // The two glyphs, above everything and on the right — ⓘ then ?, which is the order they
         // deepen in (#269). The mark opens the site because a dialog has no panel to take to a
         // help level; see SiteHelpMark for that ruling and the two roads not taken. The glyph
-        // beside it holds the reasoning the lede used to carry inline.
+        // beside it holds the reasoning the intro used to carry inline.
         // LastChildFill off, or the single Right-docked child becomes the fill child and lands on
         // the left — which is exactly where it first appeared.
         var marked = new DockPanel { Margin = new Thickness(0, 0, 0, 6), LastChildFill = false };
@@ -298,7 +298,7 @@ public sealed class HelpImproveWindow : Window
         marked.Children.Add(glyphs);
 
         DockPanel.SetDock(marked, Dock.Top);
-        DockPanel.SetDock(_lede, Dock.Top);
+        DockPanel.SetDock(_intro, Dock.Top);
         DockPanel.SetDock(options, Dock.Top);
         DockPanel.SetDock(footer, Dock.Bottom);
 
@@ -322,7 +322,7 @@ public sealed class HelpImproveWindow : Window
         Themed(pane, Border.BorderBrushProperty, ThemeManager.BorderKey);
 
         root.Children.Add(marked);
-        root.Children.Add(_lede);
+        root.Children.Add(_intro);
         root.Children.Add(options);
         root.Children.Add(footer);
         root.Children.Add(pane);
@@ -387,7 +387,7 @@ public sealed class HelpImproveWindow : Window
         _saveCorpus.IsVisible = history;
         _sendCorpusButton.IsVisible = history && _sendCorpus is not null;
 
-        _lede.Text = LedeText(history);
+        _intro.Text = IntroText(history);
 
         if (history)
         {
@@ -422,7 +422,7 @@ public sealed class HelpImproveWindow : Window
     /// argument for pressing, and is behind the glyph — see <see cref="Reasoning"/>.
     /// </para>
     /// </summary>
-    private string LedeText(bool history)
+    private string IntroText(bool history)
     {
         // Voluntariness is the frame rather than a bullet: it governs every line under it, and as
         // a bullet it read as one disclosure among five instead of the condition on all of them.
@@ -482,7 +482,7 @@ public sealed class HelpImproveWindow : Window
     }
 
     /// <summary>
-    /// What the <c>ⓘ</c> holds (#269): the arguments for pressing, which the lede used to carry a
+    /// What the <c>ⓘ</c> holds (#269): the arguments for pressing, which the intro used to carry a
     /// sentence of each alongside the facts.
     /// <para>
     /// <b>Not a disclosure among them</b>, by construction — nothing here says what leaves, where
@@ -643,7 +643,7 @@ public sealed class HelpImproveWindow : Window
 
         // The question a Commander actually asked at this window (2026-08-31): which button
         // sends? With nowhere to send, none — and the status line is where the answer belongs,
-        // because the lede said it mid-paragraph and mid-paragraph is where it was missed. Since
+        // because the intro said it mid-paragraph and mid-paragraph is where it was missed. Since
         // the address started shipping in the build this is a state only a test constructs, and
         // it stays honest for the day that changes.
         _status.Text = _sendCorpus is null

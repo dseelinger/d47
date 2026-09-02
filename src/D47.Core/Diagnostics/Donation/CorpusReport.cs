@@ -148,7 +148,7 @@ public static class CorpusReport
     private static void Group(
         StringBuilder report,
         string heading,
-        string lede,
+        string intro,
         IReadOnlyList<KindCensus> kinds,
         bool collapsed)
     {
@@ -161,7 +161,7 @@ public static class CorpusReport
             return;
         }
 
-        report.AppendLine(lede);
+        report.AppendLine(intro);
         report.AppendLine();
 
         if (collapsed)

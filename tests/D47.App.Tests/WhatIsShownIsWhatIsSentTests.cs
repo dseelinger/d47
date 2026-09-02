@@ -285,7 +285,7 @@ public class WhatIsShownIsWhatIsSentTests : IDisposable
     }
 
     /// <summary>
-    /// <b>The window no longer tells a donor to paste into an issue</b> — not in the lede, and not
+    /// <b>The window no longer tells a donor to paste into an issue</b> — not in the intro, and not
     /// on the button after a copy. That named the destination the erasure ruling removed (#165),
     /// and it named it at the moment the Commander was acting on what it said.
     /// </summary>
@@ -336,13 +336,13 @@ public class WhatIsShownIsWhatIsSentTests : IDisposable
     {
         var window = Shown(_ => "### Incident excerpt\n");
 
-        var lede = window.GetVisualDescendants().OfType<TextBlock>()
+        var intro = window.GetVisualDescendants().OfType<TextBlock>()
             .Select(block => block.Text ?? string.Empty)
             .Single(text => text.Contains("Everything below", StringComparison.Ordinal));
 
-        Assert.Contains("random number identifying this installation", lede, StringComparison.Ordinal);
-        Assert.Contains("not derived from", lede, StringComparison.Ordinal);
-        Assert.Contains("donor-token.txt", lede, StringComparison.Ordinal);
+        Assert.Contains("random number identifying this installation", intro, StringComparison.Ordinal);
+        Assert.Contains("not derived from", intro, StringComparison.Ordinal);
+        Assert.Contains("donor-token.txt", intro, StringComparison.Ordinal);
     }
 
     /// <summary>
