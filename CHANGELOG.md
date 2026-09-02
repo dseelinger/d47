@@ -27,6 +27,168 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.100.0 — 2026-09-01 — The Transcript says where you are, and the forms say what they want
+
+A release about the surface telling the truth about itself. It started with two words on a
+drop-down and ended, twelve issues later, having deleted a room nobody could enter, taught every
+form to say which of its fields it actually needs, and found a margin that had been pushing controls
+off the edge of every zoomed dialog.
+
+### The Transcript readings are named for where you were (#250)
+
+**Conversation** is **In Ship**, and **Elite Dangerous Journal File** is **Journal File**. Two of
+the three were named for what they are made of rather than for what a Commander goes there to see.
+
+The half that is invisible on the screen it is about: a crumb's label doubles as the phrase that
+reaches it, so renaming one silently retires the old word. In Ship carries `Spoken = ["conversation",
+"thread"]`, and the journal needed nothing new — *"elite dangerous journal"* was already in its list
+and goes on covering the label it no longer draws.
+
+### The help describes the page in front of you (#251, #262)
+
+The Transcript's `?` opened a page describing Thread, Details and D47 Log — three names, none of
+which had existed since 0.96.0, and one of which had been removed outright. Both journal readings
+had no help anywhere: their mark landed on a page that had never heard of them.
+
+Five more pages sent a Commander to **Technical**, four of them beyond what the report listed.
+A help page promising somewhere to go and look is worse than one that says nothing.
+
+**Then one page became three (#262), on the Commander's instruction:** *"The transcript tab should
+have 3 different Help pages depending on context — In Ship, Log File, Journal File. And not try to
+cram it all into one ELI5 page."* One page for three readings described all of them in the same four
+sections, so pressing `?` on the journal returned three quarters of an answer about somewhere else.
+The mark was already context-sensitive — `NavCrumb.Help` is per crumb — so this was one page short
+of what the mechanism offered rather than a new mechanism.
+
+**And a gate, because prose is exactly what nothing was checking.** `DocumentationGateTests` asserts
+every capability has a page quoting its schema; a general page has no schema and a `NavCrumb.Word`
+was written down nowhere a test could compare against. Each reading is now checked against its own
+page, and no help page — or Commander-facing string in `src` — may name a reading that no longer
+exists. That second half caught a response that had been answering *"the details are on the
+Technical page"* in the conversation itself for two releases.
+
+### The Technical reading is gone, not just withdrawn (#260)
+
+[#231](https://github.com/dseelinger/d47/issues/231) took it out of the picker and nothing else went
+with it. `TranscriptPage.Technical`, `TranscriptKind` and eleven writers survived, so the text was
+held in memory for the life of the session and drawn nowhere.
+
+Two of those writers were not diagnostics. Typing *"show me the checklist"* moved the panel and said
+nothing back, because its only feedback was an append to a page nobody could open — and
+`AppHost.Navigate` writes no log line either.
+
+Everything that was a diagnostic is deleted rather than rehoused, on the Commander's reason:
+*"everything in Technical is still in the Log File. I found myself never looking at the technical
+file after the Log file view was created."* `SpeechLoopTrace` goes, because the loop already reports
+every stage to the log; `TechnicalLogBridge` goes, because it was a log sink and could only ever
+have been the Log File twice. With the kind deleted there is one destination, so a line written and
+shown nowhere is no longer expressible.
+
+### In-game comms are read where the game's own words are (#264)
+
+They went to the Technical reading, so after #260 they reached nothing at all. Putting them in the
+conversation was tried and the drawn page refused it: In Ship is bubbles and a comms line arrives in
+the ship's voice, so a station's clearance merged into the sentence d47 had just said and rendered
+as one. They are logged now — the Commander's call — which puts them in the **Log File** reading,
+under a Voice category so the Voice level governs them when a station approach gets noisy.
+
+**And the Journal File reading draws them properly.** It held every `ReceiveText` and drew each as
+the bare words *"Receive Text"*; `JournalSentence`'s own comment claimed the page rendered the
+message, and nothing ever did. It draws the sender and the words — **but only Frontier's**. A
+message another player typed stays out of the summary line, which is the untrusted-input rule and is
+not relaxed here. Checked against 4,042 real events before the test was written, which is what
+caught the first draft: Elite writes an empty `From` for its own channel notices, and every one of
+them read *": Entered Channel: Tarakah"*.
+
+### Clear empties the reading you are looking at (#261)
+
+It refused exactly `TranscriptPage.Log`, which was right about all three readings that existed when
+the rule was written. The journal readings arrived later and were never added — so pressing Clear
+while reading the journal emptied the conversation three doors away, and nothing on screen changed,
+because a journal reading is drawn from Elite's file. A Commander found out on going back to In
+Ship.
+
+It asks whether the reading is d47's own now, and the menu item is greyed on the three that are
+files on disk — the way Copy beside it is already greyed with nothing selected.
+
+### A scroll that moved nothing says why (#263)
+
+Saying *"page down"* with nothing to scroll cost a language model turn that answered *"No tool for
+keystrokes on my end, Commander."* The phrase had matched. What failed is that a surface said
+`false` for two different things — already at that end, and nothing here scrolls — so the host read
+both as "not a scroll" and handed the sentence to a model that was never meant to see it.
+
+The intent was already written at the branch that declined: a Commander who says "page down" at the
+bottom should hear that they are at the bottom. It had no way to travel. A matched phrase is
+answered locally now, always.
+
+### Fields say what they need (#253)
+
+The Routing tab's placeholders carried three incompatible meanings in one slot: an example
+(`Colonia`), a source of fact (`this ship's`), and a static default (`60`) — in the same grey. So the
+three required fields were the ones that looked most like they had already been answered. The Trade
+run card is the tell: somebody hit this, had nowhere to put the answer, and put the word *required*
+in the placeholder, where it vanishes the moment you type.
+
+Marks go on the label. Required is marked and optional is not, because required is the minority by a
+distance. Every form carries a legend keyed to the marks it actually uses.
+
+**The third state is d47's own and no generic form has it:** *optional because d47 already knows the
+answer*. It gets a shape of its own rather than a second asterisk, and it draws the live figure —
+*"this ship's (28.42 ly)"*, *"where you are now (Shinrarta Dezhra)"* — from the same expressions the
+tool call falls back to, so what the form says it will use and what gets sent cannot differ. It
+follows a jump and a refit.
+
+**`PersonaWindow` was the worse case:** three boxes whose only label was a placeholder, on a window
+where every existing core is drawn with its text already set — so all three were unlabelled on the
+screen a Commander spends time on.
+
+**One measurement worth recording.** `AutomationProperties.IsRequiredForForm` announces nothing on
+Avalonia 12.1.1: no member of `TextBoxAutomationPeer` or of `AutomationPeer` mentions it, and the
+platform provider builds its answers from the peer. It is set anyway, and what actually reaches a
+screen reader is the box's name, which carries the state in words.
+
+### The pop-up windows get a help mark (#252)
+
+A dialog cannot reach the in-app help, and that is the mechanism rather than an omission: help is a
+level of the panel and these windows are shown over it. The Commander's ruling was to open the site,
+following `CoverageWindow` — which was the only pop-up in the app that had a mark at all, and is now
+a caller rather than a third copy of one.
+
+**Help improve D47** gets a page of its own, and the trim is by kind rather than by length: what a
+replay case is for and how the scrub decides moved behind the mark, and every statement of *what
+leaves and where it goes* stayed. Moving that behind a `?` would weaken the consent the window
+exists to obtain.
+
+### Every zoomed dialog stops overflowing by its own margin (#265)
+
+Reported as a help button past the fold, with a horizontal scrollbar on a window that plainly had
+room. The mark was a witness: it is docked right, so it is the first thing over the edge.
+
+`ZoomHost.Fit` gave a scaled dialog `MaxWidth = viewport / scale`. A control's `DesiredSize`
+includes its margin and `MaxWidth` does not, so a root panel with `Margin(20)` asked for the
+viewport plus forty. At 125% on a 1125-wide viewport: `MaxWidth` 900, `DesiredSize` 938, extent 1173
+— a 48-pixel overflow, small enough to read as a rounding artefact and large enough to clip the
+prose mid-word.
+
+It only happens when zoomed, which is why nothing had seen it: every capture and every test that
+shows a dialog directly takes the 100% path, where there is no viewport and no `Fit`.
+
+### The tab strip (#254, #266)
+
+**Engineers wears the game's own Engineer's Workshop hexagon (#254).** #234's *"not a cog"* reasoning
+was about not inventing a third gear and still governs Utilities and Settings; it says nothing about
+Frontier's own symbol, which is not a gear. The mark carries more weight than it did when the anvil
+was chosen, because the strip sheds its words before it sheds tabs.
+
+**And the marks are learnt before the words are taken away (#266).** Word and mark were
+alternatives, so a Commander on a full-size window read eight words and never saw the marks — then
+the window narrowed and every tab was a picture they had not met. Glyph and word while there is
+room, glyph alone when there is not. Nothing about the responsiveness needed changing: the strip
+already measures the real extent, so it accounts for the glyph on its own.
+
+---
+
 ## 0.99.0 — 2026-09-01 — Three columns, two groups, and a release that asks first
 
 ### The flight recorder is the audio recorder (#214)
