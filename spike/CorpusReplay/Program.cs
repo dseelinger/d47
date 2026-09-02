@@ -168,6 +168,7 @@ internal static class Program
         // work, and this is the instrument rather than the fix.
         Console.WriteLine();
         Console.WriteLine($"=== SEEN, AND NOTHING IN d47 HANDLES: {HandledEvents.Unhandled(kinds.Keys).Count} of {kinds.Count} kinds ===");
+        Console.WriteLine("    (Backpack, BackpackChange and ShipLocker are answered from their .json files, not the journal — see HandledEvents)");
         foreach (var kind in HandledEvents.Unhandled(kinds.Keys).OrderByDescending(k => kinds[k]))
         {
             Console.WriteLine($"  {kind}  {kinds[kind]:N0}");

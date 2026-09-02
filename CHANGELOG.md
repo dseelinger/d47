@@ -27,7 +27,7 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
-## 0.104.0 — 2026-09-02 — d47 can say which journal events it handles
+## 0.102.0 — 2026-09-02 — The chatters are named and spaced, captions can sit in the cockpit, and d47 can say which journal events it handles
 
 ### One list names the journal events d47 acts on, and a gate keeps it honest (#270)
 
@@ -78,10 +78,6 @@ The gate adds `Microsoft.CodeAnalysis.CSharp` to `D47.Core.Tests` — MIT, test-
 `PackageLicenceGateTests`' walk like everything else in the solution. The donation scrubber's table
 is deliberately not counted: it reads the event name out of raw JSON, and taking a person's name
 out of a `Friends` event is not reacting to one.
-
----
-
-## 0.103.0 — 2026-09-02 — Captions can sit in the cockpit instead of on your face
 
 ### Captions can be world-locked, low between the console and your feet (#204)
 
@@ -137,8 +133,6 @@ not carrying cannot show even that.
 *Left alone and worth knowing:* `architecture.md`'s Re-anchor paragraph still describes a feature
 retired in 0.94.0, and `VrPanelSurface.Head` is dead — nothing has read it since the same
 retirement. Both are #219's debt rather than this change's.
-
-## 0.102.0 — 2026-09-02 — The two chatters are named for who is speaking
 
 ### Two unprompted voices are kept apart, and no longer come due on the same tick (#257)
 
@@ -213,7 +207,7 @@ in that list.
 
 ### The Help improve D47 info flyout wraps its text instead of scrolling sideways (#271)
 
-Pressing the ⓘ from 0.102.0 showed every paragraph clipped at its right edge with a horizontal
+Pressing the ⓘ that #269, below, had just added showed every paragraph clipped at its right edge with a horizontal
 scrollbar under it — *an event Frontier added tha*, *a list of fields to remove* — so a Commander
 reading a reason for pressing had to scroll sideways to finish each sentence.
 

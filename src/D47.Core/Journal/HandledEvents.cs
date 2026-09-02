@@ -38,6 +38,14 @@ namespace D47.Core.Journal;
 /// of the raw JSON rather than from a <see cref="JournalEvent"/>, and taking a person's name out
 /// of a <c>Friends</c> event is not reacting to one.
 /// </para>
+/// <para>
+/// <b>Three events are absent from both blocks and are not gaps.</b> <c>Backpack</c>,
+/// <c>BackpackChange</c> and <c>ShipLocker</c> are answered by <see cref="SuitInventory"/> from
+/// <c>Backpack.json</c> and <c>ShipLocker.json</c>, on purpose: the events carry the full contents
+/// only sometimes and Elite rewrites the two files on every change. The corpus diff lists them
+/// as unhandled, which is true of the journal and not of d47. Found the first time the diff was
+/// read, and recorded here so it is not chased twice.
+/// </para>
 /// </summary>
 public static class HandledEvents
 {
