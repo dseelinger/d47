@@ -64,8 +64,13 @@ public static class SiteHelpMark
     /// run a file called <c>https:</c>. Swallowed rather than reported, because a machine with no
     /// browser registered is not a state a help mark should crash the app over.
     /// </para>
+    /// <para>
+    /// Internal since <a href="https://github.com/dseelinger/d47/issues/269">#269</a>, so
+    /// <see cref="InfoGlyph"/>'s way out to the same page is this launch rather than a second one
+    /// that would have to be kept in step with it.
+    /// </para>
     /// </summary>
-    private static void Open(string url)
+    internal static void Open(string url)
     {
         try
         {

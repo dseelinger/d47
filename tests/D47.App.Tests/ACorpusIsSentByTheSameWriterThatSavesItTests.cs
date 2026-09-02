@@ -380,7 +380,7 @@ public class ACorpusIsSentByTheSameWriterThatSavesItTests : IDisposable
     {
         var lede = Shown().GetVisualDescendants().OfType<TextBlock>()
             .Select(block => block.Text ?? string.Empty)
-            .Single(text => text.Contains("This reads your Elite journals", StringComparison.Ordinal));
+            .Single(text => text.Contains("Nothing is read, written or sent", StringComparison.Ordinal));
 
         Assert.Contains("nothing here goes to a network", lede, StringComparison.Ordinal);
     }
@@ -398,7 +398,7 @@ public class ACorpusIsSentByTheSameWriterThatSavesItTests : IDisposable
 
         var lede = window.GetVisualDescendants().OfType<TextBlock>()
             .Select(block => block.Text ?? string.Empty)
-            .Single(text => text.Contains("This reads your Elite journals", StringComparison.Ordinal));
+            .Single(text => text.Contains("Nothing is read, written or sent", StringComparison.Ordinal));
 
         Assert.Contains("https://donate.invalid/donate", lede, StringComparison.Ordinal);
         Assert.DoesNotContain("nothing here goes to a network", lede, StringComparison.Ordinal);
