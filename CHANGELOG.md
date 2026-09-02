@@ -104,6 +104,17 @@ when the page was built, so collapsing a card wrote back a copy from build time 
 any other writer had recorded since. That was already live against the pane widths and the
 checklist filter; it would have eaten these readings on the first card a Commander closed.
 
+### `promote` finds the newer pre-release again, past v0.100.0
+
+Not an issue — a defect found and fixed on the day, and the diagnosis came from the shape before
+the cause: *"funny it started when we rolled over from 99 to 100"*. The filter asking whether a
+waiting pre-release is newer than the current latest assigned to `$version`, and PowerShell variable
+names are case-insensitive, so it was the script's own `[string] $Version` parameter — type
+constraint and all. Assigning a `[version]` to it coerced the object back to a string and `-gt`
+compared two strings, which agrees with a version comparison for every release this project has ever
+cut and stops agreeing at exactly v0.100.0: `"0.100.0" -gt "0.99.0"` is False, because `"1"` sorts
+before `"9"`. A promotion would have gone looking for something newer than latest and found nothing.
+
 ---
 
 ## 0.100.0 — 2026-09-01 — The Transcript says where you are, and the forms say what they want
