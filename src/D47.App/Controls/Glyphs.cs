@@ -263,9 +263,29 @@ public static class Glyphs
         /// Each reads fine alone; a strip where three of eight are variations on a gear is a strip
         /// nobody can scan. Settings has the most universal claim on the cog, so it took it.
         /// </para>
+        /// <para>
+        /// <b>It was an anvil until #254, and the reason above is not what changed.</b> That
+        /// argument was about not inventing a third gear and it still governs Utilities and
+        /// Settings — it says nothing about Frontier's own symbol, which is not a gear. This is
+        /// the <em>Engineer's Workshop</em> mark: a hexagon with a ring at its centre, and the one
+        /// glyph in the set a Commander has already learnt somewhere other than here.
+        /// </para>
+        /// <para>
+        /// <b>The mark carries more weight than it did when the anvil was chosen.</b> The strip
+        /// sheds its words before it sheds tabs, so on a narrow window the mark <em>is</em> the
+        /// tab — and a symbol the game taught beats one d47 taught.
+        /// </para>
+        /// <para>
+        /// <b>Pointy-top, and the ring is one stroked circle.</b> Two concentric strokes fill in
+        /// at seventeen pixels, so the set's own line weight draws the ring rather than the ring
+        /// being drawn twice. The full circle is the same arc trick <see cref="Spend"/> and
+        /// <see cref="Adventures"/> use: an arc from a point back to very nearly itself, because a
+        /// zero-length arc draws nothing.
+        /// </para>
         /// </summary>
         public const string Engineers =
-            "M 3,9 L 21,9 L 17,14 L 9,14 L 9,18 L 15,18 L 15,20 L 5,20 L 5,18 L 7,18 L 7,14 L 3,12 Z";
+            "M 12,2.5 L 20.2,7.3 L 20.2,16.7 L 12,21.5 L 3.8,16.7 L 3.8,7.3 Z"
+            + "  M 12,8.8 A 3.2,3.2 0 1 1 11.99,8.8";
 
         /// <summary>A compass rose. Stories the Commander flies, rather than a list of jobs.</summary>
         public const string Adventures = "M 12,3 A 9,9 0 1 1 11.99,3  M 15.5,8.5 L 13,13 L 8.5,15.5 L 11,11 Z";
