@@ -64,16 +64,15 @@ public class TheDonateButtonIsOnlyWhereItCanWorkTests
     }
 
     /// <summary>
-    /// And on neither of the other two. The Thread page is the conversation, which the log already
-    /// holds a more exact copy of, and Details is the working behind one turn.
+    /// And not on In Ship, which is the conversation — the log already holds a more exact copy of
+    /// it, so there is nothing here the other readings would not cut better.
     /// </summary>
     [AvaloniaFact]
-    public void ItIsNotOnThePagesItWouldCutNothingFrom()
+    public void ItIsNotOnThePageItWouldCutNothingFrom()
     {
         var panel = Furnished(donation: true);
 
         Assert.False(Shown(panel, TranscriptPage.Conversation));
-        Assert.False(Shown(panel, TranscriptPage.Technical));
     }
 
     /// <summary>

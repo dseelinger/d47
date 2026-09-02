@@ -133,6 +133,77 @@ public sealed class HelpNamesTheReadingsTests
     }
 
     /// <summary>
+    /// And nothing d47 <em>says</em> names a retired reading either
+    /// (<a href="https://github.com/dseelinger/d47/issues/260">#260</a>).
+    /// <para>
+    /// <b>The help was not the only place this hid.</b> A response that threw answered
+    /// <em>"I couldn't answer that. The details are on the Technical page"</em> — drawn in the
+    /// conversation, read by the Commander, and naming a page withdrawn two releases earlier. The
+    /// docs gate above could never have seen it, because it is a string literal rather than prose
+    /// in <c>docs/</c>.
+    /// </para>
+    /// <para>
+    /// <b>Literals only, never comments.</b> The source discusses these names constantly and
+    /// should — every removal above is explained where it happened. What is checked is the text
+    /// that reaches a Commander, so a line is scanned only from its first double quote.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void NothingTheAppSaysNamesARetiredReading()
+    {
+        var offences = new List<string>();
+
+        var sources = Directory
+            .EnumerateFiles(Path.Combine(RepositoryRoot(), "src"), "*.cs", SearchOption.AllDirectories)
+            .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}")
+                           && !path.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}"));
+
+        foreach (var source in sources)
+        {
+            var line = 0;
+
+            foreach (var text in File.ReadLines(source))
+            {
+                line++;
+
+                var trimmed = text.TrimStart();
+
+                // A comment line has no literal on it worth reading, and these files are full of
+                // comments about exactly these names.
+                if (trimmed.StartsWith("//", StringComparison.Ordinal)
+                    || trimmed.StartsWith("///", StringComparison.Ordinal)
+                    || trimmed.StartsWith("*", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                var quote = text.IndexOf('"');
+
+                if (quote < 0)
+                {
+                    continue;
+                }
+
+                var literal = text[quote..];
+
+                offences.AddRange(
+                    Retired
+                        .Where(retired => literal.Contains(retired, StringComparison.Ordinal))
+                        .Select(retired =>
+                            $"{Path.GetFileName(source)}:{line} says \"{retired}\""));
+            }
+        }
+
+        Assert.True(
+            offences.Count == 0,
+            $"""
+             Something d47 draws or speaks names a Transcript reading that no longer exists:
+
+             {string.Join(Environment.NewLine, offences)}
+             """);
+    }
+
+    /// <summary>
     /// The published pages, matching <c>DocumentationGateTests.PublishedPages</c> — the spike
     /// write-ups are contributor material rather than help, and a note in one about a reading
     /// that has since been retired is a record rather than a wrong instruction.

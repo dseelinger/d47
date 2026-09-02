@@ -396,7 +396,7 @@ public partial class MainWindow : Window
 
         if (_host is null)
         {
-            _model.Append("No host: the window is running under the designer.", TranscriptKind.Technical);
+            _model.Append("No host: the window is running under the designer.");
             return;
         }
 
@@ -408,8 +408,12 @@ public partial class MainWindow : Window
 
         // The Phase 1 claim is that a request produces a real tool call that runs and returns a
         // result. This is that call, dispatched by name through the registry.
+        //
+        // Its content is no longer written to the transcript (#260). It is the version, the
+        // folders and eight log levels — a wall of diagnostics that belonged on the Technical
+        // reading and nowhere else, and the log already opens with the version and the data
+        // folder. A Commander who wants the rest asks for it, which is the tool this line calls.
         var status = await _host.Capabilities.InvokeAsync("get_app_status", ToolArguments.Empty);
-        _model.Append(status.Content, TranscriptKind.Technical);
 
         if (status.IsError)
         {
@@ -423,8 +427,7 @@ public partial class MainWindow : Window
             availability.Current == LlmAvailability.Available
                 ? "\nLanguage model: ready."
                 : $"\nLanguage model: unavailable. {availability.Reason} " +
-                  "Keyword commands still work — try \"where am I\" or \"status\".",
-            TranscriptKind.Technical);
+                  "Keyword commands still work — try \"where am I\" or \"status\".");
 
         if (errors.Count > 0)
         {
@@ -458,11 +461,14 @@ public partial class MainWindow : Window
             _ = AskAsync();
         });
 
-        // What was heard, on the page that shows the working. Only where no turn is going to
-        // carry it — an utterance a chooser took, or one the wake policy reworded on the way in
-        // (change-requests.md 31).
+        // What was heard, where no response is going to carry it — an utterance a chooser took, or
+        // one the wake policy reworded on the way in (change-requests.md 31).
+        //
+        // In the conversation since #260. It went to the working, which stopped being somewhere a
+        // Commander could open; and these are their own words, which is the one thing the
+        // conversation is unarguably for.
         _host.HeardText += text => Avalonia.Threading.Dispatcher.UIThread.Post(
-            () => _model.Append("\n" + text + "\n", TranscriptKind.Technical));
+            () => _model.Append("\n" + text + "\n"));
 
         // Anything d47 says without a turn behind it still belongs in the transcript, so what
         // was heard and what can be read back are the same set.
@@ -473,13 +479,25 @@ public partial class MainWindow : Window
         // Marked rather than appended, so it reads as the panel and not as whoever is aboard.
         _host.Noted += text => Avalonia.Threading.Dispatcher.UIThread.Post(() => _model.Mark(text));
 
-        // In-game comms. On the Technical page rather than the conversation, because a station
-        // and a police interceptor are not talking to the Commander's companion - and because on
-        // a station approach there are a lot of them, and the conversation is the one page that
-        // has to stay readable.
+        // In-game comms, in the conversation since #260 - which is a reversal, and the reasoning
+        // it overturns is worth keeping. They were held off the conversation because a station and
+        // a police interceptor are not talking to the Commander's companion, and because a station
+        // approach brings a lot of them and the conversation is the page that has to stay
+        // readable. That argument was never wrong; it simply no longer has anywhere to send them.
+        //
+        // **Dropping them was tried first, and it loses something.** The Journal File reading does
+        // hold every ReceiveText - but it draws one as the line "Receive Text", because
+        // JournalSentence gives that kind no sentence, so the sender and the message are only in
+        // the fields pane beside it. A Commander does not read their comms by selecting an event
+        // and inspecting its JSON.
+        //
+        // So they go where the rule two handlers up already puts everything audible: what was
+        // heard and what can be read back are the same set. A re-voiced message is spoken aloud,
+        // and a page omitting a line d47 has just said out loud is the more surprising of the two.
+        // Announcement.Transcript carries the sender for exactly this - a voice arriving in a
+        // headset does not need to say whose it is, and a written line does.
         _host.Transcribed += text => Avalonia.Threading.Dispatcher.UIThread.Post(
-            () => _model.Append(text, TranscriptKind.Technical));
-
+            () => _model.Append(text));
 
         _host.Settings.Changed += change => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
@@ -1003,7 +1021,7 @@ public partial class MainWindow : Window
         if (_host.Navigate(input) is { } moved)
         {
             _model.AskText = string.Empty;
-            _model.Append($"\n\n> {input}\n{moved}\n", TranscriptKind.Technical);
+            _model.Append($"\n\n> {input}\n{moved}\n");
             return;
         }
 
@@ -1014,7 +1032,7 @@ public partial class MainWindow : Window
         if (_host.Scroll(input) is { } scrolled)
         {
             _model.AskText = string.Empty;
-            _model.Append($"\n\n> {input}\n{scrolled}\n", TranscriptKind.Technical);
+            _model.Append($"\n\n> {input}\n{scrolled}\n");
             return;
         }
 
@@ -1114,26 +1132,26 @@ public partial class MainWindow : Window
             // decided in one place and pinned by its own tests (#222).
             var ending = TurnEnding.For(ex, cancelling.IsCancellationRequested);
 
-            if (ending.Technical is { } technical)
+            if (ending.Technical is not null)
             {
-                // A turn that throws is a bug, not a provider failure — provider failures arrive
-                // as events. Surface it rather than losing it.
+                // A response that throws is a bug, not a provider failure — provider failures
+                // arrive as events. Logged with its stack trace, because the logs are the first
+                // thing read on a bug report: a cross-thread failure here once left the log with
+                // nothing in it at all, not even at Information, which made a reproducible crash
+                // look like it had happened nowhere.
                 //
-                // Logged as well as shown, and with the stack trace. The panel gets one line of
-                // message, and the logs are the first thing read on a bug report — a cross-thread
-                // failure here left the log with nothing in it at all, not even at Information,
-                // which made a reproducible crash look like it had happened nowhere.
+                // The log is now the only place it goes (#260). It was written to the transcript
+                // as well, on a reading that has not been reachable since #231 — and the Log File
+                // reading a Commander does open shows this same line, from here.
                 //
-                // Neither happens for a cancel: nothing went wrong, so there is no stack worth
-                // keeping and nothing for the Technical page to hold. TurnCancellation has already
-                // recorded that the Commander called it off.
+                // Nothing happens for a cancel: nothing went wrong, so there is no stack worth
+                // keeping. TurnCancellation has already recorded that the Commander called it off.
                 _host?.Loggers.CreateLogger<MainWindow>().LogError(ex, "The turn threw");
-                _model.Append(technical, TranscriptKind.Technical);
             }
 
             // One voice. The conversation gets a line in the same register as everything else D47
-            // says, and the part that is only useful to somebody debugging goes to the page for
-            // that — a bracketed exception message is not a reply to anybody.
+            // says, and the part that is only useful to somebody debugging stays in the log — a
+            // bracketed exception message is not a reply to anybody.
             _model.Append(ending.Conversation);
         }
         finally
@@ -1615,8 +1633,7 @@ public partial class MainWindow : Window
                 _host.Loggers.CreateLogger<MainWindow>()))
         {
             _model.Append(
-                "I could not add the Start Menu entry. You can still run D47 from where it is.",
-                TranscriptKind.Technical);
+                "I could not add the Start Menu entry. You can still run D47 from where it is.");
         }
     }
 

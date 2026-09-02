@@ -42,7 +42,7 @@ public sealed record RoutingSurface(
 /// is the one being flown, and <em>Course</em> is getting a system name into the game. They are
 /// three readings of the same subject rather than three destinations, which is why they cost one
 /// tab and a mode control rather than three tabs — the same collapse Transcript already makes for
-/// Conversation, Technical and the log file.
+/// In Ship, Log File and Journal File.
 /// </para>
 /// <para>
 /// The tab adds no tool, no service and no network call of its own: everything here is a surface

@@ -136,4 +136,37 @@ public class TurnThreadingTests
 
         return thrown;
     }
+
+    /// <summary>
+    /// Two threads appending to one transcript, which is the shape the lock exists for.
+    /// <para>
+    /// <b>Moved here from TechnicalPageTests when that page was deleted</b> (#260). It was written
+    /// about a log sink writing errors from an audio thread while a response streamed onto the
+    /// same transcript — that sink is gone, and the hazard is not: a
+    /// <see cref="System.Text.StringBuilder"/> read while another thread appends throws out of
+    /// <c>ToString</c>, and the streaming path still writes from wherever the delta arrived.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task TheTranscriptSurvivesTwoThreadsWritingToIt()
+    {
+        var panel = new PanelViewModel();
+
+        var writers = Enumerable.Range(0, 4).Select(worker => Task.Run(() =>
+        {
+            for (var i = 0; i < 250; i++)
+            {
+                panel.Append(
+                    $"{worker}",
+                    voice: worker % 2 == 0 ? TranscriptVoice.Ship : TranscriptVoice.Commander);
+            }
+        }));
+
+        await Task.WhenAll(writers);
+
+        // Every append is one character, and the Commander's runs are drawn with the marks a flat
+        // page puts round them — so the count is asked of the buffer rather than of the drawing.
+        Assert.Equal(1000, panel.Segments(TranscriptPage.Conversation, framed: false)
+            .Sum(segment => segment.Text.Length));
+    }
 }

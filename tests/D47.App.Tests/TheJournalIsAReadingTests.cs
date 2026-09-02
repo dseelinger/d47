@@ -150,6 +150,12 @@ public sealed class TheJournalIsAReadingTests
     /// would land on a blank page — SelectRoot declines a root nobody registered, so they fall
     /// back to the conversation instead.
     /// </para>
+    /// <para>
+    /// <b>Asked through the key rather than through the enum</b> since #260 deleted
+    /// <c>TranscriptPage.Technical</c>. That is the road a stored reading actually takes — a
+    /// string out of a settings file or a switch position — so this now exercises the fallback
+    /// as it happens rather than through a type that can no longer express the fault.
+    /// </para>
     /// </summary>
     [AvaloniaFact]
     public void TheSurvivingReadingsKeepTheirKeysAndDetailsIsGone()
@@ -165,10 +171,13 @@ public sealed class TheJournalIsAReadingTests
 
         // And a Commander whose stored reading was Details lands on the conversation rather than
         // on nothing at all.
-        panel.Page = TranscriptPage.Technical;
+        panel.Page = TranscriptPage.Log;
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(TranscriptPage.Conversation, panel.Page);
+        Assert.False(panel.Nav.SelectRoot(PanelTab.Transcript, "transcript.technical"));
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(TranscriptPage.Log, panel.Page);
 
         window.Close();
     }

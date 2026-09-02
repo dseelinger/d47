@@ -56,16 +56,7 @@ public static class LoggingSetup
     /// </summary>
     public const long MostBytesPerDay = 4L * 1024 * 1024;
 
-    /// <param name="technical">
-    /// Forwards speech-loop errors to the Technical page as well as to the files. Added here
-    /// rather than wrapped around the factory afterwards, because a sink has to be part of the
-    /// pipeline to see an event at all — and it is pointed at a panel later, since logging is
-    /// built before there is one.
-    /// </param>
-    public static ILogger Create(
-        AppPaths paths,
-        SerilogVerbosityControl verbosity,
-        TechnicalLogBridge? technical = null)
+    public static ILogger Create(AppPaths paths, SerilogVerbosityControl verbosity)
     {
         var configuration = new LoggerConfiguration()
             .MinimumLevel.ControlledBy(verbosity.Default)
@@ -83,11 +74,6 @@ public static class LoggingSetup
             {
                 configuration = configuration.MinimumLevel.Override(prefix, level);
             }
-        }
-
-        if (technical is not null)
-        {
-            configuration = configuration.WriteTo.Sink(technical);
         }
 
         // **By time rather than by count** (#168). `retainedFileCountLimit: 14` stood here since

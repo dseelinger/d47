@@ -36,9 +36,9 @@ public enum PanelMode
 /// with everything else the bar carries.
 /// </para>
 /// <para>
-/// One asymmetry, kept rather than smoothed over: Conversation and Technical are the same
-/// exchange at two verbosities and the log is <b>a file read off disk</b>, which is why it
-/// carries the busy glyph and why the collapse is three modes rather than a single toggle.
+/// One asymmetry, kept rather than smoothed over: In Ship is held in memory and the other three
+/// are <b>files read off disk</b>, which is why the log carries the busy glyph and why this is a
+/// drop-down rather than a single toggle.
 /// </para>
 /// <para>
 /// <b>One choice across every surface, since Phase 45 — a reversal, recorded rather
@@ -54,11 +54,8 @@ public enum PanelMode
 /// </summary>
 public enum TranscriptPage
 {
-    /// <summary>The Commander and the ship's AI, and nothing else.</summary>
+    /// <summary>The Commander and the ship's AI, and nothing else. Drawn as In Ship.</summary>
     Conversation,
-
-    /// <summary>The same, with the diagnostics left in. What the panel always used to show.</summary>
-    Technical,
 
     /// <summary>Today's log file, read when this page is opened.</summary>
     Log,
@@ -74,29 +71,10 @@ public enum TranscriptPage
 }
 
 /// <summary>
-/// What kind of line this is, which is the whole basis of the conversation/technical split.
-/// <para>
-/// Decided by the caller at the moment it writes, because that is the only place that knows.
-/// The transcript used to be one string and the distinction was not recoverable from it: a
-/// version banner and a reply are both text, and no amount of pattern-matching afterwards tells
-/// them apart without guessing at somebody's prose.
-/// </para>
-/// </summary>
-public enum TranscriptKind
-{
-    /// <summary>The Commander and the ship's AI. The default, so the streaming path is untouched.</summary>
-    Conversation,
-
-    /// <summary>Diagnostics, provenance, availability - true, useful, and not the conversation.</summary>
-    Technical,
-}
-
-/// <summary>
 /// Who said it. The conversation is a conversation, and a page that draws it as one has to know
 /// which side each stretch came from (asked for 2026-08-22).
 /// <para>
-/// Decided by the caller for the same reason <see cref="TranscriptKind"/> is: it is not
-/// recoverable afterwards. The Commander's words were only ever told apart by the <c>&gt; </c>
+/// Decided by the caller because it is not recoverable afterwards. The Commander's words were only ever told apart by the <c>&gt; </c>
 /// the panel wrote in front of them, and a reply that quotes a line back would wear the same
 /// mark — which is a guess about somebody's prose standing in for a fact the writer had.
 /// </para>
@@ -134,20 +112,24 @@ public sealed record TranscriptSegment(string Text, bool Marker, TranscriptVoice
 public sealed class PanelViewModel : INotifyPropertyChanged
 {
     /// <summary>
-    /// The transcript in order, split into runs of one kind. A run rather than one buffer per
-    /// kind, because order across kinds has to survive: a technical line written between two
-    /// replies belongs between them, and two buffers cannot say that.
+    /// The transcript in order, split into runs that are drawn the same way. A run rather than
+    /// one buffer per voice, because order across voices has to survive: what the Commander said
+    /// belongs between the replies either side of it, and two buffers cannot say that.
     /// <para>
-    /// Appended to the last run when the kind matches, which is what keeps a streamed reply -
-    /// one call per delta - from becoming one run per token.
+    /// Appended to the last run when the voice and the marker match, which is what keeps a
+    /// streamed reply - one call per delta - from becoming one run per token.
+    /// </para>
+    /// <para>
+    /// There was a third thing in the tuple until #260: a <c>TranscriptKind</c> separating
+    /// conversation lines from diagnostics, which is what the Technical reading was a projection
+    /// of. Nothing writes a diagnostic here now, so the distinction went with the page.
     /// </para>
     /// </summary>
-    private readonly List<(TranscriptKind Kind, bool Marker, TranscriptVoice Voice, StringBuilder Text)> _runs = [];
+    private readonly List<(bool Marker, TranscriptVoice Voice, StringBuilder Text)> _runs = [];
 
     /// <summary>Guards <see cref="_runs"/> and the strings derived from it. See Append.</summary>
     private readonly Lock _appendLock = new();
 
-    private string _conversationText = string.Empty;
     private string _logText = string.Empty;
     private string _turnLine = string.Empty;
     private string? _errorText;
@@ -212,18 +194,19 @@ public sealed class PanelViewModel : INotifyPropertyChanged
 
     public event Action? UpdateDismissed;
 
-    /// <summary>Everything, in order. The transcript as it has always been.</summary>
+    /// <summary>
+    /// Everything said, in order.
+    /// <para>
+    /// There was a second property beside this one — <c>ConversationText</c>, the same text with
+    /// the diagnostics taken out — and the two are the same string now that nothing writes a
+    /// diagnostic line here (#260). One of them had to go rather than both being kept in step
+    /// forever over a distinction that no longer exists.
+    /// </para>
+    /// </summary>
     public string TranscriptText
     {
         get => _transcriptText;
         private set => Set(ref _transcriptText, value);
-    }
-
-    /// <summary>The conversation alone, with the diagnostics taken out.</summary>
-    public string ConversationText
-    {
-        get => _conversationText;
-        private set => Set(ref _conversationText, value);
     }
 
     /// <summary>
@@ -571,12 +554,8 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     /// <summary>
     /// Adds to the transcript. The only way it grows.
     /// <para>
-    /// <paramref name="kind"/> defaults to <see cref="TranscriptKind.Conversation"/> so the
-    /// streaming reply path - one call per delta - reads exactly as it did, and only the
-    /// callers writing diagnostics have to say so.
-    /// </para>
-    /// <para>
-    /// <paramref name="voice"/> defaults to the ship for the same reason, and the three sites
+    /// <paramref name="voice"/> defaults to the ship, so the streaming reply path - one call
+    /// per delta - reads exactly as it did, and only the three sites
     /// that write what the Commander said pass it. They pass <em>only what was said</em>: the
     /// blank line before it and the <c>&gt; </c> in front of it are how a flat page draws that
     /// voice, and <see cref="Flatten"/> puts them there. A page that draws the two sides
@@ -586,39 +565,32 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     /// </summary>
     public void Append(
         string text,
-        TranscriptKind kind = TranscriptKind.Conversation,
         bool marker = false,
         TranscriptVoice voice = TranscriptVoice.Ship)
     {
         string transcript;
-        string conversation;
 
-        // Locked, because there is more than one writer now. The turn path appends a streaming
-        // reply from its own thread while the speech loop appends stage lines from the audio
-        // path and the log bridge appends errors from wherever they were raised — and a
-        // StringBuilder mutated while another thread is reading it throws out of
-        // ToString(), which is a crash in a diagnostics feature.
+        // Locked, because there is more than one writer. The response path appends a streaming
+        // reply from its own thread while what was heard arrives from the audio path — and a
+        // StringBuilder mutated while another thread is reading it throws out of ToString(),
+        // which is a crash in the middle of a conversation.
         lock (_appendLock)
         {
             if (_runs.Count == 0
-                || _runs[^1].Kind != kind
                 || _runs[^1].Marker != marker
                 || _runs[^1].Voice != voice)
             {
-                _runs.Add((kind, marker, voice, new StringBuilder()));
+                _runs.Add((marker, voice, new StringBuilder()));
             }
 
             _runs[^1].Text.Append(text);
 
             transcript = string.Concat(_runs.Select(Flatten));
-            conversation = string.Concat(
-                _runs.Where(run => run.Kind == TranscriptKind.Conversation).Select(Flatten));
         }
 
-        // Outside the lock. These raise PropertyChanged, which reaches bindings and handlers that
+        // Outside the lock. This raises PropertyChanged, which reaches bindings and handlers that
         // marshal to the UI thread — holding a lock across that is how a deadlock is built.
         TranscriptText = transcript;
-        ConversationText = conversation;
 
         TranscriptAppended?.Invoke();
     }
@@ -632,11 +604,6 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     /// what is in front of them, which is why it needs no confirmation and costs nothing to get
     /// wrong.
     /// </para>
-    /// <para>
-    /// Both readings at once, because they are one set of runs seen two ways — clearing the
-    /// conversation and leaving the technical page holding the same lines would be a page that
-    /// disagreed with the one beside it about what had happened.
-    /// </para>
     /// </summary>
     public void ClearTranscript()
     {
@@ -645,10 +612,9 @@ public sealed class PanelViewModel : INotifyPropertyChanged
             _runs.Clear();
         }
 
-        // Outside the lock, like Append: these raise PropertyChanged, and holding a lock across a
+        // Outside the lock, like Append: this raises PropertyChanged, and holding a lock across a
         // handler that marshals to the UI thread is how a deadlock is built.
         TranscriptText = string.Empty;
-        ConversationText = string.Empty;
 
         TranscriptAppended?.Invoke();
     }
@@ -664,8 +630,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     /// metre in a headset without reading either.
     /// </para>
     /// </summary>
-    public void Mark(string text) =>
-        Append($"\n[{text}]\n", TranscriptKind.Conversation, marker: true);
+    public void Mark(string text) => Append($"\n[{text}]\n", marker: true);
 
     /// <summary>
     /// A page's content, in order, split where its emphasis changes. The view renders these
@@ -678,7 +643,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     /// </summary>
     public IReadOnlyList<TranscriptSegment> Segments(TranscriptPage page, bool framed = true)
     {
-        string Text((TranscriptKind Kind, bool Marker, TranscriptVoice Voice, StringBuilder Text) run) =>
+        string Text((bool Marker, TranscriptVoice Voice, StringBuilder Text) run) =>
             framed ? Flatten(run) : run.Text.ToString();
 
         return page switch
@@ -690,13 +655,9 @@ public sealed class PanelViewModel : INotifyPropertyChanged
             // asterisks and underscores, none of which is markup.
             TranscriptPage.RawJournal =>
                 [new TranscriptSegment(JournalRawText, Marker: false, TranscriptVoice.Ship)],
-            TranscriptPage.Technical =>
-                [.. _runs.Select(run => new TranscriptSegment(Text(run), run.Marker, run.Voice))],
             _ =>
             [
-                .. _runs
-                    .Where(run => run.Kind == TranscriptKind.Conversation)
-                    .Select(run => new TranscriptSegment(Text(run), run.Marker, run.Voice))
+                .. _runs.Select(run => new TranscriptSegment(Text(run), run.Marker, run.Voice))
             ],
         };
     }
@@ -707,8 +668,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     /// are added here, which is why every string this class hands out is byte-for-byte what it
     /// always was while the buffer underneath holds only the words.
     /// </summary>
-    private static string Flatten(
-        (TranscriptKind Kind, bool Marker, TranscriptVoice Voice, StringBuilder Text) run) =>
+    private static string Flatten((bool Marker, TranscriptVoice Voice, StringBuilder Text) run) =>
         run.Voice == TranscriptVoice.Commander
             ? $"\n\n> {run.Text}\n"
             : run.Text.ToString();

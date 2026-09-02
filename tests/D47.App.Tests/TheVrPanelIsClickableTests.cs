@@ -107,7 +107,7 @@ public class TheVrPanelIsClickableTests
     {
         var model = new PanelViewModel();
         model.Append("The Commander and the ship's AI.");
-        model.Append("[12:00:00] Microphone open, listening.\n", TranscriptKind.Technical);
+        model.Append("[12:00:00] Microphone open, listening.\n");
 
         var view = new PanelView { DataContext = model };
         using var surface = new OffscreenSurface(view, Quad);

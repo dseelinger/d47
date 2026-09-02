@@ -147,8 +147,9 @@ Two of them are about Directive 47 and two are about Elite.
 core changed. This is the reading you want almost always, and it is drawn as a conversation: each
 response in its own bubble, yours on the right.
 
-**Log File** is Directive 47's own record on disk, read a screenful at a time. Nothing here is its
-to clear — it is a file — which is why *Clear what is shown* is refused on this reading.
+**Log File** is Directive 47's own record on disk, read a screenful at a time. It is where every
+diagnostic goes: what started, what the model was asked, what the headset did, and every error with
+its cause.
 
 **Journal File** is Elite's journal, the file the game itself writes, read as sentences rather than
 as JSON. Docking, jumping, taking damage, a message from another Commander — the things that
@@ -207,6 +208,15 @@ in-game balance, and a coin in a cockpit overlay is the thing that gets read as 
 
 **The ask box** takes typing, and Enter sends. The button beside it does the same thing and exists
 so that the first thing you do with Directive 47 is not a guess.
+
+**Clear what is shown** — on the right-click menu, and <kbd>Ctrl</kbd>+<kbd>L</kbd> — empties the
+reading you are looking at. In practice that means **In Ship**, because it is the only reading that
+is Directive 47's own: the other three are files on disk that it reads and does not write, and a
+control appearing to empty one would be offering to delete it. It is greyed on those three rather
+than quietly doing nothing, so you can see the refusal before you press it.
+
+It clears the page and not the record. The model still remembers the conversation, so a follow-up
+question is answered as if you had not cleared anything, and the log file on disk is untouched.
 
 **The microphone badge** is never silent about its own state. *PTT Ready* means push-to-talk is
 armed and nothing is being kept. *Listening...* means there is no key to hold and it is waiting to

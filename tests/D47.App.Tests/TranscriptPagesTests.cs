@@ -21,45 +21,45 @@ public class TranscriptPagesTests
     {
         var model = new PanelViewModel();
 
-        model.Append("Directive 47 0.5.8\nLanguage model: ready.", TranscriptKind.Technical);
+        model.Append("Language model: ready.");
         model.Append("\n\n> Where am I?\n");
         model.Append("We're holding at HIP 12099 1 b.");
 
         return model;
     }
 
+    /// <summary>
+    /// The transcript keeps everything written to it, in the order it was written.
+    /// <para>
+    /// <b>This was two tests about a split</b> (#260). One asserted the conversation left the
+    /// diagnostics out and the other that the Technical reading kept them — and there are no
+    /// diagnostic lines any more, because the reading that took them has gone and every writer
+    /// now either says something to the Commander or says it to the log. What survives is the
+    /// half that was never about the split: order.
+    /// </para>
+    /// </summary>
     [Fact]
-    public void TheConversationPageLeavesTheDiagnosticsOut()
-    {
-        var model = Said();
-
-        Assert.DoesNotContain("Language model: ready.", model.ConversationText, StringComparison.Ordinal);
-        Assert.Contains("Where am I?", model.ConversationText, StringComparison.Ordinal);
-        Assert.Contains("HIP 12099 1 b.", model.ConversationText, StringComparison.Ordinal);
-    }
-
-    /// <summary>The technical page is the transcript as it always was — everything, in order.</summary>
-    [Fact]
-    public void TheTechnicalPageKeepsEverythingAndKeepsItInOrder()
+    public void TheTranscriptKeepsEverythingAndKeepsItInOrder()
     {
         var text = Said().TranscriptText;
 
         Assert.Contains("Language model: ready.", text, StringComparison.Ordinal);
+        Assert.Contains("Where am I?", text, StringComparison.Ordinal);
         Assert.Contains("HIP 12099 1 b.", text, StringComparison.Ordinal);
 
         Assert.True(
             text.IndexOf("Language model", StringComparison.Ordinal)
             < text.IndexOf("Where am I?", StringComparison.Ordinal),
-            "A technical line written before a reply has to stay before it.");
+            "A line written before a reply has to stay before it.");
     }
 
     /// <summary>
-    /// A reply arrives one delta at a time, so consecutive writes of one kind have to join
+    /// A reply arrives one delta at a time, so consecutive writes in one voice have to join
     /// rather than each starting a run. Otherwise a sentence is split into a run per token and
     /// the ordering machinery is doing work per character.
     /// </summary>
     [Fact]
-    public void AStreamedReplyStaysOneRunOfConversation()
+    public void AStreamedReplyStaysOneRun()
     {
         var model = new PanelViewModel();
 
@@ -67,18 +67,7 @@ public class TranscriptPagesTests
         model.Append("holding ");
         model.Append("at HIP 12099.");
 
-        Assert.Equal("We're holding at HIP 12099.", model.ConversationText);
         Assert.Equal("We're holding at HIP 12099.", model.TranscriptText);
-    }
-
-    /// <summary>The default is unchanged, so nothing that streams a reply had to be touched.</summary>
-    [Fact]
-    public void AppendWithoutAKindIsConversation()
-    {
-        var model = new PanelViewModel();
-        model.Append("Receiving you clearly, Commander.");
-
-        Assert.Equal("Receiving you clearly, Commander.", model.ConversationText);
     }
 
     [Fact]

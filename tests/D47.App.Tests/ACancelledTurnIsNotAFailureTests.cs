@@ -8,12 +8,17 @@ namespace D47.App.Tests;
 /// (<a href="https://github.com/dseelinger/d47/issues/222">#222</a>).
 /// <para>
 /// Reported from a real session: pressing Cancel answered <em>"I couldn't answer that. The details
-/// are on the Technical page."</em> — and there was nothing on the Technical page, because nothing
-/// had gone wrong. Cancelling threw out of the await like anything else and landed in the same
-/// catch as a bug.
+/// are on the Technical page."</em> — and there was nothing there, because nothing had gone wrong.
+/// Cancelling threw out of the await like anything else and landed in the same catch as a bug.
 /// </para>
 /// <para>
 /// The Commander's own words for what it should say: <c>[cancelled]</c>.
+/// </para>
+/// <para>
+/// <b>The sentence itself then named a page nobody could open</b>
+/// (<a href="https://github.com/dseelinger/d47/issues/260">#260</a>). The Technical reading was
+/// withdrawn in #231 and this line went on sending Commanders to it — so the assertions below name
+/// the Log File reading, which is where the exception is actually written down.
 /// </para>
 /// </summary>
 public class ACancelledTurnIsNotAFailureTests
@@ -25,9 +30,9 @@ public class ACancelledTurnIsNotAFailureTests
 
         Assert.Equal("\n[cancelled]", ending.Conversation);
 
-        // And nothing for the Technical page, which is half the complaint: being sent to look for
-        // a fault that does not exist is worse than being told nothing. It is also what keeps the
-        // error out of the log — the caller writes both or neither.
+        // And nothing to record, which is half the complaint: being sent to look for a fault that
+        // does not exist is worse than being told nothing. It is also what keeps the error out of
+        // the log — this null is what the caller reads to decide whether to write one.
         Assert.Null(ending.Technical);
     }
 
@@ -51,7 +56,7 @@ public class ACancelledTurnIsNotAFailureTests
     {
         var ending = TurnEnding.For(new TaskCanceledException("the request timed out"), calledOff: false);
 
-        Assert.Equal("\nI couldn't answer that. The details are on the Technical page.", ending.Conversation);
+        Assert.Equal("\nI couldn't answer that. The details are on the Log File reading.", ending.Conversation);
         Assert.Equal("\n[response failed: the request timed out]", ending.Technical);
     }
 
@@ -64,7 +69,7 @@ public class ACancelledTurnIsNotAFailureTests
     {
         var ending = TurnEnding.For(new InvalidOperationException("the calling thread"), calledOff: false);
 
-        Assert.Equal("\nI couldn't answer that. The details are on the Technical page.", ending.Conversation);
+        Assert.Equal("\nI couldn't answer that. The details are on the Log File reading.", ending.Conversation);
         Assert.Equal("\n[response failed: the calling thread]", ending.Technical);
     }
 
