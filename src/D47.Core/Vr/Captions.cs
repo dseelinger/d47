@@ -17,9 +17,8 @@ public enum CaptionSize
 /// everything here is something the CC specification leaves to the viewer, and nothing here is
 /// something it fixes.
 /// <para>
-/// Position is not on this list. Captions are their own unmovable layer, which is the point of
-/// them being a separate overlay handle — <em>Overlay Positioning &amp; Look</em> cannot reach
-/// them by accident. Characters per line is not either: 42 is the standard's number, not a
+/// <em>Placement</em> is still not on this list, and <see cref="Lock"/> is not placement — see
+/// there. Characters per line is not on it either: 42 is the standard's number, not a
 /// preference.
 /// </para>
 /// </summary>
@@ -28,6 +27,51 @@ public sealed record CaptionSettings
     public bool Enabled { get; init; } = true;
 
     public CaptionSize Size { get; init; } = CaptionSize.Medium;
+
+    /// <summary>
+    /// Whether the band rides the view or sits in the cockpit
+    /// (<a href="https://github.com/dseelinger/d47/issues/204">#204</a>).
+    /// <para>
+    /// <b>This is a choice between two computed positions, not a placement.</b> The rule it
+    /// narrows — <em>a caption you can drag somewhere you will not see it is not a caption</em> —
+    /// is about free placement, and neither of these is free: head-locked is the band the layer
+    /// has always drawn, and world-locked is a fixed area low in the cockpit worked out from the
+    /// seated origin. Captions still gain no distance, no curve and no grab-to-move, and
+    /// <em>Overlay Positioning &amp; Look</em> still cannot reach them.
+    /// </para>
+    /// <para>
+    /// <b>Head-locked is the default, and world-locked is the comfortable one.</b> A band bolted
+    /// to the view is always legible and is also a standing visual–vestibular disagreement: the
+    /// cockpit sweeps past when the Commander turns and the caption does not, which is the
+    /// mismatch that makes people ill. World-locked costs having to look down for it. That trade
+    /// is the Commander's, so it is a row rather than a ruling.
+    /// </para>
+    /// <para>
+    /// <b>A string, spelled the way the panel's lock is spelled</b>
+    /// (<see cref="Configuration.VrSurfaceSettings.Lock"/>), and read through
+    /// <see cref="Locking"/>. A <see cref="SurfaceLock"/> here would be written to
+    /// <c>settings.json</c> as <c>headLocked</c> beside the panel's <c>head</c>, and — the part
+    /// that matters — a file hand-edited to the word the row, the docs and the panel all use
+    /// would <em>throw</em> on load rather than being read.
+    /// </para>
+    /// </summary>
+    public string Lock { get; init; } = "head";
+
+    /// <summary>
+    /// <see cref="Lock"/> read as the lock it names. Parsed at the use site rather than on the
+    /// way in, exactly as <see cref="Configuration.VrSurfaceSettings.ToPlacement"/> does it, so a
+    /// word nobody recognises reads as head-locked — the band that is always in view — instead of
+    /// as a settings file that will not load.
+    /// <para>
+    /// <b>Not written.</b> A derived property with no setter is still serialised, and a
+    /// <c>settings.json</c> that gained a <c>locking</c> beside its <c>lock</c> would carry a key
+    /// nothing ever reads — permanently, since the file is append-only.
+    /// </para>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public SurfaceLock Locking => string.Equals(Lock, "world", StringComparison.OrdinalIgnoreCase)
+        ? SurfaceLock.WorldLocked
+        : SurfaceLock.HeadLocked;
 
     /// <summary>
     /// How opaque the box behind the text is. Not fully: a caption sits over a starfield, a

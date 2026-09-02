@@ -23,6 +23,15 @@ public sealed class CaptionViewModel : INotifyPropertyChanged
     /// that was wrong. Recorded because a number written down and never checked is the sort of
     /// wrong that stops the next person checking.
     /// </para>
+    /// <para>
+    /// <b>One table, and it holds for the world-locked band too</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/204">#204</a>). That band is nearer —
+    /// 1.04 m from the eye where this one is 1.66 m — so it would draw these sizes 59% larger if
+    /// its width had been left alone. <c>VrCaptionSurface</c> scales the width with the distance
+    /// instead, both bands cover the same 30.3° side to side, and every figure above is the same
+    /// in either. Re-measuring the steps for the second position would have made the size row
+    /// mean two different things.
+    /// </para>
     /// </summary>
     private static readonly IReadOnlyDictionary<CaptionSize, double> Sizes =
         new Dictionary<CaptionSize, double>

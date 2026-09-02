@@ -18,7 +18,11 @@ public enum VrSurface
     PanelFull,
     PanelMini,
 
-    /// <summary>Head-locked, flat, output only. Not reachable from Overlay Positioning.</summary>
+    /// <summary>
+    /// Flat, output only, and not reachable from Overlay Positioning. Head-locked or world-locked
+    /// since <a href="https://github.com/dseelinger/d47/issues/204">#204</a>, between two computed
+    /// positions — the lock is the only thing about a caption's placement that is settable.
+    /// </summary>
     Captions,
 }
 
@@ -86,6 +90,13 @@ public sealed record SurfacePlacement
     /// them: they sit 0.45 m below the eye at 1.6 m, so deriving would tilt them 15.7° and they
     /// are deliberately square to the view. Not a settings row — it is a property of what the
     /// surface is for, and nothing about a caption layer is placed by hand.
+    /// </para>
+    /// <para>
+    /// <b>Read only on the head-locked path</b>, which is what <see cref="Where"/> uses it for. A
+    /// world-locked caption carries a pose that was already tilted at the eye when it was worked
+    /// out (<see cref="VrPlacementMath.Resting"/>), so this says nothing about it — see
+    /// <c>VrCaptionSurface</c>, where the band 40° below the eye would be read edge-on without
+    /// that tilt.
     /// </para>
     /// </summary>
     public bool FacesTheEyes { get; init; } = true;

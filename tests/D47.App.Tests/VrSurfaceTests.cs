@@ -5,6 +5,7 @@ using Avalonia.VisualTree;
 using Avalonia.Controls;
 using D47.App.Headset;
 using D47.App.Panel;
+using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Vr;
@@ -198,15 +199,34 @@ public class VrSurfaceTests
         Assert.True(defaults.Mini.Distance < defaults.Panel.Distance);
     }
 
+    /// <summary>
+    /// Captions gain a lock and nothing else (#204). The lock is a choice between two positions
+    /// the code works out; a distance or a curve row would be the free placement the caption
+    /// layer exists to refuse, and they stay absent — which is the half of this test that has
+    /// not changed and is the reason the other half was allowed to.
+    /// </summary>
     [AvaloniaFact]
-    public void TheCaptionSurfaceIsNotReachableFromThePlacementRows()
+    public void TheCaptionSurfaceGainsALockAndNothingElseFromThePlacementRows()
     {
         var (settings, _, _) = TestSurface.Create();
 
+        var lockRow = settings.Find(VrCapability.CaptionLockKey);
+
+        Assert.NotNull(lockRow);
+        Assert.False(lockRow.Protected);
+        Assert.Equal(SettingKind.Choice, lockRow.Kind);
+        Assert.Equal(["head", "world"], lockRow.Choices);
+        Assert.Equal("head", lockRow.Binding?.Read?.Invoke(settings.Current));
+
+        // Grouped with the other caption rows rather than with the panel's placement, because it
+        // is a caption setting and not a placement one.
+        Assert.Equal("Captions", lockRow.Group);
+        Assert.True(lockRow.Advanced);
+
         // Captions are their own overlay precisely so Overlay Positioning cannot touch them.
-        Assert.Null(settings.Find("vr.captions.lock"));
         Assert.Null(settings.Find("vr.captions.distance"));
         Assert.Null(settings.Find("vr.captions.curve"));
+        Assert.Null(settings.Find("vr.captions.scale"));
     }
 
     [AvaloniaFact]
@@ -229,7 +249,7 @@ public class VrSurfaceTests
     /// <summary>
     /// The headset card, captured for a human to look at. It is the largest section the
     /// settings surface has grown - a switch, a mode, twelve placement rows across two
-    /// surfaces and four caption rows - and whether that reads as a panel or as a wall is a
+    /// surfaces and five caption rows - and whether that reads as a panel or as a wall is a
     /// question only eyes answer.
     /// </summary>
     [AvaloniaFact]
