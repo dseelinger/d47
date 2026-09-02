@@ -200,21 +200,11 @@ public sealed class CoverageWindow : Window
 
         // Every line goes somewhere. Knowing a tool has never been tried is only half an answer;
         // the other half is what it was supposed to do, which is its help page.
-        var help = new Button
-        {
-            Name = "CoverageHelp",
-            Content = "?",
-            FontSize = TypeScale.Secondary,
-            Padding = new Thickness(7, 1),
-            VerticalAlignment = VerticalAlignment.Center,
-            [ToolTip.TipProperty] = DocsSite.Capability(line.Item.CapabilityId),
-        };
-
-        help.Click += (_, _) => Process.Start(new ProcessStartInfo(
-            DocsSite.Capability(line.Item.CapabilityId))
-        {
-            UseShellExecute = true,
-        });
+        //
+        // This window was the only pop-up in the app with a mark, and #252 made it the pattern for
+        // the other two rather than a third copy of it — so the glyph, the tooltip-is-the-address
+        // and the launch all live in SiteHelpMark now.
+        var help = SiteHelpMark.For(DocsSite.Capability(line.Item.CapabilityId), "CoverageHelp");
 
         var row = new Border
         {
