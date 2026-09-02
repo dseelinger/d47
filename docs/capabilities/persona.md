@@ -433,7 +433,7 @@ never at your expense and never inside a warning.
 
 **Permission, not a personality transplant.** The eleven cores keep their own registers — a dry
 core gets drier wit, not someone else's jokes — and the line reaches everything the core says in
-character: conversation, ambient remarks, the opening brief. The carrier captain and tower are not
+character: conversation, In Ship chatter, the opening brief. The carrier captain and tower are not
 the core and are untouched.
 
 **And not the standard AI fare.** The instruction bans the stock moves as hard rules — similes
@@ -461,7 +461,7 @@ rather than silently dropped.
 ### Personality off
 
 The [conversation](conversation.md) capability has a **Personality** switch. Off gives plain
-answers with no core, no flavour and no ambient remarks.
+answers with no core, no flavour and no chatter of either kind.
 
 The anti-invention guardrails are unaffected. They sit *above* the persona in the assembled
 prompt, and there is no code path that can vary them — switching personality off truncates a

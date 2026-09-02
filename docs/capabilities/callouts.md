@@ -585,7 +585,11 @@ and not by anything the model calls. Directive 47 reads in-game messages from an
 and a model that could disable the interdiction warning is one that could be told to by the
 Commander doing the interdicting.
 
-#### Ambient remarks {#ambient}
+#### In Ship chatter {#ambient}
+
+**Who it is: your ship's AI and your crew** — the voices inside your ship, as against the
+[NPC chatter](#npc-chatter) below, which is everybody outside it. Only the AI speaks unasked; your
+crew answer when you address them.
 
 The occasional in-character line **to you**, said because *nothing* has happened. Everything else
 on this page speaks because something did. Spoken to you rather than narrated, on purpose: the
@@ -593,9 +597,9 @@ brief tells the core it is talking to its Commander, not describing the view, so
 dry aside in the cockpit and never a scene from a novel.
 
 Three rules keep it from being noise. It waits out an interval — and that interval is a range, not
-a tick: each gap lands somewhere between the least and the most time rows, forty-five to ninety
-seconds out of the box, because the same voice arriving on a beat is the most clocklike thing this
-app could do. Setting the two equal pins it; 0 on the least silences them. In seconds rather than
+a tick: each gap lands somewhere between the least and the most time rows, five to ten minutes out
+of the box, because the same voice arriving on a beat is the most clocklike thing this
+app could do. Setting the two equal pins it; 0 on the least silences it. In seconds rather than
 minutes because the interesting end of the range is finer than a minute.
 It waits for the situation to have settled for ninety seconds rather than firing on the
 transition, because Status.json flips several times a minute during an approach and a remark
@@ -612,7 +616,7 @@ the sky, the Quartermaster about what the run cost. It also knows who it is flyi
 flying and not just by wording.
 
 **Chatter is model-written or it is nothing.** With no language model configured there are no
-ambient remarks at all, and these rows are absent from this page — a switch governing something
+In Ship chatter at all, and these rows are absent from this page — a switch governing something
 that cannot happen would be a switch that does nothing. The ten authored lines per situation are
 what the model is shown as a sample of the register, never a stand-in read out in its place: a
 remark the model did not write for this moment is not spoken.
@@ -621,7 +625,10 @@ remark the model did not write for this moment is not spoken.
 The drive note has not changed in some minutes. That is what it sounds like when it is right.
 ```
 
-#### Invented chatter {#npc-chatter}
+#### NPC chatter {#npc-chatter}
+
+**Who it is: anybody outside your ship** — as against [In Ship chatter](#ambient) above, which
+is your own AI and crew.
 
 Made-up radio traffic from people who do not exist: two crews on the local channel about their own
 small business, the dock telling an invented pilot off when you are docked somewhere, and — about
@@ -631,19 +638,19 @@ conversation or the comms record. It is theatre, heard once.
 
 **This is not the game's own NPC traffic.** Elite's real messages — station chatter, pirates,
 your wing — are re-voiced under Speech → *Speak incoming messages*, and they are somebody else's
-words. Invented chatter is Directive 47's own fiction, on its own switch, so you can have either
+words. NPC chatter is Directive 47's own fiction, on its own switch, so you can have either
 without the other.
 
 Each invented speaker gets their own voice from the NPC pool for as long as you stay in the
 system, the same way the real traffic is cast. The exchange is written by the model against where
 you actually are; with no language model configured there is no chatter and these rows are absent,
-the same rule as the ambient remarks above — there are no canned conversations, on purpose.
+the same rule as the In Ship chatter above — there are no canned conversations, on purpose.
 
 The gap between exchanges is a range, not a tick: each wait lands somewhere between the least and
-the most time rows — twenty to forty minutes out of the box — because overheard traffic on a
-fixed cadence stops sounding overheard. Setting the two equal pins it; 0 on the least silences
-them. An exchange is a scene rather than a sentence, and scenes wear out faster, which is why the
-floor sits well above the ambient remarks'.
+the most time rows — five to ten minutes out of the box — because overheard traffic on a
+fixed cadence stops sounding overheard. Setting the two equal pins it; 0 on the least silences it.
+The two pairs carry the same numbers on purpose, so the two kinds of chatter arrive at the same
+rate and what varies is the mix.
 
 The lines of one exchange are spoken with air between them — somewhere between six tenths of a
 second and one and seven tenths, and never the same gap twice, because two people who never once
@@ -652,11 +659,11 @@ settings row on purpose: the beat is something to get right rather than somethin
 urgent callout waiting behind an exchange cuts those pauses short**, so a fuel or danger warning is
 never held up by a courier chatting.
 
-> "stop calling out invented chatter" / "start calling out invented chatter"
+> "stop calling out npc chatter" / "start calling out npc chatter"
 
 **Switching personality off silences these entirely**, which is the one place that switch
 reaches a callout. It is in that item's own acceptance criteria: plain answers, no flavour, no
-ambient remarks.
+chatter of either kind.
 
 Set the interval to `0` if you want the switch without finding the switch.
 

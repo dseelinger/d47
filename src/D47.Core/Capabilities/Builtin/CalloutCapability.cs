@@ -297,12 +297,20 @@ public static class CalloutCapability
 
             Toggle(
                 AmbientKey,
-                "Ambient remarks",
-                "The occasional in-character line to you, said because nothing has happened. "
-                + "Written by the model in the core's own voice, so it needs a language model "
-                + "configured - with none there are no remarks.",
+
+                // Named for who is speaking rather than for what the line is like, on the
+                // Commander's instruction (2026-09-02). "Ambient" described the occasion and left
+                // a Commander to work out whose voice it was; the pair reads as a boundary now -
+                // inside the ship, and outside it - and borrows the wording the Aboard voice slot
+                // already uses so one vocabulary covers both surfaces.
+                "In Ship chatter",
+                "Your ship's AI and your crew - the voices inside your ship. The occasional "
+                + "in-character line to you, said because nothing has happened rather than because "
+                + "something did; only the AI speaks unasked, and your crew answer when you "
+                + "address them. Written by the model in the core's own voice, so it needs a "
+                + "language model configured; with none there is no chatter.",
                 "ambient",
-                "ambient remarks",
+                "in ship chatter",
                 s => s.Callouts.Ambient,
                 (s, v) => s with { Callouts = s.Callouts with { Ambient = v } },
 
@@ -313,13 +321,13 @@ public static class CalloutCapability
 
             Toggle(
                 NpcChatterKey,
-                "Invented chatter",
-                "Made-up radio traffic from people who do not exist - passers-by talking to each "
-                + "other, the dock telling somebody off, the occasional one-way word to you. "
-                + "Theatre, written by the model, and never answered. The game's own NPC "
-                + "messages are a different switch, under Speech.",
+                "NPC chatter",
+                "Anybody outside your ship. Made-up radio traffic from people who do not exist - "
+                + "passers-by talking to each other, the dock telling somebody off, the occasional "
+                + "one-way word to you. Theatre, written by the model, and never answered. The "
+                + "game's own NPC messages are a different switch, under Speech.",
                 "npc-chatter",
-                "invented chatter",
+                "npc chatter",
                 s => s.Callouts.NpcChatter,
                 (s, v) => s with { Callouts = s.Callouts with { NpcChatter = v } },
 
@@ -332,15 +340,16 @@ public static class CalloutCapability
             Key = AmbientSecondsKey,
             Advanced = true,
 
-            // Reworded for its new sibling (#258), and the property name deliberately not: the
-            // settings file is append-only, and this row already carries one retired minutes-era
-            // key for exactly that reason.
-            Label = "The least time between ambient remarks",
-            Help = "In seconds. Each gap lands somewhere between this and the row below, so the "
-                   + "remarks never tick like a clock. Lower is a talkative companion; higher is "
-                   + "a quiet one; 0 silences them.",
+            // Reworded twice, and the property name deliberately not either time: for its new
+            // sibling (#258), and again on 2026-09-02 when the pair took the name of who is
+            // speaking. The settings file is append-only, and this row already carries one
+            // retired minutes-era key for exactly that reason.
+            Label = "The least time between In Ship chatter",
+            Help = "In seconds, between two lines from your ship's AI or your crew. Each gap lands "
+                   + "somewhere between this and the row below, so the chatter never ticks like a "
+                   + "clock. Lower is a talkative companion; higher is a quiet one; 0 silences it.",
             Kind = SettingKind.Number,
-            DefaultDisplay = "45",
+            DefaultDisplay = "300",
             DocsAnchor = "ambient",
             AppliesWhen = s => s.Callouts is { Enabled: true, Ambient: true }
                                && LlmProviderCatalog.Selected(s.Llm.Provider).Id != LlmProviderCatalog.NoneId,
@@ -364,11 +373,11 @@ public static class CalloutCapability
         {
             Key = AmbientMaxSecondsKey,
             Advanced = true,
-            Label = "The most time between ambient remarks",
-            Help = "In seconds. Equal to the row above pins a fixed cadence; anything below it "
-                   + "reads as equal.",
+            Label = "The most time between In Ship chatter",
+            Help = "In seconds, between two lines from your ship's AI or your crew. Equal to the "
+                   + "row above pins a fixed cadence; anything below it reads as equal.",
             Kind = SettingKind.Number,
-            DefaultDisplay = "90",
+            DefaultDisplay = "600",
             DocsAnchor = "ambient",
             AppliesWhen = s => s.Callouts is { Enabled: true, Ambient: true }
                                && LlmProviderCatalog.Selected(s.Llm.Provider).Id != LlmProviderCatalog.NoneId,
@@ -391,11 +400,12 @@ public static class CalloutCapability
         {
             Key = NpcChatterSecondsKey,
             Advanced = true,
-            Label = "The least time between invented exchanges",
-            Help = "In seconds. Each gap lands somewhere between this and the row below, so the "
-                   + "chatter never ticks like a clock; 0 silences them.",
+            Label = "The least time between NPC chatter",
+            Help = "In seconds, between two exchanges among people outside your ship. Each gap "
+                   + "lands somewhere between this and the row below, so the chatter never ticks "
+                   + "like a clock; 0 silences it.",
             Kind = SettingKind.Number,
-            DefaultDisplay = "1200",
+            DefaultDisplay = "300",
             DocsAnchor = "npc-chatter",
             AppliesWhen = s => s.Callouts is { Enabled: true, NpcChatter: true }
                                && LlmProviderCatalog.Selected(s.Llm.Provider).Id != LlmProviderCatalog.NoneId,
@@ -419,11 +429,11 @@ public static class CalloutCapability
         {
             Key = NpcChatterMaxSecondsKey,
             Advanced = true,
-            Label = "The most time between invented exchanges",
-            Help = "In seconds. Equal to the row above pins a fixed cadence; anything below it "
-                   + "reads as equal.",
+            Label = "The most time between NPC chatter",
+            Help = "In seconds, between two exchanges among people outside your ship. Equal to "
+                   + "the row above pins a fixed cadence; anything below it reads as equal.",
             Kind = SettingKind.Number,
-            DefaultDisplay = "2400",
+            DefaultDisplay = "600",
             DocsAnchor = "npc-chatter",
             AppliesWhen = s => s.Callouts is { Enabled: true, NpcChatter: true }
                                && LlmProviderCatalog.Selected(s.Llm.Provider).Id != LlmProviderCatalog.NoneId,

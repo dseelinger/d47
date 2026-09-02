@@ -27,13 +27,18 @@ public class TheAmbientIntervalMovedToSecondsTests
     /// Fifteen minutes is what every file got without anyone asking for it, so it is read as a
     /// default rather than as a decision — carrying it forward would mean the new default
     /// reached nobody who had ever run d47.
+    /// <para>
+    /// Whatever the default currently is. It has moved once already, from forty-five seconds to
+    /// five minutes on 2026-09-02, and this test is about the <em>rule</em> rather than about the
+    /// number — so it asks the record rather than repeating it.
+    /// </para>
     /// </summary>
     [Fact]
     public void TheOldDefaultGivesWayToTheNewOne()
     {
         var loaded = Load("""{ "callouts": { "ambientMinutes": 15 } }""");
 
-        Assert.Equal(45, loaded.Callouts.AmbientSeconds);
+        Assert.Equal(new CalloutSettings().AmbientSeconds, loaded.Callouts.AmbientSeconds);
     }
 
     [Fact]
@@ -70,10 +75,14 @@ public class TheAmbientIntervalMovedToSecondsTests
     [Fact]
     public void AFileFromBeforeTheCeilingKeepsTheCadenceItChose()
     {
-        var loaded = Load("""{ "callouts": { "ambientSeconds": 600 } }""");
+        var loaded = Load("""{ "callouts": { "ambientSeconds": 1800 } }""");
 
-        Assert.Equal(600, loaded.Callouts.AmbientSeconds);
-        Assert.Equal(90, loaded.Callouts.AmbientMaxSeconds);
+        Assert.Equal(1800, loaded.Callouts.AmbientSeconds);
+        Assert.Equal(600, loaded.Callouts.AmbientMaxSeconds);
+
+        // Which is the whole point: a floor above the ceiling's default reads as the minimum, so
+        // that file goes on ticking at exactly the cadence it was already ticking at.
+        Assert.True(loaded.Callouts.AmbientSeconds > loaded.Callouts.AmbientMaxSeconds);
     }
 
     [Fact]
@@ -81,8 +90,12 @@ public class TheAmbientIntervalMovedToSecondsTests
     {
         var fresh = new CalloutSettings();
 
-        Assert.Equal(45, fresh.AmbientSeconds);
-        Assert.Equal(90, fresh.AmbientMaxSeconds);
+        // Set by hand and flown before they were written down (2026-09-02). #258 said the
+        // spread's numbers could only come by ear, and these are the ones that came.
+        Assert.Equal(300, fresh.AmbientSeconds);
+        Assert.Equal(600, fresh.AmbientMaxSeconds);
+        Assert.Equal(300, fresh.NpcChatterSeconds);
+        Assert.Equal(600, fresh.NpcChatterMaxSeconds);
         Assert.Equal(3, fresh.RouteEveryNJumps);
         Assert.Equal(30, fresh.LongJumpSeconds);
     }
