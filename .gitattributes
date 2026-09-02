@@ -23,3 +23,4 @@ tools/get-local text eol=lf
 tools/prerelease text eol=lf
 tools/promote text eol=lf
 tools/rec-on text eol=lf
+tools/prune-branches text eol=lf
