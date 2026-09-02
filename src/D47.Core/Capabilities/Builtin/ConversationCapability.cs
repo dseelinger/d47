@@ -385,7 +385,7 @@ public static class ConversationCapability
                 Advanced = true,
                 Label = "Model for the quiet calls",
                 Help =
-                    "Which model writes the things you did not ask for — ambient remarks, the opening "
+                    "Which model writes the things you did not ask for — In Ship chatter, the opening "
                     + "brief, what D47 says after a long gap, a lore lookup, and choosing a voice. None "
                     + "of them carry the conversation, so a cheaper model here costs nothing in cache "
                     + "and saves most of what D47 spends when you are not talking to it. Leave it unset "

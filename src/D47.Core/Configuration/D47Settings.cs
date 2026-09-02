@@ -833,7 +833,9 @@ public sealed record CalloutSettings
 
     /// <summary>
     /// In-character remarks about where the Commander is, said because nothing has happened
-    /// rather than because something has (Phase 11, "Ambient Voice").
+    /// rather than because something has (Phase 11, "Ambient Voice") — <b>drawn as "In Ship
+    /// chatter"</b> since 2026-09-02, when the pair took the name of who is speaking rather than
+    /// of the occasion. The property keeps its name because the settings file is append-only.
     /// <para>
     /// On, because a companion that only ever answers questions is a search box with a voice.
     /// The interval is what makes that tolerable.
@@ -851,8 +853,14 @@ public sealed record CalloutSettings
     /// shuts up is a minute and a half, and a row whose smallest step is a minute cannot be set
     /// to it.
     /// </para>
+    /// <para>
+    /// <b>Five minutes since 2026-09-02, and it was forty-five seconds.</b> The Commander flew the
+    /// forty-five and set this to 300 by hand, which is the answer #258 said could only come by
+    /// ear — so the row's default is now the value that was chosen rather than the one that
+    /// was proposed.
+    /// </para>
     /// </summary>
-    public int AmbientSeconds { get; init; } = 45;
+    public int AmbientSeconds { get; init; } = 300;
 
     /// <summary>
     /// And the longest, asked for 2026-09-01 (<a
@@ -861,26 +869,33 @@ public sealed record CalloutSettings
     /// <see cref="NpcChatterMaxSeconds"/> already has. Equal to the minimum pins it; below the
     /// minimum reads as the minimum.
     /// <para>
-    /// Double the floor out of the box, which is the ratio the chatter pair already keeps. The
-    /// case is stronger here than there: it is the same voice every time, at a fraction of the
-    /// gap, so this is the most clocklike row in the app until it has a ceiling.
+    /// Double the floor out of the box, which is the ratio the chatter pair already keeps —
+    /// and still double it at 600 now that the floor is five minutes, because the Commander set
+    /// both by hand and kept the doubling.
     /// </para>
     /// </summary>
-    public int AmbientMaxSeconds { get; init; } = 90;
+    public int AmbientMaxSeconds { get; init; } = 600;
 
     /// <summary>
-    /// Invented background chatter (#244): made-up exchanges between people who do not exist —
-    /// passers-by, the dock, the occasional one-way hail. Not the game's own NPC traffic, which
-    /// is <see cref="SpeechSettings.SpeakNpcMessages"/> and somebody else's words.
+    /// Invented background chatter (#244), <b>drawn as "NPC chatter"</b>: made-up exchanges
+    /// between people who do not exist — passers-by, the dock, the occasional one-way hail.
+    /// Not the game's own NPC traffic, which is <see cref="SpeechSettings.SpeakNpcMessages"/> and
+    /// somebody else's words.
     /// </summary>
     public bool NpcChatter { get; init; } = true;
 
     /// <summary>
-    /// The shortest gap between two exchanges, in seconds. 0 silences them. Longer than the
-    /// ambient default because an exchange is a scene rather than a sentence, and scenes wear
-    /// out faster.
+    /// The shortest gap between two exchanges, in seconds. 0 silences them.
+    /// <para>
+    /// <b>Level with the In Ship floor since 2026-09-02, and it used to be sixteen times it.</b>
+    /// The argument on record was that an exchange is a scene rather than a sentence and scenes
+    /// wear out faster, which is sound and was still an argument from the desk: flown, twenty
+    /// minutes of silence read as the feature being broken rather than as restraint. The Commander
+    /// set both pairs to the same numbers by hand, so the two kinds of chatter now arrive at the
+    /// same rate and the mix is what varies.
+    /// </para>
     /// </summary>
-    public int NpcChatterSeconds { get; init; } = 1200;
+    public int NpcChatterSeconds { get; init; } = 300;
 
     /// <summary>
     /// And the longest, asked for 2026-08-31: the gap between exchanges varies inside the
@@ -888,7 +903,7 @@ public sealed record CalloutSettings
     /// overheard traffic must not have. Equal to the minimum pins it; below the minimum reads
     /// as the minimum.
     /// </summary>
-    public int NpcChatterMaxSeconds { get; init; } = 2400;
+    public int NpcChatterMaxSeconds { get; init; } = 600;
 
     /// <summary>
     /// What this row held when it was in minutes. Kept because unknown keys are rejected on

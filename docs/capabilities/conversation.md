@@ -377,7 +377,7 @@ expensive ones, so the choice is a real one and not only about money.
 
 #### Model for the quiet calls {#background-model}
 
-Which model writes the things you did not ask for: an ambient remark, the brief when you sit down,
+Which model writes the things you did not ask for: a line of In Ship chatter, the brief when you sit down,
 what Directive 47 says after a long gap, a lore lookup, and choosing a voice for a core. Leave it
 empty and they use the model above, which is what every version before this one did.
 
@@ -411,7 +411,7 @@ The rungs are **Low, Medium, High, Xhigh and Max**. Leave it empty and the gauge
 the default.
 
 Only your *conversation* is held to it. The quiet calls above are not, and that is deliberate: a
-floor of High would turn every ambient remark into a reasoning call, which is exactly the spending
+floor of High would turn every line of In Ship chatter into a reasoning call, which is exactly the spending
 the row two above exists to stop.
 
 #### Never think harder than this {#effort-ceiling}
@@ -602,7 +602,7 @@ Nothing is said at all when search works, so having it on costs you no words abo
 Who your Commander is, in a few lines — name, where they are from, age, how they speak. Kept
 between sessions.
 
-D47 carries it with every turn **and with everything it says in character**: the ambient remarks,
+D47 carries it with every turn **and with everything it says in character**: the In Ship chatter,
 the greeting when you sit down, a core's first words. Before this row existed those lines were
 written by a model that had never heard of the person flying, which is why they felt generic — ten
 ways to say *docked at a station* are still ten ways to say nothing. Keep it short: it is some forty
@@ -626,7 +626,7 @@ speaks of a Power with suspicion because you have reason to is the feature. Oper
 unaffected — those come from tools and tables, not from this box.
 
 It is sent with every turn, where it sits inside the cached prefix and costs nothing after the first.
-It also goes with **about one ambient remark in four** — the story is the expensive half, and a remark
+It also goes with **about one line of In Ship chatter in four** — the story is the expensive half, and a remark
 about a docking bay does not need thirteen hundred tokens of history every time, only now and then
 when it might land. Which remark is chosen by the same count that picks the stock line, never by a
 clock, so a recorded session replays to the same calls.
