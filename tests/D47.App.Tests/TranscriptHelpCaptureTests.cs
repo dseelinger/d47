@@ -41,7 +41,7 @@ public class TranscriptHelpCaptureTests
         // The lede, the four headings and the three cards — which together are the whole claim
         // that this page is about the page rather than about the language model.
         Assert.Contains(shown, text => text.StartsWith("The page you land on", StringComparison.Ordinal));
-        Assert.Contains("Three readings of the same conversation.", shown);
+        Assert.Contains("Three readings in the drop-down, and a fourth behind a switch.", shown);
         Assert.Contains("Two ways in, and the microphone always says which.", shown);
         Assert.Contains("Finding a line again, and taking it with you.", shown);
         Assert.Contains("Three settings stand behind every answer on this page.", shown);

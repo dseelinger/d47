@@ -57,7 +57,7 @@ nav_order: 142
  <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what have you sent anywhere</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
- <text x="20" y="118" font-size="16" fill="var(--text-muted)">The Technical page logs every request, with the destination.</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">The Log File reading logs every request, with the destination.</text>
  <text x="20" y="152" font-size="16" fill="var(--text-muted)">Nothing is summarised for you — the log is the evidence.</text>
 </svg>
 </section>

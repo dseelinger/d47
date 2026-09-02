@@ -428,7 +428,7 @@ captain are different people in different voices, and a crew member you address 
 theirs — so those lines open with `[Tower]`, `[Carrier]` or the crew member's own name. Directive
 47's own lines carry no name: it is the voice the caption band belongs to, and putting a label on
 every line would be noise. In-game messages from other Commanders are not captioned at all — they
-are already written out in full, with their sender, on the Technical page.
+are already written out in full, with their sender, on the Transcript page's Journal File reading.
 
 Captions follow what is actually audible rather than what was generated, so if you say "stop" the
 captions stop with the voice. A caption still sitting there after a silence command is Directive

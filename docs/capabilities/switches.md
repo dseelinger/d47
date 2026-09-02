@@ -301,15 +301,15 @@ A position may also mean nothing, which is what the centre of a three-position s
 #### A position may name a page of Directive 47's own panel instead
 
 A spare three-position toggle with nothing bound to it can flip the Transcript between
-Conversation, Technical and the log file — three detents, three pages. Each position gets a
+In Ship, Log File and Journal File — three detents, three pages. Each position gets a
 **page** rather than an action, chosen from the same list the spoken route reads: every page any
 surface shows, so there is nothing here that cannot also be said.
 
 The same rule applies, and it fits better here than where it was invented. The flip is the
 question, *are you already there* is asked first — and for Directive 47's own panel the answer is
 exact rather than read out of `Status.json` — and between flips nothing is touched. Flip to
-Technical while the panel is already on Technical and nothing happens at all. Flip to it while
-the panel is on the checklist and the panel goes to Technical, on both surfaces.
+Log File while the panel is already on Log File and nothing happens at all. Flip to it while
+the panel is on the checklist and the panel goes to Log File, on both surfaces.
 
 Two things are different, because the target is:
 

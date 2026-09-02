@@ -15,31 +15,41 @@ nav_order: 4
   The three cards at the foot carry class="card settings". On the site that is an ordinary
   link to the page about the same subject; in the panel it jumps to those rows in Settings.
   One href serves both, which is the whole reason the marker is a class and not an address.
+
+  The readings named here are NavCrumb.Word values registered in PanelView.axaml.cs, and this
+  page went stale once already because nothing compared the two (#251). HelpNamesTheReadings
+  now fails the build if a retired reading's name appears in any help page.
 -->
 <div class="d47-eli5"><div class="d47-frame">
 <p class="lede">The page you land on: what every control does, and which three settings decide the answers.</p>
 <section>
-<h2><span class="num">1</span> Three readings of the same conversation.</h2>
-<svg viewBox="0 0 880 268" role="img" aria-label="One exchange read three ways: as conversation, as the working behind it, and as the raw log file">
- <rect x="20" y="26" width="840" height="46" rx="10" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <rect x="28" y="33" width="266" height="32" rx="7" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="161" y="55" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">Thread</text>
- <text x="450" y="55" text-anchor="middle" font-size="16" fill="var(--text-muted)">Details</text>
- <text x="730" y="55" text-anchor="middle" font-size="16" fill="var(--text-muted)">D47 Log</text>
- <rect x="20" y="96" width="266" height="120" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="153" y="132" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">WHAT WAS SAID</text>
- <text x="153" y="162" text-anchor="middle" font-size="14" fill="var(--text-muted)">your words and its</text>
- <text x="153" y="184" text-anchor="middle" font-size="14" fill="var(--text-muted)">answers, in order</text>
- <rect x="307" y="96" width="266" height="120" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="440" y="132" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">THE WORKING</text>
- <text x="440" y="162" text-anchor="middle" font-size="14" fill="var(--text-muted)">what it looked up,</text>
- <text x="440" y="184" text-anchor="middle" font-size="14" fill="var(--text-muted)">and what that cost</text>
- <rect x="594" y="96" width="266" height="120" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="727" y="132" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">THE RAW RECORD</text>
- <text x="727" y="162" text-anchor="middle" font-size="14" fill="var(--text-muted)">the log on disk,</text>
- <text x="727" y="184" text-anchor="middle" font-size="14" fill="var(--text-muted)">a screenful at a time</text>
- <text x="440" y="248" text-anchor="middle" font-size="15" fill="var(--text-muted)">Each remembers where you were. Leaving Transcript and coming back returns to the one you were reading.</text>
+<h2><span class="num">1</span> Three readings in the drop-down, and a fourth behind a switch.</h2>
+<svg viewBox="0 0 880 322" role="img" aria-label="The drop-down offers In Ship, Log File and Journal File; a Raw switch beside it turns the journal into the file's own JSON">
+ <rect x="20" y="22" width="620" height="46" rx="10" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="28" y="29" width="190" height="32" rx="7" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="123" y="51" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">In Ship</text>
+ <text x="330" y="51" text-anchor="middle" font-size="16" fill="var(--text-muted)">Log File</text>
+ <text x="530" y="51" text-anchor="middle" font-size="16" fill="var(--text-muted)">Journal File</text>
+ <text x="668" y="51" font-size="16" fill="var(--text-muted)">Raw</text>
+ <rect x="712" y="30" width="60" height="30" rx="15" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <circle cx="729" cy="45" r="10" fill="var(--text-muted)"/>
+ <rect x="20" y="92" width="270" height="128" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="155" y="128" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">IN SHIP</text>
+ <text x="155" y="158" text-anchor="middle" font-size="14" fill="var(--text-muted)">what was said, here,</text>
+ <text x="155" y="180" text-anchor="middle" font-size="14" fill="var(--text-muted)">between you and it</text>
+ <rect x="305" y="92" width="270" height="128" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="440" y="128" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">LOG FILE</text>
+ <text x="440" y="158" text-anchor="middle" font-size="14" fill="var(--text-muted)">what the whole app wrote</text>
+ <text x="440" y="180" text-anchor="middle" font-size="14" fill="var(--text-muted)">to disk, this session</text>
+ <rect x="590" y="92" width="270" height="128" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="725" y="128" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">JOURNAL FILE</text>
+ <text x="725" y="158" text-anchor="middle" font-size="14" fill="var(--text-muted)">what the game wrote,</text>
+ <text x="725" y="180" text-anchor="middle" font-size="14" fill="var(--text-muted)">as sentences you can read</text>
+ <rect x="20" y="240" width="840" height="46" rx="10" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <text x="440" y="269" text-anchor="middle" font-size="15" fill="var(--text)">The Raw switch is the fourth reading: the same journal events, as the JSON the game actually wrote.</text>
+ <text x="440" y="312" text-anchor="middle" font-size="15" fill="var(--text-muted)">Each remembers where you were. Leaving Transcript and coming back returns to the one you were reading.</text>
 </svg>
+<p class="body">The first two are about Directive 47 and the last two are about Elite. That is the line to hold on to: <em>"why did it say that"</em> is the log file, and <em>"what did the game just do"</em> is the journal.</p>
 </section>
 <section>
 <h2><span class="num">2</span> Two ways in, and the microphone always says which.</h2>
@@ -67,24 +77,26 @@ nav_order: 4
 </section>
 <section>
 <h2><span class="num">3</span> Finding a line again, and taking it with you.</h2>
-<svg viewBox="0 0 880 250" role="img" aria-label="Copy All takes the whole conversation, Search steps through matches, and Details opens the receipt for one turn">
+<svg viewBox="0 0 880 314" role="img" aria-label="Copy All takes the whole reading, Search finds a line, the banknote opens the receipt, and Newest returns you to the live end">
  <rect x="20" y="30" width="270" height="130" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="155" y="70" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">COPY ALL</text>
- <text x="155" y="102" text-anchor="middle" font-size="14" fill="var(--text-muted)">the whole conversation,</text>
+ <text x="155" y="102" text-anchor="middle" font-size="14" fill="var(--text-muted)">the whole reading,</text>
  <text x="155" y="124" text-anchor="middle" font-size="14" fill="var(--text-muted)">not the selection</text>
  <text x="155" y="146" text-anchor="middle" font-size="14" fill="var(--text-muted)">— that is Ctrl+C</text>
  <rect x="305" y="30" width="270" height="130" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="70" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">SEARCH</text>
- <text x="440" y="102" text-anchor="middle" font-size="14" fill="var(--text-muted)">counts every match and</text>
- <text x="440" y="124" text-anchor="middle" font-size="14" fill="var(--text-muted)">steps you through them</text>
- <text x="440" y="146" text-anchor="middle" font-size="14" fill="var(--text-muted)">both ways</text>
+ <text x="440" y="102" text-anchor="middle" font-size="14" fill="var(--text-muted)">steps through matches</text>
+ <text x="440" y="124" text-anchor="middle" font-size="14" fill="var(--text-muted)">on three readings, and</text>
+ <text x="440" y="146" text-anchor="middle" font-size="14" fill="var(--text-muted)">filters the journal</text>
  <rect x="590" y="30" width="270" height="130" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="725" y="70" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">DETAILS</text>
- <text x="725" y="102" text-anchor="middle" font-size="14" fill="var(--text-muted)">the receipt for the turn</text>
+ <text x="725" y="70" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">THE BANKNOTE</text>
+ <text x="725" y="102" text-anchor="middle" font-size="14" fill="var(--text-muted)">the receipt for the response</text>
  <text x="725" y="124" text-anchor="middle" font-size="14" fill="var(--text-muted)">you just heard — what it</text>
  <text x="725" y="146" text-anchor="middle" font-size="14" fill="var(--text-muted)">used, and what it cost</text>
- <text x="440" y="200" text-anchor="middle" font-size="15" fill="var(--text-muted)">Copy All and Search are on every reading. Details opens a window, so it is on the desktop only.</text>
- <text x="440" y="230" text-anchor="middle" font-size="15" fill="var(--text-muted)">In a headset the same figures are on the Technical reading, one tab across.</text>
+ <rect x="20" y="184" width="840" height="72" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="440" y="214" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">Scroll away from the live end and a Newest button appears over the text.</text>
+ <text x="440" y="240" text-anchor="middle" font-size="15" fill="var(--text-muted)">Its arrow points where the newest line actually is — down on the first two readings, up on the two journal ones.</text>
+ <text x="440" y="286" text-anchor="middle" font-size="15" fill="var(--text-muted)">Copy All, Search and Newest are on every reading. The banknote opens a window, so it is on the desktop only.</text>
 </svg>
 </section>
 <section>
@@ -128,39 +140,67 @@ one it returns to when you leave everything else.
 
 ### The readings
 
-The switcher at the top of the page offers the same session read three ways.
+The drop-down at the top of the page offers three readings, and a switch beside it offers a fourth.
+Two of them are about Directive 47 and two are about Elite.
 
-**Thread** is what was said — your questions and the answers, in order, with a marker where the
-core changed. This is the reading you want almost always.
+**In Ship** is what was said — your questions and the answers, in order, with a marker where the
+core changed. This is the reading you want almost always, and it is drawn as a conversation: each
+response in its own bubble, yours on the right.
 
-**Details** is the working behind it: which capability answered, which tools it called, what it
-looked up, and what the turn cost. When an answer surprises you, this is the page that says why.
+**Log File** is Directive 47's own record on disk, read a screenful at a time. Nothing here is its
+to clear — it is a file — which is why *Clear what is shown* is refused on this reading.
 
-**D47 Log** is Directive 47's own record on disk, read a screenful at a time. Nothing here is its
-to clear — it is a file — which is why the clear control is refused on this reading and offered on
-the other two.
+**Journal File** is Elite's journal, the file the game itself writes, read as sentences rather than
+as JSON. Docking, jumping, taking damage, a message from another Commander — the things that
+happened, in the order they happened. Choosing a line opens its fields beside the list, and the
+divider between the two panes can be dragged.
 
-Each is a word you can **say** as well as press, which is why they are short and why none of them
-is a parenthetical: a crumb is matched by the keyword router, and nobody says "log file, brackets,
-raw".
+**Raw Journal** is the fourth reading, and the switch marked *Raw* beside the drop-down is how you
+get to it: the same journal events as the file's own JSON. It is not an entry in the drop-down on
+purpose — it is the same events seen another way rather than a fourth subject, and two entries would
+read as two. The switch is in the headset as well as on the desktop, and *"raw journal"* reaches it
+by voice.
 
-All three are **roots** rather than levels. Pressing Transcript while several levels deep in
-another tab returns you to whichever of the three you were last reading, not to a fixed one.
+Every one of them is a place you can **say** as well as press. Where the drawn name is not a phrase
+anybody would utter in a cockpit, the reading answers to a shorter one instead — *"journal"* reaches
+Journal File. Where a reading has been renamed, the name it used to carry goes on working: saying
+*"conversation"* or *"thread"* still reaches In Ship. The label on the screen answers *what am I
+looking at*; the spoken phrase answers *how do I ask for it*, and they stopped having to be the same
+string in 0.96.0.
 
-### The controls around the conversation
+All four are **roots** rather than levels. Pressing Transcript while several levels deep in another
+tab returns you to whichever one you were last reading, not to a fixed one. A reading that no longer
+exists — one stored by an older version — falls back to In Ship rather than to a blank page.
 
-**Copy All** puts the entire conversation on the clipboard. It is deliberately not called *Copy*:
-the text on the page is selectable, and Ctrl+C already copies a selection, so a button called
-*Copy* beside selectable text is a button that means two things.
+### The controls around the readings
 
-**Search** filters and steps. It counts the matches, moves forward and back through them, and
-clears in one press.
+**Copy All** puts the entire reading on the clipboard. It is deliberately not called *Copy*: the
+text on the page is selectable, and Ctrl+C already copies a selection, so a button called *Copy*
+beside selectable text is a button that means two things. A search query does not narrow what it
+copies — you asked for the reading, not for the matches.
 
-**The banknote** at the right of the status line opens the receipt for the most recent turn — the
-tools it ran, the tokens and characters it spent, and the price. It was the word *Details* until
-0.93.0; hovering still says what it does, and so does a screen reader. It opens a window, so it
-exists on the desktop and not in a headset; the same figures are on the Technical reading, which
-both surfaces have.
+**Search** does one of two things, and which one depends on the reading:
+
+| Reading | What a search does |
+|---|---|
+| In Ship, Log File, Raw | Highlights every match, counts them, and steps forward and back through them |
+| Journal File | Filters the list to the matching lines and says *"12 of 4,318"*; there are no steppers, because every line on screen is a hit |
+
+On the Journal File reading it matches the event's own name as well as the sentence drawn from it.
+That is worth knowing, because the thing you are hunting is frequently the name: `ShieldState`
+appears nowhere in *"Shields back up"*, and typing it should not come back empty on the page whose
+whole job is showing that event.
+
+**Newest** appears over the text once you have scrolled away from the live end, and takes you back
+to it. Its arrow points where the newest line actually is: **down** on In Ship and Log File, which
+grow downwards, and **up** on the two journal readings, which are written newest-first. It is hidden
+while you are already at the newest line, because a control that does nothing sitting over the text
+it does nothing to is worse than no control.
+
+**The banknote** at the right of the status line opens the receipt for the most recent response —
+the tools it ran, the tokens and characters it spent, and the price. It was the word *Details* until
+0.93.0; hovering still says what it does, and so does a screen reader. It opens a window, so it is
+on the desktop and not in a headset, and there is no second place these figures are shown.
 
 It is a note rather than a coin on purpose. These are dollars on a provider account, not your
 in-game balance, and a coin in a cockpit overlay is the thing that gets read as credits.
