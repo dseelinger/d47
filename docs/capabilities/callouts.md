@@ -606,6 +606,10 @@ transition, because Status.json flips several times a minute during an approach 
 about being docked that arrives as you are lifting off is worse than silence. And it never
 remarks on the same situation twice running.
 
+A fourth rule is not this feature's own: a line from inside your ship and an exchange from outside
+it are never spoken back to back. That one is a rule *between* the two, and it is explained under
+[NPC chatter](#npc-chatter) below.
+
 Seven situations are covered: docked, landed, supercruise, normal space, fuel scooping, in the
 SRV, and on foot.
 
@@ -653,6 +657,29 @@ the most time rows — five to ten minutes out of the box — because overheard 
 fixed cadence stops sounding overheard. Setting the two equal pins it; 0 on the least silences it.
 The two pairs carry the same numbers on purpose, so the two kinds of chatter arrive at the same
 rate and what varies is the mix.
+
+**And the two are kept apart from each other.** They used to be timed independently and blind to
+one another — two clocks, neither able to see the other — so nothing stopped a remark from inside
+the ship and a four-line scene from outside it arriving nose to tail. Worse, the two were due on
+the same tick at the start of every session, by construction. Now there is a floor of ninety
+seconds between any two unprompted lines, whichever kind either of them is, and the two schedules
+no longer move together.
+
+Three things about that floor are worth saying plainly. It never reaches anything urgent — danger,
+fuel and the rest exist to interrupt, and none of them ever waits on chatter. It is never longer
+than the shorter of your two "least time" rows, so it cannot overrule a setting: turn either kind
+down to twenty seconds and the floor is twenty, both ways round. That matters in both directions —
+a voice you have set to speak every twenty seconds cannot claim ninety seconds of quiet behind it,
+because it would be breaking that quiet itself long before it was up, and the other kind would go
+silent instead of being spaced out. And the one that does not go is held rather than lost — it
+arrives as soon as the air clears, keeps its turn, and costs nothing, because an exchange stopped
+this early is never written in the first place.
+
+When both fall due at the same moment the exchange goes and the remark waits, because a remark will
+be along again shortly and an exchange will not.
+
+It is not a settings row, for the same reason the beat inside an exchange is not one: it is
+something to get right rather than something to adjust. What you set is the rate.
 
 The lines of one exchange are spoken with air between them — somewhere between six tenths of a
 second and one and seven tenths, and never the same gap twice, because two people who never once

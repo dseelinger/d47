@@ -5,7 +5,16 @@ using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Callouts;
 
-/// <summary>Everything a callout is allowed to look at on one tick.</summary>
+/// <summary>
+/// Everything a callout is allowed to look at on one tick.
+/// <para>
+/// <b>The world here is fixed for the tick and the last field is not.</b> Now, Status, Route and
+/// Events are what d47 saw, and no two callouts may disagree about that. <see cref="LastChatterAt"/>
+/// is a record of d47's own conduct rather than of the world, and it advances within a tick as
+/// soon as something unprompted is queued — otherwise the second such callout of a tick could not
+/// see what the first one just did.
+/// </para>
+/// </summary>
 /// <param name="Now">The tick's time, injected like everywhere else in Core.</param>
 /// <param name="IsPriming">
 /// True on the startup tick, which replays the whole journal backlog. A callout must fold that
@@ -13,13 +22,49 @@ namespace D47.Core.Callouts;
 /// means every hull hit of the last two hours is read out at once. This is exactly what
 /// "the tracker is primed from the session backlog at startup" asks for.
 /// </param>
+/// <param name="LastChatter">
+/// The last thing d47 said because <em>nothing</em> had happened, or null if it has said nothing
+/// this session (<a href="https://github.com/dseelinger/d47/issues/257">#257</a>).
+/// <para>
+/// Supplied by <see cref="CalloutEngine.Tick"/> and read by the two chatter callouts alone, so
+/// each can hold its turn rather than spend it: a callout that yields and is then refused has
+/// already moved its own cycle on, and would pay a whole interval of silence for a collision that
+/// lasted one tick. <c>AutonomousActionRunner</c> takes this same struct and neither sets nor
+/// reads it.
+/// </para>
+/// <para>
+/// Last and defaulted, so every context built without it — and <c>default</c> — is permissive and
+/// holds nothing back. There are a dozen such construction sites across the tests and the corpus
+/// replay harness, and none of them is about this.
+/// </para>
+/// </param>
 public readonly record struct CalloutContext(
     DateTimeOffset Now,
     bool IsPriming,
     CommanderGameState? State,
     GameStatus Status,
     NavRoute Route,
-    IReadOnlyList<JournalEvent> Events);
+    IReadOnlyList<JournalEvent> Events,
+    ChatterSaid? LastChatter = null);
+
+/// <summary>
+/// Something d47 said because nothing had happened — when, and the rate the row it came from asks
+/// for (<a href="https://github.com/dseelinger/d47/issues/257">#257</a>).
+/// <para>
+/// <b>The rate travels with the timestamp because the floor is two-sided.</b> A voice set to speak
+/// every twenty seconds cannot claim ninety seconds of air behind it — it is going to break that
+/// silence itself long before it is up, and a floor that let it would silence the other voice
+/// altogether rather than spacing the two out. So the last speaker's rate bounds the wait exactly
+/// as the waiter's own does, and either alone is a floor that stops composing the moment the two
+/// rows differ.
+/// </para>
+/// </summary>
+/// <param name="At">When it was queued.</param>
+/// <param name="Asked">
+/// The least time between two of <em>its</em> kind, as the Commander set it — carried on
+/// <see cref="Announcement.Chatter"/>.
+/// </param>
+public readonly record struct ChatterSaid(DateTimeOffset At, TimeSpan Asked);
 
 /// <summary>
 /// One thing d47 might say unprompted. Implementations hold their own memory of what they have
@@ -93,6 +138,98 @@ public sealed class CalloutEngine(ILogger<CalloutEngine> logger)
     /// </para>
     /// </summary>
     private static readonly TimeSpan CueSpacing = TimeSpan.FromSeconds(10);
+
+    /// <summary>
+    /// The least air between two things d47 said because nothing happened
+    /// (<a href="https://github.com/dseelinger/d47/issues/257">#257</a>).
+    /// <para>
+    /// <b>The keys cannot answer this either</b>, for the reason <see cref="CueSpacing"/> gives
+    /// one paragraph up. <c>ambient.supercruise</c> and <c>npc.chatter.passersby</c> are two
+    /// different things to say, correctly, both worth saying; what is not worth doing is saying
+    /// them back to back, which reads as one companion filling silence with itself however many
+    /// separate timers arrived at it.
+    /// </para>
+    /// <para>
+    /// <b>Ninety seconds, and it is arithmetic rather than taste.</b> The longest of these
+    /// utterances is an exchange of <see cref="NpcChatter.MostLines"/> lines: eleven to seventeen
+    /// seconds of speech, plus the beats between them, plus a synthesis a line — call it thirty.
+    /// And <see cref="SilencedSoonAfter"/> already fixes thirty seconds as this app's span for two
+    /// things reading as connected. Thirty of air behind thirty of scene, rounded up because the
+    /// engine can measure neither.
+    /// </para>
+    /// <para>
+    /// <b>Not a settings row, and the argument is already on record one level down.</b>
+    /// <see cref="NpcChatter.Beat"/> says of itself that a row asking about the gap inside an
+    /// exchange would be "a knob for something a Commander wants right rather than adjustable".
+    /// The gap between two of them is the same argument. What a Commander does set is the rate,
+    /// and <see cref="ChatterSpacingFor"/> clamps this down to it.
+    /// </para>
+    /// <para>
+    /// <b>Measured from where an announcement was queued, not from where it was heard.</b> Core
+    /// holds no clock and cannot know how long the last line took to say, so ninety of floor buys
+    /// about eighty-five of real air after a one-sentence remark and about seventy after a
+    /// four-line scene. That is the honest limit of a guarantee the engine can make alone, and it
+    /// is why the number is materially larger than the adjacency it fixes rather than merely
+    /// larger than zero. It is also why a remark the model declined to write — dropped by the app
+    /// after this point, never heard — can still hold the other voice for one floor. Bounded at
+    /// that, and never a lost line, because the held one is deferred rather than dropped.
+    /// </para>
+    /// </summary>
+    public static readonly TimeSpan ChatterSpacing = TimeSpan.FromSeconds(90);
+
+    /// <summary>
+    /// The floor in force between a line whose row asks for <paramref name="spoken"/> and one
+    /// whose row asks for <paramref name="asked"/> — the least of the three
+    /// (<a href="https://github.com/dseelinger/d47/issues/257">#257</a>).
+    /// <para>
+    /// <b>Both rows bound it, and each one has to.</b> The waiter's own rate bounds it because a
+    /// Commander asking for a line every twenty seconds should get a twenty-second floor rather
+    /// than a ninety-second one. The <em>speaker's</em> rate bounds it because otherwise a fast
+    /// voice starves a slow one outright: a kind set to speak every sixty seconds would restamp
+    /// the floor faster than a ninety-second wait could ever expire, and the other kind would be
+    /// refused forever rather than spaced out. Either bound alone stops composing the moment the
+    /// two rows differ.
+    /// </para>
+    /// <para>
+    /// One place, read by <see cref="ChatterOwesQuiet"/> and therefore by <see cref="Offer"/> and
+    /// the callouts both, so the rule cannot be implemented twice and differently.
+    /// </para>
+    /// </summary>
+    public static TimeSpan ChatterSpacingFor(TimeSpan asked, TimeSpan spoken)
+    {
+        var floor = ChatterSpacing;
+
+        if (asked < floor)
+        {
+            floor = asked;
+        }
+
+        return spoken < floor ? spoken : floor;
+    }
+
+    /// <summary>
+    /// Whether an unprompted line whose row asks for <paramref name="asked"/> still owes the
+    /// Commander quiet, given what was last said unprompted
+    /// (<a href="https://github.com/dseelinger/d47/issues/257">#257</a>).
+    /// <para>
+    /// The whole rule, in one place and in one form. The callouts ask it before anything of theirs
+    /// moves, so a held line keeps its turn; <see cref="Offer"/> asks it again as the line is
+    /// queued, which is what makes the answer the engine's rather than the callouts' manners.
+    /// </para>
+    /// </summary>
+    public static bool ChatterOwesQuiet(ChatterSaid? last, DateTimeOffset now, TimeSpan asked) =>
+        last is { } said && now - said.At < ChatterSpacingFor(asked, said.Asked);
+
+    /// <summary>
+    /// What was last said unprompted, or null if nothing has been this session
+    /// (<a href="https://github.com/dseelinger/d47/issues/257">#257</a>).
+    /// <para>
+    /// A plain field rather than a concurrent one, for the reason <see cref="_spokenAt"/> is a
+    /// plain <see cref="Dictionary{TKey,TValue}"/>: it is written and read on the tick thread and
+    /// nowhere else. <see cref="_lastSpokeBy"/> is the one that is not, and its own note says why.
+    /// </para>
+    /// </summary>
+    private ChatterSaid? _lastChatter;
 
     /// <summary>Whether callouts are on at all. Off leaves everything else running.</summary>
     public bool Enabled { get; set; } = true;
@@ -177,8 +314,14 @@ public sealed class CalloutEngine(ILogger<CalloutEngine> logger)
     }
 
     /// <summary>
-    /// The tick-loop entry point. Runs every enabled callout against the same context so two
-    /// callouts cannot disagree about what the world looked like this tick.
+    /// The tick-loop entry point. Runs every enabled callout against the same world, so two
+    /// callouts cannot disagree about what it looked like this tick.
+    /// <para>
+    /// The one field that does advance inside a tick is
+    /// <see cref="CalloutContext.LastChatterAt"/>, which is not the world: it is whether d47 has
+    /// just spoken unprompted, and the second such callout of a tick has to be able to see what
+    /// the first one did (<a href="https://github.com/dseelinger/d47/issues/257">#257</a>).
+    /// </para>
     /// </summary>
     public void Tick(CalloutContext context)
     {
@@ -200,7 +343,10 @@ public sealed class CalloutEngine(ILogger<CalloutEngine> logger)
 
             try
             {
-                foreach (var announcement in callout.Examine(context))
+                // Derived fresh per callout off the engine's own field, never off the struct it
+                // was handed: two unprompted callouts examined on one tick must not both read
+                // "nothing has been said" (#257).
+                foreach (var announcement in callout.Examine(context with { LastChatter = _lastChatter }))
                 {
                     if (Offer(announcement, context))
                     {
@@ -232,6 +378,21 @@ public sealed class CalloutEngine(ILogger<CalloutEngine> logger)
             return false;
         }
 
+        // The floor between two unprompted lines (#257), asked here rather than trusted to the
+        // callouts that already asked it. Examine returns a sequence, so one callout may offer
+        // two on a tick and no check it made before yielding can see the second — and this is
+        // what makes "two of these are never queued closer than the floor" a property of the
+        // engine rather than of the order its callouts happen to be registered in.
+        //
+        // Above the key cooldown, and above Marked, for the reason stated below both: an
+        // announcement that is not going to be said must spend nothing. What this one would
+        // spend is its own three-hundred-second cooldown, which would turn a ninety-second
+        // deferral into a lost cycle.
+        if (announcement.Chatter is { } asked && ChatterOwesQuiet(_lastChatter, context.Now, asked))
+        {
+            return false;
+        }
+
         if (announcement.Cooldown > TimeSpan.Zero &&
             _spokenAt.TryGetValue(announcement.Key, out var last) &&
             context.Now - last < announcement.Cooldown)
@@ -240,6 +401,14 @@ public sealed class CalloutEngine(ILogger<CalloutEngine> logger)
         }
 
         _spokenAt[announcement.Key] = context.Now;
+
+        // Stamped on the way through rather than in Tick, because Offer can still refuse for
+        // priming, for Enabled or for the key cooldown — stamping where the callout spoke would
+        // hold the other voice for something that was never queued.
+        if (announcement.Chatter is { } rate)
+        {
+            _lastChatter = new ChatterSaid(context.Now, rate);
+        }
 
         // After the key cooldown, never before it: an announcement that is not going to be said
         // must not consume the spacing that would silence the alarm of one that is.

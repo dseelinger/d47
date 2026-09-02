@@ -73,6 +73,42 @@ public sealed record Announcement(string Key, string Text, CalloutUrgency Urgenc
     public int? Variant { get; init; }
 
     /// <summary>
+    /// The least time the Commander asked for between two of these, or null for an announcement
+    /// said because something <em>happened</em>
+    /// (<a href="https://github.com/dseelinger/d47/issues/257">#257</a>).
+    /// <para>
+    /// <b>Non-null is the signal</b>, the way <see cref="Transcript"/>'s is. It marks the two
+    /// callouts that speak because nothing has — a remark from inside the ship, an exchange among
+    /// people outside it — and <see cref="CalloutEngine"/> keeps any two of them apart. Two of
+    /// these arriving nose to tail is one companion filling silence with itself, which is the
+    /// impression each one's own timing rules were written to avoid.
+    /// </para>
+    /// <para>
+    /// <b>And the value is the clamp, from both ends.</b> The floor in force is the least of
+    /// <see cref="CalloutEngine.ChatterSpacing"/>, this, and whatever the line that last spoke
+    /// asked for — so nothing is ever held longer than its own row asks, and no voice can demand
+    /// more air behind it than it leaves in front of itself. The second half is what stops a fast
+    /// kind starving a slow one instead of spacing it out. Together they are what make the floor
+    /// undetectable to a Commander running one of the two, and keep it a rule <em>between</em> the
+    /// features rather than a rule about either.
+    /// </para>
+    /// <para>
+    /// <b>Orthogonal to <see cref="Urgency"/>, which answers a different question.</b> Route
+    /// progress, an arrival and a milestone are all <see cref="CalloutUrgency.Routine"/> and none
+    /// of them is chatter: they report something that happened, and a floor that delayed them
+    /// would be spacing out the news. Urgency answers "does this interrupt"; this answers "was
+    /// anything the matter", and neither can be derived from the other.
+    /// </para>
+    /// <para>
+    /// Carried rather than read back off <see cref="Cooldown"/>, which happens to hold the same
+    /// value today. That field is an identity for suppression and nothing promises to keep it
+    /// equal to the interval — the argument <see cref="CommsChannel"/> already makes about
+    /// <see cref="Key"/>, for the same reason.
+    /// </para>
+    /// </summary>
+    public TimeSpan? Chatter { get; init; }
+
+    /// <summary>
     /// Who says it. Defaults to the ship's AI, which is what every Phase 8 callout is —
     /// d47 speaking. Phase 11 adds announcements that are somebody else talking: a re-voiced
     /// in-game message, a carrier's tower. Carried here rather than resolved by the caller

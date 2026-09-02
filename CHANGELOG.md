@@ -29,6 +29,67 @@ history to match today's layout would be the one edit it must never take.
 
 ## 0.102.0 — 2026-09-02 — The two chatters are named for who is speaking
 
+### Two unprompted voices are kept apart, and no longer come due on the same tick (#257)
+
+Reported off the settings card as *"these appear to overlap"*. They do not: a remark is the core
+itself, in its own voice, about where the Commander is; an exchange is two strangers on a channel
+the Commander is deliberately not part of. **What overlapped was the timing.** In Ship chatter and
+NPC chatter were two callouts, each holding its own clock, and the engine's cooldown is keyed per
+announcement — so `ambient.supercruise` and `npc.chatter.passersby` never tested against each other
+and nothing anywhere was a floor between two unprompted utterances. The failure was never talking
+over, since the audio arbiter serialises; it was a one-line remark and a four-line invented scene
+arriving nose to tail, which reads as the core filling silence with itself.
+
+**Underneath that, the two were phase-locked by construction, which is the part the report could
+not see.** Both callouts choose each cycle's wait by hashing their own pick counter with the same
+Knuth constant, and that hash returns exactly zero on the first pick — so both served exactly their
+interval the first time. Both are seeded on the same first live tick, both read the same situation,
+both carry the same ninety-second settle, and since the rows were levelled on 2026-09-02 both carry
+the same numbers. **So the first remark and the first exchange of every session were due on the same
+tick, every session.** A floor alone would have converted that into a permanent ninety-second
+couplet followed by minutes of silence — a cadence, which is the one thing the spread exists to
+prevent. So the chatter spread is now offset by one against the ambient one. It is still off the
+pick counter with no clock and no seed, so a recorded session still replays to the same spacing.
+
+**The floor is derived, not a new row.** An announcement said because nothing happened now carries
+the rate the Commander asked for it at, and the floor in force is the least of ninety seconds, that
+rate, and the rate of whatever spoke last. **Both ends have to bound it.** The waiter's rate bounds
+it so nobody is held longer than their own row asks. The speaker's rate bounds it because otherwise
+a fast voice does not space the other one out, it silences it: a kind set to speak every twenty
+seconds restamps the floor faster than a ninety-second wait can ever expire. Between them, a
+Commander who turns either kind down to twenty seconds gets a twenty-second floor, and a Commander
+running one of the two cannot tell it exists. Ninety is arithmetic rather than taste: the longest of these utterances is a four-line
+scene, about thirty seconds with its beats and synthesis, and thirty seconds is already this app's
+span for two things reading as connected. Thirty of air behind thirty of scene, rounded up because
+the engine can measure neither. The argument against a row is the one already on record for the
+beat inside an exchange — a knob for something a Commander wants right rather than adjustable.
+
+**Nothing urgent waits on it, and that is asserted rather than argued.** The floor keys on the
+carried rate and never on urgency, which answers a different question: route progress, an arrival
+and a milestone are all routine and none of them is chatter, so an engine keying on urgency would
+have quietly spaced out the news. A test drives the shipped danger warnings into the busiest
+possible tick — both chatter callouts colliding — and asserts the warnings go on it.
+
+**The one that does not go is held, not spent.** Both callouts ask before anything of theirs moves,
+so a deferred line keeps its clock, its pick counter and its variant, and arrives as the floor
+clears rather than an interval later. An exchange stopped there never reaches the drain, so it is
+never composed, never sent and never billed. The engine re-asks the same question when the line is
+queued, so the guarantee is the engine's rather than the two callouts' manners.
+
+**When both are due on one tick, the rarer voice goes.** The exchange speaks and the remark waits,
+because a remark will be along again shortly and an exchange will not. That was written the other
+way round first, on the grounds that it puts the larger gap in front of the longer utterance, and
+measuring it settled the argument: the exchange has the narrower window — a longer interval against
+the same ninety-second settle — so it is the one that starves when it always loses. With an In Ship
+row pinned to a fixed cadence that resonates with how often the situation turns over, four hours
+produced twenty-nine exchanges alone, **none at all** with the remark going first, and twenty-eight
+with the exchange going first. The tie-break is registration order and nothing would fail if those
+two lines were swapped, so the reasoning is written where they are registered rather than assumed.
+
+The floor is measured where a line is queued and not where it is heard, which is the honest limit
+of what a component holding no clock can promise: ninety seconds of floor buys about eighty-five of
+real air after a remark and about seventy after a scene.
+
 ### The panel's tabs run Transcript, Fleet, Engineers, Checklist, Routing, Adventures, Utilities, Settings (#272)
 
 The bar had Routing second, beside the transcript, since Phase 37, on the grounds that a route is

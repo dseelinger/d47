@@ -347,7 +347,13 @@ public static class CalloutCapability
             Label = "The least time between In Ship chatter",
             Help = "In seconds, between two lines from your ship's AI or your crew. Each gap lands "
                    + "somewhere between this and the row below, so the chatter never ticks like a "
-                   + "clock. Lower is a talkative companion; higher is a quiet one; 0 silences it.",
+                   + "clock. Lower is a talkative companion; higher is a quiet one; 0 silences it. "
+
+                   // The floor between the two kinds (#257), said on the row it clamps against.
+                   // Not on the "most time" row, which does not control the number.
+                   + "The two kinds are also kept apart from each other, so a line from inside "
+                   + "your ship and an exchange from outside it never arrive back to back - and "
+                   + "neither is ever held apart by longer than this row.",
             Kind = SettingKind.Number,
             DefaultDisplay = "300",
             DocsAnchor = "ambient",
@@ -403,7 +409,12 @@ public static class CalloutCapability
             Label = "The least time between NPC chatter",
             Help = "In seconds, between two exchanges among people outside your ship. Each gap "
                    + "lands somewhere between this and the row below, so the chatter never ticks "
-                   + "like a clock; 0 silences it.",
+                   + "like a clock; 0 silences it. "
+
+                   // The In Ship row's clause, from this side of the boundary (#257).
+                   + "The two kinds are also kept apart from each other, so an exchange and a "
+                   + "line from inside your ship never arrive back to back - and neither is ever "
+                   + "held apart by longer than this row.",
             Kind = SettingKind.Number,
             DefaultDisplay = "300",
             DocsAnchor = "npc-chatter",

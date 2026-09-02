@@ -2676,11 +2676,29 @@ public sealed class AppHost : IDisposable
             // A beat of the Commander's story, when they reach it (Phase 47). Also the one
             // path the live journal reaches the adventure book by.
             .Add(new D47.Core.Adventures.AdventureCallout(adventures))
-            .Add(new AmbientCallout())
 
             // Invented chatter (#244): the marker only — the app composes the exchange, and
             // with no model the marker composes to nothing. See SpeakPendingCallouts.
+            //
+            // Above the ambient remark below it, and that order is the tie-break when both are due
+            // on one tick (#257). The rarer voice goes: an exchange comes round every five to ten
+            // minutes and a remark will be along again shortly, so the remark is the one that
+            // loses least by waiting. Neither is lost — the loser is held and arrives as soon as
+            // the floor clears, having spent nothing.
+            //
+            // It was the other way round until it was measured. With the remark first, an
+            // ambient row pinned to a fixed cadence that happens to resonate with how often the
+            // situation turns over silences the exchange completely: at 60/60 against the shipped
+            // 300/600, with the situation flipping every two minutes, four hours produced 29
+            // exchanges alone, 0 with the remark going first and 28 with the exchange going
+            // first. The exchange has the narrower window — a longer interval against the same
+            // settle — so it is the one that starves.
+            //
+            // Nothing fails if these two lines are swapped. The engine honours whatever order it
+            // is given, which is what the tests pin; which order it is given is decided here and
+            // nowhere else, so it is written down here rather than assumed.
             .Add(new NpcChatterCallout())
+            .Add(new AmbientCallout())
             .Add(new IncomingMessages
             {
                 Enabled = () => settings.Speech.SpeakIncomingMessages,

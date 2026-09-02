@@ -90,6 +90,18 @@ public sealed class AmbientCallout : ICallout
             yield break;
         }
 
+        // Not on the heels of the other kind (#257). Asked here as well as in the engine, and
+        // asked above everything that moves below: a remark turned away after the fact has
+        // already spent _lastSpokenAt and _picks, so it would pay a whole interval of silence
+        // for a collision that lasted one tick — and would leave a hole in the pick counter
+        // that Variant, and therefore whether the Commander's story rides along, is chosen by.
+        // Held rather than lost: nothing here moves, so this is still due on the tick the air
+        // clears.
+        if (CalloutEngine.ChatterOwesQuiet(context.LastChatter, context.Now, Interval))
+        {
+            yield break;
+        }
+
         // Never the same situation twice running. Two remarks about being in supercruise, an
         // interval apart, is the point at which ambient stops sounding like company.
         if (situation == _lastSpoken)
@@ -112,6 +124,11 @@ public sealed class AmbientCallout : ICallout
             // fuel warning would be the worst possible trade.
             Urgency = CalloutUrgency.Routine,
             Cooldown = Interval,
+
+            // Said because nothing happened, and the rate the Commander asked for it at — which
+            // is both the flag the engine spaces on and the clamp that stops it ever holding
+            // this longer than this row asks (#257).
+            Chatter = Interval,
 
             // The index the stock line was picked with, so the model-written replacement can be
             // chosen by the same count — which ambient remark this is decides whether the
