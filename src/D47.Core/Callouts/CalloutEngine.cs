@@ -280,6 +280,24 @@ public sealed class CalloutEngine(ILogger<CalloutEngine> logger)
     }
 
     /// <summary>
+    /// Whether anything queued behind is more than routine
+    /// (<a href="https://github.com/dseelinger/d47/issues/259">#259</a>).
+    /// <para>
+    /// Asked by the speaking loop before it takes one of the pauses between the lines of an
+    /// invented exchange. The speaking lock is held for a whole batch, so every second of air
+    /// added inside one is a second longer that the <em>next</em> batch waits — and the next
+    /// batch is where a danger or fuel callout would be. <b>The Commander hearing about the heat
+    /// two seconds late because a courier was chatting is a worse defect than the one the pauses
+    /// fix</b>, so the pause yields to it rather than the other way round.
+    /// </para>
+    /// <para>
+    /// A read of the queue rather than a drain: nothing is consumed, and the answer is asked
+    /// again on every slice of a pause, so an alert arriving mid-gap cuts the gap short.
+    /// </para>
+    /// </summary>
+    public bool AnythingUrgentWaiting => _pending.Any(pending => pending.Urgency == CalloutUrgency.Urgent);
+
+    /// <summary>
     /// Takes everything queued since the last call. Drained by the app on its own thread, which
     /// is where the awaiting happens.
     /// </summary>

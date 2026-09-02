@@ -110,6 +110,71 @@ public sealed record ViewState
     public bool ChecklistPartialGrades { get; init; }
 
     /// <summary>
+    /// Which way the journal's Raw switch was left
+    /// (<a href="https://github.com/dseelinger/d47/issues/267">#267</a>): the file's own JSON, or
+    /// sentences. Here rather than in settings for the reason the checklist filter is — no
+    /// default worth documenting, nothing behaves differently, and being unable to read it should
+    /// cost one flick of a switch rather than a loud failure.
+    /// <para>
+    /// <b>The switch's position, not a reading to open on.</b> Raw is a root of the Transcript tab
+    /// like the journal itself is, and remembering it as a <em>root</em> would open a Commander who
+    /// left d47 on raw into a wall of JSON at launch. What is kept is how the journal reading is
+    /// drawn when it is next opened; which reading the tab is on is somebody else's fact.
+    /// </para>
+    /// </summary>
+    public bool JournalRaw { get; init; }
+
+    /// <summary>
+    /// Which reading each tab was left on, by tab name and root key
+    /// (<a href="https://github.com/dseelinger/d47/issues/268">#268</a>) — the Transcript on
+    /// the log file, Routing on Course.
+    /// <para>
+    /// <b>Changing tabs already kept these; a restart did not.</b> <c>PanelNavigator</c> holds one
+    /// current root per tab so a tab switch returns to the mode it left, and nothing wrote that
+    /// down, so every launch started at the first reading each tab furnished.
+    /// </para>
+    /// <para>
+    /// <b>Keyed by name rather than by position.</b> Both halves are stable strings that already
+    /// exist — the tab's enum name and the root's own key — where an index moves the
+    /// moment a reading is registered and would quietly restore a different one. A name nothing
+    /// answers to is ignored on restore rather than raising, which is what makes a renamed root or
+    /// a hand-edited file cost a first reading instead of a failure.
+    /// </para>
+    /// <para>
+    /// <b>Raw Journal is deliberately not storable here.</b> It is a root of the Transcript tab
+    /// like the journal itself, so keeping it as one would open a wall of JSON at launch —
+    /// the thing <see cref="JournalRaw"/> exists to avoid. The Transcript's entry names the
+    /// journal reading and the switch decides how it is drawn; the normalising is the writer's
+    /// job, since this record cannot see a root key's meaning.
+    /// </para>
+    /// </summary>
+    public IReadOnlyDictionary<string, string> PanelRoots { get; init; } =
+        new Dictionary<string, string>(StringComparer.Ordinal);
+
+    /// <summary>Records which reading a tab was left on.</summary>
+    public ViewState With(string tab, string root)
+    {
+        var next = new Dictionary<string, string>(PanelRoots, StringComparer.Ordinal)
+        {
+            [tab] = root,
+        };
+
+        return this with { PanelRoots = next };
+    }
+
+    /// <summary>
+    /// Which settings section the page was left scrolled to, by capability id, or null
+    /// (<a href="https://github.com/dseelinger/d47/issues/268">#268</a>).
+    /// <para>
+    /// The settings nav is a scroll-spy over one scrolling column, so its "selection" is a scroll
+    /// offset rather than a chosen thing — which is why what is kept is the section the spy
+    /// last named rather than a pixel count. A capability id survives a card being added above it;
+    /// an offset does not.
+    /// </para>
+    /// </summary>
+    public string? SettingsSection { get; init; }
+
+    /// <summary>
     /// Whether the Commander has ever asked d47 anything, by any route. What it retires is the
     /// worked example in the ask box's placeholder, which is an onboarding hint wearing a
     /// placeholder's clothes and was still teaching someone a month in.

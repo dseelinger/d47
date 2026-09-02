@@ -167,6 +167,12 @@ public partial class MainWindow : Window
             // be selected and pasted into a bug report, which is an act with no meaning in mid-air.
             Panel.EnableRawJournal();
 
+            // And it keeps the switch where the Commander left it (#267). This surface alone is
+            // asked to, and it governs both: the transcript root is mirrored between the window
+            // and the headset, so a flick in mid-air arrives at this navigator to be recorded and
+            // a restore made here is carried back the same way.
+            Panel.RememberJournalReading(new JournalReadingMemory(host.ViewState));
+
             // The sharper half of that same act (#160). Selecting a wall of JSON and pasting it
             // hands over whatever happened to be on screen, the Commander's name and other
             // people's messages included; this cuts a window around the incident, scrubs it, and
@@ -365,6 +371,13 @@ public partial class MainWindow : Window
                 InterfaceCapability.WindowModeKey,
                 mode == PanelMode.Mini ? "mini" : "full",
                 SettingsCaller.Panel));
+
+            // And every tab back on the reading it was left on (#268). Last of the panel calls,
+            // because a root can only be selected once the tab that owns it has been furnished —
+            // and after RememberJournalReading above, so a Transcript restored to the journal is
+            // drawn the way the Raw switch was left rather than in whichever order the two
+            // arrived.
+            Panel.RememberRoots(new PanelRootMemory(host.ViewState));
 
             // Both before the window is shown. Sizing after the fact is a visible resize, and
             // wrapping the content after the first layout pass is a visible reflow.

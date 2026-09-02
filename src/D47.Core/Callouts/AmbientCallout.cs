@@ -37,6 +37,16 @@ public sealed class AmbientCallout : ICallout
     public TimeSpan Interval { get; set; } = TimeSpan.FromMinutes(15);
 
     /// <summary>
+    /// And the longest (<a href="https://github.com/dseelinger/d47/issues/258">#258</a>): each
+    /// cycle waits somewhere inside [<see cref="Interval"/>, <see cref="Longest"/>], the same
+    /// spread <see cref="NpcChatterCallout"/> already has and for a stronger reason. Chatter is
+    /// a rotating cast of strangers, which disguises a beat; this is the same voice every time,
+    /// at a fraction of the gap. At or below <see cref="Interval"/> it pins the cadence, which
+    /// is what keeps every older test and every settings file meaning what it did.
+    /// </summary>
+    public TimeSpan Longest { get; set; } = TimeSpan.FromMinutes(30);
+
+    /// <summary>
     /// How long a situation has to hold before it is worth remarking on. Without this, a remark
     /// about being docked arrives as the Commander is lifting off — Status.json flips several
     /// times a minute during an approach, and the ambient line is the slowest thing in the app.
@@ -75,7 +85,7 @@ public sealed class AmbientCallout : ICallout
             yield break;
         }
 
-        if (context.Now - _situationSince < Settle || context.Now - _lastSpokenAt < Interval)
+        if (context.Now - _situationSince < Settle || context.Now - _lastSpokenAt < Gap())
         {
             yield break;
         }
@@ -108,6 +118,26 @@ public sealed class AmbientCallout : ICallout
             // Commander's story goes with it (Phase 43).
             Variant = variant,
         };
+    }
+
+    /// <summary>
+    /// This cycle's wait, somewhere in [<see cref="Interval"/>, <see cref="Longest"/>].
+    /// Deterministic off the pick counter — a Knuth multiplicative hash, because no Core
+    /// component reads a clock or a seed and a recorded session has to replay to the same
+    /// spacing — and stable within a cycle, since <c>_picks</c> only moves on emission. The same
+    /// shape as <see cref="NpcChatterCallout"/>'s on purpose: two rows of the same kind
+    /// disagreeing about their own edge cases is worse than neither having the spread.
+    /// </summary>
+    private TimeSpan Gap()
+    {
+        if (Longest <= Interval)
+        {
+            return Interval;
+        }
+
+        var fraction = unchecked((uint)_picks * 2654435761u) / 4294967296.0;
+
+        return Interval + (Longest - Interval) * fraction;
     }
 
     /// <summary>

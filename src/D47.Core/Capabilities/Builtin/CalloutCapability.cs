@@ -66,6 +66,7 @@ public static class CalloutCapability
 
     public const string AmbientKey = "callouts.ambient";
     public const string AmbientSecondsKey = "callouts.ambientSeconds";
+    public const string AmbientMaxSecondsKey = "callouts.ambientMaxSeconds";
 
     /// <summary>Invented background chatter (#244) — theatre, never the game's own traffic.</summary>
     public const string NpcChatterKey = "callouts.npcChatter";
@@ -330,8 +331,14 @@ public static class CalloutCapability
         {
             Key = AmbientSecondsKey,
             Advanced = true,
-            Label = "At most one ambient remark every",
-            Help = "In seconds. Lower is a talkative companion; higher is a quiet one; 0 silences them.",
+
+            // Reworded for its new sibling (#258), and the property name deliberately not: the
+            // settings file is append-only, and this row already carries one retired minutes-era
+            // key for exactly that reason.
+            Label = "The least time between ambient remarks",
+            Help = "In seconds. Each gap lands somewhere between this and the row below, so the "
+                   + "remarks never tick like a clock. Lower is a talkative companion; higher is "
+                   + "a quiet one; 0 silences them.",
             Kind = SettingKind.Number,
             DefaultDisplay = "45",
             DocsAnchor = "ambient",
@@ -349,6 +356,33 @@ public static class CalloutCapability
                         && seconds >= 0
                             ? Math.Min(seconds, 14400)
                             : new CalloutSettings().AmbientSeconds },
+                },
+            },
+        });
+
+        rows.Add(new SettingRow
+        {
+            Key = AmbientMaxSecondsKey,
+            Advanced = true,
+            Label = "The most time between ambient remarks",
+            Help = "In seconds. Equal to the row above pins a fixed cadence; anything below it "
+                   + "reads as equal.",
+            Kind = SettingKind.Number,
+            DefaultDisplay = "90",
+            DocsAnchor = "ambient",
+            AppliesWhen = s => s.Callouts is { Enabled: true, Ambient: true }
+                               && LlmProviderCatalog.Selected(s.Llm.Provider).Id != LlmProviderCatalog.NoneId,
+            Binding = new SettingBinding
+            {
+                Read = s => s.Callouts.AmbientMaxSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                Write = (s, v) => s with
+                {
+                    // The row above's rules: four hours is the ceiling, and a value that will not
+                    // parse falls back to the default rather than to zero.
+                    Callouts = s.Callouts with { AmbientMaxSeconds = int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out var seconds)
+                        && seconds >= 0
+                            ? Math.Min(seconds, 14400)
+                            : new CalloutSettings().AmbientMaxSeconds },
                 },
             },
         });

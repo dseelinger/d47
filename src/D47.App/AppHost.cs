@@ -2757,6 +2757,7 @@ public sealed class AppHost : IDisposable
 
                 case AmbientCallout ambient:
                     ambient.Interval = TimeSpan.FromSeconds(callouts.AmbientSeconds);
+                    ambient.Longest = TimeSpan.FromSeconds(callouts.AmbientMaxSeconds);
 
                     // Silent while personality is off. The checklist puts "no ambient remarks"
                     // in that item's own acceptance criteria, which makes this the one callout
@@ -5769,7 +5770,7 @@ public sealed class AppHost : IDisposable
             budget.Token).ConfigureAwait(false);
 
         return [.. NpcChatter.Parse(script, kind, carrier)
-            .Select(line => new Announcement($"{NpcChatter.KeyPrefix}line", line.Text)
+            .Select(line => new Announcement(NpcChatter.LineKey, line.Text)
             {
                 Urgency = CalloutUrgency.Routine,
                 Voice = line.Role ?? D47.Core.Audio.VoiceRole.Comms,
@@ -6212,8 +6213,22 @@ public sealed class AppHost : IDisposable
 
             try
             {
+                var beat = 0;
+
                 foreach (var announcement in lines)
                 {
+                    // Air between the lines of an exchange (#259), reported as two people never
+                    // once leaving a gap. The beat is Core's, so a recorded session replays to the
+                    // same pacing; the yielding is here, where the queue behind it can be seen.
+                    if (announcement.Key == NpcChatter.LineKey)
+                    {
+                        await HoldTheBeatAsync(NpcChatter.Beat(beat++)).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        beat = 0;
+                    }
+
                     await SayAsync(announcement).ConfigureAwait(false);
 
                     // What the Commander actually heard about a story, kept (asked for
@@ -6241,6 +6256,38 @@ public sealed class AppHost : IDisposable
                 _speaking.Release();
             }
         });
+    }
+
+    /// <summary>
+    /// The pause in front of a line of an invented exchange (#259), taken in slices so it can be
+    /// abandoned.
+    /// <para>
+    /// <b>An urgent callout waiting behind this exchange cuts the pause short.</b> The speaking
+    /// lock is held for the whole batch, so air added here is air the next batch waits through,
+    /// and the next batch is where a danger or fuel callout would be. The queue is read again on
+    /// every slice rather than once at the top, so an alert arriving mid-gap is not made to serve
+    /// out the rest of it.
+    /// </para>
+    /// <para>
+    /// The captions need nothing: <c>CaptionLayer.Quiet</c> starts a reading dwell when the voice
+    /// stops rather than blanking the quad, and that dwell is several seconds for a line of
+    /// dialogue — far longer than any beat here. The headset holds the last line through the
+    /// silence for free.
+    /// </para>
+    /// </summary>
+    private async Task HoldTheBeatAsync(TimeSpan beat)
+    {
+        var slice = TimeSpan.FromMilliseconds(100);
+
+        for (var held = TimeSpan.Zero; held < beat; held += slice)
+        {
+            if (Callouts.AnythingUrgentWaiting)
+            {
+                return;
+            }
+
+            await Task.Delay(slice < beat - held ? slice : beat - held).ConfigureAwait(false);
+        }
     }
 
     /// <summary>

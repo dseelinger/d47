@@ -135,6 +135,11 @@ It is deliberately **not** an entry in the picker: it is the same events seen an
 than a fourth subject, and two entries would read as two. The switch is in the headset as well as
 on the desktop.
 
+**Where you leave it is where you find it.** The switch keeps its position across launches, so a
+Commander who reads the raw file gets the raw file the next time they open the journal reading, and
+one who does not never sees it. It is the *reading* that is remembered, not the page: d47 still
+opens on the conversation whichever way the switch is set.
+
 Neither journal reading is formatted as markup. A journal carries other players' text and JSON full
 of asterisks and underscores, none of which is emphasis, so both are drawn exactly as written.
 

@@ -149,8 +149,58 @@ public static class NpcChatter
 {
     public const string KeyPrefix = "npc.chatter.";
 
+    /// <summary>The key every spoken line of an exchange goes out under.</summary>
+    public const string LineKey = KeyPrefix + "line";
+
     /// <summary>The most lines one exchange may carry, however many the model writes.</summary>
     public const int MostLines = 4;
+
+    /// <summary>The tightest a handover may be (<a href="https://github.com/dseelinger/d47/issues/259">#259</a>).</summary>
+    public static readonly TimeSpan ShortestBeat = TimeSpan.FromMilliseconds(600);
+
+    /// <summary>And the loosest. Past about this the exchange stops reading as one conversation.</summary>
+    public static readonly TimeSpan LongestBeat = TimeSpan.FromMilliseconds(1700);
+
+    /// <summary>
+    /// The air to leave in front of a line of an exchange
+    /// (<a href="https://github.com/dseelinger/d47/issues/259">#259</a>), reported as
+    /// <em>"it's like watching an episode of the Gilmore Girls"</em>. Nothing was putting a gap
+    /// anywhere, so four utterances arrived butted together and the scene read as a script being
+    /// performed rather than as traffic overheard.
+    /// <para>
+    /// Somewhere in [<see cref="ShortestBeat"/>, <see cref="LongestBeat"/>], and <b>not a fixed
+    /// pause</b>: this repository already made that argument about the gap <em>between</em>
+    /// exchanges, and it holds inside one too. Deterministic off the line's position, by the same
+    /// Knuth multiplicative hash <see cref="NpcChatterCallout"/> spaces exchanges with, because no
+    /// Core component reads a clock or a seed and a recorded session has to replay to the same
+    /// pacing.
+    /// </para>
+    /// <para>
+    /// <b>The position and not the exchange</b>, so every exchange deals the same short sequence of
+    /// beats. That is deliberate rather than an oversight: exchanges are twenty to forty minutes
+    /// apart and three or four lines long, so the pattern has nothing to repeat against inside a
+    /// hearing. <b>And the beat is the same whoever is speaking</b> — a handover between two people
+    /// genuinely is a longer beat than one person carrying on, and it is more machinery than a
+    /// four-line scene earns. Both are decisions rather than omissions.
+    /// </para>
+    /// <para>
+    /// Nothing here is a settings row, on purpose. The two interval rows already exist; a third
+    /// asking about the beat between lines is a knob for something a Commander wants right rather
+    /// than adjustable.
+    /// </para>
+    /// </summary>
+    /// <param name="line">Which line of the exchange this is. The first gets no beat at all.</param>
+    public static TimeSpan Beat(int line)
+    {
+        if (line <= 0)
+        {
+            return TimeSpan.Zero;
+        }
+
+        var fraction = unchecked((uint)line * 2654435761u) / 4294967296.0;
+
+        return ShortestBeat + (LongestBeat - ShortestBeat) * fraction;
+    }
 
     /// <summary>The exact name the carrier's tower controller speaks under, and only it (#249).</summary>
     public const string TowerName = "Tower";

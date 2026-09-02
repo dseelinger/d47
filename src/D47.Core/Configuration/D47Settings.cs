@@ -855,6 +855,20 @@ public sealed record CalloutSettings
     public int AmbientSeconds { get; init; } = 45;
 
     /// <summary>
+    /// And the longest, asked for 2026-09-01 (<a
+    /// href="https://github.com/dseelinger/d47/issues/258">#258</a>): the gap between remarks
+    /// varies inside the range rather than ticking like a clock, the same spread
+    /// <see cref="NpcChatterMaxSeconds"/> already has. Equal to the minimum pins it; below the
+    /// minimum reads as the minimum.
+    /// <para>
+    /// Double the floor out of the box, which is the ratio the chatter pair already keeps. The
+    /// case is stronger here than there: it is the same voice every time, at a fraction of the
+    /// gap, so this is the most clocklike row in the app until it has a ceiling.
+    /// </para>
+    /// </summary>
+    public int AmbientMaxSeconds { get; init; } = 90;
+
+    /// <summary>
     /// Invented background chatter (#244): made-up exchanges between people who do not exist —
     /// passers-by, the dock, the occasional one-way hail. Not the game's own NPC traffic, which
     /// is <see cref="SpeechSettings.SpeakNpcMessages"/> and somebody else's words.

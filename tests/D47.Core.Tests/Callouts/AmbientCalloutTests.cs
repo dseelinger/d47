@@ -18,10 +18,13 @@ public class AmbientCalloutTests
     private static CalloutContext At(DateTimeOffset now, GameStatus status, bool priming = false) =>
         new(now, priming, State: null, status, NavRoute.None, []);
 
+    // Longest pinned to the interval, so the timing tests below drive a fixed cadence; the
+    // range has its own test (#258).
     private static AmbientCallout Callout() => new()
     {
         Enabled = () => true,
         Interval = TimeSpan.FromMinutes(15),
+        Longest = TimeSpan.FromMinutes(15),
         Settle = TimeSpan.FromSeconds(90),
     };
 
@@ -202,5 +205,77 @@ public class AmbientCalloutTests
         Assert.NotEqual(
             AmbientLines.Pick(AmbientSituation.Docked, 3),
             AmbientLines.Pick(AmbientSituation.Docked, 4));
+    }
+
+    /// <summary>
+    /// The gap between remarks varies inside [Interval, Longest] rather than ticking
+    /// (<a href="https://github.com/dseelinger/d47/issues/258">#258</a>) — and
+    /// deterministically, off the pick counter, because a recorded session has to replay to the
+    /// same spacing.
+    /// </summary>
+    [Fact]
+    public void TheGapVariesInsideTheRangeAndReplaysTheSame()
+    {
+        static AmbientCallout Spread() => new()
+        {
+            Enabled = () => true,
+            Interval = TimeSpan.FromMinutes(15),
+            Longest = TimeSpan.FromMinutes(30),
+            Settle = TimeSpan.Zero,
+        };
+
+        var docked = In(StatusFlags.Docked | StatusFlags.InMainShip);
+        var cruising = In(StatusFlags.Supercruise | StatusFlags.InMainShip);
+
+        var callout = Spread();
+
+        callout.Examine(At(Start, docked)).ToArray();
+        Assert.Single(callout.Examine(At(Start.AddMinutes(15), docked)).ToArray());
+
+        // Sixteen minutes on from that one is past the floor and still inside this cycle's gap,
+        // which is the whole of the change: the wait grew, and it grew by something other than a
+        // fixed amount.
+        Assert.Empty(callout.Examine(At(Start.AddMinutes(31), cruising)));
+
+        // And thirty minutes on is past every gap the range can deal.
+        Assert.Single(callout.Examine(At(Start.AddMinutes(45).AddSeconds(1), cruising)).ToArray());
+
+        // The same drive again lands on the same cycle boundaries: the spacing comes off the
+        // pick counter, never a clock or a seed.
+        var replay = Spread();
+
+        replay.Examine(At(Start, docked)).ToArray();
+        Assert.Single(replay.Examine(At(Start.AddMinutes(15), docked)).ToArray());
+        Assert.Empty(replay.Examine(At(Start.AddMinutes(31), cruising)));
+        Assert.Single(replay.Examine(At(Start.AddMinutes(45).AddSeconds(1), cruising)).ToArray());
+    }
+
+    /// <summary>
+    /// The two edge cases the chatter pair already has, and they are the same two on purpose:
+    /// two rows of the same kind disagreeing about their own edges is worse than neither having
+    /// the spread. A maximum at the minimum pins the cadence, and one below it reads as equal.
+    /// </summary>
+    [Theory]
+    [InlineData(15)]
+    [InlineData(5)]
+    public void AMaximumAtOrBelowTheMinimumPinsTheCadence(int longestMinutes)
+    {
+        var callout = new AmbientCallout
+        {
+            Enabled = () => true,
+            Interval = TimeSpan.FromMinutes(15),
+            Longest = TimeSpan.FromMinutes(longestMinutes),
+            Settle = TimeSpan.Zero,
+        };
+
+        var docked = In(StatusFlags.Docked | StatusFlags.InMainShip);
+        var cruising = In(StatusFlags.Supercruise | StatusFlags.InMainShip);
+
+        callout.Examine(At(Start, docked)).ToArray();
+
+        // Two cycles, both landing on the interval exactly. Under a spread the second would have
+        // been the one to move, since the first pick's fraction is zero.
+        Assert.Single(callout.Examine(At(Start.AddMinutes(15), docked)).ToArray());
+        Assert.Single(callout.Examine(At(Start.AddMinutes(30), cruising)).ToArray());
     }
 }
