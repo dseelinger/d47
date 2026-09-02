@@ -110,6 +110,21 @@ public sealed record ViewState
     public bool ChecklistPartialGrades { get; init; }
 
     /// <summary>
+    /// Which way the journal's Raw switch was left
+    /// (<a href="https://github.com/dseelinger/d47/issues/267">#267</a>): the file's own JSON, or
+    /// sentences. Here rather than in settings for the reason the checklist filter is — no
+    /// default worth documenting, nothing behaves differently, and being unable to read it should
+    /// cost one flick of a switch rather than a loud failure.
+    /// <para>
+    /// <b>The switch's position, not a reading to open on.</b> Raw is a root of the Transcript tab
+    /// like the journal itself is, and remembering it as a <em>root</em> would open a Commander who
+    /// left d47 on raw into a wall of JSON at launch. What is kept is how the journal reading is
+    /// drawn when it is next opened; which reading the tab is on is somebody else's fact.
+    /// </para>
+    /// </summary>
+    public bool JournalRaw { get; init; }
+
+    /// <summary>
     /// Whether the Commander has ever asked d47 anything, by any route. What it retires is the
     /// worked example in the ask box's placeholder, which is an onboarding hint wearing a
     /// placeholder's clothes and was still teaching someone a month in.

@@ -1637,6 +1637,80 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>
+    /// Keeps the Raw switch where the Commander left it, across launches (#267).
+    /// <para>
+    /// <b>Handed to one surface, and it governs both.</b> The transcript root is mirrored between
+    /// the window and the headset (Phase 45), so a flick in mid-air arrives at this navigator too
+    /// and is recorded here — and a restore made here is carried back the same way. Two
+    /// surfaces each writing the one fact would be two writers of one record with nothing deciding
+    /// between them.
+    /// </para>
+    /// </summary>
+    public void RememberJournalReading(JournalReadingMemory memory) => _journalReading = memory;
+
+    /// <summary>Where the Raw switch was left, or null on a surface not asked to remember it.</summary>
+    private JournalReadingMemory? _journalReading;
+
+    /// <summary>
+    /// Which transcript reading this surface last saw, kept apart from <see cref="_showingRoot"/>
+    /// because that one is about whichever tab is drawn and this question is about the Transcript
+    /// tab whether or not it is the one showing.
+    /// </summary>
+    private string _journalReadingWas = ConversationRoot;
+
+    /// <summary>
+    /// Applies the remembered Raw position, and records it when it moves (#267). True when it
+    /// navigated, which means the caller's own work is about to be redone by the change it raised.
+    /// <para>
+    /// <b>On arriving at the journal reading rather than at launch.</b> Raw is a root of the
+    /// Transcript tab exactly like the journal is — the picker declines to list it and
+    /// <see cref="DrawModes"/> normalises it away, but the navigator holds it as a root all the
+    /// same. So restoring it as the tab's root would open a Commander who left d47 on raw into a
+    /// wall of JSON on the tab the panel starts on. What is remembered is how the reading is drawn
+    /// once it is opened.
+    /// </para>
+    /// <para>
+    /// <b>Arriving from raw is the one move this must not undo.</b> That is the switch having just
+    /// been turned off, and it reads as "the journal reading was opened" from every angle except
+    /// where it was opened from — which is why the previous reading is kept rather than only
+    /// the current one.
+    /// </para>
+    /// </summary>
+    private bool ApplyRememberedJournalReading()
+    {
+        // Only where a host furnished the raw reading. Asked of the navigator rather than held as
+        // a flag, the same way DrawRawToggle asks it.
+        if (_journalReading is null || !Nav.Roots(PanelTab.Transcript).Any(root => root.Key == RawJournalRoot))
+        {
+            return false;
+        }
+
+        var was = _journalReadingWas;
+        var now = Nav.RootKeyOf(PanelTab.Transcript);
+
+        _journalReadingWas = now;
+
+        if (now == RawJournalRoot)
+        {
+            _journalReading.Remember(true);
+            return false;
+        }
+
+        if (now != JournalRoot)
+        {
+            return false;
+        }
+
+        if (was == RawJournalRoot)
+        {
+            _journalReading.Remember(false);
+            return false;
+        }
+
+        return _journalReading.Raw && Nav.SelectRoot(PanelTab.Transcript, RawJournalRoot);
+    }
+
+    /// <summary>
     /// Where the Commander dragged the rules between panes, on the one surface that has a mouse
     /// (Phase 55). Null everywhere else, which is what keeps this the window's alone.
     /// </summary>
@@ -2456,6 +2530,15 @@ public partial class PanelView : UserControl
 
     private void ApplyNavigation()
     {
+        // The Raw switch, put back where the Commander left it (#267). First, and returning when
+        // it moved, because the move raises Changed and this method runs again on what it landed
+        // on. Ahead of the tab checks because the reading it is about is the Transcript's whether
+        // or not the Transcript is the tab showing.
+        if (ApplyRememberedJournalReading())
+        {
+            return;
+        }
+
         // A surface that was never given a tab cannot be put on one, whether by a stale
         // property, a host that forgot to furnish it, or a hand-edited state. The navigator
         // refuses the move, so this is only ever reached with a tab that exists — except for

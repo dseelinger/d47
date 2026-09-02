@@ -167,6 +167,12 @@ public partial class MainWindow : Window
             // be selected and pasted into a bug report, which is an act with no meaning in mid-air.
             Panel.EnableRawJournal();
 
+            // And it keeps the switch where the Commander left it (#267). This surface alone is
+            // asked to, and it governs both: the transcript root is mirrored between the window
+            // and the headset, so a flick in mid-air arrives at this navigator to be recorded and
+            // a restore made here is carried back the same way.
+            Panel.RememberJournalReading(new JournalReadingMemory(host.ViewState));
+
             // The sharper half of that same act (#160). Selecting a wall of JSON and pasting it
             // hands over whatever happened to be on screen, the Commander's name and other
             // people's messages included; this cuts a window around the incident, scrubs it, and
