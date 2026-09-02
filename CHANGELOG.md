@@ -27,6 +27,63 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.103.0 — 2026-09-02 — Captions can sit in the cockpit instead of on your face
+
+### Captions can be world-locked, low between the console and your feet (#204)
+
+Asked for as a placement preference and re-filed an hour later as **comfort**, which is what
+moved it inside the moratorium: head-locked content is shaky, and world-locking helps prevent
+motion sickness. That is not a taste. A head-locked band is the only thing in a headset that does
+*not* move when the Commander turns — the cockpit sweeps past, the inner ear reports a turn, and
+the caption reports nothing — and that disagreement is the mechanism motion sickness runs on.
+Oculus's own best-practice guide says to put interface elements into the 3D world rather than
+float them in front of the eyes.
+
+**`Caption position`, two named values, and no third thing.** `head` is unchanged and stays the
+default. `world` puts the band 0.80 m ahead of the seated Commander and 0.67 m below their
+eyeline — a strip covering 37° to 43° down, between the console and the feet, where the
+head-locked band covers 12° to 19°. It is one row beside the four captions already had, under
+Captions and Advanced.
+
+`settings.json` gets `"lock": "world"`, spelled the way `vr.panel.lock` is spelled and stored as a
+string for the same reason it is: a `SurfaceLock` on the settings record writes `worldLocked`
+beside the panel's `world`, and — found in review — a file hand-edited to the word the row, the
+docs and the panel all use would then *throw* on load rather than being read. Anything that is not
+`world` reads as head-locked, which is the band that is always in view.
+
+**This narrows a rule and the narrowing is the point.** *A caption you can drag somewhere you will
+not see it is not a caption* was a rule about free placement, and neither of these positions is
+free: both are worked out from the geometry. Captions still gain no distance row, no curve row and
+no grab-to-move, and `TheCaptionSurfaceGainsALockAndNothingElseFromThePlacementRows` is the old
+test with the two assertions that still hold left standing and the one that no longer does
+inverted.
+
+**Placed against the seated origin, not against a head pose, and that is what makes it need no way
+back.** Every absolute overlay d47 places goes into `TrackingUniverseSeated`, whose zero *is* the
+Commander's seated eye facing their forward — verified against a recorded head pose of
+y = −0.036 in `view-state.json`. So "between the console and the feet" is a constant in that
+universe, and SteamVR's own *Reset Seated Position* carries the band with it. The issue asked for
+re-anchor to reach a world-locked caption, and re-anchor has not existed since 0.94.0 (#219): a
+pose frozen off one head sample would have kept whatever lean was in that frame with nothing left
+to undo it. A constant cannot drift, so there is nothing to undo.
+
+**The size steps did not need re-measuring, because the width moved instead.** Apparent text size
+is the texture's pixel count and the quad's width in metres *together*. The world-locked band sits
+1.04 m from the eye where the head-locked one sits 1.66 m, so holding 0.9 m across would have drawn
+every caption 59 % larger. The width is derived from the ratio of the two eye distances — 0.565 m —
+and both bands subtend the same 30.3°, so `small`, `medium` and `large` mean one thing rather than
+two. Curvature is still zero, for the reason it always was.
+
+**On the tilt (#189), the honest claim is smaller than it looks.** That shipped in 0.93.0 and
+head-locked captions have been level since. What is left is that they are levelled once a serve
+while `SetOverlayTransformTrackedDeviceRelative` carries the quad rigidly at headset rate in
+between, so a quick roll of the head tilts the band until the next frame. A strip the headset is
+not carrying cannot show even that.
+
+*Left alone and worth knowing:* `architecture.md`'s Re-anchor paragraph still describes a feature
+retired in 0.94.0, and `VrPanelSurface.Head` is dead — nothing has read it since the same
+retirement. Both are #219's debt rather than this change's.
+
 ## 0.102.0 — 2026-09-02 — The two chatters are named for who is speaking
 
 ### Two unprompted voices are kept apart, and no longer come due on the same tick (#257)

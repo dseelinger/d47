@@ -9,10 +9,18 @@ namespace D47.App.Headset;
 /// <summary>
 /// The caption quad (Phase 9, "TheApp appears in the headset").
 /// <para>
-/// Its own overlay handle, head-locked, flat, and unmovable. Not a preference — a caption the
-/// Commander can drag is a caption they can drag somewhere they will not see it, and the one
-/// thing a caption has to be is where they are already looking. Being a separate handle is
-/// also what keeps <em>Overlay Positioning &amp; Look</em> from reaching it by accident.
+/// Its own overlay handle, flat, and unmovable. Not a preference — a caption the Commander can
+/// drag is a caption they can drag somewhere they will not see it, and the one thing a caption
+/// has to be is where they are already looking. Being a separate handle is also what keeps
+/// <em>Overlay Positioning &amp; Look</em> from reaching it by accident.
+/// </para>
+/// <para>
+/// <b>Two computed positions, and a row that picks between them</b>
+/// (<a href="https://github.com/dseelinger/d47/issues/204">#204</a>). Unmovable survives that:
+/// both poses are worked out here from the geometry, neither is placed, and no distance, curve
+/// or grab reaches either. What changed is that head-locked stopped being the only answer, on
+/// the Commander's argument that a band bolted to the view is shaky and a motion-sickness
+/// source — see <see cref="CaptionSettings.Lock"/>.
 /// </para>
 /// </summary>
 public sealed class VrCaptionSurface : IVrSurfaceSource, IDisposable
@@ -48,6 +56,48 @@ public sealed class VrCaptionSurface : IVrSurfaceSource, IDisposable
         Curvature = 0f,
         Opacity = 1f,
     };
+
+    /// <summary>
+    /// How far ahead of the seated Commander the world-locked band sits, and how far below their
+    /// eyes its centre goes (#204). Between the console and the feet: the centre lands 40° below
+    /// the eyeline and the strip runs 37° to 43°, where the head-locked band runs 12° to 19°.
+    /// </summary>
+    private const float FootwellDistanceMetres = 0.80f;
+
+    private const float FootwellDropMetres = -0.67f;
+
+    /// <summary>
+    /// The world-locked band, worked out once from the geometry above.
+    /// <para>
+    /// <b>Placed against the seated origin rather than against a head pose, and that is the whole
+    /// of why nothing here needs re-anchoring.</b> Every absolute overlay d47 places goes into
+    /// <c>TrackingUniverseSeated</c>, whose zero <em>is</em> the Commander's seated eye facing
+    /// their forward — so "between the console and the feet" is a constant in that universe, and
+    /// SteamVR's own <em>Reset Seated Position</em> carries the band with it. A pose frozen off a
+    /// head sample instead would keep whatever lean was in that one frame, and would need a way
+    /// back that no longer exists: re-anchor was retired in 0.94.0 (#219).
+    /// </para>
+    /// <para>
+    /// <b>The width follows the distance, so the size row means the same thing in both modes.</b>
+    /// Apparent text size is the texture's pixel count and the quad's width in metres together,
+    /// and the band is now 1.04 m from the eye where it was 1.66 m — so holding 0.9 m would draw
+    /// every caption 59% larger. Scaled by the ratio of the two eye distances, the band subtends
+    /// the same 30.3° it always has and the three <see cref="CaptionSize"/> steps carry over
+    /// unchanged rather than needing re-measuring.
+    /// </para>
+    /// <para>
+    /// The tilt comes from <see cref="VrPlacementMath.Resting"/>, which aims the quad's face at
+    /// the eye and pins roll to zero. The tilt is the one that matters: a band 40° below the eye
+    /// that is square to the tracking universe is read edge-on. Roll costs nothing here and buys
+    /// a little — head-locked has been levelled since #189 shipped in 0.93.0, but it is levelled
+    /// once a serve while the runtime carries the quad rigidly at headset rate in between, so a
+    /// quick roll of the head tilts it until the next frame. A band the headset is not carrying
+    /// has nothing to correct.
+    /// </para>
+    /// </summary>
+    private static readonly SurfacePlacement Footwell = Below(
+        FootwellDistanceMetres,
+        FootwellDropMetres);
 
     private readonly CaptionLayer _layer;
     private readonly CaptionViewModel _model = new();
@@ -85,12 +135,25 @@ public sealed class VrCaptionSurface : IVrSurfaceSource, IDisposable
     /// </summary>
     public bool TakesPointer => false;
 
-    public SurfacePlacement Placement => Placed;
+    /// <summary>
+    /// Which of the two bands is up. Read from the layer's own settings on every serve rather
+    /// than latched at configure time, so the row and the quad cannot come to disagree — the
+    /// failure the panel's lock logs a warning about. Both answers are constants worked out
+    /// above; neither is a position anything put anywhere.
+    /// </summary>
+    public SurfacePlacement Placement =>
+        _layer.Settings.Locking == SurfaceLock.WorldLocked ? Footwell : Placed;
 
     public (int Width, int Height) Size => (Pixels.Width, Pixels.Height);
 
     public bool IsDirty => _dirty;
 
+    /// <summary>
+    /// Nothing to remember. The head-locked band is carried by the runtime and the world-locked
+    /// one is a constant in the seated universe, so neither answer depends on where the head was
+    /// on any particular frame — which is what keeps the world-locked band out of the "computed
+    /// from one lean and stuck with it" trap (#204).
+    /// </summary>
     public void Observe(VrPose head)
     {
     }
@@ -114,6 +177,48 @@ public sealed class VrCaptionSurface : IVrSurfaceSource, IDisposable
         _layer.Changed -= OnLayerChanged;
         _model.PropertyChanged -= OnModelChanged;
         _offscreen.Dispose();
+    }
+
+    /// <summary>
+    /// A world-locked band the given distance ahead of the seated eye, with its centre the given
+    /// drop below it, and as wide as it has to be to look the size the head-locked one does.
+    /// </summary>
+    private static SurfacePlacement Below(float distanceMetres, float dropMetres)
+    {
+        var inTheView = Placed;
+
+        // Eye to quad centre, for each band. The slant rather than the distance ahead: at 40°
+        // down the drop is most of the triangle, and measuring along the floor alone would draw
+        // the band a fifth too small.
+        var wasAway = MathF.Sqrt(
+            (inTheView.DistanceMetres * inTheView.DistanceMetres)
+            + (inTheView.DropMetres * inTheView.DropMetres));
+
+        var nowAway = MathF.Sqrt((distanceMetres * distanceMetres) + (dropMetres * dropMetres));
+
+        var width = inTheView.WidthMetres * nowAway / wasAway;
+
+        // The quad's height is not settable — SteamVR takes a width and derives the rest off the
+        // texture's aspect — so the top edge that puts the centre at the asked-for drop has to
+        // come from both, and moves the moment either of them does.
+        var quadHeight = width * Pixels.Height / Pixels.Width;
+
+        return inTheView with
+        {
+            Lock = SurfaceLock.WorldLocked,
+            DistanceMetres = distanceMetres,
+            DropMetres = dropMetres,
+            WidthMetres = width,
+
+            // The seated origin standing in for the head, which is what it is: the Commander's
+            // eye, facing their forward, level. Resting does the rest — the yaw off that
+            // forward, the tilt back at the eye, and the roll pinned to zero.
+            Placed = VrPlacementMath.Resting(
+                VrPose.Origin,
+                distanceMetres,
+                dropMetres + (quadHeight / 2f),
+                quadHeight),
+        };
     }
 
     private void OnLayerChanged()

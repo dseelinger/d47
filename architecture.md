@@ -164,7 +164,7 @@ when the aim stopped being SteamVR's to draw.*
 | Handle | Locking | Input |
 |---|---|---|
 | Panel | Head- or world-locked, per *VR Panel locking*. `Full` and `Mini` are content modes of it, each with its own placement | Ray-cast and carried by the trigger |
-| Captions | Head-locked, fixed | None — output only |
+| Captions | Head- or world-locked, per *Caption position* (#204). Both poses are computed — head-locked below the view, world-locked a fixed strip in the seated universe between the console and the feet — so the lock is a choice between two, never a placement | None — output only |
 | Beam | Follows the aiming hand | None — it *is* the input, drawn |
 | Cursor | Sits on the hit point | None |
 
@@ -176,7 +176,7 @@ soft — no beam and no cursor is a panel that can still be carried, just unguid
 
 The original table gave mini its own handle. *TheApp's panel works in VR* is explicit that "Mini is a mode of the same panel — a reduced content set — not a separate surface or a scaled-down copy", and that line is the acceptance criterion, so mini is a mode on the view model and the two modes share one handle and one quad. They do **not** share a size: apparent text size in a headset is the texture's pixel count and the quad's width in metres together, so mini is a smaller image at a smaller width, not the same image hung nearer. Each mode therefore carries its own placement, which is what the "same transform family" row was reaching for.
 
-Captions stay a separate handle precisely so *Overlay Positioning & Look* cannot accidentally apply to them.
+Captions stay a separate handle precisely so *Overlay Positioning & Look* cannot accidentally apply to them. The one caption row that names a position (#204) picks between two poses the code derives; it brings no distance, no curvature and no grab with it, which is what keeps that separation meaning something.
 
 **Controller input is `IVRInput`, not overlay mouse events.** *Amended 2026-08-17, reversing what
 this section said for three phases.*

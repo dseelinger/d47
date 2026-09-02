@@ -202,8 +202,9 @@ Two things float in front of you.
 **The panel** — the same panel as on the desktop, not a picture of it. It is the same app drawn a
 second time, so the windowed version can never do something the headset version cannot.
 
-**Captions** — everything Directive 47 says, written underneath. They place themselves, clear
-themselves, and cannot be moved or dragged somewhere you would not see them.
+**Captions** — everything Directive 47 says, written underneath. They place themselves and clear
+themselves, and there is nothing to drag them somewhere you would not see them. You choose which
+of two places they sit — in your view, or low in the cockpit — and Directive 47 works out the rest.
 
 ### Moving it about
 
@@ -434,15 +435,49 @@ Captions follow what is actually audible rather than what was generated, so if y
 captions stop with the voice. A caption still sitting there after a silence command is Directive
 47 visibly not having stopped.
 
-**They stay level with the horizon, not with your head.** Captions follow where you are looking —
-turn or look down and they come with you — but they ignore how far your head is *tilted*, so the
-text runs along the same line the cockpit does instead of along your eyeline. Tilt your head
-twenty degrees and the captions stay put and level while your view rolls around them. There is no
-setting for this and deliberately so: a caption is either level or it is wrong, and a tilt dial
-you have to trim by hand is a way of shipping it wrong.
+**They stay level with the horizon, not with your head.** Head-locked captions follow where you
+are looking — turn or look down and they come with you — but they ignore how far your head is
+*tilted*, so the text runs along the same line the cockpit does instead of along your eyeline.
+Tilt your head twenty degrees and the captions stay put and level while your view rolls around
+them. There is no tilt dial and deliberately so: a caption is either level or it is wrong, and an
+angle you have to trim by hand is a way of shipping it wrong.
 
 If your captions look level but the *cockpit* does not, that is Elite's own recenter having been
 taken with your head tilted — recenter again with your head straight, and both agree.
+
+#### Caption position {#position}
+
+`head` or `world`. Two positions, both worked out for you, and nothing else about where captions
+go is settable — there is no distance, no curvature and nothing to reach out and drag.
+
+**`head` is the default.** The band hangs a little below the middle of your view, 1.6 m out, and
+goes where you go. It is always readable, which is the one thing a caption has to be.
+
+**`world` puts it in the cockpit instead**, in a fixed strip between the console and your feet:
+0.8 m ahead of where you sit and 0.67 m below your eyeline, so it covers the band from about 37°
+to 43° down. It stays there while you look around, the way the cockpit does.
+
+Why you might want that: a head-locked caption is the only thing in the headset that does *not*
+move when you turn your head. Your eyes report a band holding perfectly still while your inner ear
+reports a turn, and that disagreement is what motion sickness is made of — so a band that sits in
+the room instead of on your face is the more comfortable of the two for anyone it bothers. World-
+locked is also that little bit steadier when you move your head fast: head-locked captions are put
+level again every time the overlay is served, and the headset carries them rigidly in between, so a
+quick roll tilts them until the next frame. A strip sitting in the cockpit is not being carried, so
+there is nothing to catch up.
+
+What it costs, plainly: you have to glance down for it. Head-locked is always in front of you and
+world-locked is somewhere you look. That trade is yours, which is why this is a row and not a
+ruling.
+
+The strip is measured from your **seated position**, not dropped where you happened to be looking,
+so it cannot drift and there is nothing to put back. If it ever sits wrong, it is your seated
+position that has moved: use SteamVR's own *Reset Seated Position* with your head straight and the
+band comes with it.
+
+Text is the same size either way. The strip is nearer than the head-locked band, so it is
+correspondingly narrower — both cover the same 30° of view, and [caption size](#size) means the
+same thing in both.
 
 #### Caption size {#size}
 
@@ -530,9 +565,14 @@ smaller image as well as less content — drawing the full panel and hanging it 
 third of the size.
 
 ```text
-full   1024 x 640 px   at 1.10 m wide
-mini     512 x 280 px   at 0.34 m wide
+full       1024 x 640 px   at 1.10 m wide
+mini         512 x 280 px   at 0.34 m wide
+captions    1600 x 340 px   at 0.90 m head-locked, 0.57 m world-locked
 ```
+
+The caption quad is the same texture in both positions. The world-locked strip is nearer, so it is
+narrower by exactly the ratio of the two distances — which is what makes the size steps mean one
+thing rather than two.
 
 1.4 m was tried first and read as enormous — close to fifty degrees of view, so the panel filled
 the middle and the cockpit was behind it rather than around it.
