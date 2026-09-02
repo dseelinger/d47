@@ -46,16 +46,21 @@ public partial class PanelView : UserControl
     /// </summary>
     /// <remarks>
     /// <b>The key does not change when the word does</b>
-    /// (<a href="https://github.com/dseelinger/d47/issues/51">#51</a>). "Conversation" became
-    /// <em>Thread</em>, "Technical" became <em>Details</em> and "Log file" became <em>D47 Log</em>
-    /// — all three are <see cref="NavCrumb.Word"/> changes and nothing else. These keys are
-    /// internal, a host drives one by name and a test reaches for one by name, so renaming them
-    /// alongside the labels would be churn with a chance of breaking something and no upside.
+    /// (<a href="https://github.com/dseelinger/d47/issues/51">#51</a>). This one has been drawn as
+    /// <em>Conversation</em>, then <em>Thread</em>, then <em>Conversation</em> again, and is
+    /// <em>In Ship</em> now — every one of them a <see cref="NavCrumb.Word"/> change and nothing
+    /// else. These keys are internal, a host drives one by name and a test reaches for one by
+    /// name, so renaming them alongside the labels would be churn with a chance of breaking
+    /// something and no upside.
+    /// <para>
+    /// <c>transcript.technical</c> is the one that did not survive, and it is not a rename: the
+    /// reading was withdrawn from the picker in #231 and the last of it went in
+    /// <a href="https://github.com/dseelinger/d47/issues/260">#260</a>. A stored root naming it
+    /// falls through to the conversation, which <see cref="PanelNavigator.SelectRoot"/> does for
+    /// any root nobody registered.
+    /// </para>
     /// </remarks>
     public const string ConversationRoot = "transcript.conversation";
-
-    /// <inheritdoc cref="ConversationRoot"/>
-    public const string TechnicalRoot = "transcript.technical";
 
     /// <inheritdoc cref="ConversationRoot"/>
     public const string LogRoot = "transcript.log";
@@ -106,7 +111,7 @@ public partial class PanelView : UserControl
     /// <para>
     /// One exception, and it is the host's rather than this view's: the Transcript tab's root is
     /// shared across every surface (Phase 45), so a press on this mode control that picks
-    /// Technical is heard by the headset and drawn there too. The navigator still holds the value;
+    /// A reading chosen by voice is heard by the headset and drawn there too. The navigator still holds the value;
     /// the host's <c>TranscriptMirror</c> keeps the navigators agreeing about it.
     /// </para>
     /// </summary>
@@ -475,7 +480,6 @@ public partial class PanelView : UserControl
     {
         get => Nav.RootKeyOf(PanelTab.Transcript) switch
         {
-            TechnicalRoot => TranscriptPage.Technical,
             LogRoot => TranscriptPage.Log,
             JournalRoot => TranscriptPage.Journal,
             RawJournalRoot => TranscriptPage.RawJournal,
@@ -484,7 +488,6 @@ public partial class PanelView : UserControl
 
         set => Nav.SelectRoot(PanelTab.Transcript, value switch
         {
-            TranscriptPage.Technical => TechnicalRoot,
             TranscriptPage.Log => LogRoot,
             TranscriptPage.Journal => JournalRoot,
             TranscriptPage.RawJournal => RawJournalRoot,
@@ -1890,16 +1893,24 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>
-    /// Empties what this page is showing, leaving the record alone (remediation.md 11, item 14).
+    /// Empties the reading being looked at, leaving the record alone (remediation.md 11, item 14).
     /// <para>
-    /// Refused on the log page, where there is nothing of d47's to clear: that page is a file on
-    /// disk read a screenful at a time, and a control that appeared to empty it would be offering
-    /// to delete a log.
+    /// Refused wherever the reading is a file on disk that d47 only reads: there is nothing of
+    /// d47's to clear there, and a control that appeared to empty one would be offering to delete
+    /// it.
+    /// </para>
+    /// <para>
+    /// <b>That was written as one page's name and should always have been the question</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/261">#261</a>). It named the log, which
+    /// was right about all three readings that existed then — and the two journal readings arrived
+    /// afterwards and were never added, so the press fell through to the conversation and emptied
+    /// a page the Commander was not looking at. Nothing on screen changed, because the journal is
+    /// read from Elite's file: they found out on going back to In Ship.
     /// </para>
     /// </summary>
     public bool ClearTranscript()
     {
-        if (Page == TranscriptPage.Log || Model is not { } model)
+        if (!Clearable || Model is not { } model)
         {
             return false;
         }
@@ -1912,6 +1923,16 @@ public partial class PanelView : UserControl
 
         return true;
     }
+
+    /// <summary>
+    /// Whether this reading is d47's own to empty (#261).
+    /// <para>
+    /// One question, asked in the one place, so the menu item's greying and the press itself
+    /// cannot disagree — which is the shape of the fault this replaces. In Ship is held in memory
+    /// and is d47's; the other three are files on disk it only reads.
+    /// </para>
+    /// </summary>
+    private bool Clearable => Page == TranscriptPage.Conversation;
 
     /// <summary>Puts the cursor in the search box. Ctrl+F does this; a host may too.</summary>
     public void FocusSearch()
@@ -4075,8 +4096,8 @@ public partial class PanelView : UserControl
 
         // Only where there is something to cut and somewhere to put it (#160). The two diagnostic
         // readings are the two halves of an incident — Elite's events and what d47 did with them —
-        // and the Thread page is neither: it is the conversation, which the log already holds a
-        // more exact copy of.
+        // and In Ship is neither: it is the conversation, which the log already holds a more exact
+        // copy of.
         //
         // Null when no host wired it, which is every surface but the desktop window. That is the
         // same rule the search box follows two lines down and for a stronger reason: a review step
@@ -4092,6 +4113,11 @@ public partial class PanelView : UserControl
                               && Mode == PanelMode.Full
                               && ModalPane.Child is null
                               && (transcript || (PagePane.Child as IFilterablePage)?.Filters == true);
+
+        // Greyed on the readings that refuse (#261), the way Copy beside it is greyed with nothing
+        // to copy — and for the reason that comment gives: a control that silently does nothing is
+        // indistinguishable from one that failed, so the refusal is drawn rather than only obeyed.
+        ClearTranscriptItem.IsEnabled = transcript && Clearable;
 
         ShowPageBar();
     }

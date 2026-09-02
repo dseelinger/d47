@@ -582,7 +582,7 @@ public sealed class AppHost : IDisposable
     public event Action<string>? Noted;
 
     /// <summary>
-    /// Raised with a line for the Technical page — in-game comms, which are neither the
+    /// Raised with a line for the transcript — in-game comms, which are neither the
     /// conversation nor a diagnostic.
     /// <para>
     /// Separate from <see cref="Said"/> because that one is d47 talking and lands on the
@@ -597,7 +597,7 @@ public sealed class AppHost : IDisposable
     /// <summary>
     /// Something the Commander said that no turn is going to write down (change-requests.md 31).
     /// <para>
-    /// <b>The Technical page, not the conversation.</b> What was heard before routing is the
+    /// <b>Written as well as heard.</b> What was heard before routing is the
     /// working behind an answer rather than part of the exchange, and the conversation is the one
     /// page that has to stay readable. It is the same reasoning that puts in-game comms there.
     /// </para>
@@ -792,12 +792,7 @@ public sealed class AppHost : IDisposable
         // Logging first, so everything below has somewhere to report a failure.
         var verbosity = new SerilogVerbosityControl();
 
-        // Built with logging rather than after it, because a sink has to be in the pipeline to
-        // see anything. It drops events until it is pointed at a panel, which is the right
-        // behaviour for the startup errors raised before there is one.
-        var technicalLog = new TechnicalLogBridge();
-
-        Log.Logger = LoggingSetup.Create(paths, verbosity, technicalLog);
+        Log.Logger = LoggingSetup.Create(paths, verbosity);
         var loggerFactory = new SerilogLoggerFactory(Log.Logger);
         var logger = loggerFactory.CreateLogger<AppHost>();
 
@@ -2200,16 +2195,13 @@ public sealed class AppHost : IDisposable
         // one of its own.
         voice.StateEntered += state => host.Panel.LoopState = state;
 
-        // And the Technical page gets the same transitions in words. The page's premise is the
-        // conversation with the diagnostics left in, and until now the loop it most needs to show
-        // reported itself only to a log file (docs/plans/change-requests.md item 6).
-        var trace = new SpeechLoopTrace(host.Panel);
-        voice.StateEntered += trace.Entered;
-
-        // Errors from the speech path land there too, through the log rather than through a call
-        // site: an authored list of stage lines cannot cover the failure nobody has written yet.
-        technicalLog.WriteTo(line =>
-            host.Panel.Append($"[error] {line}{Environment.NewLine}", TranscriptKind.Technical));
+        // The same transitions used to be written into the transcript in words, and the speech
+        // path's errors mirrored beside them (change-requests.md item 6). Both went to the
+        // Technical reading, and both are gone with it (#260): the loop reports every stage to
+        // the log already — which is what SpeechLoopTrace's own summary said it did before that
+        // page existed — and the error mirror was a log sink, so it could only ever be the Log
+        // File reading twice. That is the Commander's own reason for the page going: "everything
+        // in Technical is still in the Log File."
 
         // That the microphone is open, on both surfaces, as a property of the gate policy rather
         // than of any one capability (Phase 13). Set straight onto the view model from
@@ -4674,7 +4666,7 @@ public sealed class AppHost : IDisposable
     /// </para>
     /// <para>
     /// For the transcript the agreement is unconditional (Phase 45): which of Conversation,
-    /// Technical and the log file is being read is one choice across every surface, held by
+    /// reading is showing is one choice across every surface, held by
     /// <see cref="_transcript"/>. Tabs and trails stay per surface, so this list is still walked.
     /// </para>
     /// </summary>
@@ -4850,10 +4842,10 @@ public sealed class AppHost : IDisposable
             // three levels down — and what the Commander hears should describe the move rather
             // than one surface's share of it.
             //
-            // A transcript mode — "technical" — is taken by the first surface at a root, and the
-            // mirror has moved the rest before this loop reaches them (Phase 45). So a
-            // headset three levels into a checklist, which answers nothing here, is reading
-            // Technical when it comes back to the transcript.
+            // A transcript reading — "log file" — is taken by the first surface at a root, and
+            // the mirror has moved the rest before this loop reaches them (Phase 45). So a
+            // headset three levels into a checklist, which answers nothing here, is reading the
+            // log file when it comes back to the transcript.
             var moved = Core.Interface.PanelPhrases.Apply(spoken, nav);
 
             said ??= moved;

@@ -24,11 +24,13 @@ public class ClearingTheTranscriptKeepsTheRecordTests
         var model = new PanelViewModel();
 
         model.Append("Fixture One, docked.\n");
-        model.Append("[12:00:00] Microphone open.\n", TranscriptKind.Technical);
 
         var panel = new PanelView { DataContext = model };
         var window = new Window { Content = panel, Width = 900, Height = 600 };
 
+        // The raw journal is furnished, because it is one of the readings that has to refuse and
+        // an unfurnished surface cannot be sent to it at all.
+        panel.EnableRawJournal();
         window.Show();
         panel.EnableSearch();
         Dispatcher.UIThread.RunJobs();
@@ -51,18 +53,16 @@ public class ClearingTheTranscriptKeepsTheRecordTests
         Assert.Equal(string.Empty, Shown(panel));
     }
 
-    /// <summary>Both readings, because they are one set of runs seen two ways.</summary>
     [AvaloniaFact]
-    public void TheTechnicalPageGoesWithIt()
+    public void TheRunsUnderneathGoWithIt()
     {
         var (panel, model) = Said();
 
         panel.ClearTranscript();
         Dispatcher.UIThread.RunJobs();
 
-        Assert.DoesNotContain(model.Segments(TranscriptPage.Technical), segment => segment.Text.Length > 0);
+        Assert.DoesNotContain(model.Segments(TranscriptPage.Conversation), segment => segment.Text.Length > 0);
         Assert.Equal(string.Empty, model.TranscriptText);
-        Assert.Equal(string.Empty, model.ConversationText);
     }
 
     /// <summary>Ctrl+L, which is where a reader's hands already are.</summary>
@@ -109,24 +109,86 @@ public class ClearingTheTranscriptKeepsTheRecordTests
 
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(string.Empty, model.ConversationText);
+        Assert.Equal(string.Empty, model.TranscriptText);
     }
 
     /// <summary>
-    /// The log page is a file on disk read a screenful at a time. A control that appeared to empty
-    /// it would be offering to delete a log, so it is refused there.
+    /// Every reading that is a file on disk refuses, and the conversation it is not showing is
+    /// left alone (<a href="https://github.com/dseelinger/d47/issues/261">#261</a>).
+    /// <para>
+    /// <b>The log was the only one of these asserted, and the only one the code checked.</b> The
+    /// two journal readings arrived after that rule was written and were never added to it, so
+    /// pressing Clear on either emptied the conversation three doors away — and nothing on screen
+    /// changed, because a journal reading is drawn from Elite's file. A Commander found out on
+    /// going back to In Ship.
+    /// </para>
     /// </summary>
-    [AvaloniaFact]
-    public void TheLogPageIsNotCleared()
+    [AvaloniaTheory]
+    [InlineData(TranscriptPage.Log)]
+    [InlineData(TranscriptPage.Journal)]
+    [InlineData(TranscriptPage.RawJournal)]
+    public void AReadingThatIsAFileIsNotCleared(TranscriptPage page)
     {
         var (panel, model) = Said();
 
         model.LogSource = () => "today's log";
-        panel.Page = TranscriptPage.Log;
+        panel.Page = page;
         Dispatcher.UIThread.RunJobs();
 
+        Assert.Equal(page, panel.Page);
         Assert.False(panel.ClearTranscript());
-        Assert.Contains("Fixture One", model.ConversationText, StringComparison.Ordinal);
+        Assert.Contains("Fixture One", model.TranscriptText, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// And Ctrl+L is refused there too, not merely the menu item (#261). It is the gesture a
+    /// reader's hands reach for, so a fix that only covered the drawn control would leave the
+    /// fault exactly where it was found.
+    /// </summary>
+    [AvaloniaTheory]
+    [InlineData(TranscriptPage.Log)]
+    [InlineData(TranscriptPage.Journal)]
+    [InlineData(TranscriptPage.RawJournal)]
+    public void ControlLIsRefusedOnAReadingThatIsAFile(TranscriptPage page)
+    {
+        var (panel, model) = Said();
+
+        model.LogSource = () => "today's log";
+        panel.Page = page;
+        Dispatcher.UIThread.RunJobs();
+
+        panel.RaiseEvent(new KeyEventArgs
+        {
+            RoutedEvent = InputElement.KeyDownEvent,
+            Key = Key.L,
+            KeyModifiers = KeyModifiers.Control,
+        });
+
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Contains("Fixture One", model.TranscriptText, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The refusal is drawn as well as obeyed (#261) — greyed where it would do nothing, the way
+    /// Copy beside it is greyed with nothing selected. A control that silently does nothing is
+    /// indistinguishable from one that failed.
+    /// </summary>
+    [AvaloniaTheory]
+    [InlineData(TranscriptPage.Conversation, true)]
+    [InlineData(TranscriptPage.Log, false)]
+    [InlineData(TranscriptPage.Journal, false)]
+    [InlineData(TranscriptPage.RawJournal, false)]
+    public void TheMenuItemIsGreyedWhereItWouldRefuse(TranscriptPage page, bool enabled)
+    {
+        var (panel, _) = Said();
+
+        panel.Page = page;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(
+            enabled,
+            panel.GetControl<Avalonia.Controls.MenuItem>("ClearTranscriptItem").IsEnabled);
     }
 
     /// <summary>The menu item exists, and says the shortcut out loud.</summary>

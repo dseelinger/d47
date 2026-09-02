@@ -69,11 +69,10 @@ public class LogLevelRoutingTests : IDisposable
     {
         var verbosity = new SerilogVerbosityControl();
         var sink = new Captured();
-        var bridge = new TechnicalLogBridge();
 
         Directory.CreateDirectory(_root);
 
-        var logger = LoggingSetup.Create(new AppPaths(_root), verbosity, bridge);
+        var logger = LoggingSetup.Create(new AppPaths(_root), verbosity);
 
         // The sink cannot be added after the fact, so the captured view is a second logger over
         // the same switches — which is what is actually under test.

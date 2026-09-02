@@ -27,7 +27,7 @@ public class PersonaSwitchMarkTests
         model.Mark("Switched to Cora");
         model.Append("Cora online.");
 
-        Assert.Contains("[Switched to Cora]", model.ConversationText, StringComparison.Ordinal);
+        Assert.Contains("[Switched to Cora]", model.TranscriptText, StringComparison.Ordinal);
 
         var segments = model.Segments(TranscriptPage.Conversation);
 
@@ -39,21 +39,24 @@ public class PersonaSwitchMarkTests
     }
 
     /// <summary>
-    /// It is a conversation line, so the page that shows everything shows it too — a technical
-    /// page missing what the conversation page has would be the one page that is not a superset.
+    /// A mark survives lines written either side of it, which is the case it exists for: the core
+    /// changing is a thing that happened <em>to</em> the conversation, mid-conversation.
     /// </summary>
+    /// <remarks>
+    /// This asserted the mark reached the Technical reading as well until #260 deleted it. There
+    /// is one reading of the runs now, so "both pages agree" is not a question that can be asked
+    /// — what is left is the half that was always the point.
+    /// </remarks>
     [Fact]
-    public void TheMarkIsOnBothTheConversationAndTechnicalPages()
+    public void TheMarkSurvivesTheLinesAroundIt()
     {
         var model = new PanelViewModel();
 
-        model.Append("Directive 47 0.5.8", TranscriptKind.Technical);
+        model.Append("Standing by.");
         model.Mark("Switched to Kex");
+        model.Append("Kex online.");
 
-        Assert.Contains("[Switched to Kex]", model.ConversationText, StringComparison.Ordinal);
         Assert.Contains("[Switched to Kex]", model.TranscriptText, StringComparison.Ordinal);
-
-        Assert.Contains(model.Segments(TranscriptPage.Technical), segment => segment.Marker);
         Assert.Contains(model.Segments(TranscriptPage.Conversation), segment => segment.Marker);
     }
 

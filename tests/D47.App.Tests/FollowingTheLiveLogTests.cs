@@ -259,20 +259,19 @@ public class FollowingTheLiveLogTests
     public void TheCopyButtonSitsWithTheReadingToolsAndCopiesThePageBeingRead()
     {
         var model = new PanelViewModel();
-        model.Append("Directive 47 0.12.0\nLanguage model: ready.", TranscriptKind.Technical);
+        model.Append("Language model: ready.");
         model.Append("\n\n> Where am I?\nWe're holding at HIP 12099 1 b.");
 
         var (window, view) = Open(model);
 
         Assert.True(Named<Button>(view, "CopyButton").IsVisible);
 
-        // The conversation page copies the conversation, and the technical page copies
-        // everything — the same text the Commander is looking at, and not a fourth thing.
+        // What is copied is the page being read — the same text the Commander is looking at,
+        // and not a third thing assembled for the clipboard.
         var conversation = string.Concat(model.Segments(TranscriptPage.Conversation).Select(s => s.Text));
-        var technical = string.Concat(model.Segments(TranscriptPage.Technical).Select(s => s.Text));
 
-        Assert.DoesNotContain("Language model: ready.", conversation, StringComparison.Ordinal);
-        Assert.Contains("Language model: ready.", technical, StringComparison.Ordinal);
+        Assert.Contains("Language model: ready.", conversation, StringComparison.Ordinal);
+        Assert.Contains("HIP 12099 1 b.", conversation, StringComparison.Ordinal);
         Assert.Contains("HIP 12099 1 b.", conversation, StringComparison.Ordinal);
 
         window.Close();
