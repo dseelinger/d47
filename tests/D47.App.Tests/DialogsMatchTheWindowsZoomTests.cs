@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
@@ -131,5 +132,96 @@ public class DialogsMatchTheWindowsZoomTests
         Assert.True(
             offenders.Length == 0,
             $"open a dialog with .Over(owner) so it matches the window's zoom: {string.Join(", ", offenders)}");
+    }
+
+    /// <summary>
+    /// A zoomed dialog fits inside its window
+    /// (<a href="https://github.com/dseelinger/d47/issues/265">#265</a>).
+    /// <para>
+    /// <b>Reported as a help button past the fold</b>, and the mark was a witness rather than the
+    /// fault: it is docked right, so it is the first thing over the edge when the content is wider
+    /// than the window. What was wrong is that every zoomed dialog overflowed by <em>its own
+    /// margin</em> — a control's <c>DesiredSize</c> includes its margin and <c>MaxWidth</c> does
+    /// not, so constraining a panel with <c>Margin(20)</c> to exactly the viewport made it ask for
+    /// the viewport plus forty.
+    /// </para>
+    /// <para>
+    /// <b>The tests above never caught it because they never laid anything out.</b> They read the
+    /// scale off the window's own content, which is the right way to ask whether a dialog was
+    /// wrapped — and it says nothing about whether what is inside the wrapper fits. This one shows
+    /// a real dialog and measures.
+    /// </para>
+    /// </summary>
+    [AvaloniaTheory]
+    [InlineData(110)]
+    [InlineData(125)]
+    [InlineData(150)]
+    public void AZoomedDialogDoesNotScrollSideways(int percent)
+    {
+        var (owner, _) = Zoomed(percent);
+
+        var dialog = new Controls.HelpImproveWindow(
+            new DateTimeOffset(2026, 9, 1, 21, 0, 0, TimeSpan.Zero),
+            _ => "a line",
+            destination: "donations.example");
+
+        ZoomHost.Match(dialog, owner);
+        dialog.Show();
+
+        // Several passes: Fit runs off the viewport, and there is no viewport until a layout has
+        // happened — so the first measure is deliberately unconstrained and settles after it.
+        for (var i = 0; i < 5; i++)
+        {
+            Dispatcher.UIThread.RunJobs();
+        }
+
+        var viewport = Assert.IsType<ScrollViewer>(dialog.Content);
+
+        Assert.True(
+            viewport.Extent.Width <= viewport.Viewport.Width + 0.5,
+            $"""
+             At {percent}% the dialog is {viewport.Extent.Width:0} wide inside a
+             {viewport.Viewport.Width:0} viewport, so it scrolls sideways and whatever is docked
+             right is off the edge. Fit is not subtracting the content's margin.
+             """);
+
+        dialog.Close();
+        owner.Close();
+    }
+
+    /// <summary>
+    /// And the mark is somewhere a Commander can reach, which is the half that was reported. A
+    /// control past the right edge still has bounds, so this asks <em>where</em> it is.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheHelpMarkOnAZoomedDialogIsOnScreen()
+    {
+        var (owner, _) = Zoomed(125);
+
+        var dialog = new Controls.HelpImproveWindow(
+            new DateTimeOffset(2026, 9, 1, 21, 0, 0, TimeSpan.Zero),
+            _ => "a line",
+            destination: "donations.example");
+
+        ZoomHost.Match(dialog, owner);
+        dialog.Show();
+
+        for (var i = 0; i < 5; i++)
+        {
+            Dispatcher.UIThread.RunJobs();
+        }
+
+        var mark = dialog.GetVisualDescendants().OfType<Button>()
+            .Single(button => button.Name == "HelpImproveHelp");
+
+        var at = mark.TranslatePoint(new Point(mark.Bounds.Width, 0), dialog);
+
+        Assert.NotNull(at);
+        Assert.True(
+            at.Value.X <= dialog.Width + 0.5,
+            $"The mark's right edge is at {at.Value.X:0} in a window {dialog.Width:0} wide.");
+
+        dialog.Close();
+        owner.Close();
     }
 }

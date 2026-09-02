@@ -126,12 +126,31 @@ public sealed class ZoomHost
     /// large, which is a browser's text zoom — bigger text, rewrapped, still inside the window.
     /// </para>
     /// <para>
+    /// <b>Less the content's own margin, which is the part this got wrong</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/265">#265</a>). A control's
+    /// <c>DesiredSize</c> includes its margin and <c>MaxWidth</c> does not: constraining a panel
+    /// with <c>Margin(20)</c> to exactly the viewport makes it ask for the viewport plus forty,
+    /// so every zoomed dialog overflowed by its own margin. Small enough to look like a rounding
+    /// artefact and large enough to push a right-docked control off the edge — which is how it was
+    /// found, with the help mark #252 had just added sitting past the fold.
+    /// </para>
+    /// <para>
     /// Before the first layout pass there is no viewport to fit. Constraining to zero would
     /// measure the content at nothing at all, which is not a smaller panel but an absent one.
     /// </para>
     /// </summary>
-    private static void Fit(Control content, double available, double scale) =>
-        content.MaxWidth = available > 0 ? available / scale : double.PositiveInfinity;
+    private static void Fit(Control content, double available, double scale)
+    {
+        if (available <= 0)
+        {
+            content.MaxWidth = double.PositiveInfinity;
+            return;
+        }
+
+        var margin = content.Margin.Left + content.Margin.Right;
+
+        content.MaxWidth = Math.Max(0, (available / scale) - margin);
+    }
 
     /// <summary>
     /// Wraps the window's content in a scaling host and binds the four gestures.
