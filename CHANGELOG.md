@@ -29,6 +29,21 @@ history to match today's layout would be the one edit it must never take.
 
 ## 0.102.0 — 2026-09-02 — The two chatters are named for who is speaking
 
+### The Help improve D47 info flyout wraps its text instead of scrolling sideways (#271)
+
+Pressing the ⓘ from 0.102.0 showed every paragraph clipped at its right edge with a horizontal
+scrollbar under it — *an event Frontier added tha*, *a list of fields to remove* — so a Commander
+reading a reason for pressing had to scroll sideways to finish each sentence.
+
+The flyout's text was capped at 460 so that an unconstrained flyout would not lay a paragraph out
+on one line. But the theme's presenter caps itself at 456 and has 430 left for content once its
+padding and border are off, and it puts that content in a viewer that scrolls sideways rather than
+narrowing it. So the 460 won the measure and lost the viewport: the text wrapped at 460 and was
+shown through a hole 430 wide. **The presenter now has sideways scrolling turned off**, so its viewer
+measures the text at the width it will show and the text wraps there. A test opens the flyout
+headless and asserts the content is no wider than its viewport, whatever the theme's numbers are,
+and fails against the flyout as it was.
+
 ### One invented person is one voice, however the model spells them (#256)
 
 Found in the Commander's own log: *Courier Vance* on the first line of a four-line scene and

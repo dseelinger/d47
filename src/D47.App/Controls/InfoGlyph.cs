@@ -1,7 +1,9 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Styling;
 
 namespace D47.App.Controls;
 
@@ -78,6 +80,7 @@ public static class InfoGlyph
             Flyout = new Flyout
             {
                 Placement = PlacementMode.BottomEdgeAlignedRight,
+                FlyoutPresenterTheme = WrapsRatherThanScrolls(),
                 Content = new StackPanel
                 {
                     MaxWidth = 460,
@@ -87,5 +90,40 @@ public static class InfoGlyph
         };
 
         return glyph;
+    }
+
+    /// <summary>
+    /// The theme's presenter, with sideways scrolling turned off
+    /// (<a href="https://github.com/dseelinger/d47/issues/271">#271</a>).
+    /// <para>
+    /// The presenter caps its own width — 456 in Fluent, and 430 of that is left for content once
+    /// its padding and border are off — and then puts the content in a scroll viewer that scrolls
+    /// sideways when the content asks for more. So the cap above was never the one that bound: the
+    /// text wrapped at 460 and was shown through a hole 430 wide, clipping every line and hanging a
+    /// horizontal scrollbar under paragraphs a Commander was meant to read. With the sideways
+    /// scroll disabled the viewer measures its content at the width it will show, and the text
+    /// wraps there. The cap above stays as the guard for a theme that has no presenter to base
+    /// this on, where the flyout is the stock one and would otherwise measure unconstrained.
+    /// </para>
+    /// </summary>
+    private static ControlTheme? WrapsRatherThanScrolls()
+    {
+        var application = Application.Current;
+
+        if (application is null
+            || !application.TryGetResource(typeof(FlyoutPresenter), application.ActualThemeVariant, out var found)
+            || found is not ControlTheme stock)
+        {
+            return null;
+        }
+
+        return new ControlTheme(typeof(FlyoutPresenter))
+        {
+            BasedOn = stock,
+            Setters =
+            {
+                new Setter(ScrollViewer.HorizontalScrollBarVisibilityProperty, ScrollBarVisibility.Disabled),
+            },
+        };
     }
 }
