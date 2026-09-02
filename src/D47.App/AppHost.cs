@@ -4665,9 +4665,9 @@ public sealed class AppHost : IDisposable
     /// of the phrase that is never surprising.
     /// </para>
     /// <para>
-    /// For the transcript the agreement is unconditional (Phase 45): which of Conversation,
-    /// reading is showing is one choice across every surface, held by
-    /// <see cref="_transcript"/>. Tabs and trails stay per surface, so this list is still walked.
+    /// For the transcript the agreement is unconditional (Phase 45): which reading is showing is
+    /// one choice across every surface, held by <see cref="_transcript"/>. Tabs and trails stay
+    /// per surface, so this list is still walked.
     /// </para>
     /// </summary>
     private readonly List<Core.Interface.PanelNavigator> _navigators = [];
