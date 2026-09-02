@@ -161,6 +161,26 @@ internal static class Program
         File.WriteAllLines(outPath, kinds.OrderByDescending(k => k.Value).Select(k => $"{k.Key}\t{k.Value}"));
         Console.WriteLine($"event kind counts -> {outPath}");
 
+        // #270. The corpus subtracted from what d47 knows, which is the diff that finds defects
+        // nobody reported: an event Elite writes that falls through every consumer does so with no
+        // error and no log line. Two lists, because "nothing reacts" and "nothing even shows it"
+        // are different gaps. Neither fails the run — handling a new event is a separate piece of
+        // work, and this is the instrument rather than the fix.
+        Console.WriteLine();
+        Console.WriteLine($"=== SEEN, AND NOTHING IN d47 HANDLES: {HandledEvents.Unhandled(kinds.Keys).Count} of {kinds.Count} kinds ===");
+        foreach (var kind in HandledEvents.Unhandled(kinds.Keys).OrderByDescending(k => kinds[k]))
+        {
+            Console.WriteLine($"  {kind}  {kinds[kind]:N0}");
+        }
+
+        var narratedOnly = kinds.Keys.Where(HandledEvents.NarratedOnly.Contains).OrderByDescending(k => kinds[k]).ToList();
+        Console.WriteLine();
+        Console.WriteLine($"=== SEEN, AND ONLY THE JOURNAL READING KNOWS: {narratedOnly.Count} of {kinds.Count} kinds ===");
+        foreach (var kind in narratedOnly)
+        {
+            Console.WriteLine($"  {kind}  {kinds[kind]:N0}");
+        }
+
         Resolve.Run(files);
 
         Hulls.Run();

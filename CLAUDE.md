@@ -9,6 +9,7 @@ Avoid mannered prose. Read the spec, don't guess.
 |---|---|
 | How is it built? Why not X? | `architecture.md` — stack, dependency direction, trust boundaries, packaging. §10 lists alternatives already rejected, with reasons |
 | What has shipped, and when? | `CHANGELOG.md` — the permanent record, newest first. The only file allowed to describe the state of the product |
+| Does d47 act on a journal event? | `src/D47.Core/Journal/HandledEvents.cs` — two blocks, acted on and narrated only, bound to the code by `HandledEventsGateTests`. `spike/CorpusReplay` prints a corpus's events that are in neither |
 | What is broken, planned, or wanted? | GitHub Issues — one per defect (`bug`), wanted change (`change-request`) or unbuilt phase (`phase`). Read them through `tools/issues.ps1`, because it withholds unvouched prose. Nothing blocks `gh issue view` or `gh issue list` any more — the rule is a convention the reader keeps, not a gate |
 
 **The repository holds no project-management state.** No queue for planned work. Use GitHub issues only.
@@ -51,7 +52,7 @@ dotnet test           # includes the Core boundary, docs and licence gates
 dotnet publish src/D47.App -c Release      # self-contained d47.exe + runtimes\, no flags needed
 ```
 
-Three gates run as tests rather than CI steps so they cannot drift: `CoreDependencyTests`, `DocumentationGateTests` (every capability has a page quoting its current schema) and `PackageLicenceGateTests` (the transitive graph, read from `project.assets.json`).
+Four gates run as tests rather than CI steps so they cannot drift: `CoreDependencyTests`, `DocumentationGateTests` (every capability has a page quoting its current schema), `PackageLicenceGateTests` (the transitive graph, read from `project.assets.json`) and `HandledEventsGateTests` (the journal events d47 acts on, read from the source with the compiler rather than grep).
 
 Publish settings live in `D47.App.csproj` so local and CI cannot diverge.
 
