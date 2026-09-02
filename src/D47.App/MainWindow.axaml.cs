@@ -372,6 +372,13 @@ public partial class MainWindow : Window
                 mode == PanelMode.Mini ? "mini" : "full",
                 SettingsCaller.Panel));
 
+            // And every tab back on the reading it was left on (#268). Last of the panel calls,
+            // because a root can only be selected once the tab that owns it has been furnished —
+            // and after RememberJournalReading above, so a Transcript restored to the journal is
+            // drawn the way the Raw switch was left rather than in whichever order the two
+            // arrived.
+            Panel.RememberRoots(new PanelRootMemory(host.ViewState));
+
             // Both before the window is shown. Sizing after the fact is a visible resize, and
             // wrapping the content after the first layout pass is a visible reflow.
             //

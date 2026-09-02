@@ -511,6 +511,12 @@ surface than a list of short rows, and it is a separate decision.
 
 A tab you have not got is a tab that is not drawn. The surfaces arrive as they are built.
 
+**Each tab remembers which of its readings you were on.** Leaving Routing on *Course* and going to
+Engineers comes back to *Course*, and so does closing Directive 47 and opening it again — the
+transcript's reading, Routing's, and every other tab's. Settings comes back scrolled to the section
+you left it at, without opening any card you had closed. What is deliberately **not** remembered is
+which tab was showing: the panel opens on the transcript, the way it always has.
+
 #### Drilling in, and finding your way back {#drilling}
 
 Every surface below the transcript is a stack — Fleet, then a ship, then a slot, then a
@@ -601,7 +607,8 @@ The transcript tab has four **readings**, three of them on a drop-down at the ri
 bar and the fourth on a switch beside it. They are readings of one session rather than four
 destinations, which is why they are a drop-down and not four tabs of their own.
 
-**In Ship** is you and the ship's AI, and nothing else. It is what opens.
+**In Ship** is you and the ship's AI, and nothing else. It is what a fresh installation opens on,
+and what you come back to unless you left the tab on another reading — see *the panel* above.
 
 It is drawn as a conversation, the way the messaging app on your phone draws one: a turn to a
 bubble, **yours on the right in the theme's own colour** and **the ship's on the left**. When D47

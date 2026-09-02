@@ -1648,6 +1648,69 @@ public partial class PanelView : UserControl
     /// </summary>
     public void RememberJournalReading(JournalReadingMemory memory) => _journalReading = memory;
 
+    /// <summary>
+    /// Puts every tab back on the reading it was left on, and keeps them there (#268).
+    /// <para>
+    /// <b>Called after the tabs are furnished, because a root can only be selected once it is
+    /// registered.</b> <see cref="PanelNavigator.SelectRoot(PanelTab, string)"/> declines a key
+    /// that is not a root of the tab named, so a renamed reading, a tab this surface never
+    /// furnished and a hand-edited file all cost a first reading rather than raising.
+    /// </para>
+    /// <para>
+    /// <b>One surface remembers.</b> The transcript root is mirrored between the window and the
+    /// headset (Phase 45), so restoring here gives the headset its reading for free; every other
+    /// tab's root is per-surface by design and the headset keeps its own.
+    /// </para>
+    /// </summary>
+    public void RememberRoots(PanelRootMemory memory)
+    {
+        _roots = memory;
+
+        foreach (var (tab, root) in memory.All)
+        {
+            if (Enum.TryParse<PanelTab>(tab, out var which))
+            {
+                Nav.SelectRoot(which, root);
+            }
+        }
+
+        RecordRoots();
+    }
+
+    /// <summary>Where each tab was left, or null on a surface not asked to remember it.</summary>
+    private PanelRootMemory? _roots;
+
+    /// <summary>
+    /// Writes down the reading every furnished tab is on (#268). Called from every navigation and
+    /// costing nothing until one of them actually moves.
+    /// <para>
+    /// <b>Raw Journal is written down as the journal.</b> It is a root like any other to the
+    /// navigator, so storing it would restore it — and the Transcript would open on a wall of JSON,
+    /// which is the thing <see cref="ApplyRememberedJournalReading"/> exists to avoid. How the
+    /// journal reading is drawn is the switch's fact and is kept once, by
+    /// <see cref="JournalReadingMemory"/>.
+    /// </para>
+    /// </summary>
+    private void RecordRoots()
+    {
+        if (_roots is null)
+        {
+            return;
+        }
+
+        foreach (var tab in Enum.GetValues<PanelTab>())
+        {
+            if (!Nav.Has(tab))
+            {
+                continue;
+            }
+
+            var root = Nav.RootKeyOf(tab);
+
+            _roots.Remember(tab, root == RawJournalRoot ? JournalRoot : root);
+        }
+    }
+
     /// <summary>Where the Raw switch was left, or null on a surface not asked to remember it.</summary>
     private JournalReadingMemory? _journalReading;
 
@@ -2538,6 +2601,11 @@ public partial class PanelView : UserControl
         {
             return;
         }
+
+        // Which reading each tab is on, kept for the next launch (#268). After the redirect
+        // above, so a Transcript that is about to be sent to raw is written down as the journal
+        // once rather than twice.
+        RecordRoots();
 
         // A surface that was never given a tab cannot be put on one, whether by a stale
         // property, a host that forgot to furnish it, or a hand-edited state. The navigator

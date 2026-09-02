@@ -300,6 +300,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         Build();
 
+        RestoreSection();
+
         settings.Changed += OnSettingsChanged;
 
         // **Symmetric, which it was not** (<a href="https://github.com/dseelinger/d47/issues/90">#90</a>).
@@ -602,8 +604,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             // its own StartCollapsed again — so without this, one press of a bulk control buries
             // that default permanently and nothing anywhere brings it back. Nothing moves on
             // screen; the next launch decides.
-            _viewState = _viewState.Forgetting(section.Capability.Id);
-            _viewStateStore?.Save(_viewState);
+            SaveViewState(state => state.Forgetting(section.Capability.Id));
 
             Refresh();
         };
@@ -765,6 +766,123 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         _activeSection = index;
         UpdateNavVisuals();
         ShowActiveInNav();
+        RememberSection();
+    }
+
+    /// <summary>
+    /// Puts the page back where it was left (#268).
+    /// <para>
+    /// <b>Scrolled to, never unfolded.</b> <see cref="Reveal"/> expands the card it lands on,
+    /// because following a help link to a folded card is a link that goes nowhere — arriving
+    /// at the page you left is not that act, and should not quietly open cards the Commander had
+    /// closed.
+    /// </para>
+    /// <para>
+    /// Posted at <c>Loaded</c> for the reason <see cref="Reveal"/> posts: <see cref="CardTop"/>
+    /// reads a card's position in the scroller's content, and nothing has been laid out yet at the
+    /// end of <see cref="Build"/>. The recording is armed by the same post, so the
+    /// <see cref="SetActiveSection"/> that <see cref="Build"/> makes on the first card cannot
+    /// write over the very answer this is about to restore.
+    /// </para>
+    /// </summary>
+    private void RestoreSection()
+    {
+        var remembered = _viewState.SettingsSection;
+
+        Dispatcher.UIThread.Post(
+            () =>
+            {
+                // A capability id this build no longer registers is a stale name, and a stale name
+                // is worth the top of the page rather than a failure - the same reading Reveal
+                // takes of one it cannot find.
+                var index = _sections.FindIndex(
+                    section => string.Equals(section.CapabilityId, remembered, StringComparison.Ordinal));
+
+                if (index >= 0)
+                {
+                    ScrollTo(index);
+                }
+
+                _rememberingSection = true;
+            },
+            DispatcherPriority.Loaded);
+    }
+
+    /// <summary>
+    /// Whether the scroll-spy's answer is worth writing down yet. False until
+    /// <see cref="RestoreSection"/> has had its go, so the page cannot record its way out of the
+    /// thing it is restoring.
+    /// </summary>
+    private bool _rememberingSection;
+
+    /// <summary>
+    /// The sections' capability ids, in page order, and which one the scroll-spy is naming
+    /// (−1 for none). Named for the tests, which is the same reason the bulk-control handlers
+    /// above are members: what #268 is about is <em>which</em> section the page comes back to, and
+    /// asking the nav's fill colour about it would be asserting through the paint.
+    /// </summary>
+    internal IReadOnlyList<string> SectionIds => [.. _sections.Select(section => section.CapabilityId)];
+
+    /// <inheritdoc cref="SectionIds"/>
+    internal int ActiveSection => _activeSection;
+
+    /// <summary>Whether a section's card is open. Restoring a scroll position must not open one.</summary>
+    internal bool IsSectionExpanded(int index) => _sections[index].Content.IsVisible;
+
+    /// <summary>
+    /// Writes down which section the page is on, <b>once the scrolling has settled</b> (#268).
+    /// <para>
+    /// Settled rather than immediate, because the spy names every card a flick of the wheel passes
+    /// under: recording on the change itself would be one file write per section crossed. Half a
+    /// second after the last one is the answer a Commander would give if asked where they are.
+    /// </para>
+    /// </summary>
+    private void RememberSection()
+    {
+        if (!_rememberingSection)
+        {
+            return;
+        }
+
+        _sectionSettle ??= new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+        _sectionSettle.Tick -= OnSectionSettled;
+        _sectionSettle.Tick += OnSectionSettled;
+
+        // Restarted rather than left running, so the half second is measured from the last change
+        // rather than from the first.
+        _sectionSettle.Stop();
+        _sectionSettle.Start();
+    }
+
+    private DispatcherTimer? _sectionSettle;
+
+    private void OnSectionSettled(object? sender, EventArgs e) => SettleSection();
+
+    /// <summary>
+    /// Writes down the section the page is on, now (#268). What the settle timer calls when the
+    /// scrolling stops.
+    /// <para>
+    /// Named rather than left inside the handler so a test can reach it, which is the reason the
+    /// bulk-control handlers above are members too: half a second of real time is not something a
+    /// headless test can wait out, and what is worth asserting is <em>what</em> gets written
+    /// rather than the length of the pause before it.
+    /// </para>
+    /// </summary>
+    internal void SettleSection()
+    {
+        _sectionSettle?.Stop();
+
+        if (_activeSection < 0 || _activeSection >= _sections.Count)
+        {
+            return;
+        }
+
+        var section = _sections[_activeSection].CapabilityId;
+
+        if (!string.Equals(_viewState.SettingsSection, section, StringComparison.Ordinal))
+        {
+            SaveViewState(state => state with { SettingsSection = section });
+        }
     }
 
     /// <summary>
@@ -1112,9 +1230,24 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
     private void OnCollapseAllClick(object? sender, RoutedEventArgs e) => SetEveryCard(false);
 
-    private void RememberCollapse(string capabilityId, bool expanded)
+    private void RememberCollapse(string capabilityId, bool expanded) =>
+        SaveViewState(state => state.With(capabilityId, expanded));
+
+    /// <summary>
+    /// Changes one thing about the view state and writes it down, <b>re-reading first</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/268">#268</a>).
+    /// <para>
+    /// <b>This used to save the snapshot taken at <see cref="Attach"/>, and that was a clobber
+    /// waiting for a second writer.</b> The record is shared: the pane widths, the checklist
+    /// filter, the window rectangle and now the panel's readings all live on it and all write to
+    /// it. Collapsing a card wrote back a copy from page-build time, so anything any of them had
+    /// recorded since was silently undone — which is exactly the trap <c>PaneWidthMemory</c>
+    /// already records under "written from the cache".
+    /// </para>
+    /// </summary>
+    private void SaveViewState(Func<ViewState, ViewState> change)
     {
-        _viewState = _viewState.With(capabilityId, expanded);
+        _viewState = change(_viewStateStore?.Load() ?? _viewState);
         _viewStateStore?.Save(_viewState);
     }
 
