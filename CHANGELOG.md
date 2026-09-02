@@ -27,6 +27,48 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.102.0 — 2026-09-02 — The two chatters are named for who is speaking
+
+### In Ship chatter and NPC chatter
+
+**Ambient remarks** are **In Ship chatter**, and **invented chatter** is **NPC chatter**. The old
+names described the wrong thing: *ambient* said when a line arrives and left a Commander to work out
+whose voice it was, and *invented* said how it was made, which is Directive 47's problem rather than
+theirs. The pair reads as a boundary now — your own AI and crew on one side, everybody outside
+the ship on the other.
+
+The wording is borrowed rather than invented. The Aboard voice slot already describes itself as
+*"your ship's AI and your crew"*, so one vocabulary covers the callout rows and the voice rows both,
+and **In Ship chatter** sits beside the **In Ship** transcript reading 0.100.0 named.
+
+It moved everywhere it is read: the two switches, the four interval rows, the spoken routes
+(*"stop calling out in ship chatter"*, *"stop calling out npc chatter"*), both headings on the
+callouts page, and the mentions on the conversation and persona pages. **No settings key moved**,
+and none ever can — `settings.json` is append-only, and `callouts.ambientSeconds` already
+carries one retired minutes-era sibling for exactly that reason.
+
+### Each info bubble says who it is about
+
+Which is the whole point of the rename. **In Ship** names the ship's AI and your crew; **NPC** names
+anybody outside your ship. It also says that **only the AI speaks unasked** — your crew answer
+when you address them and have never once spoken first, so naming them without that clause would
+have the page promise chatter that cannot happen.
+
+### And the four intervals are the ones that were flown
+
+**300 and 600 seconds, both pairs.** Set by hand in the running app, then written down.
+0.101.0 shipped the In Ship spread with 45 and 90 and said in as many words that the numbers could
+only come by ear; the ear said five to ten minutes. NPC chatter came down from 1200-2400 to meet it.
+The argument on record for the wider floor — an exchange is a scene rather than a sentence, and
+scenes wear out faster — is sound and was still an argument from the desk: flown, twenty minutes
+of silence read as the feature being broken rather than as restraint. The two kinds now arrive at the
+same rate and what varies is the mix.
+
+A settings file already on disk is untouched. Only a Commander who never set these rows meets the
+new numbers.
+
+---
+
 ## 0.101.0 — 2026-09-02 — Nothing arrives on a beat, and the panel opens where you left it
 
 Four wanted changes, and they are two subjects. Two are about the pacing of speech nobody asked
