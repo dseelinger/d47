@@ -29,6 +29,28 @@ history to match today's layout would be the one edit it must never take.
 
 ## 0.102.0 — 2026-09-02 — The two chatters are named for who is speaking
 
+### One invented person is one voice, however the model spells them (#256)
+
+Found in the Commander's own log: *Courier Vance* on the first line of a four-line scene and
+*Vance* on the third, in two different men's voices, and the dock hand he was talking to split the
+same way. The parser took the name verbatim from before the colon and the cast keys its per-system
+table on that string, so each spelling was a new person, drew its own voice, and sat in the table
+until the next jump — a two-person exchange heard as four, drawn as four, and durable.
+
+**The exchange is the only place the two spellings are knowably one man**, so the reconciliation
+lives in the parser, over the lines of one exchange, before any of them reaches the cast. A name
+folds onto a longer one it is the leading or trailing word of — *Vance* onto *Courier Vance*, *Vera*
+onto *Vera Kolt* — and does not fold when that would be a guess: *Vance* beside *Mara Vance* and
+*Tom Vance* stays as written, because a wrong fold is the same fault pointed the other way. The
+carrier's own tower and captain take no part, since a line that carries a cast role is already one
+person by role and *Captain Reyes* is a pilot with a rank rather than a second spelling of the
+captain.
+
+**The brief now asks for one spelling per speaker too**, in the same wording the carrier's two
+posts were already asked for. It is a request rather than a guarantee, which is why the fold sits
+underneath it. Tests build the exchange from the log, assert one name and one voice per person and
+two entries in the cast rather than four, and fail against the parser as it was.
+
 ### Help improve D47 opens with the disclosures and nothing else (#269)
 
 The window still led with a paragraph arguing for pressing before it said what pressing does. #252

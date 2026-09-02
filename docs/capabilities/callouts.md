@@ -642,7 +642,9 @@ words. NPC chatter is Directive 47's own fiction, on its own switch, so you can 
 without the other.
 
 Each invented speaker gets their own voice from the NPC pool for as long as you stay in the
-system, the same way the real traffic is cast. The exchange is written by the model against where
+system, the same way the real traffic is cast — and keeps it through the exchange even when the
+model shortens *Courier Vance* to *Vance* on his next line, because the two spellings are read
+as one person before either is voiced. The exchange is written by the model against where
 you actually are; with no language model configured there is no chatter and these rows are absent,
 the same rule as the In Ship chatter above — there are no canned conversations, on purpose.
 
