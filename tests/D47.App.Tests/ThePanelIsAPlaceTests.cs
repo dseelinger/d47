@@ -403,8 +403,9 @@ public class ThePanelIsAPlaceTests
 
         Assert.True(panel.Nav.Modal);
 
-        var tab = panel.GetVisualDescendants().OfType<RadioButton>()
-            .First(button => (button.Content as string) == "Transcript");
+        // By name rather than by content: a tab's content is a mark and a word since #266, so
+        // asking for the string finds nothing.
+        var tab = panel.GetControl<RadioButton>("TranscriptTab");
 
         tab.IsChecked = true;
         Dispatcher.UIThread.RunJobs();
