@@ -28,7 +28,10 @@ public sealed class RouteCoursePage : UserControl
 
     private readonly TextBox _system = new()
     {
-        PlaceholderText = "Shinrarta Dezhra",
+        // "Shinrarta Dezhra" was an example drawn where a default goes, so the one field on this
+        // page — a required one — read as already answered (#253). The mark on the label carries
+        // that now, and the placeholder says what to type rather than showing one.
+        PlaceholderText = "a system",
         Width = 260,
         MinHeight = 30,
 
@@ -42,6 +45,11 @@ public sealed class RouteCoursePage : UserControl
     public RouteCoursePage(CapabilityRegistry registry, Func<string?>? suggestion = null)
     {
         _registry = registry;
+
+        // What a screen reader hears, since the mark on the label is a glyph and a glyph is not
+        // read aloud (#253).
+        D47.App.Controls.FormField.Announce(
+            _system, "System", D47.App.Controls.FieldNeed.Required);
 
         _status = Text(string.Empty, TypeScale.Secondary, ThemeManager.TextMutedKey, wrap: true);
         _status.IsVisible = false;
@@ -75,10 +83,12 @@ public sealed class RouteCoursePage : UserControl
                     Spacing = 3,
                     Children =
                     {
-                        Text("System", TypeScale.Small, ThemeManager.TextMutedKey),
+                        D47.App.Controls.FormField.Label(
+                            "System", D47.App.Controls.FieldNeed.Required),
                         _system,
                     },
                 },
+                D47.App.Controls.FormField.Legend(required: true),
                 new StackPanel
                 {
                     Orientation = Orientation.Horizontal,

@@ -91,7 +91,15 @@ public sealed class PersonaWindow : Window
         root.Children.Add(header);
         root.Children.Add(_problems);
         root.Children.Add(buttons);
-        root.Children.Add(new ScrollViewer { Content = _list, Margin = new Thickness(0, 12, 0, 0) });
+        // The key to the marks on the cards below (#253). Once for the window rather than once per
+        // card: a legend repeated twelve times is noise, and the cards are all the same shape.
+        root.Children.Add(new StackPanel
+        {
+            Margin = new Thickness(0, 10, 0, 0),
+            Children = { FormField.Legend(required: true, supplied: true) },
+        });
+
+        root.Children.Add(new ScrollViewer { Content = _list, Margin = new Thickness(0, 8, 0, 0) });
 
         Content = root;
 
@@ -149,20 +157,48 @@ public sealed class PersonaWindow : Window
         }
     }
 
+    /// <summary>
+    /// One core's three boxes (#253).
+    /// <para>
+    /// <b>All three had their label in the placeholder, which is worse here than on Routing.</b> A
+    /// placeholder disappears when the box is filled — and every existing core is drawn with its
+    /// text already set, so on the screen a Commander actually spends time on, all three boxes were
+    /// unlabelled. Only a brand-new empty card ever showed what they were.
+    /// </para>
+    /// <para>
+    /// <b>Two of them are required and it was only ever enforced after a round trip.</b> Save
+    /// writes, re-reads, and a core the store refuses leaves the list with its reason printed
+    /// above — so a missing body was a card vanishing and a sentence appearing somewhere else,
+    /// rather than a mark on the field that was empty before anything was pressed. The re-read is
+    /// right and stays; the mark is what was missing.
+    /// </para>
+    /// <para>
+    /// <b>The caps are drawn rather than discovered by exceeding them.</b> <c>MaxLength</c> stops
+    /// the typing at the limit the store would refuse, which is the same number said once —
+    /// <c>OwnPersona</c> owns it and this reads it.
+    /// </para>
+    /// </summary>
     private Control Card(Written core)
     {
-        var name = new TextBox { Text = core.Name, PlaceholderText = "Name", FontSize = TypeScale.Body };
+        var name = new TextBox
+        {
+            Text = core.Name,
+            PlaceholderText = "what to call it",
+            FontSize = TypeScale.Body,
+            MaxLength = D47.Core.Persona.OwnPersona.MaxNameLength,
+        };
 
         name.TextChanged += (_, _) => core.Name = name.Text ?? string.Empty;
 
         var body = new TextBox
         {
             Text = core.Body,
-            PlaceholderText = "What it is like. Speak to it in the second person, as the shipped cores are written.",
+            PlaceholderText = "Speak to it in the second person, as the shipped cores are written.",
             AcceptsReturn = true,
             TextWrapping = TextWrapping.Wrap,
             MinHeight = 140,
             FontSize = TypeScale.Body,
+            MaxLength = D47.Core.Persona.OwnPersona.MaxBodyLength,
         };
 
         body.TextChanged += (_, _) => core.Body = body.Text ?? string.Empty;
@@ -170,11 +206,15 @@ public sealed class PersonaWindow : Window
         var voice = new TextBox
         {
             Text = core.Voice,
-            PlaceholderText = "How it should sound. Left empty, D47 pairs it on the name alone.",
+            PlaceholderText = "how it should sound",
             FontSize = TypeScale.Body,
         };
 
         voice.TextChanged += (_, _) => core.Voice = voice.Text ?? string.Empty;
+
+        FormField.Announce(name, "Name", FieldNeed.Required);
+        FormField.Announce(body, "Character", FieldNeed.Required);
+        FormField.Announce(voice, "Voice", FieldNeed.Supplied);
 
         var drop = new Button { Content = "Delete", Padding = new Thickness(10, 4) };
 
@@ -190,8 +230,12 @@ public sealed class PersonaWindow : Window
         drop.Margin = new Thickness(8, 0, 0, 0);
 
         head.Children.Add(drop);
-        head.Children.Add(name);
+        head.Children.Add(FormField.Label("Name", FieldNeed.Required));
 
+        // Voice is the one field on this window that already described the ship-supplied state in
+        // prose — "left empty, D47 pairs it on the name alone" — which is the same third state as
+        // the Neutron Plotter's "this ship's". It gets the same mark, and the sentence moves to
+        // the label's side rather than living in a placeholder that vanishes.
         var card = new Border
         {
             Padding = new Thickness(12),
@@ -200,7 +244,20 @@ public sealed class PersonaWindow : Window
             Child = new StackPanel
             {
                 Spacing = 8,
-                Children = { head, body, voice },
+                Children =
+                {
+                    new StackPanel { Spacing = 3, Children = { head, name } },
+                    new StackPanel
+                    {
+                        Spacing = 3,
+                        Children = { FormField.Label("Character", FieldNeed.Required), body },
+                    },
+                    new StackPanel
+                    {
+                        Spacing = 3,
+                        Children = { FormField.Label("Voice", FieldNeed.Supplied), voice },
+                    },
+                },
             },
         };
 

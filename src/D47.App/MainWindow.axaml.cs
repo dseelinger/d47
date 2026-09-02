@@ -259,7 +259,12 @@ public partial class MainWindow : Window
 
                 // And the Market page beside them (Phase 49), for the same reason the
                 // plan forms are here and not in the headset: it wants a keyboard.
-                host.Commodities));
+                host.Commodities,
+
+                // What the Neutron Plotter's jump range placeholder quotes (#253). The same
+                // expression RouteCapability falls back to when the argument is absent, so what
+                // the form says it will use and what the tool call actually uses cannot differ.
+                () => host.GameState.Active?.Ship.MaxJumpRange));
 
             // And the clocks, timers and alarms (Phase 24). Both surfaces, like the
             // checklist: a Commander in a headset is exactly the Commander who cannot glance at

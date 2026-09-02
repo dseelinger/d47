@@ -44,7 +44,10 @@ public sealed class RouteMarketPage : UserControl
 
     private readonly TextBox _commodity = new()
     {
-        PlaceholderText = "Tritium",
+        // An example where a default goes, on a required field (#253) — see the survey in the
+        // issue: Tritium sat in the same grey and the same slot as the numbers that genuinely are
+        // what happens if you type nothing.
+        PlaceholderText = "which one",
         Width = 190,
         MinHeight = 30,
         HorizontalAlignment = HorizontalAlignment.Left,
@@ -195,8 +198,13 @@ public sealed class RouteMarketPage : UserControl
                 {
                     Orientation = Orientation.Horizontal,
                     Spacing = 10,
-                    Children = { Labelled("Commodity", _commodity), Labelled("Tonnes", _tonnes) },
+                    Children =
+                    {
+                        Labelled("Commodity", _commodity, D47.App.Controls.FieldNeed.Required),
+                        Labelled("Tonnes", _tonnes),
+                    },
                 },
+                D47.App.Controls.FormField.Legend(required: true),
                 _selling,
                 _largePad,
                 Text(
@@ -361,12 +369,20 @@ public sealed class RouteMarketPage : UserControl
         return block;
     }
 
-    private static Control Labelled(string label, Control box)
+    private static Control Labelled(
+        string label,
+        Control box,
+        D47.App.Controls.FieldNeed need = D47.App.Controls.FieldNeed.Optional)
     {
         var stack = new StackPanel { Spacing = 3 };
 
-        stack.Children.Add(Text(label, TypeScale.Small, ThemeManager.TextMutedKey));
+        stack.Children.Add(D47.App.Controls.FormField.Label(label, need));
         stack.Children.Add(box);
+
+        if (box is TextBox typed)
+        {
+            D47.App.Controls.FormField.Announce(typed, label, need);
+        }
 
         return stack;
     }
