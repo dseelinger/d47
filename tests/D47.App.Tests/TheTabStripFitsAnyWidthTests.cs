@@ -94,7 +94,7 @@ public class TheTabStripFitsAnyWidthTests
     {
         var wide = Furnished(1400);
 
-        Assert.Equal("Transcript", wide.GetControl<RadioButton>("TranscriptTab").Content);
+        AssertMarkAndWord(wide.GetControl<RadioButton>("TranscriptTab"), "Transcript");
 
         var narrow = Furnished(420);
 
@@ -130,7 +130,60 @@ public class TheTabStripFitsAnyWidthTests
 
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal("Transcript", panel.GetControl<RadioButton>("TranscriptTab").Content);
+        AssertMarkAndWord(panel.GetControl<RadioButton>("TranscriptTab"), "Transcript");
+    }
+
+    /// <summary>
+    /// A strip that opens wide and stays wide still gets its marks
+    /// (<a href="https://github.com/dseelinger/d47/issues/266">#266</a>).
+    /// <para>
+    /// <b>The tabs carry their word from the markup</b>, and <c>DrawTabMarks</c> ran only when the
+    /// collapsed state <em>changed</em> — so nothing ever drew the expanded state on a window that
+    /// never narrowed. It was invisible while word and mark were alternatives, because the
+    /// markup's content was exactly what the expanded state wanted; the moment the expanded state
+    /// became something else, a wide strip showed bare words forever.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void AStripThatNeverNarrowsStillGetsItsMarks()
+    {
+        var wide = Furnished(1400);
+
+        foreach (var name in new[] { "TranscriptTab", "RoutingTab", "SettingsTab" })
+        {
+            Assert.IsType<StackPanel>(wide.GetControl<RadioButton>(name).Content);
+        }
+    }
+
+    /// <summary>
+    /// A wide tab carries its mark and its word, mark on the left
+    /// (<a href="https://github.com/dseelinger/d47/issues/266">#266</a>).
+    /// <para>
+    /// <b>The word used to be the whole content</b>, so the marks were learnt only once the window
+    /// narrowed and took the words away — which is the moment they stop being available to learn
+    /// from. There is no width now at which a tab shows a word and no mark.
+    /// </para>
+    /// </summary>
+    private static void AssertMarkAndWord(RadioButton tab, string word)
+    {
+        var content = Assert.IsType<StackPanel>(tab.Content);
+
+        Assert.Equal(Orientation.Horizontal, content.Orientation);
+        Assert.Equal(2, content.Children.Count);
+
+        Assert.IsType<Avalonia.Controls.Shapes.Path>(content.Children[0]);
+        Assert.Equal(word, Assert.IsType<TextBlock>(content.Children[1]).Text);
+
+        // Said once. A glyph carrying its own name beside a text block carrying the same word is a
+        // tab a screen reader reads twice.
+        Assert.Equal(word, Avalonia.Automation.AutomationProperties.GetName(tab));
+        Assert.Equal(
+            Avalonia.Automation.AccessibilityView.Raw,
+            Avalonia.Automation.AutomationProperties.GetAccessibilityView(content.Children[0]));
+
+        // And no tooltip, unlike the collapsed tab: the word is right there, so one repeating it
+        // is noise.
+        Assert.Null(ToolTip.GetTip(tab));
     }
 
     /// <summary>

@@ -415,4 +415,57 @@ public static class Glyphs
         ToolTip.SetTip(button, says);
         Avalonia.Automation.AutomationProperties.SetName(button, says);
     }
+
+    /// <summary>
+    /// Whether a path is a filled shape rather than a stroked outline.
+    /// <para>
+    /// Avalonia's own convention: a geometry beginning <c>F0</c> or <c>F1</c> is declaring its fill
+    /// rule, and in this set only <see cref="Tabs.Settings"/> does — it is the one filled mark, for
+    /// the reason recorded on it. Asked here so that every caller drawing these makes the same
+    /// decision rather than a second one
+    /// (<a href="https://github.com/dseelinger/d47/issues/266">#266</a>).
+    /// </para>
+    /// </summary>
+    public static bool IsFilled(string data) =>
+        data.StartsWith("F0", StringComparison.Ordinal)
+        || data.StartsWith("F1", StringComparison.Ordinal);
+
+    /// <summary>
+    /// Puts a mark <em>and</em> its word on a button, the mark on the left (#266).
+    /// <para>
+    /// <b>No tooltip, unlike <see cref="Mark"/>.</b> That one carries the word on the tooltip
+    /// because a glyph alone is a picture a Commander has to guess at — and with the word right
+    /// there beside it, a tooltip repeating it is noise.
+    /// </para>
+    /// <para>
+    /// <b>The name is said once.</b> A glyph carrying its own automation name next to a text block
+    /// carrying the same word is a control a screen reader reads twice, so the mark is taken out
+    /// of the accessibility tree and the button keeps the name.
+    /// </para>
+    /// </summary>
+    public static void MarkAndWord(
+        Button button, string data, string brush, string says, double size = 14)
+    {
+        var glyph = Draw(data, brush, size, IsFilled(data));
+
+        Avalonia.Automation.AutomationProperties.SetAccessibilityView(
+            glyph, Avalonia.Automation.AccessibilityView.Raw);
+
+        var word = new TextBlock
+        {
+            Text = says,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+        };
+
+        button.Content = new StackPanel
+        {
+            Orientation = Avalonia.Layout.Orientation.Horizontal,
+            Spacing = 7,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+            Children = { glyph, word },
+        };
+
+        ToolTip.SetTip(button, null);
+        Avalonia.Automation.AutomationProperties.SetName(button, says);
+    }
 }

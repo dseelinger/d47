@@ -4025,6 +4025,9 @@ public partial class PanelView : UserControl
     /// <summary>Whether the strip is currently showing marks instead of words.</summary>
     private bool _tabsCollapsed;
 
+    /// <summary>Whether the tabs have been drawn at all yet, rather than left as the markup made them.</summary>
+    private bool _tabsDrawn;
+
     /// <summary>
     /// How wide the strip was the last time it was drawn with words — the number the decision to
     /// expand again is made against.
@@ -4047,6 +4050,18 @@ public partial class PanelView : UserControl
     /// </summary>
     private void ShowTabSteppers()
     {
+        // Once, before anything is measured. The tabs carry their word from the markup, and
+        // DrawTabMarks only ran when the collapsed state *changed* — so a strip that opened wide
+        // and stayed wide kept the markup's bare word and never got its mark (#266). It was
+        // invisible while word and mark were alternatives, because the markup's content was
+        // exactly what the expanded state wanted.
+        if (!_tabsDrawn)
+        {
+            _tabsDrawn = true;
+            DrawTabMarks();
+            TabsScroller.UpdateLayout();
+        }
+
         var room = TabsScroller.Viewport.Width;
 
         if (room > 0)
@@ -4074,12 +4089,19 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>
-    /// Puts either the word or the mark on every tab.
+    /// Puts the mark and the word, or the mark alone, on every tab.
     /// <para>
-    /// Through <see cref="Controls.Glyphs.Mark"/>, so the word survives on the tooltip and on the
-    /// name a screen reader says — which is the whole condition under which replacing a word with
-    /// a picture counts as an improvement, and doubly so here, where the Commander did not choose
-    /// to lose the word and the window merely got narrow.
+    /// Through <see cref="Controls.Glyphs.Mark"/> when the word has gone, so it survives on the
+    /// tooltip and on the name a screen reader says — which is the whole condition under which
+    /// replacing a word with a picture counts as an improvement, and doubly so here, where the
+    /// Commander did not choose to lose the word and the window merely got narrow.
+    /// </para>
+    /// <para>
+    /// <b>The wide strip shows both since #266.</b> Word and mark used to be alternatives, so a
+    /// Commander on a full-size window read eight words and never learnt the marks — and then the
+    /// window narrowed and every tab was a picture they had not seen before. The marks were learnt
+    /// exactly when they stopped being available to learn from. There is no longer a width at
+    /// which a tab shows a word and no mark.
     /// </para>
     /// </summary>
     private void DrawTabMarks()
@@ -4099,14 +4121,15 @@ public partial class PanelView : UserControl
                     Theming.ThemeManager.TextKey,
                     word,
                     size: 17,
-                    filled: glyph.StartsWith("F0", StringComparison.Ordinal));
+                    filled: Controls.Glyphs.IsFilled(glyph));
 
                 continue;
             }
 
-            tab.Content = word;
-            ToolTip.SetTip(tab, null);
-            Avalonia.Automation.AutomationProperties.SetName(tab, word);
+            // Smaller than the collapsed mark on purpose: at 17 it is the tab, and beside a word
+            // it is a mark next to a word. The word is what carries the tab at this width.
+            Controls.Glyphs.MarkAndWord(
+                tab, glyph, Theming.ThemeManager.TextKey, word, size: 15);
         }
     }
 
