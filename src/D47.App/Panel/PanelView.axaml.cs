@@ -10,6 +10,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.Core.Help;
 using D47.Core.Interface;
+using System.Globalization;
 
 namespace D47.App.Panel;
 
@@ -291,6 +292,10 @@ public partial class PanelView : UserControl
     public PanelView()
     {
         InitializeComponent();
+
+        // The box's own first measurement, which is the only thing that can say what it costs
+        // beyond its word (#273). Every later pass finds the floor already set and does nothing.
+        ModeBox.LayoutUpdated += (_, _) => WidenModeBoxToItsWidestReading();
 
         // Set in code rather than bound, because what mini hides is three named regions and a
         // binding for each would be three expressions no test can reach. The content inside
@@ -2800,8 +2805,69 @@ public partial class PanelView : UserControl
             _settingMode = false;
         }
 
+        WidenModeBoxToItsWidestReading();
+
         DrawRawToggle();
     }
+
+    /// <summary>
+    /// Gives the picker room for its <em>widest</em> reading rather than for the one that
+    /// happens to be showing (<a href="https://github.com/dseelinger/d47/issues/273">#273</a>).
+    /// <para>
+    /// A <c>ComboBox</c> measures itself against its selected item and nothing else, so the
+    /// Transcript's box was 86 pixels wide on "In Ship" and 115 on "Journal File" — it changed
+    /// size under the pointer as the reading changed, and the room left for the chevron it draws
+    /// for itself was whatever the current word happened to leave. The reported symptom was a box
+    /// sliced at its right edge with the chevron gone.
+    /// </para>
+    /// <para>
+    /// <b>Only the text is measured here; the chrome is taken off the live control.</b> The
+    /// padding, the border and the chevron's column together come to a fixed number of pixels
+    /// this file must not write down — a constant copied out of a control theme goes stale in
+    /// silence the next time that theme moves. So it is read once, as the difference between the
+    /// width the box asked for and the width of the word it was showing when it asked, and kept.
+    /// </para>
+    /// <para>
+    /// It cannot be read before the box has been laid out once, and the first tab shown is a
+    /// Transcript — hence <see cref="ModeBox"/>'s <c>LayoutUpdated</c>, which is where the first
+    /// pass arrives. Reading it while the floor is already set would measure the floor rather
+    /// than the box, so that pass is the only one it is read on.
+    /// </para>
+    /// <para>
+    /// A floor rather than a width, so a reading renamed to something longer is still shown whole
+    /// on the pass that renames it.
+    /// </para>
+    /// </summary>
+    private void WidenModeBoxToItsWidestReading()
+    {
+        if (ModeBox.ItemsSource is not IReadOnlyList<string> words
+            || words.Count == 0
+            || ModeBox.SelectedItem is not string showing)
+        {
+            return;
+        }
+
+        if (_modeBoxChrome is null)
+        {
+            if (ModeBox.MinWidth > 0 || ModeBox.Bounds.Width <= 0)
+            {
+                return;
+            }
+
+            _modeBoxChrome = ModeBox.Bounds.Width - Wide(showing);
+        }
+
+        ModeBox.MinWidth = Math.Ceiling(_modeBoxChrome.Value + words.Max(Wide));
+    }
+
+    /// <summary>How wide one reading's word is, drawn the way the box will draw it.</summary>
+    private double Wide(string word) => new FormattedText(
+        word,
+        CultureInfo.CurrentCulture,
+        FlowDirection.LeftToRight,
+        new Typeface(ModeBox.FontFamily, ModeBox.FontStyle, ModeBox.FontWeight),
+        ModeBox.FontSize,
+        Brushes.Black).Width;
 
     /// <summary>
     /// The journal's Raw toggle: shown on the journal reading, on a surface that was handed the
@@ -2861,6 +2927,13 @@ public partial class PanelView : UserControl
     /// event a press does, and the navigator would be told about a move it had just made.
     /// </summary>
     private bool _settingMode;
+
+    /// <summary>
+    /// What the mode box costs beyond the word it is showing — its padding, its border and the
+    /// column its chevron sits in. Read off the control on its first layout pass and kept; see
+    /// <see cref="WidenModeBoxToItsWidestReading"/> for why it is not written down as a number.
+    /// </summary>
+    private double? _modeBoxChrome;
 
     /// <summary>
     /// The Commander picked a reading from the drop-down.

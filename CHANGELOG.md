@@ -27,6 +27,34 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.102.1 — 2026-09-02 — The Transcript's file picker is drawn whole
+
+### The file picker is sized by its longest reading, so its chevron has room (#273)
+
+Reported from a screenshot of the Transcript: the picker offering **In Ship**, **Log File** and
+**Journal File** was cut off at its right edge, the selected word readable and the chevron the
+control draws for itself gone, so the box read as a sliced text field rather than as a drop-down.
+
+**A `ComboBox` measures itself against its selected item and nothing else.** That is the mechanism:
+the box was 86 pixels wide showing "In Ship" and 115 showing "Journal File", so it changed size
+under the pointer as the reading changed and the room its chevron had was whatever the current word
+left over. It is now sized by the widest of the three, whichever one is showing.
+
+The chrome — the padding, the border, and the column the chevron sits in — is read off the live
+control rather than written down here, as the difference between the width the box asked for and
+the width of the word it was showing when it asked. A number copied out of a control theme is a
+number that goes stale in silence the next time that theme moves. It can only be read once the box
+has been laid out, and the first tab shown is a Transcript, so the reading happens on the box's own
+`LayoutUpdated`.
+
+**What is fixed is the sizing; the clip itself never reproduced.** The drawn page was captured at
+every reading, at panel widths from 320 to 1180, at every zoom step from 100% to 200%, through the
+real `ZoomHost` viewport and in the shipped dark palette, and the chevron was inside the box in all
+of them. So the assertion that the chevron falls inside the box is a guard rather than a
+reproduction, and the test that fails without this change is the one about the box resizing between
+readings. If the slice is still there on a Commander's screen, the screenshot is what will settle
+it.
+
 ## 0.102.0 — 2026-09-02 — The chatters are named and spaced, captions can sit in the cockpit, and d47 can say which journal events it handles
 
 ### One list names the journal events d47 acts on, and a gate keeps it honest (#270)
