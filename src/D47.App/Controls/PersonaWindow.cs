@@ -93,11 +93,18 @@ public sealed class PersonaWindow : Window
         root.Children.Add(buttons);
         // The key to the marks on the cards below (#253). Once for the window rather than once per
         // card: a legend repeated twelve times is noise, and the cards are all the same shape.
-        root.Children.Add(new StackPanel
+        var legend = new StackPanel
         {
             Margin = new Thickness(0, 10, 0, 0),
             Children = { FormField.Legend(required: true, supplied: true) },
-        });
+        };
+
+        // Docked, like the two rows above it. A DockPanel child with no dock takes Left, so
+        // undocked this stood on its edge in a column of its own down the left of the window,
+        // clipped at its own width, with every card pushed sideways to clear it.
+        DockPanel.SetDock(legend, Dock.Top);
+
+        root.Children.Add(legend);
 
         root.Children.Add(new ScrollViewer { Content = _list, Margin = new Thickness(0, 8, 0, 0) });
 

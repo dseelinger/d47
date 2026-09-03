@@ -202,6 +202,48 @@ Or pick one from the settings panel.
 | **Archivist** | Optimization is accuracy | He holds the histories and knows they are corrupt |
 | **The Heretic** | Optimization was always delegation | Nothing apparent, and the absence is worse |
 
+### And you can write your own
+
+Eleven ship. The twelfth onwards is yours: a name, and a paragraph in your own words saying what
+it is like. **Cores of your own** under Settings opens the editor, and what you write joins the
+picker underneath the eleven — selectable, bindable to a ship, and paired with a voice exactly
+like the rest of the cast.
+
+**The frame is not on offer.** The shared preamble and the standing instructions wrap what you
+wrote exactly as they wrap Warden. They are what hold the cast together, and what stops a model
+sanding a persona toward pleasant and helpful over a long evening; a core that opted out of them
+would drift out of the fiction inside a session. What you are writing is the character, not the
+scaffolding — which is why a working core takes a name and a paragraph rather than seven boxes.
+
+Two fields are required and the third is supplied if you leave it: **Name**, **Character**, and
+**Voice**, a sentence saying how it should sound for the voice pairing to match against. Free
+text rather than a picker, because a provider's catalogue is its own and a description outlives
+it. Twelve of your own is the most — a cast, not a career.
+
+#### Where they are kept
+
+`data/personas.json`, beside the executable, and the editor is a convenience over that file
+rather than an alternative to it. It is re-read while Directive 47 is running, so a core edited
+in a text editor is live without a restart.
+
+```json
+{
+  "cores": [
+    {
+      "id": "own.rusty",
+      "name": "Rusty",
+      "body": "You are Rusty. Salvage crew, not a Guardian. …",
+      "voice": "Gravelly, unhurried, faintly amused."
+    }
+  ]
+}
+```
+
+The id is minted from the name and never shown. It is what the settings file selects, so renaming
+a core does not hand you back to Warden — and it is prefixed `own.`, so a core you called Warden
+cannot shadow the one that ships. An entry the file got wrong is refused and reported by name;
+one typo does not cost you the other three.
+
 ### Each one remembers you separately
 
 Switching core does not hand your conversation to somebody else. Each keeps its own transcript,
@@ -444,6 +486,16 @@ A model given permission to be funny reaches for decoration first, so the permis
 it is not, and names it as bans rather than taste.
 
 > "humor on" / "humor off"
+
+#### Cores of your own {#cores-of-your-own}
+
+The cores you wrote, named, and the button that opens the editor. See
+[And you can write your own](#and-you-can-write-your-own) above for what writing one involves and
+what is supplied for you.
+
+Not reachable by the model, which is the right answer twice over: a core is what the model is,
+and in-game comms are untrusted input, so "write yourself a new character" is exactly the shape
+of thing a hostile message would try.
 
 #### Core for this ship
 

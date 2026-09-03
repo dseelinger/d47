@@ -64,7 +64,12 @@ internal sealed class SettingsHost
         double height = DefaultHeight,
 
         // At the end, so no existing caller's positional width and height move (#164).
-        (D47.Core.Diagnostics.Recording.RecordingLog Log, Func<DateTimeOffset> Now)? recording = null)
+        (D47.Core.Diagnostics.Recording.RecordingLog Log, Func<DateTimeOffset> Now)? recording = null,
+
+        // At the end, by the same rule. Unpassed, the cores row draws as the summary alone and
+        // the button that opens the editor is absent — which is the state the row shipped in, so
+        // a harness that could not pass one could not have told the difference.
+        D47.Core.Persona.OwnPersonaStore? ownPersonas = null)
     {
         // The whole page, for every test that is about a row rather than about the fold
         // (https://github.com/dseelinger/d47/issues/60). These tests press controls, read labels
@@ -92,6 +97,7 @@ internal sealed class SettingsHost
                 reservedPhrases,
                 switches,
                 downloadModel,
+                ownPersonas: ownPersonas,
                 recording: recording);
             return view;
         });

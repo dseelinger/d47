@@ -226,4 +226,30 @@ public class ACoreYouWroteYourselfTests : IDisposable
             row.ChoicesFor(surface.Settings.Current),
             id => PersonaCatalog.Resolve(id).Name == "Rusty");
     }
+
+    /// <summary>
+    /// And the panel offers the way in. The store, the editor window and the catalogue wiring
+    /// were all built and the row that reaches them was never declared — a key with nothing
+    /// carrying it — so the only way to write a core was to write the file by hand and restart.
+    /// A test that asked what the picker offered could not see that, because the picker is fed
+    /// by the catalogue and the missing row is on the panel.
+    /// </summary>
+    [Fact]
+    public void ThePanelOffersTheWayIntoWritingOne()
+    {
+        var store = Store();
+
+        store.Save([Written("Rusty")]);
+
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        var row = surface.Settings.Sections
+            .SelectMany(section => section.Rows)
+            .Single(candidate => candidate.Key == D47.Core.Capabilities.Builtin.PersonaCapability.OwnKey);
+
+        // Info, so the model cannot write it, and it states what is there before it is pressed.
+        Assert.Equal(D47.Core.Capabilities.SettingKind.Info, row.Kind);
+        Assert.Contains("Rusty", row.Binding!.Read(surface.Settings.Current));
+    }
 }
