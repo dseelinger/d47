@@ -233,6 +233,33 @@ public sealed record LoadoutRow(string Key, string Word, string Text, string? As
     /// </para>
     /// </summary>
     public LoadoutParts? Parts { get; init; }
+
+    /// <summary>
+    /// Whether the Commander actually has this thing, and whether they are in it right now.
+    /// <para>
+    /// <b>Its own fact rather than a reading of the aside.</b> The fleet index has always carried
+    /// this — "not bought yet" against "you are flying it" — but only as prose in the muted note at
+    /// the far end of the row, which is the least visible thing on it. Reported 2026-09-03:
+    /// <i>"Unpurchased ships should be visibly differentiated"</i>.
+    /// </para>
+    /// </summary>
+    public LoadoutStanding Standing { get; init; }
+}
+
+/// <summary>
+/// Where a row's subject stands with the Commander: owned, owned and currently in use, or wanted
+/// and not bought.
+/// </summary>
+public enum LoadoutStanding
+{
+    /// <summary>Owned, and sitting somewhere. The ordinary case, and the default.</summary>
+    Owned,
+
+    /// <summary>The one the Commander is in right now.</summary>
+    Active,
+
+    /// <summary>Planned for, and not bought. Drawn as an outline of a thing rather than a thing.</summary>
+    Wanted,
 }
 
 /// <summary>
@@ -445,6 +472,18 @@ public interface ILoadoutMode
     /// </para>
     /// </summary>
     IReadOnlyList<LoadoutGauge> Gauges(string item) => [];
+
+    /// <summary>
+    /// Whether the index is a grid of cards rather than a list of rows (asked for 2026-09-03).
+    /// <para>
+    /// <b>The mode's call, because it turns on whether the things have faces.</b> A fleet does: a
+    /// hull has a silhouette a Commander recognises across a room, and twelve of them in a grid is
+    /// read at a glance where twelve identical bars are read one at a time. A suit does not, and
+    /// its index stays the list it was.
+    /// </para>
+    /// </summary>
+    bool Cards => false;
+
 
     /// <summary>
     /// A question waiting on the Commander, or null when nothing is (Phase 38).

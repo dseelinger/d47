@@ -114,25 +114,48 @@ public sealed class ShipsMode(
 
     public string SayAtSlot(string slot) => $"plan grade 5 dirty drives on {slot}";
 
+    /// <summary>
+    /// The fleet, in one alphabet (asked for 2026-09-03).
+    /// <para>
+    /// <b>Flat and alphabetical, rather than active-then-owned-then-wanted.</b> The old order was
+    /// three groups deep and unlabelled, so it read as arbitrary unless you already knew the rule —
+    /// and the one thing a Commander does on this page is find a named ship they are thinking of.
+    /// An alphabet is the only order you can search without reading. Whether a ship is owned, and
+    /// whether you are sitting in it, is carried by <see cref="LoadoutStanding"/> and drawn on the
+    /// card, which was the trade asked for in as many words: <i>"rather than groups beginning on a
+    /// new row, some sort of visual indicator is the better choice"</i>.
+    /// </para>
+    /// </summary>
     public IReadOnlyList<LoadoutRow> Items() =>
     [
-        .. ships.Fleet().Select(entry =>
-        {
-            var planned = entry.Planned;
+        .. ships.Fleet()
+            .OrderBy(entry => entry.Name ?? entry.HullName, StringComparer.CurrentCultureIgnoreCase)
+            .Select(entry =>
+            {
+                var planned = entry.Planned;
 
-            return new LoadoutRow(
-                Key(entry),
-                entry.Name ?? entry.HullName,
-                entry.Name is { Length: > 0 } name ? $"{name} ({entry.HullName})" : entry.HullName,
+                return new LoadoutRow(
+                    Key(entry),
+                    entry.Name ?? entry.HullName,
+                    entry.Name is { Length: > 0 } name ? $"{name} ({entry.HullName})" : entry.HullName,
 
-                // Where it is, and how its plans stand. The two questions the fleet page exists to
-                // answer before anything is drilled.
-                planned > 0
-                    ? $"{entry.Where()} · {planned.ToString(CultureInfo.InvariantCulture)} planned"
-                    : entry.Where(),
-                planned > 0);
-        }),
+                    // Where it is, and how its plans stand. The two questions the fleet page exists
+                    // to answer before anything is drilled.
+                    planned > 0
+                        ? $"{entry.Where()} · {planned.ToString(CultureInfo.InvariantCulture)} planned"
+                        : entry.Where(),
+                    planned > 0)
+                {
+                    Standing = entry.IsActive
+                        ? LoadoutStanding.Active
+                        : entry.IsOwned
+                            ? LoadoutStanding.Owned
+                            : LoadoutStanding.Wanted,
+                };
+            }),
     ];
+
+    public bool Cards => true;
 
     /// <summary>
     /// A hull to plan a build for before it is bought. Every hull is offered and the Commander

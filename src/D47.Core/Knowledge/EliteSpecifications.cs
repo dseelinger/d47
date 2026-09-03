@@ -14,8 +14,8 @@ public sealed record ShipSpecification
     /// <summary>
     /// Who builds it — Faulcon DeLacy, Lakon, Zorgon Peterson — from column three of the ships
     /// table. Null for a hull with no measured row, which today is the Kestrel Mk II, the Caspian
-    /// Explorer and the Corsair: those are named from their armour and there is no column three to
-    /// read. **Not fillable by hand** — game data is Frontier's and this table is derived by a
+    /// Explorer, the Corsair and the Lynx Highliner: those are named from their armour and there is
+    /// no column three to read. **Not fillable by hand** — game data is Frontier's and this table is derived by a
     /// generator with its provenance recorded, so those three stay silent until the upstream source
     /// carries them (https://github.com/dseelinger/d47/issues/108).
     /// </summary>

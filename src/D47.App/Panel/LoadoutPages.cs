@@ -300,6 +300,130 @@ public static class LoadoutPages
     }
 
     /// <summary>
+    /// One thing in the index, as a card in a grid rather than a bar in a list
+    /// (asked for 2026-09-03).
+    /// <para>
+    /// <b>A card carries its standing where a row could not.</b> The fleet index has always known
+    /// which ship is being flown and which is not bought yet, and has always said so in the muted
+    /// note at the far end of the row — the least visible thing on it. A card can colour its edge
+    /// and fade as a whole, which is read across the room rather than word by word. Reported
+    /// 2026-09-03: <i>"Unpurchased ships should be visibly differentiated"</i>.
+    /// </para>
+    /// <para>
+    /// <b>No artwork yet</b>, and the first attempt at some was thrown out on sight — hand-drawn
+    /// polygons against a reference that turned out to be renders of the game's own hull geometry.
+    /// Where the drawings go is the space above the name; what fills it is a separate problem with
+    /// a separate source.
+    /// </para>
+    /// </summary>
+    internal static Control Card(
+        string text,
+        string? aside,
+        bool marked,
+        Action pressed,
+        LoadoutStanding standing)
+    {
+        var stroke = standing switch
+        {
+            LoadoutStanding.Active => ThemeManager.AccentKey,
+            LoadoutStanding.Wanted => ThemeManager.TextMutedKey,
+            _ => ThemeManager.TextKey,
+        };
+
+        var body = new Grid
+        {
+            RowDefinitions =
+            [
+                new RowDefinition(GridLength.Star),
+                new RowDefinition(GridLength.Auto),
+                new RowDefinition(GridLength.Auto),
+            ],
+        };
+
+        var label = new TextBlock
+        {
+            Text = text,
+            FontSize = TypeScale.Body,
+            TextWrapping = TextWrapping.Wrap,
+            MaxLines = 2,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+        };
+
+        if (marked)
+        {
+            // The plan dot keeps the meaning it has on a row — a plan exists here — and keeps
+            // travelling with the name rather than becoming a corner badge that would then be
+            // one of two corner badges saying different things.
+            label.Inlines =
+            [
+                new Run(text),
+                Dot(),
+            ];
+        }
+
+        Grid.SetRow(label, 1);
+        body.Children.Add(label);
+
+        if (aside is { Length: > 0 })
+        {
+            var note = new TextBlock
+            {
+                Text = aside,
+                FontSize = TypeScale.Secondary,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                Margin = new Thickness(0, 1, 0, 0),
+            };
+
+            Themed(note, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+            Grid.SetRow(note, 2);
+            body.Children.Add(note);
+        }
+
+        var button = new Button
+        {
+            Content = body,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            VerticalContentAlignment = VerticalAlignment.Stretch,
+            Padding = new Thickness(10, 6),
+        };
+
+        if (standing != LoadoutStanding.Owned)
+        {
+            // Thickness as well as colour, because a border that differs only in hue is no border
+            // at all to a Commander who cannot separate the hues — the same rule the plan dot and
+            // the gear already answer to.
+            button.BorderThickness = new Thickness(standing == LoadoutStanding.Active ? 2 : 1);
+            Themed(button, Button.BorderBrushProperty, stroke);
+
+            if (standing == LoadoutStanding.Wanted)
+            {
+                // **Faded, because a muted one-pixel edge was not a signal.** Drawn and looked at:
+                // an unbought hull was all but indistinguishable from an owned one, which is the
+                // exact complaint this work started from. The card recedes as a whole — drawing,
+                // name and note together — which reads as "not yours yet" from across the room
+                // rather than needing the note to be read.
+                button.Opacity = 0.55;
+            }
+        }
+
+        button.Click += (_, _) => pressed();
+
+        return button;
+    }
+
+    /// <summary>The plan mark, as an inline so it travels with the name on a card.</summary>
+    private static Run Dot()
+    {
+        var dot = new Run(" ●");
+
+        Themed(dot, Run.ForegroundProperty, ThemeManager.AccentKey);
+
+        return dot;
+    }
+
+    /// <summary>
     /// The say-line along the bottom of a page: the phrase for what the Commander is looking at.
     /// <para>
     /// <b>How they learn it.</b> The ray points and the voice edits, so a page that offers no
@@ -1399,6 +1523,17 @@ public sealed class IndexPage : LoadoutPage
     private readonly PanelPrompts _prompts;
     private readonly StackPanel _list = new() { Spacing = 3 };
 
+    /// <summary>
+    /// Where the cards go, for a mode that has them. A wrap panel rather than a uniform grid,
+    /// because the column count has to fall out of the width instead of being declared: the panel
+    /// runs from a 512-pixel strip to a maximised window to a headset overlay, and the one thing
+    /// asked for in as many words was that it never scroll sideways — <i>"without having to scroll
+    /// horizontally (EVER!)"</i>. A wrap cannot.
+    /// </summary>
+    private readonly WrapPanel _cards = new();
+
+    private readonly ScrollViewer _scroller;
+
     public IndexPage(ILoadoutMode mode, PanelNavigator nav, PanelPrompts prompts)
         : base(mode)
     {
@@ -1407,21 +1542,69 @@ public sealed class IndexPage : LoadoutPage
 
         var intend = LoadoutPages.Press(mode.NewLabel, Intend);
 
-        intend.Margin = new Thickness(0, 0, 0, 10);
+        // The head of the page: what you can add, and how you want to look at what is there.
+        // One line rather than two, because the switch is not a second thought about the button.
+        var head = new DockPanel { Margin = new Thickness(0, 0, 0, 10) };
+
+        DockPanel.SetDock(intend, Dock.Left);
+        head.Children.Add(intend);
 
         var root = new DockPanel { Margin = new Thickness(14) };
         var say = LoadoutPages.SayLine(mode.SayAtIndex);
 
-        DockPanel.SetDock(intend, Dock.Top);
+        _scroller = LoadoutPages.Scrolling(_list);
+
+        DockPanel.SetDock(head, Dock.Top);
         DockPanel.SetDock(say, Dock.Bottom);
 
-        root.Children.Add(intend);
+        root.Children.Add(head);
         root.Children.Add(say);
-        root.Children.Add(LoadoutPages.Scrolling(_list));
+        root.Children.Add(_scroller);
+
+        // Sized against the scroller rather than against the cards, which would be the panel
+        // measuring itself: setting a child's width inside its own SizeChanged is how a layout
+        // pass comes back round for another go.
+        _scroller.SizeChanged += (_, size) => Lay(size.NewSize.Width);
 
         Content = root;
 
         Refresh();
+    }
+
+    /// <summary>
+    /// How wide a card is, and how tall, for the width the page actually has.
+    /// <para>
+    /// <b>The columns fall out of the width and the cards then divide it exactly.</b> A fixed card
+    /// width would wrap at the same count and leave the remainder as a ragged margin down the right
+    /// — so the count is chosen first, against a floor of what is worth drawing at all, and the
+    /// width is the share. Four columns in a 1,277-pixel window; two in a headset; one in a strip.
+    /// </para>
+    /// <para>
+    /// <b>Short, because a card is text today.</b> The height is the one number that changes when
+    /// hull drawings arrive: they want something near 16:9 to sit in, and a switch to pack the
+    /// cards back down for a Commander with sixty ships who would rather see them all at once.
+    /// </para>
+    /// </summary>
+    private void Lay(double available)
+    {
+        if (!Mode.Cards || available <= 0)
+        {
+            return;
+        }
+
+        // Below this a card is narrower than the name it carries, and the grid should become one
+        // column rather than two unreadable ones.
+        const double Smallest = 210;
+
+        var columns = Math.Max(1, (int)Math.Floor(available / Smallest));
+
+        // A pixel back, because a width that divides the space exactly still wraps once the
+        // panel's own rounding goes the wrong way — and a wrap one card early is a column of
+        // whitespace down the side of the page.
+        var width = Math.Floor(available / columns) - 1;
+
+        _cards.ItemWidth = width;
+        _cards.ItemHeight = 64;
     }
 
     protected override void Refresh()
@@ -1448,15 +1631,38 @@ public sealed class IndexPage : LoadoutPage
             return;
         }
 
+        if (!Mode.Cards)
+        {
+            foreach (var row in rows)
+            {
+                _list.Children.Add(LoadoutPages.Row(
+                    row.Text,
+                    row.Aside,
+                    row.Marked,
+                    () => _nav.Drill(LoadoutPages.Crumb(Mode, row)),
+                    row.Engineered));
+            }
+
+            return;
+        }
+
+        _cards.Children.Clear();
+
         foreach (var row in rows)
         {
-            _list.Children.Add(LoadoutPages.Row(
+            _cards.Children.Add(LoadoutPages.Card(
                 row.Text,
                 row.Aside,
                 row.Marked,
                 () => _nav.Drill(LoadoutPages.Crumb(Mode, row)),
-                row.Engineered));
+                row.Standing));
         }
+
+        _list.Children.Add(_cards);
+
+        // The scroller has its width already on a redraw; only the first pass through here is
+        // ahead of a layout, and its SizeChanged catches that one.
+        Lay(_scroller.Bounds.Width);
     }
 
     private void Intend() => Mode.New(_prompts, Refresh);
