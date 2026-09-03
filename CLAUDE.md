@@ -36,6 +36,7 @@ release commands, plus the Python table generators. `docs/` is the published sit
 ## Conventions
 
 - **Surgical changes: every changed line traces to the task.** Match the surrounding style. Remove only what your change orphaned; unrelated dead code gets mentioned, not deleted.
+- Delegate reading-to-understand; read directly only what you are about to change. Orientation — where something lives, what calls it, how a pattern is done elsewhere — goes to Explore; corpus questions to corpus-scout; installed-build symptoms to log-scout. A scout's context dies with it, so the session pays for the conclusion instead of re-reading the files on every later turn. Workflows and multi-agent fan-out stay opt-in, asked for per request.
 - **Report the outcome, not the running commentary.** A few lines: what changed, where it is, whether the  suite is green, and any caveat that costs the reader later. Design alternatives, review findings and wrong turns go in the commit message and `CHANGELOG.md`.
 - **Structure only where it buys quality.** A project exists to enforce a dependency boundary or to be independently testable, not to express a taxonomy.
 - **Build and release stay frictionless.** If a workflow needs a checklist to run, fix the workflow.
