@@ -27,7 +27,7 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
-## 0.103.0 — 2026-09-02 — The Transcript's file picker is drawn whole, a sold suit or weapon reaches the on-foot plan, a core you wrote can be written from the panel, body signals read the FSS as well as the surface scan, the Raw toggle stays off other tabs' roots, and a hull you intend to buy is picked from a list
+## 0.103.0 — 2026-09-02 — The Transcript's file picker is drawn whole, a sold suit or weapon reaches the on-foot plan, a core you wrote can be written from the panel, body signals read the FSS as well as the surface scan, the Raw toggle stays off other tabs' roots, a hull you intend to buy is picked from a list, and no prompt tells you to hold a button by its number
 
 ### Writing a core of your own is reachable from the panel
 
@@ -206,6 +206,28 @@ until you own one", which is false the moment the hull picked is one the Command
 owning a Python and planning a second is an ordinary thing to do, and the page was telling them
 otherwise. It now says what is true either way: the build is planned now, and buying one will
 point the plan at it.
+
+### A waiting prompt no longer names your stick button by its number
+
+Every prompt in d47 that waits on speech showed the same line, and for a Commander bound to a
+stick it read **"Hold button 11 on your stick and say it."** Reported: *"I don't know which of my
+4 WinWing Orion 2 throttle controls is button 11."*
+
+**The number identifies nothing, and `HotasButton` already said so.** Its own doc comment has read
+*"the WinWing throttle alone presents four interfaces with 4x32 mode on — so button 7 alone is
+ambiguous and always was"* since Phase 53. d47 holds the device as an opaque `NonRoamableId`, so it
+cannot put a name beside the number even if it wanted to; printing the number alone was asking the
+Commander to identify a control from a fact that does not identify it.
+
+**The split is report against instruction, not stick against key.** Where the binding is being
+read so it can be *changed* — the settings row, the diagnostics inventory, the collision warning
+raised as you bind it — the number is the stored value and stays. Where it is being read so it can
+be *acted on*, the prompt now says "Hold your push-to-talk button and say it." A key is still named
+in both, because `[` is a thing you can find.
+
+**It still names a gesture rather than claiming to be listening.** That distinction was settled
+when the prompt used to say "Say it — I am listening." under push-to-talk and was reported as a
+lie; dropping the number must not quietly undo it, and a test pins the whole sentence.
 
 ## 0.102.0 — 2026-09-02 — The chatters are named and spaced, captions can sit in the cockpit, and d47 can say which journal events it handles
 

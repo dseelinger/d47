@@ -840,17 +840,42 @@ public static class ListeningCapability
     /// (GitHub issue 44).
     /// </para>
     /// </summary>
-    public static string? PushToTalkGesture(ListeningSettings listening, Func<string, string>? keyLabel)
+    /// <param name="nameTheButton">
+    /// Whether a bound stick button is named by its number.
+    /// <para>
+    /// <b>True where this is a report of what is bound, false where it is an instruction to act
+    /// now.</b> The number is the stored value and belongs anywhere the Commander might change it
+    /// — the settings row, the diagnostics inventory, the collision warning raised as they bind
+    /// it. It is useless in a prompt: reported by the Commander as <em>"I don't know which of my
+    /// 4 WinWing Orion 2 throttle controls is button 11"</em>, and this file's own
+    /// <see cref="Hotas.HotasButton"/> already says why — that throttle alone presents four
+    /// interfaces, so a button number identifies nothing without the device beside it, and d47
+    /// holds only an opaque <c>NonRoamableId</c> for that.
+    /// </para>
+    /// <para>
+    /// What replaces it still names a gesture rather than claiming the microphone is open, which
+    /// is the distinction <c>remediation.md</c> 10 item 12 settled: a prompt that says "say it"
+    /// while the gate is shut is a lie however carefully it is worded.
+    /// </para>
+    /// </param>
+    public static string? PushToTalkGesture(
+        ListeningSettings listening,
+        Func<string, string>? keyLabel,
+        bool nameTheButton = true)
     {
         var printedKey = listening.PushToTalkKey is { } key
             ? keyLabel?.Invoke(key) ?? key
             : null;
 
-        return (printedKey, PrintedButton(listening)) switch
+        var printedButton = PrintedButton(listening) is { } button
+            ? nameTheButton ? $"{button} on your stick" : "your push-to-talk button"
+            : null;
+
+        return (printedKey, printedButton) switch
         {
-            ({ } bound, { } button) => $"{bound} or {button} on your stick",
+            ({ } bound, { } stick) => $"{bound} or {stick}",
             ({ } bound, null) => bound,
-            (null, { } button) => $"{button} on your stick",
+            (null, { } stick) => stick,
             _ => null,
         };
     }

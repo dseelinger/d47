@@ -5291,10 +5291,18 @@ public sealed class AppHost : IDisposable
         // The same three facts, worded for a prompt that is waiting on one (remediation.md 10,
         // item 12). Set from here rather than from the prompt, so both surfaces are told once and
         // cannot disagree about one microphone.
+        //
+        // Without the button's number, unlike the detail above it. A prompt is an instruction to
+        // act now and "button 11" is not a thing a Commander can find on a throttle presenting
+        // four interfaces; the row that binds it names the number, because that is where it is
+        // read to be changed rather than to be pressed.
         Panel.ListeningPrompt = MicrophoneNarration.Prompt(
             listening.Mode,
             Wake.Phrases,
-            gesture);
+            ListeningCapability.PushToTalkGesture(
+                listening,
+                Input.Gestures.Describe,
+                nameTheButton: false));
     }
 
     /// <summary>

@@ -1,5 +1,6 @@
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
+using D47.Core.Listening;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -164,6 +165,50 @@ public class AButtonIsAWayToBeHeardTests
             ListeningCapability.PushToTalkGesture(
                 With(key, button).Listening,
                 k => k == "Oem4" ? "[" : k));
+    }
+
+    /// <summary>
+    /// A prompt does not name the button's number, because a number is not a thing a Commander
+    /// can find (reported 2026-09-03: <em>"I don't know which of my 4 WinWing Orion 2 throttle
+    /// controls is button 11"</em>).
+    /// <para>
+    /// <b>The distinction is report against instruction</b>, not stick against key. A key is
+    /// still named in both, because <c>[</c> is findable; the number survives wherever the
+    /// binding is being read to be changed — the settings row, the inventory, the collision
+    /// warning — and goes wherever it is being read to be acted on.
+    /// </para>
+    /// </summary>
+    [Theory]
+    [InlineData(null, null, null)]
+    [InlineData("Oem4", null, "[")]
+    [InlineData(null, Button, "your push-to-talk button")]
+    [InlineData("Oem4", Button, "[ or your push-to-talk button")]
+    public void APromptDoesNotNameTheButtonsNumber(string? key, string? button, string? expected)
+    {
+        Assert.Equal(
+            expected,
+            ListeningCapability.PushToTalkGesture(
+                With(key, button).Listening,
+                k => k == "Oem4" ? "[" : k,
+                nameTheButton: false));
+    }
+
+    /// <summary>
+    /// And the sentence a waiting prompt actually shows still says a gesture is needed. Dropping
+    /// the number must not turn into claiming the microphone is already open, which is the lie
+    /// remediation.md 10 item 12 was raised about.
+    /// </summary>
+    [Fact]
+    public void TheWaitingPromptStillSaysAGestureIsNeeded()
+    {
+        var gesture = ListeningCapability.PushToTalkGesture(
+            With(button: Button).Listening,
+            keyLabel: null,
+            nameTheButton: false);
+
+        Assert.Equal(
+            "Hold your push-to-talk button and say it.",
+            MicrophoneNarration.Prompt(ListeningCapability.HoldMode, [], gesture));
     }
 
     /// <summary>
