@@ -515,22 +515,29 @@ public sealed class PanelPrompts
             });
         }
 
-        var row = new Button
-        {
-            Content = stack,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            HorizontalContentAlignment = HorizontalAlignment.Left,
-
-            // Tall enough to be pressed by a ray at a metre. A row a Commander has to aim at
-            // is a row they press twice, and the second press is on the one below it.
-            MinHeight = 34,
-            Padding = new Thickness(12, 6),
-        };
+        var row = Pressable(stack);
 
         row.Click += (_, _) => chosen(option);
 
         return row;
     }
+
+    /// <summary>
+    /// A row that is pressed to pick the thing written on it. The chooser's options and the entry
+    /// page's suggestions are the same gesture and are drawn the same way, because a list of
+    /// hulls that looked unlike a list of modules would read as a different kind of list.
+    /// </summary>
+    private static Button Pressable(Control content) => new()
+    {
+        Content = content,
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+        HorizontalContentAlignment = HorizontalAlignment.Left,
+
+        // Tall enough to be pressed by a ray at a metre. A row a Commander has to aim at
+        // is a row they press twice, and the second press is on the one below it.
+        MinHeight = 34,
+        Padding = new Thickness(12, 6),
+    };
 
     /// <summary>
     /// The drawn keyboard, as a control rather than as a method on the page that first needed one.
@@ -620,6 +627,13 @@ public sealed class PanelPrompts
         private readonly Button _swap;
 
         /// <summary>
+        /// The closed list, narrowing as the value is typed, or null where the caller had no list
+        /// to offer (#282). Voice is untouched by it: what opens is still what the call site
+        /// asked for, and this is what the Commander at a mouse gets instead of a blind box.
+        /// </summary>
+        private readonly StackPanel? _choices;
+
+        /// <summary>
         /// The visible listening state, and it has to be visible or the Commander is talking at
         /// a blank page (Phase 25).
         /// <para>
@@ -677,6 +691,11 @@ public sealed class PanelPrompts
                 {
                     _typed = _shown.Text ?? string.Empty;
                 }
+
+                // Both ways in, in one place. The drawn board writes the box through
+                // <see cref="WriteBack"/> and a desk keyboard writes it directly; the list has to
+                // narrow either way, and this is the one event both of them raise.
+                Narrow();
             };
 
             _state = new TextBlock
@@ -720,12 +739,41 @@ public sealed class PanelPrompts
             body.Children.Add(_shown);
             body.Children.Add(_state);
             body.Children.Add(actions);
-            body.Children.Add(new ScrollViewer
+
+            var board = new ScrollViewer
             {
                 Content = _board,
                 VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
                 HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-            });
+            };
+
+            if (request.Suggestions is { Count: > 0 })
+            {
+                _choices = new StackPanel { Spacing = 3 };
+
+                // The list takes what is left and the board sits under it, which is the layout
+                // the searchable chooser already uses: the board is a fixed height and the list
+                // is the part worth growing.
+                var middle = new DockPanel { LastChildFill = true };
+
+                DockPanel.SetDock(board, Dock.Bottom);
+                board.Margin = new Thickness(0, 8, 0, 0);
+
+                middle.Children.Add(board);
+                middle.Children.Add(new ScrollViewer
+                {
+                    Content = _choices,
+                    VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                    HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                });
+
+                body.Children.Add(middle);
+                Narrow();
+            }
+            else
+            {
+                body.Children.Add(board);
+            }
 
             Content = Frame(
                 request.Title,
@@ -826,6 +874,63 @@ public sealed class PanelPrompts
 
             _host.Attend(null);
             _done(value);
+        }
+
+        /// <summary>
+        /// Redraws the closed list for what has been typed so far, and does nothing at all where
+        /// the caller offered no list.
+        /// <para>
+        /// <b>A press commits, exactly as Done does.</b> It goes through
+        /// <see cref="Commit"/> rather than around it, so a picked value is validated like any
+        /// other — the list and the caller's own idea of what is a thing cannot drift apart.
+        /// </para>
+        /// </summary>
+        private void Narrow()
+        {
+            if (_choices is null)
+            {
+                return;
+            }
+
+            _choices.Children.Clear();
+
+            var shown = EntrySuggestions.Narrow(_request.Suggestions, _typed);
+
+            if (shown.Count == 0)
+            {
+                var nothing = new TextBlock
+                {
+                    Text = $"Nothing here matches “{_typed.Trim()}”.",
+                    FontSize = TypeScale.Body,
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(12, 6),
+                };
+
+                nothing.Bind(
+                    TextBlock.ForegroundProperty,
+                    App.Current!.GetResourceObservable(ThemeManager.TextMutedKey));
+
+                _choices.Children.Add(nothing);
+                return;
+            }
+
+            foreach (var value in shown)
+            {
+                var picked = value;
+
+                var label = new TextBlock
+                {
+                    Text = picked,
+                    FontSize = TypeScale.Body,
+                    TextWrapping = TextWrapping.Wrap,
+                };
+
+                var row = Pressable(label);
+
+                row.Click += (_, _) => Commit(picked);
+
+                _choices.Children.Add(row);
+            }
         }
 
         /// <summary>

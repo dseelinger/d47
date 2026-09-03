@@ -27,7 +27,7 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
-## 0.103.0 — 2026-09-02 — The Transcript's file picker is drawn whole, a sold suit or weapon reaches the on-foot plan, a core you wrote can be written from the panel, body signals read the FSS as well as the surface scan, and the Raw toggle stays off other tabs' roots
+## 0.103.0 — 2026-09-02 — The Transcript's file picker is drawn whole, a sold suit or weapon reaches the on-foot plan, a core you wrote can be written from the panel, body signals read the FSS as well as the surface scan, the Raw toggle stays off other tabs' roots, and a hull you intend to buy is picked from a list
 
 ### Writing a core of your own is reachable from the panel
 
@@ -166,6 +166,29 @@ returned before the toggle was ever re-evaluated, and it kept showing whatever t
 had last left it as. The call now runs ahead of that guard on every navigation, and `DrawRawToggle`
 itself now checks `Nav.Tab == PanelTab.Transcript`, since the switch is a Transcript-only
 affordance.
+
+### A hull you intend to buy is picked from a list rather than spelled at a blind box (#282)
+
+Fleet → Ships → **Plan a ship you do not own** asked "Which ship do you intend to buy?" as free
+text. Anything that was not an exact known hull came back as *"I do not know a ship called…"* —
+after the fact, and without saying what would have matched. The hulls are a closed set of a few
+dozen and d47 ships the whole table, which is the one case a list beats a box.
+
+**The list is under the box, and voice still opens.** The prompt's doc comment was deliberate —
+*"a hull is a name and a name is far easier said than hunted for one key at a time"* — so nothing
+about HOTAS button 11 and speech changes. What changes is what a Commander at a mouse sees: every
+hull, alphabetically, narrowing as they type, and a press is the answer.
+
+**A list rather than a surface.** `EntrySurface` still says which of voice and the drawn keyboard
+opens; the closed list is a new `EntryRequest.Suggestions`, which is orthogonal to it and empty
+for every other call site. The narrowing itself is `EntrySuggestions.Narrow` in Core, matching
+anywhere in the name and without regard for case, so "type" finds the Type-9 as well as the
+Type-6. Narrowing rather than resolving, which is the rule the searchable chooser already keeps:
+nothing refuses what is typed, and a query matching nothing leaves an empty list.
+
+**A pressed hull goes through the same validation a spoken one does**, and the list is built from
+the same specification table that validation reads — so the two cannot come to disagree about what
+a hull is.
 
 ## 0.102.0 — 2026-09-02 — The chatters are named and spaced, captions can sit in the cockpit, and d47 can say which journal events it handles
 

@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using D47.Core.Checklists;
 using D47.Core.Interface;
 using D47.Core.Journal;
@@ -137,6 +137,12 @@ public sealed class ShipsMode(
     /// <summary>
     /// A hull the Commander does not own. Voice first, because a hull is a name and a name is far
     /// easier said than hunted for one key at a time.
+    /// <para>
+    /// <b>And a list under the box for everyone else</b> (#282). The hulls are a closed set and
+    /// d47 holds all of them, so a Commander at a mouse picks one instead of typing into a blind
+    /// box and being told after the fact that it was not a ship. The list is the same table the
+    /// validation reads, which is what stops the two disagreeing about what a hull is.
+    /// </para>
     /// </summary>
     public void New(PanelPrompts prompts, Action done) =>
         prompts.Enter(
@@ -149,12 +155,25 @@ public sealed class ShipsMode(
                 EntrySurface.Voice,
                 value => EliteSpecifications.Ship(value) is null
                     ? EntryVerdict.No($"I do not know a ship called “{value}”.")
-                    : EntryVerdict.Ok),
+                    : EntryVerdict.Ok,
+                Hulls),
             hull =>
             {
                 ships.Intend(hull);
                 done();
             });
+
+    /// <summary>
+    /// Every hull the specification table can measure, alphabetically — the list the picker
+    /// offers and, by construction, exactly the set the validation accepts.
+    /// </summary>
+    private static IReadOnlyList<string> Hulls { get; } =
+    [
+        .. EliteSpecifications.Ships
+            .Select(ship => ship.Name)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Order(StringComparer.OrdinalIgnoreCase),
+    ];
 
     public string? Summary(string item) => Resolve(item) is not { } build
         ? null
