@@ -33,6 +33,9 @@ public static class PersonaCapability
     /// <summary>The row that picks which ship the core row above is about.</summary>
     public const string ShipCoreShipKey = "persona.shipCoreShip";
 
+    /// <summary>The row that reads the cores the Commander wrote, and opens the editor.</summary>
+    public const string OwnKey = "persona.own";
+
     /// <summary>The core-row value that means "take the binding back".</summary>
     private const string Nobody = "nobody";
 
@@ -226,6 +229,27 @@ public static class PersonaCapability
             // protected, and here it comes free rather than as a flag.
             Binding = new SettingBinding { Read = _ => Introductions(host) },
         },
+        new SettingRow
+        {
+            Key = OwnKey,
+            Advanced = true,
+            Label = "Cores of your own",
+            Help =
+                "Cores you wrote, which join the picker at the top of this section beside the "
+                + "eleven that ship. One needs a name and a paragraph saying what it is like; "
+                + "everything else about the frame is supplied, and the shared preamble and "
+                + "standing instructions wrap what you write exactly as they wrap a shipped core. "
+                + "The file behind it is personas.json beside d47.exe, and the editor is a "
+                + "convenience over that file rather than an alternative to it.",
+            Kind = SettingKind.Info,
+            DocsAnchor = "cores-of-your-own",
+
+            // Info, so the model cannot reach it. It comes free here rather than as a flag, and
+            // it is the right answer twice over: a core is what the model is, and in-game comms
+            // are untrusted input, so "write yourself a new character" is exactly the shape of
+            // thing a hostile message would try.
+            Binding = new SettingBinding { Read = _ => SummariseOwn() },
+        },
         ..ships is null ? Array.Empty<SettingRow>() : ShipCoreRows(host, ships),
     ];
 
@@ -377,17 +401,8 @@ public static class PersonaCapability
     }
 
     /// <summary>
-    /// The closed phrase set that reaches this row without a model. Spelled out per core rather
-    /// than matched loosely, for the reason every <see cref="SettingCommandPhrase"/> is: a
-    /// router that guesses at values is a router that changes the wrong setting with total
-    /// confidence.
-    /// </summary>
-    /// <summary>The row that opens the editor for the Commander's own cores.</summary>
-    public const string OwnKey = "persona.own";
-
-    /// <summary>
-    /// What that row reads. Here rather than in the App, so the panel and the tool surface cannot
-    /// describe the same set differently.
+    /// What the own-cores row reads. Here rather than in the App, so the panel and the tool
+    /// surface cannot describe the same set differently.
     /// </summary>
     public static string SummariseOwn()
     {
@@ -398,6 +413,12 @@ public static class PersonaCapability
             : $"{names.Length} of your own: {string.Join(", ", names)}.";
     }
 
+    /// <summary>
+    /// The closed phrase set that reaches this row without a model. Spelled out per core rather
+    /// than matched loosely, for the reason every <see cref="SettingCommandPhrase"/> is: a
+    /// router that guesses at values is a router that changes the wrong setting with total
+    /// confidence.
+    /// </summary>
     private static IEnumerable<SettingCommandPhrase> SelectionPhrases(Persona.Persona persona)
     {
         var name = persona.Name.ToLowerInvariant();

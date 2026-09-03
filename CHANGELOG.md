@@ -27,7 +27,49 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
-## 0.102.1 — 2026-09-02 — The Transcript's file picker is drawn whole, and a sold suit or weapon reaches the on-foot plan
+## 0.102.1 — 2026-09-02 — The Transcript's file picker is drawn whole, a sold suit or weapon reaches the on-foot plan, and a core you wrote can be written from the panel
+
+### Writing a core of your own is reachable from the panel
+
+Reported from a screenshot of the Persona section: *"Is there a capability to institute a custom
+persona? If so, there does not appear to be a UI for it."* Both halves were right. The capability
+had been built for months and there was no way in.
+
+**A key that named a row nothing carried.** `PersonaCapability.OwnKey` was declared, the summary
+it would read was written beside it, and `SettingsView` carried a branch that draws the row with
+a **Write a core** button opening the editor — but `Rows(...)` never built a row with that key.
+`persona.own` appeared exactly once in the repository, as the constant. So the branch could never
+match, `PersonaWindow` was three hundred lines nothing opened, and the only way to write a core
+was to write `personas.json` by hand and restart. Everything downstream of the row already worked:
+a hand-written core joined the picker under the eleven that ship, took the shared preamble and
+standing instructions like any of them, paired with a voice, and could be bound to a ship.
+
+**The constant had been pasted into the middle of another method's documentation comment**, which
+is the shape of the mistake: `SelectionPhrases` lost its summary to `OwnKey` and the row
+registration never followed. Both are back where they belong.
+
+**And the store is polled on the tick now.** It was read once at startup. Every sibling store —
+alarms, ship builds, ship cores, memories, goals, adventures — is on the tick so a hand edit is
+live without a restart, `OwnPersonaStore` is built for exactly that and has a test proving it
+re-reads, and the promise held everywhere except in the running app.
+
+Two tests, because one could not have caught it: the row is declared with its summary (Core), and
+it draws its button when the store reaches the view (the real settings page). The second is the
+one that matters — a row whose host delegate is absent draws no button, and a probe of Core goes
+on passing.
+
+**The editor drew its own legend down the left-hand side.** Found by opening the window for the
+first time. A `DockPanel` child with no dock takes `Left`, and the legend added by
+[#253](https://github.com/dseelinger/d47/issues/253) had none — so the key to the `*` and `◆`
+marks stood in a column of its own down the side of the window, clipped at its own width, with
+every card squeezed to 442 pixels of the 680 to clear it. It is docked to the top now, like the
+two rows above it, and the cards get the width of the window.
+
+Three tests: the row is declared with its summary (Core), it draws its button when the store
+reaches the view, and the editor's cards get the window's width. The last two are on the real
+drawn page, which is the only place either fault was visible — a row whose host delegate is
+absent draws no button, and a probe of Core goes on passing.
+
 
 ### The file picker is sized by its longest reading, so its chevron has room (#273)
 

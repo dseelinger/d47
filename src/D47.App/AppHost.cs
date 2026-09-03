@@ -2478,6 +2478,12 @@ public sealed class AppHost : IDisposable
             }
         });
 
+        // The cores the Commander wrote, on the tick like every other store. Read here rather
+        // than only at startup, because personas.json is meant to be hand-editable and the store
+        // is built to re-read on a write — polling it once meant that promise held everywhere
+        // except in the running app, where a hand edit needed a restart to be seen.
+        tick.Add("own cores", _ => ownPersonas.Poll());
+
         // A core per ship (Phase 35). The store is read first so a hand edit is live, then
         // the ship the Commander is in is compared against the one whose binding is already
         // aboard. Nothing here writes a binding: this reads what they already said.
