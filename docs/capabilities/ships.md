@@ -22,17 +22,29 @@ nav_order: 111
 <p class="intro">Three steps to a build you are working towards.</p>
 <section>
 <h2><span class="num">1</span> Open the Ships tab. Your fleet is already there.</h2>
-<svg viewBox="0 0 880 246" role="img" aria-label="The Ships tab">
- <rect x="20" y="16" width="840" height="210" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+<svg viewBox="0 0 880 300" role="img" aria-label="The Ships tab">
+ <rect x="20" y="16" width="840" height="264" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <rect x="20" y="16" width="840" height="42" rx="8" fill="var(--surface)"/>
  <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Ships</text>
- <text x="44" y="92" font-size="16" fill="var(--text)">Anaconda — Ptarmigan</text>
- <text x="836" y="92" text-anchor="end" font-size="16" fill="var(--text-muted)">flying now</text>
- <text x="44" y="130" font-size="16" fill="var(--text)">Krait Mk II — Sparrow</text>
- <text x="836" y="130" text-anchor="end" font-size="16" fill="var(--text-muted)">Jameson Memorial</text>
- <text x="44" y="168" font-size="16" fill="var(--text)">Python</text>
- <text x="836" y="168" text-anchor="end" font-size="16" fill="var(--text-muted)">wanted</text>
- <text x="44" y="222" font-size="15" fill="var(--text-muted)">Read out of the journal. Ships you mean to buy sit beside ships you own.</text>
+ <text x="836" y="44" text-anchor="end" font-size="14" fill="var(--text-muted)">Drawings</text>
+
+ <rect x="44" y="78" width="256" height="152" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="3"/>
+ <path d="M78 130 L214 120 L266 148 L214 166 L112 168 Z" fill="var(--text-muted)"/>
+ <path d="M112 168 L214 166 L196 186 L128 184 Z" fill="var(--border)"/>
+ <text x="60" y="206" font-size="15" fill="var(--text)">Ptarmigan (Anaconda)</text>
+ <text x="60" y="224" font-size="13" fill="var(--text-muted)">flying now</text>
+
+ <rect x="312" y="78" width="256" height="152" rx="6" fill="var(--surface)"/>
+ <path d="M346 134 L462 122 L512 146 L462 164 L378 168 Z" fill="var(--text-muted)"/>
+ <text x="328" y="206" font-size="15" fill="var(--text)">Sparrow (Krait Mk II)</text>
+ <text x="328" y="224" font-size="13" fill="var(--text-muted)">Jameson Memorial</text>
+
+ <rect x="580" y="78" width="256" height="152" rx="6" fill="var(--surface)" stroke="var(--text-muted)" stroke-width="2" opacity="0.55"/>
+ <path d="M614 132 L730 122 L778 146 L730 164 L646 168 Z" fill="var(--text-muted)" opacity="0.55"/>
+ <text x="596" y="206" font-size="15" fill="var(--text-muted)">Python</text>
+ <text x="596" y="224" font-size="13" fill="var(--text-muted)">wanted</text>
+
+ <text x="44" y="266" font-size="15" fill="var(--text-muted)">Read out of the journal. The one you are flying is outlined; a ship you only mean to buy is faded.</text>
 </svg>
 </section>
 <section>

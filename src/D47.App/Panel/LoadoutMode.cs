@@ -244,6 +244,18 @@ public sealed record LoadoutRow(string Key, string Word, string Text, string? As
     /// </para>
     /// </summary>
     public LoadoutStanding Standing { get; init; }
+
+    /// <summary>
+    /// The hull symbol this row is about, lower case as the journal writes it, or null for a row
+    /// that is not a ship.
+    /// <para>
+    /// <b>Carried because <see cref="Key"/> cannot be looked up by.</b> A row's key is a build id,
+    /// or <c>new:</c> and a stored ship's number — it identifies <em>this Commander's</em> ship,
+    /// which is the right thing to drill into and the wrong thing to find a picture of. Two Cobras
+    /// share a hull and share a drawing. Null on every row is a mode with no artwork, unchanged.
+    /// </para>
+    /// </summary>
+    public string? Hull { get; init; }
 }
 
 /// <summary>
@@ -261,6 +273,20 @@ public enum LoadoutStanding
     /// <summary>Planned for, and not bought. Drawn as an outline of a thing rather than a thing.</summary>
     Wanted,
 }
+
+/// <summary>
+/// A switch at the head of an index, with somewhere to remember itself.
+/// <para>
+/// <b>Remembered on the view state rather than in settings</b>, and scoped to the one page:
+/// asked for 2026-09-03, <i>"I think it's better if this one lives only on the Ships page"</i>.
+/// How a Commander wants to look at their fleet is not a preference about d47, it is where they
+/// left a page — the same shelf the raw-journal switch and the pane widths sit on.
+/// </para>
+/// </summary>
+/// <param name="Label">What the switch says. A noun for what you get, not an instruction.</param>
+/// <param name="On">Where it is now.</param>
+/// <param name="Set">Where to put it, and where to remember it.</param>
+public sealed record LoadoutToggle(string Label, bool On, Action<bool> Set);
 
 /// <summary>
 /// One side of a slot row: what is in the slot, or what the plan asks for
@@ -484,6 +510,16 @@ public interface ILoadoutMode
     /// </summary>
     bool Cards => false;
 
+    /// <summary>
+    /// A switch for the index itself, or null for a mode with nothing to switch.
+    /// <para>
+    /// <b>The mode's, because what it turns is the mode's.</b> The drawings switch belongs to the
+    /// fleet and nowhere else — a suit index has no artwork to pack away — and a page-level switch
+    /// would have to ask which mode it was looking at before it knew what it did. Defaulted null
+    /// for the same reason the gauges are.
+    /// </para>
+    /// </summary>
+    LoadoutToggle? IndexToggle => null;
 
     /// <summary>
     /// A question waiting on the Commander, or null when nothing is (Phase 38).

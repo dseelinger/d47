@@ -27,7 +27,7 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
-## 0.103.0 — 2026-09-02 — The Transcript's file picker is drawn whole, a sold suit or weapon reaches the on-foot plan, a core you wrote can be written from the panel, body signals read the FSS as well as the surface scan, the Raw toggle stays off other tabs' roots, a hull you intend to buy is picked from a list, and no prompt tells you to hold a button by its number
+## 0.103.0 — 2026-09-02 — The Transcript's file picker is drawn whole, a sold suit or weapon reaches the on-foot plan, a core you wrote can be written from the panel, body signals read the FSS as well as the surface scan, the Raw toggle stays off other tabs' roots, a hull you intend to buy is picked from a list, no prompt tells you to hold a button by its number, and the ship picker no longer repeats itself
 
 ### Writing a core of your own is reachable from the panel
 
@@ -228,6 +228,16 @@ in both, because `[` is a thing you can find.
 **It still names a gesture rather than claiming to be listening.** That distinction was settled
 when the prompt used to say "Say it — I am listening." under push-to-talk and was reported as a
 lie; dropping the number must not quietly undo it, and a test pins the whole sentence.
+
+### The ship picker no longer says "or say it" twice
+
+The combo box built for #282 draws its own placeholder, "Pick one, or say it", and beside it stood
+the same waiting prompt every other voice entry shows — "Hold your push-to-talk button and say
+it." on this Commander's build. Two controls, inches apart, both telling the same instruction.
+
+**The waiting line is still there for what it is actually for**: it shows a partial transcript as
+it is heard, and a hull that was not understood, or refused, still explains itself in the same
+spot. Only the idle caption — the copy of what the placeholder already says — is gone.
 
 ## 0.102.0 — 2026-09-02 — The chatters are named and spaced, captions can sit in the cockpit, and d47 can say which journal events it handles
 

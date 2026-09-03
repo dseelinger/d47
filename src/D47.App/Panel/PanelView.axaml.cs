@@ -851,9 +851,10 @@ public partial class PanelView : UserControl
         D47.Core.Checklists.ChecklistService checklists,
         Func<D47.Core.Journal.CommanderGameState?> state,
         D47.Core.Loadout.OnFootPlanService? onFoot = null,
-        Func<D47.Core.Journal.ModulePower>? modulePower = null)
+        Func<D47.Core.Journal.ModulePower>? modulePower = null,
+        ShipsDrawingsMemory? drawings = null)
     {
-        var shipsMode = new ShipsMode(ships, checklists, state, modulePower);
+        var shipsMode = new ShipsMode(ships, checklists, state, modulePower, drawings);
 
         // Kept, so the tick has something to invalidate (remediation.md 17, item 7).
         _loadoutMode = shipsMode;

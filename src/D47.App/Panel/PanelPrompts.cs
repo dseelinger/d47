@@ -949,7 +949,7 @@ public sealed class PanelPrompts
 
             _state = new TextBlock
             {
-                Text = Waiting,
+                Text = string.Empty,
                 FontSize = TypeScale.Secondary,
                 TextWrapping = TextWrapping.Wrap,
                 VerticalAlignment = VerticalAlignment.Center,
@@ -983,20 +983,15 @@ public sealed class PanelPrompts
                 Dispatcher.UIThread.Post(() => _pick.Focus(), DispatcherPriority.Input);
         }
 
-        private string Waiting => _host.Waiting?.Invoke() is { Length: > 0 } said
-            ? said
-            : WaitingFallback;
-
         private void OnHeard(Heard heard)
         {
             // A partial is shown and never committed, which is the visible listening state doing
             // its job — the words appearing as they are said is how a Commander knows the
-            // microphone is on them.
+            // microphone is on them. No leading prompt here: the combo box already says "or say
+            // it", and repeating how to open the microphone next to it said the same thing twice.
             if (!heard.Final)
             {
-                _state.Text = string.IsNullOrWhiteSpace(heard.Text)
-                    ? Waiting
-                    : $"{Waiting} {heard.Text}";
+                _state.Text = heard.Text;
 
                 return;
             }

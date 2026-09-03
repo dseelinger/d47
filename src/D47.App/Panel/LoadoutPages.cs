@@ -10,6 +10,7 @@ using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Avalonia.Reactive;
 using Avalonia.VisualTree;
@@ -310,10 +311,10 @@ public static class LoadoutPages
     /// 2026-09-03: <i>"Unpurchased ships should be visibly differentiated"</i>.
     /// </para>
     /// <para>
-    /// <b>No artwork yet</b>, and the first attempt at some was thrown out on sight — hand-drawn
-    /// polygons against a reference that turned out to be renders of the game's own hull geometry.
-    /// Where the drawings go is the space above the name; what fills it is a separate problem with
-    /// a separate source.
+    /// <b>The artwork goes in the space above the name</b>, when there is any: renders of Elite's
+    /// own hull geometry, one file per hull, absent for most of them until each has been captured.
+    /// A card with no drawing keeps the star row empty and is the card it always was, so the fleet
+    /// does not have to arrive all at once. See <see cref="ShipArt"/>.
     /// </para>
     /// </summary>
     internal static Control Card(
@@ -321,7 +322,9 @@ public static class LoadoutPages
         string? aside,
         bool marked,
         Action pressed,
-        LoadoutStanding standing)
+        LoadoutStanding standing,
+        string? hull = null,
+        bool drawings = false)
     {
         var stroke = standing switch
         {
@@ -339,6 +342,32 @@ public static class LoadoutPages
                 new RowDefinition(GridLength.Auto),
             ],
         };
+
+        Image? spinning = null;
+        Bitmap? resting = null;
+
+        if (drawings && ShipArt.For(hull) is { } picture)
+        {
+            resting = picture;
+
+            // Uniform, so a hull keeps its proportions whatever share of the width the column
+            // count left the card; and centred in the row rather than stretched to it, because a
+            // Sidewinder and a Type-10 are framed to fill the same box already and letting the
+            // control stretch would undo that.
+            var drawing = new Image
+            {
+                Source = picture,
+                Stretch = Stretch.Uniform,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 0, 2),
+            };
+
+            Grid.SetRow(drawing, 0);
+            body.Children.Add(drawing);
+
+            spinning = drawing;
+        }
 
         var label = new TextBlock
         {
@@ -409,6 +438,13 @@ public static class LoadoutPages
         }
 
         button.Click += (_, _) => pressed();
+
+        if (spinning is not null && resting is not null)
+        {
+            // Attached to the button rather than the image, so the hull turns while the pointer is
+            // anywhere on its card and not only while it is over the drawing itself.
+            HullSpin.Attach(button, spinning, hull, resting);
+        }
 
         return button;
     }
@@ -1534,6 +1570,9 @@ public sealed class IndexPage : LoadoutPage
 
     private readonly ScrollViewer _scroller;
 
+    /// <summary>The index's own switch, kept so it can be withdrawn when it has nothing to do.</summary>
+    private readonly ToggleSwitch? _switch;
+
     public IndexPage(ILoadoutMode mode, PanelNavigator nav, PanelPrompts prompts)
         : base(mode)
     {
@@ -1553,6 +1592,35 @@ public sealed class IndexPage : LoadoutPage
         var say = LoadoutPages.SayLine(mode.SayAtIndex);
 
         _scroller = LoadoutPages.Scrolling(_list);
+
+        // After the scroller exists, because the switch re-lays the grid and would otherwise be
+        // capturing a field the constructor has not filled in yet.
+        if (mode.IndexToggle is { } toggle)
+        {
+            // A ToggleSwitch, the same control the raw-journal switch uses — a Commander asked for
+            // that one by name, and two switches in one app that look different are two controls.
+            _switch = new ToggleSwitch
+            {
+                Content = toggle.Label,
+                IsChecked = toggle.On,
+                FontSize = TypeScale.Secondary,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+            _switch.IsCheckedChanged += (_, _) =>
+            {
+                toggle.Set(_switch.IsChecked == true);
+
+                // The cards are rebuilt because the drawing is part of the card, and re-laid
+                // because the height it needs changed with it.
+                Refresh();
+                Lay(_scroller.Bounds.Width);
+            };
+
+            DockPanel.SetDock(_switch, Dock.Right);
+            head.Children.Add(_switch);
+        }
 
         DockPanel.SetDock(head, Dock.Top);
         DockPanel.SetDock(say, Dock.Bottom);
@@ -1580,9 +1648,10 @@ public sealed class IndexPage : LoadoutPage
     /// width is the share. Four columns in a 1,277-pixel window; two in a headset; one in a strip.
     /// </para>
     /// <para>
-    /// <b>Short, because a card is text today.</b> The height is the one number that changes when
-    /// hull drawings arrive: they want something near 16:9 to sit in, and a switch to pack the
-    /// cards back down for a Commander with sixty ships who would rather see them all at once.
+    /// <b>The height follows the switch.</b> With drawings the card is the picture's 16:9 box plus
+    /// the two lines of text under it, so the box grows and shrinks with the column width and a
+    /// hull is never letterboxed inside its own card. With them off it is back to the short card
+    /// text alone needs — for the Commander with sixty ships who would rather see them all at once.
     /// </para>
     /// </summary>
     private void Lay(double available)
@@ -1604,8 +1673,32 @@ public sealed class IndexPage : LoadoutPage
         var width = Math.Floor(available / columns) - 1;
 
         _cards.ItemWidth = width;
-        _cards.ItemHeight = 64;
+
+        // 64 is what the name and its note need, and the drawing adds a 16:9 box of whatever
+        // width is left inside the card's padding. Measured from the card rather than declared,
+        // so the two never disagree about how tall the picture actually drew.
+        const double Text = 64;
+        const double Sides = 20;
+
+        _cards.ItemHeight = Drawings
+            ? Text + Math.Floor((width - Sides) * 9 / 16)
+            : Text;
     }
+
+    /// <summary>
+    /// Whether the index is drawing its artwork.
+    /// <para>
+    /// <b>The switch being on is not enough: something has to be there to draw.</b> Hulls are
+    /// captured one at a time and most have none yet, and a card grid three times taller for
+    /// pictures that do not exist is a page of empty boxes. So the height follows what the fleet
+    /// actually has, and a Commander whose ships are all uncaptured sees the compact grid without
+    /// having had to find the switch.
+    /// </para>
+    /// </summary>
+    private bool Drawings => (Mode.IndexToggle?.On ?? false) && _drawable;
+
+    /// <summary>Whether any row in the index has artwork behind it. Set as the cards are built.</summary>
+    private bool _drawable;
 
     protected override void Refresh()
     {
@@ -1648,6 +1741,15 @@ public sealed class IndexPage : LoadoutPage
 
         _cards.Children.Clear();
 
+        // Asked before the cards are built, because the height they get depends on the answer and
+        // the switch has nothing to offer a fleet with no captured hull in it.
+        _drawable = rows.Any(row => ShipArt.For(row.Hull) is not null);
+
+        if (_switch is { } box)
+        {
+            box.IsVisible = _drawable;
+        }
+
         foreach (var row in rows)
         {
             _cards.Children.Add(LoadoutPages.Card(
@@ -1655,7 +1757,9 @@ public sealed class IndexPage : LoadoutPage
                 row.Aside,
                 row.Marked,
                 () => _nav.Drill(LoadoutPages.Crumb(Mode, row)),
-                row.Standing));
+                row.Standing,
+                row.Hull,
+                Drawings));
         }
 
         _list.Children.Add(_cards);

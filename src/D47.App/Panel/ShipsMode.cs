@@ -20,7 +20,8 @@ public sealed class ShipsMode(
     ShipPlanService ships,
     ChecklistService checklists,
     Func<CommanderGameState?> state,
-    Func<ModulePower>? measured = null) : ILoadoutMode
+    Func<ModulePower>? measured = null,
+    ShipsDrawingsMemory? drawings = null) : ILoadoutMode
 {
     /// <summary>A row for a ship the journal reports and nothing has planned for yet.</summary>
     private const string Unplanned = "new:";
@@ -151,11 +152,24 @@ public sealed class ShipsMode(
                         : entry.IsOwned
                             ? LoadoutStanding.Owned
                             : LoadoutStanding.Wanted,
+                    Hull = entry.Hull,
                 };
             }),
     ];
 
     public bool Cards => true;
+
+    /// <summary>
+    /// The drawings switch, for a fleet that has somewhere to remember it.
+    /// <para>
+    /// Null without the memory, which is what a test constructing this mode by hand gets — and it
+    /// means the switch is simply absent rather than present and forgetful.
+    /// </para>
+    /// </summary>
+    public LoadoutToggle? IndexToggle =>
+        drawings is null
+            ? null
+            : new LoadoutToggle("Drawings", drawings.Drawings, drawings.Remember);
 
     /// <summary>
     /// A hull to plan a build for before it is bought. Every hull is offered and the Commander

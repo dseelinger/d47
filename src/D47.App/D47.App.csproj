@@ -103,6 +103,12 @@
     <AvaloniaResource Include="..\..\assets\directive-47.ico" Link="Assets\directive-47.ico" />
   </ItemGroup>
 
+  <!--
+    Hull drawings are deliberately NOT built in. They live in data\ships\ beside the executable and
+    are read at run time (see ShipArt). Compiling them in meant a rebuild for every new hull and
+    every change to how hulls are drawn, and shipped all forty-odd to a Commander who owns one.
+  -->
+
   <ItemGroup>
     <InternalsVisibleTo Include="D47.App.Tests" />
   </ItemGroup>

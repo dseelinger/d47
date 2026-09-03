@@ -243,7 +243,12 @@ public partial class MainWindow : Window
                 host.Checklists,
                 () => host.GameState.Active,
                 host.OnFootPlans,
-                () => host.ModulePower);
+                () => host.ModulePower,
+                new ShipsDrawingsMemory(host.ViewState));
+
+            // Where the hull drawings are read from. Beside the executable rather than inside it,
+            // so a hull that arrives after this build still draws.
+            ShipArt.Folder = host.Paths.Ships;
 
             // Who to go and unlock next, read across both plan stores (Phase 28). Both
             // surfaces again, because a Commander deciding where to fly is usually already in

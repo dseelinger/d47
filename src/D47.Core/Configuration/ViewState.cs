@@ -125,6 +125,22 @@ public sealed record ViewState
     public bool JournalRaw { get; init; }
 
     /// <summary>
+    /// Whether the Ships index draws its hull artwork, or packs the cards down to their names.
+    /// <para>
+    /// Here rather than in settings for the reason the raw switch is, and scoped tighter still:
+    /// asked for 2026-09-03, <i>"I think it's better if this one lives only on the Ships page"</i>.
+    /// It is where one page was left, not a preference about d47.
+    /// </para>
+    /// <para>
+    /// <b>Drawings are the default, which is why the stored fact is the opposite.</b> A bool reads
+    /// false when the file is absent or unreadable, and the shrug has to land on the better page —
+    /// so what is remembered is the Commander who turned the pictures <em>off</em>, typically
+    /// because they have sixty ships and would rather see them all at once.
+    /// </para>
+    /// </summary>
+    public bool ShipsDrawingsOff { get; init; }
+
+    /// <summary>
     /// Which reading each tab was left on, by tab name and root key
     /// (<a href="https://github.com/dseelinger/d47/issues/268">#268</a>) — the Transcript on
     /// the log file, Routing on Course.

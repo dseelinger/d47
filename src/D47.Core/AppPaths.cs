@@ -27,6 +27,7 @@ public sealed class AppPaths
         VrActions = Path.Combine(Data, "vr-actions");
         DonorTokenFile = Path.Combine(Data, "donor-token.txt");
         Donations = Path.Combine(Data, "donations");
+        Ships = Path.Combine(Data, "ships");
     }
 
     /// <summary>
@@ -143,6 +144,22 @@ public sealed class AppPaths
     /// </summary>
     public string Donations { get; }
 
+    /// <summary>
+    /// The hull drawings the fleet cards carry, one pair of files per hull symbol.
+    /// <para>
+    /// <b>Beside the executable rather than inside it, and that is the load-bearing part.</b>
+    /// These were built into the binary first, which made three ordinary things impossible: a new
+    /// hull meant a rebuild, a change to how the hulls are drawn meant a rebuild, and every
+    /// Commander carried every hull whether they owned one ship or forty. As a folder, a hull is a
+    /// file that appears - dropped in by hand, or fetched when a fleet turns out to need it.
+    /// </para>
+    /// <para>
+    /// A drop-in folder like the audio ones, so it is created empty rather than left as a
+    /// convention nobody can see.
+    /// </para>
+    /// </summary>
+    public string Ships { get; }
+
     public void EnsureCreated()
     {
         Directory.CreateDirectory(Data);
@@ -153,5 +170,6 @@ public sealed class AppPaths
         Directory.CreateDirectory(Path.Combine(Audio, FolderAudioSource.CuesFolder));
         Directory.CreateDirectory(Path.Combine(Audio, FolderAudioSource.BedsFolder));
         Directory.CreateDirectory(Path.Combine(Audio, FolderAudioSource.MusicFolder));
+        Directory.CreateDirectory(Ships);
     }
 }
