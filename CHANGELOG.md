@@ -167,28 +167,45 @@ had last left it as. The call now runs ahead of that guard on every navigation, 
 itself now checks `Nav.Tab == PanelTab.Transcript`, since the switch is a Transcript-only
 affordance.
 
-### A hull you intend to buy is picked from a list rather than spelled at a blind box (#282)
+### A hull you intend to buy is picked, not spelled at a blind box (#282)
 
 Fleet → Ships → **Plan a ship you do not own** asked "Which ship do you intend to buy?" as free
 text. Anything that was not an exact known hull came back as *"I do not know a ship called…"* —
 after the fact, and without saying what would have matched. The hulls are a closed set of a few
-dozen and d47 ships the whole table, which is the one case a list beats a box.
+dozen and d47 ships the whole table, which is the one case a picker beats a box.
 
-**The list is under the box, and voice still opens.** The prompt's doc comment was deliberate —
-*"a hull is a name and a name is far easier said than hunted for one key at a time"* — so nothing
-about HOTAS button 11 and speech changes. What changes is what a Commander at a mouse sees: every
-hull, alphabetically, narrowing as they type, and a press is the answer.
+**It is a real `ComboBox`, and the panel spent a long time believing it could not have one.** The
+first cut of this drew the hulls as a stack of full-width buttons under the text box, which the
+Commander rejected on sight — *"one of the most stupid design decisions ever"* — and they were
+right: forty-eight window-wide buttons is a wall, not a picker. The belief that ruled a combo out
+was that a popup has no top level to hang from on a window that is never shown. That was answered
+by [#231](https://github.com/dseelinger/d47/issues/231) and the answer was never applied here: the
+desktop window has a real top level and gets the control's own drop-down, and the headset gets
+`OffscreenSurface.Choose`, which takes the ray-press before a pointer event exists and draws the
+same items on the panel. Both surfaces, one declaration, no new mechanism.
 
-**A list rather than a surface.** `EntrySurface` still says which of voice and the drawn keyboard
-opens; the closed list is a new `EntryRequest.Suggestions`, which is orthogonal to it and empty
-for every other call site. The narrowing itself is `EntrySuggestions.Narrow` in Core, matching
-anywhere in the name and without regard for case, so "type" finds the Type-9 as well as the
-Type-6. Narrowing rather than resolving, which is the rule the searchable chooser already keeps:
-nothing refuses what is typed, and a query matching nothing leaves an empty list.
+**Type-ahead comes with the control.** Avalonia 12's `ComboBox` matches multiple characters, so
+"ana" is an Anaconda; the box is focused when the page opens, so that is the whole interaction for
+a Commander who already knows the hull they want — which is everyone who pressed this button. The
+box carries a generous `MinWidth` floor rather than sizing to its selection, because a `ComboBox`
+measures itself against the selected item and nothing else, and a box that resizes under the
+pointer has been reported twice already (#231, #273).
 
-**A pressed hull goes through the same validation a spoken one does**, and the list is built from
-the same specification table that validation reads — so the two cannot come to disagree about what
-a hull is.
+**Two controls were removed, on a principle rather than for tidiness.** The drawn keyboard exists
+because free text needs one in a cockpit, and **Done** exists to commit free text once and
+atomically. Neither applies when every answer is already on the page: picking is the commit. The
+picker is its own page for the same reason — branching inside the entry page would have left most
+of it unreachable whenever a list was offered.
+
+**Voice is untouched.** It is still armed while the picker is open, and a spoken hull commits
+through the same validation a picked one does. A value that is not a hull says so and leaves the
+picker standing; there is no keyboard to put back, because the answers are all on screen.
+
+**The second line no longer claims anything about the fleet.** It read "it is not in your fleet
+until you own one", which is false the moment the hull picked is one the Commander already flies —
+owning a Python and planning a second is an ordinary thing to do, and the page was telling them
+otherwise. It now says what is true either way: the build is planned now, and buying one will
+point the plan at it.
 
 ## 0.102.0 — 2026-09-02 — The chatters are named and spaced, captions can sit in the cockpit, and d47 can say which journal events it handles
 

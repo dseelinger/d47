@@ -107,12 +107,27 @@ public sealed class PanelPrompts
     /// </summary>
     public void Enter(EntryRequest request, Action<string> done)
     {
-        Open(request.Key, request.Word, page: true, () => new EntryPage(this, request, value =>
+        Open(request.Key, request.Word, page: true, () => Answering(request, value =>
         {
             Dismiss(request.Key, ChoiceSurface.Page);
             done(value);
         }));
     }
+
+    /// <summary>
+    /// The page that takes the answer: a picker where the caller could name every value it would
+    /// accept, and the box-and-keyboard everywhere else (#282).
+    /// <para>
+    /// <b>They are different pages rather than one page with a mode.</b> A closed list has no
+    /// typed value, so it has nothing for the drawn board to edit and nothing for <b>Done</b> to
+    /// commit once — picking is the commit. Branching inside the entry page would have left most
+    /// of it unreachable whenever a list was offered, which is how a page stops being readable.
+    /// </para>
+    /// </summary>
+    private Control Answering(EntryRequest request, Action<string> done) =>
+        request.Suggestions is { Count: > 0 }
+            ? new PickPage(this, request, done)
+            : new EntryPage(this, request, done);
 
     /// <summary>
     /// Hands the panel what was heard, for whichever prompt is listening. Called by the host from
@@ -515,29 +530,22 @@ public sealed class PanelPrompts
             });
         }
 
-        var row = Pressable(stack);
+        var row = new Button
+        {
+            Content = stack,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Left,
+
+            // Tall enough to be pressed by a ray at a metre. A row a Commander has to aim at
+            // is a row they press twice, and the second press is on the one below it.
+            MinHeight = 34,
+            Padding = new Thickness(12, 6),
+        };
 
         row.Click += (_, _) => chosen(option);
 
         return row;
     }
-
-    /// <summary>
-    /// A row that is pressed to pick the thing written on it. The chooser's options and the entry
-    /// page's suggestions are the same gesture and are drawn the same way, because a list of
-    /// hulls that looked unlike a list of modules would read as a different kind of list.
-    /// </summary>
-    private static Button Pressable(Control content) => new()
-    {
-        Content = content,
-        HorizontalAlignment = HorizontalAlignment.Stretch,
-        HorizontalContentAlignment = HorizontalAlignment.Left,
-
-        // Tall enough to be pressed by a ray at a metre. A row a Commander has to aim at
-        // is a row they press twice, and the second press is on the one below it.
-        MinHeight = 34,
-        Padding = new Thickness(12, 6),
-    };
 
     /// <summary>
     /// The drawn keyboard, as a control rather than as a method on the page that first needed one.
@@ -627,13 +635,6 @@ public sealed class PanelPrompts
         private readonly Button _swap;
 
         /// <summary>
-        /// The closed list, narrowing as the value is typed, or null where the caller had no list
-        /// to offer (#282). Voice is untouched by it: what opens is still what the call site
-        /// asked for, and this is what the Commander at a mouse gets instead of a blind box.
-        /// </summary>
-        private readonly StackPanel? _choices;
-
-        /// <summary>
         /// The visible listening state, and it has to be visible or the Commander is talking at
         /// a blank page (Phase 25).
         /// <para>
@@ -691,11 +692,6 @@ public sealed class PanelPrompts
                 {
                     _typed = _shown.Text ?? string.Empty;
                 }
-
-                // Both ways in, in one place. The drawn board writes the box through
-                // <see cref="WriteBack"/> and a desk keyboard writes it directly; the list has to
-                // narrow either way, and this is the one event both of them raise.
-                Narrow();
             };
 
             _state = new TextBlock
@@ -739,41 +735,12 @@ public sealed class PanelPrompts
             body.Children.Add(_shown);
             body.Children.Add(_state);
             body.Children.Add(actions);
-
-            var board = new ScrollViewer
+            body.Children.Add(new ScrollViewer
             {
                 Content = _board,
                 VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
                 HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-            };
-
-            if (request.Suggestions is { Count: > 0 })
-            {
-                _choices = new StackPanel { Spacing = 3 };
-
-                // The list takes what is left and the board sits under it, which is the layout
-                // the searchable chooser already uses: the board is a fixed height and the list
-                // is the part worth growing.
-                var middle = new DockPanel { LastChildFill = true };
-
-                DockPanel.SetDock(board, Dock.Bottom);
-                board.Margin = new Thickness(0, 8, 0, 0);
-
-                middle.Children.Add(board);
-                middle.Children.Add(new ScrollViewer
-                {
-                    Content = _choices,
-                    VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-                    HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-                });
-
-                body.Children.Add(middle);
-                Narrow();
-            }
-            else
-            {
-                body.Children.Add(board);
-            }
+            });
 
             Content = Frame(
                 request.Title,
@@ -877,63 +844,6 @@ public sealed class PanelPrompts
         }
 
         /// <summary>
-        /// Redraws the closed list for what has been typed so far, and does nothing at all where
-        /// the caller offered no list.
-        /// <para>
-        /// <b>A press commits, exactly as Done does.</b> It goes through
-        /// <see cref="Commit"/> rather than around it, so a picked value is validated like any
-        /// other — the list and the caller's own idea of what is a thing cannot drift apart.
-        /// </para>
-        /// </summary>
-        private void Narrow()
-        {
-            if (_choices is null)
-            {
-                return;
-            }
-
-            _choices.Children.Clear();
-
-            var shown = EntrySuggestions.Narrow(_request.Suggestions, _typed);
-
-            if (shown.Count == 0)
-            {
-                var nothing = new TextBlock
-                {
-                    Text = $"Nothing here matches “{_typed.Trim()}”.",
-                    FontSize = TypeScale.Body,
-                    TextWrapping = TextWrapping.Wrap,
-                    Margin = new Thickness(12, 6),
-                };
-
-                nothing.Bind(
-                    TextBlock.ForegroundProperty,
-                    App.Current!.GetResourceObservable(ThemeManager.TextMutedKey));
-
-                _choices.Children.Add(nothing);
-                return;
-            }
-
-            foreach (var value in shown)
-            {
-                var picked = value;
-
-                var label = new TextBlock
-                {
-                    Text = picked,
-                    FontSize = TypeScale.Body,
-                    TextWrapping = TextWrapping.Wrap,
-                };
-
-                var row = Pressable(label);
-
-                row.Click += (_, _) => Commit(picked);
-
-                _choices.Children.Add(row);
-            }
-        }
-
-        /// <summary>
         /// The one board, drawn by the host rather than here (remediation.md 12, item 5). It used
         /// to be built in this page, which was the only place that needed one until the
         /// searchable chooser did.
@@ -954,5 +864,170 @@ public sealed class PanelPrompts
                 _typed = string.Empty;
                 WriteBack();
             }));
+    }
+
+    /// <summary>
+    /// One value picked from every value there is (#282).
+    /// <para>
+    /// <b>A real <c>ComboBox</c>, which is the control this question always wanted.</b> The hulls
+    /// are a closed set of a few dozen, so a free-text box could only ever tell a Commander
+    /// <em>after</em> they had typed that what they typed was not a ship — and could not say what
+    /// would have been. It also earns the two things it removes: the drawn keyboard exists
+    /// because free text needs one in a cockpit, and <b>Done</b> exists to commit free text once
+    /// and atomically. Neither applies when every answer is already on the page.
+    /// </para>
+    /// <para>
+    /// <b>Both surfaces, and neither is a special case.</b> The desktop window has a real top
+    /// level and gets the control's own drop-down, with the type-ahead Avalonia gives it — three
+    /// letters and the hull is selected. The headset gets <c>OffscreenSurface.Choose</c>, which
+    /// takes the ray-press before a pointer event exists and draws the same items on the panel,
+    /// because a popup has no top level to hang from on a window that is never shown. That is
+    /// <a href="https://github.com/dseelinger/d47/issues/231">#231</a>'s mechanism reused rather
+    /// than a second one invented here.
+    /// </para>
+    /// <para>
+    /// <b>Voice is untouched.</b> It is still armed while this is open and a spoken hull commits
+    /// through the same validation a picked one does. Which surface the call site asked for
+    /// decides nothing here, because there is no keyboard to open instead.
+    /// </para>
+    /// </summary>
+    private sealed class PickPage : UserControl
+    {
+        private readonly PanelPrompts _host;
+        private readonly EntryRequest _request;
+        private readonly Action<string> _done;
+
+        private readonly ComboBox _pick;
+        private readonly TextBlock _state;
+
+        /// <summary>
+        /// Whether the selection is being set rather than made. Selecting the value a caller
+        /// arrived with raises the same event a Commander's press does, and committing on it
+        /// would answer the question before it had been read.
+        /// </summary>
+        private bool _settling;
+
+        public PickPage(PanelPrompts host, EntryRequest request, Action<string> done)
+        {
+            _host = host;
+            _request = request;
+            _done = done;
+
+            _pick = new ComboBox
+            {
+                ItemsSource = request.Suggestions,
+                PlaceholderText = "Pick one, or say it",
+                FontSize = TypeScale.Body,
+                HorizontalAlignment = HorizontalAlignment.Left,
+
+                // A floor, and a generous one. A ComboBox measures itself against its selected
+                // item and nothing else, so a box sized to whatever is showing changes width as
+                // the selection changes and slices its own chevron off — reported twice, as #231
+                // and again as #273. No value here comes near this, so the box is the same size
+                // before and after a pick.
+                MinWidth = 300,
+            };
+
+            _settling = true;
+
+            if (request.Initial is { Length: > 0 } initial
+                && request.Suggestions!.FirstOrDefault(value =>
+                    string.Equals(value, initial, StringComparison.OrdinalIgnoreCase)) is { } already)
+            {
+                _pick.SelectedItem = already;
+            }
+
+            _settling = false;
+
+            _pick.SelectionChanged += (_, _) =>
+            {
+                if (!_settling && _pick.SelectedItem is string picked)
+                {
+                    Commit(picked);
+                }
+            };
+
+            _state = new TextBlock
+            {
+                Text = Waiting,
+                FontSize = TypeScale.Secondary,
+                TextWrapping = TextWrapping.Wrap,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(14, 0, 0, 0),
+            };
+
+            _state.Bind(
+                TextBlock.ForegroundProperty,
+                App.Current!.GetResourceObservable(ThemeManager.TextMutedKey));
+
+            var row = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                VerticalAlignment = VerticalAlignment.Top,
+                Children = { _pick, _state },
+            };
+
+            Content = Frame(
+                request.Title,
+                request.Context,
+                row,
+                () => _host.Dismiss(request.Key, ChoiceSurface.Page));
+
+            _host.Attend(OnHeard);
+
+            // Focused once it is in a tree, and posted for the reason the searchable chooser's
+            // box already is: focusing during the attach event runs before the page under it has
+            // finished building, and whatever settles focus last wins. Focused, the box takes
+            // type-ahead straight away — "ana" is an Anaconda without a press.
+            AttachedToVisualTree += (_, _) =>
+                Dispatcher.UIThread.Post(() => _pick.Focus(), DispatcherPriority.Input);
+        }
+
+        private string Waiting => _host.Waiting?.Invoke() is { Length: > 0 } said
+            ? said
+            : WaitingFallback;
+
+        private void OnHeard(Heard heard)
+        {
+            // A partial is shown and never committed, which is the visible listening state doing
+            // its job — the words appearing as they are said is how a Commander knows the
+            // microphone is on them.
+            if (!heard.Final)
+            {
+                _state.Text = string.IsNullOrWhiteSpace(heard.Text)
+                    ? Waiting
+                    : $"{Waiting} {heard.Text}";
+
+                return;
+            }
+
+            if (TextEntryLoop.Judge(heard, _request.Validate, out var verdict) is { } fallback)
+            {
+                // Said, and then the list is the way out. There is no keyboard to put back here:
+                // every value d47 would accept is already on the page, so the complaint is the
+                // whole of what a failure needs to leave behind.
+                _state.Text = TextEntryLoop.Explain(fallback, verdict?.Complaint);
+                return;
+            }
+
+            Commit(heard.Text.Trim());
+        }
+
+        /// <summary>
+        /// Takes the value, once. A picked value goes through the caller's own validation exactly
+        /// as a spoken one does — the list is built from what the caller accepts, so this can
+        /// only refuse if those two have come apart, and then it says so rather than committing.
+        /// </summary>
+        private void Commit(string value)
+        {
+            if (_request.Validate?.Invoke(value) is { Accepted: false } refused)
+            {
+                _state.Text = TextEntryLoop.Explain(EntryFallback.DidNotResolve, refused.Complaint);
+                return;
+            }
+
+            _host.Attend(null);
+            _done(value);
+        }
     }
 }

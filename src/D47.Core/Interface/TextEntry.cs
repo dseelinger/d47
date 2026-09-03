@@ -74,12 +74,18 @@ public sealed record EntryVerdict(bool Accepted, string? Complaint = null)
 /// complaint showing.
 /// </param>
 /// <param name="Suggestions">
-/// Every value the caller would accept, when there are few enough of them to show — the closed
+/// Every value the caller would accept, when there are few enough of them to name — the closed
 /// list, in the order it should be read. Null for a genuinely open value, which is most of them.
 /// <para>
-/// <b>Not a surface.</b> Voice still opens where the call site asked for voice; the list sits
-/// under the box for whoever is at a mouse, narrowing as they type, so a hull is picked rather
-/// than guessed at and told after the fact that it was wrong (#282).
+/// <b>Offering one changes what the prompt is.</b> A caller that can name every answer gets a
+/// picker rather than a box: there is nothing to spell, so there is no drawn keyboard and no
+/// <b>Done</b>, and a value is chosen rather than typed and refused afterwards (#282). Voice is
+/// unaffected and stays armed either way.
+/// </para>
+/// <para>
+/// The list is a promise about <see cref="Validate"/>: everything in it must be accepted, or the
+/// picker offers values the caller then refuses. Both are built from one source where they can
+/// be — see <c>ShipsMode.Hulls</c>.
 /// </para>
 /// </param>
 public sealed record EntryRequest(
@@ -91,37 +97,6 @@ public sealed record EntryRequest(
     EntrySurface Surface,
     Func<string, EntryVerdict>? Validate = null,
     IReadOnlyList<string>? Suggestions = null);
-
-/// <summary>
-/// Narrowing a closed list as the Commander types (#282).
-/// <para>
-/// <b>Narrowing rather than resolving</b>, which is the rule the searchable chooser already
-/// keeps: nothing here refuses a value or asks for a spelling, so a query that matches nothing
-/// leaves an empty list and the box still holds what was typed. In Core with the rest of the
-/// panel arithmetic, because it is a decision about words rather than about controls.
-/// </para>
-/// </summary>
-public static class EntrySuggestions
-{
-    /// <summary>
-    /// The values worth showing for what has been typed so far. Everything for an empty query,
-    /// and otherwise every value the query appears anywhere in — "type" finds the Type-9 as well
-    /// as the Type-6, and "mk" finds every mark of everything.
-    /// </summary>
-    public static IReadOnlyList<string> Narrow(IReadOnlyList<string>? all, string? query)
-    {
-        if (all is null || all.Count == 0)
-        {
-            return [];
-        }
-
-        var wanted = query?.Trim() ?? string.Empty;
-
-        return wanted.Length == 0
-            ? all
-            : [.. all.Where(value => value.Contains(wanted, StringComparison.OrdinalIgnoreCase))];
-    }
-}
 
 /// <summary>
 /// What d47 heard, and how sure it was (Phase 25).

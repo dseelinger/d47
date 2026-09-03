@@ -135,13 +135,15 @@ public sealed class ShipsMode(
     ];
 
     /// <summary>
-    /// A hull the Commander does not own. Voice first, because a hull is a name and a name is far
-    /// easier said than hunted for one key at a time.
+    /// A hull to plan a build for before it is bought. Every hull is offered and the Commander
+    /// picks one; voice still answers it, because a hull is a name and a name is far easier said
+    /// than hunted for one key at a time (#282).
     /// <para>
-    /// <b>And a list under the box for everyone else</b> (#282). The hulls are a closed set and
-    /// d47 holds all of them, so a Commander at a mouse picks one instead of typing into a blind
-    /// box and being told after the fact that it was not a ship. The list is the same table the
-    /// validation reads, which is what stops the two disagreeing about what a hull is.
+    /// <b>The second line does not claim anything about the fleet.</b> It used to read "it is not
+    /// in your fleet until you own one", which is false the moment the hull picked is one the
+    /// Commander already flies — owning a Python and planning a second one is an ordinary thing
+    /// to do, and the page was telling them otherwise. What is true either way is what buying one
+    /// does to the plan, which is what the summary of an unowned build already says.
     /// </para>
     /// </summary>
     public void New(PanelPrompts prompts, Action done) =>
@@ -150,7 +152,7 @@ public sealed class ShipsMode(
                 "loadout.intend",
                 "Ship",
                 "Which ship do you intend to buy?",
-                "It is not in your fleet until you own one — acquiring it is the plan's first step.",
+                "The build is planned now; buying one will point the plan at it.",
                 string.Empty,
                 EntrySurface.Voice,
                 value => EliteSpecifications.Ship(value) is null
