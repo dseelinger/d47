@@ -27,7 +27,7 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
-## 0.102.1 — 2026-09-02 — The Transcript's file picker is drawn whole, a sold suit or weapon reaches the on-foot plan, a core you wrote can be written from the panel, body signals read the FSS as well as the surface scan, and the Raw toggle stays off other tabs' roots
+## 0.103.0 — 2026-09-02 — The Transcript's file picker is drawn whole, a sold suit or weapon reaches the on-foot plan, a core you wrote can be written from the panel, body signals read the FSS as well as the surface scan, and the Raw toggle stays off other tabs' roots
 
 ### Writing a core of your own is reachable from the panel
 
