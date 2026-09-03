@@ -90,6 +90,7 @@ public static class HandledEvents
         "EngineerProgress",
         "FSDJump",
         "FSDTarget",
+        "FSSBodySignals",
         "FSSSignalDiscovered",
         "FactionKillBond",
         "FuelScoop",

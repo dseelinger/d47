@@ -190,9 +190,20 @@ public static class ExobiologyCapability
 
         var report = new StringBuilder();
 
-        report.AppendLine($"{body.BodyName}, surface-scanned {Stamp(body.SeenAt)}.");
+        var seenHow = body.Source == BodySignalSource.SurfaceScan ? "surface-scanned" : "FSS-scanned, not mapped,";
 
-        if (!body.HasBiology)
+        report.AppendLine($"{body.BodyName}, {seenHow} {Stamp(body.SeenAt)}.");
+
+        if (body.Source == BodySignalSource.Fss && body.BiologicalCount > 0)
+        {
+            // The FSS says how many; it never says which genus. Saying "no biology" here would be
+            // wrong, and listing genera would claim knowledge the game has not given up yet.
+            report.AppendLine(
+                $"  The FSS reported {body.BiologicalCount} biological signal"
+                + $"{(body.BiologicalCount == 1 ? "" : "s")}. It has not been mapped, so I do not know "
+                + "the genus.");
+        }
+        else if (!body.HasBiology)
         {
             // A real answer, and the one that saves a landing. The scan ran and found nothing
             // biological, which is different from d47 not having looked.

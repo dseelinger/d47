@@ -171,6 +171,71 @@ public class ExobiologyCapabilityTests
         Assert.Contains("no surface scans yet", never.Content, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// The FSS resolves a body before anyone flies to it, and 349 of 429 FSS-signalled bodies in the
+    /// 944-journal corpus are never surface-scanned — so it is the only source d47 will ever see for
+    /// four bodies in five (#275). It says how many biological signals, never which genus.
+    /// </summary>
+    [Fact]
+    public async Task AnFssRowSaysTheCountAndThatItIsNotMapped()
+    {
+        var result = await Ask(
+            Store(
+                """
+                {"timestamp":"2026-08-16T10:00:00Z","event":"FSSBodySignals","BodyName":"Fixture 3 b",
+                 "SystemAddress":1,"BodyID":23,
+                 "Signals":[{"Type":"$SAA_SignalType_Biological;","Type_Localised":"Biological","Count":3}]}
+                """),
+            "get_body_biology");
+
+        Assert.Contains("Fixture 3 b", result.Content, StringComparison.Ordinal);
+        Assert.Contains("FSS reported 3 biological signals", result.Content, StringComparison.Ordinal);
+        Assert.Contains("not been mapped", result.Content, StringComparison.Ordinal);
+        Assert.DoesNotContain("No biological signals", result.Content, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Order matters: a surface scan is the later, fuller answer and always replaces an FSS row for
+    /// the same body.
+    /// </summary>
+    [Fact]
+    public async Task ASurfaceScanReplacesAnEarlierFssRowForTheSameBody()
+    {
+        var result = await Ask(
+            Store(
+                """
+                {"timestamp":"2026-08-16T09:30:00Z","event":"FSSBodySignals","BodyName":"HR 3230 3 a a",
+                 "SystemAddress":182359951707,"BodyID":20,
+                 "Signals":[{"Type":"$SAA_SignalType_Biological;","Type_Localised":"Biological","Count":1}]}
+                """,
+                Scan),
+            "get_body_biology");
+
+        Assert.Contains("Brain Trees", result.Content, StringComparison.Ordinal);
+        Assert.DoesNotContain("has not been mapped", result.Content, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The other direction must never happen: an FSS row arriving after a surface scan must not
+    /// erase the genera the surface scan already found.
+    /// </summary>
+    [Fact]
+    public async Task AnFssRowNeverOverwritesAnExistingSurfaceScan()
+    {
+        var result = await Ask(
+            Store(
+                Scan,
+                """
+                {"timestamp":"2026-08-16T11:00:00Z","event":"FSSBodySignals","BodyName":"HR 3230 3 a a",
+                 "SystemAddress":182359951707,"BodyID":20,
+                 "Signals":[{"Type":"$SAA_SignalType_Biological;","Type_Localised":"Biological","Count":1}]}
+                """),
+            "get_body_biology");
+
+        Assert.Contains("Brain Trees", result.Content, StringComparison.Ordinal);
+        Assert.DoesNotContain("has not been mapped", result.Content, StringComparison.Ordinal);
+    }
+
     /// <summary>A Commander already in Opet says "7 b", not "Opet 7 b".</summary>
     [Fact]
     public async Task ABodyIsFoundByTheShortNameACommanderWouldSay()

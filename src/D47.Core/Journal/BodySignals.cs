@@ -11,19 +11,32 @@ namespace D47.Core.Journal;
 public sealed record BodySignal(string Type, int Count);
 
 /// <summary>
-/// What a detailed surface scan found on one body (Phase 18, "Find the exobiology").
+/// Which event told d47 about a body's signals. The FSS resolves a body before anyone flies to it;
+/// the surface scan is later and fuller — it alone names genera — so a surface scan always outranks
+/// an FSS row for the same body, and an FSS row must never overwrite one (#275).
+/// </summary>
+public enum BodySignalSource
+{
+    Fss,
+    SurfaceScan,
+}
+
+/// <summary>
+/// What Elite has said is on one body — from the FSS, a surface scan, or both (Phase 18, "Find the
+/// exobiology"; widened to the FSS by #275).
 /// <para>
-/// <b>The game's own answer, and it outranks any prediction d47 could make.</b> Once a body has been
-/// mapped, <c>SAASignalsFound</c> says what is on it — so "is this worth landing on" stops being an
-/// inference from <c>Scan</c> properties and becomes reading the journal back. Prediction is for
-/// <em>before</em> the DSS; this is after it, and after wins.
+/// <b>The game's own answer, and it outranks any prediction d47 could make.</b> <c>FSSBodySignals</c>
+/// says how many signals a body carries the moment the scanner resolves it; <c>SAASignalsFound</c>,
+/// once the body is mapped, says the same and adds which genera. Either way "is this worth landing
+/// on" stops being an inference from <c>Scan</c> properties and becomes reading the journal back.
+/// Prediction is for <em>before</em> either event; this is after, and after wins.
 /// </para>
 /// <para>
-/// <b>It names the genus and never the species, and that ceiling is load-bearing.</b> All 792 events
-/// measured carry <c>Genuses</c>, and every row in it is a genus — <em>Bacterium</em>,
-/// <em>Stratum</em>, <em>Brain Trees</em>. The species is what sets the price, and the game does not
-/// say it until the sample is taken. So this can list what is down there and must not quote a
-/// figure; the route plotter, which does know species, is the half that may.
+/// <b>It names the genus and never the species, and that ceiling is load-bearing.</b> All 792
+/// <c>SAASignalsFound</c> events measured carry <c>Genuses</c>, and every row in it is a genus —
+/// <em>Bacterium</em>, <em>Stratum</em>, <em>Brain Trees</em>. The species is what sets the price,
+/// and the game does not say it until the sample is taken. So this can list what is down there and
+/// must not quote a figure; the route plotter, which does know species, is the half that may.
 /// </para>
 /// </summary>
 public sealed record BodyBiology(string BodyName)
@@ -35,8 +48,16 @@ public sealed record BodyBiology(string BodyName)
     /// <summary>Every signal type on the body, as Elite labelled it.</summary>
     public IReadOnlyList<BodySignal> Signals { get; init; } = [];
 
-    /// <summary>The genera present. Empty where the scan found no biology, which is a real answer.</summary>
+    /// <summary>
+    /// The genera present. The FSS never carries this, so empty means "no biology" only when
+    /// <see cref="Source"/> is <see cref="BodySignalSource.SurfaceScan"/> — for an
+    /// <see cref="BodySignalSource.Fss"/> row, empty means "not mapped yet", not "found nothing".
+    /// </summary>
     public IReadOnlyList<string> Genera { get; init; } = [];
+
+    /// <summary>Which event this row came from, needed because an empty <see cref="Genera"/> means
+    /// two different things depending on the source.</summary>
+    public BodySignalSource Source { get; init; }
 
     public DateTimeOffset SeenAt { get; init; }
 
@@ -102,8 +123,23 @@ public sealed record BodySignals
 
     public BodySignals Apply(JournalEvent journalEvent)
     {
-        if (journalEvent.Kind != "SAASignalsFound"
-            || journalEvent.String("BodyName") is not { } bodyName)
+        var source = journalEvent.Kind switch
+        {
+            "SAASignalsFound" => BodySignalSource.SurfaceScan,
+            "FSSBodySignals" => BodySignalSource.Fss,
+            _ => (BodySignalSource?)null,
+        };
+
+        if (source is null || journalEvent.String("BodyName") is not { } bodyName)
+        {
+            return this;
+        }
+
+        // An FSS row is the earlier, thinner answer — it must never replace a surface scan
+        // already on file for this body.
+        if (source == BodySignalSource.Fss
+            && Bodies.TryGetValue(bodyName, out var mapped)
+            && mapped.Source == BodySignalSource.SurfaceScan)
         {
             return this;
         }
@@ -128,6 +164,7 @@ public sealed record BodySignals
             BodyId = journalEvent.Int("BodyID"),
             Signals = signals,
             Genera = genera,
+            Source = source.Value,
             SeenAt = journalEvent.Timestamp,
         };
 

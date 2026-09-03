@@ -27,7 +27,7 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
-## 0.102.1 — 2026-09-02 — The Transcript's file picker is drawn whole, a sold suit or weapon reaches the on-foot plan, and a core you wrote can be written from the panel
+## 0.102.1 — 2026-09-02 — The Transcript's file picker is drawn whole, a sold suit or weapon reaches the on-foot plan, a core you wrote can be written from the panel, and body signals read the FSS as well as the surface scan
 
 ### Writing a core of your own is reachable from the panel
 
@@ -136,6 +136,22 @@ session, which is consistent with the flight-suit rule the `SellSuit` fold alrea
 `BuySuit` and `BuyWeapon` stay out of the worn-loadout fold, for the reason that was already
 written there: a suit just bought is by definition not the suit being worn. `SellWeapon` joins
 `HandledEvents.ActedOn`, and the corpus diff now names seven unhandled kinds rather than eight.
+
+### Body signals read the FSS as well as the surface scan
+
+Found by the corpus diff #270 added: `FSSBodySignals` was one of eight event kinds nothing in d47
+handled, sitting beside a folded `SAASignalsFound`. Elite writes the same `Signals` array earlier,
+the moment the FSS resolves a body, before anyone flies to it — and over 944 journals, 349 of the
+429 bodies with FSS signals were never surface-scanned. For four bodies in five, the FSS was the
+only source d47 would ever see, and `get_body_biology` had nothing for them at all.
+
+`BodySignals.Apply` now folds `FSSBodySignals` too. Order matters: a surface scan is the later,
+fuller answer and always replaces an FSS row for the same body, but an FSS row must never replace
+an existing surface scan. `BodyBiology` now records which event it came from, because an empty
+`Genera` used to mean one thing — "the scan found no biology" — and after this change it can also
+mean "not mapped yet, ask again once it is." `get_body_biology` tells the two apart: an FSS-only
+body says how many biological signals were reported and that it has not been mapped, rather than
+implying the genera are known to be absent.
 
 ## 0.102.0 — 2026-09-02 — The chatters are named and spaced, captions can sit in the cockpit, and d47 can say which journal events it handles
 
