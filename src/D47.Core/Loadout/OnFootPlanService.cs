@@ -400,6 +400,11 @@ public sealed class OnFootPlanService(
     /// Only ever the <em>first</em> matching prospective build, and only on an exact name match.
     /// Two Mavericks planned and one bought is a question rather than a guess.
     /// </para>
+    /// <para>
+    /// <b>And for the sale, which is the same event backwards</b> (<a
+    /// href="https://github.com/dseelinger/d47/issues/274">#274</a>). Selling matches on the id
+    /// rather than the name, because by then there is one build that can possibly be meant.
+    /// </para>
     /// </summary>
     public IReadOnlyList<string> Observe(IEnumerable<JournalEvent> events)
     {
@@ -409,20 +414,29 @@ public sealed class OnFootPlanService(
         {
             var (kind, idField) = journalEvent.Kind switch
             {
-                "BuySuit" => (OnFootKind.Suit, "SuitID"),
-                "BuyWeapon" => (OnFootKind.Weapon, "SuitModuleID"),
+                "BuySuit" or "SellSuit" => (OnFootKind.Suit, "SuitID"),
+                "BuyWeapon" or "SellWeapon" => (OnFootKind.Weapon, "SuitModuleID"),
                 _ => (OnFootKind.Unknown, string.Empty),
             };
 
-            if (kind == OnFootKind.Unknown)
+            if (kind == OnFootKind.Unknown || journalEvent.Long(idField) is not { } itemId)
             {
+                continue;
+            }
+
+            if (journalEvent.Kind is "SellSuit" or "SellWeapon")
+            {
+                if (Disown(kind, itemId) is { } sold)
+                {
+                    said.Add(sold);
+                }
+
                 continue;
             }
 
             // The symbol, never Name_Localised: Frontier's own localisation reports every suit
             // above grade 1 as Class1, which would adopt the plan onto the wrong grade's name.
-            if (OnFootCatalogue.Find(journalEvent.String("Name")) is not { } entry
-                || journalEvent.Long(idField) is not { } itemId)
+            if (OnFootCatalogue.Find(journalEvent.String("Name")) is not { } entry)
             {
                 continue;
             }
@@ -463,6 +477,27 @@ public sealed class OnFootPlanService(
         Replace(build with { ItemId = itemId });
 
         return $"That {build.Equipment} is yours now, and the plan you had for one is pointed at it.";
+    }
+
+    /// <summary>
+    /// Unbinds a build from an item that has been sold, and keeps the build
+    /// (<a href="https://github.com/dseelinger/d47/issues/274">#274</a>).
+    /// <para>
+    /// <b>Owned is derived and intended is authored</b>, so clearing the id is the whole of it:
+    /// the plan the Commander wrote survives the sale and answers "not bought yet" again, which
+    /// is true, and is what makes buying the replacement adopt it back.
+    /// </para>
+    /// </summary>
+    private string? Disown(OnFootKind kind, long itemId)
+    {
+        if (store.ForItem(kind, itemId) is not { } build)
+        {
+            return null;
+        }
+
+        Replace(build with { ItemId = null });
+
+        return $"That {build.Equipment} is sold. I kept the plan you had for one, waiting on another.";
     }
 
     private void Replace(OnFootBuild build) =>

@@ -184,6 +184,61 @@ public class OnFootLoadoutTests
         Assert.Null(loadout.InSlot("PrimaryWeapon1"));
     }
 
+    /// <summary>
+    /// A weapon sold out of the loadout being carried leaves its slot (#274). Both events are the
+    /// real pair, five minutes apart in one journal: the Karma P-15 in the flight suit's secondary
+    /// slot, and the sale of that same <c>SuitModuleID</c>.
+    /// </summary>
+    [Fact]
+    public void SellingAWeaponTakesItOutOfTheSlotItWasCarriedIn()
+    {
+        var carried = OnFootLoadout.Unknown.Apply(Event(
+            """
+            {"timestamp":"2025-10-12T13:53:14Z","event":"SuitLoadout","SuitID":1842191460035273,
+             "SuitName":"flightsuit","SuitName_Localised":"Flight Suit","SuitMods":[],
+             "LoadoutID":4293000000,"LoadoutName":"Default loadout",
+             "Modules":[{"SlotName":"SecondaryWeapon","SuitModuleID":1842191460035344,
+                         "ModuleName":"wpn_s_pistol_kinetic_sauto","ModuleName_Localised":"Karma P-15",
+                         "Class":1,"WeaponMods":[]}]}
+            """));
+
+        Assert.NotNull(carried.InSlot("SecondaryWeapon"));
+
+        var sold = carried.Apply(Event(
+            """
+            {"timestamp":"2025-10-12T13:58:44Z","event":"SellWeapon","Name":"wpn_s_pistol_kinetic_sauto",
+             "Name_Localised":"Karma P-15","Class":1,"WeaponMods":[],"Price":30000,
+             "SuitModuleID":1842191460035344}
+            """));
+
+        Assert.Empty(sold.Weapons);
+        Assert.Null(sold.InSlot("SecondaryWeapon"));
+
+        // The suit is untouched. Elite writes no fresh SuitLoadout after a weapon sale, which is
+        // the whole reason the fold has to do this itself.
+        Assert.Equal("Flight Suit", sold.Suit?.Name);
+    }
+
+    /// <summary>
+    /// Selling a weapon out of the locker rather than off the Commander is not news, and must not
+    /// disturb the loadout — including its <c>SeenAt</c>, which is what "last reported" means.
+    /// </summary>
+    [Fact]
+    public void SellingAWeaponThatIsNotBeingCarriedLeavesTheLoadoutAlone()
+    {
+        var carried = Worn();
+
+        var after = carried.Apply(Event(
+            """
+            {"timestamp":"2025-11-01T00:19:54Z","event":"SellWeapon","Name":"wpn_m_assaultrifle_laser_fauto",
+             "Name_Localised":"TK Aphelion","Class":1,"WeaponMods":[],"Price":75000,
+             "SuitModuleID":1845784622401778}
+            """));
+
+        Assert.Same(carried, after);
+        Assert.Equal(2, after.Weapons.Count);
+    }
+
     /// <summary>Grade 1 has zero slots, which is an ordering problem rather than a shortage.</summary>
     [Fact]
     public void AGradeOneSuitCarriesNoSlotsAtAll()

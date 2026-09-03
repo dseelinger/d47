@@ -27,7 +27,7 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
-## 0.102.1 — 2026-09-02 — The Transcript's file picker is drawn whole
+## 0.102.1 — 2026-09-02 — The Transcript's file picker is drawn whole, and a sold suit or weapon reaches the on-foot plan
 
 ### The file picker is sized by its longest reading, so its chevron has room (#273)
 
@@ -54,6 +54,46 @@ of them. So the assertion that the chevron falls inside the box is a guard rathe
 reproduction, and the test that fails without this change is the one about the box resizing between
 readings. If the slice is still there on a Commander's screen, the screenshot is what will settle
 it.
+
+### Selling a suit or weapon reaches the on-foot plan and the worn loadout (#274)
+
+Found by the corpus diff [#270](https://github.com/dseelinger/d47/issues/270) added to
+`spike/CorpusReplay`, which is the first thing that tool found: `SellWeapon` was one of eight event
+kinds in a 944-journal corpus that nothing in d47 handled, and it sat beside a handled `BuyWeapon`.
+`SellSuit` was handled, but only by the worn loadout and not by the plan. Two defects behind one
+omission.
+
+**The plan kept a sold item as owned.** `OnFootPlanService.Observe` adopts a prospective build onto
+a real item when `BuySuit` or `BuyWeapon` matches it by name, writing the journal id into `ItemId`,
+and nothing ever cleared it. After the Commander sold the item the build still answered "on you" or
+"not on you now" rather than "not bought yet", and the plan went on pointing at something that was
+gone.
+
+**Selling is the buy backwards**, and it matches on the id rather than the name: by the time a sale
+arrives there is exactly one build that can be meant. The build gives up its `ItemId` and keeps
+everything else — owned is derived and intended is authored, so the plan the Commander wrote
+survives the sale, the line reads "not bought yet" again, and buying the replacement adopts that
+same build onto the new id. That is the whole reason for keeping the build rather than deleting it.
+
+**The worn loadout kept a sold weapon in its slot**, and unlike a suit there is nothing to correct
+it later. Elite writes a fresh `SuitLoadout` when the suit being worn is sold — which is what the
+existing `SellSuit` fold leans on — but writes none after a weapon sale: measured over the corpus,
+what follows a `SellWeapon` is `CommunityGoal`, `Embark`, `Loadout` or another `SellWeapon`. So a
+weapon sold out of the slot the Commander was carrying it in stood there until the next loadout
+switch. `OnFootLoadout.Apply` now takes it out of its slot, matched on `SuitModuleID` alone —
+`SellWeapon` carries no `SuitID` to check the suit by and needs none, since the id is that weapon's
+own — and a sale of a weapon that is not in the loadout is not news and changes nothing, including
+the loadout's own "last reported".
+
+**Ten on-foot sales in 944 journals**: six `SellWeapon`, four `SellSuit`. Two of the six weapons
+sold had appeared in a loadout snapshot earlier in the same session — both a Karma P-15, one of
+them five minutes before the sale, and that pair is what the test drives — so the worn-loadout case
+is real rather than theoretical. None of the four suits sold had appeared in a snapshot that
+session, which is consistent with the flight-suit rule the `SellSuit` fold already describes.
+
+`BuySuit` and `BuyWeapon` stay out of the worn-loadout fold, for the reason that was already
+written there: a suit just bought is by definition not the suit being worn. `SellWeapon` joins
+`HandledEvents.ActedOn`, and the corpus diff now names seven unhandled kinds rather than eight.
 
 ## 0.102.0 — 2026-09-02 — The chatters are named and spaced, captions can sit in the cockpit, and d47 can say which journal events it handles
 
