@@ -151,6 +151,38 @@ public sealed class TheRawSwitchIsWhereItWasLeftTests
         window.Close();
     }
 
+    /// <summary>
+    /// A Commander parked on Raw Journal who switches to another tab's root must not see the
+    /// switch follow them there (<a href="https://github.com/dseelinger/d47/issues/277">#277</a>).
+    /// </summary>
+    [AvaloniaFact]
+    public void TheSwitchDoesNotBleedIntoAnotherTabsRoot()
+    {
+        var store = Store();
+
+        var (panel, window) = Shown(store);
+
+        // A single root, the same shape as Fleet's Ships root in the report: no picker of its
+        // own to hide behind.
+        panel.Furnish(
+            PanelTab.Loadout,
+            crumb => new TextBlock { Text = crumb.Word },
+            new NavCrumb("fleet", "Ships"));
+
+        panel.Page = TranscriptPage.Journal;
+        Dispatcher.UIThread.RunJobs();
+
+        Toggle(panel).IsChecked = true;
+        Dispatcher.UIThread.RunJobs();
+
+        panel.Tab = PanelTab.Loadout;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.False(panel.GetControl<StackPanel>("RawToggleBox").IsVisible);
+
+        window.Close();
+    }
+
     private static ToggleButton Toggle(PanelView panel) =>
         panel.GetControl<ToggleButton>("RawToggle");
 

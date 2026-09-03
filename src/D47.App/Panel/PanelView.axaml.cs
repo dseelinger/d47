@@ -2794,6 +2794,11 @@ public partial class PanelView : UserControl
 
         ShowPageBar();
 
+        // Ahead of the early return below, which answers only the picker: Fleet's Ships root has
+        // one reading and never shows the picker, but a Commander parked on Raw Journal must not
+        // see its toggle survive the move there anyway (#277).
+        DrawRawToggle();
+
         if (!ModePicker.IsVisible)
         {
             return;
@@ -2836,8 +2841,6 @@ public partial class PanelView : UserControl
         }
 
         WidenModeBoxToItsWidestReading();
-
-        DrawRawToggle();
     }
 
     /// <summary>
@@ -2917,7 +2920,8 @@ public partial class PanelView : UserControl
 
         // The box, not the switch: the label lives beside the knob, and hiding one without the
         // other would leave a word floating in the bar.
-        RawToggleBox.IsVisible = journal && furnished && Nav.AtRoot && !OutputOnly;
+        RawToggleBox.IsVisible = journal && furnished && Nav.AtRoot && !OutputOnly
+            && Nav.Tab == PanelTab.Transcript;
 
         if (!RawToggleBox.IsVisible)
         {
