@@ -27,7 +27,7 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
-## 0.102.1 — 2026-09-02 — The Transcript's file picker is drawn whole, a sold suit or weapon reaches the on-foot plan, a core you wrote can be written from the panel, and body signals read the FSS as well as the surface scan
+## 0.102.1 — 2026-09-02 — The Transcript's file picker is drawn whole, a sold suit or weapon reaches the on-foot plan, a core you wrote can be written from the panel, body signals read the FSS as well as the surface scan, and the Raw toggle stays off other tabs' roots
 
 ### Writing a core of your own is reachable from the panel
 
@@ -152,6 +152,20 @@ an existing surface scan. `BodyBiology` now records which event it came from, be
 mean "not mapped yet, ask again once it is." `get_body_biology` tells the two apart: an FSS-only
 body says how many biological signals were reported and that it has not been mapped, rather than
 implying the genera are known to be absent.
+
+### The Raw toggle stays off other tabs' roots (#277)
+
+Reported from a screenshot of the Fleet tab: the Journal reading's **Raw** switch was showing on
+the Ships root, above "Plan a ship you do not own", unconnected to anything Ships draws. Flipping
+it did nothing to the list — it silently changed the remembered Transcript reading in the
+background, only visible on returning to that tab.
+
+**`DrawRawToggle` only ran from inside `DrawModes`, behind the mode picker's own visibility
+guard.** A tab with one root — Fleet's Ships root among them — never shows a picker, so the guard
+returned before the toggle was ever re-evaluated, and it kept showing whatever the Transcript tab
+had last left it as. The call now runs ahead of that guard on every navigation, and `DrawRawToggle`
+itself now checks `Nav.Tab == PanelTab.Transcript`, since the switch is a Transcript-only
+affordance.
 
 ## 0.102.0 — 2026-09-02 — The chatters are named and spaced, captions can sit in the cockpit, and d47 can say which journal events it handles
 
