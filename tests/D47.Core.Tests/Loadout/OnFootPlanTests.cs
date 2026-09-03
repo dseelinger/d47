@@ -163,6 +163,113 @@ public class OnFootPlanTests
         Assert.Equal(42, store.Find(intended.Id)!.ItemId);
     }
 
+    /// <summary>
+    /// Selling is the buy backwards (#274): the item goes and the plan stays, so the line answers
+    /// "not bought yet" again rather than claiming the sold suit is still on the Commander. Both
+    /// event bodies are real, and the sale carries the id the buy did.
+    /// </summary>
+    [Fact]
+    public void SellingTheSuitGivesUpTheItemAndKeepsThePlan()
+    {
+        using var install = new TempInstall();
+        var store = Store(install);
+        var kit = Service(install, store, OnFoot());
+
+        var intended = kit.Intend("Maverick")!;
+
+        kit.Plan(intended.Id, new KitPlan(OnFootBuild.GradeSlot, 5));
+
+        kit.Observe([Event("""
+            {"timestamp":"2026-08-18T09:00:00Z","event":"BuySuit","Name":"UtilitySuit_Class1","Name_Localised":"Maverick Suit","Price":150000,"SuitID":1837009111675068,"SuitMods":[]}
+            """)]);
+
+        Assert.Equal("on you, grade 3", kit.Entry(intended.Id)!.Where());
+
+        var said = kit.Observe([Event("""
+            {"timestamp":"2026-08-18T10:00:00Z","event":"SellSuit","SuitID":1837009111675068,"SuitMods":[],"Name":"utilitysuit_class1","Name_Localised":"Maverick Suit","Price":90000}
+            """)]);
+
+        Assert.Single(said);
+
+        var kept = store.Find(intended.Id)!;
+
+        // The item is gone and the intent is not: owned is derived and intended is authored.
+        Assert.Null(kept.ItemId);
+        Assert.False(kept.IsOwned);
+        Assert.Null(kept.Scope);
+        Assert.Equal(5, kept.PlannedGrade);
+        Assert.Equal("not bought yet", kit.Entry(intended.Id)!.Where());
+    }
+
+    /// <summary>
+    /// A weapon sale disowns the weapon's build and nothing else, and a sale of something no build
+    /// points at is not news (#274).
+    /// </summary>
+    [Fact]
+    public void SellingAWeaponDisownsThatBuildAloneAndSaysNothingForAnUnplannedOne()
+    {
+        using var install = new TempInstall();
+        var store = Store(install);
+        var kit = Service(install, store);
+
+        var suit = kit.Intend("Maverick")!;
+        var weapon = kit.Intend("Karma AR-50")!;
+
+        kit.Observe([
+            Event("""
+                {"timestamp":"2026-08-18T09:00:00Z","event":"BuySuit","Name":"UtilitySuit_Class1","Name_Localised":"Maverick Suit","Price":150000,"SuitID":1837009111675068,"SuitMods":[]}
+                """),
+            Event("""
+                {"timestamp":"2026-08-18T09:01:00Z","event":"BuyWeapon","Name":"Wpn_M_AssaultRifle_Kinetic_FAuto","Name_Localised":"Karma AR-50","Class":1,"Price":125000,"SuitModuleID":1845784643934762,"WeaponMods":[]}
+                """)]);
+
+        var said = kit.Observe([
+            Event("""
+                {"timestamp":"2026-08-18T10:00:00Z","event":"SellWeapon","Name":"wpn_m_assaultrifle_kinetic_fauto","Name_Localised":"Karma AR-50","Class":1,"WeaponMods":[],"Price":75000,"SuitModuleID":1845784643934762}
+                """),
+            Event("""
+                {"timestamp":"2026-08-18T10:00:30Z","event":"SellWeapon","Name":"wpn_m_launcher_rocket_sauto","Name_Localised":"Karma L-6","Class":1,"WeaponMods":[],"Price":105000,"SuitModuleID":1845784668255858}
+                """)]);
+
+        // One sale, one thing said: the second weapon was never planned for.
+        Assert.Single(said);
+        Assert.False(store.Find(weapon.Id)!.IsOwned);
+        Assert.True(store.Find(suit.Id)!.IsOwned);
+    }
+
+    /// <summary>
+    /// Buying the replacement adopts the plan back onto it, which is the point of keeping the
+    /// build: the id is what the sale gave up, and the plan is what it did not (#274).
+    /// </summary>
+    [Fact]
+    public void BuyingAgainAfterASaleAdoptsTheSamePlanOntoTheNewItem()
+    {
+        using var install = new TempInstall();
+        var store = Store(install);
+        var kit = Service(install, store);
+
+        var intended = kit.Intend("Maverick")!;
+
+        kit.Plan(intended.Id, new KitPlan(OnFootBuild.GradeSlot, 5));
+
+        kit.Observe([
+            Event("""
+                {"timestamp":"2026-08-18T09:00:00Z","event":"BuySuit","Name":"UtilitySuit_Class1","Name_Localised":"Maverick Suit","Price":150000,"SuitID":1837009111675068,"SuitMods":[]}
+                """),
+            Event("""
+                {"timestamp":"2026-08-18T10:00:00Z","event":"SellSuit","SuitID":1837009111675068,"SuitMods":[],"Name":"utilitysuit_class1","Name_Localised":"Maverick Suit","Price":90000}
+                """),
+            Event("""
+                {"timestamp":"2026-08-18T11:00:00Z","event":"BuySuit","Name":"UtilitySuit_Class1","Name_Localised":"Maverick Suit","Price":150000,"SuitID":1845810920854798,"SuitMods":[]}
+                """)]);
+
+        var again = store.Find(intended.Id)!;
+
+        Assert.Equal(1845810920854798, again.ItemId);
+        Assert.Equal(5, again.PlannedGrade);
+        Assert.Single(store.Builds);
+    }
+
     /// <summary>A slot holds one plan, because a slot holds one thing.</summary>
     [Fact]
     public void PlanningASlotTwiceReplacesRatherThanAdds()

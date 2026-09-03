@@ -140,6 +140,7 @@ public static class HandledEvents
         "SellExplorationData",
         "SellOrganicData",
         "SellSuit",
+        "SellWeapon",
         "SetUserShipName",
         "ShieldState",
         "ShipyardBuy",

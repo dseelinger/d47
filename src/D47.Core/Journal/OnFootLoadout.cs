@@ -139,6 +139,12 @@ public sealed record OnFootLoadout
         // fresh SuitLoadout for that. Forgetting rather than guessing which is why this is Unknown.
         "SellSuit" => SameSuit(journalEvent.Long("SuitID")) ? Unknown : this,
 
+        // A weapon sale gets no such correction (#274). Measured on a 944-journal corpus, what
+        // follows a SellWeapon is CommunityGoal, Embark, Loadout or another SellWeapon — never a
+        // fresh SuitLoadout — so a weapon sold out of the slot the Commander is carrying it in
+        // would stand there until the next loadout switch.
+        "SellWeapon" => SoldWeapon(journalEvent),
+
         _ => this,
     };
 
@@ -211,6 +217,26 @@ public sealed record OnFootLoadout
                     weapon.ModuleId == moduleId ? weapon with { Grade = grade } : weapon)],
                 SeenAt = journalEvent.Timestamp,
             };
+    }
+
+    /// <summary>
+    /// A weapon sold. Matched on <c>SuitModuleID</c> alone, because <c>SellWeapon</c> carries no
+    /// <c>SuitID</c> to check the suit by — and it does not need one: the id is that weapon's own
+    /// and no other suit can be carrying it. A weapon that is not in this loadout is not news.
+    /// </summary>
+    private OnFootLoadout SoldWeapon(JournalEvent journalEvent)
+    {
+        if (journalEvent.Long("SuitModuleID") is not { } moduleId
+            || !Weapons.Any(weapon => weapon.ModuleId == moduleId))
+        {
+            return this;
+        }
+
+        return this with
+        {
+            Weapons = [.. Weapons.Where(weapon => weapon.ModuleId != moduleId)],
+            SeenAt = journalEvent.Timestamp,
+        };
     }
 
     private OnFootLoadout Equipped(JournalEvent journalEvent)
