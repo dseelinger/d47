@@ -163,6 +163,44 @@ public sealed record ViewState
     }
 
     /// <summary>
+    /// Which reading each tab was left on <em>in the headset</em>, kept apart from
+    /// <see cref="PanelRoots"/> for the reason <see cref="LastTabVr"/> is
+    /// (<a href="https://github.com/dseelinger/d47/issues/276">#276</a>): a root is per-surface by
+    /// design apart from the Transcript's, and a shared key would have a move in one surface
+    /// overwrite what the other was left on.
+    /// </summary>
+    public IReadOnlyDictionary<string, string> PanelRootsVr { get; init; } =
+        new Dictionary<string, string>(StringComparer.Ordinal);
+
+    /// <summary>Records which reading a tab was left on in the headset.</summary>
+    public ViewState WithVr(string tab, string root)
+    {
+        var next = new Dictionary<string, string>(PanelRootsVr, StringComparer.Ordinal)
+        {
+            [tab] = root,
+        };
+
+        return this with { PanelRootsVr = next };
+    }
+
+    /// <summary>
+    /// Which tab the desktop window was left on, or null for never left Transcript
+    /// (<a href="https://github.com/dseelinger/d47/issues/276">#276</a>). Here rather than in
+    /// settings for the reason every other panel-position fact is: no default worth documenting,
+    /// nothing behaves differently, and a launch that opens on Transcript instead of where the
+    /// Commander left off costs one extra press rather than a loud failure.
+    /// </summary>
+    public string? LastTab { get; init; }
+
+    /// <summary>
+    /// Which tab the headset was left on, kept apart from <see cref="LastTab"/> because the two
+    /// surfaces move independently — the window can be on Settings while the headset reads the
+    /// conversation — so one key would have whichever surface changed tabs last decide where both
+    /// reopen.
+    /// </summary>
+    public string? LastTabVr { get; init; }
+
+    /// <summary>
     /// Which settings section the page was left scrolled to, by capability id, or null
     /// (<a href="https://github.com/dseelinger/d47/issues/268">#268</a>).
     /// <para>

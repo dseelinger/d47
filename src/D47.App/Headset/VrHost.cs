@@ -183,7 +183,7 @@ public sealed class VrHost : IDisposable
         var panel = new VrPanelSurface(
             model, settings, slot => self?.AnchorFor(slot), avatars, dumpTo, settingsPage,
             checklists, timekeeper, alarmStore, ships, gameState, onFoot, unlocks, goals,
-            backfillGoals, adventures);
+            backfillGoals, adventures, viewState);
         var layer = new CaptionLayer { Settings = settings.Current.Vr.Captions };
         var captions = new VrCaptionSurface(layer);
 

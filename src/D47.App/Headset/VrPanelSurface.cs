@@ -97,7 +97,11 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         Action? backfillGoals = null,
 
         // The stories the Commander flies (Phase 47), in the headset from 2026-08-22.
-        Panel.AdventureSurface? adventures = null)
+        Panel.AdventureSurface? adventures = null,
+
+        // Where the headset was left, across launches (#276) — null in every test that has no
+        // opinion about it, which leaves this surface exactly as it always behaved.
+        ViewStateStore? viewState = null)
     {
         _dumpTo = dumpTo;
 
@@ -188,6 +192,19 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
                 alarmStore,
                 () => D47.Core.SystemWallClock.Instance.UtcNow,
                 () => TimeZoneInfo.Local);
+        }
+
+        if (viewState is not null)
+        {
+            // The headset's own tab and roots, back where they were left (#276). Its own
+            // PanelRootMemory and PanelTabMemory, marked `vr: true` so they read and write
+            // ViewState's headset-only fields — the window's own memory is per-surface by design,
+            // and sharing a key would have whichever surface moved last decide where both reopen.
+            // Roots before the tab, for the reason MainWindow orders the same two calls: a tab
+            // restored after its root opens on the reading already put in place instead of the
+            // first one it furnishes.
+            _view.RememberRoots(new PanelRootMemory(viewState, vr: true));
+            _view.RememberTab(new PanelTabMemory(viewState, vr: true));
         }
 
         // The same scaling host the desktop window zooms with, for the same reason: a render

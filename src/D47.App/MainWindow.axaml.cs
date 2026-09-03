@@ -379,6 +379,10 @@ public partial class MainWindow : Window
             // arrived.
             Panel.RememberRoots(new PanelRootMemory(host.ViewState));
 
+            // And the tab itself, back where it was left (#276). After the roots, so a tab
+            // restored here opens on the reading the call above already put it on.
+            Panel.RememberTab(new PanelTabMemory(host.ViewState));
+
             // Both before the window is shown. Sizing after the fact is a visible resize, and
             // wrapping the content after the first layout pass is a visible reflow.
             //

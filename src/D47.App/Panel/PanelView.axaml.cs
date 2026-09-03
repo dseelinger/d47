@@ -1686,6 +1686,32 @@ public partial class PanelView : UserControl
     private PanelRootMemory? _roots;
 
     /// <summary>
+    /// Puts this surface back on the tab it was left on, and keeps it there
+    /// (<a href="https://github.com/dseelinger/d47/issues/276">#276</a>).
+    /// <para>
+    /// Called after <see cref="RememberRoots"/>, so a tab restored here opens on the reading that
+    /// call already put it on rather than on the first reading the tab furnishes. Going through
+    /// <see cref="Tab"/> rather than <see cref="PanelNavigator.Select"/> directly costs nothing
+    /// extra: it already declines a tab this surface was not furnished, which is what stops a
+    /// stale property or a hand-edited state landing on an empty pane.
+    /// </para>
+    /// </summary>
+    public void RememberTab(PanelTabMemory memory)
+    {
+        _tabMemory = memory;
+
+        if (memory.Remembered() is { } tab)
+        {
+            Tab = tab;
+        }
+
+        RecordRoots();
+    }
+
+    /// <summary>Which tab this surface was left on, or null on a surface not asked to remember it.</summary>
+    private PanelTabMemory? _tabMemory;
+
+    /// <summary>
     /// Writes down the reading every furnished tab is on (#268). Called from every navigation and
     /// costing nothing until one of them actually moves.
     /// <para>
@@ -1698,6 +1724,10 @@ public partial class PanelView : UserControl
     /// </summary>
     private void RecordRoots()
     {
+        // Which tab this surface is on (#276), independent of whether roots are being remembered
+        // here at all — a surface can be asked to remember one without the other.
+        _tabMemory?.Remember(Nav.Tab);
+
         if (_roots is null)
         {
             return;

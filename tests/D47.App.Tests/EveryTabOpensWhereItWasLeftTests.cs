@@ -51,6 +51,49 @@ public sealed class EveryTabOpensWhereItWasLeftTests
     }
 
     /// <summary>
+    /// The tab itself, back where it was left
+    /// (<a href="https://github.com/dseelinger/d47/issues/276">#276</a>) — not just the reading
+    /// each one is on, which is what the rest of this class already covers.
+    /// </summary>
+    [AvaloniaFact]
+    public void ThePanelOpensOnTheTabItWasLeftOn()
+    {
+        var store = Store();
+
+        var (first, window) = Shown(store);
+
+        first.Tab = PanelTab.Routing;
+        Jobs();
+
+        window.Close();
+
+        // A second panel over the same store, which is what the next launch has.
+        var (next, second) = Shown(store);
+
+        Assert.Equal(PanelTab.Routing, next.Tab);
+
+        second.Close();
+    }
+
+    /// <summary>
+    /// A tab name nothing answers to — a hand-edited file, or a tab this build no longer furnishes
+    /// — costs Transcript rather than a failure, the same as a root nothing answers to does.
+    /// </summary>
+    [AvaloniaFact]
+    public void ATabNothingAnswersToLeavesThePanelOnTranscript()
+    {
+        var store = Store();
+
+        store.Save(store.Load() with { LastTab = "Cartography" });
+
+        var (panel, window) = Shown(store);
+
+        Assert.Equal(PanelTab.Transcript, panel.Tab);
+
+        window.Close();
+    }
+
+    /// <summary>
     /// The transcript reading too, which is the one the request named first — and the one that
     /// takes the extra care, because Raw Journal is a root of this tab like the journal itself is.
     /// </summary>
@@ -218,8 +261,10 @@ public sealed class EveryTabOpensWhereItWasLeftTests
         panel.EnableRouting(new RoutingSurface(() => NavRoute.None, () => null));
 
         // Last, exactly as the window wires it: a root can only be selected once the tab that owns
-        // it has been furnished.
+        // it has been furnished, and the tab itself after its root so it opens on the reading
+        // already restored rather than the tab's first one.
         panel.RememberRoots(new PanelRootMemory(store));
+        panel.RememberTab(new PanelTabMemory(store));
 
         var window = new Window { Content = panel, Width = 1180, Height = 800 };
 

@@ -18,13 +18,23 @@ namespace D47.App.Panel;
 /// press. The store is re-read before each write, like every other writer of this record, so
 /// leaving a tab cannot clobber a pane drag or a collapse state written in between.
 /// </para>
+/// <para>
+/// <b>One instance per surface.</b> <paramref name="vr"/> chooses <c>ViewState.PanelRootsVr</c>
+/// over <c>ViewState.PanelRoots</c> so the headset gets its own remembered roots
+/// (<a href="https://github.com/dseelinger/d47/issues/276">#276</a>) rather than the two surfaces
+/// overwriting each other's key — the window can be three levels into a ship's slots while the
+/// headset reads the conversation, and a restart should not flatten that.
+/// </para>
 /// </summary>
-public sealed class PanelRootMemory(ViewStateStore store)
+public sealed class PanelRootMemory(ViewStateStore store, bool vr = false)
 {
     private Dictionary<string, string>? _roots;
 
     private Dictionary<string, string> Roots =>
-        _roots ??= new Dictionary<string, string>(store.Load().PanelRoots, StringComparer.Ordinal);
+        _roots ??= new Dictionary<string, string>(Source(store.Load()), StringComparer.Ordinal);
+
+    private IReadOnlyDictionary<string, string> Source(ViewState state) =>
+        vr ? state.PanelRootsVr : state.PanelRoots;
 
     /// <summary>
     /// Which reading a tab was left on, or null where nothing was remembered for it — which is
@@ -48,6 +58,6 @@ public sealed class PanelRootMemory(ViewStateStore store)
 
         Roots[name] = root;
 
-        store.Save(store.Load().With(name, root));
+        store.Save(vr ? store.Load().WithVr(name, root) : store.Load().With(name, root));
     }
 }
