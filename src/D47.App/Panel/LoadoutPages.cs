@@ -437,14 +437,20 @@ public static class LoadoutPages
             }
         }
 
-        button.Click += (_, _) => pressed();
-
-        if (spinning is not null && resting is not null)
+        button.Click += (_, _) =>
         {
-            // Attached to the button rather than the image, so the hull turns while the pointer is
-            // anywhere on its card and not only while it is over the drawing itself.
-            HullSpin.Attach(button, spinning, hull, resting);
-        }
+            // The rotation first, then the drill, and both on the one press (#289). On anything
+            // but the narrowest pane the fleet stays beside the page that just opened, so the card
+            // turns next to the ship it opened; on one pane it leaves the tree and the rotation
+            // stops with it. Nothing here waits for the video — the page must open at the speed a
+            // press opens a page, whatever the decoder is doing.
+            if (spinning is not null && resting is not null)
+            {
+                HullTurntable.Play(spinning, hull, resting);
+            }
+
+            pressed();
+        };
 
         return button;
     }
@@ -1952,6 +1958,17 @@ public sealed class ItemPage : LoadoutPage
         // What the ship is, before what is in it (remediation.md 13, item 2). Inside the
         // scroller rather than docked above it, or a hull's figures would cost the slot list the
         // same rows on every window.
+        // The hull itself, before anything written about it (#289). Above the figures rather than
+        // beside them because it is what the page is about, and inside the scroller with them for
+        // the same reason they are: docked, it would cost the slot list its height on every
+        // window. A hull whose picture has not arrived draws nothing at all and the page reads as
+        // it did before — see HullPicture, which is also why this is asked for once per Refresh
+        // rather than once per page.
+        if (roomy && Mode.HullOf(_item) is { Length: > 0 } hull)
+        {
+            _list.Children.Add(HullPicture.For(hull));
+        }
+
         foreach (var line in roomy ? Mode.Details(_item) : [])
         {
             // Stepped rather than Line, for the copy glyph a whereabouts line carries: the system

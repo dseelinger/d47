@@ -13,7 +13,15 @@ public sealed class AppPaths
 {
     public const string DataFolderName = "data";
 
-    public AppPaths(string installRoot)
+    /// <param name="installRoot">Where d47 writes: <c>data\</c> is made inside it.</param>
+    /// <param name="buildRoot">
+    /// Where the build's own read-only files sit, which is the executable's folder and is the
+    /// same place for everything published. Separate only because a Debug build redirects
+    /// <paramref name="installRoot"/> to <c>dev-install\</c> and the files that shipped are not
+    /// there — they are in <c>bin\Debug\</c> beside the executable that is running. Defaults to
+    /// the install root, so a test that wants one folder gets one folder.
+    /// </param>
+    public AppPaths(string installRoot, string? buildRoot = null)
     {
         InstallRoot = Path.GetFullPath(installRoot);
         Data = Path.Combine(InstallRoot, DataFolderName);
@@ -28,6 +36,7 @@ public sealed class AppPaths
         DonorTokenFile = Path.Combine(Data, "donor-token.txt");
         Donations = Path.Combine(Data, "donations");
         Ships = Path.Combine(Data, "ships");
+        ShippedShips = Path.Combine(Path.GetFullPath(buildRoot ?? InstallRoot), "ships");
     }
 
     /// <summary>
@@ -49,7 +58,8 @@ public sealed class AppPaths
     /// unaffected.
     /// </para>
     /// </summary>
-    public static AppPaths ForRunningBuild() => new(DevInstallRoot() ?? AppContext.BaseDirectory);
+    public static AppPaths ForRunningBuild() =>
+        new(DevInstallRoot() ?? AppContext.BaseDirectory, AppContext.BaseDirectory);
 
     /// <summary>
     /// The Debug-only redirect, or null.
@@ -145,7 +155,8 @@ public sealed class AppPaths
     public string Donations { get; }
 
     /// <summary>
-    /// The hull drawings the fleet cards carry, one pair of files per hull symbol.
+    /// The hull art that arrives after the install: the 4K picture Ship Details shows and the
+    /// turntable a card plays, one of each per hull symbol.
     /// <para>
     /// <b>Beside the executable rather than inside it, and that is the load-bearing part.</b>
     /// These were built into the binary first, which made three ordinary things impossible: a new
@@ -159,6 +170,25 @@ public sealed class AppPaths
     /// </para>
     /// </summary>
     public string Ships { get; }
+
+    /// <summary>
+    /// The card stills that came with the build, read-only, beside the executable.
+    /// <para>
+    /// <b>The one piece of hull art that is not a file that appears</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/289">#289</a>). Every hull's resting
+    /// drawing is 240 KB, so all forty-seven fit in eleven megabytes and a fresh installation has
+    /// a fleet with pictures on it before anything is fetched. The 4K stills and the turntables
+    /// are two hundred and sixty megabytes between them and stay out of the download.
+    /// </para>
+    /// <para>
+    /// <b>Its own folder rather than seeding <see cref="Ships"/>, because the two are owned by
+    /// different people.</b> <c>data\ships\</c> is the Commander's — an update never touches it,
+    /// and an uninstall asks before removing it. This one is the build's, replaced wholesale by
+    /// every update the way <c>runtimes\</c> is, so a corrected drawing actually arrives. A hull
+    /// present in both reads from <c>data\</c>, which is what makes dropping a file in still work.
+    /// </para>
+    /// </summary>
+    public string ShippedShips { get; }
 
     public void EnsureCreated()
     {

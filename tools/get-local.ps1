@@ -15,10 +15,11 @@
     would look broken for reasons that have nothing to do with the change being tested. See
     `AppPaths.ForRunningBuild` and the `bin is disposable` rule in CLAUDE.md.
 
-    **The payload is exactly what the installer ships**: `d47.exe` and `runtimes\`, the two entries
-    in `installer\d47.iss`. `data\` is never touched and never mirrored — deleting it costs the
-    Commander their checklist, their settings and a 325 MB download, which has happened once
-    already (2026-08-23).
+    **The payload is exactly what the installer ships**: `d47.exe`, `runtimes\` and `ships\`, the
+    three entries in `installer\d47.iss`. `data\` is never touched and never mirrored — deleting it
+    costs the Commander their checklist, their settings and a 325 MB download, which has happened
+    once already (2026-08-23). Since #289 it also costs them the fetched hull art, which is the
+    same rule for a new reason.
 
     **The version says what it is, in the one place that keeps the whole stamp.** The build is
     stamped `<newest tag>-local`, and About shows the full string — `0.84.3-local+<sha>` — so a
@@ -114,8 +115,8 @@ function Write-Note { param([string] $Text) Write-Host "    $Text" -ForegroundCo
     git log, so it has to be baked in — and this is the moment it is knowable. It goes in as one
     base64 `AssemblyMetadata` value, the way `DevInstallRoot` already travels: a published release
     never passes the property, so the feature is absent from a real build by construction rather
-    than by a run-time check, and `get-local`'s rule that it copies exactly `d47.exe` and
-    `runtimes\` is untouched.
+    than by a run-time check, and `get-local`'s rule that it copies exactly `d47.exe`,
+    `runtimes\` and `ships\` is untouched.
 
     **A title is only baked for an issue the Commander vouched for**, through the same
     `Resolve-Trust` that keeps a stranger's prose out of an agent's context. Rendering a title in
@@ -270,7 +271,7 @@ if (-not $NoBackup) {
 
 Write-Step "Installing over $InstallRoot"
 
-# Exactly the installer's two entries, and checked one at a time: a second robocopy overwrites the
+# Exactly the installer's three entries, and checked one at a time: a second robocopy overwrites the
 # first one's exit code, so a failed executable behind a successful runtimes\ would report success.
 #
 # /E rather than /MIR. Mirroring would delete data\ and the uninstaller with it, and data\ is the
@@ -294,6 +295,7 @@ function Copy-Payload {
 
 Copy-Payload $publish $InstallRoot @('d47.exe')
 Copy-Payload (Join-Path $publish 'runtimes') (Join-Path $InstallRoot 'runtimes') @('/E')
+Copy-Payload (Join-Path $publish 'ships') (Join-Path $InstallRoot 'ships') @('/E')
 
 if (-not $NoSelfTest) {
     Write-Step 'Checking the payload'

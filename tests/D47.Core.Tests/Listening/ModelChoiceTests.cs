@@ -1,4 +1,4 @@
-using D47.Core.Capabilities;
+﻿using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Listening;
@@ -179,6 +179,9 @@ public class ModelChoiceTests
 
             // Every provider off means the voice one too: Edge Neural is free, not local.
             Speech = new SpeechSettings { Provider = Core.Audio.TtsProviderCatalog.NoneId },
+
+            // And the hull art, which fetches a picture and a turntable on a press (#289).
+            Ui = new UiSettings { HullArt = false },
         };
 
         var entries = EgressDisclosure.For(settings, llmKeyPresent: false);

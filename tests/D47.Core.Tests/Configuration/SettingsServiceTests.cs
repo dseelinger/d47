@@ -1,4 +1,4 @@
-using D47.Core.Audio;
+﻿using D47.Core.Audio;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
@@ -602,6 +602,12 @@ public class EgressDisclosureTests
             // A selection that can cause a transfer is what the download row reports, so
             // reaching zero active rows takes one more opt-out than it used to.
             Listening = new ListeningSettings { Model = Core.Listening.WhisperModels.NoneId },
+
+            // And so does the hull art (#289), which fetches a picture and a turntable from the
+            // release the app updates itself from. On by default, because it is asked for by a
+            // press and costs nothing until one is made - so reaching zero takes an opt-out here
+            // too, which is exactly what this test exists to keep true.
+            Ui = new UiSettings { HullArt = false },
         };
 
         var entries = EgressDisclosure.For(settings, llmKeyPresent: false);

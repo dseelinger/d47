@@ -500,6 +500,23 @@ public interface ILoadoutMode
     IReadOnlyList<LoadoutGauge> Gauges(string item) => [];
 
     /// <summary>
+    /// The hull symbol behind one item, or null for a mode whose items are not ships
+    /// (<a href="https://github.com/dseelinger/d47/issues/289">#289</a>).
+    /// <para>
+    /// <b>The same distinction <c>LoadoutRow.Hull</c> already draws, one level down.</b> An item
+    /// key is a build id and identifies <em>this Commander's</em> ship — the right thing to open
+    /// and the wrong thing to find a picture of, because two Cobras share a hull and share a
+    /// drawing. The index had this fact on every row and the page below it did not, so the
+    /// picture had nothing to be about.
+    /// </para>
+    /// <para>
+    /// Defaulted for the same reason the gauges are: On foot has no hulls and should not have to
+    /// say so in code.
+    /// </para>
+    /// </summary>
+    string? HullOf(string item) => null;
+
+    /// <summary>
     /// Whether the index is a grid of cards rather than a list of rows (asked for 2026-09-03).
     /// <para>
     /// <b>The mode's call, because it turns on whether the things have faces.</b> A fleet does: a

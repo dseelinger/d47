@@ -72,6 +72,10 @@ Source: "..\src\D47.App\bin\Release\publish\{#ExeName}"; DestDir: "{app}"; Flags
 ; Whisper's natives, which its loader finds by probing runtimes\win-x64 on disk beside the
 ; executable. recursesubdirs preserves that layout exactly; flattening it breaks speech.
 Source: "..\src\D47.App\bin\Release\publish\runtimes\*"; DestDir: "{app}\runtimes"; Flags: ignoreversion recursesubdirs createallsubdirs
+; The card still for every hull (#289), 11 MB, so a fresh installation has a fleet with pictures
+; on it before anything is fetched. The build's folder, not the Commander's: the large art lands
+; in data\ships\, which an install and an update both leave alone.
+Source: "..\src\D47.App\bin\Release\publish\ships\*"; DestDir: "{app}\ships"; Flags: ignoreversion
 
 [Icons]
 ; Named to match StartMenuShortcut.EntryName so the two paths cannot disagree.
@@ -86,6 +90,7 @@ Filename: "{app}\{#ExeName}"; Description: "Start {#Name}"; Flags: nowait postin
 ; from this list — see below.
 Type: files; Name: "{app}\{#ExeName}.old"
 Type: filesandordirs; Name: "{app}\runtimes"
+Type: filesandordirs; Name: "{app}\ships"
 
 [Code]
 { Uninstall keeps data\ unless the Commander says otherwise. It holds their API keys, their

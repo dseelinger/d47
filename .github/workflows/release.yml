@@ -131,13 +131,14 @@ jobs:
             exit $p.ExitCode
           }
 
-      # The exe and the native libraries beside it, and nothing else — never data\, which the
+      # The exe and what the build owns beside it, and nothing else — never data\, which the
       # selftest just wrote. Whisper's loader probes runtimes\win-x64 on disk beside the exe,
-      # which is why a release is an archive rather than a bare executable.
+      # which is why a release is an archive rather than a bare executable; ships\ carries every
+      # hull's card still (#289), so an updated build brings corrected drawings with it.
       - name: Package
         shell: pwsh
         working-directory: src/D47.App/bin/Release/publish
-        run: Compress-Archive -Path d47.exe, runtimes -DestinationPath d47.zip
+        run: Compress-Archive -Path d47.exe, runtimes, ships -DestinationPath d47.zip
 
       # The installer is the normal way in; the zip stays for portable use and is what the
       # in-app updater fetches. Both come from the same publish output that just self-tested.

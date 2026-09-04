@@ -235,6 +235,14 @@ public sealed class ShipsMode(
     /// measured one is the failure the whole specification table is built the way it is to avoid.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// Which hull this ship is, for the picture on its page
+    /// (<a href="https://github.com/dseelinger/d47/issues/289">#289</a>). Through the same
+    /// <see cref="Resolve"/> the details go through, so a ship the journal reported and nothing
+    /// has planned for has a hull here too.
+    /// </summary>
+    public string? HullOf(string item) => Resolve(item)?.Hull;
+
     public IReadOnlyList<LoadoutLine> Details(string item)
     {
         if (Resolve(item) is not { } build)

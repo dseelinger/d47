@@ -27,6 +27,86 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.104.0 — unreleased — Every hull has its picture on the card, a ship's own page draws it at 4K with zoom, and a card turns once when you open it
+
+Closes [#289](https://github.com/dseelinger/d47/issues/289).
+
+### Every ship has a drawing, from the first launch
+
+The hull drawings shipped in 0.103 as one file per hull that somebody had to drop into
+`data/ships` by hand, and one hull had been captured. All forty-seven are now rendered, and the
+small one — the drawing on the card — **comes with the download**. Eleven megabytes for the fleet,
+so a fresh installation shows a fleet with pictures on it rather than a page of names.
+
+**In `ships\` beside the executable, not in `data\ships\`, and that split is the point.**
+`data\` is the Commander's: an update never touches it and an uninstall asks before removing it.
+`ships\` is the build's, replaced wholesale by every update the way `runtimes\` is, so a corrected
+drawing actually arrives. A hull present in both reads from `data\`, which is what keeps dropping
+a file in by hand working.
+
+### The picture at 4K, on the ship's own page
+
+Ship Details had no picture at all. It has one now: the same drawing, the same camera, the same
+Freestyle lines — rendered again at 3840x2160 rather than blown up from the 720p frame, because a
+720p frame blown up to a window is a smear. Fitted to the pane, and clicking it fills the whole
+window, where the wheel zooms at the pointer, dragging pans and a double click fits it again.
+Escape returns.
+
+**Zoom stops at one image pixel to one screen pixel**, which is the whole of what rendering at 4K
+buys: on a 4K monitor that is the entire ship, and on a 1080p monitor the canopy fills the screen.
+
+**A control rather than a block of the page**, on the Commander's instruction the day it was
+specified: planning a hull you do not own wants the same picture, and that page will take
+`HullPicture` unchanged when it wants it.
+
+**No more than two are held**, asserted by a test rather than intended: a 4K picture is 33 MB of
+pixels, so the one being looked at and the one just left is 66 MB and a third would be a hundred.
+The card stills are decoded to 512 wide for the same reason in the other direction — every card on
+a fleet page is on screen at once, and at full size that is 170 MB of thumbnails.
+
+### The turntable is an MP4, played once when you open a ship
+
+The rotation was a 120-frame sprite sheet — one 3 MB PNG per hull, about 20 MB decoded — that
+played while the pointer was over a card. Both halves are replaced.
+
+**An MP4, decoded a frame at a time.** The same rotation at 180 frames for a tenth of the bytes,
+read through **Media Foundation**, which is Windows' own and costs the build no package and no
+licence question. Nothing decodes ahead: a full turntable is 663 MB of pixels, and what is held is
+one bitmap written in place.
+
+**Played on the pick, not on the pointer.** A grid of hulls that turn as the mouse crosses them on
+the way somewhere else is a slot machine. Opening a ship plays its rotation once and rests on the
+still; opening it again plays it again. It is visible because of how the drill already lays out —
+on anything but the narrowest pane, a ship's page opens *beside* the fleet, so the card turns next
+to the page it opened.
+
+`.spin.png`, the sheet decoder and the hover timer are gone rather than left beside the new path.
+
+### The large art is fetched, and it says so
+
+The 4K picture and the turntable are 260 MB across the fleet, so they are not carried. Opening a
+ship fetches the two files for its hull from a pinned GitHub release, once, into `data/ships`. The
+still shows while the fetch runs and stays if it fails; a miss is looked for once per session,
+which is the rule `ShipArt` already kept for a drawing that was not there.
+
+**Its own egress row**, although it shares a host with the update check — a disclosure organised by
+address rather than by what is actually done hides things behind a brand. The update row says a
+version number leaves and a build may come back; this one says which ships you looked at leave.
+**Hull pictures** on the Ships card in Settings turns it off, and off, every ship keeps the small
+drawing it came with.
+
+### Twelve hulls whose pictures nothing could have found
+
+Caught by looking at the drawn page rather than by a test, which is why there is now a test. The
+render pipeline names its work for people — `python-mk2`, `type-9-heavy`, `fer-de-lance` — and
+`ShipArt` finds a hull's picture by the symbol Elite's journal writes and by nothing else. Copying
+the pipeline's names straight across looked entirely correct: thirty-five hulls whose readable name
+happens to equal their symbol drew, and twelve did not. Nothing failed. The Python MkII's card was
+simply blank, next to the Anaconda's, which was not.
+
+`tools/ship-art.ps1` now carries the table that turns one name into the other, and
+`TheShipArtIsNamedForItsHullTests` fails on a file named for anything that is not a hull.
+
 ## 0.103.0 — 2026-09-02 — The Transcript's file picker is drawn whole, a sold suit or weapon reaches the on-foot plan, a core you wrote can be written from the panel, body signals read the FSS as well as the surface scan, the Raw toggle stays off other tabs' roots, a hull you intend to buy is picked from a list, no prompt tells you to hold a button by its number, and the ship picker no longer repeats itself
 
 ### Writing a core of your own is reachable from the panel

@@ -262,6 +262,40 @@ That Corsair is yours now, and the plan you had for one is pointed at it.
 Only when exactly one intended build matches the hull. Two Corsairs planned and one bought is a
 question rather than a guess.
 
+### The pictures {#hull-art}
+
+Every card carries a drawing of the hull, and it is a render of Elite's own geometry rather than
+artwork somebody drew: the shipyard preview, captured, posed in the game's camera and drawn as
+orange lines over a dark hull. **Drawings** at the top of the fleet puts them away.
+
+**The small one came with Directive 47.** All forty-seven fit in eleven megabytes, so a fresh
+installation has a fleet with pictures on it before anything is downloaded.
+
+**The large ones did not, and there are two of them per hull.** A ship's own page shows the same
+drawing at 3840 by 2160 — rendered again at that size rather than blown up, so the lines are the
+weight they always were — and opening a ship plays its turntable once through on the card you came
+from. Together those are a quarter of a gigabyte for the fleet, which is not something to hand a
+Commander who flies a Sidewinder. So the first time you open a ship, Directive 47 fetches the two
+files for that hull, from the same GitHub release it updates itself from, and keeps them in
+`data/ships`. Each hull is asked for once.
+
+The hull symbol is all that is sent. Not your Commander name, not which ships you own, not where
+you are, nothing from your journal.
+
+**Turn it off and nothing breaks.** The Ships card in Settings has **Hull pictures**; off, nothing
+is fetched and every ship keeps the small drawing it came with. Files already on disk stay and are
+still shown. Offline is the same thing without the setting: the small drawing stays, and the log
+says why the large one did not arrive.
+
+**Click the picture to fill the window.** The wheel zooms where you are pointing, dragging moves
+it, a double click fits it again, and Escape puts it back. It stops at one image pixel to one
+screen pixel — on a 4K monitor that is the whole ship, and on a 1080p monitor the canopy fills
+the screen.
+
+**A hull with no picture is an ordinary thing.** The card is the card it always was and the page
+reads exactly as it did before. This is a picture, not a viewer: one pose, no orbit, no lighting
+and no model — anything you can do to a photograph and nothing you could only do to a mesh.
+
 ### Owned is derived. Intended is authored.
 
 The same rule your checklist already draws between a line the journal settles and a line a person

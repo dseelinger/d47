@@ -2,25 +2,39 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Avalonia;
 using Avalonia.Media.Imaging;
 
 namespace D47.App.Panel;
 
 /// <summary>
-/// The hull drawings the fleet cards carry, read from <c>data/ships/</c> by hull symbol.
+/// The hull art the fleet carries: a card still, a 4K picture and a turntable, by hull symbol.
 /// <para>
 /// <b>Renders of Elite's own geometry, not artwork somebody drew.</b> Hand-authored outlines were
 /// tried first and thrown out on sight; these come out of a RenderDoc capture of the shipyard
 /// preview, posed and lit in Blender. The pipeline lives outside this repo — it runs once per
-/// hull, not once per build.
+/// hull, not once per build — and <c>tools\ship-art.ps1</c> is the step that brings what it made
+/// into <c>assets\ships\</c>.
+/// </para>
+/// <para>
+/// <b>Three files per hull, and they reach a Commander two different ways.</b> The card still
+/// (<c>&lt;hull&gt;.png</c>, 1280x720) ships inside the download, so a fresh installation has a
+/// fleet with pictures on it. The 4K picture (<c>&lt;hull&gt;.4k.png</c>) and the turntable
+/// (<c>&lt;hull&gt;.spin.mp4</c>) are 260 MB between them and do not: they are fetched for the
+/// hull being looked at (<see cref="ShipArtStore"/>) and kept in <c>data\ships\</c>.
 /// </para>
 /// <para>
 /// <b>Files beside the executable, not resources inside it.</b> The first version compiled the
 /// PNGs in as <c>AvaloniaResource</c>, which quietly made three ordinary things impossible: adding
 /// a hull meant a rebuild, changing how hulls are drawn meant a rebuild, and a Commander with one
-/// Sidewinder carried all forty-odd. On disk, a hull is a file that appears — dropped in by hand
-/// today, fetched on demand later — and this class never has to know which.
+/// Sidewinder carried all forty-odd. On disk, a hull is a file that appears — dropped in by hand,
+/// or fetched when a fleet turns out to need it — and this class never has to know which.
+/// </para>
+/// <para>
+/// <b>Two folders, and <c>data\ships\</c> wins.</b> That is what keeps dropping a file in working
+/// after the card still started shipping: a hull present in both reads from the Commander's
+/// folder, and the build's <c>ships\</c> is the floor underneath. It is also why they are separate
+/// folders rather than one seeded at first run — an update replaces what the build owns and never
+/// touches what the Commander owns, so a corrected drawing actually arrives.
 /// </para>
 /// <para>
 /// <b>Decoded rather than drawn, which is the one place this departs from the avatar.</b> That
@@ -32,21 +46,59 @@ namespace D47.App.Panel;
 /// cannot carry, and a flat vector silhouette is the look that was already rejected on sight.
 /// </para>
 /// <para>
-/// <b>A miss is ordinary and always will be.</b> Most symbols have no drawing yet, and a fresh
-/// installation has none at all; the card falls back to the text it already was. Misses are
-/// remembered so an absent hull is looked for once rather than on every layout pass.
+/// <b>A miss is ordinary and always will be.</b> A hull whose art has not been fetched yet, or
+/// captured yet, falls back to the card it already was. Misses are remembered so an absent hull is
+/// looked for once rather than on every layout pass — which is also what makes
+/// <see cref="Forget"/> load-bearing rather than tidy: a fetch that lands has to say so.
 /// </para>
 /// </summary>
 internal static class ShipArt
 {
-    private static readonly Dictionary<string, Bitmap?> Known = new(StringComparer.Ordinal);
-    private static readonly Dictionary<string, IReadOnlyList<CroppedBitmap>?> Recent =
-        new(StringComparer.Ordinal);
+    /// <summary>
+    /// How wide a card still is decoded, whatever the file holds.
+    /// <para>
+    /// <b>Because every card is on screen at once.</b> The stills are 1280x720, which is 3.7 MB of
+    /// pixels each and 170 MB across a full fleet — held, not passed through, since a fleet page
+    /// draws every card together and a cache that evicted would thrash on every layout pass. A
+    /// card is 210 to about 400 logical pixels wide, so 512 covers the widest column at the
+    /// deepest zoom and costs 590 KB a hull. The 4K picture is what a Commander looks at closely;
+    /// this one is a thumbnail and is decoded like one.
+    /// </para>
+    /// </summary>
+    private const int CardWidth = 512;
 
-    private static string? _folder;
+    private static readonly Dictionary<string, Bitmap?> Known = new(StringComparer.Ordinal);
+    private static readonly Dictionary<string, Bitmap?> Close = new(StringComparer.Ordinal);
 
     /// <summary>
-    /// Where the drawings are read from. Set once, at startup, from <c>AppPaths.Ships</c>.
+    /// How many 4K decodes are held. <b>Two, and this is a memory budget rather than a
+    /// preference</b>: a 3840x2160 picture is 33 MB of pixels, so the one being looked at and the
+    /// one just left is 66 MB and a third would be a hundred. Two is what makes stepping back to
+    /// the ship you were just on free, which is the only repeat that happens.
+    /// </summary>
+    internal const int CloseHeld = 2;
+
+    private static string? _folder;
+    private static string? _shipped;
+
+    /// <summary>
+    /// How many 4K pictures are held right now. Here so the ceiling can be asserted rather than
+    /// intended: reading them back to count would not do it, because a read that misses caches its
+    /// own miss and evicts one of the answers it was asking about.
+    /// </summary>
+    internal static int Held
+    {
+        get
+        {
+            lock (Close)
+            {
+                return Close.Count;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Where art the Commander owns is read from — <c>AppPaths.Ships</c>, set once at startup.
     /// <para>
     /// A property rather than a constructor argument because the card primitive that needs it is a
     /// static helper several layers below anything holding an <c>AppPaths</c>, and threading one
@@ -59,16 +111,20 @@ internal static class ShipArt
         get => _folder;
         set
         {
-            lock (Known)
-            {
-                _folder = value;
-                Known.Clear();
+            Point(value, _shipped);
+        }
+    }
 
-                lock (Recent)
-                {
-                    Recent.Clear();
-                }
-            }
+    /// <summary>
+    /// Where art that came with the build is read from — <c>AppPaths.ShippedShips</c>. Searched
+    /// after <see cref="Folder"/>, so a file dropped in by hand still wins.
+    /// </summary>
+    internal static string? Shipped
+    {
+        get => _shipped;
+        set
+        {
+            Point(_folder, value);
         }
     }
 
@@ -94,7 +150,7 @@ internal static class ShipArt
                 return held;
             }
 
-            var art = Read(symbol + ".png");
+            var art = Read(symbol + ".png", CardWidth);
 
             Known[symbol] = art;
 
@@ -103,20 +159,14 @@ internal static class ShipArt
     }
 
     /// <summary>
-    /// Every frame of a hull's turn, or null when it has no sheet.
+    /// The 4K picture for a hull, or null when it has not arrived
+    /// (<a href="https://github.com/dseelinger/d47/issues/289">#289</a>).
     /// <para>
-    /// <b>One decode, sliced into views.</b> The frames arrive as a single sheet and become
-    /// <see cref="CroppedBitmap"/> windows onto it rather than 120 decoded bitmaps: the pixels are
-    /// paid for once, and slicing costs nothing.
-    /// </para>
-    /// <para>
-    /// <b>Held for the last two hulls only.</b> A sheet is around 20 MB decoded, so keeping every
-    /// hull's would be most of a gigabyte across a full fleet. Only a pointed-at card spins and a
-    /// pointer is in one place, so two is enough to make going back to the card you just left
-    /// free.
+    /// <b>Held for the last two hulls only</b>, and that ceiling is the reason this is a separate
+    /// cache rather than a second entry in the first: see <see cref="CloseHeld"/>.
     /// </para>
     /// </summary>
-    internal static IReadOnlyList<CroppedBitmap>? Frames(string? hull)
+    internal static Bitmap? Close4K(string? hull)
     {
         var symbol = Symbol(hull);
 
@@ -125,28 +175,56 @@ internal static class ShipArt
             return null;
         }
 
-        lock (Recent)
+        lock (Close)
         {
-            if (Recent.TryGetValue(symbol, out var held))
+            if (Close.TryGetValue(symbol, out var held))
             {
                 return held;
             }
 
-            var frames = Slice(symbol);
+            // Full size, unlike the card: this is the picture the Commander zooms into, and one
+            // image pixel to one screen pixel is what it is for.
+            var art = Read(symbol + ".4k.png", width: 0);
 
-            // Null is cached too: a hull with no sheet must not be looked for on every hover.
-            Recent[symbol] = frames;
+            // Null is cached too: a hull whose picture has not been fetched must not be looked for
+            // on every draw of the page.
+            Close[symbol] = art;
 
-            while (Recent.Count > 2)
+            while (Close.Count > CloseHeld)
             {
-                Recent.Remove(Recent.Keys.First(key => key != symbol));
+                Close.Remove(Close.Keys.First(key => key != symbol));
             }
 
-            return frames;
+            return art;
         }
     }
 
-    /// <summary>Forgets what has been read, for a hull whose files have just changed on disk.</summary>
+    /// <summary>
+    /// Where a hull's turntable is on disk, or null when it has not arrived. A path rather than
+    /// anything decoded, because the decoder that plays it reads a file (<see cref="Turntable"/>).
+    /// </summary>
+    internal static string? SpinFile(string? hull)
+    {
+        var symbol = Symbol(hull);
+
+        return symbol is null ? null : Find(symbol + ".spin.mp4");
+    }
+
+    /// <summary>Whether a hull's 4K picture is on disk, without decoding 33 MB to find out.</summary>
+    internal static bool HasClose4K(string? hull)
+    {
+        var symbol = Symbol(hull);
+
+        return symbol is not null && Find(symbol + ".4k.png") is not null;
+    }
+
+    /// <summary>
+    /// Forgets what has been read, for a hull whose files have just changed on disk.
+    /// <para>
+    /// Called when a fetch lands (<see cref="ShipArtStore"/>). Without it a hull looked at once
+    /// before its picture arrived would keep the cached miss for the rest of the session.
+    /// </para>
+    /// </summary>
     internal static void Forget(string? hull)
     {
         var symbol = Symbol(hull);
@@ -161,9 +239,25 @@ internal static class ShipArt
             Known.Remove(symbol);
         }
 
-        lock (Recent)
+        lock (Close)
         {
-            Recent.Remove(symbol);
+            Close.Remove(symbol);
+        }
+    }
+
+    /// <summary>Both folders at once, so setting either clears both caches exactly once.</summary>
+    private static void Point(string? folder, string? shipped)
+    {
+        lock (Known)
+        {
+            _folder = folder;
+            _shipped = shipped;
+            Known.Clear();
+
+            lock (Close)
+            {
+                Close.Clear();
+            }
         }
     }
 
@@ -184,80 +278,56 @@ internal static class ShipArt
             : symbol;
     }
 
-    private static Bitmap? Read(string file)
+    /// <summary>The Commander's folder first, then the build's, or null when it is in neither.</summary>
+    private static string? Find(string file)
     {
-        if (_folder is not { Length: > 0 })
+        foreach (var folder in new[] { _folder, _shipped })
+        {
+            if (folder is not { Length: > 0 })
+            {
+                continue;
+            }
+
+            var path = Path.Combine(folder, file);
+
+            try
+            {
+                if (File.Exists(path))
+                {
+                    return path;
+                }
+            }
+            catch (Exception)
+            {
+                // An unreadable folder is a miss, not a crash on the way to drawing a page.
+            }
+        }
+
+        return null;
+    }
+
+    /// <param name="width">The width to decode to, or 0 for whatever the file holds.</param>
+    private static Bitmap? Read(string file, int width)
+    {
+        if (Find(file) is not { } path)
         {
             return null;
         }
-
-        var path = Path.Combine(_folder, file);
 
         try
         {
             // Read through a stream that is closed straight after, so a drawing being replaced on
             // disk — a look still in flux, a fetch landing — is not blocked by the app holding it.
-            if (!File.Exists(path))
-            {
-                return null;
-            }
-
             using var stream = File.OpenRead(path);
 
-            return new Bitmap(stream);
+            return width > 0
+                ? Bitmap.DecodeToWidth(stream, width, BitmapInterpolationMode.HighQuality)
+                : new Bitmap(stream);
         }
         catch (Exception)
         {
             // A half-written or corrupt PNG costs a card its picture, not the fleet page.
             return null;
         }
-    }
-
-    private static IReadOnlyList<CroppedBitmap>? Slice(string symbol)
-    {
-        var sheet = Read(symbol + ".spin.png");
-
-        if (sheet is null)
-        {
-            return null;
-        }
-
-        // The grid is read off the sheet against the resting frame's size rather than stored
-        // beside it, so a hull rendered at a different frame count needs no second fact kept in
-        // step with the first.
-        var cell = For(symbol);
-
-        if (cell is null)
-        {
-            return null;
-        }
-
-        var w = (int)cell.Size.Width;
-        var h = (int)cell.Size.Height;
-
-        if (w <= 0 || h <= 0)
-        {
-            return null;
-        }
-
-        var columns = sheet.PixelSize.Width / w;
-        var rows = sheet.PixelSize.Height / h;
-
-        if (columns <= 0 || rows <= 0)
-        {
-            return null;
-        }
-
-        var frames = new List<CroppedBitmap>(columns * rows);
-
-        for (var row = 0; row < rows; row++)
-        {
-            for (var column = 0; column < columns; column++)
-            {
-                frames.Add(new CroppedBitmap(sheet, new PixelRect(column * w, row * h, w, h)));
-            }
-        }
-
-        return frames;
     }
 }
