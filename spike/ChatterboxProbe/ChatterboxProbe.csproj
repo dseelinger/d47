@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>ChatterboxProbe</RootNamespace>
+    <!--
+      Which ONNX Runtime build to measure against. `dml` is the default because the GPU leg is the
+      one #293 gates on; `-p:Ep=cpu` swaps in the version D47.Tts actually ships, which is the only
+      way to know whether the version pin below costs anything on the CPU.
+    -->
+    <Ep Condition="'$(Ep)' == ''">dml</Ep>
+    <DefineConstants Condition="'$(Ep)' == 'dml'">$(DefineConstants);DML</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(Ep)' == 'dml'">
+    <!--
+      1.24.4 and not 1.29.0, because 1.24.4 is the last DirectML build Microsoft published: the base
+      package went on to 1.29.0 and this one stopped. That gap is a finding rather than a detail —
+      D47.Tts references 1.29.0, and the two packages cannot coexist in one process, so adopting the
+      DirectML provider means moving the whole app back four minor versions of ONNX Runtime.
+
+      The CPU provider inside this package is 1.24.4's, so a CPU number taken here is a 1.24.4
+      number. `-p:Ep=cpu` retakes it on 1.29.0.
+    -->
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.DirectML" Version="1.24.4" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Ep)' == 'cpu'">
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.29.0" />
+  </ItemGroup>
+
+</Project>
