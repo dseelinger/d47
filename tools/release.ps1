@@ -1,6 +1,8 @@
 ﻿<#
 .SYNOPSIS
     Commits what is in the working tree, merges it to main, and cuts a release.
+    Works from a linked worktree: the merge and push happen in the primary checkout, because
+    that is the only place main can be checked out at all.
 
 .DESCRIPTION
     The release process is written down in CLAUDE.md and has been run by hand every time. This is
@@ -49,6 +51,31 @@
     token: `release.yml` triggers on the pushed tag, holds `contents: write`, and creates a GitHub
     Release. It never pushes, updates or deletes a ref, so a ruleset on `refs/tags/v*` has nothing
     of its to refuse.
+
+    Where the merge to main happens
+    --------------------------------
+    <https://github.com/dseelinger/d47/issues/292>. `main` is always checked out in the primary
+    checkout, and this repository now runs parallel sessions from linked worktrees under
+    `.claude/worktrees/`. `git checkout main` from one of those fails — main is already checked out
+    elsewhere — and it used to fail *after* the commit above, which is exactly the late failure
+    every other check in this script exists to prevent.
+
+    So the merge step first asks `git rev-parse --git-common-dir`, which differs from `--git-dir`
+    only in a linked worktree, and the common dir's parent is the primary checkout. From the
+    primary checkout, or an ordinary (non-worktree) clone, nothing changes: `checkout main` and
+    `merge --no-ff` run right here, as they always did. From a linked worktree, this script never
+    checks anything out — refs and objects are shared with the primary checkout, so `main` is
+    merged and pushed there instead, by running git with `-C <primary>`. The worktree's own
+    checkout is untouched throughout, so the session that ran this is still on its branch
+    afterwards.
+
+    A preflight before the commit refuses the run if the primary checkout is not on `main`, or has
+    uncommitted changes — that may be another session's work in progress, and a merge on top of it
+    is not this script's to make. Said before anything is committed, in the same place every other
+    preflight here lives.
+
+    The rollback on a refused push (#93) resets `main` in the primary checkout the same way it
+    resets it here otherwise; there is nothing to check back out, because the worktree never moved.
 
 .PARAMETER Release
     Patch or Minor, case-insensitive.
@@ -548,6 +575,44 @@ if ([string]::IsNullOrWhiteSpace($Notes)) {
     }
 }
 
+# ------------------------------------------------------------------ linked worktree
+
+# git shares refs and objects between a primary checkout and every worktree linked off it, but
+# only one of them can have any given branch checked out at a time — including main. Run from a
+# linked worktree, the merge step's `checkout main` fails because main is already checked out in
+# the primary checkout, and it used to fail after the commit above: exactly the late failure every
+# preflight in this script exists to prevent (#292).
+#
+# `--git-dir` and `--git-common-dir` agree in the primary checkout and in an ordinary clone, and
+# differ only in a linked worktree, where `--git-dir` is the worktree's own private
+# `.git/worktrees/<name>` and `--git-common-dir` is the shared `.git` it was linked from. That
+# common dir's parent is the primary checkout.
+$gitDir = Resolve-Path ((Invoke-Git rev-parse --git-dir) | Select-Object -First 1)
+$commonDir = Resolve-Path ((Invoke-Git rev-parse --git-common-dir) | Select-Object -First 1)
+$isLinkedWorktree = $gitDir.Path -ne $commonDir.Path
+$primaryRoot = if ($isLinkedWorktree) { Split-Path $commonDir.Path -Parent } else { $root }
+
+if ($isLinkedWorktree) {
+    Write-Step "Running from a linked worktree; $Main lives in $primaryRoot"
+
+    # Refused here, before the commit below, for the same reason every other preflight in this
+    # script runs early: another session may have uncommitted work in the primary checkout, and a
+    # merge on top of it is not this script's to make.
+    $primaryBranch = (Invoke-Git -C $primaryRoot rev-parse --abbrev-ref HEAD) | Select-Object -First 1
+
+    if ($primaryBranch -ne $Main) {
+        throw "The primary checkout at $primaryRoot is on $primaryBranch, not $Main. Check out $Main there before releasing from a worktree."
+    }
+
+    $primaryStatus = (Invoke-Git -C $primaryRoot status --porcelain) -join "`n"
+
+    if (-not [string]::IsNullOrWhiteSpace($primaryStatus)) {
+        throw "The primary checkout at $primaryRoot has uncommitted changes. That may be another session's work in progress; this script will not merge on top of it."
+    }
+
+    Write-Note "$primaryRoot is on $Main and clean."
+}
+
 # ------------------------------------------------------------------ commit
 
 if (Test-Clean) {
@@ -639,6 +704,20 @@ $before = $null
 if ($branch -eq $Main) {
     Write-Step "Already on $Main, nothing to merge"
 }
+elseif ($isLinkedWorktree) {
+    Write-Step "Merging $branch into $Main in $primaryRoot"
+
+    $before = (Invoke-Git -C $primaryRoot rev-parse $Main) | Select-Object -First 1
+
+    # No checkout here: refs and objects are shared with the primary checkout, so it can merge a
+    # branch this worktree has checked out without either checkout moving.
+    #
+    # --no-ff, because a batch that arrived as several commits should read as one thing on main.
+    # The merge commit is where the whole of it is named.
+    Invoke-Git -C $primaryRoot merge --no-ff $branch -m "Merge $branch" | Out-Null
+
+    Write-Note (Invoke-Git -C $primaryRoot log --oneline -1)
+}
 else {
     Write-Step "Merging $branch into $Main"
 
@@ -684,17 +763,30 @@ Write-Step "Pushing $Main to $Remote"
 # unlikely: main returns to where this run found it and the checkout returns to the branch, which
 # still holds every commit. Nothing is lost, and there is nothing to unpick by hand.
 try {
-    Invoke-Git push $Remote $Main | Out-Null
+    if ($isLinkedWorktree) {
+        Invoke-Git -C $primaryRoot push $Remote $Main | Out-Null
+    }
+    else {
+        Invoke-Git push $Remote $Main | Out-Null
+    }
 }
 catch {
     if ($before) {
         Write-Warning "$Remote refused the push. Putting $Main back where this run found it."
 
-        Invoke-Git reset --hard $before | Out-Null
-        Invoke-Git checkout $branch | Out-Null
+        if ($isLinkedWorktree) {
+            Invoke-Git -C $primaryRoot reset --hard $before | Out-Null
 
-        Write-Note "$Main is at $($before.Substring(0, 12)) again, and you are back on $branch."
-        Write-Note 'Every commit is still on that branch. Nothing was tagged.'
+            Write-Note "$Main is at $($before.Substring(0, 12)) again in $primaryRoot."
+            Write-Note "This worktree never left $branch. Every commit is still on it. Nothing was tagged."
+        }
+        else {
+            Invoke-Git reset --hard $before | Out-Null
+            Invoke-Git checkout $branch | Out-Null
+
+            Write-Note "$Main is at $($before.Substring(0, 12)) again, and you are back on $branch."
+            Write-Note 'Every commit is still on that branch. Nothing was tagged.'
+        }
     }
     else {
         Write-Warning "$Remote refused the push, and this run committed straight onto $Main."
@@ -704,7 +796,12 @@ catch {
     throw
 }
 
-$head = (Invoke-Git rev-parse HEAD) | Select-Object -First 1
+$head = if ($isLinkedWorktree) {
+    (Invoke-Git -C $primaryRoot rev-parse HEAD) | Select-Object -First 1
+}
+else {
+    (Invoke-Git rev-parse HEAD) | Select-Object -First 1
+}
 
 Write-Note "main is at $($head.Substring(0, 12))"
 
