@@ -1,9 +1,9 @@
 using Avalonia.Controls;
-using Avalonia.Input;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using D47.App.Media;
 using D47.App.Panel;
 using D47.Core.Checklists;
 using D47.Core.Configuration;
@@ -15,20 +15,26 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The Ships index draws each hull's own artwork on its card, and the switch at the head of the
-/// page puts the pictures away again.
+/// The Ships index draws each hull's own artwork on its card, the ship's own page draws it large,
+/// and the switch at the head of the index puts the pictures away again.
 /// <para>
 /// The card grid shipped in commit 04e9b0c with no tests of its own, and the drawings are the
 /// thing it was built to hold — so these cover the grid as well as the artwork: that a card finds
 /// the picture for its hull, that a hull with no capture yet is still a working card, and that the
 /// switch is remembered where a page's state is kept rather than in settings.
 /// </para>
+/// <para>
+/// Since <a href="https://github.com/dseelinger/d47/issues/289">#289</a> they also cover the three
+/// files a hull now has and the two folders they can be in: the card still that came with the
+/// build, the 4K picture and the turntable that are fetched, and the rule that the Commander's own
+/// folder wins over the build's.
+/// </para>
 /// </summary>
 public class TheFleetCardsCarryTheirHullTests
 {
     /// <summary>
-    /// The repo's own hull drawings. Walked up to from the test binary rather than hard-coded, so
-    /// this keeps working wherever the suite is run from.
+    /// The repo's own hull art. Walked up to from the test binary rather than hard-coded, so this
+    /// keeps working wherever the suite is run from.
     /// </summary>
     private static string Assets
     {
@@ -47,35 +53,57 @@ public class TheFleetCardsCarryTheirHullTests
         }
     }
 
-    /// <summary>Puts the repo's drawings where the app reads them, and points it there.</summary>
-    private static string Stocked(D47.Core.AppPaths paths)
+    /// <summary>
+    /// Copies named files out of the repo's art into a folder.
+    /// <para>
+    /// By name rather than by wildcard, and that is not tidiness: <c>assets\ships</c> is 260 MB
+    /// now, so a helper that copied <c>*.png</c> would move ninety megabytes per test.
+    /// </para>
+    /// </summary>
+    private static void Stock(string folder, params string[] files)
     {
-        foreach (var art in Directory.GetFiles(Assets, "*.png"))
-        {
-            File.Copy(art, Path.Combine(paths.Ships, Path.GetFileName(art)), overwrite: true);
-        }
+        Directory.CreateDirectory(folder);
 
+        foreach (var file in files)
+        {
+            File.Copy(Path.Combine(Assets, file), Path.Combine(folder, file), overwrite: true);
+        }
+    }
+
+    /// <summary>Puts one hull's art where the app reads it, and points it there.</summary>
+    private static string Stocked(D47.Core.AppPaths paths, params string[] files)
+    {
+        Stock(paths.Ships, files);
+
+        ShipArt.Shipped = null;
         ShipArt.Folder = paths.Ships;
 
         return paths.Ships;
     }
 
     /// <summary>A stocked folder for the tests that ask ShipArt directly, with no page involved.</summary>
-    private static void Stocked()
+    private static string Stocked(params string[] files)
     {
         var paths = new D47.Core.AppPaths(TempFolders.Create("d47-fleet-card-art-store"));
 
         paths.EnsureCreated();
-        Stocked(paths);
+
+        return Stocked(paths, files.Length == 0 ? ["corsair.png"] : files);
     }
 
-    private static (PanelView Panel, ViewStateStore Store) Fleet(bool drawings = true)
+    private static (PanelView Panel, ViewStateStore Store) Fleet(
+        bool drawings = true, params string[] files)
     {
         var paths = new D47.Core.AppPaths(TempFolders.Create("d47-fleet-card-art-tests"));
 
         paths.EnsureCreated();
 
-        Stocked(paths);
+        Stocked(paths, files.Length == 0 ? ["corsair.png"] : files);
+
+        // The rotation is static and outlives a page on purpose — it has to, or opening a ship
+        // would stop the video the opening started. So a fixture has to put it back, or a test
+        // that opened a ship leaves the next one's fleet already turning.
+        HullTurntable.Stop();
 
         var checklists = new ChecklistService(
             new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), NullLogger<ChecklistStore>.Instance),
@@ -124,6 +152,19 @@ public class TheFleetCardsCarryTheirHullTests
         panel.GetVisualDescendants()
             .OfType<ToggleSwitch>()
             .Single(box => box.Content as string == "Drawings");
+
+    /// <summary>Opens the card for a ship, which is what the Commander does to get to its page.</summary>
+    private static void Open(PanelView panel, string named)
+    {
+        var card = panel.GetVisualDescendants()
+            .OfType<Button>()
+            .First(button => button.GetVisualDescendants()
+                .OfType<TextBlock>()
+                .Any(block => (block.Text ?? string.Empty).Contains(named, StringComparison.Ordinal)));
+
+        card.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+    }
 
     [AvaloniaFact]
     public void ACapturedHullIsDrawnOnItsCard()
@@ -191,57 +232,6 @@ public class TheFleetCardsCarryTheirHullTests
     }
 
     [AvaloniaFact]
-    public void PointingAtACardTurnsItsHull()
-    {
-        var (panel, _) = Fleet();
-
-        var drawing = Drawings(panel).Single();
-        var card = drawing.FindAncestorOfType<Button>()!;
-        var resting = drawing.Source;
-
-        card.RaiseEvent(new PointerEventArgs(
-            InputElement.PointerEnteredEvent, card, new Pointer(0, PointerType.Mouse, true),
-            null, default, 0, new PointerPointProperties(), KeyModifiers.None));
-
-        // The timer is what advances it, so the frame after entering is still the resting one;
-        // what this proves is that the hover found the sheet and armed the spin.
-        Assert.NotNull(ShipArt.Frames("Corsair"));
-
-        card.RaiseEvent(new PointerEventArgs(
-            InputElement.PointerExitedEvent, card, new Pointer(0, PointerType.Mouse, true),
-            null, default, 0, new PointerPointProperties(), KeyModifiers.None));
-
-        Assert.Same(resting, drawing.Source);
-    }
-
-    [AvaloniaFact]
-    public void AHullsFramesAreSlicedFromItsSheet()
-    {
-        Stocked();
-
-        var frames = ShipArt.Frames("Corsair");
-
-        Assert.NotNull(frames);
-
-        // 120 frames is three degrees a step, the twenty-second rotation asked for.
-        Assert.Equal(120, frames!.Count);
-
-        // Every frame is one card, not a strip of them: a wrong grid would still slice cleanly
-        // and be caught only by eye.
-        var art = ShipArt.For("Corsair")!;
-        Assert.All(frames, frame => Assert.Equal(art.Size, frame.Size));
-    }
-
-    [AvaloniaFact]
-    public void AHullWithNoSheetSimplyDoesNotTurn()
-    {
-        Stocked();
-
-        Assert.Null(ShipArt.Frames("Type8"));
-        Assert.Null(ShipArt.Frames("a_hull_that_does_not_exist"));
-    }
-
-    [AvaloniaFact]
     public void AHullIsFoundWhateverCaseTheJournalWroteIt()
     {
         Stocked();
@@ -253,4 +243,312 @@ public class TheFleetCardsCarryTheirHullTests
         Assert.Null(ShipArt.For("a_hull_that_does_not_exist"));
         Assert.Null(ShipArt.For(null));
     }
+
+    /// <summary>
+    /// <b>The spelling that cost nine cards of twelve.</b> <c>StoredShips</c> carries
+    /// <c>ShipType_Localised</c> for most hulls and <c>JournalJson.Named</c> prefers it, so a
+    /// stored ship arrives as <i>Type-8 Transporter</i> where a planned one arrives as
+    /// <c>type8</c>. Both have to reach the same file, and the punctuation has to come out on the
+    /// way: Frontier writes <i>Python Mk II</i> where d47's own table says <c>Python MkII</c>.
+    /// </summary>
+    [AvaloniaFact]
+    public void AHullIsFoundBySpellingAsWellAsBySymbol()
+    {
+        Stocked("corsair.png", "python_nx.png", "type8.png", "panthermkii.png", "lakonminer.png");
+
+        Assert.NotNull(ShipArt.For("python_nx"));
+        Assert.NotNull(ShipArt.For("Python Mk II"));
+        Assert.NotNull(ShipArt.For("Python MkII"));
+        Assert.NotNull(ShipArt.For("Type-8 Transporter"));
+        Assert.NotNull(ShipArt.For("Panther Clipper Mk II"));
+        Assert.NotNull(ShipArt.For("Type-11 Prospector"));
+
+        // And a hull nothing knows still works from the string itself, which is what the drop-in
+        // folder is for: a ship Frontier shipped this morning draws before the tables hear of it.
+        Assert.Null(ShipArt.For("Some Ship Nobody Has"));
+    }
+
+    [AvaloniaFact]
+    public void AHullTheTablesHaveNeverHeardOfStillDrawsFromItsFile()
+    {
+        var folder = Stocked("corsair.png");
+
+        File.Copy(
+            Path.Combine(folder, "corsair.png"),
+            Path.Combine(folder, "newhull01_nx.png"),
+            overwrite: true);
+
+        ShipArt.Folder = folder;
+
+        // The fallback that keeps the folder worth having: no table anywhere knows this symbol,
+        // and the file is still found because it is a plain symbol and a plain file name.
+        Assert.NotNull(ShipArt.For("NewHull01_NX"));
+    }
+
+    /// <summary>
+    /// A symbol reaches <c>ShipArt</c> from the journal and becomes part of a path, so anything
+    /// that is not a plain symbol is refused rather than sanitised.
+    /// </summary>
+    [AvaloniaFact]
+    public void AHullNameThatIsAPathIsRefused()
+    {
+        Stocked();
+
+        Assert.Null(ShipArt.For("../../settings"));
+        Assert.Null(ShipArt.For("corsair.png"));
+        Assert.Null(ShipArt.SpinFile("..\\corsair"));
+    }
+
+    [AvaloniaFact]
+    public void AStillThatCameWithTheBuildIsFoundWithNothingInTheDataFolder()
+    {
+        var paths = new D47.Core.AppPaths(TempFolders.Create("d47-shipped-art"));
+
+        paths.EnsureCreated();
+        Stock(paths.ShippedShips, "corsair.png");
+
+        ShipArt.Folder = paths.Ships;
+        ShipArt.Shipped = paths.ShippedShips;
+
+        // The whole point of the still shipping: a fresh installation has fetched nothing and
+        // still draws every hull.
+        Assert.NotNull(ShipArt.For("Corsair"));
+    }
+
+    [AvaloniaFact]
+    public void AStillInTheDataFolderWinsOverTheOneThatShipped()
+    {
+        var paths = new D47.Core.AppPaths(TempFolders.Create("d47-shipped-art-beaten"));
+
+        paths.EnsureCreated();
+
+        // The same name in both folders. Asked through SpinFile rather than through a decoded
+        // bitmap, because a path says which of the two answered and two pictures of the same size
+        // do not.
+        Stock(paths.ShippedShips, "corsair.spin.mp4");
+        Stock(paths.Ships, "corsair.spin.mp4");
+
+        ShipArt.Folder = paths.Ships;
+        ShipArt.Shipped = paths.ShippedShips;
+
+        // A drawing dropped in by hand still wins, which is what keeps the folder worth having
+        // now that every hull's card still arrives with the build.
+        Assert.Equal(
+            Path.Combine(paths.Ships, "corsair.spin.mp4"), ShipArt.SpinFile("Corsair"));
+    }
+
+    /// <summary>Whether a ship's own page is drawing its hull, and at what size.</summary>
+    private static List<Image> Large(PanelView panel) =>
+        [.. panel.GetVisualDescendants()
+            .OfType<HullPicture>()
+            .SelectMany(picture => picture.GetVisualDescendants().OfType<Image>())
+            .Where(image => image.Source is Bitmap)];
+
+    [AvaloniaFact]
+    public void TheLargePictureIsDrawnOnTheShipsOwnPage()
+    {
+        var (panel, _) = Fleet(drawings: true, "corsair.png", "corsair.4k.png");
+
+        Open(panel, "Reaper");
+
+        Assert.Single(Large(panel));
+
+        // The figures go with it, wherever it puts them: a page that drew the picture and dropped
+        // what the page is about would be a worse page than the one before this existed. The marks
+        // are drawn geometry rather than text, so any words in here are the page's own.
+        Assert.NotEmpty(
+            panel.GetVisualDescendants()
+                .OfType<HullPicture>()
+                .Single()
+                .GetVisualDescendants()
+                .OfType<TextBlock>());
+    }
+
+    [AvaloniaFact]
+    public void AHullWithNoLargePictureLeavesThePageAsItWas()
+    {
+        var (panel, _) = Fleet(drawings: true, "corsair.png");
+
+        Open(panel, "Reaper");
+
+        // Built either way, so a fetch that lands later can fill it in — but drawing nothing,
+        // which is what "the page as it is today" means. The figures are still there.
+        Assert.Empty(Large(panel));
+        Assert.Contains(
+            panel.GetVisualDescendants().OfType<TextBlock>(),
+            block => (block.Text ?? string.Empty).Contains("Corsair", StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// The three marks, and that the first two change where the figures go
+    /// (the Commander's amendment, 2026-09-04).
+    /// </summary>
+    [AvaloniaFact]
+    public void ThePictureHasThreeSizesAndTheFiguresMoveWithIt()
+    {
+        var (panel, _) = Fleet(drawings: true, "corsair.png", "corsair.4k.png");
+
+        Open(panel, "Reaper");
+
+        var picture = panel.GetVisualDescendants().OfType<HullPicture>().Single();
+        var marks = picture.GetVisualDescendants().OfType<Button>().ToList();
+
+        Assert.Equal(3, marks.Count);
+
+        // Pressed rather than assumed, because the size is kept for the session: a test that
+        // opened by asserting the default would pass or fail on which test ran before it.
+        marks[0].RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        // Half the pane: two columns, the figures in one and the picture in the other.
+        Assert.Equal(2, picture.ColumnDefinitions.Count);
+
+        marks[1].RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        // The width of the pane: one column, the figures under it.
+        Assert.Empty(picture.ColumnDefinitions);
+        Assert.Equal(2, picture.RowDefinitions.Count);
+        Assert.Single(Large(panel));
+
+        marks[0].RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(2, picture.ColumnDefinitions.Count);
+    }
+
+    /// <summary>
+    /// The memory ceiling the issue asks to be asserted rather than intended: a 4K picture is
+    /// 33 MB of pixels, so a third one held would be a hundred megabytes of hulls nobody is
+    /// looking at.
+    /// </summary>
+    [AvaloniaFact]
+    public void NoMoreThanTwoLargePicturesAreHeldAtOnce()
+    {
+        Stocked("corsair.png", "corsair.4k.png", "anaconda.4k.png", "adder.4k.png");
+
+        Assert.NotNull(ShipArt.Close4K("Corsair"));
+        Assert.Equal(1, ShipArt.Held);
+
+        Assert.NotNull(ShipArt.Close4K("Anaconda"));
+        Assert.Equal(2, ShipArt.Held);
+
+        Assert.NotNull(ShipArt.Close4K("Adder"));
+
+        // Two, and the literal is the point: this is 66 MB of pixels and a third would be a
+        // hundred. A change that raised the ceiling would have to change this line to say so.
+        Assert.Equal(2, ShipArt.CloseHeld);
+        Assert.Equal(2, ShipArt.Held);
+    }
+
+    [AvaloniaFact]
+    public void AHullWithNoTurntableSimplyDoesNotTurn()
+    {
+        Stocked("corsair.png");
+
+        Assert.Null(ShipArt.SpinFile("Corsair"));
+        Assert.False(HullTurntable.Ready("Corsair"));
+    }
+
+    [AvaloniaFact]
+    public void ATurntableThatIsThereIsReadyToPlay()
+    {
+        Stocked("corsair.png", "corsair.spin.mp4");
+
+        Assert.NotNull(ShipArt.SpinFile("Corsair"));
+        Assert.True(HullTurntable.Ready("Corsair"));
+    }
+
+    /// <summary>
+    /// The decoder, against a real turntable.
+    /// <para>
+    /// <b>Skipped rather than failed where Media Foundation is not installed.</b> It is a Windows
+    /// feature and a Server SKU can be built without it, which is what a CI runner is. A missing
+    /// decoder is a case this code already has an answer for — the card keeps its still — so a
+    /// suite that went red there would be reporting the runner rather than the change.
+    /// </para>
+    /// </summary>
+    [AvaloniaFact]
+    public void ATurntableDecodesToFramesTheCardCanDraw()
+    {
+        var folder = Stocked("corsair.png", "corsair.spin.mp4");
+
+        using var video = VideoFrames.Open(Path.Combine(folder, "corsair.spin.mp4"));
+
+        if (video is null)
+        {
+            return;
+        }
+
+        Assert.Equal(1280, video.Size.Width);
+        Assert.Equal(720, video.Size.Height);
+
+        var frame = video.Frame();
+
+        Assert.True(video.Next(frame));
+        Assert.True(video.Next(frame));
+        Assert.False(video.Ended);
+    }
+
+    /// <summary>
+    /// <b>One click, on the card that is still on screen afterwards</b> (reported twice,
+    /// 2026-09-04). Opening a ship redraws the index so it can outline what it opened, so the
+    /// press starts the video on an image that is thrown away a moment later — which is why it
+    /// took a second click, and why asserting against the pressed control would have passed while
+    /// the Commander saw nothing. This looks at what is in the tree.
+    /// </summary>
+    [AvaloniaFact]
+    public void OneClickTurnsTheCardThatIsStillOnScreen()
+    {
+        var (panel, _) = Fleet(drawings: true, "corsair.png", "corsair.spin.mp4");
+
+        Assert.Empty(Turning(panel));
+
+        Open(panel, "Reaper");
+
+        // Skipped where Media Foundation is not installed — a Server SKU can be built without it,
+        // and the card keeping its still is a case this code already has an answer for.
+        if (VideoFrames.Open(Path.Combine(Assets, "corsair.spin.mp4")) is null)
+        {
+            return;
+        }
+
+        Assert.Single(Turning(panel));
+
+        HullTurntable.Stop();
+
+        Assert.Empty(Turning(panel));
+    }
+
+    /// <summary>Images that are on screen and showing decoded frames rather than their still.</summary>
+    private static List<Image> Turning(PanelView panel) =>
+        [.. panel.GetVisualDescendants()
+            .OfType<Image>()
+            .Where(image => image.GetVisualParent() is not null && image.Source is WriteableBitmap)];
+
+    /// <summary>
+    /// The ship whose page is open is outlined on its card, the way a row has been since #110.
+    /// Free to mean that only since "flying now" became a badge: two outlines meaning different
+    /// things on one grid is worse than neither.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheShipBeingShownIsOutlinedOnItsCard()
+    {
+        var (panel, _) = Fleet();
+
+        Assert.Empty(Outlined(panel));
+
+        Open(panel, "Reaper");
+
+        var card = Assert.Single(Outlined(panel));
+
+        Assert.Contains(
+            card.GetVisualDescendants().OfType<TextBlock>(),
+            block => (block.Text ?? string.Empty).Contains("Reaper", StringComparison.Ordinal));
+    }
+
+    private static List<Button> Outlined(PanelView panel) =>
+        [.. panel.GetVisualDescendants()
+            .OfType<Button>()
+            .Where(button => button.BorderThickness.Left >= 2)];
 }

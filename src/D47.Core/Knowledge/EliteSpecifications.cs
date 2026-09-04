@@ -385,6 +385,63 @@ public static class EliteSpecifications
     }
 
     /// <summary>
+    /// The symbol for a hull named any way Elite names it, or null for one nothing here knows.
+    /// <b>The inverse of <see cref="HullSaid"/></b>, and the thing to call before a hull becomes
+    /// a key, a file name or anything else that has to be one string per ship.
+    /// <para>
+    /// <b>Because the journal writes both spellings, in the same event.</b> <c>StoredShips</c>
+    /// carries <c>ShipType</c> and, for most hulls, <c>ShipType_Localised</c> beside it — and
+    /// <c>JournalJson.Named</c> deliberately prefers the localised one, so what reaches the rest
+    /// of d47 for a stored ship is <i>Type-8 Transporter</i> where a build's own hull is
+    /// <c>type8</c>. Both are the same ship and neither is wrong; they simply cannot both be a
+    /// key. Measured on a live fleet of twelve on 2026-09-04: nine hulls localised, three
+    /// (Corsair, Anaconda, Cobra) not, so a caller that assumed either spelling worked for some
+    /// of the fleet and silently failed for the rest.
+    /// </para>
+    /// <para>
+    /// <b>Matched with the punctuation taken out</b>, because the two spellings disagree about it:
+    /// the table says <c>Cobra MkV</c> and Frontier's localisation says <c>Cobra Mk V</c>, and
+    /// <c>Python MkII</c> against <c>Python Mk II</c>. Comparing letters and digits alone settles
+    /// every pair without a table of exceptions to keep in step.
+    /// </para>
+    /// </summary>
+    public static string? HullSymbol(string? hull) =>
+        string.IsNullOrWhiteSpace(hull) ? null : Symbols.Value.GetValueOrDefault(Plain(hull));
+
+    /// <summary>
+    /// Every spelling of every hull, to its symbol. Symbols are written last so a hull whose name
+    /// flattens onto another's symbol cannot take it.
+    /// </summary>
+    private static readonly Lazy<IReadOnlyDictionary<string, string>> Symbols = new(
+        () =>
+        {
+            var loaded = Loaded.Value;
+            var symbols = new Dictionary<string, string>(StringComparer.Ordinal);
+
+            foreach (var (symbol, name) in loaded.HullNames)
+            {
+                symbols[Plain(name)] = symbol;
+            }
+
+            foreach (var (symbol, ship) in loaded.Ships)
+            {
+                symbols[Plain(ship.Name)] = symbol;
+            }
+
+            foreach (var symbol in loaded.HullNames.Keys.Concat(loaded.Ships.Keys))
+            {
+                symbols[Plain(symbol)] = symbol;
+            }
+
+            return symbols;
+        },
+        LazyThreadSafetyMode.ExecutionAndPublication);
+
+    /// <summary>Letters and digits, lower case. What is left of a hull's name once spelling is.</summary>
+    private static string Plain(string said) =>
+        string.Concat(said.Where(char.IsLetterOrDigit)).ToLowerInvariant();
+
+    /// <summary>
     /// The whole ladder, ending in what was handed in: the measured row, then the name read off
     /// the hull's armour, then a spoken match for a caller holding Frontier's localised spelling
     /// rather than a symbol, and failing all three the string itself.

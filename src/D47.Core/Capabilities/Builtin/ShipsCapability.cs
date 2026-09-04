@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using D47.Core.Configuration;
 using D47.Core.Ships;
 
 namespace D47.Core.Capabilities.Builtin;
@@ -39,6 +40,12 @@ public static class ShipsCapability
     /// (<a href="https://github.com/dseelinger/d47/issues/128">#128</a>).
     /// </summary>
     public const string RescanKey = "ships.remembered";
+
+    /// <summary>
+    /// The key of the row that decides whether the large hull art is fetched
+    /// (<a href="https://github.com/dseelinger/d47/issues/289">#289</a>).
+    /// </summary>
+    public const string HullArtKey = "ships.art";
 
     /// <summary>
     /// What only the App can do for this capability
@@ -233,6 +240,35 @@ public static class ShipsCapability
             Binding = new SettingBinding
             {
                 Read = _ => surface?.Remembered?.Invoke() ?? "Nothing is remembered yet.",
+            },
+        },
+
+        // The pictures (#289). On the Ships card rather than under Interface with the theme and
+        // the zoom, because the question it answers - "why has this ship no picture" - is asked
+        // by a Commander who is already standing on the fleet page.
+        new SettingRow
+        {
+            Key = HullArtKey,
+            Label = "Hull pictures",
+            Help =
+                "Every ship comes with a small drawing on its card, inside the download. The large "
+                + "picture on a ship's own page, and the turntable a card plays when you open it, "
+                + "are far bigger — a quarter of a gigabyte for the whole fleet — so they are not "
+                + "carried. D47 fetches the two files for a hull the first time you open one of "
+                + "those ships, from the same GitHub release the app updates itself from, and "
+                + "keeps them in data\\ships.\n\n"
+                + "Off, nothing is fetched and every ship keeps the small drawing it came with. "
+                + "Files you have already got stay and are still shown.",
+            Kind = SettingKind.Toggle,
+            DocsAnchor = "hull-art",
+            EgressId = EgressDisclosure.HullArt,
+            Binding = new SettingBinding
+            {
+                Read = s => s.Ui.HullArt ? "true" : "false",
+                Write = (s, v) => s with
+                {
+                    Ui = s.Ui with { HullArt = bool.TryParse(v, out var on) && on },
+                },
             },
         },
     ];

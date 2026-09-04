@@ -15,10 +15,11 @@
     would look broken for reasons that have nothing to do with the change being tested. See
     `AppPaths.ForRunningBuild` and the `bin is disposable` rule in CLAUDE.md.
 
-    **The payload is exactly what the installer ships**: `d47.exe` and `runtimes\`, the two entries
-    in `installer\d47.iss`. `data\` is never touched and never mirrored — deleting it costs the
-    Commander their checklist, their settings and a 325 MB download, which has happened once
-    already (2026-08-23).
+    **The payload is exactly what the installer ships**: `d47.exe`, `runtimes\` and `ships\`, the
+    three entries in `installer\d47.iss`. `data\` is never touched and never mirrored — deleting it
+    costs the Commander their checklist, their settings and a 325 MB download, which has happened
+    once already (2026-08-23). Since #289 it also costs them the fetched hull art, which is the
+    same rule for a new reason.
 
     **The version says what it is, in the one place that keeps the whole stamp.** The build is
     stamped `<newest tag>-local`, and About shows the full string — `0.84.3-local+<sha>` — so a
@@ -114,8 +115,8 @@ function Write-Note { param([string] $Text) Write-Host "    $Text" -ForegroundCo
     git log, so it has to be baked in — and this is the moment it is knowable. It goes in as one
     base64 `AssemblyMetadata` value, the way `DevInstallRoot` already travels: a published release
     never passes the property, so the feature is absent from a real build by construction rather
-    than by a run-time check, and `get-local`'s rule that it copies exactly `d47.exe` and
-    `runtimes\` is untouched.
+    than by a run-time check, and `get-local`'s rule that it copies exactly `d47.exe`,
+    `runtimes\` and `ships\` is untouched.
 
     **A title is only baked for an issue the Commander vouched for**, through the same
     `Resolve-Trust` that keeps a stranger's prose out of an agent's context. Rendering a title in
@@ -209,7 +210,14 @@ if ($NoBuild) {
 else {
     # Named for what it is, off the newest tag, so About says which release this was cut from and
     # that it is not that release, and the title bar marks it as a local build.
-    $tag = (git -C $repo describe --tags --abbrev=0 2>$null)
+    #
+    # **`v*` only, and that is not belt and braces** (#289). This repository grew its first tag
+    # that is not a version — `ship-art-1`, which carries the hull pictures and no executable —
+    # and a bare `describe` takes the newest tag of any shape. It stamped a build `ship-art-1-local`
+    # and computed the badge's window from `ship-art-1..HEAD`, which is a version nothing can parse
+    # and a list of issues from the wrong range. `release.ps1` and `prerelease.ps1` already
+    # filtered; this was the one that did not.
+    $tag = (git -C $repo describe --tags --abbrev=0 --match 'v*' 2>$null)
     $version = if ($LASTEXITCODE -eq 0 -and $tag) { "$($tag.TrimStart('v'))-local" } else { '0.1.0-local' }
 
     # What the badge will list, over the same window the version is named for so the two cannot
@@ -270,7 +278,7 @@ if (-not $NoBackup) {
 
 Write-Step "Installing over $InstallRoot"
 
-# Exactly the installer's two entries, and checked one at a time: a second robocopy overwrites the
+# Exactly the installer's three entries, and checked one at a time: a second robocopy overwrites the
 # first one's exit code, so a failed executable behind a successful runtimes\ would report success.
 #
 # /E rather than /MIR. Mirroring would delete data\ and the uninstaller with it, and data\ is the
@@ -294,6 +302,7 @@ function Copy-Payload {
 
 Copy-Payload $publish $InstallRoot @('d47.exe')
 Copy-Payload (Join-Path $publish 'runtimes') (Join-Path $InstallRoot 'runtimes') @('/E')
+Copy-Payload (Join-Path $publish 'ships') (Join-Path $InstallRoot 'ships') @('/E')
 
 if (-not $NoSelfTest) {
     Write-Step 'Checking the payload'

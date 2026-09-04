@@ -307,6 +307,7 @@ that cannot be undone.
 The settings panel carries one row per destination, saying the same things this page does
 {#egress-websearch} {#egress-updates} {#egress-diagnostics} {#egress-journal}
 {#egress-tts} {#egress-galaxy} {#egress-communitygoals} {#egress-models} {#egress-notableplaces}
+{#egress-hullart}
 {#egress-donation} — but computed live from your settings
 rather than written down once. They are read-only: not something you set, something Directive 47
 says, sitting next to the settings that change it.

@@ -246,9 +246,19 @@ public partial class MainWindow : Window
                 () => host.ModulePower,
                 new ShipsDrawingsMemory(host.ViewState));
 
-            // Where the hull drawings are read from. Beside the executable rather than inside it,
+            // Where the hull art is read from, in the order it is searched. The Commander's folder
+            // first, so a drawing dropped in by hand still wins; then the stills that came with
+            // the build, which is every hull's card picture (#289). Files rather than resources,
             // so a hull that arrives after this build still draws.
             ShipArt.Folder = host.Paths.Ships;
+            ShipArt.Shipped = host.Paths.ShippedShips;
+
+            // And where the two large files per hull come from when they are wanted. Nothing is
+            // fetched here: this only says it may be, on a press, if the Commander allows it.
+            ShipArtStore.Enable(
+                host.Paths.Ships,
+                () => host.Settings.Current.Ui.HullArt,
+                host.Loggers.CreateLogger("D47.App.Panel.ShipArtStore"));
 
             // Who to go and unlock next, read across both plan stores (Phase 28). Both
             // surfaces again, because a Commander deciding where to fly is usually already in

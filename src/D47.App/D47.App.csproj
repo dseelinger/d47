@@ -104,10 +104,30 @@
   </ItemGroup>
 
   <!--
-    Hull drawings are deliberately NOT built in. They live in data\ships\ beside the executable and
-    are read at run time (see ShipArt). Compiling them in meant a rebuild for every new hull and
-    every change to how hulls are drawn, and shipped all forty-odd to a Commander who owns one.
+    Hull art is deliberately NOT built in. It is read from disk at run time (see ShipArt).
+    Compiling it in meant a rebuild for every new hull and every change to how hulls are drawn,
+    and shipped all forty-odd to a Commander who owns one.
+
+    Two of the three files per hull keep that rule and arrive after the install: the 4K picture
+    Ship Details shows and the turntable a card plays, 260 MB between them, fetched for the hull
+    being looked at and kept in data\ships\.
+
+    The card still does not, since #289. Every hull's resting drawing together is 11 MB, and
+    carrying them means a fresh installation has a fleet with pictures on it rather than a page of
+    names that fills in as the Commander clicks about. Copied beside the executable rather than
+    embedded, so it is still a file on disk that ShipArt reads and still replaceable by dropping a
+    better one into data\ships\ — and copied into ships\ rather than data\ships\, because an
+    update replaces what the build owns and never touches what the Commander owns.
+
+    Excluded by name rather than by a separate folder: *.4k.png sits beside *.png in assets\ships\
+    so that one hull's art is one place, and the wildcard says which half ships.
   -->
+  <ItemGroup>
+    <None Include="..\..\assets\ships\*.png"
+          Exclude="..\..\assets\ships\*.4k.png"
+          Link="ships\%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="D47.App.Tests" />
