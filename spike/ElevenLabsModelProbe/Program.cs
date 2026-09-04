@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using D47.Core;
 using D47.Core.Audio;
 using D47.Core.Configuration;
@@ -107,8 +108,13 @@ internal static class Program
     /// cold. "Is this better" is not a question anybody can answer; "is this whispered" is.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// Named exactly, because <c>eleven_multilingual_v2</c> is a real model in the same listing and
+    /// is the one disqualified in August for reading a milestone half in German. A file saying "the
+    /// old V 2" is one careless listen away from being filed as evidence about the wrong model.
+    /// </summary>
     private static string Label(string model, string delta) =>
-        $"{delta}. This is the {(model == V3 ? "new V 3" : "old V 2")}.";
+        $"{delta}. This is the {(model == V3 ? "new v 3" : "old Flash 2 point 5")}.";
 
     /// <summary>
     /// The sweep. Wide enough on both sides of the 0.7-1.2 range Flash publishes to find where a
@@ -173,7 +179,7 @@ internal static class Program
             Console.WriteLine($"NOTE: {V3} is not in this account's model listing.");
         }
 
-        var only = Argument(args, "--only")?.Split(',') ?? ["language", "speed", "latency", "compare"];
+        var only = Argument(args, "--only")?.Split(',') ?? ["language", "speed", "latency", "compare", "plain"];
 
         if (only.Contains("language"))
         {
@@ -192,7 +198,12 @@ internal static class Program
 
         if (only.Contains("compare"))
         {
-            await CompareAsync(voice, outputDirectory).ConfigureAwait(false);
+            await CompareAsync(voice, outputDirectory, tagged: true).ConfigureAwait(false);
+        }
+
+        if (only.Contains("plain"))
+        {
+            await CompareAsync(voice, outputDirectory, tagged: false).ConfigureAwait(false);
         }
 
         Console.WriteLine();
@@ -431,11 +442,13 @@ internal static class Program
     /// and a difference is heard in the seam - two players and a click between them is a worse
     /// instrument than four hundred milliseconds of silence.
     /// </summary>
-    private static async Task CompareAsync(string voice, string outputDirectory)
+    private static async Task CompareAsync(string voice, string outputDirectory, bool tagged)
     {
-        Section("5. Side by side: v3 first, then Flash, one file each");
+        Section(tagged
+            ? "5. Side by side, with the tags: v3 first, then Flash, one file each"
+            : "6. Side by side, with no tags at all - the lines as d47 writes them today");
 
-        var comparisons = Path.Combine(outputDirectory, "compare");
+        var comparisons = Path.Combine(outputDirectory, tagged ? "compare" : "compare-plain");
         Directory.CreateDirectory(comparisons);
 
         // Long enough to be a gap rather than a breath, short enough that nobody reaches for the
@@ -444,13 +457,26 @@ internal static class Program
 
         for (var index = 0; index < Comparisons.Length; index++)
         {
-            var (name, delta, text) = Comparisons[index];
+            var (name, delta, tags) = Comparisons[index];
+
+            // The same line with the brackets taken out. Nothing in d47 writes a tag today, so
+            // this is what a Commander who switched the row would actually hear - and six of the
+            // eight lines are only in the tagged set because of a tag, which is why the untagged
+            // run is six files rather than eight.
+            var text = tagged ? tags : Bare(tags);
+
+            if (!tagged && text == tags)
+            {
+                continue;
+            }
+
             var pieces = new List<byte[]>();
             var lengths = new List<string>();
 
             foreach (var model in new[] { V3, Flash })
             {
-                var label = await SpeakAsync(model, voice, Label(model, delta), "en", speed: 1.0)
+                var label = await SpeakAsync(
+                    model, voice, Label(model, tagged ? delta : "No tags at all"), "en", speed: 1.0)
                     .ConfigureAwait(false);
 
                 var read = await SpeakAsync(model, voice, text, "en", speed: 1.0).ConfigureAwait(false);
@@ -471,7 +497,7 @@ internal static class Program
                 // Also on its own, for the comparison somebody wants to loop rather than sit
                 // through: the read without the label in front of it.
                 await File.WriteAllBytesAsync(
-                    Path.Combine(comparisons, $"{name}-{ShortName(model)}.wav"), Wav(read.Pcm))
+                    Path.Combine(comparisons, $"{name}-{ShortName(model)}{(tagged ? string.Empty : "-plain")}.wav"), Wav(read.Pcm))
                     .ConfigureAwait(false);
             }
 
@@ -489,7 +515,7 @@ internal static class Program
                 at += piece.Length;
             }
 
-            var file = Path.Combine(comparisons, $"{index + 1}-{name}.wav");
+            var file = Path.Combine(comparisons, $"{index + 1}-{name}{(tagged ? string.Empty : "-plain")}.wav");
             await File.WriteAllBytesAsync(file, Wav(joined)).ConfigureAwait(false);
 
             Console.WriteLine($"  {index + 1}-{name,-12} {string.Join("  ", lengths),-24} {delta}");
@@ -499,7 +525,14 @@ internal static class Program
         Console.WriteLine($"  {comparisons}");
     }
 
-    private static string ShortName(string model) => model == V3 ? "v3" : "v2";
+    private static string ShortName(string model) => model == V3 ? "v3" : "flash";
+
+    /// <summary>The line without its audio tags, and without the double space taking one out leaves.</summary>
+    private static string Bare(string text) =>
+        TagPattern.Replace(text, string.Empty).Replace("  ", " ", StringComparison.Ordinal).Trim();
+
+    private static readonly Regex TagPattern =
+        new(@"\[[a-z ]+\]", RegexOptions.IgnoreCase);
 
     // ---- the wire --------------------------------------------------------------------------
 

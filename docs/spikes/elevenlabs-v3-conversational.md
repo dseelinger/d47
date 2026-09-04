@@ -139,7 +139,32 @@ d47's callouts, which nothing writes tags into today.
 > **Open, pending an ear.** Cartesia (Phase 60) worked and did not impress, and the same test
 > applies: the question is not whether the difference exists but whether it is worth 1.7 seconds.
 
-## 6. Expressiveness — the earlier pair
+## 6. The same six lines with no tags at all — the run that describes d47 today
+
+`--only plain` repeats section 5 with the brackets stripped, and nothing else changed. **This is the
+comparison that matters for the picker as scoped**, because nothing in d47 writes an audio tag: a
+Commander who switched the row today would get the untagged column and no other part of it. Six
+files rather than eight, since two of section 5's lines carried no tag to strip.
+
+| | Line, tags removed | v3 | Flash | Tagged, from §5 |
+|---|---|---|---|---|
+| 1 | `Cutting the drives. There is something in the next ring…` | 5.68 s | 4.13 s | 6.32 / 4.88 |
+| 2 | `That is the third interdiction this hour, Commander.` | 2.72 s | 2.65 s | 3.84 / 3.20 |
+| 3 | `Double painite hotspot, dead ahead…` | 4.16 s | 3.76 s | 5.20 / 4.46 |
+| 4 | `Heat sink, now! Hull at 14 percent!` | 3.92 s | 2.74 s | 3.36 / 3.20 |
+| 5 | `Beautiful landing, Commander. The pad will buff out.` | 3.52 s | 2.93 s | 3.44 / 3.72 |
+| 6 | `The entire bounty is 812 credits.` | 3.28 s | 3.30 s | 4.08 / 3.30 |
+
+**Both models return less audio without the tags** — Flash by 0.6 s a line on average, v3 by 0.5 s —
+which says the bracketed words cost time in both. What that time buys is the listen.
+
+**The reads are labelled by model name from this run on**: *"No tags at all. This is the new v 3"*
+against *"…the old Flash 2 point 5"*. The first set said "the old V 2", and
+`eleven_multilingual_v2` is a real model in the same listing — the one disqualified in August for
+reading a milestone half in German. A file one careless listen from being filed as evidence about
+the wrong model is not a file worth keeping.
+
+## 7. Expressiveness — the earlier pair
 
 `eleven_v3_conversational-tags-en.wav` against `eleven_flash_v2_5-tags-en.wav`, from section 2's
 grid — the same question as section 5 on one line, kept because it is the file the language grid
