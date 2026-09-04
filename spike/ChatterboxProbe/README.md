@@ -81,7 +81,7 @@ one JSON per graph; `--verbose` opens the environment at verbose so a provider's
 piece, 25 is a second), `--overlap` (tokens of the previous piece decoded again as context) and
 `--crossfade` (samples blended at the seam).
 
-## Four things that will bite the next reader
+## Seven things that will bite the next reader
 
 **`-p:Ep=cpu` is not cosmetic, and neither is `-p:OrtVersion`.** The default build references
 `Microsoft.ML.OnnxRuntime.DirectML` **1.24.4**, which is the last DirectML build Microsoft published;
@@ -92,6 +92,17 @@ and **1.29.0 runs the q4f16 language model 1.7× slower than 1.24.4 through 1.28
 ([onnxruntime#32255](https://github.com/microsoft/onnxruntime/issues/32255): fp16 `MatMul` on x64
 fell through to Eigen; fixed on `main`, in no package). Measure on 1.28.0 unless the question is
 1.29.0 itself.
+
+**A reference clip need not be a WAV.** Anything Media Foundation decodes — `.m4a`, `.mp3`,
+`.wma`, `.flac` — is read through NAudio and downmixed, because Windows Sound Recorder writes AAC
+by default. Its settings do offer `WAV (lossless)`, which is still the better choice for a clip
+being cloned.
+
+**The decoder does not return the same number of samples for the same tokens.** It drops the
+voice's prompt itself, but not to the sample: two clips of the same length whose prompts differ by
+one token give pieces that differ by one token's audio. `stream` therefore measures the overlap to
+discard from the *end* of each piece. An offset assumed from the front stutters at every seam, and
+only some clips show it.
 
 **The reference clip's length is the decoder's cost.** Every decode carries the clip's own speech
 tokens as its prompt, so a 10s clip makes a 25-token piece cost nearly what a whole line does. A 5s

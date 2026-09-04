@@ -22,6 +22,15 @@
     <OrtVersion Condition="'$(OrtVersion)' == ''">1.29.0</OrtVersion>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!--
+      For the reference clip only, and specifically for Media Foundation: Windows Sound Recorder
+      writes .m4a, so without this every clip needs converting before the probe will look at it.
+      No native of its own, so it does not collide with either ONNX Runtime package.
+    -->
+    <PackageReference Include="NAudio" Version="2.2.1" />
+  </ItemGroup>
+
   <ItemGroup Condition="'$(Ep)' == 'dml'">
     <!--
       1.24.4 and not 1.29.0, because 1.24.4 is the last DirectML build Microsoft published: the base

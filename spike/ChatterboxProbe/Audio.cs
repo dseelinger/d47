@@ -1,4 +1,5 @@
 using System.Text;
+using NAudio.Wave;
 
 namespace ChatterboxProbe;
 
@@ -13,10 +14,15 @@ internal static class Audio
     {
         var bytes = File.ReadAllBytes(path);
 
-        if (Encoding.ASCII.GetString(bytes, 0, 4) != "RIFF" ||
+        // Anything that is not a RIFF goes to Media Foundation, which is how a clip recorded by
+        // Windows Sound Recorder arrives: it writes .m4a and offers no WAV in its own interface.
+        // Asking for the file to be converted first is friction the probe can absorb, and the
+        // decoder is a Windows component rather than a new dependency to ship.
+        if (bytes.Length < 12 ||
+            Encoding.ASCII.GetString(bytes, 0, 4) != "RIFF" ||
             Encoding.ASCII.GetString(bytes, 8, 4) != "WAVE")
         {
-            throw new InvalidDataException($"{path} is not a RIFF/WAVE file.");
+            return ReadThroughMediaFoundation(path);
         }
 
         var at = 12;
@@ -44,6 +50,38 @@ internal static class Audio
         }
 
         throw new InvalidDataException($"{path} has no data chunk.");
+    }
+
+    /// <summary>
+    /// Whatever Windows can decode — .m4a, .mp3, .wma, .flac — downmixed to mono, at whatever rate
+    /// the file carries. The caller resamples, exactly as it does for a WAV.
+    /// </summary>
+    private static (float[] Samples, int Rate) ReadThroughMediaFoundation(string path)
+    {
+        using var reader = new MediaFoundationReader(path);
+
+        var channels = reader.WaveFormat.Channels;
+        var samples = reader.ToSampleProvider();
+        var buffer = new float[reader.WaveFormat.SampleRate * channels];
+        var mono = new List<float>();
+        int read;
+
+        while ((read = samples.Read(buffer, 0, buffer.Length)) > 0)
+        {
+            for (var i = 0; i + channels <= read; i += channels)
+            {
+                var sum = 0f;
+
+                for (var c = 0; c < channels; c++)
+                {
+                    sum += buffer[i + c];
+                }
+
+                mono.Add(sum / channels);
+            }
+        }
+
+        return ([.. mono], reader.WaveFormat.SampleRate);
     }
 
     private static float[] Decode(byte[] bytes, int at, int size, int format, int channels, int bits)

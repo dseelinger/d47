@@ -527,18 +527,25 @@ internal sealed class Pipeline : IDisposable
             var piece = Decode(voice, CollectionsMarshal.AsSpan(spoken)[(decodedTo - context)..], last);
             decode.Stop();
 
-            var expected = (context + fresh + (last ? SilencePadding : 0)) * SamplesPerToken;
+            // How much of this piece is the context re-said, measured from the end rather than
+            // assumed from the front. The decoder drops the voice's prompt itself, but not always
+            // to the sample: a clip whose prompt is one token longer comes back one token longer,
+            // which an assumed offset would silently turn into a stutter at every seam. The fresh
+            // tail is what is kept, so anchor on it and let any wobble land in the discarded head.
+            var keep = (fresh + (last ? SilencePadding : 0)) * SamplesPerToken;
+            var skip = piece.Length - keep;
 
-            if (piece.Length != expected)
+            if (skip < 0 || skip > (context + 2) * SamplesPerToken)
             {
                 throw new InvalidOperationException(
-                    $"the decoder returned {piece.Length} samples for {context + fresh} tokens; " +
-                    $"expected {expected} at {SamplesPerToken} a token.");
+                    $"the decoder returned {piece.Length} samples for {context} context and " +
+                    $"{fresh} fresh tokens, which leaves {skip} to discard at " +
+                    $"{SamplesPerToken} a token.");
             }
 
-            Append(audio, piece, context * SamplesPerToken, crossfade);
+            Append(audio, piece, skip, crossfade);
 
-            chunks.Add(new Chunk(fresh, languageMs, decode.Elapsed.TotalMilliseconds, piece.Length - context * SamplesPerToken));
+            chunks.Add(new Chunk(fresh, languageMs, decode.Elapsed.TotalMilliseconds, keep));
 
             decodedTo = spoken.Count;
             language.Restart();
