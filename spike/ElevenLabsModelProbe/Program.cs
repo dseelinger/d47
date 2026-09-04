@@ -221,6 +221,11 @@ internal static class Program
             await UnknownTagsAsync(voice, outputDirectory).ConfigureAwait(false);
         }
 
+        if (only.Contains("context"))
+        {
+            await ContextAsync(voice, outputDirectory).ConfigureAwait(false);
+        }
+
         if (only.Contains("vocabulary"))
         {
             await VocabularyAsync(voice, outputDirectory).ConfigureAwait(false);
@@ -572,6 +577,141 @@ internal static class Program
 
     private static readonly Regex TagPattern =
         new(@"\[[a-z ]+\]", RegexOptions.IgnoreCase);
+
+    // ---- 11. does the sentence decide whether the tag lands --------------------------------
+
+    /// <summary>
+    /// The six tags the Commander heard do nothing, retried two ways, because the audition that
+    /// found them had a flaw worth naming: <b>it asked every tag to colour the same deliberately
+    /// neutral line.</b> That is the right control for "does this tag exist" and the wrong one for
+    /// half of these — sarcasm needs a proposition to contradict and curiosity needs something
+    /// unresolved, and "Contact on the scanner. It has not seen us yet." offers neither. A tag with
+    /// nothing to act on has no way to show that it landed.
+    /// <para>
+    /// The second suspect is length, and it is ElevenLabs' own: <i>"very short prompts are more
+    /// likely to cause inconsistent outputs"</i>, with prompts <b>greater than 250 characters</b>
+    /// encouraged. The audition line was 47. This matters far beyond these six, because d47's
+    /// sentence splitter guarantees every synthesis is short — the app operates exactly where v3's
+    /// tags are least reliable, by design and not by accident.
+    /// </para>
+    /// <para>
+    /// So each tag is asked twice: once on a short line written to give it something to act on, and
+    /// once on the same situation told past 250 characters. Short-and-fitting failing while
+    /// long-and-fitting works is a length problem, and a length problem is d47's problem. Both
+    /// working says the original line was simply the wrong instrument.
+    /// </para>
+    /// </summary>
+    private static async Task ContextAsync(string voice, string outputDirectory)
+    {
+        Section("11. The six that did nothing: is it the sentence, or is it the length?");
+
+        var directory = Path.Combine(outputDirectory, "context");
+        Directory.CreateDirectory(directory);
+
+        // Each pair says the same thing about the same situation. Only the length differs, and the
+        // long one is written the way somebody actually talks rather than padded to a count.
+        (string Tag, string Short, string Long)[] cases =
+        [
+            ("sarcastic",
+                "Beautiful landing, Commander. The pad will buff out.",
+                "Beautiful landing, Commander. Truly. I have watched a lot of ships come down on that "
+                + "pad and I have never seen one do it quite like that. The landing gear is rated for "
+                + "a vertical descent, which is a detail I mention only in passing. The pad will buff "
+                + "out. Station services have been notified, and they send their regards."),
+
+            ("curious",
+                "There is a Corvette on that pad with no registry. Why would anyone park it there?",
+                "There is a Federal Corvette sitting on pad 7 with no registry painted anywhere on the "
+                + "hull, which is not a thing I have seen before. It is not listed on the arrivals "
+                + "board either. Somebody flew a warship into a civilian outpost and then went to "
+                + "some trouble to be nobody in particular. Why would anyone do that, Commander?"),
+
+            ("starts laughing",
+                "You have plotted a 40 jump route to buy one tonne of biowaste.",
+                "Let me read this back to you, Commander, because I want to be certain I have it "
+                + "right. You have plotted a forty jump route, at eleven minutes a jump, across two "
+                + "sectors of empty sky, to arrive at an outpost whose entire commodity market "
+                + "consists of one tonne of biowaste. And you have done this on purpose."),
+
+            ("wheezing",
+                "Hull breach on deck three. I am venting atmosphere.",
+                "Hull breach on deck three, Commander, and the bulkhead did not seal. I am venting "
+                + "atmosphere into the ring and the pressure on that deck is down to nothing. Life "
+                + "support is pulling everything it has to hold the rest of the ship. I would very "
+                + "much like you to get us somewhere with a landing pad in the next few minutes."),
+
+            ("crying",
+                "We lost the whole wing, Commander. Every one of them.",
+                "We lost the whole wing, Commander. All four of them, inside ninety seconds, and I "
+                + "watched every one of it happen on the scanner and could not do a thing about any "
+                + "of it. They were still talking on the channel when the last drive went. I have "
+                + "their names. I do not know what you want me to do with them."),
+
+            // The control of the set. An accent does not need the sentence's help, so if this fails
+            // both ways it is the voice refusing rather than the line - which is what ElevenLabs
+            // means by "the voice needs to be similar enough to the desired delivery".
+            ("strong Scottish accent",
+                "Contact on the scanner. It has not seen us yet.",
+                "Contact on the scanner, Commander, and it has not seen us yet. It is holding station "
+                + "off the second planet with its drives cold, which is either a very patient pilot "
+                + "or a very broken one. We have the angle on it for about another minute. After "
+                + "that it has the angle on us, and I would rather not find out which it is."),
+        ];
+
+        var pieces = new List<byte[]>();
+        var gap = new byte[SampleRate * 2 * 2 / 5];
+
+        foreach (var (tag, brief, told) in cases)
+        {
+            foreach (var (which, text) in new[] { ("short", brief), ("long", told) })
+            {
+                var label = await SpeakAsync(
+                    V3, voice, $"{tag}, {which}, {text.Length} characters.", "en", speed: 1.0)
+                    .ConfigureAwait(false);
+
+                var read = await SpeakAsync(V3, voice, $"[{tag}] {text}", "en", speed: 1.0)
+                    .ConfigureAwait(false);
+
+                if (label.Pcm is not { Length: > 0 } || read.Pcm is not { Length: > 0 })
+                {
+                    Console.WriteLine($"  {tag} {which}: {read.Status} {read.Said ?? label.Said}");
+                    continue;
+                }
+
+                await File.WriteAllBytesAsync(
+                    Path.Combine(directory, $"{tag.Replace(' ', '-')}-{which}.wav"), Wav(read.Pcm))
+                    .ConfigureAwait(false);
+
+                pieces.Add(label.Pcm);
+                pieces.Add(gap);
+                pieces.Add(read.Pcm);
+                pieces.Add(gap);
+
+                Console.WriteLine(
+                    $"  {tag,-24} {which,-6} {text.Length,3} characters   {Seconds(read.Pcm.Length):0.00}s");
+            }
+        }
+
+        if (pieces.Count == 0)
+        {
+            return;
+        }
+
+        var joined = new byte[pieces.Sum(piece => piece.Length)];
+        var at = 0;
+
+        foreach (var piece in pieces)
+        {
+            piece.CopyTo(joined, at);
+            at += piece.Length;
+        }
+
+        var file = Path.Combine(directory, "audition.wav");
+        await File.WriteAllBytesAsync(file, Wav(joined)).ConfigureAwait(false);
+
+        Console.WriteLine();
+        Console.WriteLine($"  {file}  {Seconds(joined.Length) / 60:0.0} minutes");
+    }
 
     // ---- 10. which tags actually do anything, on this voice ----------------------------------
 

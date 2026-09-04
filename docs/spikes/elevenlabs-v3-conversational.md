@@ -238,7 +238,52 @@ for, and **the first two are the reference points** — no tag, then `[thargoid]
 model did something, but not what was asked" sounds like. A candidate that is not clearly better
 than the `[thargoid]` entry has not earned a place on a list a model is told it may write.
 
-## 9. Are the tags billed? Not settled, and it does not need to be
+## 9. Six tags did nothing — and the audition that found them had a flaw
+
+Heard on 2026-09-04, on Roger. **Ten of sixteen landed:** `[whispers]` `[sighs]` `[exhales]`
+`[excited]` `[mischievously]` `[snorts]` `[laughs]` `[laughs harder]` `[sings]` `[shouting]`.
+**Six did not:** `[sarcastic]` `[curious]` `[starts laughing]` `[wheezing]` `[crying]`
+`[strong Scottish accent]` — alongside `[thargoid]`, as expected.
+
+**The audition asked every tag to colour the same deliberately neutral line, and that is the wrong
+instrument for half of these.** Sarcasm needs a proposition to contradict; curiosity needs something
+unresolved. *"Contact on the scanner. It has not seen us yet."* offers neither, so a tag with
+nothing to act on has no way to show that it landed. The neutrality that made the control fair made
+the test meaningless for the interpretive tags.
+
+**The second suspect is length, and it is ElevenLabs' own.** Their v3 prompting guide: *"very short
+prompts are more likely to cause inconsistent outputs"*, and it encourages prompts **greater than
+250 characters**. The audition line was 47.
+
+> **This reaches far past these six.** `SentenceSplitter` exists to start speech at the first
+> sentence boundary rather than at end of turn — the largest perceived-latency win d47 has
+> (architecture.md §6) — so **every** synthesis d47 issues is one sentence, 23 to 83 characters in
+> the measured samples. d47 operates exactly where v3 says its tags are least reliable, and it does
+> so by design. Anything that fixes this trades against that latency win.
+
+`--only context` asks each of the six twice: once on a short line written to give the tag something
+to act on, once on the same situation told past 250 characters.
+
+| Tag | Short | Long |
+|---|---|---|
+| `[sarcastic]` | 52 chars, 3.44 s | 321 chars, 20.00 s |
+| `[curious]` | 81 chars, 5.12 s | 322 chars, 20.48 s |
+| `[starts laughing]` | 62 chars, 5.12 s | 306 chars, 22.88 s |
+| `[wheezing]` | 51 chars, 4.00 s | 319 chars, 16.72 s |
+| `[crying]` | 53 chars, 5.04 s | 302 chars, 19.52 s |
+| `[strong Scottish accent]` | 47 chars, 2.88 s | 317 chars, 18.56 s |
+
+Three outcomes, and each means something different:
+
+- **Both work** — the original line was simply the wrong instrument, and the tag goes on the list.
+- **Only the long one works** — a length problem, which is d47's problem and not the tag's. It
+  cannot be fixed without giving up the sentence-boundary latency win.
+- **Neither works** — the voice is refusing, which is what ElevenLabs means by *"the voice needs to
+  be similar enough to the desired delivery"*. `[strong Scottish accent]` is the set's control here:
+  an accent needs no help from the sentence, so if it fails both ways the answer is Roger, not the
+  writing.
+
+## 10. Are the tags billed? Not settled, and it does not need to be
 
 `--only billing` reads the account's `character_count` before and after one tagged synthesis and
 one bare one. **Both reads came back 267,096 — the meter did not move for either call**, so
@@ -251,7 +296,7 @@ over-estimate, and an over-estimate of spend is the safe direction. The tags in 
 worth 19 characters against 39 of speech — roughly a third again on a short line, which is the
 figure to keep in mind rather than a per-tag price.
 
-## 10. Expressiveness — the earlier pair
+## 11. Expressiveness — the earlier pair
 
 `eleven_v3_conversational-tags-en.wav` against `eleven_flash_v2_5-tags-en.wav`, from section 2's
 grid — the same question as section 5 on one line, kept because it is the file the language grid
