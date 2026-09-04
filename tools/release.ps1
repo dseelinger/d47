@@ -796,11 +796,11 @@ catch {
     throw
 }
 
-$head = if ($isLinkedWorktree) {
-    (Invoke-Git -C $primaryRoot rev-parse HEAD) | Select-Object -First 1
+if ($isLinkedWorktree) {
+    $head = (Invoke-Git -C $primaryRoot rev-parse HEAD) | Select-Object -First 1
 }
 else {
-    (Invoke-Git rev-parse HEAD) | Select-Object -First 1
+    $head = (Invoke-Git rev-parse HEAD) | Select-Object -First 1
 }
 
 Write-Note "main is at $($head.Substring(0, 12))"
