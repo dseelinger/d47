@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
@@ -54,10 +54,25 @@ public class TheFleetCardsCarryTheirHullTests
     }
 
     /// <summary>
-    /// Copies named files out of the repo's art into a folder.
+    /// Stand-ins for the large art, beside the tests that need it.
+    /// <para>
+    /// <b>Because the repository deliberately does not carry the real thing.</b> The 4K pictures
+    /// and the turntables are 260 MB and are published as release assets, so a clean checkout has
+    /// the card stills and nothing else — and seven tests written against
+    /// <c>assets\ships\corsair.4k.png</c> passed on the machine that wrote them and failed on
+    /// CI, which is where that difference first showed. These are a 480x270 picture and a
+    /// twelve-frame turntable, 132 KB between them, carrying the names that are the contract.
+    /// </para>
+    /// </summary>
+    private static string Fixtures => Path.Combine(AppContext.BaseDirectory, "Fixtures", "ships");
+
+    /// <summary>
+    /// Copies named files into a folder, from the fixtures where there is one and from the repo's
+    /// own art otherwise.
     /// <para>
     /// By name rather than by wildcard, and that is not tidiness: <c>assets\ships</c> is 260 MB
-    /// now, so a helper that copied <c>*.png</c> would move ninety megabytes per test.
+    /// on a machine that has rendered it, so a helper that copied <c>*.png</c> would move ninety
+    /// megabytes per test.
     /// </para>
     /// </summary>
     private static void Stock(string folder, params string[] files)
@@ -66,7 +81,10 @@ public class TheFleetCardsCarryTheirHullTests
 
         foreach (var file in files)
         {
-            File.Copy(Path.Combine(Assets, file), Path.Combine(folder, file), overwrite: true);
+            var stand = Path.Combine(Fixtures, file);
+            var source = File.Exists(stand) ? stand : Path.Combine(Assets, file);
+
+            File.Copy(source, Path.Combine(folder, file), overwrite: true);
         }
     }
 
@@ -508,7 +526,7 @@ public class TheFleetCardsCarryTheirHullTests
 
         // Skipped where Media Foundation is not installed — a Server SKU can be built without it,
         // and the card keeping its still is a case this code already has an answer for.
-        if (VideoFrames.Open(Path.Combine(Assets, "corsair.spin.mp4")) is null)
+        if (VideoFrames.Open(Path.Combine(Fixtures, "corsair.spin.mp4")) is null)
         {
             return;
         }

@@ -95,6 +95,16 @@ version number leaves and a build may come back; this one says which ships you l
 **Hull pictures** on the Ships card in Settings turns it off, and off, every ship keeps the small
 drawing it came with.
 
+### Seven tests that could only pass on the machine that wrote them
+
+The large art is published rather than committed, so a clean checkout has the card stills and
+nothing else — and seven tests copied `assets/ships/corsair.4k.png` and `corsair.spin.mp4` to set
+themselves up. They passed here and failed on CI, which is the first place the difference showed.
+
+The stand-ins live beside the tests now: a 480x270 picture and a twelve-frame turntable, 132 KB
+between them, carrying the names that are the contract. Verified by running the suite with the
+un-committed art moved out of the way, which is what CI sees.
+
 ### The rotation follows the hull, and the open ship is outlined
 
 **One click, not two.** Opening a ship redraws the fleet index — it has to, so it can outline what
