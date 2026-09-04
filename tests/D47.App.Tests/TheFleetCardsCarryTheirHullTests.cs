@@ -100,6 +100,11 @@ public class TheFleetCardsCarryTheirHullTests
 
         Stocked(paths, files.Length == 0 ? ["corsair.png"] : files);
 
+        // The rotation is static and outlives a page on purpose — it has to, or opening a ship
+        // would stop the video the opening started. So a fixture has to put it back, or a test
+        // that opened a ship leaves the next one's fleet already turning.
+        HullTurntable.Stop();
+
         var checklists = new ChecklistService(
             new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), NullLogger<ChecklistStore>.Instance),
             new ChecklistProposalStore(
@@ -486,23 +491,64 @@ public class TheFleetCardsCarryTheirHullTests
     }
 
     /// <summary>
-    /// Opening a ship starts its rotation and the page opens anyway. The frames are a timer's
-    /// work, so what this covers is that the press does both things and neither throws.
+    /// <b>One click, on the card that is still on screen afterwards</b> (reported twice,
+    /// 2026-09-04). Opening a ship redraws the index so it can outline what it opened, so the
+    /// press starts the video on an image that is thrown away a moment later — which is why it
+    /// took a second click, and why asserting against the pressed control would have passed while
+    /// the Commander saw nothing. This looks at what is in the tree.
     /// </summary>
     [AvaloniaFact]
-    public void OpeningAShipTurnsItsCardAndOpensThePage()
+    public void OneClickTurnsTheCardThatIsStillOnScreen()
     {
         var (panel, _) = Fleet(drawings: true, "corsair.png", "corsair.spin.mp4");
 
-        var drawing = Drawings(panel).Single();
-        var resting = drawing.Source;
+        Assert.Empty(Turning(panel));
 
         Open(panel, "Reaper");
 
-        Assert.NotNull(resting);
+        // Skipped where Media Foundation is not installed — a Server SKU can be built without it,
+        // and the card keeping its still is a case this code already has an answer for.
+        if (VideoFrames.Open(Path.Combine(Assets, "corsair.spin.mp4")) is null)
+        {
+            return;
+        }
+
+        Assert.Single(Turning(panel));
 
         HullTurntable.Stop();
 
-        Assert.Same(resting, drawing.Source);
+        Assert.Empty(Turning(panel));
     }
+
+    /// <summary>Images that are on screen and showing decoded frames rather than their still.</summary>
+    private static List<Image> Turning(PanelView panel) =>
+        [.. panel.GetVisualDescendants()
+            .OfType<Image>()
+            .Where(image => image.GetVisualParent() is not null && image.Source is WriteableBitmap)];
+
+    /// <summary>
+    /// The ship whose page is open is outlined on its card, the way a row has been since #110.
+    /// Free to mean that only since "flying now" became a badge: two outlines meaning different
+    /// things on one grid is worse than neither.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheShipBeingShownIsOutlinedOnItsCard()
+    {
+        var (panel, _) = Fleet();
+
+        Assert.Empty(Outlined(panel));
+
+        Open(panel, "Reaper");
+
+        var card = Assert.Single(Outlined(panel));
+
+        Assert.Contains(
+            card.GetVisualDescendants().OfType<TextBlock>(),
+            block => (block.Text ?? string.Empty).Contains("Reaper", StringComparison.Ordinal));
+    }
+
+    private static List<Button> Outlined(PanelView panel) =>
+        [.. panel.GetVisualDescendants()
+            .OfType<Button>()
+            .Where(button => button.BorderThickness.Left >= 2)];
 }

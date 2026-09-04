@@ -47,6 +47,7 @@ internal static class HullTurntable
     private static Bitmap? _waitingRest;
     private static string? _awaited;
     private static string? _awaitedHull;
+    private static string? _wanted;
     private static bool _listening;
 
     /// <summary>
@@ -54,6 +55,23 @@ internal static class HullTurntable
     /// to play, so a fleet with no art fetched yet does nothing rather than opening files.
     /// </summary>
     internal static bool Ready(string? hull) => ShipArt.SpinFile(hull) is not null;
+
+    /// <summary>
+    /// Whether a card being built is for the hull that should be turning, so it can pick the
+    /// rotation back up.
+    /// <para>
+    /// <b>The rotation follows the hull, not the control, and that is the whole of a defect
+    /// reported twice.</b> Opening a ship rebuilds the fleet's cards — the index outlines the row
+    /// the other pane is drawing, so it redraws on every navigation — which meant the press
+    /// started the video on an <see cref="Image"/> that was thrown away a moment later. Measured:
+    /// after one click the pressed image was out of the tree and holding the frames, and the card
+    /// on screen was a different instance showing its still. The rotation stopped on the next
+    /// tick, and a second click "worked" only because the trail no longer changed and so nothing
+    /// was rebuilt.
+    /// </para>
+    /// </summary>
+    internal static bool Resumes(string? hull) =>
+        _wanted is not null && string.Equals(_wanted, ShipArt.Symbol(hull), StringComparison.Ordinal);
 
     /// <summary>
     /// Plays one rotation on a card's drawing, and rests on <paramref name="resting"/> at the end.
@@ -70,6 +88,16 @@ internal static class HullTurntable
     {
         Stop();
 
+        if (ShipArt.Symbol(hull) is not { } symbol)
+        {
+            return;
+        }
+
+        // Set after the stop, which clears it, and before anything that can fail: a card rebuilt
+        // out from under this — which is what opening a ship does — reads it to know it should
+        // still be turning. See Resumes.
+        _wanted = symbol;
+
         if (ShipArt.SpinFile(hull) is not { } path)
         {
             Await(drawing, hull, resting);
@@ -79,6 +107,8 @@ internal static class HullTurntable
 
         if (VideoFrames.Open(path) is not { } video)
         {
+            _wanted = null;
+
             return;
         }
 
@@ -100,6 +130,7 @@ internal static class HullTurntable
     {
         Ticker.Stop();
         _awaited = null;
+        _wanted = null;
 
         if (_turning is not null && _resting is not null && _turning.GetVisualParent() is not null)
         {

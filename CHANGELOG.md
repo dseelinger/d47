@@ -95,6 +95,20 @@ version number leaves and a build may come back; this one says which ships you l
 **Hull pictures** on the Ships card in Settings turns it off, and off, every ship keeps the small
 drawing it came with.
 
+### The rotation follows the hull, and the open ship is outlined
+
+**One click, not two.** Opening a ship redraws the fleet index — it has to, so it can outline what
+it opened — so the press started the video on a card that was thrown away a moment later. Measured:
+after one click the pressed image was out of the tree and holding the frames, and the card on
+screen was a different object showing its still. The second click "worked" only because the trail
+no longer changed and nothing was rebuilt. The rotation now follows the hull rather than the
+control: a card rebuilt for the hull that should be turning picks it back up as it enters the tree.
+
+**And the ship whose page is open is outlined on its card**, the way a row has been since #110 and
+read off the same place — the trail's last crumb, so it follows the right pane however it got
+there. It was free to mean that only once "flying now" became a badge: two outlines meaning
+different things on one grid is worse than neither.
+
 ### A ship's page is headed by the ship
 
 Three more from driving the build, on 2026-09-04.

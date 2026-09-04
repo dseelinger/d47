@@ -324,7 +324,8 @@ public static class LoadoutPages
         Action pressed,
         LoadoutStanding standing,
         string? hull = null,
-        bool drawings = false)
+        bool drawings = false,
+        bool showing = false)
     {
         var stroke = standing == LoadoutStanding.Wanted
             ? ThemeManager.TextMutedKey
@@ -446,20 +447,46 @@ public static class LoadoutPages
             button.Opacity = 0.55;
         }
 
-        button.Click += (_, _) =>
+        if (showing)
         {
-            // The rotation first, then the drill, and both on the one press (#289). On anything
-            // but the narrowest pane the fleet stays beside the page that just opened, so the card
-            // turns next to the ship it opened; on one pane it leaves the tree and the rotation
-            // stops with it. Nothing here waits for the video — the page must open at the speed a
-            // press opens a page, whatever the decoder is doing.
-            if (spinning is not null && resting is not null)
-            {
-                HullTurntable.Play(spinning, hull, resting);
-            }
+            // **The card the other pane is drawing**, the same outline a row has carried since
+            // #110 and the same reason: an index that stays on screen beside what it opened has
+            // to say which one that is. It was free to mean this only once "flying now" stopped
+            // being an outline and became a badge — two outlines meaning different things on one
+            // grid is worse than neither (reported 2026-09-04).
+            button.BorderThickness = new Thickness(2);
+            Themed(button, Button.BorderBrushProperty, ThemeManager.AccentKey);
+        }
 
-            pressed();
-        };
+        if (spinning is { } turning && resting is { } still)
+        {
+            button.Click += (_, _) =>
+            {
+                // The rotation first, then the drill, and both on the one press (#289). Nothing
+                // here waits for the video — the page must open at the speed a press opens a page,
+                // whatever the decoder is doing.
+                HullTurntable.Play(turning, hull, still);
+
+                pressed();
+            };
+
+            // **And again when this card is the one being rebuilt**, which the press itself
+            // causes: opening a ship redraws the index so it can outline what it opened, so the
+            // image the press started the video on is thrown away a moment later. Wired on attach
+            // rather than called here, because a control that is not in the tree yet is one the
+            // rotation stops on at its first tick. See HullTurntable.Resumes.
+            turning.AttachedToVisualTree += (_, _) =>
+            {
+                if (HullTurntable.Resumes(hull))
+                {
+                    HullTurntable.Play(turning, hull, still);
+                }
+            };
+        }
+        else
+        {
+            button.Click += (_, _) => pressed();
+        }
 
         return button;
     }
@@ -1806,14 +1833,23 @@ public sealed class IndexPage : LoadoutPage
 
         foreach (var row in rows)
         {
+            // Read off the trail rather than kept as a second piece of state (#110): the last
+            // crumb is what the other pane is drawing, and every card builds the crumb it would
+            // drill to anyway — so the outline follows the right pane however it got there,
+            // pressed here, reached by voice, or arrived at by the back gesture.
+            var crumb = LoadoutPages.Crumb(Mode, row);
+            var showing = _nav.Trail.Count > 0
+                          && string.Equals(_nav.Trail[^1].Key, crumb.Key, StringComparison.Ordinal);
+
             _cards.Children.Add(LoadoutPages.Card(
                 row.Text,
                 row.Aside,
                 row.Marked,
-                () => _nav.Drill(LoadoutPages.Crumb(Mode, row)),
+                () => _nav.Drill(crumb),
                 row.Standing,
                 row.Hull,
-                Drawings));
+                Drawings,
+                showing));
         }
 
         _list.Children.Add(_cards);
