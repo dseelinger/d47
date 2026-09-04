@@ -17,6 +17,14 @@
       and sound like, not what some other text does.
     -->
     <ProjectReference Include="..\..\src\D47.Core\D47.Core.csproj" />
+
+    <!--
+      To read the clips back. "Did the model say all the words" is not a question an ear settles
+      reliably and is not one a duration answers at all - a tagged line can be longer than the bare
+      one and still be missing half of it, because the tag costs time of its own. d47 already ships
+      a transcriber, so the clip is read by the same model that reads the Commander.
+    -->
+    <ProjectReference Include="..\..\src\D47.Stt\D47.Stt.csproj" />
   </ItemGroup>
 
 </Project>

@@ -7,6 +7,8 @@ using System.Text.RegularExpressions;
 using D47.Core;
 using D47.Core.Audio;
 using D47.Core.Configuration;
+using D47.Core.Listening;
+using D47.Stt;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace ElevenLabsModelProbe;
@@ -107,11 +109,12 @@ internal static class Program
     /// It names the difference being listened for as well as the model, so a file can be played
     /// cold. "Is this better" is not a question anybody can answer; "is this whispered" is.
     /// </para>
-    /// </summary>
-    /// <summary>
-    /// Named exactly, because <c>eleven_multilingual_v2</c> is a real model in the same listing and
-    /// is the one disqualified in August for reading a milestone half in German. A file saying "the
-    /// old V 2" is one careless listen away from being filed as evidence about the wrong model.
+    /// <para>
+    /// The model is named exactly, because <c>eleven_multilingual_v2</c> is a real model in the
+    /// same listing and is the one disqualified in August for reading a milestone half in German. A
+    /// file saying "the old V 2" is one careless listen away from being filed as evidence about the
+    /// wrong model.
+    /// </para>
     /// </summary>
     private static string Label(string model, string delta) =>
         $"{delta}. This is the {(model == V3 ? "new v 3" : "old Flash 2 point 5")}.";
@@ -216,6 +219,11 @@ internal static class Program
         if (only.Contains("unknown"))
         {
             await UnknownTagsAsync(voice, outputDirectory).ConfigureAwait(false);
+        }
+
+        if (only.Contains("words"))
+        {
+            await WordsAsync(Argument(args, "--clips") ?? outputDirectory, install).ConfigureAwait(false);
         }
 
         Console.WriteLine();
@@ -559,6 +567,117 @@ internal static class Program
 
     private static readonly Regex TagPattern =
         new(@"\[[a-z ]+\]", RegexOptions.IgnoreCase);
+
+    // ---- 9. did it say all the words, and how loudly -----------------------------------------
+
+    /// <summary>
+    /// Reads the clips back. Two failures look the same from a duration and neither is one an ear
+    /// settles reliably:
+    /// <list type="bullet">
+    /// <item><b>Words missing.</b> A tagged line can be <em>longer</em> than the bare one and still
+    /// be short of half its words, because the performance the tag asks for costs time of its own.
+    /// So the words are counted rather than inferred, by the transcriber d47 already ships.</item>
+    /// <item><b>Words present but inaudible.</b> A whisper that comes back 20 dB down is a line the
+    /// Commander does not hear over Elite, which is indistinguishable from a line that was never
+    /// said - and it is a level, so it is a number.</item>
+    /// </list>
+    /// <para>
+    /// tiny.en is the model in the install, and it is a check rather than an authority: a word it
+    /// misses is a word worth listening for, not proof of anything. What it is good for is
+    /// <em>relative</em> - the same sentence four ways, where only the brackets changed.
+    /// </para>
+    /// </summary>
+    private static async Task WordsAsync(string clipDirectory, string install)
+    {
+        Section("9. Every word, and how loud it came back");
+
+        var model = Path.Combine(install, "data", "models", "ggml-tiny.en.bin");
+
+        if (!File.Exists(model))
+        {
+            Console.WriteLine($"  no transcriber model at {model}; levels only");
+        }
+
+        using var transcriber = new WhisperTranscriber(NullLogger<WhisperTranscriber>.Instance);
+
+        var loaded = File.Exists(model) && transcriber.Load(model, "tiny.en", useGpu: false);
+
+        if (File.Exists(model) && !loaded)
+        {
+            Console.WriteLine($"  {transcriber.Unavailable}");
+        }
+
+        foreach (var file in Directory.GetFiles(clipDirectory, "*.wav").OrderBy(name => name))
+        {
+            var samples = Samples(await File.ReadAllBytesAsync(file).ConfigureAwait(false));
+
+            var peak = samples.Length == 0 ? 0 : samples.Max(Math.Abs);
+            var rms = samples.Length == 0
+                ? 0
+                : Math.Sqrt(samples.Sum(sample => (double)sample * sample) / samples.Length);
+
+            Console.WriteLine($"  {Path.GetFileNameWithoutExtension(file)}");
+            Console.WriteLine(
+                $"    {samples.Length / (double)SampleRate:0.00}s   peak {Decibels(peak):0.0} dBFS   "
+                + $"rms {Decibels(rms):0.0} dBFS");
+
+            if (!loaded)
+            {
+                continue;
+            }
+
+            var heard = await transcriber
+                .TranscribeAsync(new Utterance(Downsample(samples), 16_000), [])
+                .ConfigureAwait(false);
+
+            Console.WriteLine($"    heard: {heard.Text}");
+        }
+    }
+
+    private static double Decibels(double amplitude) =>
+        amplitude <= 0 ? double.NegativeInfinity : 20 * Math.Log10(amplitude);
+
+    /// <summary>The WAV's samples as floats in -1..1, skipping the 44-byte header this probe wrote.</summary>
+    private static float[] Samples(byte[] wav)
+    {
+        const int Header = 44;
+
+        if (wav.Length <= Header)
+        {
+            return [];
+        }
+
+        var samples = new float[(wav.Length - Header) / 2];
+
+        for (var i = 0; i < samples.Length; i++)
+        {
+            samples[i] = BitConverter.ToInt16(wav, Header + (i * 2)) / 32768f;
+        }
+
+        return samples;
+    }
+
+    /// <summary>
+    /// 24 kHz to the 16 kHz Whisper wants, linearly. Good enough for reading words back; this is
+    /// not in the product and nothing is judged on its fidelity.
+    /// </summary>
+    private static float[] Downsample(float[] samples)
+    {
+        var ratio = SampleRate / 16_000.0;
+        var wanted = (int)(samples.Length / ratio);
+        var output = new float[wanted];
+
+        for (var i = 0; i < wanted; i++)
+        {
+            var at = i * ratio;
+            var left = (int)at;
+            var right = Math.Min(left + 1, samples.Length - 1);
+
+            output[i] = (float)(samples[left] + ((samples[right] - samples[left]) * (at - left)));
+        }
+
+        return output;
+    }
 
     // ---- 8. what a tag the model does not know does ------------------------------------------
 

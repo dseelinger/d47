@@ -164,7 +164,51 @@ against *"…the old Flash 2 point 5"*. The first set said "the old V 2", and
 reading a milestone half in German. A file one careless listen from being filed as evidence about
 the wrong model is not a file worth keeping.
 
-## 7. Are the tags billed? Not settled, and it does not need to be
+## 7. Read back: Flash says the tags out loud, v3 never does
+
+`--only words` reads every clip back through the transcriber d47 already ships (tiny.en, from the
+install) and prints its level. It exists because two failures look identical from a duration, and
+neither is one an ear settles: **words missing**, and **words present but inaudible**.
+
+**Flash 2.5 speaks the bracketed word as text. Every single time.** Transcribed, not inferred:
+
+| Sent | Flash said | v3 said |
+|---|---|---|
+| `[whispers] Cutting the drives…` | "**Whispers,** cutting the drives…" | "Cutting the drives…" |
+| `[sighs] That is the third interdiction…` | "**Sighs.** That is the third…" | "That is the third…" |
+| `[excited] Double painite hotspot…` | "**Excited,** double painite hotspot…" | "Double painite hotspot…" |
+| `[sarcastic] Beautiful landing…` | "**Sarcastic** beautiful landing…" | "Beautiful landing…" |
+| `[laughs] The entire bounty…` | "**Laughs,** the entire bounty…" | "The entire bounty…" |
+| `[shouting] Heat sink, now!` | "**Shouting** heat sink now…" | "Heat sink, now!" |
+
+**This is what makes the strip mandatory rather than tidy.** A tag that reaches any provider but v3
+is a word the Commander hears in the middle of a sentence, and four of the five providers are in
+that position. Kokoro is worse than the rest: its `Phonemiser` lists `[` and `]` as trimmable
+brackets, so it pronounces the contents as a word by construction.
+
+**v3 never spoke a tag aloud — including one that does not exist.** `[thargoid]` was silently
+ignored, and `[grumbles quietly]`, plausible but undocumented, produced *an actual grumble* — the
+transcript reads "Mmm. Cutting the drives." So on v3 an invented tag is performed or dropped, not
+leaked as text. That weakens the case for a strict whitelist and does not touch the case for the
+strip.
+
+### No content was ever lost, and here is what made it look like it was
+
+Every clip transcribes to the full sentence, every WAV's header agrees with its file size (46 of
+46), and a half-second energy envelope shows sound running the whole length of each file. What the
+tagged take does differently is quieter and emptier:
+
+| `Cutting the drives. It has not seen us.` | Peak | RMS | The gap between the two sentences |
+|---|---|---|---|
+| no tag | −2.1 dBFS | −20.6 dBFS | −53.8 dBFS — room tone |
+| `[whispers]` | −7.2 dBFS | −24.3 dBFS | **−81.0 dBFS — true digital silence, half a second** |
+
+So a whispered line is **5 dB down on peak** and puts a **half-second of absolute silence** inside
+itself where the plain reading has quiet room tone. Nothing is missing; it is quieter, and it stops
+dead in the middle. Worth knowing before a `[whispers]` is ever sent over a callout the Commander is
+meant to act on.
+
+## 8. Are the tags billed? Not settled, and it does not need to be
 
 `--only billing` reads the account's `character_count` before and after one tagged synthesis and
 one bare one. **Both reads came back 267,096 — the meter did not move for either call**, so
@@ -177,7 +221,7 @@ over-estimate, and an over-estimate of spend is the safe direction. The tags in 
 worth 19 characters against 39 of speech — roughly a third again on a short line, which is the
 figure to keep in mind rather than a per-tag price.
 
-## 8. Expressiveness — the earlier pair
+## 9. Expressiveness — the earlier pair
 
 `eleven_v3_conversational-tags-en.wav` against `eleven_flash_v2_5-tags-en.wav`, from section 2's
 grid — the same question as section 5 on one line, kept because it is the file the language grid
