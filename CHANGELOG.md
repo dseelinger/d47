@@ -187,6 +187,18 @@ simply blank, next to the Anaconda's, which was not.
 
 `tools/ship-art.ps1` now carries the table that turns one name into the other, and
 `TheShipArtIsNamedForItsHullTests` fails on a file named for anything that is not a hull.
+## 0.103.1 — 2026-09-04 — `release.ps1` works from a linked worktree
+
+Run from `.claude/worktrees/`, `release.ps1` failed at the merge: `main` is always checked out in
+the primary checkout, and git refuses to check it out a second time. That arrived after the
+commit, past every preflight the script has.
+
+The merge and push now run in the primary checkout when the script is run from a linked worktree
+— `git rev-parse --git-common-dir` finds it, and refs are shared, so nothing needs a second
+checkout of `main` at all. A preflight before the commit refuses if the primary checkout is not on
+`main` or is dirty: that may be another session's work in progress. The rollback on a refused push
+puts `main` back in the primary checkout the same way it always did; the worktree that ran the
+release never leaves its own branch. [#292](https://github.com/dseelinger/d47/issues/292)
 
 ## 0.103.0 — 2026-09-02 — The Transcript's file picker is drawn whole, a sold suit or weapon reaches the on-foot plan, a core you wrote can be written from the panel, body signals read the FSS as well as the surface scan, the Raw toggle stays off other tabs' roots, a hull you intend to buy is picked from a list, no prompt tells you to hold a button by its number, and the ship picker no longer repeats itself
 
