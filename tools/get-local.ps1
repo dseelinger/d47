@@ -210,7 +210,14 @@ if ($NoBuild) {
 else {
     # Named for what it is, off the newest tag, so About says which release this was cut from and
     # that it is not that release, and the title bar marks it as a local build.
-    $tag = (git -C $repo describe --tags --abbrev=0 2>$null)
+    #
+    # **`v*` only, and that is not belt and braces** (#289). This repository grew its first tag
+    # that is not a version — `ship-art-1`, which carries the hull pictures and no executable —
+    # and a bare `describe` takes the newest tag of any shape. It stamped a build `ship-art-1-local`
+    # and computed the badge's window from `ship-art-1..HEAD`, which is a version nothing can parse
+    # and a list of issues from the wrong range. `release.ps1` and `prerelease.ps1` already
+    # filtered; this was the one that did not.
+    $tag = (git -C $repo describe --tags --abbrev=0 --match 'v*' 2>$null)
     $version = if ($LASTEXITCODE -eq 0 -and $tag) { "$($tag.TrimStart('v'))-local" } else { '0.1.0-local' }
 
     # What the badge will list, over the same window the version is named for so the two cannot
