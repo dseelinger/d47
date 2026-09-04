@@ -145,7 +145,15 @@ public sealed class SpeechPipeline : IAsyncDisposable
     /// <summary>Whether the voice has already been written down for this utterance.</summary>
     private int _recorded;
 
-    private sealed record Spoken(string Text, AudioClip Clip);
+    /// <param name="Text">
+    /// The written form: no delivery direction in it, ever. What the caption, the transcript and
+    /// the panel are built from.
+    /// </param>
+    /// <param name="Directed">
+    /// The same words with the direction still in place, where any was written and the provider
+    /// performs it. The log's copy, and the only surface a tag survives to (#291).
+    /// </param>
+    private sealed record Spoken(string Text, string Directed, AudioClip Clip);
 
     public SpeechPipeline(
         AudioArbiter arbiter,
@@ -346,19 +354,19 @@ public sealed class SpeechPipeline : IAsyncDisposable
         var directed = AudioTags.For(plain, _tts.ReadsAudioTags);
 
         _rendered.Writer.TryWrite(
-            SynthesizeAsync(written, SpokenUnits.Rewrite(directed), AudioTags.In(directed)));
+            SynthesizeAsync(written, SpokenUnits.Rewrite(directed), directed));
     }
 
-    /// <param name="asked">
-    /// The delivery direction that went out with this unit, for the log. <b>Asked for, never
-    /// performed</b>: at d47's sentence lengths a tag is a probability and ElevenLabs' own word is
-    /// "inconsistent", so the one record that settles a complaint must not claim a delivery the
-    /// service never promised (#291).
+    /// <param name="directed">
+    /// The sentence with its delivery direction still in it, for the log. <b>What was asked for,
+    /// never what was performed</b>: at d47's sentence lengths a tag is a probability and
+    /// ElevenLabs' own word is "inconsistent", so the one record that settles a complaint must not
+    /// claim a delivery the service never promised (#291).
     /// </param>
     private async Task<Spoken?> SynthesizeAsync(
         string sentence,
         string spoken,
-        IReadOnlyList<string> asked)
+        string directed)
     {
         try
         {
@@ -369,10 +377,9 @@ public sealed class SpeechPipeline : IAsyncDisposable
                 .ConfigureAwait(false);
 
             Record();
-            Directed(asked);
             Note(sentence, spoken, started.Elapsed);
 
-            return new Spoken(sentence, _colour is null ? clip : _colour(clip));
+            return new Spoken(sentence, directed, _colour is null ? clip : _colour(clip));
         }
         catch (OperationCanceledException)
         {
@@ -391,7 +398,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
 
             VoiceRejected?.Invoke(refused);
 
-            return await SpeakWithoutAVoiceAsync(sentence, spoken, asked).ConfigureAwait(false);
+            return await SpeakWithoutAVoiceAsync(sentence, spoken, directed).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -529,7 +536,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
     private async Task<Spoken?> SpeakWithoutAVoiceAsync(
         string sentence,
         string spoken,
-        IReadOnlyList<string> asked)
+        string directed)
     {
         try
         {
@@ -540,10 +547,9 @@ public sealed class SpeechPipeline : IAsyncDisposable
                 .ConfigureAwait(false);
 
             Record();
-            Directed(asked);
             Note(sentence, spoken, started.Elapsed);
 
-            return new Spoken(sentence, _colour is null ? clip : _colour(clip));
+            return new Spoken(sentence, directed, _colour is null ? clip : _colour(clip));
         }
         catch (OperationCanceledException)
         {
@@ -600,7 +606,10 @@ public sealed class SpeechPipeline : IAsyncDisposable
                 // Accumulated here rather than where the text arrived, because this is the point
                 // a sentence is actually going to be heard. A sentence that was abandoned or
                 // failed to render never reaches this line and so is never recorded as said.
-                said.Append(said.Length == 0 ? string.Empty : " ").Append(spoken.Text);
+                // The directed form, so the log shows the delivery in the place it was asked for
+                // rather than as a list beside the sentence. Where the tag sat is half of what it
+                // meant, and a separate line loses it (#291).
+                said.Append(said.Length == 0 ? string.Empty : " ").Append(spoken.Directed);
             }
         }
         catch (OperationCanceledException)
@@ -630,6 +639,13 @@ public sealed class SpeechPipeline : IAsyncDisposable
     /// written.
     /// </para>
     /// <para>
+    /// <b>With its delivery direction still in it</b>, which is the one surface a tag survives to
+    /// (#291, the maintainer's ruling of 2026-09-04). Inline rather than listed beside the
+    /// sentence, because where a tag sat is half of what it meant. It records what was
+    /// <em>asked for</em> and never what was performed: at d47's sentence lengths a tag is a
+    /// probability, and this is the line a delivery complaint gets read against.
+    /// </para>
+    /// <para>
     /// <b>Information rather than Debug, deliberately.</b> A released build's log is the first
     /// thing read on a bug report, and "what did it say" is the first question asked of one. It
     /// is also the reason to be plain about what this writes down: a re-voiced in-game message
@@ -648,33 +664,6 @@ public sealed class SpeechPipeline : IAsyncDisposable
             "{Who} said: {Said}",
             _speaker ?? "D47",
             said.ToString());
-    }
-
-    /// <summary>
-    /// The delivery direction that went out with a unit — the only surface where a tag survives
-    /// (the maintainer's ruling, 2026-09-04: the log, and not the transcript or the conversation).
-    /// <para>
-    /// <b>"Was asked for", never "performed".</b> ElevenLabs says short prompts make tags
-    /// inconsistent, and d47's median sentence is 34 characters, so a tag that went out may simply
-    /// not have landed. This line is what a latency or a delivery complaint is read against, and a
-    /// record claiming a performance nobody heard is worse than no record at all (#291).
-    /// </para>
-    /// <para>
-    /// Silent when there was none, which is nearly every line — so this costs a reader nothing
-    /// until it has something to say.
-    /// </para>
-    /// </summary>
-    private void Directed(IReadOnlyList<string> asked)
-    {
-        if (asked.Count == 0)
-        {
-            return;
-        }
-
-        _logger.LogInformation(
-            "{Who} was asked to sound {Direction}",
-            _speaker ?? "D47",
-            string.Join(", ", asked));
     }
 
     public async ValueTask DisposeAsync()
