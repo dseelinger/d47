@@ -473,6 +473,39 @@ cores are not re-picked from scratch.
 A settings file written before Directive 47 recorded whose voices were whose has nothing to file
 them under, so those are dropped rather than filed under a guess.
 
+#### ElevenLabs model {#elevenlabs-model}
+
+Two, and they are a real choice rather than a newer and an older.
+
+**v3 Conversational** is the default. It performs *delivery direction*: where a line calls for it,
+Directive 47 can ask for a sigh, an alarmed reading or a dry one, and the voice acts on it instead
+of saying the word. It takes about two seconds to produce a line.
+
+**Flash 2.5** takes about a third of a second, and is what to pick if that second and a half
+matters to you — in a fight it might. It cannot perform direction, so Directive 47 sends it none:
+handed `[sighs]`, Flash reads the word "sighs" out loud, which is why nothing is ever sent one.
+
+Both cost the same, $0.05 per thousand characters, so the choice is speed against expression and
+nothing else.
+
+Two things follow from picking v3, and both are visible:
+
+- **The speaking rate row disappears**, because v3 has no speaking rate. It is not missing at their
+  end — the field is accepted, and every value from `0.5` to `2.0` comes back with the same audio.
+  Rather than offer a control that appears to work, Directive 47 offers none, exactly as it does for
+  Cartesia.
+- **Directive 47 speaks in slightly longer pieces.** Direction needs room to land — a few words on
+  their own are too short for it to take reliably — so sentences after the first are sent together
+  rather than one at a time. The first sentence is never delayed, so speech still starts as soon as
+  it always did.
+
+Direction never appears on screen. It is an instruction to the voice, so it is stripped from
+captions, from the transcript and from the conversation; the log records what was *asked for*, which
+is not a promise it was heard — on a short line the direction sometimes does not take.
+
+A message from another Commander never carries direction either, whatever it contains. Square
+brackets in someone else's message are read as text, not as a way to decide how Directive 47 sounds.
+
 #### Speaking rate {#rate}
 
 `1.0` is the voice's natural pace; `1.2` is a fifth faster.

@@ -56,6 +56,22 @@ public sealed class SpeechPipeline : IAsyncDisposable
     private readonly Channel<Task<Spoken?>> _rendered = Channel.CreateUnbounded<Task<Spoken?>>();
 
     /// <summary>
+    /// Closed sentences waiting for the rest of their group, for a provider that asked to be
+    /// handed more than one at a time (<see cref="ITtsProvider.GroupsSentencesUpTo"/>). Always
+    /// empty for a provider that did not, which is all but ElevenLabs v3.
+    /// </summary>
+    private readonly List<string> _gathering = [];
+
+    /// <summary>How long <see cref="_gathering"/> would be once joined.</summary>
+    private int _gathered;
+
+    /// <summary>
+    /// Whether a group has gone for rendering yet. The first one leaves early and on its own
+    /// terms; everything after it waits to be filled.
+    /// </summary>
+    private bool _spoke;
+
+    /// <summary>
     /// Which channel the rendered sentences enter the arbiter on. Speech for a turn; Alert for
     /// a Phase 8 danger callout, which has to outrank whatever is being said rather than queue
     /// behind it — an alert that waits for the current sentence to finish is not an alert.
@@ -185,13 +201,79 @@ public sealed class SpeechPipeline : IAsyncDisposable
     /// <summary>How many sentences failed to render. Zero on a healthy turn.</summary>
     public int Failures => Volatile.Read(ref _failures);
 
-    /// <summary>Feeds one model delta. Sentences that close as a result start rendering now.</summary>
+    /// <summary>
+    /// Feeds one model delta. Sentences that close as a result start rendering now — or join the
+    /// group being gathered, for a provider that asked for more than one at a time.
+    /// </summary>
     public void Push(string delta)
     {
         foreach (var sentence in _splitter.Push(delta))
         {
-            Render(sentence);
+            Group(sentence);
         }
+
+        // <b>The first group of a turn goes with whatever has arrived, however little.</b> That is
+        // the Phase 5 latency win and it is not negotiable: waiting for a group to fill would put a
+        // whole group's worth of streaming in front of the first sound. So grouping costs nothing
+        // at the front of a reply and applies to all of it after that.
+        //
+        // Whatever has arrived is usually one sentence and is sometimes the lot: a caller that
+        // pushes its whole text in one go — the keyword router, an announcement — has no first
+        // boundary to wait for and gets a properly gathered group from the start.
+        if (!_spoke)
+        {
+            Gathered();
+        }
+    }
+
+    /// <summary>
+    /// One closed sentence, either rendered on its own or added to the group being gathered.
+    /// <para>
+    /// <b>Nothing here ever waits for text that has not arrived.</b> A group closes when the next
+    /// sentence would overflow it, or when the turn ends, and never on a clock — so a model that
+    /// stalls mid-reply produces the gap it always did rather than a new one. It can afford to be
+    /// that simple because text arrives far faster than speech leaves: by the time the first
+    /// sentence has been spoken, the rest of an ordinary reply is already here.
+    /// </para>
+    /// </summary>
+    private void Group(string sentence)
+    {
+        if (_tts.GroupsSentencesUpTo is var budget && budget <= 0)
+        {
+            Render(sentence);
+            return;
+        }
+
+        // A sentence that will not fit closes the group in front of it rather than being cut, and
+        // one longer than the whole budget is its own group. The splitter's soft cap is what stops
+        // that being unbounded.
+        if (_gathering.Count > 0 && _gathered + 1 + sentence.Length > budget)
+        {
+            Gathered();
+        }
+
+        _gathered += (_gathering.Count == 0 ? 0 : 1) + sentence.Length;
+        _gathering.Add(sentence);
+
+        if (_gathered >= budget)
+        {
+            Gathered();
+        }
+    }
+
+    /// <summary>Sends the gathered group to be rendered, if there is one.</summary>
+    private void Gathered()
+    {
+        if (_gathering.Count == 0)
+        {
+            return;
+        }
+
+        Render(string.Join(' ', _gathering));
+
+        _gathering.Clear();
+        _gathered = 0;
+        _spoke = true;
     }
 
     /// <summary>
@@ -202,8 +284,10 @@ public sealed class SpeechPipeline : IAsyncDisposable
     {
         if (_splitter.Flush() is { } tail)
         {
-            Render(tail);
+            Group(tail);
         }
+
+        Gathered();
 
         _rendered.Writer.TryComplete();
         await _drain.ConfigureAwait(false);
@@ -247,15 +331,34 @@ public sealed class SpeechPipeline : IAsyncDisposable
         // PlainSpeech; the conversation history keeps what the model actually wrote.
         var plain = PlainSpeech.Strip(sentence);
 
-        if (plain.Length == 0)
+        // Delivery direction parts company from the words here, and this is the only place it
+        // could: the written form goes to the caption and the panel, the spoken form goes on the
+        // wire, and only one of the two may carry [sighs]. A provider that does not perform a tag
+        // says it out loud — measured on four of the five — so `spoken` keeps the brackets only
+        // where they will be acted on, and `written` never keeps them at all (#291).
+        var written = AudioTags.Strip(plain);
+
+        if (written.Length == 0)
         {
             return;
         }
 
-        _rendered.Writer.TryWrite(SynthesizeAsync(plain, SpokenUnits.Rewrite(plain)));
+        var directed = AudioTags.For(plain, _tts.ReadsAudioTags);
+
+        _rendered.Writer.TryWrite(
+            SynthesizeAsync(written, SpokenUnits.Rewrite(directed), AudioTags.In(directed)));
     }
 
-    private async Task<Spoken?> SynthesizeAsync(string sentence, string spoken)
+    /// <param name="asked">
+    /// The delivery direction that went out with this unit, for the log. <b>Asked for, never
+    /// performed</b>: at d47's sentence lengths a tag is a probability and ElevenLabs' own word is
+    /// "inconsistent", so the one record that settles a complaint must not claim a delivery the
+    /// service never promised (#291).
+    /// </param>
+    private async Task<Spoken?> SynthesizeAsync(
+        string sentence,
+        string spoken,
+        IReadOnlyList<string> asked)
     {
         try
         {
@@ -266,6 +369,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
                 .ConfigureAwait(false);
 
             Record();
+            Directed(asked);
             Note(sentence, spoken, started.Elapsed);
 
             return new Spoken(sentence, _colour is null ? clip : _colour(clip));
@@ -287,7 +391,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
 
             VoiceRejected?.Invoke(refused);
 
-            return await SpeakWithoutAVoiceAsync(sentence, spoken).ConfigureAwait(false);
+            return await SpeakWithoutAVoiceAsync(sentence, spoken, asked).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -422,7 +526,10 @@ public sealed class SpeechPipeline : IAsyncDisposable
     /// Either way the failure stops being permanent.
     /// </para>
     /// </summary>
-    private async Task<Spoken?> SpeakWithoutAVoiceAsync(string sentence, string spoken)
+    private async Task<Spoken?> SpeakWithoutAVoiceAsync(
+        string sentence,
+        string spoken,
+        IReadOnlyList<string> asked)
     {
         try
         {
@@ -433,6 +540,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
                 .ConfigureAwait(false);
 
             Record();
+            Directed(asked);
             Note(sentence, spoken, started.Elapsed);
 
             return new Spoken(sentence, _colour is null ? clip : _colour(clip));
@@ -540,6 +648,33 @@ public sealed class SpeechPipeline : IAsyncDisposable
             "{Who} said: {Said}",
             _speaker ?? "D47",
             said.ToString());
+    }
+
+    /// <summary>
+    /// The delivery direction that went out with a unit — the only surface where a tag survives
+    /// (the maintainer's ruling, 2026-09-04: the log, and not the transcript or the conversation).
+    /// <para>
+    /// <b>"Was asked for", never "performed".</b> ElevenLabs says short prompts make tags
+    /// inconsistent, and d47's median sentence is 34 characters, so a tag that went out may simply
+    /// not have landed. This line is what a latency or a delivery complaint is read against, and a
+    /// record claiming a performance nobody heard is worse than no record at all (#291).
+    /// </para>
+    /// <para>
+    /// Silent when there was none, which is nearly every line — so this costs a reader nothing
+    /// until it has something to say.
+    /// </para>
+    /// </summary>
+    private void Directed(IReadOnlyList<string> asked)
+    {
+        if (asked.Count == 0)
+        {
+            return;
+        }
+
+        _logger.LogInformation(
+            "{Who} was asked to sound {Direction}",
+            _speaker ?? "D47",
+            string.Join(", ", asked));
     }
 
     public async ValueTask DisposeAsync()

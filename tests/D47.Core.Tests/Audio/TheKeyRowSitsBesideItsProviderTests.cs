@@ -57,6 +57,12 @@ public class TheKeyRowSitsBesideItsProviderTests
         var needKeys = TtsProviderCatalog.All.Count(provider => provider.NeedsKey);
 
         Assert.Equal(SpeechCapability.VoiceKey, keys[needKeys + 2]);
-        Assert.Equal(SpeechCapability.RateKey, keys[needKeys + 3]);
+
+        // The ElevenLabs model joined the pair on 2026-09-04 (#291), between them rather than
+        // beside its provider's key: a key is setup and this is a choice about how d47 sounds,
+        // which is what the voice and the rate are. Above the rate because it decides whether
+        // there is a rate at all — v3 Conversational has none.
+        Assert.Equal(SpeechCapability.ElevenLabsModelKey, keys[needKeys + 3]);
+        Assert.Equal(SpeechCapability.RateKey, keys[needKeys + 4]);
     }
 }

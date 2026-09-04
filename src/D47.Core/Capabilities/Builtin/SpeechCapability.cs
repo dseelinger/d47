@@ -27,6 +27,13 @@ public static class SpeechCapability
     public const string LocalVoiceBuildKey = "speech.localVoiceBuild";
     public const string VoiceKey = "speech.voice";
     public const string RateKey = "speech.rate";
+
+    /// <summary>
+    /// Which ElevenLabs model speaks (#291). Named for the provider it belongs to, the way the key
+    /// rows are, so a second provider that ever grows a choice gets its own row rather than
+    /// inheriting the meaning of this one.
+    /// </summary>
+    public const string ElevenLabsModelKey = "speech.elevenlabs.model";
     public const string OutputDeviceKey = "speech.outputDevice";
     public const string CuesKey = "speech.cues";
     public const string BedEnabledKey = "speech.thinkingBed";
@@ -508,8 +515,12 @@ public static class SpeechCapability
                 // then ignores it, so a row here would be a control that appears to work — the
                 // exact failure docs/capabilities/listening.md names (Phase 60). The
                 // resolver refuses it too; this half only keeps it off the screen.
-                AppliesWhen = s => TtsProviderCatalog.Selected(s.Speech.Provider)
-                    is { Speaks: true, RateCanBeSet: true },
+                //
+                // ElevenLabs is the same fault arriving per model rather than per provider: v3
+                // accepts 0.5 through 2.0 and returns the same audio throughout, while Flash
+                // honours 0.7 to 1.2 exactly. So the question cannot be asked of the descriptor
+                // alone any more (#291).
+                AppliesWhen = RateCanBeSet,
                 DocsAnchor = "rate",
                 Binding = new SettingBinding
                 {
@@ -1084,6 +1095,46 @@ public static class SpeechCapability
                     .Any(id => string.Equals(id, provider.Id, StringComparison.OrdinalIgnoreCase)),
             });
 
+        // Between the voice and the rate, not among the keys. The key block above is the
+        // arrangement TheKeyRowSitsBesideItsProviderTests pins — each key beside the provider that
+        // needs it — and a key is setup, where this is a choice about how d47 sounds, which is
+        // what voice and rate are. Above the rate specifically, because the model is what decides
+        // whether there is a rate row at all: a Commander who switches to v3 and watches the rate
+        // disappear should have been looking at the control that did it (#291).
+        rows.Insert(
+            rows.FindIndex(row => row.Key == VoiceKey) + 1,
+            new SettingRow
+            {
+                Key = ElevenLabsModelKey,
+                Label = "ElevenLabs model",
+                Help =
+                    "v3 Conversational performs delivery direction such as a sigh or an alarmed "
+                    + "line, and takes about two seconds a line. Flash 2.5 takes about a third of "
+                    + "a second and reads direction out loud instead, so D47 does not send it any. "
+                    + "Flash is also the only one of the two with a speaking rate.",
+                Kind = SettingKind.Choice,
+                Choices = [.. ElevenLabsModels.All.Select(model => model.Id)],
+                ChoiceLabel = id => ElevenLabsModels.All.FirstOrDefault(model => model.Id == id).Label ?? id,
+                DocsAnchor = "elevenlabs-model",
+
+                // On screen while any slot speaks through ElevenLabs, the same rule as its key —
+                // the carrier can be on ElevenLabs while the ship is on Edge, and the model is
+                // what that carrier will be heard in.
+                AppliesWhen = s => VoiceGroups.Selected(s.Speech).Values
+                    .Any(id => string.Equals(
+                        id, TtsProviderCatalog.ElevenLabsId, StringComparison.OrdinalIgnoreCase)),
+                Binding = new SettingBinding
+                {
+                    // Resolved on read rather than echoed, so a file naming a model d47 no longer
+                    // offers shows the one that will actually speak.
+                    Read = s => ElevenLabsModels.Named(s.Speech.ElevenLabsModel),
+                    Write = (s, v) => s with
+                    {
+                        Speech = s.Speech with { ElevenLabsModel = ElevenLabsModels.Named(v) },
+                    },
+                },
+            });
+
         return rows;
     }
 
@@ -1237,6 +1288,31 @@ public static class SpeechCapability
     /// doing the speaking.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// Whether telling the thing that will speak to go faster or slower would change anything.
+    /// <para>
+    /// <b>Two questions, not one, since #291.</b> Most providers answer for themselves —
+    /// <see cref="TtsProviderInfo.RateCanBeSet"/> is false for Cartesia, which validates a speed
+    /// precisely and then ignores it. ElevenLabs answers <em>per model</em>: Flash 2.5 honours
+    /// 0.7 to 1.2 exactly and v3 Conversational accepts 0.5 through 2.0 and acts on none of it.
+    /// Same failure, one level down.
+    /// </para>
+    /// <para>
+    /// One method because it is enforced in two places — the row's <c>AppliesWhen</c>, which keeps
+    /// it off the screen, and <see cref="RateFor"/>, which refuses it however a settings file was
+    /// edited. That is the discipline <see cref="TtsProviderInfo.RateCanBeSet"/> sets out and the
+    /// reason it is worth restating here: a rule living only in a dropdown is one a text editor
+    /// walks straight past.
+    /// </para>
+    /// </summary>
+    public static bool RateCanBeSet(D47Settings settings) =>
+        RateCanBeSet(settings, TtsProviderCatalog.Selected(settings.Speech.Provider));
+
+    private static bool RateCanBeSet(D47Settings settings, TtsProviderInfo provider) =>
+        provider is { Speaks: true, RateCanBeSet: true }
+        && (provider.Id != TtsProviderCatalog.ElevenLabsId
+            || ElevenLabsModels.ReadsRate(settings.Speech.ElevenLabsModel));
+
     public static double RateFor(D47Settings settings, string? providerId)
     {
         var provider = TtsProviderCatalog.Selected(providerId);
@@ -1245,7 +1321,7 @@ public static class SpeechCapability
         // says — the half of the rule the picker cannot enforce, because `settings.json` is a file
         // a Commander reads and edits (Phase 60). Natural pace rather than the stored
         // number, so the value the app uses and the value the provider honours are the same one.
-        if (!provider.RateCanBeSet)
+        if (!RateCanBeSet(settings, provider))
         {
             return 1.0;
         }

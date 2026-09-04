@@ -22,6 +22,18 @@ public sealed class FakeTtsProvider : ITtsProvider
     /// <summary>When set, synthesis waits for <see cref="Release"/> before returning.</summary>
     public bool Gated { get; init; }
 
+    /// <summary>
+    /// Stands in for a provider that performs bracketed delivery direction rather than reading it
+    /// aloud — only ElevenLabs v3 does (#291).
+    /// </summary>
+    public bool ReadsAudioTags { get; init; }
+
+    /// <summary>
+    /// Stands in for a provider that would rather be handed several sentences at once. Zero, as it
+    /// is for every real provider but one, unless a test is about the grouping.
+    /// </summary>
+    public int GroupsSentencesUpTo { get; init; }
+
     /// <summary>Sentences containing this throw, standing in for a provider that is down.</summary>
     public string? FailOn { get; init; }
 

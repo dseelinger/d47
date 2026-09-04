@@ -222,11 +222,69 @@ public interface ITtsProvider
     /// One sentence, rendered to <see cref="AudioFormat.Standard"/>. Sentence-sized rather
     /// than reply-sized on purpose: the whole latency win is that this is called per sentence
     /// while the previous one is still playing.
+    /// <para>
+    /// <b>Or a few sentences, for a provider that asked</b> — see
+    /// <see cref="GroupsSentencesUpTo"/>, which is zero for all but one. Never the whole reply
+    /// either way: the first one always leaves as soon as it closes.
+    /// </para>
     /// </summary>
     Task<AudioClip> SynthesizeAsync(
         string text,
         VoiceSelection voice,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// How many characters this provider would rather be handed at once, or zero for one sentence
+    /// at a time.
+    /// <para>
+    /// <b>Zero everywhere except ElevenLabs v3</b>, and it is a property of the model rather than
+    /// of the account, so the ElevenLabs client answers this differently depending on which model
+    /// is selected. A service plans a sentence's intonation as well from one call as from three,
+    /// and sentence-at-a-time is what keeps a turn's tail droppable and its captions per sentence.
+    /// </para>
+    /// <para>
+    /// <b>v3 is the exception because a tag needs room to land.</b> ElevenLabs' own guidance is
+    /// that <i>"very short prompts are more likely to cause inconsistent outputs"</i>, with over
+    /// 250 characters encouraged — and d47's median sentence is 34 characters, measured over 1,520
+    /// real replies. Left alone, the app sends exactly the shape the model handles worst.
+    /// </para>
+    /// <para>
+    /// <b>It costs nothing a Commander hears, which is why it is worth doing.</b> The next group
+    /// renders while the previous clip plays, and a v3 request returns three to four times more
+    /// audio than it costs in waiting — 3.4× for one sentence, 4.0× at the cap — so once one clip
+    /// ahead it stays ahead. The first group is what protects the front of a reply: it leaves with
+    /// whatever has arrived, however little, so the Phase 5 latency win is untouched
+    /// (docs/spikes/elevenlabs-v3-conversational.md §11).
+    /// </para>
+    /// <para>
+    /// Characters rather than tokens because this layer has no tokeniser and no reason to grow
+    /// one. It is a target and not a limit: saying a number here promises to cope with whatever
+    /// arrives, and <see cref="SentenceSplitter"/>'s soft cap is what keeps that bounded.
+    /// </para>
+    /// <para>
+    /// Accepted with it, 2026-09-04: a larger unit wastes more spend when the Commander asks for
+    /// silence mid-reply, and makes a coarser caption.
+    /// </para>
+    /// </summary>
+    int GroupsSentencesUpTo => 0;
+
+    /// <summary>
+    /// Whether this provider performs bracketed delivery direction rather than reading it aloud
+    /// (<a href="https://github.com/dseelinger/d47/issues/291">#291</a>).
+    /// <para>
+    /// False for all but ElevenLabs v3, and false is the safe answer: a provider that does not
+    /// perform a tag <em>says</em> it. Measured — Flash 2.5 transcribed back as <i>"Whispers,
+    /// cutting the drives"</i> on every tag it was sent, and Kokoro pronounces the contents by
+    /// construction. See <see cref="AudioTags"/>, which is where the removal happens and where
+    /// this is read.
+    /// </para>
+    /// <para>
+    /// Like <see cref="GroupsSentencesUpTo"/> this is a property of the model rather than of the
+    /// provider, so the ElevenLabs client answers it from the selected model. The two travel
+    /// together for a reason: direction that lands needs room, and neither is much use alone.
+    /// </para>
+    /// </summary>
+    bool ReadsAudioTags => false;
 
     /// <summary>
     /// What this provider will actually put on the wire for <paramref name="text"/>, which for

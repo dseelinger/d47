@@ -221,6 +221,11 @@ internal static class Program
             await UnknownTagsAsync(voice, outputDirectory).ConfigureAwait(false);
         }
 
+        if (only.Contains("fields"))
+        {
+            await VoiceFieldsAsync(voice).ConfigureAwait(false);
+        }
+
         if (only.Contains("headroom"))
         {
             await HeadroomAsync(voice).ConfigureAwait(false);
@@ -592,6 +597,58 @@ internal static class Program
 
     private static readonly Regex TagPattern =
         new(@"\[[a-z ]+\]", RegexOptions.IgnoreCase);
+
+    // ---- 15. does a voice record say which models suit it ------------------------------------
+
+    /// <summary>
+    /// Whether the account's own voice listing carries anything d47 could read to say "this voice
+    /// suits v3". ElevenLabs' guidance is that the voice matters more than any other parameter and
+    /// that <i>"some tags work well with certain voices while others may not"</i> — which is only
+    /// actionable if the fact is on the wire rather than in a web page.
+    /// </summary>
+    private static async Task VoiceFieldsAsync(string voice)
+    {
+        Section("15. What a voice record says about the models it suits");
+
+        var (status, body) = await GetAsync($"/voices/{Uri.EscapeDataString(voice)}").ConfigureAwait(false);
+
+        if (status != 200 || body is null)
+        {
+            Console.WriteLine($"  GET /voices/{voice} answered {status}");
+            return;
+        }
+
+        using var document = JsonDocument.Parse(body);
+
+        Console.WriteLine("  every field on the record:");
+
+        foreach (var field in document.RootElement.EnumerateObject())
+        {
+            var shape = field.Value.ValueKind switch
+            {
+                JsonValueKind.Array => $"[{field.Value.GetArrayLength()}]",
+                JsonValueKind.Object => "{...}",
+                JsonValueKind.String => $"\"{Head(field.Value.GetString())}\"",
+                _ => field.Value.ToString(),
+            };
+
+            Console.WriteLine($"    {field.Name,-34} {shape}");
+        }
+
+        // The ones that would answer the question, printed whole wherever they exist.
+        foreach (var name in new[]
+                 {
+                     "high_quality_base_model_ids", "verified_languages", "category", "labels",
+                     "is_legacy", "is_mixed", "safety_control", "voice_verification",
+                 })
+        {
+            if (document.RootElement.TryGetProperty(name, out var found))
+            {
+                Console.WriteLine();
+                Console.WriteLine($"  {name}: {found}");
+            }
+        }
+    }
 
     // ---- 14. is there room to group after the first sentence --------------------------------
 
