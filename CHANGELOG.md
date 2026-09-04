@@ -187,6 +187,7 @@ simply blank, next to the Anaconda's, which was not.
 
 `tools/ship-art.ps1` now carries the table that turns one name into the other, and
 `TheShipArtIsNamedForItsHullTests` fails on a file named for anything that is not a hull.
+
 ## 0.103.1 — 2026-09-04 — `release.ps1` works from a linked worktree
 
 Run from `.claude/worktrees/`, `release.ps1` failed at the merge: `main` is always checked out in
