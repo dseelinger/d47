@@ -241,21 +241,16 @@ internal static class ShipArtStore
         }
     }
 
-    /// <summary>The same refusal <see cref="ShipArt"/> makes, for the same reason: this is a path.</summary>
-    private static string? Symbol(string? hull)
-    {
-        if (hull is not { Length: > 0 })
-        {
-            return null;
-        }
-
-        var symbol = hull.Trim().ToLowerInvariant();
-
-        return symbol.Length == 0
-               || !symbol.All(c => char.IsAsciiLetterOrDigit(c) || c == '_' || c == '-')
-            ? null
-            : symbol;
-    }
+    /// <summary>
+    /// The same answer <see cref="ShipArt"/> gives, by asking it.
+    /// <para>
+    /// <b>One copy, because two drifted.</b> This had a refusal of its own that matched the one in
+    /// <c>ShipArt</c> the day it was written. When that one learned that a stored ship arrives
+    /// spelled <i>Type-8 Transporter</i>, this one did not, and a fetch would have gone looking
+    /// for a file the reader would never have asked for.
+    /// </para>
+    /// </summary>
+    private static string? Symbol(string? hull) => ShipArt.Symbol(hull);
 
     private static HttpClient CreateClient()
     {

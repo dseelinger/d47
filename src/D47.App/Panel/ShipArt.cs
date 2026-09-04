@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Avalonia.Media.Imaging;
+using D47.Core.Knowledge;
 
 namespace D47.App.Panel;
 
@@ -30,11 +31,12 @@ namespace D47.App.Panel;
 /// or fetched when a fleet turns out to need it — and this class never has to know which.
 /// </para>
 /// <para>
-/// <b>Two folders, and <c>data\ships\</c> wins.</b> That is what keeps dropping a file in working
-/// after the card still started shipping: a hull present in both reads from the Commander's
-/// folder, and the build's <c>ships\</c> is the floor underneath. It is also why they are separate
-/// folders rather than one seeded at first run — an update replaces what the build owns and never
-/// touches what the Commander owns, so a corrected drawing actually arrives.
+/// <b>Two folders, each asked first for what it owns.</b> The build owns the card still — it ships
+/// one per hull and replaces it on every update — so <c>ships\</c> is asked for that first. The
+/// Commander owns the large art, which is fetched into theirs, so <c>data\ships\</c> is asked for
+/// that first. Both folders are searched either way, so a hull the build has no still for still
+/// draws from one dropped in by hand. See <see cref="Find"/> for the relic that made the rule
+/// worth writing down.
 /// </para>
 /// <para>
 /// <b>Decoded rather than drawn, which is the one place this departs from the avatar.</b> That
@@ -116,8 +118,9 @@ internal static class ShipArt
     }
 
     /// <summary>
-    /// Where art that came with the build is read from — <c>AppPaths.ShippedShips</c>. Searched
-    /// after <see cref="Folder"/>, so a file dropped in by hand still wins.
+    /// Where art that came with the build is read from — <c>AppPaths.ShippedShips</c>. Asked first
+    /// for the card still, which the build owns, and second for everything else. See
+    /// <see cref="Find"/>.
     /// </summary>
     internal static string? Shipped
     {
@@ -130,9 +133,8 @@ internal static class ShipArt
 
     /// <summary>The resting drawing for a hull, or null when there is not one.</summary>
     /// <param name="hull">
-    /// The hull symbol as the journal writes it. Normalised the way
-    /// <c>EliteSpecifications.HullName</c> normalises it, so <c>CobraMkV</c> and <c>cobramkv</c>
-    /// reach the same file.
+    /// The hull, spelled any way Elite spells it: <c>CobraMkV</c>, <c>cobramkv</c> or
+    /// <c>Cobra Mk V</c> all reach the same file. See <see cref="Symbol"/>.
     /// </param>
     internal static Bitmap? For(string? hull)
     {
@@ -261,11 +263,31 @@ internal static class ShipArt
         }
     }
 
-    private static string? Symbol(string? hull)
+    /// <summary>
+    /// The file name for a hull, however the journal spelled it.
+    /// <para>
+    /// <b>Through <c>EliteSpecifications</c> first, and that is not politeness.</b> A stored ship
+    /// reaches here as <i>Type-8 Transporter</i> and a planned one as <c>type8</c>, because
+    /// <c>StoredShips</c> carries a localised spelling and <c>JournalJson.Named</c> prefers it.
+    /// Taking the string as given drew nine of a fleet of twelve and left the rest blank, with
+    /// nothing failing anywhere — the cards were simply empty.
+    /// </para>
+    /// <para>
+    /// <b>And a hull nothing knows still works.</b> The fallback is the string itself, sanitised,
+    /// so art dropped in for a ship Frontier shipped this morning draws before d47's own tables
+    /// have heard of it. That is the case the folder exists for.
+    /// </para>
+    /// </summary>
+    internal static string? Symbol(string? hull)
     {
         if (hull is not { Length: > 0 })
         {
             return null;
+        }
+
+        if (EliteSpecifications.HullSymbol(hull) is { Length: > 0 } known)
+        {
+            return known;
         }
 
         var symbol = hull.Trim().ToLowerInvariant();
@@ -278,10 +300,27 @@ internal static class ShipArt
             : symbol;
     }
 
-    /// <summary>The Commander's folder first, then the build's, or null when it is in neither.</summary>
+    /// <summary>
+    /// Where a file is, searching the folder that owns that kind of file first.
+    /// <para>
+    /// <b>Each folder is asked first for what it owns</b>, which is the rule that stops a relic
+    /// winning for ever. The build owns the card still: it ships one for every hull and replaces
+    /// it on every update, so a copy in <c>data\ships\</c> can only be older — and one was, on the
+    /// machine this was written on, where 0.103's hand-dropped 280x158 preview of the Corsair went
+    /// on being drawn beside forty-six 1280x720 renders. The Commander owns the large art, which
+    /// is fetched into their folder, so that is asked first for a <c>.4k.png</c> or a turntable.
+    /// </para>
+    /// <para>
+    /// Both folders are searched either way, so a hull the build has no still for still draws from
+    /// one dropped in by hand — which is the case the folder exists for.
+    /// </para>
+    /// </summary>
     private static string? Find(string file)
     {
-        foreach (var folder in new[] { _folder, _shipped })
+        var mine = file.EndsWith(".4k.png", StringComparison.Ordinal)
+                   || file.EndsWith(".spin.mp4", StringComparison.Ordinal);
+
+        foreach (var folder in mine ? new[] { _folder, _shipped } : [_shipped, _folder])
         {
             if (folder is not { Length: > 0 })
             {

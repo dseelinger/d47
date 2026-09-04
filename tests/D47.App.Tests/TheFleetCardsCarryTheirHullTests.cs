@@ -240,6 +240,47 @@ public class TheFleetCardsCarryTheirHullTests
     }
 
     /// <summary>
+    /// <b>The spelling that cost nine cards of twelve.</b> <c>StoredShips</c> carries
+    /// <c>ShipType_Localised</c> for most hulls and <c>JournalJson.Named</c> prefers it, so a
+    /// stored ship arrives as <i>Type-8 Transporter</i> where a planned one arrives as
+    /// <c>type8</c>. Both have to reach the same file, and the punctuation has to come out on the
+    /// way: Frontier writes <i>Python Mk II</i> where d47's own table says <c>Python MkII</c>.
+    /// </summary>
+    [AvaloniaFact]
+    public void AHullIsFoundBySpellingAsWellAsBySymbol()
+    {
+        Stocked("corsair.png", "python_nx.png", "type8.png", "panthermkii.png", "lakonminer.png");
+
+        Assert.NotNull(ShipArt.For("python_nx"));
+        Assert.NotNull(ShipArt.For("Python Mk II"));
+        Assert.NotNull(ShipArt.For("Python MkII"));
+        Assert.NotNull(ShipArt.For("Type-8 Transporter"));
+        Assert.NotNull(ShipArt.For("Panther Clipper Mk II"));
+        Assert.NotNull(ShipArt.For("Type-11 Prospector"));
+
+        // And a hull nothing knows still works from the string itself, which is what the drop-in
+        // folder is for: a ship Frontier shipped this morning draws before the tables hear of it.
+        Assert.Null(ShipArt.For("Some Ship Nobody Has"));
+    }
+
+    [AvaloniaFact]
+    public void AHullTheTablesHaveNeverHeardOfStillDrawsFromItsFile()
+    {
+        var folder = Stocked("corsair.png");
+
+        File.Copy(
+            Path.Combine(folder, "corsair.png"),
+            Path.Combine(folder, "newhull01_nx.png"),
+            overwrite: true);
+
+        ShipArt.Folder = folder;
+
+        // The fallback that keeps the folder worth having: no table anywhere knows this symbol,
+        // and the file is still found because it is a plain symbol and a plain file name.
+        Assert.NotNull(ShipArt.For("NewHull01_NX"));
+    }
+
+    /// <summary>
     /// A symbol reaches <c>ShipArt</c> from the journal and becomes part of a path, so anything
     /// that is not a plain symbol is refused rather than sanitised.
     /// </summary>
@@ -291,6 +332,13 @@ public class TheFleetCardsCarryTheirHullTests
             Path.Combine(paths.Ships, "corsair.spin.mp4"), ShipArt.SpinFile("Corsair"));
     }
 
+    /// <summary>Whether a ship's own page is drawing its hull, and at what size.</summary>
+    private static List<Image> Large(PanelView panel) =>
+        [.. panel.GetVisualDescendants()
+            .OfType<HullPicture>()
+            .SelectMany(picture => picture.GetVisualDescendants().OfType<Image>())
+            .Where(image => image.Source is Bitmap)];
+
     [AvaloniaFact]
     public void TheLargePictureIsDrawnOnTheShipsOwnPage()
     {
@@ -298,10 +346,17 @@ public class TheFleetCardsCarryTheirHullTests
 
         Open(panel, "Reaper");
 
-        var large = panel.GetVisualDescendants().OfType<HullPicture>().ToList();
+        Assert.Single(Large(panel));
 
-        Assert.NotEmpty(large);
-        Assert.Contains(large, picture => picture.IsVisible);
+        // The figures go with it, wherever it puts them: a page that drew the picture and dropped
+        // what the page is about would be a worse page than the one before this existed. The marks
+        // are drawn geometry rather than text, so any words in here are the page's own.
+        Assert.NotEmpty(
+            panel.GetVisualDescendants()
+                .OfType<HullPicture>()
+                .Single()
+                .GetVisualDescendants()
+                .OfType<TextBlock>());
     }
 
     [AvaloniaFact]
@@ -312,10 +367,49 @@ public class TheFleetCardsCarryTheirHullTests
         Open(panel, "Reaper");
 
         // Built either way, so a fetch that lands later can fill it in — but drawing nothing,
-        // which is what "the page as it is today" means.
-        Assert.All(
-            panel.GetVisualDescendants().OfType<HullPicture>(),
-            picture => Assert.False(picture.IsVisible));
+        // which is what "the page as it is today" means. The figures are still there.
+        Assert.Empty(Large(panel));
+        Assert.Contains(
+            panel.GetVisualDescendants().OfType<TextBlock>(),
+            block => (block.Text ?? string.Empty).Contains("Corsair", StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// The three marks, and that the first two change where the figures go
+    /// (the Commander's amendment, 2026-09-04).
+    /// </summary>
+    [AvaloniaFact]
+    public void ThePictureHasThreeSizesAndTheFiguresMoveWithIt()
+    {
+        var (panel, _) = Fleet(drawings: true, "corsair.png", "corsair.4k.png");
+
+        Open(panel, "Reaper");
+
+        var picture = panel.GetVisualDescendants().OfType<HullPicture>().Single();
+        var marks = picture.GetVisualDescendants().OfType<Button>().ToList();
+
+        Assert.Equal(3, marks.Count);
+
+        // Pressed rather than assumed, because the size is kept for the session: a test that
+        // opened by asserting the default would pass or fail on which test ran before it.
+        marks[0].RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        // Half the pane: two columns, the figures in one and the picture in the other.
+        Assert.Equal(2, picture.ColumnDefinitions.Count);
+
+        marks[1].RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        // The width of the pane: one column, the figures under it.
+        Assert.Empty(picture.ColumnDefinitions);
+        Assert.Equal(2, picture.RowDefinitions.Count);
+        Assert.Single(Large(panel));
+
+        marks[0].RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(2, picture.ColumnDefinitions.Count);
     }
 
     /// <summary>

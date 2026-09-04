@@ -43,6 +43,11 @@ internal static class HullTurntable
     private static VideoFrames? _video;
     private static WriteableBitmap? _frame;
     private static Bitmap? _resting;
+    private static Image? _waiting;
+    private static Bitmap? _waitingRest;
+    private static string? _awaited;
+    private static string? _awaitedHull;
+    private static bool _listening;
 
     /// <summary>
     /// Whether a hull can be turned at all: its turntable is on disk. Asked before a card is told
@@ -52,14 +57,27 @@ internal static class HullTurntable
 
     /// <summary>
     /// Plays one rotation on a card's drawing, and rests on <paramref name="resting"/> at the end.
-    /// Does nothing at all if the hull has no turntable yet, which is the ordinary case on a fresh
-    /// installation.
+    /// <para>
+    /// <b>Asks for the turntable if it is not here, and plays it when it lands.</b> The first
+    /// selection of a hull is exactly the one that has nothing on disk yet, so a version that only
+    /// played what was already there never played on a first click — which is the whole of what a
+    /// Commander sees the first time they open each ship. The fetch is a few seconds on a home
+    /// connection and the card is still on the page beside the ship it opened, so the rotation
+    /// starts late rather than not at all. A hull that never arrives simply never turns.
+    /// </para>
     /// </summary>
     internal static void Play(Image drawing, string? hull, Bitmap resting)
     {
         Stop();
 
-        if (ShipArt.SpinFile(hull) is not { } path || VideoFrames.Open(path) is not { } video)
+        if (ShipArt.SpinFile(hull) is not { } path)
+        {
+            Await(drawing, hull, resting);
+
+            return;
+        }
+
+        if (VideoFrames.Open(path) is not { } video)
         {
             return;
         }
@@ -81,6 +99,7 @@ internal static class HullTurntable
     internal static void Stop()
     {
         Ticker.Stop();
+        _awaited = null;
 
         if (_turning is not null && _resting is not null && _turning.GetVisualParent() is not null)
         {
@@ -94,6 +113,56 @@ internal static class HullTurntable
         _frame = null;
         _resting = null;
     }
+
+    /// <summary>
+    /// Waits for the fetch this selection started, and plays when it lands.
+    /// <para>
+    /// One waiting card at a time, cleared by the next selection, so a Commander clicking through
+    /// a fleet does not end up with six turntables arriving at once over whatever is on screen by
+    /// then. The check that the card is still in the tree is the same one <see cref="Advance"/>
+    /// makes and matters more here, because minutes can pass.
+    /// </para>
+    /// </summary>
+    private static void Await(Image drawing, string? hull, Bitmap resting)
+    {
+        if (ShipArt.Symbol(hull) is not { } wanted)
+        {
+            return;
+        }
+
+        _awaited = wanted;
+        _awaitedHull = hull;
+        _waiting = drawing;
+        _waitingRest = resting;
+
+        // Subscribed once for the life of the process rather than per selection. A handler per
+        // wait would need unsubscribing on a landing that may never come, so a Commander clicking
+        // through a fleet with the network down would leave one behind on every card.
+        if (!_listening)
+        {
+            ShipArtStore.Arrived += Landed;
+            _listening = true;
+        }
+
+        ShipArtStore.Want(hull);
+    }
+
+    private static void Landed(string symbol) => Dispatcher.UIThread.Post(() =>
+    {
+        if (!string.Equals(symbol, _awaited, StringComparison.Ordinal)
+            || _waiting is not { } drawing
+            || _waitingRest is not { } resting)
+        {
+            return;
+        }
+
+        _awaited = null;
+
+        if (drawing.GetVisualParent() is not null)
+        {
+            Play(drawing, _awaitedHull, resting);
+        }
+    });
 
     private static DispatcherTimer Build()
     {

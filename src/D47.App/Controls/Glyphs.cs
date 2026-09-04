@@ -65,6 +65,27 @@ public static class Glyphs
         "M 4,10 L 10,10 L 10,4  M 20,10 L 14,10 L 14,4  M 20,14 L 14,14 L 14,20  M 4,14 L 10,14 L 10,20";
 
     /// <summary>
+    /// A picture in half the width with the words beside it: a box on the right, short lines to
+    /// its left and full-width lines under both
+    /// (<a href="https://github.com/dseelinger/d47/issues/289">#289</a>).
+    /// <para>
+    /// <b>The text-wrap mark every word processor uses</b>, which is what the Commander asked for
+    /// this by — <i>"like a Microsoft Word image with the text flowing around an image"</i>. It has
+    /// to be drawn rather than typed: the obvious character for it, <c>◧</c>, is not in Inter, and
+    /// a mark that renders as a box on one machine is not a mark.
+    /// </para>
+    /// </summary>
+    public const string PictureBeside =
+        "M 13,4 L 20,4 L 20,12 L 13,12 Z  M 4,6 L 10,6  M 4,10 L 10,10  M 4,16 L 20,16  M 4,20 L 20,20";
+
+    /// <summary>
+    /// A picture across the full width with the words under it: the same mark with the box
+    /// widened. <inheritdoc cref="PictureBeside" path="/summary/para"/>
+    /// </summary>
+    public const string PictureWide =
+        "M 4,4 L 20,4 L 20,12 L 4,12 Z  M 4,16 L 20,16  M 4,20 L 20,20";
+
+    /// <summary>
     /// Open every card: a plus
     /// (<a href="https://github.com/dseelinger/d47/issues/223">#223</a>).
     /// <para>

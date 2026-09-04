@@ -27,7 +27,7 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
-## 0.104.0 — unreleased — Every hull has its picture on the card, a ship's own page draws it at 4K with zoom, and a card turns once when you open it
+## 0.104.0 — unreleased — Every hull has its picture on the card whatever the journal calls it, a ship's own page draws it at 4K in three sizes, and a card turns once when you open it
 
 Closes [#289](https://github.com/dseelinger/d47/issues/289).
 
@@ -94,6 +94,57 @@ address rather than by what is actually done hides things behind a brand. The up
 version number leaves and a build may come back; this one says which ships you looked at leave.
 **Hull pictures** on the Ships card in Settings turns it off, and off, every ship keeps the small
 drawing it came with.
+
+### Nine cards of twelve, and nothing failed anywhere
+
+Reported from a screenshot of a real fleet the day the first build was driven: most cards had no
+drawing on them. Every file was present, every name was right, and `ShipArt` resolved all
+forty-seven when asked directly.
+
+**`StoredShips` writes two spellings of a hull and Directive 47 prefers the wrong one for keying.**
+The event carries `ShipType` and, for most hulls, `ShipType_Localised` beside it — and
+`JournalJson.Named` deliberately takes the localised one, because a raw symbol reaching a Commander
+is a fault this repository has already fixed three times. So a *stored* ship arrives as
+`Type-8 Transporter` where a *planned* one arrives as `type8`. Measured on the live fleet that
+reported this: nine hulls localised, three (Corsair, Anaconda, Cobra) not — which is exactly the
+three that drew.
+
+`EliteSpecifications.HullSymbol` is the inverse of `HullSaid` and the thing to call before a hull
+becomes a key, a file name or a lookup. It matches with the punctuation taken out, because the two
+spellings disagree about that too: the table says `Cobra MkV` and Frontier says `Cobra Mk V`.
+
+`FleetRegistry` said in as many words that `StoredShips` carries no localised name at all. It does.
+That comment is corrected rather than deleted, because it is the reason nobody checked.
+
+### The picture has three sizes, and the flown ship wears a badge
+
+Both asked for on 2026-09-04, after driving the first build.
+
+**Half the pane, the width of the pane, or the whole window**, chosen by three marks above the
+picture. It opens at half, with the ship's own figures in the other half — and the slot list below
+runs the full width, which is where text would have wrapped under it anyway. The size you last
+chose is the size the next ship opens at.
+
+**"Flying now" is a badge, not a highlighted card.** The flown ship had an accent border round the
+whole card, which is what every list everywhere uses for *the row you have selected* — so the fleet
+opened looking as though d47 had already picked a ship: *"I assume that's the indication Current
+Ship. That's the wrong signal to send."* A pill on the drawing says the one thing it means, in
+words, which is also the only version of it that survives a Commander who cannot separate the hues.
+
+**A card plays its turntable on the first click now**, not the second. The first selection of a hull
+is exactly the one with nothing on disk yet, so a version that played only what was already there
+never played the first time — which is the whole of what a Commander sees the first time they open
+each ship. The fetch is asked for and the rotation starts when it lands.
+
+**And the shipped still beats a copy in `data\ships\`.** Each folder is asked first for what it
+owns: the build owns the card still and replaces it on every update, so a copy in the Commander's
+folder can only be older. One was — 0.103's hand-dropped 280x158 preview of the Corsair went on
+being drawn beside forty-six 1280x720 renders. The large art is the other way round, because that
+is fetched into their folder, and both folders are still searched either way.
+
+Fixing the half-width layout turned up a gauge that never wrapped: its heading was a horizontal
+stack, which hands its children infinite width, so a long reading simply ran off the end. Nobody
+saw it while a gauge had the whole pane.
 
 ### Twelve hulls whose pictures nothing could have found
 

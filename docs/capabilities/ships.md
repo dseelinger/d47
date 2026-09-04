@@ -287,14 +287,23 @@ is fetched and every ship keeps the small drawing it came with. Files already on
 still shown. Offline is the same thing without the setting: the small drawing stays, and the log
 says why the large one did not arrive.
 
-**Click the picture to fill the window.** The wheel zooms where you are pointing, dragging moves
-it, a double click fits it again, and Escape puts it back. It stops at one image pixel to one
-screen pixel — on a 4K monitor that is the whole ship, and on a 1080p monitor the canopy fills
-the screen.
+**Three sizes, above the picture.** Half the pane with the ship's own figures beside it, which is
+where it opens; the width of the pane, with the figures under it; and the whole window. The size
+you last chose is the size the next ship opens at.
+
+**The whole window is a picture you can get into.** The wheel zooms where you are pointing,
+dragging moves it, a double click fits it again, and Escape puts it back. It stops at one image
+pixel to one screen pixel — on a 4K monitor that is the whole ship, and on a 1080p monitor the
+canopy fills the screen. Clicking the picture does the same thing.
 
 **A hull with no picture is an ordinary thing.** The card is the card it always was and the page
-reads exactly as it did before. This is a picture, not a viewer: one pose, no orbit, no lighting
-and no model — anything you can do to a photograph and nothing you could only do to a mesh.
+reads exactly as it did before — the figures on their own, no marks and no gap. This is a picture,
+not a viewer: one pose, no orbit, no lighting and no model — anything you can do to a photograph
+and nothing you could only do to a mesh.
+
+**The ship you are flying wears a badge.** It used to be an outlined card, which is what every list
+everywhere uses for *the row you have selected* — so the fleet opened looking as though Directive
+47 had already picked a ship for you. **FLYING NOW** on the drawing says the one thing it means.
 
 ### Owned is derived. Intended is authored.
 

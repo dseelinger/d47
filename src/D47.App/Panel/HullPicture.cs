@@ -7,6 +7,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using D47.App.Controls;
 using D47.App.Theming;
 
 namespace D47.App.Panel;
@@ -21,18 +22,23 @@ namespace D47.App.Panel;
 /// Everything it needs is a hull symbol.
 /// </para>
 /// <para>
-/// <b>Fitted first, expanded on request.</b> In a page it takes the width it is given and keeps
-/// its aspect. Clicking it fills the whole window — the wheel zooms at the pointer, dragging pans,
-/// a double click fits it again, Escape puts it back. Zoom stops at one image pixel to one screen
-/// pixel, which is the whole of what rendering at 3840x2160 buys: on a 4K monitor that is the
-/// entire ship, and on a 1080p monitor the canopy fills the screen.
+/// <b>Three sizes, asked for by mark</b> (the Commander's amendment, 2026-09-04). Half the pane
+/// with the page's own words in the other half, which is where it opens; the width of the pane,
+/// with the words under it; and the whole window. The first two are where it sits on a page and
+/// the third is an act — leaving it puts the page back the size it was.
+/// </para>
+/// <para>
+/// <b>The whole window is a picture you can get into.</b> The wheel zooms at the pointer, dragging
+/// pans, a double click fits it again, Escape puts it back. Zoom stops at one image pixel to one
+/// screen pixel, which is the whole of what rendering at 3840x2160 buys: on a 4K monitor that is
+/// the entire ship, and on a 1080p monitor the canopy fills the screen.
 /// </para>
 /// <para>
 /// <b>Absent is the ordinary state, not a failure.</b> The 4K picture is fetched rather than
 /// shipped, so a hull whose art has not arrived — or a Commander who has turned fetching off, or
-/// one with no network — gets a page that reads exactly as it did before this existed. The control
-/// is built either way and draws nothing until it has something, which is what lets it fill itself
-/// in when a fetch lands rather than needing the page rebuilt around it.
+/// one with no network — gets a page that reads exactly as it did before this existed: the words
+/// alone, no marks, no gap. The control is built either way, which is what lets it fill itself in
+/// when a fetch lands rather than needing the page rebuilt around it.
 /// </para>
 /// <para>
 /// <b>The desktop window only.</b> The expansion is an overlay on this window's own overlay layer,
@@ -40,9 +46,21 @@ namespace D47.App.Panel;
 /// that would otherwise have it.
 /// </para>
 /// </summary>
-internal sealed class HullPicture : Border
+internal sealed class HullPicture : Grid
 {
+    /// <summary>
+    /// How big the picture is drawn in a page, kept for the session rather than per page.
+    /// <para>
+    /// <b>The size a Commander last chose is the size they want on the next ship.</b> Resetting to
+    /// half on every drill would make the choice something to make again on every hull. Not in
+    /// <c>ViewState</c> because it is not a page's state — it is how somebody is reading right
+    /// now, and a fresh launch opening at half is the right default rather than a lost setting.
+    /// </para>
+    /// </summary>
+    private static HullPictureSize _size = HullPictureSize.Beside;
+
     private readonly string? _hull;
+    private readonly Control? _beside;
     private readonly Image _fitted = new()
     {
         Stretch = Stretch.Uniform,
@@ -50,23 +68,43 @@ internal sealed class HullPicture : Border
         VerticalAlignment = VerticalAlignment.Top,
     };
 
+    private readonly StackPanel _marks = new()
+    {
+        Orientation = Orientation.Horizontal,
+        Spacing = 2,
+        HorizontalAlignment = HorizontalAlignment.Right,
+    };
+
+    private readonly Border _frame;
+    private readonly StackPanel _column;
+
     private Bitmap? _picture;
 
-    internal HullPicture(string? hull)
+    internal HullPicture(string? hull, Control? beside)
     {
         _hull = hull;
+        _beside = beside;
 
-        Child = _fitted;
-        Margin = new Thickness(0, 0, 0, 12);
-        ClipToBounds = true;
-        IsVisible = false;
-
-        Cursor = new Cursor(StandardCursorType.Hand);
-        ToolTip.SetTip(this, "Click to fill the window. The wheel zooms, dragging moves it, Escape returns.");
-
-        PointerPressed += (_, e) =>
+        _frame = new Border
         {
-            if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            Child = _fitted,
+            ClipToBounds = true,
+            Cursor = new Cursor(StandardCursorType.Hand),
+        };
+
+        _column = new StackPanel
+        {
+            Spacing = 4,
+            Margin = new Thickness(0, 0, 0, 12),
+            Children = { _marks, _frame },
+        };
+
+        ToolTip.SetTip(
+            _frame, "Click to fill the window. The wheel zooms, dragging moves it, Escape returns.");
+
+        _frame.PointerPressed += (_, e) =>
+        {
+            if (e.GetCurrentPoint(_frame).Properties.IsLeftButtonPressed)
             {
                 Expand();
             }
@@ -81,22 +119,33 @@ internal sealed class HullPicture : Border
     }
 
     /// <summary>
-    /// The picture for a hull, and the ask that fetches it if it is not here yet.
+    /// The picture for a hull with the page's own words beside it, and the ask that fetches the
+    /// picture if it is not here yet.
     /// <para>
     /// One call so a page cannot do half of it: a page that showed the picture without asking
     /// would show it to nobody who had not already been sent the file by hand.
     /// </para>
+    /// <para>
+    /// <b>The words go through here rather than round it</b> because where they belong depends on
+    /// how big the picture is — beside it at half width, under it at full width, and on their own
+    /// when there is no picture at all. A page that laid them out itself would have to know all
+    /// three, and would get the third one wrong on every hull nobody has rendered yet.
+    /// </para>
     /// </summary>
-    internal static HullPicture For(string? hull)
+    /// <param name="beside">
+    /// What the page would otherwise have drawn where this goes. Null for a caller that has
+    /// nothing to put beside a hull.
+    /// </param>
+    internal static HullPicture For(string? hull, Control? beside = null)
     {
         ShipArtStore.Want(hull);
 
-        return new HullPicture(hull);
+        return new HullPicture(hull, beside);
     }
 
     private void Landed(string symbol) => Dispatcher.UIThread.Post(() =>
     {
-        if (string.Equals(symbol, _hull?.Trim().ToLowerInvariant(), StringComparison.Ordinal))
+        if (string.Equals(symbol, ShipArt.Symbol(_hull), StringComparison.Ordinal))
         {
             Show();
         }
@@ -106,7 +155,128 @@ internal sealed class HullPicture : Border
     {
         _picture = ShipArt.Close4K(_hull);
         _fitted.Source = _picture;
-        IsVisible = _picture is not null;
+
+        Lay();
+    }
+
+    /// <summary>
+    /// Draws the picture and the words at the chosen size.
+    /// <para>
+    /// <b>Two equal columns rather than a measured half</b>, so the split holds at every pane
+    /// width the drill can produce and at every rung of the zoom ladder without a number in it.
+    /// </para>
+    /// <para>
+    /// <b>The words wrap under the picture rather than round it.</b> Avalonia has no float: an
+    /// image in a paragraph is an inline that text goes around the outside of, not one it flows
+    /// past. What is achievable is the half that matters — a ship's own figures sit beside its
+    /// picture, and the slot list below runs the full width of the pane, which is where the
+    /// wrapping would have happened anyway.
+    /// </para>
+    /// </summary>
+    private void Lay()
+    {
+        Children.Clear();
+        ColumnDefinitions.Clear();
+        RowDefinitions.Clear();
+
+        if (_picture is null)
+        {
+            // No picture is the ordinary state for a hull nothing has rendered, and the page has
+            // to read exactly as it did before this control existed.
+            if (_beside is { } alone)
+            {
+                Children.Add(alone);
+            }
+
+            return;
+        }
+
+        // The column is built once and moved between the layouts, never rebuilt. A fresh wrapper
+        // each time throws: the frame would still be a child of the one before it, and a control
+        // belongs to exactly one logical tree.
+        Marks();
+
+        var picture = _column;
+
+        if (_size == HullPictureSize.Beside && _beside is not null)
+        {
+            ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+            ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+
+            _beside.Margin = new Thickness(0, 0, 12, 0);
+
+            Grid.SetColumn(_beside, 0);
+            Grid.SetColumn(picture, 1);
+
+            Children.Add(_beside);
+            Children.Add(picture);
+
+            return;
+        }
+
+        RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+
+        Grid.SetRow(picture, 0);
+        Children.Add(picture);
+
+        if (_beside is { } under)
+        {
+            under.Margin = new Thickness(0);
+
+            Grid.SetRow(under, 1);
+            Children.Add(under);
+        }
+    }
+
+    /// <summary>
+    /// The three sizes, as marks rather than words. Half and full are where the picture sits on
+    /// the page; the third is the whole window, which is an act rather than a state — leaving it
+    /// puts the page back the size it was.
+    /// </summary>
+    private void Marks()
+    {
+        _marks.Children.Clear();
+
+        _marks.Children.Add(Step(
+            Glyphs.PictureBeside,
+            "Half the pane, with the figures beside it",
+            _size == HullPictureSize.Beside,
+            () => Resize(HullPictureSize.Beside)));
+
+        _marks.Children.Add(Step(
+            Glyphs.PictureWide,
+            "The width of the pane",
+            _size == HullPictureSize.Wide,
+            () => Resize(HullPictureSize.Wide)));
+
+        _marks.Children.Add(Step(
+            Glyphs.Expand, "The whole window, with zoom", showing: false, Expand));
+    }
+
+    private static Button Step(string glyph, string said, bool showing, Action pressed)
+    {
+        var button = new Button
+        {
+            Content = Glyphs.Draw(
+                glyph, showing ? ThemeManager.AccentKey : ThemeManager.TextMutedKey, size: 13),
+            Padding = new Thickness(6, 2),
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(showing ? 1 : 0),
+        };
+
+        LoadoutPages.Themed(button, Button.BorderBrushProperty, ThemeManager.AccentKey);
+        ToolTip.SetTip(button, said);
+        button.Click += (_, _) => pressed();
+
+        return button;
+    }
+
+    private void Resize(HullPictureSize size)
+    {
+        _size = size;
+
+        Lay();
     }
 
     private void Expand()
@@ -118,6 +288,16 @@ internal sealed class HullPicture : Border
 
         layer.Children.Add(new HullPictureFull(picture, layer));
     }
+}
+
+/// <summary>How big a hull's picture is drawn in a page.</summary>
+internal enum HullPictureSize
+{
+    /// <summary>Half the pane, on the right, with the page's own words in the other half.</summary>
+    Beside,
+
+    /// <summary>The width of the pane, with the words under it.</summary>
+    Wide,
 }
 
 /// <summary>

@@ -326,12 +326,9 @@ public static class LoadoutPages
         string? hull = null,
         bool drawings = false)
     {
-        var stroke = standing switch
-        {
-            LoadoutStanding.Active => ThemeManager.AccentKey,
-            LoadoutStanding.Wanted => ThemeManager.TextMutedKey,
-            _ => ThemeManager.TextKey,
-        };
+        var stroke = standing == LoadoutStanding.Wanted
+            ? ThemeManager.TextMutedKey
+            : ThemeManager.TextKey;
 
         var body = new Grid
         {
@@ -367,6 +364,21 @@ public static class LoadoutPages
             body.Children.Add(drawing);
 
             spinning = drawing;
+        }
+
+        // **"Flying now" as a badge, not as a highlighted card** (#289, reported 2026-09-04). An
+        // accent border round the whole card is the signal every list in every application uses
+        // for *the row you have selected*, so the fleet page opened looking as though d47 had
+        // already picked a ship for the Commander — "I assume that's the indication Current Ship.
+        // That's the wrong signal to send." A pill says the one thing it means and says it in
+        // words, which is also the only version of this that survives a Commander who cannot
+        // separate the hues.
+        if (standing == LoadoutStanding.Active)
+        {
+            var badge = Pill("FLYING NOW");
+
+            Grid.SetRow(badge, 0);
+            body.Children.Add(badge);
         }
 
         var label = new TextBlock
@@ -418,23 +430,20 @@ public static class LoadoutPages
             Padding = new Thickness(10, 6),
         };
 
-        if (standing != LoadoutStanding.Owned)
+        if (standing == LoadoutStanding.Wanted)
         {
             // Thickness as well as colour, because a border that differs only in hue is no border
             // at all to a Commander who cannot separate the hues — the same rule the plan dot and
             // the gear already answer to.
-            button.BorderThickness = new Thickness(standing == LoadoutStanding.Active ? 2 : 1);
+            button.BorderThickness = new Thickness(1);
             Themed(button, Button.BorderBrushProperty, stroke);
 
-            if (standing == LoadoutStanding.Wanted)
-            {
-                // **Faded, because a muted one-pixel edge was not a signal.** Drawn and looked at:
-                // an unbought hull was all but indistinguishable from an owned one, which is the
-                // exact complaint this work started from. The card recedes as a whole — drawing,
-                // name and note together — which reads as "not yours yet" from across the room
-                // rather than needing the note to be read.
-                button.Opacity = 0.55;
-            }
+            // **Faded, because a muted one-pixel edge was not a signal.** Drawn and looked at:
+            // an unbought hull was all but indistinguishable from an owned one, which is the
+            // exact complaint this work started from. The card recedes as a whole — drawing,
+            // name and note together — which reads as "not yours yet" from across the room
+            // rather than needing the note to be read.
+            button.Opacity = 0.55;
         }
 
         button.Click += (_, _) =>
@@ -453,6 +462,40 @@ public static class LoadoutPages
         };
 
         return button;
+    }
+
+    /// <summary>
+    /// A small bordered label, the shape the build badge and the issue chips already use.
+    /// <para>
+    /// In the picture's row rather than the name's, and aligned to the top left of it, so it reads
+    /// as a stamp on the drawing rather than as part of the ship's name. A card with no drawing
+    /// puts it in the empty row above the name, which is the same place.
+    /// </para>
+    /// </summary>
+    private static Control Pill(string said)
+    {
+        var text = new TextBlock
+        {
+            Text = said,
+            FontSize = TypeScale.Small,
+            FontWeight = FontWeight.Bold,
+        };
+
+        var pill = new Border
+        {
+            Padding = new Thickness(7, 1),
+            CornerRadius = new CornerRadius(9),
+            BorderThickness = new Thickness(1),
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top,
+            Child = text,
+        };
+
+        Themed(text, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
+        Themed(pill, Border.BorderBrushProperty, ThemeManager.AccentKey);
+        Themed(pill, Border.BackgroundProperty, ThemeManager.BackgroundKey);
+
+        return pill;
     }
 
     /// <summary>The plan mark, as an inline so it travels with the name on a card.</summary>
@@ -826,11 +869,12 @@ public static class LoadoutPages
     {
         var stack = new StackPanel { Spacing = 2, Margin = new Thickness(0, 6, 0, 6) };
 
-        var heading = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 8,
-        };
+        // **A DockPanel rather than a horizontal stack, so the reading wraps** (#289). A stack
+        // hands its children infinite width, so a long reading simply ran off the end — which
+        // nobody saw while a gauge had the whole pane, and which spilled straight into the hull
+        // picture the moment the figures moved into half of it. Docked, the name keeps its place
+        // and the reading gets what is left, so it wraps instead of leaving.
+        var heading = new DockPanel();
 
         var name = new TextBlock
         {
@@ -838,7 +882,10 @@ public static class LoadoutPages
             FontSize = TypeScale.Secondary,
             FontWeight = FontWeight.SemiBold,
             VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(0, 0, 8, 0),
         };
+
+        DockPanel.SetDock(name, Dock.Left);
 
         Themed(name, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
         heading.Children.Add(name);
@@ -850,6 +897,7 @@ public static class LoadoutPages
             Text = gauge.Modelled ? $"~ {gauge.Reading}" : gauge.Reading,
             FontSize = TypeScale.Body,
             VerticalAlignment = VerticalAlignment.Center,
+            TextWrapping = TextWrapping.Wrap,
         };
 
         Themed(
@@ -1958,23 +2006,20 @@ public sealed class ItemPage : LoadoutPage
         // What the ship is, before what is in it (remediation.md 13, item 2). Inside the
         // scroller rather than docked above it, or a hull's figures would cost the slot list the
         // same rows on every window.
-        // The hull itself, before anything written about it (#289). Above the figures rather than
-        // beside them because it is what the page is about, and inside the scroller with them for
-        // the same reason they are: docked, it would cost the slot list its height on every
-        // window. A hull whose picture has not arrived draws nothing at all and the page reads as
-        // it did before — see HullPicture, which is also why this is asked for once per Refresh
-        // rather than once per page.
-        if (roomy && Mode.HullOf(_item) is { Length: > 0 } hull)
-        {
-            _list.Children.Add(HullPicture.For(hull));
-        }
+        // What the ship is, and the hull it is (#289). The figures and the gauges go into one
+        // block so that the picture can put them where they belong for the size it is drawn at —
+        // beside it at half the pane, under it at full width, and on their own for a hull nobody
+        // has rendered, which reads exactly as the page did before this existed. Inside the
+        // scroller rather than docked above it for the reason the figures always were: docked,
+        // both would cost the slot list their height on every window.
+        var facts = new StackPanel { Spacing = 3 };
 
         foreach (var line in roomy ? Mode.Details(_item) : [])
         {
             // Stepped rather than Line, for the copy glyph a whereabouts line carries: the system
             // a ship is parked in goes on the clipboard from here, to be pasted into the Galaxy
             // Map. A line with neither a step nor a copy is drawn exactly as before.
-            _list.Children.Add(LoadoutPages.Stepped(line));
+            facts.Children.Add(LoadoutPages.Stepped(line));
         }
 
         // Power and jump range, at the head of the slot list and under the hull's own figures
@@ -1983,8 +2028,12 @@ public sealed class ItemPage : LoadoutPage
         // read once when the page opens rather than watched while scrolling.
         foreach (var gauge in roomy ? Mode.Gauges(_item) : [])
         {
-            _list.Children.Add(LoadoutPages.Gauge(gauge));
+            facts.Children.Add(LoadoutPages.Gauge(gauge));
         }
+
+        _list.Children.Add(roomy && Mode.HullOf(_item) is { Length: > 0 } hull
+            ? HullPicture.For(hull, facts)
+            : facts);
 
         // **Mini shows only the rows that disagree** (the Commander's ruling, 2026-08-25).
         // Two columns do not fit 512 pixels thirty times over, and the alternative readings were
