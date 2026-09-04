@@ -127,7 +127,8 @@ public static class FlavourTurn
         bool webSearch = false,
         int? maxOutputTokens = null,
         ThinkingEffort effort = ThinkingEffort.Low,
-        LlmSampling? sampling = null)
+        LlmSampling? sampling = null,
+        bool canBeDirected = false)
     {
         if (provider is null)
         {
@@ -164,6 +165,11 @@ public static class FlavourTurn
                 // empty position 1 is also what keeps this prompt's prefix distinct from the
                 // conversation's rather than fighting it for the same cache entry.
                 Persona = persona,
+
+                // Chatter, a carrier captain and an ambient remark are spoken by whichever
+                // provider that slot uses, so the caller answers this rather than the setting
+                // for the ship's own voice (#291).
+                CanBeDirected = canBeDirected,
                 AboutMe = aboutMe,
                 History = [new ConversationMessage(ConversationRole.User, instruction)],
                 LiveGameState = gameState,

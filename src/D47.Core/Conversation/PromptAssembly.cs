@@ -42,6 +42,56 @@ public sealed record PromptAssembly
     public string? Persona { get; init; }
 
     /// <summary>
+    /// Whether the voice that will speak this can be directed, and so whether the model is told it
+    /// may write delivery direction (<see cref="DeliveryDirection"/>, #291).
+    /// <para>
+    /// <b>Position 3.5, immediately under the persona, because it is about the same thing.</b> The
+    /// persona says who is speaking; this says what their voice can be asked to do. It sits in the
+    /// cached region because it changes only when a Commander changes model, which is close to
+    /// never — and above the cache breakpoint is where a paragraph that stable belongs.
+    /// </para>
+    /// <para>
+    /// <b>Off unless the provider that will actually speak performs tags.</b> Not "unless
+    /// ElevenLabs is selected": the slot matters, because the carrier can be on one provider while
+    /// the ship is on another, and a model told it may sigh whose words go to a provider that reads
+    /// brackets aloud has been told something false. <see cref="Audio.AudioTags"/> would strip them
+    /// anyway, so the cost of getting this wrong is wasted instruction rather than a wrong noise —
+    /// but a prompt that describes a capability the voice does not have is a prompt that lies.
+    /// </para>
+    /// </summary>
+    public bool CanBeDirected { get; init; }
+
+    /// <summary>
+    /// What the model is told about delivery direction. One paragraph, and every line of it is a
+    /// measured finding rather than a style preference (docs/spikes/elevenlabs-v3-conversational.md).
+    /// <para>
+    /// <b>No list of permitted tags, deliberately.</b> ElevenLabs publishes examples and says
+    /// outright that <i>"there are likely many more effective tags beyond this list"</i> — the model
+    /// reads the bracket as a description rather than looking it up, which is why
+    /// <c>[grumbles quietly]</c>, in no list anywhere, produced an actual grumble. A fixed list
+    /// would be d47 inventing a limit the service does not have.
+    /// </para>
+    /// <para>
+    /// <b>The three rules are the ones the spike found, and each has a failure behind it.</b> One
+    /// tag per sentence, because a tag reaches its own synthesis and no further — a tag at the head
+    /// of a four-sentence reply coloured one sentence and left three plain. Never twice in the same
+    /// sentence, because restating one does not refresh it, it defeats it: the same passage came
+    /// back with <em>less</em> accent than tagging once. And sparingly, because the Commander asked
+    /// for delivery that means something rather than a performance on every line.
+    /// </para>
+    /// </summary>
+    public const string DeliveryDirection =
+        "Your voice can be directed. Where a line genuinely calls for it, you may open a sentence "
+        + "with a delivery note in square brackets — [sighs], [alarmed], [dryly], [reassuring] — "
+        + "and it will be performed rather than read out. Any short description of a manner or a "
+        + "reaction works; you are not choosing from a list.\n"
+        + "Use it sparingly, where the delivery carries something the words do not. Most lines "
+        + "need none.\n"
+        + "A note applies only to the sentence it opens, so put one on each sentence you mean it "
+        + "for. Never put two in one sentence. Never use one to narrate — it directs how you "
+        + "sound, and is not something the Commander reads.";
+
+    /// <summary>
     /// Position 4. The Commander's own account of themselves — the character sheet and, when
     /// the caller chose to carry it, the story, composed by <see cref="CommanderStory"/>.
     /// </summary>
@@ -128,6 +178,14 @@ public sealed record PromptAssembly
         if (!string.IsNullOrWhiteSpace(Persona))
         {
             block.Append("\n\n").Append(Persona.Trim());
+        }
+
+        // Under the persona, because the persona says who is speaking and this says what their
+        // voice can be asked to do. Above About Me for the same reason the persona is: this is
+        // about d47, and everything below is about the Commander.
+        if (CanBeDirected)
+        {
+            block.Append("\n\n").Append(DeliveryDirection);
         }
 
         if (!string.IsNullOrWhiteSpace(AboutMe))

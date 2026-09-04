@@ -56,37 +56,11 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
     private readonly SemaphoreSlim _inFlight = new(MaxConcurrent, MaxConcurrent);
 
     /// <summary>
-    /// The model. Named rather than left to the service's default so that a change on their
-    /// side is not a change in what the Commander hears, and because the speed control this
-    /// provider exposes is a property of the model generation rather than of the account.
-    /// <para>
-    /// <b>The 2.5 generation rather than Multilingual 2, and the reason is language.</b>
-    /// Multilingual 2 infers the language of every line from the line, which is the behaviour it
-    /// is built for and which produced a material milestone read half in German. The 2.5
-    /// generation accepts <c>language_code</c> and holds it; Multilingual 2 rejects the parameter
-    /// outright, so there was no version of pinning English that kept that model. It is also half
-    /// the price.
-    /// </para>
-    /// <para>
-    /// <b>Flash 2.5 rather than Turbo 2.5, from 2026-08-25.</b> ElevenLabs has deprecated Turbo
-    /// and names Flash as its replacement, in terms that make the swap uninteresting: the two are
-    /// <em>"functionally equivalent … except the latency on the Flash models is lower on
-    /// average"</em>. Same list price, same <c>language_code</c>, less delay before the first
-    /// sound — and the pin that was moving away from was the one being switched off. This is not
-    /// a second opinion about the August ruling above; it is the same ruling, on the model that
-    /// still exists.
-    /// </para>
-    /// <para>
-    /// <b>One model, deliberately, and there is no setting for it</b> (change-requests.md 41,
-    /// declined 2026-08-25 in favour of this). A picker here would have to carry a per-model
-    /// price into the spend ledger, a per-model speed range into the rate row, and a rule keeping
-    /// Multilingual 2 off the list for ever — three mechanisms so a Commander could choose
-    /// between one model that is right and several that are slower, dearer, or unable to hold
-    /// English. The cheapest and fastest option that satisfies the language rule is not a
-    /// preference.
-    /// </para>
+    /// What speaks when nobody has chosen. The list, the defaulting rule and the reasoning behind
+    /// both live in <see cref="ElevenLabsModels"/>, because the settings surface and prompt
+    /// assembly need them and neither can reach this assembly.
     /// </summary>
-    public const string DefaultModel = "eleven_flash_v2_5";
+    public const string DefaultModel = ElevenLabsModels.Default;
 
     /// <summary>
     /// The language every line is synthesised as. English, fixed: d47 speaks English, its
@@ -124,6 +98,7 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
     private readonly HttpClient _http;
     private readonly bool _ownsHttp;
     private readonly Func<string?> _key;
+    private readonly Func<string?>? _model;
 
     private VoiceCatalogue? _voices;
 
@@ -133,20 +108,52 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
     /// (Phase 4). Null means no key is stored yet, which is a capability being off
     /// rather than an error to raise.
     /// </param>
+    /// <param name="model">
+    /// Asked for rather than held, for the same reason the key is: a Commander who switches models
+    /// expects the next line to use the new one, not the next session. Null means nobody has
+    /// chosen, which is <see cref="DefaultModel"/>.
+    /// </param>
     public ElevenLabsTtsProvider(
         Func<string?> key,
         ILogger<ElevenLabsTtsProvider> logger,
-        HttpClient? http = null)
+        HttpClient? http = null,
+        Func<string?>? model = null)
     {
         _key = key;
         _logger = logger;
         _http = http ?? new HttpClient();
         _ownsHttp = http is null;
+        _model = model;
     }
 
     public string Id => ProviderId;
 
     public string Name => "ElevenLabs";
+
+    /// <summary>The model in force right now, resolved against what d47 still offers.</summary>
+    internal string Model => ElevenLabsModels.Named(_model?.Invoke());
+
+    /// <summary>
+    /// v3 performs bracketed direction; Flash reads it aloud. A property of the model rather than
+    /// of the account, which is why this is answered here and not declared on the descriptor.
+    /// </summary>
+    public bool ReadsAudioTags => ElevenLabsModels.ReadsTags(Model);
+
+    /// <summary>
+    /// How much text v3 would rather have at once, and nothing at all for Flash.
+    /// <para>
+    /// <b>300 characters, and the number comes from both ends.</b> ElevenLabs encourages over 250
+    /// for a tag to land consistently; <see cref="SentenceSplitter"/>'s soft cap is 320, so a
+    /// larger budget could not be filled by one sentence anyway. Between them there is one obvious
+    /// value.
+    /// </para>
+    /// <para>
+    /// Flash asks for nothing because it has nothing to gain: it performs no tags, and grouping
+    /// would spend its whole advantage — the reason a Commander chooses it — on a capability it
+    /// does not have.
+    /// </para>
+    /// </summary>
+    public int GroupsSentencesUpTo => ElevenLabsModels.GroupsSentencesUpTo(Model);
 
     public async Task<VoiceCatalogue> ListVoicesAsync(CancellationToken cancellationToken = default)
     {
@@ -271,13 +278,22 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
             using var request = new HttpRequestMessage(HttpMethod.Post, url);
             request.Headers.Add("xi-api-key", key);
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("audio/*"));
+            var model = Model;
+
             request.Content = JsonContent.Create(
                 new SynthesisRequest
                 {
                     Text = Billable(text),
-                    ModelId = DefaultModel,
+                    ModelId = model,
                     LanguageCode = Language,
-                    VoiceSettings = new VoiceSettings { Speed = SpeedFor(voice.Rate) },
+
+                    // Omitted entirely for a model that does not read it, rather than sent and
+                    // ignored. v3 accepts 0.5 through 2.0 and acts on none of it, so a speed on
+                    // the wire would be a number in the request log that never changed a sound —
+                    // and a request that carries no rate is one nobody can misread later.
+                    VoiceSettings = ElevenLabsModels.ReadsRate(model)
+                        ? new VoiceSettings { Speed = SpeedFor(voice.Rate) }
+                        : null,
                 },
                 options: Json);
 
@@ -469,8 +485,10 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
         [JsonPropertyName("language_code")]
         public required string LanguageCode { get; init; }
 
+        /// <summary>Omitted for a model that ignores it - see the call site.</summary>
         [JsonPropertyName("voice_settings")]
-        public required VoiceSettings VoiceSettings { get; init; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public VoiceSettings? VoiceSettings { get; init; }
     }
 
     private sealed record VoiceSettings

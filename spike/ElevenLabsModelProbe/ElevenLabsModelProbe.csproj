@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>ElevenLabsModelProbe</AssemblyName>
+    <RootNamespace>ElevenLabsModelProbe</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      For the secret store and for SpokenNumbers. The key is read the way d47 reads it, so no
+      key is ever typed at a prompt or pasted into a file, and the text put on the wire is
+      expanded by the same code the provider calls - the question is what d47's own lines cost
+      and sound like, not what some other text does.
+    -->
+    <ProjectReference Include="..\..\src\D47.Core\D47.Core.csproj" />
+
+    <!--
+      To read the clips back. "Did the model say all the words" is not a question an ear settles
+      reliably and is not one a duration answers at all - a tagged line can be longer than the bare
+      one and still be missing half of it, because the tag costs time of its own. d47 already ships
+      a transcriber, so the clip is read by the same model that reads the Commander.
+    -->
+    <ProjectReference Include="..\..\src\D47.Stt\D47.Stt.csproj" />
+  </ItemGroup>
+
+</Project>

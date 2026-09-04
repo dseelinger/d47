@@ -417,4 +417,35 @@ public class IncomingMessageTests
         Assert.NotNull(read);
         Assert.Equal(TimeSpan.Zero, read.Cooldown);
     }
+
+    /// <summary>
+    /// <b>Another Commander cannot decide how d47 sounds</b>
+    /// (<a href="https://github.com/dseelinger/d47/issues/291">#291</a>).
+    /// <para>
+    /// Square brackets are delivery direction to ElevenLabs v3, and this text was typed by a
+    /// stranger. Left alone, a message reading <c>[shouting]</c> or
+    /// <c>[strong German accent]</c> would be performed — a player choosing d47's delivery while
+    /// their own words are read out. In-game comms are untrusted input, so the brackets are taken
+    /// off at the boundary rather than trusted to a strip further down; everything downstream may
+    /// then treat direction as something d47's own model wrote, which is the only way one ever
+    /// gets there legitimately.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void DirectionInSomebodyElsesMessageIsReadAsTextAndNotObeyed()
+    {
+        var read = Reader().Read(Message("Vex", "[shouting] watch your six", "wing"));
+
+        Assert.NotNull(read);
+        Assert.DoesNotContain("[shouting]", read.Text, StringComparison.Ordinal);
+        Assert.Contains("watch your six", read.Text, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// And a message that was <em>only</em> direction leaves nothing worth speaking, so it is
+    /// dropped rather than read out as a silence with a sender's name attached.
+    /// </summary>
+    [Fact]
+    public void AMessageThatWasOnlyDirectionIsNotSpokenAtAll() =>
+        Assert.Null(Reader().Read(Message("Vex", "[whispers]", "wing")));
 }

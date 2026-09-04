@@ -2874,6 +2874,13 @@ public sealed class AppHost : IDisposable
         // afternoon is applied to the next thing said without a restart.
         Turns.Heard = HeardAsMeant;
 
+        // Position 3.5, and asked of the client that will speak rather than of the settings, so
+        // the prompt describes the voice a Commander will actually hear. A reply is Aboard by
+        // construction. Deferred rather than resolved here for the same reason the game state is:
+        // the slot's client is rebuilt when a provider or a model changes, and the next turn
+        // should see the new one (#291).
+        Turns.CanBeDirected = () => DirectableIn(VoiceGroup.Aboard);
+
         // Position 4, both halves: the turn path is cached above the breakpoint, so the story's
         // thirteen hundred tokens are paid once per edit rather than per turn (Phase 43).
         Turns.AboutMe = CommanderStory.Compose(current.Llm.CharacterSheet, current.Llm.AboutMe, withStory: true);
@@ -3784,7 +3791,11 @@ public sealed class AppHost : IDisposable
 
         SpeechCapability.ElevenLabsId => new ElevenLabsTtsProvider(
             () => Secrets.TryGet(ElevenLabsTtsProvider.KeySecretName, out var key) ? key : null,
-            _loggerFactory.CreateLogger<ElevenLabsTtsProvider>()),
+            _loggerFactory.CreateLogger<ElevenLabsTtsProvider>(),
+
+            // Asked per line rather than captured, the same as the key, so switching model applies
+            // to the next thing said rather than to the next session (#291).
+            model: () => Settings.Current.Speech.ElevenLabsModel),
 
         TtsProviderCatalog.OpenAiId => new OpenAiTtsProvider(
             () => Secrets.TryGet(OpenAiTtsProvider.KeySecretName, out var key) ? key : null,
@@ -5387,6 +5398,19 @@ public sealed class AppHost : IDisposable
     private ITtsProvider? Speaker(VoiceGroup group) => _slots.GetValueOrDefault(group);
 
     /// <summary>
+    /// Whether a line written for this slot may carry delivery direction — asked of the client
+    /// that will speak it, never of the settings (#291).
+    /// <para>
+    /// Per slot because the slots differ: a carrier captain on ElevenLabs v3 can be directed while
+    /// the ship's own voice is on Edge and cannot. Telling a model it may sigh when the words are
+    /// bound for a provider that reads brackets aloud would be describing a voice that does not
+    /// exist — <see cref="AudioTags"/> strips them either way, so the cost is a wasted paragraph
+    /// rather than a wrong noise, but a prompt that misdescribes the voice is still wrong.
+    /// </para>
+    /// </summary>
+    private bool DirectableIn(VoiceGroup group) => Speaker(group)?.ReadsAudioTags == true;
+
+    /// <summary>
     /// Which provider each slot is on, and whether it had its key last time speech settings were
     /// applied. Tracked rather than inferred, because "is it null" answered "does one need
     /// building" only while there was exactly one to build — and because a key arriving is an
@@ -5747,7 +5771,12 @@ public sealed class AppHost : IDisposable
             Spend,
             PriceTable.Default,
             _logger,
-            budget.Token).ConfigureAwait(false);
+            budget.Token,
+
+            // Against the slot this line will be spoken in, not the ship's. A carrier captain on
+            // ElevenLabs v3 may be directed while the companion is on Edge and may not (#291).
+            canBeDirected: DirectableIn(VoiceGroups.Of(announcement.Voice, announcement.CommsChannel)))
+            .ConfigureAwait(false);
 
         // The authored line stands unless the rewrite is one that may be spoken. Null is a call
         // that failed; the other case is a call that succeeded and came back talking about the
@@ -5799,7 +5828,8 @@ public sealed class AppHost : IDisposable
             Spend,
             PriceTable.Default,
             _logger,
-            budget.Token).ConfigureAwait(false);
+            budget.Token,
+            canBeDirected: DirectableIn(VoiceGroup.Npcs)).ConfigureAwait(false);
 
         return [.. NpcChatter.Parse(script, kind, carrier)
             .Select(line => new Announcement(NpcChatter.LineKey, line.Text)

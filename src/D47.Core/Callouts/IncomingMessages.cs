@@ -182,6 +182,22 @@ public sealed partial class IncomingMessages : ICallout
             return null;
         }
 
+        // **Delivery direction is stripped here, at the boundary, and this is the only place it
+        // could be** (#291). A tag in square brackets is an instruction to the voice, and this
+        // text was typed by another player: left alone, `[shouting]` or `[strong German accent]`
+        // in a message would let a stranger decide how d47 sounds while reading their words out.
+        //
+        // At the point the untrusted text arrives rather than in the speaking path, because that
+        // is where the rule belongs — the pipeline's job is to know which providers perform tags,
+        // not which sentences are to be trusted. Everything downstream may then treat a tag as
+        // something d47's own model wrote, which is the only way one ever gets there.
+        text = AudioTags.Strip(text);
+
+        if (text.Length == 0)
+        {
+            return null;
+        }
+
         var sender = Undecorate(
             journalEvent.String("From_Localised") ?? journalEvent.String("From") ?? "Unknown");
 

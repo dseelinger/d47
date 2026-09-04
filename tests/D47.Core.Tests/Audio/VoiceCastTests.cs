@@ -275,11 +275,19 @@ public class TtsProviderCatalogTests
 /// </summary>
 public class PerProviderRateTests
 {
+    /// <param name="provider">
+    /// ElevenLabs is the exemplar throughout this fixture, because it is the provider with a
+    /// narrow range to be clamped to. From #291 it has two models and only Flash 2.5 has a rate at
+    /// all, so the model is pinned here — otherwise these would be measuring the v3 default's
+    /// absence of a rate rather than the per-provider mechanism they exist for. That absence is
+    /// asserted where it belongs, in <c>ARateThatWouldDoNothingIsNotOfferedTests</c>.
+    /// </param>
     private static D47Settings With(string provider, params (string Provider, double Rate)[] rates) => new()
     {
         Speech = new SpeechSettings
         {
             Provider = provider,
+            ElevenLabsModel = ElevenLabsModels.Flash,
             ProviderRates = rates.ToDictionary(r => r.Provider, r => r.Rate, StringComparer.OrdinalIgnoreCase),
         },
     };
@@ -320,6 +328,12 @@ public class PerProviderRateTests
         var surface = TestSurface.For(install);
 
         surface.Settings.Apply(SpeechCapability.ProviderKey, TtsProviderCatalog.ElevenLabsId, SettingsCaller.Panel);
+
+        // Flash, because v3 Conversational has no rate to write and this is a test about where a
+        // written rate is stored (#291).
+        surface.Settings.Apply(
+            SpeechCapability.ElevenLabsModelKey, ElevenLabsModels.Flash, SettingsCaller.Panel);
+
         surface.Settings.Apply(SpeechCapability.RateKey, "0.8", SettingsCaller.Panel);
 
         Assert.Equal(0.8, surface.Settings.Current.Speech.ProviderRates[TtsProviderCatalog.ElevenLabsId]);

@@ -27,6 +27,97 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.105.0 — 2026-09-04 — D47 speaks through ElevenLabs v3 and can be told how to say a line, the metering wrapper stops swallowing what a voice can do, and a finished turn lets go of the turn slot
+
+### Two ElevenLabs models, and v3 Conversational speaks by default
+
+ElevenLabs now lists `eleven_v3_conversational` at the same $0.05 per thousand characters as the
+Flash 2.5 that D47 has pinned since August. **A row under the ElevenLabs key chooses between them,
+and v3 is the default** — judged plainly better by ear even on lines carrying no direction at all,
+which is the comparison that describes ordinary use.
+
+Flash 2.5 stays for the Commander who would rather have the time back, and that is a real choice
+rather than old and new. Measured on D47's own path, a routing line takes **313 ms through Flash and
+2,060 ms through v3**. The published 75 ms and 280 ms describe a caller that streams; D47 reads the
+whole response before a sound is made, so the whole round trip is the wait, and it grows with the
+length of the line.
+
+**The speaking rate row disappears when v3 is selected, because v3 has no speaking rate.** It is not
+missing at their end: every value from `0.5` to `2.0` is accepted and returns the same audio, the
+spread within one setting wider than the spread across all eleven. Rather than offer a control that
+appears to work, D47 offers none — the same ruling Cartesia's speed control got, arriving one level
+down. A rate written against v3 in a hand-edited `settings.json` is ignored rather than sent.
+
+`eleven_v3` — the plain one — is deliberately not offered: same languages, same capability, twice the
+price. Multilingual 2 remains unnameable, which is the rule the August pin was built on.
+
+### D47 can be told how to say a line, and only a voice that performs it is ever told
+
+Where a line calls for it, the model may open a sentence with a delivery note in square brackets —
+`[sighs]`, `[alarmed]`, `[dryly]` — and v3 performs it. **There is no fixed vocabulary**, because
+ElevenLabs says outright that more tags work than they publish, and the model reads the bracket as a
+description rather than looking it up: `[grumbles quietly]`, which appears in no list anywhere,
+produced an actual grumble.
+
+**Every other voice has the brackets taken off before it sees them, and that is not tidiness.** Flash
+2.5 was sent them unchanged and read them out: *"Whispers, cutting the drives"*, *"Sighs. That is the
+third interdiction"*, *"Sarcastic beautiful landing"* — every tag, every time. The local voice is
+worse by construction, listing `[` and `]` among the brackets it trims, so it pronounces the
+contents as a word. Four of the five voices were in that position.
+
+**Direction never reaches anything a person reads.** Captions, the transcript and the conversation
+carry the words alone. The log keeps it, inline where it was asked for, because where a note sat is
+half of what it meant — and it records what was *asked for* rather than what was performed: on a
+short line the direction sometimes does not take, and the log is what a complaint gets read against.
+
+**A message from another Commander can never direct D47.** In-game text is untrusted, so brackets
+come off where that text arrives; without it, a player typing `[shouting]` into a message would be
+choosing how D47 sounds while their own words were read out.
+
+### Longer pieces, so a delivery note has room to land
+
+ElevenLabs' guidance is that prompts under 250 characters make a tag inconsistent. **D47's median
+spoken sentence is 34 characters** — measured across 1,520 real replies — so left alone the app sent
+exactly the shape v3 handles worst.
+
+Sentences after the first are now sent together, up to 300 characters, for v3 only. **The first
+sentence is never delayed**, so speech still starts where it always did; everything after it renders
+while the previous clip plays, and a v3 request returns three to four times more audio than it costs
+in waiting, so it never runs out. Every other voice is unchanged at one sentence at a time.
+
+Accepted with it: a larger piece wastes a little more when the shut-up key is pressed mid-reply, and
+makes a coarser caption.
+
+### The metering wrapper was answering "no" on every voice's behalf
+
+Found by driving the built app: v3 was selected and speaking, and neither of the two things it had
+been selected for was happening.
+
+Every voice is reached through a wrapper that counts what was said. It restated four members of the
+provider interface; **everything else on that interface has a default, so a member the wrapper does
+not restate is not a compiler error — it is a wrapper answering "no" for a voice that would have said
+yes.** No unit test could see it, because they all hold a provider directly. Only the built app goes
+through the wrapper.
+
+It had already happened once, silently. `Phonemes` was added for the audio recorder in 0.86.0 and
+never forwarded either, **so the recorder's phoneme column has been empty for the local voice ever
+since** — it was asking the wrapper and being told there were none. That is fixed here too. All four
+members now forward, and a gate reads the interface by reflection and fails by name when a member is
+added and not passed on.
+
+### A finished turn lets go of the turn slot
+
+Reported from a log: *"A new turn started while one was in flight; cancelling the old one"*, on turns
+that interrupted nothing. The comment above the claim had always said the slot was released when the
+turn ended, and the code never released it.
+
+The log line was the least of it. The slot stayed occupied for the rest of the session, so **the
+shut-up path reported success while cancelling a token belonging to a turn that had already
+finished** — "cancel" answered by silence, which is the exact failure that method exists to prevent.
+A cancellation source leaked per turn as well.
+
+[#291](https://github.com/dseelinger/d47/issues/291)
+
 ## 0.104.0 — 2026-09-04 — Every hull has its picture on the card whatever the journal calls it, a ship's own page draws it at 4K in three sizes, and a card turns once when you open it
 
 Closes [#289](https://github.com/dseelinger/d47/issues/289).

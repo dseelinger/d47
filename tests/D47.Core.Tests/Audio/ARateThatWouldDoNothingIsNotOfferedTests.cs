@@ -26,11 +26,16 @@ namespace D47.Core.Tests.Audio;
 /// </summary>
 public class ARateThatWouldDoNothingIsNotOfferedTests
 {
-    private static D47Settings On(string provider, double? rate = null) => new()
+    private static D47Settings On(string provider, double? rate = null, string? model = null) => new()
     {
         Speech = new SpeechSettings
         {
             Provider = provider,
+
+            // Flash unless a test says otherwise: from #291 ElevenLabs answers this question per
+            // model, and Flash is the one that still honours a rate. The v3 default's absence of
+            // one is asserted below rather than assumed by every case here.
+            ElevenLabsModel = model ?? ElevenLabsModels.Flash,
             ProviderRates = rate is { } chosen
                 ? new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase) { [provider] = chosen }
                 : new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase),
@@ -65,6 +70,52 @@ public class ARateThatWouldDoNothingIsNotOfferedTests
         Assert.True(row.AppliesWhen!(On(TtsProviderCatalog.EdgeId)));
         Assert.True(row.AppliesWhen!(On(TtsProviderCatalog.ElevenLabsId)));
         Assert.True(row.AppliesWhen!(On(TtsProviderCatalog.OpenAiId)));
+    }
+
+    /// <summary>
+    /// <b>The same fault as Cartesia's, one level down: per model rather than per provider</b>
+    /// (#291). ElevenLabs Flash 2.5 honours 0.7 to 1.2 and refuses anything outside with a message
+    /// naming the range. v3 Conversational accepts <c>0.5</c> through <c>2.0</c> — a four-fold
+    /// span — and returns the same eight and a half seconds of audio throughout, with the spread
+    /// within one setting wider than the spread across all eleven
+    /// (docs/spikes/elevenlabs-v3-conversational.md §3).
+    /// <para>
+    /// So the descriptor cannot answer alone any more, and the row is hidden for the model that
+    /// would ignore it rather than narrowed to a range it does not have.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void ButNotForTheElevenLabsModelThatIgnoresIt()
+    {
+        var row = RateRow();
+
+        Assert.True(row.AppliesWhen!(On(TtsProviderCatalog.ElevenLabsId, model: ElevenLabsModels.Flash)));
+        Assert.False(row.AppliesWhen!(On(TtsProviderCatalog.ElevenLabsId, model: ElevenLabsModels.V3)));
+
+        // And that is the default, so a Commander who has never opened the row sees no rate.
+        Assert.False(row.AppliesWhen!(On(TtsProviderCatalog.ElevenLabsId, model: null!) with
+        {
+            Speech = new SpeechSettings { Provider = TtsProviderCatalog.ElevenLabsId },
+        }));
+    }
+
+    /// <summary>
+    /// The half a dropdown cannot enforce, for the model as well as for the provider. A rate
+    /// written against v3 in a hand-edited file is not a faster voice; it is a number the row
+    /// would otherwise read back as though it meant something.
+    /// </summary>
+    [Fact]
+    public void AndAModelThatIgnoresItSpeaksAtItsOwnPaceWhateverTheFileSays()
+    {
+        var settings = On(TtsProviderCatalog.ElevenLabsId, rate: 0.8, model: ElevenLabsModels.V3);
+
+        Assert.Equal(1.0, SpeechCapability.RateFor(settings));
+
+        // The same file with Flash selected honours it, so this is the model being read and not
+        // the rate being lost.
+        Assert.Equal(
+            0.8,
+            SpeechCapability.RateFor(On(TtsProviderCatalog.ElevenLabsId, rate: 0.8, model: ElevenLabsModels.Flash)));
     }
 
     [Fact]

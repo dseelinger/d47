@@ -22,7 +22,11 @@ namespace D47.Core.Tests.Audio;
 /// </summary>
 public class TheLogSaysWhatWasSaidTests
 {
+    private static Task<IReadOnlyList<string>> SpokenAsync(string? speaker, params string[] pushes) =>
+        SpokenAsync(new FakeTtsProvider(), speaker, pushes);
+
     private static async Task<IReadOnlyList<string>> SpokenAsync(
+        ITtsProvider tts,
         string? speaker,
         params string[] pushes)
     {
@@ -33,7 +37,7 @@ public class TheLogSaysWhatWasSaidTests
 
         await using (var speech = new SpeechPipeline(
             arbiter,
-            new FakeTtsProvider(),
+            tts,
             new VoiceSelection("voice-1") { Name = "George" },
             "test",
             new Capture(log),
@@ -118,5 +122,43 @@ public class TheLogSaysWhatWasSaidTests
             Exception? exception,
             Func<TState, Exception?, string> formatter) =>
             lines.Add(formatter(state, exception));
+    }
+
+    /// <summary>
+    /// <b>The delivery direction stays in this line and in no other</b> (#291, asked for on
+    /// 2026-09-04 after reading it as a line of its own and preferring it in place).
+    /// <para>
+    /// Inline because where a tag sat is half of what it meant: <c>[dryly]</c> in front of the
+    /// second of three sentences is a different reply from the same tag in front of the first, and
+    /// a list beside the sentence cannot say which. This is the line a delivery complaint is read
+    /// against, so it records what was <em>asked for</em> — never a claim that it was performed.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task TheDirectionIsWrittenDownWhereItWasAskedFor()
+    {
+        var line = SaidLine(await SpokenAsync(
+            new FakeTtsProvider { ReadsAudioTags = true },
+            "D47",
+            "Hull is holding. ",
+            "[dryly] The correction is yours to make."));
+
+        Assert.Contains("Hull is holding. [dryly] The correction is yours", line, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// And a provider that would read the brackets aloud has none to write down, because none was
+    /// sent — the log says what went out, so for Flash and the local voice it says the words alone.
+    /// </summary>
+    [Fact]
+    public async Task AProviderThatWasSentNoDirectionLogsNone()
+    {
+        var line = SaidLine(await SpokenAsync(
+            new FakeTtsProvider { ReadsAudioTags = false },
+            "D47",
+            "[dryly] The correction is yours to make."));
+
+        Assert.DoesNotContain("[dryly]", line, StringComparison.Ordinal);
+        Assert.Contains("The correction is yours to make.", line, StringComparison.Ordinal);
     }
 }

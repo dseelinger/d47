@@ -1189,6 +1189,18 @@ public partial class MainWindow : Window
         }
         finally
         {
+            // **Released here, which the comment above always said and the code never did**
+            // (reported 2026-09-04: every turn after the first logged "a new turn started while
+            // one was in flight" against a turn that had finished).
+            //
+            // Three things went wrong for want of this line, and only the first was visible. The
+            // log accused every send of interrupting its predecessor. `InFlight` stayed true for
+            // the rest of the session, so `Cancel` — the shut-up path — reported success while
+            // cancelling a source belonging to a turn that had already ended, which is "cancel"
+            // answered by silence and is the exact failure that method's own doc warns about. And
+            // the source was never disposed, one per turn.
+            _host.Cancellation.End(cancelling);
+
             _turnInFlight = false;
             _model.CanAsk = true;
 

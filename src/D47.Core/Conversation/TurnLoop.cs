@@ -433,6 +433,17 @@ public sealed class TurnLoop(
     public string? Directions { get; set; }
 
     /// <summary>
+    /// Whether the voice that will speak this turn performs delivery direction, and so whether the
+    /// model is told it may write any (<see cref="PromptAssembly.CanBeDirected"/>, #291).
+    /// <para>
+    /// A source rather than a value, for the same reason <see cref="LiveGameState"/> is: it is a
+    /// property of the provider and model selected right now, and a Commander who changes either
+    /// expects it to apply to what they say next. It is also cheap to ask.
+    /// </para>
+    /// </summary>
+    public Func<bool>? CanBeDirected { get; set; }
+
+    /// <summary>
     /// Live game state for the turn about to run. A source rather than a value: the tick loop
     /// is folding journal events continuously, so anything assigned here would be as old as the
     /// last time somebody remembered to assign it. Asked once per turn, at the moment the
@@ -686,6 +697,7 @@ public sealed class TurnLoop(
                 {
                     Tools = lastRound ? [] : advertised,
                     Persona = Persona,
+                    CanBeDirected = CanBeDirected?.Invoke() == true,
                     AboutMe = AboutMe,
                     Recall = Recall,
                     Directions = Directions,

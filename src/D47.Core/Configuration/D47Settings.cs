@@ -1177,6 +1177,24 @@ public sealed record SpeechSettings
         new Dictionary<string, double>();
 
     /// <summary>
+    /// Which ElevenLabs model speaks, or null for the default
+    /// (<a href="https://github.com/dseelinger/d47/issues/291">#291</a>).
+    /// <para>
+    /// <b>Null rather than a written-out default.</b> The default moved once already — Turbo to
+    /// Flash in August, when ElevenLabs switched Turbo off — and a Commander who never opened the
+    /// row should move with it rather than be pinned to whatever was current the day they
+    /// installed. A value here means somebody chose.
+    /// </para>
+    /// <para>
+    /// One provider's model and not a dictionary of every provider's, because exactly one provider
+    /// has a choice worth making. If a second ever does, this stays what it is and that one gets
+    /// its own property — settings are append-only, and a key that quietly grew a new meaning is
+    /// the failure that rule exists to prevent.
+    /// </para>
+    /// </summary>
+    public string? ElevenLabsModel { get; init; }
+
+    /// <summary>
     /// The voices chosen while each <em>other</em> provider was selected, keyed by provider id
     /// (Phase 19, "Remember which voice you chose for each provider").
     /// <para>
