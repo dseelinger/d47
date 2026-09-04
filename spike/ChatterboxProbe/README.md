@@ -57,26 +57,50 @@ it has the right to distribute, which is a question #293 raises and this probe d
 | `sizes` | download size per published variant and precision, from the Hub's file listing — nothing downloaded |
 | `tokens <text>` | what the tokeniser makes of a line, tags included |
 | `say <text> <ref.wav> <out.wav>` | one line end to end, with the time split across the four stages |
-| `bench <text> <ref.wav> [runs]` | the same line on each provider, after a warm run |
+| `bench <text> <ref.wav> [runs]` | the same line on each provider, after a warm run; the median of each stage on its own line |
+| `stream <text> <ref.wav> <out.wav>` | the line decoded in pieces as its tokens arrive: first sound per piece, and whether playback would have waited |
 | `gpu` | the card, what it is holding, and which process is holding it |
 | `elite <text> <ref.wav>` | Elite's frame time with and without a line being spoken |
 
 ```powershell
 dotnet run --project spike/ChatterboxProbe -c Release -- shape --variant nano
 dotnet run --project spike/ChatterboxProbe -c Release -- say "Docking permission granted at Shinrarta Dezhra." $m\voices\andrew.wav out.wav --variant nano
-dotnet run --project spike/ChatterboxProbe -c Release -- bench "Docking permission granted at Shinrarta Dezhra." $m\voices\andrew.wav 5 --variant nano --provider cpu
+dotnet run --project spike/ChatterboxProbe -c Release -p:Ep=cpu -p:OrtVersion=1.28.0 -- bench "Docking permission granted at Shinrarta Dezhra." $m\voices\andrew.wav 5 --variant nano --provider cpu --threads 8 --decoder-threads 16
+dotnet run --project spike/ChatterboxProbe -c Release -p:Ep=cpu -p:OrtVersion=1.28.0 -- stream "Docking permission granted at Shinrarta Dezhra." $m\voices\andrew.wav out.wav --variant nano --threads 8 --decoder-threads 16 --chunk 25 --overlap 5
 ```
 
-`--variant turbo|nano`, `--dtype fp32|fp16|q4|q4f16|q8`, `--provider cpu|dml`, `--root <dir>`,
+`--variant turbo|nano`, `--dtype fp32|fp16|q4|q4f16|q8`, `--provider cpu|dml|webgpu`, `--root <dir>`,
 `--max-tokens`, `--penalty`, `--watch`, `--cpu-graphs <names>`, `--presentmon <exe>`.
+
+Threads: `--threads n` for every graph, `--encoder-threads`, `--lm-threads` and `--decoder-threads`
+to override one; `--spin on|off`; `--global-pool` for one environment-wide pool instead of one per
+session. **Pin the threads before believing any A/B**: on the default pool one configuration varies
+±25% run to run, pinned it varies ±3%. `--profile <prefix>` writes ONNX Runtime's per-op profile,
+one JSON per graph; `--verbose` opens the environment at verbose so a provider's own messages show.
+`--ep key=value` passes a provider option through, repeatable. `stream` takes `--chunk` (tokens per
+piece, 25 is a second), `--overlap` (tokens of the previous piece decoded again as context) and
+`--crossfade` (samples blended at the seam).
 
 ## Four things that will bite the next reader
 
-**`-p:Ep=cpu` is not cosmetic.** The default build references
+**`-p:Ep=cpu` is not cosmetic, and neither is `-p:OrtVersion`.** The default build references
 `Microsoft.ML.OnnxRuntime.DirectML` **1.24.4**, which is the last DirectML build Microsoft published;
-`-p:Ep=cpu` swaps in `Microsoft.ML.OnnxRuntime` **1.29.0**, the version `D47.Tts` ships. The two
-packages cannot coexist in one process, so a CPU number taken from the default build is a 1.24.4
-number. Both were measured; the difference is inside the noise.
+`-p:Ep=cpu` swaps in `Microsoft.ML.OnnxRuntime` at `OrtVersion` (default **1.29.0**, the version
+`D47.Tts` ships), and `-p:Ep=webgpu` adds the `Microsoft.ML.OnnxRuntime.EP.WebGpu` plugin beside it.
+The packages cannot coexist in one process, so a CPU number is a number for one runtime version —
+and **1.29.0 runs the q4f16 language model 1.7× slower than 1.24.4 through 1.28.0**
+([onnxruntime#32255](https://github.com/microsoft/onnxruntime/issues/32255): fp16 `MatMul` on x64
+fell through to Eigen; fixed on `main`, in no package). Measure on 1.28.0 unless the question is
+1.29.0 itself.
+
+**The reference clip's length is the decoder's cost.** Every decode carries the clip's own speech
+tokens as its prompt, so a 10s clip makes a 25-token piece cost nearly what a whole line does. A 5s
+clip halves the decoder and the encoder; a 3s clip made the model stop after 24 tokens. The
+`voices\` clips are 8–10s; `andrew-5s.wav` was cut from `andrew.wav` for the amended finding.
+
+**A provider option is capped at 8,192 characters.** `forceCpuNodeNames` cannot carry the decoder's
+larger op types whole (305 `LayerNormalization` names alone are over it), so a bisect by op type
+stops at the ones with a few dozen nodes. Rewriting the graph is the way past it.
 
 **`--provider dml` mostly does not work, and the failures are informative rather than a setup
 problem.** Two graphs error with `80070057`, the language model fail-fasts the process at q4f16 and

@@ -13,6 +13,13 @@
     -->
     <Ep Condition="'$(Ep)' == ''">dml</Ep>
     <DefineConstants Condition="'$(Ep)' == 'dml'">$(DefineConstants);DML</DefineConstants>
+    <DefineConstants Condition="'$(Ep)' == 'webgpu'">$(DefineConstants);WEBGPU</DefineConstants>
+    <!--
+      The base package's version, for the cpu and webgpu flavours. Overridable because the language
+      model runs 1.6x slower on 1.29.0 than on 1.24.4's CPU provider, and finding where between the
+      two it moved is a matter of building each.
+    -->
+    <OrtVersion Condition="'$(OrtVersion)' == ''">1.29.0</OrtVersion>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(Ep)' == 'dml'">
@@ -29,7 +36,16 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(Ep)' == 'cpu'">
-    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.29.0" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="$(OrtVersion)" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Ep)' == 'webgpu'">
+    <!--
+      The plugin execution provider, MIT, which sits beside the base package rather than replacing
+      it — the one GPU route that does not move the app off 1.29.0. Dawn over Direct3D 12 on Windows.
+    -->
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="$(OrtVersion)" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.EP.WebGpu" Version="0.3.0" />
   </ItemGroup>
 
 </Project>

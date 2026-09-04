@@ -20,6 +20,106 @@ driver 610.74; Windows 11.
 
 ---
 
+## Amended later the same day: the premise changed, and two numbers below are wrong
+
+**The question is no longer whether Chatterbox clears Kokoro's bar.** The maintainer ruled that
+Kokoro goes and Chatterbox is offered as an option, lag and all; the job became getting first sound
+as low as it will go on the CPU, with the GPU a bonus. Everything from here was measured after that
+ruling, on the same machine and line, five warm runs each with the thread pool pinned — because on
+the default pool the same configuration varies ±25% run to run, and pinned it varies ±3%.
+
+**Two corrections to the text below.** The 3,375 ms headline in §2 was taken on ONNX Runtime's
+default thread pool; at eight intra-op threads (the P-core count) the same measurement reads
+2,044 ms on 1.29.0. And "nothing available moves that by an order of magnitude" is false: the
+runtime version, the reference clip's length and decoding the line in pieces each move it by more
+than the section allowed for, and together they take first sound from 3,375 ms to under 500.
+
+### Where the time goes, and what moves it
+
+| Nano q4f16, one 2.84s line, warm medians | first sound | encode | language model | decoder |
+|---|---|---|---|---|
+| ORT 1.29.0, default pool (the §2 number) | 3,375 ms | | | |
+| ORT 1.29.0, 8 threads | 2,044 ms | 308 | 1,007 (14.4 ms/token) | 733 |
+| ORT 1.28.0, 8 threads | 1,574 ms | 323 | 541 (7.7 ms/token) | 710 |
+| ORT 1.28.0, 8 threads, decoder on 16 | 1,537 ms | 336 | 551 | 651 |
+| … and a 5s reference clip instead of 10s | 1,139 ms | 160 | 574 | 403 |
+| … and decoded in pieces of 25 tokens, encoder cached | **498 ms** | — | 243 | 255 |
+
+- **ONNX Runtime 1.29.0 runs this language model 1.7× slower than every version before it.** Built
+  and measured against 1.24.4, 1.25.0, 1.26.0, 1.27.1 and 1.28.0: all between 7.7 and 8.7 ms per
+  token. 1.29.0 alone reads 13.7–14.4. The decoder is unchanged across all six. 1.29.0 is the
+  version `D47.Tts` ships; the §2 paragraph calling the pin "worth nothing" measured on the
+  default pool, where the noise hid it. It is a known bug, not a tuning question:
+  [onnxruntime#32255](https://github.com/microsoft/onnxruntime/issues/32255) — 1.29.0 registered
+  fp16 `MatMul` and `Gemm` CPU kernels on every target, and on x64, which has no fp16 GEMM, they fall
+  through to an Eigen product; 1.28 promoted those nodes to fp32 instead. The q4f16 export has 24
+  such nodes per token (attention's QKᵀ and PV), the q4 decoder has none. The fix
+  ([#32301](https://github.com/microsoft/onnxruntime/pull/32301)) merged to `main` on 2026-09-01
+  and is in no package; nothing in `SessionOptions` recovers it. Pin 1.28.0, or ship an export
+  with fp32 activations — which is also Microsoft's own CPU recipe for int4 decoders.
+- **The decoder's cost is the reference clip, not the line.** Every decode carries the reference's
+  own speech tokens as its prompt — 250 of them for a 10s clip — so a 25-token piece costs almost
+  what the whole line does: 442 ms against 651. A 5s clip halves the decoder (403 ms) and the
+  encoder (160 ms) and Whisper reads the line back unchanged. **A 3s clip breaks it:** the model
+  stopped after 24 tokens and Whisper heard "Ace to Pre". Five seconds is the floor, not a target.
+- **Decoding in pieces works, and §2 was wrong to dismiss it.** The graph is one-shot, but nothing
+  makes the line one piece: `stream` decodes each 25 tokens as they exist, with five tokens of the
+  previous piece in front for context and a 10 ms crossfade at the seam. Whisper small.en reads
+  every pieced line back correctly — the 2.84s line at pieces of 10, 15, 20 and 25 tokens, and an
+  8.6s line in eleven pieces: *"Docking permission granted at Shinrata Desra. Proceed to pad 32 and
+  mind the Anaconda on approach, Commander. Fuel is at 40%."* Playback never waits: each piece is
+  ready before the one before it has finished playing, on one thread. **Whether the seams can be
+  heard is not measured** — the community README warns they can, and a read-back proves words, not
+  clicks. The WAVs are under `%LOCALAPPDATA%\d47-spike\chatterbox\out\` (`stream-*.wav`,
+  `s-c*.wav`, `long-*.wav`).
+- **Long lines scale fine once pieced.** 8.6s of audio, 213 speech tokens: first sound 424 ms with a
+  5s clip (645 with 10s), total synthesis 4.1s, realtime ×2.1, no stalls.
+- **Threads.** The language model wants *more* threads, not fewer — 1: 41.9 ms/token, 2: 26.2,
+  4: 18.2, 8: 14.4, 12: 13.2 on 1.29.0 — because it is not dispatch-bound, it is op-count-bound:
+  the export runs about 1,400 nodes per token, of which 73 are matmuls carrying 44% of the time and
+  the rest are Cast (166), Unsqueeze (182), Reshape (149), Concat (136), Gather (126) and Add (113).
+  The decoder is best at 16 (651 ms; 733 at 8, 941 at 24, where the pool spills onto E-cores and
+  its idle spinning slows the *next* line's encoder). `session.intra_op.allow_spinning=0` loses
+  5%. One environment-wide pool shared by the four sessions measures the same as one pool each.
+  A count that is right on this chip is wrong on another; whatever ships needs a heuristic.
+
+**The next lead, not taken:** a fused re-export of the language model with fp32 activations. The
+1,400-node step is the plain transformers export with fp16 KV cache, which the CPU provider wraps
+in casts; ONNX Runtime's transformers optimiser folds the shape chains and fuses attention, and
+"q4" (fp32 activations) is the CPU-native MatMulNBits path. That is Python tooling and a graph d47
+would host itself. The per-token embedding dispatch (lead 4 of the brief) and an in-place KV cache
+(lead 5) are smaller than either.
+
+### The GPU, revisited: one route works for one graph
+
+`Microsoft.ML.OnnxRuntime.EP.WebGpu` 0.3.0 (2026-08-24, MIT) is a plugin provider that sits beside
+the base package, so it needs no version move — the one thing DirectML could not offer. Dawn over
+Direct3D 12; `-p:Ep=webgpu` builds against it, `--provider webgpu` runs on it.
+
+| graph | on WebGPU |
+|---|---|
+| language_model | **runs correctly** — 69 of 70 tokens identical to the CPU's, the one difference a tie-break, and Whisper reads the line back. 17.4 ms/token as wired, slower than the CPU: the KV cache round-trips to the card every step and 124 nodes fall back to the CPU |
+| embed_tokens | runs |
+| speech_encoder | computes wrong speech-token ids (the quantised gather after it caught index 6564 of a 6561 table). Runs once per voice; keep it on the CPU |
+| conditional_decoder | **aborts the process.** After about 55 s of first-run shader work, five `_com_error` exceptions inside the provider and a fail-fast (0xC0000409) with the NVIDIA D3D12 driver on the stack. The same for Turbo's official export at fp16 and q4f16, so not the conversion. Forcing any one op type to the CPU changes nothing (`forceCpuNodeNames` is capped at 8,192 characters, so the large op types could only be tried in halves). No FXC fallback: without `dxcompiler.dll` the provider refuses to initialise. The Vulkan backend cannot load `vulkan-1.dll` (error 87) |
+
+So the GPU can take the language model today and not the decoder, and the language model on the
+GPU only pays once the KV cache stays on the card (IoBinding) and the export stops falling back.
+
+**What the crash is, as far as it could be taken.** No issue on the ONNX Runtime tracker matches
+it, and `_com_error` is thrown nowhere in ONNX Runtime, Dawn or the shader compiler — the NVIDIA
+user-mode driver is the only other C++ module on the stack, and it is known to raise that type.
+It is not a display timeout: the System log has no event 4101, and a timeout would come back as
+an exception, not a fail-fast. The shape fits a C++ exception escaping the driver's pipeline
+compile on a Dawn worker thread, whose entry point terminates the process. Serialising pipeline
+builds (`maxNumPendingDispatches=1`) with environment-level verbose logging and the shader dump
+(`ORT_WEBGPU_EP_SHADER_DUMP_FILE`) named nothing: the dump was empty and the last log lines were
+arena reservations. Untried: the same provider on another card or driver, and forcing the whole
+of `Conv`, `LayerNormalization` or `MatMulNBits` to the CPU, which the 8,192-character cap
+prevented — a graph rewrite would get round it.
+
+---
+
 ## 1. The port works, and the proof is not "it produced a WAV"
 
 The four graphs drive from C# with no wrapper in the middle. Everything Resemble's own sample gets

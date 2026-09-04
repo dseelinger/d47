@@ -22,9 +22,24 @@ internal static class Program
     private static float _penalty = 1.2f;
     private static bool _watch;
     private static int _seconds = 20;
+    private static int _threads;
+    private static int _encoderThreads;
+    private static int _lmThreads;
+    private static int _decoderThreads;
+    private static bool? _spin;
+    private static bool _globalPool;
+    private static string? _profile;
+    private static bool _verbose;
+    private static int _chunk = 25;
+    private static int _overlap = 5;
+    private static int _crossfade = 240;
     private static HashSet<string> _onCpu = [];
+    private static readonly Dictionary<string, string> _ep = [];
 
     private static string VariantRoot => Path.Combine(_root, _variant);
+
+    private static Tuning Tuning => new(
+        _threads, _encoderThreads, _lmThreads, _decoderThreads, _spin, _globalPool, _profile, _verbose);
 
     private static int Main(string[] args)
     {
@@ -44,6 +59,23 @@ internal static class Program
                 case "--penalty": _penalty = float.Parse(args[++i]); break;
                 case "--watch": _watch = true; break;
                 case "--seconds": _seconds = int.Parse(args[++i]); break;
+                case "--threads": _threads = int.Parse(args[++i]); break;
+                case "--encoder-threads": _encoderThreads = int.Parse(args[++i]); break;
+                case "--lm-threads": _lmThreads = int.Parse(args[++i]); break;
+                case "--decoder-threads": _decoderThreads = int.Parse(args[++i]); break;
+                case "--spin": _spin = args[++i] == "on"; break;
+                case "--global-pool": _globalPool = true; break;
+                case "--profile": _profile = args[++i]; break;
+                case "--verbose": _verbose = true; break;
+                case "--chunk": _chunk = int.Parse(args[++i]); break;
+                case "--overlap": _overlap = int.Parse(args[++i]); break;
+                case "--crossfade": _crossfade = int.Parse(args[++i]); break;
+                case "--ep":
+                {
+                    var pair = args[++i].Split('=', 2);
+                    _ep[pair[0]] = pair.Length > 1 ? pair[1] : "1";
+                    break;
+                }
                 case "--cpu-graphs": _onCpu = [.. args[++i].Split(',', StringSplitOptions.RemoveEmptyEntries)]; break;
                 default: rest.Add(args[i]); break;
             }
@@ -58,6 +90,7 @@ internal static class Program
                 "tokens" => Tokens(rest),
                 "say" => Say(rest),
                 "bench" => Bench(rest),
+                "stream" => Stream(rest),
                 "gpu" => ShowGpu(),
                 "elite" => Elite(rest),
                 _ => Help(),
@@ -85,13 +118,21 @@ internal static class Program
               tokens <text>                what the tokeniser makes of a line, tags included
               say <text> <ref.wav> <out>   one line end to end; first-sound latency and realtime
               bench <text> <ref.wav> [n]   the same line on each --provider, n runs each
+              stream <text> <ref.wav> <out>  the line decoded in pieces as its tokens arrive; first sound per piece
               gpu                          the card, what it is holding, and which process holds it
               elite <text> <ref.wav>       Elite's frame time with and without a line being spoken
 
-            --variant turbo|nano   --dtype fp32|fp16|q4|q4f16|q8   --provider cpu|dml
+            --variant turbo|nano   --dtype fp32|fp16|q4|q4f16|q8   --provider cpu|dml|webgpu
             --root <dir>   --max-tokens n   --penalty f   --watch   --presentmon <exe>
+            --ep key=value         a provider option, repeatable (webgpu: dawnBackendType=Vulkan)
             --cpu-graphs speech_encoder,…   keep named graphs on the CPU whatever --provider says
             --seconds n            how long `elite` samples each of its two windows (default 20)
+            --threads n            intra-op threads (0 = ONNX Runtime's default)   --spin on|off
+            --encoder-threads n  --lm-threads n  --decoder-threads n   per graph, else --threads
+            --global-pool          one pool of --threads shared by all four sessions, not one each
+            --profile <prefix>     ONNX Runtime's per-op profile, one JSON per graph
+            --chunk n              stream: tokens per piece (25 = one second)   --overlap k   tokens of context
+            --crossfade n          stream: samples blended at each seam (240 = 10 ms)
             """);
 
         return 0;
@@ -103,7 +144,7 @@ internal static class Program
     /// </summary>
     private static int Shape()
     {
-        using var pipeline = Pipeline.Open(VariantRoot, _dtype, _provider, _onCpu);
+        using var pipeline = Pipeline.Open(VariantRoot, _dtype, _provider, _onCpu, Tuning, _ep);
 
         Console.WriteLine($"variant   : {_variant} ({VariantRoot})");
         Console.WriteLine($"provider  : {_provider}");
@@ -270,12 +311,14 @@ internal static class Program
         var tokeniser = Tokeniser.Load(Path.Combine(VariantRoot, "tokenizer.json"));
         var ids = tokeniser.Encode(args[0]);
 
-        using var pipeline = Pipeline.Open(VariantRoot, _dtype, _provider, _onCpu);
+        using var pipeline = Pipeline.Open(VariantRoot, _dtype, _provider, _onCpu, Tuning, _ep);
         using var watch = _watch ? new Gpu.Watch() : null;
 
-        var (audio, timing) = pipeline.Speak(ids, reference, _maxTokens, _penalty);
+        var (audio, tokens, timing) = pipeline.Speak(ids, reference, _maxTokens, _penalty);
 
         Audio.WriteWav(args[2], audio, Pipeline.SampleRate);
+
+        Console.WriteLine($"tokens    : {string.Join(" ", tokens)}");
 
         Console.WriteLine(
             $"{_variant}/{_dtype} on {_provider}: {ids.Length} text tokens -> " +
@@ -291,6 +334,11 @@ internal static class Program
         {
             Console.WriteLine(
                 $"  peak VRAM in use {watch.PeakUsedMb:N0} MB   peak GPU {watch.PeakUtilisation}%");
+        }
+
+        foreach (var profile in pipeline.EndProfiling())
+        {
+            Console.WriteLine($"  profile -> {profile}");
         }
 
         return 0;
@@ -315,7 +363,15 @@ internal static class Program
         var ids = tokeniser.Encode(args[0]);
 
         // Both, unless told otherwise: the comparison is the point of the command.
-        foreach (var provider in (_providerGiven ? _provider : "cpu,dml").Split(','))
+#if WEBGPU
+        const string Both = "cpu,webgpu";
+#elif DML
+        const string Both = "cpu,dml";
+#else
+        const string Both = "cpu";
+#endif
+
+        foreach (var provider in (_providerGiven ? _provider : Both).Split(','))
         {
             Pipeline pipeline;
 
@@ -325,7 +381,7 @@ internal static class Program
 
             try
             {
-                pipeline = Pipeline.Open(VariantRoot, _dtype, provider, _onCpu);
+                pipeline = Pipeline.Open(VariantRoot, _dtype, provider, _onCpu, Tuning, _ep);
             }
             catch (OnnxRuntimeException exception)
             {
@@ -338,34 +394,108 @@ internal static class Program
                 using var watch = new Gpu.Watch();
 
                 var first = pipeline.Speak(ids, reference, _maxTokens, _penalty);
-                var times = new List<double>();
+                var timings = new List<Timing>();
 
                 for (var run = 0; run < runs; run++)
                 {
-                    times.Add(pipeline.Speak(ids, reference, _maxTokens, _penalty).Timing.TotalMs);
+                    timings.Add(pipeline.Speak(ids, reference, _maxTokens, _penalty).Timing);
                 }
 
-                times.Sort();
-
-                var median = times[times.Count / 2];
+                var median = Median(t => t.TotalMs);
                 var seconds = first.Timing.Seconds;
 
                 Console.WriteLine(
                     $"{provider,-4} load {pipeline.LoadMs,7:F0} ms   " +
                     $"warm {first.Timing.TotalMs,7:F0} ms   " +
-                    $"median {median,7:F0} ms   min {times[0],7:F0}   max {times[^1],7:F0}   " +
+                    $"median {median,7:F0} ms   min {timings.Min(t => t.TotalMs),7:F0}   " +
+                    $"max {timings.Max(t => t.TotalMs),7:F0}   " +
                     $"audio {seconds,5:F2}s   realtime x{seconds * 1000 / median:F2}" +
                     // Only on the GPU: on the CPU this column reads whatever the desktop happened
                     // to do while the line was being spoken, which is not a fact about the model.
-                    (provider == "dml"
+                    (provider != "cpu"
                         ? $"   VRAM +{Math.Max(0, watch.PeakUsedMb - baseline):N0} MB"
                         : string.Empty));
+
+                // Each stage's own median: which graph holds the time decides what to work on
+                // next, and a total cannot say.
+                Console.WriteLine(
+                    $"     encode {Median(t => t.EncodeMs),6:F0} ms   " +
+                    $"language {Median(t => t.LanguageMs),6:F0} ms " +
+                    $"({Median(t => t.MsPerToken):F1} ms/token, {first.Timing.Tokens} tokens)   " +
+                    $"decode {Median(t => t.DecodeMs),6:F0} ms");
+
+                foreach (var profile in pipeline.EndProfiling())
+                {
+                    Console.WriteLine($"     profile -> {profile}");
+                }
+
+                double Median(Func<Timing, double> stage)
+                {
+                    var sorted = timings.Select(stage).Order().ToArray();
+                    return sorted[sorted.Length / 2];
+                }
             }
         }
 
         return 0;
 
         static string Line(string message) => message.Split('\n')[0].Trim();
+    }
+
+    /// <summary>
+    /// The line decoded in pieces as its tokens arrive, which is the one change that attacks first
+    /// sound rather than total time. The numbers are the point; whether the seams can be heard is
+    /// for the WAV and the Whisper read-back.
+    /// </summary>
+    private static int Stream(List<string> args)
+    {
+        if (args.Count < 3)
+        {
+            Console.Error.WriteLine("stream <text> <reference.wav> <out.wav>");
+            return 2;
+        }
+
+        var reference = Reference(args[1]);
+        var tokeniser = Tokeniser.Load(Path.Combine(VariantRoot, "tokenizer.json"));
+        var ids = tokeniser.Encode(args[0]);
+
+        using var pipeline = Pipeline.Open(VariantRoot, _dtype, _provider, _onCpu, Tuning, _ep);
+        using var voice = pipeline.Encode(reference);
+
+        // One warm pass, as bench does: the first inference pays for arena allocation, which is
+        // not the cost of speaking a line.
+        pipeline.Stream(ids, voice, _maxTokens, _penalty, _chunk, _overlap, _crossfade);
+
+        var (audio, tokens, timing) =
+            pipeline.Stream(ids, voice, _maxTokens, _penalty, _chunk, _overlap, _crossfade);
+
+        Audio.WriteWav(args[2], audio, Pipeline.SampleRate);
+
+        Console.WriteLine($"tokens    : {string.Join(" ", tokens)}");
+        Console.WriteLine(
+            $"{_variant}/{_dtype} on {_provider}: {ids.Length} text tokens -> {tokens.Length} speech " +
+            $"tokens -> {timing.Seconds:F2}s of audio in {timing.Chunks.Count} pieces of {_chunk} " +
+            $"tokens, {_overlap} of context, {_crossfade} samples of crossfade");
+        Console.WriteLine($"  encode {voice.EncodeMs,6:F0} ms, once per voice and not counted below");
+
+        var ready = 0.0;
+
+        foreach (var (chunk, i) in timing.Chunks.Select((c, i) => (c, i)))
+        {
+            ready += chunk.LanguageMs + chunk.DecodeMs;
+
+            Console.WriteLine(
+                $"  piece {i + 1,2}: {chunk.Tokens,3} tokens   language {chunk.LanguageMs,5:F0} ms   " +
+                $"decode {chunk.DecodeMs,5:F0} ms   audio {chunk.AudioMs,5:F0} ms   ready at {ready,5:F0} ms");
+        }
+
+        Console.WriteLine(
+            $"  first sound {timing.FirstSoundMs:F0} ms   total {timing.TotalMs:F0} ms   " +
+            $"realtime x{timing.Seconds * 1000 / timing.TotalMs:F2}   " +
+            $"stalls {timing.StallMs:F0} ms on one thread, {timing.PipelinedStallMs:F0} ms with " +
+            "the decoder on its own   -> " + args[2]);
+
+        return 0;
     }
 
     private static int ShowGpu()
@@ -415,7 +545,7 @@ internal static class Program
             var tokeniser = Tokeniser.Load(Path.Combine(VariantRoot, "tokenizer.json"));
             var ids = tokeniser.Encode(args[0]);
 
-            using var pipeline = Pipeline.Open(VariantRoot, _dtype, _provider, _onCpu);
+            using var pipeline = Pipeline.Open(VariantRoot, _dtype, _provider, _onCpu, Tuning, _ep);
 
             pipeline.Speak(ids, reference, _maxTokens, _penalty);
 
