@@ -109,6 +109,15 @@ earlier than fit: **DirectML 1.24.4 runs one of Chatterbox's four graphs.**
 | `language_model` | q4f16 **fail-fasts the process** (`0xC0000409`). fp16 runs, and is wrong: 31 speech tokens where the CPU generates 70, 1.28s of audio Whisper transcribes as nothing at all |
 | `conditional_decoder` | runs correctly |
 
+**These are failures, not refusals, and the difference is the whole reason they are fatal.** The
+sessions build; DirectML *takes* those nodes at partition time and throws from inside its own kernel
+implementation (`MLOperatorAuthorImpl.cpp`) at execute time. Had it declined the operators instead,
+ONNX Runtime would have placed them on the CPU and the pipeline would have run, slowly and correctly.
+`80070057` out of DirectML is a long-running family of bugs — reported against `Add`, `Resize`,
+`InstanceNormalization`, `MatMul` and `ConvTranspose` over several years, with the same models
+succeeding on the CPU and on CUDA — which fits a provider Microsoft has in sustained engineering with
+new work moved to Windows ML.
+
 The one graph that runs and the one that runs-but-lies are both worth a number, because they say the
 GPU would not have been the answer even if the errors were fixed. The language model alone, fp16, on
 the card, with the other three graphs pinned to the CPU:
@@ -133,6 +142,14 @@ Runtime — a cost worth knowing about even now that nothing is being adopted.
 runtime carries NVIDIA's own terms and a licence-gate question"*. There is no CUDA toolkit on this
 machine and `CUDA_PATH` is unset, so trying it means a machine-wide install under those terms. That
 is a decision to be typed on purpose rather than one a spike makes on the way past.
+
+**And "the GPU leg does not exist" means DirectML, which is narrower than it sounds.** Three other
+routes to the card are untested: CUDA, Windows ML, and ONNX Runtime's newer WebGPU plugin execution
+provider — and the Nano conversion reports its graphs running through ONNX Runtime Web on WebGPU on
+one RTX 3060, so a working GPU path is not a hopeless idea. It is not one worth chasing either. Even
+if the language model *and* the vocoder both went five times faster, a Nano line would land near 780
+ms against Kokoro's 321, and it would still be the slower option for a download 1.8× the size. The
+CPU measurement decides this on its own; the GPU was only ever the thing that might have rescued it.
 
 ## 4. What the download would be
 
