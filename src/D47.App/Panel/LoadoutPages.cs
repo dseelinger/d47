@@ -324,14 +324,12 @@ public static class LoadoutPages
         Action pressed,
         LoadoutStanding standing,
         string? hull = null,
-        bool drawings = false)
+        bool drawings = false,
+        bool showing = false)
     {
-        var stroke = standing switch
-        {
-            LoadoutStanding.Active => ThemeManager.AccentKey,
-            LoadoutStanding.Wanted => ThemeManager.TextMutedKey,
-            _ => ThemeManager.TextKey,
-        };
+        var stroke = standing == LoadoutStanding.Wanted
+            ? ThemeManager.TextMutedKey
+            : ThemeManager.TextKey;
 
         var body = new Grid
         {
@@ -367,6 +365,21 @@ public static class LoadoutPages
             body.Children.Add(drawing);
 
             spinning = drawing;
+        }
+
+        // **"Flying now" as a badge, not as a highlighted card** (#289, reported 2026-09-04). An
+        // accent border round the whole card is the signal every list in every application uses
+        // for *the row you have selected*, so the fleet page opened looking as though d47 had
+        // already picked a ship for the Commander — "I assume that's the indication Current Ship.
+        // That's the wrong signal to send." A pill says the one thing it means and says it in
+        // words, which is also the only version of this that survives a Commander who cannot
+        // separate the hues.
+        if (standing == LoadoutStanding.Active)
+        {
+            var badge = Pill("FLYING NOW");
+
+            Grid.SetRow(badge, 0);
+            body.Children.Add(badge);
         }
 
         var label = new TextBlock
@@ -418,35 +431,98 @@ public static class LoadoutPages
             Padding = new Thickness(10, 6),
         };
 
-        if (standing != LoadoutStanding.Owned)
+        if (standing == LoadoutStanding.Wanted)
         {
             // Thickness as well as colour, because a border that differs only in hue is no border
             // at all to a Commander who cannot separate the hues — the same rule the plan dot and
             // the gear already answer to.
-            button.BorderThickness = new Thickness(standing == LoadoutStanding.Active ? 2 : 1);
+            button.BorderThickness = new Thickness(1);
             Themed(button, Button.BorderBrushProperty, stroke);
 
-            if (standing == LoadoutStanding.Wanted)
-            {
-                // **Faded, because a muted one-pixel edge was not a signal.** Drawn and looked at:
-                // an unbought hull was all but indistinguishable from an owned one, which is the
-                // exact complaint this work started from. The card recedes as a whole — drawing,
-                // name and note together — which reads as "not yours yet" from across the room
-                // rather than needing the note to be read.
-                button.Opacity = 0.55;
-            }
+            // **Faded, because a muted one-pixel edge was not a signal.** Drawn and looked at:
+            // an unbought hull was all but indistinguishable from an owned one, which is the
+            // exact complaint this work started from. The card recedes as a whole — drawing,
+            // name and note together — which reads as "not yours yet" from across the room
+            // rather than needing the note to be read.
+            button.Opacity = 0.55;
         }
 
-        button.Click += (_, _) => pressed();
-
-        if (spinning is not null && resting is not null)
+        if (showing)
         {
-            // Attached to the button rather than the image, so the hull turns while the pointer is
-            // anywhere on its card and not only while it is over the drawing itself.
-            HullSpin.Attach(button, spinning, hull, resting);
+            // **The card the other pane is drawing**, the same outline a row has carried since
+            // #110 and the same reason: an index that stays on screen beside what it opened has
+            // to say which one that is. It was free to mean this only once "flying now" stopped
+            // being an outline and became a badge — two outlines meaning different things on one
+            // grid is worse than neither (reported 2026-09-04).
+            button.BorderThickness = new Thickness(2);
+            Themed(button, Button.BorderBrushProperty, ThemeManager.AccentKey);
+        }
+
+        if (spinning is { } turning && resting is { } still)
+        {
+            button.Click += (_, _) =>
+            {
+                // The rotation first, then the drill, and both on the one press (#289). Nothing
+                // here waits for the video — the page must open at the speed a press opens a page,
+                // whatever the decoder is doing.
+                HullTurntable.Play(turning, hull, still);
+
+                pressed();
+            };
+
+            // **And again when this card is the one being rebuilt**, which the press itself
+            // causes: opening a ship redraws the index so it can outline what it opened, so the
+            // image the press started the video on is thrown away a moment later. Wired on attach
+            // rather than called here, because a control that is not in the tree yet is one the
+            // rotation stops on at its first tick. See HullTurntable.Resumes.
+            turning.AttachedToVisualTree += (_, _) =>
+            {
+                if (HullTurntable.Resumes(hull))
+                {
+                    HullTurntable.Play(turning, hull, still);
+                }
+            };
+        }
+        else
+        {
+            button.Click += (_, _) => pressed();
         }
 
         return button;
+    }
+
+    /// <summary>
+    /// A small bordered label, the shape the build badge and the issue chips already use.
+    /// <para>
+    /// In the picture's row rather than the name's, and aligned to the top left of it, so it reads
+    /// as a stamp on the drawing rather than as part of the ship's name. A card with no drawing
+    /// puts it in the empty row above the name, which is the same place.
+    /// </para>
+    /// </summary>
+    private static Control Pill(string said)
+    {
+        var text = new TextBlock
+        {
+            Text = said,
+            FontSize = TypeScale.Small,
+            FontWeight = FontWeight.Bold,
+        };
+
+        var pill = new Border
+        {
+            Padding = new Thickness(7, 1),
+            CornerRadius = new CornerRadius(9),
+            BorderThickness = new Thickness(1),
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top,
+            Child = text,
+        };
+
+        Themed(text, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
+        Themed(pill, Border.BorderBrushProperty, ThemeManager.AccentKey);
+        Themed(pill, Border.BackgroundProperty, ThemeManager.BackgroundKey);
+
+        return pill;
     }
 
     /// <summary>The plan mark, as an inline so it travels with the name on a card.</summary>
@@ -820,11 +896,12 @@ public static class LoadoutPages
     {
         var stack = new StackPanel { Spacing = 2, Margin = new Thickness(0, 6, 0, 6) };
 
-        var heading = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 8,
-        };
+        // **A DockPanel rather than a horizontal stack, so the reading wraps** (#289). A stack
+        // hands its children infinite width, so a long reading simply ran off the end — which
+        // nobody saw while a gauge had the whole pane, and which spilled straight into the hull
+        // picture the moment the figures moved into half of it. Docked, the name keeps its place
+        // and the reading gets what is left, so it wraps instead of leaving.
+        var heading = new DockPanel();
 
         var name = new TextBlock
         {
@@ -832,7 +909,10 @@ public static class LoadoutPages
             FontSize = TypeScale.Secondary,
             FontWeight = FontWeight.SemiBold,
             VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(0, 0, 8, 0),
         };
+
+        DockPanel.SetDock(name, Dock.Left);
 
         Themed(name, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
         heading.Children.Add(name);
@@ -844,6 +924,7 @@ public static class LoadoutPages
             Text = gauge.Modelled ? $"~ {gauge.Reading}" : gauge.Reading,
             FontSize = TypeScale.Body,
             VerticalAlignment = VerticalAlignment.Center,
+            TextWrapping = TextWrapping.Wrap,
         };
 
         Themed(
@@ -1752,14 +1833,23 @@ public sealed class IndexPage : LoadoutPage
 
         foreach (var row in rows)
         {
+            // Read off the trail rather than kept as a second piece of state (#110): the last
+            // crumb is what the other pane is drawing, and every card builds the crumb it would
+            // drill to anyway — so the outline follows the right pane however it got there,
+            // pressed here, reached by voice, or arrived at by the back gesture.
+            var crumb = LoadoutPages.Crumb(Mode, row);
+            var showing = _nav.Trail.Count > 0
+                          && string.Equals(_nav.Trail[^1].Key, crumb.Key, StringComparison.Ordinal);
+
             _cards.Children.Add(LoadoutPages.Card(
                 row.Text,
                 row.Aside,
                 row.Marked,
-                () => _nav.Drill(LoadoutPages.Crumb(Mode, row)),
+                () => _nav.Drill(crumb),
                 row.Standing,
                 row.Hull,
-                Drawings));
+                Drawings,
+                showing));
         }
 
         _list.Children.Add(_cards);
@@ -1787,6 +1877,20 @@ public sealed class ItemPage : LoadoutPage
     private readonly string _item;
     private readonly Button? _drop;
     private readonly StackPanel _list = new() { Spacing = 3 };
+
+    /// <summary>
+    /// What the page is about, in the size a name goes in (#289). Docked above everything and
+    /// outside the scroller, so it stays at the top of the pane at every size the picture takes —
+    /// and is covered along with the rest of the page when the picture fills the window.
+    /// </summary>
+    private readonly TextBlock _title = new()
+    {
+        FontSize = TypeScale.Heading,
+        FontWeight = FontWeight.Bold,
+        TextWrapping = TextWrapping.Wrap,
+        Margin = new Thickness(0, 0, 0, 8),
+    };
+
     private readonly TextBlock _summary = new()
     {
         FontSize = TypeScale.Secondary,
@@ -1806,9 +1910,10 @@ public sealed class ItemPage : LoadoutPage
         _item = item;
         _prompts = prompts;
 
+        LoadoutPages.Themed(_title, TextBlock.ForegroundProperty, ThemeManager.TextKey);
         LoadoutPages.Themed(_summary, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
 
-        var promote = LoadoutPages.Press(mode.PromoteLabel, () => _summary.Text = Mode.Promote(_item));
+        var promote = LoadoutPages.Press(mode.PromoteLabel, () => Said(Mode.Promote(_item)));
 
         var actions = new StackPanel
         {
@@ -1831,10 +1936,12 @@ public sealed class ItemPage : LoadoutPage
         var root = new DockPanel { Margin = new Thickness(14) };
         var say = LoadoutPages.SayLine(mode.SayAtItem);
 
+        DockPanel.SetDock(_title, Dock.Top);
         DockPanel.SetDock(_summary, Dock.Top);
         DockPanel.SetDock(actions, Dock.Top);
         DockPanel.SetDock(say, Dock.Bottom);
 
+        root.Children.Add(_title);
         root.Children.Add(_summary);
         root.Children.Add(actions);
         root.Children.Add(say);
@@ -1848,6 +1955,21 @@ public sealed class ItemPage : LoadoutPage
         Content = new Avalonia.Controls.Panel { Children = { root, _overlay } };
 
         Refresh();
+    }
+
+    /// <summary>
+    /// Puts a sentence on the line under the heading, or takes the line away when there is none.
+    /// <para>
+    /// <b>Visibility as well as text, since the line's ordinary state became empty</b> (#289). An
+    /// owned ship has nothing to say under its own name, so the row is not drawn — and a press
+    /// that reports what it did has to bring it back, or the report would be written into a
+    /// control nobody can see.
+    /// </para>
+    /// </summary>
+    private void Said(string? sentence)
+    {
+        _summary.Text = sentence ?? string.Empty;
+        _summary.IsVisible = sentence is { Length: > 0 };
     }
 
     /// <summary>
@@ -1875,8 +1997,8 @@ public sealed class ItemPage : LoadoutPage
                 "loadout.drop",
                 "Drop",
                 _drop?.Content as string ?? "Drop this",
-                Mode.Summary(_item) is { } what
-                    ? $"{what} There is no way back from this one."
+                Mode.Title(_item) is { } what
+                    ? $"{what}. There is no way back from this one."
                     : "There is no way back from this one.",
                 [new ChoiceOption("keep", "Keep it"), new ChoiceOption("drop", "Drop it")],
                 "keep",
@@ -1908,20 +2030,30 @@ public sealed class ItemPage : LoadoutPage
 
         Refresh();
 
-        _summary.Text = said;
+        Said(said);
     }
 
     protected override void Refresh()
     {
         _list.Children.Clear();
 
-        if (Mode.Summary(_item) is not { } summary)
+        var title = Mode.Title(_item);
+        var summary = Mode.Summary(_item);
+
+        // Gone is neither: a mode with no heading says everything in the summary, and one with a
+        // heading says nothing in the summary for an owned ship. Either alone means it is there.
+        if (title is null && summary is null)
         {
+            _title.IsVisible = false;
+            _summary.IsVisible = false;
             _list.Children.Add(LoadoutPages.Muted("That build is not there any more."));
             return;
         }
 
-        _summary.Text = summary;
+        _title.Text = title ?? string.Empty;
+        _title.IsVisible = title is { Length: > 0 };
+
+        Said(summary);
 
         // The same question the index carries, here too (Phase 38): a Commander who has
         // drilled into the ship it is about is the likeliest one to answer it, and they would
@@ -1931,7 +2063,7 @@ public sealed class ItemPage : LoadoutPage
             _list.Children.Add(LoadoutPages.Notice(notice, said =>
             {
                 Refresh();
-                _summary.Text = said;
+                Said(said);
             }));
         }
 
@@ -1952,12 +2084,20 @@ public sealed class ItemPage : LoadoutPage
         // What the ship is, before what is in it (remediation.md 13, item 2). Inside the
         // scroller rather than docked above it, or a hull's figures would cost the slot list the
         // same rows on every window.
+        // What the ship is, and the hull it is (#289). The figures and the gauges go into one
+        // block so that the picture can put them where they belong for the size it is drawn at —
+        // beside it at half the pane, under it at full width, and on their own for a hull nobody
+        // has rendered, which reads exactly as the page did before this existed. Inside the
+        // scroller rather than docked above it for the reason the figures always were: docked,
+        // both would cost the slot list their height on every window.
+        var facts = new StackPanel { Spacing = 3 };
+
         foreach (var line in roomy ? Mode.Details(_item) : [])
         {
             // Stepped rather than Line, for the copy glyph a whereabouts line carries: the system
             // a ship is parked in goes on the clipboard from here, to be pasted into the Galaxy
             // Map. A line with neither a step nor a copy is drawn exactly as before.
-            _list.Children.Add(LoadoutPages.Stepped(line));
+            facts.Children.Add(LoadoutPages.Stepped(line));
         }
 
         // Power and jump range, at the head of the slot list and under the hull's own figures
@@ -1966,8 +2106,12 @@ public sealed class ItemPage : LoadoutPage
         // read once when the page opens rather than watched while scrolling.
         foreach (var gauge in roomy ? Mode.Gauges(_item) : [])
         {
-            _list.Children.Add(LoadoutPages.Gauge(gauge));
+            facts.Children.Add(LoadoutPages.Gauge(gauge));
         }
+
+        _list.Children.Add(roomy && Mode.HullOf(_item) is { Length: > 0 } hull
+            ? HullPicture.For(hull, facts)
+            : facts);
 
         // **Mini shows only the rows that disagree** (the Commander's ruling, 2026-08-25).
         // Two columns do not fit 512 pixels thirty times over, and the alternative readings were
@@ -2117,7 +2261,7 @@ public sealed class ItemPage : LoadoutPage
 
                     if (target == from)
                     {
-                        _summary.Text = $"{row.Word} is where that plan already is, so nothing was copied.";
+                        Said($"{row.Word} is where that plan already is, so nothing was copied.");
                         return;
                     }
 
@@ -2137,7 +2281,7 @@ public sealed class ItemPage : LoadoutPage
                     // same gesture that produced it.
                     Refresh();
 
-                    _summary.Text = said;
+                    Said(said);
                 }
                 finally
                 {

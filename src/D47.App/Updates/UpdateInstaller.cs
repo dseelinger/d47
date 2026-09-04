@@ -1,4 +1,4 @@
-using System.IO.Compression;
+﻿using System.IO.Compression;
 using System.Security.Cryptography;
 using D47.Core;
 using Microsoft.Extensions.Logging;
@@ -256,28 +256,38 @@ public sealed class UpdateInstaller(AppPaths paths, ILogger<UpdateInstaller> log
     }
 
     /// <summary>
-    /// Files under <c>runtimes\</c> that the new build does not ship. Only that folder: it is
-    /// the one place a release puts files whose mere presence changes behaviour, and everything
-    /// else beside the exe is the Commander's data, which an update has no business touching.
+    /// Files under <c>runtimes\</c> or <c>ships\</c> that the new build does not ship. Those two
+    /// folders and no others: they are the places a release puts files beside the exe, and
+    /// everything else there is the Commander's data, which an update has no business touching.
+    /// <para>
+    /// <c>runtimes\</c> is the one where it matters — Whisper's loader picks up whatever sits in
+    /// that folder, and a stale library beside new ones is a load failure with nobody to blame.
+    /// <c>ships\</c> joined it with the card stills (#289) for tidiness rather than for
+    /// correctness: an orphaned drawing is a file nothing reads, but it is still the build's file
+    /// and the build has stopped shipping it.
+    /// </para>
     /// </summary>
     private static IEnumerable<string> StaleRuntimeFiles(string installRoot, List<string> shipped)
     {
-        var runtimes = Path.Combine(installRoot, "runtimes");
-
-        if (!Directory.Exists(runtimes))
-        {
-            yield break;
-        }
-
         var keep = shipped.ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var file in Directory.EnumerateFiles(runtimes, "*", SearchOption.AllDirectories))
+        foreach (var owned in new[] { "runtimes", "ships" })
         {
-            var rel = Path.GetRelativePath(installRoot, file);
+            var folder = Path.Combine(installRoot, owned);
 
-            if (!keep.Contains(rel) && !file.EndsWith(RetiredSuffix, StringComparison.OrdinalIgnoreCase))
+            if (!Directory.Exists(folder))
             {
-                yield return file;
+                continue;
+            }
+
+            foreach (var file in Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories))
+            {
+                var rel = Path.GetRelativePath(installRoot, file);
+
+                if (!keep.Contains(rel) && !file.EndsWith(RetiredSuffix, StringComparison.OrdinalIgnoreCase))
+                {
+                    yield return file;
+                }
             }
         }
     }

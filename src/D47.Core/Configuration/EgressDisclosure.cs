@@ -1,4 +1,4 @@
-using D47.Core.Conversation;
+﻿using D47.Core.Conversation;
 
 namespace D47.Core.Configuration;
 
@@ -115,6 +115,19 @@ public static class EgressDisclosure
     public const string GitHubReleasesEndpoint =
         "api.github.com, and github.com if you accept an update";
 
+    /// <summary>
+    /// Fetching a hull's large art — the 4K picture and the turntable
+    /// (<a href="https://github.com/dseelinger/d47/issues/289">#289</a>).
+    /// <para>
+    /// <b>Its own row although it shares a host with the update check</b>, for the reason
+    /// <see cref="WebSearch"/> gives at length: a disclosure organised by address rather than by
+    /// what is actually done hides things behind a brand. The update row says a version number
+    /// leaves and a build may come back. This one says which ships you looked at leave, which is
+    /// a different fact about the same host and the only one here that is about your fleet.
+    /// </para>
+    /// </summary>
+    public const string HullArt = "hullart";
+
     /// <summary>Every disclosure d47 makes, in a fixed order. Ids are stable; text is live.</summary>
     public static IReadOnlyList<string> Ids { get; } =
     [
@@ -125,6 +138,7 @@ public static class EgressDisclosure
         NotablePlaces,
         CommunityGoals,
         UpdateCheck,
+        HullArt,
         SpeechModels,
         Diagnostics,
         JournalFiles,
@@ -146,6 +160,7 @@ public static class EgressDisclosure
         CommunityGoals => "Community goals",
         WebSearch => "Web search",
         SpeechModels => "Speech model download",
+        HullArt => "Hull pictures",
         Diagnostics => "Diagnostics and logs",
         JournalFiles => "Journal files",
         // "Shared", not "Donated" (#239): the Commander's word for the act on every surface they
@@ -235,6 +250,23 @@ public static class EgressDisclosure
                 NameOf(CommunityGoals),
                 "No Inara API key is stored, so nothing is requested and community goals are read only from "
                 + "your own journal."),
+
+        HullArt => settings.Ui.HullArt
+            ? new EgressEntry(
+                HullArt,
+                NameOf(HullArt),
+                GitHubReleasesEndpoint,
+                "The hull symbol of a ship you open, when D47 has no large picture of it yet - one request "
+                + "for a picture and one for a turntable, kept on disk so each hull is asked for once. "
+                + "Nothing else goes with it: no key, no Commander name, no position and nothing from your "
+                + "journal. Which hulls you own is not sent, and the small picture on each card came with "
+                + "the build and is never fetched.",
+                Active: true)
+            : EgressEntry.Silent(
+                HullArt,
+                NameOf(HullArt),
+                "Hull pictures are off, so nothing is fetched and every ship keeps the small drawing that "
+                + "came with the build."),
 
         UpdateCheck => settings.Updates.CheckOnStartup
             ? new EgressEntry(

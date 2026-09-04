@@ -16,6 +16,18 @@
     <ProjectReference Include="..\..\src\D47.App\D47.App.csproj" />
   </ItemGroup>
 
+  <!--
+    Stand-ins for the large hull art (#289). The 4K pictures and the turntables are 260 MB and are
+    published as release assets rather than committed, so a clean checkout has the card stills and
+    nothing else — and tests written against assets\ships\corsair.4k.png passed on the machine
+    that wrote them and failed on CI, which is where that difference first showed. These are a
+    480x270 picture and a twelve-frame turntable, 132 KB between them, carrying the names that are
+    the contract.
+  -->
+  <ItemGroup>
+    <None Include="Fixtures\ships\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Avalonia.Headless.XUnit" Version="12.1.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />

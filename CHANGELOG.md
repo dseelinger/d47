@@ -27,7 +27,7 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
-## 0.104.0 — 2026-09-04 — D47 speaks through ElevenLabs v3 and can be told how to say a line, the metering wrapper stops swallowing what a voice can do, and a finished turn lets go of the turn slot
+## 0.105.0 — 2026-09-04 — D47 speaks through ElevenLabs v3 and can be told how to say a line, the metering wrapper stops swallowing what a voice can do, and a finished turn lets go of the turn slot
 
 ### Two ElevenLabs models, and v3 Conversational speaks by default
 
@@ -117,6 +117,177 @@ finished** — "cancel" answered by silence, which is the exact failure that met
 A cancellation source leaked per turn as well.
 
 [#291](https://github.com/dseelinger/d47/issues/291)
+
+## 0.104.0 — 2026-09-04 — Every hull has its picture on the card whatever the journal calls it, a ship's own page draws it at 4K in three sizes, and a card turns once when you open it
+
+Closes [#289](https://github.com/dseelinger/d47/issues/289).
+
+### Every ship has a drawing, from the first launch
+
+The hull drawings shipped in 0.103 as one file per hull that somebody had to drop into
+`data/ships` by hand, and one hull had been captured. All forty-seven are now rendered, and the
+small one — the drawing on the card — **comes with the download**. Eleven megabytes for the fleet,
+so a fresh installation shows a fleet with pictures on it rather than a page of names.
+
+**In `ships\` beside the executable, not in `data\ships\`, and that split is the point.**
+`data\` is the Commander's: an update never touches it and an uninstall asks before removing it.
+`ships\` is the build's, replaced wholesale by every update the way `runtimes\` is, so a corrected
+drawing actually arrives. A hull present in both reads from `data\`, which is what keeps dropping
+a file in by hand working.
+
+### The picture at 4K, on the ship's own page
+
+Ship Details had no picture at all. It has one now: the same drawing, the same camera, the same
+Freestyle lines — rendered again at 3840x2160 rather than blown up from the 720p frame, because a
+720p frame blown up to a window is a smear. Fitted to the pane, and clicking it fills the whole
+window, where the wheel zooms at the pointer, dragging pans and a double click fits it again.
+Escape returns.
+
+**Zoom stops at one image pixel to one screen pixel**, which is the whole of what rendering at 4K
+buys: on a 4K monitor that is the entire ship, and on a 1080p monitor the canopy fills the screen.
+
+**A control rather than a block of the page**, on the Commander's instruction the day it was
+specified: planning a hull you do not own wants the same picture, and that page will take
+`HullPicture` unchanged when it wants it.
+
+**No more than two are held**, asserted by a test rather than intended: a 4K picture is 33 MB of
+pixels, so the one being looked at and the one just left is 66 MB and a third would be a hundred.
+The card stills are decoded to 512 wide for the same reason in the other direction — every card on
+a fleet page is on screen at once, and at full size that is 170 MB of thumbnails.
+
+### The turntable is an MP4, played once when you open a ship
+
+The rotation was a 120-frame sprite sheet — one 3 MB PNG per hull, about 20 MB decoded — that
+played while the pointer was over a card. Both halves are replaced.
+
+**An MP4, decoded a frame at a time.** The same rotation at 180 frames for a tenth of the bytes,
+read through **Media Foundation**, which is Windows' own and costs the build no package and no
+licence question. Nothing decodes ahead: a full turntable is 663 MB of pixels, and what is held is
+one bitmap written in place.
+
+**Played on the pick, not on the pointer.** A grid of hulls that turn as the mouse crosses them on
+the way somewhere else is a slot machine. Opening a ship plays its rotation once and rests on the
+still; opening it again plays it again. It is visible because of how the drill already lays out —
+on anything but the narrowest pane, a ship's page opens *beside* the fleet, so the card turns next
+to the page it opened.
+
+`.spin.png`, the sheet decoder and the hover timer are gone rather than left beside the new path.
+
+### The large art is fetched, and it says so
+
+The 4K picture and the turntable are 260 MB across the fleet, so they are not carried. Opening a
+ship fetches the two files for its hull from a pinned GitHub release, once, into `data/ships`. The
+still shows while the fetch runs and stays if it fails; a miss is looked for once per session,
+which is the rule `ShipArt` already kept for a drawing that was not there.
+
+**Its own egress row**, although it shares a host with the update check — a disclosure organised by
+address rather than by what is actually done hides things behind a brand. The update row says a
+version number leaves and a build may come back; this one says which ships you looked at leave.
+**Hull pictures** on the Ships card in Settings turns it off, and off, every ship keeps the small
+drawing it came with.
+
+### Seven tests that could only pass on the machine that wrote them
+
+The large art is published rather than committed, so a clean checkout has the card stills and
+nothing else — and seven tests copied `assets/ships/corsair.4k.png` and `corsair.spin.mp4` to set
+themselves up. They passed here and failed on CI, which is the first place the difference showed.
+
+The stand-ins live beside the tests now: a 480x270 picture and a twelve-frame turntable, 132 KB
+between them, carrying the names that are the contract. Verified by running the suite with the
+un-committed art moved out of the way, which is what CI sees.
+
+### The rotation follows the hull, and the open ship is outlined
+
+**One click, not two.** Opening a ship redraws the fleet index — it has to, so it can outline what
+it opened — so the press started the video on a card that was thrown away a moment later. Measured:
+after one click the pressed image was out of the tree and holding the frames, and the card on
+screen was a different object showing its still. The second click "worked" only because the trail
+no longer changed and nothing was rebuilt. The rotation now follows the hull rather than the
+control: a card rebuilt for the hull that should be turning picks it back up as it enters the tree.
+
+**And the ship whose page is open is outlined on its card**, the way a row has been since #110 and
+read off the same place — the trail's last crumb, so it follows the right pane however it got
+there. It was free to mean that only once "flying now" became a badge: two outlines meaning
+different things on one grid is worse than neither.
+
+### A ship's page is headed by the ship
+
+Three more from driving the build, on 2026-09-04.
+
+**The name is a heading now, and the rule that followed it is gone.** The page opened on one muted
+line carrying both — *"Campaigner (Panther Clipper MkII). One build per ship: a slot holds one
+plan."* — which is a title and a rule about the feature, in the same breath and the same grey. The
+name goes at the top of the pane in the size a name goes in, at every size the picture takes; the
+rule is in help, where somebody who wants it can find it, and nowhere on the page. What is left
+under the heading is the one sentence that is about *this* ship and is not already in it: that
+buying the hull will adopt the plan, said only for a hull nobody has bought.
+
+**The full-screen mark sat under the scrollbar and could not be pressed.** The page scrolls, so the
+bar is drawn over the content's right edge — and the mark nearest that edge is the one a Commander
+reaches for. The row is held clear of it.
+
+### Nine cards of twelve, and nothing failed anywhere
+
+Reported from a screenshot of a real fleet the day the first build was driven: most cards had no
+drawing on them. Every file was present, every name was right, and `ShipArt` resolved all
+forty-seven when asked directly.
+
+**`StoredShips` writes two spellings of a hull and Directive 47 prefers the wrong one for keying.**
+The event carries `ShipType` and, for most hulls, `ShipType_Localised` beside it — and
+`JournalJson.Named` deliberately takes the localised one, because a raw symbol reaching a Commander
+is a fault this repository has already fixed three times. So a *stored* ship arrives as
+`Type-8 Transporter` where a *planned* one arrives as `type8`. Measured on the live fleet that
+reported this: nine hulls localised, three (Corsair, Anaconda, Cobra) not — which is exactly the
+three that drew.
+
+`EliteSpecifications.HullSymbol` is the inverse of `HullSaid` and the thing to call before a hull
+becomes a key, a file name or a lookup. It matches with the punctuation taken out, because the two
+spellings disagree about that too: the table says `Cobra MkV` and Frontier says `Cobra Mk V`.
+
+`FleetRegistry` said in as many words that `StoredShips` carries no localised name at all. It does.
+That comment is corrected rather than deleted, because it is the reason nobody checked.
+
+### The picture has three sizes, and the flown ship wears a badge
+
+Both asked for on 2026-09-04, after driving the first build.
+
+**Half the pane, the width of the pane, or the whole window**, chosen by three marks above the
+picture. It opens at half, with the ship's own figures in the other half — and the slot list below
+runs the full width, which is where text would have wrapped under it anyway. The size you last
+chose is the size the next ship opens at.
+
+**"Flying now" is a badge, not a highlighted card.** The flown ship had an accent border round the
+whole card, which is what every list everywhere uses for *the row you have selected* — so the fleet
+opened looking as though d47 had already picked a ship: *"I assume that's the indication Current
+Ship. That's the wrong signal to send."* A pill on the drawing says the one thing it means, in
+words, which is also the only version of it that survives a Commander who cannot separate the hues.
+
+**A card plays its turntable on the first click now**, not the second. The first selection of a hull
+is exactly the one with nothing on disk yet, so a version that played only what was already there
+never played the first time — which is the whole of what a Commander sees the first time they open
+each ship. The fetch is asked for and the rotation starts when it lands.
+
+**And the shipped still beats a copy in `data\ships\`.** Each folder is asked first for what it
+owns: the build owns the card still and replaces it on every update, so a copy in the Commander's
+folder can only be older. One was — 0.103's hand-dropped 280x158 preview of the Corsair went on
+being drawn beside forty-six 1280x720 renders. The large art is the other way round, because that
+is fetched into their folder, and both folders are still searched either way.
+
+Fixing the half-width layout turned up a gauge that never wrapped: its heading was a horizontal
+stack, which hands its children infinite width, so a long reading simply ran off the end. Nobody
+saw it while a gauge had the whole pane.
+
+### Twelve hulls whose pictures nothing could have found
+
+Caught by looking at the drawn page rather than by a test, which is why there is now a test. The
+render pipeline names its work for people — `python-mk2`, `type-9-heavy`, `fer-de-lance` — and
+`ShipArt` finds a hull's picture by the symbol Elite's journal writes and by nothing else. Copying
+the pipeline's names straight across looked entirely correct: thirty-five hulls whose readable name
+happens to equal their symbol drew, and twelve did not. Nothing failed. The Python MkII's card was
+simply blank, next to the Anaconda's, which was not.
+
+`tools/ship-art.ps1` now carries the table that turns one name into the other, and
+`TheShipArtIsNamedForItsHullTests` fails on a file named for anything that is not a hull.
 
 ## 0.103.1 — 2026-09-04 — `release.ps1` works from a linked worktree
 

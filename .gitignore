@@ -470,3 +470,13 @@ data/
 
 # wrangler's machine-local state from Worker provisioning; never repository material
 worker/.wrangler/
+
+# The large hull art (#289). Every hull has three files in assets\ships\: the card still, which is
+# committed because it ships inside the download, and a 4K picture and a turntable, which are not.
+# Those two are 260 MB across the fleet - they change when somebody re-renders a hull and never
+# otherwise, so putting them in history would be permanent, would land in every clone and would be
+# paid again by CI on every push. They are published as assets on a pinned GitHub release instead
+# and fetched for the hull being looked at; see ShipArtStore.Source for where from, and
+# tools\ship-art.ps1, which puts them here on the way out of the render pipeline.
+/assets/ships/*.4k.png
+/assets/ships/*.spin.mp4

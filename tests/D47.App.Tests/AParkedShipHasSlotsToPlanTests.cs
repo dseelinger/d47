@@ -107,7 +107,9 @@ public class AParkedShipHasSlotsToPlanTests
 
         var reaper = Assert.Single(mode.Items());
 
-        Assert.NotNull(mode.Summary(reaper.Key));
+        // Through Title since #289 — an owned ship's summary line is deliberately empty now, and
+        // the name that used to be the front of that sentence is the page's heading.
+        Assert.NotNull(mode.Title(reaper.Key));
         Assert.NotEmpty(mode.Details(reaper.Key));
     }
 

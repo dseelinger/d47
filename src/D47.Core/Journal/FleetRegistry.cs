@@ -38,10 +38,16 @@ public sealed record StoredShip(int ShipId, string Type, string? Name, string St
     /// about the same ship".
     /// </para>
     /// <para>
-    /// <c>StoredShips</c> carries no <c>ShipType_Localised</c> at all, so <see cref="Type"/> is
-    /// always the bare symbol here — unlike <c>ShipLoadout</c>, where Frontier sends a localised
-    /// name and the fleet reads correctly. That is why the same fleet had two spellings, decided by
-    /// which event a row happened to come from.
+    /// <b>This said <c>StoredShips</c> carries no <c>ShipType_Localised</c> at all, and it does</b>
+    /// — measured against a live journal on 2026-09-04, where nine hulls of twelve had one and
+    /// three (Corsair, Anaconda, Cobra) did not, in the same event. So <see cref="Type"/> here is
+    /// the localised spelling wherever Frontier supplies one and the bare symbol where they do
+    /// not, and a fleet carries both at once rather than one per event kind.
+    /// <para>
+    /// <b>Which is fine for reading and fatal for keying.</b> Anything turning a hull into a key,
+    /// a file name or a lookup has to go through <c>EliteSpecifications.HullSymbol</c> first —
+    /// taking this string as given drew nine cards of twelve and left the rest blank with nothing
+    /// failing anywhere (<a href="https://github.com/dseelinger/d47/issues/289">#289</a>).
     /// </para>
     /// <para>
     /// Safe even when <see cref="Type"/> already holds a name: the ladder tries the measured row,

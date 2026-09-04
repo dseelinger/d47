@@ -1401,6 +1401,23 @@ public sealed record UiSettings
     /// are rather than under a card about a device they are not wearing.
     /// </summary>
     public OverlaySettings Overlay { get; init; } = new();
+
+    /// <summary>
+    /// Whether d47 fetches the large hull art — the 4K picture Ship Details shows and the
+    /// turntable a card plays (<a href="https://github.com/dseelinger/d47/issues/289">#289</a>).
+    /// <para>
+    /// <b>A switch because it is egress, and on because it is asked for by a press.</b> Every
+    /// third-party destination gets one, so that local-only operation is reachable rather than
+    /// argued about. This one differs from the rest in what turning it off costs: nothing but the
+    /// large pictures. The card stills came with the build and keep being drawn.
+    /// </para>
+    /// <para>
+    /// Under <see cref="UiSettings"/> beside the theme and the zoom, because what it governs is
+    /// how d47 looks. The row a Commander finds it on is on the Ships card, where they will be
+    /// standing when they wonder why a ship has no picture.
+    /// </para>
+    /// </summary>
+    public bool HullArt { get; init; } = true;
 }
 
 /// <summary>
