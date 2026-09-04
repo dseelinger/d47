@@ -27,7 +27,7 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
-## 0.104.0 — unreleased — Every hull has its picture on the card whatever the journal calls it, a ship's own page draws it at 4K in three sizes, and a card turns once when you open it
+## 0.104.0 — 2026-09-04 — Every hull has its picture on the card whatever the journal calls it, a ship's own page draws it at 4K in three sizes, and a card turns once when you open it
 
 Closes [#289](https://github.com/dseelinger/d47/issues/289).
 
