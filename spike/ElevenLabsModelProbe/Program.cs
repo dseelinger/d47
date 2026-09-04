@@ -213,6 +213,11 @@ internal static class Program
             await BillingAsync(voice).ConfigureAwait(false);
         }
 
+        if (only.Contains("unknown"))
+        {
+            await UnknownTagsAsync(voice, outputDirectory).ConfigureAwait(false);
+        }
+
         Console.WriteLine();
         Console.WriteLine("Listen to the WAVs. The two questions no status code answers are whether");
         Console.WriteLine("the German line is read in English, and whether the tags are performed or spoken.");
@@ -554,6 +559,55 @@ internal static class Program
 
     private static readonly Regex TagPattern =
         new(@"\[[a-z ]+\]", RegexOptions.IgnoreCase);
+
+    // ---- 8. what a tag the model does not know does ------------------------------------------
+
+    /// <summary>
+    /// The question that decides whether d47 may let a model write its own tags, or must hand it a
+    /// list. ElevenLabs documents which tags exist and documents nothing about what happens to one
+    /// that does not — and the failure that matters is not "the tag is ignored", it is <b>the word
+    /// inside the brackets being read out loud</b>, which a Commander hears as d47 saying
+    /// "grumbles" in the middle of a sentence.
+    /// <para>
+    /// Four renditions of one line, identical but for the brackets: none, a documented tag, an
+    /// undocumented but plausible one, and a nonsense one. Durations are printed but do not settle
+    /// it; the files are the instrument.
+    /// </para>
+    /// </summary>
+    private static async Task UnknownTagsAsync(string voice, string outputDirectory)
+    {
+        Section("8. A documented tag, an undocumented one, and a nonsense one");
+
+        var unknown = Path.Combine(outputDirectory, "unknown-tags");
+        Directory.CreateDirectory(unknown);
+
+        (string Name, string Text)[] cases =
+        [
+            ("none", "Cutting the drives. It has not seen us."),
+            ("documented", "[whispers] Cutting the drives. It has not seen us."),
+            ("undocumented", "[grumbles quietly] Cutting the drives. It has not seen us."),
+            ("nonsense", "[thargoid] Cutting the drives. It has not seen us."),
+        ];
+
+        foreach (var (name, text) in cases)
+        {
+            var spoken = await SpeakAsync(V3, voice, text, "en", speed: 1.0).ConfigureAwait(false);
+
+            if (spoken.Pcm is not { Length: > 0 })
+            {
+                Console.WriteLine($"  {name,-14} {spoken.Status} {spoken.Said}");
+                continue;
+            }
+
+            await File.WriteAllBytesAsync(Path.Combine(unknown, $"{name}.wav"), Wav(spoken.Pcm))
+                .ConfigureAwait(false);
+
+            Console.WriteLine($"  {name,-14} {Seconds(spoken.Pcm.Length):0.00}s   {text}");
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("  If a bracketed word is ever heard, the model may not write its own tags.");
+    }
 
     // ---- 7. are the tags billed --------------------------------------------------------------
 
