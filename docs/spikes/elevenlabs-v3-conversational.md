@@ -13,6 +13,10 @@ body shape, text through the same `SpokenNumbers.Expand` — and varies only `mo
 accepted by v3 and does nothing at all, and the round trip is not 280 ms against 75 ms but
 2.06 s against 0.31 s on a line d47 says every jump.**
 
+**And the finding nobody was looking for: audio tags do not survive being split into sentences
+unless every sentence carries one, restating a tag inside one generation defeats it, and at d47's
+sentence lengths a tag is a probability rather than a guarantee** (§10).
+
 ---
 
 ## 1. The model exists, and the service's own words differ from the pricing page's
@@ -287,7 +291,8 @@ Three outcomes, and each means something different:
 
 **Heard on 2026-09-04: every long variant worked, including the accent.** So none of the six
 failures was the voice refusing — Roger can do all of them. The control did its job and cleared the
-voice; **the gate is length**.
+voice; **the gate is length**. (§10 qualifies this: length raises the odds rather than guaranteeing
+anything.)
 
 **And the tag decays.** The accent held and then reverted to Roger's own voice partway through, at
 *"We have the angle on it…"* — **character 187 of a 317-character passage**. So a tag colours
@@ -317,21 +322,47 @@ not:
 | **split-once** — four generations, only the first tagged | 4 | 1,447 ms | 5,999 ms |
 | **whole-repeated** — one generation, tag restated at the halfway point | 1 | 5,588 ms | 5,588 ms |
 
-**`split-tagged` is the variant that decides the architecture.** If repeating the tag on each short
-sentence holds the accent, d47 keeps its sentence boundaries, keeps the 1.5 s first sound against
-the whole passage's 5.2 s, and tag injection is a per-sentence string operation with nothing else to
-build.
+### Heard on 2026-09-04, and it settles the architecture
 
-If it does not hold, the fix is to group sentences before synthesis — and **that seam already exists
-in this repository's history**. `ITtsProvider.GroupsSentencesUpTo` was built on the #236 branch
-(`bfc4d640`), with tests, and the closing note says outright: *"One thing from this branch is worth
-reviving … the seam outlives the reason it was cut."* It was cut because Kokoro's prosody grouping
-sounded lifeless. It would come back for a different provider and a measured reason.
+| Variant | Verdict |
+|---|---|
+| **whole** | **held throughout** |
+| **split-tagged** | **held — and grew more intense sentence by sentence** |
+| **split-once** | only the first sentence was affected |
+| **whole-repeated** | **no accent at all, or very little** |
 
-**Its price is stated above and it is not small: 5,199 ms to first sound against 1,513 ms.** That is
-the latency win the splitter was built for, spent on expression — which is precisely the trade the
-two-model row exists to let a Commander make. It also means the model row is no longer only about
-speed: Flash 2.5 is fast, plain and unsplit; v3 is expressive, tagged, and waits.
+**`split-tagged` works, so d47 keeps its sentence boundaries.** Repeating the tag on each short
+sentence carries the delivery across a whole reply at 1,513 ms to first sound rather than 5,199 ms.
+`GroupsSentencesUpTo` does not need reviving; the seam stays cut, and this page is the record of
+why it was reconsidered and did not turn out to be needed.
+
+Three rules fall out, and each is a thing the code has to know:
+
+1. **A tag reaches its own generation and no further.** `split-once` proves it: the model writing
+   one tag at the head of a four-sentence reply colours one sentence. Whatever is meant to carry has
+   to appear in every sentence it applies to.
+2. **Never put the same tag twice in one generation.** `whole-repeated` came back with *less* accent
+   than tagging once — restating it does not refresh a fade, it defeats the tag.
+3. **Intensity scales inversely with length.** The same tag on a 48-character sentence hits harder
+   than on a 342-character passage, which is what "grew more intense" is: four short generations,
+   each landing the tag proportionally harder than the long one did. So mechanically repeating a tag
+   down a reply escalates it. **This is the argument for the model choosing which sentences carry a
+   tag, rather than d47 propagating one down the reply** — the code cannot know whether a rising
+   delivery is what was wanted.
+
+### One more thing this run corrected
+
+The `whole` variant held the accent all the way through **342 characters**, where §9's 317-character
+passage faded at 187. Same tag, same voice, different sample. So **the fade is real but not
+reliable** — and by the same token, so is the landing. `[strong Scottish accent]` failed on a
+47-character line in §8's audition and worked on a 48-character sentence here.
+
+That is ElevenLabs' own sentence turned into a measurement: *"very short prompts are more likely to
+cause **inconsistent** outputs."* Inconsistent, not absent. **At d47's lengths a tag is a
+probability, not a guarantee**, which means the ten-of-sixteen result in §9 is the shape of the
+distribution rather than a hard list — and it means the spoken-line log must record that a tag was
+**asked for**, never that it was performed. The log is what settles complaints; it cannot claim
+something the service does not promise.
 
 ## 11. Are the tags billed? Not settled, and it does not need to be
 
