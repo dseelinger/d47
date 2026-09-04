@@ -418,6 +418,34 @@ public sealed class MeteredTtsProvider(ITtsProvider inner, SpeechSpend spend, Vo
     public Task<VoiceCatalogue> ListVoicesAsync(CancellationToken cancellationToken = default) =>
         inner.ListVoicesAsync(cancellationToken);
 
+    /// <summary>
+    /// <b>Everything below here forwards, and forgetting one is invisible.</b>
+    /// <para>
+    /// Each of these has a default implementation on <see cref="ITtsProvider"/>, so a member this
+    /// class does not restate is not a compiler error — it is a decorator that quietly answers
+    /// "no" on behalf of a provider that would have said yes. Every caller reaches the provider
+    /// through this wrapper, so that answer is the only one anything ever sees.
+    /// </para>
+    /// <para>
+    /// It has happened twice. <see cref="ITtsProvider.Phonemes"/> was added for the audio recorder
+    /// (#164) and never forwarded, so the phoneme column has been empty for the local voice ever
+    /// since — the recorder was asking the wrapper and being told there were none.
+    /// <see cref="ITtsProvider.ReadsAudioTags"/> and
+    /// <see cref="ITtsProvider.GroupsSentencesUpTo"/> arrived with #291 and went the same way:
+    /// v3 was selected and speaking, and both of its capabilities were switched off by the
+    /// wrapper between it and everything else. <c>MeteringForwardsEveryCapabilityTests</c> is the
+    /// gate that stops a third.
+    /// </para>
+    /// </summary>
+    public string Billable(string text) => inner.Billable(text);
+
+    public string? Phonemes(string text, VoiceSelection voice) => inner.Phonemes(text, voice);
+
+    public bool ReadsAudioTags => inner.ReadsAudioTags;
+
+
+    public int GroupsSentencesUpTo => inner.GroupsSentencesUpTo;
+
     public async Task<AudioClip> SynthesizeAsync(
         string text,
         VoiceSelection voice,
