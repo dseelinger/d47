@@ -283,7 +283,57 @@ Three outcomes, and each means something different:
   an accent needs no help from the sentence, so if it fails both ways the answer is Roger, not the
   writing.
 
-## 10. Are the tags billed? Not settled, and it does not need to be
+## 10. Length is the gate, the tag fades, and that collides with the sentence splitter
+
+**Heard on 2026-09-04: every long variant worked, including the accent.** So none of the six
+failures was the voice refusing — Roger can do all of them. The control did its job and cleared the
+voice; **the gate is length**.
+
+**And the tag decays.** The accent held and then reverted to Roger's own voice partway through, at
+*"We have the angle on it…"* — **character 187 of a 317-character passage**. So a tag colours
+roughly the first 190 characters after it and then stops.
+
+Put beside §9's finding, the two bracket d47 from both sides:
+
+| | |
+|---|---|
+| Below ~250 characters | the tag may not land at all |
+| Beyond ~190 characters from the tag | the tag has already faded |
+| What d47 sends | **23–83 characters, one sentence per request** |
+
+`SentenceSplitter` is not incidental here. It exists so speech starts at the first sentence boundary
+rather than at end of turn, which is the largest perceived-latency win d47 has (architecture.md §6).
+It guarantees the shape v3 handles worst.
+
+### The four ways of saying the same 300 characters
+
+`--only grouping`, with the accent as the instrument because it is the one tag that either is or is
+not:
+
+| Variant | Requests | First sound | All of it |
+|---|---|---|---|
+| **whole** — one generation, tagged once | 1 | 5,199 ms | 5,199 ms |
+| **split-tagged** — four generations, each tagged | 4 | **1,513 ms** | 6,975 ms |
+| **split-once** — four generations, only the first tagged | 4 | 1,447 ms | 5,999 ms |
+| **whole-repeated** — one generation, tag restated at the halfway point | 1 | 5,588 ms | 5,588 ms |
+
+**`split-tagged` is the variant that decides the architecture.** If repeating the tag on each short
+sentence holds the accent, d47 keeps its sentence boundaries, keeps the 1.5 s first sound against
+the whole passage's 5.2 s, and tag injection is a per-sentence string operation with nothing else to
+build.
+
+If it does not hold, the fix is to group sentences before synthesis — and **that seam already exists
+in this repository's history**. `ITtsProvider.GroupsSentencesUpTo` was built on the #236 branch
+(`bfc4d640`), with tests, and the closing note says outright: *"One thing from this branch is worth
+reviving … the seam outlives the reason it was cut."* It was cut because Kokoro's prosody grouping
+sounded lifeless. It would come back for a different provider and a measured reason.
+
+**Its price is stated above and it is not small: 5,199 ms to first sound against 1,513 ms.** That is
+the latency win the splitter was built for, spent on expression — which is precisely the trade the
+two-model row exists to let a Commander make. It also means the model row is no longer only about
+speed: Flash 2.5 is fast, plain and unsplit; v3 is expressive, tagged, and waits.
+
+## 11. Are the tags billed? Not settled, and it does not need to be
 
 `--only billing` reads the account's `character_count` before and after one tagged synthesis and
 one bare one. **Both reads came back 267,096 — the meter did not move for either call**, so
@@ -296,7 +346,7 @@ over-estimate, and an over-estimate of spend is the safe direction. The tags in 
 worth 19 characters against 39 of speech — roughly a third again on a short line, which is the
 figure to keep in mind rather than a per-tag price.
 
-## 11. Expressiveness — the earlier pair
+## 12. Expressiveness — the earlier pair
 
 `eleven_v3_conversational-tags-en.wav` against `eleven_flash_v2_5-tags-en.wav`, from section 2's
 grid — the same question as section 5 on one line, kept because it is the file the language grid

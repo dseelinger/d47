@@ -221,6 +221,11 @@ internal static class Program
             await UnknownTagsAsync(voice, outputDirectory).ConfigureAwait(false);
         }
 
+        if (only.Contains("grouping"))
+        {
+            await GroupingAsync(voice, outputDirectory).ConfigureAwait(false);
+        }
+
         if (only.Contains("context"))
         {
             await ContextAsync(voice, outputDirectory).ConfigureAwait(false);
@@ -577,6 +582,149 @@ internal static class Program
 
     private static readonly Regex TagPattern =
         new(@"\[[a-z ]+\]", RegexOptions.IgnoreCase);
+
+    // ---- 12. can a tag survive d47's sentence splitter --------------------------------------
+
+    /// <summary>
+    /// The experiment that decides the architecture, and the accent is the instrument because it is
+    /// the one tag that either is or is not — no judgement, no neutral line, nothing to argue about.
+    /// <para>
+    /// Two facts collide. A tag needs a long generation to land at all (ElevenLabs: over 250
+    /// characters), and it <b>fades</b> — the accent held for about 186 characters of a 317
+    /// character passage and then reverted mid-sentence. Meanwhile <c>SentenceSplitter</c> exists so
+    /// speech starts at the first sentence boundary instead of at end of turn, so every synthesis
+    /// d47 issues is 23 to 83 characters. Both facts point the same way: d47 sends exactly the shape
+    /// v3 handles worst.
+    /// </para>
+    /// <para>
+    /// Four ways to say the same 300 characters, so the cheap fix gets its chance before the
+    /// expensive one is argued for:
+    /// </para>
+    /// <list type="number">
+    /// <item><b>whole</b> — one generation, tag at the head. What v3 wants and what d47 does not
+    /// do.</item>
+    /// <item><b>split-tagged</b> — four short generations, the tag repeated on each. <b>This is the
+    /// one that matters</b>: if it works, d47 keeps its sentence boundaries and its latency, and the
+    /// injection is per sentence with nothing else to build.</item>
+    /// <item><b>split-once</b> — four short generations, tagged only on the first. What naive
+    /// injection would produce, and the failure to rule out.</item>
+    /// <item><b>whole-repeated</b> — one generation with the tag restated past the decay point, to
+    /// see whether a fade can be refreshed in place.</item>
+    /// </list>
+    /// <para>
+    /// The round trip is recorded per variant, because the answer is not only "does it sound right":
+    /// grouping sentences buys expression with the one thing the splitter was built to save.
+    /// </para>
+    /// </summary>
+    private static async Task GroupingAsync(string voice, string outputDirectory)
+    {
+        Section("12. Does a tag survive being split into sentences?");
+
+        const string Tag = "[strong Scottish accent]";
+
+        // Four sentences that read as one passage, so every variant says exactly the same words in
+        // the same order and only the seams move.
+        string[] sentences =
+        [
+            "Contact on the scanner, Commander, and it has not seen us yet.",
+            "It is holding station off the second planet with its drives cold, which is either a very patient pilot or a very broken one.",
+            "We have the angle on it for about another minute.",
+            "After that it has the angle on us, and I would rather not find out which it is.",
+        ];
+
+        var whole = string.Join(' ', sentences);
+
+        var directory = Path.Combine(outputDirectory, "grouping");
+        Directory.CreateDirectory(directory);
+
+        var pieces = new List<byte[]>();
+        var gap = new byte[SampleRate * 2 * 2 / 5];
+
+        async Task<(byte[] Pcm, double Milliseconds)?> RunAsync(string name, string said, string[] parts)
+        {
+            var label = await SpeakAsync(V3, voice, said, "en", speed: 1.0).ConfigureAwait(false);
+
+            var audio = new List<byte[]>();
+            var elapsed = 0.0;
+            var first = 0.0;
+
+            foreach (var part in parts)
+            {
+                var read = await SpeakAsync(V3, voice, part, "en", speed: 1.0).ConfigureAwait(false);
+
+                if (read.Pcm is not { Length: > 0 } pcm)
+                {
+                    Console.WriteLine($"  {name}: {read.Status} {read.Said}");
+                    return null;
+                }
+
+                audio.Add(pcm);
+                elapsed += read.Elapsed.TotalMilliseconds;
+                first = first == 0 ? read.Elapsed.TotalMilliseconds : first;
+            }
+
+            var joined = audio.SelectMany(part => part).ToArray();
+
+            await File.WriteAllBytesAsync(Path.Combine(directory, name + ".wav"), Wav(joined))
+                .ConfigureAwait(false);
+
+            Console.WriteLine(
+                $"  {name,-16} {parts.Length} request(s), {parts.Sum(p => p.Length),3} characters   "
+                + $"first sound {first:0} ms   all of it {elapsed:0} ms");
+
+            if (label.Pcm is { Length: > 0 } spokenLabel)
+            {
+                pieces.Add(spokenLabel);
+                pieces.Add(gap);
+            }
+
+            pieces.Add(joined);
+            pieces.Add(gap);
+
+            return (joined, first);
+        }
+
+        await RunAsync("whole", "One generation, tagged once at the front.", [$"{Tag} {whole}"])
+            .ConfigureAwait(false);
+
+        await RunAsync(
+            "split-tagged",
+            "Four separate generations, each one tagged.",
+            [.. sentences.Select(sentence => $"{Tag} {sentence}")])
+            .ConfigureAwait(false);
+
+        await RunAsync(
+            "split-once",
+            "Four separate generations, only the first one tagged.",
+            [.. sentences.Select((sentence, at) => at == 0 ? $"{Tag} {sentence}" : sentence)])
+            .ConfigureAwait(false);
+
+        await RunAsync(
+            "whole-repeated",
+            "One generation, with the tag said again halfway through.",
+            [$"{Tag} {sentences[0]} {sentences[1]} {Tag} {sentences[2]} {sentences[3]}"])
+            .ConfigureAwait(false);
+
+        if (pieces.Count == 0)
+        {
+            return;
+        }
+
+        var all = new byte[pieces.Sum(piece => piece.Length)];
+        var at = 0;
+
+        foreach (var piece in pieces)
+        {
+            piece.CopyTo(all, at);
+            at += piece.Length;
+        }
+
+        var file = Path.Combine(directory, "audition.wav");
+        await File.WriteAllBytesAsync(file, Wav(all)).ConfigureAwait(false);
+
+        Console.WriteLine();
+        Console.WriteLine($"  {file}  {Seconds(all.Length) / 60:0.0} minutes");
+    }
 
     // ---- 11. does the sentence decide whether the tag lands --------------------------------
 
