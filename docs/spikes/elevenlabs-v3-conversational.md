@@ -107,12 +107,43 @@ Two further facts from the same runs: v3 returns **more audio for the same words
 6.36 s on `system`, 47% longer), and the ratio worsens with length, so a persona's longer replies
 pay the most.
 
-## 5. Expressiveness — open, pending an ear
+## 5. What v3 can do that Flash cannot — eight comparisons, open pending an ear
 
-`eleven_v3_conversational-tags-en.wav` against `eleven_flash_v2_5-tags-en.wav`. A model that cannot
-read the brackets should say them out loud; the two files are within half a second of each other in
-length, so the numbers do not settle it. Cartesia (Phase 60) worked and did not impress, and the
-same test applies.
+`--only compare` writes eight files, one per claimed difference. Each holds **v3 then Flash**, and
+each read is introduced by that model saying which difference is being listened for and which model
+it is — *"Whispering. This is the new V 3."* Both halves in one file rather than two, because the
+question is a difference and a difference is heard in the seam.
+
+The label is a separate request from the read. A tag at the head of a v3 generation colours
+everything after it, so a label sharing the line would be part of the performance being judged.
+
+| | Difference | Line | v3 | Flash |
+|---|---|---|---|---|
+| 1 | Whispering | `[whispers] Cutting the drives. There is something in the next ring…` | 6.32 s | 4.88 s |
+| 2 | A weary sigh | `[sighs] That is the third interdiction this hour, Commander.` | 3.84 s | 3.20 s |
+| 3 | Excitement | `[excited] Double painite hotspot, dead ahead…` | 5.20 s | 4.46 s |
+| 4 | Shouting under pressure | `[shouting] Heat sink, now! Hull at 14 percent!` | 3.36 s | 3.20 s |
+| 5 | Sarcasm | `[sarcastic] Beautiful landing, Commander. The pad will buff out.` | 3.44 s | 3.72 s |
+| 6 | Laughter | `[laughs] The entire bounty is 812 credits.` | 4.08 s | 3.53 s |
+| 7 | Urgency with no tag to tell it to | `We just lost the starboard thruster. Get us to the station.` | 3.20 s | 3.39 s |
+| 8 | Emphasis on a capitalised word, no tag | `That is a Federal CORVETTE, not a Viper.` | 4.96 s | 4.13 s |
+
+**Flash is sent the brackets unchanged rather than stripped**, so what it does with them is part of
+the comparison rather than something taken on trust — a model that cannot read a tag should say the
+word out loud, and the lengths do not distinguish "performed" from "spoken aloud".
+
+The last two carry no tag at all, on purpose. A model that is expressive only when told to is a
+different proposition from one that reads the sentence, and only the second changes anything for
+d47's callouts, which nothing writes tags into today.
+
+> **Open, pending an ear.** Cartesia (Phase 60) worked and did not impress, and the same test
+> applies: the question is not whether the difference exists but whether it is worth 1.7 seconds.
+
+## 6. Expressiveness — the earlier pair
+
+`eleven_v3_conversational-tags-en.wav` against `eleven_flash_v2_5-tags-en.wav`, from section 2's
+grid — the same question as section 5 on one line, kept because it is the file the language grid
+already renders under all three pins.
 
 ---
 

@@ -68,6 +68,49 @@ internal static class Program
     ];
 
     /// <summary>
+    /// The side-by-side set: eight things v3 is said to do that Flash cannot, each written as a
+    /// line d47 would really say rather than as a demo sentence.
+    /// <para>
+    /// Six are audio tags, which is the whole reason to look at v3. The last two carry no tag at
+    /// all - one plainly urgent, one with a word in capitals - because a model that is only
+    /// expressive when told to is a different proposition from one that reads the sentence. Flash
+    /// gets every line unchanged, including the brackets, so what it does with them is part of the
+    /// comparison rather than something taken on trust.
+    /// </para>
+    /// </summary>
+    private static readonly (string Name, string Delta, string Text)[] Comparisons =
+    [
+        ("whisper", "Whispering",
+            "[whispers] Cutting the drives. There is something in the next ring, and it has not seen us."),
+        ("sigh", "A weary sigh",
+            "[sighs] That is the third interdiction this hour, Commander."),
+        ("excited", "Excitement",
+            "[excited] Double painite hotspot, dead ahead. Both of them inside the ring!"),
+        ("urgent", "Shouting under pressure",
+            "[shouting] Heat sink, now! Hull at 14 percent!"),
+        ("sarcastic", "Sarcasm",
+            "[sarcastic] Beautiful landing, Commander. The pad will buff out."),
+        ("laughs", "Laughter",
+            "[laughs] The entire bounty is 812 credits."),
+        ("plain", "Urgency with no tag to tell it to",
+            "We just lost the starboard thruster. Get us to the station."),
+        ("emphasis", "Emphasis on a capitalised word, with no tag",
+            "That is a Federal CORVETTE, not a Viper. Do not interdict it."),
+    ];
+
+    /// <summary>
+    /// Spoken ahead of each read, by the model doing the reading, in a request of its own. Its own
+    /// request because a tag at the head of a v3 generation colours everything after it, and a
+    /// label sharing the line would be part of the performance being judged.
+    /// <para>
+    /// It names the difference being listened for as well as the model, so a file can be played
+    /// cold. "Is this better" is not a question anybody can answer; "is this whispered" is.
+    /// </para>
+    /// </summary>
+    private static string Label(string model, string delta) =>
+        $"{delta}. This is the {(model == V3 ? "new V 3" : "old V 2")}.";
+
+    /// <summary>
     /// The sweep. Wide enough on both sides of the 0.7-1.2 range Flash publishes to find where a
     /// different model's range ends, and dense enough inside it to notice a narrowing.
     /// </summary>
@@ -130,7 +173,7 @@ internal static class Program
             Console.WriteLine($"NOTE: {V3} is not in this account's model listing.");
         }
 
-        var only = Argument(args, "--only")?.Split(',') ?? ["language", "speed", "latency"];
+        var only = Argument(args, "--only")?.Split(',') ?? ["language", "speed", "latency", "compare"];
 
         if (only.Contains("language"))
         {
@@ -145,6 +188,11 @@ internal static class Program
         if (only.Contains("latency"))
         {
             await LatencyAsync(voice, repeats).ConfigureAwait(false);
+        }
+
+        if (only.Contains("compare"))
+        {
+            await CompareAsync(voice, outputDirectory).ConfigureAwait(false);
         }
 
         Console.WriteLine();
@@ -374,6 +422,84 @@ internal static class Program
             }
         }
     }
+
+    // ---- 5. what v3 can do that Flash cannot ------------------------------------------------
+
+    /// <summary>
+    /// One WAV per comparison, v3 then Flash, each read introduced by its own model saying which
+    /// it is. Back to back in one file rather than two files, because the question is a difference
+    /// and a difference is heard in the seam - two players and a click between them is a worse
+    /// instrument than four hundred milliseconds of silence.
+    /// </summary>
+    private static async Task CompareAsync(string voice, string outputDirectory)
+    {
+        Section("5. Side by side: v3 first, then Flash, one file each");
+
+        var comparisons = Path.Combine(outputDirectory, "compare");
+        Directory.CreateDirectory(comparisons);
+
+        // Long enough to be a gap rather than a breath, short enough that nobody reaches for the
+        // scrub bar between the two halves of one comparison.
+        var gap = new byte[SampleRate * 2 * 2 / 5];
+
+        for (var index = 0; index < Comparisons.Length; index++)
+        {
+            var (name, delta, text) = Comparisons[index];
+            var pieces = new List<byte[]>();
+            var lengths = new List<string>();
+
+            foreach (var model in new[] { V3, Flash })
+            {
+                var label = await SpeakAsync(model, voice, Label(model, delta), "en", speed: 1.0)
+                    .ConfigureAwait(false);
+
+                var read = await SpeakAsync(model, voice, text, "en", speed: 1.0).ConfigureAwait(false);
+
+                if (label.Pcm is not { Length: > 0 } || read.Pcm is not { Length: > 0 })
+                {
+                    Console.WriteLine($"  {name,-12} {model,-26} {read.Status} {read.Said ?? label.Said}");
+                    continue;
+                }
+
+                pieces.Add(label.Pcm);
+                pieces.Add(gap);
+                pieces.Add(read.Pcm);
+                pieces.Add(gap);
+
+                lengths.Add($"{ShortName(model)} {Seconds(read.Pcm.Length):0.00}s");
+
+                // Also on its own, for the comparison somebody wants to loop rather than sit
+                // through: the read without the label in front of it.
+                await File.WriteAllBytesAsync(
+                    Path.Combine(comparisons, $"{name}-{ShortName(model)}.wav"), Wav(read.Pcm))
+                    .ConfigureAwait(false);
+            }
+
+            if (pieces.Count == 0)
+            {
+                continue;
+            }
+
+            var joined = new byte[pieces.Sum(piece => piece.Length)];
+            var at = 0;
+
+            foreach (var piece in pieces)
+            {
+                piece.CopyTo(joined, at);
+                at += piece.Length;
+            }
+
+            var file = Path.Combine(comparisons, $"{index + 1}-{name}.wav");
+            await File.WriteAllBytesAsync(file, Wav(joined)).ConfigureAwait(false);
+
+            Console.WriteLine($"  {index + 1}-{name,-12} {string.Join("  ", lengths),-24} {delta}");
+        }
+
+        Console.WriteLine();
+        Console.WriteLine($"  {comparisons}");
+    }
+
+    private static string ShortName(string model) => model == V3 ? "v3" : "v2";
 
     // ---- the wire --------------------------------------------------------------------------
 
