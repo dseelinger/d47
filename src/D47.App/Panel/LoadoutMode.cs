@@ -470,7 +470,27 @@ public interface ILoadoutMode
 
     void New(PanelPrompts prompts, Action done);
 
-    /// <summary>The line at the top of an item's page, or null when the item is gone.</summary>
+    /// <summary>
+    /// The heading at the top of an item's page — what the page is about, said once
+    /// (<a href="https://github.com/dseelinger/d47/issues/289">#289</a>).
+    /// <para>
+    /// <b>Its own member because it is a name rather than a sentence.</b> The page used to open on
+    /// one muted line carrying both — <i>"Campaigner (Panther Clipper MkII). One build per ship: a
+    /// slot holds one plan."</i> — which is a title and a rule about the feature, in the same
+    /// breath, in the same grey. The rule belongs in help and the name belongs at the top in the
+    /// size a name goes in.
+    /// </para>
+    /// <para>
+    /// Null for a mode with no name to head a page with, and null for an item that is gone. A page
+    /// with neither this nor <see cref="Summary"/> is a page whose subject no longer exists.
+    /// </para>
+    /// </summary>
+    string? Title(string item) => null;
+
+    /// <summary>
+    /// A sentence under the heading, or null when there is nothing to say. Also where a press
+    /// reports what it did.
+    /// </summary>
     string? Summary(string item);
 
     /// <summary>

@@ -1841,6 +1841,20 @@ public sealed class ItemPage : LoadoutPage
     private readonly string _item;
     private readonly Button? _drop;
     private readonly StackPanel _list = new() { Spacing = 3 };
+
+    /// <summary>
+    /// What the page is about, in the size a name goes in (#289). Docked above everything and
+    /// outside the scroller, so it stays at the top of the pane at every size the picture takes —
+    /// and is covered along with the rest of the page when the picture fills the window.
+    /// </summary>
+    private readonly TextBlock _title = new()
+    {
+        FontSize = TypeScale.Heading,
+        FontWeight = FontWeight.Bold,
+        TextWrapping = TextWrapping.Wrap,
+        Margin = new Thickness(0, 0, 0, 8),
+    };
+
     private readonly TextBlock _summary = new()
     {
         FontSize = TypeScale.Secondary,
@@ -1860,9 +1874,10 @@ public sealed class ItemPage : LoadoutPage
         _item = item;
         _prompts = prompts;
 
+        LoadoutPages.Themed(_title, TextBlock.ForegroundProperty, ThemeManager.TextKey);
         LoadoutPages.Themed(_summary, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
 
-        var promote = LoadoutPages.Press(mode.PromoteLabel, () => _summary.Text = Mode.Promote(_item));
+        var promote = LoadoutPages.Press(mode.PromoteLabel, () => Said(Mode.Promote(_item)));
 
         var actions = new StackPanel
         {
@@ -1885,10 +1900,12 @@ public sealed class ItemPage : LoadoutPage
         var root = new DockPanel { Margin = new Thickness(14) };
         var say = LoadoutPages.SayLine(mode.SayAtItem);
 
+        DockPanel.SetDock(_title, Dock.Top);
         DockPanel.SetDock(_summary, Dock.Top);
         DockPanel.SetDock(actions, Dock.Top);
         DockPanel.SetDock(say, Dock.Bottom);
 
+        root.Children.Add(_title);
         root.Children.Add(_summary);
         root.Children.Add(actions);
         root.Children.Add(say);
@@ -1902,6 +1919,21 @@ public sealed class ItemPage : LoadoutPage
         Content = new Avalonia.Controls.Panel { Children = { root, _overlay } };
 
         Refresh();
+    }
+
+    /// <summary>
+    /// Puts a sentence on the line under the heading, or takes the line away when there is none.
+    /// <para>
+    /// <b>Visibility as well as text, since the line's ordinary state became empty</b> (#289). An
+    /// owned ship has nothing to say under its own name, so the row is not drawn — and a press
+    /// that reports what it did has to bring it back, or the report would be written into a
+    /// control nobody can see.
+    /// </para>
+    /// </summary>
+    private void Said(string? sentence)
+    {
+        _summary.Text = sentence ?? string.Empty;
+        _summary.IsVisible = sentence is { Length: > 0 };
     }
 
     /// <summary>
@@ -1929,8 +1961,8 @@ public sealed class ItemPage : LoadoutPage
                 "loadout.drop",
                 "Drop",
                 _drop?.Content as string ?? "Drop this",
-                Mode.Summary(_item) is { } what
-                    ? $"{what} There is no way back from this one."
+                Mode.Title(_item) is { } what
+                    ? $"{what}. There is no way back from this one."
                     : "There is no way back from this one.",
                 [new ChoiceOption("keep", "Keep it"), new ChoiceOption("drop", "Drop it")],
                 "keep",
@@ -1962,20 +1994,30 @@ public sealed class ItemPage : LoadoutPage
 
         Refresh();
 
-        _summary.Text = said;
+        Said(said);
     }
 
     protected override void Refresh()
     {
         _list.Children.Clear();
 
-        if (Mode.Summary(_item) is not { } summary)
+        var title = Mode.Title(_item);
+        var summary = Mode.Summary(_item);
+
+        // Gone is neither: a mode with no heading says everything in the summary, and one with a
+        // heading says nothing in the summary for an owned ship. Either alone means it is there.
+        if (title is null && summary is null)
         {
+            _title.IsVisible = false;
+            _summary.IsVisible = false;
             _list.Children.Add(LoadoutPages.Muted("That build is not there any more."));
             return;
         }
 
-        _summary.Text = summary;
+        _title.Text = title ?? string.Empty;
+        _title.IsVisible = title is { Length: > 0 };
+
+        Said(summary);
 
         // The same question the index carries, here too (Phase 38): a Commander who has
         // drilled into the ship it is about is the likeliest one to answer it, and they would
@@ -1985,7 +2027,7 @@ public sealed class ItemPage : LoadoutPage
             _list.Children.Add(LoadoutPages.Notice(notice, said =>
             {
                 Refresh();
-                _summary.Text = said;
+                Said(said);
             }));
         }
 
@@ -2183,7 +2225,7 @@ public sealed class ItemPage : LoadoutPage
 
                     if (target == from)
                     {
-                        _summary.Text = $"{row.Word} is where that plan already is, so nothing was copied.";
+                        Said($"{row.Word} is where that plan already is, so nothing was copied.");
                         return;
                     }
 
@@ -2203,7 +2245,7 @@ public sealed class ItemPage : LoadoutPage
                     // same gesture that produced it.
                     Refresh();
 
-                    _summary.Text = said;
+                    Said(said);
                 }
                 finally
                 {

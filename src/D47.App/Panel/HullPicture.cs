@@ -68,11 +68,22 @@ internal sealed class HullPicture : Grid
         VerticalAlignment = VerticalAlignment.Top,
     };
 
+    /// <summary>
+    /// The marks, held clear of the scroller's right edge.
+    /// <para>
+    /// <b>The last one sat under the scrollbar and could not be pressed</b> (reported
+    /// 2026-09-04): the page scrolls, so the bar is drawn over the content's right edge, and
+    /// reaching for the mark nearest the edge is exactly what a Commander does. Sixteen is the
+    /// bar's own width with room either side, so the whole row stays hittable whether the bar is
+    /// there or not.
+    /// </para>
+    /// </summary>
     private readonly StackPanel _marks = new()
     {
         Orientation = Orientation.Horizontal,
         Spacing = 2,
         HorizontalAlignment = HorizontalAlignment.Right,
+        Margin = new Thickness(0, 0, 16, 0),
     };
 
     private readonly Border _frame;

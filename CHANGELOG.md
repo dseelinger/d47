@@ -95,6 +95,22 @@ version number leaves and a build may come back; this one says which ships you l
 **Hull pictures** on the Ships card in Settings turns it off, and off, every ship keeps the small
 drawing it came with.
 
+### A ship's page is headed by the ship
+
+Three more from driving the build, on 2026-09-04.
+
+**The name is a heading now, and the rule that followed it is gone.** The page opened on one muted
+line carrying both — *"Campaigner (Panther Clipper MkII). One build per ship: a slot holds one
+plan."* — which is a title and a rule about the feature, in the same breath and the same grey. The
+name goes at the top of the pane in the size a name goes in, at every size the picture takes; the
+rule is in help, where somebody who wants it can find it, and nowhere on the page. What is left
+under the heading is the one sentence that is about *this* ship and is not already in it: that
+buying the hull will adopt the plan, said only for a hull nobody has bought.
+
+**The full-screen mark sat under the scrollbar and could not be pressed.** The page scrolls, so the
+bar is drawn over the content's right edge — and the mark nearest that edge is the one a Commander
+reaches for. The row is held clear of it.
+
 ### Nine cards of twelve, and nothing failed anywhere
 
 Reported from a screenshot of a real fleet the day the first build was driven: most cards had no

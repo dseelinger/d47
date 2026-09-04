@@ -214,11 +214,25 @@ public sealed class ShipsMode(
             .Order(StringComparer.OrdinalIgnoreCase),
     ];
 
-    public string? Summary(string item) => Resolve(item) is not { } build
+    /// <summary>
+    /// The ship, named — "Campaigner (Panther Clipper MkII)", or "Corsair, intended" for a hull
+    /// nobody has bought yet (#289).
+    /// </summary>
+    public string? Title(string item) => Resolve(item)?.Describe();
+
+    /// <summary>
+    /// What is worth saying under the name, which for an owned ship is nothing.
+    /// <para>
+    /// <b>"One build per ship: a slot holds one plan" is gone from here</b> (the Commander's
+    /// instruction, 2026-09-04). It is a rule about how the feature works rather than a fact about
+    /// this ship, it was on the page of every ship for ever, and it is said in help where somebody
+    /// who wants it can find it. What is left is the one line that is about this ship and is not
+    /// already in the heading: that buying the hull will adopt the plan.
+    /// </para>
+    /// </summary>
+    public string? Summary(string item) => Resolve(item) is not { IsOwned: false }
         ? null
-        : build.IsOwned
-            ? $"{build.Describe()}. One build per ship: a slot holds one plan."
-            : $"{build.Describe()}. Buying one will point this plan at it.";
+        : "Buying one will point this plan at it.";
 
     /// <summary>
     /// What this ship is, where it is, and what it can do (remediation.md 13, item 2).
