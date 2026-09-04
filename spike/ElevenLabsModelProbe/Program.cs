@@ -169,7 +169,9 @@ internal static class Program
             return 1;
         }
 
-        Console.WriteLine($"voice {voice}");
+        // Named as well as identified. Every section uses this one voice and varies only the
+        // model, so which voice it was is half of what a recording means later.
+        Console.WriteLine($"voice {voice} ({await VoiceNameAsync(voice).ConfigureAwait(false) ?? "unnamed"})");
 
         if (!models.Contains(V3, StringComparer.OrdinalIgnoreCase))
         {
@@ -263,6 +265,20 @@ internal static class Program
 
         Console.WriteLine($"  ({found.Count} models listed in all)");
         return found;
+    }
+
+    /// <summary>What the account calls a voice id, for the header line and for the write-up.</summary>
+    private static async Task<string?> VoiceNameAsync(string voice)
+    {
+        var (status, body) = await GetAsync($"/voices/{Uri.EscapeDataString(voice)}").ConfigureAwait(false);
+
+        if (status != 200 || body is null)
+        {
+            return null;
+        }
+
+        using var document = JsonDocument.Parse(body);
+        return Text(document.RootElement, "name");
     }
 
     private static async Task<string?> FirstVoiceAsync()
