@@ -364,7 +364,54 @@ distribution rather than a hard list — and it means the spoken-line log must r
 **asked for**, never that it was performed. The log is what settles complaints; it cannot claim
 something the service does not promise.
 
-## 11. Are the tags billed? Not settled, and it does not need to be
+## 11. The trade is not binary: group after the first sentence
+
+**What d47 really says**, measured from 24 log files — 1,520 replies, and the sentences they were
+split into, which is the unit that actually reaches a provider:
+
+| | Reply | **Sentence** |
+|---|---|---|
+| median | 56 | **34** |
+| p90 | 130 | 84 |
+| p99 | 598 | 185 |
+| max | 1,710 | 319 |
+| ≥ 250 characters | 61 (4.0%) | **10 (0.4%)** |
+
+A chattier persona does not fix this on its own: a 598-character reply does not reach v3 as 598
+characters, because the splitter cuts it into sentences and sends each as its own request. What
+raises tag reliability is longer *sentences*, not longer replies.
+
+**But the fix is cheap, because d47 renders the next unit while the previous one is playing.**
+Audio bought per second of waiting, v3, median of three:
+
+| Group | Characters | Round trip | Audio | Audio per second waited |
+|---|---|---|---|---|
+| 1 sentence | 62 | 1,064 ms | 3.60 s | 3.4× |
+| 2 sentences | 128 | 2,318 ms | 7.68 s | 3.3× |
+| 4 sentences | 272 | 4,538 ms | 16.32 s | 3.6× |
+| soft cap | 350 | 5,392 ms | 21.36 s | **4.0×** |
+
+Every request buys three to four times more audio than it costs in waiting, and **the ratio improves
+with size** — the fixed overhead is amortised. So once d47 is one clip ahead it stays ahead.
+
+**The trap is the second unit, not the first.** Sentence 1 arrives at 1.06 s and plays until 4.66 s;
+a full soft-cap group dispatched behind it needs 5.39 s and lands at ~7 s, later still once the model
+has to stream the text first. That is a gap of a second or two immediately after the first sentence.
+
+So the ramp cannot be jumped, and **it needs no tuning constant because the text supply is the
+ramp**: render the next unit from whatever sentences have arrived by the time the previous one is
+dispatched. Early in a reply little has streamed, so the group is small and fast; later, more has
+arrived, so groups grow and tags land. Self-pacing.
+
+That is first sound unchanged at ~1 s, later units long enough for a tag to be reliable, and no hole
+in playback. **It also means grouping belongs to `SpeechPipeline` rather than to ElevenLabs** —
+`GroupsSentencesUpTo` returns from the #236 branch as *how large may a group get*, with every other
+provider leaving it at one sentence.
+
+Two costs, accepted 2026-09-04: a larger unit wastes more spend when the shut-up hotkey is hit, and
+makes a coarser caption.
+
+## 12. Are the tags billed? Not settled, and it does not need to be
 
 `--only billing` reads the account's `character_count` before and after one tagged synthesis and
 one bare one. **Both reads came back 267,096 — the meter did not move for either call**, so
@@ -377,7 +424,7 @@ over-estimate, and an over-estimate of spend is the safe direction. The tags in 
 worth 19 characters against 39 of speech — roughly a third again on a short line, which is the
 figure to keep in mind rather than a per-tag price.
 
-## 12. Expressiveness — the earlier pair
+## 13. Expressiveness — the earlier pair
 
 `eleven_v3_conversational-tags-en.wav` against `eleven_flash_v2_5-tags-en.wav`, from section 2's
 grid — the same question as section 5 on one line, kept because it is the file the language grid

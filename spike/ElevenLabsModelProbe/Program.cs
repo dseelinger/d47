@@ -221,6 +221,11 @@ internal static class Program
             await UnknownTagsAsync(voice, outputDirectory).ConfigureAwait(false);
         }
 
+        if (only.Contains("headroom"))
+        {
+            await HeadroomAsync(voice).ConfigureAwait(false);
+        }
+
         if (only.Contains("registers"))
         {
             await RegistersAsync(voice, outputDirectory).ConfigureAwait(false);
@@ -587,6 +592,90 @@ internal static class Program
 
     private static readonly Regex TagPattern =
         new(@"\[[a-z ]+\]", RegexOptions.IgnoreCase);
+
+    // ---- 14. is there room to group after the first sentence --------------------------------
+
+    /// <summary>
+    /// How much audio a request buys per second spent waiting for it. The one number that decides
+    /// whether sentences can be grouped after the first without a gap opening in playback.
+    /// <para>
+    /// The trade looked binary — fast and short, or expressive and slow — and it is not. d47 renders
+    /// the next unit <em>while the previous one is playing</em>. So the first unit can stay a single
+    /// sentence, which is the whole latency win and is untouched, and everything after it can be as
+    /// long as the text allows: by then there is a clip playing to hide the render behind. The only
+    /// question is whether the render finishes before the playing clip runs out.
+    /// </para>
+    /// <para>
+    /// That is <c>audio ÷ round trip</c>. Above 1 the group arrives with time to spare and the
+    /// grouping is free; below 1 it arrives late and the Commander hears a hole. Measured across the
+    /// lengths a group would actually be, because the ratio is not a constant — a long request
+    /// returns proportionally more audio for its fixed overhead, which is the effect that makes this
+    /// work at all.
+    /// </para>
+    /// </summary>
+    private static async Task HeadroomAsync(string voice, int repeats = 3)
+    {
+        Section("14. Audio bought per second of waiting, by request size");
+
+        // One sentence, then the sizes a group would plausibly be, up to the splitter's soft cap.
+        (string Name, string Text)[] sizes =
+        [
+            ("1 sentence", "Contact on the scanner, Commander, and it has not seen us yet."),
+            ("2 sentences",
+                "Contact on the scanner, Commander, and it has not seen us yet. It is holding station "
+                + "off the second planet with its drives cold."),
+            ("4 sentences",
+                "Contact on the scanner, Commander, and it has not seen us yet. It is holding station "
+                + "off the second planet with its drives cold, which is either a very patient pilot "
+                + "or a very broken one. We have the angle on it for about another minute. After that "
+                + "it has the angle on us."),
+            ("soft cap",
+                "Contact on the scanner, Commander, and it has not seen us yet. It is holding station "
+                + "off the second planet with its drives cold, which is either a very patient pilot "
+                + "or a very broken one. We have the angle on it for about another minute. After that "
+                + "it has the angle on us, and I would rather not find out which of those it is going "
+                + "to turn out to be."),
+        ];
+
+        Console.WriteLine("  size          chars   round trip      audio    audio/wait");
+
+        foreach (var (name, text) in sizes)
+        {
+            var trips = new List<double>();
+            var audio = 0.0;
+
+            for (var i = 0; i < repeats; i++)
+            {
+                var spoken = await SpeakAsync(V3, voice, text, "en", speed: 1.0).ConfigureAwait(false);
+
+                if (spoken.Pcm is not { Length: > 0 } pcm)
+                {
+                    Console.WriteLine($"  {name}: {spoken.Status} {spoken.Said}");
+                    trips.Clear();
+                    break;
+                }
+
+                trips.Add(spoken.Elapsed.TotalMilliseconds);
+                audio = Seconds(pcm.Length);
+            }
+
+            if (trips.Count == 0)
+            {
+                continue;
+            }
+
+            trips.Sort();
+            var trip = trips[trips.Count / 2];
+
+            Console.WriteLine(
+                $"  {name,-12} {text.Length,5}   {trip,7:0} ms   {audio,6:0.00}s      "
+                + $"{audio / (trip / 1000),5:0.0}x");
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("  Above 1.0x the next group finishes rendering before the clip playing runs");
+        Console.WriteLine("  out, so grouping after the first sentence costs nothing a Commander hears.");
+    }
 
     // ---- 13. the registers a ship AI actually speaks in --------------------------------------
 
