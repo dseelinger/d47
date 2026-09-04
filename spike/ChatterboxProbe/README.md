@@ -81,7 +81,7 @@ one JSON per graph; `--verbose` opens the environment at verbose so a provider's
 piece, 25 is a second), `--overlap` (tokens of the previous piece decoded again as context) and
 `--crossfade` (samples blended at the seam).
 
-## Seven things that will bite the next reader
+## Eight things that will bite the next reader
 
 **`-p:Ep=cpu` is not cosmetic, and neither is `-p:OrtVersion`.** The default build references
 `Microsoft.ML.OnnxRuntime.DirectML` **1.24.4**, which is the last DirectML build Microsoft published;
