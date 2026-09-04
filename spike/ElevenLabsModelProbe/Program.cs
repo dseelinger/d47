@@ -221,6 +221,11 @@ internal static class Program
             await UnknownTagsAsync(voice, outputDirectory).ConfigureAwait(false);
         }
 
+        if (only.Contains("registers"))
+        {
+            await RegistersAsync(voice, outputDirectory).ConfigureAwait(false);
+        }
+
         if (only.Contains("grouping"))
         {
             await GroupingAsync(voice, outputDirectory).ConfigureAwait(false);
@@ -582,6 +587,99 @@ internal static class Program
 
     private static readonly Regex TagPattern =
         new(@"\[[a-z ]+\]", RegexOptions.IgnoreCase);
+
+    // ---- 13. the registers a ship AI actually speaks in --------------------------------------
+
+    /// <summary>
+    /// Ten tags that appear <em>only</em> inside the prompting guide's example dialogue and in no
+    /// list on the page — and which are far closer to what d47 says all day than the sound effects
+    /// in the documented set are. A ship AI has no use for <c>[applause]</c> and constant use for
+    /// <c>[alarmed]</c>.
+    /// <para>
+    /// Two things are fixed from the first audition. Each line is written to give its tag something
+    /// to act on, because a neutral line cannot show that <c>[dismissive]</c> landed. And each is
+    /// left at the length d47 really speaks — 60 to 90 characters — because a tag that only works
+    /// at 250 is a tag d47 cannot use, and finding that out is the point rather than a nuisance to
+    /// design around.
+    /// </para>
+    /// </summary>
+    private static async Task RegistersAsync(string voice, string outputDirectory)
+    {
+        Section("13. The registers a ship AI speaks in, at the length it speaks them");
+
+        (string Tag, string Line)[] cases =
+        [
+            ("alarmed", "Hard lock. Something just cut our drives, and it was not the station."),
+            ("panicking", "Hull at 9 percent and the canopy is gone. Get us down, right now."),
+            ("reassuring", "Breathe, Commander. Shields are holding and the wing is two jumps out."),
+            ("cautiously", "I would not open that cargo hatch until we are well clear of the ring."),
+            ("deadpan", "You have arrived. The station is the one that is on fire."),
+            ("professional", "Docking granted, pad 14. Gear down, and welcome to Jameson Memorial."),
+            ("dismissive", "It is a Sidewinder, Commander. That is not a threat, it is a formality."),
+            ("surprised", "That is a Thargoid Interceptor. Here. Twelve light years inside the bubble."),
+            ("nervously", "We are four jumps out with no scoop, and I have been doing the arithmetic."),
+            ("frustrated", "That is the third time you have plotted us through a permit system."),
+        ];
+
+        var directory = Path.Combine(outputDirectory, "registers");
+        Directory.CreateDirectory(directory);
+
+        var pieces = new List<byte[]>();
+        var gap = new byte[SampleRate * 2 * 2 / 5];
+
+        foreach (var (tag, line) in cases)
+        {
+            // The control first: the same line with no tag, so what the tag changed is audible
+            // rather than remembered. Nothing else in this probe has had that, and it is the
+            // difference between "that sounded alarmed" and "that sounded alarmed compared to what".
+            var plain = await SpeakAsync(V3, voice, line, "en", speed: 1.0).ConfigureAwait(false);
+            var label = await SpeakAsync(V3, voice, $"{tag}.", "en", speed: 1.0).ConfigureAwait(false);
+            var read = await SpeakAsync(V3, voice, $"[{tag}] {line}", "en", speed: 1.0)
+                .ConfigureAwait(false);
+
+            if (plain.Pcm is not { Length: > 0 } || label.Pcm is not { Length: > 0 }
+                || read.Pcm is not { Length: > 0 })
+            {
+                Console.WriteLine($"  {tag}: {read.Status} {read.Said ?? plain.Said}");
+                continue;
+            }
+
+            await File.WriteAllBytesAsync(Path.Combine(directory, $"{tag}.wav"), Wav(read.Pcm))
+                .ConfigureAwait(false);
+
+            pieces.Add(label.Pcm);
+            pieces.Add(gap);
+            pieces.Add(plain.Pcm);
+            pieces.Add(gap);
+            pieces.Add(read.Pcm);
+            pieces.Add(gap);
+
+            Console.WriteLine(
+                $"  [{tag,-13}] {line.Length,3} characters   "
+                + $"plain {Seconds(plain.Pcm.Length):0.00}s   tagged {Seconds(read.Pcm.Length):0.00}s");
+        }
+
+        if (pieces.Count == 0)
+        {
+            return;
+        }
+
+        var all = new byte[pieces.Sum(piece => piece.Length)];
+        var at = 0;
+
+        foreach (var piece in pieces)
+        {
+            piece.CopyTo(all, at);
+            at += piece.Length;
+        }
+
+        var file = Path.Combine(directory, "audition.wav");
+        await File.WriteAllBytesAsync(file, Wav(all)).ConfigureAwait(false);
+
+        Console.WriteLine();
+        Console.WriteLine("  Each entry is: the tag named, the line untagged, then the line tagged.");
+        Console.WriteLine($"  {file}  {Seconds(all.Length) / 60:0.0} minutes");
+    }
 
     // ---- 12. can a tag survive d47's sentence splitter --------------------------------------
 
