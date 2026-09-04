@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>ElevenLabsModelProbe</AssemblyName>
+    <RootNamespace>ElevenLabsModelProbe</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      For the secret store and for SpokenNumbers. The key is read the way d47 reads it, so no
+      key is ever typed at a prompt or pasted into a file, and the text put on the wire is
+      expanded by the same code the provider calls - the question is what d47's own lines cost
+      and sound like, not what some other text does.
+    -->
+    <ProjectReference Include="..\..\src\D47.Core\D47.Core.csproj" />
+  </ItemGroup>
+
+</Project>
