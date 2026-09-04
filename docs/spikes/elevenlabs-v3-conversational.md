@@ -208,7 +208,37 @@ itself where the plain reading has quiet room tone. Nothing is missing; it is qu
 dead in the middle. Worth knowing before a `[whispers]` is ever sent over a callout the Commander is
 meant to act on.
 
-## 8. Are the tags billed? Not settled, and it does not need to be
+## 8. The vocabulary a model may be told to write, and why measurement cannot fix it
+
+**The list cannot be ElevenLabs' published one.** Their own guidance is that *"the voice you choose
+and its training samples will affect tag effectiveness"*, so a documented tag can be silent on a
+given voice — and **a silent tag is worse than a missing one**, because the spoken-line log then
+records a delivery that never happened. A Commander reading `[befuddled]` against a line that was
+not befuddled is being lied to by the one record that settles complaints.
+
+`--only vocabulary` renders every candidate on the Commander's own voice, against a control of the
+same neutral line rendered five times to find the spread with nothing asked for:
+
+```
+control x5: 2.88-3.28s   peak -3.2 to -0.0 dBFS   rms -20.3 to -19.1 dBFS
+```
+
+Sixteen candidates, two takes each: **every one landed outside that spread**, and only `[whispers]`
+moved loudness far enough to be unmistakable (−11.0 and −17.6 dBFS peak against a −3.2 floor).
+
+**That result proves less than it looks, and the reason is the important part.** `[thargoid]` — a
+tag that does not exist — also lengthened the same line, by 0.7 s, while transcribing to exactly the
+words that were sent. **A bracket costs time whether or not it is honoured**, so duration and level
+cannot tell *performed* from *paused*, and no acoustic measurement available here can. The question
+"does `[curious]` sound curious" is irreducibly an ear's.
+
+So the spike stops at bounding the listen rather than pretending to settle it. `vocabulary/
+audition.wav` is 1.8 minutes: one line, eighteen readings, each introduced by the tag it was asked
+for, and **the first two are the reference points** — no tag, then `[thargoid]`, which is what "the
+model did something, but not what was asked" sounds like. A candidate that is not clearly better
+than the `[thargoid]` entry has not earned a place on a list a model is told it may write.
+
+## 9. Are the tags billed? Not settled, and it does not need to be
 
 `--only billing` reads the account's `character_count` before and after one tagged synthesis and
 one bare one. **Both reads came back 267,096 — the meter did not move for either call**, so
@@ -221,7 +251,7 @@ over-estimate, and an over-estimate of spend is the safe direction. The tags in 
 worth 19 characters against 39 of speech — roughly a third again on a short line, which is the
 figure to keep in mind rather than a per-tag price.
 
-## 9. Expressiveness — the earlier pair
+## 10. Expressiveness — the earlier pair
 
 `eleven_v3_conversational-tags-en.wav` against `eleven_flash_v2_5-tags-en.wav`, from section 2's
 grid — the same question as section 5 on one line, kept because it is the file the language grid

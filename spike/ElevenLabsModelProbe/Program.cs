@@ -221,6 +221,11 @@ internal static class Program
             await UnknownTagsAsync(voice, outputDirectory).ConfigureAwait(false);
         }
 
+        if (only.Contains("vocabulary"))
+        {
+            await VocabularyAsync(voice, outputDirectory).ConfigureAwait(false);
+        }
+
         if (only.Contains("words"))
         {
             await WordsAsync(Argument(args, "--clips") ?? outputDirectory, install).ConfigureAwait(false);
@@ -567,6 +572,208 @@ internal static class Program
 
     private static readonly Regex TagPattern =
         new(@"\[[a-z ]+\]", RegexOptions.IgnoreCase);
+
+    // ---- 10. which tags actually do anything, on this voice ----------------------------------
+
+    /// <summary>
+    /// Every tag ElevenLabs documents, on one neutral line, against a control of the same line with
+    /// no tag at all.
+    /// <para>
+    /// <b>The list d47 lets a model write cannot be the published one.</b> ElevenLabs' own guidance
+    /// is that <i>"the voice you choose and its training samples will affect tag effectiveness"</i>,
+    /// so a documented tag can be silent on a given voice — and a silent tag is worse than a
+    /// missing one, because the spoken-line log then records a delivery that never happened. A
+    /// Commander reading "[befuddled]" against a line that was not befuddled is being lied to by
+    /// the one record that is supposed to settle complaints.
+    /// </para>
+    /// <para>
+    /// Synthesis is not deterministic, so "did it change anything" needs a noise floor rather than a
+    /// comparison against one bare rendition. The control is rendered several times to find the
+    /// spread of duration, peak and loudness with nothing asked for; a tag whose renditions land
+    /// inside that spread on every axis did nothing worth logging, and is the one to listen to
+    /// before it goes on the list.
+    /// </para>
+    /// </summary>
+    private static async Task VocabularyAsync(string voice, string outputDirectory)
+    {
+        Section("10. Which documented tags do anything on this voice");
+
+        // Neutral on purpose: any delivery could plausibly colour it, so a tag that changes
+        // nothing here is not being defeated by a line that fights it.
+        const string Line = "Contact on the scanner. It has not seen us yet.";
+
+        var vocabulary = Path.Combine(outputDirectory, "vocabulary");
+        Directory.CreateDirectory(vocabulary);
+
+        string[] tags =
+        [
+            "whispers", "sighs", "exhales", "sarcastic", "curious", "excited", "mischievously",
+            "snorts", "laughs", "laughs harder", "starts laughing", "wheezing", "crying", "sings",
+            "strong Scottish accent",
+
+            // Not in the documented list, and the one d47 would most want for a danger callout.
+            "shouting",
+        ];
+
+        var control = new List<(double Seconds, double Peak, double Rms)>();
+
+        for (var i = 0; i < 5; i++)
+        {
+            if (await MeasureAsync(voice, Line, vocabulary, $"control-{i}").ConfigureAwait(false) is { } one)
+            {
+                control.Add(one);
+            }
+        }
+
+        if (control.Count == 0)
+        {
+            Console.WriteLine("  the control would not render");
+            return;
+        }
+
+        var span = (
+            Low: (control.Min(c => c.Seconds), control.Min(c => c.Peak), control.Min(c => c.Rms)),
+            High: (control.Max(c => c.Seconds), control.Max(c => c.Peak), control.Max(c => c.Rms)));
+
+        Console.WriteLine(
+            $"  control x{control.Count}: {span.Low.Item1:0.00}-{span.High.Item1:0.00}s   "
+            + $"peak {span.Low.Item2:0.0} to {span.High.Item2:0.0} dBFS   "
+            + $"rms {span.Low.Item3:0.0} to {span.High.Item3:0.0} dBFS");
+        Console.WriteLine();
+
+        foreach (var tag in tags)
+        {
+            var takes = new List<(double Seconds, double Peak, double Rms)>();
+
+            for (var i = 0; i < 2; i++)
+            {
+                var name = tag.Replace(' ', '-');
+
+                if (await MeasureAsync(voice, $"[{tag}] {Line}", vocabulary, $"{name}-{i}")
+                    .ConfigureAwait(false) is { } one)
+                {
+                    takes.Add(one);
+                }
+            }
+
+            if (takes.Count == 0)
+            {
+                Console.WriteLine($"  [{tag,-24}] would not render");
+                continue;
+            }
+
+            var inside = takes.All(take =>
+                take.Seconds >= span.Low.Item1 && take.Seconds <= span.High.Item1
+                && take.Peak >= span.Low.Item2 && take.Peak <= span.High.Item2
+                && take.Rms >= span.Low.Item3 && take.Rms <= span.High.Item3);
+
+            Console.WriteLine(
+                $"  [{tag,-24}] {string.Join("  ", takes.Select(t => $"{t.Seconds:0.00}s {t.Peak:0.0}/{t.Rms:0.0}"))}"
+                + (inside ? "   <- inside the control's spread on every axis" : string.Empty));
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("  Every tag moves the audio, and that proves less than it looks: [thargoid],");
+        Console.WriteLine("  which is nonsense, lengthened the same line by 0.7s. A bracket costs time");
+        Console.WriteLine("  whether or not it is honoured, so the numbers cannot tell 'performed' from");
+        Console.WriteLine("  'paused'. The audition below is the instrument that can.");
+
+        await AuditionAsync(voice, Line, tags, vocabulary).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// One file, every candidate in it, each read introduced by the tag it was asked for.
+    /// <para>
+    /// Sixteen separate clips is sixteen decisions to open something; one file is a listen. The
+    /// order is fixed and the label is spoken so it can be followed without the screen — and the
+    /// first two entries are the reference points: the line with no tag at all, and the line with a
+    /// tag that does not exist, which is what "the model did something, but not what was asked"
+    /// sounds like.
+    /// </para>
+    /// </summary>
+    private static async Task AuditionAsync(
+        string voice,
+        string line,
+        IReadOnlyList<string> tags,
+        string directory)
+    {
+        Console.WriteLine();
+        Console.WriteLine("  Building the audition");
+
+        var pieces = new List<byte[]>();
+        var gap = new byte[SampleRate * 2 * 2 / 5];
+
+        (string Said, string Text)[] entries =
+        [
+            ("No tag at all.", line),
+            ("A tag that does not exist.", $"[thargoid] {line}"),
+            .. tags.Select(tag => ($"{tag}.", $"[{tag}] {line}")),
+        ];
+
+        foreach (var (said, text) in entries)
+        {
+            // The label is its own request and carries no tag, so it is never part of the
+            // performance being judged - the same rule the side-by-side set follows.
+            var label = await SpeakAsync(V3, voice, said, "en", speed: 1.0).ConfigureAwait(false);
+            var read = await SpeakAsync(V3, voice, text, "en", speed: 1.0).ConfigureAwait(false);
+
+            if (label.Pcm is not { Length: > 0 } || read.Pcm is not { Length: > 0 })
+            {
+                Console.WriteLine($"    {said} would not render");
+                continue;
+            }
+
+            pieces.Add(label.Pcm);
+            pieces.Add(gap);
+            pieces.Add(read.Pcm);
+            pieces.Add(gap);
+        }
+
+        if (pieces.Count == 0)
+        {
+            return;
+        }
+
+        var joined = new byte[pieces.Sum(piece => piece.Length)];
+        var at = 0;
+
+        foreach (var piece in pieces)
+        {
+            piece.CopyTo(joined, at);
+            at += piece.Length;
+        }
+
+        var file = Path.Combine(directory, "audition.wav");
+        await File.WriteAllBytesAsync(file, Wav(joined)).ConfigureAwait(false);
+
+        Console.WriteLine($"    {file}  {Seconds(joined.Length) / 60:0.0} minutes");
+    }
+
+    /// <summary>One rendition, written to disk and measured. Null when the service refused it.</summary>
+    private static async Task<(double Seconds, double Peak, double Rms)?> MeasureAsync(
+        string voice,
+        string text,
+        string directory,
+        string name)
+    {
+        var spoken = await SpeakAsync(V3, voice, text, "en", speed: 1.0).ConfigureAwait(false);
+
+        if (spoken.Pcm is not { Length: > 0 } pcm)
+        {
+            Console.WriteLine($"  {name} {spoken.Status} {spoken.Said}");
+            return null;
+        }
+
+        var wav = Wav(pcm);
+        await File.WriteAllBytesAsync(Path.Combine(directory, name + ".wav"), wav).ConfigureAwait(false);
+
+        var samples = Samples(wav);
+
+        return (
+            Seconds(pcm.Length),
+            Decibels(samples.Max(Math.Abs)),
+            Decibels(Math.Sqrt(samples.Sum(sample => (double)sample * sample) / samples.Length)));
+    }
 
     // ---- 9. did it say all the words, and how loudly -----------------------------------------
 
