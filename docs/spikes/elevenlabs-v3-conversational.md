@@ -164,7 +164,20 @@ against *"…the old Flash 2 point 5"*. The first set said "the old V 2", and
 reading a milestone half in German. A file one careless listen from being filed as evidence about
 the wrong model is not a file worth keeping.
 
-## 7. Expressiveness — the earlier pair
+## 7. Are the tags billed? Not settled, and it does not need to be
+
+`--only billing` reads the account's `character_count` before and after one tagged synthesis and
+one bare one. **Both reads came back 267,096 — the meter did not move for either call**, so
+`/v1/user/subscription` does not update per request on this account and the measurement is
+inconclusive. It is recorded rather than dropped so nobody re-runs it expecting an answer.
+
+It does not need to be settled. **d47's ledger counts what d47 puts on the wire**, so injected tags
+are counted whether or not ElevenLabs meters them; the ledger is then either exact or a slight
+over-estimate, and an over-estimate of spend is the safe direction. The tags in the sample above are
+worth 19 characters against 39 of speech — roughly a third again on a short line, which is the
+figure to keep in mind rather than a per-tag price.
+
+## 8. Expressiveness — the earlier pair
 
 `eleven_v3_conversational-tags-en.wav` against `eleven_flash_v2_5-tags-en.wav`, from section 2's
 grid — the same question as section 5 on one line, kept because it is the file the language grid

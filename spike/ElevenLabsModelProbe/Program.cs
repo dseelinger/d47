@@ -181,7 +181,7 @@ internal static class Program
             Console.WriteLine($"NOTE: {V3} is not in this account's model listing.");
         }
 
-        var only = Argument(args, "--only")?.Split(',') ?? ["language", "speed", "latency", "compare", "plain"];
+        var only = Argument(args, "--only")?.Split(',') ?? ["language", "speed", "latency", "compare", "plain", "billing"];
 
         if (only.Contains("language"))
         {
@@ -206,6 +206,11 @@ internal static class Program
         if (only.Contains("plain"))
         {
             await CompareAsync(voice, outputDirectory, tagged: false).ConfigureAwait(false);
+        }
+
+        if (only.Contains("billing"))
+        {
+            await BillingAsync(voice).ConfigureAwait(false);
         }
 
         Console.WriteLine();
@@ -549,6 +554,79 @@ internal static class Program
 
     private static readonly Regex TagPattern =
         new(@"\[[a-z ]+\]", RegexOptions.IgnoreCase);
+
+    // ---- 7. are the tags billed --------------------------------------------------------------
+
+    /// <summary>
+    /// Whether the bracketed words cost characters. The published price is per character and no
+    /// page says whether a tag is one, which matters because d47's spend ledger counts what it
+    /// puts on the wire: if tags are billed, injecting them raises the bill by however many
+    /// characters they run to and the ledger is already right; if they are free, the ledger would
+    /// over-count every tagged line.
+    /// <para>
+    /// Measured off the account's own meter rather than reasoned about - <c>character_count</c>
+    /// before and after one synthesis, which is the only number that settles it. Run when nothing
+    /// else is speaking on the account, since the meter is the account's and not this process's.
+    /// </para>
+    /// </summary>
+    private static async Task BillingAsync(string voice)
+    {
+        Section("7. Are audio tags billed as characters");
+
+        const string Tagged = "[whispers] Cutting the drives. [sighs] It has not seen us.";
+        var bare = Bare(Tagged);
+
+        var taggedLength = SpokenNumbers.Expand(Tagged).Length;
+        var bareLength = SpokenNumbers.Expand(bare).Length;
+
+        Console.WriteLine($"  tagged  {taggedLength} characters on the wire");
+        Console.WriteLine($"  bare    {bareLength} characters on the wire");
+        Console.WriteLine($"  the tags are worth {taggedLength - bareLength}");
+        Console.WriteLine();
+
+        foreach (var (label, text) in new[] { ("tagged", Tagged), ("bare", bare) })
+        {
+            var before = await MeterAsync().ConfigureAwait(false);
+
+            if (before is null)
+            {
+                Console.WriteLine("  the account meter would not read; skipping");
+                return;
+            }
+
+            var spoken = await SpeakAsync(V3, voice, text, "en", speed: 1.0).ConfigureAwait(false);
+
+            if (spoken.Pcm is not { Length: > 0 })
+            {
+                Console.WriteLine($"  {label} {spoken.Status} {spoken.Said}");
+                continue;
+            }
+
+            var after = await MeterAsync().ConfigureAwait(false);
+
+            Console.WriteLine(
+                $"  {label,-8} meter {before} -> {after}, charged {after - before} "
+                + $"for {SpokenNumbers.Expand(text).Length} characters sent");
+        }
+    }
+
+    /// <summary>The account's used-character count, which is the only meter either side agrees on.</summary>
+    private static async Task<int?> MeterAsync()
+    {
+        var (status, body) = await GetAsync("/user/subscription").ConfigureAwait(false);
+
+        if (status != 200 || body is null)
+        {
+            return null;
+        }
+
+        using var document = JsonDocument.Parse(body);
+
+        return document.RootElement.TryGetProperty("character_count", out var used)
+            && used.ValueKind == JsonValueKind.Number
+                ? used.GetInt32()
+                : null;
+    }
 
     // ---- the wire --------------------------------------------------------------------------
 
