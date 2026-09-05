@@ -61,13 +61,6 @@ internal static class Program
                 Console.WriteLine($"{id}: lost a file, will be cut again");
             }
 
-            var verdicts = Load(Path.Combine(corpus, "verdicts.json"))?.AsObject();
-
-            if (verdicts?.Remove(id) == true)
-            {
-                Save(Path.Combine(corpus, "verdicts.json"), verdicts);
-                Console.WriteLine($"{id}: verdict cleared, it needs another listen");
-            }
         }
 
         var candidates = new JsonArray();
@@ -183,9 +176,32 @@ internal static class Program
         Mundane(candidates, known, corpus);
 
         Save(Path.Combine(corpus, "candidates.json"), candidates);
+
+        // Anything cut in this run is audio the ear has not heard: a voice re-sourced, re-windowed
+        // past an archive's spoken copyright notice, or rebuilt after a placeholder was swept out
+        // from under it. Its old verdict was about a different recording, so it goes and the voice
+        // returns to the queue. Doing it here rather than by hand is what stops a stale approval
+        // reaching the test.
+        var verdicts = Load(Path.Combine(corpus, "verdicts.json"))?.AsObject();
+        var reheard = _cut.Where(id => verdicts?.ContainsKey(id) == true).ToList();
+
+        foreach (var id in reheard)
+        {
+            verdicts!.Remove(id);
+        }
+
+        if (reheard.Count > 0)
+        {
+            Save(Path.Combine(corpus, "verdicts.json"), verdicts!);
+            Console.WriteLine($"{reheard.Count} verdicts cleared, those voices need another listen");
+        }
+
         Console.WriteLine($"{candidates.Count} candidates -> candidates.json");
         return 0;
     }
+
+    /// <summary>Every voice cut in this run, so its verdict can be cleared at the end.</summary>
+    private static readonly List<string> _cut = [];
 
     /// <summary>
     /// Deletes the clips that are not clips. A clip site whose signed link has expired serves a
@@ -273,6 +289,8 @@ internal static class Program
             Console.WriteLine($"{voice}: {exception.Message}");
             return;
         }
+
+        _cut.Add(id);
 
         candidates.Add(new JsonObject
         {

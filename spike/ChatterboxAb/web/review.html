@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Voice Review</title>
 <style>
-  :root { --bg: #14181d; --panel: #1d232a; --ink: #e8edf2; --muted: #93a0ae; --rule: #2f3944; --yes: #3fbf7f; --no: #e0a21a; --bad: #e0665a; }
+  :root { --bg: #14181d; --panel: #1d232a; --ink: #e8edf2; --muted: #93a0ae; --rule: #2f3944; --yes: #3fbf7f; --no: #e0a21a; --bad: #e0665a; --late: #6f8fd8; }
   body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.4 "Segoe UI", system-ui, sans-serif; }
   header { position: sticky; top: 0; background: var(--bg); border-bottom: 1px solid var(--rule); padding: 14px 24px; display: flex; gap: 24px; align-items: baseline; flex-wrap: wrap; }
   h1 { font-size: 1.2rem; margin: 0; }
@@ -13,17 +13,19 @@
   .count b { color: var(--yes); font-size: 1.3rem; }
   label { color: var(--muted); }
   main { padding: 16px 24px 80px; display: grid; gap: 10px; max-width: 1100px; }
-  .row { display: grid; grid-template-columns: 1fr 300px auto auto auto; gap: 12px; align-items: center; background: var(--panel); padding: 10px 14px; border-radius: 6px; border-left: 4px solid var(--rule); }
+  .row { display: grid; grid-template-columns: 1fr 260px auto auto auto auto; gap: 10px; align-items: center; background: var(--panel); padding: 10px 14px; border-radius: 6px; border-left: 4px solid var(--rule); }
   .row.yes { border-left-color: var(--yes); }
   .row.no { border-left-color: var(--no); opacity: 0.55; }
   .row.bad { border-left-color: var(--bad); opacity: 0.55; }
+  .row.late { border-left-color: var(--late); opacity: 0.7; }
   .row .name { font-weight: 600; }
   .row .meta { color: var(--muted); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
-  audio { width: 300px; height: 36px; }
-  button { font: inherit; padding: 8px 14px; border-radius: 6px; border: 1px solid var(--rule); background: transparent; color: var(--ink); cursor: pointer; white-space: nowrap; }
+  audio { width: 260px; height: 36px; }
+  button { font: inherit; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--rule); background: transparent; color: var(--ink); cursor: pointer; white-space: nowrap; }
   button.yes:hover, button.yes.on { background: var(--yes); border-color: var(--yes); color: #08130d; }
   button.no:hover, button.no.on { background: var(--no); border-color: var(--no); color: #1a1204; }
   button.bad:hover, button.bad.on { background: var(--bad); border-color: var(--bad); color: #1a0a08; }
+  button.late:hover, button.late.on { background: var(--late); border-color: var(--late); color: #070d1a; }
   .hint { color: var(--muted); }
   kbd { background: var(--rule); padding: 1px 6px; border-radius: 4px; font-size: 0.85em; }
 </style>
@@ -31,7 +33,7 @@
 <body>
 <header>
   <h1>Voice Review</h1>
-  <div class="count"><b id="approved">0</b> interesting · <span id="meh">0</span> meh · <span id="bad">0</span> unusable · <span id="left">0</span> to review</div>
+  <div class="count"><b id="approved">0</b> interesting · <span id="meh">0</span> meh · <span id="bad">0</span> unusable · <span id="late">0</span> another's voice first · <span id="left">0</span> to review</div>
   <label>show
     <select id="filter">
       <option value="new">to review</option>
@@ -39,9 +41,10 @@
       <option value="yes">interesting</option>
       <option value="no">meh</option>
       <option value="bad">unusable</option>
+      <option value="late">begins with another's voice</option>
     </select>
   </label>
-  <span class="hint"><kbd>space</kbd> play · <kbd>Y</kbd> interesting · <kbd>N</kbd> meh · <kbd>X</kbd> unusable · <kbd>↓</kbd> next</span>
+  <span class="hint"><kbd>space</kbd> play · <kbd>Y</kbd> interesting · <kbd>N</kbd> meh · <kbd>X</kbd> unusable · <kbd>L</kbd> another's voice · <kbd>↓</kbd> next</span>
 </header>
 <main id="list"></main>
 <script>
@@ -58,11 +61,12 @@
   function render() {
     const filter = document.getElementById('filter').value;
     list.innerHTML = '';
-    let approved = 0, left = 0, bad = 0, meh = 0;
+    let approved = 0, left = 0, bad = 0, meh = 0, late = 0;
     rows.forEach((c, i) => {
       if (c.verdict === 'yes') approved++;
       if (c.verdict === 'no') meh++;
       if (c.verdict === 'bad') bad++;
+      if (c.verdict === 'late') late++;
       if (!c.verdict) left++;
       const shown = filter === 'all' || (filter === 'new' ? !c.verdict : c.verdict === filter);
       if (!shown) return;
@@ -74,10 +78,12 @@
         <audio preload="none" controls src="/corpus/${c.file}"></audio>
         <button class="yes ${c.verdict === 'yes' ? 'on' : ''}">interesting</button>
         <button class="no ${c.verdict === 'no' ? 'on' : ''}">meh</button>
-        <button class="bad ${c.verdict === 'bad' ? 'on' : ''}" title="not the voice it claims to be, or music under it that would corrupt the clone">unusable</button>`;
+        <button class="bad ${c.verdict === 'bad' ? 'on' : ''}" title="not the voice it claims to be, or music under it that would corrupt the clone">unusable</button>
+        <button class="late ${c.verdict === 'late' ? 'on' : ''}" title="an announcer, an interviewer or an archive notice speaks first and the clip ends before the real voice does. Fixable rather than fatal: the window moves later and the clip is cut again">begins with another's voice</button>`;
       row.querySelector('.yes').onclick = () => verdict(i, 'yes');
       row.querySelector('.no').onclick = () => verdict(i, 'no');
       row.querySelector('.bad').onclick = () => verdict(i, 'bad');
+      row.querySelector('.late').onclick = () => verdict(i, 'late');
       row.querySelector('audio').onplay = () => { current = i; };
       list.appendChild(row);
     });
@@ -85,6 +91,7 @@
     document.getElementById('left').textContent = left;
     document.getElementById('bad').textContent = bad;
     document.getElementById('meh').textContent = meh;
+    document.getElementById('late').textContent = late;
   }
 
   async function verdict(i, v) {
@@ -122,6 +129,7 @@
     if (e.key === 'y' || e.key === 'Y') verdict(+row.dataset.index, 'yes');
     if (e.key === 'n' || e.key === 'N') verdict(+row.dataset.index, 'no');
     if (e.key === 'x' || e.key === 'X') verdict(+row.dataset.index, 'bad');
+    if (e.key === 'l' || e.key === 'L') verdict(+row.dataset.index, 'late');
     if (e.key === 'ArrowDown') { e.preventDefault(); play(row.nextElementSibling); }
     if (e.key === 'ArrowUp') { e.preventDefault(); play(row.previousElementSibling); }
   });
