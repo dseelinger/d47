@@ -46,7 +46,29 @@ internal static class Program
 
     private static int Prepare(string corpus)
     {
-        Stubs(corpus);
+        // A voice that lost a file to the sweep is cut again from what survived, and the verdict
+        // recorded against it goes: it was cast on audio that is no longer what plays. Doing this
+        // here rather than by hand is the point — the sweep found nineteen copies of one
+        // placeholder, and the two voices whose stale clips it did not re-cut were the two that
+        // reached the ear anyway.
+        foreach (var id in Stubs(corpus))
+        {
+            var prepared = Path.Combine(corpus, "prepared", id.Replace('/', Path.DirectorySeparatorChar) + ".wav");
+
+            if (File.Exists(prepared))
+            {
+                File.Delete(prepared);
+                Console.WriteLine($"{id}: lost a file, will be cut again");
+            }
+
+            var verdicts = Load(Path.Combine(corpus, "verdicts.json"))?.AsObject();
+
+            if (verdicts?.Remove(id) == true)
+            {
+                Save(Path.Combine(corpus, "verdicts.json"), verdicts);
+                Console.WriteLine($"{id}: verdict cleared, it needs another listen");
+            }
+        }
 
         var candidates = new JsonArray();
         var existing = Load(Path.Combine(corpus, "candidates.json"))?.AsArray() ?? [];
@@ -174,13 +196,14 @@ internal static class Program
     /// small file whose exact bytes repeat across unrelated voices is a placeholder, because two
     /// real recordings of two different actors never collide.
     /// </summary>
-    private static void Stubs(string corpus)
+    private static HashSet<string> Stubs(string corpus)
     {
+        var hit = new HashSet<string>();
         var raw = Path.Combine(corpus, "raw");
 
         if (!Directory.Exists(raw))
         {
-            return;
+            return hit;
         }
 
         var byHash = new Dictionary<string, List<string>>();
@@ -217,9 +240,12 @@ internal static class Program
 
             foreach (var file in files)
             {
+                hit.Add($"{Path.GetFileName(Path.GetDirectoryName(file))}/{Prefix(file)}");
                 File.Delete(file);
             }
         }
+
+        return hit;
     }
 
     private static void Add(

@@ -31,8 +31,16 @@
 <body>
 <header>
   <h1>Voice Review</h1>
-  <div class="count"><b id="approved">0</b> approved of 100 wanted · <span id="left">0</span> to review · <span id="bad">0</span> unusable</div>
-  <label><input type="checkbox" id="hide" checked> hide reviewed</label>
+  <div class="count"><b id="approved">0</b> interesting · <span id="meh">0</span> meh · <span id="bad">0</span> unusable · <span id="left">0</span> to review</div>
+  <label>show
+    <select id="filter">
+      <option value="new">to review</option>
+      <option value="all">everything</option>
+      <option value="yes">interesting</option>
+      <option value="no">meh</option>
+      <option value="bad">unusable</option>
+    </select>
+  </label>
   <span class="hint"><kbd>space</kbd> play · <kbd>Y</kbd> interesting · <kbd>N</kbd> meh · <kbd>X</kbd> unusable · <kbd>↓</kbd> next</span>
 </header>
 <main id="list"></main>
@@ -48,14 +56,16 @@
   }
 
   function render() {
-    const hide = document.getElementById('hide').checked;
+    const filter = document.getElementById('filter').value;
     list.innerHTML = '';
-    let approved = 0, left = 0, bad = 0;
+    let approved = 0, left = 0, bad = 0, meh = 0;
     rows.forEach((c, i) => {
       if (c.verdict === 'yes') approved++;
+      if (c.verdict === 'no') meh++;
       if (c.verdict === 'bad') bad++;
       if (!c.verdict) left++;
-      if (hide && c.verdict) return;
+      const shown = filter === 'all' || (filter === 'new' ? !c.verdict : c.verdict === filter);
+      if (!shown) return;
       const row = document.createElement('div');
       row.className = 'row ' + (c.verdict || '');
       row.dataset.index = i;
@@ -74,18 +84,37 @@
     document.getElementById('approved').textContent = approved;
     document.getElementById('left').textContent = left;
     document.getElementById('bad').textContent = bad;
+    document.getElementById('meh').textContent = meh;
   }
 
   async function verdict(i, v) {
+    // Where to go next, decided before the list is redrawn: when the filter is showing one verdict,
+    // this row is about to leave the list, so the next row takes its place; when showing
+    // everything, the list does not move and the next row is the one below.
+    const row = document.querySelector(`.row[data-index="${i}"]`);
+    const below = row?.nextElementSibling;
+    const leaving = document.getElementById('filter').value !== 'all';
+
     rows[i].verdict = v;
     await fetch('/api/verdict', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: rows[i].id, verdict: v }) });
+
+    const wanted = leaving ? null : +(below?.dataset.index ?? -1);
     render();
-    const next = document.querySelector('.row');
-    if (next) { const a = next.querySelector('audio'); a.scrollIntoView({ block: 'center' }); a.play(); current = +next.dataset.index; }
+
+    const next = wanted === null || wanted < 0
+      ? document.querySelector('.row')
+      : document.querySelector(`.row[data-index="${wanted}"]`);
+
+    if (next) {
+      const audio = next.querySelector('audio');
+      audio.scrollIntoView({ block: 'center' });
+      audio.play();
+      current = +next.dataset.index;
+    }
   }
 
   document.addEventListener('keydown', e => {
-    if (e.target.tagName === 'INPUT') return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
     const row = document.querySelector(`.row[data-index="${current}"]`) || document.querySelector('.row');
     if (!row) return;
     const audio = row.querySelector('audio');
@@ -96,7 +125,7 @@
     if (e.key === 'ArrowDown') { const n = row.nextElementSibling; if (n) { current = +n.dataset.index; n.querySelector('audio').scrollIntoView({ block: 'center' }); n.querySelector('audio').play(); e.preventDefault(); } }
   });
 
-  document.getElementById('hide').onchange = render;
+  document.getElementById('filter').onchange = render;
   load();
 </script>
 </body>
