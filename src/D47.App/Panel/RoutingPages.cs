@@ -38,7 +38,25 @@ public sealed record RoutingSurface(
     // The jump range of the ship being flown, for the placeholder that says d47 will supply it
     // (#253). Read fresh, because it changes on a swap and on a refit — and it is the same value
     // RouteCapability falls back to, so the figure drawn is the figure sent.
-    Func<double?>? JumpRange = null);
+    Func<double?>? JumpRange = null,
+
+    // The Community Goal page's own needs (#296): the saved search, the ledger, and who and when
+    // to ask them about. Null where the surface has no such page.
+    CommunityGoalSurface? CommunityGoal = null);
+
+/// <summary>
+/// What the Community Goal page reads and drives
+/// (<a href="https://github.com/dseelinger/d47/issues/296">#296</a>).
+/// </summary>
+/// <param name="Search">The saved query — its commodity is the one field the page edits.</param>
+/// <param name="Ledger">What the commodity has made or lost, folded from the journals.</param>
+/// <param name="Commander">The Frontier id the ledger is asked about; null asks about the last one seen.</param>
+/// <param name="Now">The clock, injected like everywhere else the ledger is measured from.</param>
+public sealed record CommunityGoalSurface(
+    CommunityGoalSearch Search,
+    CommodityLedger Ledger,
+    Func<string?> Commander,
+    Func<DateTimeOffset> Now);
 
 /// <summary>
 /// The Routing tab (Phase 37).
@@ -68,6 +86,9 @@ public static class RoutingPages
     /// <summary>Where to buy a commodity, or where to dump one (Phase 49).</summary>
     public const string MarketRoot = "routing.market";
 
+    /// <summary>The Community Goal supply search and its ledger (#296).</summary>
+    public const string CommunityGoalRoot = "routing.communityGoal";
+
     /// <summary>How a plan that was made is keyed when it is opened as a level.</summary>
     public const string ResultPrefix = "routing.result:";
 
@@ -96,6 +117,7 @@ public static class RoutingPages
             PlanRoot => Plan(surface, nav),
             CourseRoot => Course(surface),
             MarketRoot => Market(surface),
+            CommunityGoalRoot => CommunityGoal(surface),
 
             // Progress is the fallback rather than Plan, because it is the mode that works with
             // nothing switched on and nothing typed.
@@ -130,6 +152,16 @@ public static class RoutingPages
                 surface.LookupsEnabled ?? (() => false),
                 surface.OpenSettings)
             : Missing("Market lookups are not available on this surface.");
+
+    private static Control CommunityGoal(RoutingSurface surface) =>
+        surface is { Registry: { } registry, Commodities: { } board, CommunityGoal: { } goal }
+            ? new RouteCommunityGoalPage(
+                registry,
+                board,
+                goal,
+                surface.LookupsEnabled ?? (() => false),
+                surface.OpenSettings)
+            : Missing("The Community Goal search is not available on this surface.");
 
     private static Control Result(NavCrumb crumb, RoutingSurface surface)
     {

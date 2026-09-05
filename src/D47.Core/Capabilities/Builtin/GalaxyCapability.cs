@@ -333,6 +333,33 @@ public static class GalaxyCapability
                         Type = ToolParameterType.Integer,
                         Description = "How many to return, 1 to 20. Default 5.",
                     },
+                    // The four INARA has and this did not (#296). Short for the reason the three
+                    // above are: the surface pays for every byte of prose here.
+                    new ToolParameter
+                    {
+                        Name = "max_station_distance",
+                        Type = ToolParameterType.Number,
+                        Description = "Furthest from the star, in light seconds.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "min_supply",
+                        Type = ToolParameterType.Integer,
+                        Description = "Least in stock, or least demand when selling.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "surface_stations",
+                        Type = ToolParameterType.Boolean,
+                        Description = "Also planetary ports and settlements. Default false.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "order_by",
+                        Type = ToolParameterType.String,
+                        Description = "Nearest first, or best price first. Default price.",
+                        AllowedValues = ["distance", "price"],
+                    },
                 ],
                 Handler = (arguments, cancellationToken) =>
                     FindStationAsync(
@@ -792,6 +819,23 @@ public static class GalaxyCapability
 
         var maxPriceAge = Math.Clamp(askedAge ?? DefaultPriceAgeHours, 1, MaxPriceAgeHours);
 
+        // The four knobs INARA's search has and this one lacked (#296). Each is optional and
+        // absent means what it always meant; only min_supply reaches the request, because it is
+        // the one the station search honours server-side.
+        double? maxStationDistance = arguments.TryGetDouble("max_station_distance", out var lightSeconds)
+                                     && lightSeconds > 0
+            ? lightSeconds
+            : null;
+
+        int? minAvailable = arguments.TryGetInt32("min_supply", out var least) && least > 0 ? least : null;
+
+        arguments.TryGetBoolean("surface_stations", out var surfaceStations);
+
+        var orderBy = arguments.TryGetString("order_by", out var order)
+                      && string.Equals(order, "distance", StringComparison.OrdinalIgnoreCase)
+            ? CommodityOrder.Distance
+            : CommodityOrder.Price;
+
         var query = new CommodityQuery(
             commodity.Trim(),
             selling ? TradeSide.Selling : TradeSide.Buying,
@@ -799,7 +843,11 @@ public static class GalaxyCapability
             maxDistance,
             largePad,
             includeCarriers,
-            limit);
+            limit,
+            maxStationDistance,
+            minAvailable,
+            surfaceStations,
+            orderBy);
 
         try
         {
@@ -924,6 +972,13 @@ public static class GalaxyCapability
                 line += $", {offer.Total:N0} cr for the load";
             }
 
+            // The other half of "how far" (#296), said only when the index knows it: a pad
+            // 60,000 light seconds out is the trip the Commander feels after the jump.
+            if (offer.Market.DistanceToArrival is { } arrival)
+            {
+                line += $", {arrival:N0} Ls from the star";
+            }
+
             line += $" — {Age(offer)}";
 
             lines.Add(line);
@@ -937,7 +992,24 @@ public static class GalaxyCapability
             ? $"{verb} {load} tonnes of {query.Commodity} within {reach} ly of {near}"
             : $"{verb} {query.Commodity} within {reach} ly of {near}";
 
-        var report = $"Best for {heading}: " + string.Join("; ", lines) + ".";
+        string report;
+
+        if (query.OrderBy == CommodityOrder.Distance && answer.OriginKnown)
+        {
+            // Nearest first means the nearest is the answer (#296). One station in full, and the
+            // rest counted rather than read: the full ranked list is on the Routing tab, which
+            // is where thirty numbers belong. The ear gets the place to go next.
+            report = $"Nearest for {heading}: {lines[0]}.";
+
+            if (lines.Count > 1)
+            {
+                report += $" {lines.Count - 1} more, further out, are on the Routing tab.";
+            }
+        }
+        else
+        {
+            report = $"Best for {heading}: " + string.Join("; ", lines) + ".";
+        }
 
         if (!answer.OriginKnown)
         {
@@ -1004,6 +1076,29 @@ public static class GalaxyCapability
         if (query.IncludeCarriers)
         {
             turned.Add("fleet carriers included");
+        }
+
+        // The four from #296, under the same rule: said only when turned.
+        if (query.MaxStationDistance is { } lightSeconds)
+        {
+            turned.Add($"pads within {lightSeconds:N0} Ls of the star");
+        }
+
+        if (query.MinAvailable is { } floor)
+        {
+            turned.Add(query.Side == TradeSide.Buying
+                ? $"at least {floor:N0} in stock"
+                : $"demand of at least {floor:N0}");
+        }
+
+        if (query.SurfaceStations)
+        {
+            turned.Add("surface stations included");
+        }
+
+        if (query.OrderBy == CommodityOrder.Distance)
+        {
+            turned.Add("nearest first");
         }
 
         var said = turned.Count > 0 ? $" Searched {string.Join(", ", turned)}." : string.Empty;

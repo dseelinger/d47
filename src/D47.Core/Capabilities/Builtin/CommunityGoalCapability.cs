@@ -53,10 +53,19 @@ public static class CommunityGoalCapability
     /// Injected, because no Core component reads the clock — and because the whole correctness of
     /// this capability is a comparison against it.
     /// </param>
+    /// <param name="ledger">
+    /// What the Community Goal commodity has made or lost, folded from the journals
+    /// (<a href="https://github.com/dseelinger/d47/issues/296">#296</a>). Null under the designer
+    /// and in a test that is not about it; the tool then says nothing is keeping one rather than
+    /// vanishing, so the page that documents it and the phrases that reach it stay honest.
+    /// </param>
+    /// <param name="search">The saved search, for which commodity the ledger is asked about.</param>
     public static CapabilityDescriptor Create(
         Func<CommanderGameState?> commander,
         ICommunityGoalService? listing,
-        Func<DateTimeOffset> now) => new()
+        Func<DateTimeOffset> now,
+        CommodityLedger? ledger = null,
+        CommunityGoalSearch? search = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -68,10 +77,12 @@ public static class CommunityGoalCapability
             "how am I doing in the community goal",
             "what tier is the community goal at",
         ],
+        // Named, because the capability has two answerable tools now (#296): the board is what
+        // "community goal" means on its own; the ledger is reached by its own three phrases.
         Keywords =
         [
-            "community goals",
-            "community goal",
+            new CapabilityKeyword("community goals", "get_community_goals"),
+            new CapabilityKeyword("community goal", "get_community_goals"),
         ],
         Tools =
         [
@@ -103,6 +114,36 @@ public static class CommunityGoalCapability
                 Handler = (arguments, cancellationToken) =>
                     DescribeAsync(commander, listing, now, arguments, cancellationToken),
             },
+            new ToolDefinition
+            {
+                Name = "get_community_goal_earnings",
+                Description =
+                    "What the Community Goal commodity has made or lost, net of what the cargo cost: "
+                    + "this session, today, or over the goal's own week.",
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "range",
+                        Type = ToolParameterType.String,
+                        Description = "Which stretch. Default session.",
+                        AllowedValues = ["session", "today", "week"],
+                    },
+                ],
+
+                // The three questions the issue names, matched whole so none swallows a longer
+                // sentence, and costing no surface bytes: a command is not part of the schema.
+                Commands =
+                [
+                    Phrase("how have i done today", "today"),
+                    Phrase("how have i done this week", "week"),
+                    Phrase("how have i done this session", "session"),
+                    Phrase("how have i done on the community goal", "week"),
+                    Phrase("how am i doing on the community goal", "week"),
+                ],
+                Handler = (arguments, _) =>
+                    Task.FromResult(Earnings(commander, ledger, search, now, arguments)),
+            },
         ],
         Settings =
         [
@@ -123,6 +164,73 @@ public static class CommunityGoalCapability
         ],
         Display = new CapabilityDisplay { PanelTitle = "Community goals", Order = 53 },
     };
+
+    private static ToolCommandPhrase Phrase(string phrase, string range) =>
+        new(phrase, new Dictionary<string, string>(StringComparer.Ordinal) { ["range"] = range });
+
+    /// <summary>
+    /// The ledger's answer for one stretch (#296): the net figure first, in the words the sale
+    /// callout uses, then the sales, tonnes and the two gross sides it is the difference of. The
+    /// week names the goal whose window it is, because "this week" means that window and a
+    /// Commander should be able to hear which one.
+    /// </summary>
+    private static ToolResult Earnings(
+        Func<CommanderGameState?> commander,
+        CommodityLedger? ledger,
+        CommunityGoalSearch? search,
+        Func<DateTimeOffset> now,
+        ToolArguments arguments)
+    {
+        if (ledger is null || search is null)
+        {
+            return ToolResult.Error(
+                "Nothing here is keeping a commodity ledger, so I cannot say how the goal has gone.");
+        }
+
+        var who = commander()?.Identity.FrontierId;
+        var commodity = search.Commodity;
+        var at = now();
+
+        arguments.TryGetString("range", out var range);
+
+        LedgerTotal total;
+        string label;
+        string? window = null;
+
+        switch (range?.ToLowerInvariant())
+        {
+            case "today":
+                total = ledger.Between(who, commodity, CommodityLedger.Today(at));
+                label = "today";
+                break;
+
+            case "week":
+                var week = ledger.Week(at);
+                total = ledger.Between(who, commodity, week);
+                label = week.Label == "this week" ? "this week" : $"over {week.Label}";
+                window = week.Label == "this week"
+                    ? null
+                    : $" That is the goal's own window, from {week.From:d MMMM} until {week.To:d MMMM HH:mm} UTC.";
+                break;
+
+            default:
+                total = ledger.Session(who, commodity);
+                label = "this session";
+                break;
+        }
+
+        if (total.Sales == 0)
+        {
+            return ToolResult.Ok($"No {commodity} sold {label}.{window}");
+        }
+
+        var tonnes = total.Tonnes == 1 ? "1 tonne" : $"{total.Tonnes:N0} tonnes";
+        var sales = total.Sales == 1 ? "1 sale" : $"{total.Sales} sales";
+
+        return ToolResult.Ok(
+            $"{commodity}: {total.Said} {label} — {sales}, {tonnes}, {total.Revenue:N0} cr in against "
+            + $"{total.Cost:N0} cr the cargo cost.{window}");
+    }
 
     private static async Task<ToolResult> DescribeAsync(
         Func<CommanderGameState?> commander,

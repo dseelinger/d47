@@ -34,6 +34,31 @@ public enum TradeSide
 /// joke, and the station itself may be a hundred light years away by the time anybody arrives.
 /// </param>
 /// <param name="Limit">How many to return.</param>
+/// <param name="MaxStationDistance">
+/// Light seconds from the star, or null for any (#296). The half of "how far" the Commander
+/// feels once they arrive: a pad 60,000 Ls out is a longer trip than a system two jumps further
+/// on. Filtered here off <see cref="MarketSnapshot.DistanceToArrival"/>, which the sweep already
+/// carries; a station whose distance is unknown is kept, because unknown is not far.
+/// </param>
+/// <param name="MinAvailable">
+/// The least the station must have — supply when buying, demand when selling — or null for any
+/// (#296). Different from <paramref name="Tonnes"/>: that says how much the Commander wants and
+/// caps what a station can do for them; this excludes a station that has less than a floor, which
+/// is the shape INARA's "min supply" has and the one a Community Goal run wants. It also goes into
+/// the request, because the station search honours a supply bound (measured 2026-09-05: 347
+/// stations within 40 ly of Ega at supply ≥ 1, 80 at ≥ 1,000, 34 at ≥ 10,000, 4 at ≥ 50,000).
+/// </param>
+/// <param name="SurfaceStations">
+/// Also planetary ports, outposts and settlements (#296). Off by default, as INARA's search has it:
+/// a surface pad is a descent and a climb the Commander did not ask about. The index's own words
+/// for a surface station are <c>Planetary Outpost</c>, <c>Planetary Port</c>, <c>Settlement</c>
+/// and <c>Surface Settlement</c>, measured 2026-09-05.
+/// </param>
+/// <param name="OrderBy">
+/// Nearest first, or best price first. <see cref="CommodityOrder.Price"/> is the ranking this
+/// search has always had; <see cref="CommodityOrder.Distance"/> is what a Commander running
+/// INARA's search orders by, and what "the best place to go next" means to them (#296).
+/// </param>
 public sealed record CommodityQuery(
     string Commodity,
     TradeSide Side = TradeSide.Buying,
@@ -41,7 +66,21 @@ public sealed record CommodityQuery(
     double MaxDistance = 50,
     bool LargePadOnly = false,
     bool IncludeCarriers = false,
-    int Limit = 5);
+    int Limit = 5,
+    double? MaxStationDistance = null,
+    int? MinAvailable = null,
+    bool SurfaceStations = false,
+    CommodityOrder OrderBy = CommodityOrder.Price);
+
+/// <summary>Which way a commodity answer is ranked (#296).</summary>
+public enum CommodityOrder
+{
+    /// <summary>Price against distance when a tonnage was given, price alone when not.</summary>
+    Price,
+
+    /// <summary>Nearest first. The price is reported beside it and decides nothing.</summary>
+    Distance,
+}
 
 /// <summary>
 /// One station's answer to a commodity question.
@@ -136,6 +175,21 @@ public static class CommodityMarketSearch
                 continue;
             }
 
+            // A surface pad is a descent the Commander did not ask for (#296). Kept when they
+            // did; a station with no type at all is kept too, because unknown is not surface.
+            if (!query.SurfaceStations && market.IsSurface)
+            {
+                continue;
+            }
+
+            // Unknown is not far: a station the index gives no arrival distance for stays in.
+            if (query.MaxStationDistance is { } furthest
+                && market.DistanceToArrival is { } arrival
+                && arrival > furthest)
+            {
+                continue;
+            }
+
             if (market.Quote(query.Commodity) is not { } quote)
             {
                 continue;
@@ -157,6 +211,13 @@ public static class CommodityMarketSearch
                 continue;
             }
 
+            // A floor rather than a load (#296): the station is excluded for having less than
+            // this, whatever the Commander means to carry away.
+            if (query.MinAvailable is { } floor && available < floor)
+            {
+                continue;
+            }
+
             var distance = origin?.DistanceTo(market) ?? 0;
 
             if (origin is not null && distance > query.MaxDistance)
@@ -171,7 +232,14 @@ public static class CommodityMarketSearch
                 distance));
         }
 
-        return [.. offers.OrderBy(offer => Score(query, offer)).Take(Math.Max(1, query.Limit))];
+        // Nearest first when asked (#296), the price breaking a tie between two stations in one
+        // system. Without an origin every distance is zero, so this falls through to price — the
+        // same fallback the price ranking already makes when it cannot place the Commander.
+        IEnumerable<CommodityOffer> ranked = query.OrderBy == CommodityOrder.Distance && origin is not null
+            ? offers.OrderBy(offer => offer.Distance).ThenBy(offer => Score(query, offer))
+            : offers.OrderBy(offer => Score(query, offer));
+
+        return [.. ranked.Take(Math.Max(1, query.Limit))];
     }
 
     /// <summary>

@@ -232,12 +232,89 @@ all arrive as 200 with a status code inside the body. Reading the transport code
 would report a rejected key as an empty board, which is the one wrong answer here that looks
 exactly like a right one.
 
+### The Community Goal search
+
+One saved question, run again and again ([#296](https://github.com/dseelinger/d47/issues/296)).
+It is the INARA commodity search a Commander flying a supply goal was typing by hand before every
+run: **buy Palladium, from wherever the ship is, nearest first**, within 250 light years, prices
+under eight hours old, a large pad, a station within 50,000 light seconds of the star, at least
+10,000 in stock, no surface stations, no carriers. Every one of those is now a knob on the galaxy
+search's `find_nearest_station`, and this is the one place they are set together.
+
+Two ways to run it, one code path:
+
+- **By voice** \u2014 *"community goal search"* or *"CG search"*. The phrase is matched whole and first
+  by the keyword router and pointed at the galaxy tool with the arguments already filled in, so it
+  costs no tool-surface bytes and never goes through a model to be reinterpreted. It runs from your
+  current system.
+- **From the Routing tab** \u2014 the **Community Goal** page, beside Plan, Progress, Course and Market,
+  has the commodity in a box and a **Run** button. The commodity is the one field that moves;
+  the rest is written on the page as the fixed shape of the search.
+
+Saying *"refresh"* while that page is showing runs it again. It is the first refresh command in
+d47, and it is kept to that page so the bare word cannot be claimed by this forever.
+
+The spoken answer is **one sentence naming the nearest station that passes every filter** \u2014 its
+stock, its price, its distance from the star and how old the quote is \u2014 with the rest counted:
+*"2 more, further out, are on the Routing tab."* The page draws the full ranked list: station,
+system, pad, distance from the star, distance, supply, price, when the quote was reported.
+
+```text
+Nearest for buying Palladium within 250 ly of Ega: Coleman Relay (Enayex), 11 ly, 51,000 cr a
+tonne, 12,400 in stock, 210 Ls from the star \u2014 reported 2 hours ago. 4 more, further out, are on
+the Routing tab. Searched out to 250 ly, up to 10 results, prices up to 8 hours old, pads within
+50,000 Ls of the star, at least 10,000 in stock, nearest first.
+```
+
+### The ledger
+
+What the goal's commodity has made or lost, **net of what the cargo cost** \u2014 a Palladium bought at
+48,200 and sold at 51,000 shows the 2,800 and not the 51,000. The cost is Elite's own
+`AvgPricePaid` on each sale, which the game tracks across sessions and ships; when Elite writes
+zero \u2014 cargo that was never bought \u2014 it falls back to the average of your own `MarketBuy` events
+for the commodity, and failing that the sale is gross, which is the honest figure for a mined load.
+
+Three stretches, all on the Community Goal page and two of them by voice:
+
+- **This session** \u2014 spoken automatically after every sale of the commodity, as the running total
+  rather than the sale: *"That's 2.1 million up this session."* You can see the sale's own figure
+  on your screen at that moment; what you cannot see is where it leaves you. The
+  [Community Goal sales](callouts.html#community-goal-sales) row on the Callouts page switches the
+  sentence off, and nothing is said while d47 is catching up on a journal it did not watch being
+  written.
+- **Today** \u2014 *"how have I done today"*.
+- **This week** \u2014 *"how have I done this week"*. **The week is the running goal's own window**,
+  from the first `CommunityGoal` event that named it to its `Expiry`, because that is what "this
+  week" means to a Commander flying one; the calendar week, Monday to Monday, is the fallback when
+  no goal is live. The answer names the goal whose window it is.
+
+The day and the week reach across sessions because the journal files Elite keeps are read at
+startup \u2014 the files that cover the last ten days \u2014 and the live journal after that. Nothing is
+written under `data\`: the journals are the record, and a sale the startup read already counted is
+recognised rather than counted twice when the live journal replays it.
+
+```text
+Palladium: 3 million up over Palladium Drive \u2014 3 sales, 300 tonnes, 15,000,000 cr in against
+12,000,000 cr the cargo cost. That is the goal's own window, from 2 September until 9 September
+16:00 UTC.
+```
+
 ### Tools
 
 #### `get_community_goals`
 
 ```json
 {"type":"object","properties":{"include_finished":{"type":"boolean","description":"Also list goals that have already expired, with what they paid out. Default false \u2014 an expired goal cannot be contributed to."},"name":{"type":"string","description":"Only goals whose title contains this. Leave out for all of them."}},"required":[],"additionalProperties":false}
+```
+
+#### `get_community_goal_earnings`
+
+What the Community Goal commodity has made or lost, net of cost, over one of three stretches. The
+three questions above reach it through the keyword router without a model; the model can call it
+for anything phrased differently.
+
+```json
+{"type":"object","properties":{"range":{"type":"string","description":"Which stretch. Default session.","enum":["session","today","week"]}},"required":[],"additionalProperties":false}
 ```
 
 ### Notes for anyone reading the code

@@ -47,6 +47,7 @@ public static class CalloutCapability
     public const string AnnouncedAttackKey = "callouts.announcedAttack";
     public const string RivalTerritoryKey = "callouts.rivalTerritory";
     public const string ChecklistKey = "callouts.checklist";
+    public const string CommunityGoalSalesKey = "callouts.communityGoalSales";
     public const string RouteEveryKey = "callouts.routeEveryNJumps";
     public const string LongJumpSecondsKey = "callouts.longJumpSeconds";
     public const string HomeSystemKey = "callouts.homeSystem";
@@ -294,6 +295,16 @@ public static class CalloutCapability
                 "the adventure",
                 s => s.Callouts.Adventure,
                 (s, v) => s with { Callouts = s.Callouts with { Adventure = v } }),
+
+            Toggle(
+                CommunityGoalSalesKey,
+                "Community Goal sales",
+                "After every sale of the Community Goal commodity, where that leaves you this session, "
+                + "net of what the cargo cost. The sale's own figure is on your screen; this is the total.",
+                "community-goal-sales",
+                "community goal sales",
+                s => s.Callouts.CommunityGoalSales,
+                (s, v) => s with { Callouts = s.Callouts with { CommunityGoalSales = v } }),
 
             Toggle(
                 AmbientKey,

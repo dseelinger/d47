@@ -1186,7 +1186,8 @@ public partial class PanelView : UserControl
         bool plan = true,
         bool progress = true,
         bool course = true,
-        bool market = true)
+        bool market = true,
+        bool communityGoal = true)
     {
         var roots = new List<NavCrumb>();
 
@@ -1224,6 +1225,17 @@ public partial class PanelView : UserControl
             });
         }
 
+        // After Market, because it is the errand's special case (#296): one saved question and
+        // the ledger of what it earned. Its help is the community goals page, where the search,
+        // the ledger and this page are described together.
+        if (communityGoal && surface.Commodities is not null && surface.CommunityGoal is not null)
+        {
+            roots.Add(new NavCrumb(RoutingPages.CommunityGoalRoot, "Community Goal")
+            {
+                Help = D47.Core.Capabilities.Builtin.CommunityGoalCapability.Id,
+            });
+        }
+
         if (roots.Count == 0)
         {
             return;
@@ -1244,10 +1256,20 @@ public partial class PanelView : UserControl
                 // selected, so the last one built is the one on screen.
                 _routeProgress = page as RouteProgressPage ?? _routeProgress;
                 _routePlan = page as RoutePlanPage ?? _routePlan;
+                _routeCommunityGoal = page as RouteCommunityGoalPage ?? _routeCommunityGoal;
 
                 return page;
             },
             [.. roots]);
+
+        // An answer or a sale landing anywhere — by voice, from the page's own button, from the
+        // journal — leaves the Community Goal page one redraw out of date, for the reason the
+        // plan book below is one subscription (#296). Redraws and never navigates.
+        if (surface.CommunityGoal is { } goal)
+        {
+            surface.Commodities!.Posted += () => _routeCommunityGoal?.Refresh();
+            goal.Ledger.Changed += () => _routeCommunityGoal?.Refresh();
+        }
 
         // A plot made anywhere - this tab's own button, or a spoken tool call - leaves the
         // Plan page one redraw out of date, because "show the last one" is drawn from the book.
@@ -1307,6 +1329,7 @@ public partial class PanelView : UserControl
 
     private RouteProgressPage? _routeProgress;
     private RoutePlanPage? _routePlan;
+    private RouteCommunityGoalPage? _routeCommunityGoal;
     private Func<D47.Core.Journal.NavRoute>? _routeState;
     private Func<string?>? _routeHere;
     private Func<double?>? _routeRange;

@@ -233,7 +233,14 @@ public static class BuiltinCapabilities
         // the four comments above record the cost of. Null under the designer and in every test
         // that is not about it; the capability still registers, so its two rows and its
         // documentation page exist, and the disclosure says nothing is debriefing.
-        Debrief.DebriefBook? debrief = null) =>
+        Debrief.DebriefBook? debrief = null,
+
+        // What the Community Goal commodity has made or lost, and the saved search that names it
+        // (<a href="https://github.com/dseelinger/d47/issues/296">#296</a>). LAST, by the same rule
+        // the five comments above record the cost of. Null under the designer and in every test
+        // that is not about them; the earnings tool then says nothing is keeping a ledger.
+        Journal.CommodityLedger? ledger = null,
+        Knowledge.CommunityGoalSearch? communityGoalSearch = null) =>
     [
         HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage),
@@ -291,7 +298,9 @@ public static class BuiltinCapabilities
         CommunityGoalCapability.Create(
             () => gameState.Active,
             communityGoals,
-            now ?? (() => DateTimeOffset.MinValue)),
+            now ?? (() => DateTimeOffset.MinValue),
+            ledger,
+            communityGoalSearch),
         ConversationCapability.Create(
             settings, llmAvailability, spend, cancellation, speech.Silence, verifyLlmKey,
 

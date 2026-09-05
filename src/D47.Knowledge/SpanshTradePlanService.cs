@@ -123,7 +123,11 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
                 radius,
                 cancellationToken,
                 search.Query.Commodity,
-                search.Query.Side == TradeSide.Selling)
+                search.Query.Side == TradeSide.Selling,
+
+                // The Commander's floor goes into the request too (#296), so the 150-station
+                // budget is spent on stations that have enough rather than on ones that have any.
+                search.Query.MinAvailable ?? 1)
             .ConfigureAwait(false);
 
         var fetched = sweep.Markets;
@@ -424,6 +428,7 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
         double Radius,
         string? Commodity,
         bool Selling,
+        int Minimum,
         DateTimeOffset At,
         Sweep Sweep);
 
@@ -459,7 +464,8 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
         double radius,
         CancellationToken cancellationToken,
         string? commodity = null,
-        bool selling = false)
+        bool selling = false,
+        int minimum = 1)
     {
         lock (_gate)
         {
@@ -475,6 +481,9 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
                 && entry.Radius >= radius
                 && string.Equals(entry.Commodity, commodity, StringComparison.OrdinalIgnoreCase)
                 && entry.Selling == selling
+
+                // A sweep with a lower floor is a superset; one with a higher floor is not (#296).
+                && entry.Minimum <= minimum
                 && _now() - entry.At < CacheLife);
 
             if (cached is not null)
@@ -493,7 +502,7 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
         for (var page = 0; page < Pages; page++)
         {
             using var content = new StringContent(
-                SpanshRequest.Markets(system, radius, PageSize, page, commodity, selling),
+                SpanshRequest.Markets(system, radius, PageSize, page, commodity, selling, minimum),
                 Encoding.UTF8,
                 "application/json");
 
@@ -529,9 +538,10 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
             _sweeps.RemoveAll(entry =>
                 string.Equals(entry.System, system, StringComparison.OrdinalIgnoreCase)
                 && string.Equals(entry.Commodity, commodity, StringComparison.OrdinalIgnoreCase)
-                && entry.Selling == selling);
+                && entry.Selling == selling
+                && entry.Minimum == minimum);
 
-            _sweeps.Add(new Cached(system, radius, commodity, selling, _now(), sweep));
+            _sweeps.Add(new Cached(system, radius, commodity, selling, minimum, _now(), sweep));
 
             if (_sweeps.Count > CacheSlots)
             {

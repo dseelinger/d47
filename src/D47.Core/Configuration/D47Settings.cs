@@ -877,6 +877,13 @@ public sealed record CalloutSettings
     public int AmbientMaxSeconds { get; init; } = 600;
 
     /// <summary>
+    /// The running session total after every sale of the Community Goal commodity
+    /// (<a href="https://github.com/dseelinger/d47/issues/296">#296</a>). On, like every callout
+    /// that fires because the game said something.
+    /// </summary>
+    public bool CommunityGoalSales { get; init; } = true;
+
+    /// <summary>
     /// Invented background chatter (#244), <b>drawn as "NPC chatter"</b>: made-up exchanges
     /// between people who do not exist — passers-by, the dock, the occasional one-way hail.
     /// Not the game's own NPC traffic, which is <see cref="SpeechSettings.SpeakNpcMessages"/> and

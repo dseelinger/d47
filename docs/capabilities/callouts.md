@@ -553,6 +553,23 @@ it, since both belong to this callout.
 While a beat is between firing and being said, the Adventures tab shows that the core is
 composing, on the desktop window and in the headset alike.
 
+#### Community Goal sales {#community-goal-sales}
+
+After every sale of the Community Goal commodity, where that leaves you this session, net of what
+the cargo cost ([#296](https://github.com/dseelinger/d47/issues/296)). The total rather than the
+sale, because the sale's own figure is on your screen at that moment and the running position is
+not.
+
+```text
+That's 2.1 million up this session.
+```
+
+The commodity is the one the saved Community Goal search names — Palladium unless you change it on
+the Routing tab's Community Goal page — and the figures come from the ledger described on the
+[community goals page](community-goals.html). Nothing is said while d47 is catching up on a journal
+it did not watch being written. Switching this off stops the sentence and nothing else: the ledger
+keeps counting for the page and for *"how have I done today"*.
+
 ### Settings
 
 #### Speak without being asked {#enabled}

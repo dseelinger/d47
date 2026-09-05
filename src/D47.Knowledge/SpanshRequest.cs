@@ -419,7 +419,8 @@ internal static class SpanshRequest
         int size,
         int page,
         string? commodity = null,
-        bool selling = false)
+        bool selling = false,
+        int minimum = 1)
     {
         var buffer = new ArrayBufferWriter<byte>();
 
@@ -435,7 +436,7 @@ internal static class SpanshRequest
 
             if (commodity is { Length: > 0 } wanted)
             {
-                WriteMarketFilter(writer, wanted, selling);
+                WriteMarketFilter(writer, wanted, selling, minimum);
             }
 
             writer.WriteEndObject();
@@ -474,15 +475,20 @@ internal static class SpanshRequest
     /// filter is a range rather than a comparison, not because anything is being excluded by it.
     /// </para>
     /// </summary>
-    private static void WriteMarketFilter(Utf8JsonWriter writer, string commodity, bool selling)
+    private static void WriteMarketFilter(Utf8JsonWriter writer, string commodity, bool selling, int minimum)
     {
         writer.WriteStartArray("market");
         writer.WriteStartObject();
         writer.WriteString("name", commodity);
 
+        // The floor is the Commander's when they set one (#296), and 1 — "has any" — when they
+        // did not. Honoured: within 40 ly of Ega on 2026-09-05, Palladium at supply ≥ 1 returned
+        // 347 stations, ≥ 1,000 returned 80, ≥ 10,000 returned 34 and ≥ 50,000 returned 4, with
+        // the smallest supply on each page above its bound; demand ≥ 10,000 returned 316. All
+        // under the endpoint's 10,000 cap (7,597 unfiltered), so the counts can move.
         writer.WriteStartObject(selling ? "demand" : "supply");
         writer.WriteStartArray("value");
-        writer.WriteStringValue("1");
+        writer.WriteStringValue(Math.Max(1, minimum).ToString(CultureInfo.InvariantCulture));
         writer.WriteStringValue("1000000000");
         writer.WriteEndArray();
         writer.WriteString("comparison", "<=>");

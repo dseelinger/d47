@@ -27,6 +27,45 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.106.0 — 2026-09-05 — The Community Goal supply search, and a ledger that knows what the cargo cost
+
+The INARA commodity search a Commander flying a supply goal was typing by hand before every run —
+buy Palladium, nearest first, within 250 ly, prices under eight hours old, large pad, a station
+within 50,000 Ls, at least 10,000 in stock, no surface stations, no carriers — is one saved
+question now. *"Community goal search"* runs it by voice from the current system; a **Community
+Goal** page on the Routing tab runs it from a button and draws the full ranked list; *"refresh"*
+reruns it while that page is up, the first refresh command in d47. The phrase is a dynamic command
+pointed at `find_nearest_station` with the arguments baked, so it costs no tool-surface bytes and
+never reaches a model to be reinterpreted. The spoken answer is one sentence naming the nearest
+station that passes every filter, with its stock, price, distance from the star and quote age, and
+the rest counted for the page.
+
+`find_nearest_station` grew the four knobs the search needed and INARA had: `max_station_distance`,
+`min_supply`, `surface_stations` (off by default, as INARA has it) and `order_by`. Only the supply
+floor goes into the request, because the live station search honours it — measured within 40 ly of
+Ega: 347 stations at supply ≥ 1, 80 at ≥ 1,000, 34 at ≥ 10,000, 4 at ≥ 50,000, against 7,597
+unfiltered and under the endpoint's 10,000 cap. The other three filter locally off the arrival
+distance and station type the sweep already carries; the index's own words for a surface pad are
+*Planetary Outpost*, *Planetary Port*, *Settlement* and *Surface Settlement*, and a Stronghold
+carrier falls under the carrier switch by name. Every station's line now says its distance from the
+star where the index knows it. The tool surface's worst case moved from 40,701 to 41,464 of 50,000.
+
+A **ledger** of what the goal's commodity has made or lost, net of what the cargo cost — Elite's
+own `AvgPricePaid` on each sale, falling back to the average of your own purchases, then to gross.
+Nothing in d47 knew a cost basis before: the session summary folded sales gross and the logbook
+summed them per day. After every sale of the commodity one line says the running session total,
+*"That's 2.1 million up this session"*, through the arbiter, with its own Callouts row and silent
+during priming. *"How have I done today"* and *"how have I done this week"* answer from the journal
+files on disk across sessions; **the week is the running goal's own window**, first sighting to
+expiry, with the calendar week as the fallback when no goal is live. No file under `data\` — the
+journals are read for the last ten days at startup, and a sale counted then is recognised rather
+than counted twice when the live journal replays it.
+
+The new page is built once and redrawn in place: its form, results and ledger are three fixed
+children and nothing that holds a field is ever re-parented, which is the shape the Market page's
+Find had to learn in 0.105.1.
+[#296](https://github.com/dseelinger/d47/issues/296)
+
 ## 0.105.1 — 2026-09-05 — The Market page survives its own rebuild
 
 Every successful Find on Routing → Market took d47 down: `Refresh()` clears the page and calls

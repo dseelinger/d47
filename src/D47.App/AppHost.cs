@@ -545,6 +545,19 @@ public sealed class AppHost : IDisposable
     public D47.Core.Knowledge.CommodityBoard Commodities { get; private set; } = new();
 
     /// <summary>
+    /// The Community Goal supply search, saved once and run by voice or from the Routing tab
+    /// (<a href="https://github.com/dseelinger/d47/issues/296">#296</a>).
+    /// </summary>
+    public D47.Core.Knowledge.CommunityGoalSearch CommunityGoalSearch { get; private set; } = new();
+
+    /// <summary>
+    /// What the Community Goal commodity has made or lost, per Commander, folded from the journals
+    /// (<a href="https://github.com/dseelinger/d47/issues/296">#296</a>). In memory: the journals
+    /// on disk are the record, and this is rebuilt from them at every start.
+    /// </summary>
+    public D47.Core.Journal.CommodityLedger CommodityLedger { get; private set; } = new();
+
+    /// <summary>
     /// The last shopping list for a construction site (Phase 50), on the same terms as
     /// <see cref="Commodities"/> and for the same reason.
     /// </summary>
@@ -984,6 +997,19 @@ public sealed class AppHost : IDisposable
         var commodityBoard = new D47.Core.Knowledge.CommodityBoard();
         var sourcingBoard = new D47.Core.Knowledge.SourcingBoard();
 
+        // The Community Goal supply search, saved once (#296), and the ledger of what its
+        // commodity has made or lost. The ledger is folded from the journal files on disk that
+        // cover the goal's week before the tick starts, so "how have I done this week" answers
+        // from history rather than from this session alone; the live tick folds the rest, and a
+        // sale the startup fold already counted is recognised rather than counted twice.
+        var communityGoalSearch = new D47.Core.Knowledge.CommunityGoalSearch();
+        var commodityLedger = new D47.Core.Journal.CommodityLedger();
+
+        commodityLedger.FoldHistory(
+            journalDirectory,
+            DateTimeOffset.Now - D47.Core.Journal.CommodityLedger.Lookback,
+            loggerFactory.CreateLogger<D47.Core.Journal.CommodityLedger>());
+
         // On disk, unlike the two boards: a carrier figure is the Commander's own statement rather
         // than a price, and it is dated wherever it is used (Phase 50).
         var carrierManifest = new D47.Core.Knowledge.CarrierManifest(
@@ -1171,7 +1197,16 @@ public sealed class AppHost : IDisposable
             () => unlocksRef);
 
         var callouts = BuildCallouts(
-            loaded, loggerFactory, checklists, lore, loreVisits, memoryBook, adventureBook, viewState);
+            loaded,
+            loggerFactory,
+            checklists,
+            lore,
+            loreVisits,
+            memoryBook,
+            adventureBook,
+            viewState,
+            commodityLedger,
+            communityGoalSearch);
 
         // Acting on the game without being asked (Phase 10, item 2). Each member is off
         // until its own row is switched on, which is why the runner reads the setting per tick
@@ -1246,6 +1281,12 @@ public sealed class AppHost : IDisposable
             // tick's events is announced on this tick rather than the next. Polled unconditionally
             // — the checklist callout can be switched off, and the list must stay honest anyway.
             checklists.Poll(announce: !context.IsFirst);
+
+            // Before the callouts, so the sale callout reads a total that includes the sale it
+            // is announcing (#296). Here rather than in the callout, because a callout switched
+            // off is not examined at all and the ledger has to stay whole for the page and the
+            // "how have I done" question whether or not the sentence is wanted.
+            commodityLedger.Apply(events);
 
             var calloutContext = new CalloutContext(
                 context.Now,
@@ -1998,7 +2039,12 @@ public sealed class AppHost : IDisposable
                 // What the debrief drafted and what the Commander took (#162). The capability
                 // advertises no tool at all — the pass is offline and the model cannot invoke it —
                 // so this reaches one disclosure row and the pane behind it, and nothing else.
-                debriefBook));
+                debriefBook,
+
+                // What the Community Goal commodity has made or lost, and which commodity that is
+                // (#296), for the earnings question on the community goals capability.
+                commodityLedger,
+                communityGoalSearch));
 
         built = capabilities;
 
@@ -2039,7 +2085,13 @@ public sealed class AppHost : IDisposable
                 // planned actually wants (change-requests.md 37). Dynamic for the same reason
                 // again: which materials are wanted changes with the plans, and a command is not
                 // part of a tool's schema so this cannot move a byte of the cached prefix.
-                .Concat(GapCapability.Phrases(shipPlans, onFootPlans, () => gameState.Active)));
+                .Concat(GapCapability.Phrases(shipPlans, onFootPlans, () => gameState.Active))
+
+                // And "community goal search" (#296): the INARA query with its knobs baked, pointed
+                // at find_nearest_station, plus "refresh" while the page that draws it is up.
+                // Dynamic for the same reason as the rest: the commodity is editable, and the
+                // arguments are read at match time rather than when the descriptor registered.
+                .Concat(communityGoalSearch.Phrases()));
 
         var turns = new TurnLoop(
             capabilities,
@@ -2293,6 +2345,8 @@ public sealed class AppHost : IDisposable
         host.Plans = planBook;
         host.Controllers = controllers;
         host.Commodities = commodityBoard;
+        host.CommunityGoalSearch = communityGoalSearch;
+        host.CommodityLedger = commodityLedger;
         host.Sourcing = sourcingBoard;
         host.Carrier = carrierManifest;
 
@@ -2608,7 +2662,9 @@ public sealed class AppHost : IDisposable
         LoreVisits loreVisits,
         MemoryBook memories,
         D47.Core.Adventures.AdventureBook adventures,
-        ViewStateStore viewState)
+        ViewStateStore viewState,
+        D47.Core.Journal.CommodityLedger ledger,
+        D47.Core.Knowledge.CommunityGoalSearch communityGoal)
     {
         var engine = new CalloutEngine(loggers.CreateLogger<CalloutEngine>())
             .Add(new DangerCallout())
@@ -2678,6 +2734,10 @@ public sealed class AppHost : IDisposable
             // game does. Below it, because on a launch where both fire the Commander has sat down
             // once and should hear one greeting rather than two.
             .Add(new SessionCallout())
+
+            // Where a sale of the Community Goal commodity leaves the session, net of cost
+            // (#296). The ledger it reads is folded by the tick before this runs.
+            .Add(new CommunityGoalSaleCallout(ledger, communityGoal))
 
             // A beat of the Commander's story, when they reach it (Phase 47). Also the one
             // path the live journal reaches the adventure book by.
@@ -2750,6 +2810,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("ambient", callouts.Ambient, now);
         engine.SetEnabled("continuity", callouts.Continuity, now);
         engine.SetEnabled("adventure", callouts.Adventure, now);
+        engine.SetEnabled("community-goal-sales", callouts.CommunityGoalSales, now);
 
         foreach (var callout in engine.Callouts)
         {
