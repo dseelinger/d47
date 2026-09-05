@@ -9,20 +9,21 @@ not tell d47 anything it can ship.
 
 ## Getting the files
 
-Nothing here is committed: the smallest working set is 539 MB. It lives outside the repository, and
+Nothing here is committed: the working set is 691 MB for Turbo q4, 539 MB at its smallest. It lives outside the repository, and
 every command takes `--root`.
 
 ```powershell
 $m = "$env:LOCALAPPDATA\d47-spike\chatterbox"
 New-Item -ItemType Directory -Force $m\turbo\onnx, $m\nano\onnx, $m\voices | Out-Null
 
-# Turbo — Resemble's own export, MIT. q4f16 is 539 MB and is the one worth measuring;
-# fp16 is 1,587 MB and was slower on the CPU, not faster.
+# Turbo — Resemble's own export, MIT, and the one the ear chose. q4 is 691 MB and is the one to
+# use: int4 weights with fp32 activations, faster than q4f16 in both stages. q4f16 is 539 MB and
+# a third slower; fp16 is 1,587 MB and slower still; `quantized` (q8) is 1,071 MB and unusable.
 $t = "https://huggingface.co/ResembleAI/chatterbox-turbo-ONNX/resolve/main"
 curl.exe -sL "$t/tokenizer.json" -o "$m\turbo\tokenizer.json"
 foreach ($g in 'embed_tokens','speech_encoder','language_model','conditional_decoder') {
-    curl.exe -sL "$t/onnx/${g}_q4f16.onnx"      -o "$m\turbo\onnx\${g}_q4f16.onnx"
-    curl.exe -sL "$t/onnx/${g}_q4f16.onnx_data" -o "$m\turbo\onnx\${g}_q4f16.onnx_data"
+    curl.exe -sL "$t/onnx/${g}_q4.onnx"      -o "$m\turbo\onnx\${g}_q4.onnx"
+    curl.exe -sL "$t/onnx/${g}_q4.onnx_data" -o "$m\turbo\onnx\${g}_q4.onnx_data"
 }
 
 # Nano — a community conversion, MIT, 546 MB, and the only ONNX Nano there is: ResembleAI's own
@@ -67,6 +68,9 @@ dotnet run --project spike/ChatterboxProbe -c Release -- shape --variant nano
 dotnet run --project spike/ChatterboxProbe -c Release -- say "Docking permission granted at Shinrarta Dezhra." $m\voices\andrew.wav out.wav --variant nano
 dotnet run --project spike/ChatterboxProbe -c Release -p:Ep=cpu -p:OrtVersion=1.28.0 -- bench "Docking permission granted at Shinrarta Dezhra." $m\voices\andrew.wav 5 --variant nano --provider cpu --threads 8 --decoder-threads 16
 dotnet run --project spike/ChatterboxProbe -c Release -p:Ep=cpu -p:OrtVersion=1.28.0 -- stream "Docking permission granted at Shinrarta Dezhra." $m\voices\andrew.wav out.wav --variant nano --threads 8 --decoder-threads 16 --chunk 25 --overlap 5
+
+# Turbo, tuned for Turbo: 796 ms to first sound, x1.82 realtime, no stalls.
+dotnet run --project spike/ChatterboxProbe -c Release -p:Ep=cpu -p:OrtVersion=1.28.0 -- stream "Docking permission granted at Shinrarta Dezhra." $m\voices\doug1-5s.wav out.wav --variant turbo --dtype q4 --lm-threads 8 --decoder-threads 8 --chunk 20 --overlap 3 --pipeline --runs 5
 ```
 
 `--variant turbo|nano`, `--dtype fp32|fp16|q4|q4f16|q8`, `--provider cpu|dml|webgpu`, `--root <dir>`,
@@ -79,19 +83,28 @@ session. **Pin the threads before believing any A/B**: on the default pool one c
 one JSON per graph; `--verbose` opens the environment at verbose so a provider's own messages show.
 `--ep key=value` passes a provider option through, repeatable. `stream` takes `--chunk` (tokens per
 piece, 25 is a second), `--overlap` (tokens of the previous piece decoded again as context) and
-`--crossfade` (samples blended at the seam).
+`--crossfade` (samples blended at the seam). `--pipeline` runs the decoder on a thread of its own
+behind the language model, which is worth 23-35% of total time on Turbo; `--runs n` repeats the
+measured pass and reports the median and the spread across runs.
 
-## Eight things that will bite the next reader
+## Ten things that will bite the next reader
+
+**The 1.28.0 pin below is a Nano fact, and Turbo does not need it.** Measured back to back on
+2026-09-05: the q4f16 language model costs 7.6 ms/token on 1.28.0 and 12.2 on 1.29.0 for the
+community Nano conversion, but 20.9 against 22.6 for Resemble's own Turbo export. Through the
+pieced, pipelined path Turbo reads ×1.49 on 1.28.0 and ×1.51 on 1.29.0 at q4f16, ×1.81 against
+×1.75 at q4. Build on 1.28.0 to compare against the numbers already written down; ship on whatever
+`D47.Tts` uses.
 
 **`-p:Ep=cpu` is not cosmetic, and neither is `-p:OrtVersion`.** The default build references
 `Microsoft.ML.OnnxRuntime.DirectML` **1.24.4**, which is the last DirectML build Microsoft published;
 `-p:Ep=cpu` swaps in `Microsoft.ML.OnnxRuntime` at `OrtVersion` (default **1.29.0**, the version
 `D47.Tts` ships), and `-p:Ep=webgpu` adds the `Microsoft.ML.OnnxRuntime.EP.WebGpu` plugin beside it.
 The packages cannot coexist in one process, so a CPU number is a number for one runtime version —
-and **1.29.0 runs the q4f16 language model 1.7× slower than 1.24.4 through 1.28.0**
+and **1.29.0 runs Nano's q4f16 language model 1.7× slower than 1.24.4 through 1.28.0**
 ([onnxruntime#32255](https://github.com/microsoft/onnxruntime/issues/32255): fp16 `MatMul` on x64
 fell through to Eigen; fixed on `main`, in no package). Measure on 1.28.0 unless the question is
-1.29.0 itself.
+1.29.0 itself — but see the paragraph above for how little of that reaches Turbo.
 
 **A reference clip need not be a WAV.** Anything Media Foundation decodes — `.m4a`, `.mp3`,
 `.wma`, `.flac` — is read through NAudio and downmixed, because Windows Sound Recorder writes AAC
@@ -125,5 +138,11 @@ so without `--presentmon <exe>` the command says so instead of substituting GPU 
 **A WAV of the right length is not evidence.** Every claim in the finding about what the model said
 was checked by handing the output back to the Whisper model d47 already ships. Doing that from inside
 this probe is not possible — `D47.Stt` references ONNX Runtime 1.29.0 and would collide with the
-DirectML package — so it was a throwaway console app outside the repository. If the question comes
-back, build that again rather than trusting the waveform.
+DirectML package — so it lives next door: `ChatterboxAb hear <wav|glob> …` transcribes anything, and
+that project never loads ONNX Runtime so it can reference `D47.Stt` directly.
+
+**A stall this probe reports may be arithmetic rather than a measurement.** `StreamTiming` carries
+two projections over the stage times — one thread, and the decoder on its own — and both assume the
+stages cost the same overlapped as they did taking turns. On Turbo that is wrong by 30–70% per
+decode. `MeasuredStallMs`, and each piece's `ReadyMs`, are clock readings; the projections are
+printed beside them so the gap stays visible rather than standing in for the measurement.

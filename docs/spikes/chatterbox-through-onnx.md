@@ -20,7 +20,101 @@ driver 610.74; Windows 11.
 
 ---
 
-## Amended later the same day: the premise changed, and two numbers below are wrong
+## Amended 2026-09-05: the ear chose Turbo, so everything below was tuned on the wrong model
+
+**The blind A/B is finished and Turbo won** — 94 of 140 decisive trials, 67.1%, p = 0.0001
+(`spike/ChatterboxAb`). Every latency number in the two sections after this one is a Nano number,
+and Turbo's language model costs about two and a half times Nano's per token. Re-tuned on Turbo, on
+the same machine, the same line and Doug's own voice, five measured passes per configuration after
+a warm one:
+
+| Turbo, one line, warm medians | first sound | total | realtime | stalls |
+|---|---|---|---|---|
+| q4f16, `--threads 8 --decoder-threads 16` — the settings Nano was tuned to | 1,224 ms | 5,257 ms | ×0.92 | 95 ms |
+| q4f16, decoder threads dropped to 8 | 1,181 ms | 3,304 ms | ×1.47 | 0 |
+| … and the decoder on a thread of its own | 1,124 ms | 3,220 ms | ×1.49 | 0 |
+| … and q4 rather than q4f16 | 915 ms | 3,133 ms | ×1.81 | 0 |
+| **… and pieces of 20 tokens with 3 of context** | **796 ms** | **3,120 ms** | **×1.82** | **0** |
+| the same, on a 9.0s line in twelve pieces | 821 ms | 5,059 ms | ×1.78 | 0 |
+
+Whisper reads every line above back correctly. Spread across the five passes is 1–2%.
+
+**Running the decoder behind the language model is the single largest change, and it had never been
+run.** `stream` measured the two stages one after the other and *added their durations up* to
+report "zero stalls with the decoder on its own thread". `--pipeline` now actually hands each piece
+to a consumer thread. The projection was wrong in both directions: overlapped, each decode costs
+30–70% more than it did alone, and the line still finishes 23–35% sooner. Turbo goes from ×0.97 to
+×1.49 at q4f16, and from ×1.17 to ×1.81 at q4. Every pieced arrangement measured zero stalls once
+the decoder was pipelined, including ones running at ×0.7 sequentially.
+
+**`--decoder-threads 16` was a Nano setting and it costs Turbo a third of its headroom.** Eight
+intra-op threads — the P-core count — is right for both graphs; 8/8 through 8/12 is a flat plateau
+and everything outside it is worse. Sixteen threads for either graph spills onto the E-cores
+(×1.06), and 24 collapses (×0.21). `--spin off` costs 13% and the default is already on.
+
+**Piece size is the one real trade left.** Smaller pieces reach first sound sooner and cost total
+throughput, because every decode carries the reference clip's tokens as its prompt whatever it is
+decoding:
+
+| tokens per piece | first sound | realtime |
+|---|---|---|
+| 10 | 890 ms | ×0.61–0.79, and it stalls |
+| 15 | 1,000 ms | ×1.07 |
+| **20** | **1,120 ms** | **×1.31** |
+| 25 | 1,265 ms | ×1.39 |
+| 30 | 1,380 ms | ×1.44 |
+| 40 | 1,650 ms | ×1.43 |
+
+Twenty is the knee: past thirty there is no throughput left to buy and first sound keeps rising.
+Overlap is worth under 2% anywhere between three and eight tokens. The reference clip still matters
+as much as §"Where the time goes" says — 5s gives ×1.48, Doug's 6.4s take ×1.40 and a 10s clip
+×0.96 — so the 5–7s rule the recorder is to enforce is confirmed at the short end of its range.
+
+### q4 rather than q4f16, and the version pin comes off
+
+Turbo is the only variant Resemble publish all five precisions of, and only q4f16 had ever been
+measured. All four runnable ones, at 8/8 threads with the decoder pipelined:
+
+| Turbo | download | first sound | realtime | verdict |
+|---|---|---|---|---|
+| **q4** — int4 weights, fp32 activations | 691 MB | **915 ms** | **×1.81** | the one to use |
+| q4f16 | 539 MB | 1,124 ms | ×1.49 | 152 MB smaller, a third less headroom |
+| fp16 | 1,587 MB | 1,329 ms | ×1.25 | three times the download to be slower |
+| q8 (`quantized`) | 1,071 MB | 8,032 ms | ×0.14 | unusable, and consistently so |
+
+q4 is faster in both stages that matter — 16.6 ms per token against q4f16's 20.9, and 756 ms of
+decode against 862 — which is Microsoft's own account of int4 on x64: fp32 activations take the
+CPU-native `MatMulNBits` path and fp16 ones do not. Part of its realtime advantage is also that it
+speaks a little more slowly, 5.68s of audio where q4f16 gives 4.80s for the same sentence; the
+per-token figures are the honest comparison and they favour q4 on their own. q8 is not a near miss
+but an order of magnitude out, repeatably, at 1% spread.
+
+**And the ONNX Runtime 1.28.0 pin was a Nano fact.** Measured back to back on both packages, same
+line, same clip, eight threads:
+
+| q4f16 language model | ORT 1.28.0 | ORT 1.29.0 | |
+|---|---|---|---|
+| Nano — the community conversion | 7.6 ms/token | 12.2 ms/token | **×1.61 slower**, as recorded |
+| Turbo — Resemble's own export | 20.9 ms/token | 22.6 ms/token | ×1.08 |
+| Turbo q4 | 16.6 ms/token | 19.7 ms/token | ×1.19 |
+
+Through the pieced, pipelined path the difference is smaller still, because the language model's
+extra cost hides behind decode work that is happening anyway: q4f16 reads ×1.49 on 1.28.0 and ×1.51
+on 1.29.0, and q4 ×1.81 against ×1.75. **So d47 can ship Chatterbox on 1.29.0, the version
+`D47.Tts` already references, and does not need a second runtime.** The Nano control reproduces the
+recorded 1.7×, so this is a difference between the two exports rather than a change in method —
+[onnxruntime#32255](https://github.com/microsoft/onnxruntime/issues/32255) lands hard on the
+community conversion's graph and barely touches Resemble's.
+
+**What to build against, on this chip.** Turbo q4, eight intra-op threads for both the language
+model and the decoder, the decoder on its own thread behind the language model, pieces of 20 tokens
+with 3 of context, a 5s reference clip, encoder output cached per voice. **First sound 796 ms and
+×1.82 realtime, with no stall on any line measured.** A thread count that is right here is wrong on
+another chip, so whatever ships still needs a heuristic rather than these constants.
+
+---
+
+## Amended 2026-09-04: the premise changed, and two numbers below are wrong
 
 **The question is no longer whether Chatterbox clears Kokoro's bar.** The maintainer ruled that
 Kokoro goes and Chatterbox is offered as an option, lag and all; the job became getting first sound
