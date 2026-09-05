@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Nano or Turbo</title>
 <style>
-  :root { --bg: #14181d; --panel: #1d232a; --ink: #e8edf2; --muted: #93a0ae; --rule: #2f3944; --a: #5aa7e8; --b: #e0a21a; --ok: #3fbf7f; }
+  :root { --bg: #14181d; --panel: #1d232a; --ink: #e8edf2; --muted: #93a0ae; --rule: #2f3944; --a: #5aa7e8; --b: #e0a21a; --ok: #3fbf7f; --no: #d95f5f; }
   body { margin: 0; background: var(--bg); color: var(--ink); font: 18px/1.4 "Segoe UI", system-ui, sans-serif; }
   main { max-width: 820px; margin: 0 auto; padding: 32px 24px 80px; display: grid; gap: 28px; }
   h1 { font-size: 1.3rem; margin: 0; }
@@ -19,7 +19,8 @@
   .picks { display: flex; gap: 12px; }
   button { font: inherit; font-size: 1.05rem; padding: 12px 22px; border-radius: 8px; border: 1px solid var(--rule); background: transparent; color: var(--ink); cursor: pointer; }
   button.a:hover { background: var(--a); color: #06111a; } button.b:hover { background: var(--b); color: #1a1204; } button.tie:hover { background: var(--rule); }
-  .tally { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; font-variant-numeric: tabular-nums; }
+  button.neither { border-color: var(--no); color: var(--no); } button.neither:hover { background: var(--no); color: #1a0606; }
+  .tally { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; font-variant-numeric: tabular-nums; }
   .tally div { background: var(--panel); padding: 12px 14px; border-radius: 6px; }
   .tally b { display: block; font-size: 1.6rem; }
   .tally span { color: var(--muted); font-size: 0.85rem; }
@@ -32,13 +33,14 @@
 <body>
 <main>
   <h1>Which sounds better?</h1>
-  <div class="hint"><kbd>1</kbd> play A · <kbd>2</kbd> play B · <kbd>A</kbd> / <kbd>B</kbd> / <kbd>S</kbd> same</div>
+  <div class="hint"><kbd>1</kbd> play A · <kbd>2</kbd> play B · <kbd>A</kbd> / <kbd>B</kbd> / <kbd>S</kbd> same / <kbd>N</kbd> neither</div>
   <div class="trial" id="trial"></div>
   <div class="tally">
     <div><b id="n">0</b><span>trials</span></div>
     <div><b id="turbo">0</b><span>Turbo preferred</span></div>
     <div><b id="nano">0</b><span>Nano preferred</span></div>
     <div><b id="ties">0</b><span>same</span></div>
+    <div><b id="neitherCount">0</b><span>neither, in the cockpit</span></div>
   </div>
   <div class="verdict" id="verdict"></div>
 </main>
@@ -68,12 +70,14 @@
           <button class="a" onclick="pick('a')">A is better</button>
           <button class="b" onclick="pick('b')">B is better</button>
           <button class="tie" onclick="pick('tie')">Same to me</button>
+          <button class="neither" onclick="pick('neither')">Neither, in the cockpit</button>
         </div>`;
     }
     document.getElementById('n').textContent = state.answered.length;
     document.getElementById('turbo').textContent = state.turbo;
     document.getElementById('nano').textContent = state.nano;
     document.getElementById('ties').textContent = state.ties;
+    document.getElementById('neitherCount').textContent = state.neither;
     const v = document.getElementById('verdict');
     const pct = state.decisive ? Math.round(100 * state.turbo / state.decisive) : 0;
     let text = `Turbo preferred in ${pct}% of decisive trials (95% interval ${Math.round(100 * state.low)}–${Math.round(100 * state.high)}%), p = ${state.p}. `;
@@ -106,6 +110,7 @@
     if (e.key === 'a' || e.key === 'A') pick('a');
     if (e.key === 'b' || e.key === 'B') pick('b');
     if (e.key === 's' || e.key === 'S') pick('tie');
+    if (e.key === 'n' || e.key === 'N') pick('neither');
   });
 
   load();

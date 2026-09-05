@@ -19,10 +19,11 @@ committed:
 | `manifests/*.json` | what each agent said it fetched, and from where |
 | `candidates.json` | one row per voice: id, label, seconds, licence, sources |
 | `verdicts.json` | the ear's judgement per voice |
+| `viability.json` | whether an approved voice clones at all, machine-checked |
 | `trials.json`, `picks.json` | the A/B pairs, and what was chosen |
-| `synth/` | each approved voice speaking each line, on each model |
+| `synth/` | each surviving voice speaking each line, on each model |
 
-**261 voices, 134 approved**: Star Trek from TOS to Enterprise, ship computers (HAL, GLaDOS,
+**261 voices, 134 approved, 132 clone at all**: Star Trek from TOS to Enterprise, ship computers (HAL, GLaDOS,
 SHODAN, KITT, Mother, WOPR, the Borg), film and cartoon characters, actors whose voice is an
 instrument, real-world audio and accents, and 48 deliberately dull controls — twelve LibriSpeech
 readers and six RAVDESS actors in six moods each, so the interesting ones have something to be
@@ -37,13 +38,21 @@ could never ship; the shipping question is settled elsewhere and the answer is D
 $c = "$env:LOCALAPPDATA\d47-spike\chatterbox\corpus"
 dotnet run --project spike/ChatterboxAb -c Release -- prepare $c
 dotnet run --project spike/ChatterboxAb -c Release -- serve   $c 8765
+dotnet run --project spike/ChatterboxAb -c Release -- viable  $c <path to ChatterboxProbe.exe> nano
 dotnet run --project spike/ChatterboxAb -c Release -- synth   $c <path to ChatterboxProbe.exe>
+dotnet run --project spike/ChatterboxAb -c Release -- stretch $c <path to ChatterboxProbe.exe> characters/brian 12
 ```
 
 `prepare` is idempotent and safe to re-run whenever clips change: it cuts only what is missing,
 upgrades a label when a manifest lands late, and drops a candidate whose audio has gone. `serve`
-hosts the review page at `/` and the A/B at `/ab`. `synth` needs a probe built on **ORT 1.28.0**
-(`-p:Ep=cpu -p:OrtVersion=1.28.0`), because 1.29.0 runs the language model 1.7× slower.
+hosts the review page at `/` and the A/B at `/ab`. `viable` clones one ~10s phrase per approved
+voice on one model and Whisper-checks the result against the input text, dropping anything that
+comes back as no words, the wrong words, or garbage — a reference clip that is fine to *listen* to
+can still be too short or too processed to clone at all. `synth` and `stretch` both need a probe
+built on **ORT 1.28.0** (`-p:Ep=cpu -p:OrtVersion=1.28.0`), because 1.29.0 runs the language model
+1.7× slower; `synth` builds the trials, and `stretch` re-cuts one voice past the corpus-wide 5-7s
+cap to ask whether more reference audio clones it better, without moving the cap everything else is
+cut and cached against.
 
 ## The four verdicts
 
@@ -69,7 +78,7 @@ test stops at 95% confidence with at least 20 decisive trials, or at 100 trials 
 100 without significance is itself the finding, because it means the ear cannot tell the two models
 apart. The page shows the running tally, the Wilson interval and the p-value as you go.
 
-## Three things that will bite the next reader
+## Four things that will bite the next reader
 
 **A downloaded clip that plays is not a clip.** A site whose signed link has expired serves a spoken
 placeholder — *"Please refresh the page to hear the sounds"* — with a 200 and an audio content type,
@@ -86,6 +95,18 @@ old verdict was about audio that no longer plays.
 
 **Transcribe, don't trust.** Both traps were caught by handing every prepared clip back to the
 Whisper model d47 ships. It is cheap, it is the only check that reads what is actually in the file,
-and it is the same check for whether a clone produced words at all. `D47.Stt` cannot be referenced
-from here (its ONNX Runtime collides with the probe's), so it lives as a throwaway console app —
-Whisper.net 1.9.1 and `ggml-small.en.bin` are all it needs.
+and it is the same check `viable` runs against a clone rather than a source recording. `D47.Stt`
+references cleanly from here — this project never loads ONNX Runtime, so there is nothing for
+Whisper.net's native runtime to collide with; that collision is `ChatterboxProbe`'s own problem
+(its README), not this one's.
+
+**A clone that says the right words can still not sound like the source.** `viable` only checks
+that Chatterbox produced *some* coherent voice saying the input text — it says nothing about timbre.
+Brian Griffin and Bugs Bunny both pass viability cleanly and both still read back as a generic
+narrator with the shape of an impression, not the character. The instinct is to blame the 5-7s
+reference cap, but it isn't that: both voices' raw soundboard clips support building a reference
+**twice** as long (`stretch … 12` uses all of it, no floor hit), and the 12s clone is barely
+different from the 5-7s one on the same line. The fallback to generic is Chatterbox itself — small
+and heavily quantised (`q4f16`) on an unusual voice — not a starved reference, so the corpus-wide
+cap stays where it is rather than doubling the run time of every synth pass for a difference this
+small.

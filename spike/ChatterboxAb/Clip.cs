@@ -20,7 +20,11 @@ internal static class Clip
     /// For a long recording, the stretch that holds the good speech, as "m:ss-m:ss" or "s-s";
     /// null takes the file from the top.
     /// </param>
-    public static float[] Prepare(IReadOnlyList<string> files, string? where)
+    /// <param name="minSeconds">
+    /// Overridable for the "does a longer reference clone better" question (#293 follow-up) without
+    /// moving the corpus-wide floor everything else was already cut and cached against.
+    /// </param>
+    public static float[] Prepare(IReadOnlyList<string> files, string? where, double minSeconds = MinSeconds, double maxSeconds = MaxSeconds)
     {
         var joined = new List<float>();
         var gap = new float[(int)(GapSeconds * Rate)];
@@ -50,7 +54,7 @@ internal static class Clip
 
             first = false;
 
-            var room = (int)(MaxSeconds * Rate) - joined.Count;
+            var room = (int)(maxSeconds * Rate) - joined.Count;
 
             if (mono.Length > room)
             {
@@ -60,7 +64,7 @@ internal static class Clip
 
             joined.AddRange(mono);
 
-            if (joined.Count >= MinSeconds * Rate)
+            if (joined.Count >= minSeconds * Rate)
             {
                 break;
             }

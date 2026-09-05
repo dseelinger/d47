@@ -3,6 +3,9 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using D47.Core.Listening;
+using D47.Stt;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace ChatterboxAb;
 
@@ -26,7 +29,9 @@ internal static class Program
 
                   prepare <corpus>                       manifests -> prepared clips + candidates.json
                   serve   <corpus> [port]                review at /, A/B at /ab (default 8765)
+                  viable  <corpus> <probe.exe> [variant]  one phrase per approved voice -> viability.json
                   synth   <corpus> <probe.exe> [lines]   approved voices x lines x {nano,turbo} -> trials
+                  stretch <corpus> <probe.exe> <id> [s]  one voice re-cut past the 5-7s cap -> stretch/
                 """);
             return 2;
         }
@@ -37,7 +42,9 @@ internal static class Program
         {
             "prepare" => Prepare(corpus),
             "serve" => Serve(corpus, args.Length > 2 ? int.Parse(args[2]) : 8765),
+            "viable" => Viable(corpus, args[2], args.Length > 3 ? args[3] : "nano"),
             "synth" => Synth(corpus, args[2], args.Length > 3 ? args[3] : Path.Combine(AppContext.BaseDirectory, "web", "lines.json")),
+            "stretch" => Stretch(corpus, args[2], args[3], args.Length > 4 ? double.Parse(args[4]) : 12),
             _ => 2,
         };
     }
@@ -486,7 +493,7 @@ internal static class Program
         var picks = Load(Path.Combine(corpus, "picks.json"))?.AsArray() ?? [];
         var byTrial = trials.ToDictionary(t => t!["id"]!.GetValue<string>(), t => t!);
 
-        int turbo = 0, nano = 0, ties = 0;
+        int turbo = 0, nano = 0, ties = 0, neither = 0;
 
         foreach (var pick in picks)
         {
@@ -500,6 +507,18 @@ internal static class Program
             if (choice == "tie")
             {
                 ties++;
+                continue;
+            }
+
+            // Neither clip is one Doug would run in the cockpit, whichever model made it — not
+            // evidence for Nano over Turbo, so it stays out of the decisive count exactly like a
+            // tie. Recorded under its own name rather than folded into "tie" so the voice can be
+            // picked back out of picks.json afterwards: every voice that never draws a "neither"
+            // is the roster of clones worth keeping for Doug's own use, copyright licence to ship
+            // aside.
+            if (choice == "neither")
+            {
+                neither++;
                 continue;
             }
 
@@ -529,6 +548,7 @@ internal static class Program
             ["turbo"] = turbo,
             ["nano"] = nano,
             ["ties"] = ties,
+            ["neither"] = neither,
             ["decisive"] = decisive,
             ["p"] = Math.Round(p, 4),
             ["low"] = Math.Round(low, 3),
@@ -539,14 +559,187 @@ internal static class Program
         };
     }
 
+    // ------------------------------------------------------------------ viable
+
+    /// <summary>
+    /// Whether an approved voice clones at all, cheaply, before the full A/B pays to synthesise it
+    /// three lines over two models. One phrase — the A/B's own "narrative" line, so a pass doubles
+    /// as that line's cache entry for <see cref="Synth"/> — on one model, since a reference clip
+    /// that cannot be cloned fails for a reason that lives in the clip, not in which model reads it.
+    /// Whisper is the check: a clone that produced no words, the wrong words, or garbage would still
+    /// be a WAV of the right length, so only reading back what is actually in the file catches it
+    /// (README.md, "Transcribe, don't trust").
+    /// </summary>
+    private static int Viable(string corpus, string probe, string variant)
+    {
+        var candidates = Load(Path.Combine(corpus, "candidates.json"))?.AsArray() ?? [];
+        var verdicts = Load(Path.Combine(corpus, "verdicts.json"))?.AsObject() ?? [];
+        var lines = Load(Path.Combine(AppContext.BaseDirectory, "web", "lines.json"))!.AsArray();
+        var line = lines.First(l => l!["id"]!.GetValue<string>() == "narrative")!;
+        var lineId = line["id"]!.GetValue<string>();
+        var text = line["text"]!.GetValue<string>();
+        var expected = Words(text);
+        var approved = candidates.Where(c => verdicts[c!["id"]!.GetValue<string>()]?.GetValue<string>() == "yes").ToList();
+
+        var modelPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Programs", "d47", "data", "models", "ggml-small.en.bin");
+
+        using var transcriber = new WhisperTranscriber(NullLogger<WhisperTranscriber>.Instance);
+
+        if (!transcriber.Load(modelPath, "small.en", useGpu: false))
+        {
+            Console.Error.WriteLine(transcriber.Unavailable);
+            return 1;
+        }
+
+        var results = Load(Path.Combine(corpus, "viability.json"))?.AsObject() ?? [];
+        int pass = 0, fail = 0;
+
+        Console.WriteLine($"{approved.Count} approved voices, one \"{lineId}\" clip each on {variant}");
+
+        foreach (var candidate in approved)
+        {
+            var id = candidate!["id"]!.GetValue<string>();
+            var reference = Path.Combine(corpus, candidate["file"]!.GetValue<string>().Replace('/', Path.DirectorySeparatorChar));
+            var output = Path.Combine(corpus, "synth", $"{Slug(id)}-{lineId}-{variant}.wav");
+
+            if (!File.Exists(output))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(output)!);
+
+                var start = new ProcessStartInfo(probe) { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false };
+
+                foreach (var a in new[] { "say", text, reference, output, "--variant", variant, "--dtype", "q4f16", "--threads", "8", "--decoder-threads", "16" })
+                {
+                    start.ArgumentList.Add(a);
+                }
+
+                using var process = Process.Start(start)!;
+                var stdout = process.StandardOutput.ReadToEnd();
+                process.StandardError.ReadToEnd();
+                process.WaitForExit();
+
+                if (process.ExitCode != 0 || !File.Exists(output))
+                {
+                    Console.WriteLine($"FAIL {id,-40} synth failed: {stdout.Split('\n').LastOrDefault(l => l.Length > 0)}");
+                    results[id] = new JsonObject { ["voice"] = candidate["voice"]!.DeepClone(), ["category"] = candidate["category"]!.DeepClone(), ["seconds"] = candidate["seconds"]!.DeepClone(), ["variant"] = variant, ["transcript"] = "", ["overlap"] = 0, ["pass"] = false, ["reason"] = "synth failed" };
+                    Save(Path.Combine(corpus, "viability.json"), results);
+                    fail++;
+                    continue;
+                }
+            }
+
+            var (samples, rate) = Clip.Decode(output);
+            var heard = transcriber.TranscribeAsync(new Utterance(samples, rate), []).GetAwaiter().GetResult();
+            var overlap = expected.Count == 0 ? 0 : (double)Words(heard.Text).Intersect(expected).Count() / expected.Count;
+            var passed = !heard.IsEmpty && overlap >= 0.4;
+
+            results[id] = new JsonObject
+            {
+                ["voice"] = candidate["voice"]!.DeepClone(),
+                ["category"] = candidate["category"]!.DeepClone(),
+                ["seconds"] = candidate["seconds"]!.DeepClone(),
+                ["variant"] = variant,
+                ["transcript"] = heard.Text,
+                ["overlap"] = Math.Round(overlap, 2),
+                ["pass"] = passed,
+            };
+
+            if (passed)
+            {
+                pass++;
+            }
+            else
+            {
+                fail++;
+            }
+
+            Console.WriteLine($"{(passed ? "ok  " : "FAIL")} {id,-40} {overlap,5:P0}  {heard.Text}");
+            Save(Path.Combine(corpus, "viability.json"), results);
+        }
+
+        Console.WriteLine($"{pass} pass, {fail} fail out of {approved.Count} ({(approved.Count == 0 ? 0 : (double)fail / approved.Count),4:P0} failure rate) -> viability.json");
+        return 0;
+    }
+
+    private static HashSet<string> Words(string text) =>
+        [.. text.ToLowerInvariant().Split([' ', '.', ',', '!', '?', '-', '\n', '\r', '[', ']', '(', ')', '"'], StringSplitOptions.RemoveEmptyEntries)];
+
+    // ------------------------------------------------------------------ stretch
+
+    /// <summary>
+    /// One voice, re-cut from its own raw files with the 5-7s corpus-wide cap lifted, to answer
+    /// "does more reference audio clone this character better" without moving the cap everything
+    /// else was already synthesised against (Doug, on Brian Griffin and Bugs Bunny: "they sound
+    /// much more generic" — both are soundboard composites that hit the 7s room limit with raw
+    /// material left unused). Writes beside the corpus rather than into prepared/ or synth/, so it
+    /// cannot race the running <see cref="Synth"/> pass or invalidate its cache.
+    /// </summary>
+    private static int Stretch(string corpus, string probe, string id, double seconds)
+    {
+        var slash = id.IndexOf('/');
+        var category = id[..slash];
+        var prefix = id[(slash + 1)..];
+        var raw = Path.Combine(corpus, "raw", category);
+        var files = Directory.Exists(raw)
+            ? Directory.GetFiles(raw).Where(f => Prefix(f) == prefix).OrderBy(Number).ToList()
+            : [];
+
+        if (files.Count == 0)
+        {
+            Console.Error.WriteLine($"no raw files for {id} under {raw}");
+            return 2;
+        }
+
+        var samples = Clip.Prepare(files, null, minSeconds: seconds, maxSeconds: seconds);
+        var actual = Clip.Seconds(samples);
+        var stretchDir = Path.Combine(corpus, "stretch");
+        var reference = Path.Combine(stretchDir, $"{Slug(id)}-{actual:F1}s.wav");
+
+        Directory.CreateDirectory(stretchDir);
+        Clip.WriteWav(reference, samples);
+        Console.WriteLine($"{id}: {files.Count} raw files -> {actual:F1}s reference (asked for {seconds:F0}s) -> {reference}");
+
+        var lines = Load(Path.Combine(AppContext.BaseDirectory, "web", "lines.json"))!.AsArray();
+        var line = lines.First(l => l!["id"]!.GetValue<string>() == "narrative")!;
+        var text = line["text"]!.GetValue<string>();
+
+        foreach (var model in new[] { "nano", "turbo" })
+        {
+            var output = Path.Combine(stretchDir, $"{Slug(id)}-{actual:F1}s-{model}.wav");
+
+            var start = new ProcessStartInfo(probe) { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false };
+
+            foreach (var a in new[] { "say", text, reference, output, "--variant", model, "--dtype", "q4f16", "--threads", "8", "--decoder-threads", "16" })
+            {
+                start.ArgumentList.Add(a);
+            }
+
+            using var process = Process.Start(start)!;
+            var stdout = process.StandardOutput.ReadToEnd();
+            process.StandardError.ReadToEnd();
+            process.WaitForExit();
+
+            Console.WriteLine(process.ExitCode == 0 && File.Exists(output)
+                ? $"{model,-6} -> {output}"
+                : $"{model,-6} FAILED: {stdout.Split('\n').LastOrDefault(l => l.Length > 0)}");
+        }
+
+        return 0;
+    }
+
     // ------------------------------------------------------------------ synth
 
     private static int Synth(string corpus, string probe, string linesFile)
     {
         var candidates = Load(Path.Combine(corpus, "candidates.json"))?.AsArray() ?? [];
         var verdicts = Load(Path.Combine(corpus, "verdicts.json"))?.AsObject() ?? [];
+        var viability = Load(Path.Combine(corpus, "viability.json"))?.AsObject() ?? [];
         var lines = Load(linesFile)!.AsArray();
-        var approved = candidates.Where(c => verdicts[c!["id"]!.GetValue<string>()]?.GetValue<string>() == "yes").ToList();
+        var approved = candidates.Where(c =>
+            verdicts[c!["id"]!.GetValue<string>()]?.GetValue<string>() == "yes" &&
+            viability[c["id"]!.GetValue<string>()]?["pass"]?.GetValue<bool>() != false).ToList();
         var trials = Load(Path.Combine(corpus, "trials.json"))?.AsArray() ?? [];
         var have = trials.Select(t => t!["id"]!.GetValue<string>()).ToHashSet();
         var random = new Random(47);
@@ -626,6 +819,11 @@ internal static class Program
                 });
                 have.Add(trialId);
             }
+
+            // Saved after every voice, unshuffled, so `/ab` has real trials to try while a run
+            // that takes hours is still going — the shuffle below is cosmetic and runs once more
+            // at the end, over the same trials, so nothing already answered is disturbed.
+            Save(Path.Combine(corpus, "trials.json"), new JsonArray(trials.Select(t => t!.DeepClone()).ToArray()));
         }
 
         // Shuffled once, so the page walks them in an order that hides nothing.
