@@ -106,6 +106,40 @@ recorded 1.7×, so this is a difference between the two exports rather than a ch
 [onnxruntime#32255](https://github.com/microsoft/onnxruntime/issues/32255) lands hard on the
 community conversion's graph and barely touches Resemble's.
 
+### Beside the game: the headset does not notice
+
+Measured 2026-09-05 with Elite running in VR, Quest over Virtual Desktop wireless, the tuned
+configuration synthesising back to back. Nine paired windows of 15-30s, `vrframes`:
+
+| | quiet | speaking |
+|---|---|---|
+| **frames the compositor dropped** | **0** | **0** — all eighteen windows |
+| reprojected, median paired change | | **+0.2 percentage points**, five up four down |
+| compositor cadence | 71.9/s | 72.0/s, never broken |
+| Elite's own CPU time per frame | 5.8–6.4 ms | 7.0–7.4 ms, **+20%** |
+| Elite's own GPU time per frame | 7.5 ms | 7.7 ms, +2% |
+
+**Nothing was dropped, and reprojection does not move.** Two of the nine pairs showed a large
+positive jump and both are drift rather than effect: their *quiet* window caught the tail of a
+light scene and their speaking window caught a heavy one. Once the session settled into a scene
+already reprojecting about half its frames, the median paired change is −0.2 points across five
+pairs. What the Commander is flying moves reprojection between 1% and 50%; the speech does not
+move it at all.
+
+The mechanism is visible and benign. Elite's render thread really does work 20% harder per frame,
+which is genuine CPU contention — but at 72 Hz it has 13.9 ms of budget and was using 6, so it
+absorbs the whole of it without missing a beat. The GPU is untouched, as it should be: this leg is
+entirely on the CPU.
+
+**PresentMon measures the wrong pipeline for this question, and says so if read carefully.** It
+captured one swapchain for `EliteDangerous64.exe`, `Composed: Flip` at 62 fps, while the compositor
+reported 71.9 through the same seconds — because Elite submits to SteamVR rather than presenting
+the headset's frames itself, so PresentMon sees the flat mirror window that DWM composes. On that
+mirror, hitches over 33 ms went from 0.31/s to 1.22/s the moment synthesis started, which is a true
+measurement of CPU contention and not evidence that anything reached the eye late.
+`vrcompositor.exe` yields no rows at all. Use `vrframes` for the VR question and PresentMon only
+for a flat-screen one.
+
 **What to build against, on this chip.** Turbo q4, eight intra-op threads for both the language
 model and the decoder, the decoder on its own thread behind the language model, pieces of 20 tokens
 with 3 of context, a 5s reference clip, encoder output cached per voice. **First sound 796 ms and

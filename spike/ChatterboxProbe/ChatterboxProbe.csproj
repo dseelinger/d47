@@ -31,6 +31,15 @@
     <PackageReference Include="NAudio" Version="2.2.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!--
+      For `vrframes` only. Safe to reference from here, unlike D47.Stt: D47.Vr carries Valve's
+      vendored binding and resolves openvr_api.dll out of the installed SteamVR runtime, so it
+      brings no native library of its own and cannot collide with either ONNX Runtime package.
+    -->
+    <ProjectReference Include="..\..\src\D47.Vr\D47.Vr.csproj" />
+  </ItemGroup>
+
   <ItemGroup Condition="'$(Ep)' == 'dml'">
     <!--
       1.24.4 and not 1.29.0, because 1.24.4 is the last DirectML build Microsoft published: the base

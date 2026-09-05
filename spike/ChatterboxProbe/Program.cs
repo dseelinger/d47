@@ -1,6 +1,9 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Text.Json;
+using D47.Vr;
 using Microsoft.ML.OnnxRuntime;
+using Valve.VR;
 
 namespace ChatterboxProbe;
 
@@ -97,6 +100,7 @@ internal static class Program
                 "stream" => Stream(rest),
                 "gpu" => ShowGpu(),
                 "elite" => Elite(rest),
+                "vrframes" => VrFrames(rest),
                 _ => Help(),
             };
         }
@@ -125,6 +129,7 @@ internal static class Program
               stream <text> <ref.wav> <out>  the line decoded in pieces as its tokens arrive; first sound per piece
               gpu                          the card, what it is holding, and which process holds it
               elite <text> <ref.wav>       Elite's frame time with and without a line being spoken
+              vrframes <text> <ref.wav>    SteamVR's dropped and reprojected frames, quiet then speaking
 
             --variant turbo|nano   --dtype fp32|fp16|q4|q4f16|q8   --provider cpu|dml|webgpu
             --root <dir>   --max-tokens n   --penalty f   --watch   --presentmon <exe>
@@ -552,6 +557,153 @@ internal static class Program
 
         double Spread(Func<StreamTiming, double> of) =>
             Median(of) == 0 ? 0 : (all.Max(of) - all.Min(of)) / Median(of);
+    }
+
+    /// <summary>
+    /// What the headset actually missed, which is the only frame-time question a Commander in VR
+    /// can answer from the inside. PresentMon measures the flat mirror window: Elite submits to
+    /// SteamVR rather than presenting the headset's frames itself, so a hitch in the mirror is
+    /// evidence of CPU contention and not evidence that anything was dropped. The compositor
+    /// counts presents, drops and reprojections for the running scene application, and the
+    /// difference across a window is what this reports.
+    /// </summary>
+    private static int VrFrames(List<string> args)
+    {
+        if (args.Count < 2)
+        {
+            Console.Error.WriteLine("vrframes <text> <reference.wav>");
+            return 2;
+        }
+
+        if (!OpenVrLoader.Register())
+        {
+            Console.Error.WriteLine("no SteamVR runtime on this machine.");
+            return 1;
+        }
+
+        var startup = EVRInitError.None;
+
+        // Background, never Overlay: this reads what the compositor is already doing and must add
+        // nothing to the scene the Commander is looking at.
+        OpenVR.Init(ref startup, EVRApplicationType.VRApplication_Background);
+
+        if (startup != EVRInitError.None)
+        {
+            Console.Error.WriteLine($"SteamVR: {OpenVR.GetStringForHmdError(startup)}");
+            return 1;
+        }
+
+        try
+        {
+            var compositor = OpenVR.Compositor;
+
+            if (compositor is null)
+            {
+                Console.Error.WriteLine("SteamVR is up but exposes no compositor.");
+                return 1;
+            }
+
+            var bytes = (uint)Marshal.SizeOf<Compositor_CumulativeStats>();
+
+            Compositor_CumulativeStats Read()
+            {
+                var stats = default(Compositor_CumulativeStats);
+                compositor.GetCumulativeStats(ref stats, bytes);
+                return stats;
+            }
+
+            Console.WriteLine(Process.GetProcessesByName("EliteDangerous64").Length > 0
+                ? "Elite is running."
+                : "Elite is NOT running — the compositor will be counting somebody else's frames.");
+
+            Console.WriteLine($"scene application pid {Read().m_nPid}, sampling {_seconds}s per window");
+
+            var quiet = Window("quiet", null);
+
+            var reference = Reference(args[1]);
+            var tokeniser = Tokeniser.Load(Path.Combine(VariantRoot, "tokenizer.json"));
+            var ids = tokeniser.Encode(args[0]);
+
+            using var pipeline = Pipeline.Open(VariantRoot, _dtype, _provider, _onCpu, Tuning, _ep);
+            using var voice = pipeline.Encode(reference);
+
+            // Warm, and outside the measured window: the first inference pays for arena allocation,
+            // which is not what speaking a line costs.
+            pipeline.Stream(ids, voice, _maxTokens, _penalty, _chunk, _overlap, _crossfade, _pipeline);
+
+            var stop = new CancellationTokenSource();
+            var speaking = Task.Run(() =>
+            {
+                while (!stop.IsCancellationRequested)
+                {
+                    pipeline.Stream(ids, voice, _maxTokens, _penalty, _chunk, _overlap, _crossfade, _pipeline);
+                }
+            });
+
+            var busy = Window("speaking", $"{_variant}/{_dtype}");
+
+            stop.Cancel();
+            speaking.Wait();
+            stop.Dispose();
+
+            Console.WriteLine();
+            Console.WriteLine(
+                $"dropped     {quiet.Dropped,6:N0} -> {busy.Dropped,6:N0}   " +
+                $"({quiet.DroppedPercent:F2}% -> {busy.DroppedPercent:F2}% of presents)");
+            Console.WriteLine(
+                $"reprojected {quiet.Reprojected,6:N0} -> {busy.Reprojected,6:N0}   " +
+                $"({quiet.ReprojectedPercent:F2}% -> {busy.ReprojectedPercent:F2}%)");
+
+            return 0;
+
+            Counts Window(string label, string? during)
+            {
+                var before = Read();
+                var clock = Stopwatch.StartNew();
+                Thread.Sleep(_seconds * 1000);
+                clock.Stop();
+                var after = Read();
+
+                var counts = new Counts(
+                    after.m_nNumFramePresents - before.m_nNumFramePresents,
+                    after.m_nNumDroppedFrames - before.m_nNumDroppedFrames,
+                    after.m_nNumReprojectedFrames - before.m_nNumReprojectedFrames,
+                    after.m_flSumApplicationCPUTimeMS - before.m_flSumApplicationCPUTimeMS,
+                    after.m_flSumApplicationGPUTimeMS - before.m_flSumApplicationGPUTimeMS,
+                    clock.Elapsed.TotalSeconds);
+
+                Console.WriteLine();
+                Console.WriteLine($"--- {label}{(during is null ? string.Empty : $", {during} speaking")}");
+                Console.WriteLine(
+                    $"presents    {counts.Presents,6:N0} in {counts.Seconds:F1}s ({counts.Fps:F1}/s)");
+                Console.WriteLine(
+                    $"dropped     {counts.Dropped,6:N0} ({counts.DroppedPercent:F2}%)   " +
+                    $"reprojected {counts.Reprojected,6:N0} ({counts.ReprojectedPercent:F2}%)");
+                Console.WriteLine(
+                    $"app time    {counts.CpuMsPerFrame:F2} ms CPU, {counts.GpuMsPerFrame:F2} ms GPU per frame");
+
+                return counts;
+            }
+        }
+        finally
+        {
+            OpenVR.Shutdown();
+        }
+    }
+
+    /// <summary>What the compositor counted across one window.</summary>
+    private sealed record Counts(
+        uint Presents, uint Dropped, uint Reprojected, double CpuMs, double GpuMs, double Seconds)
+    {
+        public double Fps => Seconds <= 0 ? 0 : Presents / Seconds;
+
+        public double DroppedPercent => Presents == 0 ? 0 : 100.0 * Dropped / Presents;
+
+        public double ReprojectedPercent => Presents == 0 ? 0 : 100.0 * Reprojected / Presents;
+
+        public double CpuMsPerFrame => Presents == 0 ? 0 : CpuMs / Presents;
+
+        public double GpuMsPerFrame => Presents == 0 ? 0 : GpuMs / Presents;
     }
 
     private static int ShowGpu()
