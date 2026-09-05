@@ -155,7 +155,10 @@ internal static partial class Gpu
         {
             Run(presentMon,
                 $"--process_name {process} --output_file \"{csv}\" --timed {seconds} " +
-                "--terminate_after_timed --stop_existing_session --no_top");
+                // --no_console_stats, not 1.x's --no_top: PresentMon 2.x rejects the old name and
+                // exits rather than capturing. 2.x also needs administrative privilege or
+                // membership of "Performance Log Users" to open its trace session at all.
+                "--terminate_after_timed --stop_existing_session --no_console_stats");
 
             if (!File.Exists(csv))
             {

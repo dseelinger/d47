@@ -134,6 +134,11 @@ is how the one runnable configuration was isolated. See §3 of the finding.
 **The `elite` command needs PresentMon and does not bundle it.** Per-process VRAM comes from a
 Windows performance counter and works unaided; frame time has no API a bystanding process can call,
 so without `--presentmon <exe>` the command says so instead of substituting GPU utilisation for it.
+**PresentMon must run elevated** — opening its trace session is access-denied otherwise, and no
+amount of retrying helps — so either start the probe from an administrator shell or put the account
+in "Performance Log Users". Get `PresentMon-2.5.1-x64.exe` (0.9 MB) from Intel's own
+[GameTechDev/PresentMon](https://github.com/GameTechDev/PresentMon) releases; 2.x dropped 1.x's
+`--no_top` for `--no_console_stats`, which is what the probe now passes.
 
 **A WAV of the right length is not evidence.** Every claim in the finding about what the model said
 was checked by handing the output back to the Whisper model d47 already ships. Doing that from inside

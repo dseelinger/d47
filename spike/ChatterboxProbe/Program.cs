@@ -602,15 +602,20 @@ internal static class Program
             var ids = tokeniser.Encode(args[0]);
 
             using var pipeline = Pipeline.Open(VariantRoot, _dtype, _provider, _onCpu, Tuning, _ep);
+            using var voice = pipeline.Encode(reference);
 
-            pipeline.Speak(ids, reference, _maxTokens, _penalty);
+            // The pieced path with --pipeline, not the one-shot Speak, because that is what would
+            // run beside the game: two graphs at once rather than one at a time, which is a
+            // different load on the CPU and the only arrangement whose latency d47 could ship.
+            // Encoding is hoisted out because it happens once per voice and is cached.
+            pipeline.Stream(ids, voice, _maxTokens, _penalty, _chunk, _overlap, _crossfade, _pipeline);
 
             var stop = new CancellationTokenSource();
             var speaking = Task.Run(() =>
             {
                 while (!stop.IsCancellationRequested)
                 {
-                    pipeline.Speak(ids, reference, _maxTokens, _penalty);
+                    pipeline.Stream(ids, voice, _maxTokens, _penalty, _chunk, _overlap, _crossfade, _pipeline);
                 }
             });
 
