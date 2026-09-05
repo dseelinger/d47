@@ -68,10 +68,16 @@ than the section allowed for, and together they take first sound from 3,375 ms t
   every pieced line back correctly — the 2.84s line at pieces of 10, 15, 20 and 25 tokens, and an
   8.6s line in eleven pieces: *"Docking permission granted at Shinrata Desra. Proceed to pad 32 and
   mind the Anaconda on approach, Commander. Fuel is at 40%."* Playback never waits: each piece is
-  ready before the one before it has finished playing, on one thread. **Whether the seams can be
-  heard is not measured** — the community README warns they can, and a read-back proves words, not
-  clicks. The WAVs are under `%LOCALAPPDATA%\d47-spike\chatterbox\out\` (`stream-*.wav`,
-  `s-c*.wav`, `long-*.wav`).
+  ready before the one before it has finished playing, on one thread. **The seams are measurable
+  and never the sharpest thing in the file.** Spectral flux — the mean change of the dB spectrum
+  between 20 ms frames, every 5 ms — puts every seam between the 85th and 99th percentile of its
+  own file, so a seam is sharper than most frames; and the model's own consonant onsets are twice
+  as sharp as any seam, in the one-piece file as much as the pieced one. Two of twenty-one seams
+  across three files reached the 99th percentile; those are the candidates for an ear. Pieces of
+  25 tokens put seams at exactly 1.0, 2.0, 3.0… s, so a listener can be told where to listen. The
+  WAVs are under `%LOCALAPPDATA%\d47-spike\chatterbox\out\` (`stream-*.wav`, `s-c*.wav`,
+  `long-*.wav`, `doug*.wav`, `ship-*.wav`; `*-marked.wav` carry a tick a quarter second before
+  each seam).
 - **Long lines scale fine once pieced.** 8.6s of audio, 213 speech tokens: first sound 424 ms with a
   5s clip (645 with 10s), total synthesis 4.1s, realtime ×2.1, no stalls.
 - **Threads.** The language model wants *more* threads, not fewer — 1: 41.9 ms/token, 2: 26.2,
@@ -101,7 +107,7 @@ Direct3D 12; `-p:Ep=webgpu` builds against it, `--provider webgpu` runs on it.
 | language_model | **runs correctly** — 69 of 70 tokens identical to the CPU's, the one difference a tie-break, and Whisper reads the line back. 17.4 ms/token as wired, slower than the CPU: the KV cache round-trips to the card every step and 124 nodes fall back to the CPU |
 | embed_tokens | runs |
 | speech_encoder | computes wrong speech-token ids (the quantised gather after it caught index 6564 of a 6561 table). Runs once per voice; keep it on the CPU |
-| conditional_decoder | **aborts the process.** After about 55 s of first-run shader work, five `_com_error` exceptions inside the provider and a fail-fast (0xC0000409) with the NVIDIA D3D12 driver on the stack. The same for Turbo's official export at fp16 and q4f16, so not the conversion. Forcing any one op type to the CPU changes nothing (`forceCpuNodeNames` is capped at 8,192 characters, so the large op types could only be tried in halves). No FXC fallback: without `dxcompiler.dll` the provider refuses to initialise. The Vulkan backend cannot load `vulkan-1.dll` (error 87) |
+| conditional_decoder | **aborts the process.** After about 55 s of first-run shader work, five `_com_error` exceptions inside the provider and a fail-fast (0xC0000409) with the NVIDIA D3D12 driver on the stack. The same for Turbo's official export at fp16 and q4f16, so not the conversion. Forcing any one op type to the CPU changes nothing (`forceCpuNodeNames` is capped at 8,192 characters, so the large op types could only be tried in halves). No FXC fallback: without `dxcompiler.dll` the provider refuses to initialise. The Vulkan backend cannot load `vulkan-1.dll` from System32 (error 87); with the loader copied beside the exe it initialises, and the decoder dies the same way — so the common factor is the NVIDIA driver's shader path, not Direct3D or DXC |
 
 So the GPU can take the language model today and not the decoder, and the language model on the
 GPU only pays once the KV cache stays on the card (IoBinding) and the export stops falling back.
