@@ -27,6 +27,18 @@ history to match today's layout would be the one edit it must never take.
 
 ---
 
+## 0.105.1 — 2026-09-05 — The Market page survives its own rebuild
+
+Every successful Find on Routing → Market took d47 down: `Refresh()` clears the page and calls
+`SearchCard()` again, but `_commodity`, `_tonnes`, `_selling` and `_largePad` are `readonly` fields
+built once and only ever wrapped in a fresh container, so the second wrap found each one still
+parented to the one `Build()` had just discarded and Avalonia refused to add it. It was the page's
+main button doing exactly what it is for, not an edge — voice search never goes through this page,
+and the page's own tests furnished it and read it but never pressed Find, so the fault shipped
+unnoticed since Phase 49. `SearchCard()` now detaches those controls (and `_status`, which has the
+same shape) from their current parent before rewrapping them.
+[#284](https://github.com/dseelinger/d47/issues/284)
+
 ## 0.105.0 — 2026-09-04 — D47 speaks through ElevenLabs v3 and can be told how to say a line, the metering wrapper stops swallowing what a voice can do, and a finished turn lets go of the turn slot
 
 ### Two ElevenLabs models, and v3 Conversational speaks by default
