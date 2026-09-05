@@ -357,8 +357,33 @@ the coordinates, so "how far" has the same answer wherever it is asked from.
 Where to buy a named module or ship, nearest first.
 
 ```json
-{"type":"object","properties":{"commodity":{"type":"string","description":"A commodity traded there, by name."},"include_carriers":{"type":"boolean","description":"Also fleet carriers, whose prices are player-set and can move."},"large_pad":{"type":"boolean","description":"Only stations with a large landing pad."},"limit":{"type":"integer","description":"How many to return, 1 to 20. Default 5."},"max_distance":{"type":"number","description":"How far to look, in light years. Default 50."},"max_price_age_hours":{"type":"integer","description":"How stale a quoted price may be, in hours. Default 720, one month."},"module":{"type":"string","description":"A module to be sold there, by name \u2014 \u0022Frame Shift Drive\u0022."},"module_class":{"type":"string","description":"Module size, 0 to 8.","enum":["0","1","2","3","4","5","6","7","8"]},"module_rating":{"type":"string","description":"Module rating, A to I.","enum":["A","B","C","D","E","F","G","H","I"]},"near":{"type":"string","description":"Search out from this system. Defaults to theirs."},"selling":{"type":"boolean","description":"Sell it rather than buy it."},"ship":{"type":"string","description":"A ship to be sold there, by name \u2014 \u0022Krait MkII\u0022."},"tonnes":{"type":"integer","description":"How many tonnes, if they said."}},"required":[],"additionalProperties":false}
+{"type":"object","properties":{"commodity":{"type":"string","description":"A commodity traded there, by name."},"include_carriers":{"type":"boolean","description":"Also fleet carriers, whose prices are player-set and can move."},"large_pad":{"type":"boolean","description":"Only stations with a large landing pad."},"limit":{"type":"integer","description":"How many to return, 1 to 20. Default 5."},"max_distance":{"type":"number","description":"How far to look, in light years. Default 50."},"max_price_age_hours":{"type":"integer","description":"How stale a quoted price may be, in hours. Default 720, one month."},"max_station_distance":{"type":"number","description":"Furthest from the star, in light seconds."},"min_supply":{"type":"integer","description":"Least in stock, or least demand when selling."},"module":{"type":"string","description":"A module to be sold there, by name \u2014 \u0022Frame Shift Drive\u0022."},"module_class":{"type":"string","description":"Module size, 0 to 8.","enum":["0","1","2","3","4","5","6","7","8"]},"module_rating":{"type":"string","description":"Module rating, A to I.","enum":["A","B","C","D","E","F","G","H","I"]},"near":{"type":"string","description":"Search out from this system. Defaults to theirs."},"order_by":{"type":"string","description":"Nearest first, or best price first. Default price.","enum":["distance","price"]},"selling":{"type":"boolean","description":"Sell it rather than buy it."},"ship":{"type":"string","description":"A ship to be sold there, by name \u2014 \u0022Krait MkII\u0022."},"surface_stations":{"type":"boolean","description":"Also planetary ports and settlements. Default false."},"tonnes":{"type":"integer","description":"How many tonnes, if they said."}},"required":[],"additionalProperties":false}
 ```
+
+**The four filters INARA's commodity search has and this one lacked**
+([#296](https://github.com/dseelinger/d47/issues/296)): `max_station_distance` in light seconds
+from the star, `min_supply` as a floor a station must clear (demand when selling), `surface_stations`
+to let planetary ports and settlements back in — they are out unless asked for, as INARA has it —
+and `order_by`, which is `price` for the ranking this search has always had and `distance` for
+nearest first. Only `min_supply` goes into the request, because it is the one the station search
+honours server-side: measured on 2026-09-05 within 40 light years of Ega, Palladium at supply ≥ 1
+returned 347 stations, ≥ 1,000 returned 80, ≥ 10,000 returned 34 and ≥ 50,000 returned 4, against
+7,597 unfiltered — all under the endpoint's 10,000 cap, so the counts could move. The other three
+are applied here, off the arrival distance and station type every result already carries. A
+station whose type or arrival distance the index does not know is kept: unknown is not surface,
+and unknown is not far.
+
+**Nearest first changes what is said, not only the order.** When the Commander orders by distance
+the nearest station *is* the answer, so the ear gets one station in full — its price, its stock,
+its distance from the star and the age of the quote — and the rest are counted: *"3 more, further
+out, are on the Routing tab."* That tab draws the whole ranked list. The price ordering still reads
+every station out, as it always did. Each station's line also names its distance from the star now,
+wherever the index knows it, because a pad 60,000 light seconds out is the half of "how far" the
+Commander feels after the jump.
+
+The saved **Community Goal search** — the INARA query with every one of these baked in — lives on
+the [community goals page](community-goals.html), and runs through this tool.
+
 
 **Every knob the commodity half has is an argument** ([#157](https://github.com/dseelinger/d47/issues/157)).
 It used not to be. `max_distance` was clamped to 250 inside the handler, so *"expand your search

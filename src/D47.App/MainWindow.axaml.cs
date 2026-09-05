@@ -285,7 +285,21 @@ public partial class MainWindow : Window
                 // What the Neutron Plotter's jump range placeholder quotes (#253). The same
                 // expression RouteCapability falls back to when the argument is absent, so what
                 // the form says it will use and what the tool call actually uses cannot differ.
-                () => host.GameState.Active?.Ship.MaxJumpRange));
+                () => host.GameState.Active?.Ship.MaxJumpRange,
+
+                // And the Community Goal page (#296): the saved search, its ledger, and who and
+                // when to ask them about. Here for the reason the Market page is: it has a form.
+                new CommunityGoalSurface(
+                    host.CommunityGoalSearch,
+                    host.CommodityLedger,
+                    () => host.GameState.Active?.Identity.FrontierId,
+                    () => DateTimeOffset.Now)));
+
+            // "Refresh" by voice means this search only while its page is what the window is
+            // showing (#296), and the window is the one thing that knows that.
+            host.CommunityGoalSearch.Showing = () =>
+                Panel.Nav.Tab == PanelTab.Routing
+                && Panel.Nav.Root.Key == RoutingPages.CommunityGoalRoot;
 
             // And the clocks, timers and alarms (Phase 24). Both surfaces, like the
             // checklist: a Commander in a headset is exactly the Commander who cannot glance at

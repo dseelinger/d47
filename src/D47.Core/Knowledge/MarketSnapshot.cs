@@ -114,6 +114,17 @@ public sealed record MarketSnapshot
     public bool IsCarrier =>
         Type is { } type && type.Contains("Carrier", StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// A pad on a planet's surface (#296). The index's own words for one, measured against the
+    /// live station search on 2026-09-05: <c>Planetary Outpost</c>, <c>Planetary Port</c>,
+    /// <c>Settlement</c> and <c>Surface Settlement</c>. A station with no type is not surface —
+    /// unknown is not a reason to exclude it.
+    /// </summary>
+    public bool IsSurface =>
+        Type is { } type
+        && (type.Contains("Planetary", StringComparison.OrdinalIgnoreCase)
+            || type.Contains("Settlement", StringComparison.OrdinalIgnoreCase));
+
     public MarketQuote? Quote(string commodity) =>
         Quotes.TryGetValue(commodity, out var quote) ? quote : null;
 
