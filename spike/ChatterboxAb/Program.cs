@@ -46,8 +46,20 @@ internal static class Program
 
     private static int Prepare(string corpus)
     {
+        Stubs(corpus);
+
         var candidates = new JsonArray();
         var existing = Load(Path.Combine(corpus, "candidates.json"))?.AsArray() ?? [];
+
+        // A candidate whose clips have all gone — a stub sweep, or a file deleted by hand — is
+        // dropped rather than left pointing at audio that is no longer there.
+        foreach (var stale in existing.Where(c =>
+            !File.Exists(Path.Combine(corpus, c!["file"]!.GetValue<string>().Replace('/', Path.DirectorySeparatorChar)))).ToList())
+        {
+            Console.WriteLine($"{stale!["voice"]!.GetValue<string>()}: prepared clip is gone, dropped");
+            existing.Remove(stale);
+        }
+
         var known = existing.Select(c => c!["id"]!.GetValue<string>()).ToHashSet();
 
         foreach (var c in existing)
@@ -151,6 +163,63 @@ internal static class Program
         Save(Path.Combine(corpus, "candidates.json"), candidates);
         Console.WriteLine($"{candidates.Count} candidates -> candidates.json");
         return 0;
+    }
+
+    /// <summary>
+    /// Deletes the clips that are not clips. A clip site whose signed link has expired serves a
+    /// spoken placeholder — "please refresh the page to hear the sounds" — with a 200 and an audio
+    /// content type, so nothing upstream can tell it from a voice. Two of them reached this corpus
+    /// from two different sites, one of them 19 times, and they only showed up when a person played
+    /// them. They are byte-identical wherever they land, which is what makes them findable: any
+    /// small file whose exact bytes repeat across unrelated voices is a placeholder, because two
+    /// real recordings of two different actors never collide.
+    /// </summary>
+    private static void Stubs(string corpus)
+    {
+        var raw = Path.Combine(corpus, "raw");
+
+        if (!Directory.Exists(raw))
+        {
+            return;
+        }
+
+        var byHash = new Dictionary<string, List<string>>();
+
+        foreach (var file in Directory.GetFiles(raw, "*", SearchOption.AllDirectories))
+        {
+            // Only small files: a placeholder is a few seconds, and hashing a 40 MB interview to
+            // discover it is unique is time spent for nothing.
+            if (new FileInfo(file).Length > 400 * 1024)
+            {
+                continue;
+            }
+
+            var hash = Convert.ToHexString(System.Security.Cryptography.MD5.HashData(File.ReadAllBytes(file)));
+
+            if (!byHash.TryGetValue(hash, out var same))
+            {
+                byHash[hash] = same = [];
+            }
+
+            same.Add(file);
+        }
+
+        foreach (var (_, files) in byHash)
+        {
+            // Two copies under one voice are an agent fetching the same URL twice, which is
+            // harmless. The same bytes under two voices are a placeholder.
+            if (files.Count < 2 || files.Select(f => $"{Path.GetFileName(Path.GetDirectoryName(f))}/{Prefix(f)}").Distinct().Count() < 2)
+            {
+                continue;
+            }
+
+            Console.WriteLine($"placeholder in {files.Count} files, deleting: {string.Join(", ", files.Select(Path.GetFileName).Take(4))}…");
+
+            foreach (var file in files)
+            {
+                File.Delete(file);
+            }
+        }
     }
 
     private static void Add(
