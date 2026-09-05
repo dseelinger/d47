@@ -88,29 +88,29 @@
   }
 
   async function verdict(i, v) {
-    // Where to go next, decided before the list is redrawn: when the filter is showing one verdict,
-    // this row is about to leave the list, so the next row takes its place; when showing
-    // everything, the list does not move and the next row is the one below.
-    const row = document.querySelector(`.row[data-index="${i}"]`);
-    const below = row?.nextElementSibling;
-    const leaving = document.getElementById('filter').value !== 'all';
+    // The clip below this one, noted before the list is redrawn, because judging a row under a
+    // verdict filter removes it and the row beneath slides up into its place. Following the
+    // remembered row rather than "whatever is first now" is what keeps a long pass moving
+    // forwards instead of snapping back to the top on every click.
+    const below = document.querySelector(`.row[data-index="${i}"]`)?.nextElementSibling;
+    const wanted = below ? +below.dataset.index : -1;
 
     rows[i].verdict = v;
     await fetch('/api/verdict', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: rows[i].id, verdict: v }) });
-
-    const wanted = leaving ? null : +(below?.dataset.index ?? -1);
     render();
 
-    const next = wanted === null || wanted < 0
-      ? document.querySelector('.row')
-      : document.querySelector(`.row[data-index="${wanted}"]`);
+    play(document.querySelector(`.row[data-index="${wanted}"]`));
+  }
 
-    if (next) {
-      const audio = next.querySelector('audio');
-      audio.scrollIntoView({ block: 'center' });
-      audio.play();
-      current = +next.dataset.index;
+  function play(row) {
+    if (!row) {
+      return;
     }
+
+    const audio = row.querySelector('audio');
+    audio.scrollIntoView({ block: 'center' });
+    audio.play();
+    current = +row.dataset.index;
   }
 
   document.addEventListener('keydown', e => {
@@ -122,7 +122,8 @@
     if (e.key === 'y' || e.key === 'Y') verdict(+row.dataset.index, 'yes');
     if (e.key === 'n' || e.key === 'N') verdict(+row.dataset.index, 'no');
     if (e.key === 'x' || e.key === 'X') verdict(+row.dataset.index, 'bad');
-    if (e.key === 'ArrowDown') { const n = row.nextElementSibling; if (n) { current = +n.dataset.index; n.querySelector('audio').scrollIntoView({ block: 'center' }); n.querySelector('audio').play(); e.preventDefault(); } }
+    if (e.key === 'ArrowDown') { e.preventDefault(); play(row.nextElementSibling); }
+    if (e.key === 'ArrowUp') { e.preventDefault(); play(row.previousElementSibling); }
   });
 
   document.getElementById('filter').onchange = render;
