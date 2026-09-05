@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>ChatterboxAb</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Decoding whatever the fan sites serve: Media Foundation for mp3/m4a/wav/flac, NVorbis for ogg. -->
+    <PackageReference Include="NAudio" Version="2.2.1" />
+    <PackageReference Include="NAudio.Vorbis" Version="1.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      The real transcriber, not a copy of it, for the viability pass. Safe to reference here and
+      not from ChatterboxProbe: this project never loads ONNX Runtime, so there is nothing for
+      Whisper.net's own native runtime to collide with (ChatterboxProbe/README.md, "Transcribe,
+      don't trust").
+    -->
+    <ProjectReference Include="..\..\src\D47.Core\D47.Core.csproj" />
+    <ProjectReference Include="..\..\src\D47.Stt\D47.Stt.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="web\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

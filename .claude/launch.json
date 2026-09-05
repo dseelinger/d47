@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "chatterbox-ab",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "spike/ChatterboxAb", "-c", "Release", "--", "serve", "C:\\Users\\dougs\\AppData\\Local\\d47-spike\\chatterbox\\corpus", "8765"],
+      "port": 8765
+    }
+  ]
+}

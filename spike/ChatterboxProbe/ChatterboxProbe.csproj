@@ -1,0 +1,69 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>ChatterboxProbe</RootNamespace>
+    <!--
+      Which ONNX Runtime build to measure against. `dml` is the default because the GPU leg is the
+      one #293 gates on; `-p:Ep=cpu` swaps in the version D47.Tts actually ships, which is the only
+      way to know whether the version pin below costs anything on the CPU.
+    -->
+    <Ep Condition="'$(Ep)' == ''">dml</Ep>
+    <DefineConstants Condition="'$(Ep)' == 'dml'">$(DefineConstants);DML</DefineConstants>
+    <DefineConstants Condition="'$(Ep)' == 'webgpu'">$(DefineConstants);WEBGPU</DefineConstants>
+    <!--
+      The base package's version, for the cpu and webgpu flavours. Overridable because the language
+      model runs 1.6x slower on 1.29.0 than on 1.24.4's CPU provider, and finding where between the
+      two it moved is a matter of building each.
+    -->
+    <OrtVersion Condition="'$(OrtVersion)' == ''">1.29.0</OrtVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      For the reference clip only, and specifically for Media Foundation: Windows Sound Recorder
+      writes .m4a, so without this every clip needs converting before the probe will look at it.
+      No native of its own, so it does not collide with either ONNX Runtime package.
+    -->
+    <PackageReference Include="NAudio" Version="2.2.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      For `vrframes` only. Safe to reference from here, unlike D47.Stt: D47.Vr carries Valve's
+      vendored binding and resolves openvr_api.dll out of the installed SteamVR runtime, so it
+      brings no native library of its own and cannot collide with either ONNX Runtime package.
+    -->
+    <ProjectReference Include="..\..\src\D47.Vr\D47.Vr.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Ep)' == 'dml'">
+    <!--
+      1.24.4 and not 1.29.0, because 1.24.4 is the last DirectML build Microsoft published: the base
+      package went on to 1.29.0 and this one stopped. That gap is a finding rather than a detail —
+      D47.Tts references 1.29.0, and the two packages cannot coexist in one process, so adopting the
+      DirectML provider means moving the whole app back four minor versions of ONNX Runtime.
+
+      The CPU provider inside this package is 1.24.4's, so a CPU number taken here is a 1.24.4
+      number. `-p:Ep=cpu` retakes it on 1.29.0.
+    -->
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.DirectML" Version="1.24.4" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Ep)' == 'cpu'">
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="$(OrtVersion)" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Ep)' == 'webgpu'">
+    <!--
+      The plugin execution provider, MIT, which sits beside the base package rather than replacing
+      it — the one GPU route that does not move the app off 1.29.0. Dawn over Direct3D 12 on Windows.
+    -->
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="$(OrtVersion)" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.EP.WebGpu" Version="0.3.0" />
+  </ItemGroup>
+
+</Project>
