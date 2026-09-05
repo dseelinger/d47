@@ -71,14 +71,40 @@ internal static class Clip
 
     public static double Seconds(float[] samples) => samples.Length / (double)Rate;
 
+    private static WaveStream Open(string path)
+    {
+        if (Path.GetExtension(path).Equals(".ogg", StringComparison.OrdinalIgnoreCase))
+        {
+            return new VorbisWaveReader(path);
+        }
+
+        if (Path.GetExtension(path).Equals(".wav", StringComparison.OrdinalIgnoreCase))
+        {
+            try
+            {
+                var wave = new WaveFileReader(path);
+
+                if (wave.WaveFormat.Encoding is WaveFormatEncoding.Pcm or WaveFormatEncoding.IeeeFloat)
+                {
+                    return wave;
+                }
+
+                wave.Dispose();
+            }
+            catch (FormatException)
+            {
+                // Not a WAV the reader knows; Media Foundation gets a turn below.
+            }
+        }
+
+        return new MediaFoundationReader(path);
+    }
+
     public static (float[] Samples, int Rate) Decode(string path)
     {
-        using WaveStream reader = Path.GetExtension(path).ToLowerInvariant() switch
-        {
-            ".ogg" => new VorbisWaveReader(path),
-            ".wav" => new WaveFileReader(path),
-            _ => new MediaFoundationReader(path),
-        };
+        // A .wav from a fan site is often not PCM — several are ADPCM or mu-law, which
+        // WaveFileReader refuses — so fall through to Media Foundation, which decodes them.
+        using WaveStream reader = Open(path);
 
         var provider = reader.ToSampleProvider();
         var channels = reader.WaveFormat.Channels;
@@ -104,29 +130,43 @@ internal static class Clip
         return ([.. mono], reader.WaveFormat.SampleRate);
     }
 
+    /// <summary>
+    /// The stretch of a long recording holding the wanted speech, as "m:ss-m:ss" or "s-s". The
+    /// field is free text an agent filled in, so anything that is not a pair of clocks — "whole
+    /// tracks", a sentence of advice — means take the file from the top rather than fail.
+    /// </summary>
     private static float[] Window(float[] samples, string where)
     {
         var parts = where.Split('-');
 
-        if (parts.Length != 2)
+        if (parts.Length != 2 || !Parse(parts[0], out var start) || !Parse(parts[1], out var stop))
         {
             return samples;
         }
 
-        var from = (int)(Parse(parts[0]) * Rate);
-        var to = (int)(Parse(parts[1]) * Rate);
-
-        from = Math.Clamp(from, 0, samples.Length);
-        to = Math.Clamp(to, from, samples.Length);
+        var from = Math.Clamp((int)(start * Rate), 0, samples.Length);
+        var to = Math.Clamp((int)(stop * Rate), from, samples.Length);
 
         return samples[from..to];
 
-        static double Parse(string clock)
+        static bool Parse(string clock, out double seconds)
         {
+            seconds = 0;
             var bits = clock.Trim().Split(':');
-            return bits.Length == 2
-                ? double.Parse(bits[0]) * 60 + double.Parse(bits[1])
-                : double.Parse(bits[0]);
+
+            if (bits.Length == 1)
+            {
+                return double.TryParse(bits[0], out seconds);
+            }
+
+            if (bits.Length != 2 || !double.TryParse(bits[0], out var minutes) ||
+                !double.TryParse(bits[1], out var rest))
+            {
+                return false;
+            }
+
+            seconds = minutes * 60 + rest;
+            return true;
         }
     }
 

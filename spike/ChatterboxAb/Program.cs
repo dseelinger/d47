@@ -77,16 +77,15 @@ internal static class Program
             {
                 var voice = entry!["voice"]!.GetValue<string>();
                 var category = entry["category"]?.GetValue<string>() ?? Path.GetFileNameWithoutExtension(manifest);
-                var id = $"{category}/{Slug(voice)}";
 
-                if (known.Contains(id))
-                {
-                    continue;
-                }
-
+                // Agents write a path either from the corpus root or from raw/, and one wrote an
+                // absolute one. Take whichever exists rather than insisting on a convention that
+                // was only ever in the brief.
                 var files = entry["files"]!.AsArray()
-                    .Select(f => Path.Combine(corpus, "raw", f!.GetValue<string>().Replace('/', Path.DirectorySeparatorChar)))
-                    .Where(File.Exists)
+                    .Select(f => f!.GetValue<string>().Replace('/', Path.DirectorySeparatorChar))
+                    .Select(f => new[] { Path.Combine(corpus, "raw", f), Path.Combine(corpus, f), f }
+                        .FirstOrDefault(File.Exists))
+                    .OfType<string>()
                     .ToList();
 
                 if (files.Count == 0)
@@ -95,10 +94,54 @@ internal static class Program
                     continue;
                 }
 
+                // Keyed by the files' own prefix, not the voice's name, so a voice first seen by
+                // scanning the folder (below) keeps its id and its verdict when its manifest lands.
+                var id = $"{category}/{Prefix(files[0])}";
+
+                if (known.Contains(id))
+                {
+                    // Already cut, from the folder scan of an earlier run. The manifest is still
+                    // worth reading for what the scan could not know — the voice's real name, its
+                    // licence and where it came from — and none of that changes the audio or the
+                    // verdict already recorded against this id.
+                    var already = candidates.FirstOrDefault(c => c!["id"]!.GetValue<string>() == id);
+
+                    if (already is not null)
+                    {
+                        already["voice"] = voice;
+                        already["licence"] = entry["licence"]?.GetValue<string>() ?? "unknown";
+                        already["sources"] = new JsonArray(Sources(entry).Select(s => (JsonNode)s).ToArray());
+                    }
+
+                    continue;
+                }
+
                 Add(candidates, id, voice, category, files, entry["where"]?.GetValue<string>(),
-                    entry["licence"]?.GetValue<string>() ?? "unknown",
-                    entry["sources"]?.AsArray().Select(s => s!.GetValue<string>()).ToArray() ?? [],
-                    corpus);
+                    entry["licence"]?.GetValue<string>() ?? "unknown", Sources(entry), corpus);
+                known.Add(id);
+            }
+        }
+
+        // Voices whose manifest has not landed yet, from the files alone: the agents name them
+        // <voice>-<n>.<ext>, so the prefix is the voice. The manifest, when it comes, keeps the id
+        // and only improves the label.
+        var raw = Path.Combine(corpus, "raw");
+
+        foreach (var folder in Directory.Exists(raw) ? Directory.GetDirectories(raw) : [])
+        {
+            var category = Path.GetFileName(folder);
+
+            foreach (var group in Directory.GetFiles(folder).GroupBy(Prefix).OrderBy(g => g.Key))
+            {
+                var id = $"{category}/{group.Key}";
+
+                if (known.Contains(id))
+                {
+                    continue;
+                }
+
+                var files = group.OrderBy(f => Number(f)).ToList();
+                Add(candidates, id, group.Key.Replace('-', ' '), category, files, null, "unverified, listening test only", [], corpus);
                 known.Add(id);
             }
         }
@@ -483,6 +526,35 @@ internal static class Program
 
     private static string Slug(string text) =>
         new string(text.ToLowerInvariant().Select(c => char.IsLetterOrDigit(c) ? c : '-').ToArray()).Trim('-');
+
+    /// <summary>
+    /// The URLs a manifest entry cites. Some agents wrote a bare string per source and one wrote an
+    /// object per file, so take the object's own url and fall back to its text.
+    /// </summary>
+    private static string[] Sources(JsonNode entry) =>
+        [.. (entry["sources"]?.AsArray() ?? []).Select(s => s switch
+        {
+            JsonValue value => value.ToString(),
+            JsonObject o => o["url"]?.ToString() ?? o["item"]?.ToString() ?? o.ToJsonString(),
+            _ => s?.ToJsonString() ?? string.Empty,
+        })];
+
+    /// <summary>"vader-3.mp3" -> "vader"; a file with no number keeps its whole stem.</summary>
+    private static string Prefix(string file)
+    {
+        var stem = Path.GetFileNameWithoutExtension(file);
+        var dash = stem.LastIndexOf('-');
+
+        return dash > 0 && int.TryParse(stem[(dash + 1)..], out _) ? stem[..dash] : stem;
+    }
+
+    private static int Number(string file)
+    {
+        var stem = Path.GetFileNameWithoutExtension(file);
+        var dash = stem.LastIndexOf('-');
+
+        return dash > 0 && int.TryParse(stem[(dash + 1)..], out var n) ? n : 0;
+    }
 
     private static JsonNode? Load(string path) =>
         File.Exists(path) ? JsonNode.Parse(File.ReadAllText(path)) : null;
