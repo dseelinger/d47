@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Microsoft.ML.OnnxRuntime;
@@ -71,7 +72,12 @@ internal sealed record Voice(
 }
 
 /// <summary>One decoded piece of a streamed line, and what it cost.</summary>
-internal sealed record Chunk(int Tokens, double LanguageMs, double DecodeMs, int Samples)
+/// <param name="ReadyMs">
+/// Milliseconds from the start of the line to the moment this piece's audio actually existed,
+/// on the clock rather than from a sum. With the decoder on a thread of its own it is the only
+/// honest answer: the stages overlap, so no addition of their durations describes it.
+/// </param>
+internal sealed record Chunk(int Tokens, double LanguageMs, double DecodeMs, int Samples, double ReadyMs)
 {
     public double AudioMs => Samples * 1000.0 / Pipeline.SampleRate;
 }
@@ -79,7 +85,7 @@ internal sealed record Chunk(int Tokens, double LanguageMs, double DecodeMs, int
 /// <summary>Where a streamed line's time went, and whether playback would have kept up.</summary>
 internal sealed record StreamTiming(IReadOnlyList<Chunk> Chunks, double TotalMs)
 {
-    public double FirstSoundMs => Chunks.Count == 0 ? 0 : Chunks[0].LanguageMs + Chunks[0].DecodeMs;
+    public double FirstSoundMs => Chunks.Count == 0 ? 0 : Chunks[0].ReadyMs;
 
     public int Samples => Chunks.Sum(c => c.Samples);
 
@@ -92,8 +98,43 @@ internal sealed record StreamTiming(IReadOnlyList<Chunk> Chunks, double TotalMs)
     /// </summary>
     public double StallMs => Stall(pipelined: false);
 
-    /// <summary>The same with the decoder on a thread of its own, running behind the language model.</summary>
+    /// <summary>
+    /// The same with the decoder on a thread of its own, running behind the language model — as
+    /// arithmetic over stage times that were measured one after the other. It is a projection, and
+    /// it assumes the two stages cost the same when they run at once as they did when they took
+    /// turns. <see cref="MeasuredStallMs"/> is what actually happened; compare the two before
+    /// believing this one.
+    /// </summary>
     public double PipelinedStallMs => Stall(pipelined: true);
+
+    /// <summary>
+    /// The wait a listener would actually have had, from the clock: each piece is due when the one
+    /// before it stops playing and available at its own <see cref="Chunk.ReadyMs"/>. True of
+    /// whichever arrangement produced the run, and the only number that survives the stages
+    /// overlapping.
+    /// </summary>
+    public double MeasuredStallMs
+    {
+        get
+        {
+            var playing = 0.0;
+            var stall = 0.0;
+
+            foreach (var chunk in Chunks)
+            {
+                var start = Math.Max(chunk.ReadyMs, playing);
+
+                if (playing > 0)
+                {
+                    stall += start - playing;
+                }
+
+                playing = start + chunk.AudioMs;
+            }
+
+            return stall;
+        }
+    }
 
     private double Stall(bool pipelined)
     {
@@ -465,7 +506,8 @@ internal sealed class Pipeline : IDisposable
         float repetitionPenalty,
         int chunkTokens,
         int overlap,
-        int crossfade)
+        int crossfade,
+        bool pipelined = false)
     {
         var total = Stopwatch.StartNew();
         var generated = new List<long>();
@@ -474,6 +516,16 @@ internal sealed class Pipeline : IDisposable
         var chunks = new List<Chunk>();
         var decodedTo = 0;
         var language = Stopwatch.StartNew();
+
+        // One consumer, so the pieces are decoded and joined in the order they were cut. The
+        // language model keeps generating while it works, which is the arrangement the projection
+        // in StreamTiming only assumed.
+        var queue = pipelined ? new BlockingCollection<Piece>(new ConcurrentQueue<Piece>()) : null;
+        var worker = queue is null
+            ? null
+            : Task.Factory.StartNew(
+                () => { foreach (var piece in queue.GetConsumingEnumerable()) { Consume(piece); } },
+                TaskCreationOptions.LongRunning);
 
         foreach (var token in Generate(textIds, voice.Conditioning, maxTokens, repetitionPenalty))
         {
@@ -508,6 +560,16 @@ internal sealed class Pipeline : IDisposable
             Flush(last: true);
         }
 
+        if (queue is not null)
+        {
+            queue.CompleteAdding();
+
+            // GetAwaiter().GetResult() rather than Wait(): a decoder that threw should surface its
+            // own exception, not an AggregateException wrapping it.
+            worker!.GetAwaiter().GetResult();
+            queue.Dispose();
+        }
+
         total.Stop();
 
         return ([.. audio], [.. generated], new StreamTiming(chunks, total.Elapsed.TotalMilliseconds));
@@ -522,9 +584,30 @@ internal sealed class Pipeline : IDisposable
             var languageMs = language.Elapsed.TotalMilliseconds;
             var context = Math.Min(overlap, decodedTo);
             var fresh = spoken.Count - decodedTo;
+            var work = new Piece(
+                [.. CollectionsMarshal.AsSpan(spoken)[(decodedTo - context)..]], context, fresh, last, languageMs);
+
+            decodedTo = spoken.Count;
+
+            if (queue is not null)
+            {
+                // The language model carries straight on, so its clock restarts here rather than
+                // after a decode it no longer waits for.
+                language.Restart();
+                queue.Add(work);
+                return;
+            }
+
+            Consume(work);
+            language.Restart();
+        }
+
+        void Consume(Piece work)
+        {
+            var (tokens, context, fresh, last, languageMs) = work;
 
             var decode = Stopwatch.StartNew();
-            var piece = Decode(voice, CollectionsMarshal.AsSpan(spoken)[(decodedTo - context)..], last);
+            var piece = Decode(voice, tokens, last);
             decode.Stop();
 
             // How much of this piece is the context re-said, measured from the end rather than
@@ -545,12 +628,13 @@ internal sealed class Pipeline : IDisposable
 
             Append(audio, piece, skip, crossfade);
 
-            chunks.Add(new Chunk(fresh, languageMs, decode.Elapsed.TotalMilliseconds, keep));
-
-            decodedTo = spoken.Count;
-            language.Restart();
+            chunks.Add(new Chunk(
+                fresh, languageMs, decode.Elapsed.TotalMilliseconds, keep, total.Elapsed.TotalMilliseconds));
         }
     }
+
+    /// <summary>A cut piece on its way to the decoder, with what the language model spent cutting it.</summary>
+    private sealed record Piece(long[] Tokens, int Context, int Fresh, bool Last, double LanguageMs);
 
     /// <summary>
     /// Joins a piece onto the audio so far. Its first <paramref name="skip"/> samples re-say what

@@ -34,6 +34,7 @@ internal static class Program
     private static int _overlap = 5;
     private static int _crossfade = 240;
     private static int _runs = 1;
+    private static bool _pipeline;
     private static HashSet<string> _onCpu = [];
     private static readonly Dictionary<string, string> _ep = [];
 
@@ -72,6 +73,7 @@ internal static class Program
                 case "--overlap": _overlap = int.Parse(args[++i]); break;
                 case "--crossfade": _crossfade = int.Parse(args[++i]); break;
                 case "--runs": _runs = int.Parse(args[++i]); break;
+                case "--pipeline": _pipeline = true; break;
                 case "--ep":
                 {
                     var pair = args[++i].Split('=', 2);
@@ -136,6 +138,7 @@ internal static class Program
             --chunk n              stream: tokens per piece (25 = one second)   --overlap k   tokens of context
             --crossfade n          stream: samples blended at each seam (240 = 10 ms)
             --runs n               stream: measured passes after the warm one; medians and spread
+            --pipeline             stream: decode on a thread of its own, behind the language model
             """);
 
         return 0;
@@ -467,7 +470,7 @@ internal static class Program
 
         // One warm pass, as bench does: the first inference pays for arena allocation, which is
         // not the cost of speaking a line.
-        pipeline.Stream(ids, voice, _maxTokens, _penalty, _chunk, _overlap, _crossfade);
+        pipeline.Stream(ids, voice, _maxTokens, _penalty, _chunk, _overlap, _crossfade, _pipeline);
 
         // --runs measures the same configuration repeatedly, because one sample of a stage this
         // noisy has already produced a clean effect that did not exist. The last pass is the one
@@ -480,7 +483,7 @@ internal static class Program
         for (var run = 0; run < Math.Max(1, _runs); run++)
         {
             (audio, tokens, timing) =
-                pipeline.Stream(ids, voice, _maxTokens, _penalty, _chunk, _overlap, _crossfade);
+                pipeline.Stream(ids, voice, _maxTokens, _penalty, _chunk, _overlap, _crossfade, _pipeline);
             all.Add(timing);
         }
 
@@ -493,25 +496,29 @@ internal static class Program
             $"tokens, {_overlap} of context, {_crossfade} samples of crossfade");
         Console.WriteLine($"  encode {voice.EncodeMs,6:F0} ms, once per voice and not counted below");
 
-        var ready = 0.0;
-
         if (all.Count == 1)
         {
             foreach (var (chunk, i) in timing.Chunks.Select((c, i) => (c, i)))
             {
-                ready += chunk.LanguageMs + chunk.DecodeMs;
-
+                // "ready at" is the clock, not a running total of the two stages: with the decoder
+                // on its own thread the stages overlap and no sum of them describes the moment.
                 Console.WriteLine(
                     $"  piece {i + 1,2}: {chunk.Tokens,3} tokens   language {chunk.LanguageMs,5:F0} ms   " +
-                    $"decode {chunk.DecodeMs,5:F0} ms   audio {chunk.AudioMs,5:F0} ms   ready at {ready,5:F0} ms");
+                    $"decode {chunk.DecodeMs,5:F0} ms   audio {chunk.AudioMs,5:F0} ms   ready at {chunk.ReadyMs,5:F0} ms");
             }
         }
 
         Console.WriteLine(
             $"  first sound {Median(t => t.FirstSoundMs):F0} ms   total {Median(t => t.TotalMs):F0} ms   " +
             $"realtime x{timing.Seconds * 1000 / Median(t => t.TotalMs):F2}   " +
-            $"stalls {Median(t => t.StallMs):F0} ms on one thread, {Median(t => t.PipelinedStallMs):F0} ms with " +
-            "the decoder on its own   -> " + args[2]);
+            $"stalls {Median(t => t.MeasuredStallMs):F0} ms measured" +
+            (_pipeline ? ", decoder on its own thread" : " on one thread") + "   -> " + args[2]);
+
+        // The projection beside the measurement, because the two disagreeing is the finding: it
+        // assumes the stages cost the same overlapped as they did taking turns.
+        Console.WriteLine(
+            $"  projected from the stage times: {Median(t => t.StallMs):F0} ms on one thread, " +
+            $"{Median(t => t.PipelinedStallMs):F0} ms with the decoder on its own");
 
         if (all.Count > 1)
         {
@@ -528,9 +535,11 @@ internal static class Program
             $"ROW\t{_variant}\t{_dtype}\t{Path.GetFileName(args[1])}\tthreads={_threads}\t" +
             $"enc={_encoderThreads}\tlm={_lmThreads}\tdec={_decoderThreads}\tspin={(_spin is null ? "default" : _spin.Value ? "on" : "off")}\t" +
             $"chunk={_chunk}\toverlap={_overlap}\truns={all.Count}\t" +
+            $"pipeline={(_pipeline ? "on" : "off")}\t" +
             $"first={Median(t => t.FirstSoundMs):F0}\ttotal={Median(t => t.TotalMs):F0}\t" +
             $"realtime={timing.Seconds * 1000 / Median(t => t.TotalMs):F2}\t" +
-            $"stall={Median(t => t.StallMs):F0}\tpipelined={Median(t => t.PipelinedStallMs):F0}\t" +
+            $"stall={Median(t => t.MeasuredStallMs):F0}\t" +
+            $"proj1={Median(t => t.StallMs):F0}\tproj2={Median(t => t.PipelinedStallMs):F0}\t" +
             $"audio={timing.Seconds:F2}\tspread={Spread(t => t.TotalMs):P0}");
 
         return 0;
