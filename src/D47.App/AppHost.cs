@@ -2769,6 +2769,18 @@ public sealed class AppHost : IDisposable
             {
                 Enabled = () => settings.Speech.SpeakIncomingMessages,
                 IncludeNpcs = () => settings.Speech.SpeakNpcMessages,
+
+                // squadleaders follows the Squadron row (#299) — a Commander does not know
+                // Elite writes those as two channels, so there is one switch, not two.
+                ChannelEnabled = channel => channel switch
+                {
+                    "starsystem" => settings.Speech.SpeakSystemChat,
+                    "local" => settings.Speech.SpeakLocalChat,
+                    "wing" => settings.Speech.SpeakWingChat,
+                    "squadron" or "squadleaders" => settings.Speech.SpeakSquadronChat,
+                    "player" => settings.Speech.SpeakDirectMessages,
+                    _ => true,
+                },
             });
 
         // Elite echoes what you send back to you on the channel it went out on. Without this,

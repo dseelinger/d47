@@ -695,6 +695,22 @@ when you leave.
 approach produces a steady stream of NPC traffic, and wanting to hear your wing is not the same
 as wanting all of that.
 
+**Five more rows, one per player channel, appear once Speak incoming messages is on** — so system
+chat can go quiet in a Community Goal system's wall of strangers while your wing and squadron stay
+spoken, which is exactly the case that could not be told apart with one switch for all of it:
+
+| Row | Journal channel(s) it covers |
+|---|---|
+| System chat | `starsystem` |
+| Local | `local` |
+| Wing | `wing` |
+| Squadron | `squadron` and `squadleaders` — one row, because you cannot tell those apart by ear |
+| Direct messages | `player` |
+
+All five are on by default, matching today's behaviour for anyone who never opens them. A message
+on a switched-off channel is dropped before it is ever composed or sent to the synthesiser — not
+spoken and then hushed.
+
 In-game messages are never treated as instructions. The text goes to the synthesiser and to your
 screen; it does not reach the model as something to act on.
 

@@ -62,6 +62,19 @@ public static class SpeechCapability
     public const string SpentKey = "speech.spent";
     public const string SpeakNpcKey = "speech.speakNpcMessages";
 
+    /// <summary>
+    /// The five per-channel rows (#299), each named for the row rather than for the raw
+    /// <c>Channel</c> value it gates — <see cref="SpeakSquadronKey"/> covers both
+    /// <c>squadron</c> and <c>squadleaders</c>, which is the whole reason they are keys and not
+    /// the channel strings themselves.
+    /// </summary>
+    public const string SpeakSystemChatKey = "speech.speakSystemChat";
+
+    public const string SpeakLocalChatKey = "speech.speakLocalChat";
+    public const string SpeakWingChatKey = "speech.speakWingChat";
+    public const string SpeakSquadronKey = "speech.speakSquadronChat";
+    public const string SpeakDirectMessagesKey = "speech.speakDirectMessages";
+
     /// <summary>The secret row key for a voice provider's API key. One row per provider needing one.</summary>
     public static string KeyRowFor(TtsProviderInfo provider) => $"speech.{provider.Id}.apiKey";
 
@@ -831,6 +844,106 @@ public static class SpeechCapability
                     Write = (s, v) => s with
                     {
                         Speech = s.Speech with { SpeakNpcMessages = v is not "false" and not null },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = SpeakSystemChatKey,
+                Advanced = true,
+                Label = "System chat",
+                Help = "Speak messages from strangers in the system you're in.",
+                Kind = SettingKind.Toggle,
+                DefaultDisplay = "on",
+                AppliesWhen = s => s.Speech.Provider != NoneId && s.Speech.SpeakIncomingMessages,
+                Group = "Other voices",
+                DocsAnchor = "incoming-messages",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Speech.SpeakSystemChat ? "true" : "false",
+                    Write = (s, v) => s with
+                    {
+                        Speech = s.Speech with { SpeakSystemChat = v is not "false" and not null },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = SpeakLocalChatKey,
+                Advanced = true,
+                Label = "Local chat",
+                Help = "Speak messages sent to everyone nearby.",
+                Kind = SettingKind.Toggle,
+                DefaultDisplay = "on",
+                AppliesWhen = s => s.Speech.Provider != NoneId && s.Speech.SpeakIncomingMessages,
+                Group = "Other voices",
+                DocsAnchor = "incoming-messages",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Speech.SpeakLocalChat ? "true" : "false",
+                    Write = (s, v) => s with
+                    {
+                        Speech = s.Speech with { SpeakLocalChat = v is not "false" and not null },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = SpeakWingChatKey,
+                Advanced = true,
+                Label = "Wing",
+                Help = "Speak messages from your wing.",
+                Kind = SettingKind.Toggle,
+                DefaultDisplay = "on",
+                AppliesWhen = s => s.Speech.Provider != NoneId && s.Speech.SpeakIncomingMessages,
+                Group = "Other voices",
+                DocsAnchor = "incoming-messages",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Speech.SpeakWingChat ? "true" : "false",
+                    Write = (s, v) => s with
+                    {
+                        Speech = s.Speech with { SpeakWingChat = v is not "false" and not null },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = SpeakSquadronKey,
+                Advanced = true,
+                Label = "Squadron",
+                Help = "Speak messages from your squadron, including squadron leadership.",
+                Kind = SettingKind.Toggle,
+                DefaultDisplay = "on",
+                AppliesWhen = s => s.Speech.Provider != NoneId && s.Speech.SpeakIncomingMessages,
+                Group = "Other voices",
+                DocsAnchor = "incoming-messages",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Speech.SpeakSquadronChat ? "true" : "false",
+                    Write = (s, v) => s with
+                    {
+                        Speech = s.Speech with { SpeakSquadronChat = v is not "false" and not null },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = SpeakDirectMessagesKey,
+                Advanced = true,
+                Label = "Direct messages",
+                Help = "Speak messages sent to you directly.",
+                Kind = SettingKind.Toggle,
+                DefaultDisplay = "on",
+                AppliesWhen = s => s.Speech.Provider != NoneId && s.Speech.SpeakIncomingMessages,
+                Group = "Other voices",
+                DocsAnchor = "incoming-messages",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Speech.SpeakDirectMessages ? "true" : "false",
+                    Write = (s, v) => s with
+                    {
+                        Speech = s.Speech with { SpeakDirectMessages = v is not "false" and not null },
                     },
                 },
             },

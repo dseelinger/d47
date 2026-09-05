@@ -34,6 +34,17 @@ public sealed partial class IncomingMessages : ICallout
     public Func<bool> IncludeNpcs { get; set; } = () => false;
 
     /// <summary>
+    /// Whether one <em>player</em> channel is spoken, asked with the raw <c>Channel</c> value
+    /// (<a href="https://github.com/dseelinger/d47/issues/299">#299</a>). Never asked for
+    /// <c>npc</c>, which keeps its own switch above.
+    /// <para>
+    /// True for everything by default, so a Commander who never opens the five new rows hears
+    /// exactly what they heard before this existed.
+    /// </para>
+    /// </summary>
+    public Func<string, bool> ChannelEnabled { get; set; } = _ => true;
+
+    /// <summary>
     /// The Commander's own name, so their own messages are not read back to them. Elite echoes
     /// what you send on the same channel it went out on.
     /// </summary>
@@ -157,6 +168,13 @@ public sealed partial class IncomingMessages : ICallout
         var isPlayer = IsAPlayerChannel(channel);
 
         if (!isPlayer && !IncludeNpcs())
+        {
+            return null;
+        }
+
+        // Filtered here, before an announcement exists, so a channel switched off is never
+        // composed, voiced or billed for — not filtered after the fact at the speaking path.
+        if (isPlayer && !ChannelEnabled(channel))
         {
             return null;
         }

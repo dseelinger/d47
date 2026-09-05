@@ -146,7 +146,11 @@ public static class VoiceGroups
         Covers = "your friends, your wing and your squadron",
         OverTheAir = true,
         OtherPeoplesWords = true,
-        Channels = ["friend", "wing", "squadron"],
+
+        // squadleaders is squadron leadership on its own channel (#299) — a Commander does not
+        // know Elite writes those as two channels, so it is grouped rather than left to fall
+        // through to Npcs, which is what an unlisted channel means to IsAPerson.
+        Channels = ["friend", "wing", "squadron", "squadleaders"],
     };
 
     public static VoiceGroupInfo DirectMessages { get; } = new()

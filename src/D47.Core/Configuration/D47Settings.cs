@@ -1280,6 +1280,29 @@ public sealed record SpeechSettings
     public bool SpeakNpcMessages { get; init; }
 
     /// <summary>
+    /// Whether system chat (<c>starsystem</c>) is spoken
+    /// (<a href="https://github.com/dseelinger/d47/issues/299">#299</a>). On by default — this is
+    /// today's behaviour, before the other four rows below existed to turn it off on its own.
+    /// </summary>
+    public bool SpeakSystemChat { get; init; } = true;
+
+    /// <summary>Whether local chat (<c>local</c>) is spoken (#299). On by default.</summary>
+    public bool SpeakLocalChat { get; init; } = true;
+
+    /// <summary>Whether wing chat (<c>wing</c>) is spoken (#299). On by default.</summary>
+    public bool SpeakWingChat { get; init; } = true;
+
+    /// <summary>
+    /// Whether squadron chat is spoken (#299), covering both <c>squadron</c> and
+    /// <c>squadleaders</c> — a Commander does not know Elite writes those as two channels, so
+    /// there is one switch rather than two. On by default.
+    /// </summary>
+    public bool SpeakSquadronChat { get; init; } = true;
+
+    /// <summary>Whether a direct message (<c>player</c>) is spoken (#299). On by default.</summary>
+    public bool SpeakDirectMessages { get; init; } = true;
+
+    /// <summary>
     /// The output device id, or null for the system default. An id rather than a name because
     /// a friendly name is not stable across driver updates.
     /// </summary>

@@ -35,6 +35,58 @@ public class IncomingMessageTests
     };
 
     /// <summary>
+    /// With system chat off and everything else on, a <c>starsystem</c> message produces no
+    /// announcement and a <c>wing</c> message still does (#299's acceptance test, run through
+    /// the same single-event decision the replay harness exercises everything else through).
+    /// </summary>
+    [Fact]
+    public void AChannelSwitchedOffIsSilentWhileOthersStillSpeak()
+    {
+        var reader = Reader();
+        reader.ChannelEnabled = channel => channel != "starsystem";
+
+        Assert.Null(reader.Read(Message("$cmdr_decorate:#name=Vex;", "hello", "starsystem")));
+
+        var wing = reader.Read(Message("$cmdr_decorate:#name=Vex;", "hello", "wing"));
+        Assert.NotNull(wing);
+    }
+
+    /// <summary>
+    /// <c>squadleaders</c> follows the Squadron row rather than having a switch of its own — the
+    /// same merge <c>AppHost</c> wires, exercised here as the single boolean a Commander actually
+    /// controls.
+    /// </summary>
+    [Fact]
+    public void SquadLeadersFollowsTheSquadronRow()
+    {
+        var squadronRowOn = false;
+        var reader = Reader();
+        reader.ChannelEnabled = channel => channel switch
+        {
+            "squadron" or "squadleaders" => squadronRowOn,
+            _ => true,
+        };
+
+        Assert.Null(reader.Read(Message("$cmdr_decorate:#name=Vex;", "hello", "squadron")));
+        Assert.Null(reader.Read(Message("$cmdr_decorate:#name=Vex;", "hello", "squadleaders")));
+
+        squadronRowOn = true;
+        Assert.NotNull(reader.Read(Message("$cmdr_decorate:#name=Vex;", "hello", "squadron")));
+        Assert.NotNull(reader.Read(Message("$cmdr_decorate:#name=Vex;", "hello", "squadleaders")));
+    }
+
+    /// <summary>NPC chatter is never asked about through <see cref="IncomingMessages.ChannelEnabled"/>.</summary>
+    [Fact]
+    public void ChannelFilteringNeverGatesNpcTraffic()
+    {
+        var reader = Reader(npcs: true);
+        reader.ChannelEnabled = _ => false;
+
+        var read = reader.Read(Message("$ShipName_Police_Federation;", "Scanning.", "npc", localised: "Scanning."));
+        Assert.NotNull(read);
+    }
+
+    /// <summary>
     /// A Frontier-canned line from the Commander's own carrier rides the rewording brief
     /// (#248): the <c>$…;</c> key is what proves no player wrote it, so it is the one kind of
     /// received text allowed near a model — and the two fields that mark somebody else's words

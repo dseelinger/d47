@@ -79,7 +79,8 @@ public class EveryVoiceCanComeFromSomewhereDifferentTests
     [Fact]
     public void EveryChannelEliteWritesIsAccountedFor()
     {
-        string[] elites = ["npc", "player", "wing", "local", "friend", "squadron", "starsystem"];
+        string[] elites =
+            ["npc", "player", "wing", "local", "friend", "squadron", "squadleaders", "starsystem"];
 
         var covered = VoiceGroups.All.SelectMany(slot => slot.Channels).ToList();
 
