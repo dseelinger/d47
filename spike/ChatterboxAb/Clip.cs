@@ -222,7 +222,7 @@ internal static class Clip
         return samples;
     }
 
-    private static float[] Resample(float[] samples, int from, int to)
+    public static float[] Resample(float[] samples, int from, int to)
     {
         if (from == to)
         {

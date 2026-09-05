@@ -33,6 +33,7 @@ internal static class Program
     private static int _chunk = 25;
     private static int _overlap = 5;
     private static int _crossfade = 240;
+    private static int _runs = 1;
     private static HashSet<string> _onCpu = [];
     private static readonly Dictionary<string, string> _ep = [];
 
@@ -70,6 +71,7 @@ internal static class Program
                 case "--chunk": _chunk = int.Parse(args[++i]); break;
                 case "--overlap": _overlap = int.Parse(args[++i]); break;
                 case "--crossfade": _crossfade = int.Parse(args[++i]); break;
+                case "--runs": _runs = int.Parse(args[++i]); break;
                 case "--ep":
                 {
                     var pair = args[++i].Split('=', 2);
@@ -133,6 +135,7 @@ internal static class Program
             --profile <prefix>     ONNX Runtime's per-op profile, one JSON per graph
             --chunk n              stream: tokens per piece (25 = one second)   --overlap k   tokens of context
             --crossfade n          stream: samples blended at each seam (240 = 10 ms)
+            --runs n               stream: measured passes after the warm one; medians and spread
             """);
 
         return 0;
@@ -466,8 +469,20 @@ internal static class Program
         // not the cost of speaking a line.
         pipeline.Stream(ids, voice, _maxTokens, _penalty, _chunk, _overlap, _crossfade);
 
-        var (audio, tokens, timing) =
-            pipeline.Stream(ids, voice, _maxTokens, _penalty, _chunk, _overlap, _crossfade);
+        // --runs measures the same configuration repeatedly, because one sample of a stage this
+        // noisy has already produced a clean effect that did not exist. The last pass is the one
+        // written out, so the WAV is always a file the reported numbers actually describe.
+        var all = new List<StreamTiming>();
+        float[] audio = [];
+        long[] tokens = [];
+        StreamTiming timing = null!;
+
+        for (var run = 0; run < Math.Max(1, _runs); run++)
+        {
+            (audio, tokens, timing) =
+                pipeline.Stream(ids, voice, _maxTokens, _penalty, _chunk, _overlap, _crossfade);
+            all.Add(timing);
+        }
 
         Audio.WriteWav(args[2], audio, Pipeline.SampleRate);
 
@@ -480,22 +495,54 @@ internal static class Program
 
         var ready = 0.0;
 
-        foreach (var (chunk, i) in timing.Chunks.Select((c, i) => (c, i)))
+        if (all.Count == 1)
         {
-            ready += chunk.LanguageMs + chunk.DecodeMs;
+            foreach (var (chunk, i) in timing.Chunks.Select((c, i) => (c, i)))
+            {
+                ready += chunk.LanguageMs + chunk.DecodeMs;
 
-            Console.WriteLine(
-                $"  piece {i + 1,2}: {chunk.Tokens,3} tokens   language {chunk.LanguageMs,5:F0} ms   " +
-                $"decode {chunk.DecodeMs,5:F0} ms   audio {chunk.AudioMs,5:F0} ms   ready at {ready,5:F0} ms");
+                Console.WriteLine(
+                    $"  piece {i + 1,2}: {chunk.Tokens,3} tokens   language {chunk.LanguageMs,5:F0} ms   " +
+                    $"decode {chunk.DecodeMs,5:F0} ms   audio {chunk.AudioMs,5:F0} ms   ready at {ready,5:F0} ms");
+            }
         }
 
         Console.WriteLine(
-            $"  first sound {timing.FirstSoundMs:F0} ms   total {timing.TotalMs:F0} ms   " +
-            $"realtime x{timing.Seconds * 1000 / timing.TotalMs:F2}   " +
-            $"stalls {timing.StallMs:F0} ms on one thread, {timing.PipelinedStallMs:F0} ms with " +
+            $"  first sound {Median(t => t.FirstSoundMs):F0} ms   total {Median(t => t.TotalMs):F0} ms   " +
+            $"realtime x{timing.Seconds * 1000 / Median(t => t.TotalMs):F2}   " +
+            $"stalls {Median(t => t.StallMs):F0} ms on one thread, {Median(t => t.PipelinedStallMs):F0} ms with " +
             "the decoder on its own   -> " + args[2]);
 
+        if (all.Count > 1)
+        {
+            // The spread, not just the middle: a median that moved 5% between configurations means
+            // nothing if either configuration's own runs span 20%.
+            Console.WriteLine(
+                $"  over {all.Count} runs: first sound {all.Min(t => t.FirstSoundMs):F0}-{all.Max(t => t.FirstSoundMs):F0} ms " +
+                $"({Spread(t => t.FirstSoundMs):P0}), total {all.Min(t => t.TotalMs):F0}-{all.Max(t => t.TotalMs):F0} ms " +
+                $"({Spread(t => t.TotalMs):P0})");
+        }
+
+        // One line a sweep can grep, holding every knob and every number it moved.
+        Console.WriteLine(
+            $"ROW\t{_variant}\t{_dtype}\t{Path.GetFileName(args[1])}\tthreads={_threads}\t" +
+            $"enc={_encoderThreads}\tlm={_lmThreads}\tdec={_decoderThreads}\tspin={(_spin is null ? "default" : _spin.Value ? "on" : "off")}\t" +
+            $"chunk={_chunk}\toverlap={_overlap}\truns={all.Count}\t" +
+            $"first={Median(t => t.FirstSoundMs):F0}\ttotal={Median(t => t.TotalMs):F0}\t" +
+            $"realtime={timing.Seconds * 1000 / Median(t => t.TotalMs):F2}\t" +
+            $"stall={Median(t => t.StallMs):F0}\tpipelined={Median(t => t.PipelinedStallMs):F0}\t" +
+            $"audio={timing.Seconds:F2}\tspread={Spread(t => t.TotalMs):P0}");
+
         return 0;
+
+        double Median(Func<StreamTiming, double> of)
+        {
+            var sorted = all.Select(of).Order().ToArray();
+            return sorted[sorted.Length / 2];
+        }
+
+        double Spread(Func<StreamTiming, double> of) =>
+            Median(of) == 0 ? 0 : (all.Max(of) - all.Min(of)) / Median(of);
     }
 
     private static int ShowGpu()

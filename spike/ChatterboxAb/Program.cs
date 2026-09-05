@@ -20,6 +20,9 @@ internal static class Program
 {
     private static readonly JsonSerializerOptions Json = new() { WriteIndented = true };
 
+    /// <summary>What Whisper.net reads a float array as, whatever sample rate it is told.</summary>
+    private const int WhisperRate = 16000;
+
     private static int Main(string[] args)
     {
         if (args.Length < 2)
@@ -32,6 +35,7 @@ internal static class Program
                   viable  <corpus> <probe.exe> [variant]  one phrase per approved voice -> viability.json
                   synth   <corpus> <probe.exe> [lines]   approved voices x lines x {nano,turbo} -> trials
                   stretch <corpus> <probe.exe> <id> [s]  one voice re-cut past the 5-7s cap -> stretch/
+                  hear    <wav|glob> ...                 what Whisper reads back out of each file
                 """);
             return 2;
         }
@@ -45,8 +49,58 @@ internal static class Program
             "viable" => Viable(corpus, args[2], args.Length > 3 ? args[3] : "nano"),
             "synth" => Synth(corpus, args[2], args.Length > 3 ? args[3] : Path.Combine(AppContext.BaseDirectory, "web", "lines.json")),
             "stretch" => Stretch(corpus, args[2], args[3], args.Length > 4 ? double.Parse(args[4]) : 12),
+            "hear" => Hear(args[1..]),
             _ => 2,
         };
+    }
+
+    /// <summary>
+    /// What is actually in a WAV, read back by the Whisper model d47 ships. Every claim the probe's
+    /// measurements make about what the model said goes through here, because a WAV of the right
+    /// length is not evidence — a clone can produce silence, the wrong words or garbage and still
+    /// weigh what it should.
+    /// </summary>
+    private static int Hear(string[] files)
+    {
+        var modelPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Programs", "d47", "data", "models", "ggml-small.en.bin");
+
+        using var transcriber = new WhisperTranscriber(NullLogger<WhisperTranscriber>.Instance);
+
+        if (!transcriber.Load(modelPath, "small.en", useGpu: false))
+        {
+            Console.Error.WriteLine(transcriber.Unavailable);
+            return 1;
+        }
+
+        foreach (var file in files.SelectMany(Expand).Order())
+        {
+            if (!File.Exists(file))
+            {
+                Console.WriteLine($"{Path.GetFileName(file),-46} MISSING");
+                continue;
+            }
+
+            var (samples, rate) = Clip.Decode(file);
+
+            // Whisper.net reads the float array as 16 kHz and ignores the rate it is handed, so a
+            // 24 kHz clone comes through 1.5x fast and a 48 kHz recording three times fast. It still
+            // finds words in the first case, which is how `viable` got away with it; it finds none
+            // in the second. Resample here rather than trust either.
+            var heard = transcriber
+                .TranscribeAsync(new Utterance(Clip.Resample(samples, rate, WhisperRate), WhisperRate), [])
+                .GetAwaiter().GetResult();
+
+            Console.WriteLine($"{Path.GetFileName(file),-46} {samples.Length / (double)rate,5:F2}s  {(heard.IsEmpty ? "(nothing)" : heard.Text.Trim())}");
+        }
+
+        return 0;
+
+        static IEnumerable<string> Expand(string pattern) =>
+            pattern.Contains('*') || pattern.Contains('?')
+                ? Directory.GetFiles(Path.GetDirectoryName(Path.GetFullPath(pattern))!, Path.GetFileName(pattern))
+                : [pattern];
     }
 
     // ------------------------------------------------------------------ prepare
