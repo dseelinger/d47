@@ -135,6 +135,16 @@ public sealed class RouteMarketPage : UserControl
 
     private Control SearchCard()
     {
+        // _commodity, _tonnes, _selling and _largePad are readonly fields, built once and reused
+        // across every Build() — Labelled() wraps the two boxes in a fresh StackPanel each call,
+        // and the checkboxes join a fresh form StackPanel directly, so a second call finds each
+        // one still parented to the wrapper Build() just discarded. Detach before rewrapping.
+        Detach(_commodity);
+        Detach(_tonnes);
+        Detach(_selling);
+        Detach(_largePad);
+        Detach(_status);
+
         var find = new Button { Content = "Find it", Padding = new Thickness(12, 4), MinHeight = 30 };
         var cancel = new Button
         {
@@ -367,6 +377,15 @@ public sealed class RouteMarketPage : UserControl
         block.TextTrimming = TextTrimming.CharacterEllipsis;
 
         return block;
+    }
+
+    /// <summary>Removes a control from whatever panel currently holds it, if any.</summary>
+    private static void Detach(Control control)
+    {
+        if (control.Parent is Avalonia.Controls.Panel parent)
+        {
+            parent.Children.Remove(control);
+        }
     }
 
     private static Control Labelled(

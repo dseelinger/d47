@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Panel;
@@ -188,5 +189,39 @@ public class TheMarketPageTests
 
         Assert.Contains("Where to buy it", drawn);
         Assert.DoesNotContain("Price", drawn);
+    }
+
+    /// <summary>
+    /// #284: <c>Build()</c> clears and redraws the page after every successful Find, but the
+    /// commodity/tonnes boxes and the two checkboxes are <c>readonly</c> fields that only ever get
+    /// wrapped in fresh containers — so the second wrap finds them still parented to the first one
+    /// and Avalonia refuses. Pressing Find a second time is exactly what the button is for, so this
+    /// is the page's main road, not an edge.
+    /// </summary>
+    [AvaloniaFact]
+    public void FindingASecondTimeDoesNotCrashThePage()
+    {
+        var panel = Furnished(new CommodityBoard());
+
+        panel.Tab = PanelTab.Routing;
+        Dispatcher.UIThread.RunJobs();
+
+        var commodity = panel.GetVisualDescendants()
+            .OfType<TextBox>()
+            .Single(box => box.PlaceholderText == "which one");
+
+        // Find() is rebuilt fresh by every Build(), so it is re-queried each time — the readonly
+        // fields (_commodity among them) are the ones the fix has to keep working across rebuilds.
+        commodity.Text = "Tritium";
+        panel.GetVisualDescendants().OfType<Button>().Single(b => Equals(b.Content, "Find it"))
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        // Reaching here at all is the assertion: before the fix, the second Build() throws
+        // InvalidOperationException from inside Labelled() and takes the process down with it.
+        commodity.Text = "Tritium";
+        panel.GetVisualDescendants().OfType<Button>().Single(b => Equals(b.Content, "Find it"))
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
     }
 }
