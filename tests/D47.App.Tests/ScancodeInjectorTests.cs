@@ -1,0 +1,312 @@
+using D47.Core.Capabilities.Builtin;
+using D47.App.Input;
+using D47.Core.Input;
+using Microsoft.Extensions.Logging.Abstractions;
+using Xunit;
+
+namespace D47.App.Tests;
+
+/// <summary> The injector's three load-bearing rules driven in dry-run mode so the real composition path runs
+/// and nothing reaches the system. </summary>
+public class ScancodeInjectorTests
+{
+    private sealed class FakeElite : IEliteWindow
+    {
+        public bool IsRunning { get; set; } = true;
+
+        public bool IsForeground { get; set; } = true;
+
+        /// <summary>Nothing here raises anything.</summary>
+        public (int X, int Y, int Width, int Height)? Bounds => null;
+
+        public FocusResult Raise() =>
+            throw new InvalidOperationException("the injector must never raise the game itself");
+    }
+
+    // No status by default: the harness and the diagnostics card drive the injector with no Status.json to read.
+    private static ScancodeInjector Injector(FakeElite elite, Func<D47.Core.Journal.GameStatus>? status = null) =>
+        new(elite, NullLogger<ScancodeInjector>.Instance, status) { DryRun = true };
+
+    private static IReadOnlyList<InputStep> Tap() =>
+        InputSequence.Tap(new EliteBinding("LandingGearToggle", "Primary", "Keyboard", "Key_L"));
+
+    [Fact]
+    public async Task NothingIsSentWhenEliteIsNotTheWindowInFront()
+    {
+        var elite = new FakeElite { IsForeground = false };
+
+        var result = await Injector(elite).SendAsync(Tap(), TestContext.Current.CancellationToken);
+
+        Assert.Equal(InjectionOutcome.NotForeground, result.Outcome);
+        Assert.False(result.Sent);
+        Assert.Contains("in front", result.Reason, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task NothingIsSentWhenEliteIsNotRunning()
+    {
+        var elite = new FakeElite { IsRunning = false };
+
+        var result = await Injector(elite).SendAsync(Tap(), TestContext.Current.CancellationToken);
+
+        Assert.Equal(InjectionOutcome.GameNotFound, result.Outcome);
+    }
+
+    [Fact]
+    public async Task AnEmptySequenceIsReportedRatherThanSentAsNothing()
+    {
+        var result = await Injector(new FakeElite()).SendAsync([], TestContext.Current.CancellationToken);
+
+        Assert.Equal(InjectionOutcome.NothingToSend, result.Outcome);
+    }
+
+    [Fact]
+    public async Task AForegroundEliteGetsTheWholeSequence()
+    {
+        using var injector = Injector(new FakeElite());
+
+        var result = await injector.SendAsync(Tap(), TestContext.Current.CancellationToken);
+
+        Assert.True(result.Sent);
+        Assert.Equal(Tap(), injector.LastSequence);
+    }
+
+ /// <summary>Running is not the same as being in the game.</summary>
+    [Fact]
+    public async Task NothingIsSentAtTheMainMenu()
+    {
+        var menu = D47.Core.Journal.GameStatus.Unknown with
+        {
+            Flags = D47.Core.Journal.StatusFlags.None,
+            ReadAt = DateTimeOffset.Now,
+        };
+
+        var result = await Injector(new FakeElite(), () => menu)
+            .SendAsync(Tap(), TestContext.Current.CancellationToken);
+
+        Assert.Equal(InjectionOutcome.NotOnline, result.Outcome);
+        Assert.False(result.Sent);
+        Assert.Contains("not in the game", result.Reason, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// A status file from yesterday still says "in the ship", because IsKnown is one-way and nothing
+    /// ever unsets it.
+    /// </summary>
+    [Fact]
+    public async Task AStaleStatusFileWithTheGameGoneIsRefusedForBeingGone()
+    {
+        var yesterday = D47.Core.Journal.GameStatus.Unknown with
+        {
+            Flags = D47.Core.Journal.StatusFlags.InMainShip,
+            ReadAt = DateTimeOffset.Now - TimeSpan.FromHours(20),
+        };
+
+        var result = await Injector(new FakeElite { IsRunning = false }, () => yesterday)
+            .SendAsync(Tap(), TestContext.Current.CancellationToken);
+
+        Assert.Equal(InjectionOutcome.GameNotFound, result.Outcome);
+        Assert.False(result.Sent);
+    }
+
+ /// <summary>The Commander who docked and went to make a cup of tea.</summary>
+    [Fact]
+    public async Task ADockedCommanderAwayFromTheKeyboardStillGetsHisKeys()
+    {
+        var afk = D47.Core.Journal.GameStatus.Unknown with
+        {
+            Flags = D47.Core.Journal.StatusFlags.InMainShip | D47.Core.Journal.StatusFlags.Docked,
+            ReadAt = DateTimeOffset.Now - TimeSpan.FromMinutes(45),
+        };
+
+        var injector = Injector(new FakeElite(), () => afk);
+        var result = await injector.SendAsync(Tap(), TestContext.Current.CancellationToken);
+
+        Assert.True(result.Sent);
+        Assert.Equal(Tap(), injector.LastSequence);
+    }
+
+ /// <summary>Going online is what enables the game-dependent features.</summary>
+    [Fact]
+    public async Task GoingOnlineIsWhatTurnsTheKeysBackOn()
+    {
+        var aboard = D47.Core.Journal.GameStatus.Unknown with
+        {
+            Flags = D47.Core.Journal.StatusFlags.InMainShip,
+            ReadAt = DateTimeOffset.Now,
+        };
+
+        using var injector = Injector(new FakeElite(), () => aboard);
+
+        var result = await injector.SendAsync(Tap(), TestContext.Current.CancellationToken);
+
+        Assert.True(result.Sent);
+    }
+
+    [Fact]
+    public async Task LosingTheForegroundPartWayThroughStopsTheSequence()
+    {
+        // A hold can span a second, and the Commander alt-tabbing mid-hold must not carry on pressing keys
+        // into whatever is now in front.
+        var elite = new FakeElite();
+        using var injector = Injector(elite);
+
+        var steps = new List<InputStep>
+        {
+            new(InputStepKind.KeyDown, 0x4C),
+            InputStep.Wait(TimeSpan.FromMilliseconds(1)),
+            new(InputStepKind.KeyUp, 0x4C),
+        };
+
+        var sending = injector.SendAsync(steps, TestContext.Current.CancellationToken);
+        elite.IsForeground = false;
+
+        var result = await sending;
+
+        Assert.Equal(InjectionOutcome.NotForeground, result.Outcome);
+    }
+
+ /// <summary>And it lets go during the hold, not at the end of it.</summary>
+    [Fact]
+    public async Task ALongHoldLetsGoTheMomentEliteStopsBeingInFront()
+    {
+        var elite = new FakeElite();
+        using var injector = Injector(elite);
+
+        // The honk's shape, two seconds instead of 5.3 so the test is quick: a modifier down, the key under
+        // it, the charge, then the releases.
+        var hold = TimeSpan.FromSeconds(2);
+
+        var steps = new List<InputStep>
+        {
+            new(InputStepKind.KeyDown, 0xA2),
+            new(InputStepKind.KeyDown, 0x58),
+            InputStep.Wait(hold),
+            new(InputStepKind.KeyUp, 0x58),
+            new(InputStepKind.KeyUp, 0xA2),
+        };
+
+        var ran = System.Diagnostics.Stopwatch.StartNew();
+        var sending = injector.SendAsync(steps, TestContext.Current.CancellationToken);
+
+        await Task.Delay(TimeSpan.FromMilliseconds(100), TestContext.Current.CancellationToken);
+        elite.IsForeground = false;
+
+        var result = await sending;
+        ran.Stop();
+
+        Assert.Equal(InjectionOutcome.NotForeground, result.Outcome);
+
+        // The outcome on its own proved nothing before this fix: the step after the wait reported it too, a
+        // whole hold later.
+        Assert.True(ran.Elapsed < hold, $"the hold ran on for {ran.Elapsed} of {hold}");
+    }
+
+ /// <summary>Leaving the game mid-hold ends it on the same terms.</summary>
+    [Fact]
+    public async Task ALongHoldLetsGoWhenTheCommanderLeavesTheGame()
+    {
+        var aboard = D47.Core.Journal.GameStatus.Unknown with
+        {
+            Flags = D47.Core.Journal.StatusFlags.InMainShip,
+            ReadAt = DateTimeOffset.Now,
+        };
+
+        var live = aboard;
+
+        using var injector = Injector(new FakeElite(), () => live);
+
+        var hold = TimeSpan.FromSeconds(2);
+
+        var steps = new List<InputStep>
+        {
+            new(InputStepKind.KeyDown, 0x58),
+            InputStep.Wait(hold),
+            new(InputStepKind.KeyUp, 0x58),
+        };
+
+        var ran = System.Diagnostics.Stopwatch.StartNew();
+        var sending = injector.SendAsync(steps, TestContext.Current.CancellationToken);
+
+        await Task.Delay(TimeSpan.FromMilliseconds(100), TestContext.Current.CancellationToken);
+
+        live = aboard with { Flags = D47.Core.Journal.StatusFlags.None };
+
+        var result = await sending;
+        ran.Stop();
+
+        Assert.Equal(InjectionOutcome.NotOnline, result.Outcome);
+        Assert.True(ran.Elapsed < hold, $"the hold ran on for {ran.Elapsed} of {hold}");
+    }
+
+    /// <summary>
+ /// A hold nothing interrupts still lasts as long as it was asked to — the watch wakes about
+    /// a hundred times across the honk, and the scanner needs the whole 5.3 seconds.
+    /// </summary>
+    [Fact]
+    public async Task AnUninterruptedHoldStillLastsAsLongAsItWasAsked()
+    {
+        using var injector = Injector(new FakeElite());
+
+        var hold = TimeSpan.FromMilliseconds(600);
+
+        var ran = System.Diagnostics.Stopwatch.StartNew();
+
+        var result = await injector.SendAsync(
+            [new InputStep(InputStepKind.KeyDown, 0x58), InputStep.Wait(hold), new InputStep(InputStepKind.KeyUp, 0x58)],
+            TestContext.Current.CancellationToken);
+
+        ran.Stop();
+
+        Assert.True(result.Sent);
+        Assert.True(ran.Elapsed >= hold, $"the hold ended early, at {ran.Elapsed} of {hold}");
+    }
+
+    [Fact]
+    public async Task ReleaseAllRunsAfterEverySendWhetherOrNotItWorked()
+    {
+        // Unconditional means in a finally, so a send that failed part-way still lets go.
+        using var injector = Injector(new FakeElite());
+
+        await injector.SendAsync(Tap(), TestContext.Current.CancellationToken);
+
+        injector.ReleaseAll();
+        injector.ReleaseAll();
+    }
+
+    [Fact]
+    public void ReleaseAllIsSafeWithNothingHeld()
+    {
+        // Called from a finally, a focus-loss handler and a shutdown path, none of which coordinate with each
+        // other.
+        using var injector = Injector(new FakeElite());
+
+        injector.ReleaseAll();
+        injector.ReleaseAll();
+    }
+
+    [Fact]
+    public async Task ADryRunSendsNothingButStillComposesTheSequence()
+    {
+        using var injector = Injector(new FakeElite());
+
+        await injector.SendAsync(InputSequence.Tap(
+            new EliteBinding("PrimaryFire", "Primary", "Mouse", "Mouse_1")),
+            TestContext.Current.CancellationToken);
+
+        Assert.Contains(injector.LastSequence, step => step.Kind == InputStepKind.MouseDown);
+        Assert.Contains(injector.LastSequence, step => step.Kind == InputStepKind.MouseUp);
+    }
+
+    [Fact]
+    public async Task TextIsSentAsTextRatherThanAsKeystrokes()
+    {
+        using var injector = Injector(new FakeElite());
+
+        await injector.SendAsync([InputStep.Type("Shinrarta Dezhra")], TestContext.Current.CancellationToken);
+
+        var step = Assert.Single(injector.LastSequence);
+        Assert.Equal(InputStepKind.Text, step.Kind);
+        Assert.Equal("Shinrarta Dezhra", step.Text);
+    }
+}

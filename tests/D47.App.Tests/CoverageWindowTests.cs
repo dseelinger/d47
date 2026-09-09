@@ -1,0 +1,308 @@
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.Documents;
+using Avalonia.Headless;
+using Avalonia.Headless.XUnit;
+using Avalonia.Media;
+using Avalonia.VisualTree;
+using D47.App.Controls;
+using D47.App.Settings;
+using D47.App.Theming;
+using D47.Core.Configuration;
+using D47.Core.Coverage;
+using Microsoft.Extensions.Logging.Abstractions;
+using Xunit;
+
+namespace D47.App.Tests;
+
+/// <summary>The coverage list.</summary>
+public class CoverageWindowTests
+{
+    private static readonly DateTimeOffset Monday = new(2026, 8, 10, 9, 0, 0, TimeSpan.Zero);
+
+    private readonly ITestOutputHelper _output;
+
+    public CoverageWindowTests(ITestOutputHelper output)
+    {
+        _output = output;
+    }
+
+    /// <summary>Three brushes, all already in every theme.</summary>
+    [AvaloniaFact]
+    public void EachStateCarriesItsOwnColour()
+    {
+        var window = Open(Report());
+
+        Assert.Equal(Brush(window, ThemeManager.AccentKey), MarkBrush(window, "done"));
+        Assert.Equal(Brush(window, ThemeManager.DangerKey), MarkBrush(window, "failed"));
+        Assert.Equal(Brush(window, ThemeManager.TextMutedKey), MarkBrush(window, "never"));
+
+        // Stale reads as work remaining, because the last run proved nothing about what is there now.
+        Assert.Equal(Brush(window, ThemeManager.TextMutedKey), MarkBrush(window, "changed"));
+
+        window.Close();
+    }
+
+    /// <summary>Colour cannot be the only signal.</summary>
+    [AvaloniaFact]
+    public void AFailureIsDistinguishableWithoutRelyingOnColour()
+    {
+        var window = Open(Report());
+
+        Assert.Equal(FontWeight.Bold, Mark(window, "failed").FontWeight);
+        Assert.Equal(FontWeight.Normal, Mark(window, "done").FontWeight);
+
+        window.Close();
+    }
+
+    /// <summary>Every line, not only the interesting ones.</summary>
+    [AvaloniaFact]
+    public void EveryItemInTheReportGetsALine()
+    {
+        var report = Report();
+        var window = Open(report);
+
+        var names = window.GetVisualDescendants()
+            .OfType<TextBlock>()
+            .Select(block => block.Text)
+            .ToList();
+
+        Assert.All(report.Lines, line => Assert.Contains(line.Item.Name, names));
+
+        window.Close();
+    }
+
+    /// <summary>
+    /// Knowing a tool has never been tried is half an answer; the other half is what it was supposed to
+    /// do.
+    /// </summary>
+    [AvaloniaFact]
+    public void EveryLineLinksToItsCapabilitysHelpPage()
+    {
+        var report = Report();
+        var window = Open(report);
+
+        var links = window.GetVisualDescendants()
+            .OfType<Button>()
+            .Where(button => button.Name == "CoverageHelp")
+            .Select(button => ToolTip.GetTip(button) as string)
+            .ToList();
+
+        Assert.Equal(report.Total, links.Count);
+
+        Assert.All(
+            report.Lines,
+            line => Assert.Contains(DocsSite.Capability(line.Item.CapabilityId), links));
+
+        window.Close();
+    }
+
+    /// <summary>
+    /// Something that ran and errored is a stronger call to action than something never tried, so it
+    /// leads — and it appears once, not again under its status further down.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheListLeadsWithFailuresAndShowsEachLineOnce()
+    {
+        var window = Open(Report());
+
+        var headings = window.GetVisualDescendants()
+            .OfType<TextBlock>()
+            .Select(block => block.Text ?? string.Empty)
+            .Where(text => text.EndsWith(')') && text.Contains(" ("))
+            .ToList();
+
+        Assert.Equal("Came back with an error (1)", headings[0]);
+        Assert.Equal("Never exercised (1)", headings[1]);
+
+        var names = window.GetVisualDescendants()
+            .OfType<TextBlock>()
+            .Count(block => block.Text == "Probe - broke");
+
+        Assert.Equal(1, names);
+
+        window.Close();
+    }
+
+    /// <summary>The way in exists only when this process was asked to record.</summary>
+    [AvaloniaTheory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void TheDiagnosticsRowOffersTheListOnlyWhenRecording(bool recording)
+    {
+        // The summary is what makes the row exist; the report is what the button opens.
+        var (settings, viewState, paths) = TestSurface.Create(
+            recording ? () => Report().Summary : null);
+
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
+            .FollowSettings(settings);
+
+        var host = SettingsHost.Open(settings, viewState, paths, recording ? Report : null);
+
+        var offered = host.View.GetVisualDescendants()
+            .OfType<Button>()
+            .Any(button => button.Name == "OpenCoverage");
+
+        Assert.Equal(recording, offered);
+
+        host.Close();
+    }
+
+    /// <summary>Writes a PNG per theme for a human to look at.</summary>
+    [AvaloniaFact]
+    public void TheListRendersToACaptureAtRealSize()
+    {
+        var output = TestSurface.CaptureDirectory;
+        _output.WriteLine($"Captures: {output}");
+
+        var settings = Theme();
+
+        foreach (var theme in D47.Core.Interface.ThemeCatalog.All)
+        {
+            if (theme.Id == D47.Core.Interface.ThemeCatalog.ElitePaletteId)
+            {
+                // Depends on the Commander's own HUD matrix file; the plain Elite palette is captured anyway.
+                continue;
+            }
+
+            settings.Apply("ui.theme", theme.Id, SettingsCaller.Panel);
+            Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+            var window = Shown(RealisticReport());
+
+            var frame = window.CaptureRenderedFrame();
+            Assert.NotNull(frame);
+            frame.Save(
+                Path.Combine(output, $"coverage-{theme.Id}.png"),
+                new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+
+            // The far end, where the exercised lines are.
+            var scroller = window.GetVisualDescendants().OfType<ScrollViewer>().First();
+            scroller.ScrollToEnd();
+            Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+            window.CaptureRenderedFrame()!.Save(
+                Path.Combine(output, $"coverage-{theme.Id}-bottom.png"),
+                new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+
+            window.Close();
+        }
+    }
+
+    /// <summary>
+    /// And the row that opens it, in the card it lives on — the other half of this change, and the half
+    /// no assertion about a button's existence tells you the look of.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheDiagnosticsRowRendersToACapture()
+    {
+        var output = TestSurface.CaptureDirectory;
+        _output.WriteLine($"Captures: {output}");
+
+        var (settings, viewState, paths) = TestSurface.Create(() => Report().Summary);
+
+        // Cards remember whether they were left open, and Diagnostics defaults to closed — a capture of a
+        // collapsed card would show the header and none of the row.
+        viewState.Save(viewState.Load().With("diagnostics", expanded: true));
+
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
+            .FollowSettings(settings);
+
+        var host = SettingsHost.Open(settings, viewState, paths, Report);
+
+        var scroller = host.View.GetVisualDescendants().OfType<ScrollViewer>().First();
+        scroller.ScrollToEnd();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        host.Window.CaptureRenderedFrame()!.Save(
+            Path.Combine(output, "coverage-row.png"),
+            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+
+        host.Close();
+    }
+
+    /// <summary>A themed window.</summary>
+    private static CoverageWindow Open(CoverageReport report)
+    {
+        Theme();
+        return Shown(report);
+    }
+
+    private static CoverageWindow Shown(CoverageReport report)
+    {
+        var window = new CoverageWindow(report);
+        window.Show();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        return window;
+    }
+
+    private static SettingsService Theme()
+    {
+        var settings = TestSurface.Create().Settings;
+
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
+            .FollowSettings(settings);
+
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        return settings;
+    }
+
+    /// <summary>One line in each of the four states.</summary>
+    private static CoverageReport Report()
+    {
+        var ledger = new CoverageLedger();
+
+        ledger.Record(Item("worked"), Monday, CoverageOutcome.Ok);
+        ledger.Record(Item("broke"), Monday, CoverageOutcome.Failed);
+        ledger.Record(Item("moved", "before"), Monday, CoverageOutcome.Ok);
+
+        return ledger.Report(
+            [Item("worked"), Item("broke"), Item("moved", "after"), Item("untouched")]);
+    }
+
+    /// <summary>
+    /// The shape the window is actually for: most of it never exercised, a handful done, one or two
+    /// that broke.
+    /// </summary>
+    private static CoverageReport RealisticReport()
+    {
+        string[] capabilities = ["diagnostics", "listening", "speech", "conversation"];
+
+        var items = new List<CoverageItem>();
+        var ledger = new CoverageLedger();
+
+        for (var i = 0; i < 94; i++)
+        {
+            var isRow = i % 3 == 0;
+            var capability = capabilities[i % capabilities.Length];
+
+            var item = new CoverageItem(
+                isRow ? CoverageKind.Setting : CoverageKind.Tool,
+                $"{(isRow ? "row" : "tool")}_{i:00}",
+                capability,
+                $"{char.ToUpperInvariant(capability[0])}{capability[1..]} - something_or_other_{i:00}",
+                "aaaa");
+
+            items.Add(item);
+
+            // Most of it untouched, a handful done, one or two broken — the shape the window is actually for.
+            if (i % 7 < 2)
+            {
+                ledger.Record(item, Monday, i % 21 == 0 ? CoverageOutcome.Failed : CoverageOutcome.Ok);
+            }
+        }
+
+        return ledger.Report(items);
+    }
+
+    private static CoverageItem Item(string id, string fingerprint = "aaaa") =>
+        new(CoverageKind.Tool, id, "diagnostics", $"Probe - {id}", fingerprint);
+
+    private static IBrush? Brush(Visual window, string key) => window.FindResource(key) as IBrush;
+
+    private static IBrush? MarkBrush(Visual window, string mark) => Mark(window, mark).Foreground;
+
+    private static TextBlock Mark(Visual window, string mark) =>
+        window.GetVisualDescendants().OfType<TextBlock>().Single(block => block.Text == mark);
+}

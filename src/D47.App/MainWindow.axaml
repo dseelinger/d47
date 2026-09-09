@@ -1,0 +1,17 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:panel="clr-namespace:D47.App.Panel"
+        x:Class="D47.App.MainWindow"
+        Title="Directive 47"
+        Icon="/Assets/directive-47.ico"
+        Width="820" Height="640"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource D47.Background}"
+        Foreground="{DynamicResource D47.Text}">
+
+  <!-- The window is the desktop host for the panel, and nothing more. Everything the panel
+       shows lives in PanelView, which the VR overlay instantiates for itself against the same
+       view model — and which, since Phase 12, carries the settings surface
+       as one of its pages rather than handing it to a second window. -->
+  <panel:PanelView x:Name="Panel" />
+</Window>

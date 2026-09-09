@@ -1,0 +1,322 @@
+﻿using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Headless;
+using Avalonia.Headless.XUnit;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.VisualTree;
+using D47.App.Panel;
+using D47.Core.Interface;
+using D47.App.Settings;
+using D47.App.Theming;
+using D47.Core.Configuration;
+using Microsoft.Extensions.Logging.Abstractions;
+using Xunit;
+
+namespace D47.App.Tests;
+
+/// <summary>One visible window.</summary>
+public class SettingsIsATabTests
+{
+    private static PanelView Panel(bool withSettings)
+    {
+        var view = new PanelView { DataContext = new PanelViewModel() };
+
+        if (withSettings)
+        {
+            view.EnableSettings(() => new TextBlock { Text = "settings" });
+        }
+
+        return view;
+    }
+
+    /// <summary>
+    /// By name scope rather than by visual descent, so a view that has never been shown — the headset
+    /// builds one and rasterises it offscreen — answers the same question.
+    /// </summary>
+    private static Control Named(PanelView view, string name) =>
+        view.FindControl<Control>(name) ?? throw new InvalidOperationException($"no {name}");
+
+    /// <summary>The tab is a capability the host grants.</summary>
+    [AvaloniaTheory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void TheTabAppearsOnlyWhereSettingsWereEnabled(bool enabled)
+    {
+        var view = Panel(enabled);
+        var window = new Window { Content = view, Width = 900, Height = 700 };
+        window.Show();
+
+        Assert.Equal(enabled, Named(view, "SettingsTab").IsVisible);
+
+        window.Close();
+    }
+
+    /// <summary>
+    /// The headset's own instantiation has one when it is given a builder, and does not when it is not.
+    /// </summary>
+    [AvaloniaTheory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void TheHeadsetCopyHasSettingsWhenItIsGivenThem(bool given)
+    {
+        var (settings, _, _) = TestSurface.Create();
+
+        using var surface = new Headset.VrPanelSurface(
+            new PanelViewModel(),
+            settings,
+            _ => null,
+            settingsPage: given ? () => new TextBlock { Text = "settings" } : null);
+
+        var view = (PanelView)surface.GetType()
+            .GetField("_view", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+            .GetValue(surface)!;
+
+        Assert.Equal(given, Named(view, "SettingsTab").IsVisible);
+    }
+
+    /// <summary>A surface with no settings page cannot be put on one, whatever sets the property.</summary>
+    [AvaloniaFact]
+    public void ASurfaceWithoutSettingsRefusesTheSettingsPage()
+    {
+        var view = Panel(withSettings: false);
+        var window = new Window { Content = view, Width = 900, Height = 700 };
+        window.Show();
+
+        view.Page = TranscriptPage.Log;
+        view.Tab = PanelTab.Settings;
+
+        Assert.Equal(TranscriptPage.Log, view.Page);
+        Assert.True(Named(view, "TranscriptPane").IsVisible);
+
+        window.Close();
+    }
+
+    /// <summary>
+    /// The settings page takes the transcript's place, and the ask line gives way to the footer the
+    /// settings surface brings with it.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheSettingsPageReplacesTheTranscriptAndTheAskLine()
+    {
+        var view = Panel(withSettings: true);
+        var window = new Window { Content = view, Width = 900, Height = 700 };
+        window.Show();
+
+        Assert.True(Named(view, "AskRow").IsVisible);
+
+        view.Tab = PanelTab.Settings;
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.False(Named(view, "TranscriptPane").IsVisible);
+        Assert.True(Named(view, "PagePane").IsVisible);
+        Assert.False(Named(view, "AskRow").IsVisible);
+
+        // Effectively rather than directly: the provenance line shares a row with the microphone indicator
+        // since Phase 13, and it is the row that is hidden.
+        Assert.False(Named(view, "TurnLine").IsEffectivelyVisible);
+
+        // The header stays: the avatar and the help glyph are as true on this page as on any other.
+        Assert.True(Named(view, "Header").IsVisible);
+        Assert.Null(view.FindControl<Control>("SettingsButton"));
+
+        window.Close();
+    }
+
+    /// <summary>Built on first selection rather than at startup — ninety-odd rows is not free.</summary>
+    [AvaloniaFact]
+    public void TheSettingsPageIsNotBuiltUntilItIsSelected()
+    {
+        var built = 0;
+        var view = new PanelView { DataContext = new PanelViewModel() };
+        view.EnableSettings(() =>
+        {
+            built++;
+            return new TextBlock { Text = "settings" };
+        });
+
+        var window = new Window { Content = view, Width = 900, Height = 700 };
+        window.Show();
+
+        Assert.Equal(0, built);
+
+        view.Tab = PanelTab.Settings;
+        view.Tab = PanelTab.Transcript;
+        view.Tab = PanelTab.Settings;
+
+        Assert.Equal(1, built);
+
+        window.Close();
+    }
+
+    /// <summary>
+    /// Escape puts back the page it covered up, not a fixed default: a Commander reading the log who
+    /// opens settings and changes their mind is put back on the log.
+    /// </summary>
+    [AvaloniaFact]
+    public void EscapeReturnsToThePageYouCameFrom()
+    {
+        var view = Panel(withSettings: true);
+        var window = new Window { Content = view, Width = 900, Height = 700 };
+        window.Show();
+
+        view.Page = TranscriptPage.Log;
+        view.Tab = PanelTab.Settings;
+
+        Assert.True(view.GoBack());
+        Assert.Equal(PanelTab.Transcript, view.Tab);
+        Assert.Equal(TranscriptPage.Log, view.Page);
+
+        // And there is nothing to leave when it is not showing, so the key stays available to whatever else
+        // wants it.
+        Assert.False(view.GoBack());
+
+        window.Close();
+    }
+
+    /// <summary>Through the window's own key handling, which is where the gesture actually lands.</summary>
+    [AvaloniaFact]
+    public void EscapeOnTheMainWindowLeavesTheSettingsPage()
+    {
+        var (settings, _, _) = TestSurface.Create();
+
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
+            .Apply(settings.Current.Ui.Theme);
+
+        var window = new MainWindow(host: null);
+
+        // No host under a headless run, so the page is enabled the way a host would.
+        window.Panel.EnableSettings(() => new TextBlock { Text = "settings" });
+        window.Show();
+
+        window.Panel.Tab = PanelTab.Settings;
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        window.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, null);
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(PanelTab.Transcript, window.Panel.Tab);
+
+        window.Close();
+    }
+
+    /// <summary>The nav column collapses on a narrow page and comes back on a wide one.</summary>
+    [AvaloniaTheory]
+    [InlineData(820, false)]
+    [InlineData(1180, true)]
+    public void TheNavColumnFollowsTheWidth(double width, bool shown)
+    {
+        var (settings, viewState, paths) = TestSurface.Create();
+
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
+            .FollowSettings(settings);
+
+        var host = SettingsHost.Open(settings, viewState, paths, width: width);
+
+        var nav = host.View.GetVisualDescendants().OfType<Control>().First(c => c.Name == "Nav");
+        var root = (Grid)host.View.GetVisualDescendants().OfType<Control>().First(c => c.Name == "Root");
+
+        Assert.Equal(shown, nav.IsVisible);
+        Assert.Equal(shown ? 224 : 0, root.ColumnDefinitions[0].Width.Value);
+
+        // And the floor moves with it, or a page with no nav would still be asking for the width of one.
+        Assert.Equal(shown ? 700 : 476, root.MinWidth);
+
+        host.Close();
+    }
+
+    /// <summary>
+    /// The rows still get their width on the narrow page — the whole point of collapsing the nav is
+    /// that the cards take what it was using.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheCardsKeepTheirShapeWithTheNavCollapsed()
+    {
+        var (settings, viewState, paths) = TestSurface.Create();
+
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
+            .FollowSettings(settings);
+
+        var host = SettingsHost.Open(settings, viewState, paths, width: 820);
+
+        // By the class the view marks its rows with, not by "three columns" — that also matched the grid
+        // Avalonia builds a TextBox out of.
+        var rows = host.View.GetVisualDescendants().OfType<Grid>()
+            .Where(grid => grid.Classes.Contains(SettingsView.CompactRowClass) && grid.Bounds.Width > 0)
+            .ToList();
+
+        Assert.NotEmpty(rows);
+
+        foreach (var row in rows)
+        {
+            Assert.True(
+                row.ColumnDefinitions[0].ActualWidth >= row.ColumnDefinitions[2].ActualWidth,
+                $"a row gave {row.ColumnDefinitions[2].ActualWidth:0} to its control and only "
+                + $"{row.ColumnDefinitions[0].ActualWidth:0} to its caption");
+        }
+
+        host.Close();
+    }
+
+    /// <summary>The page at the width the Commander actually opens it at, for a human to look at.</summary>
+    [AvaloniaFact]
+    public void TheSettingsPageRendersToACaptureAtTheDefaultWindowWidth()
+    {
+        var (settings, viewState, paths) = TestSurface.Create();
+
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
+            .FollowSettings(settings);
+
+        var host = SettingsHost.Open(settings, viewState, paths, width: 820, height: 640);
+
+        host.Window.CaptureRenderedFrame()!.Save(
+            Path.Combine(TestSurface.CaptureDirectory, "settings-tab-narrow.png"),
+            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+
+        host.Close();
+    }
+
+    /// <summary>Hotkey capture sees a key the push-to-talk suppressor has already marked handled.</summary>
+    [AvaloniaFact]
+    public void RebindingPushToTalkToTheKeyItAlreadyHoldsStillCaptures()
+    {
+        var (settings, viewState, paths) = TestSurface.Create();
+
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
+            .FollowSettings(settings);
+
+        var view = new SettingsView();
+
+        var window = new MainWindow(host: null) { PushToTalkGesture = () => "F9" };
+        window.Panel.EnableSettings(() =>
+        {
+            view.Attach(settings, viewState, paths);
+            return view;
+        });
+
+        window.Show();
+        window.Panel.Tab = PanelTab.Settings;
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        // The push-to-talk row itself, which is the row this is about: F9 is the key it already holds, and F9
+        // is the key the suppressor above is swallowing.
+        var row = view.GetVisualDescendants().OfType<Grid>()
+            .First(grid => grid.ColumnDefinitions.Count == 3
+                && grid.GetVisualDescendants().OfType<TextBlock>()
+                    .Any(text => text.Text == "Push-to-talk"));
+
+        var bind = row.GetVisualDescendants().OfType<Button>()
+            .Where(button => !D47.App.Settings.SettingsView.IsRowChrome(button))
+            .First(button => (button.Content as string) != "Unbind");
+
+        bind.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        window.KeyPress(Key.F9, RawInputModifiers.None, PhysicalKey.F9, null);
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal("F9", settings.Current.Listening.PushToTalkKey);
+
+        window.Close();
+    }
+}

@@ -1,0 +1,30 @@
+# Build output
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+publish/
+
+# The Debug build's data root — settings, secrets and a 325 MB model, none of it source
+dev-install/data/
+
+# Inno Setup output (OutputDir is installer\)
+installer/d47-setup-*.exe
+installer/*.sha256
+
+# Release artifacts built by hand
+d47.zip
+d47.zip.sha256
+
+# Python generators
+__pycache__/
+*.py[cod]
+
+# Tooling
+.vs/
+.idea/
+*.user
+*.suo
+
+# wrangler's machine-local state from Worker provisioning; never repository material
+worker/.wrangler/

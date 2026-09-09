@@ -1,0 +1,261 @@
+using D47.Core.Conversation;
+using Xunit;
+
+namespace D47.Core.Tests.Conversation;
+
+/// <summary> The five windows the spend dialog reports. </summary>
+public class SpendPeriodTests
+{
+    /// <summary>
+    /// London, because it changes offset twice a year at a civil hour, so an hour can be skipped or
+    /// repeated without midnight itself moving.
+    /// </summary>
+    private static readonly TimeZoneInfo London =
+        TimeZoneInfo.FindSystemTimeZoneById("Europe/London");
+
+    /// <summary>
+    /// Chatham Islands: the clocks go forward at 02:45 and the offset is not a whole number of hours,
+    /// which is the case a naive "subtract the offset" would get wrong.
+    /// </summary>
+    private static readonly TimeZoneInfo Chatham =
+        TimeZoneInfo.FindSystemTimeZoneById("Pacific/Chatham");
+
+    [Fact]
+    public void ARollingWindowIsJustElapsedTime()
+    {
+        var now = new DateTimeOffset(2026, 8, 17, 9, 30, 0, TimeSpan.Zero);
+        var week = SpendPeriods.Rolling("Last 7 days", now, 7);
+
+        Assert.Equal(new DateTimeOffset(2026, 8, 10, 9, 30, 0, TimeSpan.Zero), week.From);
+        Assert.Equal(now, week.To);
+
+        Assert.True(week.Holds(week.From));
+        Assert.False(week.Holds(week.To.AddTicks(1)));
+    }
+
+    /// <summary>
+    /// The charge a Commander is most likely to be looking for is the one just made, stamped at the
+    /// same instant the windows end.
+    /// </summary>
+    [Fact]
+    public void AChargeMadeThisInstantIsInsideEveryWindow()
+    {
+        var now = new DateTimeOffset(2026, 8, 17, 9, 30, 0, TimeSpan.Zero);
+
+        Assert.All(
+            SpendPeriods.All(now, London),
+            period => Assert.True(period.Holds(now), $"{period.Name} excluded a charge made now"));
+    }
+
+    /// <summary>Sunday, as asked for — not the ISO week, which starts on Monday.</summary>
+    [Fact]
+    public void TheWeekStartsOnSundayInTheCommandersOwnZone()
+    {
+        // A Monday, so a Sunday start and a Monday start give different answers and the test can tell them
+        // apart.
+        var now = new DateTimeOffset(2026, 8, 17, 9, 30, 0, TimeSpan.FromHours(1));
+        var week = SpendPeriods.CurrentWeek(now, London);
+
+        var localStart = TimeZoneInfo.ConvertTime(week.From, London);
+
+        Assert.Equal(DayOfWeek.Sunday, localStart.DayOfWeek);
+        Assert.Equal(new DateTime(2026, 8, 16), localStart.Date);
+        Assert.Equal(TimeSpan.Zero, localStart.TimeOfDay);
+    }
+
+    [Fact]
+    public void TheMonthStartsAtTheFirstLocalMidnight()
+    {
+        var now = new DateTimeOffset(2026, 8, 17, 9, 30, 0, TimeSpan.FromHours(1));
+        var month = SpendPeriods.CurrentMonth(now, London);
+
+        var localStart = TimeZoneInfo.ConvertTime(month.From, London);
+
+        Assert.Equal(new DateTime(2026, 8, 1), localStart.Date);
+        Assert.Equal(TimeSpan.Zero, localStart.TimeOfDay);
+    }
+
+    /// <summary>The claim the storage format exists for.</summary>
+    [Fact]
+    public void AChargeJustAfterLocalMidnightCountsInTheRightMonth()
+    {
+        // Sydney: well ahead of UTC, so local and UTC disagree about which month it is.
+        var sydney = TimeZoneInfo.FindSystemTimeZoneById("Australia/Sydney");
+
+        var now = new DateTimeOffset(2026, 8, 1, 2, 0, 0, TimeSpan.FromHours(10));
+        var month = SpendPeriods.CurrentMonth(now, sydney);
+
+        var charge = new DateTimeOffset(2026, 8, 1, 0, 30, 0, TimeSpan.FromHours(10));
+
+        Assert.True(month.Holds(charge), "a charge after local midnight fell outside its own month");
+
+        // And the instant before it did not.
+        Assert.False(month.Holds(charge.AddHours(-1)));
+    }
+
+    /// <summary>
+    /// A zone that moves its clocks at midnight itself, so one local midnight never happens and another
+    /// happens twice.
+    /// </summary>
+    private static TimeZoneInfo MidnightShift()
+    {
+        static TimeZoneInfo.TransitionTime At(int hour, int month) =>
+            TimeZoneInfo.TransitionTime.CreateFloatingDateRule(
+                new DateTime(1, 1, 1, hour, 0, 0), month, 4, DayOfWeek.Sunday);
+
+        // Forward at 00:00 in March, so 00:00-00:59 does not exist that day.
+        var rule = TimeZoneInfo.AdjustmentRule.CreateAdjustmentRule(
+            DateTime.MinValue.Date,
+            DateTime.MaxValue.Date,
+            TimeSpan.FromHours(1),
+            At(0, 3),
+            At(1, 10));
+
+        return TimeZoneInfo.CreateCustomTimeZone(
+            "D47 Midnight Shift", TimeSpan.Zero, "Midnight Shift", "Standard", "Daylight", [rule]);
+    }
+
+    /// <summary>A month beginning on a midnight that never happened.</summary>
+    [Fact]
+    public void AMonthStartingOnASkippedMidnightMovesToTheFirstRealMinute()
+    {
+        var zone = MidnightShift();
+
+        // The fourth Sunday of March 2026 is the 22nd, and midnight that day is skipped.
+        var skipped = new DateTime(2026, 3, 22, 0, 0, 0);
+        Assert.True(zone.IsInvalidTime(skipped), "the constructed zone no longer skips this midnight");
+
+        var week = SpendPeriods.CurrentWeek(new DateTimeOffset(2026, 3, 25, 12, 0, 0, TimeSpan.FromHours(1)), zone);
+
+        // It landed on the day it names, at the first minute of it that exists.
+        var localStart = TimeZoneInfo.ConvertTime(week.From, zone);
+
+        Assert.Equal(new DateTime(2026, 3, 22), localStart.Date);
+        Assert.Equal(TimeSpan.FromHours(1), localStart.TimeOfDay);
+    }
+
+    /// <summary>A week whose first midnight is repeated.</summary>
+    [Fact]
+    public void AnAmbiguousMidnightTakesTheEarlierInstant()
+    {
+        var zone = MidnightShift();
+
+        // The fourth Sunday of October 2026 is the 25th, and midnight happens twice that day.
+        var repeated = new DateTime(2026, 10, 25, 0, 30, 0);
+        Assert.True(zone.IsAmbiguousTime(repeated), "the constructed zone no longer repeats this midnight");
+
+        var week = SpendPeriods.CurrentWeek(new DateTimeOffset(2026, 10, 28, 12, 0, 0, TimeSpan.Zero), zone);
+
+        // A charge in the first pass through the repeated hour is inside the week.
+        var firstPass = new DateTimeOffset(2026, 10, 25, 0, 30, 0, TimeSpan.FromHours(1));
+
+        Assert.True(week.Holds(firstPass), "the repeated hour fell outside its own week");
+    }
+
+    /// <summary>A zone whose clocks move at a quarter past the hour, on a fractional offset.</summary>
+    [Fact]
+    public void AFractionalOffsetZoneStillLandsOnLocalMidnight()
+    {
+        var now = new DateTimeOffset(2026, 9, 27, 12, 0, 0, TimeSpan.FromHours(12.75));
+        var month = SpendPeriods.CurrentMonth(now, Chatham);
+
+        var localStart = TimeZoneInfo.ConvertTime(month.From, Chatham);
+
+        Assert.Equal(new DateTime(2026, 9, 1), localStart.Date);
+        Assert.Equal(TimeSpan.Zero, localStart.TimeOfDay);
+    }
+
+    [Fact]
+    public void TheWindowsAreTwoGroupsAndEachCalendarOneSitsBesideItsRollingTwin()
+    {
+        var now = new DateTimeOffset(2026, 8, 17, 9, 30, 0, TimeSpan.Zero);
+
+        Assert.Equal(["Today"], SpendPeriods.Immediate(now, London).Select(period => period.Name));
+
+        Assert.Equal(
+            ["This week", "Last 7 days", "This month", "Last 30 days"],
+            SpendPeriods.Windows(now, London).Select(period => period.Name));
+
+        // And All is still the two of them in that order, because Resettable and the ledger's own summary
+        // read it.
+        Assert.Equal(
+            ["Today", "This week", "Last 7 days", "This month", "Last 30 days"],
+            SpendPeriods.All(now, London).Select(period => period.Name));
+    }
+
+    /// <summary>There is no rolling twenty-four-hour window: "what have I spent today" is a question a Commander asks, and "in the last twenty-four hours" is the same number with a boundary they cannot point at.</summary>
+    [Fact]
+    public void ThereIsNoRollingTwentyFourHourTwin()
+    {
+        var now = new DateTimeOffset(2026, 8, 17, 9, 30, 0, TimeSpan.Zero);
+
+        Assert.DoesNotContain(
+            SpendPeriods.All(now, London),
+            period => period.Name.Contains("24", StringComparison.Ordinal));
+    }
+
+    /// <summary>The trap Today inherits rather than re-solves.</summary>
+    [Fact]
+    public void TodayStartsAtTheMidnightThatHappened()
+    {
+        // 14:00 local on the day the clocks went forward, which is 13:00 UTC (BST is +1 by then).
+        var now = new DateTimeOffset(2026, 3, 29, 13, 0, 0, TimeSpan.Zero);
+        var today = SpendPeriods.Today(now, London);
+
+        Assert.Equal(new DateTimeOffset(2026, 3, 29, 0, 0, 0, TimeSpan.Zero), today.From);
+        Assert.Equal(now, today.To);
+
+        // A charge from 23:30 the previous evening is yesterday's, and a 24-hour window would have swept it
+        // in.
+        Assert.False(today.Holds(new DateTimeOffset(2026, 3, 28, 23, 30, 0, TimeSpan.Zero)));
+        Assert.True(today.Holds(new DateTimeOffset(2026, 3, 29, 0, 0, 0, TimeSpan.Zero)));
+    }
+
+    /// <summary>
+    /// The other direction: 25 October 2026, when London falls back at 02:00 and 01:30 happens twice.
+    /// </summary>
+    [Fact]
+    public void TodayCoversTheRepeatedHourWhenTheClocksGoBack()
+    {
+        var now = new DateTimeOffset(2026, 10, 25, 12, 0, 0, TimeSpan.Zero);
+        var today = SpendPeriods.Today(now, London);
+
+        Assert.Equal(new DateTimeOffset(2026, 10, 25, 0, 0, 0, TimeSpan.FromHours(1)), today.From);
+
+        // 01:30 BST — the first pass through the ambiguous hour, 00:30 UTC.
+        Assert.True(today.Holds(new DateTimeOffset(2026, 10, 25, 0, 30, 0, TimeSpan.Zero)));
+
+        // 01:30 GMT — the second pass, an hour later in absolute terms.
+        Assert.True(today.Holds(new DateTimeOffset(2026, 10, 25, 1, 30, 0, TimeSpan.Zero)));
+    }
+
+    /// <summary>
+    /// A zone whose offset is not a whole number of hours, which is where "subtract the offset"
+    /// arithmetic goes wrong.
+    /// </summary>
+    [Fact]
+    public void TodayIsRightInAZoneWithAQuarterHourOffset()
+    {
+        // 08:00 on 17 August 2026 in Chatham is 19:15 UTC on the 16th (+12:45).
+        var now = new DateTimeOffset(2026, 8, 16, 19, 15, 0, TimeSpan.Zero);
+        var today = SpendPeriods.Today(now, Chatham);
+
+        Assert.Equal(new DateTimeOffset(2026, 8, 17, 0, 0, 0, TimeSpan.FromMinutes(765)), today.From);
+        Assert.True(today.Holds(now));
+    }
+
+    /// <summary>Expected, and written down so it is not "fixed" later.</summary>
+    [Fact]
+    public void OnASundayTheFirstAllThreeCalendarWindowsAgree()
+    {
+        var now = new DateTimeOffset(2026, 11, 1, 15, 0, 0, TimeSpan.Zero);
+        var all = SpendPeriods.All(now, London);
+
+        var today = all.Single(period => period.Name == "Today");
+        var week = all.Single(period => period.Name == "This week");
+        var month = all.Single(period => period.Name == "This month");
+
+        Assert.Equal(today.From, week.From);
+        Assert.Equal(today.From, month.From);
+    }
+}

@@ -1,0 +1,195 @@
+using D47.Core.Conversation;
+
+namespace D47.Core.Tests.Conversation;
+
+/// <summary>A scripted provider.</summary>
+public sealed class FakeLlmProvider : ILlmProvider
+{
+    private readonly IReadOnlyList<LlmStreamEvent> _script;
+
+    public FakeLlmProvider(params LlmStreamEvent[] script) => _script = script;
+
+    /// <summary>The request the last call was made with, for asserting on prompt assembly.</summary>
+    public LlmRequest? LastRequest { get; private set; }
+
+    public int CallCount { get; private set; }
+
+    public string Id { get; init; } = "anthropic";
+
+    public string DisplayName => "Fake";
+
+    public string DefaultModel { get; init; } = "claude-opus-5";
+
+    /// <summary>Whether this endpoint advertises tools and executes tool_use replies.</summary>
+    public bool ToolCalls { get; init; }
+
+    /// <summary>Whether this endpoint can run a web search on the model's behalf.</summary>
+    public bool WebSearch { get; init; } = true;
+
+    /// <summary>Whether the model this provider is standing in for takes a thinking effort at all.</summary>
+    public bool ThinkingEffort { get; init; } = true;
+
+    public LlmProviderCapabilities CapabilitiesFor(string model) => new()
+    {
+        SupportsPromptCaching = true,
+        SupportsThinkingEffort = ThinkingEffort,
+        SupportsOperatorSystemMessages = true,
+        MinimumCacheablePrefixTokens = 512,
+        SupportsToolCalls = ToolCalls,
+        SupportsWebSearch = WebSearch,
+    };
+
+    public async IAsyncEnumerable<LlmStreamEvent> StreamAsync(
+        LlmRequest request,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        LastRequest = request;
+        CallCount++;
+
+        foreach (var streamEvent in _script)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return streamEvent;
+        }
+
+        await Task.CompletedTask;
+    }
+
+    /// <summary>The common case: some text, then a clean completion with the given usage.</summary>
+    public static FakeLlmProvider Answering(string reply, LlmUsage? usage = null) =>
+        new(
+            new LlmStreamEvent.TextDelta(reply),
+            new LlmStreamEvent.Completed(usage ?? LlmUsage.None, LlmStopReason.Completed));
+}
+
+/// <summary>
+/// A provider scripted per round rather than per session — the shape an agentic turn needs, where one
+/// turn is several requests and each has its own reply.
+/// </summary>
+public sealed class RoundScriptedLlmProvider(params IReadOnlyList<LlmStreamEvent>[] rounds) : ILlmProvider
+{
+    private readonly List<LlmRequest> _requests = [];
+
+    public IReadOnlyList<LlmRequest> Requests => _requests;
+
+    public int CallCount => _requests.Count;
+
+    public string Id => "anthropic";
+
+    public string DisplayName => "Rounds";
+
+    public string DefaultModel => "claude-opus-5";
+
+    public LlmProviderCapabilities CapabilitiesFor(string model) => new()
+    {
+        SupportsPromptCaching = true,
+        SupportsThinkingEffort = true,
+        SupportsOperatorSystemMessages = true,
+        MinimumCacheablePrefixTokens = 512,
+        SupportsToolCalls = true,
+    };
+
+    public async IAsyncEnumerable<LlmStreamEvent> StreamAsync(
+        LlmRequest request,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        var round = _requests.Count;
+        _requests.Add(request);
+
+        if (round >= rounds.Length)
+        {
+            throw new InvalidOperationException(
+                $"The turn asked for round {round + 1}, but only {rounds.Length} were scripted.");
+        }
+
+        foreach (var streamEvent in rounds[round])
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return streamEvent;
+        }
+
+        await Task.CompletedTask;
+    }
+
+    /// <summary>One round that asks for a tool, then rounds that keep asking for the same one.</summary>
+    public static IReadOnlyList<LlmStreamEvent> Calling(string id, string tool, string inputJson) =>
+    [
+        new LlmStreamEvent.ToolUse(id, tool, inputJson),
+        new LlmStreamEvent.Completed(LlmUsage.None, LlmStopReason.ToolUse),
+    ];
+
+    public static IReadOnlyList<LlmStreamEvent> Saying(string text, LlmUsage? usage = null) =>
+    [
+        new LlmStreamEvent.TextDelta(text),
+        new LlmStreamEvent.Completed(usage ?? LlmUsage.None, LlmStopReason.Completed),
+    ];
+}
+
+/// <summary>A provider that throws rather than reporting.</summary>
+public sealed class ThrowingLlmProvider : ILlmProvider
+{
+    public int CallCount { get; private set; }
+
+    public string Id => "anthropic";
+
+    public string DisplayName => "Throwing";
+
+    public string DefaultModel => "claude-opus-5";
+
+    public LlmProviderCapabilities CapabilitiesFor(string model) => new()
+    {
+        SupportsPromptCaching = true,
+        SupportsThinkingEffort = true,
+        SupportsOperatorSystemMessages = true,
+        MinimumCacheablePrefixTokens = 512,
+    };
+
+    public async IAsyncEnumerable<LlmStreamEvent> StreamAsync(
+        LlmRequest request,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        CallCount++;
+        await Task.CompletedTask;
+        throw new IOException("the socket went away");
+
+#pragma warning disable CS0162 // Required to make this an iterator rather than a plain throw.
+        yield break;
+#pragma warning restore CS0162
+    }
+}
+
+/// <summary>Fails a fixed number of times, then answers.</summary>
+public sealed class FlakyLlmProvider(int failuresBeforeSuccess) : ILlmProvider
+{
+    private int _calls;
+
+    public string Id => "anthropic";
+
+    public string DisplayName => "Flaky";
+
+    public string DefaultModel => "claude-opus-5";
+
+    public LlmProviderCapabilities CapabilitiesFor(string model) => new()
+    {
+        SupportsPromptCaching = true,
+        SupportsThinkingEffort = true,
+        SupportsOperatorSystemMessages = true,
+        MinimumCacheablePrefixTokens = 512,
+    };
+
+    public async IAsyncEnumerable<LlmStreamEvent> StreamAsync(
+        LlmRequest request,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        await Task.CompletedTask;
+
+        if (_calls++ < failuresBeforeSuccess)
+        {
+            yield return new LlmStreamEvent.Failed("Overloaded.", Transient: true);
+            yield break;
+        }
+
+        yield return new LlmStreamEvent.TextDelta("Jump range is 12.5 light years.");
+        yield return new LlmStreamEvent.Completed(LlmUsage.None, LlmStopReason.Completed);
+    }
+}

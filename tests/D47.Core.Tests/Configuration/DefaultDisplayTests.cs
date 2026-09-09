@@ -1,0 +1,74 @@
+using D47.Core.Capabilities;
+using D47.Core.Capabilities.Builtin;
+using D47.Core.Configuration;
+using D47.Core.Conversation;
+using Xunit;
+
+namespace D47.Core.Tests.Configuration;
+
+/// <summary>
+/// Rows disagree about whether their default reads as an aside — "(the provider's default)" — or as a
+/// value, like a model name, and they always will.
+/// </summary>
+public class DefaultDisplayTests
+{
+    [Fact]
+    public void ADefaultDeclaredAsAnAsideComesBackWithoutItsBrackets()
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        var voice = surface.Settings.Find(SpeechCapability.VoiceKey);
+        Assert.NotNull(voice);
+
+        // With a model configured, clearing this row is the way back to the voice d47 chose for this core,
+        // and that is what the row has to say it does.
+        Assert.Equal("(the voice d47 picks for this core)", voice.DefaultDisplayFor(surface.Settings.Current));
+        Assert.Equal("the voice d47 picks for this core", voice.BareDefaultFor(surface.Settings.Current));
+
+        // With no model there is nothing to pick with, so it really is the provider's own default — named as
+        // far as it can be: d47 cannot know which voice a provider chooses when asked for nothing, but it can
+        // say whose default is being talked about.
+        surface.Settings.Replace(
+            ConversationCapability.ProviderKey,
+            current => current with { Llm = current.Llm with { Provider = LlmProviderCatalog.NoneId } });
+
+        Assert.Equal("(Edge Neural's own default voice)", voice.DefaultDisplayFor(surface.Settings.Current));
+        Assert.Equal("Edge Neural's own default voice", voice.BareDefaultFor(surface.Settings.Current));
+    }
+
+    [Fact]
+    public void ADefaultThatIsAValueIsLeftAlone()
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        var model = surface.Settings.Find(ConversationCapability.ModelKey);
+        Assert.NotNull(model);
+
+        Assert.Equal("claude-sonnet-5", model.BareDefaultFor(surface.Settings.Current));
+    }
+
+    /// <summary>
+    /// The property every surface reads, checked across the whole registered surface so a row added
+    /// later cannot reintroduce the doubling by being written the other way.
+    /// </summary>
+    [Fact]
+    public void NoRowOffersABareDefaultThatIsStillBracketed()
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        foreach (var row in surface.Registry.All.SelectMany(c => c.Descriptor.Settings))
+        {
+            if (row.BareDefaultFor(surface.Settings.Current) is not { Length: > 0 } bare)
+            {
+                continue;
+            }
+
+            Assert.False(
+                bare[0] == '(' && bare[^1] == ')',
+                $"the default for '{row.Key}' is still bracketed: {bare}");
+        }
+    }
+}

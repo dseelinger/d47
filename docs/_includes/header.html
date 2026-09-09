@@ -1,0 +1,20 @@
+{%- comment -%}
+  Overrides minima 2.5.1's _includes/header.html — the version GitHub Pages pins.
+
+  What is removed is minima's page run: it lists **every** page as one inline row across the
+  top, which was fine at four pages and unreadable at thirty-odd. It wrapped to five lines and
+  broke titles mid-phrase, so the banner read "Talking to Directive / 47" and "Ship and module /
+  specifications" — entries that look like separate links and are not. Nothing marked the current
+  page, and a flat alphabetical run of every capability is not an order a reader has any use for.
+
+  What replaces it is a left nav grouped by section, in _layouts/default.html. This file keeps
+  the site's name and the link home, which is all a banner owes a reader who has a nav.
+
+  The name doubles as the way back to the top level on a phone, where the nav sits above the
+  content rather than beside it (list.md Phase 19).
+{%- endcomment -%}
+<header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" rel="author" href="{{ "/" | relative_url }}">{{ site.title | escape }}</a>
+  </div>
+</header>

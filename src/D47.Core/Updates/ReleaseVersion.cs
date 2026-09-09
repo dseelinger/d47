@@ -1,0 +1,65 @@
+namespace D47.Core.Updates;
+
+/// <summary>
+/// A released version parsed from a git tag such as "v0.1.0" (release.yml's whole tagging scheme).
+/// </summary>
+public readonly record struct ReleaseVersion(int Major, int Minor, int Patch) : IComparable<ReleaseVersion>
+{
+    /// <summary>
+    /// Just the release out of a build stamp — <c>0.78.0</c> from
+    /// <c>0.78.0+4b18aaecbe2510b0aeae95d3f19583edd18ea205</c>, and the string unchanged when it does
+    /// not parse as a version at all.
+    /// </summary>
+    public static string Semantic(string? stamp) =>
+        TryParse(stamp, out var version) ? version.ToString() : stamp ?? string.Empty;
+
+    public static bool TryParse(string? text, out ReleaseVersion version)
+    {
+        version = default;
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return false;
+        }
+
+        var trimmed = text.Trim();
+        if (trimmed.Length > 0 && (trimmed[0] == 'v' || trimmed[0] == 'V'))
+        {
+            trimmed = trimmed[1..];
+        }
+
+        // Strip SemVer build metadata and pre-release suffixes.
+        var suffixIndex = trimmed.IndexOfAny(['+', '-']);
+        if (suffixIndex >= 0)
+        {
+            trimmed = trimmed[..suffixIndex];
+        }
+
+        var parts = trimmed.Split('.');
+        if (parts.Length != 3 ||
+            !int.TryParse(parts[0], out var major) ||
+            !int.TryParse(parts[1], out var minor) ||
+            !int.TryParse(parts[2], out var patch))
+        {
+            return false;
+        }
+
+        version = new ReleaseVersion(major, minor, patch);
+        return true;
+    }
+
+    public int CompareTo(ReleaseVersion other)
+    {
+        var major = Major.CompareTo(other.Major);
+        if (major != 0)
+        {
+            return major;
+        }
+
+        var minor = Minor.CompareTo(other.Minor);
+        return minor != 0 ? minor : Patch.CompareTo(other.Patch);
+    }
+
+    public bool IsNewerThan(ReleaseVersion other) => CompareTo(other) > 0;
+
+    public override string ToString() => $"{Major}.{Minor}.{Patch}";
+}

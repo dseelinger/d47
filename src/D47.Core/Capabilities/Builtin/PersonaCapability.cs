@@ -1,0 +1,437 @@
+using System.Globalization;
+
+using System.Text;
+using D47.Core.Configuration;
+using D47.Core.Persona;
+
+namespace D47.Core.Capabilities.Builtin;
+
+/// <summary>Which companion character is aboard (Phase 11, "Personas" and "Ship AI Naming").</summary>
+public static class PersonaCapability
+{
+    public const string Id = "persona";
+
+    public const string PersonaKey = "persona.id";
+
+    public const string ShipNameKey = "persona.shipName";
+
+    public const string KeepShipNameKey = "persona.keepShipName";
+
+    public const string IntroductionsKey = "persona.introductions";
+
+    /// <summary>An occasional light touch of wit, per core character (#243).</summary>
+    public const string HumorKey = "persona.humor";
+
+    /// <summary>The row that reads what the ship the Commander is in flies with, and binds it.</summary>
+    public const string ShipCoreKey = "persona.shipCore";
+
+    /// <summary>The row that reads every binding, and forgets the current ship's.</summary>
+    public const string ShipCoresKey = "persona.shipCores";
+
+    /// <summary>The row that picks which ship the core row above is about.</summary>
+    public const string ShipCoreShipKey = "persona.shipCoreShip";
+
+    /// <summary>The row that reads the cores the Commander wrote, and opens the editor.</summary>
+    public const string OwnKey = "persona.own";
+
+    /// <summary>The core-row value that means "take the binding back".</summary>
+    private const string Nobody = "nobody";
+
+    /// <summary>A ship id as a choice key.</summary>
+    private static string Keyed(int shipId) => shipId.ToString(CultureInfo.InvariantCulture);
+
+    public static CapabilityDescriptor Create(
+        PersonaHost host,
+        SettingsService settings,
+        ShipCoreService? ships = null) => new()
+    {
+        Id = Id,
+        Group = "Conversation",
+        Name = "Persona",
+        Summary = "Report which Guardian core is aboard, what it is called, and how to change it.",
+        Examples = ["who are you", "which persona is this", "switch to Cora"],
+        // Each names its tool (#161). state_identity is what all five already reached, and saying so is what
+        // stops the next tool declared above it silently taking them — bind_ship_core and forget_ship_core
+        // both take no required argument and both write.
+        Keywords =
+        [
+            new("who are you", "state_identity"),
+            new("which persona", "state_identity"),
+            new("what persona", "state_identity"),
+            new("which core", "state_identity"),
+            new("who am I talking to", "state_identity"),
+        ],
+        Display = new CapabilityDisplay { PanelTitle = "Persona", Order = 12 },
+        Tools =
+        [
+            // First, and that is load-bearing rather than tidy: the keyword router answers with a
+            // capability's first tool that needs no arguments, and every phrase this capability declares —
+            // "who are you", "which core", "who am I talking to" — is a question about identity with a
+            // one-sentence answer.
+            new ToolDefinition
+            {
+                Name = "state_identity",
+                Description =
+                    "Answer who you are. The name the Commander calls this ship's AI, in one "
+                    + "sentence, and nothing else — no status, no list of what else is available.",
+                Handler = (_, _) => Task.FromResult(ToolResult.Ok($"I am {host.ShipName}.")),
+            },
+            new ToolDefinition
+            {
+                Name = "describe_persona",
+                Description =
+                    "Report which persona is currently active, what the Commander calls it, and which "
+                    + "other personas are available to switch to.",
+                Handler = (_, _) => Task.FromResult(ToolResult.Ok(Describe(host, settings.Current, ships))),
+            },
+        ],
+        Settings = Rows(host, ships),
+    };
+
+    private static IReadOnlyList<SettingRow> Rows(PersonaHost host, ShipCoreService? ships) =>
+    [
+        new SettingRow
+        {
+            Key = PersonaKey,
+            Label = "Persona",
+            Help = "Which Guardian core answers you. Each keeps its own memory of your conversations.",
+            Kind = SettingKind.Choice,
+            DefaultDisplay = PersonaCatalog.Resolve(null).Name,
+            DocsAnchor = "persona",
+            // A source rather than a list, so a core the Commander wrote appears in the picker the moment
+            // they write it (remediation.md 11, item 9).
+            Choices = [.. PersonaCatalog.Shipped.Select(persona => persona.Id)],
+            ChoiceSource = _ => [.. PersonaCatalog.All.Select(persona => persona.Id)],
+            ChoiceLabel = id => PersonaCatalog.Resolve(id).Name,
+
+            // Protected, and this is the one row in the phase where that is a judgement call rather than a
+            // rule being followed.
+            Protected = true,
+            // The shipped cores only.
+            Commands = [.. PersonaCatalog.Shipped.SelectMany(SelectionPhrases)],
+            Binding = new SettingBinding
+            {
+                Read = s => s.Persona.Id,
+                Write = WriteCoreAboard,
+            },
+        },
+        new SettingRow
+        {
+            Key = ShipNameKey,
+            Advanced = true,
+            Label = "Ship AI name",
+            Help = "What you call your ship's AI. Empty uses the persona's own name.",
+            Kind = SettingKind.Text,
+
+            // Follows the persona rather than being pinned, which is the requirement: "defaults to Persona's
+            // name".
+            DefaultDisplaySource = s => PersonaCatalog.Resolve(s.Persona.Id).Name,
+            DocsAnchor = "ship-ai-name",
+
+            // Deliberately not protected, unlike the row above. "Call yourself Fred" is a harmless thing to
+            // be able to say to a companion, it changes no state anything depends on, and refusing it would
+            // be protecting the Commander from a nickname.
+            Binding = new SettingBinding
+            {
+                Read = s => s.Persona.ShipName,
+                Write = (s, v) => s with { Persona = s.Persona with { ShipName = Blank(v) } },
+            },
+        },
+        new SettingRow
+        {
+            Key = KeepShipNameKey,
+            Advanced = true,
+            Label = "Keep Ship AI name on persona switch",
+            Help =
+                "On, the name above stays whoever is aboard. Off, changing core clears it and "
+                + "the new core answers to its own name.",
+            Kind = SettingKind.Toggle,
+            DefaultDisplay = "On",
+            DocsAnchor = "keep-ship-ai-name",
+
+            // Only applies when there is a name to keep.
+            AppliesWhen = s => !string.IsNullOrWhiteSpace(s.Persona.ShipName),
+
+            // Not protected, for the reason the name itself is not: the worst a hostile message can achieve
+            // here is that a nickname does or does not survive a switch it cannot make, since the row that
+            // changes core is protected.
+            Binding = new SettingBinding
+            {
+                Read = s => s.Persona.KeepShipName ? "true" : "false",
+                Write = (s, v) => s with
+                {
+                    Persona = s.Persona with { KeepShipName = v is null || bool.TryParse(v, out var on) && on },
+                },
+            },
+        },
+        new SettingRow
+        {
+            Key = HumorKey,
+            Advanced = true,
+            Label = "A little humor",
+            Help =
+                "On, the core is allowed an occasional light touch of wit, in its own character. "
+                + "Off is the register d47 shipped with - serious throughout.",
+            Kind = SettingKind.Toggle,
+            DefaultDisplay = "Off",
+            DocsAnchor = "humor",
+
+            // Not protected, like the name rows: the worst a hostile message can do is make the ship's AI
+            // allow itself a dry aside, and the panel row takes it straight back.
+            Commands =
+            [
+                new SettingCommandPhrase("humor on", "true"),
+                new SettingCommandPhrase("humor off", "false"),
+            ],
+            Binding = new SettingBinding
+            {
+                Read = s => s.Persona.Humor ? "true" : "false",
+                Write = (s, v) => s with { Persona = s.Persona with { Humor = v == "true" } },
+            },
+        },
+        new SettingRow
+        {
+            Key = IntroductionsKey,
+            Advanced = true,
+            Label = "Introductions",
+            Help =
+                "A core introduces itself the first time you ever pick it, and reacts to the gap "
+                + "every time after that. That is remembered between sessions, so restarting d47 "
+                + "no longer brings the opening lines back — forgetting is the only way to hear "
+                + "them again, and it puts every core back to its introduction at once.",
+            Kind = SettingKind.Info,
+            DocsAnchor = "introductions",
+            PressLabel = "Forget introductions",
+            Press = host.ForgetIntroductions,
+
+            // Info, so the model cannot reach it — same reason the persona row above is protected, and here
+            // it comes free rather than as a flag.
+            Binding = new SettingBinding { Read = _ => Introductions(host) },
+        },
+        new SettingRow
+        {
+            Key = OwnKey,
+            Advanced = true,
+            Label = "Cores of your own",
+            Help =
+                "Cores you wrote, which join the picker at the top of this section beside the "
+                + "eleven that ship. One needs a name and a paragraph saying what it is like; "
+                + "everything else about the frame is supplied, and the shared preamble and "
+                + "standing instructions wrap what you write exactly as they wrap a shipped core. "
+                + "The file behind it is personas.json beside d47.exe, and the editor is a "
+                + "convenience over that file rather than an alternative to it.",
+            Kind = SettingKind.Info,
+            DocsAnchor = "cores-of-your-own",
+
+            // Info, so the model cannot reach it.
+            Binding = new SettingBinding { Read = _ => SummariseOwn() },
+        },
+        ..ships is null ? Array.Empty<SettingRow>() : ShipCoreRows(host, ships),
+    ];
+
+    /// <summary>A core per ship, on the panel (Phase 35).</summary>
+    private static SettingRow[] ShipCoreRows(PersonaHost host, ShipCoreService ships) =>
+    [
+        // Two rows, and they read as one sentence: which ship, and who flies it.
+        new SettingRow
+        {
+            Key = ShipCoreShipKey,
+            Advanced = true,
+            Label = "Ship",
+            Help =
+                "Which ship the core below belongs to. Every ship in your fleet is here, so you do "
+                + "not have to be sitting in one to give it a core.",
+            Kind = SettingKind.Choice,
+            DocsAnchor = "core-for-this-ship",
+
+            // What puts a rule between this pair and the persona rows above (remediation.md 16, item 3).
+            Group = "A core per ship",
+
+            // Protected, which is what keeps Phase 35's rule after these stopped being Info rows.
+            Protected = true,
+
+            // A ship id, which only means something for the Commander whose fleet it counts (Phase 44): one
+            // Commander's ship 7 and another's are two ships.
+            Scope = SettingScope.Commander,
+            ChoiceSource = _ => [.. ships.Fleet().Select(entry => Keyed(entry.ShipId))],
+            ChoiceLabel = key => ships.Fleet()
+                .FirstOrDefault(entry => Keyed(entry.ShipId) == key)
+                .Said ?? key,
+            WhyNoChoices = _ =>
+                "I have not seen your fleet yet. Dock somewhere with a shipyard and I will read it.",
+            Binding = new SettingBinding
+            {
+                Read = settings => settings.Persona.ShipCoreShip is var id and not 0 ? Keyed(id) : null,
+                Write = (settings, value) => settings with
+                {
+                    Persona = settings.Persona with
+                    {
+                        ShipCoreShip = int.TryParse(value, CultureInfo.InvariantCulture, out var id) ? id : 0,
+                    },
+                },
+            },
+        },
+        new SettingRow
+        {
+            Key = ShipCoreKey,
+            Advanced = true,
+            Label = "Core for that ship",
+            Help =
+                "A ship can have its own core, so changing ship changes who answers "
+                + "you. Nothing is bound until you say so, and boarding a ship you have not bound "
+                + "leaves whoever is aboard aboard. Choosing nobody takes a binding back.",
+            Kind = SettingKind.Choice,
+            DocsAnchor = "core-for-this-ship",
+            Protected = true,
+
+            // Per Commander through the store rather than the settings file: what it reads is the binding for
+            // the ship the row above points at, and ship-cores.json carries the Commander beside each one
+            // (Phase 44).
+            Scope = SettingScope.Commander,
+
+            // The same group as the row above, so the pair sits under one heading and the rule is drawn once
+            // rather than between two rows that are one thought.
+            Group = "A core per ship",
+
+            // Nobody first: it is the unbind.
+            Choices = [Nobody, .. PersonaCatalog.Shipped.Select(persona => persona.Id)],
+            ChoiceSource = _ => [Nobody, .. PersonaCatalog.All.Select(persona => persona.Id)],
+            ChoiceLabel = id => id == Nobody
+                ? "Nobody — whoever is aboard stays aboard"
+                : PersonaCatalog.Resolve(id).Name,
+            Binding = new SettingBinding
+            {
+                Read = settings => settings.Persona.ShipCoreShip is var id and not 0
+                    ? ships.For(id)?.Core ?? Nobody
+                    : null,
+
+                // The write is the binding, and it returns the settings unchanged: what it changes lives in
+                // ship-cores.json, not here.
+                Write = (settings, value) =>
+                {
+                    if (settings.Persona.ShipCoreShip is var id and not 0)
+                    {
+                        ships.BindTo(id, value == Nobody ? null : value);
+                    }
+
+                    return settings;
+                },
+            },
+        },
+        new SettingRow
+        {
+            Key = ShipCoresKey,
+            Advanced = true,
+            Label = "Cores by ship",
+            Help =
+                "Every ship you have bound, and what it flies with. The file behind it is "
+                + "ship-cores.json beside d47.exe, and it is meant to be readable — one line per "
+                + "ship, hand-editable, with the hull and the name written beside the id so you "
+                + "can tell which ship is which.",
+            Kind = SettingKind.Info,
+            DocsAnchor = "cores-by-ship",
+            PressLabel = "Forget this ship's core",
+            Press = () => ships.Forget(),
+            Binding = new SettingBinding { Read = _ => ships.DescribeAll() },
+        },
+    ];
+
+    /// <summary>What the introductions row states.</summary>
+    private static string Introductions(PersonaHost host)
+    {
+        var introduced = host.Introduced;
+
+        return introduced.Count == 0
+            ? "No core has introduced itself yet. Every one of them still has its first line waiting."
+            : $"Already introduced: {string.Join(", ", introduced.Select(p => p.Name))}. "
+              + "Selecting one of those again gets its gap reaction instead.";
+    }
+
+    /// <summary>What the own-cores row reads.</summary>
+    public static string SummariseOwn()
+    {
+        var names = Persona.PersonaCatalog.Own?.Invoke().Select(core => core.Name).ToArray() ?? [];
+
+        return names.Length == 0
+            ? "None yet. A core needs a name and a paragraph saying what it is like."
+            : $"{names.Length} of your own: {string.Join(", ", names)}.";
+    }
+
+    /// <summary>The closed phrase set that reaches this row without a model.</summary>
+    private static IEnumerable<SettingCommandPhrase> SelectionPhrases(Persona.Persona persona)
+    {
+        var name = persona.Name.ToLowerInvariant();
+
+        yield return new SettingCommandPhrase($"switch to {name}", persona.Id);
+        yield return new SettingCommandPhrase($"be {name}", persona.Id);
+        yield return new SettingCommandPhrase($"become {name}", persona.Id);
+        yield return new SettingCommandPhrase($"persona {name}", persona.Id);
+        yield return new SettingCommandPhrase($"wake {name}", persona.Id);
+
+        // "The Heretic" and "L-LAM-0" both read badly after "switch to the", and a Commander saying the bare
+        // name is the likeliest phrasing for every core.
+        if (name.StartsWith("the ", StringComparison.Ordinal))
+        {
+            var bare = name[4..];
+
+            yield return new SettingCommandPhrase($"switch to {bare}", persona.Id);
+            yield return new SettingCommandPhrase($"be {bare}", persona.Id);
+            yield return new SettingCommandPhrase($"become {bare}", persona.Id);
+        }
+    }
+
+    /// <summary>
+    /// Puts a core aboard, and takes the ship AI's name with it or leaves it behind, according to the
+    /// row above.
+    /// </summary>
+    private static D47Settings WriteCoreAboard(D47Settings settings, string? value)
+    {
+        var incoming = PersonaCatalog.Knows(value) ? value! : PersonaCatalog.DefaultId;
+        var switching = !string.Equals(incoming, settings.Persona.Id, StringComparison.Ordinal);
+
+        return settings with
+        {
+            Persona = settings.Persona with
+            {
+                Id = incoming,
+                ShipName = switching && !settings.Persona.KeepShipName ? null : settings.Persona.ShipName,
+            },
+        };
+    }
+
+    private static string? Blank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static string Describe(PersonaHost host, D47Settings settings, ShipCoreService? ships)
+    {
+        var report = new StringBuilder();
+        var current = host.Current;
+
+        report.AppendLine($"Active persona: {current.Name} — {current.Tagline}");
+
+        if (!string.Equals(host.ShipName, current.Name, StringComparison.Ordinal))
+        {
+            report.AppendLine($"The Commander calls you {host.ShipName}.");
+        }
+
+        report.AppendLine(settings.Llm.PersonalityEnabled
+            ? "Personality is on."
+            : "Personality is off, so you are answering plainly and this persona's voice is not in play.");
+
+        // The binding, read and never written (Phase 35).
+        if (ships is not null)
+        {
+            report.AppendLine(ships.DescribeCurrent()
+                + " That is the Commander's own binding — you can say what it is, and only they can change it.");
+        }
+
+        report.AppendLine();
+        report.AppendLine("Available personas (the Commander changes these from the panel or by saying so):");
+
+        foreach (var persona in PersonaCatalog.All)
+        {
+            report.AppendLine($"  {persona.Id} — {persona.Name}: {persona.Tagline}");
+        }
+
+        return report.ToString().TrimEnd();
+    }
+}

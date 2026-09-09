@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\D47.Core\D47.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="D47.App.Tests" />
+    <InternalsVisibleTo Include="D47.Audio.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NAudio" Version="2.2.1" />
+
+    <PackageReference Include="SoundFlow.Extensions.WebRtc.Apm" Version="1.4.0" />
+  </ItemGroup>
+
+</Project>

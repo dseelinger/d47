@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.11" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\assets\cues\*.wav" LogicalName="D47.Core.Cues.%(Filename)" />
+    <EmbeddedResource Include="..\..\assets\alerts\*.wav" LogicalName="D47.Core.Alerts.%(Filename)" />
+    <EmbeddedResource Include="..\..\assets\beds\*.wav" LogicalName="D47.Core.Beds.%(Filename)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Knowledge\EliteSpecifications.tsv" LogicalName="D47.Core.EliteSpecifications" />
+    <EmbeddedResource Include="Knowledge\Engineers.tsv" LogicalName="D47.Core.Engineers" />
+    <EmbeddedResource Include="Knowledge\Materials.tsv" LogicalName="D47.Core.Materials" />
+    <EmbeddedResource Include="Knowledge\Blueprints.tsv" LogicalName="D47.Core.Blueprints" />
+    <EmbeddedResource Include="Knowledge\OnFoot.tsv" LogicalName="D47.Core.OnFoot" />
+    <EmbeddedResource Include="Knowledge\Lore.tsv" LogicalName="D47.Core.LoreTable" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\docs\capabilities\*.md" LogicalName="D47.Core.Help.%(Filename)" />
+
+    <EmbeddedResource Include="..\..\docs\*.md" LogicalName="D47.Core.Help.general-%(Filename)" />
+
+    <EmbeddedResource Include="..\..\CHANGELOG.md" LogicalName="D47.Core.Changelog" />
+  </ItemGroup>
+
+</Project>

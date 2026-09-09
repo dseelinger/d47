@@ -1,0 +1,95 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <OutputType>WinExe</OutputType>
+    <AssemblyName>d47</AssemblyName>
+    <RootNamespace>D47.App</RootNamespace>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <PublishDir>bin\$(Configuration)\publish\</PublishDir>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <DebugType>embedded</DebugType>
+    <AllowedReferenceRelatedFileExtensions>none</AllowedReferenceRelatedFileExtensions>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+    <AssemblyMetadata Include="DevInstallRoot" Value="$(MSBuildThisFileDirectory)..\..\dev-install" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <ApplicationIcon>..\..\assets\directive-47.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="..\..\assets\directive-47.ico" Link="Assets\directive-47.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\assets\ships\*.png"
+          Exclude="..\..\assets\ships\*.4k.png"
+          Link="ships\%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="D47.App.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\D47.Core\D47.Core.csproj" />
+    <ProjectReference Include="..\D47.Audio\D47.Audio.csproj" />
+    <ProjectReference Include="..\D47.Knowledge\D47.Knowledge.csproj" />
+    <ProjectReference Include="..\D47.Llm\D47.Llm.csproj" />
+    <ProjectReference Include="..\D47.Stt\D47.Stt.csproj" />
+    <ProjectReference Include="..\D47.Tts\D47.Tts.csproj" />
+    <ProjectReference Include="..\D47.Vr\D47.Vr.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia.BuildServices" Version="11.3.2" ExcludeAssets="all" PrivateAssets="all" />
+  </ItemGroup>
+
+  <Target Name="DropSymbolsFromPublish" AfterTargets="ComputeFilesToPublish">
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(Extension)' == '.pdb'" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="ShipWhisperNativesBesideTheExe" AfterTargets="_ComputeCopyToPublishDirectoryItems">
+    <ItemGroup>
+      <_WhisperNative
+          Include="@(ResolvedFileToPublish)"
+          Condition="$([System.String]::Copy('%(ResolvedFileToPublish.RelativePath)').StartsWith('runtimes')) and $([System.String]::Copy('%(ResolvedFileToPublish.Filename)').Contains('whisper'))" />
+      <ResolvedFileToPublish Remove="@(_WhisperNative)" />
+      <ResolvedFileToPublish
+          Include="@(_WhisperNative)"
+          Condition="$([System.String]::Copy('%(_WhisperNative.RelativePath)').Contains('win-x64'))"
+          ExcludeFromSingleFile="true" />
+    </ItemGroup>
+    <Message Importance="high" Text="WHISPER-NATIVE beside the exe: %(_WhisperNative.RelativePath)"
+             Condition="$([System.String]::Copy('%(_WhisperNative.RelativePath)').Contains('win-x64'))" />
+  </Target>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.1" />
+    <PackageReference Include="Serilog" Version="4.4.0" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="10.0.0" />
+    <PackageReference Include="Serilog.Formatting.Compact" Version="3.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
+    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+  </ItemGroup>
+
+</Project>

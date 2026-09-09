@@ -1,0 +1,532 @@
+using D47.Core.Checklists;
+using D47.Core.Journal;
+using D47.Core.Ships;
+using Microsoft.Extensions.Logging.Abstractions;
+using Xunit;
+
+namespace D47.Core.Tests.Ships;
+
+/// <summary>The fleet, the fleet the Commander intends, and one build per ship.</summary>
+public class ShipPlanTests
+{
+    private static ShipBuildStore Store(TempInstall install) =>
+        new(Path.Combine(install.Root, "ships.json"), NullLogger<ShipBuildStore>.Instance);
+
+    private static ChecklistService Checklists(TempInstall install, CommanderGameState? state = null) =>
+        new(
+            new ChecklistStore(
+                Path.Combine(install.Root, "checklist.json"),
+                NullLogger<ChecklistStore>.Instance),
+            new ChecklistProposalStore(
+                Path.Combine(install.Root, "checklist-proposals.json"),
+                NullLogger<ChecklistProposalStore>.Instance),
+            () => state);
+
+    private static ShipPlanService Service(
+        TempInstall install, ShipBuildStore store, CommanderGameState? state = null) =>
+        new(store, Checklists(install, state), () => state);
+
+    /// <summary>
+    /// A hull the Commander does not own has no ship id, because the journal's id is what a ship list
+    /// is keyed by and a Corsair nobody has bought has none.
+    /// </summary>
+    [Fact]
+    public void AnIntendedHullHasNoShipIdAndIsNotOwned()
+    {
+        using var install = new TempInstall();
+        var ships = Service(install, Store(install));
+
+        var build = ships.Intend("Python");
+
+        Assert.NotNull(build);
+        Assert.Null(build.ShipId);
+        Assert.False(build.IsOwned);
+        Assert.Null(build.Scope);
+        Assert.Contains("intended", build.Describe(), StringComparison.Ordinal);
+    }
+
+ /// <summary>What d47 says still carries the grade in the sentence.</summary>
+    [Fact]
+    public void TheSpokenLineKeepsTheGradeAndOnlyTheDrawnOneDropsIt()
+    {
+        var plan = new SlotPlan("LargeHardpoint2", "Lightweight Mount", 5, null)
+        {
+            Module = "Pulse Laser",
+        };
+
+        Assert.Equal("Pulse Laser, grade 5 Lightweight Mount", plan.Describe());
+        Assert.Equal("Pulse Laser, Lightweight Mount", plan.Describe(withGrade: false));
+    }
+
+    /// <summary>The shipped table is what answers "is that a hull", so a typo is refused.</summary>
+    [Fact]
+    public void AHullNoTableKnowsIsRefusedRatherThanInvented()
+    {
+        using var install = new TempInstall();
+
+        Assert.Null(Service(install, Store(install)).Intend("Corsaire Mark Nine"));
+    }
+
+    /// <summary>
+    /// The identity is stable and independent of the ship id from the moment the build is made — which
+    /// is what there is to rebind when the hull is bought.
+    /// </summary>
+    [Fact]
+    public void BuyingTheHullAdoptsThePlanRatherThanMakingTheCommanderRePointIt()
+    {
+        using var install = new TempInstall();
+        var store = Store(install);
+        var ships = Service(install, store);
+
+        var intended = ships.Intend("Python")!;
+
+        ships.Plan(intended.Id, new SlotPlan("MainEngines", "Dirty Drive Tuning", 5));
+
+        // The journal writes ShipyardNew with the id.
+        var said = ships.Observe([Event("""
+            {"timestamp":"2026-08-18T09:00:00Z","event":"ShipyardNew","ShipType":"python","NewShipID":21}
+            """)]);
+
+        Assert.Single(said);
+
+        var adopted = store.Find(intended.Id);
+
+        Assert.NotNull(adopted);
+        Assert.Equal(21, adopted.ShipId);
+        Assert.True(adopted.IsOwned);
+
+        // The same identity throughout, and the slot plan came with it.
+        Assert.Equal(intended.Id, adopted.Id);
+        Assert.Equal("Dirty Drive Tuning", adopted.For("MainEngines")?.Blueprint);
+    }
+
+    [Fact]
+    public void BoardingAPlannedHullAdoptsItToo()
+    {
+        using var install = new TempInstall();
+        var store = Store(install);
+        var ships = Service(install, store);
+
+        var intended = ships.Intend("Python")!;
+
+        Assert.Null(intended.ShipId);
+
+        var said = ships.Observe([Event("""
+            {"timestamp":"2026-08-18T09:00:00Z","event":"Loadout","Ship":"python","ShipID":12,"ShipName":"Bad Idea"}
+            """)]);
+
+        Assert.Single(said);
+        Assert.Equal(12, store.Find(intended.Id)?.ShipId);
+    }
+
+    [Fact]
+    public void BoardingDoesNotStealAShipAnotherBuildAlreadyHolds()
+    {
+        using var install = new TempInstall();
+        var store = Store(install);
+        var ships = Service(install, store);
+
+        var owned = ships.Intend("Python", "the one I fly")!;
+
+        ships.Observe([Event("""
+            {"timestamp":"2026-08-18T09:00:00Z","event":"ShipyardNew","ShipType":"python","NewShipID":12}
+            """)]);
+
+        var wanted = ships.Intend("Python", "the one I want")!;
+
+        var said = ships.Observe([Event("""
+            {"timestamp":"2026-08-18T10:00:00Z","event":"Loadout","Ship":"python","ShipID":12,"ShipName":"Bad Idea"}
+            """)]);
+
+        Assert.Empty(said);
+        Assert.Equal(12, store.Find(owned.Id)?.ShipId);
+        Assert.Null(store.Find(wanted.Id)?.ShipId);
+    }
+
+    /// <summary>
+    /// Two Corsairs planned and one bought is a question rather than a guess: adopting the wrong one
+    /// silently is worse than adopting neither.
+    /// </summary>
+    [Fact]
+    public void TwoIntendedHullsOfOneTypeAreNotAdoptedAtAll()
+    {
+        using var install = new TempInstall();
+        var store = Store(install);
+        var ships = Service(install, store);
+
+        ships.Intend("Python", "one");
+        ships.Intend("Python", "two");
+
+        var said = ships.Observe([Event("""
+            {"timestamp":"2026-08-18T09:00:00Z","event":"ShipyardNew","ShipType":"python","NewShipID":21}
+            """)]);
+
+        Assert.Empty(said);
+        Assert.All(store.Builds, build => Assert.False(build.IsOwned));
+    }
+
+    /// <summary>A slot holds one plan, because a slot holds one module.</summary>
+    [Fact]
+    public void PlanningASlotTwiceReplacesRatherThanAdds()
+    {
+        using var install = new TempInstall();
+        var store = Store(install);
+        var ships = Service(install, store);
+
+        var build = ships.Intend("Python")!;
+
+        ships.Plan(build.Id, new SlotPlan("Hardpoint1", "Long Range", 5));
+        ships.Plan(build.Id, new SlotPlan("Hardpoint1", "Overcharged", 3));
+
+        var slot = Assert.Single(store.Find(build.Id)!.Slots);
+
+        Assert.Equal("Overcharged", slot.Blueprint);
+        Assert.Equal(3, slot.Grade);
+    }
+
+    [Fact]
+    public void AShipHasOneBuild()
+    {
+        using var install = new TempInstall();
+        var store = Store(install);
+        var ships = Service(install, store);
+
+        var first = ships.BuildFor(12, "python", "Bad Idea");
+        var again = ships.BuildFor(12, "python", "Bad Idea");
+
+        Assert.Equal(first.Id, again.Id);
+        Assert.Single(store.Builds);
+    }
+
+    /// <summary>And a hand edit that puts two on one ship is reported rather than obeyed.</summary>
+    [Fact]
+    public void AFileWithTwoBuildsForOneShipIsRefusedAndSaidSo()
+    {
+        using var install = new TempInstall();
+        var path = Path.Combine(install.Root, "ships.json");
+
+        File.WriteAllText(path, """
+        {
+          "ships": [
+            { "id": "ship-1", "hull": "python", "shipId": 12 },
+            { "id": "ship-2", "hull": "python", "shipId": 12 }
+          ]
+        }
+        """);
+
+        var store = new ShipBuildStore(path, NullLogger<ShipBuildStore>.Instance);
+        store.Poll();
+
+        Assert.Single(store.Builds);
+        Assert.Single(store.Problems);
+    }
+
+    /// <summary>The Commander is half the key: Elite's ship ids are per Commander and start small, so two Commanders' ship 12s are two ships and neither build is a duplicate of the other.</summary>
+    [Fact]
+    public void TwoCommandersMayEachHaveABuildForTheSameShipId()
+    {
+        using var install = new TempInstall();
+        var path = Path.Combine(install.Root, "ships.json");
+
+        File.WriteAllText(path, """
+        {
+          "ships": [
+            { "commanderFid": "F1", "id": "ship-1", "hull": "python", "shipId": 12 },
+            { "commanderFid": "F2", "id": "ship-2", "hull": "anaconda", "shipId": 12 }
+          ]
+        }
+        """);
+
+        var store = new ShipBuildStore(path, NullLogger<ShipBuildStore>.Instance);
+        store.Poll();
+
+        Assert.Equal(2, store.Builds.Count);
+        Assert.Empty(store.Problems);
+        Assert.Equal("python", store.ForShip("F1", 12)!.Hull);
+        Assert.Equal("anaconda", store.ForShip("F2", 12)!.Hull);
+    }
+
+    /// <summary>The same seen from the service: another Commander's ship 12 is a different ship, so their build must not answer for this Commander's.</summary>
+    [Fact]
+    public void AnotherCommandersBuildDoesNotAnswerForThisCommandersShip()
+    {
+        using var install = new TempInstall();
+        var store = Store(install);
+
+        store.Save([new ShipBuild("F2", "ship-1", "anaconda", 12, "Someone Else's")]);
+
+        var game = new GameStateStore();
+
+        game.Apply(Event(
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}"""));
+
+        game.Apply(Event(
+            """{"timestamp":"2026-08-18T09:00:01Z","event":"Loadout","Ship":"python","ShipID":12,"ShipName":"Bad Idea","ShipIdent":"BI-01","Modules":[]}"""));
+
+        var ships = Service(install, store, game.Active!);
+
+        Assert.Null(ships.ForShip(12));
+
+        // The fleet page is this Commander's: their flown ship with no plan on it, and the other Commander's
+        // build nowhere in the list.
+        var flown = Assert.Single(ships.Fleet());
+
+        Assert.True(flown.IsActive);
+        Assert.Null(flown.Build);
+    }
+
+    /// <summary>
+    /// A file from before builds carried a Commander: claimed whole by the first one seen, the way the
+    /// checklist adopts unowned notes — a release must not silently empty every fleet page.
+    /// </summary>
+    [Fact]
+    public void ALegacyBuildFileIsAdoptedByTheFirstCommanderSeen()
+    {
+        using var install = new TempInstall();
+        var path = Path.Combine(install.Root, "ships.json");
+
+        File.WriteAllText(path, """
+        {
+          "ships": [
+            { "id": "ship-1", "hull": "python", "shipId": 12 }
+          ]
+        }
+        """);
+
+        var store = new ShipBuildStore(path, NullLogger<ShipBuildStore>.Instance);
+        store.Poll();
+
+        var game = new GameStateStore();
+
+        game.Apply(Event(
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}"""));
+
+        var ships = Service(install, store, game.Active!);
+
+        Assert.Null(ships.ForShip(12));
+
+        ships.Observe([]);
+
+        Assert.Equal("F1", ships.ForShip(12)!.CommanderFid);
+    }
+
+    /// <summary>Promotion goes through the proposal path, so nothing lands on the checklist unasked.</summary>
+    [Fact]
+    public void PromotingPutsTheBuildOnTheChecklistBecauseThatIsWhatTheButtonSays()
+    {
+        using var install = new TempInstall();
+        var store = Store(install);
+        var checklists = Checklists(install);
+        var ships = new ShipPlanService(store, checklists, () => null);
+
+        var build = ships.BuildFor(12, "python", "Bad Idea");
+
+        ships.Plan(build.Id, new SlotPlan("MainEngines", "Dirty Drive Tuning", 5, "Felicity Farseer"));
+        var said = ships.Promote(build.Id);
+
+        // The button says "Put this build on my checklist", so pressing it puts the lines on the list rather than leaving a proposal waiting.
+        Assert.Empty(checklists.Proposals.Pending);
+
+        // And it says how much arrived, because forty items landing is an event.
+        Assert.Contains("on your checklist now", said, StringComparison.Ordinal);
+
+        // Promotion is one-to-many: the modification, plus the rank the grade needs.
+        var items = checklists.Document.Items;
+
+        Assert.Contains(items, item => item.Intent?.Kind == ChecklistIntentKind.Blueprint);
+        Assert.Contains(items, item => item.Intent?.Kind == ChecklistIntentKind.EngineerAccess);
+    }
+
+    /// <summary>
+    /// A prospective hull has no list to be on, and that is said rather than invented: scoping a
+    /// Corsair's hardpoints to the universal list would outlive the decision to buy one.
+    /// </summary>
+    [Fact]
+    public void APlanForAHullYouDoNotOwnCannotBePromoted()
+    {
+        using var install = new TempInstall();
+        var store = Store(install);
+        var checklists = Checklists(install);
+        var ships = new ShipPlanService(store, checklists, () => null);
+
+        var build = ships.Intend("Python")!;
+
+        ships.Plan(build.Id, new SlotPlan("MainEngines", "Dirty Drive Tuning", 5));
+
+        var said = ships.Promote(build.Id);
+
+        Assert.Contains("do not own", said, StringComparison.Ordinal);
+        Assert.Empty(checklists.Proposals.Pending);
+    }
+
+    /// <summary>Dropping a plan keeps what it already put on the checklist.</summary>
+    [Fact]
+    public void DroppingABuildKeepsWhatItAlreadyPromoted()
+    {
+        using var install = new TempInstall();
+        var store = Store(install);
+        var checklists = Checklists(install);
+        var ships = new ShipPlanService(store, checklists, () => null);
+
+        var build = ships.BuildFor(12, "python", "Bad Idea");
+
+        ships.Plan(build.Id, new SlotPlan("MainEngines", "Dirty Drive Tuning", 5));
+        ships.Promote(build.Id);
+        checklists.Accept();
+
+        var before = checklists.Document.Items.Count(item => item.IsLive);
+
+        Assert.True(before > 0);
+
+        var said = ships.Delete(build.Id);
+
+        Assert.Empty(store.Builds);
+        Assert.Equal(before, checklists.Document.Items.Count(item => item.IsLive));
+        Assert.Contains("still there", said, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Changing a slot and promoting again is a revision rather than a rebuild — which is the slot key
+    /// of item one, seen from the far end of the phase.
+    /// </summary>
+    [Fact]
+    public void ChangingASlotAndPromotingAgainRevisesRatherThanRebuilds()
+    {
+        using var install = new TempInstall();
+        var store = Store(install);
+        var checklists = Checklists(install);
+        var ships = new ShipPlanService(store, checklists, () => null);
+
+        var build = ships.BuildFor(12, "python", "Bad Idea");
+
+        ships.Plan(build.Id, new SlotPlan("Hardpoint1", "Long Range", 5));
+        ships.Promote(build.Id);
+        checklists.Accept();
+
+        var first = checklists.Document.Items.Single(item => item.Intent?.Kind == ChecklistIntentKind.Blueprint);
+
+        ships.Plan(build.Id, new SlotPlan("Hardpoint1", "Overcharged", 3));
+        ships.Promote(build.Id);
+        checklists.Accept();
+
+        var after = checklists.Document.Items
+            .Where(item => item.Intent?.Kind == ChecklistIntentKind.Blueprint)
+            .ToList();
+
+        // One item, still live, still the same identity.
+        var only = Assert.Single(after);
+
+        Assert.True(only.IsLive);
+        Assert.True(only.Id.Same(first.Id));
+    }
+
+    /// <summary>
+    /// The fleet lists the ship being flown, which the journal's stored-ships snapshot never does:
+    /// StoredShips is what is in the racks, and the one under the Commander is by definition not.
+    /// </summary>
+    [Fact]
+    public void TheShipBeingFlownIsInTheFleet()
+    {
+        using var install = new TempInstall();
+        var store = new GameStateStore();
+
+        store.Apply(Event(
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}"""));
+
+        store.Apply(Event(
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"Loadout","Ship":"python","ShipID":12,"ShipName":"Bad Idea","ShipIdent":"BI-01","Modules":[]}"""));
+
+        var state = store.Active!;
+        var ships = Service(install, Store(install), state);
+        var fleet = ships.Fleet();
+
+        var active = Assert.Single(fleet);
+
+        Assert.True(active.IsActive);
+        Assert.True(active.IsOwned);
+        Assert.Equal("Bad Idea", active.Name);
+        Assert.Contains("flying", active.Where(), StringComparison.Ordinal);
+    }
+
+    /// <summary>Change is detected by content, not by a stamp.</summary>
+    [Fact]
+    public void TwoWritesInsideOneTickAreBothSeen()
+    {
+        using var install = new TempInstall();
+        var path = Path.Combine(install.Root, "ships.json");
+        var store = new ShipBuildStore(path, NullLogger<ShipBuildStore>.Instance);
+
+        File.WriteAllText(path, """{ "ships": [ { "id": "ship-1", "hull": "python" } ] }""");
+        Assert.True(store.Poll());
+
+        File.WriteAllText(path, """{ "ships": [ { "id": "ship-2", "hull": "anaconda" } ] }""");
+        Assert.True(store.Poll());
+
+        Assert.Equal("anaconda", store.Builds[0].Hull);
+        Assert.False(store.Poll());
+    }
+
+    /// <summary>
+    /// Every row names the system the ship is in, asked for 2026-08-20: "print in the ship list what
+    /// system the ship is in".
+    /// </summary>
+    [Fact]
+    public void EveryRowNamesTheSystemTheShipIsIn()
+    {
+        using var install = new TempInstall();
+        var store = new GameStateStore();
+
+        store.Apply(Event(
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}"""));
+
+        store.Apply(Event(
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"Location","StarSystem":"Laksak","Docked":true,"StationName":"BNH-T2F"}"""));
+
+        store.Apply(Event(
+            """{"timestamp":"2026-08-18T09:00:01Z","event":"Loadout","Ship":"anaconda","ShipID":51,"ShipName":"Flamebrand","ShipIdent":"FB-01","Modules":[]}"""));
+
+        // One in the rack beside them, one parked somewhere else entirely.
+        store.Apply(Event(
+            """{"timestamp":"2026-08-18T09:00:02Z","event":"StoredShips","StarSystem":"Laksak","StationName":"BNH-T2F","ShipsHere":[{"ShipID":37,"ShipType":"cobramkv","Name":"Reaper","Value":1}],"ShipsRemote":[{"ShipID":42,"ShipType":"python","Name":"Expedition","StarSystem":"Shinrarta Dezhra","Value":1}]}"""));
+
+        var ships = Service(install, Store(install), store.Active!);
+        var fleet = ships.Fleet();
+
+        var flown = fleet.Single(entry => entry.Stored?.ShipId == 51);
+        var beside = fleet.Single(entry => entry.Stored?.ShipId == 37);
+        var away = fleet.Single(entry => entry.Stored?.ShipId == 42);
+
+        Assert.Contains("Laksak", flown.Where(), StringComparison.Ordinal);
+        Assert.Contains("Laksak", beside.Where(), StringComparison.Ordinal);
+        Assert.Equal("Shinrarta Dezhra", away.Where());
+
+        // Still says which one is under the Commander — the system was added to that answer, not put in place
+        // of it.
+        Assert.Contains("flying", flown.Where(), StringComparison.Ordinal);
+    }
+
+    /// <summary>With no location yet, the row says what it knows and no more.</summary>
+    [Fact]
+    public void AShipWithNoKnownSystemDoesNotInventOne()
+    {
+        using var install = new TempInstall();
+        var store = new GameStateStore();
+
+        store.Apply(Event(
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}"""));
+
+        store.Apply(Event(
+            """{"timestamp":"2026-08-18T09:00:01Z","event":"Loadout","Ship":"python","ShipID":12,"ShipName":"Bad Idea","ShipIdent":"BI-01","Modules":[]}"""));
+
+        var flown = Assert.Single(Service(install, Store(install), store.Active!).Fleet());
+
+        Assert.False(flown.Stored!.HasSystem);
+        Assert.Equal("you are flying it", flown.Where());
+    }
+
+    private static JournalEvent Event(string json)
+    {
+        Assert.True(JournalEvent.TryParse(json.ReplaceLineEndings(" "), NullLogger.Instance, out var parsed));
+        return parsed!;
+    }
+}

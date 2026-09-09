@@ -1,0 +1,98 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="D47.App.Settings.SettingsView"
+             Background="{DynamicResource D47.Background}"
+             Foreground="{DynamicResource D47.Text}">
+
+  <!--
+    One view definition. Phase 9 instantiates it a second time against the same settings
+    service for the VR overlay; nothing here knows about a window.
+
+    Layout is scroll-spy: one scrolling column of cards, and a nav that highlights whichever
+    card is topmost in view (list.md Phase 4, "Settings Nav Menu"). Nav items are built in
+    code from the same sections the cards are - there is no second list.
+  -->
+  <!--
+    The page has a width below which it stops working: the nav, plus a card column wide enough to
+    hold a caption beside its control. Narrower than this the window scrolls sideways rather than
+    squeezing, which is what a browser does and what zoom needs.
+
+    Both numbers move with the width now that this is a page of the main window rather than a
+    window of its own that could open at 1180 — see OnRootSizeChanged for the floor the nav
+    collapses at and why.
+  -->
+  <Grid x:Name="Root" ColumnDefinitions="224,*" MinWidth="700" SizeChanged="OnRootSizeChanged">
+
+    <Border x:Name="Nav"
+            Grid.Column="0"
+            Background="{DynamicResource D47.Background}"
+            BorderBrush="{DynamicResource D47.Border}"
+            BorderThickness="0,0,1,0">
+      <DockPanel Margin="12,20,12,16">
+        <StackPanel DockPanel.Dock="Top" Spacing="3" Margin="10,0,10,16">
+          <TextBlock Text="Settings"
+                     FontSize="{StaticResource D47.Type.Heading}"
+                     FontWeight="Medium"
+                     Foreground="{DynamicResource D47.Text}" />
+          <TextBlock Text="Changes apply as you make them."
+                     FontSize="{StaticResource D47.Type.Secondary}"
+                     TextWrapping="Wrap"
+                     Foreground="{DynamicResource D47.TextMuted}" />
+        </StackPanel>
+        <!--
+          The nav scrolls (remediation.md 17, item 3). One entry per capability that declares any
+          settings, which is now more than twenty against a window that opens 640 tall, so the
+          tail of the list was off the bottom edge and unreachable.
+
+          Its own scroller rather than a taller column: the heading above it stays put while the
+          entries move, which is what makes the list feel like an index rather than a page.
+          Auto rather than Visible, so the bar is absent on a window tall enough not to need it.
+        -->
+        <ScrollViewer x:Name="NavScroller"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+          <StackPanel x:Name="NavItems" Spacing="2" />
+        </ScrollViewer>
+      </DockPanel>
+    </Border>
+
+    <DockPanel Grid.Column="1">
+
+      <!--
+        The strip that used to run along the foot of this tab - where the data folder is, and a
+        button to open it - is gone (the Commander's instruction, 2026-09-01). It was permanently
+        on screen behind every card to answer a question asked once. Both halves are on the About
+        card now, which is where a Commander looks for "where is this thing"; About itself stopped
+        being down here when it became an area in the nav (#50), and this is the rest of that move.
+      -->
+
+      <!--
+        Open and shut every card (#223). Built in code and put beside "Show every setting"
+        rather than declared here, because it belongs on that row (the Commander's instruction,
+        2026-09-01) and a control declared in one container and moved into another carries the
+        first one's sizing with it - measured, it asked for 664 of the line's 700 pixels and left
+        the row nothing to draw in. See BulkControls.
+      -->
+
+      <!--
+        Horizontal scrolling is on, and the cards have a floor as well as a ceiling. Zoom shrinks
+        the space the panel is laid out in - at 175% in a 900-pixel window a row gets 197 - and
+        below about 420 a row cannot hold its caption and its control side by side. Without a
+        floor the caption was squeezed to nothing and the control drew over it; with one, the
+        row keeps its shape and the panel scrolls. A scrollbar is a worse answer than fitting
+        and a better one than two controls in the same place.
+      -->
+      <ScrollViewer x:Name="Scroller"
+                    ScrollChanged="OnScrollChanged"
+                    SizeChanged="OnScrollerSizeChanged"
+                    HorizontalScrollBarVisibility="Auto">
+        <StackPanel x:Name="Cards"
+                    Margin="28,20,28,28"
+                    Spacing="14"
+                    HorizontalAlignment="Left" />
+      </ScrollViewer>
+
+    </DockPanel>
+
+  </Grid>
+</UserControl>

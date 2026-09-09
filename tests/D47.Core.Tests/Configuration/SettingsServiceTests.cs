@@ -1,0 +1,711 @@
+﻿using D47.Core.Audio;
+using D47.Core.Capabilities;
+using D47.Core.Capabilities.Builtin;
+using D47.Core.Configuration;
+using D47.Core.Conversation;
+using D47.Core.Interface;
+using Microsoft.Extensions.Logging;
+using Xunit;
+
+namespace D47.Core.Tests.Configuration;
+
+public class SettingsServiceTests
+{
+    private static readonly string AnthropicKeyRow =
+        ConversationCapability.KeyRowFor(LlmProviderCatalog.Find(LlmProviderCatalog.AnthropicId)!);
+
+    private static readonly string ElevenLabsKeyRow =
+        SpeechCapability.KeyRowFor(TtsProviderCatalog.ElevenLabs);
+
+    [Fact]
+    public void AChangeIsPersistedWithoutASaveStep()
+    {
+        // There is no save button and no dirty state: what is in memory and what is on disk cannot disagree,
+        // because a rejected value never reaches either.
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        var result = surface.Settings.Apply(InterfaceCapability.ThemeKey, ThemeCatalog.Guardian, SettingsCaller.Panel);
+
+        Assert.Equal(SettingApplyStatus.Applied, result.Status);
+        Assert.Equal(ThemeCatalog.Guardian, surface.Settings.Current.Ui.Theme);
+
+        // Read back through a second store over the same folder — a restart, in effect.
+        var reloaded = TestSurface.For(install);
+        Assert.Equal(ThemeCatalog.Guardian, reloaded.Settings.Current.Ui.Theme);
+    }
+
+    [Fact]
+    public void SettingAValueTwiceIsNotAWrite()
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        surface.Settings.Apply(InterfaceCapability.ThemeKey, ThemeCatalog.Light, SettingsCaller.Panel);
+        var again = surface.Settings.Apply(InterfaceCapability.ThemeKey, ThemeCatalog.Light, SettingsCaller.Panel);
+
+        Assert.Equal(SettingApplyStatus.Unchanged, again.Status);
+    }
+
+    [Fact]
+    public void AChangeIsAnnouncedOnceWithTheKeyThatChanged()
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        var announced = new List<string>();
+        surface.Settings.Changed += change => announced.Add(change.Key);
+
+        surface.Settings.Apply(InterfaceCapability.ThemeKey, ThemeCatalog.Dark, SettingsCaller.Panel);
+
+        Assert.Equal([InterfaceCapability.ThemeKey], announced);
+    }
+
+    /// <summary>Changed means "a change was persisted, go and re-read".</summary>
+    [Fact]
+    public void EveryAttemptIsAnnouncedWithItsStatusIncludingTheOnesThatChangedNothing()
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        var announced = new List<SettingApplied>();
+        surface.Settings.Applied += announced.Add;
+
+        surface.Settings.Apply(InterfaceCapability.ThemeKey, ThemeCatalog.Dark, SettingsCaller.Panel);
+        surface.Settings.Apply(InterfaceCapability.ThemeKey, ThemeCatalog.Dark, SettingsCaller.Panel);
+        surface.Settings.Apply(InterfaceCapability.ThemeKey, "sparkly", SettingsCaller.Panel);
+
+        Assert.Equal(
+            [
+                new SettingApplied(InterfaceCapability.ThemeKey, SettingApplyStatus.Applied),
+                new SettingApplied(InterfaceCapability.ThemeKey, SettingApplyStatus.Unchanged),
+                new SettingApplied(InterfaceCapability.ThemeKey, SettingApplyStatus.Rejected),
+            ],
+            announced);
+    }
+
+    /// <summary>
+    /// The outcome most worth seeing, and the one Changed can never carry: a valid value that could not
+    /// be written.
+    /// </summary>
+    [Fact]
+    public void AFailedSaveIsAnnouncedAsAppliedButNotAsChanged()
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        var applied = new List<SettingApplied>();
+        var changed = new List<string>();
+        surface.Settings.Applied += applied.Add;
+        surface.Settings.Changed += change => changed.Add(change.Key);
+
+        // A directory sitting where the pending write wants to put a file.
+        Directory.CreateDirectory(install.Paths.SettingsFile + ".writing");
+
+        var result = surface.Settings.Apply(
+            InterfaceCapability.ThemeKey, ThemeCatalog.Guardian, SettingsCaller.Panel);
+
+        Assert.Equal(SettingApplyStatus.Failed, result.Status);
+        Assert.Equal([new SettingApplied(InterfaceCapability.ThemeKey, SettingApplyStatus.Failed)], applied);
+        Assert.Empty(changed);
+    }
+
+    /// <summary>Keys are matched case-insensitively, so "Ui.Theme" and "ui.theme" are one row.</summary>
+    [Fact]
+    public void BothEventsAnnounceTheRowsOwnKeyNotTheCallersSpelling()
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        var applied = new List<string>();
+        var changed = new List<string>();
+        surface.Settings.Applied += a => applied.Add(a.Key);
+        surface.Settings.Changed += c => changed.Add(c.Key);
+
+        var shouted = InterfaceCapability.ThemeKey.ToUpperInvariant();
+        Assert.NotEqual(InterfaceCapability.ThemeKey, shouted);
+
+        var result = surface.Settings.Apply(shouted, ThemeCatalog.Guardian, SettingsCaller.Panel);
+
+        Assert.Equal(SettingApplyStatus.Applied, result.Status);
+        Assert.Equal([InterfaceCapability.ThemeKey], applied);
+        Assert.Equal([InterfaceCapability.ThemeKey], changed);
+    }
+
+    [Fact]
+    public void AnUnknownKeyIsNamedRatherThanIgnored()
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        var result = surface.Settings.Apply("ui.chrome", "sparkly", SettingsCaller.Panel);
+
+        Assert.Equal(SettingApplyStatus.UnknownKey, result.Status);
+        Assert.Contains("ui.chrome", result.Message, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(SettingsCaller.Panel)]
+    [InlineData(SettingsCaller.Hotkey)]
+    [InlineData(SettingsCaller.KeywordRouter)]
+    public void EveryCallerButTheModelReachesAProtectedRow(SettingsCaller caller)
+    {
+ // Protected is a property of the caller, not of the modality.
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        var result = surface.Settings.Apply(PrivacyCapability.UpdateCheckKey, "false", caller);
+
+        Assert.Equal(SettingApplyStatus.Applied, result.Status);
+        Assert.False(surface.Settings.Current.Updates.CheckOnStartup);
+    }
+
+    [Fact]
+    public void TheModelIsRefusedAProtectedRow()
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        var result = surface.Settings.Apply(PrivacyCapability.UpdateCheckKey, "false", SettingsCaller.Model);
+
+        Assert.Equal(SettingApplyStatus.Refused, result.Status);
+        Assert.True(surface.Settings.Current.Updates.CheckOnStartup);
+    }
+
+    [Fact]
+    public void TheModelIsRefusedASecretEvenWhenTheRowIsNotMarkedProtected()
+    {
+        // Belt and braces on purpose: a key must be unreachable from the tool surface whether or not whoever
+        // declared the row remembered to also mark it protected.
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        Assert.False(surface.Settings.Find(AnthropicKeyRow)!.Protected);
+
+        var result = surface.Settings.Apply(AnthropicKeyRow, "sk-not-a-real-key", SettingsCaller.Model);
+
+        Assert.Equal(SettingApplyStatus.Refused, result.Status);
+        Assert.False(surface.Settings.HasSecret(LlmProviderCatalog.Find(LlmProviderCatalog.AnthropicId)!.KeySecretName));
+    }
+
+    [Fact]
+    public void ASecretIsWriteOnlyFromEverySurface()
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+        var row = surface.Settings.Find(AnthropicKeyRow)!;
+
+        var stored = surface.Settings.Apply(AnthropicKeyRow, "sk-not-a-real-key", SettingsCaller.Panel);
+
+        Assert.Equal(SettingApplyStatus.Applied, stored.Status);
+        Assert.True(surface.Settings.HasSecret(row.SecretName));
+
+        // Presence, never the value — including for the panel that just set it.
+        Assert.Null(surface.Settings.Read(AnthropicKeyRow));
+
+        var cleared = surface.Settings.Apply(AnthropicKeyRow, null, SettingsCaller.Panel);
+        Assert.Equal(SettingApplyStatus.Applied, cleared.Status);
+        Assert.False(surface.Settings.HasSecret(row.SecretName));
+    }
+
+    /// <summary>A key can be stored before the provider it belongs to is the one selected.</summary>
+    [Fact]
+    public void AProviderKeyIsStorableBeforeThatProviderIsSelected()
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        var row = surface.Settings.Find(ElevenLabsKeyRow)!;
+
+        // The state a fresh install is in, and the one the screenshot was taken in.
+        Assert.NotEqual(TtsProviderCatalog.ElevenLabsId, surface.Settings.Current.Speech.Provider);
+        Assert.False(row.Applies(surface.Settings.Current));
+
+        var result = surface.Settings.Apply(ElevenLabsKeyRow, "sk-a-valid-looking-key", SettingsCaller.Panel);
+
+        Assert.Equal(SettingApplyStatus.Applied, result.Status);
+        Assert.True(surface.Settings.HasSecret(row.SecretName!));
+    }
+
+    /// <summary>
+    /// The half of the rule that did not change: a row that does not apply and is not a secret is still
+    /// rejected.
+    /// </summary>
+    [Fact]
+    public void ANonSecretRowThatDoesNotApplyIsStillRejected()
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        // Anthropic has one address and no reason to accept another, so its endpoint row does not apply while
+        // Anthropic is selected.
+        var result = surface.Settings.Apply(
+            ConversationCapability.EndpointKey, "https://example.invalid", SettingsCaller.Panel);
+
+        Assert.Equal(SettingApplyStatus.Rejected, result.Status);
+    }
+
+    [Fact]
+    public void ADisclosureRowIsReportedRatherThanSet()
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        var result = surface.Settings.Apply($"egress.{EgressDisclosure.LanguageModel}", "off", SettingsCaller.Panel);
+
+        Assert.Equal(SettingApplyStatus.Refused, result.Status);
+    }
+
+    [Fact]
+    public void AValueOutsideAClosedChoiceIsRefusedWithTheRealList()
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        var result = surface.Settings.Apply(InterfaceCapability.ThemeKey, "sparkly", SettingsCaller.Panel);
+
+        Assert.Equal(SettingApplyStatus.Rejected, result.Status);
+        Assert.Contains(ThemeCatalog.Guardian, result.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AToggleAcceptsTheWordsAPersonWouldSayAndStoresOneForm()
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        Assert.Equal(
+            SettingApplyStatus.Applied,
+            surface.Settings.Apply(PrivacyCapability.UpdateCheckKey, "OFF", SettingsCaller.Panel).Status);
+
+        Assert.Equal("false", surface.Settings.Read(PrivacyCapability.UpdateCheckKey));
+
+        // Same setting, said differently: not a change, so not a write and not an announcement.
+        Assert.Equal(
+            SettingApplyStatus.Unchanged,
+            surface.Settings.Apply(PrivacyCapability.UpdateCheckKey, "no", SettingsCaller.Panel).Status);
+    }
+
+    [Fact]
+    public void ClearingARowRestoresTheDefaultTheePlaceholderAdvertised()
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        // Set to something other than the default, so clearing is a visible change rather than a value that
+        // happens to match what the placeholder already advertised.
+        surface.Settings.Apply(ConversationCapability.ModelKey, "claude-opus-5", SettingsCaller.Panel);
+        Assert.Equal("claude-opus-5", surface.Settings.Read(ConversationCapability.ModelKey));
+
+        surface.Settings.Apply(ConversationCapability.ModelKey, null, SettingsCaller.Panel);
+
+        Assert.Null(surface.Settings.Read(ConversationCapability.ModelKey));
+        Assert.Equal(
+            "claude-sonnet-5",
+            surface.Settings.Find(ConversationCapability.ModelKey)!.DefaultDisplayFor(surface.Settings.Current));
+    }
+
+    [Fact]
+    public void ChangingTheEndpointResetsTheModelListAndTheSelection()
+    {
+        // A model id belongs to its endpoint's namespace.
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        surface.Settings.Apply(ConversationCapability.ModelKey, "claude-opus-5", SettingsCaller.Panel);
+        Assert.Equal("claude-opus-5", surface.Settings.Current.Llm.Model);
+
+        var endpoint = surface.Settings.Find(ConversationCapability.EndpointKey);
+        Assert.NotNull(endpoint);
+
+        var moved = endpoint.Binding!.Write!(surface.Settings.Current, "https://gateway.example/v1");
+
+        Assert.Null(moved.Llm.Model);
+        Assert.Empty(surface.Settings.Find(ConversationCapability.ModelKey)!.ChoicesFor(moved));
+    }
+
+    /// <summary>Having an address and being pointable at another are different facts.</summary>
+    [Fact]
+    public void TheEndpointRowDoesNotApplyToAProviderWithNowhereElseToPoint()
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        surface.Settings.Apply(
+            ConversationCapability.ProviderKey, LlmProviderCatalog.AnthropicId, SettingsCaller.Panel);
+
+        var endpoint = surface.Settings.Find(ConversationCapability.EndpointKey);
+
+        Assert.NotNull(endpoint);
+        Assert.False(endpoint.Applies(surface.Settings.Current));
+    }
+
+    [Fact]
+    public void AModelNameTheEndpointOnlyKnowsIsStillAccepted()
+    {
+        // The picker's fail-soft contract: with an empty list you can still type one.
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        surface.Settings.Apply(ConversationCapability.EndpointKey, "https://gateway.example/v1", SettingsCaller.Panel);
+
+        var result = surface.Settings.Apply(ConversationCapability.ModelKey, "house-model-7", SettingsCaller.Panel);
+
+        Assert.Equal(SettingApplyStatus.Applied, result.Status);
+        Assert.Equal("house-model-7", surface.Settings.Current.Llm.Model);
+    }
+
+    [Fact]
+    public void ChangingTheProviderClearsWhatBelongedToTheOldOne()
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        surface.Settings.Apply(ConversationCapability.EndpointKey, "https://gateway.example/v1", SettingsCaller.Panel);
+        surface.Settings.Apply(ConversationCapability.ModelKey, "house-model-7", SettingsCaller.Panel);
+
+        surface.Settings.Apply(ConversationCapability.ProviderKey, LlmProviderCatalog.NoneId, SettingsCaller.Panel);
+
+        Assert.Null(surface.Settings.Current.Llm.Endpoint);
+        Assert.Null(surface.Settings.Current.Llm.Model);
+    }
+
+    [Fact]
+    public void ARowThatDoesNotApplyIsNotWritableEither()
+    {
+        // Settings adapt to the selected provider rather than showing a hardwired set.
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        surface.Settings.Apply(ConversationCapability.ProviderKey, LlmProviderCatalog.NoneId, SettingsCaller.Panel);
+
+        Assert.False(surface.Settings.Find(ConversationCapability.EndpointKey)!.Applies(surface.Settings.Current));
+
+        var result = surface.Settings.Apply(
+            ConversationCapability.EndpointKey, "https://gateway.example/v1", SettingsCaller.Panel);
+
+        Assert.Equal(SettingApplyStatus.Rejected, result.Status);
+    }
+
+    [Fact]
+    public void ALogLevelChangeIsLiveAndPersistedFromOnePath()
+    {
+        // The tool, the panel and the settings file all write the same row, and the verbosity control follows
+        // the row.
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        surface.Settings.Apply(DiagnosticsCapability.LevelRowFor("Journal"), "Trace", SettingsCaller.Panel);
+
+        Assert.Equal(LogLevel.Trace, surface.Verbosity.Levels["Journal"]);
+        Assert.Equal(LogLevel.Trace, TestSurface.For(install).Verbosity.Levels["Journal"]);
+    }
+
+    [Fact]
+    public void ARowWithNothingBehindItFailsAtStartupRatherThanOnScreen()
+    {
+        using var install = new TempInstall();
+
+        var descriptor = new CapabilityDescriptor
+        {
+            Id = "hollow",
+            Group = "Test",
+            Name = "Hollow",
+            Summary = "A capability with a row that does nothing.",
+            Settings =
+            [
+                new SettingRow
+                {
+                    Key = "hollow.row",
+                    Label = "Hollow",
+                    Help = "Nothing is bound behind this.",
+                    Kind = SettingKind.Text,
+                },
+            ],
+        };
+
+        var store = new SettingsStore(install.Paths, Microsoft.Extensions.Logging.Abstractions.NullLogger<SettingsStore>.Instance);
+        var secrets = new SecretStore(
+            install.Paths,
+            new ReversibleProtector(),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<SecretStore>.Instance);
+
+        var service = new SettingsService(
+            store,
+            secrets,
+            new D47Settings(),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<SettingsService>.Instance);
+
+        Assert.Throws<CapabilityRegistrationException>(() =>
+            service.Bind(CapabilityRegistry.Build([descriptor])));
+    }
+
+    /// <summary>An Info row whose whole content is a button is wired, and insisting on something to read killed 0.76.0 at startup — About's changelog row is exactly this shape, and the app died before it drew a window.</summary>
+    [Fact]
+    public void AnInfoRowMadeOfItsButtonIsWired()
+    {
+        using var install = new TempInstall();
+
+        static CapabilityDescriptor Descriptor(SettingRow row) => new()
+        {
+            Id = "pressable",
+            Group = "Test",
+            Name = "Pressable",
+            Summary = "A capability whose row is a button.",
+            Settings = [row],
+        };
+
+        var store = new SettingsStore(install.Paths, Microsoft.Extensions.Logging.Abstractions.NullLogger<SettingsStore>.Instance);
+        var secrets = new SecretStore(
+            install.Paths,
+            new ReversibleProtector(),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<SecretStore>.Instance);
+
+        SettingsService Service() => new(
+            store,
+            secrets,
+            new D47Settings(),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<SettingsService>.Instance);
+
+        var pressable = Descriptor(new SettingRow
+        {
+            Key = "pressable.row",
+            Label = "Press me",
+            Help = "Nothing to read, something to do.",
+            Kind = SettingKind.Info,
+            Press = () => { },
+            PressLabel = "Do it",
+        });
+
+        Service().Bind(CapabilityRegistry.Build([pressable]));
+
+        var hollow = Descriptor(new SettingRow
+        {
+            Key = "pressable.row",
+            Label = "Press me",
+            Help = "Nothing to read and nothing to do.",
+            Kind = SettingKind.Info,
+        });
+
+        Assert.Throws<CapabilityRegistrationException>(() =>
+            Service().Bind(CapabilityRegistry.Build([hollow])));
+    }
+}
+
+public class SettingsSurfaceShapeTests
+{
+    [Fact]
+    public void EveryRowIsDocumentedAndReachableFromItsPage()
+    {
+        // A setup-guide link per row.
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        var missing = surface.Settings.Sections
+            .SelectMany(section => section.Rows)
+            .Where(row => string.IsNullOrWhiteSpace(row.DocsAnchor))
+            .Select(row => row.Key)
+            .ToArray();
+
+        Assert.True(missing.Length == 0, $"Settings rows with no documentation anchor: {string.Join(", ", missing)}");
+    }
+
+    [Fact]
+    public void EverySettingsKeyIsUniqueAcrossCapabilities()
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+
+        var keys = surface.Settings.Sections.SelectMany(s => s.Rows).Select(r => r.Key).ToArray();
+
+        Assert.Equal(keys.Length, keys.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+    }
+
+    [Fact]
+    public void EveryModelTheCatalogueOffersHasAPrice()
+    {
+        // Anything picked from the list keeps the running total honest.
+        var unpriced =
+            (from provider in LlmProviderCatalog.All
+             from model in provider.Models
+             where PriceTable.Default.For(provider.Id, model) is null
+             select $"{provider.Id}/{model}").ToArray();
+
+        Assert.True(unpriced.Length == 0, $"Offered models with no price-table entry: {string.Join(", ", unpriced)}");
+    }
+}
+
+public class EgressDisclosureTests
+{
+    [Fact]
+    public void WithEverySwitchOffOnlyTheBuiltInDonationRoadStaysActive()
+    {
+        var settings = new D47Settings
+        {
+            Llm = new LlmSettings { Provider = LlmProviderCatalog.NoneId },
+            Updates = new UpdateSettings { CheckOnStartup = false },
+
+            // The voice provider counts.
+            Speech = new SpeechSettings { Provider = Core.Audio.TtsProviderCatalog.NoneId },
+
+            // So does the speech model, now that a fresh install selects one and fetches it.
+            Listening = new ListeningSettings { Model = Core.Listening.WhisperModels.NoneId },
+
+ // And so does the hull art, which fetches a picture and a turntable from the release the
+            // app updates itself from.
+            Ui = new UiSettings { HullArt = false },
+        };
+
+        var entries = EgressDisclosure.For(settings, llmKeyPresent: false);
+        var described = EgressDisclosure.Describe(settings, false);
+
+        // One row stays active by design (2026-08-31): the donation address ships in the build, so the
+        // destination always exists and the press is its only switch.
+        var active = Assert.Single(entries, entry => entry.Active);
+        Assert.Equal(EgressDisclosure.Donation, active.Id);
+        Assert.Contains($"1 of {entries.Count} destinations are active", described, StringComparison.Ordinal);
+
+        // Counted, never claimed.
+        Assert.DoesNotContain("Nothing is leaving", described, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AProviderWithNoKeyIsSelectedButInert()
+    {
+        // Selected is not the same as sending, and the disclosure has to say which one it is.
+        var settings = new D47Settings();
+
+        var entry = EgressDisclosure.Entry(EgressDisclosure.LanguageModel, settings, llmKeyPresent: false);
+
+        Assert.False(entry.Active);
+        Assert.Contains("no key stored", entry.What, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>Web search is off by default, so the row is silent on a fresh install even with a key.</summary>
+    [Fact]
+    public void WebSearchIsSilentUntilItIsTurnedOn()
+    {
+        var entry = EgressDisclosure.Entry(EgressDisclosure.WebSearch, new D47Settings(), llmKeyPresent: true);
+
+        Assert.False(entry.Active);
+        Assert.Contains("Web search is off", entry.What, StringComparison.Ordinal);
+    }
+
+    /// <summary>On, with a usable model, the row says the provider does the searching.</summary>
+    [Fact]
+    public void WebSearchOnNamesTheProviderAsTheOneWhoSearches()
+    {
+        var settings = new D47Settings { Llm = new LlmSettings { WebSearch = true } };
+
+        var entry = EgressDisclosure.Entry(EgressDisclosure.WebSearch, settings, llmKeyPresent: true);
+
+        Assert.True(entry.Active);
+        Assert.Equal("https://api.anthropic.com", entry.Destination);
+        Assert.Contains("does not search the web itself", entry.What, StringComparison.Ordinal);
+    }
+
+    /// <summary>The setting alone is not enough to make it active.</summary>
+    [Fact]
+    public void WebSearchOnWithNoKeyIsStillInert()
+    {
+        var settings = new D47Settings { Llm = new LlmSettings { WebSearch = true } };
+
+        var entry = EgressDisclosure.Entry(EgressDisclosure.WebSearch, settings, llmKeyPresent: false);
+
+        Assert.False(entry.Active);
+        Assert.Contains("no language model is usable", entry.What, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The setting on, a key present, and an endpoint that offers no search — which is what pointing
+    /// <c>llm.endpoint</c> at a gateway produces, since a server-side search is the provider's to
+    /// offer.
+    /// </summary>
+    [Fact]
+    public void WebSearchAtAnEndpointThatCannotSearchIsSilent()
+    {
+        var settings = new D47Settings { Llm = new LlmSettings { WebSearch = true } };
+
+        var entry = EgressDisclosure.Entry(
+            EgressDisclosure.WebSearch, settings, llmKeyPresent: true, searchAvailable: false);
+
+        Assert.False(entry.Active);
+        Assert.Contains("offers no search", entry.What, StringComparison.Ordinal);
+
+        // The specific claims the old row made.
+        Assert.DoesNotContain("does not search the web itself", entry.What, StringComparison.Ordinal);
+        Assert.DoesNotContain("penny", entry.What, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The default stays "assume it can", so a caller with no provider to ask — first run, and every
+    /// test that is not about this — describes what the settings would cause.
+    /// </summary>
+    [Fact]
+    public void WebSearchAssumesTheEndpointCanSearchWhenNobodySays()
+    {
+        var settings = new D47Settings { Llm = new LlmSettings { WebSearch = true } };
+
+        Assert.True(EgressDisclosure.Entry(EgressDisclosure.WebSearch, settings, llmKeyPresent: true).Active);
+    }
+
+    /// <summary>
+    /// An endpoint that cannot search takes the whole report with it: the prose form counts active
+    /// destinations, and a row that is wrong there is wrong in the spoken answer too.
+    /// </summary>
+    [Fact]
+    public void TheProseReportDropsSearchAtAnEndpointThatCannotSearch()
+    {
+        var settings = new D47Settings { Llm = new LlmSettings { WebSearch = true } };
+
+        var report = EgressDisclosure.Describe(
+            settings, llmKeyPresent: true, inaraKeyPresent: false, searchAvailable: false);
+
+        Assert.Contains("offers no search", report, StringComparison.Ordinal);
+        Assert.DoesNotContain("penny", report, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AConfiguredProviderNamesTheEndpointItSendsTo()
+    {
+        var settings = new D47Settings { Llm = new LlmSettings { Endpoint = "https://gateway.example/v1" } };
+
+        var entry = EgressDisclosure.Entry(EgressDisclosure.LanguageModel, settings, llmKeyPresent: true);
+
+        Assert.True(entry.Active);
+        Assert.Equal("https://gateway.example/v1", entry.Destination);
+    }
+
+    [Fact]
+    public void CommunityGoalsAreSilentUntilAKeyIsStored()
+    {
+        // The only row decided by a secret rather than by a setting.
+        var silent = EgressDisclosure.Entry(
+            EgressDisclosure.CommunityGoals, new D47Settings(), llmKeyPresent: true);
+
+        Assert.False(silent.Active);
+        Assert.Contains("No Inara API key is stored", silent.What, StringComparison.Ordinal);
+
+        var active = EgressDisclosure.Entry(
+            EgressDisclosure.CommunityGoals, new D47Settings(), llmKeyPresent: false, inaraKeyPresent: true);
+
+        Assert.True(active.Active);
+        Assert.Equal("inara.cz", active.Destination);
+
+        // The claim the request builder is tested against on the other side of the seam: the header may carry
+        // a Commander name and a Frontier ID, and this one carries neither.
+        Assert.Contains("nothing else", active.What, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheDisclosureNamesEveryDestinationIncludingTheSilentOnes()
+    {
+        // A disclosure that lists only what does send invites the question of what else exists.
+        var report = EgressDisclosure.Describe(new D47Settings(), llmKeyPresent: true);
+
+        foreach (var id in EgressDisclosure.Ids)
+        {
+            Assert.Contains(EgressDisclosure.NameOf(id), report, StringComparison.Ordinal);
+        }
+    }
+}

@@ -1,0 +1,122 @@
+using System.Text;
+
+namespace D47.Core.Adventures;
+
+/// <summary>
+/// The story as standing prompt context, below the cache breakpoint beside the game state (Phase 47,
+/// "The story is told from inside, between the beats").
+/// </summary>
+public static class AdventureContext
+{
+    // "Nobody in it can be met" is there because the first story flown from the field ended a beat with "ask
+    // the clerk who countersigns", and asked "now what?" the core sent the Commander to find a person — which
+    // Elite has no act for.
+    public const string Label =
+        "Adventure — a story the Commander agreed to hear, told by you. The places in it are real and "
+        + "the people in it may not be, and nobody in it can be met, spoken to or watched: the game has "
+        + "no act for that, and the only thing the Commander can do in the story is fly to the next "
+        + "beat. Speak from inside it between beats: wonder, foreshadow, apply pressure, notice where "
+        + "the Commander is relative to it — but state no new fact about the story, and do not recite "
+        + "it. Asked what to do next, say where the next beat is in plain words and nothing beyond it. "
+        + "You do not know how it ends. Asked what is actually at a place, answer from your tools and "
+        + "say which is which.";
+
+    /// <summary>
+    /// The block, or null when nothing is under way — null rather than a block saying so, because an
+    /// empty report still costs tokens on every turn.
+    /// </summary>
+    public static string? Describe(
+        IReadOnlyList<AdventureStanding> standings,
+        Func<string?, string?> personaName,
+        DateTimeOffset now)
+    {
+        ArgumentNullException.ThrowIfNull(standings);
+        ArgumentNullException.ThrowIfNull(personaName);
+
+        var active = standings.Where(standing => standing.Adventure.IsActive && !standing.IsDone).ToList();
+
+        if (active.Count == 0)
+        {
+            return null;
+        }
+
+        var block = new StringBuilder(Label);
+
+        foreach (var standing in active)
+        {
+            var adventure = standing.Adventure;
+
+            block.AppendLine().AppendLine();
+            block.Append(adventure.Name);
+
+            var by = adventure.Source == AdventureSource.Commander
+                ? "written by the Commander"
+                : personaName(adventure.WrittenBy) is { } name
+                    ? $"written by {name}"
+                    : "written without a persona";
+
+            block.Append(", ").Append(by);
+
+            if (adventure.AcceptedAt is { } begun)
+            {
+                block.Append($", begun {begun:d MMM yyyy}");
+            }
+
+            block.Append('.');
+
+            if (adventure.Spine is { } spine)
+            {
+                Line(block, "Premise", spine.Premise);
+                Line(block, "What the Commander is after", spine.Want);
+                Line(block, "What is at stake", spine.Stake);
+
+                if (standing.TurnReached)
+                {
+                    Line(block, "The turn, now reached", spine.Turn);
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(adventure.Opening))
+            {
+                Line(block, "Opening", adventure.Opening);
+            }
+
+            if (standing.Fired.Count > 0)
+            {
+                var titles = string.Join(", ", standing.Adventure.Beats.Take(standing.Fired.Count).Select(beat => beat.Title));
+                Line(block, "So far", titles);
+
+                if (standing.LastBeat is { } last && standing.LastFiredAt is { } at)
+                {
+                    Line(block, $"Last beat, {last.Title}, {Ago(now - at)}", last.Line);
+                }
+            }
+
+            if (standing.CurrentBeat is { } current)
+            {
+                var function = string.IsNullOrWhiteSpace(current.Function) ? string.Empty : $" ({current.Function})";
+                Line(block, $"Now: {current.Title}{function}", $"waiting to {current.Trigger.Describe()}.");
+            }
+        }
+
+        return block.ToString().TrimEnd();
+    }
+
+    private static void Line(StringBuilder block, string label, string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return;
+        }
+
+        block.AppendLine().Append("  ").Append(label).Append(": ").Append(text.Trim());
+    }
+
+    private static string Ago(TimeSpan age) => age.TotalMinutes switch
+    {
+        < 1 => "just now",
+        < 60 => $"{(int)age.TotalMinutes} minutes ago",
+        < 1440 => $"{(int)age.TotalHours} hours ago",
+        _ => $"{(int)age.TotalDays} days ago",
+    };
+}

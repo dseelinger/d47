@@ -1,0 +1,33 @@
+# d47's donation endpoint (https://github.com/dseelinger/d47/issues/175).
+#
+# Deploying is one command — `wrangler deploy` from this folder — which is the bar CLAUDE.md
+# already holds the build to. What it cannot express is the two retention rules, which are bucket
+# state rather than Worker configuration; those are in README.md, with the commands.
+
+name = "d47-donations"
+main = "src/index.js"
+compatibility_date = "2026-08-29"
+
+# **On since 2026-08-31, and the reversal is deliberate** — this line read false, on the argument
+# that a URL a Commander pastes into a settings row wants exactly one address, not a second one
+# that exists whether or not anybody meant it to. That settings row is gone: the address ships in
+# the build (DonationSettings.Address in D47.Core), so the workers.dev hostname IS the one
+# address, and the Commander ruled Cloudflare's own protections enough for what a public hostname
+# invites. False here would silently turn the shipped address off on the next deploy, which is
+# the one thing this file must not do now.
+workers_dev = true
+
+# **No observability, and no telemetry beyond what Cloudflare cannot be stopped from counting.**
+# The whole point of this endpoint is that a donation is one deliberate act; a request log that
+# accumulated who posted what and when would be the ambient collection this project rules out,
+# arriving at the other end of the wire.
+[observability]
+enabled = false
+
+[[r2_buckets]]
+binding = "DONATIONS"
+bucket_name = "d47-donations"
+
+# There is deliberately nothing else here. No KV, no D1, no queue, no secret: the Worker holds no
+# credential of its own, because the binding above IS the credential and it never leaves
+# Cloudflare's side. That is what makes "the Worker is the only writer" true rather than aspired to.

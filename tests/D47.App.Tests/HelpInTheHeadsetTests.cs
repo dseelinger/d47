@@ -1,0 +1,408 @@
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Headless.XUnit;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
+using D47.App.Headset;
+using D47.App.Panel;
+using D47.Core;
+using D47.Core.Capabilities.Builtin;
+using D47.Core.Checklists;
+using D47.Core.Configuration;
+using D47.Core.Engineers;
+using D47.Core.Help;
+using D47.Core.Interface;
+using D47.Core.Journal;
+using D47.Core.Loadout;
+using D47.Core.Ships;
+using Microsoft.Extensions.Logging.Abstractions;
+using Xunit;
+
+namespace D47.App.Tests;
+
+public class HelpInTheHeadsetTests
+{
+ /// <summary>What a ray-sized target has to clear, in surface pixels.</summary>
+    private const double TouchFloor = 30;
+
+    /// <summary>
+    /// The floor for text meant to be read, in surface pixels. 1024 across a 1.1 m quad at 1.1 m is 19
+    /// pixels per degree, and ~20 arcminutes of cap height is the floor — so 13 px is the smallest a
+    /// band may end up drawn at, whatever it says in the markup.
+    /// </summary>
+    private const double ReadingFloor = 13;
+
+    private static JournalEvent Event(string json)
+    {
+        Assert.True(JournalEvent.TryParse(json.ReplaceLineEndings(" "), NullLogger.Instance, out var parsed));
+        return parsed!;
+    }
+
+    /// <summary>A Commander in Sol, flying 30 ly a jump, unlocked with Liz Ryder alone.</summary>
+    private static CommanderGameState State()
+    {
+        var store = new GameStateStore();
+
+        foreach (var line in new[]
+                 {
+                     """{"timestamp":"2026-08-22T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+                     """{"timestamp":"2026-08-22T09:00:00Z","event":"Location","StarSystem":"Sol","StarPos":[0.0,0.0,0.0],"Docked":true,"StationName":"Abraham Lincoln"}""",
+                     """{"timestamp":"2026-08-22T09:00:00Z","event":"Loadout","Ship":"python","ShipID":12,"ShipName":"Bad Idea","ShipIdent":"BI-01","MaxJumpRange":30.0,"Modules":[]}""",
+                     """{"timestamp":"2026-08-22T09:00:00Z","event":"EngineerProgress","Engineers":[{"Engineer":"Liz Ryder","EngineerID":300080,"Progress":"Unlocked","Rank":5}]}""",
+                 })
+        {
+            store.Apply(Event(line));
+        }
+
+        return store.Active!;
+    }
+
+    /// <summary>The big panel with the Engineers tab furnished.</summary>
+    /// <param name="showingHelp">Opens help before the first frame.</param>
+    /// <param name="dump">Where this surface's one PNG goes.</param>
+    private static (VrPanelSurface Panel, PanelView View, string Dump) Headset(
+        bool showingHelp = false,
+        string? dump = null)
+    {
+        var (settings, _, _) = TestSurface.Create();
+        settings.Apply(VrCapability.ModeKey, "full", SettingsCaller.Panel);
+
+        var root = TempFolders.Create("d47-help-in-vr");
+        var state = State();
+
+        var checklists = new ChecklistService(
+            new ChecklistStore(Path.Combine(root, "checklist.json"), NullLogger<ChecklistStore>.Instance),
+            new ChecklistProposalStore(
+                Path.Combine(root, "checklist-proposals.json"),
+                NullLogger<ChecklistProposalStore>.Instance),
+            () => state);
+
+        var builds = new ShipBuildStore(Path.Combine(root, "ships.json"), NullLogger<ShipBuildStore>.Instance);
+
+        builds.Save([
+            new ShipBuild("F1", "ship-1", "python", 12, "Bad Idea",
+                [new SlotPlan("FrameShiftDrive", "Increased FSD Range", 3)]),
+        ]);
+
+        var kit = new OnFootBuildStore(Path.Combine(root, "on-foot.json"), NullLogger<OnFootBuildStore>.Instance);
+
+        dump ??= TestSurface.CaptureDirectory;
+
+        var panel = new VrPanelSurface(
+            new PanelViewModel(),
+            settings,
+            _ => null,
+            dumpTo: dump,
+            ships: new ShipPlanService(builds, checklists, () => state),
+            gameState: () => state,
+            onFoot: new OnFootPlanService(kit, checklists, () => state),
+            unlocks: new EngineerPlanService(builds, kit, checklists, () => state));
+
+        var view = (PanelView)typeof(VrPanelSurface)
+            .GetField("_view", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+            .GetValue(panel)!;
+
+        // Spoken, because that is the route a Commander wearing one actually has — there is no tab to press
+        // until the surface has drawn one.
+        PanelPhrases.Apply("show me the engineers", panel.Nav);
+
+        if (showingHelp)
+        {
+            Assert.True(view.OpenHelp(), "help opened");
+        }
+
+        Serve(panel);
+
+        return (panel, view, dump);
+    }
+
+    /// <summary>One frame, into a buffer nobody reads.</summary>
+    private static void Serve(VrPanelSurface panel)
+    {
+        Dispatcher.UIThread.RunJobs();
+
+        var (width, height) = panel.Size;
+        var buffer = new byte[width * height * 4];
+
+        unsafe
+        {
+            fixed (byte* pixels = buffer)
+            {
+                panel.Draw((IntPtr)pixels, width * 4);
+                panel.Draw((IntPtr)pixels, width * 4);
+            }
+        }
+
+        Dispatcher.UIThread.RunJobs();
+    }
+
+    /// <summary>Where a control is on the quad's face, in the 0..1 a ray answers in.</summary>
+    private static (float U, float V) At(Control control, PanelView view, VrPanelSurface panel)
+    {
+        var corner = control.TranslatePoint(new Point(0, 0), view);
+        Assert.NotNull(corner);
+
+        var centre = corner.Value + new Point(control.Bounds.Width / 2, control.Bounds.Height / 2);
+        var (width, height) = panel.Size;
+
+        return ((float)(centre.X / width), (float)(centre.Y / height));
+    }
+
+    private static Button Mark(PanelView view) =>
+        view.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "HelpButton");
+
+    /// <summary>The headset has a help mark again.</summary>
+    [AvaloniaFact]
+    public void TheEngineersTabCarriesAHelpMarkInTheHeadset()
+    {
+        var (panel, view, _) = Headset();
+
+        Assert.Equal(PanelTab.Engineers, view.Tab);
+
+        var mark = Mark(view);
+
+        Assert.True(mark.IsVisible, "the headset's Engineers tab shows the help mark");
+        Assert.True(mark.Bounds.Width >= TouchFloor, $"the mark is {mark.Bounds.Width} px across");
+        Assert.True(mark.Bounds.Height >= TouchFloor, $"the mark is {mark.Bounds.Height} px down");
+
+        panel.Dispose();
+    }
+
+    /// <summary>
+    /// Pressed through a ray, it takes the panel — which is what makes it help over the page rather
+    /// than a tab beside it.
+    /// </summary>
+    [AvaloniaFact]
+    public void PressingItTakesThePanelWithoutLeavingTheTab()
+    {
+        var (panel, view, _) = Headset();
+
+        var (u, v) = At(Mark(view), view, panel);
+
+        Assert.True(panel.Press(u, v), "the mark takes the press");
+
+        Serve(panel);
+
+        Assert.True(view.Nav.Modal, "help holds the panel until it is dismissed");
+        Assert.Equal("Help", view.Nav.Trail[^1].Word);
+
+        // Still the Engineers tab underneath.
+        Assert.Equal(PanelTab.Engineers, view.Tab);
+
+        // And nothing can navigate away from it while it is up.
+        Assert.False(view.Nav.Select(PanelTab.Transcript));
+        Assert.Equal(PanelTab.Engineers, view.Tab);
+
+        panel.Dispose();
+    }
+
+    /// <summary>The band is drawn, all four figures of it, and every one has real bounds.</summary>
+    [AvaloniaFact]
+    public void TheBandDrawsItsFourFiguresOnTheQuad()
+    {
+        var (panel, view, _) = Headset();
+
+        var (u, v) = At(Mark(view), view, panel);
+        panel.Press(u, v);
+        Serve(panel);
+
+        var figures = view.GetVisualDescendants().OfType<HelpFigureView>().ToList();
+
+        Assert.Equal(4, figures.Count);
+
+        foreach (var figure in figures)
+        {
+            Assert.True(figure.Bounds.Width > 400, $"a figure is only {figure.Bounds.Width} px across");
+            Assert.True(figure.Bounds.Height > 80, $"a figure is only {figure.Bounds.Height} px down");
+        }
+
+        // The intro and every heading reached the surface too.
+        var said = view.GetVisualDescendants().OfType<TextBlock>()
+            .Select(block => block.Text ?? string.Empty)
+            .ToList();
+
+        Assert.Contains(said, line => line.StartsWith("Who can improve your ship", StringComparison.Ordinal));
+        Assert.Contains("Two lists.", said);
+        Assert.Contains("The Route picks the one unlock that helps most.", said);
+
+        panel.Dispose();
+    }
+
+    /// <summary>The reason the figures are drawn rather than written.</summary>
+    [AvaloniaFact]
+    public void NothingInTheBandIsDrawnBelowTheReadingFloor()
+    {
+        var (panel, view, _) = Headset();
+
+        var (u, v) = At(Mark(view), view, panel);
+        panel.Press(u, v);
+        Serve(panel);
+
+        var article = HelpLibrary.For("engineers")!;
+        var figures = view.GetVisualDescendants().OfType<HelpFigureView>().ToList();
+
+        // Counted before the zip below, which pairs two sequences and would sail through with nothing to say
+        // if the page had drawn none of them.
+        Assert.Equal(4, figures.Count);
+
+        var drawn = article.Sections
+            .Select(section => section.Figure)
+            .OfType<HelpFigure>()
+            .Zip(figures, (figure, control) => (Figure: figure, Scale: control.Bounds.Width / figure.Width));
+
+        foreach (var (figure, scale) in drawn)
+        {
+            Assert.True(scale > 0.5, $"a figure is drawn at {scale:0.00} of its authored size");
+
+            var smallest = figure.Shapes.OfType<HelpLabel>().Min(label => label.Size) * scale;
+
+            Assert.True(
+                smallest >= ReadingFloor,
+                $"the smallest text lands at {smallest:0.0} px, under the {ReadingFloor} px floor");
+        }
+
+        panel.Dispose();
+    }
+
+    /// <summary>Back puts the page back.</summary>
+    [AvaloniaFact]
+    public void BackDismissesItAndTheTabIsWhereItWas()
+    {
+        var (panel, view, _) = Headset();
+
+        var (u, v) = At(Mark(view), view, panel);
+        panel.Press(u, v);
+        Serve(panel);
+
+        Assert.True(view.Nav.Modal);
+        Assert.True(view.GoBack(), "there was something to go back from");
+
+        Serve(panel);
+
+        Assert.False(view.Nav.Modal, "the panel is handed back");
+        Assert.Empty(view.GetVisualDescendants().OfType<HelpFigureView>());
+        Assert.Equal(PanelTab.Engineers, view.Tab);
+
+        // And the tab is usable again.
+        Assert.True(view.Nav.Select(PanelTab.Transcript));
+
+        panel.Dispose();
+    }
+
+    /// <summary>The frame the compositor would hand SteamVR, kept as a PNG.</summary>
+    [AvaloniaFact]
+    public void TheHelpFrameRasterises()
+    {
+        var folder = Path.Combine(TestSurface.CaptureDirectory, "help");
+        Directory.CreateDirectory(folder);
+
+        var (panel, view, dump) = Headset(showingHelp: true, dump: folder);
+
+        Assert.True(view.Nav.Modal, "the frame that was kept is the help page");
+
+        var written = Directory.GetFiles(dump, "vr-*.png");
+
+        Assert.NotEmpty(written);
+        Assert.All(written, file => Assert.True(new FileInfo(file).Length > 0, $"{file} is empty"));
+
+        panel.Dispose();
+    }
+
+    /// <summary>Help follows the level, and a level inherits.</summary>
+    [AvaloniaFact]
+    public void DrillingIntoOneEngineerInheritsTheTabsHelp()
+    {
+        var (panel, view, _) = Headset();
+
+        Assert.Equal("engineers", view.Nav.Help);
+
+        // The crumb the directory pushes when a name is pressed.
+        Assert.True(view.Nav.Drill(
+            new NavCrumb(EngineersPages.WhoPrefix + "300080", "Liz Ryder")
+            {
+                Level = EngineersPages.WhoPrefix,
+            }));
+
+        Serve(panel);
+
+        Assert.Equal("engineers", view.Nav.Help);
+        Assert.True(Mark(view).IsVisible, "the mark survives the drill");
+
+        var (u, v) = At(Mark(view), view, panel);
+        Assert.True(panel.Press(u, v), "and still opens the band");
+
+        Serve(panel);
+
+        Assert.Equal("help:engineers", view.Nav.Trail[^1].Key);
+
+        panel.Dispose();
+    }
+
+    /// <summary>
+    /// The band's links, on the surface with no browser behind it — and the split that decides how each
+    /// one is drawn.
+    /// </summary>
+    [AvaloniaFact]
+    public void EachLinkIsDrawnAsWhatThisSurfaceCanDoWithIt()
+    {
+        var (panel, view, _) = Headset(showingHelp: true);
+
+        var shown = view.GetVisualDescendants().OfType<TextBlock>()
+            .Select(block => block.Text ?? string.Empty)
+            .ToList();
+
+        Assert.Contains("Where to go next".ToUpperInvariant(), shown);
+
+        var article = HelpLibrary.For("engineers")!;
+        Assert.NotEmpty(article.Links);
+
+        foreach (var link in article.Links)
+        {
+            var target = link.Article!;
+
+            if (HelpLibrary.For(target) is not null)
+            {
+                Assert.DoesNotContain(D47.App.DocsSite.Capability(target), shown);
+
+                Assert.Contains(
+                    view.GetVisualDescendants().OfType<Button>(),
+                    button => button.GetVisualDescendants().OfType<TextBlock>()
+                        .Any(text => text.Text == link.Title));
+            }
+            else
+            {
+                Assert.Contains(D47.App.DocsSite.Capability(target), shown);
+            }
+        }
+
+        // The long form of this very page is always an address: the panel draws the band and nothing beneath
+        // it, and there is no band to drill to for the reference half.
+        Assert.Contains(D47.App.DocsSite.Capability("engineers"), shown);
+
+        panel.Dispose();
+    }
+
+    /// <summary>Help, asked for out loud, on the quad.</summary>
+    [AvaloniaFact]
+    public void HelpOpensBySayingSoInTheHeadset()
+    {
+        var (panel, view, _) = Headset();
+
+        Assert.Equal("Help.", PanelPhrases.Apply("what is this", panel.Nav));
+
+        Serve(panel);
+
+        Assert.True(view.Nav.Modal);
+        Assert.Equal(4, view.GetVisualDescendants().OfType<HelpFigureView>().Count());
+
+        // And out again by the same word that leaves any other level.
+        Assert.Equal("Back to Directory.", PanelPhrases.Apply("back", panel.Nav));
+
+        Serve(panel);
+
+        Assert.False(view.Nav.Modal);
+        Assert.Empty(view.GetVisualDescendants().OfType<HelpFigureView>());
+
+        panel.Dispose();
+    }
+}

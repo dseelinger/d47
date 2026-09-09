@@ -1,0 +1,1219 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:panel="clr-namespace:D47.App.Panel"
+             xmlns:controls="clr-namespace:D47.App.Controls"
+             x:Class="D47.App.Panel.PanelView"
+             x:DataType="panel:PanelViewModel"
+             Background="{DynamicResource D47.Background}"
+             Foreground="{DynamicResource D47.Text}">
+
+  <!--
+    One view definition, instantiated twice: once by the desktop window, once by the VR
+    overlay, both bound to one PanelViewModel. A Visual belongs to exactly one visual tree so
+    the framework will not render a single instance to two targets, but the constraint the
+    checklist is protecting is satisfied either way - there is no second UI codebase and no
+    path where the VR surface is a screenshot of the desktop one.
+
+    Nothing here knows about a window. That is what makes the overlay path minimise-safe: the
+    window the VR surface hosts this in is constructed and never shown, so there is no window
+    state for a minimise to put it in.
+
+    Mini is a mode of this panel, not another one. The rows mini does without bind IsFull.
+
+    Colour by role, never by literal: every brush is a theme resource, so switching theme
+    repaints this without it knowing a theme exists (list.md Phase 4).
+  -->
+  <!--
+    A surface the pointer goes straight through draws no buttons (asked for 2026-08-24: "clickable
+    controls should be removed from the 2D overlay - nothing can be clicked, and it makes more room
+    for the data").
+
+    A style rather than a pass over each page, because the pages are furnished by hosts and there
+    are five of them: the checklist's filter and Add, the engineer pages, the clocks. One selector
+    reaches all of them and reaches the next one nobody has written yet.
+
+    <b>Exact `Button`, deliberately.</b> Avalonia matches the type rather than the hierarchy unless
+    asked with `:is()`, and that is the distinction wanted here: a `Button` exists to be pressed and
+    is nothing without a pointer, while `CheckBox` shows whether a checklist line is done and
+    `RepeatButton` is half of a scrollbar. Removing those would take away the data rather than make
+    room for it.
+  -->
+  <UserControl.Styles>
+    <Style Selector="panel|PanelView.output-only Button">
+      <Setter Property="IsVisible" Value="False" />
+    </Style>
+
+    <!--
+      And the page's own chrome, as a container (#202).
+
+      **The rule above could not hold on its own, and it failed two ways at once.** A style setter
+      sits at `BindingPriority.Style`, below `LocalValue`, so any control that assigns its own
+      `IsVisible` from code pins the value and the selector never applies — three did, and they are
+      exactly the controls a Commander reported seeing on a mini panel. And it matches *exact*
+      `Button`, so a filter checkbox on a chrome bar was never covered at all.
+
+      **The container is the unit that fixes both.** A hidden parent hides its children whatever
+      they say about themselves, so a page goes on writing `_suggestions.IsVisible = ...` and is
+      right about it; and it covers every control type at once, without having to enumerate them or
+      keep the deliberate exemptions — a checklist line's tick, a scrollbar's parts — out of a list.
+
+      **A style rather than a walk, and the timing is why.** A drill level builds its page on first
+      sight, which is after the class has been set and after the last thing that could have walked
+      the tree — so an imperative pass finds an empty pane and never runs again. A style applies
+      when the control enters the tree, whenever that is.
+
+      What it asks of a page is one thing: mark the container, and never assign its `IsVisible`.
+      See `PageChrome`.
+    -->
+    <Style Selector="panel|PanelView.output-only :is(Control).page-chrome">
+      <Setter Property="IsVisible" Value="False" />
+    </Style>
+  </UserControl.Styles>
+
+  <UserControl.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceInclude Source="avares://d47/Panel/PanelTabs.axaml" />
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </UserControl.Resources>
+
+  <DockPanel Margin="24,16,24,24">
+
+    <!--
+      LastChildFill is off because there is no last child to fill with: the version line that
+      used to sit on the left has moved to the title bar, and without this the final docked
+      button silently stops docking and stretches across the header instead.
+    -->
+    <DockPanel x:Name="Header" DockPanel.Dock="Top" LastChildFill="False">
+      <!--
+        Help. The gear used to sit beside it and no longer does: settings is a page of this panel
+        now, chosen from the tab strip below like every other page, and a second affordance
+        opening the same page would be a second thing to keep in step (list.md Phase 12).
+
+        Drawn rather than typed. A "?" set as text was a character in a font: lighter than the
+        glyph beside it, and sitting on a baseline rather than in the middle of its box, so it
+        read as smaller and hung high. This is a 24-unit coordinate space scaled into a
+        17-pixel box, so it lines up by construction rather than by adjustment.
+
+        Stroked rather than filled, because thickness is the property being matched and a stroke
+        states it directly. The dot is a zero-length segment with a round cap - a line from a
+        point to itself, drawn as a disc exactly as wide as the stroke, which keeps it in step
+        with the hook for free.
+      -->
+      <!--
+        Square, with the glyph centred in it by construction (remediation.md 10, item 4).
+        <para/>
+        It was a uniform padding around a 17x17 Path, which reads as centred and is not. Two things
+        were off. The button was as wide as the glyph plus its padding and as tall as the glyph
+        plus the same, but the ink is a question mark — about half as wide as it is tall — and
+        <c>Stretch="Uniform"</c> scales the geometry's own bounds, so the drawn mark filled the
+        height and left slack across the width that the padding then did not account for. And the
+        button's content alignment was whatever the default theme said rather than centre.
+        <para/>
+        So the button is a fixed square, the content is centred on both axes explicitly, and the
+        Path's box is the shape of the ink rather than a square the ink sits inside. The highlight
+        is the button's own background, so a glyph centred in the button is centred in the
+        highlight — which is what was being asked for.
+      -->
+      <!--
+        Hidden until the host hands this surface a way to open the site (EnableHelp). The headset
+        copy is never handed one: the button opened a browser on the desktop, which a Commander in
+        the headset cannot see (change-requests.md 24).
+      -->
+      <!--
+        The pre-release mark (#92). Docked right so it sits immediately left of the help mark, and
+        hidden by default for the same reason the help button is: a local IsVisible outranks a
+        style setter, so this one is furnished by hand and is off on the headset's copy along with
+        the button it sits beside. A Commander in a headset is flying, and a badge about which
+        build they are on is chrome they cannot dismiss and did not ask for.
+      -->
+
+
+
+
+      <!--
+        The ship AI's face, on the left, where the build line used to be. It earns that space in
+        a way a version string never did: it is the one thing on the panel that says what D47 is
+        doing right now without the Commander reading anything, which is the whole point in a
+        cockpit. Drawn rather than decoded — see AvatarView for why that is not an aesthetic
+        choice — and present in mini too, since a reduced content set is exactly where a glance
+        has to carry more.
+      -->
+
+    </DockPanel>
+
+    <!-- Both banners in one region, so mini hides them with one line and each still decides
+         for itself whether it has anything to say. -->
+    <StackPanel x:Name="Banners" DockPanel.Dock="Top">
+
+    <!-- Settings that failed to load are said out loud, not swallowed. Dismissable, because a
+         fault the Commander has read and decided about should not go on taking a strip off the
+         top of the panel for the rest of the session — and the same fault arising again raises
+         it again, so dismissing hides a message rather than muting a problem. -->
+    <Border x:Name="ErrorBanner"
+            IsVisible="{Binding HasError}"
+            Margin="0,14,0,0"
+            Padding="12"
+            CornerRadius="4"
+            Background="{DynamicResource D47.SurfaceAlt}"
+            BorderBrush="{DynamicResource D47.Danger}"
+            BorderThickness="1">
+      <DockPanel>
+        <Button x:Name="DismissErrorButton"
+                DockPanel.Dock="Right"
+                Margin="10,0,0,0"
+                Padding="7,1"
+                VerticalAlignment="Top"
+                Background="Transparent"
+                BorderThickness="0"
+                Foreground="{DynamicResource D47.Danger}"
+                FontSize="{StaticResource D47.Type.Body}"
+                Content="&#x2715;"
+                ToolTip.Tip="Dismiss"
+                Click="OnDismissErrorClick" />
+        <SelectableTextBlock x:Name="ErrorText"
+                             Text="{Binding ErrorText}"
+                             TextWrapping="Wrap"
+                             FontSize="{StaticResource D47.Type.Body}"
+                             Foreground="{DynamicResource D47.Danger}" />
+      </DockPanel>
+    </Border>
+
+    <!-- Hidden until a background check finds a newer release; never blocks startup. -->
+    <Border x:Name="UpdateBanner"
+            IsVisible="{Binding HasUpdate}"
+            Margin="0,14,0,0"
+            Padding="12"
+            CornerRadius="4"
+            Background="{DynamicResource D47.SurfaceAlt}"
+            BorderBrush="{DynamicResource D47.Info}"
+            BorderThickness="1">
+      <DockPanel>
+        <StackPanel DockPanel.Dock="Right"
+                    Orientation="Horizontal"
+                    Spacing="8"
+                    IsVisible="{Binding UpdateActionable}">
+          <Button x:Name="UpdateNowButton" Content="Update now" Click="OnUpdateNowClick" />
+          <Button x:Name="UpdateLaterButton" Content="Later" Click="OnUpdateLaterClick" />
+        </StackPanel>
+        <TextBlock x:Name="UpdateText"
+                   Text="{Binding UpdateText}"
+                   TextWrapping="Wrap"
+                   FontSize="{StaticResource D47.Type.Body}"
+                   VerticalAlignment="Center" />
+      </DockPanel>
+    </Border>
+
+
+    </StackPanel>
+
+    <!-- Ask box. Enter sends; the button is for discoverability. -->
+    <Border x:Name="AskRow" DockPanel.Dock="Bottom" Margin="0,14,0,0">
+      <DockPanel>
+        <!-- The send glyph, drawn in-repo like the help mark. The label is gone because a paper
+             aeroplane next to a text box needs no caption anywhere a Commander has been. -->
+        <Button x:Name="AskButton"
+                DockPanel.Dock="Right"
+                Margin="8,0,0,0"
+                Padding="11,7"
+                CornerRadius="4"
+                IsEnabled="{Binding CanAsk}"
+                Background="{DynamicResource D47.SurfaceAlt}"
+                BorderBrush="{DynamicResource D47.Border}"
+                BorderThickness="1"
+                ToolTip.Tip="Send (Enter)"
+                Click="OnAskClick">
+          <Path x:Name="AskGlyph"
+                Width="17" Height="17"
+                Stretch="Uniform"
+                Fill="{DynamicResource D47.Accent}"
+                Data="M 2.5,3 L 22,12 L 2.5,21 L 2.5,13.6 L 14.5,12 L 2.5,10.4 Z" />
+        </Button>
+        <!-- The placeholder is set in code rather than bound; see ApplyAskHint for why a
+             binding on this particular control is the wrong tool. -->
+        <TextBox x:Name="AskBox"
+                 Text="{Binding AskText, Mode=TwoWay}"
+                 KeyDown="OnAskBoxKeyDown" />
+      </DockPanel>
+    </Border>
+
+    <!--
+      The provenance line, and beside it the one thing on this panel that is about right now
+      rather than about the last turn: whether the microphone is open (list.md Phase 13).
+
+      It sits in this row rather than in the header because the header is what mini takes away,
+      and mini is the headset's normal state. "Continuous capture with no visible state is the
+      thing a user is right to distrust" does not become less true at a metre — so the indicator
+      lives in the one region both surfaces show in both modes.
+
+      Docked left of the turn line rather than under it: the two are read at different moments
+      and neither should push the other around as it changes length.
+    -->
+    <DockPanel x:Name="StatusRow" DockPanel.Dock="Bottom" Margin="0,10,0,0">
+
+      <Border x:Name="MicrophoneRow"
+              DockPanel.Dock="Left"
+              IsVisible="{Binding MicrophoneVisible}"
+              Margin="0,0,10,0"
+              Padding="7,2"
+              CornerRadius="3"
+              VerticalAlignment="Center"
+              Background="{DynamicResource D47.SurfaceAlt}"
+              BorderThickness="1">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <!--
+            A microphone, drawn rather than typed, for the reason the help mark already is: a
+            glyph taken from a font is whatever weight that font happens to have, and it hangs
+            off a baseline instead of sitting in the middle of its box. A 24-unit coordinate
+            space scaled into a 13-pixel box lines up with the text beside it by construction.
+
+            Filled or hollow is the state, not just the colour, because a Commander glancing at
+            this in a headset is reading a shape before they read a hue - and because a colour
+            difference alone is not a difference for everybody.
+          -->
+          <Path x:Name="MicrophoneGlyph"
+                Width="13" Height="13"
+                VerticalAlignment="Center"
+                Stretch="Uniform"
+                StrokeThickness="2"
+                StrokeLineCap="Round"
+                StrokeJoin="Round"
+                Data="M 12,3 A 3,3 0 0 1 15,6 L 15,11 A 3,3 0 0 1 9,11 L 9,6 A 3,3 0 0 1 12,3 Z
+                      M 5.5,10.5 A 6.5,6.5 0 0 0 18.5,10.5 M 12,17 L 12,21" />
+          <TextBlock x:Name="MicrophoneLabel"
+                     VerticalAlignment="Center"
+                     FontSize="{StaticResource D47.Type.Small}" />
+        </StackPanel>
+      </Border>
+
+      <!--
+        Which assigned HOTAS switches currently sit against the game's state (list.md Phase 21).
+        In this row rather than in the banners, and the difference is the whole point: mini hides
+        the banners and mini is the headset's normal state, so a switch annunciator up there
+        would be invisible exactly where a Commander cannot see their own switches either.
+
+        Docked right, so it never pushes the microphone indicator around — the two change on
+        completely different clocks.
+      -->
+      <!--
+        The way out, seated rather than given a row of its own on the transcript page (#194).
+        First right-docked child, so it takes the outer edge — outboard of Details and the switch
+        annunciator, where a way out belongs.
+
+        It is a second button rather than ModeToggle reparented here: a Visual belongs to exactly
+        one visual tree, so one control cannot sit in both places, and moving it on every tab
+        change would mutate the tree for a saving of one row. The two cannot drift because
+        neither is marked on its own — PanelView.Show marks both in one call, with one handler
+        between them.
+      -->
+      <Button x:Name="ModeToggleSeat"
+              DockPanel.Dock="Right"
+              IsVisible="False"
+              Margin="8,0,0,0"
+              Padding="6,1"
+              MinWidth="0"
+              VerticalAlignment="Center"
+              Background="Transparent"
+              BorderThickness="0"
+              Cursor="Hand"
+              FontSize="{StaticResource D47.Type.Secondary}"
+              Foreground="{DynamicResource D47.Accent}"
+              Click="OnModeToggleClick" />
+
+      <Border x:Name="SwitchRow"
+              DockPanel.Dock="Right"
+              IsVisible="{Binding SwitchesVisible}"
+              Margin="10,0,0,0"
+              Padding="7,2"
+              CornerRadius="3"
+              VerticalAlignment="Center"
+              Background="{DynamicResource D47.SurfaceAlt}"
+              BorderBrush="{DynamicResource D47.TextMuted}"
+              BorderThickness="1">
+        <TextBlock x:Name="SwitchText"
+                   Text="{Binding SwitchesText}"
+                   VerticalAlignment="Center"
+                   TextWrapping="Wrap"
+                   FontSize="{StaticResource D47.Type.Small}"
+                   Foreground="{DynamicResource D47.Accent}" />
+      </Border>
+
+      <!--
+        One line of provenance per turn: which path answered, at what effort, for what.
+
+        The figures behind it live in a dialog rather than on the line. Eleven numbers on one
+        row beside a running game is a wall a Commander reads none of; the ones that answer
+        "did that work" stay here and the rest are a click away. The link is docked so the line
+        wraps against it rather than pushing it off the row.
+      -->
+      <!--
+        A banknote rather than the word "Details" (#210), chosen by the Commander from six drawings
+        on 2026-08-30. The content, the tooltip and the accessible name are all set in code by
+        Glyphs.Mark, which is what keeps the word reachable: a glyph-only control with no accessible
+        name is a control that does not exist for anybody not looking at it.
+
+        Centred rather than padded on one axis. The word was 6,1 around text on a baseline; a mark
+        sits in a box of its own, so the padding is even and the content is centred explicitly —
+        the same correction the help button already carries.
+      -->
+      <Button x:Name="TurnDetails"
+              DockPanel.Dock="Right"
+              IsVisible="False"
+              Margin="8,0,0,0"
+              Padding="4,2"
+              MinWidth="0"
+              VerticalAlignment="Center"
+              VerticalContentAlignment="Center"
+              HorizontalContentAlignment="Center"
+              Background="Transparent"
+              BorderThickness="0"
+              Cursor="Hand"
+              FontSize="{StaticResource D47.Type.Secondary}"
+              Foreground="{DynamicResource D47.Accent}"
+              Click="OnTurnDetailsClick" />
+      <TextBlock x:Name="TurnLine"
+                 Text="{Binding TurnLine}"
+                 VerticalAlignment="Center"
+                 FontFamily="Cascadia Mono,Consolas,monospace"
+                 FontSize="{StaticResource D47.Type.Secondary}"
+                 Foreground="{DynamicResource D47.TextMuted}"
+                 TextWrapping="Wrap" />
+    </DockPanel>
+
+    <!--
+      The way out of mini, drawn (asked for 2026-08-24). Phase 51 ruled that the way back must not
+      live in the thing that disappears and listed three that do not: the hotkey, the phrase and
+      the title bar. The Commander's answer on meeting it was that a surface with no visible
+      control to leave by is one you have to be told about — so there is one, and the other three
+      stand beside it rather than being replaced.
+
+      This row is now the exception rather than the rule (#194). On the transcript page the way
+      out takes a seat in StatusRow and this row is not drawn at all; everywhere else it is drawn
+      and the seat is not. The reason the row exists has not gone away — StatusRow is the
+      transcript's, hidden on every other tab, so a way out that lived only there would vanish on
+      the tabs that have no turns on them, which is a way out with a hole in it. What changed is
+      that the hole is now filled by this row rather than by refusing the seat.
+
+      Hidden unless a host furnishes it, exactly as TurnDetails above is — so the headset's mini is
+      untouched and the flat overlay, which the pointer goes straight through, does not draw a
+      button nobody could press.
+    -->
+    <DockPanel x:Name="ModeRow" DockPanel.Dock="Bottom" IsVisible="False" Margin="0,8,0,0">
+      <Button x:Name="ModeToggle"
+              DockPanel.Dock="Right"
+              Padding="6,1"
+              MinWidth="0"
+              VerticalAlignment="Center"
+              Background="Transparent"
+              BorderThickness="0"
+              Cursor="Hand"
+              FontSize="{StaticResource D47.Type.Secondary}"
+              Foreground="{DynamicResource D47.Accent}"
+              Click="OnModeToggleClick" />
+      <TextBlock />
+    </DockPanel>
+
+    <!--
+      Which surface of the panel this instantiation is showing, and which reading of it. On the
+      view rather than on the view model, for the same reason PanelMode is: both surfaces bind
+      one model, so a page held there would send the headset to the log file the moment the
+      window went to it. The model owns the content; how much of it a given surface shows is
+      that surface's business.
+    -->
+    <DockPanel x:Name="TabStrip" DockPanel.Dock="Top" Margin="0,16,0,0">
+
+      <!--
+        The steppers, for when the tabs do not fit (remediation.md 10, item 1).
+        <para/>
+        The strip used to carry the tabs, the mode control and the search box in one row, and
+        below a certain width they simply overlapped: a DockPanel gives its docked children what
+        they ask for and lets the filling child have whatever is left, which below a threshold is
+        a negative number rather than a scrollbar. The mode control and the search box have moved
+        into the pane, which is most of the fix; these are what makes the remainder reachable at
+        any width at all, including the headset's, where the strip is narrower still.
+        <para/>
+        Docked outside the scroller rather than floating over it, so a tab is never underneath the
+        control that scrolls to it. Hidden entirely when everything fits, which is the ordinary
+        case on a desktop — a pair of dead arrows either side of six tabs is two controls that do
+        nothing, permanently.
+      -->
+      <Button x:Name="TabsLeft"
+              DockPanel.Dock="Left"
+              Content="&#x2039;"
+              IsVisible="False"
+              Padding="7,0"
+              MinWidth="0"
+              Height="30"
+              Margin="0,0,4,0"
+              VerticalAlignment="Bottom"
+              FontSize="{StaticResource D47.Type.Body}"
+              ToolTip.Tip="Earlier tabs"
+              AutomationProperties.Name="Show earlier tabs"
+              Click="OnTabsLeftClick" />
+      <!--
+        The panel's chrome, on the tab row rather than in a band above it (#234). Three small
+        controls were costing a whole strip of height that the page below did not get, which is
+        nothing on a desktop window and is a real fraction of a headset panel.
+
+        **One row of a fixed height, rather than three controls each aligning themselves.** They
+        were docked separately and bottom-aligned, and bottom-aligning things of three different
+        heights lines up their bottom edges and nothing else - the question mark sits in a 35-pixel
+        button, the badge in a 22-pixel border, and the ink came out at three different heights.
+        A container with one height, and every child centred in it, aligns what a reader actually
+        sees.
+
+        Right-to-left: avatar, badge, help, and then the tab stepper nearest the tabs it scrolls.
+        The avatar is outermost on the Commander's instruction. Both the badge and the help mark
+        are furnished by hand and are absent on the headset's copy, so this row has to sit
+        correctly with any of the three missing - which a StackPanel does by giving a hidden child
+        no width.
+      -->
+      <StackPanel x:Name="ChromeRow"
+                  DockPanel.Dock="Right"
+                  Orientation="Horizontal"
+                  Height="35"
+                  VerticalAlignment="Bottom"
+                  Margin="6,0,0,0">
+        <!--
+          Thirty-five, and the row is thirty-five because of it. Two constraints meet on this
+          number: the headset presses this mark with a ray, so it may not go under the 30-pixel
+          floor (Phase 39) - and the glyph inside is centred against the button's own box, which
+          TheHelpGlyphIsCentredInItsButton measures to half a pixel. Shrinking the button moved
+          the ink off centre by more than that, so the size that was proven stays and the row is
+          built around it rather than the other way about.
+        -->
+        <Button x:Name="HelpButton"
+                IsVisible="False"
+                Width="35"
+                Height="35"
+                Padding="0"
+                HorizontalContentAlignment="Center"
+                VerticalContentAlignment="Center"
+                VerticalAlignment="Center"
+                CornerRadius="4"
+                Background="Transparent"
+                BorderThickness="0"
+                ToolTip.Tip="Open the documentation"
+                Click="OnHelpClick">
+          <!--
+            Width is the ink's own aspect rather than a square: the geometry spans 9.2 units across
+            and 18.6 down, so 8.4 by 17 is the box it actually fills. A 17-wide box would leave four
+            pixels of nothing on each side of the mark and hang it left of centre.
+
+            **Accent at rest** (#208). It was muted until pointed at, and a pair of handlers swapped
+            the stroke on the way in and out — which is the pattern `Glyphs.Draw` exists to refuse:
+            `FindResource` reads a brush *once*, at the moment of the hover, and assigns it, so a
+            theme switched after a hover left the mark painted in the old theme's colour. Both
+            handlers are gone with the resting colour; a `DynamicResource` is the only mechanism on
+            this stroke now.
+
+            And the hover feedback goes with them rather than being replaced. The colour was saying
+            two things — "this can be pressed" and "you are pointing at it" — and the first is the one
+            worth keeping. `TurnDetails` and `ModeToggle` are accent at rest and change nothing on
+            hover; the button's own background wash is what says the pointer is here.
+          -->
+          <Path x:Name="HelpGlyph"
+                Width="8.4" Height="17"
+                Stretch="Uniform"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Stroke="{DynamicResource D47.Accent}"
+                StrokeThickness="2.8"
+                StrokeLineCap="Round"
+                StrokeJoin="Round"
+                Data="M 7.4,7.6 A 4.6,4.6 0 1 1 12,12.2 L 12,15.5 M 12,20.2 L 12,20.2" />
+        </Button>
+        <Border x:Name="PreReleaseBadge"
+                IsVisible="False"
+                VerticalAlignment="Center"
+                Margin="0,0,6,0"
+                Padding="7,2"
+                CornerRadius="3"
+                Background="Transparent"
+                BorderThickness="1"
+                BorderBrush="{DynamicResource D47.Accent}"
+                ToolTip.Tip="This is a pre-release. It is offered to nobody automatically, and it is not final.">
+          <TextBlock x:Name="PreReleaseBadgeText"
+                     Text="PRE-RELEASE"
+                     FontSize="{StaticResource D47.Type.Small}"
+                     FontWeight="Bold"
+                     Foreground="{DynamicResource D47.Accent}" />
+        </Border>
+
+        <!--
+          The turn state. Sized through Extent rather than Width, because this control sizes its
+          own ring and core inside the box it is given - setting only the outer box drew a
+          40-pixel ring in a 30-pixel space.
+        -->
+        <panel:AvatarView x:Name="Avatar"
+                          Extent="30"
+                          VerticalAlignment="Center"
+                          Margin="8,0,0,0" />
+      </StackPanel>
+
+      <Button x:Name="TabsRight"
+              DockPanel.Dock="Right"
+              Content="&#x203A;"
+              IsVisible="False"
+              Padding="7,0"
+              MinWidth="0"
+              Height="30"
+              Margin="4,0,0,0"
+              VerticalAlignment="Bottom"
+              FontSize="{StaticResource D47.Type.Body}"
+              ToolTip.Tip="Later tabs"
+              AutomationProperties.Name="Show later tabs"
+              Click="OnTabsRightClick" />
+
+      <!--
+        The strip itself, which scrolls rather than wraps. Wrapping would move the tabs into a
+        second row and take the join to the panel with them, and the join is the whole idiom —
+        a tab that is not touching its page does not read as a tab.
+
+        No visible scrollbar: a horizontal bar under a tab strip reads as a second, thinner strip.
+        The arrows above are the affordance, and the wheel and a drag still work.
+      -->
+      <ScrollViewer x:Name="TabsScroller"
+                    HorizontalScrollBarVisibility="Hidden"
+                    VerticalScrollBarVisibility="Disabled"
+                    SizeChanged="OnTabsResized">
+
+      <!--
+        No GroupName, deliberately. Avalonia groups named radio buttons across the whole
+        application rather than within a tree, and this view is instantiated twice - once by the
+        window, once by the headset overlay. A shared name put both strips in one group, so the
+        overlay's tabs unchecked the window's as they were built, and the window opened with no
+        tab highlighted until it was clicked. Nameless, they group by their parent panel, which
+        is one strip per surface - which is what a tab strip is.
+
+        Six tabs, and five in the headset: Settings stays hidden there for the reason recorded
+        below. Every tab but Transcript is hidden until a host furnishes it, which is what lets
+        the phases that fill them land one at a time without a dead tab in between - the same
+        rule Settings has followed since Phase 12, generalised.
+      -->
+      <StackPanel x:Name="Tabs"
+                  Orientation="Horizontal"
+                  VerticalAlignment="Bottom">
+        <!--
+          One tab for three readings of one exchange. Conversation and Technical are the same
+          turns at two verbosities and the log is a file read off disk - which is why the busy
+          glyph rides the mode rather than the tab, and why the collapse is three modes rather
+          than a single toggle (list.md Phase 25).
+        -->
+        <RadioButton x:Name="TranscriptTab"
+                     Theme="{StaticResource D47.Tab}"
+                     IsChecked="True"
+                     Content="Transcript"
+                     Tapped="OnTabTapped"
+                     IsCheckedChanged="OnTabChecked" />
+        <!--
+          Fleet rather than Loadout (#234). Its roots are unchanged - Ships, Suits and Gap - so
+          the root that holds owned vessels keeps the name it already had, and only the tab's own
+          label moved. What that name promises and does not yet deliver is #230.
+        -->
+        <RadioButton x:Name="LoadoutTab"
+                     Theme="{StaticResource D47.Tab}"
+                     IsVisible="False"
+                     Content="Fleet"
+                     Tapped="OnTabTapped"
+                     IsCheckedChanged="OnTabChecked" />
+        <RadioButton x:Name="EngineersTab"
+                     Theme="{StaticResource D47.Tab}"
+                     IsVisible="False"
+                     Content="Engineers"
+                     Tapped="OnTabTapped"
+                     IsCheckedChanged="OnTabChecked" />
+        <RadioButton x:Name="ChecklistTab"
+                     Theme="{StaticResource D47.Tab}"
+                     IsVisible="False"
+                     Content="Checklist"
+                     Tapped="OnTabTapped"
+                     IsCheckedChanged="OnTabChecked" />
+        <!--
+          Where the Commander is going, in three readings of one journey (list.md Phase 37).
+          Beside the transcript from Phase 37 until 2026-09-02, on the grounds that a route is
+          read while flying and the tab a hand reaches for in flight should not be far along.
+          After Fleet, Engineers and Checklist on the Commander's instruction (#272).
+        -->
+        <RadioButton x:Name="RoutingTab"
+                     Theme="{StaticResource D47.Tab}"
+                     IsVisible="False"
+                     Content="Routing"
+                     Tapped="OnTabTapped"
+                     IsCheckedChanged="OnTabChecked" />
+        <!--
+          Stories the Commander flies (list.md Phase 47). After the ledgers on the Commander's
+          instruction, 2026-08-22: a story turns out to be read between trips rather than during
+          one, which is where the ledgers are.
+        -->
+        <RadioButton x:Name="AdventuresTab"
+                     Theme="{StaticResource D47.Tab}"
+                     IsVisible="False"
+                     Content="Adventures"
+                     Tapped="OnTabTapped"
+                     IsCheckedChanged="OnTabChecked" />
+        <RadioButton x:Name="UtilitiesTab"
+                     Theme="{StaticResource D47.Tab}"
+                     IsVisible="False"
+                     Content="Utilities"
+                     Tapped="OnTabTapped"
+                     IsCheckedChanged="OnTabChecked" />
+        <!--
+          Hidden until a host says otherwise, and only the desktop window ever does. The headset
+          renders this same view, and a 1180-pixel nav column at a metre is not a settings surface
+          so much as a wall - so the tab is absent there rather than present and asking to be
+          remembered about (list.md Phase 12).
+        -->
+        <RadioButton x:Name="SettingsTab"
+                     Theme="{StaticResource D47.Tab.Settings}"
+                     IsVisible="False"
+                     Content="Settings"
+                     Tapped="OnTabTapped"
+                     IsCheckedChanged="OnTabChecked" />
+      </StackPanel>
+
+      </ScrollViewer>
+
+    </DockPanel>
+
+    <!--
+      Where the Commander is, once they are below a root (list.md Phase 25, "Drill in, and find
+      your way back").
+
+      Both the back affordance and the you-are-here, because a headset has no title bar to
+      orient by and losing your place is expensive when you cannot glance at a second monitor.
+      The first crumb is the tab itself - the tab is the root rather than the first level - so
+      this row says nothing at a root and is not drawn there, which is also what keeps it from
+      reading as a second strip beside the mode control it replaces.
+
+      Filled in code from the navigator's trail, because a trail can materialise mid-drill: a
+      spoken "open the third weapon slot on the Corsair" lands three levels down and the row has
+      to be right the first time it is drawn.
+    -->
+    <StackPanel x:Name="CrumbRow"
+                DockPanel.Dock="Top"
+                Orientation="Horizontal"
+                IsVisible="False"
+                Margin="0,10,0,0"
+                Spacing="0" />
+
+    <!--
+      One slot, every page. The transcript and each furnished tab occupy the same place under
+      the strip and are swapped by which tab is checked, which is what makes settings a page of
+      this window rather than a second window - and what makes every surface Phases 24 and 26-28
+      add a page of it too, on the same terms.
+    -->
+    <!--
+      One bordered container for the whole content region, with the page's own controls inside it
+      (remediation.md 10, items 1, 2 and 3).
+      <para/>
+      It used to be two borders side by side in a Panel — one for the transcript, one for every
+      furnished page — because the two want different fills: the transcript is Surface and the
+      settings page is Background, since a card the colour of its page is not a card. That is
+      still true and is still the rule; what changed is that one border can carry either fill, so
+      the difference is a property rather than a second control. ApplyChrome sets it.
+      <para/>
+      Top-left corner square, because a tab is sitting on it. Rounding it there would leave a
+      visible notch between the first tab and the panel it belongs to.
+    -->
+    <Border x:Name="ContentPane"
+            BorderBrush="{DynamicResource D47.Border}"
+            BorderThickness="1"
+            CornerRadius="0,4,4,4">
+      <DockPanel>
+
+      <!--
+        The page's own bar: which reading of the page is showing, and the two things that act on
+        it (remediation.md 10, items 1, 2 and 3).
+        <para/>
+        <b>Inside the panel rather than beside the tabs.</b> The mode control was a segmented pill
+        riding in the tab strip's own row, on the argument that two stacked strips read worse than
+        eight flat tabs. That argument was about a second strip of <em>tabs</em>; what it produced
+        was a row with three unrelated controls competing for one width, which below a certain
+        window size stopped being a layout at all. A control that says which reading of this page
+        you are looking at belongs to the page, and a page is what is inside the border.
+        <para/>
+        And it is a drop-down now rather than a row of segments, so it costs one control's width
+        whatever the tab offers — three readings or six.
+      -->
+      <DockPanel x:Name="PageBar"
+                 DockPanel.Dock="Top"
+                 IsVisible="False"
+                 Margin="14,12,14,0">
+        <!--
+          Which reading of this page is showing. A button rather than a ComboBox, because a
+          ComboBox is a popup and a popup has no top level to hang from on a window that is never
+          shown — the headset's host is exactly that. It opens the panel's own chooser in the
+          layer, like every other choice here.
+
+          Filled in code, because the roots come from the navigator: a tab declares its own, and a
+          tab with one root shows no control at all. Hidden below the root, where the breadcrumb
+          is already answering which stack you are in.
+        -->
+        <!--
+          A real ComboBox (#231), and the comment this replaces was half right. It said a
+          ComboBox cannot be used here because a popup has no top level to hang from on a window
+          that is never shown. That is true of the headset's copy and was applied to both — but
+          the panel is instantiated twice, and only the offscreen copy lives in that window. This
+          one is in the real main window, with a real top level, exactly like Settings.
+
+          The headset's copy is already covered without this knowing: OffscreenSurface intercepts
+          a ray-press on any ComboBox before a pointer event is raised, forces IsDropDownOpen to
+          false and draws its own list on the panel. That interception exists so the panel can
+          contain combo boxes, and this is the control it was waiting for.
+
+          The busy glyph sits beside it rather than inside it, because a ComboBox's content is
+          its selected item and a spinner is not one of the readings.
+        -->
+        <StackPanel x:Name="ModePicker"
+                    DockPanel.Dock="Left"
+                    Orientation="Horizontal"
+                    Spacing="7"
+                    Margin="0,0,12,0"
+                    VerticalAlignment="Center"
+                    IsVisible="False">
+          <ComboBox x:Name="ModeBox"
+                    MinHeight="28"
+                    VerticalAlignment="Center"
+                    CornerRadius="4"
+                    FontSize="{StaticResource D47.Type.Secondary}"
+                    SelectionChanged="OnModeChanged" />
+
+          <!--
+            The journal's two readings, as one reading seen two ways (#231). They used to be two
+            entries in the picker, which read as two subjects — and they are the same events, once
+            as sentences and once as the file's own JSON.
+
+            Shown in the headset too, on the Commander's instruction: "Show the toggle. If they
+            don't like it they can toggle it off." That reverses the position Raw Journal shipped
+            with, which was that a wall of JSON is not readable at a metre and exists to be pasted
+            into a bug report. Recorded here so it is not put back as a regression.
+          -->
+          <!--
+            A ToggleSwitch rather than a ToggleButton, on the Commander's instruction
+            (2026-08-31): a button that changes colour reads as a pressed button, and the
+            settings page has already taught what a switch looks like - the same control, the
+            same accent, no On/Off words, the label doing the work.
+
+            The label sits beside the knob rather than inside the switch, because a
+            ToggleSwitch stacks its Content above the knob - one word wrapped onto two lines in
+            a 28-pixel bar. The settings page keeps its labels outside the control for the same
+            reason, so this does what it does: a TextBlock, then a bare switch, and the box is
+            what shows and hides.
+          -->
+          <StackPanel x:Name="RawToggleBox"
+                      Orientation="Horizontal"
+                      VerticalAlignment="Center"
+                      Margin="6,0,0,0"
+                      IsVisible="False"
+                      ToolTip.Tip="Show the file's own JSON instead of sentences">
+            <TextBlock Text="Raw"
+                       VerticalAlignment="Center"
+                       Margin="0,0,6,0"
+                       FontSize="{StaticResource D47.Type.Secondary}" />
+            <ToggleSwitch x:Name="RawToggle"
+                          VerticalAlignment="Center"
+                          OnContent="{x:Null}"
+                          OffContent="{x:Null}"
+                          IsCheckedChanged="OnRawToggled" />
+          </StackPanel>
+        </StackPanel>
+        <!--
+          One search affordance for the surface, on the tab that is selected — not four features
+          bolted to four pages (list.md Phase 12). What a match does differs by page and that
+          difference is the design: the transcript pages highlight and step, and Settings filters,
+          so the count and the steppers are hidden where they would mean nothing.
+
+          Hidden until a host enables it, which only the desktop window does. Mini shows no strip
+          and the headset has no keyboard, and a search box the Commander cannot type into is
+          worse than no search at all.
+        -->
+        <!--
+          A DockPanel rather than a horizontal stack, and the search box is the child that flexes
+          (remediation.md 10, item 1). A stack with a fixed 200-pixel box in it takes the width it
+          wants and leaves the mode button beside it whatever is left, which on a narrow pane is a
+          sliver — the same failure this batch removed from the tab strip, reproduced one row
+          down. Everything here keeps its size and the box gives, because a search box that is
+          narrower is still a search box and a mode button that is four pixels wide is not a
+          control at all.
+        -->
+        <DockPanel x:Name="SearchRow"
+                   LastChildFill="True"
+                   IsVisible="False"
+                   VerticalAlignment="Center"
+                   Margin="12,0,0,0">
+          <!--
+            One affordance for the whole page as it is currently shown (list.md Phase 19, "Copy
+            log"). Beside the search box because both are about the page rather than about the
+            conversation, and because this is the row a Commander looks at when they are reading
+            rather than talking. The tedious case is several hundred lines of a log, to paste into
+            an issue.
+
+            "Copy All", not "Copy" (remediation.md 10, item 3). The text on this page is selectable
+            and Ctrl+C already works on a selection, so a button beside it saying "Copy" reads as
+            copying that selection — which is the one thing it does not do.
+
+            Centred on both axes, and the content alignment is the half that was missing: the
+            height made the button the right size and the label still sat where the default put
+            it, which beside a 28-pixel search box reads as one control hanging lower than its
+            neighbours.
+          -->
+          <Button x:Name="CopyButton"
+                  DockPanel.Dock="Left"
+                  Margin="0,0,6,0"
+                  Height="28"
+                  VerticalAlignment="Center"
+                  VerticalContentAlignment="Center"
+                  HorizontalContentAlignment="Center"
+                  Padding="10,0"
+                  FontSize="{StaticResource D47.Type.Secondary}"
+                  ToolTip.Tip="Copy this whole page to the clipboard"
+                  Click="OnCopyClick" />
+          <!--
+            The other thing a Commander does with these two pages, and the one Copy All cannot do
+            (#160). Copy hands over the page as it stands — the Commander's name, other people's
+            messages, a screenful of whatever happened to be on screen. This cuts a window around
+            an incident, scrubs it, and shows exactly what would leave before anything does.
+
+            Worded rather than a glyph, unlike Copy beside it. Copy is a verb everybody already
+            knows and a clipboard icon says it; this is a thing nobody has done before and an icon
+            for it would be a small picture nobody presses. Shown only on the two pages it can cut
+            from, and only where a host has wired it — the headset has no clipboard and no file
+            picker, so on that surface it is simply absent.
+          -->
+          <Button x:Name="DonateButton"
+                  DockPanel.Dock="Left"
+                  Margin="0,0,6,0"
+                  Height="28"
+                  VerticalAlignment="Center"
+                  VerticalContentAlignment="Center"
+                  HorizontalContentAlignment="Center"
+                  Padding="10,0"
+                  IsVisible="False"
+                  Content="Help improve D47…"
+                  FontSize="{StaticResource D47.Type.Secondary}"
+                  ToolTip.Tip="Share a scrubbed excerpt around an incident - or, on the journal pages, your journal history - after reading exactly what would leave"
+                  Click="OnDonateClick" />
+          <!--
+            The clear affordance sits inside the field, not beside it. Another sibling in this
+            StackPanel would sit outside the border and read as a fourth button in a row that
+            already has Copy and the two steppers, rather than as part of the box it empties.
+
+            U+00D7, the multiplication sign, and deliberately not the letter x — the same reason
+            the steppers above are U+2039 and U+203A rather than angle brackets.
+
+            Hidden until there is something to clear, or it is a control that does nothing for
+            most of the time a Commander can see it.
+          -->
+          <!--
+            Docked innermost-last, and the box is the last child so it is the one that fills.
+            Order is load-bearing twice over. A DockPanel gives its first right-docked child the
+            rightmost slot, so the trio is declared next, previous, count to read left to right as
+            count, previous, next. And LastChildFill overrides the last child's own Dock: with the
+            steppers declared last, one of them stretched across the whole row and the count sat
+            outside it (remediation.md 11, item 2).
+          -->
+          <Button x:Name="SearchNext"
+                  DockPanel.Dock="Right"
+                  Margin="6,0,0,0"
+                  Content="&#x203A;"
+                  Padding="8,0"
+                  MinWidth="0"
+                  Height="28"
+                  IsVisible="False"
+                  FontSize="{StaticResource D47.Type.Body}"
+                  ToolTip.Tip="Next match (Enter)"
+                  Click="OnSearchNextClick" />
+          <Button x:Name="SearchPrevious"
+                  DockPanel.Dock="Right"
+                  Margin="6,0,0,0"
+                  Content="&#x2039;"
+                  Padding="8,0"
+                  MinWidth="0"
+                  Height="28"
+                  IsVisible="False"
+                  FontSize="{StaticResource D47.Type.Body}"
+                  ToolTip.Tip="Previous match (Shift+Enter)"
+                  Click="OnSearchPreviousClick" />
+          <TextBlock x:Name="SearchCount"
+                     DockPanel.Dock="Right"
+                     Margin="6,0,0,0"
+                     VerticalAlignment="Center"
+                     IsVisible="False"
+                     FontSize="{StaticResource D47.Type.Secondary}"
+                     Foreground="{DynamicResource D47.TextMuted}" />
+          <!--
+            Body, not Secondary. A field the Commander types into is not supporting text, and at
+            13 beside a page of 14 it read as a smaller-than-everything control rather than as a
+            quieter one — which is the exact drift TypeScale exists to stop.
+          -->
+          <!--
+            The child that gives, and the only one that can. It takes whatever width the row has
+            spare, so no other control has to hold a gap — which is the whole of item 2: the slack
+            has to go somewhere, and every other control here is the wrong place for it.
+            <para/>
+            Capping it and right-aligning the group was tried and does not work: a stretched child
+            with a MaxWidth is centred in what is left, which puts a gap on both sides of the box
+            instead of one beside it, and a child aligned Right does not stretch at all — it
+            collapses to MinWidth at every window size. So the box is wide on a wide window, which
+            is a cosmetic cost paid for having no gap at any width and still shrinking to 90 on a
+            narrow pane.
+          -->
+          <TextBox x:Name="SearchInput"
+                   MinWidth="90"
+                   Height="28"
+                   Padding="8,3"
+                   FontSize="{StaticResource D47.Type.Body}"
+                   VerticalContentAlignment="Center"
+                   PlaceholderText="Search this page"
+                   TextChanged="OnSearchChanged"
+                   KeyDown="OnSearchKeyDown">
+            <TextBox.InnerRightContent>
+              <Button x:Name="SearchClear"
+                      Content="&#x00D7;"
+                      Padding="6,0"
+                      MinWidth="0"
+                      Margin="0,0,2,0"
+                      IsVisible="False"
+                      Background="Transparent"
+                      BorderThickness="0"
+                      VerticalAlignment="Center"
+                      FontSize="{StaticResource D47.Type.Body}"
+                      Foreground="{DynamicResource D47.TextMuted}"
+                      Cursor="Hand"
+                      ToolTip.Tip="Clear the search (Esc)"
+                      AutomationProperties.Name="Clear the search"
+                      Click="OnSearchClearClick" />
+            </TextBox.InnerRightContent>
+          </TextBox>
+        </DockPanel>
+      </DockPanel>
+
+      <Panel>
+      <Border x:Name="TranscriptPane"
+              Padding="14">
+        <Panel>
+          <ScrollViewer x:Name="TranscriptScroller" ScrollChanged="OnTranscriptScrolled">
+            <!--
+              Two presentations of one page, and exactly one of them is ever visible. The
+              conversation is a conversation, so it is drawn as one - each turn its own bubble,
+              the Commander's on the right (asked for 2026-08-22). Technical and the log file
+              are not conversations: one is a diagnostic feed and the other is a file, and both
+              stay the flat block they have always been.
+
+              Siblings in a Panel rather than one control reshaped, because they are different
+              shapes with different rules. Sharing a scroll viewer is what keeps following,
+              the ↓ Newest button and the search offsets one mechanism rather than two.
+            -->
+            <!--
+              Named because the fold pads it (#413). Ctrl+L scrolls the reading above the top of
+              the view, and a reading shorter than the view has nowhere to go until something
+              below it says there is - so the press adds a viewport's worth of empty space here
+              and takes it back as new lines grow into it.
+            -->
+            <Panel x:Name="TranscriptContent">
+            <!-- No Text binding: the content is written as runs from code-behind, because a
+                 marked line - the panel noting that the core changed - is drawn differently from
+                 the conversation around it, and one string cannot carry that.
+
+                 SelectableTextBlock rather than TextBlock, and that is the whole of "the live log
+                 is selectable and copyable" (list.md Phase 19): drag-selection across the text
+                 and Ctrl+C are the control's own, so there is no workflow to invent. The item
+                 says so itself - "if it is free due to the nature of the controls being used,
+                 then don't invent a workflow that's unneeded". SelectableTextBlockTests asserts
+                 it stays that way. -->
+            <SelectableTextBlock x:Name="Transcript"
+                                 FontFamily="Cascadia Mono,Consolas,monospace"
+                                 FontSize="{StaticResource D47.Type.Body}"
+                                 TextWrapping="Wrap">
+              <!--
+                The other way to the same act (remediation.md 11, item 14). A right-click is where
+                a reader looks for "clear this", and Ctrl+L is where their hands already are; the
+                menu is also the only one of the two that says the shortcut exists.
+
+                It deletes nothing (#413). The act is a scroll: what is on the page goes above the
+                top of the view, scrolling back shows every line of it again, and the file on disk
+                and d47's own record are not touched. That is why it is offered on all four
+                readings now, including the three that are files d47 only reads.
+              -->
+              <SelectableTextBlock.ContextMenu>
+                <ContextMenu>
+                  <!--
+                    Copy of the selection (remediation.md 14, item 9). Declaring a menu of our own
+                    replaced the one the control comes with, which is where a reader's hand goes
+                    for Copy and where it had stopped being — so the shortcut that still worked
+                    had nothing telling anybody it did. Greyed rather than absent when there is
+                    nothing selected or nowhere to copy to, so the gesture is discoverable at the
+                    moment it cannot be used as well as the moment it can.
+                  -->
+                  <MenuItem x:Name="CopySelectionItem"
+                            Header="Copy"
+                            IsEnabled="False"
+                            InputGesture="Ctrl+C"
+                            Click="OnCopySelectionClick" />
+                  <Separator />
+                  <MenuItem x:Name="ScrollPastReadingItem"
+                            Header="Scroll what is shown above the fold"
+                            InputGesture="Ctrl+L"
+                            Click="OnScrollPastReadingClick" />
+                </ContextMenu>
+              </SelectableTextBlock.ContextMenu>
+            </SelectableTextBlock>
+
+            <!--
+              The conversation. Built from code-behind like the block beside it and for the same
+              reason - who spoke decides how a turn is drawn, and one string cannot carry that.
+              Empty and hidden until the page asks for it, so a surface reading the log file
+              pays nothing for a conversation it is not showing.
+            -->
+            <StackPanel x:Name="Bubbles" IsVisible="False" />
+            </Panel>
+          </ScrollViewer>
+
+          <!--
+            The journal (https://github.com/dseelinger/d47/issues/51). A sibling of the scroller
+            above rather than a third presentation inside it, because it is the one page here with
+            a shape of its own: a list and a detail beside it, each scrolling separately.
+
+            Design C of the four proposed, and the two panes answer each other's weakness — which
+            is the whole argument for it. The summary line is prose, so it is lossy and capable of
+            being wrong; the detail is the untouched fields, so it is complete and cannot be. An
+            event nobody wrote a sentence for still lists, and its detail is exactly as complete as
+            any other's.
+
+            DrillView draws this shape already and is deliberately not used: it is a tab-level
+            construct built around a navigation trail, and the Transcript tab has never had one.
+            Borrowing it would mean giving this tab a drill stack it has no levels for.
+          -->
+          <Grid x:Name="JournalPane" IsVisible="False" ColumnDefinitions="*,Auto,1.2*">
+            <!--
+              Watched like the transcript's own scroller, because the Newest button acts on
+              whichever of the two is showing (#233). Without this, moving through the list
+              never told the button the Commander had left the newest entry.
+            -->
+            <ScrollViewer Grid.Column="0" x:Name="JournalListScroller" ScrollChanged="OnTranscriptScrolled">
+              <ListBox x:Name="JournalList"
+                       Background="Transparent"
+                       BorderThickness="0"
+                       FontFamily="Cascadia Mono,Consolas,monospace"
+                       FontSize="{StaticResource D47.Type.Secondary}"
+                       SelectionChanged="OnJournalSelected" />
+            </ScrollViewer>
+
+            <!--
+              The same rule between panes the drill strip draws, and draggable for the same reason
+              Phase 55 made those draggable. In its own column here rather than overlaid, because
+              this grid is built once and never rebuilt by a navigation - the trap that phase names
+              does not exist on this page.
+            -->
+            <GridSplitter Grid.Column="1"
+                          x:Name="JournalSplitter"
+                          Width="9"
+                          Background="Transparent"
+                          ResizeDirection="Columns"
+                          ResizeBehavior="PreviousAndNext" />
+
+            <Border Grid.Column="1"
+                    Width="1"
+                    HorizontalAlignment="Center"
+                    IsHitTestVisible="False"
+                    Background="{DynamicResource D47.Border}" />
+
+            <ScrollViewer Grid.Column="2" x:Name="JournalDetailScroller" Padding="14,0,0,0">
+              <!--
+                Selectable, because the reason to open this pane at all is usually to put a field
+                into a bug report. Same control and the same free copy the live log gets.
+              -->
+              <SelectableTextBlock x:Name="JournalDetail"
+                                   FontFamily="Cascadia Mono,Consolas,monospace"
+                                   FontSize="{StaticResource D47.Type.Secondary}"
+                                   TextWrapping="NoWrap" />
+            </ScrollViewer>
+          </Grid>
+
+          <!--
+            Floating over the transcript rather than docked beside it, because it is about where
+            the reader is rather than about the page: it appears only when there is something
+            below the fold and takes no layout when there is not (list.md Phase 19, "Follow the
+            live log, or stop following it").
+
+            Hidden while following, which is the state a panel beside a running game is in
+            almost all the time. A permanent "jump to latest" on a view that is already at the
+            latest is a control that does nothing, sitting over the text it does nothing to.
+          -->
+          <Button x:Name="FollowButton"
+                  IsVisible="False"
+                  HorizontalAlignment="Right"
+                  VerticalAlignment="Bottom"
+                  Margin="0,0,14,10"
+                  Padding="10,5"
+                  CornerRadius="14"
+                  FontSize="{StaticResource D47.Type.Secondary}"
+                  Background="{DynamicResource D47.SurfaceAlt}"
+                  BorderBrush="{DynamicResource D47.Border}"
+                  BorderThickness="1"
+                  ToolTip.Tip="Scroll to the newest line and follow it again"
+                  Click="OnFollowClick" />
+        </Panel>
+      </Border>
+
+      <!--
+        Whichever furnished tab is showing, filled on its first selection by whatever the host
+        handed to Furnish and never at all on a surface that was handed nothing. One pane rather
+        than one per tab, with the built pages kept: constructing ninety-odd settings rows is not
+        free, and a Commander who flips between Checklist and Settings should pay for each once.
+
+        The fill is D47.Background rather than the transcript's D47.Surface because the cards
+        inside a settings page are Surface, and a card the same colour as the page it sits on is
+        not a card - which is also why the Settings tab has a control theme of its own for the
+        join. A page that wants the transcript's fill draws its own.
+      -->
+      <Border x:Name="PagePane"
+              IsVisible="False"
+              ClipToBounds="True" />
+
+      <!--
+        The mini panel's reading of the tab that is showing (asked for 2026-08-22). Mini has no tab
+        strip and cannot afford one at 512x280, so which tab it is reading is chosen on the big
+        panel and this draws the short version of it. The transcript's tail is still the default and
+        is still drawn by TranscriptPane; this pane is what Adventures looks like at that size, and
+        the other tabs are unchanged until somebody asks for them.
+      -->
+      <Border x:Name="MiniPane"
+              IsVisible="False"
+              ClipToBounds="True" />
+
+      <!--
+        A chooser, or a value being said or typed. It takes the whole content region because that
+        is what makes it a level of the stack rather than a popup - and because popups cannot
+        exist in the VR path at all, where the panel's window is never shown and a popup has
+        nowhere to hang from (list.md Phase 25, "Choosing takes the panel").
+
+        Over the pane rather than inside it, so the tab underneath keeps its state: a chooser
+        opened three levels into a ship comes back to that ship rather than to its root.
+      -->
+      <Border x:Name="ModalPane"
+              IsVisible="False"
+              ClipToBounds="True"
+              Background="{DynamicResource D47.Background}"
+              BorderBrush="{DynamicResource D47.Border}"
+              BorderThickness="1"
+              CornerRadius="0,4,4,4" />
+
+      <!--
+        The in-tree layer, for the choosers that are declared as layers rather than as pages - a
+        five-item settings enum, where taking the whole panel would be a level of navigation to
+        answer a question the Commander did not think of as one.
+
+        Still not a popup. It is a panel in this tree, so the geometric hit test the headset uses
+        finds it exactly as it finds everything else.
+      -->
+      <Panel x:Name="Layer" IsVisible="False" />
+      </Panel>
+
+      </DockPanel>
+    </Border>
+
+  </DockPanel>
+</UserControl>

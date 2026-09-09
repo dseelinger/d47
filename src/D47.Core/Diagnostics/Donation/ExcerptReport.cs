@@ -1,0 +1,159 @@
+using System.Globalization;
+using System.Text;
+
+namespace D47.Core.Diagnostics.Donation;
+
+/// <summary>The paperwork an excerpt carries: which build it came off, and when it was taken.</summary>
+/// <param name="Build">The running build's full stamp, version and commit.</param>
+/// <param name="TakenAt">When the Commander cut it.</param>
+public sealed record ExcerptPaperwork(string Build, DateTimeOffset TakenAt);
+
+/// <summary>The excerpt as it will look wherever it lands — and this text is the consent (#160).</summary>
+public static class ExcerptReport
+{
+    /// <summary>Four backticks rather than three.</summary>
+    private const string Fence = "````";
+
+    /// <summary>The marker that says what this block is, for anybody reading the raw document.</summary>
+    public const string Marker = "<!-- d47 incident excerpt -->";
+
+    /// <summary>Renders the whole block.</summary>
+    public static string Render(IncidentExcerpt excerpt, ExcerptPaperwork paperwork)
+    {
+        var report = new StringBuilder();
+
+        report.AppendLine(Marker);
+        report.AppendLine("### Incident excerpt");
+        report.AppendLine();
+
+        report.AppendLine(
+            $"Cut from d47 {paperwork.Build} at {Stamp(paperwork.TakenAt)}, "
+            + $"covering {Stamp(excerpt.From)} to {Stamp(excerpt.To)} "
+            + $"({Length(excerpt.To - excerpt.From)}).");
+
+        report.AppendLine();
+        report.AppendLine(
+            "**What it is for.** The journal half is a replay case: `spike/CorpusReplay` drives it "
+            + "through the same fold the running app uses, so the fix is proven against what "
+            + "actually happened rather than against a reconstruction, and cannot regress "
+            + "silently afterwards. The log half is the diagnosis — what this build did with those "
+            + "events.");
+
+        report.AppendLine();
+        report.AppendLine($"**What was done to it.** {Treatment(excerpt.Tally)}");
+
+        report.AppendLine();
+        report.AppendLine(
+            // **Weakened once and then narrowed, and both moves were about what a destination can honour.**
+            // #165 took out an erasure promise that no public transport could keep — a GitHub comment is
+            // copied to third-party archives within the hour and mailed whole to every watcher, so deleting
+            // it recalls nothing. #175 answered the destination question the other way, with a private store
+            // where a delete is one object delete — so the promise is back, and it is bounded to the route it
+            // can actually be kept on.
+            "**Where this came from.** It was scrubbed on the machine it came off, and it says "
+            + "here exactly what would leave. Sent to Directive 47's own store, it is one object "
+            + "and one delete: ask, quoting the receipt d47 kept beside its executable, and it "
+            + "goes — and an incident excerpt goes on its own after thirty days in any case. "
+            + "Copied or saved and taken somewhere public instead, that promise is not "
+            + "transferable: anything posted publicly can be archived beyond anyone's reach, so "
+            + "ask about removal wherever it ended up.");
+
+        report.AppendLine();
+
+        // **The notice travels with the thing it describes** (#166).
+        report.AppendLine(DonationNotice.Line);
+
+        report.AppendLine();
+        Half(
+            report,
+            $"Journal — {Count(excerpt.Tally.JournalEvents, "event")}, replay-ready",
+            "json",
+            excerpt.Journal);
+
+        report.AppendLine();
+        Half(
+            report,
+            $"d47 log — {Count(excerpt.Tally.LogEntries, "entry", "entries")}",
+            "text",
+            excerpt.Log);
+
+        return report.ToString();
+    }
+
+    /// <summary>The sentence about what is missing.</summary>
+    private static string Treatment(ExcerptTally tally)
+    {
+        var said = new List<string>
+        {
+            tally.NamesReplaced > 0
+                ? $"{Count(tally.NamesReplaced, "name or ID", "names and IDs")} replaced with "
+                  + "consistent stand-ins, by field list rather than by guesswork"
+                : "no name or ID was found to replace",
+
+            tally.InGameMessages > 0
+                ? $"{Count(tally.InGameMessages, "in-game message", "in-game messages")} withheld — "
+                  + "another player's words are not the donor's to give"
+                : "no in-game message arrived in this window",
+
+            tally.MySpeechLines == 0
+                ? "the Commander said nothing aloud in this window"
+                : tally.MySpeechIncluded
+                    ? $"the Commander's own speech is included, on purpose "
+                      + $"({Count(tally.MySpeechLines, "line")})"
+                    : $"the Commander's own speech is held back "
+                      + $"({Count(tally.MySpeechLines, "line")})",
+        };
+
+        if (tally.LinksDropped > 0)
+        {
+            said.Add(
+                $"{Count(tally.LinksDropped, "squadron link")} dropped — the flag saying which "
+                + "minor faction is the Commander's squadron's, which would have undone the "
+                + "squadron stand-ins in one hop");
+        }
+
+        if (tally.JournalWithheld > 0)
+        {
+            said.Add(
+                $"{Count(tally.JournalWithheld, "journal event")} dropped whole, unreadable to the "
+                + "scrubber and therefore not checked");
+        }
+
+        return string.Concat(char.ToUpper(said[0][0], CultureInfo.InvariantCulture), said[0][1..])
+               + "; " + string.Join("; ", said.Skip(1)) + ".";
+    }
+
+    private static void Half(StringBuilder report, string summary, string language, IReadOnlyList<string> lines)
+    {
+        if (lines.Count == 0)
+        {
+            report.AppendLine($"*{summary} — nothing in the window.*");
+            return;
+        }
+
+        report.AppendLine($"<details><summary>{summary}</summary>");
+        report.AppendLine();
+        report.AppendLine(Fence + language);
+
+        foreach (var line in lines)
+        {
+            report.AppendLine(line);
+        }
+
+        report.AppendLine(Fence);
+        report.AppendLine();
+        report.AppendLine("</details>");
+    }
+
+    /// <summary>UTC to the second.</summary>
+    private static string Stamp(DateTimeOffset at) =>
+        at.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ssZ", CultureInfo.InvariantCulture);
+
+    private static string Length(TimeSpan span) =>
+        span < TimeSpan.FromMinutes(1)
+            ? Count((int)Math.Round(span.TotalSeconds), "second")
+            : Count((int)Math.Round(span.TotalMinutes), "minute");
+
+    private static string Count(int howMany, string one, string? many = null) =>
+        $"{howMany.ToString(CultureInfo.InvariantCulture)} {(howMany == 1 ? one : many ?? one + "s")}";
+}

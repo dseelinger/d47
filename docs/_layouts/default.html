@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="{{ page.lang | default: site.lang | default: 'en' }}">
+
+{%- comment -%}
+  Overrides minima 2.5.1's _layouts/default.html — the version GitHub Pages pins. Everything
+  outside the two-column block below is minima's own, kept verbatim so head, header and footer
+  keep behaving the way the theme intends.
+
+  A layout override rather than a different theme, deliberately: a theme is a dependency and
+  this is a nav (list.md Phase 19).
+
+  The nav is built from front matter — `group` and `nav_order` on every published page — and
+  those two are not a second hand-maintained list. `CapabilityDescriptor.Group` already orders
+  the settings surface, and DocumentationGateTests asserts that each capability page's front
+  matter still matches the descriptor it belongs to. Change a capability's group and the test
+  says which page to edit, the same way the schema gate already says which block to paste.
+
+  index.md used to carry a table of the capabilities and their groups, by hand. It listed
+  sixteen of the thirty-three by the time this was written, which is the argument for the nav
+  being generated and for the table being gone.
+
+  Grouping is by `group`; groups are ordered by the lowest `nav_order` in them, so the running
+  order is the registry's own rather than alphabetical — which is the order the panel shows and
+  the order a reader has some use for.
+{%- endcomment -%}
+
+{%- include head.html -%}
+
+<body>
+
+{%- include header.html -%}
+
+<main class="page-content" aria-label="Content">
+  <div class="wrapper d47-layout">
+
+    {%- comment -%}
+      Sorted once and reused. A page with no nav_order is not in the nav at all, which is the
+      one thing the gate test refuses to let happen quietly: the documentation gate asserts a
+      page *exists* and asserted nothing about it being reachable, which is how a page could
+      pass CI and be invisible.
+    {%- endcomment -%}
+    {%- assign navigable = site.pages | where_exp: "p", "p.nav_order" -%}
+    {%- assign ordered = navigable | sort: "nav_order" -%}
+
+    <nav class="d47-nav" aria-label="Site sections">
+      {%- assign groups = ordered | map: "group" | uniq -%}
+      {%- for group in groups -%}
+        <div class="d47-nav-group">
+          <h2 class="d47-nav-heading">{{ group | escape }}</h2>
+          <ul>
+            {%- for entry in ordered -%}
+              {%- if entry.group == group -%}
+                {%- if entry.url == page.url -%}
+                  <li class="d47-nav-here" aria-current="page">{{ entry.title | escape }}</li>
+                {%- else -%}
+                  <li><a href="{{ entry.url | relative_url }}">{{ entry.title | escape }}</a></li>
+                {%- endif -%}
+              {%- endif -%}
+            {%- endfor -%}
+          </ul>
+        </div>
+      {%- endfor -%}
+    </nav>
+
+    {%- comment -%}
+      No heading of its own. minima's page layout already renders page.title as the h1 and every
+      page here reaches this through it, so one here would be the second — which is also why the
+      capability pages no longer carry a hand-written "# Colonisation" of their own.
+    {%- endcomment -%}
+    <div class="d47-content">
+      {{ content }}
+    </div>
+
+  </div>
+</main>
+
+{%- include footer.html -%}
+
+</body>
+
+</html>

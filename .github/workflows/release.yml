@@ -1,0 +1,157 @@
+name: release
+
+# The only workflow. Nothing here triggers on push — a commit to any branch, main included,
+# fires no run at all. A release happens when you ask for one:
+#
+#   tools\release.ps1 -Patch
+#
+# Order is deliberate: the suite runs before the tag exists, so a failure leaves nothing
+# published and nothing to clean up.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, X.Y.Z — no leading v, no label"
+        required: true
+        type: string
+      docs_only:
+        description: "Deploy docs and cut no release (emergency doc fix)"
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: ${{ !inputs.docs_only }}
+    runs-on: windows-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      # ReleaseVersion.TryParse takes exactly three integer parts and treats anything after a
+      # '-' as a label, which marks the build as a local working-tree build. Refuse early.
+      - name: Check the version is releasable
+        shell: pwsh
+        run: |
+          $v = '${{ inputs.version }}'
+          if ($v -notmatch '^\d+\.\d+\.\d+$') {
+            throw "Version must be X.Y.Z with no leading v and no label. Got '$v'."
+          }
+          if (git tag --list "v$v") {
+            throw "Tag v$v already exists. A published tag never moves; pick another version."
+          }
+
+      # The gate. Everything below this line only runs on a green suite.
+      - name: Test
+        run: dotnet test d47.slnx -c Release
+
+      # No -o: PublishDir is already bin\$(Configuration)\publish\, which is exactly where
+      # installer\d47.iss reads from. Passing one breaks the installer's paths.
+      - name: Publish
+        run: dotnet publish src/D47.App/D47.App.csproj -c Release -p:Version=${{ inputs.version }}
+
+      - name: Build the installer
+        shell: pwsh
+        run: |
+          $iscc = 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe'
+          if (-not (Test-Path $iscc)) {
+            choco install innosetup --no-progress -y
+          }
+          & $iscc /DVersion=${{ inputs.version }} installer\d47.iss
+          if ($LASTEXITCODE -ne 0) { throw "ISCC failed with $LASTEXITCODE" }
+
+      # d47.zip is what the in-app updater applies, and UpdateInstaller.StaleRuntimeFiles retires
+      # anything under runtimes\ or ships\ that the archive does not carry. An incomplete archive
+      # deletes files from Commanders' machines, so the payload is exactly the installer's three
+      # entries and it is flat at the zip root — UpdateInstaller requires d47.exe there.
+      - name: Pack d47.zip
+        shell: pwsh
+        run: |
+          $publish = 'src/D47.App/bin/Release/publish'
+          foreach ($entry in 'd47.exe', 'runtimes', 'ships') {
+            if (-not (Test-Path "$publish/$entry")) { throw "Publish is missing $entry" }
+          }
+          if (-not (Test-Path "$publish/runtimes/vulkan/win-x64/ggml-vulkan-whisper.dll")) {
+            throw "Publish is missing the Vulkan whisper runtime; --selftest would exit 8"
+          }
+          Compress-Archive -Force -DestinationPath d47.zip -Path `
+            "$publish/d47.exe", "$publish/runtimes", "$publish/ships"
+
+      # sha256sum format: the hash, two spaces, the name. UpdateInstaller.ParseChecksum takes the
+      # first space-delimited field of the first line and wants 64 hex characters — a tab
+      # separator does not parse.
+      - name: Checksum the assets
+        shell: pwsh
+        run: |
+          $setup = "installer/d47-setup-${{ inputs.version }}.exe"
+          if (-not (Test-Path $setup)) { throw "Installer not found at $setup" }
+          foreach ($file in 'd47.zip', $setup) {
+            $hash = (Get-FileHash $file -Algorithm SHA256).Hash.ToLower()
+            $name = Split-Path $file -Leaf
+            Set-Content -Path "$file.sha256" -Value "$hash  $name" -Encoding ascii
+          }
+
+      - name: Attest the artifacts
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            d47.zip
+            installer/d47-setup-${{ inputs.version }}.exe
+
+      # gh creates the tag as part of this, so the tag comes into existence only once the suite
+      # is green and every asset is built. Non-draft and non-prerelease: releases/latest is what
+      # the in-app updater follows, and a draft or prerelease is invisible to it.
+      - name: Publish the release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v${{ inputs.version }}" `
+            --target "${{ github.sha }}" `
+            --title "v${{ inputs.version }}" `
+            --generate-notes `
+            d47.zip `
+            d47.zip.sha256 `
+            "installer/d47-setup-${{ inputs.version }}.exe" `
+            "installer/d47-setup-${{ inputs.version }}.exe.sha256"
+
+  # Docs go out after the release is live, never before. Pages source must be set to "GitHub
+  # Actions" rather than "deploy from a branch" — that is what stops a Pages run firing on
+  # every push to main.
+  docs:
+    needs: release
+    if: ${{ always() && (inputs.docs_only || needs.release.result == 'success') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./docs
+          destination: ./_site
+      - uses: actions/upload-pages-artifact@v3
+      - id: deploy
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,148 @@
+using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Headless.XUnit;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
+using D47.App.Controls;
+using D47.App.Windowing;
+using D47.Core.Capabilities.Builtin;
+using D47.Core.Configuration;
+using Xunit;
+
+namespace D47.App.Tests;
+
+/// <summary>A dialog opened over a zoomed panel still fits inside itself.</summary>
+public class ZoomedDialogsFitTests
+{
+    /// <summary>The Commander's own level, and the one the report came from.</summary>
+    private const int Zoomed = 150;
+
+    /// <summary>
+    /// A window carrying a zoom host, which is what <see cref="ZoomHost.Match"/> looks the level up in
+    /// — a dialog over an owner that has none is left at 100% and is not this test's case.
+    /// </summary>
+    private static Window Owner(int percent)
+    {
+        var settings = TestSurface.Settings();
+
+        settings.Apply(
+            InterfaceCapability.ZoomKey,
+            percent.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            SettingsCaller.Panel);
+
+        var owner = new Window { Width = 1200, Height = 800, Content = new Border() };
+
+        ZoomHost.Attach(owner, settings);
+
+        return owner;
+    }
+
+    /// <summary>
+    /// The voice picker as the report shows it: a long help paragraph, and rows whose labels run past
+    /// the width of the window they are in.
+    /// </summary>
+    private static PickerRequest Voices() => new()
+    {
+        Prompt = "Voice",
+        Help =
+            "Which voice the core aboard speaks in. Kept per core, so switching persona switches "
+            + "voice. Play a voice to hear it. This provider costs nothing. It must be a voice "
+            + "from the selected provider, and clearing the row has d47 choose for this core again.",
+        Choices = ["af_jessica", "af_kore", "af_nicole", "af_nova", "af_river"],
+        Describe = id => $"{char.ToUpperInvariant(id[3])}{id[4..]} — female, American — Female, en-US",
+        Current = "af_kore",
+        DefaultDisplay = "the voice d47 picks for this core",
+    };
+
+    /// <summary>
+    /// Nothing sticks out sideways, which is the whole report: the content is no wider than the window
+    /// drawn around it, so there is nothing to scroll to.
+    /// </summary>
+    [AvaloniaFact]
+    public void AZoomedPickerHasNothingToScrollSidewaysTo()
+    {
+        var owner = Owner(Zoomed);
+        var picker = PickerWindow.For(Voices());
+
+        ZoomHost.Match(picker, owner);
+
+        picker.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var host = Assert.IsType<ScrollViewer>(picker.Content);
+
+        Assert.True(
+            host.Extent.Width <= host.Viewport.Width + 1,
+            $"the picker is {host.Extent.Width} wide inside a {host.Viewport.Width} window.");
+
+        picker.Close();
+        owner.Close();
+    }
+
+    /// <summary>And the reason it fits: the help paragraph has a width to wrap against.</summary>
+    [AvaloniaFact]
+    public void TheHelpParagraphStillWraps()
+    {
+        var owner = Owner(Zoomed);
+        var picker = PickerWindow.For(Voices());
+
+        ZoomHost.Match(picker, owner);
+
+        picker.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var help = picker.GetControl<TextBlock>("HelpText");
+
+        Assert.True(
+            help.Bounds.Width <= picker.Width,
+            $"the help line is {help.Bounds.Width} wide in a {picker.Width} window.");
+
+        picker.Close();
+        owner.Close();
+    }
+
+    /// <summary>
+    /// The rows trim to the list instead of setting the width of the window, which is the same fault
+    /// seen from the other end — a voice label is long and is meant to end in an ellipsis.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheRowsTrimToTheListRatherThanWideningIt()
+    {
+        var owner = Owner(Zoomed);
+        var picker = PickerWindow.For(Voices());
+
+        ZoomHost.Match(picker, owner);
+
+        picker.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var list = picker.GetControl<ListBox>("Choices");
+
+        Assert.All(
+            list.GetVisualDescendants().OfType<ListBoxItem>(),
+            item => Assert.True(
+                item.Bounds.Width <= picker.Width,
+                $"a row is {item.Bounds.Width} wide in a {picker.Width} window."));
+
+        picker.Close();
+        owner.Close();
+    }
+
+    /// <summary>
+    /// At 100% nothing is wrapped at all — <see cref="ZoomHost.Match"/> leaves the dialog alone, and
+    /// the window is its own declared size.
+    /// </summary>
+    [AvaloniaFact]
+    public void AnUnzoomedPickerIsLeftExactlyAsItWas()
+    {
+        var owner = Owner(100);
+        var picker = PickerWindow.For(Voices());
+
+        ZoomHost.Match(picker, owner);
+
+        Assert.IsNotType<ScrollViewer>(picker.Content);
+        Assert.Equal(520, picker.Width);
+
+        owner.Close();
+    }
+}

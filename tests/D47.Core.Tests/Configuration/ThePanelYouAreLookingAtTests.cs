@@ -1,0 +1,158 @@
+using D47.Core.Capabilities;
+using D47.Core.Capabilities.Builtin;
+using D47.Core.Configuration;
+using D47.Core.Storage;
+using Microsoft.Extensions.Logging.Abstractions;
+using Xunit;
+
+namespace D47.Core.Tests.Configuration;
+
+/// <summary>
+/// A placement instruction lands on the panel the Commander is looking at, ruled 2026-08-24:
+/// "whichever panel I'm looking at."
+/// </summary>
+public class ThePanelYouAreLookingAtTests
+{
+    private static IReadOnlyList<SettingRow> Rows()
+    {
+        var install = new TempInstall();
+        var store = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance);
+
+        var settings = new SettingsService(
+            store,
+            new SecretStore(install.Paths, new ReversibleProtector(), NullLogger<SecretStore>.Instance),
+            store.Load(),
+            NullLogger<SettingsService>.Instance);
+
+        return
+        [
+            .. VrCapability
+                .Create(
+                    settings,
+                    new VrCapability.HeadsetSurface
+                    {
+                        Report = () => (D47.Core.Vr.VrState.Unavailable, "No runtime in a test."),
+                        Nudge = (_, _) => D47.Core.Vr.VrNudgeOutcome.NoHeadset,
+                    })
+                .Settings,
+        ];
+    }
+
+    private static SettingRow Row(string key) =>
+        Assert.Single(Rows(), row => row.Key == key);
+
+    private static D47Settings With(string mode, double panel, double mini)
+    {
+        var settings = new D47Settings();
+
+        return settings with
+        {
+            Vr = settings.Vr with
+            {
+                Mode = mode,
+                Panel = settings.Vr.Panel with { Distance = panel },
+                Mini = settings.Vr.Mini with { Distance = mini },
+            },
+        };
+    }
+
+    [Fact]
+    public void ItReadsWhicheverSurfaceIsOnScreen()
+    {
+        var row = Row("vr.current.distance");
+
+        Assert.Equal("1.2", row.Binding!.Read(With("full", 1.2, 0.7)));
+        Assert.Equal("0.7", row.Binding!.Read(With("mini", 1.2, 0.7)));
+    }
+
+    [Fact]
+    public void MovingItInMiniLeavesTheBigPanelExactlyWhereItWas()
+    {
+        var moved = Row("vr.current.distance").Binding!.Write!(With("mini", 1.2, 0.7), "0.5");
+
+        Assert.Equal(0.5, moved.Vr.Mini.Distance);
+        Assert.Equal(1.2, moved.Vr.Panel.Distance);
+    }
+
+    [Fact]
+    public void MovingItInFullLeavesTheMiniPanelExactlyWhereItWas()
+    {
+        var moved = Row("vr.current.distance").Binding!.Write!(With("full", 1.2, 0.7), "2.0");
+
+        Assert.Equal(2.0, moved.Vr.Panel.Distance);
+        Assert.Equal(0.7, moved.Vr.Mini.Distance);
+    }
+
+    /// <summary>
+    /// The two explicit rows survive and still write their own surface, because setting mini up while
+    /// wearing the big panel is an ordinary thing to want and the page is where it is done.
+    /// </summary>
+    [Fact]
+    public void TheExplicitRowsSurviveAndStillWriteTheirOwnSurface()
+    {
+        var moved = Row("vr.mini.distance").Binding!.Write!(With("full", 1.2, 0.7), "0.4");
+
+        Assert.Equal(0.4, moved.Vr.Mini.Distance);
+        Assert.Equal(1.2, moved.Vr.Panel.Distance);
+    }
+
+    /// <summary>And the model is offered one of the three rather than all of them.</summary>
+    [Fact]
+    public void OnlyTheResolvingRowIsOfferedToTheModel()
+    {
+        Assert.False(Row("vr.current.distance").PageOnly, "the row that means what was asked");
+        Assert.True(Row("vr.panel.distance").PageOnly, "on the page, not offered to the model");
+        Assert.True(Row("vr.mini.distance").PageOnly, "on the page, not offered to the model");
+    }
+
+    /// <summary>
+    /// Every placement knob resolves, not just the one that is easy to test — a Commander who says
+    /// "turn it a bit" means the panel in front of them exactly as much as one who says "closer".
+    /// </summary>
+    [Theory]
+    [InlineData("lock")]
+    [InlineData("distance")]
+    [InlineData("size")]
+    [InlineData("curve")]
+    [InlineData("scale")]
+    public void EveryPlacementKnobHasAResolvingRow(string name)
+    {
+        var keys = Rows().Select(row => row.Key).ToList();
+
+        Assert.Contains($"vr.current.{name}", keys);
+        Assert.Contains($"vr.panel.{name}", keys);
+        Assert.Contains($"vr.mini.{name}", keys);
+    }
+
+    /// <summary>
+ /// The words a Commander actually reaches for switch the panel. "Full panel" shipped alone,
+    /// and it is the one phrase nobody says unprompted.
+    /// </summary>
+    [Theory]
+    [InlineData("big panel", "full")]
+    [InlineData("large panel", "full")]
+    [InlineData("full panel", "full")]
+    [InlineData("little panel", "mini")]
+    [InlineData("small panel", "mini")]
+    [InlineData("minimal panel", "mini")]
+    [InlineData("mini panel", "mini")]
+    public void TheWordsForEachPanelReachIt(string phrase, string mode)
+    {
+        var row = Row(VrCapability.ModeKey);
+
+        Assert.Equal(
+            mode,
+            Assert.Single(row.Commands, spoken => spoken.Phrase == phrase).Value);
+    }
+
+    /// <summary>
+    /// And the two rows that both answer "size" each name the other, because a Commander asking to
+ /// change the size of the panel could mean either and d47 answered with neither.
+    /// </summary>
+    [Fact]
+    public void TheTwoRowsThatBothMeanSizePointAtEachOther()
+    {
+        Assert.Contains("scale", Row("vr.current.size").Help, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("size", Row("vr.current.scale").Help, StringComparison.OrdinalIgnoreCase);
+    }
+}

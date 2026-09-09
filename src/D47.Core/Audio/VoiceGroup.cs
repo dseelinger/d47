@@ -1,0 +1,251 @@
+﻿using D47.Core.Configuration;
+
+namespace D47.Core.Audio;
+
+/// <summary>Which slot a voice comes out of, and so which provider synthesises it (Phase 57).</summary>
+public enum VoiceGroup
+{
+    /// <summary>The two voices actually in the cockpit: the ship's AI and the crew.</summary>
+    Aboard,
+
+    /// <summary>The Commander's fleet carrier — its captain and its tower, one installation.</summary>
+    Carrier,
+
+    /// <summary>Game-authored traffic.</summary>
+    Npcs,
+
+    /// <summary>Real people the Commander has accepted, teamed with, or joined.</summary>
+    PeopleYouKnow,
+
+    /// <summary>A real person reaching the Commander directly, on the <c>player</c> channel.</summary>
+    DirectMessages,
+
+    /// <summary>Local and system chat: real people, no consent anywhere in it, unbounded in volume.</summary>
+    AnyoneInRange,
+}
+
+/// <summary>What one slot covers, what it is called, and which side of the hull it is on.</summary>
+public sealed record VoiceGroupInfo
+{
+    /// <summary>The settings key this slot is filed under.</summary>
+    public required string Id { get; init; }
+
+    public required VoiceGroup Group { get; init; }
+
+    /// <summary>How the settings row and the disclosure table name it.</summary>
+    public required string Name { get; init; }
+
+    /// <summary>Who is in it, in a clause, for the row's help and the disclosure's table.</summary>
+    public required string Covers { get; init; }
+
+    /// <summary>Whether this slot reaches the Commander through a radio rather than from the next seat.</summary>
+    public required bool OverTheAir { get; init; }
+
+    /// <summary>Whether the text this slot speaks was written by another player.</summary>
+    public required bool OtherPeoplesWords { get; init; }
+
+    /// <summary>
+    /// The in-game chat channels that land here, or empty for the two slots that are not chat at all.
+    /// </summary>
+    public IReadOnlyList<string> Channels { get; init; } = [];
+
+    /// <summary>The roles that land here regardless of channel.</summary>
+    public IReadOnlyList<VoiceRole> Roles { get; init; } = [];
+}
+
+/// <summary>The six slots, what falls into each, and which provider speaks for it.</summary>
+public static class VoiceGroups
+{
+    public static VoiceGroupInfo Aboard { get; } = new()
+    {
+        Id = "aboard",
+        Group = VoiceGroup.Aboard,
+        Name = "Aboard",
+        Covers = "your ship's AI and your crew",
+        OverTheAir = false,
+        OtherPeoplesWords = false,
+        Roles = [VoiceRole.ShipAi, VoiceRole.Crew],
+    };
+
+    public static VoiceGroupInfo Carrier { get; } = new()
+    {
+        Id = "carrier",
+        Group = VoiceGroup.Carrier,
+        Name = "Carrier",
+        Covers = "your fleet carrier's captain and its tower",
+        OverTheAir = true,
+        OtherPeoplesWords = false,
+        Roles = [VoiceRole.CarrierCaptain, VoiceRole.TowerControl],
+    };
+
+    public static VoiceGroupInfo Npcs { get; } = new()
+    {
+        Id = "npcs",
+        Group = VoiceGroup.Npcs,
+        Name = "NPCs",
+        Covers = "stations, police, and every other ship the game speaks for",
+        OverTheAir = true,
+        OtherPeoplesWords = false,
+        Channels = ["npc"],
+    };
+
+    public static VoiceGroupInfo PeopleYouKnow { get; } = new()
+    {
+        Id = "known",
+        Group = VoiceGroup.PeopleYouKnow,
+        Name = "People you know",
+        Covers = "your friends, your wing and your squadron",
+        OverTheAir = true,
+        OtherPeoplesWords = true,
+
+        // squadleaders is squadron leadership on its own channel (#299) — a Commander does not know Elite
+        // writes those as two channels, so it is grouped rather than left to fall through to Npcs, which is
+        // what an unlisted channel means to IsAPerson.
+        Channels = ["friend", "wing", "squadron", "squadleaders"],
+    };
+
+    public static VoiceGroupInfo DirectMessages { get; } = new()
+    {
+        Id = "direct",
+        Group = VoiceGroup.DirectMessages,
+        Name = "Direct messages",
+        Covers = "a Commander messaging you directly",
+        OverTheAir = true,
+        OtherPeoplesWords = true,
+        Channels = ["player"],
+    };
+
+    public static VoiceGroupInfo AnyoneInRange { get; } = new()
+    {
+        Id = "range",
+        Group = VoiceGroup.AnyoneInRange,
+        Name = "Anyone in range",
+        Covers = "local and system chat — anybody at all, whether you know them or not",
+        OverTheAir = true,
+        OtherPeoplesWords = true,
+        Channels = ["local", "starsystem"],
+    };
+
+    /// <summary>
+    /// Every slot, in the order the settings rows offer them: the cockpit first, then outward by how
+    /// little the Commander chose to hear from it.
+    /// </summary>
+    public static IReadOnlyList<VoiceGroupInfo> All { get; } =
+        [Aboard, Carrier, Npcs, PeopleYouKnow, DirectMessages, AnyoneInRange];
+
+    public static VoiceGroupInfo Info(VoiceGroup group) =>
+        All.First(slot => slot.Group == group);
+
+    /// <summary>The slot with this settings key, or null for one d47 does not ship.</summary>
+    public static VoiceGroupInfo? ById(string? id) =>
+        All.FirstOrDefault(slot => string.Equals(slot.Id, id, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>Which slot a line belongs to.</summary>
+    /// <param name="channel">
+    /// The in-game chat channel a re-voiced message arrived on, or null where the line is not one — a
+    /// callout, a crew member, the carrier.
+    /// </param>
+    public static VoiceGroup Of(VoiceRole role, string? channel = null)
+    {
+        foreach (var slot in All)
+        {
+            if (slot.Roles.Contains(role))
+            {
+                return slot.Group;
+            }
+        }
+
+        foreach (var slot in All)
+        {
+            if (slot.Channels.Contains(channel ?? string.Empty, StringComparer.OrdinalIgnoreCase))
+            {
+                return slot.Group;
+            }
+        }
+
+        return VoiceGroup.Npcs;
+    }
+
+    /// <summary>Whether a channel carries somebody a person typed as.</summary>
+    public static bool IsAPerson(string? channel) => Of(VoiceRole.Comms, channel) != VoiceGroup.Npcs;
+
+    /// <summary>Which provider speaks for one slot.</summary>
+    public static string ProviderFor(SpeechSettings speech, VoiceGroup group)
+    {
+        if (group == VoiceGroup.Aboard)
+        {
+            return TtsProviderCatalog.Selected(speech.Provider).Id;
+        }
+
+        var slot = Info(group);
+        var chosen = speech.GroupProviders?.GetValueOrDefault(slot.Id);
+
+        var resolved = chosen is null
+            ? TtsProviderCatalog.Selected(speech.Provider)
+            : TtsProviderCatalog.Selected(chosen);
+
+        // A provider that cannot be told a language never speaks for a slot carrying other people's words,
+        // however it got named — the picker does not offer it, and a hand-edited file naming one is treated
+        // the way every unusable value is rather than obeyed (Phase 58).
+        return TtsProviderCatalog.For(slot).Contains(resolved)
+            ? resolved.Id
+            : TtsProviderCatalog.EdgeId;
+    }
+
+    /// <summary>Every slot's provider, resolved.</summary>
+    public static IReadOnlyDictionary<VoiceGroup, string> Selected(SpeechSettings speech) =>
+        All.ToDictionary(slot => slot.Group, slot => ProviderFor(speech, slot.Group));
+
+    /// <summary>
+    /// What a voice id is called, looked for in every slot's list rather than the ship's alone (#149).
+    /// </summary>
+    /// <param name="catalogues">What one slot's provider offers.</param>
+    public static string? NameFor(Func<VoiceGroup, VoiceCatalogue> catalogues, string? id)
+    {
+        ArgumentNullException.ThrowIfNull(catalogues);
+
+        if (id is not { Length: > 0 })
+        {
+            return null;
+        }
+
+        foreach (var slot in All)
+        {
+            var named = catalogues(slot.Group).Voices
+                .FirstOrDefault(voice => string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase));
+
+            if (named?.Name is { Length: > 0 } name)
+            {
+                return name;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>The providers actually needed, each once.</summary>
+    public static IReadOnlyList<string> ProvidersInUse(SpeechSettings speech) =>
+        [.. Selected(speech).Values
+            .Where(id => TtsProviderCatalog.Selected(id).Speaks)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(id => id, StringComparer.Ordinal)];
+
+    /// <summary>
+    /// The same settings with the five over-the-air slots moved to Edge, once, for a file written
+    /// before this phase.
+    /// </summary>
+    public static D47Settings Migrated(D47Settings settings)
+    {
+        if (settings.Speech.GroupProviders is not null
+            || !TtsProviderCatalog.Selected(settings.Speech.Provider).Speaks)
+        {
+            return settings;
+        }
+
+        var moved = All
+            .Where(slot => slot.Group != VoiceGroup.Aboard)
+            .ToDictionary(slot => slot.Id, _ => TtsProviderCatalog.EdgeId, StringComparer.OrdinalIgnoreCase);
+
+        return settings with { Speech = settings.Speech with { GroupProviders = moved } };
+    }
+}

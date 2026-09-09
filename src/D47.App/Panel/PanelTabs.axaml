@@ -1,0 +1,192 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!--
+    A tab, and it has to read as one rather than as a button or a link.
+
+    What makes the difference is not the label, it is the join. A selected tab shares its
+    background with the panel below it and has no border along the edge they meet, so the two
+    read as one shape with a notch cut out of the top. An unselected tab keeps that bottom
+    border and sits on a recessed background, so it reads as being behind the panel rather than
+    beside it. Buttons all sit on the same plane as each other and links have no plane at all;
+    this is the only detail that says "these are pages of the thing underneath".
+
+    Built on RadioButton rather than on Buttons and a hand-rolled selected flag, because
+    mutually-exclusive selection, keyboard arrows and the accessibility role all come with it.
+    The template throws away the bullet entirely - what is left is the geometry above.
+  -->
+  <ControlTheme x:Key="D47.Tab" TargetType="RadioButton">
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="FontFamily" Value="Cascadia Mono,Consolas,monospace" />
+    <Setter Property="FontSize" Value="{StaticResource D47.Type.Body}" />
+    <Setter Property="Foreground" Value="{DynamicResource D47.TextMuted}" />
+    <Setter Property="Padding" Value="14,7" />
+
+    <!-- Negative bottom margin is what lands the tab on the panel's top border rather than
+         above it. Without the overlap there is a hairline between them and the join reads as
+         two separate controls that happen to be touching. -->
+    <Setter Property="Margin" Value="0,0,3,-1" />
+
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border x:Name="Shape"
+                Background="{DynamicResource D47.SurfaceAlt}"
+                BorderBrush="{DynamicResource D47.Border}"
+                BorderThickness="1"
+                CornerRadius="4,4,0,0">
+          <Panel>
+            <!-- The highlight on the current tab. A bar along the top edge rather than a
+                 different fill, because the fill is already carrying the join to the panel
+                 below and cannot say two things at once. -->
+            <Border x:Name="Marker"
+                    Height="3"
+                    VerticalAlignment="Top"
+                    Background="Transparent" />
+            <ContentPresenter x:Name="PART_ContentPresenter"
+                              Content="{TemplateBinding Content}"
+                              Padding="{TemplateBinding Padding}"
+                              Foreground="{TemplateBinding Foreground}"
+                              VerticalAlignment="Center" />
+          </Panel>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+
+    <Style Selector="^:pointerover">
+      <Setter Property="Foreground" Value="{DynamicResource D47.Text}" />
+    </Style>
+
+    <!--
+      The current tab: same fill as the panel, no border where they meet, an accent bar along
+      the top, and the label at full strength rather than muted. The join alone says which page
+      the panel is showing; the accent is what makes it findable at a glance, which is the whole
+      job of a selected tab in a headset at a metre.
+    -->
+    <Style Selector="^:checked">
+      <!--
+        The label takes the accent as well as the bar. A 2px rule and a weight change was the
+        first attempt and it was reported as no highlight at all, twice - correctly, because a
+        thing you have to look for is not highlighted. This is the same idiom the settings
+        sidebar already uses for its current section: accent bar, accent text.
+      -->
+      <Setter Property="Foreground" Value="{DynamicResource D47.Accent}" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Style Selector="^ /template/ Border#Shape">
+        <Setter Property="Background" Value="{DynamicResource D47.Surface}" />
+        <Setter Property="BorderThickness" Value="1,1,1,0" />
+      </Style>
+      <Style Selector="^ /template/ Border#Marker">
+        <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
+      </Style>
+    </Style>
+
+  </ControlTheme>
+
+  <!--
+    The Settings tab, which is the same tab with one thing changed.
+    <para/>
+    The join is the whole idiom: a selected tab shares the fill of the page below it. The three
+    transcript pages are D47.Surface and the settings page is D47.Background - it has to be,
+    because its cards are Surface and a card the colour of its page is not a card - so a single
+    checked fill cannot serve both. Everything else about a tab is inherited, so the two strips
+    cannot drift apart in padding, weight, marker or hover.
+  -->
+  <ControlTheme x:Key="D47.Tab.Settings" TargetType="RadioButton" BasedOn="{StaticResource D47.Tab}">
+    <Style Selector="^:checked">
+      <Style Selector="^ /template/ Border#Shape">
+        <Setter Property="Background" Value="{DynamicResource D47.Background}" />
+      </Style>
+    </Style>
+  </ControlTheme>
+
+  <!--
+    A mode of the tab that is showing - Conversation, Technical, Log file; later Ships, Suits
+    and weapons, Gap analysis (list.md Phase 25).
+
+    Deliberately not a tab. "The mode control is not a second tab strip under the first; two
+    stacked strips read worse than the eight flat tabs this avoids" - so this borrows nothing
+    from the tab idiom above: no join to the page, no notch, no top marker. It is a segmented
+    pill, which is the control every phone settings screen already taught, and it rides in the
+    tab strip's own row rather than in a row of its own. Two strips is the thing being avoided,
+    and a strip in the same row as the tabs is one strip.
+
+    Shown at the root and nowhere else. Drilling hides it, because a mode switch three levels
+    into a ship is a question about which stack you are in rather than about what you are
+    looking at, and the breadcrumb is already answering the second one.
+  -->
+  <ControlTheme x:Key="D47.Segment" TargetType="RadioButton">
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="FontFamily" Value="Cascadia Mono,Consolas,monospace" />
+    <Setter Property="FontSize" Value="{StaticResource D47.Type.Secondary}" />
+    <Setter Property="Foreground" Value="{DynamicResource D47.TextMuted}" />
+    <Setter Property="Padding" Value="10,4" />
+    <Setter Property="Margin" Value="0" />
+
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border x:Name="Shape"
+                Background="Transparent"
+                CornerRadius="3">
+          <ContentPresenter x:Name="PART_ContentPresenter"
+                            Content="{TemplateBinding Content}"
+                            Padding="{TemplateBinding Padding}"
+                            Foreground="{TemplateBinding Foreground}"
+                            VerticalAlignment="Center" />
+        </Border>
+      </ControlTemplate>
+    </Setter>
+
+    <Style Selector="^:pointerover">
+      <Setter Property="Foreground" Value="{DynamicResource D47.Text}" />
+    </Style>
+
+    <!-- Filled rather than underlined. The segment that is on has to be findable at a metre,
+         and a fill is the one difference a glance reads before it reads anything else. -->
+    <Style Selector="^:checked">
+      <Setter Property="Foreground" Value="{DynamicResource D47.Background}" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Style Selector="^ /template/ Border#Shape">
+        <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
+      </Style>
+    </Style>
+  </ControlTheme>
+
+  <!--
+    One crumb of the breadcrumb (list.md Phase 25, "Drill in, and find your way back").
+
+    It is both the back affordance and the you-are-here, because a headset has no title bar to
+    orient by and losing your place is expensive when you cannot glance at a second monitor.
+    So every crumb but the last is pressable and the last one is not: the last crumb is where
+    you are, and a control that does nothing is a control that costs a press to learn that.
+
+    A button rather than a link, and quiet rather than accented, because the row is read as a
+    trail rather than as a set of choices - the accent in this region belongs to the tab.
+  -->
+  <ControlTheme x:Key="D47.Crumb" TargetType="Button">
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="FontFamily" Value="Cascadia Mono,Consolas,monospace" />
+    <Setter Property="FontSize" Value="{StaticResource D47.Type.Body}" />
+    <Setter Property="Foreground" Value="{DynamicResource D47.Accent}" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="4,2" />
+    <Setter Property="MinWidth" Value="0" />
+
+    <Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource D47.SurfaceAlt}" />
+      <Setter Property="TextBlock.Foreground" Value="{DynamicResource D47.Accent}" />
+    </Style>
+
+    <!-- Where you are. Disabled rather than drawn as a label, so the control keeps its metrics
+         and the row does not shift by a pixel as the trail grows and shrinks. -->
+    <Style Selector="^:disabled">
+      <Setter Property="Cursor" Value="Arrow" />
+      <Setter Property="Foreground" Value="{DynamicResource D47.Text}" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Opacity" Value="1" />
+      </Style>
+    </Style>
+  </ControlTheme>
+
+</ResourceDictionary>

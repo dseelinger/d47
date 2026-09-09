@@ -1,0 +1,240 @@
+using D47.App.Recording;
+using D47.Core.Audio;
+using D47.Core.Diagnostics.Recording;
+using D47.Core.Listening;
+using Microsoft.Extensions.Logging.Abstractions;
+using Xunit;
+
+namespace D47.App.Tests;
+
+/// <summary>The spoken side of the audio recorder, driven with no audio device.</summary>
+public class OneUtteranceIsOneRowTests : IDisposable
+{
+    private static readonly DateTimeOffset Noon = new(2026, 8, 29, 12, 0, 0, TimeSpan.Zero);
+
+    private static readonly AudioFormat Rendered = new(48_000, 2);
+
+    private readonly string _folder = Path.Combine(
+        Path.GetTempPath(), "d47-flight-stitch", Guid.NewGuid().ToString("N"));
+
+    private int _tick;
+
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
+
+        if (Directory.Exists(_folder))
+        {
+            Directory.Delete(_folder, recursive: true);
+        }
+    }
+
+    /// <summary>The arbiter's tap, driven by hand.</summary>
+    private sealed class Tap : IRenderReferenceTap
+    {
+        public event Action<RenderReferenceFrame>? Rendered;
+
+        public void Render(int bytes, AudioFormat format) =>
+            Rendered?.Invoke(new RenderReferenceFrame(0, new byte[bytes], format));
+    }
+
+    /// <summary> Enough of a sink for the arbiter to run against: it starts and finishes clips on demand and
+    /// renders nothing, the null sink. </summary>
+    private sealed class Sink : IAudioSink
+    {
+        public List<long> Started { get; } = [];
+
+        public event Action<long>? Finished;
+
+        public IRenderReferenceTap ReferenceTap { get; } = new Tap();
+
+        public void Play(PlaybackRequest request) => Started.Add(request.Id);
+
+        public void Stop(long playbackId)
+        {
+        }
+
+        public void StopAll()
+        {
+        }
+
+        public void SetGain(long playbackId, float gain)
+        {
+        }
+
+        public void Finish(long playbackId) => Finished?.Invoke(playbackId);
+    }
+
+    /// <summary>A clock that moves a second per read, so two rows cannot share an identity.</summary>
+    private DateTimeOffset Now() => Noon.AddSeconds(Interlocked.Increment(ref _tick));
+
+    private RecordingLog Log() => new(_folder, NullLogger.Instance);
+
+    private static AudioRequest Speech(string caption) =>
+        new()
+        {
+            Channel = AudioChannel.Speech,
+            Clip = new AudioClip(caption, new byte[16], AudioFormat.Standard),
+            Group = "turn-1",
+            Caption = caption,
+        };
+
+    [Fact]
+    public void What_played_while_one_clip_was_current_becomes_one_row()
+    {
+        var log = Log();
+        var sink = new Sink();
+        var arbiter = new AudioArbiter(sink, NullLogger<AudioArbiter>.Instance).Start();
+        var tap = new Tap();
+
+        using (var recorder = AudioRecorder.Regardless(log, Now, NullLogger.Instance))
+        {
+            recorder.Watch(arbiter, tap);
+
+            // Nothing is playing yet, so nothing here is anybody speaking.
+            tap.Render(4_000, Rendered);
+
+            arbiter.Enqueue(Speech("You are in Sol."));
+
+            // Half a second of the mix each: 48,000 frames a second at four bytes a frame.
+            tap.Render(96_000, Rendered);
+            tap.Render(96_000, Rendered);
+
+            sink.Finish(sink.Started[0]);
+        }
+
+        var row = Assert.Single(log.Rows);
+
+        Assert.Equal(RecordingDirection.Spoken, row.Direction);
+        Assert.Equal("You are in Sol.", row.Text);
+
+        // The two frames that arrived while it was playing, and not the one that arrived before anything was.
+        Assert.Equal(TimeSpan.FromSeconds(1), row.Duration);
+    }
+
+    /// <summary>A second sentence is a second row rather than more of the first.</summary>
+    [Fact]
+    public void A_second_clip_is_a_second_row()
+    {
+        var log = Log();
+        var sink = new Sink();
+        var arbiter = new AudioArbiter(sink, NullLogger<AudioArbiter>.Instance).Start();
+        var tap = new Tap();
+
+        using (var recorder = AudioRecorder.Regardless(log, Now, NullLogger.Instance))
+        {
+            recorder.Watch(arbiter, tap);
+
+            arbiter.Enqueue(Speech("You are in Sol."));
+            arbiter.Enqueue(Speech("Fuel is fine."));
+
+            tap.Render(9_600, Rendered);
+            sink.Finish(sink.Started[0]);
+
+            tap.Render(9_600, Rendered);
+            sink.Finish(sink.Started[1]);
+        }
+
+        var rows = log.Rows;
+
+        Assert.Equal(2, rows.Count);
+        Assert.Contains(rows, row => row.Text == "You are in Sol.");
+        Assert.Contains(rows, row => row.Text == "Fuel is fine.");
+    }
+
+    [Fact]
+    public void The_row_carries_what_the_pipeline_reported()
+    {
+        var log = Log();
+        var sink = new Sink();
+        var arbiter = new AudioArbiter(sink, NullLogger<AudioArbiter>.Instance).Start();
+        var tap = new Tap();
+
+        using (var recorder = AudioRecorder.Regardless(log, Now, NullLogger.Instance))
+        {
+            recorder.Watch(arbiter, tap);
+
+            recorder.Noted(new SynthesisNote(
+                "Observatory.",
+                "Kokoro (on this machine)",
+                "Heart (af_heart)",
+                "ɒbzɜːveɪ",
+                TimeSpan.FromMilliseconds(120)));
+
+            arbiter.Enqueue(Speech("Observatory."));
+            tap.Render(9_600, Rendered);
+            sink.Finish(sink.Started[0]);
+        }
+
+        var row = Assert.Single(log.Rows);
+
+        Assert.Equal("Kokoro (on this machine)", row.Provider);
+        Assert.Equal("Heart (af_heart)", row.Voice);
+        Assert.Equal("ɒbzɜːveɪ", row.Phonemes);
+        Assert.Equal(TimeSpan.FromMilliseconds(120), row.Elapsed);
+    }
+
+    /// <summary>A cue is not d47 speaking.</summary>
+    [Fact]
+    public void A_cue_is_not_written_down()
+    {
+        var log = Log();
+        var sink = new Sink();
+        var arbiter = new AudioArbiter(sink, NullLogger<AudioArbiter>.Instance).Start();
+        var tap = new Tap();
+
+        using (var recorder = AudioRecorder.Regardless(log, Now, NullLogger.Instance))
+        {
+            recorder.Watch(arbiter, tap);
+
+            arbiter.Enqueue(new AudioRequest
+            {
+                Channel = AudioChannel.Cue,
+                Clip = new AudioClip("listening", new byte[16], AudioFormat.Standard),
+            });
+
+            tap.Render(9_600, Rendered);
+            sink.Finish(sink.Started[0]);
+        }
+
+        Assert.Empty(log.Rows);
+    }
+
+    /// <summary>The exact buffer the transcriber was given, beside what it came back with.</summary>
+    [Fact]
+    public void What_the_transcriber_was_given_is_written_down_beside_what_it_said()
+    {
+        var log = Log();
+        var samples = new float[16_000];
+
+        for (var i = 0; i < samples.Length; i++)
+        {
+            samples[i] = 0.5f;
+        }
+
+        using (var recorder = AudioRecorder.Regardless(log, Now, NullLogger.Instance))
+        {
+            recorder.Heard(
+                new Utterance(samples, 16_000),
+                new Transcription("set course for Colonel")
+                {
+                    Model = "base.en",
+                    Elapsed = TimeSpan.FromMilliseconds(340),
+                });
+        }
+
+        var row = Assert.Single(log.Rows);
+
+        Assert.Equal(RecordingDirection.Heard, row.Direction);
+        Assert.Equal("set course for Colonel", row.Text);
+        Assert.Equal("base.en", row.Model);
+        Assert.Equal(TimeSpan.FromMilliseconds(340), row.Elapsed);
+
+        // Read back as audio rather than as a byte count: the whole point of retaining it is that somebody
+        // can play it, and a header this writer got wrong would pass a length check.
+        var clip = WavReader.Read(Path.Combine(_folder, row.Clip));
+
+        Assert.Equal(16_000, clip.Format.SampleRate);
+        Assert.Equal(TimeSpan.FromSeconds(1), clip.Duration);
+    }
+}
