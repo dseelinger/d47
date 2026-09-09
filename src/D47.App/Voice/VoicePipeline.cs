@@ -243,7 +243,7 @@ public sealed class VoicePipeline(
                 colour: RadioVoice.Colours(announcement.Voice),
 
                 // The sender where there is one and the role otherwise, which is the difference between "Ilse
-                // Bruhn" and "Comms" in the log — and the whole point of writing the voice down is being able
+                // Bruhn" and "Comms" in the log — and the reason for writing the voice down is being able
                 // to tell two senders apart.
                 speaker: announcement.Speaker is { Length: > 0 } named
                     ? named

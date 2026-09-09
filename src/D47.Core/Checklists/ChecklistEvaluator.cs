@@ -99,7 +99,7 @@ public static class ChecklistEvaluator
         ShipLoadout loadout)
     {
 
-        // A ShipID now reporting a different hull makes the list stale and says so, rather than quietly
+        // A ShipID now reporting a different hull makes the list stale and says so, rather than silently
         // diffing an exploration Krait against a Cutter. **Compared as hulls and not as strings** (reported
         // 2026-08-20).
         if (item.Hull is { } hull

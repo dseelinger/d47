@@ -274,7 +274,7 @@ public class TimekeepingTests
         Assert.True(store.Poll());
         Assert.Equal("one", store.Alarms[0].Name);
 
-        // Immediately, with no delay at all — which is the whole point.
+        // Immediately, with no delay at all — which is what Poll is for.
         File.WriteAllText(path, Two);
         Assert.True(store.Poll());
         Assert.Equal("two", store.Alarms[0].Name);

@@ -216,7 +216,7 @@ public class AModelRowSaysWhatItCostsTests
 
     /// <summary>
     /// A row that has nothing settings-dependent to say still reads as it always did, so widening the
-    /// hook cannot have quietly changed every other picker in d47.
+    /// hook cannot have silently changed every other picker in d47.
     /// </summary>
     [Fact]
     public void ARowWithoutASettingsAwareLabelIsUnchanged()

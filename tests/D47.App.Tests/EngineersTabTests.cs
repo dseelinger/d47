@@ -147,7 +147,7 @@ public class EngineersTabTests
     }
 
     /// <summary>
-    /// Distances are on the page, which is the whole point of the coordinates shipping in the table:
+    /// Distances are on the page, which is the reason for the coordinates shipping in the table:
     /// this is arithmetic against where the Commander is, not a lookup.
     /// </summary>
     [AvaloniaFact]

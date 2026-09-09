@@ -12,7 +12,7 @@ public sealed class ToolArguments(IReadOnlyDictionary<string, string> values)
     public IReadOnlyDictionary<string, string> Values { get; } = values;
 
     /// <summary>
-    /// The flattening the provider seam owes the registry: a model's JSON object becomes the flat
+    /// The flattening the provider seam must do for the registry: a model's JSON object becomes the flat
     /// string map every handler already reads.
     /// </summary>
     public static ToolArguments FromJson(string? json)

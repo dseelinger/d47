@@ -44,7 +44,7 @@ public class TheNameLadderTests
 
         var said = Rules.ToPhonemes("Shinrarta Dezhra");
 
-        // The ʒ is the whole point.
+        // The ʒ is what this checks.
         Assert.Contains("ʒ", said, StringComparison.Ordinal);
         Assert.DoesNotContain("zɛd", said, StringComparison.Ordinal);
         Assert.DoesNotContain("ziː", said, StringComparison.Ordinal);

@@ -196,7 +196,7 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
         Assert.True(caught.TryGetValue("F1", out var ships));
         Assert.Null(ships.For(42));
 
-        // And the ship that was not sold is still there, which is the whole point of seeding.
+        // And the ship that was not sold is still there, which is the reason for seeding.
         Assert.NotNull(ships.For(51));
     }
 

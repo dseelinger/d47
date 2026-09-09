@@ -8,13 +8,13 @@ nav_order: 109
   The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
   comment on engineers.md — with one addition and one subtraction.
 
-  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
-  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
-  would silently become what the in-app panel draws on this page. The docs site styles the two
-  identically (main.scss extends one from the other); the app sees only the one below.
+  The class is d47-howto rather than d47-eli5, and the class decides behaviour, not just
+  appearance. HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under
+  that class would silently become what the in-app panel draws on this page. The docs site styles
+  the two identically (main.scss extends one from the other); the app sees only the one below.
 
-  And no rationale in here. Every "because" belongs in the band below. That separation is the
-  whole point of there being two, and it is the thing that will erode first.
+  And no rationale in here. Every "because" belongs in the band below. Keeping the two apart is
+  the reason there are two of them, and it is the first rule here that will be forgotten.
 -->
 <details class="d47-band" open>
 <summary>How to use it</summary>
@@ -208,7 +208,7 @@ only by buying and re-upgrading a fresh item.
 every suit above grade 1, and it is not an edge case: of 768 `SuitLoadout` events in a 912-journal
 corpus, **269 carry an unresolved `$UtilitySuit_Class1_Name;` token, and every one says Class1**
 whatever the real class is. Speaking that string would give you the wrong grade more than a third of
-the time. The symbol plus a shipped table is the only honest route.
+the time. The symbol plus a shipped table is the only accurate route.
 
 A modification d47 has no name for is said as the symbol Elite wrote, and labelled as one, rather
 than dropped from the list as though the slot were empty.
@@ -365,7 +365,7 @@ rather than making you re-point it.
 ```
 
 Dropping a plan keeps whatever it already put on your checklist. You ordered your list around those
-lines, and removing them silently is a history that lies.
+lines, and removing them silently makes the history wrong.
 
 #### The file
 

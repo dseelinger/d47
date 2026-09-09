@@ -107,7 +107,7 @@ public class ShipLoadoutsAreRememberedTests
     [Fact]
     public void AShipNeverSatInIsStillUnknown()
     {
-        // The honest remainder, and the reason the rest can be trusted: remembering what was watched is not
+        // The remaining case, and the reason the rest can be trusted: remembering what was watched is not
         // the same as inventing what was not.
         var state = State(Boarding("2026-08-20T02:00:00Z", "anaconda", 51, "int_engine_size7_class2"));
 

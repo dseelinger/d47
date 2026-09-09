@@ -622,7 +622,7 @@ public partial class MainWindow : Window
         var open = _host.Settings.Current.Hotkeys.OpenSettings;
 
         // Read from settings rather than hardcoded, so rebinding the gesture updates the tip instead of
-        // leaving a "Ctrl+," that quietly became a lie.
+        // leaving a "Ctrl+," that silently became wrong.
         ToolTip.SetTip(
             Panel.SettingsAffordance,
             open is null ? "Settings" : $"Settings ({Gestures.Describe(open)})");

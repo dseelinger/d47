@@ -14,7 +14,7 @@ public class TheShortNamesAreThisRepositorysOwnTests
         Assert.Equal("Power Dist.", ShortNames.Of("Power Distributor"));
     }
 
-    /// <summary>And no other pair may quietly do what those two did.</summary>
+    /// <summary>And no other pair may silently do what those two did.</summary>
     [Fact]
     public void NoTwoModulesShareAShortName()
     {

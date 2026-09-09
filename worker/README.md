@@ -106,7 +106,7 @@ node --test
 ```
 
 Node's own test runner, from this folder. No framework, no `package.json`, no `node_modules` — a
-second language in the tree is the honest cost of this endpoint and a second dependency tree on top
+second language in the tree is the real cost of this endpoint and a second dependency tree on top
 of it would not be. Twenty-nine tests, and what they mostly assert is that a malformed donation is
 **refused with nothing written**, and that an erasure deletes both prefixes for one identifier and
 nothing belonging to anybody else.

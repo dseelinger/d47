@@ -144,7 +144,7 @@ public class BindsTests : IDisposable
 
         var binds = Resolve();
 
-        // A string comparison puts 4.10 below 4.2 and quietly selects a file two revisions stale.
+        // A string comparison puts 4.10 below 4.2 and silently selects a file two revisions stale.
         Assert.EndsWith("Custom.4.10.binds", binds.SourceFile);
         Assert.Equal("Key_Z", Assert.Single(binds.Bindings).Key);
     }

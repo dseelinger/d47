@@ -19,7 +19,7 @@ public class TheVoiceIsSentDirectionAndTheScreenIsNotTests
     private static SpeechPipeline Pipeline(AudioArbiter arbiter, ITtsProvider tts) =>
         new(arbiter, tts, VoiceSelection.Default, "turn-1", NullLogger.Instance);
 
-    /// <summary>The whole point.</summary>
+    /// <summary>The central case.</summary>
     [Fact]
     public async Task AProviderThatWouldReadItAloudIsNeverSentIt()
     {

@@ -167,8 +167,8 @@ public static class TtsProviderCatalog
         // Not priced by the character, and that is still the finding rather than an omission (Phase 58).
         ListDollarsPerThousandCharacters = null,
 
-        // $0.015 per minute of audio. **This is a proxy and is recorded as one**, which is the honest half of
-        // #63 and the half worth reading before trusting the figure.
+        // $0.015 per minute of audio. **This is a proxy and is recorded as one**, which is the half of #63
+        // worth reading before trusting the figure.
         ListDollarsPerMinute = 0.015m,
     };
 

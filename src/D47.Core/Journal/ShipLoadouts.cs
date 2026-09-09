@@ -61,7 +61,7 @@ public sealed record ShipLoadouts
             is "Loadout" or "SetUserShipName" or "EngineerCraft"
             or "ShipyardSell" or "ShipyardBuy" or "ShipyardNew";
 
-    /// <summary>Forgetting, which is the half a durable file makes load-bearing (#128).</summary>
+    /// <summary>Forgetting a ship, which a durable file keeps forever unless this removes it (#128).</summary>
     public ShipLoadouts Apply(JournalEvent journalEvent)
     {
         ArgumentNullException.ThrowIfNull(journalEvent);

@@ -21,7 +21,10 @@ public static class JournalSentence
         "Scanned",
     };
 
-    /// <summary>What this event says, in one line, or the bare kind where nothing honest is available.</summary>
+    /// <summary>
+    /// What this event says, in one line, or the bare kind where nothing more can be said without
+    /// inventing it.
+    /// </summary>
     public static string For(JournalEvent entry)
     {
         var raw = entry.Raw;

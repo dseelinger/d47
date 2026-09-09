@@ -271,7 +271,7 @@ public sealed class RouteCommunityGoalPage : UserControl
 
         // Whose system this was measured from, in words (#331). "near Scorpii Sector ND-S b4-0" was already
         // true and still went unread: a system name alone does not say whether it is the goal's or the
-        // ship's, and the whole point of the search is that those differ.
+        // ship's, and the reason for the search is that those differ.
         var whose = CommunityGoalSearch.Whose(posting.Query.Tag) is { } named ? $", {named}" : string.Empty;
 
         var heading = Text(

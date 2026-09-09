@@ -193,7 +193,7 @@ public class TheFourInaraKnobsReachTheSearchTests
     }
 
     /// <summary>
-    /// With no reference coordinates the ranking falls back to price, but a query whose whole point is
+    /// With no reference coordinates the ranking falls back to price, but a query that exists to produce
  /// one sentence must still get one rather than every offer read out.
     /// </summary>
     [Fact]

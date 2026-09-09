@@ -189,7 +189,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         // A WrapPanel, because this bar overlapped itself below about 700 pixels. It was a DockPanel
         // with one group docked right and one filling, and a filling StackPanel does not shrink — so the two
         // groups drew over each other, which the strip's 512 made obvious and a narrow desktop window has
-        // been doing quietly all along.
+        // been doing unnoticed all along.
         var bar = new WrapPanel { Margin = new Thickness(0, 0, 0, 10), ItemSpacing = 8, LineSpacing = 8 }
             .AsChrome();
 

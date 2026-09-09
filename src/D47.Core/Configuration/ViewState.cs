@@ -138,7 +138,7 @@ public sealed record ViewState
 
     /// <summary>
     /// The remembered shares for a pane count, or null for equal panes — which is both the untouched
-    /// default and the honest answer when what was stored cannot be trusted.
+    /// default and the correct answer when what was stored cannot be trusted.
     /// </summary>
     public IReadOnlyList<double>? SharesFor(int panes)
     {

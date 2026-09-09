@@ -187,7 +187,7 @@ public class TheStressMarkGoesBeforeTheVowelTests
 
     /// <summary>
     /// And every number word is in the table, so the assertion above cannot pass by the table having
-    /// quietly lost one — the ladder falls through to the rules for anything missing, and the rules
+    /// silently lost one — the ladder falls through to the rules for anything missing, and the rules
     /// read <c>eighty</c> as <c>eɪɡtaɪ</c>.
     /// </summary>
     [Theory]

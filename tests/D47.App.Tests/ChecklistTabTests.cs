@@ -77,8 +77,8 @@ public class ChecklistTabTests
     }
 
     /// <summary>
-    /// The tab is on both surfaces, unlike Settings — and that asymmetry is the item's whole point
-    /// rather than an oversight.
+    /// The tab is on both surfaces, unlike Settings — and that asymmetry is deliberate rather than
+    /// an oversight.
     /// </summary>
     [AvaloniaFact]
     public void TheTabIsThereOnceTheHostGivesIt()

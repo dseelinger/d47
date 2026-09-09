@@ -278,7 +278,7 @@ def origins() -> tuple[dict[tuple[str, str], str], list[str], set[str], int]:
     Two names are duplicated in EDEngineer's own file. `Virology Data` is a straight repeat,
     and `Biological Sample` appears twice under different `FormattedName`s, only one of
     which FDevIDs carries. Both pairs currently agree on their origins, so collapsing them
-    loses nothing — but a future pair that *disagreed* would quietly hand one item the
+    loses nothing — but a future pair that *disagreed* would silently hand one item the
     other's sourcing, so a disagreement stops the run instead.
     """
     entries = json.loads(fetch(EDENGINEER).decode("utf-8-sig"))

@@ -128,7 +128,7 @@ public class GaugesAtTheHeadOfTheSlotListTests
         Assert.Contains(said, text => text.Contains(" MW of ", StringComparison.Ordinal));
         Assert.Contains(said, text => text.Contains(" ly", StringComparison.Ordinal) && text.Contains('–'));
 
-        // And the retracted figure beside the deployed one, which is the whole point of the split.
+        // And the retracted figure beside the deployed one, which is the reason for the split.
         Assert.Contains(said, text => text.Contains("retracted", StringComparison.Ordinal));
 
         surface.Window.Close();

@@ -672,7 +672,7 @@ public sealed class TurnLoop(
         Reported = running.Reported && round.Reported,
     };
 
-    /// <summary>One request to the provider, retried where retrying is honest.</summary>
+    /// <summary>One request to the provider, retried where retrying is warranted.</summary>
     private async IAsyncEnumerable<TurnEvent> RunRoundAsync(
         LlmRequest request,
         ILlmProvider activeProvider,

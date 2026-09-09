@@ -118,7 +118,7 @@ public class LogDigestBuilderTests : IDisposable
 
         Assert.Contains(digest.Facts, fact => fact.Statement.Contains("Ordo Vulpes", StringComparison.Ordinal));
 
-        // And it says so, rather than quietly writing up a third of the evening.
+        // And it says so, rather than silently writing up a third of the evening.
         Assert.Equal(55, digest.FactsDropped);
         Assert.Contains("55 further facts", digest.Render(), StringComparison.Ordinal);
     }

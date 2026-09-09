@@ -288,7 +288,7 @@ public class TheFleetCardsCarryTheirHullTests
         ShipArt.Folder = paths.Ships;
         ShipArt.Shipped = paths.ShippedShips;
 
-        // The whole point of the still shipping: a fresh installation has fetched nothing and still draws
+        // The reason for the still shipping: a fresh installation has fetched nothing and still draws
         // every hull.
         Assert.NotNull(ShipArt.For("Corsair"));
     }

@@ -105,7 +105,7 @@ public class ColonisationCandidateTests
     private static Task<ToolResult> Find(CapabilityRegistry registry, params (string Name, string Value)[] values) =>
         registry.InvokeAsync("find_colonisation_candidates", Args(values), TestContext.Current.CancellationToken);
 
-    /// <summary>The load-bearing one.</summary>
+    /// <summary>The case that matters most.</summary>
     [Fact]
     public async Task NoAnswerEverSuggestsASystemIsFreeToClaim()
     {

@@ -97,10 +97,10 @@ says so rather than claiming a person's habit as a mechanism.
 Two things are kept with no end date. Both are deliberate, and saying so is harder than leaving
 them off a table, which is exactly why they are on one.
 
-**A donated journal history, indefinitely.** That is the whole point of it. It becomes a replay
+**A donated journal history, indefinitely.** That is what it is for. It becomes a replay
 case that `spike/CorpusReplay` drives through the same fold the running app uses, so a defect can
 be proven fixed against play that really happened — and a regression case that expires stops being
-one. Permanent retention is also what makes the anonymity load-bearing rather than decorative: a
+one. Permanent retention is also why the anonymity has to hold rather than merely look right: a
 donation is scrubbed by field list, another player's words are dropped rather than scrubbed, and
 the stand-in names are deliberately not stable between donations so two of them cannot be joined.
 It goes when the donor asks.

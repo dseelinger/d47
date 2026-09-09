@@ -3989,7 +3989,7 @@ public sealed class AppHost : IDisposable
         if (_pushToTalkButton.Bound is { } button
             && Binds.UsingJoystickButton(button.Button) is { Count: > 0 } sharing)
         {
-            // Hedged, and the hedge is the honest part.
+            // Hedged, and the hedge is the accurate part.
             _logger.LogWarning(
                 "Push-to-talk {Button} may collide: Elite ({Preset}) binds a button of that number to "
                 + "{Actions}. D47 cannot tell whether that is the same controller.",
@@ -5329,9 +5329,9 @@ public sealed class AppHost : IDisposable
         {
             var voices = await provider.ListVoicesAsync(budget.Token).ConfigureAwait(false);
 
-            // Read from the listing rather than from the count, which is what this check was quietly doing
-            // wrong: the provider answers an empty list rather than throwing, so a rejected key arrived here
-            // as "accepted the key — 0 voices" (Phase 19).
+            // Read from the listing rather than from the count, which is what this check was getting wrong
+            // without saying so: the provider answers an empty list rather than throwing, so a rejected key
+            // arrived here as "accepted the key — 0 voices" (Phase 19).
             return voices.Listing switch
             {
                 VoiceListing.KeyRejected => SecretCheck.Rejected(

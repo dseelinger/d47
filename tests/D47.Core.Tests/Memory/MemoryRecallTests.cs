@@ -55,7 +55,7 @@ public class MemoryRecallTests
         Assert.True(selection.Shown.Sum(entry => entry.Spoken().Length) <= MemoryRecall.MaxCharacters);
     }
 
-    /// <summary>The sentence that keeps the model honest.</summary>
+    /// <summary>The sentence that tells the model how much it is not being shown.</summary>
     [Fact]
     public void ASampleSaysHowMuchItIsLeavingOut()
     {

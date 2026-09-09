@@ -21,7 +21,7 @@ public class TickLoopTests
 
         loop.Tick(DateTimeOffset.UnixEpoch);
 
-        // Load-bearing, not incidental: the journal is polled before anything that reads game state, so a
+        // Required, not incidental: the journal is polled before anything that reads game state, so a
         // callout sees this tick's events rather than the previous tick's.
         Assert.Equal(["first", "second", "third"], order);
     }

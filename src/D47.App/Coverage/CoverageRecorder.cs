@@ -48,7 +48,7 @@ public sealed class CoverageRecorder
 
     /// <summary>
     /// A recorder if this process asked for one, otherwise null — so every caller's check is "is there
-    /// one", and there is no disabled object quietly doing nothing.
+    /// one", and there is no disabled object silently doing nothing.
     /// </summary>
     public static CoverageRecorder? Create(
         AppPaths paths,

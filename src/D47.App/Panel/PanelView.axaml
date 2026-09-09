@@ -133,9 +133,9 @@
 
 
       <!--
-        The ship AI's face, on the left, where the build line used to be. It earns that space in
-        a way a version string never did: it is the one thing on the panel that says what D47 is
-        doing right now without the Commander reading anything, which is the whole point in a
+        The ship AI's face, on the left, where the build line used to be. It is worth that space in
+        a way a version string never was: it is the one thing on the panel that says what D47 is
+        doing right now without the Commander reading anything, which is what matters in a
         cockpit. Drawn rather than decoded — see AvatarView for why that is not an aesthetic
         choice — and present in mini too, since a reduced content set is exactly where a glance
         has to carry more.
@@ -289,7 +289,7 @@
 
       <!--
         Which assigned HOTAS switches currently sit against the game's state (list.md Phase 21).
-        In this row rather than in the banners, and the difference is the whole point: mini hides
+        In this row rather than in the banners, and the difference is the reason for it: mini hides
         the banners and mini is the headset's normal state, so a switch annunciator up there
         would be invisible exactly where a Commander cannot see their own switches either.
 
@@ -908,7 +908,7 @@
           -->
           <!--
             Docked innermost-last, and the box is the last child so it is the one that fills.
-            Order is load-bearing twice over. A DockPanel gives its first right-docked child the
+            Order matters twice over. A DockPanel gives its first right-docked child the
             rightmost slot, so the trio is declared next, previous, count to read left to right as
             count, previous, next. And LastChildFill overrides the last child's own Dock: with the
             steppers declared last, one of them stretched across the whole row and the count sat

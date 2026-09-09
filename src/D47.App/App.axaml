@@ -5,7 +5,7 @@
   <Application.Resources>
     <ResourceDictionary>
       <ResourceDictionary.MergedDictionaries>
-        <!-- Application-wide, because every surface draws text and the whole point of the
+        <!-- Application-wide, because every surface draws text and the reason for the
              scale is that there is one of it. -->
         <ResourceInclude Source="avares://d47/Theming/TypeScale.axaml" />
       </ResourceDictionary.MergedDictionaries>

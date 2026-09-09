@@ -295,7 +295,7 @@ internal sealed class VideoFrames : IDisposable
     private static extern int MFCreateSourceReaderFromURL(
         string url, IMFAttributes? attributes, out IMFSourceReader reader);
 
-    /// <summary>The unused slots are load-bearing.</summary>
+    /// <summary>The unused slots must be declared, to keep the vtable offsets right.</summary>
     [ComImport]
     [Guid("2CD2D921-C447-44A7-A13C-4ADABFC247E3")]
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]

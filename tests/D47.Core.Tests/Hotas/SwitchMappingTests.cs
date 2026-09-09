@@ -231,7 +231,7 @@ public class SwitchStoreTests : IDisposable
     [Fact]
     public void ABadSwitchIsRefusedByNameAndTheRestOfTheFileStillLoads()
     {
-        // A switch that quietly vanished would be a Commander flipping a toggle into the dark.
+        // A switch that silently vanished would be a Commander flipping a toggle with no way to tell what it did.
         Directory.CreateDirectory(_folder);
 
         File.WriteAllText(Path_, """

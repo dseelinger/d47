@@ -106,7 +106,7 @@ public sealed class HttpModelStore : IModelStore, IDisposable
                         ?? (lfs?.TryGetProperty("oid", out var oid) == true ? oid.GetString() : null);
 
                     // The pin wins, and a disagreement is refused rather than resolved. Falling back
-                    // to the host's value on a mismatch would undo the whole point: the pin exists precisely
+                    // to the host's value on a mismatch would undo what the pin is for: it exists precisely
                     // so that the server cannot both change the file and change what the file is expected to
                     // be.
                     if (model.Sha256 is { Length: > 0 } pinned)

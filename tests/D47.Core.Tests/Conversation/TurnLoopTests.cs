@@ -62,7 +62,7 @@ public class TurnLoopTests
     [Fact]
     public async Task WithNoProviderTheKeywordRouterStillAnswers()
     {
-        // The load-bearing claim: every input path is answerable with no capabilities at all.
+        // The central claim: every input path is answerable with no capabilities at all.
         using var install = new TempInstall();
         var loop = Build(BuiltinRegistry(install), provider: null, out _, out _);
 
@@ -314,7 +314,7 @@ public class TurnLoopTests
     }
 
     /// <summary>
-    /// The ceiling earns its keep twice: it is a cost dial, and it is the guard against the router's
+    /// The ceiling does two jobs: it is a cost control, and it is the guard against the router's
     /// own false positives.
     /// </summary>
     [Fact]

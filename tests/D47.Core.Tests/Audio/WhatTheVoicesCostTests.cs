@@ -330,7 +330,7 @@ public class SpeechIsCountedAtTheSeamTests
 
     /// <summary>
     /// A voice the provider will not accept is the same case and worth its own line: it is a failure
-    /// d47 recovers from by itself, and a recovery that quietly billed for the attempt would put a
+    /// d47 recovers from by itself, and a recovery that silently billed for the attempt would put a
     /// charge on the Commander's account for a sentence they never heard.
     /// </summary>
     [Fact]

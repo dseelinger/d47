@@ -46,7 +46,7 @@ public sealed record PowerGauge(double Retracted, double Deployed, double? Capac
 /// <param name="Best">
 /// Unladen plus one jump's fuel, which is Frontier's own <c>MaxJumpRange</c> — measured across 2,876
 /// <c>Loadout</c> events at a median error of 0.000%. "Empty fuel" is not a state anybody jumps in, so
-/// this is the honest top of the range and it is checkable in-game.
+/// this is the real top of the range and it is checkable in-game.
 /// </param>
 /// <param name="Middle">
 /// Unladen plus a full tank: what the first jump of a trip actually does.

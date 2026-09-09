@@ -596,7 +596,7 @@ public static class ListeningCapability
                 Key = CorrectionsKey,
                 Label = "Names it has learned to hear",
                 Help =
-                    "Proper nouns are where speech recognition fails hardest and most quietly: a "
+                    "Proper nouns are where speech recognition fails hardest and least visibly: a "
                     + "misheard system name does not come back as an error, it comes back as a "
                     + "plausible English word and the answer is confidently about the wrong "
                     + "place.\n\n"

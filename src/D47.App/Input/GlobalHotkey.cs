@@ -193,7 +193,7 @@ public sealed class GlobalHotkey : IDisposable
                 }
 
                 // Run on this thread rather than dispatched: silencing is a queue operation with no work in
-                // it, and the whole point is being immediate.
+                // it, and it has to be immediate.
                 onPressed?.Invoke();
                 return 0;
             }

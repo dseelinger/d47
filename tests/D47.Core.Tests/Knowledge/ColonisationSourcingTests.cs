@@ -180,7 +180,7 @@ public class ColonisationSourcingTests
     /// <summary>
     /// The quantity is the site's remaining need rather than its requirement, and it is capped at what
     /// the station actually holds — a plan promising tonnage that is not there is the arithmetic lying
-    /// quietly.
+    /// silently.
     /// </summary>
     [Fact]
     public void TheTonnageIsWhatIsLeftCappedAtWhatTheStationHas()

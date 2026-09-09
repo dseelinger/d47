@@ -187,7 +187,7 @@ public class AWayBackTests
     }
 
     /// <summary>
-    /// And clearing by hand still means what it always did, so reset has not quietly taken over the
+    /// And clearing by hand still means what it always did, so reset has not silently taken over the
     /// other gesture.
     /// </summary>
     [Fact]

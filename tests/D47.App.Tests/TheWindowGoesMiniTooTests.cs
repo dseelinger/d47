@@ -238,7 +238,7 @@ public class TheWindowGoesMiniTooTests
 
         Assert.Equal(700, viewState.Load().MainWindowMini?.Width);
 
-        // And the full rectangle is still its own, which is the whole point of two records.
+        // And the full rectangle is still its own, which is the reason for two records.
         Assert.NotEqual(700, viewState.Load().MainWindow?.Width);
     }
 

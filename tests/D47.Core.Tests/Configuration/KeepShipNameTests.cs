@@ -55,7 +55,7 @@ public class KeepShipNameTests
     [Fact]
     public void WritingTheCoreThatIsAlreadyAboardIsNotASwitch()
     {
-        // Otherwise an unrelated settings edit that rewrites the same core would quietly rename the
+        // Otherwise an unrelated settings edit that rewrites the same core would silently rename the
         // Commander's companion.
         using var install = new TempInstall();
         var surface = Named(install, "Fred", keep: false);

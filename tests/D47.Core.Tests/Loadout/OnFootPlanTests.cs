@@ -426,7 +426,7 @@ public class OnFootPlanTests
 
     /// <summary>
     /// Dropping a plan keeps what it already put on the checklist: the Commander ordered their list
-    /// around those lines, and silently removing them is a history that lies.
+    /// around those lines, and silently removing them makes the history wrong.
     /// </summary>
     [Fact]
     public void DroppingAPlanKeepsWhatItAlreadyPromoted()

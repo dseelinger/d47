@@ -12,8 +12,8 @@
 // "ask and it is deleted" is a promise no public transport can keep. A store that could not honour
 // it either would have moved the problem rather than solved it.
 //
-// **It is JavaScript, and that is a second language in the tree.** That is the honest cost of the
-// proposal, argued in #175 rather than smuggled in. It is about two hundred lines and it lives
+// **It is JavaScript, and that is a second language in the tree.** That is the real cost of the
+// proposal, argued in #175 rather than hidden. It is about two hundred lines and it lives
 // outside src/, where nothing builds it and nothing tests it with dotnet.
 //
 // **Nothing here bills.** Three hard stops, each of which fails closed:
@@ -81,7 +81,7 @@ const MOST_METADATA = 200;
  *
  * R2 lists and deletes a thousand keys at a time, and ten pages of that is more donations than
  * any installation will make in a lifetime — but it is a CEILING rather than an assumption, so a
- * donor who somehow passed it is TOLD there is more rather than being quietly left with half a
+ * donor who somehow passed it is TOLD there is more rather than being silently left with half a
  * deletion. `more` in the reply says press again, and the receipt d47 writes says the same.
  */
 const MOST_PER_PAGE = 1000;

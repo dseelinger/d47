@@ -55,7 +55,7 @@ public class ADonationSaysWhoseItIsWithoutSayingWhoTests : IDisposable
         Assert.False(System.IO.File.Exists(File_));
     }
 
-    /// <summary>The same installation keeps the same identifier, which is the whole point of it.</summary>
+    /// <summary>The same installation keeps the same identifier, which is the reason for it.</summary>
     [Fact]
     public void TheSameInstallationKeepsTheSameToken()
     {

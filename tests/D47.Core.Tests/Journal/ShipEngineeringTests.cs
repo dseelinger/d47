@@ -44,7 +44,7 @@ public class ShipEngineeringTests
     {
         var module = Module(FullyEngineeredDrive);
 
-        // This is the whole point of the step. "How good is my roll" needs no table at all — the module
+        // This is the reason for the step. "How good is my roll" needs no table at all — the module
         // carries its own before and after.
         Assert.Equal("FSD_LongRange", module.Blueprint);
         Assert.Equal(5, module.BlueprintLevel);

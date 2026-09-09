@@ -49,7 +49,7 @@ public class AnAcceptedRemovalIsAppliedTests
         Assert.Empty(reopened.Document.In(ChecklistScope.Universal));
     }
 
-    /// <summary>The honest failure, kept honest.</summary>
+    /// <summary>The failure is reported rather than hidden.</summary>
     [Fact]
     public void AcceptingARemovalOfSomethingGoneSaysSo()
     {
@@ -136,7 +136,7 @@ public class AnAcceptedRemovalIsAppliedTests
     }
 
     /// <summary>
-    /// And once it is answered they are ordinary words again, rather than a router that has quietly
+    /// And once it is answered they are ordinary words again, rather than a router that has silently
     /// kept "yes" for the rest of the session.
     /// </summary>
     [Fact]

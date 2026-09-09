@@ -140,7 +140,7 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
         !reply.Truncated && reply.Markets.Count > 0 && reply.Reference is not null;
 
     /// <summary>
-    /// How far the market index actually covered, in light years — or null where there is no honest
+    /// How far the market index actually covered, in light years — or null where there is no accurate
     /// number, which is either because it covered the whole radius asked for or because it cannot be
     /// known at all (#350).
     /// </summary>

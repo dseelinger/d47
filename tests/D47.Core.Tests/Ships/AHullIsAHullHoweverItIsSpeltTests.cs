@@ -109,7 +109,7 @@ public class AHullIsAHullHoweverItIsSpeltTests
     [Fact]
     public void AHullNothingKnowsStandsAsItWasWritten()
     {
-        // The honest remainder.
+        // The remaining case.
         var path = System.IO.Path.Combine(
             System.IO.Path.GetTempPath(),
             $"d47-builds-{Guid.NewGuid():N}.json");

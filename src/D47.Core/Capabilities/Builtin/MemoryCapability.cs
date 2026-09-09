@@ -205,7 +205,7 @@ public static class MemoryCapability
         Label = "Forget after",
         Help =
             "How long a fact lasts before D47 drops it. Anything you told D47 yourself is said out "
-            + "loud as it goes, so an expiry can never quietly lose your own words.",
+            + "loud as it goes, so an expiry can never silently lose your own words.",
         Kind = SettingKind.Choice,
         Choices = ExpiryChoices,
         ChoiceLabel = value => value switch

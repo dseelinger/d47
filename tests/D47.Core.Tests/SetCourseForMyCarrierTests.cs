@@ -89,7 +89,7 @@ public class SetCourseForMyCarrierTests
 
     /// <summary>
  /// Over the whole command table, not one phrase: a fifteenth spelling added later cannot
-    /// quietly go to the planner instead.
+    /// silently go to the planner instead.
     /// </summary>
     [Fact]
     public void EverySetCoursePhraseInTheTablePlotsInTheMap()
@@ -154,7 +154,7 @@ public class SetCourseForMyCarrierTests
         Assert.Empty(Commands(system is null ? null : new CarrierState { StarSystem = system }));
     }
 
-    /// <summary>And it beats the keyword, which is the whole point.</summary>
+    /// <summary>And it beats the keyword, which is the reason for the phrase.</summary>
     [Fact]
     public void TheRouterTakesItAheadOfTheCarrierKeyword()
     {

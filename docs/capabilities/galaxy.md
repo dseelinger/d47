@@ -8,13 +8,13 @@ nav_order: 104
   The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
   comment on engineers.md — with one addition and one subtraction.
 
-  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
-  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
-  would silently become what the in-app panel draws on this page. The docs site styles the two
-  identically (main.scss extends one from the other); the app sees only the one below.
+  The class is d47-howto rather than d47-eli5, and the class decides behaviour, not just
+  appearance. HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under
+  that class would silently become what the in-app panel draws on this page. The docs site styles
+  the two identically (main.scss extends one from the other); the app sees only the one below.
 
-  And no rationale in here. Every "because" belongs in the band below. That separation is the
-  whole point of there being two, and it is the thing that will erode first.
+  And no rationale in here. Every "because" belongs in the band below. Keeping the two apart is
+  the reason there are two of them, and it is the first rule here that will be forgotten.
 -->
 <details class="d47-band" open>
 <summary>How to use it</summary>
@@ -203,7 +203,7 @@ and got every system, presented as though the filter had applied.
 So d47 keeps its own closed list of filters and refuses one it does not know **before** building
 a request. If you ask for something that is not on the list, you get told what is, rather than a
 confident wrong answer. This is the first guardrail — never invent game data — applied to a
-service that will happily let you invent it.
+service that will let you invent it without complaint.
 
 The filters are `distance`, `allegiance`, `government`, `primary_economy`, `security` and `state`.
 Ranges take one number for an upper bound (`30` means within 30) or two separated by a dash
@@ -292,7 +292,7 @@ Best for buying 700 tonnes of Tritium within 50 ly of Sol: Jameson Memorial (Shi
 ```
 
 A market **you** stood in yourself is labelled as yours, because it is the one figure with no
-caveat. Stations dropped for quoting prices too old to trust are counted rather than quietly
+caveat. Stations dropped for quoting prices too old to trust are counted rather than silently
 skipped — "nothing within fifty light years" and "eleven stations, all quoting last month" are
 different answers, and only one of them means you should look further out.
 
@@ -465,7 +465,7 @@ question in silence. *"That's as far as I search"* is the sentence the change ex
 **And `limit` is under the same two rules** ([#178](https://github.com/dseelinger/d47/issues/178)).
 It was not, and it was worse than a clamp: a value outside 1 to 20 was *reset* to 5, so asking for
 fifty returned five and the answer said nothing about either number. It now stops at 20 and starts
-at 1, says so when it bites — *"You asked for 50; limit stops at 20, so that is what I looked
+at 1, says so when it applies — *"You asked for 50; limit stops at 20, so that is what I looked
 for."* — and echoes a non-default count that was honoured, the way the radius is echoed. Both
 halves of the tool obey it: the commodity search and the module-and-ship search take the same
 argument and now owe the same sentence.
@@ -528,7 +528,7 @@ misspelled key did.
 **A signal count is exact, not a minimum.** Asking for 1 returned 41 bodies, 2 returned 14, 3
 returned none and 4 returned 2 — not a decreasing series, and every result carried precisely the
 number asked for. So the schema says "exactly how many" rather than "at least", because a "three
-or more" that quietly meant "exactly three" would be a wrong answer that reads like a right one.
+or more" that silently meant "exactly three" would be a wrong answer that reads like a right one.
 
 `distance_to_arrival` is **not** offered as a filter: the service ignores it. Setting it to 0-10
 light seconds returned the same 1,315 bodies as no filter at all. It is read off each result and

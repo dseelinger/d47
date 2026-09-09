@@ -66,7 +66,7 @@ public class TheGroupingCommaIsNotSpelledTests
         Assert.Contains(rungs, fell => fell.Segment == token && fell.Rung == PhonemeRung.Number);
     }
 
-    // ---- The validation, which is what keeps this honest --------------------------------------
+    // ---- The validation, which is what keeps this correct -------------------------------------
 
     /// <summary>A comma every three, or it is not a grouping: a token that only looks like a number falls through to the ladder and is spelled, which is never wrong.</summary>
     [Theory]

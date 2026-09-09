@@ -390,8 +390,8 @@ public sealed class OverlayPanel : Window
         catch (EntryPointNotFoundException ex)
         {
             // The 32-bit entry point is SetWindowLongW and d47 is x64, so this is unreachable in any shipped
-            // build - but a swallowed style is a strip that eats clicks, which is the one failure this
-            // surface must not have quietly.
+            // build - but a swallowed style is a strip that absorbs clicks, which is the one failure this
+            // surface must not have without saying so.
             _logger.LogWarning(ex, "Could not make the overlay click-through; it is being hidden instead");
             Hide();
         }
@@ -568,7 +568,7 @@ public sealed class OverlayPanel : Window
     /// <summary>
     /// Read-modify-write against the file rather than against a snapshot, exactly as the window's own
     /// placement and the VR anchors do: the settings page writes card state into the same store while
-    /// this is open, and saving a stale copy would quietly undo it.
+    /// this is open, and saving a stale copy would silently undo it.
     /// </summary>
     private void Remember()
     {

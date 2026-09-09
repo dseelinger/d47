@@ -1084,7 +1084,7 @@ public static class GalaxyCapability
         return Math.Clamp(asked ?? DefaultLimit, MinLimit, MaxLimit);
     }
 
-    /// <summary>The sentence a refused <c>limit</c> owes, or nothing at all where the ask was honoured.</summary>
+    /// <summary>The sentence a refused <c>limit</c> requires, or nothing at all where the ask was honoured.</summary>
     private static string LimitRefused(int? asked) => asked switch
     {
         > MaxLimit => $" You asked for {asked}; limit stops at {MaxLimit}, so that is what I looked for.",

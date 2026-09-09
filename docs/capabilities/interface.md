@@ -8,13 +8,13 @@ nav_order: 125
   The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
   comment on engineers.md — with one addition and one subtraction.
 
-  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
-  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
-  would silently become what the in-app panel draws on this page. The docs site styles the two
-  identically (main.scss extends one from the other); the app sees only the one below.
+  The class is d47-howto rather than d47-eli5, and the class decides behaviour, not just
+  appearance. HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under
+  that class would silently become what the in-app panel draws on this page. The docs site styles
+  the two identically (main.scss extends one from the other); the app sees only the one below.
 
-  And no rationale in here. Every "because" belongs in the band below. That separation is the
-  whole point of there being two, and it is the thing that will erode first.
+  And no rationale in here. Every "because" belongs in the band below. Keeping the two apart is
+  the reason there are two of them, and it is the first rule here that will be forgotten.
 -->
 <details class="d47-band" open>
 <summary>How to use it</summary>
@@ -204,7 +204,7 @@ show me every setting · show all the settings · show the advanced settings
 hide the advanced settings · show fewer settings · just the usual settings
 ```
 
-The label never uses the word *advanced*, and the phrases happily accept it. That is on purpose:
+The label never uses the word *advanced*, and the phrases accept it anyway. That is on purpose:
 the phrase list is where Directive 47 meets your words, and the label is where it chooses its own.
 
 #### Theme {#theme}
@@ -819,6 +819,6 @@ its width and 75% of its height, floored so a small screen still gets a readable
 than a fixed size written down once against somebody else's monitor. It is then clamped to 90% of
 that working area —
 90% rather than 100% because a window filling the work area exactly reads as maximised. Size and
-position live in `view-state.json` beside the executable and fail quietly if unreadable.
+position live in `view-state.json` beside the executable and fail silently if unreadable.
 
 </details>

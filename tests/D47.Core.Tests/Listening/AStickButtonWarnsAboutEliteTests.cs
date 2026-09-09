@@ -59,7 +59,7 @@ public class AStickButtonWarnsAboutEliteTests
     }
 
     /// <summary>
-    /// The hedge is the honest part and must survive anybody tidying the sentence: d47 cannot tell
+    /// The hedge is the accurate part and must survive anybody tidying the sentence: d47 cannot tell
     /// whether Elite's <c>Joy_7</c> is on this stick or another one, so it never says "collides".
     /// </summary>
     [Fact]

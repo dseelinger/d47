@@ -5,7 +5,7 @@ namespace D47.Core.Knowledge;
 /// <param name="Jumps">How many jumps to reach it from the previous waypoint.</param>
 /// <param name="DistanceLeft">Light years still to go after arriving.</param>
 /// <param name="IsNeutron">
-/// Whether this one is a neutron star, which is the whole point of the waypoint: it is where the
+/// Whether this one is a neutron star, which is the reason for the waypoint: it is where the
 /// Commander has to fly into the jet cone rather than just plot onward.
 /// </param>
 public sealed record RouteWaypoint(string System, int Jumps, double? DistanceLeft, bool IsNeutron)

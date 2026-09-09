@@ -446,7 +446,7 @@ public class AdventuresTabTests
 
         Assert.NotEmpty(Pulses(panel));
 
-        // Driven by the tick rather than by a timer of its own, and honest about whether the frame moved —
+        // Driven by the tick rather than by a timer of its own, and accurate about whether the frame moved —
         // the headset sets its dirty flag from this, and a flag held true every frame is what made the panel
         // flicker the last time something set one unconditionally.
         Assert.False(panel.TickAdventures());

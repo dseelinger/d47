@@ -30,8 +30,8 @@ public class SlotCopyTests
         Assert.NotNull(moved);
         Assert.Equal("SmallHardpoint1", moved!.Slot);
 
-        // The module resolves to the small one — which is what the target already has, so the whole point of
-        // the drag is the three lines below it.
+        // The module resolves to the small one — which is what the target already has, so the drag's real effect is
+        // the three lines below it.
         Assert.Equal("hpt_pulselaser_turret_small", moved.Variant);
         Assert.Equal("Long Range Weapon", moved.Blueprint);
         Assert.Equal(5, moved.Grade);

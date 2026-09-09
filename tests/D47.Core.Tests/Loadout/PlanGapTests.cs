@@ -110,7 +110,7 @@ public class PlanGapTests
 
     /// <summary>
     /// Whether hulls the Commander does not own count is a filter rather than a decision taken on their
-    /// behalf: counting them is honest about the whole ambition, and excluding them answers what can be
+    /// behalf: counting them accounts for the whole ambition, and excluding them answers what can be
     /// finished now.
     /// </summary>
     [Fact]
@@ -147,7 +147,7 @@ public class PlanGapTests
     }
 
     /// <summary>
-    /// A material trader can cover a shortfall, and the offer is a second line beside the honest raw
+    /// A material trader can cover a shortfall, and the offer is a second line beside the raw
     /// number rather than a reason to report a smaller one.
     /// </summary>
     [Fact]

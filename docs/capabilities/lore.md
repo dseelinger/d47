@@ -8,13 +8,13 @@ nav_order: 116
   The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
   comment on engineers.md — with one addition and one subtraction.
 
-  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
-  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
-  would silently become what the in-app panel draws on this page. The docs site styles the two
-  identically (main.scss extends one from the other); the app sees only the one below.
+  The class is d47-howto rather than d47-eli5, and the class decides behaviour, not just
+  appearance. HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under
+  that class would silently become what the in-app panel draws on this page. The docs site styles
+  the two identically (main.scss extends one from the other); the app sees only the one below.
 
-  And no rationale in here. Every "because" belongs in the band below. That separation is the
-  whole point of there being two, and it is the thing that will erode first.
+  And no rationale in here. Every "because" belongs in the band below. Keeping the two apart is
+  the reason there are two of them, and it is the first rule here that will be forgotten.
 -->
 <details class="d47-band" open>
 <summary>How to use it</summary>
@@ -110,7 +110,7 @@ nav_order: 116
  <text x="46" y="168" text-anchor="start" font-size="16" fill="var(--text)">“I wrote this one down myself, and nothing has checked it…”</text>
  <text x="580" y="168" text-anchor="start" font-size="15" fill="var(--text-muted)">← its own note</text>
  <text x="440" y="224" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">A tier is never promoted.</text>
- <text x="440" y="254" text-anchor="middle" font-size="15" fill="var(--text-muted)">Surviving a lookup is a label, not a verdict — promotion is how an invention quietly becomes a fact.</text>
+ <text x="440" y="254" text-anchor="middle" font-size="15" fill="var(--text-muted)">Surviving a lookup is a label, not a verdict — promotion is how an invention silently becomes a fact.</text>
 </svg>
 <p class="body">An obscure but real site finds nothing, and a search can appear to agree with something a model half-invented. So if a later search <em>would</em> have corroborated a note, the note still says <em>you told me</em>.</p>
 </section>
@@ -216,7 +216,7 @@ I wrote this one down myself, and nothing has checked it: …      ← D47's own
 **A tier is never promoted.** Surviving a lookup is a label, not a verdict: an obscure but real site
 finds nothing, and a search can appear to agree with something a model half-invented. If a later
 search would have corroborated a note, the note still says you told me — because promotion is the
-path by which an invention quietly becomes a fact Directive 47 states flatly.
+path by which an invention silently becomes a fact Directive 47 states flatly.
 
 Notes live in `data/lore.json` beside the executable, one file for the installation rather than one
 per Commander: what is true about a system is true whichever character you are flying. Each entry

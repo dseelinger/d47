@@ -347,7 +347,7 @@ public sealed class WindowPlacementMemory
 
         // Read-modify-write against the file rather than against a snapshot taken at startup: the settings
         // page writes card collapse state into the same store while this window is open, and saving a stale
-        // copy here would quietly undo it.
+        // copy here would silently undo it.
         _store.Save(state);
     }
 }

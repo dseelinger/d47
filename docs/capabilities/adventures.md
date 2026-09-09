@@ -8,13 +8,13 @@ nav_order: 114
   The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
   comment on engineers.md — with one addition and one subtraction.
 
-  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
-  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
-  would silently become what the in-app panel draws on this page. The docs site styles the two
-  identically (main.scss extends one from the other); the app sees only the one below.
+  The class is d47-howto rather than d47-eli5, and the class decides behaviour, not just
+  appearance. HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under
+  that class would silently become what the in-app panel draws on this page. The docs site styles
+  the two identically (main.scss extends one from the other); the app sees only the one below.
 
-  And no rationale in here. Every "because" belongs in the band below. That separation is the
-  whole point of there being two, and it is the thing that will erode first.
+  And no rationale in here. Every "because" belongs in the band below. Keeping the two apart is
+  the reason there are two of them, and it is the first rule here that will be forgotten.
 -->
 <details class="d47-band" open>
 <summary>How to use it</summary>
@@ -233,7 +233,7 @@ Both are yours alone, reachable from the panel and nowhere else.
 ### Nothing here is callable by the model
 
 Generation, beginning, abandoning and removing are all your acts, on the panel. The ship's AI can
-*read* the story — that is the whole point, so it can play off it — and can change nothing about
+*read* the story — that is what it is for, so it can play off it — and can change nothing about
 it. A hostile message arriving in your comms panel cannot propose a story, end one, or delete one.
 
 It also costs nothing: none of this is on the advertised tool surface.

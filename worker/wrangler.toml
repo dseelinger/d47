@@ -18,7 +18,7 @@ compatibility_date = "2026-08-29"
 workers_dev = true
 
 # **No observability, and no telemetry beyond what Cloudflare cannot be stopped from counting.**
-# The whole point of this endpoint is that a donation is one deliberate act; a request log that
+# The reason for this endpoint is that a donation is one deliberate act; a request log that
 # accumulated who posted what and when would be the ambient collection this project rules out,
 # arriving at the other end of the wire.
 [observability]

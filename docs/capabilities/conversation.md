@@ -8,13 +8,13 @@ nav_order: 119
   The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
   comment on engineers.md — with one addition and one subtraction.
 
-  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
-  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
-  would silently become what the in-app panel draws on this page. The docs site styles the two
-  identically (main.scss extends one from the other); the app sees only the one below.
+  The class is d47-howto rather than d47-eli5, and the class decides behaviour, not just
+  appearance. HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under
+  that class would silently become what the in-app panel draws on this page. The docs site styles
+  the two identically (main.scss extends one from the other); the app sees only the one below.
 
-  And no rationale in here. Every "because" belongs in the band below. That separation is the
-  whole point of there being two, and it is the thing that will erode first.
+  And no rationale in here. Every "because" belongs in the band below. Keeping the two apart is
+  the reason there are two of them, and it is the first rule here that will be forgotten.
 -->
 <details class="d47-band" open>
 <summary>How to use it</summary>
@@ -105,7 +105,7 @@ nav_order: 119
  <text x="660" y="182" text-anchor="middle" font-size="16" font-weight="700" fill="var(--accent)">and so does the spend</text>
  <text x="440" y="246" text-anchor="middle" font-size="16" fill="var(--text-muted)">Both act on a turn in flight — the only thing either of them has to act on.</text>
 </svg>
-<p class="body">One honest limit: whatever the model had already produced before you cancelled was already billed by the provider. Cancelling saves the work that had not happened yet, not the work that had.</p>
+<p class="body">One limitation: whatever the model had already produced before you cancelled was already billed by the provider. Cancelling saves the work that had not happened yet, not the work that had.</p>
 </section>
 <section>
 <h2><span class="num">3</span> Two bills, one answer.</h2>
@@ -199,7 +199,7 @@ rather than a fixed number of hours back.
 
 A charge Directive 47 could not price — a model with no published rate, or a voice provider you
 have not set a rate for — is recorded with its tokens or characters and no dollar figure. Any
-window containing one reports **at least** its total rather than presenting a figure that quietly
+window containing one reports **at least** its total rather than presenting a figure that silently
 leaves part of the cost out.
 
 **Every figure in there is an estimate, and the window says so once at the top.** Directive 47
@@ -261,7 +261,7 @@ Session so far: 0 turn(s), $0.0000
 Both work while a turn is running rather than waiting for it to finish — a turn in flight is the
 only thing either has to act on.
 
-One honest limit: whatever the model had already produced before you cancelled has already been
+One limitation: whatever the model had already produced before you cancelled has already been
 billed by the provider, and Directive 47 cannot get the figures for a turn it tore down. So a
 cancelled turn adds nothing to the running total, which slightly under-reports the session.
 Cancelling saves the work that had not happened yet, not the work that had.
@@ -342,7 +342,7 @@ serves whatever you loaded into it, so any guess would fail at the first questio
 list the endpoint gave back, or type the name.
 
 The offered list is every model Directive 47 can price, so anything picked from it keeps the
-running cost honest. Type one by hand and it is accepted, but counted as unknown rather than as
+running cost accurate. Type one by hand and it is accepted, but counted as unknown rather than as
 free. Models the *endpoint* offered are in that second category — Directive 47 has no published
 rate for a model it has never heard of, and inventing one would be worse than saying so.
 
@@ -476,7 +476,7 @@ key is bad would send you to your account page to issue another one that fails t
 
 **On an OpenAI-shaped endpoint the check asks for the model list instead**, and answers something
 like `OpenAI answered — 5 models.` That is the better probe here for three reasons: it works with
-no key, which is the whole point of running your own model; it works with no model chosen, which a
+no key, which is the reason for running your own model; it works with no model chosen, which a
 local server may well be; and it is the exact call Directive 47 makes anyway to fill the picker,
 rather than a proxy for it. A server that is simply not started yet reads as unreachable, not as a
 wrong address.
@@ -508,7 +508,7 @@ Four things can be dropped this way, and each costs something small rather than 
 retried in a loop, because a client hunting for a request shape the server will accept is
 indistinguishable from an outage from where you are sitting. And it is never written to disk,
 because a demotion saved to a file outlives the server upgrade that fixed it — and you would have
-no way of knowing why the tools quietly stopped being offered.
+no way of knowing why the tools silently stopped being offered.
 
 Nothing is demoted on a guess. A refusal that names no field turns nothing off.
 
@@ -569,7 +569,7 @@ search result, never written into a table — but it is the one case where a sea
 rather than a question. Setting that row to *Remark only*, or switching this one off, ends it.
 
 Two things are true of anything found this way. It is **spoken as something read, with the source
-named**, and never quietly mixed into the ship and galaxy figures Directive 47 was built with —
+named**, and never silently mixed into the ship and galaxy figures Directive 47 was built with —
 if a page disagrees with those, you get told both and which is which. And it is **never written
 into Directive 47's own tables**: those are generated from recorded sources, and a search result
 has no route into them.

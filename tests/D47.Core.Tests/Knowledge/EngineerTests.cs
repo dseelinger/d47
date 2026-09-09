@@ -15,7 +15,7 @@ public class EngineerTests
     {
         Assert.True(EngineerDirectory.All.Count > 30, $"{EngineerDirectory.All.Count} engineers");
 
-        // The whole point of resolving the two ids at generation time.
+        // The reason for resolving the two ids at generation time.
         Assert.All(EngineerDirectory.All, engineer => Assert.NotNull(engineer.System));
     }
 

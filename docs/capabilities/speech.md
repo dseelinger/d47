@@ -8,13 +8,13 @@ nav_order: 121
   The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
   comment on engineers.md — with one addition and one subtraction.
 
-  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
-  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
-  would silently become what the in-app panel draws on this page. The docs site styles the two
-  identically (main.scss extends one from the other); the app sees only the one below.
+  The class is d47-howto rather than d47-eli5, and the class decides behaviour, not just
+  appearance. HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under
+  that class would silently become what the in-app panel draws on this page. The docs site styles
+  the two identically (main.scss extends one from the other); the app sees only the one below.
 
-  And no rationale in here. Every "because" belongs in the band below. That separation is the
-  whole point of there being two, and it is the thing that will erode first.
+  And no rationale in here. Every "because" belongs in the band below. Keeping the two apart is
+  the reason there are two of them, and it is the first rule here that will be forgotten.
 -->
 <details class="d47-band" open>
 <summary>How to use it</summary>
@@ -295,7 +295,7 @@ and Directive 47 sends it the description of whichever Guardian core is aboard. 
 is cast rather than merely given a larynx, and the same core on Edge or ElevenLabs is not. There is
 nothing to switch on: it happens whenever the ship's AI speaks through OpenAI with personality on.
 
-One honest limit. Directive 47 keeps **one connection per provider** shared across all six voice
+One limitation. Directive 47 keeps **one connection per provider** shared across all six voice
 slots, so if you also put the carrier or the NPCs on OpenAI, they are performed the same way. The
 default puts everything carrying another player's words on Edge, so this usually reaches the core
 and nothing else.
@@ -413,7 +413,7 @@ than a word you have to hope appears in its label. It offers **All**, **Female**
 **Unlabelled**, and the two filters narrow together — Female plus `en-GB` is the British women.
 
 *Unlabelled* is voices the provider tags with nothing. They are their own answer rather than being
-counted as men or quietly left out, because some providers label every voice and some label none,
+counted as men or silently left out, because some providers label every voice and some label none,
 and a filter that hid them would look like a shorter list rather than like a filter.
 
 The filter is only offered where the voices carry a gender at all. A provider that tags none of them
@@ -576,7 +576,7 @@ runs with a provider that speaks. Nothing moves if you have chosen `none`.
 *Direct messages* and *Anyone in range* carry text other Commanders typed, which can be in any
 language at all. Edge and ElevenLabs can both be *told* what language to speak — Directive 47
 sends one with every line — and OpenAI has no such setting: a language sent to it is accepted and
-then quietly ignored, so a message written in French would come back read in French, in the voice
+then silently ignored, so a message written in French would come back read in French, in the voice
 you chose for English. Rather than warn about that, those three slots simply do not list it. If
 you hand-edit `settings.json` to name it anyway, the slot falls back to Edge rather than obeying
 the file.
@@ -608,7 +608,7 @@ bill: a subscription burns bundled credits instead, at an effective rate that de
 tier and on how much of the month's bundle is left, and the API reports neither. Correct the row
 and every figure below follows it. The row is absent on a provider that charges nothing.
 
-**On Cartesia it reads *(not published — no price will be quoted)*, and that is honest rather than
+**On Cartesia it reads *(not published — no price will be quoted)*, and that is accurate rather than
 lazy.** Their API will not say: the four endpoints that would carry a rate or a balance —
 `/balance`, `/usage`, `/subscriptions/current`, `/account` — all answer 404, so Directive 47 does
 not know their rate and does not even know which *unit* they bill in. Rather than invent a figure

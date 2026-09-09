@@ -91,7 +91,7 @@ public class GalaxyCapabilityTests
     [Fact]
     public async Task AFilterTheServiceWouldSilentlyIgnoreNeverReachesIt()
     {
-        // The load-bearing one: an unknown filter has to stop here, because it does not stop anywhere
+        // The case that matters: an unknown filter has to stop here, because it does not stop anywhere
         // downstream.
         using var install = new TempInstall();
         var (registry, galaxy) = Build(install);

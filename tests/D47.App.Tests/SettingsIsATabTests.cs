@@ -226,7 +226,7 @@ public class SettingsIsATabTests
     }
 
     /// <summary>
-    /// The rows still get their width on the narrow page — the whole point of collapsing the nav is
+    /// The rows still get their width on the narrow page — the reason for collapsing the nav is
     /// that the cards take what it was using.
     /// </summary>
     [AvaloniaFact]

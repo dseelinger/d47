@@ -50,7 +50,7 @@ public sealed record LoreEntry(long SystemAddress, string Name, string Note)
     public DateTimeOffset? AddedAt { get; init; }
 
     /// <summary>
-    /// The sentence this entry is read back in, which is the whole point of <see cref="LoreTier"/>
+    /// The sentence this entry is read back in, which is the reason for <see cref="LoreTier"/>
     /// being a field rather than a note the persona is trusted to add.
     /// </summary>
     public string Spoken() => (Tier, Arrival) switch

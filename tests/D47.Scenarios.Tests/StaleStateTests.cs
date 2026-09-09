@@ -70,7 +70,7 @@ public class StaleStateTests
 
         var prompt = Assert.Single(trace.Prompts);
 
-        // The stale claim is in the request, which is the whole point: this is the turn the Commander
+        // The stale claim is in the request, which is the reason for the case: this is the turn the Commander
         // actually had, not a tidied one.
         Assert.Contains("Zeppelin Depot", TurnTrace.Render(prompt), StringComparison.Ordinal);
 

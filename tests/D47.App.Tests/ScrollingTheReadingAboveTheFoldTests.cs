@@ -158,7 +158,7 @@ public class ScrollingTheReadingAboveTheFoldTests : IDisposable
     }
 
     /// <summary>
- /// What makes the gesture honest: the text is above the fold, not gone, so scrolling back up
+ /// What keeps the gesture from losing anything: the text is above the fold, not gone, so scrolling back up
     /// brings it into view — and every run is still in the model underneath.
     /// </summary>
     [AvaloniaFact]

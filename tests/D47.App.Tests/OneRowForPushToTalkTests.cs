@@ -119,7 +119,7 @@ public class OneRowForPushToTalkTests
         host.Close();
     }
 
-    /// <summary>A hold row must not quietly be given a fire-once binding.</summary>
+    /// <summary>A hold row must not silently be given a fire-once binding.</summary>
     [AvaloniaFact]
     public void AKeyBoundOnThisRowIsAHeldKeyRatherThanAFireOnceHotkey()
     {

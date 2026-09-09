@@ -156,7 +156,7 @@ public static class Launch
                 return new LaunchOutcome(LaunchEnding.Refused, walked.Reason);
             }
 
-            // The status flag is the only honest answer.
+            // The status flag is the only accurate answer.
             return await awaitUndocked(cancellationToken).ConfigureAwait(false) switch
             {
                 // The verdict, and no longer the acknowledgement (#158).

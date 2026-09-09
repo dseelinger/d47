@@ -8,13 +8,13 @@ nav_order: 120
   The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
   comment on engineers.md — with one addition and one subtraction.
 
-  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
-  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
-  would silently become what the in-app panel draws on this page. The docs site styles the two
-  identically (main.scss extends one from the other); the app sees only the one below.
+  The class is d47-howto rather than d47-eli5, and the class decides behaviour, not just
+  appearance. HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under
+  that class would silently become what the in-app panel draws on this page. The docs site styles
+  the two identically (main.scss extends one from the other); the app sees only the one below.
 
-  And no rationale in here. Every "because" belongs in the band below. That separation is the
-  whole point of there being two, and it is the thing that will erode first.
+  And no rationale in here. Every "because" belongs in the band below. Keeping the two apart is
+  the reason there are two of them, and it is the first rule here that will be forgotten.
 -->
 <details class="d47-band" open>
 <summary>How to use it</summary>
@@ -288,7 +288,7 @@ have never had aboard: it introduces itself, once ever.
 companions; a ship has to stay the ship for half a minute before its binding acts, and only the
 one you actually leave in applies.
 
-**The ship you are already in when Directive 47 starts** has its binding applied quietly — no
+**The ship you are already in when Directive 47 starts** has its binding applied silently — no
 introduction, no remark. Launching the app is not a ship change you just made.
 
 A ship you have not bound changes nothing: whoever is aboard stays aboard. And picking a
@@ -299,7 +299,7 @@ continuously — until the next time you board it.
 Commander, so one Commander's ship 7 and another's are two ships, and bindings are kept per
 Commander. When somebody else logs in on this machine, the transcript of every core is discarded
 — their conversation was with the Commander who left — the ship they are sitting in has *its*
-binding applied quietly, as at startup, and the greeting is said again, naming them: *"Good
+binding applied silently, as at startup, and the greeting is said again, naming them: *"Good
 evening, Commander Jameson. Ready to go."* Directive 47 learning who has been flying since before
 it started is not a login and discards nothing. The **Ship** row below is per Commander for the
 same reason the bindings are.

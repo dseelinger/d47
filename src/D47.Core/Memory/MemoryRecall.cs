@@ -49,7 +49,7 @@ public static class MemoryRecall
             }
 
             // Counted against the rendered length rather than the raw fact, because the tier's sentence is
-            // part of what is sent and the whole point of the budget is to bound what is sent.
+            // part of what is sent and the reason for the budget is to bound what is sent.
             var cost = entry.Spoken().Length + 1;
 
             if (characters + cost > MaxCharacters && shown.Count > 0)

@@ -112,7 +112,7 @@ public sealed class LoadoutStore(string path, ILogger<LoadoutStore> logger)
     /// </summary>
     /// <paramref name="commanders"/>
     /// at all, and writing only what this session has seen would delete their ships from the file —
-    /// quietly, and permanently once the journals scrolled past the catch-up window.
+    /// silently, and permanently once the journals scrolled past the catch-up window.
     /// </paramref>
     public void Save(IEnumerable<CommanderGameState> commanders, DateTimeOffset foldedThrough)
     {

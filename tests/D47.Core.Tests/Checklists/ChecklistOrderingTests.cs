@@ -99,7 +99,7 @@ public class ChecklistOrderingTests : IDisposable
     }
 
     /// <summary>
-    /// With no state and nothing ranked there is no signal at all, and the honest reading is the file's
+    /// With no state and nothing ranked there is no signal at all, and the correct reading is the file's
     /// own order rather than one d47 invented.
     /// </summary>
     [Fact]
@@ -161,7 +161,7 @@ public class ChecklistOrderingTests : IDisposable
 
     /// <summary>
     /// The Commander's rank outranks the derivation — a rank the reading could overrule whenever they
-    /// fly somewhere is a control that lies.
+    /// fly somewhere is a control in name only.
     /// </summary>
     [Fact]
     public void ARankedProjectOutranksHereAndNow()

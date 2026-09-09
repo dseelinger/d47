@@ -8,13 +8,13 @@ nav_order: 110
   The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
   comment on engineers.md — with one addition and one subtraction.
 
-  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
-  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
-  would silently become what the in-app panel draws on this page. The docs site styles the two
-  identically (main.scss extends one from the other); the app sees only the one below.
+  The class is d47-howto rather than d47-eli5, and the class decides behaviour, not just
+  appearance. HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under
+  that class would silently become what the in-app panel draws on this page. The docs site styles
+  the two identically (main.scss extends one from the other); the app sees only the one below.
 
-  And no rationale in here. Every "because" belongs in the band below. That separation is the
-  whole point of there being two, and it is the thing that will erode first.
+  And no rationale in here. Every "because" belongs in the band below. Keeping the two apart is
+  the reason there are two of them, and it is the first rule here that will be forgotten.
 -->
 <details class="d47-band" open>
 <summary>How to use it</summary>
@@ -350,7 +350,7 @@ engineer's work, the effect is too: both appear together or neither does.
 The tab reflects changes live. It is a view of `data/checklist.json`, and that file is re-read
 while Directive 47 is running, so a line edited in a text editor appears a moment later with no
 restart. A line the file gets wrong is **reported rather than silently dropped** — a checklist that
-quietly loses a line is worse than one that refuses it out loud.
+silently loses a line is worse than one that refuses it out loud.
 
 **The file says `universal` where everything else says `custom`, and that is deliberate.** The
 group a Commander sees, says and reads in the tool schema is **custom** — it is the list they wrote
@@ -403,7 +403,7 @@ surface for an organisational convenience.
 
 A plan is a list of **intents**, not a target loadout. A Krait has around twenty slots and a
 conversation about a build produces opinions about six — a target loadout would mean inventing the
-other fourteen and then reporting "6 of 20" where the honest number is "6 of 9 things you asked
+other fourteen and then reporting "6 of 20" where the accurate number is "6 of 9 things you asked
 for".
 
 Leaving something out means **any**, not unknown. "Grade 5 dirty drives and I don't care which

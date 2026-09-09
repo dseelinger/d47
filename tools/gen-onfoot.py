@@ -51,7 +51,7 @@ to guess, because 786 blueprints is not a table anybody can author.
 rather than game data — the same category as the `Ballistic Data` alias in `gen-engineers.py`.
 It names the modification **family**: three of them exist once per weapon manufacturer, and the
 recipe table spells those "Greater range (Takada laser)". The journal has one symbol for all
-three, so the family is what a symbol can honestly resolve to and the manufacturer comes from
+three, so the family is what a symbol can reliably resolve to and the manufacturer comes from
 the weapon the mod is fitted to.
 Every row marked `corpus` was observed in a journal. Every row marked `derived` follows
 Frontier's own naming convention and has **not** been seen in a journal, so it is emitted with
@@ -98,7 +98,7 @@ EXPECTED_TOOLS = 5
 NPC = "suitai"
 
 # Grade 1 purchase prices, read off BuySuit / BuyWeapon in the journal corpus. Blank is the
-# honest answer for anything not bought there; see the module docstring.
+# accurate answer for anything not bought there; see the module docstring.
 PRICES = {
     "flightsuit": 0,
     "tacticalsuit": 150000,

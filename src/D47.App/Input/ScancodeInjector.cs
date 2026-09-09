@@ -86,7 +86,7 @@ public sealed class ScancodeInjector(
 
         // A caller with several sends and evidence of its own hands its trace in; everything else — the
         // launch walk, a Commander's macro, an autonomous honk — is traced one sequence at a time with no
-        // code of its own, which is the whole point of hanging this here rather than on the plot (#365).
+        // code of its own, which is the reason for hanging this here rather than on the plot (#365).
         var own = trace is null ? observer?.Open(IInputStepObserver.Anonymous) : null;
 
         try

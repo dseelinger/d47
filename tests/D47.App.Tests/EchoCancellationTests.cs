@@ -434,7 +434,7 @@ public class EchoCancellationTests
         Assert.False(canceller.IsActive);
         Assert.Contains("the gate fell over", canceller.Unavailable);
 
-        // Still passing capture through, untouched, which is the whole point of giving up rather than
+        // Still passing capture through, untouched, which is the reason for giving up rather than
         // throwing into the capture thread.
         canceller.Write(new float[frame]);
 

@@ -170,7 +170,7 @@ public class AnAnswerOffersTheClipboardTests
             Task.FromResult(new BodySearchResult("Sol", 0, []));
 
         // Neither search under test calls these, and answering them with nothing is what makes that visible
-        // rather than a stub quietly returning something plausible.
+        // rather than a stub silently returning something plausible.
         public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
             Task.FromResult<double?>(null);
 

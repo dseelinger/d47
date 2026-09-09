@@ -103,7 +103,7 @@ public class AnUnreadLoadoutFallsBackToTheRememberedOneTests
 
     /// <summary>
     /// The last resort: no <c>ShipID</c> has been named at all, and the ship the Commander last sat in
-    /// is the honest answer to "what is fitted on my ship".
+    /// is the accurate answer to "what is fitted on my ship".
     /// </summary>
     [Fact]
     public void TheShipLastSatInAnswersWhenNoIdHasBeenNamed()

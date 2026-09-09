@@ -208,7 +208,7 @@ public static class ShipCommands
             Label = "Let D47 separate and engage",
             Help = "Lets \"separate and engage\" go to full throttle and boost until the mass lock "
                    + "breaks, then jump. Bounded at four boosts and twenty seconds, and it says so "
-                   + "rather than stopping quietly. Needs key presses to be allowed as well.",
+                   + "rather than stopping silently. Needs key presses to be allowed as well.",
             Kind = SettingKind.Toggle,
             DefaultDisplay = "on",
             DocsAnchor = "separate",

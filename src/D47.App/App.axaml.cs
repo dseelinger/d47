@@ -52,7 +52,7 @@ public partial class App(AppHost? host) : Application
                 host.Paths.Data,
 
                 // The same builder the window uses, which is the point: two of them would be two lists of
-                // what a settings surface needs wired to it, and the headset's would be the one that quietly
+                // what a settings surface needs wired to it, and the headset's would be the one that silently
                 // fell behind.
                 window is null ? null : window.BuildSettingsPage,
 

@@ -413,7 +413,7 @@ public sealed class SteamVrRuntime(
 
     private VrStart Bring()
     {
-        // Asked before VR_Init, and this is the whole point of asking: VR_Init *starts SteamVR* if it is not
+        // Asked before VR_Init, and this is the reason for asking: VR_Init *starts SteamVR* if it is not
         // already running.
         if (!SteamVrIsRunning())
         {

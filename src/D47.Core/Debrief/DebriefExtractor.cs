@@ -313,7 +313,7 @@ public static class DebriefExtractor
                 {
                     Kind = DirectionKind.Question,
 
-                    // No suggestion, and that is honest rather than lazy: the answer to this one is a
+                    // No suggestion, and that is deliberate rather than lazy: the answer to this one is a
                     // threshold on a settings row, and the debrief writes one file that is not that row.
                     Suggested = null,
                 },

@@ -65,7 +65,7 @@ public class CommunityGoalTests
     [Fact]
     public void AGoalPastItsExpiryIsNotLiveHoweverRecentlyItWasReported()
     {
-        // The load-bearing one.
+        // The case that matters.
         var board = Fold(Board(expiry: "2026-08-11T16:00:00Z", timestamp: "2026-08-15T10:00:00Z"));
 
         Assert.Single(board.Goals);

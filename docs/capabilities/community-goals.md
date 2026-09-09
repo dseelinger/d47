@@ -8,13 +8,13 @@ nav_order: 118
   The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
   comment on engineers.md — with one addition and one subtraction.
 
-  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
-  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
-  would silently become what the in-app panel draws on this page. The docs site styles the two
-  identically (main.scss extends one from the other); the app sees only the one below.
+  The class is d47-howto rather than d47-eli5, and the class decides behaviour, not just
+  appearance. HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under
+  that class would silently become what the in-app panel draws on this page. The docs site styles
+  the two identically (main.scss extends one from the other); the app sees only the one below.
 
-  And no rationale in here. Every "because" belongs in the band below. That separation is the
-  whole point of there being two, and it is the thing that will erode first.
+  And no rationale in here. Every "because" belongs in the band below. Keeping the two apart is
+  the reason there are two of them, and it is the first rule here that will be forgotten.
 -->
 <details class="d47-band" open>
 <summary>How to use it</summary>
@@ -302,7 +302,7 @@ What the goal's commodity has made or lost, **net of what the cargo cost** \u201
 48,200 and sold at 51,000 shows the 2,800 and not the 51,000. The cost is Elite's own
 `AvgPricePaid` on each sale, which the game tracks across sessions and ships; when Elite writes
 zero \u2014 cargo that was never bought \u2014 it falls back to the average of your own `MarketBuy` events
-for the commodity, and failing that the sale is gross, which is the honest figure for a mined load.
+for the commodity, and failing that the sale is gross, which is the accurate figure for a mined load.
 
 Three stretches, all on the Community Goal page; only the first is spoken automatically, and the
 other two are answers to a question

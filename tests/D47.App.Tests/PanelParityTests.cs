@@ -44,7 +44,7 @@ public class PanelParityTests
     }
 
     /// <summary>
-    /// The load-bearing half of minimise-safety: the panel renders — text, fonts, layout, borders and
+    /// The essential half of minimise-safety: the panel renders — text, fonts, layout, borders and
     /// all — with nothing shown on the desktop.
     /// </summary>
     [AvaloniaFact]

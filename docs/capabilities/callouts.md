@@ -8,13 +8,13 @@ nav_order: 124
   The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
   comment on engineers.md — with one addition and one subtraction.
 
-  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
-  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
-  would silently become what the in-app panel draws on this page. The docs site styles the two
-  identically (main.scss extends one from the other); the app sees only the one below.
+  The class is d47-howto rather than d47-eli5, and the class decides behaviour, not just
+  appearance. HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under
+  that class would silently become what the in-app panel draws on this page. The docs site styles
+  the two identically (main.scss extends one from the other); the app sees only the one below.
 
-  And no rationale in here. Every "because" belongs in the band below. That separation is the
-  whole point of there being two, and it is the thing that will erode first.
+  And no rationale in here. Every "because" belongs in the band below. Keeping the two apart is
+  the reason there are two of them, and it is the first rule here that will be forgotten.
 -->
 <details class="d47-band" open>
 <summary>How to use it</summary>
@@ -379,7 +379,7 @@ verdict is written down as it is announced:
 ```
 
 A computed tick going backwards is information rather than a glitch to hide. You would otherwise
-find out by reading a list that had quietly changed under you.
+find out by reading a list that had silently changed under you.
 
 **The last unit a plan needed.** Netted across every live plan, because storage caps are shared and
 a shopping trip is a trip for everything:
@@ -522,7 +522,7 @@ Stratum Paleas, 2 of 3. 556 metres from the last one. 1 to go.
 Stratum Paleas analysed. That run is complete.
 ```
 
-The distance is the whole point — you can see the genus and you can count to three, but nobody can
+The distance is what the callout is for — you can see the genus and you can count to three, but nobody can
 judge four hundred metres across a ridge, and getting it wrong wastes the sample. Directive 47 says
 how far you moved and **never whether it was far enough**: that figure is in the species' Codex entry
 in-game, and no table of it ships here. See [Exobiology](exobiology.md) for why.

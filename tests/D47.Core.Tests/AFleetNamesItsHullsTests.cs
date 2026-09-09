@@ -14,7 +14,7 @@ public class AFleetNamesItsHullsTests
         new(12, type, name, "Shinrarta Dezhra");
 
     /// <summary>
-    /// The three hulls with no measured row, which is the whole point: these are named from their
+    /// The three hulls with no measured row, which is what the case is for: these are named from their
     /// armour, so a caller that skips the ladder shows the symbol and one that climbs it does not.
     /// </summary>
     [Theory]

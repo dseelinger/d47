@@ -35,7 +35,7 @@
 
     {%- comment -%}
       Sorted once and reused. A page with no nav_order is not in the nav at all, which is the
-      one thing the gate test refuses to let happen quietly: the documentation gate asserts a
+      one thing the gate test refuses to let happen silently: the documentation gate asserts a
       page *exists* and asserted nothing about it being reachable, which is how a page could
       pass CI and be invisible.
     {%- endcomment -%}

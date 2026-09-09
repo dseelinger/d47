@@ -188,7 +188,7 @@ public class TypingMaleDoesNotListEveryWomanTests
     }
 
     /// <summary>
-    /// Choosing one narrows the list without anything being typed, which is the whole point: the
+    /// Choosing one narrows the list without anything being typed, which is what it is for: the
     /// Commander no longer has to guess a word that happens to appear in a label.
     /// </summary>
     [AvaloniaTheory]

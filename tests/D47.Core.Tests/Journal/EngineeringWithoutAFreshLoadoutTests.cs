@@ -156,7 +156,7 @@ public class EngineeringWithoutAFreshLoadoutTests
     [Fact]
     public void TheChecklistItemIsDoneAtTheConsoleRatherThanAtTheNextBoarding()
     {
-        // The whole point, end to end.
+        // The behaviour this file is named for, end to end.
         var store = new GameStateStore();
 
         foreach (var json in new[]

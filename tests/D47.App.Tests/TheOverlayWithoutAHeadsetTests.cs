@@ -316,8 +316,8 @@ public class TheOverlayWithoutAHeadsetTests
         Assert.False(overlay.IsPlacing);
         Assert.False(overlay.IsVisible);
 
-        // The setting is the other way in, and it is the one the issue's smaller fix is honest about
-        // declining: touching it re-reads the state and still finds a window that is gone.
+        // The setting is the other way in, and it is the one the issue's smaller fix explicitly
+        // declines: touching it re-reads the state and still finds a window that is gone.
         _settings!.Apply(InterfaceCapability.OverlayKey, "False", SettingsCaller.Panel);
         _settings!.Apply(InterfaceCapability.OverlayKey, "True", SettingsCaller.Panel);
         Dispatcher.UIThread.RunJobs();

@@ -230,7 +230,7 @@ public class OneUtteranceIsOneRowTests : IDisposable
         Assert.Equal("base.en", row.Model);
         Assert.Equal(TimeSpan.FromMilliseconds(340), row.Elapsed);
 
-        // Read back as audio rather than as a byte count: the whole point of retaining it is that somebody
+        // Read back as audio rather than as a byte count: the reason for retaining it is that somebody
         // can play it, and a header this writer got wrong would pass a length check.
         var clip = WavReader.Read(Path.Combine(_folder, row.Clip));
 

@@ -112,8 +112,8 @@ public class TheTickingTabsDoNotAskForARedrawTests
                 "a clock whose digits did not change does not ask to be redrawn");
         }
 
-        // And the other half of the bargain, because a fix that buys stillness by dropping real changes is a
-        // clock that stopped.
+        // And the other half of the requirement, because a fix that gets stillness by dropping real changes
+        // is a clock that stopped.
         clock.Now = clock.Now.AddMinutes(2);
 
         Assert.True(panel.TickClocks(), "a minute that actually ticked is drawn");

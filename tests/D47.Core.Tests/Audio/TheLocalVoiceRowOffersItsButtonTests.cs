@@ -8,7 +8,7 @@ namespace D47.Core.Tests.Audio;
 public class TheLocalVoiceRowOffersItsButtonTests
 {
     /// <summary>
-    /// The App's shape, and the whole point of the test: the thing the delegates close over does not
+    /// The App's shape, and the reason for the test: the thing the delegates close over does not
     /// exist yet when the rows are built.
     /// </summary>
     private static (SpeechCapability.SpeechSurface Surface, Action Arrive, List<string> Presses) Deferred()

@@ -1558,8 +1558,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 HorizontalAlignment = row.PageTop ? HorizontalAlignment.Right : HorizontalAlignment.Stretch,
             };
 
-            // Load-bearing rather than decorative: RowWidthTests asserts the caption keeps the larger share
-            // of every compact row, and it needs a way to say which grids those are.
+            // Not a styling hook: RowWidthTests asserts the caption keeps the larger share of every
+            // compact row, and it needs a way to say which grids those are.
             if (!row.PageTop)
             {
                 grid.Classes.Add(CompactRowClass);

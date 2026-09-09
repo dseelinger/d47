@@ -2,8 +2,8 @@
 // that could set a settings key or name a file to write would be an own goal of a quite special
 // kind (docs/plans/phase-30-prove-the-model-behaves.md).
 //
-// This repository is public and these are working prompt-injection attempts. That is worth one
-// honest sentence rather than a silence: they are generic, published attacks that any attacker
+// This repository is public and these are working prompt-injection attempts. That is worth stating
+// plainly rather than leaving unsaid: they are generic, published attacks that any attacker
 // already has, and a corpus kept private would be hidden from the only person who needs to read
 // it — the Commander deciding whether to point d47 at a model nobody has tested.
 //

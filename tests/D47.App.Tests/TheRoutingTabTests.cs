@@ -146,7 +146,7 @@ public class TheRoutingTabTests
 
     /// <summary>
     /// Being somewhere the route does not mention is said out loud, because the alternative is a
-    /// jumps-remaining figure that quietly means something else.
+    /// jumps-remaining figure that silently means something else.
     /// </summary>
     [AvaloniaFact]
     public void BeingOffTheRouteIsStatedRatherThanImplied()

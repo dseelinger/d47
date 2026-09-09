@@ -8,13 +8,13 @@ nav_order: 105
   The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
   comment on engineers.md — with one addition and one subtraction.
 
-  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
-  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
-  would silently become what the in-app panel draws on this page. The docs site styles the two
-  identically (main.scss extends one from the other); the app sees only the one below.
+  The class is d47-howto rather than d47-eli5, and the class decides behaviour, not just
+  appearance. HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under
+  that class would silently become what the in-app panel draws on this page. The docs site styles
+  the two identically (main.scss extends one from the other); the app sees only the one below.
 
-  And no rationale in here. Every "because" belongs in the band below. That separation is the
-  whole point of there being two, and it is the thing that will erode first.
+  And no rationale in here. Every "because" belongs in the band below. Keeping the two apart is
+  the reason there are two of them, and it is the first rule here that will be forgotten.
 -->
 <details class="d47-band" open>
 <summary>How to use it</summary>
@@ -241,7 +241,7 @@ The service has no mining route planner.
 
 What it does have is the ring index, and that is `find_body` on the [galaxy search](galaxy.md) —
 a hotspot material, how many overlap, the ring's composition and how rich its reserves are. Naming
-a mining-route tool here that quietly ran a body search would be a worse answer than not having
+a mining-route tool here that silently ran a body search would be a worse answer than not having
 one.
 
 ### Tools
@@ -336,7 +336,7 @@ for is a better answer, not a shortfall, so it is taken.
 **It does not model market saturation.** Selling far more of a commodity than a station has demand
 for drops what the rest of it fetches, and by how much is *not known*. A constant guessed here
 would make every profit in every plan wrong in a way that reads exactly like the feature working,
-so no leg ever sells more than a station asked for, and the plan says so every time. The honest
+so no leg ever sells more than a station asked for, and the plan says so every time. An accurate
 version of that figure is derivable from your own `MarketSell` events, and that is a different
 piece of work.
 

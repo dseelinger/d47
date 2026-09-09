@@ -13,7 +13,7 @@ public class AHullWithNoShipRowKeepsItsSlotsTests
     public void TheGapThisGuardsIsRealRatherThanHypothetical()
     {
         // If this ever starts failing, the table has caught up and the fallback below is no longer
-        // load-bearing for this hull — which is a good day, not a broken test.
+        // needed for this hull — which means the table improved, not that the test broke.
         Assert.Null(EliteSpecifications.Ship(NoShipRow));
     }
 

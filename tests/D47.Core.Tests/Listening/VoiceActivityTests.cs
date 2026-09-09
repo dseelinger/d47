@@ -254,7 +254,7 @@ public class VoiceActivityTests
 
         Feed(gate, Room(TimeSpan.FromSeconds(2)), ref now);
 
-        // The whole point of Phase 13's first item.
+        // The reason for Phase 13's first item.
         gate.FarEndActive = true;
         Feed(gate, Speech(TimeSpan.FromSeconds(1)), ref now);
 

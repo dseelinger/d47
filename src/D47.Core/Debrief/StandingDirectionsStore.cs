@@ -213,7 +213,7 @@ public sealed class StandingDirectionsStore
 
     private void Save()
     {
-        // Again, and this is the check that earns its keep.
+        // Again, and this is the check that matters.
         DebriefWriteFence.Enforce(_path);
 
         Document document;

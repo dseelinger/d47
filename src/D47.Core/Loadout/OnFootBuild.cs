@@ -35,8 +35,8 @@ public sealed record KitPlan(string Slot, int? Grade = null, string? Modificatio
 /// <summary>One suit's or one weapon's build (Phase 27, "The same page, on foot").</summary>
 /// <param name="Id">
 /// This build's own identity, stable from creation and independent of <see cref="ItemId"/> — the same
-/// load-bearing independence a ship build has, and for the same reason: buying the suit binds a real id
-/// to a plan that already exists.
+/// independence a ship build has, and for the same reason: buying the suit binds a real id to a plan
+/// that already exists.
 /// </param>
 /// <param name="Equipment">
 /// The suit or weapon as a Commander names it — <c>Maverick Suit</c>, <c>Karma AR-50</c>.

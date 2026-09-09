@@ -4,8 +4,8 @@ using System.Text;
 namespace D47.Core.Checklists;
 
 /// <summary>
-/// How an item comes by the key that is its identity (Phase 17, "item identity is the load-bearing
-/// decision").
+/// How an item comes by the key that is its identity (Phase 17, where item identity is the decision
+/// the rest of the checklist depends on).
 /// </summary>
 public static class ChecklistKeys
 {

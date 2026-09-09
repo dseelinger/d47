@@ -266,7 +266,7 @@ public sealed class CartesiaTtsProvider : ITtsProvider, IDisposable
 
     /// <summary>
     /// What the service said, classified into the answers a Commander can act on — the distinction
-    /// docs/spikes/elevenlabs-voice-sources.md §3 establishes as load-bearing, since "refused the key"
+    /// docs/spikes/elevenlabs-voice-sources.md §3 requires, since "refused the key"
     /// and "could not be reached" have different remedies.
     /// </summary>
     private async Task<TtsException> DescribeAsync(

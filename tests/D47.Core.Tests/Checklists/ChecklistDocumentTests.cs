@@ -38,7 +38,7 @@ public class ChecklistDocumentTests
         Assert.False(change.Changed);
         Assert.Contains("worked out from your journal", change.Report, StringComparison.Ordinal);
 
-        // Not "quietly does nothing": the reason is the point, because the next journal read would either
+        // Not "silently does nothing": the reason is the point, because the next journal read would either
         // undo the tick or leave it standing and lying.
         Assert.Contains("leave it standing and wrong", change.Report, StringComparison.Ordinal);
     }

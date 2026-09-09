@@ -8,13 +8,13 @@ nav_order: 113
   The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
   comment on engineers.md — with one addition and one subtraction.
 
-  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
-  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
-  would silently become what the in-app panel draws on this page. The docs site styles the two
-  identically (main.scss extends one from the other); the app sees only the one below.
+  The class is d47-howto rather than d47-eli5, and the class decides behaviour, not just
+  appearance. HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under
+  that class would silently become what the in-app panel draws on this page. The docs site styles
+  the two identically (main.scss extends one from the other); the app sees only the one below.
 
-  And no rationale in here. Every "because" belongs in the band below. That separation is the
-  whole point of there being two, and it is the thing that will erode first.
+  And no rationale in here. Every "because" belongs in the band below. Keeping the two apart is
+  the reason there are two of them, and it is the first rule here that will be forgotten.
 -->
 <details class="d47-band" open>
 <summary>How to use it</summary>
@@ -250,7 +250,7 @@ it was tried against the corpus and reconciled against the game's own total:
 Cargo reaches a carrier by routes the journal never itemises: its own commodity market, another
 Commander's delivery, anything loaded before the file d47 is reading. So an itemised carrier
 manifest would be wrong twice as often as right, and it would look authoritative every time. The
-tonnage is the honest half.
+tonnage is the half d47 can state accurately.
 
 ### Your deliveries, apart from everybody else's
 
@@ -319,7 +319,7 @@ And note the twenty-three. A crowd-sourced index holds what somebody has scanned
 system nobody has honked comes back as a star with no planets — **a fifth of the neighbourhood in
 that example**. Those are not small systems and they are not empty ones; they are systems with
 nothing known about them, which on a frontier is often exactly where you would go and look. They are
-counted rather than recommended, and counted rather than quietly dropped.
+counted rather than recommended, and counted rather than silently dropped.
 
 #### What this cannot be: telling you a system is free
 

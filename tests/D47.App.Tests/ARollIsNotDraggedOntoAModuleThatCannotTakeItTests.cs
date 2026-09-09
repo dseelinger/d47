@@ -154,7 +154,7 @@ public class ARollIsNotDraggedOntoAModuleThatCannotTakeItTests
     [Fact]
     public void APlanThatDeclinedTheVariantStillReadsAsTheGroup()
     {
-        // The honest remainder: "a hull reinforcement, I do not mind which" has no class to print, and
+        // The remaining case: "a hull reinforcement, I do not mind which" has no class to print, and
         // inventing one would be inventing the plan.
         var (mode, ships) = InTheAnaconda();
 

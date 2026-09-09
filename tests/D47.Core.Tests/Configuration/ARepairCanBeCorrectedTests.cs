@@ -16,8 +16,8 @@ public class ARepairCanBeCorrectedTests
     [Fact]
     public void AFileTheBrokenRepairStampedIsStillBehindThisBuild()
     {
-        // The shape of a file written by v0.6.2: the old flag set, and no revision — which is the whole point
-        // of not reading that flag any more.
+        // The shape of a file written by v0.6.2: the old flag set, and no revision — which is the reason for
+        // not reading that flag any more.
         var stamped = new PersonaSettings { VoicesNamedChecked = true };
 
         Assert.True(stamped.VoicesRepaired < VoicePairing.RepairRevision);

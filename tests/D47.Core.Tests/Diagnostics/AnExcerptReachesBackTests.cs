@@ -26,7 +26,7 @@ public class AnExcerptReachesBackTests : IDisposable
     public void Dispose() => Directory.Delete(_root, recursive: true);
 
     /// <summary>
-    /// The whole point: an excerpt now spans the files a window touches, rather than the one Elite
+    /// The change this file is named for: an excerpt now spans the files a window touches, rather than the one Elite
     /// happens to have open.
     /// </summary>
     [Fact]

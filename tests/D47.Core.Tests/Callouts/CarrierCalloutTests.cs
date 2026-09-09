@@ -118,7 +118,7 @@ public class CarrierCalloutTests
     [Fact]
     public void ACommanderWithNoCarrierHearsNothing()
     {
-        // It never guesses. "No carrier seen" is the honest state and produces silence rather than a captain
+        // It never guesses. "No carrier seen" is the accurate state and produces silence rather than a captain
         // talking about a ship that does not exist.
         var callout = new CarrierCallout();
         var state = new CommanderGameState(new CommanderIdentity("F1", "Fixture"));

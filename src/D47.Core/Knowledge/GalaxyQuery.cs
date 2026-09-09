@@ -31,7 +31,7 @@ public sealed record GalaxyFilter(string Name, GalaxyFilterKind Kind, IReadOnlyL
     public static GalaxyFilter Range(string name) => new(name, GalaxyFilterKind.Range, []);
 }
 
-/// <summary>The filter vocabulary, and the local validation that is the whole point of it.</summary>
+/// <summary>The filter vocabulary, and the local validation that is the reason for it.</summary>
 public static class GalaxyFilters
 {
     /// <summary>Every filter d47 offers.</summary>

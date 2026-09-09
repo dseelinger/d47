@@ -125,7 +125,7 @@ public class EngineeringCapabilityTests
     {
         var answer = await Ask(Flying(), "get_blueprint", ("blueprint", "Increased FSD Range"));
 
-        // The whole point of folding rank in.
+        // The reason for folding rank in.
         Assert.Contains("You are grade 5 with Felicity Farseer", answer, StringComparison.Ordinal);
         Assert.Contains("a full grade 5 is 5 crafts", answer, StringComparison.Ordinal);
         Assert.Contains("5 × Arsenic", answer, StringComparison.Ordinal);
@@ -236,7 +236,7 @@ public class EngineeringCapabilityTests
 
         Assert.Contains("FSD LongRange at grade 5, crafted by Felicity Farseer.", answer, StringComparison.Ordinal);
         Assert.Contains("The grade is finished", answer, StringComparison.Ordinal);
-        Assert.Contains("0.85 is as far as the game insists", answer, StringComparison.Ordinal);
+        Assert.Contains("0.85 is as far as the game requires", answer, StringComparison.Ordinal);
 
         Assert.Contains("Experimental effect: Mass Manager.", answer, StringComparison.Ordinal);
     }

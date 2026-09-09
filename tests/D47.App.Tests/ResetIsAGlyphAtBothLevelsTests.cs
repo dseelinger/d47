@@ -25,7 +25,7 @@ public sealed class ResetIsAGlyphAtBothLevelsTests
     private static IReadOnlyList<Button> ResetButtons(SettingsHost host)
     {
         // Found in the tree rather than by FindControl: the bulk glyphs are built in code now (2026-09-01),
-        // so they are not in the axaml's namescope and FindControl answers null — which would quietly turn
+        // so they are not in the axaml's namescope and FindControl answers null — which would silently turn
         // this exclusion off and count them as resets.
         var bulk = host.View.GetVisualDescendants()
             .OfType<Control>()

@@ -151,7 +151,7 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
                 if (useGpu && !UsingGpu)
                 {
                     // The load that succeeds on the wrong device: no Vulkan-capable driver, so the loader
-                    // fell through to the CPU library and whisper loaded on it happily.
+                    // fell through to the CPU library and whisper loaded on it without error.
                     _logger.LogWarning(
                         "The GPU was asked for, but the native runtime that loaded is {Library} — "
                         + "inference is on the CPU.",

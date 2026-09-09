@@ -8,13 +8,13 @@ nav_order: 112
   The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
   comment on engineers.md — with one addition and one subtraction.
 
-  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
-  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
-  would silently become what the in-app panel draws on this page. The docs site styles the two
-  identically (main.scss extends one from the other); the app sees only the one below.
+  The class is d47-howto rather than d47-eli5, and the class decides behaviour, not just
+  appearance. HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under
+  that class would silently become what the in-app panel draws on this page. The docs site styles
+  the two identically (main.scss extends one from the other); the app sees only the one below.
 
-  And no rationale in here. Every "because" belongs in the band below. That separation is the
-  whole point of there being two, and it is the thing that will erode first.
+  And no rationale in here. Every "because" belongs in the band below. Keeping the two apart is
+  the reason there are two of them, and it is the first rule here that will be forgotten.
 -->
 <details class="d47-band" open>
 <summary>How to use it</summary>
@@ -119,7 +119,7 @@ nav_order: 112
  <text x="440" y="190" text-anchor="middle" font-size="16" fill="var(--text)">A figure you cannot trace is a figure you cannot act on.</text>
  <text x="440" y="220" text-anchor="middle" font-size="15" fill="var(--text-muted)">The trade is a second line beside the shortfall, never instead of it — the headline stays the raw number.</text>
 </svg>
-<p class="body">Whether hulls and suits you have not bought yet are counted is a switch on the page, not a decision taken once on your behalf. Counting them is honest about the whole ambition; excluding them answers what can be finished tonight. Both are real questions, and which one you are asking changes through the evening.</p>
+<p class="body">Whether hulls and suits you have not bought yet are counted is a switch on the page, not a decision taken once on your behalf. Counting them accounts for the whole ambition; excluding them answers what can be finished tonight. Both are real questions, and which one you are asking changes through the evening.</p>
 </section>
 </div></div>
 </details>
@@ -189,13 +189,13 @@ were cross-line. That last multiplier is why the line matters: the material trad
 commonest trade there is at a sixth of what it costs.
 
 So a trade appears as a second line beside the shortfall and never instead of it. The headline stays
-the honest raw number, and only a trade you can actually make out of a genuine surplus is offered —
+the raw number, and only a trade you can actually make out of a genuine surplus is offered —
 one that leaves you short of what you traded away has moved the problem rather than solved it.
 
 ### Counting what you do not own yet is a filter
 
 Whether hulls and suits you have not bought are included is a switch on the page, not a decision
-taken once on your behalf. Counting them is honest about the whole ambition; excluding them answers
+taken once on your behalf. Counting them accounts for the whole ambition; excluding them answers
 what can be finished now. **Both are real questions**, and which one you are asking changes through
 the evening.
 
@@ -247,4 +247,4 @@ A plan with no grade named has no total: which grade decides the multiplication,
 said. A grade your rank cannot reach with the named engineer is a gate rather than a shortfall, and
 it is stated first — listing materials under a gate nobody can pass is listing work nobody can
 start. And a blueprint no shipped table covers is **kept and marked, never refused**: a checklist
-line presses nothing, so the honest move is to carry it and say what is not known about it.
+line presses nothing, so the right move is to carry it and say what is not known about it.

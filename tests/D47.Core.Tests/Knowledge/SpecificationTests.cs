@@ -257,7 +257,7 @@ public class SpecificationTests
     public void NoNameQualifiesItselfWithAWordItAlreadySays()
     {
         // The general form of the above, swept over the whole shipped table, so the next time a source
-        // renames something it cannot quietly bring the doubled word back.
+        // renames something it cannot silently bring the doubled word back.
         foreach (var module in EliteSpecifications.Modules)
         {
             var open = module.Name.IndexOf(" (", StringComparison.Ordinal);

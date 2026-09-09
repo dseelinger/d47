@@ -64,7 +64,7 @@ public static class PersonaCapability
         Display = new CapabilityDisplay { PanelTitle = "Persona", Order = 12 },
         Tools =
         [
-            // First, and that is load-bearing rather than tidy: the keyword router answers with a
+            // First, and the order matters rather than being cosmetic: the keyword router answers with a
             // capability's first tool that needs no arguments, and every phrase this capability declares —
             // "who are you", "which core", "who am I talking to" — is a question about identity with a
             // one-sentence answer.

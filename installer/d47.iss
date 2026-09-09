@@ -30,7 +30,7 @@ AppSupportURL=https://github.com/dseelinger/d47
 AppUpdatesURL=https://github.com/dseelinger/d47/releases
 VersionInfoVersion={#Version}
 
-; The whole point: lowest asks for no elevation and cannot silently escalate.
+; The reason: lowest asks for no elevation and cannot silently escalate.
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=
 

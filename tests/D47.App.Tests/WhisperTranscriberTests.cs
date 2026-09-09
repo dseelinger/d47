@@ -24,7 +24,7 @@ public class WhisperTranscriberTests
             Assert.False(transcriber.IsReady);
             Assert.NotNull(transcriber.Unavailable);
 
-            // The whole point of the buffer: the failure's log entry carries what the native side was saying
+            // The reason for the buffer: the failure's log entry carries what the native side was saying
             // when it happened, at a level the log file actually keeps.
             Assert.Contains(
                 log.Errors,

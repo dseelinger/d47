@@ -66,7 +66,7 @@ public class TheAmbientIntervalMovedToSecondsTests
         Assert.Equal(1800, loaded.Callouts.AmbientSeconds);
         Assert.Equal(600, loaded.Callouts.AmbientMaxSeconds);
 
-        // Which is the whole point: a floor above the ceiling's default reads as the minimum, so that file
+        // Which is why it matters: a floor above the ceiling's default reads as the minimum, so that file
         // goes on ticking at exactly the cadence it was already ticking at.
         Assert.True(loaded.Callouts.AmbientSeconds > loaded.Callouts.AmbientMaxSeconds);
     }

@@ -18,7 +18,7 @@ public class OfferedButNotCostedTests
         // Rapid Fire, and only Rapid Fire.
         Assert.Equal(["Weapon_RapidFire"], BlueprintCatalogue.OfferedTo(type));
 
-        // And d47 holds no recipe for that one, which is the honest gap this file is named for: EDEngineer
+        // And d47 holds no recipe for that one, which is the gap this file is named for: EDEngineer
         // carries no Guardian weapon recipes at all.
         Assert.Empty(BlueprintCatalogue.For(EliteSpecifications.Module("hpt_guardian_gausscannon_fixed_medium"))!);
     }

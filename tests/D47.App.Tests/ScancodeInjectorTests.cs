@@ -6,7 +6,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary> The injector's three load-bearing rules driven in dry-run mode so the real composition path runs
+/// <summary> The injector's three essential rules driven in dry-run mode so the real composition path runs
 /// and nothing reaches the system. </summary>
 public class ScancodeInjectorTests
 {

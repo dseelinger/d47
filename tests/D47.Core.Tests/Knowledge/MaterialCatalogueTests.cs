@@ -57,7 +57,7 @@ public class MaterialCatalogueTests
             var ladder = MaterialCatalogue.InLine(line);
             var grades = ladder.Select(entry => entry.Grade).ToArray();
 
-            // The whole point of a line: one material per grade.
+            // The reason for a line: one material per grade.
             Assert.Equal(grades.Length, grades.Distinct().Count());
             Assert.All(ladder, entry => Assert.Equal(MaterialLedger.Material, entry.Ledger));
         }

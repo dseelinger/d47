@@ -402,7 +402,7 @@ public class Phase15WarningTests
         var clips = Enum.GetValues<AlertCue>().Select(library.For).ToList();
 
         // One per member, and none of them the same file twice — a warning whose cue is another warning's cue
-        // is a warning the Commander cannot tell apart, which is the whole point of there being four.
+        // is a warning the Commander cannot tell apart, which is the reason for there being four.
         Assert.Equal(Enum.GetValues<AlertCue>().Length, clips.Distinct().Count());
 
         foreach (var clip in clips)

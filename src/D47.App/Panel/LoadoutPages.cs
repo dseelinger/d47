@@ -2041,7 +2041,7 @@ public sealed class GapPage : UserControl
         var report = _gap.Of(_includeIntended);
 
         // The filter, and it says which question it is answering rather than merely which state it is in:
-        // counting hulls nobody owns is honest about the whole ambition, and excluding them answers what can
+        // counting hulls nobody owns accounts for the whole ambition, and excluding them answers what can
         // be finished now.
         _filter.Content = _includeIntended
             ? "Counting what you do not own yet — show only what you can finish now"
@@ -2137,7 +2137,7 @@ public sealed class GapPage : UserControl
                 ThemeManager.DangerKey));
         }
 
-        // Trade second and never instead: the headline stays the honest raw shortfall.
+        // Trade second and never instead: the headline stays the raw shortfall.
         if (line.Trade is { } trade)
         {
             _body.Children.Add(LoadoutPages.Muted(trade.Describe()));

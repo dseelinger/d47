@@ -355,7 +355,7 @@ public static class ConversationCapability
                 DefaultDisplay = "(gauged per question)",
                 DocsAnchor = "effort-floor",
 
-                // Both, and the pair is load-bearing.
+                // Both, and both are needed.
                 Choices = ThinkingEffortRange.Names,
                 ChoiceSource = s => s.Llm.EffortCeiling is { } ceiling
                     ? ThinkingEffortRange.NamesUpTo(ceiling)

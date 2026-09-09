@@ -357,7 +357,7 @@ public static class EngineerAccess
                 held,
 
                 // Invited, unlocked, or nothing published: three different reasons for there being no
-                // open-ended requirement left, and all three are honestly none.
+                // open-ended requirement left, and all three genuinely are none.
                 standing is { IsInvited: true } || held > 0 ? null : stop.Meeting,
                 held > 0 ? null : stop.UnlockCost));
 

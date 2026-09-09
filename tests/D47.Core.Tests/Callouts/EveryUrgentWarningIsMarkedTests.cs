@@ -111,7 +111,7 @@ public class EveryUrgentWarningIsMarkedTests
     }
 
     /// <summary>
-    /// And the routine ones are named, so this cannot pass by every line quietly becoming urgent.
+    /// And the routine ones are named, so this cannot pass by every line silently becoming urgent.
     /// </summary>
     [Fact]
     public void AFullHoldAndTheRebuyScreenSoundNoAlarm()

@@ -352,7 +352,7 @@ public class AuditionDoesNotCommitTests
     private static void Pump(Func<bool> until, string complaint)
     {
         // Wall-clock, not a count of turns. A turn is microseconds on an idle machine and tens of
-        // milliseconds on a saturated one, so a budget in turns is a budget that quietly becomes minutes
+        // milliseconds on a saturated one, so a budget in turns is a budget that silently becomes minutes
         // exactly when something has gone wrong — measured at eight and a half of them with the pool pinned.
         var watch = System.Diagnostics.Stopwatch.StartNew();
 

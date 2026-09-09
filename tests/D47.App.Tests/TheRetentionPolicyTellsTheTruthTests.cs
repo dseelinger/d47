@@ -64,7 +64,7 @@ public class TheRetentionPolicyTellsTheTruthTests
     }
 
     /// <summary>The one rule that lives outside the .NET build: nothing else in <c>dotnet test</c> opens the
-    /// Worker's runbook, so an expiry changed there would leave this page quietly wrong.</summary>
+    /// Worker's runbook, so an expiry changed there would leave this page silently wrong.</summary>
     [Fact]
     public void ThePageStatesTheRuleThatLivesOutsideTheDotNetBuild()
     {

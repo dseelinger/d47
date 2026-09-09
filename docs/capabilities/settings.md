@@ -8,13 +8,13 @@ nav_order: 143
   The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
   comment on engineers.md — with one addition and one subtraction.
 
-  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
-  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
-  would silently become what the in-app panel draws on this page. The docs site styles the two
-  identically (main.scss extends one from the other); the app sees only the one below.
+  The class is d47-howto rather than d47-eli5, and the class decides behaviour, not just
+  appearance. HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under
+  that class would silently become what the in-app panel draws on this page. The docs site styles
+  the two identically (main.scss extends one from the other); the app sees only the one below.
 
-  And no rationale in here. Every "because" belongs in the band below. That separation is the
-  whole point of there being two, and it is the thing that will erode first.
+  And no rationale in here. Every "because" belongs in the band below. Keeping the two apart is
+  the reason there are two of them, and it is the first rule here that will be forgotten.
 -->
 <details class="d47-band" open>
 <summary>How to use it</summary>
@@ -102,7 +102,7 @@ nav_order: 143
  <rect x="424" y="24" width="436" height="70" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="642" y="52" text-anchor="middle" font-size="16" fill="var(--text)">“'chatty' is not a valid Theme. Expected one of:</text>
  <text x="642" y="78" text-anchor="middle" font-size="16" fill="var(--text)">elite, dark, light, guardian, elite-palette.”</text>
- <text x="440" y="146" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">Never quietly ignored, and never guessed at.</text>
+ <text x="440" y="146" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">Never silently ignored, and never guessed at.</text>
  <text x="440" y="178" text-anchor="middle" font-size="16" fill="var(--text-muted)">TRUE, on and True are one answer rather than three. Clearing a row puts back its default —</text>
  <text x="440" y="204" text-anchor="middle" font-size="16" fill="var(--text-muted)">which is the greyed-out value the box has been showing you all along.</text>
 </svg>
@@ -138,7 +138,7 @@ in: what you can change by talking to it.
 > "switch to the guardian theme"
 > "turn journal logging up to debug"
 
-Say a value it does not offer and it tells you the ones it does, rather than quietly ignoring
+Say a value it does not offer and it tells you the ones it does, rather than silently ignoring
 you:
 
 ```text
@@ -161,7 +161,7 @@ language model.
 | Check for updates at startup | It decides whether anything leaves at all |
 | Every hotkey | Rebinding one hands out a way in |
 
-The reason is worth a sentence, because it is the whole point. Directive 47 reads text nobody
+The reason is worth a sentence, because everything here follows from it. Directive 47 reads text nobody
 here wrote: journal entries carrying another Commander's chosen ship name, in-game messages from
 anyone in range, and later web results. **Anything the model can be asked to do, a hostile
 message can try to make it do.** A guard the model can switch off is not a guard, so the rows

@@ -397,7 +397,7 @@ hr {
   justify-content: center;
 }
 
-/* Pictures scale with the band. Never a fixed pixel size: the whole point of the viewBox is
+/* Pictures scale with the band. Never a fixed pixel size: the reason for the viewBox is
    that one drawing serves a phone and a headset. */
 .d47-eli5 svg {
   display: block;
@@ -472,7 +472,7 @@ hr {
    it is; the how-to band above it says how to use it, and is the one a Commander who arrived
    stuck actually wants.
 
-   The how-to band is a different class rather than a second .d47-eli5, and that is load-bearing:
+   The how-to band is a different class rather than a second .d47-eli5, and the class decides behaviour:
    HelpLibrary.Band takes the *first* "<div class=\"d47-eli5\">" in the file, so a second one
    under that class would silently become what the in-app panel draws. @extend gives it every
    rule the ELI5 band has — Sass rewrites the descendant selectors too — so the two are styled

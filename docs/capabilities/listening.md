@@ -8,13 +8,13 @@ nav_order: 123
   The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
   comment on engineers.md — with one addition and one subtraction.
 
-  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
-  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
-  would silently become what the in-app panel draws on this page. The docs site styles the two
-  identically (main.scss extends one from the other); the app sees only the one below.
+  The class is d47-howto rather than d47-eli5, and the class decides behaviour, not just
+  appearance. HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under
+  that class would silently become what the in-app panel draws on this page. The docs site styles
+  the two identically (main.scss extends one from the other); the app sees only the one below.
 
-  And no rationale in here. Every "because" belongs in the band below. That separation is the
-  whole point of there being two, and it is the thing that will erode first.
+  And no rationale in here. Every "because" belongs in the band below. Keeping the two apart is
+  the reason there are two of them, and it is the first rule here that will be forgotten.
 -->
 <details class="d47-band" open>
 <summary>How to use it</summary>
@@ -305,7 +305,7 @@ There used to be two rows for this. The stick half is [described below](#push-to
 is unchanged in every respect except that it is no longer a separate question.
 
 Clear the row and Directive 47 never opens the microphone — unless you have also put
-[the row below](#mode) into one of its hands-free settings, which is the whole point of those and
+[the row below](#mode) into one of its hands-free settings, which is the reason for those and
 the only case where an unbound key still leaves a live microphone.
 
 Clearing it was the old default, and it meant a voice companion that could not hear anything until
@@ -487,7 +487,7 @@ before Directive 47 was willing to call the sound speech.
 
 #### Names it has learned to hear {#corrections}
 
-Proper nouns are where speech recognition fails hardest and most quietly. A misheard system name
+Proper nouns are where speech recognition fails hardest and least visibly. A misheard system name
 does not come back as an error or as a low-confidence marker — it comes back as a plausible English
 word, and the answer is confidently about the wrong place. Directive 47 already biases the
 transcriber towards the names around you, but that list holds sixty and the galaxy holds four
@@ -504,7 +504,7 @@ sentence containing it. An alias against the system would have fixed one questio
 
 **It only ever learns when you correct it**, and it refuses to learn a word that already means
 something — a place you have visited, or a phrase Directive 47 answers to. A wrong entry here would
-be permanent, invisible and would quietly rewrite everything you said afterwards, which is a worse
+be permanent, invisible and would silently rewrite everything you said afterwards, which is a worse
 failure than the mishearing it came from. It is also spoken input only: if you *type* a name, that
 is what you meant.
 
@@ -559,13 +559,13 @@ and `huggingface.co` is listed under [Privacy](privacy.md) for as long as a mode
 
 **Directive 47 knows what each model file should be.** The SHA-256 of every model it offers is
 written into the build, and a download that does not match it is discarded rather than loaded.
-That is worth one sentence of honesty about what it buys: those values were read from
+That is worth one sentence about what it actually buys: those values were read from
 `huggingface.co` once, on a stated date, and pinning them does not make that first read
 trustworthy — it means the file *changing* afterwards becomes visible, where before the expected
 hash and the bytes came from the same place. The model is loaded and run on your machine, so it
 is worth checking.
 
-`none` stays a real choice. Pick it and Directive 47 hears you and says, honestly, that it cannot
+`none` stays a real choice. Pick it and Directive 47 hears you and says plainly that it cannot
 turn what it heard into words.
 
 #### Running on the GPU {#gpu}
@@ -595,7 +595,7 @@ The switch takes effect immediately, both ways: turn it off and the video memory
 
 > **This did not work before [#187](https://github.com/dseelinger/d47/issues/187).** The toggle
 > shipped for months with no GPU code behind it at all — the CPU runtime accepted the request,
-> loaded happily, and the log read *"on the GPU"* because it was repeating the request back
+> loaded without error, and the log read *"on the GPU"* because it was repeating the request back
 > rather than reporting what happened. If you turned it on and noticed nothing, that is why.
 > D47 now uses Vulkan, which works on AMD and Intel cards as well as NVIDIA.
 
@@ -642,7 +642,7 @@ Every utterance is transcribed knowing the names around you: the system you are 
 the body, your next jump, your ship and its type, your carrier, the route ahead, and your fleet.
 
 This matters more than it sounds. **Proper nouns are where speech recognition fails hardest and
-most quietly.** A misheard system name does not come back as an error — it comes back as a
+least visibly.** A misheard system name does not come back as an error — it comes back as a
 plausible English phrase. "Shinrarta Dezhra" becomes "shin arta desha", everything proceeds
 confidently about the wrong system, and nothing anywhere reports a problem.
 

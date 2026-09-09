@@ -23,7 +23,7 @@ The warrant, column by column
 -----------------------------
 **symbol** — EDSY's `eddb.js` and ED Odyssey Materials Helper's
 `locale/material/horizons/manufactured.csv` (MIT) agree on all three spellings, and neither is
-downstream of the other. EDOMH's is load-bearing in its own app: it is the key it counts a
+downstream of the other. EDOMH's spelling is what its own app depends on: it is the key it counts a
 journal inventory by, so a wrong one would show a permanent zero to every user who gathered one.
 
 **name** — both sources, taking EDSY's bare form. EDOMH suffixes "(Thargoid)" to several
@@ -46,7 +46,7 @@ FDevIDs' `category` gives its own 29 rows of them.
 Each one retires itself
 -----------------------
 Both generators drop a curated row the day the authority names it, and say so on the run. A list
-like this shadowing a source that has caught up is how a table goes quietly stale.
+like this shadowing a source that has caught up is how a table goes silently stale.
 """
 
 # symbol, name, category, grade

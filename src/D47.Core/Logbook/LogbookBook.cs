@@ -220,7 +220,7 @@ public sealed class LogbookBook(
         {
             logger.LogWarning(ex, "Could not write the Commander's log");
 
-            // The money is already spent, so the prose is not lost quietly: it goes back to the caller, which
+            // The money is already spent, so the prose is not lost silently: it goes back to the caller, which
             // is the panel and the transcript.
             return new LogOutcome(false, $"I wrote it and could not save it — {ex.Message}", written);
         }

@@ -8,7 +8,7 @@ namespace D47.Core.Tests.Conversation;
 public class AKeywordDoesNotHijackASentenceTests
 {
     /// <summary>
-    /// Verbatim from the log line at 14:54:11, which is the whole point of asserting it here: the
+    /// Verbatim from the log line at 14:54:11, which is the reason for asserting it here: the
     /// sentence a Commander actually said, not a shortened stand-in for it.
     /// </summary>
     private const string TheComplaint =

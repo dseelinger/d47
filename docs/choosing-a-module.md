@@ -119,8 +119,8 @@ The first row is always the one that changes nothing: **keep** what is there. It
 no way to say *this one is fine* is a page that makes you close it and lose your place.
 
 Where the fitted module is engineered, that row says so — including when Directive 47 has the
-blueprint's name and no recipe for it. That sentence is the honest form of a gap: it tells the
-truth about itself rather than about Elite.
+blueprint's name and no recipe for it. That sentence is the accurate form of a gap: it states what
+Directive 47 does not have, rather than a claim about Elite.
 
 ### The two badges
 

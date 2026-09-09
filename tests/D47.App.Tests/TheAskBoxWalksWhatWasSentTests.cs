@@ -65,7 +65,7 @@ public class TheAskBoxWalksWhatWasSentTests
         Press(view, Key.Up);
         Assert.Equal("where am I", model.AskText);
 
-        // **Stops rather than wrapping.** A long history that quietly returned to the newest reads as the key
+        // **Stops rather than wrapping.** A long history that silently returned to the newest reads as the key
         // having missed.
         Press(view, Key.Up);
         Assert.Equal("where am I", model.AskText);

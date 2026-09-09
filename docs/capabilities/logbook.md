@@ -8,13 +8,13 @@ nav_order: 140
   The how-to band (#229). Same authoring rules as the ELI5 band below it — they are in the
   comment on engineers.md — with one addition and one subtraction.
 
-  The class is d47-howto rather than d47-eli5, and that is load-bearing rather than cosmetic.
-  HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under that class
-  would silently become what the in-app panel draws on this page. The docs site styles the two
-  identically (main.scss extends one from the other); the app sees only the one below.
+  The class is d47-howto rather than d47-eli5, and the class decides behaviour, not just
+  appearance. HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under
+  that class would silently become what the in-app panel draws on this page. The docs site styles
+  the two identically (main.scss extends one from the other); the app sees only the one below.
 
-  And no rationale in here. Every "because" belongs in the band below. That separation is the
-  whole point of there being two, and it is the thing that will erode first.
+  And no rationale in here. Every "because" belongs in the band below. Keeping the two apart is
+  the reason there are two of them, and it is the first rule here that will be forgotten.
 -->
 <details class="d47-band" open>
 <summary>How to use it</summary>
@@ -48,7 +48,7 @@ nav_order: 140
 <svg viewBox="0 0 880 152" role="img" aria-label="It writes up what the journal saw, not what you meant.">
  <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">It writes up what the journal saw, not what you meant.</text>
- <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">A quiet session produces a short log. That is the log being honest rather than being broken.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">A quiet session produces a short log. That is the log being accurate rather than broken.</text>
 </svg>
 </section>
 </div></div>

@@ -10,6 +10,21 @@ already writes, answers out loud, renders one panel to a desktop window and a St
 MIT code; Frontier game data under their media-usage rules (`LICENSE`, `NOTICE`). Product docs:
 `docs/index.md`.
 
+
+## Writing style
+
+Mannered prose substitutes metaphor and flourish for direct statement. Instead
+of "a parameter worth varying," the mannered writer produces "a dial worth
+turning." Instead of "this point still matters," they write "this point earns
+its keep." The phrases exist to display the writer, not to convey the idea,
+and readers can tell. That is why mannered prose irritates: it makes the
+reader work harder so the writer can perform. It is also imprecise. Metaphors
+drag in connotations the writer did not choose and cannot control. The fix is
+to say what you mean. When a literal phrase is available, use it.
+
+Apply this to comments, commit messages, docstrings, and any prose you write
+— not to code identifiers or established technical terms.
+
 ## Build and test
 
 ```
@@ -58,7 +73,7 @@ not the pool. `JournalReader` follows the same rule.
 1. **A tick is synchronous and must not block.** All subscribers share one thread; one that waits
    on the network stalls push-to-talk and every callout behind it. Awaitable work goes to the
    thread pool through a queue.
-2. **Registration order is load-bearing.** The journal is polled before anything reading game
+2. **Registration order matters.** The journal is polled before anything reading game
    state.
 3. **A throwing subscriber is caught, logged and skipped**, reporting throttled after the first.
 
@@ -123,7 +138,7 @@ when that file moves, which is what happened in this checkout.
 `src/D47.Core/Journal/MaterialGrades.g.cs`. Not part of the build, never run by CI; re-run by
 hand when Frontier changes game data. Edit the generator, not the table.
 
-### Documentation structure is load-bearing
+### Documentation structure is part of the build
 
 `D47.Core.csproj` embeds `docs/capabilities/*.md` and `docs/*.md` as resources;
 `Core.Help.HelpLibrary` parses them into the in-app help panel, taking the first `d47-eli5` band.

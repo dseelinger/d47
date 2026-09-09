@@ -994,7 +994,7 @@ public class LoadoutTabTests
         surface.Window.Close();
     }
 
-    /// <summary>And keeping it does not quietly drop it.</summary>
+    /// <summary>And keeping it does not silently drop it.</summary>
     [AvaloniaFact]
     public void KeepingAPlannedModuleCarriesItThrough()
     {

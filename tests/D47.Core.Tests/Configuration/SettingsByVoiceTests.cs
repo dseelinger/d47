@@ -67,7 +67,7 @@ public class SettingsByVoiceTests
             .Select(row => row.Key)
             .ToHashSet(StringComparer.Ordinal);
 
-        // An exemption for a row that has been renamed or removed is an exemption quietly covering nothing,
+        // An exemption for a row that has been renamed or removed is an exemption silently covering nothing,
         // and the next row to need one inherits a list nobody trusts.
         var stale = NotSettableByPhrase.Keys.Where(key => !keys.Contains(key)).ToArray();
 

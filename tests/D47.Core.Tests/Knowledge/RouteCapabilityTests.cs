@@ -345,7 +345,7 @@ public class RouteCapabilityTests
 
     /// <summary>The staleness bound is spelled `max_price_age_hours` here as well as on the commodity search,
     /// and the handler reads it under that name — a rename that reached the schema and not the handler would
-    /// advertise a knob that quietly does nothing.</summary>
+    /// advertise a knob that silently does nothing.</summary>
     [Fact]
     public async Task TheStalenessBoundIsSpelledWithItsUnit()
     {

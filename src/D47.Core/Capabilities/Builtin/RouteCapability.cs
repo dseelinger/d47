@@ -618,10 +618,10 @@ public static class RouteCapability
 
         report.AppendLine(".");
 
-        // The honest half of the saturation answer, and it is said every time rather than only when it bites:
-        // d47 does not model the price drop from dumping past demand, so it never plans past demand — and a
-        // profit that assumed otherwise would be wrong in a way that reads exactly like the feature working
-        // (Phase 36).
+        // The limit d47 states in the saturation answer, and it is said every time rather than only when it
+        // applies: d47 does not model the price drop from dumping past demand, so it never plans past
+        // demand — and a profit that assumed otherwise would be wrong in a way that reads exactly like
+        // the feature working (Phase 36).
         report.Append(
             capped
                 ? "No leg sells more than a station asked for, and some were cut short by that. I "

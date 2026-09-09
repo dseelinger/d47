@@ -222,7 +222,7 @@ public class WhereToBuyTheWholeBuildTests
         Assert.Equal(200, trade.Last.Outstanding.Single(row => row.Name == "Steel").Remaining);
 
         // The site's own outstanding list is untouched by it: the depot event is a snapshot rather than a
-        // delta, and recomputing what a site owes is the trap that caught two other folds.
+        // delta, and recomputing what a site owes is the mistake that caught two other folds.
         Assert.Contains("400 tonnes left", said, StringComparison.Ordinal);
         Assert.Contains("300 tonnes left", said, StringComparison.Ordinal);
     }

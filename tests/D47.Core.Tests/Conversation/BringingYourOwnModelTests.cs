@@ -59,7 +59,7 @@ public class BringingYourOwnModelTests
 
     /// <summary>
     /// Every id a catalog offers is one the price table can quote — that is the field's contract, and
-    /// it is what keeps a running total honest for anything picked from the picker.
+    /// it is what keeps a running total accurate for anything picked from the picker.
     /// </summary>
     [Fact]
     public void EveryOfferedModelHasAPrice()
@@ -96,7 +96,7 @@ public class BringingYourOwnModelTests
         Assert.Equal(OpenAi.Models, model.ChoiceSource!(hostedSettings));
     }
 
-    /// <summary>The first time in d47's life that the honest answer to what is leaving is nothing.</summary>
+    /// <summary>The first time in d47's life that the accurate answer to what is leaving is nothing.</summary>
     [Fact]
     public void ALoopbackEndpointReadsAsNothingLeavingThisMachine()
     {

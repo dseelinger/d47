@@ -1,10 +1,10 @@
 // The Worker's refusals, driven rather than read (https://github.com/dseelinger/d47/issues/175).
 //
 // **Run it with `node --test` from this folder.** It uses Node's own test runner and nothing else:
-// no framework, no package.json, no node_modules. A second language in the tree is the honest cost
+// no framework, no package.json, no node_modules. A second language in the tree is the real cost
 // of the endpoint, and a second dependency tree on top of it would not be.
 //
-// **It is not in `dotnet test`, and that is a gap said out loud rather than papered over.** The
+// **It is not in `dotnet test`, and that is a gap stated rather than hidden.** The
 // three gates that run as tests do so because they must not drift from the code; this one cannot
 // be one of them without putting Node in CI, which is a decision for the Commander rather than a
 // side effect of this issue. What it does buy is that the hard stops below are exercised at all —
@@ -207,7 +207,7 @@ test('forgetting an installation deletes everything it ever sent, and nothing el
   assert.equal(said.more, false);
 
   // Both prefixes, because a donor asking to be forgotten means both retention classes — the
-  // permanent one included, which is the only way "kept for ever" stays honest.
+  // permanent one included, which is the only way "kept for ever" stays accurate.
   assert.deepEqual([...env.DONATIONS.objects.keys()], [`corpus/${other}/20260829T142530Z-dddd.jsonl.gz`]);
 });
 
@@ -247,7 +247,7 @@ for (const [what, overrides] of [
 }
 
 // A ceiling rather than an assumption. A donor who somehow passed it is told there is more, rather
-// than being quietly left with half a deletion.
+// than being silently left with half a deletion.
 test('past the ceiling it says there is more rather than stopping quietly', async () => {
   const many = Array.from(
     { length: 10_001 },

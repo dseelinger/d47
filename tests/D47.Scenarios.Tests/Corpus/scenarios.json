@@ -2,7 +2,7 @@
 //
 // EVERY NEGATIVE ASSERTION IN THIS SUITE SHIPS WITH ITS POSITIVE TWIN. A test that nothing
 // happened is worthless without a sibling proving it can happen — a negative assertion passes
-// when the mechanism is broken, when the string never arrived, and when the harness quietly did
+// when the mechanism is broken, when the string never arrived, and when the harness silently did
 // nothing at all. This repository has already paid for that lesson once: a test asserting the
 // push-to-talk key does not type into the text box passed against the *unfixed* build, because
 // Avalonia's headless KeyPress raises key events and no text input whatsoever. The whole

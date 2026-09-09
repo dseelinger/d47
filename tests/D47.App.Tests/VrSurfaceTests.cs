@@ -35,7 +35,7 @@ public class VrSurfaceTests
         Assert.Equal(PanelMode.Mini, headset.Mode);
         Assert.Equal(PanelMode.Full, window.Mode);
 
-        // And they are still showing the same thing, which is the whole point of the split.
+        // And they are still showing the same thing, which is the reason for the split.
         model.Append("Fixture One, docked.");
         Assert.Contains("Fixture One", model.TranscriptText, StringComparison.Ordinal);
     }

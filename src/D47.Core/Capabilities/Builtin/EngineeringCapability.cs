@@ -978,7 +978,7 @@ public static class EngineeringCapability
         {
             return full
                 ? $"The grade is finished at {fill}, where {EngineeringRules.CompleteAt
-                    .ToString("0.0#", CultureInfo.InvariantCulture)} is as far as the game insists."
+                    .ToString("0.0#", CultureInfo.InvariantCulture)} is as far as the game requires."
                 : $"finished ({fill})";
         }
 

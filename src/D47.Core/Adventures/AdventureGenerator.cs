@@ -270,8 +270,8 @@ public sealed class AdventureGenerator(
 
     /// <summary>
     /// The real places within reach, from the galaxy search: the stations nearest here and the landable
-    /// bodies nearest here, which between them are every place a dock, land or scan beat can honestly
-    /// name.
+    /// bodies nearest here, which between them are every place a dock, land or scan beat can
+    /// accurately name.
     /// </summary>
     private sealed record Candidates(IReadOnlyList<StationSummary> Stations, IReadOnlyList<BodySummary> Bodies)
     {

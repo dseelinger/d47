@@ -124,7 +124,7 @@ nav_order: 3
  <line x1="562" y1="254" x2="578" y2="254" stroke="var(--border)" stroke-width="2"/>
  <text x="590" y="248" font-size="15" font-weight="700" fill="var(--text)">this one turns off</text>
  <text x="590" y="272" font-size="14" fill="var(--text-muted)">and the rules above stay exactly as they are</text>
- <text x="440" y="312" text-anchor="middle" font-size="14" fill="var(--text-muted)">The rules sit above the personality on every single turn. That is the whole point of the order.</text>
+ <text x="440" y="312" text-anchor="middle" font-size="14" fill="var(--text-muted)">The rules sit above the personality on every single turn. That is the reason for the order.</text>
 </svg>
 </section>
 </div></div>

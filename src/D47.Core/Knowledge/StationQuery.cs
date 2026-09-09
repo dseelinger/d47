@@ -167,7 +167,7 @@ public sealed record StationQuery
 
     /// <summary>
     /// A search for material traders, which asks a different question from the module and ship search
-    /// above and so does not go through it — <see cref="TryParse"/> insists on something being sold,
+    /// above and so does not go through it — <see cref="TryParse"/> requires something to be sold,
     /// and a trader sells nothing.
     /// </summary>
     public static StationQuery ForTrader(string? referenceSystem, string? traderType, double? maxDistance, int size)

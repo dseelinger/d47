@@ -46,7 +46,7 @@ public class HostSurfaceTests
     public void TheExemptionListNamesOnlySurfacesThatStillLackAnInert()
     {
         // The list rots the other way too: a surface that grows an Inert should leave it, or the exemption
-        // quietly excuses a guard that is now available.
+        // silently excuses a guard that is now available.
         var stale = WithoutInert
             .Where(name => Surfaces().FirstOrDefault(t => t.Name == name) is { } type
                            && type.GetProperty("Inert", BindingFlags.Public | BindingFlags.Static) is not null)

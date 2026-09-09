@@ -59,7 +59,7 @@ public sealed class RoutePlanResultPage : UserControl
         return block;
     }
 
-    /// <summary>When it was worked out, and what the plan itself refuses to promise.</summary>
+    /// <summary>When it was worked out, and what the plan itself does not claim.</summary>
     private static string Provenance(StoredRoutePlan plan)
     {
         var when = plan.PlottedAt == default
@@ -81,7 +81,7 @@ public sealed class RoutePlanResultPage : UserControl
         }
 
         // Said every time rather than only where it bit, because the figure is not known and a plan that
-        // quietly assumed one would be wrong in a way that reads like it working.
+        // silently assumed one would be wrong in a way that reads like it working.
         parts.Add("No leg sells past a station's demand, and what dumping past it does to a price is not modelled.");
 
         return string.Join(" ", parts);

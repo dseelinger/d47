@@ -524,7 +524,7 @@ public class SettingsSurfaceShapeTests
     [Fact]
     public void EveryModelTheCatalogueOffersHasAPrice()
     {
-        // Anything picked from the list keeps the running total honest.
+        // Anything picked from the list keeps the running total accurate.
         var unpriced =
             (from provider in LlmProviderCatalog.All
              from model in provider.Models

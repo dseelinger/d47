@@ -96,7 +96,7 @@ public sealed class AudioRecorder : IDisposable
 
     /// <summary>
     /// A recorder if this process asked for one, otherwise null — so every caller's check is "is there
-    /// one", and there is no disabled object quietly doing nothing on the audio thread.
+    /// one", and there is no disabled object silently doing nothing on the audio thread.
     /// </summary>
     public static AudioRecorder? Create(AppPaths paths, Func<DateTimeOffset> now, ILogger logger)
     {

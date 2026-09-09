@@ -55,7 +55,7 @@ public class AMisheardNameAsksAndIsRememberedTests : IDisposable
         Assert.Equal("Deciat", Assert.Single(visited.Near("Dessy at")));
     }
 
-    /// <summary>The whole point of holding it against the token.</summary>
+    /// <summary>The reason for holding it against the token.</summary>
     [Fact]
     public void ACorrectionLearnedFromOneQuestionFixesAnother()
     {

@@ -18,7 +18,7 @@ public class GalaxyQueryTests
     [Fact]
     public void AFilterTheServiceDoesNotHaveIsRefusedRatherThanPassedThrough()
     {
-        // The whole point.
+        // The central case.
         var ok = Parse(new Dictionary<string, string> { ["not_a_real_filter"] = "Federation" }, out _, out var failure);
 
         Assert.False(ok);

@@ -205,7 +205,7 @@ public class VrPlacementTests
     [Fact]
     public void ADroppedTrackingFrameIsRecognisableRatherThanCarriedThrough()
     {
-        // Every arithmetic path here will happily carry a NaN through to a transform, where it becomes an
+        // Every arithmetic path here will carry a NaN through to a transform without complaint, where it becomes an
         // overlay that is nowhere.
         Assert.False(new VrPose(new Vector3(float.NaN, 0, 0), Quaternion.Identity).IsFinite);
         Assert.False(new VrPose(Vector3.Zero, new Quaternion(0, float.PositiveInfinity, 0, 1)).IsFinite);

@@ -36,7 +36,7 @@ public class TheFirstSentenceNeverWaitsForAGroupTests
     }
 
     /// <summary>
-    /// And everything after it is gathered, which is the whole point: a group is long enough for
+    /// And everything after it is gathered, which is the reason for gathering: a group is long enough for
     /// direction to land where a single sentence is not.
     /// </summary>
     [Fact]

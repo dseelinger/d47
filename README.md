@@ -18,7 +18,7 @@ You talk to it while you fly. It watches the journal for what just happened, ans
 about ships, modules, engineers, blueprints and routes, calls out what is worth knowing without
 being asked, and can act on the game on your say-so. Forty-five capabilities are documented one
 page each under [Capabilities](https://dseelinger.github.io/d47/); the
-[open issues](https://github.com/dseelinger/d47/issues) are the honest list of what is wrong with
+[open issues](https://github.com/dseelinger/d47/issues) are the full list of what is wrong with
 it today.
 
 It is one person's project with a handful of users. [CHANGELOG.md](CHANGELOG.md) records what

@@ -9,7 +9,7 @@ namespace D47.Core.Goals;
 
 /// <summary>What to do about an arc today (Phase 34, "The checklist points at the arc").</summary>
 /// <param name="Say">The next concrete thing, in one sentence.</param>
-/// <param name="Lines">What to propose, empty where there is nothing honest to propose.</param>
+/// <param name="Lines">What to propose, empty where there is nothing to propose without inventing it.</param>
 /// <param name="Delegated">
 /// Set where accepting is handed to a solver that already does this properly — the engineers arc, which
 /// is the one <see cref="UnlockPlanner"/> was built for.

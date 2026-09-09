@@ -665,7 +665,7 @@ def build_bulkheads(
     Iterated from `outfitting.csv` rather than from coriolis, because that is the side that
     decides what exists: a bulkhead is exactly an outfitting row with the `ship` column
     filled in, which is the only place either source says out loud that a module belongs to
-    one hull. Both directions of the join come back, so neither can fail quietly — a named
+    one hull. Both directions of the join come back, so neither can fail silently — a named
     bulkhead with no figures and a figure with no name are different problems, and only one
     of them is survivable.
     """
@@ -857,7 +857,7 @@ def edsy_database() -> str:
 
     The check is the corpus rather than the source. Every slot name this produces is
     asserted against what Frontier actually wrote across 915 real journals, so a source that
-    goes stale fails a test rather than quietly inventing a slot.
+    goes stale fails a test rather than silently inventing a slot.
     """
     return fetch(EDSY_DB).decode("utf-8-sig")
 
@@ -908,7 +908,7 @@ def entries(text: str) -> list[tuple[int, str]]:
     A pattern that stops at the first `}` reads eight hundred of EDSY's modules and silently
     drops the rest: a power distributor carries `noblueprints:{misc_agzr:1}` and a hardpoint
     carries `mats:{...}`, so the nested brace ends the match early and the entry is never
-    seen. It failed quietly — every power plant and every power distributor came out
+    seen. It failed silently — every power plant and every power distributor came out
     untyped, which reads exactly like a source that does not carry the field.
     """
     found = []
@@ -1208,7 +1208,7 @@ def main() -> None:
 
     # Every mount agrees with the symbol it sits beside. True by construction — `build_modules`
     # takes the mount from `mount_of` and not from the row — so this is here to stop a future
-    # edit quietly handing the column back to `outfitting.csv`, which is wrong on four rows.
+    # edit silently handing the column back to `outfitting.csv`, which is wrong on four rows.
     # The same assertion runs in CI against the shipped table, in SpecificationTests, because
     # this script is not part of the build and nothing would otherwise notice.
     disagreeing = [(row[0], row[4]) for row in modules if row[4] != mount_of(row[0])]

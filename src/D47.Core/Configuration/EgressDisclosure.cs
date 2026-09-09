@@ -434,7 +434,7 @@ public static class EgressDisclosure
 
         var destination = settings.Llm.Endpoint ?? provider.DefaultEndpoint ?? provider.Name;
 
-        // The first time in d47's life that the honest answer to *what is leaving* is *nothing* (Phase 29).
+        // The first time in d47's life that the accurate answer to *what is leaving* is *nothing* (Phase 29).
         if (LocalEndpoint.IsLoopback(destination))
         {
             return EgressEntry.Silent(

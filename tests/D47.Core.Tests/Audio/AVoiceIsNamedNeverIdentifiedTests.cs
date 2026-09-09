@@ -45,7 +45,7 @@ public class AVoiceIsNamedNeverIdentifiedTests
         Assert.Equal(edge, VoiceCatalogue.Silent.LabelFor(edge, TtsProviderCatalog.Edge));
     }
 
-    /// <summary>The flag itself, so the two providers cannot quietly come to agree.</summary>
+    /// <summary>The flag itself, so the two providers cannot silently come to agree.</summary>
     [Fact]
     public void OnlyTheProviderWithUnreadableIdsDeclaresThem()
     {

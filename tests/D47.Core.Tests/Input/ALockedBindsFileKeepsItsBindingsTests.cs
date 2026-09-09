@@ -116,7 +116,7 @@ public class ALockedBindsFileKeepsItsBindingsTests : IDisposable
     }
 
     /// <summary>
-    /// The other half of the bargain: a Commander who genuinely has no bindings still gets the honest
+    /// The other half of the rule: a Commander who genuinely has no bindings still gets the correct
     /// answer, and a fix that kept stale bindings for ever would be its own defect.
     /// </summary>
     [Fact]

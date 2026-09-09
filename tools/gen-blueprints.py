@@ -39,7 +39,7 @@ EDEngineer keeps six different things in one list, and they are not interchangea
 
 Told apart by the `@`-prefixed pseudo-engineers EDEngineer uses — `@Synthesis`,
 `@Technology`, `@Merchant`, `@Bartender` — rather than by a list of type names, so a new
-munitions recipe classifies itself. The distinction is load-bearing: multiplying a synthesis
+munitions recipe classifies itself. The distinction has to be right: multiplying a synthesis
 recipe by a roll count is arithmetic on the wrong kind of thing.
 
 EDEngineer's on-foot quantities are pre-patch, and are corrected here
@@ -137,7 +137,7 @@ DISPUTED_COLUMNS = ["symbol", "name", "mtypes"]
 # under `cfsdo` and the ordinary one under `cfsd`; EDEngineer has a single module kind called
 # "Frame Shift Drive", so every drive recipe landed on `cfsd` and an SCO drive — which is the drive
 # essentially every Commander now flies — was offered eight blueprints d47 held no recipe for. The
-# Loadout tab said so honestly and could do nothing about it.
+# Loadout tab said so plainly and could do nothing about it.
 #
 # What settles it is the corpus and not the naming: across the 919-journal corpus, SCO drives
 # carrying `FSD_LongRange` report `Modifiers` that the `cfsd` grade rows reproduce to 0.000%. The
@@ -173,7 +173,7 @@ MTYPE_ALIASES = {"cfsdo": "cfsd"}
 # no recipe is still a claim — *"Frontier engineers this and I cannot cost it"* — and d47 is not
 # in a position to make even that one about a blueprint whose two describers disagree.
 #
-# **This is not the same as the honest-gap machinery below**, which is for engineering d47 knows
+# **This is not the same as the stated-gap machinery below**, which is for engineering d47 knows
 # is real and cannot price. This is for engineering d47 cannot describe consistently, and the
 # difference is whether the Commander is told something.
 DISPUTED_OFFERS = {"GuardianModule_Sturdy"}
@@ -1103,7 +1103,7 @@ def main() -> None:
     print(f"Module types: {len(offers)}, of which {engineerable} can be engineered and "
           f"{len(offers) - engineerable} genuinely cannot")
 
-    # The one direction that is not survivable quietly. A blueprint EDSY offers that nothing here
+    # The one direction that is not survivable silently. A blueprint EDSY offers that nothing here
     # supplies is a row a Commander can be shown and d47 cannot cost.
     supplied = {name for row in built for name in row[8].split(",") if name}
     wanted = {name for row in offers for name in row[1].split(",") if name}
@@ -1191,7 +1191,7 @@ def main() -> None:
         raise SystemExit(
             "the Manticore Opressor typo was not found. If it has been fixed upstream, delete "
             "MISSPELLED — leaving a rewrite in place that no longer matches anything is how a "
-            "table starts lying quietly."
+            "table silently goes wrong."
         )
 
     for label, items in disagreements.items():

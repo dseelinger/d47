@@ -73,7 +73,7 @@ public class EverySlotHasItsOwnProviderRowTests
 
         Assert.Contains("Edge", shown, StringComparison.Ordinal);
 
-        // And the ship is on the paid one at the same time, which is the whole point of the phase: the
+        // And the ship is on the paid one at the same time, which is the reason for the phase: the
         // companion is worth paying for and a stranger in local is not.
         Assert.Contains("ElevenLabs", Shown(host, SpeechCapability.ProviderKey), StringComparison.Ordinal);
 

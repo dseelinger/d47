@@ -1017,7 +1017,7 @@ public sealed class ShipsMode(
             string.Equals(candidate.Slot, slot, StringComparison.OrdinalIgnoreCase));
 
         // Said before the module rather than after it, because it qualifies everything below — and left off
-        // entirely for the ship being flown, where "now" is the honest tense.
+        // entirely for the ship being flown, where "now" is the accurate tense.
         var asOf = seen.SeenAt is { } when
             ? new LoadoutLine($"As you left it, {Age(when)}.", LoadoutTone.Muted)
             : null;

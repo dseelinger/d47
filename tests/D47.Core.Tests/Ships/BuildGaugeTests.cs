@@ -32,7 +32,7 @@ public class BuildGaugeTests
 
         Assert.NotNull(gauges.Jump);
 
-        // **The anchor for the whole gauge.** A range that quietly disagrees with the number on the
+        // **The anchor for the whole gauge.** A range that silently disagrees with the number on the
         // outfitting screen looks broken, and this is that number: unladen mass plus one jump's fuel, which
         // is what MaxJumpRange turns out to mean.
         Assert.Equal(loadout.MaxJumpRange!.Value, gauges.Jump.Best, 2);
@@ -50,7 +50,7 @@ public class BuildGaugeTests
         Assert.NotNull(jump);
 
         // Best is one jump's fuel, middle is the full 16 tonne tank, worst adds the hold — which on this ship
-        // is empty, so the last two are the same and that is the honest answer rather than an invented
+        // is empty, so the last two are the same and that is the correct answer rather than an invented
         // spread.
         Assert.True(jump.Best > jump.Middle);
         Assert.Equal(jump.Middle, jump.Worst, 6);

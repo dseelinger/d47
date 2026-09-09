@@ -44,7 +44,7 @@ correct: d47 saying an engineer has no referrer when the parse simply missed the
 **Bill Turner is overruled.** EDDiscovery calls him "Common knowledge"; the Fandom engineer
 table says Selene Jean, and a journal trace decides it in the wiki's favour — see
 `docs/spikes/journal-corpus-engineering.md` §4. The two sources agree on the other 37, so the
-one disagreement is stated in the code rather than quietly patched.
+one disagreement is stated in the code rather than silently patched.
 
 Where each engineer is, as a number
 -----------------------------------
@@ -141,7 +141,7 @@ ON_FOOT = {"Suit", "Weapon"}
 # the row that unlocks Kit Fowler carries Domino Green's Push ×5 as well as the Opinion Polls, and
 # the row that unlocks Wellington Beck carries Hero Ferrari's Settlement Defence Plans. Frontier's
 # notes are per engineer. So EDEngineer's 40 Opinion Polls is not a stale version of Frontier's 5;
-# it is a different quantity with a different meaning, and quietly replacing one with the other
+# it is a different quantity with a different meaning, and silently replacing one with the other
 # would produce a number belonging to neither.
 #
 # This is the column whose failure wastes a Commander's trip rather than merely their materials, so
@@ -320,7 +320,7 @@ SPLIT_REFERRERS = re.compile(r",\s*|\s+and\s+", re.IGNORECASE)
 # EDDiscovery says Bill Turner is "Common knowledge". The Fandom engineer table says Selene Jean,
 # and a journal trace in docs/spikes/journal-corpus-engineering.md §4 decides it in the wiki's
 # favour. The one place in this file where a source is overruled, so it is stated rather than
-# quietly patched: the sources agree on the other 37 of 38.
+# silently patched: the sources agree on the other 37 of 38.
 BILL_TURNER = ("Bill Turner", ["Selene Jean"], 3)
 
 
@@ -601,7 +601,7 @@ def main() -> None:
 
     if unplaced:
         # Shipped without a position rather than dropped. d47 answers "I do not know how far" for
-        # these, which is the honest reading and the one the ranking is built to survive.
+        # these, which is the accurate reading and the one the ranking is built to survive.
         print(f"No coordinates for: {', '.join(unplaced)}")
 
     if silent:
