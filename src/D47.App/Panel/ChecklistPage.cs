@@ -258,6 +258,10 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         // which is the whole of what the report was about.
         _checklists.FilterChanged += OnChanged;
 
+        // The engineer filter answers from where the ship is, and none of the three above moves when it does
+        // (#93).
+        _checklists.HereChanged += OnChanged;
+
         if (_goals is not null)
         {
             _goals.Store.Changed += OnChanged;
@@ -285,6 +289,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         _checklists.List.Changed -= OnChanged;
         _checklists.Proposals.Changed -= OnChanged;
         _checklists.FilterChanged -= OnChanged;
+        _checklists.HereChanged -= OnChanged;
 
         if (_goals is not null)
         {

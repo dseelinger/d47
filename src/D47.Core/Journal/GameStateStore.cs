@@ -67,6 +67,12 @@ public sealed class GameStateStore
     public event Action<CommanderSwitch>? CommanderChanged;
 
     /// <summary>
+    /// Raised when the system the active Commander is in changes, including the switch to a Commander
+    /// standing somewhere else (#93).
+    /// </summary>
+    public event Action? SystemChanged;
+
+    /// <summary>
     /// Replaces what every known Commander's ships were last seen holding, from a re-derivation of the
     /// journals (#128).
     /// </summary>
@@ -84,10 +90,7 @@ public sealed class GameStateStore
 
     public void Apply(JournalEvent journalEvent, SurfaceFix? at) => Apply(journalEvent, at, priming: false);
 
-    /// <summary>
-    /// <param name="at"> Where the Commander was standing when this event landed, from
-    /// <c>Status.json</c>.
-    /// </summary>
+    /// <summary>Folds one event in, and says so when it moved the Commander to another system.</summary>
     /// <param name="at">
     /// Where the Commander was standing when this event landed, from <c>Status.json</c>.
     /// </param>
@@ -95,6 +98,21 @@ public sealed class GameStateStore
     /// Whether this event is part of the startup replay rather than something that just happened.
     /// </param>
     public void Apply(JournalEvent journalEvent, SurfaceFix? at, bool priming)
+    {
+        var was = Active?.Location.StarSystem;
+
+        Fold(journalEvent, at, priming);
+
+        // Read off the value rather than off a list of event kinds: Location, FSDJump, CarrierJump and a
+        // Docked that names a system all fold into StarSystem, and an event that leaves it where it was —
+        // SupercruiseExit in the system it was already in — raises nothing.
+        if (!string.Equals(was, Active?.Location.StarSystem, StringComparison.OrdinalIgnoreCase))
+        {
+            SystemChanged?.Invoke();
+        }
+    }
+
+    private void Fold(JournalEvent journalEvent, SurfaceFix? at, bool priming)
     {
         if (CommanderIdentity.From(journalEvent) is { } identity)
         {

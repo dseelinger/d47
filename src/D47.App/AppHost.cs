@@ -769,6 +769,10 @@ public sealed class AppHost : IDisposable
                 ChecklistPartialGrades = view.IncludePartialGrades,
             }));
 
+        // The engineer filter is a question about where the ship is, so the list is re-read when it moves
+        // (#93).
+        checklists.Follow(gameState);
+
         checklists.Restore(
             new ChecklistView(
                 viewState.Load().ChecklistFilter ?? ChecklistService.Everything,

@@ -6,6 +6,15 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.7 — The checklist follows the ship
+
+Filtering the checklist to the engineer in this system now answers from the system the ship is in.
+The page listened to the list, the proposals, the filter and the goals, and to nothing that says
+where the Commander is — so jumping into an engineer's system left the empty message on screen with
+that engineer's work behind it, and left the partial-grades checkbox and the rank line describing
+the system just left. The page redraws when the system changes, and on nothing else: docking,
+dropping out of supercruise and every other event inside one system redraw nothing.
+
 ## 0.110.6 — Settings rows that open a window
 
 Every Settings row that opens a second window — memories, the debrief, notes, the logbook, the

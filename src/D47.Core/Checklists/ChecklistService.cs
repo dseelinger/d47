@@ -76,6 +76,23 @@ public sealed class ChecklistService(
     /// <summary>Raised when the filter or the search text moves, so every surface can redraw.</summary>
     public event Action? FilterChanged;
 
+    /// <summary>
+    /// Raised when the system the Commander is in changes, so a surface under the engineer filter reads
+    /// <see cref="HereKey"/> again instead of showing the system they left (#93).
+    /// </summary>
+    public event Action? HereChanged;
+
+    /// <summary>
+    /// Ties <see cref="HereChanged"/> to the journal. Without this the engineer filter still answers
+    /// from live state and nothing tells a surface to ask again.
+    /// </summary>
+    public void Follow(GameStateStore states)
+    {
+        ArgumentNullException.ThrowIfNull(states);
+
+        states.SystemChanged += () => HereChanged?.Invoke();
+    }
+
     /// <summary>Puts the list under a filter, or back under <see cref="Everything"/>.</summary>
     public void Choose(string? key)
     {
