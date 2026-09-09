@@ -43,6 +43,15 @@ jobs:
         with:
           global-json-file: global.json
 
+      # Restore is ~40s of a cold run and the package set only moves when a .csproj or the SDK
+      # pin does, so the key is those files.
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~\.nuget\packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', 'global.json') }}
+          restore-keys: nuget-${{ runner.os }}-
+
       # ReleaseVersion.TryParse takes exactly three integer parts and treats anything after a
       # '-' as a label, which marks the build as a local working-tree build. Refuse early.
       - name: Check the version is releasable
@@ -56,14 +65,42 @@ jobs:
             throw "Tag v$v already exists. A published tag never moves; pick another version."
           }
 
+      # Built once, with the version being released, so the suite runs against the binaries that
+      # ship and Publish below has nothing left to compile.
+      - name: Build
+        run: dotnet build d47.slnx -c Release -p:Version=${{ inputs.version }}
+
       # The gate. Everything below this line only runs on a green suite.
+      #
+      # The projects run concurrently against that build. D47.App.Tests takes longer than the
+      # other six together — Avalonia.Headless.XUnit puts every one of its tests on a single
+      # dispatcher thread — so it starts first and they finish inside its runtime. A non-zero
+      # exit from any of them fails the step.
       - name: Test
-        run: dotnet test d47.slnx -c Release
+        shell: pwsh
+        run: |
+          $projects = @(Get-ChildItem tests -Filter *.csproj -Recurse -Depth 1 | ForEach-Object FullName)
+          $projects = @($projects | Sort-Object { if ($_ -match 'D47\.App\.Tests') { 0 } else { 1 } })
+          $results = $projects | ForEach-Object -ThrottleLimit 3 -Parallel {
+              $output = & dotnet test $_ -c Release --no-build --nologo 2>&1 | Out-String
+              [pscustomobject]@{
+                  Project = [System.IO.Path]::GetFileNameWithoutExtension($_)
+                  Code    = $LASTEXITCODE
+                  Output  = $output
+              }
+          }
+          foreach ($r in $results) {
+              Write-Host "::group::$($r.Project) — exit $($r.Code)"
+              Write-Host $r.Output
+              Write-Host '::endgroup::'
+          }
+          $failed = @($results | Where-Object Code -ne 0)
+          if ($failed) { throw "failed: $($failed.Project -join ', ')" }
 
       # No -o: PublishDir is already bin\$(Configuration)\publish\, which is exactly where
       # installer\d47.iss reads from. Passing one breaks the installer's paths.
       - name: Publish
-        run: dotnet publish src/D47.App/D47.App.csproj -c Release -p:Version=${{ inputs.version }}
+        run: dotnet publish src/D47.App/D47.App.csproj -c Release -p:Version=${{ inputs.version }} --no-restore
 
       - name: Build the installer
         shell: pwsh
