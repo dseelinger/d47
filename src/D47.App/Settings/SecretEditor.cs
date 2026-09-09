@@ -96,6 +96,9 @@ public sealed class SecretEditor : UserControl
 
         InTheBox(_clear, "Clear the key");
 
+        // Asking means a dialog, which the headset's copy of this surface must not open.
+        Panel.OffscreenSurface.OpensAWindow(_clear);
+
         _state = new TextBlock { FontSize = TypeScale.Secondary, VerticalAlignment = VerticalAlignment.Center };
 
         _badge = new Border

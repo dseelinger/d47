@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
@@ -42,6 +43,114 @@ internal static class AssemblyCalls
         }
 
         return found;
+    }
+
+    /// <summary>
+    /// Every method that reaches the named one through a chain of calls, as <c>Type.Method</c>. A method
+    /// written as async or as an iterator is named as it was written rather than as its state machine.
+    /// </summary>
+    public static IReadOnlyCollection<string> Reaching(Assembly assembly, string? declaredOn, string method)
+    {
+        using var stream = File.OpenRead(assembly.Location);
+        using var pe = new PEReader(stream);
+
+        var metadata = pe.GetMetadataReader();
+        var bodies = Bodies(pe, metadata);
+        var written = StateMachines(assembly);
+
+        var found = new SortedSet<string>(StringComparer.Ordinal);
+        var asked = new HashSet<string>(StringComparer.Ordinal);
+        var pending = new Queue<(string? On, string Name)>();
+
+        pending.Enqueue((declaredOn, method));
+
+        while (pending.Count > 0)
+        {
+            var (on, name) = pending.Dequeue();
+
+            if (!asked.Add($"{on}.{name}"))
+            {
+                continue;
+            }
+
+            var tokens = TokensFor(metadata, on, name);
+
+            if (tokens.Count == 0)
+            {
+                continue;
+            }
+
+            foreach (var (caller, il) in bodies)
+            {
+                if (!tokens.Any(token => Calls(il, token)))
+                {
+                    continue;
+                }
+
+                // A state machine is reached through the method it was written as: nothing calls its
+                // MoveNext by name.
+                var reached = written.TryGetValue(caller, out var source) ? source : caller;
+
+                if (!found.Add(reached))
+                {
+                    continue;
+                }
+
+                var dot = reached.LastIndexOf('.');
+                pending.Enqueue((reached[..dot], reached[(dot + 1)..]));
+            }
+        }
+
+        return found;
+    }
+
+    /// <summary>Every method body in the assembly, read once, as <c>Type.Method</c> and its IL.</summary>
+    private static List<(string Name, byte[] Il)> Bodies(PEReader pe, MetadataReader metadata)
+    {
+        var bodies = new List<(string, byte[])>();
+
+        foreach (var handle in metadata.MethodDefinitions)
+        {
+            var definition = metadata.GetMethodDefinition(handle);
+
+            if (definition.RelativeVirtualAddress == 0)
+            {
+                continue;
+            }
+
+            if (pe.GetMethodBody(definition.RelativeVirtualAddress).GetILBytes() is { } il)
+            {
+                bodies.Add((Name(metadata, definition), il));
+            }
+        }
+
+        return bodies;
+    }
+
+    /// <summary>Every state machine's <c>MoveNext</c>, against the method it was written as.</summary>
+    private static Dictionary<string, string> StateMachines(Assembly assembly)
+    {
+        const BindingFlags Declared = BindingFlags.Public | BindingFlags.NonPublic
+            | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
+
+        var written = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        foreach (var type in assembly.GetTypes())
+        {
+            foreach (var member in type.GetMethods(Declared))
+            {
+                var machine =
+                    member.GetCustomAttribute<AsyncStateMachineAttribute>()?.StateMachineType
+                    ?? member.GetCustomAttribute<IteratorStateMachineAttribute>()?.StateMachineType;
+
+                if (machine is not null)
+                {
+                    written[$"{machine.Name}.MoveNext"] = $"{type.Name}.{member.Name}";
+                }
+            }
+        }
+
+        return written;
     }
 
     /// <summary>Whether one named method's body issues a call to another, wherever that one lives.</summary>
@@ -112,11 +221,12 @@ internal static class AssemblyCalls
 
         var il = pe.GetMethodBody(definition.RelativeVirtualAddress).GetILBytes();
 
-        if (il is null)
-        {
-            return false;
-        }
+        return il is not null && Calls(il, token);
+    }
 
+    /// <summary>Whether one body issues a call carrying this token.</summary>
+    private static bool Calls(byte[] il, int token)
+    {
         var wanted = new byte[5];
         BitConverter.TryWriteBytes(wanted.AsSpan(1), token);
 

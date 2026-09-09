@@ -210,9 +210,11 @@ public sealed class OffscreenSurface : IDisposable
             return true;
         }
 
-        // A control that opens a window is left alone.
+        // A control that opens a window is left alone, and the panel says why rather than appearing to
+        // have missed the press.
         if (actionable is not null && actionable.Classes.Contains(DesktopOnly))
         {
+            Say(Refusal);
             return false;
         }
 
@@ -248,6 +250,15 @@ public sealed class OffscreenSurface : IDisposable
 
     /// <summary>Does what the release should have done, for the controls this panel is made of.</summary>
     public const string DesktopOnly = "desktop-only";
+
+    /// <summary>What the panel says when it refuses a press on a control that opens a window.</summary>
+    public const string Refusal = "That opens a window. It is on the desktop.";
+
+    /// <summary>
+    /// Marks a control this surface must not press, because pressing it opens a window: a dialog on a
+    /// desktop the Commander is not looking at is a dialog they cannot answer.
+    /// </summary>
+    public static void OpensAWindow(Control control) => control.Classes.Add(DesktopOnly);
 
     /// <summary>Whether this is a control a press means something to.</summary>
     private static bool Actionable(Control control) =>
@@ -457,6 +468,32 @@ public sealed class OffscreenSurface : IDisposable
         var body = new StackPanel { Children = { shown, board, actions } };
 
         Overlay(Card(body));
+    }
+
+    /// <summary>Puts one line of state on the panel, over whatever is under it, until it is dismissed.</summary>
+    public void Say(string line)
+    {
+        var text = new TextBlock
+        {
+            Text = line,
+            FontSize = Theming.TypeScale.Heading,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 0, 0, 14),
+        };
+
+        Painted(text, TextBlock.ForegroundProperty, Theming.ThemeManager.TextKey);
+
+        var close = Pressable("Close", marked: true);
+        close.Height = 52;
+        close.Padding = new Thickness(24, 0);
+        close.HorizontalAlignment = HorizontalAlignment.Right;
+        close.Click += (_, _) => Dismiss();
+
+        var card = Card(new StackPanel { Children = { text, close } });
+        card.MinWidth = Math.Min(460, _size.Width - 120);
+        card.MaxWidth = Math.Min(560, _size.Width - 80);
+
+        Overlay(card);
     }
 
     /// <summary>The card everything on this layer sits in.</summary>

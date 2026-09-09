@@ -1865,6 +1865,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             HorizontalAlignment = HorizontalAlignment.Left,
         };
 
+        Panel.OffscreenSurface.OpensAWindow(open);
+
         open.Click += async (_, _) =>
         {
             if (_memories is not { } memories || TopLevel.GetTopLevel(this) is not Window owner)
@@ -1898,6 +1900,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             HorizontalAlignment = HorizontalAlignment.Left,
         };
 
+        Panel.OffscreenSurface.OpensAWindow(open);
+
         open.Click += async (_, _) =>
         {
             if (_debrief is not { } debrief || TopLevel.GetTopLevel(this) is not Window owner)
@@ -1929,6 +1933,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Padding = new Thickness(10, 4),
             HorizontalAlignment = HorizontalAlignment.Left,
         };
+
+        Panel.OffscreenSurface.OpensAWindow(open);
 
         open.Click += async (_, _) =>
         {
@@ -1962,6 +1968,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Padding = new Thickness(10, 4),
             HorizontalAlignment = HorizontalAlignment.Left,
         };
+
+        Panel.OffscreenSurface.OpensAWindow(open);
 
         open.Click += async (_, _) =>
         {
@@ -2000,6 +2008,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Padding = new Thickness(10, 4),
             HorizontalAlignment = HorizontalAlignment.Left,
         };
+
+        Panel.OffscreenSurface.OpensAWindow(open);
 
         open.Click += async (_, _) =>
         {
@@ -2154,6 +2164,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             HorizontalAlignment = HorizontalAlignment.Left,
         };
 
+        Panel.OffscreenSurface.OpensAWindow(open);
+
         open.Click += async (_, _) =>
         {
             if (_coverage is not null && TopLevel.GetTopLevel(this) is Window owner)
@@ -2180,6 +2192,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Padding = new Thickness(10, 4),
             HorizontalAlignment = HorizontalAlignment.Left,
         };
+
+        Panel.OffscreenSurface.OpensAWindow(open);
 
         open.Click += async (_, _) =>
         {
@@ -2211,6 +2225,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Padding = new Thickness(10, 4),
             HorizontalAlignment = HorizontalAlignment.Left,
         };
+
+        Panel.OffscreenSurface.OpensAWindow(open);
 
         open.Click += async (_, _) =>
         {
@@ -2278,6 +2294,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Padding = new Thickness(10, 4),
             HorizontalAlignment = HorizontalAlignment.Left,
         };
+
+        Panel.OffscreenSurface.OpensAWindow(open);
 
         open.Click += async (_, _) =>
         {
@@ -2580,9 +2598,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         DressAsAChoice(button);
 
-        // Behind this is a window, which is a thing the headset's copy of this surface must not open: a
-        // dialog on a desktop the Commander is not looking at is a dialog they cannot answer.
-        button.Classes.Add(Panel.OffscreenSurface.DesktopOnly);
+        Panel.OffscreenSurface.OpensAWindow(button);
 
         // Said rather than left to be guessed at.
         var busy = new BusyGlyph

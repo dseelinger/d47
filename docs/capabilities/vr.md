@@ -202,6 +202,13 @@ Two things float in front of you.
 **The panel** — the same panel as on the desktop, not a picture of it. It is the same app drawn a
 second time, so the windowed version can never do something the headset version cannot.
 
+**A Settings row that opens a window is refused, and the panel says so.** Some Settings rows open a
+second window over the desktop panel: what Directive 47 remembers, the directions it has drafted,
+your notes, the logbook, the audio recorder, the coverage list, your own ship cores, macros,
+switches, and the arrow that clears a stored key. A window cannot appear in a headset at all, so a
+ray press on one of those draws *“That opens a window. It is on the desktop.”* over the panel and
+opens nothing. Everything else on the page is pressed as usual.
+
 **Captions** — everything Directive 47 says, written underneath. They place themselves and clear
 themselves, and there is nothing to drag them somewhere you would not see them. You choose which
 of two places they sit — in your view, or low in the cockpit — and Directive 47 works out the rest.
