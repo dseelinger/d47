@@ -127,14 +127,17 @@ public sealed class VrHost : IDisposable
         D47.Core.Engineers.EngineerPlanService? unlocks = null,
         D47.Core.Goals.GoalBook? goals = null,
         Action? backfillGoals = null,
-        Panel.AdventureSurface? adventures = null)
+        Panel.AdventureSurface? adventures = null,
+        D47.Core.Capabilities.CapabilityRegistry? capabilities = null,
+        D47.Core.Knowledge.SourcingBoard? sourcingBoard = null,
+        D47.Core.Knowledge.CarrierManifest? carrier = null)
     {
         VrHost? self = null;
 
         var panel = new VrPanelSurface(
             model, settings, slot => self?.AnchorFor(slot), avatars, dumpTo, settingsPage,
             checklists, timekeeper, alarmStore, ships, gameState, onFoot, unlocks, goals,
-            backfillGoals, adventures, viewState);
+            backfillGoals, adventures, viewState, capabilities, sourcingBoard, carrier);
         var layer = new CaptionLayer { Settings = settings.Current.Vr.Captions };
         var captions = new VrCaptionSurface(layer);
 

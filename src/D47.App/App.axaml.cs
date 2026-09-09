@@ -79,7 +79,13 @@ public partial class App(AppHost? host) : Application
                 host.Goals?.Backfill,
 
                 // And the stories (Phase 47), from 2026-08-22.
-                window?.Adventures);
+                window?.Adventures,
+
+                // And where to buy what a build still needs (Phase 50), on the same terms as the window's copy
+                // (#54).
+                host.Capabilities,
+                host.Sourcing,
+                host.Carrier);
 
             // And the headset's copy of the panel can be the one asking for a spoken value (Phase 25).
             var prompts = host.Vr.Prompts;

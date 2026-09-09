@@ -5,6 +5,11 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using D47.App.Headset;
 using D47.App.Panel;
+using D47.Core.Capabilities;
+using D47.Core.Capabilities.Builtin;
+using D47.Core.Checklists;
+using D47.Core.Journal;
+using D47.Core.Knowledge;
 using D47.Vr;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -120,6 +125,142 @@ public class VrPanelRasterTests
         var (settings, _, _) = TestSurface.Create();
 
         Assert.True(new VrPanelSurface(new PanelViewModel(), settings, _ => null).IsDirty);
+    }
+
+    private const string Depot =
+        """
+        { "timestamp":"2026-08-25T10:00:00Z", "event":"ColonisationConstructionDepot",
+          "MarketID":3960809986, "ConstructionProgress":0.25,
+          "ConstructionComplete":false, "ConstructionFailed":false,
+          "ResourcesRequired":[
+            { "Name":"$steel_name;", "Name_Localised":"Steel",
+              "RequiredAmount":300, "ProvidedAmount":0, "Payment":5000 } ] }
+        """;
+
+    /// <summary>Everything a headset copy needs to carry Sourcing: a registry, a board, and a build to show.</summary>
+    private static (
+        VrPanelSurface Surface,
+        CarrierManifest Carrier,
+        D47.Core.Journal.CommanderGameState? GameState) WithSourcing()
+    {
+        var (settings, _, paths) = TestSurface.Create();
+        var store = new GameStateStore();
+
+        foreach (var line in new[]
+                 {
+                     """{"timestamp":"2026-08-25T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+                     """{"timestamp":"2026-08-25T09:30:00Z","event":"Docked","StationName":"Ratraii Construction Site","StarSystem":"Ratraii","MarketID":3960809986}""",
+                     Depot.ReplaceLineEndings(" "),
+                 })
+        {
+            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
+            store.Apply(parsed!);
+        }
+
+        var live = store.Active;
+        var board = new SourcingBoard();
+        var carrier = new CarrierManifest(
+            Path.Combine(paths.Data, "carrier.json"), NullLogger<CarrierManifest>.Instance);
+
+        var registry = CapabilityRegistry.Build(
+        [
+            ColonisationCapability.Create(
+                () => live,
+                null,
+                settings,
+                new NoopTrade(),
+                carrier,
+                board,
+                () => new DateTimeOffset(2026, 8, 25, 12, 0, 0, TimeSpan.Zero)),
+        ]);
+
+        var checklists = new ChecklistService(
+            new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), NullLogger<ChecklistStore>.Instance),
+            new ChecklistProposalStore(
+                Path.Combine(paths.Data, "checklist-proposals.json"),
+                NullLogger<ChecklistProposalStore>.Instance),
+            () => null);
+
+        var model = new PanelViewModel();
+
+        var surface = new VrPanelSurface(
+            model,
+            settings,
+            _ => null,
+            checklists: checklists,
+            gameState: () => live,
+            capabilities: registry,
+            sourcingBoard: board,
+            carrier: carrier);
+
+        return (surface, carrier, live);
+    }
+
+    private sealed class NoopTrade : D47.Core.Knowledge.ITradePlanService
+    {
+        public Task<D47.Core.Knowledge.TradeRoute?> PlanAsync(
+            D47.Core.Knowledge.TradeQuery query, CancellationToken cancellationToken) =>
+            Task.FromResult<D47.Core.Knowledge.TradeRoute?>(null);
+
+        public Task<D47.Core.Knowledge.CommodityAnswer> FindCommodityAsync(
+            D47.Core.Knowledge.CommoditySearch search, CancellationToken cancellationToken) =>
+            Task.FromResult(D47.Core.Knowledge.CommodityAnswer.Empty);
+
+        public Task<D47.Core.Knowledge.SourcingAnswer> SourceConstructionAsync(
+            D47.Core.Knowledge.SourcingSearch search, CancellationToken cancellationToken) =>
+            Task.FromResult(D47.Core.Knowledge.SourcingAnswer.Empty);
+    }
+
+    /// <summary>The root reaches the headset the same way it reaches the window (#54).</summary>
+    [AvaloniaFact]
+    public void SourcingIsTheChecklistTabsSecondRootOnTheHeadset()
+    {
+        var (surface, _, _) = WithSourcing();
+
+        Assert.Contains(
+            surface.Nav.Roots(D47.Core.Interface.PanelTab.Checklist),
+            root => root.Key == SourcingPage.RootKey && root.Word == "Sourcing");
+    }
+
+    /// <summary>
+    /// A carrier figure already told, drawn into the headset's own copy of the page — the half of #54
+    /// that never touches a keyboard at all.
+    /// </summary>
+    [AvaloniaFact]
+    public void TheHeadsetRastersTheSourcingPageWithACarrierFigureTyped()
+    {
+        var (surface, carrier, gameState) = WithSourcing();
+
+        carrier.Set(gameState?.Identity.FrontierId, "Steel", 150, DateTimeOffset.Now);
+
+        Assert.True(surface.Nav.SelectRoot(D47.Core.Interface.PanelTab.Checklist, SourcingPage.RootKey));
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        var (width, height) = surface.Size;
+        var buffer = new VrPixels(width, height);
+        surface.Draw(buffer.Address, buffer.RowBytes);
+
+        var distinct = new HashSet<uint>();
+
+        unsafe
+        {
+            var pixels = (uint*)buffer.Address;
+
+            for (var i = 0; i < width * height; i++)
+            {
+                distinct.Add(pixels[i]);
+
+                if (distinct.Count > 8)
+                {
+                    break;
+                }
+            }
+        }
+
+        Assert.True(
+            distinct.Count > 8,
+            $"The submitted buffer has only {distinct.Count} distinct colours, which is a blank quad "
+            + "rather than a rendered Sourcing page.");
     }
 
     /// <summary>

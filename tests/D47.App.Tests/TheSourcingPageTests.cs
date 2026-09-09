@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
@@ -187,8 +188,120 @@ public class TheSourcingPageTests
     }
 
     /// <summary>
-    /// Desktop only, by not making the call — the carrier figure is typed, and typing wants a keyboard
-    /// the headset has not got.
+    /// The headset's own path to the same box: a ray press opens the drawn keyboard over the panel, and
+    /// Done writes what was typed into the box once — the same guarantee every other text box on this
+    /// surface already gets (#54).
+    /// </summary>
+    [AvaloniaFact]
+    public void ARayPressOnTheCarrierBoxOpensTheDrawnKeyboardAndDoneWritesItOnce()
+    {
+        var root = TempFolders.Create("d47-sourcing-headset-tests");
+        var store = new GameStateStore();
+
+        foreach (var line in new[]
+                 {
+                     """{"timestamp":"2026-08-25T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+                     """{"timestamp":"2026-08-25T09:30:00Z","event":"Docked","StationName":"Ratraii Construction Site","StarSystem":"Ratraii","MarketID":3960809986}""",
+                     Depot.ReplaceLineEndings(" "),
+                 })
+        {
+            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
+            store.Apply(parsed!);
+        }
+
+        var live = store.Active;
+        var trade = new FakeTrade();
+        var board = new SourcingBoard();
+        var carrier = new CarrierManifest(Path.Combine(root, "carrier.json"), NullLogger<CarrierManifest>.Instance);
+        var paths = new D47.Core.AppPaths(root);
+
+        paths.EnsureCreated();
+
+        var settingsStore = new SettingsStore(paths, NullLogger<SettingsStore>.Instance);
+
+        var settings = new SettingsService(
+            settingsStore,
+            new SecretStore(paths, new Plain(), NullLogger<SecretStore>.Instance),
+            settingsStore.Load(),
+            NullLogger<SettingsService>.Instance);
+
+        var registry = CapabilityRegistry.Build(
+        [
+            ColonisationCapability.Create(
+                () => live,
+                null,
+                settings,
+                trade,
+                carrier,
+                board,
+                () => new DateTimeOffset(2026, 8, 25, 12, 0, 0, TimeSpan.Zero)),
+        ]);
+
+        var checklists = new ChecklistService(
+            new ChecklistStore(Path.Combine(root, "checklist.json"), NullLogger<ChecklistStore>.Instance),
+            new ChecklistProposalStore(
+                Path.Combine(root, "checklist-proposals.json"),
+                NullLogger<ChecklistProposalStore>.Instance),
+            () => null);
+
+        var panel = new PanelView { DataContext = new PanelViewModel() };
+
+        panel.EnableChecklist(
+            checklists,
+            null,
+            null,
+            () => new SourcingPage(registry, board, carrier, () => live, () => settings.Current.Knowledge.GalaxySearch));
+
+        using var offscreen = new OffscreenSurface(panel, new PixelSize(1100, 900));
+
+        panel.Tab = PanelTab.Checklist;
+        Dispatcher.UIThread.RunJobs();
+        offscreen.Render();
+
+        Assert.True(panel.Nav.SelectRoot(SourcingPage.RootKey));
+        Dispatcher.UIThread.RunJobs();
+        offscreen.Render();
+
+        var box = Box(panel, "Tritium");
+        var at = box.TranslatePoint(new Point(box.Bounds.Width / 2, box.Bounds.Height / 2), offscreen.View);
+        Assert.NotNull(at);
+
+        Assert.True(offscreen.Click(at.Value), "the press landed on the carrier box");
+        Assert.True(offscreen.IsChoosing, "the drawn keyboard is over the panel");
+
+        offscreen.Render();
+
+        foreach (var letter in new[] { "s", "t", "e", "e", "l" })
+        {
+            var key = offscreen.Root.GetVisualDescendants().OfType<Button>()
+                .First(button => (button.Content as string) == letter);
+
+            var onKey = key.TranslatePoint(new Point(key.Bounds.Width / 2, key.Bounds.Height / 2), offscreen.View);
+            Assert.NotNull(onKey);
+
+            Assert.True(offscreen.Click(onKey.Value));
+            offscreen.Render();
+        }
+
+        // Not yet: nothing is written until Done.
+        Assert.True(string.IsNullOrEmpty(box.Text));
+
+        var done = offscreen.Root.GetVisualDescendants().OfType<Button>()
+            .First(button => (button.Content as string) == "Done");
+
+        var onDone = done.TranslatePoint(new Point(done.Bounds.Width / 2, done.Bounds.Height / 2), offscreen.View);
+        Assert.NotNull(onDone);
+
+        Assert.True(offscreen.Click(onDone.Value));
+
+        Assert.Equal("steel", box.Text);
+        Assert.False(offscreen.IsChoosing, "the keyboard put itself away");
+    }
+
+    /// <summary>
+    /// Both surfaces get the root now (#54) — this is the general guard, the one <c>Furnish</c> gives
+    /// every root, checked here because Sourcing is where it used to be mistaken for a reason to keep
+    /// the headset out.
     /// </summary>
     [AvaloniaFact]
     public void ASurfaceThatDoesNotFurnishItDoesNotGetIt()
