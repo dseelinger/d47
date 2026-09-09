@@ -164,6 +164,10 @@ public partial class PanelView : UserControl
         // (#273).
         ModeBox.LayoutUpdated += (_, _) => WidenModeBoxToItsWidestReading();
 
+        // The strip's own first measurement, so a window that opens too narrow for the words is decided
+        // before it is shown rather than only on the first drag (#95).
+        TabsScroller.LayoutUpdated += (_, _) => ShowTabSteppers();
+
         // Set in code rather than bound, because what mini hides is three named regions and a binding for
         // each would be three expressions no test can reach.
         ModeProperty.Changed.AddClassHandler<PanelView>((view, _) =>
@@ -3174,11 +3178,12 @@ public partial class PanelView : UserControl
         (nameof(SettingsTab), "Settings", Controls.Glyphs.Tabs.Settings),
     ];
 
-    /// <summary>Whether the strip is currently showing marks instead of words.</summary>
-    private bool _tabsCollapsed;
-
-    /// <summary>Whether the tabs have been drawn at all yet, rather than left as the markup made them.</summary>
-    private bool _tabsDrawn;
+    /// <summary>
+    /// Whether the strip is showing marks instead of words, or null before the first settled
+    /// measurement has decided (#95) — never a plain <c>bool</c>, because that has to start at one
+    /// answer and the markup's own answer, words, is exactly the one a narrow window must not keep.
+    /// </summary>
+    private bool? _tabsCollapsed;
 
     /// <summary>
     /// How wide the strip was the last time it was drawn with words — the number the decision to expand
@@ -3189,27 +3194,34 @@ public partial class PanelView : UserControl
     /// <summary>Three stages, in order: words, marks, then marks that scroll (#234).</summary>
     private void ShowTabSteppers()
     {
-        // Once, before anything is measured.
-        if (!_tabsDrawn)
+        var room = TabsScroller.Viewport.Width;
+
+        // Nothing settled to decide against yet — the layout-pass subscription above will call this
+        // again once there is (#95).
+        if (room <= 0)
         {
-            _tabsDrawn = true;
+            return;
+        }
+
+        if (_tabsCollapsed is not { } was)
+        {
+            // The first decision, against the strip as the markup drew it: words.
+            _tabWordsWidth = TabsScroller.Extent.Width;
+            _tabsCollapsed = _tabWordsWidth > room + 1;
             DrawTabMarks();
             TabsScroller.UpdateLayout();
         }
-
-        var room = TabsScroller.Viewport.Width;
-
-        if (room > 0)
+        else
         {
-            if (!_tabsCollapsed)
+            if (!was)
             {
                 _tabWordsWidth = TabsScroller.Extent.Width;
             }
 
-            var wanted = _tabsCollapsed ? _tabWordsWidth : TabsScroller.Extent.Width;
+            var wanted = was ? _tabWordsWidth : TabsScroller.Extent.Width;
             var collapse = wanted > room + 1;
 
-            if (collapse != _tabsCollapsed)
+            if (collapse != was)
             {
                 _tabsCollapsed = collapse;
                 DrawTabMarks();
@@ -3233,7 +3245,7 @@ public partial class PanelView : UserControl
                 continue;
             }
 
-            if (_tabsCollapsed)
+            if (_tabsCollapsed == true)
             {
                 Controls.Glyphs.Mark(
                     tab,

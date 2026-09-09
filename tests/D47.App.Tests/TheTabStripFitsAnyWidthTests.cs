@@ -112,6 +112,25 @@ public class TheTabStripFitsAnyWidthTests
         AssertMarkAndWord(panel.GetControl<RadioButton>("TranscriptTab"), "Transcript");
     }
 
+    /// <summary>And the words go away again when the room does, the same trigger working both ways (#95).</summary>
+    [AvaloniaFact]
+    public void TheWordsGoAwayWhenTheRoomDoes()
+    {
+        var panel = Furnished(1400);
+
+        AssertMarkAndWord(panel.GetControl<RadioButton>("TranscriptTab"), "Transcript");
+
+        if (panel.Parent is ContentControl host)
+        {
+            host.Width = 420;
+        }
+
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.IsType<Avalonia.Controls.Shapes.Path>(
+            panel.GetControl<RadioButton>("TranscriptTab").Content);
+    }
+
  /// <summary>A strip that opens wide and stays wide still gets its marks.</summary>
     [AvaloniaFact]
     public void AStripThatNeverNarrowsStillGetsItsMarks()
