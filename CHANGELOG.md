@@ -6,7 +6,15 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
-## 0.110.8 — The tab strip decides its own width before it is shown
+## 0.110.8 — The empty Checklist names what it is filtered by, and the tab strip decides its own width
+
+"Nothing on your list matches that." never said what "that" was. On the full panel the query box
+and the scope button sit beside the message, so the gap was survivable; in mini neither is on
+screen, and the query still narrows the list from wherever it was typed. The message now names the
+query, the scope, or both, from the same two values the filter itself reads — "Nothing on your list
+matches 'limpets'.", "Nothing on your list is in A ship's build.", "Nothing in A ship's build
+matches 'limpets'." — and the empty state grows a Clear filter button, since mini has no search box
+to clear the query from.
 
 A window that opened narrower than the tab strip's words drew the words anyway, and only
 collapsed to marks once the Commander touched the edge — the collapse decision ran only from a
