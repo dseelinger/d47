@@ -6,6 +6,14 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.8 — The tab strip decides its own width before it is shown
+
+A window that opened narrower than the tab strip's words drew the words anyway, and only
+collapsed to marks once the Commander touched the edge — the collapse decision ran only from a
+resize, so a window that opened at a narrow size and sat still never made it. The decision is now
+made once against a settled measurement before the window is first shown, so it opens in the state
+it would otherwise only reach after a drag.
+
 ## 0.110.7 — The checklist follows the ship, and Sourcing opens on the headset
 
 Filtering the checklist to the engineer in this system now answers from the system the ship is in.
