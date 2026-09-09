@@ -252,7 +252,7 @@ public sealed class OffscreenSurface : IDisposable
     public const string DesktopOnly = "desktop-only";
 
     /// <summary>What the panel says when it refuses a press on a control that opens a window.</summary>
-    public const string Refusal = "That opens a window. It is on the desktop.";
+    public const string Refusal = "Not currently supported in VR";
 
     /// <summary>
     /// Marks a control this surface must not press, because pressing it opens a window: a dialog on a

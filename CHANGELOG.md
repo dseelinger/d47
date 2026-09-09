@@ -10,7 +10,7 @@
 
 Every Settings row that opens a second window — memories, the debrief, notes, the logbook, the
 audio recorder, coverage, ship cores, macros, switches, and the arrow that clears a stored key —
-now refuses a headset press and says *“That opens a window. It is on the desktop.”* on the panel.
+now refuses a headset press and telling the user that it's not supported in VR.
 A ray press used to reach the handler, which would have tried to open a dialog over a window that
 is never shown. The desktop window is unchanged.
 
