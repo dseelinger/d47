@@ -6,6 +6,12 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.1 — What can I do?
+
+The ask box's empty text is now a question you can actually type. It read "Ask D47 something";
+it reads "What can I do?", and on a Commander's first run still offers "where am I" and
+"what's your status" beside it.
+
 ## 0.75 — placeholder
 
 **The release history for this version was not recovered.** This heading exists because the

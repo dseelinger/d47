@@ -51,7 +51,7 @@ public class AskHintRetiresTests
 
         // The example goes; the label does not.
         Assert.DoesNotContain(Example, Placeholder(view), StringComparison.OrdinalIgnoreCase);
-        Assert.Equal("Ask D47 something", Placeholder(view));
+        Assert.Equal("What can I do?", Placeholder(view));
 
         window.Close();
     }
@@ -66,7 +66,7 @@ public class AskHintRetiresTests
         var model = new PanelViewModel { HasAsked = true };
         var (window, view) = Open(model);
 
-        Assert.Equal("Ask D47 something", Placeholder(view));
+        Assert.Equal("What can I do?", Placeholder(view));
 
         window.Close();
     }
@@ -91,8 +91,8 @@ public class AskHintRetiresTests
         model.HasAsked = true;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal("Ask D47 something", Placeholder(desktop));
-        Assert.Equal("Ask D47 something", Placeholder(headset));
+        Assert.Equal("What can I do?", Placeholder(desktop));
+        Assert.Equal("What can I do?", Placeholder(headset));
 
         second.Close();
         window.Close();
@@ -111,7 +111,7 @@ public class AskHintRetiresTests
 
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal("Ask D47 something", Placeholder(view));
+        Assert.Equal("What can I do?", Placeholder(view));
 
         window.Close();
     }
