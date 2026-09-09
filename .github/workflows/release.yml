@@ -72,12 +72,24 @@ jobs:
 
       # The gate. Everything below this line only runs on a green suite.
       #
-      # Sequential on purpose. Running the seven projects concurrently was measured on a
-      # four-vCPU runner and lost: D47.App.Tests went 2m34s -> 3m21s and Core.Tests 20s -> 39s,
-      # for no change in the total. D47.App.Tests is single-threaded — Avalonia.Headless.XUnit
-      # puts every test on one dispatcher thread — so it starves against anything else running.
+      # Six of the seven projects. D47.App.Tests runs on the maintainer's machine instead, before
+      # this workflow is dispatched at all — see tools\release.ps1. Its 1365 Avalonia headless
+      # tests cost 2m52s on a four-vCPU runner against 76s locally, and they are the only ones
+      # that do; the six here total about a minute and carry Core's 5490.
+      #
+      # Sequential on purpose. Running them concurrently was measured and lost: D47.App.Tests
+      # went 2m34s -> 3m21s and Core.Tests 20s -> 39s for no change in the total, because
+      # Avalonia.Headless.XUnit puts every test on one dispatcher thread and starves against
+      # anything sharing the machine.
       - name: Test
-        run: dotnet test d47.slnx -c Release --no-build
+        shell: pwsh
+        run: |
+          $projects = Get-ChildItem tests -Filter *.csproj -Recurse -Depth 1 |
+              Where-Object BaseName -ne 'D47.App.Tests'
+          foreach ($project in $projects) {
+              dotnet test $project.FullName -c Release --no-build --nologo
+              if ($LASTEXITCODE -ne 0) { throw "$($project.BaseName) failed." }
+          }
 
       # No -o: PublishDir is already bin\$(Configuration)\publish\, which is exactly where
       # installer\d47.iss reads from. Passing one breaks the installer's paths.

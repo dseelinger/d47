@@ -19,7 +19,8 @@ dotnet test  d47.slnx -c Debug      # the whole suite; a release gate, not a wor
 dotnet test tests/D47.Core.Tests --filter FullyQualifiedName~Ticking   # the working loop
 ```
 
-- SDK pinned by `global.json` to `10.0.302`, `rollForward: latestFeature`.
+- SDK pinned by `global.json` to `10.0.400`, `rollForward: disable` — exact, because the suite
+  now runs partly here and partly on the runner and the two must agree on a toolchain.
 - `Directory.Build.props` sets `net10.0-windows`, `Nullable`, `ImplicitUsings`,
   `EnforceCodeStyleInBuild` and **`TreatWarningsAsErrors`**. A warning is a build break. There is
   no `#pragma warning disable` or `SuppressMessage` in `src/`; adding the first one is a
