@@ -72,30 +72,12 @@ jobs:
 
       # The gate. Everything below this line only runs on a green suite.
       #
-      # The projects run concurrently against that build. D47.App.Tests takes longer than the
-      # other six together — Avalonia.Headless.XUnit puts every one of its tests on a single
-      # dispatcher thread — so it starts first and they finish inside its runtime. A non-zero
-      # exit from any of them fails the step.
+      # Sequential on purpose. Running the seven projects concurrently was measured on a
+      # four-vCPU runner and lost: D47.App.Tests went 2m34s -> 3m21s and Core.Tests 20s -> 39s,
+      # for no change in the total. D47.App.Tests is single-threaded — Avalonia.Headless.XUnit
+      # puts every test on one dispatcher thread — so it starves against anything else running.
       - name: Test
-        shell: pwsh
-        run: |
-          $projects = @(Get-ChildItem tests -Filter *.csproj -Recurse -Depth 1 | ForEach-Object FullName)
-          $projects = @($projects | Sort-Object { if ($_ -match 'D47\.App\.Tests') { 0 } else { 1 } })
-          $results = $projects | ForEach-Object -ThrottleLimit 3 -Parallel {
-              $output = & dotnet test $_ -c Release --no-build --nologo 2>&1 | Out-String
-              [pscustomobject]@{
-                  Project = [System.IO.Path]::GetFileNameWithoutExtension($_)
-                  Code    = $LASTEXITCODE
-                  Output  = $output
-              }
-          }
-          foreach ($r in $results) {
-              Write-Host "::group::$($r.Project) — exit $($r.Code)"
-              Write-Host $r.Output
-              Write-Host '::endgroup::'
-          }
-          $failed = @($results | Where-Object Code -ne 0)
-          if ($failed) { throw "failed: $($failed.Project -join ', ')" }
+        run: dotnet test d47.slnx -c Release --no-build
 
       # No -o: PublishDir is already bin\$(Configuration)\publish\, which is exactly where
       # installer\d47.iss reads from. Passing one breaks the installer's paths.
