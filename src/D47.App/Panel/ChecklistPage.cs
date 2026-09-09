@@ -409,10 +409,14 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         if (live.Count == 0)
         {
-            _list.Children.Add(Muted(Query.Length > 0 || Chosen != Everything
-                ? "Nothing on your list matches that."
-                : "Nothing here yet. Say \"add buy limpets to my checklist\", or ask for a build plan, "
-                  + "and D47 will propose it."));
+            _list.Children.Add(Muted(EmptyMessage()));
+
+            // Mini has no search box to type the query away (#94): the button that clears the filter,
+            // not just the sentence that names it.
+            if (Query.Length > 0 || Chosen != Everything)
+            {
+                _list.Children.Add(ClearFilterButton());
+            }
         }
 
         // How big the answer is, whenever the page is showing less than all of it (reported 2026-08-23, twice
@@ -1371,6 +1375,52 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     /// The second line of a row: its scope, the arc it serves, and — on a derived item — the sentence
     /// saying why it is not something to tick.
     /// </summary>
+    /// <summary>
+    /// Names the query and the scope that emptied the list — the same two values <see cref="Matches"/>
+    /// reads — so a Commander in mini, where neither is on screen, can still tell what to undo (#94).
+    /// </summary>
+    private string EmptyMessage()
+    {
+        if (Query.Length == 0 && Chosen == Everything)
+        {
+            return "Nothing here yet. Say \"add buy limpets to my checklist\", or ask for a build plan, "
+                   + "and D47 will propose it.";
+        }
+
+        // The filter's own word, from the same lookup the scope button's label uses, so the two cannot
+        // drift apart.
+        var scope = Chosen == Everything
+            ? null
+            : _checklists.FilterAxes().FirstOrDefault(filter => filter.Key == Chosen)?.Word ?? Chosen;
+
+        return (Query.Length > 0, scope) switch
+        {
+            (true, null) => $"Nothing on your list matches '{Query}'.",
+            (true, { } word) => $"Nothing in {word} matches '{Query}'.",
+            (false, { } word) => $"Nothing on your list is in {word}.",
+            _ => "Nothing here yet.",
+        };
+    }
+
+    /// <summary>The way out of a filter that emptied the list, for the surface with no search box to clear.</summary>
+    private Control ClearFilterButton()
+    {
+        var button = new Button
+        {
+            Content = "Clear filter",
+            Padding = new Thickness(12, 4),
+            MinHeight = TouchTarget,
+        };
+
+        button.Click += (_, _) =>
+        {
+            _checklists.Search(null);
+            _checklists.Choose(null);
+        };
+
+        return button;
+    }
+
     private static TextBlock Muted(string text)
     {
         var block = new TextBlock

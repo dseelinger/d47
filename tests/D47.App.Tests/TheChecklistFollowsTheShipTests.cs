@@ -124,10 +124,10 @@ public class TheChecklistFollowsTheShipTests
 
         var panel = Showing(checklists);
 
-        // Parked where nobody works: the filter has nothing to show, and says so.
+        // Parked where nobody works: the filter has nothing to show, and names the scope that emptied it.
         Assert.Contains(
             Drawn(panel),
-            text => text.Contains("Nothing on your list matches that.", StringComparison.Ordinal));
+            text => text.Contains("Nothing on your list is in here.", StringComparison.Ordinal));
 
         JumpToLaksak(store);
 
@@ -135,7 +135,7 @@ public class TheChecklistFollowsTheShipTests
 
         Assert.DoesNotContain(
             arrived,
-            text => text.Contains("Nothing on your list matches that.", StringComparison.Ordinal));
+            text => text.Contains("Nothing on your list is in here.", StringComparison.Ordinal));
 
         Assert.Contains(arrived, text => text.Contains("Heavy Duty", StringComparison.Ordinal));
     }
