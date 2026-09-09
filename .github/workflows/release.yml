@@ -43,15 +43,6 @@ jobs:
         with:
           global-json-file: global.json
 
-      # Restore is ~40s of a cold run and the package set only moves when a .csproj or the SDK
-      # pin does, so the key is those files.
-      - name: Cache NuGet
-        uses: actions/cache@v4
-        with:
-          path: ~\.nuget\packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', 'global.json') }}
-          restore-keys: nuget-${{ runner.os }}-
-
       # ReleaseVersion.TryParse takes exactly three integer parts and treats anything after a
       # '-' as a label, which marks the build as a local working-tree build. Refuse early.
       - name: Check the version is releasable
