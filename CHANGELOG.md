@@ -6,7 +6,7 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
-## 0.110.7 — The checklist follows the ship
+## 0.110.7 — The checklist follows the ship, and Sourcing opens on the headset
 
 Filtering the checklist to the engineer in this system now answers from the system the ship is in.
 The page listened to the list, the proposals, the filter and the goals, and to nothing that says
@@ -14,6 +14,11 @@ where the Commander is — so jumping into an engineer's system left the empty m
 that engineer's work behind it, and left the partial-grades checkbox and the rank line describing
 the system just left. The page redraws when the system changes, and on nothing else: docking,
 dropping out of supercruise and every other event inside one system redraw nothing.
+
+Sourcing — where to buy what a build still needs — is now the Checklist's second root on the
+headset. It was withheld there because the carrier figure is typed and the headset had no
+keyboard of its own; a press on the carrier box opens the drawn keyboard the panel already has,
+and the figure is written once when the board closes. The desktop window is unchanged.
 
 ## 0.110.6 — Settings rows that open a window
 
