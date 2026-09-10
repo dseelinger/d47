@@ -469,10 +469,24 @@ public sealed class TurnLoop(
         // turn which merely says it did.
         var standingBefore = Standing?.Invoke();
 
+        // A tool the model already called this turn, keyed by name and exact arguments, so a repeat is
+        // answered rather than run again — the second identical call is not tried, and whatever it does the
+        // first time (an announcement included) does not happen twice (#87).
+        var triedThisTurn = new Dictionary<string, ToolResult>();
+
+        // Whether the round that just finished spoke any text, so the next round's text is not run onto
+        // the end of it without a space (#87).
+        var previousRoundSpoke = false;
+
         for (var round = 1; ; round++)
         {
             // The last round is offered no tools at all.
             var lastRound = round > MaxToolRounds;
+
+            if (round > 1 && previousRoundSpoke)
+            {
+                yield return new TurnEvent.TextDelta(" ");
+            }
 
             var request = new LlmRequest
             {
@@ -524,6 +538,7 @@ public sealed class TurnLoop(
             usage = Add(usage, outcome.Usage);
             answer = outcome.Reply.ToString().Trim();
             stopReason = outcome.StopReason;
+            previousRoundSpoke = answer.Length > 0;
 
             if (outcome.ToolUses.Count == 0)
             {
@@ -547,20 +562,41 @@ public sealed class TurnLoop(
             {
                 yield return new TurnEvent.ToolStarted(call.Name);
 
-                // The one call site that says Model.
-                var result = await capabilities
-                    .InvokeAsync(
-                        call.Name,
-                        ToolArguments.FromJson(call.InputJson),
-                        cancellationToken,
-                        ToolCaller.Model)
-                    .ConfigureAwait(false);
+                var key = call.Name + " " + call.InputJson;
+                ToolResult result;
 
-                logger.LogInformation(
-                    "Model called {Tool} in round {Round}: {Status}",
-                    call.Name,
-                    round,
-                    result.IsError ? "error" : "ok");
+                if (triedThisTurn.TryGetValue(key, out var prior))
+                {
+                    // Not run again: whatever the first attempt did — an announcement included — happens once,
+                    // and the model is told plainly that asking again will not change the answer (#87).
+                    result = ToolResult.Error(
+                        "Already tried once this turn with the same arguments, and the answer was: "
+                        + $"{prior.Content} Asking again will not change it.");
+
+                    logger.LogInformation(
+                        "Model called {Tool} in round {Round}: skipped, already tried this turn",
+                        call.Name,
+                        round);
+                }
+                else
+                {
+                    // The one call site that says Model.
+                    result = await capabilities
+                        .InvokeAsync(
+                            call.Name,
+                            ToolArguments.FromJson(call.InputJson),
+                            cancellationToken,
+                            ToolCaller.Model)
+                        .ConfigureAwait(false);
+
+                    triedThisTurn[key] = result;
+
+                    logger.LogInformation(
+                        "Model called {Tool} in round {Round}: {Status}",
+                        call.Name,
+                        round,
+                        result.IsError ? "error" : "ok");
+                }
 
                 yield return new TurnEvent.ToolFinished(call.Name, !result.IsError);
 

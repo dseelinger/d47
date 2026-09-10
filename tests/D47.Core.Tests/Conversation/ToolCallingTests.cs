@@ -214,8 +214,88 @@ public class ToolCallingTests
 
         // Three rounds that could call, then one that could not.
         Assert.Equal(4, provider.CallCount);
-        Assert.Equal(3, spy.Calls.Count);
+
+        // The same call with the same arguments three times over: only the first is actually run (#87).
+        Assert.Single(spy.Calls);
         Assert.Empty(provider.Requests[3].Prompt.Tools);
+    }
+
+    [Fact]
+    public async Task ASecondIdenticalCallInOneTurnIsNotRunAgain()
+    {
+        // The scenario in #87: the same tool with the same arguments, asked for repeatedly inside one turn
+        // and refused the same way every time. Only the first attempt should reach the capability, because
+        // what it does once — speak an announcement — must not happen five times.
+        var spy = new SpyTool { Result = ToolResult.Error("Refused: the game is not online.") };
+        var registry = CapabilityRegistry.Build([spy.Describe("plot_course")]);
+
+        var provider = new RoundScriptedLlmProvider(
+            RoundScriptedLlmProvider.Calling("c1", "plot_course", """{"system":"Kamitra"}"""),
+            RoundScriptedLlmProvider.Calling("c2", "plot_course", """{"system":"Kamitra"}"""),
+            RoundScriptedLlmProvider.Saying("I could not plot that."));
+
+        var loop = Build(registry, provider);
+        var (result, events) = await RunAsync(loop, "plot a course to Kamitra");
+
+        Assert.Equal(TurnOutcome.Answered, result.Outcome);
+        Assert.Single(spy.Calls);
+
+        var finishes = events.OfType<TurnEvent.ToolFinished>().ToList();
+        Assert.Equal(2, finishes.Count);
+        Assert.All(finishes, finished => Assert.False(finished.Succeeded));
+
+        var secondResult = provider.Requests[2].Prompt.History
+            .SelectMany(message => message.Content)
+            .OfType<ConversationContent.ToolResult>()
+            .Last();
+
+        Assert.Contains("Already tried once this turn", secondResult.Content);
+    }
+
+    [Fact]
+    public async Task TwoDifferentToolsInOneTurnAreBothRun()
+    {
+        // The dedup in #87 is keyed on the call, not the turn: a second, different tool is not caught by it.
+        var spy = new SpyTool();
+        var otherSpy = new SpyTool();
+        var descriptor = spy.Describe("look_up_distance") with
+        {
+            Tools = [.. spy.Describe("look_up_distance").Tools, .. otherSpy.Describe("plot_course").Tools],
+        };
+        var registry = CapabilityRegistry.Build([descriptor]);
+
+        var provider = new RoundScriptedLlmProvider(
+            RoundScriptedLlmProvider.Calling("c1", "look_up_distance", """{"system":"Sol"}"""),
+            RoundScriptedLlmProvider.Calling("c2", "plot_course", """{"system":"Sol"}"""),
+            RoundScriptedLlmProvider.Saying("Done."));
+
+        await RunAsync(Build(registry, provider), "look up Sol then plot to it");
+
+        Assert.Single(spy.Calls);
+        Assert.Single(otherSpy.Calls);
+    }
+
+    [Fact]
+    public async Task TextFromASecondRoundDoesNotRunOntoTheFirst()
+    {
+        // The other half of #87: two rounds that both speak before the turn ends must not be joined into
+        // one unspaced sentence when read together.
+        var spy = new SpyTool();
+        var registry = CapabilityRegistry.Build([spy.Describe()]);
+
+        var provider = new RoundScriptedLlmProvider(
+            [
+                new LlmStreamEvent.TextDelta("Kamitra's on the clipboard."),
+                new LlmStreamEvent.ToolUse("c1", "look_up_distance", """{"system":"Kamitra"}"""),
+                new LlmStreamEvent.Completed(LlmUsage.None, LlmStopReason.ToolUse),
+            ],
+            RoundScriptedLlmProvider.Saying("Course is in for the plotting."));
+
+        var (_, events) = await RunAsync(Build(registry, provider), "plot a course to Kamitra");
+
+        var spoken = string.Concat(events.OfType<TurnEvent.TextDelta>().Select(delta => delta.Text));
+
+        Assert.Contains("clipboard. Course is in", spoken);
     }
 
     [Fact]

@@ -6,6 +6,15 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.18 — A refused tool call is not tried again in the same turn
+
+A plot request refused by the online gate (#408) was retried by the model five times in seven
+seconds, each retry speaking "Plotting the course to Kamitra" again and the model's separate
+replies running together with no space between them. A tool call is now run once per turn for a
+given name and arguments; a repeat is told plainly that it was already tried and answered the same
+way, without running the tool or speaking its announcement again. Text spoken across two tool
+rounds in one turn is now always separated by a space.
+
 ## 0.110.17 — The Quartermaster stops reaching for a ledger word for everything
 
 A weekend of logs showed the Quartermaster's accounting vocabulary leaking into lines that had
