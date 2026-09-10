@@ -93,37 +93,24 @@ public class ChecklistTabTests
         Assert.True(panel.FindControl<Control>("ChecklistTab")!.IsVisible);
     }
 
-    /// <summary>And the headset's own instantiation has it again, and still has no Loadout.</summary>
+    /// <summary>And the headset's own instantiation has it too.</summary>
     [AvaloniaFact]
-    public void TheHeadsetCopyHasTheChecklistAndStillNotTheFleet()
+    public void TheHeadsetCopyHasTheChecklist()
     {
         var (settings, _, _) = TestSurface.Create();
-        var root = TempFolders.Create("d47-checklist-tests");
-        var checklists = Checklists(root);
-
-        // The fleet service too, so the second assertion is the surface declining to furnish a tab it could
-        // have rather than a test that never handed it the parts.
-        var ships = new D47.Core.Ships.ShipPlanService(
-            new D47.Core.Ships.ShipBuildStore(
-                Path.Combine(root, "ships.json"),
-                NullLogger<D47.Core.Ships.ShipBuildStore>.Instance),
-            checklists,
-            () => null);
+        var checklists = Checklists(TempFolders.Create("d47-checklist-tests"));
 
         using var surface = new Headset.VrPanelSurface(
             new PanelViewModel(),
             settings,
             _ => null,
-            checklists: checklists,
-            ships: ships,
-            gameState: () => null);
+            checklists: checklists);
 
         var view = (PanelView)surface.GetType()
             .GetField("_view", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
             .GetValue(surface)!;
 
         Assert.True(view.FindControl<Control>("ChecklistTab")!.IsVisible);
-        Assert.False(view.FindControl<Control>("LoadoutTab")!.IsVisible);
     }
 
     /// <summary>

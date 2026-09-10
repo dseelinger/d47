@@ -6,6 +6,26 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.11 — The Fleet tab is in the headset, drill and all
+
+Your ships, their builds and your carrier were the window's alone. Fleet was withdrawn from the
+headset panel during the redesign in 0.37.0 and left out again when Checklist came back, on the
+reading that a three-level drill ending in a search field was a bigger surface than one list of
+short rows. That no longer holds: every row it drills to is a button or a switch a controller ray
+already presses, and every value typed into it goes through the same voice-first prompt the rest of
+the panel uses.
+
+Fleet now sits after Transcript on the headset panel, in the place in the tab strip the window puts
+it. Ships, Suits, the gap between the two and the carrier all draw there. A ray press opens a ship
+and then a slot, the mode switch takes a press, and three grip-backs from a slot row return you to
+the root. The hull picture's step buttons do what the mouse wheel and drag do in the window. The
+tab redraws from the headset's own tick, for the same reason Engineers does: the ship underneath
+you can change without anything else happening first.
+
+Ctrl-dragging one slot onto another stays a desktop convenience. The headset surface has no
+pointer-moved path for that gesture to ride on, and no new gesture is being added before 1.0.0, so
+a module is copied there by the row's own action.
+
 ## 0.110.10 — The Routing tab is in the headset, every root of it
 
 Where you are going was the window's alone: the plan forms wanted a keyboard, and the headset had
