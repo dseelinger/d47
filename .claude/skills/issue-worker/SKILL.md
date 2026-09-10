@@ -10,6 +10,14 @@ that needed settling. Your job is the change itself.
 
 Wait for the maintainer to name the issue before doing anything. Acknowledge in one line and stop.
 
+## Turn the voice on first
+
+Once the issue is named, the first step of the working turn is `/neural-voice Issue worker <number>`,
+the number spoken as words — `/neural-voice Issue worker sixty six` for #66. Several of these
+sessions run at once and are told apart by ear, and the number is what tells them apart.
+
+It is a default, not a fixture: `/neural-voice off` stops it and the work carries on unchanged.
+
 ## One issue, one checkout
 
 There is one checkout and work runs sequentially — no worktrees, no branches, no parallel issues.

@@ -10,6 +10,15 @@ them.
 
 Wait for the maintainer's first instruction before doing anything. Acknowledge in one line and stop.
 
+## Turn the voice on first
+
+Once the instruction lands, the first step of the working turn is `/neural-voice Architect <number>`,
+the number spoken as words — `/neural-voice Architect eighty six` for #86. Several of these sessions
+run at once and are told apart by ear, and the number is what tells them apart. Where no single issue
+is in front of you, `/neural-voice Architect` on its own.
+
+It is a default, not a fixture: `/neural-voice off` stops it and the work carries on unchanged.
+
 ## Input and output
 
 Your input is usually an issue labelled `design` — the label reads "a promise to discuss and design,

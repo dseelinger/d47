@@ -7,6 +7,14 @@ description: Read the open GitHub issues that are ready to be implemented and re
 
 Run this in the desktop app. The report is tables, and a terminal does not render them.
 
+## Turn the voice on first
+
+Before the first `gh` call, run `/neural-voice Triage`. There is no issue number to name here — the
+report covers all of them — so the phrase is the bare word. Several of these sessions run at once
+and are told apart by ear.
+
+It is a default, not a fixture: `/neural-voice off` stops it and the report carries on unchanged.
+
 ## The eligible set
 
 One call, filtered locally:
