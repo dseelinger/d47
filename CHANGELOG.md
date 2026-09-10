@@ -6,6 +6,16 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.14 — A System Authority vessel near your own carrier gets the owner treatment reliably
+
+A System Authority vessel's canned line, heard while the Commander shared a system with their own
+fleet carrier, was sometimes read out as an ordinary stranger's message instead of the reworded,
+deferential line that setup calls for. The check for "does the Commander own a carrier here" was
+installed as a side effect of an unrelated periodic pass over game state, so a line arriving before
+that pass had run was always judged as "no" — including every line spoken in the first seconds
+after Directive 47 starts. The check now reads live game state directly from where the callout is
+built, so it is never standing in for "nothing has told me yet".
+
 ## 0.110.13 — NPC chatter stops inventing a dock in supercruise and normal space
 
 Overheard chatter talked about landing pads and dock queues while the Commander was crossing a

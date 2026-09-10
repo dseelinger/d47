@@ -145,6 +145,24 @@ public class IncomingMessageTests
     }
 
     /// <summary>
+    /// A police ship's free text — no <c>$…;</c> key, so a player could have written it — stays an
+    /// ordinary message even beside the Commander's own carrier: the owner road is only for Frontier's
+    /// canned lines (#102).
+    /// </summary>
+    [Fact]
+    public void AFreeTextLineFromAPoliceShipNearYourCarrierIsJustAMessage()
+    {
+        var reader = Reader();
+        reader.AuthorityNearOwnCarrier = () => true;
+
+        var read = reader.Read(Message(
+            "$ShipName_Police_Independent;", "Stand down.", "npc", localised: "Stand down."));
+
+        Assert.NotNull(read);
+        Assert.NotEqual(IncomingMessages.AuthorityCannedKey, read.Key);
+    }
+
+    /// <summary>
     /// Free text from the same sender keeps the verbatim road and stays away from the model: a sender
     /// is a name, and a name can be worn.
     /// </summary>

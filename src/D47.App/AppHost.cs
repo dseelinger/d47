@@ -895,7 +895,8 @@ public sealed class AppHost : IDisposable
             adventureBook,
             viewState,
             commodityLedger,
-            communityGoalSearch);
+            communityGoalSearch,
+            gameState);
 
         // Acting on the game without being asked (Phase 10, item 2).
         var autonomous = new AutonomousActionRunner(loggerFactory.CreateLogger<AutonomousActionRunner>())
@@ -2120,7 +2121,8 @@ public sealed class AppHost : IDisposable
         D47.Core.Adventures.AdventureBook adventures,
         ViewStateStore viewState,
         D47.Core.Journal.CommodityLedger ledger,
-        D47.Core.Knowledge.CommunityGoalSearch communityGoal)
+        D47.Core.Knowledge.CommunityGoalSearch communityGoal,
+        GameStateStore gameState)
     {
         var engine = new CalloutEngine(loggers.CreateLogger<CalloutEngine>())
             .Add(new DangerCallout())
@@ -2199,6 +2201,15 @@ public sealed class AppHost : IDisposable
                     "player" => settings.Speech.SpeakDirectMessages,
                     _ => true,
                 },
+
+                // Reads live state directly rather than waiting on the voice-scope follow to install it
+                // (#102): a line judged before that follow has ever run still takes the authority road
+                // when the state already says it should.
+                AuthorityNearOwnCarrier = () =>
+                    gameState.Active is { } active
+                    && active.Carrier.Owned
+                    && active.Carrier.StarSystem is { Length: > 0 } parked
+                    && string.Equals(parked, active.Location.StarSystem, StringComparison.OrdinalIgnoreCase),
             });
 
         // Elite echoes what you send back to you on the channel it went out on.
@@ -4732,14 +4743,6 @@ public sealed class AppHost : IDisposable
 
                 // The third key, and the one that is known before the dock (#109).
                 callout.CarrierDisplayName = carrier.DisplayName;
-
-                // Whether the Commander shares a system with their own carrier (#248's second half): the
-                // condition under which a System Authority vessel's canned line gets the owner treatment.
-                callout.AuthorityNearOwnCarrier = () =>
-                    GameState.Active is { } active
-                    && active.Carrier.Owned
-                    && active.Carrier.StarSystem is { Length: > 0 } parked
-                    && string.Equals(parked, active.Location.StarSystem, StringComparison.OrdinalIgnoreCase);
             }
         }
 
