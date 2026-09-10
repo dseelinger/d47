@@ -77,6 +77,13 @@ public sealed record ShipModule(string Slot, string Item, bool Powered, int? Hea
     public string? Experimental { get; init; }
 
     /// <summary>
+    /// The unlocalised symbol behind <see cref="Experimental"/> — what <see
+    /// cref="Knowledge.BlueprintCatalogue.NameOf"/> actually joins against, since Elite localises the
+    /// display name and the catalogue never does.
+    /// </summary>
+    public string? ExperimentalSymbol { get; init; }
+
+    /// <summary>
     /// Progress through the grade, 0 to 1. 0.85 and above is finished, not 1.0 — see <see
     /// cref="Knowledge.EngineeringRules.CompleteAt"/>, which carries the evidence.
     /// </summary>
@@ -113,6 +120,8 @@ public sealed record ShipModule(string Slot, string Item, bool Powered, int? Hea
             // same thing.
             Experimental = Blank(engineering?.Named("ExperimentalEffect")
                                  ?? engineering?.Named("ApplyExperimentalEffect")),
+            ExperimentalSymbol = Blank(engineering?.String("ExperimentalEffect")
+                                       ?? engineering?.String("ApplyExperimentalEffect")),
 
             Quality = engineering?.Double("Quality"),
             Engineer = Blank(engineering?.String("Engineer")),
@@ -297,6 +306,9 @@ public sealed record ShipLoadout
             Experimental = Blank(journalEvent.Named("ExperimentalEffect")
                                  ?? journalEvent.Named("ApplyExperimentalEffect"))
                            ?? existing.Experimental,
+            ExperimentalSymbol = Blank(journalEvent.String("ExperimentalEffect")
+                                       ?? journalEvent.String("ApplyExperimentalEffect"))
+                                  ?? existing.ExperimentalSymbol,
 
             Engineer = Blank(journalEvent.String("Engineer")) ?? existing.Engineer,
             EngineerId = journalEvent.Long("EngineerID") ?? existing.EngineerId,

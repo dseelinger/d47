@@ -205,6 +205,7 @@ public sealed class LoadoutStore(string path, ILogger<LoadoutStore> logger)
             Blueprint = record.Blueprint,
             BlueprintLevel = record.BlueprintLevel,
             Experimental = record.Experimental,
+            ExperimentalSymbol = record.ExperimentalSymbol,
             Quality = record.Quality,
             Engineer = record.Engineer,
             EngineerId = record.EngineerId,
@@ -257,6 +258,7 @@ public sealed class LoadoutStore(string path, ILogger<LoadoutStore> logger)
         Blueprint = module.Blueprint,
         BlueprintLevel = module.BlueprintLevel,
         Experimental = module.Experimental,
+        ExperimentalSymbol = module.ExperimentalSymbol,
         Quality = module.Quality,
         Engineer = module.Engineer,
         EngineerId = module.EngineerId,
@@ -342,6 +344,8 @@ public sealed class LoadoutStore(string path, ILogger<LoadoutStore> logger)
         public int? BlueprintLevel { get; set; }
 
         public string? Experimental { get; set; }
+
+        public string? ExperimentalSymbol { get; set; }
 
         public double? Quality { get; set; }
 

@@ -238,13 +238,14 @@ public class ChecklistEvaluatorTests
     }
 
     [Fact]
-    public void AnExperimentalEffectIsCheckedExactlyBecauseEliteLocalisesThatOne()
+    public void AnExperimentalEffectIsJoinedOnItsSymbolRatherThanItsLocalisedName()
     {
         const string withEffect =
             """
             { "timestamp":"2026-08-16T10:05:00Z", "event":"Loadout", "Ship":"krait_mkii", "ShipID":12,
               "Modules":[ { "Slot":"MainEngines", "Item":"int_engine_size5_class5", "On":true,
                 "Engineering":{"BlueprintName":"Engine_Dirty","Level":5,"Quality":1.0,
+                               "ExperimentalEffect":"special_engine_overloaded",
                                "ExperimentalEffect_Localised":"Drag Drives"} } ] }
             """;
 
@@ -253,6 +254,48 @@ public class ChecklistEvaluatorTests
             State(withEffect));
 
         Assert.Equal(ChecklistState.Done, verdict!.Value.State);
+    }
+
+    [Fact]
+    public void APluralLocalisedEffectStillConfirmsAgainstItsSingularSymbol()
+    {
+        // "Super Capacitors" is what Elite localises "Super Capacitor" as on a shield booster (#105) — the
+        // localised spelling must not be what the join runs on.
+        const string withEffect =
+            """
+            { "timestamp":"2026-08-16T10:05:00Z", "event":"Loadout", "Ship":"type10", "ShipID":12,
+              "Modules":[ { "Slot":"ShieldBooster0", "Item":"hpt_shieldbooster_size1_class5", "On":true,
+                "Engineering":{"BlueprintName":"ShieldBooster_HeavyDuty","Level":5,"Quality":1.0,
+                               "ExperimentalEffect":"special_shieldbooster_chunky",
+                               "ExperimentalEffect_Localised":"Super Capacitors"} } ] }
+            """;
+
+        var verdict = ChecklistEvaluator.Evaluate(
+            Item(
+                new ChecklistIntent(ChecklistIntentKind.Experimental, "ShieldBooster0") { Detail = "Super Capacitor" },
+                hull: "type10"),
+            State(withEffect));
+
+        Assert.Equal(ChecklistState.Done, verdict!.Value.State);
+    }
+
+    [Fact]
+    public void AnUnrecognisedExperimentalSymbolIsUnverifiedRatherThanAConflict()
+    {
+        const string withEffect =
+            """
+            { "timestamp":"2026-08-16T10:05:00Z", "event":"Loadout", "Ship":"krait_mkii", "ShipID":12,
+              "Modules":[ { "Slot":"MainEngines", "Item":"int_engine_size5_class5", "On":true,
+                "Engineering":{"BlueprintName":"Engine_Dirty","Level":5,"Quality":1.0,
+                               "ExperimentalEffect":"not_a_real_symbol",
+                               "ExperimentalEffect_Localised":"Something Odd"} } ] }
+            """;
+
+        var verdict = ChecklistEvaluator.Evaluate(
+            Item(new ChecklistIntent(ChecklistIntentKind.Experimental, "MainEngines") { Detail = "Drag Drives" }),
+            State(withEffect));
+
+        Assert.Equal(ChecklistState.Unverified, verdict!.Value.State);
     }
 
     [Fact]

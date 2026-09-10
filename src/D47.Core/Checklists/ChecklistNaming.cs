@@ -6,7 +6,11 @@ namespace D47.Core.Checklists;
 /// <summary>Whether a plan's wording and the journal's wording are talking about the same thing.</summary>
 public static class ChecklistNaming
 {
-    /// <summary>Whether <paramref name="journalName"/> is the thing <paramref name="wanted"/> asked for.</summary>
+    /// <summary>
+    /// Whether <paramref name="journalName"/> — Frontier's own spelling, not a localised display name —
+    /// is the thing <paramref name="wanted"/> asked for. False means the catalogue named a specific,
+    /// different recipe; null means nothing could be confirmed either way.
+    /// </summary>
     public static bool? Confirms(string? wanted, string? journalName)
     {
         // Nothing was claimed, so nothing is unconfirmed.
@@ -21,17 +25,19 @@ public static class ChecklistNaming
         }
 
         var asked = ChecklistKeys.Compact(wanted);
+        var named = BlueprintCatalogue.NameOf(journalName);
 
-        // The join, first.
-        if (BlueprintCatalogue.NameOf(journalName) is { Length: > 0 } named
-            && asked == ChecklistKeys.Compact(named))
+        // The join, first — a plan may name the catalogue's spelling, or Frontier's own.
+        if ((named is { Length: > 0 } && asked == ChecklistKeys.Compact(named))
+            || asked == ChecklistKeys.Compact(journalName)
+            || asked == ChecklistKeys.Compact(Readable(journalName)))
         {
             return true;
         }
 
-        return asked == ChecklistKeys.Compact(journalName) || asked == ChecklistKeys.Compact(Readable(journalName))
-            ? true
-            : null;
+        // The catalogue named a specific recipe and it is not the one asked for — a real conflict, not an
+        // open question.
+        return named is { Length: > 0 } ? false : null;
     }
 
     /// <summary>

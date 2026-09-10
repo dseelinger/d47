@@ -124,8 +124,8 @@ public static class ChecklistEvaluator
                 ChecklistState.Done,
                 $"{Describe(module)} is fitted in {intent.Subject}."),
 
-            // Elite localises the experimental effect and never the blueprint, so this one compares exactly
-            // and the blueprint below sometimes cannot.
+            // Elite localises the experimental effect's display name but not its symbol, so the comparison
+            // below joins on the symbol rather than on what module.Experimental says out loud.
             ChecklistIntentKind.Experimental => Experimental(intent, module),
 
             _ => Blueprint(intent, module, state),
@@ -140,10 +140,16 @@ public static class ChecklistEvaluator
                 ChecklistState.Open, $"{Describe(module)} has no experimental effect on it.");
         }
 
-        return ChecklistNaming.Confirms(intent.Detail, applied) == true
-            ? new ChecklistVerdict(ChecklistState.Done, $"{applied} is on {Describe(module)}.")
-            : new ChecklistVerdict(
-                ChecklistState.Open, $"{Describe(module)} carries {applied} rather than {intent.Detail}.");
+        return ChecklistNaming.Confirms(intent.Detail, module.ExperimentalSymbol) switch
+        {
+            true => new ChecklistVerdict(ChecklistState.Done, $"{applied} is on {Describe(module)}."),
+            false => new ChecklistVerdict(
+                ChecklistState.Open, $"{Describe(module)} carries {applied} rather than {intent.Detail}."),
+            null => new ChecklistVerdict(
+                ChecklistState.Unverified,
+                $"{Describe(module)} carries {applied}, which I have no recipe under that name to check "
+                + $"against \"{intent.Detail}\"."),
+        };
     }
 
     private static ChecklistVerdict Blueprint(ChecklistIntent intent, ShipModule module, CommanderGameState state)

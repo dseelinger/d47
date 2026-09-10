@@ -6,6 +6,15 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.10 — An experimental effect confirms against its symbol, not its spoken name
+
+"Super Capacitors" never confirmed "Super Capacitor" on a shield booster, because Elite localises
+the display name and the checklist was comparing that name rather than the unlocalised symbol
+underneath it. Every experimental effect whose localised spelling differs from the recipe table's
+was unconfirmable the same way, and the checklist line read the module as carrying the wrong
+effect rather than as one it could not check. The comparison now joins on the symbol, and a symbol
+the table does not recognise is reported as unconfirmed rather than as a conflict.
+
 ## 0.110.9 — Routing and Fleet reach the headset, and a drawn keyboard takes a spelled value
 
 The keyboard a controller ray opens on a text box in the headset heard nothing: every character of
