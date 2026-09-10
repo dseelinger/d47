@@ -6,6 +6,13 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.16 — Passers-by chatter stops running one script
+
+Overheard exchanges between a dock hand and a courier were one script with the names changed: a
+third of them opened on the Commander's ship blocking a pad and closed on "not my problem, I'm
+just here for the run". The cast, the topic and the opening beat now rotate deterministically per
+exchange, and the worn lines the logs measured are named off limits in the prompt itself.
+
 ## 0.110.15 — Invented chatter at your own carrier knows whose deck it is standing on
 
 Parked on your own fleet carrier, overheard chatter already knew whom to cast as the tower

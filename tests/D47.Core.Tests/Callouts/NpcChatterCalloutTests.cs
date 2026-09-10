@@ -433,15 +433,56 @@ public class NpcChatterScriptTests
         }
     }
 
-    /// <summary>The docked scenes are unchanged by the normal-space fix (#43).</summary>
+    /// <summary>The docked hail scene is unchanged by the normal-space fix (#43).</summary>
     [Fact]
     public void DockedScenesAreUnchanged()
     {
         var passersby = NpcChatter.Instruction(NpcChatterKind.Passersby, NpcChatterCarrier.None, docked: true);
         var hail = NpcChatter.Instruction(NpcChatterKind.Hail, NpcChatterCarrier.None, docked: true);
 
-        Assert.Contains("a courier and a dock hand", passersby, StringComparison.Ordinal);
         Assert.Contains("a grumble about the queue", hail, StringComparison.Ordinal);
         Assert.Contains("docked at a station", passersby, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// The dock hand and the courier saying "not my problem" was one script wearing different names
+    /// (#45). The cast, the topic and the opening beat now rotate off the exchange index the same way
+    /// as everything else this callout paces, and the worn lines the logs measured are named off
+    /// limits every time.
+    /// </summary>
+    [Fact]
+    public void PassersbyChatterRotatesTheScriptRatherThanRepeatingOne()
+    {
+        var casts = new HashSet<string>();
+        var topics = new HashSet<string>();
+        var openings = new HashSet<string>();
+
+        for (var index = 0; index < 12; index++)
+        {
+            var instruction = NpcChatter.Instruction(
+                NpcChatterKind.Passersby, NpcChatterCarrier.None, docked: true, exchangeIndex: index);
+
+            Assert.Contains("Do not write", instruction, StringComparison.Ordinal);
+            Assert.Contains("not my problem", instruction, StringComparison.Ordinal);
+            Assert.Contains("just here for the", instruction, StringComparison.Ordinal);
+            Assert.Contains("third time this week", instruction, StringComparison.Ordinal);
+            Assert.Contains("blocking, hogging or taking up a pad", instruction, StringComparison.Ordinal);
+
+            // The same index yields the same pick, every time.
+            Assert.Equal(
+                instruction,
+                NpcChatter.Instruction(
+                    NpcChatterKind.Passersby, NpcChatterCarrier.None, docked: true, exchangeIndex: index));
+
+            var opening = instruction[(instruction.IndexOf("opening on ", StringComparison.Ordinal) + 11)..];
+
+            casts.Add(instruction[..instruction.IndexOf(" — exchange", StringComparison.Ordinal)]);
+            topics.Add(opening[(opening.IndexOf(", about ", StringComparison.Ordinal) + 8)..].Split('.')[0]);
+            openings.Add(opening.Split(',')[0]);
+        }
+
+        Assert.True(casts.Count > 1, "Twelve exchanges never picked a second cast pair.");
+        Assert.True(topics.Count > 1, "Twelve exchanges never picked a second topic.");
+        Assert.True(openings.Count > 1, "Twelve exchanges never picked a second opening beat.");
     }
 }

@@ -201,15 +201,24 @@ public static class NpcChatter
     /// Whether this exchange may make the Commander's owning his carrier the subject rather than only
     /// colour — decided once per visit by <see cref="NpcChatterOwnershipSpotlight"/> (#88).
     /// </param>
+    /// <param name="exchangeIndex">
+    /// This exchange's place in the sequence <see cref="NpcChatterCallout"/> counts — the same number
+    /// that picks its kind — used to rotate the passers-by cast, topic and opening beat so a replayed
+    /// session picks the same script every time (#45).
+    /// </param>
     public static string Instruction(
         NpcChatterKind kind,
         NpcChatterCarrier? carrier = null,
         bool docked = false,
-        bool spotlight = false)
+        bool spotlight = false,
+        int exchangeIndex = 0)
     {
         var about = carrier ?? NpcChatterCarrier.None;
 
-        return Situation(docked) + Scene(kind, about, docked) + Contract + Carrier(about, spotlight);
+        return Situation(docked)
+            + Scene(kind, about, docked, exchangeIndex)
+            + Contract
+            + Carrier(about, spotlight);
     }
 
     /// <summary>
@@ -220,47 +229,141 @@ public static class NpcChatter
         ? "The Commander's ship is docked at a station. "
         : "The Commander's ship is in normal space, under its own power, with no station nearby. ";
 
-    private static string Scene(NpcChatterKind kind, NpcChatterCarrier carrier, bool docked) => kind switch
+    private static string Scene(NpcChatterKind kind, NpcChatterCarrier carrier, bool docked, int exchangeIndex) =>
+        kind switch
+        {
+            // Docked is the only situation this pairing fires in, and while the Commander is at their own
+            // carrier the only thing they can be docked at is that carrier — so the controller is named
+            // rather than left for the model to guess at.
+            NpcChatterKind.Controller when carrier.Present =>
+                "An invented pilot and the tower controller aboard the Commander's own fleet carrier "
+                + $"{Called(carrier)}exchange 2 to 4 short lines of routine traffic — clearances, pad "
+                + "assignments, a telling-off. Procedure with a human edge. The Commander is not "
+                + "part of it. ",
+
+            NpcChatterKind.Controller =>
+                "An invented pilot and the controller of the station or carrier where the Commander "
+                + "is docked exchange 2 to 4 short lines of routine traffic — clearances, pad "
+                + "assignments, a telling-off. Procedure with a human edge. The Commander is not "
+                + "part of it. ",
+
+            NpcChatterKind.Hail when !docked =>
+                "One invented person nearby says one or two lines to the Commander over the open "
+                + "channel — a compliment on the ship, a warning about a system ahead, a rumour "
+                + "picked up on the way. No pad, no dock, no queue: there is no station here. "
+                + "Statements only: they are not starting a conversation. ",
+
+            NpcChatterKind.Hail =>
+                "One invented person nearby says one or two lines to the Commander over the open "
+                + "channel — a compliment on the ship, a grumble about the queue, a rumour heard in "
+                + "the bar. Statements only: they are not starting a conversation. ",
+
+            _ => PassersbyScene(exchangeIndex, docked),
+        };
+
+    /// <summary>
+    /// A dock hand noticing a pad and a courier saying "not my problem" was one script wearing
+    /// different names (#45): the cast, the topic and the opening beat now each rotate off
+    /// <paramref name="exchangeIndex"/>, and the completions that shape is known to reach for are
+    /// named off limits.
+    /// </summary>
+    private static string PassersbyScene(int exchangeIndex, bool docked)
     {
-        // Docked is the only situation this pairing fires in, and while the Commander is at their own carrier
-        // the only thing they can be docked at is that carrier — so the controller is named rather than left
-        // for the model to guess at.
-        NpcChatterKind.Controller when carrier.Present =>
-            "An invented pilot and the tower controller aboard the Commander's own fleet carrier "
-            + $"{Called(carrier)}exchange 2 to 4 short lines of routine traffic — clearances, pad "
-            + "assignments, a telling-off. Procedure with a human edge. The Commander is not "
-            + "part of it. ",
+        var cast = Pick(exchangeIndex, CastOffset, docked ? DockedCasts : OpenSpaceCasts);
+        var topic = Pick(exchangeIndex, TopicOffset, Topics);
+        var opening = Pick(exchangeIndex, OpeningOffset, Openings);
 
-        NpcChatterKind.Controller =>
-            "An invented pilot and the controller of the station or carrier where the Commander "
-            + "is docked exchange 2 to 4 short lines of routine traffic — clearances, pad "
-            + "assignments, a telling-off. Procedure with a human edge. The Commander is not "
-            + "part of it. ",
+        var noStation = docked
+            ? string.Empty
+            : "No pad, no dock, no queue: there is no station here. ";
 
-        NpcChatterKind.Hail when !docked =>
-            "One invented person nearby says one or two lines to the Commander over the open "
-            + "channel — a compliment on the ship, a warning about a system ahead, a rumour "
-            + "picked up on the way. No pad, no dock, no queue: there is no station here. "
-            + "Statements only: they are not starting a conversation. ",
+        var noticed = Notices(exchangeIndex)
+            ? "The Commander may be noticed in passing, nothing more. "
+            : "The Commander is not part of it, and is not mentioned. ";
 
-        NpcChatterKind.Hail =>
-            "One invented person nearby says one or two lines to the Commander over the open "
-            + "channel — a compliment on the ship, a grumble about the queue, a rumour heard in "
-            + "the bar. Statements only: they are not starting a conversation. ",
+        return $"Two invented people near the Commander — {cast} — exchange 2 to 4 short lines, "
+            + $"opening on {opening}, about {topic}. "
+            + noStation
+            + noticed
+            + PassersbyBans;
+    }
 
-        _ when !docked =>
-            "Two invented people near the Commander — other crews on the open channel, a miner "
-            + "asking about a ring, a courier complaining about an interdiction, a wing sorting "
-            + "itself out — exchange 2 to 4 short lines about their own small business. No pad, "
-            + "no dock, no queue: there is no station here. The Commander is not part of it, "
-            + "and is not mentioned beyond perhaps being noticed in passing. ",
+    /// <summary>Cast pairs for a scene with a station around it.</summary>
+    private static readonly string[] DockedCasts =
+    [
+        "a dock hand and a courier",
+        "two freighter crews on the local channel",
+        "a miner and a refinery hand",
+        "a fuel rat and a bored escort pilot",
+        "two passengers' liner crew",
+        "a salvage crew",
+    ];
 
-        _ =>
-            "Two invented people near the Commander — crews on the local channel, a courier and "
-            + "a dock hand — exchange 2 to 4 short lines about their own small business: cargo, "
-            + "shifts, prices, a ship acting up. The Commander is not part of it, and is not "
-            + "mentioned beyond perhaps being noticed in passing. ",
-    };
+    /// <summary>Cast pairs for a scene with no station in it (#43): no dock hand among them.</summary>
+    private static readonly string[] OpenSpaceCasts =
+    [
+        "two freighter crews on the open channel",
+        "a miner and a wingmate",
+        "a fuel rat and a bored escort pilot",
+        "two passengers' liner crew",
+        "a salvage crew",
+        "a courier and a scout",
+    ];
+
+    /// <summary>What the pair's own small business is about.</summary>
+    private static readonly string[] Topics =
+    [
+        "a cargo manifest",
+        "prices at the last stop",
+        "a pilot's licence exam",
+        "a bad landing somebody else made",
+        "a rumour going around",
+        "food",
+        "weather on a planet nobody has been to",
+        "a bet",
+    ];
+
+    /// <summary>What the exchange opens on — never the Commander's ship.</summary>
+    private static readonly string[] Openings =
+    [
+        "a shift that will not end",
+        "a delivery running late",
+        "a manifest that has come up short",
+        "a rumour just heard",
+        "a bet neither of them has settled",
+        "the weather rolling in",
+    ];
+
+    private const int CastOffset = 3;
+    private const int TopicOffset = 7;
+    private const int OpeningOffset = 13;
+    private const int NoticeOffset = 19;
+
+    /// <summary>
+    /// The stock deflections the measured logs showed — asked for once here rather than caught after
+    /// the fact, because a line already spoken cannot be unheard (#45).
+    /// </summary>
+    private const string PassersbyBans =
+        "Do not write the Commander's ship blocking, hogging or taking up a pad — nobody here has "
+        + "noticed it beyond perhaps a glance in passing. Do not write \"not my problem\", \"not my "
+        + "run\", \"just here for the ... run\", or \"third time this week\" — overused lines, "
+        + "off limits here. ";
+
+    /// <summary>
+    /// One pick off a fixed list, spaced by the same Knuth multiplicative hash <see
+    /// cref="NpcChatterCallout"/> spreads exchanges with and <see cref="Beat"/> paces lines with, so a
+    /// replayed session lands on the same pick every time (#45).
+    /// </summary>
+    private static T Pick<T>(int exchangeIndex, int offset, T[] options)
+    {
+        var fraction = unchecked((uint)(exchangeIndex + offset) * 2654435761u) / 4294967296.0;
+
+        return options[(int)(fraction * options.Length)];
+    }
+
+    /// <summary>Whether this exchange is one of the few allowed to notice the Commander at all.</summary>
+    private static bool Notices(int exchangeIndex) =>
+        unchecked((uint)(exchangeIndex + NoticeOffset) * 2654435761u) % 5 == 0;
 
     /// <summary>
     /// The rules the Commander's own carrier adds (#249, #88): who its two posts are when he is at it,
