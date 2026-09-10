@@ -400,11 +400,11 @@ public static class NavigationCapability
             // all: believing a course is set when it is not is the failure that strands somebody.
             return confirmed switch
             {
-                true => ToolResult.Ok($"Course plotted to {system}.{stillOpen}"),
-                false => ToolResult.Ok(
+                true => ToolResult.Relay($"Course plotted to {system}.{stillOpen}"),
+                false => ToolResult.Relay(
                     $"I tried to plot {system} and no route appeared, so assume it did not work. {copied} "
                     + $"I cannot tell why.{stillOpen}"),
-                null => ToolResult.Ok(
+                null => ToolResult.Relay(
                     $"I tried to plot {system} but cannot tell whether it worked. {copied} Check the map.{stillOpen}"),
             };
         }

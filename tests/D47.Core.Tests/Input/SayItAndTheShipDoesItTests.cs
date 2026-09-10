@@ -1100,6 +1100,9 @@ public class SayItAndTheShipDoesItTests
         Assert.False(result.IsError);
         Assert.Contains("HR 6012 is on your clipboard", result.Content, StringComparison.Ordinal);
         Assert.Equal([Panel, Back, Down, Select], Pressed(input));
+
+        // A plot outcome, so heard as written on the model route the same way plot_course itself is (#112).
+        Assert.True(result.Relayed);
     }
 
     /// <summary>

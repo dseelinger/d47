@@ -150,7 +150,13 @@ public static class ShipCommands
 
             var said = prefix + launched.Message;
 
-            return launched.Ok ? ToolResult.Ok(said) : ToolResult.Error(said);
+            if (!launched.Ok)
+            {
+                return ToolResult.Error(said);
+            }
+
+            // A plot outcome too, so heard as written the same way plot_course itself is (#112).
+            return command == SetCourseAndTakeUsOut ? ToolResult.Relay(said) : ToolResult.Ok(said);
         }
 
         // The only difference between the two separations, and it is deliberate that they differ in nothing

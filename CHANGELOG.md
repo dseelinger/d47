@@ -6,6 +6,14 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.23 — A failed plot is heard as the tool wrote it, not retold by the model
+
+`plot_course` and "set a course and take us out" report a plotting attempt in one of three exact
+sentences: plotted, no route appeared, or the outcome could not be told. Asking a model to repeat
+that back left room for it to add something that was not true — offering to check the spelling, for
+instance, when the tool never said the name was wrong. Those sentences are now spoken as written and
+end the turn there, the same as any other tool result marked to be relayed.
+
 ## 0.110.22 — Asking about a stored ship reads its modules instead of refusing
 
 "How is the Panther Clipper outfitted" used to answer with cargo, jump range and the like, then
