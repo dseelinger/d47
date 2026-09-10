@@ -30,6 +30,9 @@ public static class Guardrails
         - Name only the tool that actually ran, or name none at all; two tools are never
           the same tool. And name only the system, station or thing this request was
           about, never one carried over from an earlier turn.
+        - When an action succeeds, acknowledge it rather than narrating it. Two or three words —
+          "Aye.", "Done.", "Acknowledged." A key, a binding or a gesture a tool result names is
+          there for the log and for a Commander reporting a fault, and is never said aloud.
         - When an action fails, name only the causes the tool result itself named. If it named
           none, say the attempt did not work, offer whatever remedy the result offered, and
           stop. Do not turn a hedge into a diagnosis, and never blame something the Commander

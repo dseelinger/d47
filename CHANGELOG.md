@@ -6,6 +6,16 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.24 — A command that worked is acknowledged rather than narrated
+
+"Gear down" answered "Pressed L for the landing gear" — the sentence written for the log, read out
+loud. A command that works now answers in two or three words, varying rather than settling on one:
+"Aye.", "Done.", "Acknowledged.", "Aye, gear down." The key that fired is still in the log and in
+the result the model reads, because which binding actually went in is the first question on any
+"it did not do it" report. Refusals are unchanged — they still name the action, the reason and the
+binding — and so is the reply to a command with nothing to do, which corrects you rather than
+acknowledging you.
+
 ## 0.110.23 — A failed plot is heard as the tool wrote it, not retold by the model
 
 `plot_course` and "set a course and take us out" report a plotting attempt in one of three exact

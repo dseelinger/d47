@@ -32,7 +32,20 @@ public sealed record ToolResult
     /// <summary>Spoken to the Commander as written; the model turn ends without the model reporting it.</summary>
     public bool Relayed { get; init; }
 
+    /// <summary>
+    /// The short form to say in place of <see cref="Content"/>, where the two audiences differ: the
+    /// Commander hears this, the model and the log keep the content.
+    /// </summary>
+    public string? ShortForm { get; init; }
+
+    /// <summary>What the Commander hears — the short form where a tool set one, the content otherwise.</summary>
+    public string Spoken => ShortForm is { Length: > 0 } form ? form : Content;
+
     public static ToolResult Ok(string content) => new() { IsError = false, Content = content };
+
+    /// <summary>A result the Commander hears as <paramref name="shortForm"/> and the model reads in full.</summary>
+    public static ToolResult Ok(string content, string shortForm) =>
+        new() { IsError = false, Content = content, ShortForm = shortForm };
 
     public static ToolResult Relay(string content) =>
         new() { IsError = false, Content = content, Relayed = true };

@@ -155,6 +155,31 @@ shift drive.
 > "lights off"
 > "take us to supercruise"
 
+### What you hear back
+
+A command that worked is acknowledged rather than described:
+
+```text
+Aye, gear down.
+```
+
+Two or three words — *"Aye."*, *"Done."*, *"Acknowledged."*, *"Aye, gear down."* — and never the
+same one twice running. Which key was pressed is not part of it. You asked for the gear, not for a
+report on the keyboard.
+
+The key is still in the log, and in the result the AI reads:
+
+```text
+Pressed L for the landing gear.
+```
+
+That sentence is the first thing to look at when a command did not do what you asked, so it is kept
+in the record. It is only kept out of the spoken reply.
+
+A refusal is not terse, because it has something to tell you: it still names the action, the reason
+and the binding. Nor is the answer to a command with nothing to do — *"The landing gear is already
+on."* is a correction rather than an acknowledgement.
+
 ### It presses your keys, not its own
 
 Directive 47 has no keys of its own. It reads the bindings you already use and sends those, so

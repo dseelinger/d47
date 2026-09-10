@@ -1,4 +1,5 @@
-﻿using D47.Core.Configuration;
+﻿using D47.Core.Actions;
+using D47.Core.Configuration;
 using D47.Core.Input;
 using D47.Core.Journal;
 
@@ -26,6 +27,9 @@ public sealed record ActionSurface
 
     /// <summary>Says one line, now, and does not wait for it to be spoken (#158).</summary>
     public Action<string> Acknowledge { get; init; } = _ => { };
+
+    /// <summary>The terse reply a performed action is acknowledged with (#66).</summary>
+    public Acknowledgements Acknowledgements { get; init; } = new();
 
     public ControlContext Context => ControlContexts.Of(Status());
 
@@ -307,8 +311,12 @@ public static class ActionCapabilities
             .SendAsync(InputSequence.Tap(reach.Binding!), cancellationToken)
             .ConfigureAwait(false);
 
+        // Two audiences: the key that fired is what makes an "it did not do it" report diagnosable, and it
+        // is not what the Commander asked to hear back.
         return result.Sent
-            ? ToolResult.Ok($"Pressed {reach.Binding!.Gesture()} for {action.Label}.")
+            ? ToolResult.Ok(
+                $"Pressed {reach.Binding!.Gesture()} for {action.Label}.",
+                surface.Acknowledgements.For(action, wanted))
             : ToolResult.Error(result.Reason);
     }
 

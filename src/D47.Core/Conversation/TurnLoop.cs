@@ -362,13 +362,13 @@ public sealed class TurnLoop(
                 toolCommand.Phrase);
 
             // With what was asked for, as above (#415).
-            Said(actioned.Content, input);
+            Said(actioned.Spoken, input);
 
-            yield return new TurnEvent.TextDelta(actioned.Content);
+            yield return new TurnEvent.TextDelta(actioned.Spoken);
             yield return new TurnEvent.Completed(new TurnResult(
                 actioned.IsError ? TurnOutcome.Failed : TurnOutcome.Answered,
                 TurnRoute.ActionCommand,
-                actioned.Content,
+                actioned.Spoken,
                 Effort: null,
                 Cost: null));
             yield break;
@@ -387,13 +387,13 @@ public sealed class TurnLoop(
                 "Keyword router answered with {Capability}/{Tool}", match.CapabilityId, match.ToolName);
 
             // With what was asked for, as above (#415).
-            Said(result.Content, input);
+            Said(result.Spoken, input);
 
-            yield return new TurnEvent.TextDelta(result.Content);
+            yield return new TurnEvent.TextDelta(result.Spoken);
             yield return new TurnEvent.Completed(new TurnResult(
                 result.IsError ? TurnOutcome.Failed : TurnOutcome.Answered,
                 TurnRoute.KeywordRouter,
-                result.Content,
+                result.Spoken,
                 Effort: null,
                 Cost: null));
             yield break;
@@ -607,7 +607,7 @@ public sealed class TurnLoop(
 
                 if (result.Relayed)
                 {
-                    relayed.Add(result.Content);
+                    relayed.Add(result.Spoken);
                 }
             }
 
