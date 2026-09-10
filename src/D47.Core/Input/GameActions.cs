@@ -232,6 +232,41 @@ public static class GameActions
 
         new()
         {
+            Id = "throttle_25",
+            Label = "quarter throttle",
+            Group = Flight,
+            Variants = [new ActionVariant("SetSpeed25", ControlContext.Flying)],
+            Phrases = [("throttle to twenty-five", DesiredState.Toggle), ("twenty-five per cent", DesiredState.Toggle)],
+        },
+
+        new()
+        {
+            Id = "throttle_50",
+            Label = "half throttle",
+            Group = Flight,
+            Variants = [new ActionVariant("SetSpeed50", ControlContext.Flying)],
+            Phrases = [("throttle to fifty", DesiredState.Toggle), ("fifty per cent", DesiredState.Toggle)],
+        },
+
+        new()
+        {
+            // SetSpeed75 is 75% thrust. Not military power in the aviation sense (full thrust, no
+            // afterburner) — do not "correct" this to 100%.
+            Id = "throttle_75",
+            Label = "military thrust",
+            Group = Flight,
+            Variants = [new ActionVariant("SetSpeed75", ControlContext.Flying)],
+            Phrases =
+            [
+                ("military thrust", DesiredState.Toggle),
+                ("military power", DesiredState.Toggle),
+                ("throttle to seventy-five", DesiredState.Toggle),
+                ("seventy-five per cent", DesiredState.Toggle),
+            ],
+        },
+
+        new()
+        {
             // The other end of the throttle, and the first step of "separate" (Phase 52, item 3).
             Id = "throttle_full",
             Label = "full throttle",

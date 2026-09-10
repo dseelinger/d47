@@ -228,7 +228,8 @@ An action you have left unbound entirely says so too, rather than failing as sil
 ### What it can reach
 
 Landing gear, ship lights, cargo scoop, hardpoints, the frame shift drive, supercruise, the
-hyperspace jump, flight assist, throttle to zero, and boost.
+hyperspace jump, flight assist, throttle at zero, twenty-five, fifty or seventy-five per cent
+("military thrust"), and boost.
 
 Firing your weapons is deliberately not on this list. Directive 47 reads text from the galaxy
 that anyone can write, and a companion that can be talked into opening fire is a different kind
@@ -373,7 +374,7 @@ actions listed as reachable in the current game state will work; anything else c
 the reason it did not.
 
 ```json
-{"type":"object","properties":{"action":{"type":"string","description":"Which action to perform.","enum":["landing_gear","lights","cargo_scoop","hardpoints","frame_shift_drive","supercruise","hyperspace","flight_assist","throttle_zero","boost"]},"state":{"type":"string","description":"What to leave it in. Elite binds a single toggle, so asking for \u0022on\u0022 or \u0022off\u0022 checks the game\u0027s own report first and does nothing if it is already there. Defaults to toggling.","enum":["on","off","toggle"]}},"required":["action"],"additionalProperties":false}
+{"type":"object","properties":{"action":{"type":"string","description":"Which action to perform.","enum":["landing_gear","lights","cargo_scoop","hardpoints","frame_shift_drive","supercruise","hyperspace","flight_assist","throttle_zero","throttle_25","throttle_50","throttle_75","boost"]},"state":{"type":"string","description":"What to leave it in. Elite binds a single toggle, so asking for \u0022on\u0022 or \u0022off\u0022 checks the game\u0027s own report first and does nothing if it is already there. Defaults to toggling.","enum":["on","off","toggle"]}},"required":["action"],"additionalProperties":false}
 ```
 
 The enum is the whole group and never changes, which is what keeps the schema byte-identical

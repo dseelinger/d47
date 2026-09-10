@@ -170,6 +170,34 @@ public class ActionCommandTests
     }
 
     [Fact]
+    public async Task MilitaryThrustPressesTheCommandersOwnKeyForSetSpeed75()
+    {
+        var fixture = Build(Binds(("SetSpeed75", "Key_7")), Flying());
+
+        var result = await Say(fixture, "military thrust");
+
+        Assert.False(result.IsError);
+        Assert.Equal(
+            [
+                new InputStep(InputStepKind.KeyDown, 0x37),
+                new InputStep(InputStepKind.KeyUp, 0x37),
+            ],
+            fixture.Input.Steps.Where(step => step.Kind != InputStepKind.Delay));
+    }
+
+    [Fact]
+    public async Task MilitaryThrustWithSetSpeed75UnboundRefusesByNameAndPressesNothing()
+    {
+        var fixture = Build(Binds(("SetSpeedZero", "Key_X")), Flying());
+
+        var result = await Say(fixture, "military thrust");
+
+        Assert.True(result.IsError);
+        Assert.Contains("no binding", result.Content, StringComparison.OrdinalIgnoreCase);
+        Assert.Empty(fixture.Input.Steps);
+    }
+
+    [Fact]
     public void FiringWeaponsIsReachableFromNoPhraseAndNoTool()
     {
         // The catalogue carries them for the honk.

@@ -6,6 +6,13 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.25 — Three more throttle positions, "military thrust" among them
+
+D47 could only set the throttle to zero or full. Elite's own preset already binds 25%, 50% and
+75% to the keyboard, so "military thrust" (also "military power", "throttle to seventy-five",
+"seventy-five per cent") now presses `SetSpeed75`, and the same phrasing pattern covers 25% and
+50%. Unbound, each refuses by name and presses nothing, the way every other action does.
+
 ## 0.110.24 — A command that worked is acknowledged rather than narrated
 
 "Gear down" answered "Pressed L for the landing gear" — the sentence written for the log, read out
