@@ -1,55 +1,76 @@
 ---
 name: stream-deck
-description: Edit the maintainer's Stream Deck profiles by writing ProfilesV2 JSON directly, using the verified v2 format — page folder name encoding, the manifest shape, and the exact action entries the app accepts. Use when the user invokes /stream-deck, or asks to add, change or remove Stream Deck buttons, fix a profile that imported with no keys, or build a new profile.
+description: Edit the maintainer's Stream Deck profiles by writing ProfilesV2 JSON directly, using the verified v2 format — the Keypad controller type, page folder name encoding, key images and the action entries the app accepts. Use when the user invokes /stream-deck, or asks to add, change or remove Stream Deck buttons, fix a profile that shows no keys, or build a new profile.
 ---
 
 # Stream Deck profiles
 
-Everything here was verified on this machine against Stream Deck 7.4 and a MK.2. It is written down
-because the same problem has been solved from scratch twice, each time through the same failures.
+Verified on this machine against Stream Deck 7.4 and a MK.2. Written down because the same problem
+has now been solved from scratch three times, each time through the same failures.
+
+## The one that costs the most time
+
+**Every controller needs `"Type": "Keypad"`.** Without it the profile loads, the pages load, the log
+says nothing, and every action is silently discarded — an empty grid. This single missing field
+caused four straight "imported fine, no buttons" failures, and it is invisible unless you diff
+against a working profile.
+
+```json
+{"Controllers": [{"Type": "Keypad", "Actions": {"0,0": { ... }}}], "Icon": "", "Name": "Page 1"}
+```
+
+## Diff against a working profile first
+
+Do this before theorising. `ProfilesV2` holds profiles the app itself authored; open one and compare
+field by field. Both the `Type` bug and the key-image path bug were found in a minute this way,
+after hours of guessing. If the maintainer offers to export a profile, take it.
 
 ## Do not import. Write the files.
 
-Importing a hand-built `.streamDeckProfile` fails. Four attempts produced, in order: a page-folder
-name error, `RT ERROR: profile looped`, and twice a clean import with zero keys and no log line.
-Writing `ProfilesV2` directly works and is verifiable.
+Importing a hand-built `.streamDeckProfile` fails. Write `ProfilesV2` directly:
 
-The method:
-
-1. **Quit Stream Deck.** It holds profiles in memory and writes them back on exit. Any edit made
-   while it runs is overwritten, and any read while it runs may be stale.
+1. **Quit Stream Deck.** It holds profiles in memory; an edit made while it runs is lost.
 2. Create the profile in the app first if it does not exist — that gets a correct skeleton, a UUID
    and a registry entry for free. Then quit again.
-3. Write the page manifests.
+3. Write the page manifests and key images.
 4. Start Stream Deck.
-5. **Verify by quitting again and re-reading the files.** The app rewrites what it parsed, so keys
-   that survive a quit were genuinely loaded. Keys sitting unread on disk look identical until then.
 
-Delete any leftover `.streamDeckProfile` file afterwards. One left on the Desktop got double-clicked,
+Delete any leftover `.streamDeckProfile` afterwards. One left on the Desktop got double-clicked,
 re-imported stale, and destroyed a good profile.
+
+### Verification: only the maintainer's eyes count
+
+The app **does not rewrite a profile on exit** unless it was edited in the UI. So neither of these
+proves the profile was parsed, and both were believed here and were wrong:
+
+- keys still present in the file after a quit — an unread file survives untouched too
+- the file still being pretty-printed rather than the app's compact style
+
+Ask the maintainer to look at the deck. There is no file-level substitute.
 
 ## Where things are
 
 | What | Where |
 | --- | --- |
 | Profiles | `%APPDATA%\Elgato\StreamDeck\ProfilesV2\<UUID>.sdProfile\` |
-| **Log — read this first on any failure** | `%APPDATA%\Elgato\StreamDeck\logs\StreamDeck.log` |
-| Backups (zip archives) | `%APPDATA%\Elgato\StreamDeck\Backup\*.streamDeckProfilesBackup` |
+| Log — read on any failure | `%APPDATA%\Elgato\StreamDeck\logs\StreamDeck.log` |
+| Backups (zips) | `%APPDATA%\Elgato\StreamDeck\Backup\*.streamDeckProfilesBackup` |
 | Executable | `C:\Program Files\Elgato\StreamDeck\StreamDeck.exe` |
-| Active profile | `HKCU\Software\Elgato Systems GmbH\StreamDeck` → `Devices` |
+| Active profile | `HKCU\Software\Elgato Systems GmbH\StreamDeck` -> `Devices` |
 
-Every import failure named itself in the log. Read it before theorising.
+The log names load-time failures (`ios_base::failbit`, `no pages in umbrellas`, `profile looped`)
+but is **silent about discarded actions** — the `Type` bug produces no line at all.
 
-The active profile lives in an opaque Qt `QByteArray` in that registry value. **A profile cannot be
-made live programmatically** — say so and ask the maintainer to pick it in the app.
+The active profile is an opaque Qt `QByteArray` in that registry value. **A profile cannot be made
+live programmatically** — ask the maintainer to pick it from the dropdown.
 
-The device: model `20GBA9901`, UUID `@(1)[4057/128/A00SA5022OQ7Y6]`. Keys are addressed
-`"column,row"`, columns 0–4, rows 0–2.
+Device: model `20GBA9901`, UUID `@(1)[4057/128/A00SA5022OQ7Y6]`. Keys are `"column,row"`,
+columns 0-4, rows 0-2.
 
 ## Page folder names are derived from the page UUID
 
-Not random. A page whose folder name does not match its UUID gives
-`ERROR I/O: ios_base::failbit set` and `no pages in umbrellas`. base32hex with `U` removed:
+Not random. A mismatch gives `ERROR I/O: ios_base::failbit set` and `no pages in umbrellas`.
+base32hex with `U` removed, verified 10/10:
 
 ```python
 ALPHA = '0123456789ABCDEFGHIJKLMNOPQRSTVW'
@@ -57,8 +78,6 @@ def folder_for(page_uuid):
     v = int.from_bytes(uuid.UUID(page_uuid).bytes, 'big') << 2
     return ''.join(ALPHA[(v >> (5 * i)) & 31] for i in range(26))[::-1] + 'Z'
 ```
-
-Verified 10/10 against an app-authored profile.
 
 ## Top-level manifest.json
 
@@ -70,28 +89,19 @@ Verified 10/10 against an app-authored profile.
  "Version": "2.0"}
 ```
 
-**`Default` must be a page that is not in `Pages`.** Pointing it at a visible page gives
-`RT ERROR: profile looped`: the profile imports, and every action is silently discarded.
+**`Default` must be a page not in `Pages`.** Pointing it at a visible page gives
+`RT ERROR: profile looped` and every action is discarded.
 
-Folder count = visible pages + 1 for `Default` + 1 per `profile.openchild` child profile.
-
-## Page manifest.json
-
-Keys `Controllers`, `Icon`, `Name`. `Controllers` is a list of one `{"Actions": {...}}`, keyed by
-coordinate.
+Folder count = visible pages + 1 for `Default` + 1 per `profile.openchild` child.
 
 ## Action entries
-
-Copied from entries Stream Deck wrote itself. Match this shape exactly.
 
 ```json
 {"ActionID": "<fresh uuid4>", "LinkedTitle": false, "Name": "Open",
  "Plugin": {"Name": "Open", "UUID": "com.elgato.streamdeck.system.open", "Version": "1.0"},
- "Settings": {"path": "C:\dev\d47\tools\deck\triage.cmd"},
- "State": 0, "States": [{"Title": "Triage"}], "UUID": "com.elgato.streamdeck.system.open"}
+ "Settings": {"path": "C:\\dev\\d47\\tools\\deck\\triage.cmd"},
+ "State": 0, "States": [{ ... }], "UUID": "com.elgato.streamdeck.system.open"}
 ```
-
-Types in use:
 
 | Purpose | `UUID` | `Plugin.UUID` | `Settings` |
 | --- | --- | --- | --- |
@@ -102,21 +112,41 @@ Types in use:
 | Back to parent | `com.elgato.streamdeck.profile.backtoparent` | | `{}` |
 | Open a URL | `com.elgato.streamdeck.system.website` | | `{"browser": "", "openInBrowser": true, "path": "https://..."}` |
 
-Three things that cost attempts:
+`Plugin.UUID` is the plugin id, not the action id — they differ for `page.goto`.
 
-- **`Plugin.UUID` is the plugin id, not the action id.** They differ for `page.goto`.
-- **Keep `States` minimal** — `[{"Title": "..."}]`, or `[{}]`. The font block (`FontFamily`,
-  `FontSize`, `ShowTitle`, `TitleColor`, `OutlineThickness`, `TitleAlignment` and the rest) appears
-  only on keys carrying a custom image.
-- **Omit `Image` entirely.** Do not set it to `""`.
-- `LinkedTitle: false` with a `Title` gives a custom label; `true` takes the action's own name.
+## Key appearance
+
+`States[n]` carries the whole style. A styled key needs the full block; a bare `{"Title": "x"}`
+renders the plugin's stock icon with a small title under it.
+
+```json
+{"FontFamily": "Arial", "FontSize": 11, "FontStyle": "Bold", "FontUnderline": false,
+ "Image": "Images/launch.png", "OutlineThickness": 2, "ShowTitle": true,
+ "Title": "Triage", "TitleAlignment": "middle", "TitleColor": "#ffffff"}
+```
+
+**`Image` is relative to the page folder** — `Profiles/<page folder>/Images/x.png`, not the profile
+root. The root `Images/` folder exists but is empty and is not where the app looks. Each page needs
+its own copy of the files it references.
+
+`ShowTitle: false` means the artwork carries the label; use it only with real icons.
+
+At `FontSize` 11 a label of about ten characters fits. Longer titles clip rather than wrap.
 
 ## The d47 profile
 
-`Directive 47 Development`, profile UUID `2CFD100A-59FE-4ADF-82B0-A12855B1A0B2`.
+`Directive 47 Development`, UUID `2CFD100A-59FE-4ADF-82B0-A12855B1A0B2`. Page 1 runs the launchers
+in `tools/deck/*.cmd`; page 2 holds the release keys. Tiles are 144x144 vertical gradients
+generated with `zlib` and `struct`, colour-coded: purple opens a Claude session, teal types into the
+focused terminal, slate runs a script, amber cuts a release, near-black switches page.
 
-Page 1 runs the launchers in `tools/deck/*.cmd`. Each opens a `claude` session in the repo with a
-name, model, effort and an initial slash command; the **Desktop** key types `/desktop` into the
-focused terminal to hand that session to the desktop app. Page 2 holds the release keys.
+Adding a button is three edits: a `.cmd` in `tools/deck/`, an action entry in the page manifest, and
+a tile in that page's `Images/`.
 
-Adding a button is two edits: a `.cmd` in `tools/deck/`, and one action entry in the page manifest.
+## Writing the script
+
+The Bash heredoc on this machine **collapses a doubled backslash to a single one**, so a Windows
+path written as a doubled escape arrives with real tab and formfeed characters in it. Build paths
+with `os.path.join` and `os.sep` and use no literal backslash anywhere in the script — or write the
+file with the Write tool, which does not mangle. Verify every `Settings.path` with `os.path.isfile`
+and every `Image` against the page folder before restarting; both classes of breakage are silent.
