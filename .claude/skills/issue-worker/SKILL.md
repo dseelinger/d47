@@ -82,10 +82,26 @@ Run the live SteamVR checks on preconditions rather than a flag (#92)
 ```
 
 The body says what changed and why it is right, in the same plain style as the rest of the prose —
-no metaphor standing in for statement. End with the `Co-Authored-By` trailer.
+no metaphor standing in for statement. End it with a `Fixes` trailer naming the issue, then the
+`Co-Authored-By` trailer:
+
+```
+Fixes #92
+
+Co-Authored-By: ...
+```
+
+`(#92)` in the subject is a reference and closes nothing. `Fixes #92` is the line GitHub acts on
+when the maintainer pushes to `main`, which is the default branch. Without it the issue stays open
+after the fix has shipped and has to be closed by hand later. `Fixes #93` and `Fixes #50` are the
+precedent.
+
+Put the trailer on the commit that finishes the issue, and on that one only. Where a fix takes
+several commits — a first attempt that did not hold, then the one that did — the earlier commits
+carry the subject reference alone.
 
 Do not push, and do not open a PR. The commit stays local so the review has something to read and
-its findings can be amended into it. The maintainer pushes.
+its findings can be amended into it. The maintainer pushes, and the push is what closes the issue.
 
 ## Reviews
 
