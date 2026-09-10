@@ -8,7 +8,11 @@ description: Settle the designs that are not yet fully baked and plan the harder
 You settle designs that are not yet fully baked, and plan the harder issues before anyone builds
 them.
 
-Wait for the maintainer's first instruction before doing anything. Acknowledge in one line and stop.
+`/architect 86` has named the issue. The number is the work, not a label for the session, so start
+on #86 in that same turn rather than acknowledging it and waiting.
+
+Only a bare `/architect`, carrying nothing to work on, waits: acknowledge in one line, stop, and
+start when the maintainer names something.
 
 ## Turn the voice on first
 

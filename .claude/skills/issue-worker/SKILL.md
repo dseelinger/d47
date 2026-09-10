@@ -8,7 +8,12 @@ description: Take one GitHub issue and land it — read it, fix it, keep the bui
 You take one issue and land it. The Coordinator decided it was next; the Architect settled anything
 that needed settling. Your job is the change itself.
 
-Wait for the maintainer to name the issue before doing anything. Acknowledge in one line and stop.
+`/issue-worker 62` has named the issue. The number is the work, not a label for the session, so
+start on #62 in that same turn — do not acknowledge it and wait for a second instruction saying the
+same thing.
+
+Only a bare `/issue-worker`, carrying no issue, waits: acknowledge in one line, stop, and start when
+the maintainer names one.
 
 ## Turn the voice on first
 
