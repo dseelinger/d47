@@ -1,6 +1,7 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
 using D47.Core.Vr;
+using D47.Vr.Binding;
 using Microsoft.Extensions.Logging;
 using Valve.VR;
 
@@ -38,7 +39,8 @@ public interface IVrSurfaceSource
 /// <summary>The headset, for real.</summary>
 public sealed class SteamVrRuntime(
     IReadOnlyList<IVrSurfaceSource> sources,
-    ILogger<SteamVrRuntime> logger) : IVrRuntime
+    ILogger<SteamVrRuntime> logger,
+    IOpenVrSession openVr) : IVrRuntime
 {
     /// <summary>Reverse-domain, one per quad.</summary>
     private static readonly IReadOnlyDictionary<VrSurface, (string Key, string Name)> Keys =
@@ -86,7 +88,7 @@ public sealed class SteamVrRuntime(
     private readonly record struct ControllerSeen(bool Connected, bool Tracking, EDeviceActivityLevel Activity);
 
     /// <summary>The trigger.</summary>
-    public VrActionInput Actions { get; } = new(logger);
+    public VrActionInput Actions { get; } = new(logger, openVr);
 
     /// <summary>Whether d47 may touch the motion controllers at all (#198).</summary>
     public bool Pointing { get; set; }
@@ -101,7 +103,7 @@ public sealed class SteamVrRuntime(
 
     private float _beamLength = float.NaN;
 
-    private CVRSystem? _system;
+    private IOpenVrSystem? _system;
     private bool _claimed;
 
     /// <summary>The last head pose read.</summary>
@@ -109,7 +111,7 @@ public sealed class SteamVrRuntime(
 
     public VrStart Start()
     {
-        if (!OpenVrLoader.Register())
+        if (!openVr.Load())
         {
             return new VrStart(
                 VrStartOutcome.NoRuntime,
@@ -206,7 +208,7 @@ public sealed class SteamVrRuntime(
             // Before the session goes, so a claim standing at the moment the overlay was switched off is
             // given back rather than left for SteamVR to notice.
             Actions.Release();
-            OpenVR.Shutdown();
+            openVr.Shutdown();
             _system = null;
         }
 
@@ -331,7 +333,7 @@ public sealed class SteamVrRuntime(
         }
 
         var correction = Matrix4x4.Identity;
-        var models = OpenVR.RenderModels;
+        var models = openVr.RenderModels;
 
         if (models is not null && ModelName(device) is { } model)
         {
@@ -415,7 +417,7 @@ public sealed class SteamVrRuntime(
     {
         // Asked before VR_Init, and this is the reason for asking: VR_Init *starts SteamVR* if it is not
         // already running.
-        if (!SteamVrIsRunning())
+        if (!openVr.SessionIsRunning())
         {
             Release();
             return new VrStart(
@@ -423,7 +425,7 @@ public sealed class SteamVrRuntime(
                 "SteamVR is not running. D47 will attach when you start it.");
         }
 
-        if (!OpenVR.IsHmdPresent())
+        if (!openVr.IsHmdPresent())
         {
             Release();
             return new VrStart(
@@ -432,7 +434,7 @@ public sealed class SteamVrRuntime(
         }
 
         var error = EVRInitError.None;
-        _system = OpenVR.Init(ref error, EVRApplicationType.VRApplication_Overlay);
+        _system = openVr.Init(ref error, EVRApplicationType.VRApplication_Overlay);
 
         if (error != EVRInitError.None || _system is null)
         {
@@ -440,10 +442,10 @@ public sealed class SteamVrRuntime(
             Release();
             return new VrStart(
                 VrStartOutcome.NotReady,
-                $"SteamVR is not ready: {OpenVR.GetStringForHmdError(error)}");
+                $"SteamVR is not ready: {openVr.GetStringForHmdError(error)}");
         }
 
-        if (OpenVR.Overlay is null)
+        if (openVr.Overlay is null)
         {
             Release();
             return new VrStart(VrStartOutcome.Failed, "SteamVR started but has no overlay interface.");
@@ -459,7 +461,7 @@ public sealed class SteamVrRuntime(
                 continue;
             }
 
-            var overlay = VrOverlay.Create(key, name, out var failure, Refused);
+            var overlay = VrOverlay.Create(openVr, key, name, out var failure, Refused);
 
             if (overlay is null)
             {
@@ -522,7 +524,7 @@ public sealed class SteamVrRuntime(
         float widthMetres,
         uint sortOrder)
     {
-        var overlay = VrOverlay.Create(key, name, out _, Refused);
+        var overlay = VrOverlay.Create(openVr, key, name, out _, Refused);
 
         if (overlay is null)
         {

@@ -1,6 +1,7 @@
 using D47.App.Headset;
 using D47.Core.Capabilities.Builtin;
 using D47.Vr;
+using D47.Vr.Binding;
 using Xunit;
 
 namespace D47.App.Tests;
@@ -18,7 +19,7 @@ public class NothingTouchesAControllerWhileWithdrawnTests
 
     /// <summary>One choke point for every per-device call.</summary>
     [Theory]
-    [InlineData("CVRSystem", "GetTrackedDeviceClass")]
+    [InlineData(nameof(IOpenVrSystem), "GetTrackedDeviceClass")]
     [InlineData(nameof(SteamVrRuntime), "Note")]
     [InlineData(nameof(SteamVrRuntime), "GripToTip")]
     public void EveryPerDeviceCallIsMadeFromHandsAndHeadAndNowhereElse(string type, string call)
@@ -26,6 +27,18 @@ public class NothingTouchesAControllerWhileWithdrawnTests
         var callers = AssemblyCalls.Callers(typeof(SteamVrRuntime).Assembly, type, call);
 
         Assert.Equal(["SteamVrRuntime.HandsAndHead"], callers);
+    }
+
+    /// <summary>
+    /// And the vendored binding is reached only through the adapter, which forwards and does nothing
+    /// else — so the choke point above is the whole of it and not one of two roads.
+    /// </summary>
+    [Fact]
+    public void TheVendoredBindingIsReachedOnlyThroughTheAdapter()
+    {
+        Assert.Equal(
+            ["SystemApi.GetTrackedDeviceClass"],
+            AssemblyCalls.Callers(typeof(SteamVrRuntime).Assembly, "CVRSystem", "GetTrackedDeviceClass"));
     }
 
     /// <summary>And that one method asks the row before it does any of it.</summary>

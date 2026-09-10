@@ -8,6 +8,7 @@ using D47.Core.Configuration;
 using D47.Core.Ticking;
 using D47.Core.Vr;
 using D47.Vr;
+using D47.Vr.Binding;
 using Microsoft.Extensions.Logging;
 
 namespace D47.App.Headset;
@@ -151,7 +152,10 @@ public sealed class VrHost : IDisposable
         var layer = new CaptionLayer { Settings = settings.Current.Vr.Captions };
         var captions = new VrCaptionSurface(layer);
 
-        var runtime = new SteamVrRuntime([panel, captions], loggers.CreateLogger<SteamVrRuntime>());
+        var runtime = new SteamVrRuntime(
+            [panel, captions],
+            loggers.CreateLogger<SteamVrRuntime>(),
+            OpenVrBinding.Instance);
         var lifecycle = new VrLifecycle(runtime, loggers.CreateLogger<VrLifecycle>());
 
         var host = self = new VrHost(

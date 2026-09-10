@@ -5,7 +5,7 @@
 
 .DESCRIPTION
     Everything that matters happens in `.github/workflows/release.yml` — this decides the number,
-    runs D47.App.Tests, and dispatches. The other six projects run there, before the tag exists,
+    runs D47.App.Tests, and dispatches. The other seven projects run there, before the tag exists,
     so a red run leaves nothing tagged and nothing published.
 
     D47.App.Tests runs here because it costs 2m52s on a four-vCPU runner and 76s on this machine,

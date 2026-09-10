@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using D47.Core.Vr;
+using D47.Vr.Binding;
 using Valve.VR;
 
 namespace D47.Vr;
@@ -12,6 +13,13 @@ public sealed class VrOverlay : IDisposable
 
     private readonly ulong _handle;
     private readonly Action<string>? _refused;
+    private readonly IOpenVrSession _session;
+
+    /// <summary>
+    /// The interface this quad was created through. Held rather than asked for per call, and given back
+    /// through <see cref="_session"/> so a session that has already gone is not called into.
+    /// </summary>
+    private readonly IOpenVrOverlay _api;
 
     private VrPose? _appliedPose;
     private VrPose? _appliedHeadOffset;
@@ -20,8 +28,15 @@ public sealed class VrOverlay : IDisposable
     private float _appliedAlpha = float.NaN;
     private bool _shown;
 
-    private VrOverlay(ulong handle, string key, Action<string>? refused)
+    private VrOverlay(
+        IOpenVrSession session,
+        IOpenVrOverlay api,
+        ulong handle,
+        string key,
+        Action<string>? refused)
     {
+        _session = session;
+        _api = api;
         _handle = handle;
         Key = key;
         _refused = refused;
@@ -42,10 +57,21 @@ public sealed class VrOverlay : IDisposable
     public string Key { get; }
 
     /// <summary>Creates the quad.</summary>
-    public static VrOverlay? Create(string key, string name, out VrStart failure, Action<string>? refused = null)
+    public static VrOverlay? Create(
+        IOpenVrSession session,
+        string key,
+        string name,
+        out VrStart failure,
+        Action<string>? refused = null)
     {
+        if (session.Overlay is not { } api)
+        {
+            failure = new VrStart(VrStartOutcome.Failed, "SteamVR has no overlay interface.");
+            return null;
+        }
+
         ulong handle = 0;
-        var created = OpenVR.Overlay.CreateOverlay(key, name, ref handle);
+        var created = api.CreateOverlay(key, name, ref handle);
 
         if (created == EVROverlayError.KeyInUse)
         {
@@ -61,22 +87,22 @@ public sealed class VrOverlay : IDisposable
             return null;
         }
 
-        var overlay = new VrOverlay(handle, key, refused);
+        var overlay = new VrOverlay(session, api, handle, key, refused);
 
         // The handle exists from the moment CreateOverlay succeeded, so a failure after this point still has
         // a quad to give back.
         try
         {
-            OpenVR.Overlay.SetOverlaySortOrder(handle, SortOrder);
+            api.SetOverlaySortOrder(handle, SortOrder);
 
             // The rasteriser hands over premultiplied alpha, so the compositor is told to expect it.
-            OpenVR.Overlay.SetOverlayFlag(handle, VROverlayFlags.IsPremultiplied, true);
+            api.SetOverlayFlag(handle, VROverlayFlags.IsPremultiplied, true);
 
             // Off by default, and this is the reason: the flag sorts the quad with the *non-scene* overlays,
             // which is the class SteamVR's dashboard belongs to.
             if (Environment.GetEnvironmentVariable("D47_VR_SORT") == "nonscene")
             {
-                OpenVR.Overlay.SetOverlayFlag(handle, VROverlayFlags.SortWithNonSceneOverlays, true);
+                api.SetOverlayFlag(handle, VROverlayFlags.SortWithNonSceneOverlays, true);
             }
         }
         catch
@@ -93,11 +119,11 @@ public sealed class VrOverlay : IDisposable
     /// <returns>Whether the runtime took it.</returns>
     public bool Submit(IntPtr pixels, int width, int height) =>
         Went(
-            OpenVR.Overlay.SetOverlayRaw(_handle, pixels, (uint)width, (uint)height, 4),
+            _api.SetOverlayRaw(_handle, pixels, (uint)width, (uint)height, 4),
             "Setting the pixels");
 
     /// <summary>Whether SteamVR is drawing this quad right now.</summary>
-    public bool Visible => OpenVR.Overlay.IsOverlayVisible(_handle);
+    public bool Visible => _api.IsOverlayVisible(_handle);
 
     /// <summary>Hangs the quad off the headset itself, which is what head-locked means to OpenVR.</summary>
     public void PlaceOnHead(VrPose offset)
@@ -110,7 +136,7 @@ public sealed class VrOverlay : IDisposable
         var matrix = VrMatrix.ToOpenVr(offset);
 
         if (Went(
-            OpenVR.Overlay.SetOverlayTransformTrackedDeviceRelative(
+            _api.SetOverlayTransformTrackedDeviceRelative(
                 _handle,
                 OpenVR.k_unTrackedDeviceIndex_Hmd,
                 ref matrix),
@@ -133,7 +159,7 @@ public sealed class VrOverlay : IDisposable
 
         // Latched only once it went through, here and below.
         if (Went(
-            OpenVR.Overlay.SetOverlayTransformAbsolute(
+            _api.SetOverlayTransformAbsolute(
                 _handle,
                 ETrackingUniverseOrigin.TrackingUniverseSeated,
                 ref matrix),
@@ -147,26 +173,26 @@ public sealed class VrOverlay : IDisposable
     public void Look(float widthMetres, float curvature, float opacity)
     {
         if (!Same(_appliedWidth, widthMetres)
-            && Went(OpenVR.Overlay.SetOverlayWidthInMeters(_handle, widthMetres), "Setting the width"))
+            && Went(_api.SetOverlayWidthInMeters(_handle, widthMetres), "Setting the width"))
         {
             _appliedWidth = widthMetres;
         }
 
         if (!Same(_appliedCurvature, curvature)
-            && Went(OpenVR.Overlay.SetOverlayCurvature(_handle, curvature), "Setting the curvature"))
+            && Went(_api.SetOverlayCurvature(_handle, curvature), "Setting the curvature"))
         {
             _appliedCurvature = curvature;
         }
 
         if (!Same(_appliedAlpha, opacity)
-            && Went(OpenVR.Overlay.SetOverlayAlpha(_handle, opacity), "Setting the opacity"))
+            && Went(_api.SetOverlayAlpha(_handle, opacity), "Setting the opacity"))
         {
             _appliedAlpha = opacity;
         }
     }
 
     /// <summary>Puts this quad above the panel.</summary>
-    public void Above(uint sortOrder) => OpenVR.Overlay.SetOverlaySortOrder(_handle, SortOrder + sortOrder);
+    public void Above(uint sortOrder) => _api.SetOverlaySortOrder(_handle, SortOrder + sortOrder);
 
     public void Show(bool shown)
     {
@@ -177,8 +203,8 @@ public sealed class VrOverlay : IDisposable
 
         // Latched after the call, not before.
         var went = shown
-            ? Went(OpenVR.Overlay.ShowOverlay(_handle), "Showing the quad")
-            : Went(OpenVR.Overlay.HideOverlay(_handle), "Hiding the quad");
+            ? Went(_api.ShowOverlay(_handle), "Showing the quad")
+            : Went(_api.HideOverlay(_handle), "Hiding the quad");
 
         if (went)
         {
@@ -189,17 +215,17 @@ public sealed class VrOverlay : IDisposable
     /// <summary>What SteamVR says about this quad, read back rather than remembered.</summary>
     public string Describe()
     {
-        var visible = OpenVR.Overlay.IsOverlayVisible(_handle);
+        var visible = _api.IsOverlayVisible(_handle);
 
         var alpha = 0f;
-        OpenVR.Overlay.GetOverlayAlpha(_handle, ref alpha);
+        _api.GetOverlayAlpha(_handle, ref alpha);
 
         var width = 0f;
-        OpenVR.Overlay.GetOverlayWidthInMeters(_handle, ref width);
+        _api.GetOverlayWidthInMeters(_handle, ref width);
 
         // Asked which kind first.
         var kind = VROverlayTransformType.VROverlayTransform_Absolute;
-        OpenVR.Overlay.GetOverlayTransformType(_handle, ref kind);
+        _api.GetOverlayTransformType(_handle, ref kind);
 
         var held = new HmdMatrix34_t();
         var where = "";
@@ -208,13 +234,13 @@ public sealed class VrOverlay : IDisposable
         if (kind == VROverlayTransformType.VROverlayTransform_TrackedDeviceRelative)
         {
             uint device = 0;
-            got = OpenVR.Overlay.GetOverlayTransformTrackedDeviceRelative(_handle, ref device, ref held);
+            got = _api.GetOverlayTransformTrackedDeviceRelative(_handle, ref device, ref held);
             where = $"riding device {device}";
         }
         else
         {
             var universe = ETrackingUniverseOrigin.TrackingUniverseSeated;
-            got = OpenVR.Overlay.GetOverlayTransformAbsolute(_handle, ref universe, ref held);
+            got = _api.GetOverlayTransformAbsolute(_handle, ref universe, ref held);
             where = $"universe={universe}";
         }
 
@@ -239,7 +265,7 @@ public sealed class VrOverlay : IDisposable
         var next = new VREvent_t();
         var size = (uint)Marshal.SizeOf<VREvent_t>();
 
-        while (OpenVR.Overlay.PollNextOverlayEvent(_handle, ref next, size))
+        while (_api.PollNextOverlayEvent(_handle, ref next, size))
         {
         // Drained, not read.
         }
@@ -248,8 +274,8 @@ public sealed class VrOverlay : IDisposable
     /// <summary>Gives the quad back.</summary>
     public void Dispose()
     {
-        OpenVR.Overlay?.ClearOverlayTexture(_handle);
-        OpenVR.Overlay?.DestroyOverlay(_handle);
+        _session.Overlay?.ClearOverlayTexture(_handle);
+        _session.Overlay?.DestroyOverlay(_handle);
     }
 
     private static bool Same(float a, float b) => Math.Abs(a - b) < 0.0005f;

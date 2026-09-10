@@ -164,7 +164,7 @@ current tool schema.
 | Path | What |
 | --- | --- |
 | `src/` | The 8 projects. `D47.Core` is the hub; `D47.App` the composition root and UI. |
-| `tests/` | 7 xunit suites plus `tests/fixtures/` journal fixtures. |
+| `tests/` | 8 xunit suites plus `tests/fixtures/` journal fixtures. |
 | `docs/` | Published Jekyll site. Also embedded into `D47.Core`. |
 | `tools/` | The Python table generators and the release commands. |
 | `worker/` | The Cloudflare Worker backing donations. |

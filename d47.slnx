@@ -17,5 +17,6 @@
     <Project Path="tests/D47.Llm.Tests/D47.Llm.Tests.csproj" />
     <Project Path="tests/D47.Scenarios.Tests/D47.Scenarios.Tests.csproj" />
     <Project Path="tests/D47.Tts.Tests/D47.Tts.Tests.csproj" />
+    <Project Path="tests/D47.Vr.Tests/D47.Vr.Tests.csproj" />
   </Folder>
 </Solution>

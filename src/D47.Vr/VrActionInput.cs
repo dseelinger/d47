@@ -1,16 +1,19 @@
 using System.Runtime.InteropServices;
+using D47.Vr.Binding;
 using Microsoft.Extensions.Logging;
 using Valve.VR;
 
 namespace D47.Vr;
 
 /// <summary>The trigger, read through <c>IVRInput</c>.</summary>
-public sealed class VrActionInput(ILogger logger)
+public sealed class VrActionInput(ILogger logger, IOpenVrSession session)
 {
     private ulong _set;
     private ulong _grab;
     private ulong _back;
-    private bool _ready;
+
+    /// <summary>The input interface, held from the moment the handles resolved. Null until then.</summary>
+    private IOpenVrInput? _input;
 
     /// <summary>Whether the back button was down last frame, so a hold is one press.</summary>
     private bool _backWasDown;
@@ -24,7 +27,7 @@ public sealed class VrActionInput(ILogger logger)
     private EVRInputError? _releaseRefused;
 
     /// <summary>Whether the trigger can be read at all.</summary>
-    public bool Ready => _ready;
+    public bool Ready => _input is not null;
 
     /// <summary>Whether this frame is claiming the controllers, for the diagnostic line.</summary>
     public bool HoldingPriority { get; private set; }
@@ -32,26 +35,32 @@ public sealed class VrActionInput(ILogger logger)
     /// <summary>Registers with SteamVR and loads the manifest.</summary>
     public void Register(string actionFolder)
     {
-        if (_ready)
+        if (_input is not null)
         {
             return;
         }
 
         try
         {
+            if (session.Applications is not { } applications || session.Input is not { } input)
+            {
+                logger.LogWarning("SteamVR has no input interface; the panel stays display-only");
+                return;
+            }
+
             var actions = VrActionManifest.Write(actionFolder);
             var application = VrActionManifest.WriteAppManifest(actionFolder, actions);
 
             // Temporary, so it evaporates on a SteamVR restart rather than accumulating stale entries in the
             // Commander's application list.
-            var added = OpenVR.Applications.AddApplicationManifest(application, true);
+            var added = applications.AddApplicationManifest(application, true);
 
             if (added != EVRApplicationError.None)
             {
                 logger.LogWarning("SteamVR would not take d47's application manifest: {Error}", added);
             }
 
-            var identified = OpenVR.Applications.IdentifyApplication(
+            var identified = applications.IdentifyApplication(
                 (uint)Environment.ProcessId,
                 VrActionManifest.AppKey);
 
@@ -60,7 +69,7 @@ public sealed class VrActionInput(ILogger logger)
                 logger.LogWarning("SteamVR would not identify d47 as {Key}: {Error}", VrActionManifest.AppKey, identified);
             }
 
-            var loaded = OpenVR.Input.SetActionManifestPath(actions);
+            var loaded = input.SetActionManifestPath(actions);
 
             if (loaded != EVRInputError.None)
             {
@@ -72,9 +81,9 @@ public sealed class VrActionInput(ILogger logger)
             var grab = 0ul;
             var back = 0ul;
 
-            if (OpenVR.Input.GetActionSetHandle(VrActionManifest.ActionSet, ref set) != EVRInputError.None
-                || OpenVR.Input.GetActionHandle(VrActionManifest.GrabAction, ref grab) != EVRInputError.None
-                || OpenVR.Input.GetActionHandle(VrActionManifest.BackAction, ref back) != EVRInputError.None)
+            if (input.GetActionSetHandle(VrActionManifest.ActionSet, ref set) != EVRInputError.None
+                || input.GetActionHandle(VrActionManifest.GrabAction, ref grab) != EVRInputError.None
+                || input.GetActionHandle(VrActionManifest.BackAction, ref back) != EVRInputError.None)
             {
                 logger.LogWarning("The action handles would not resolve; the panel stays display-only");
                 return;
@@ -83,7 +92,7 @@ public sealed class VrActionInput(ILogger logger)
             _set = set;
             _grab = grab;
             _back = back;
-            _ready = true;
+            _input = input;
 
             logger.LogInformation("Controller input is on: the trigger carries the panel");
         }
@@ -100,7 +109,7 @@ public sealed class VrActionInput(ILogger logger)
     /// </summary>
     public bool TriggerHeld(bool wanted)
     {
-        if (!_ready || !wanted)
+        if (_input is not { } input || !wanted)
         {
             Release();
             return false;
@@ -118,7 +127,7 @@ public sealed class VrActionInput(ILogger logger)
 
         HoldingPriority = true;
 
-        var updated = OpenVR.Input.UpdateActionState(
+        var updated = input.UpdateActionState(
             _active,
             (uint)Marshal.SizeOf<VRActiveActionSet_t>());
 
@@ -129,7 +138,7 @@ public sealed class VrActionInput(ILogger logger)
 
         var data = default(InputDigitalActionData_t);
 
-        var read = OpenVR.Input.GetDigitalActionData(
+        var read = input.GetDigitalActionData(
             _grab,
             ref data,
             (uint)Marshal.SizeOf<InputDigitalActionData_t>(),
@@ -143,7 +152,7 @@ public sealed class VrActionInput(ILogger logger)
     /// <summary>Gives the controllers back.</summary>
     public void Release()
     {
-        if (!_ready || !HoldingPriority)
+        if (_input is not { } input || !HoldingPriority)
         {
             HoldingPriority = false;
             return;
@@ -152,7 +161,7 @@ public sealed class VrActionInput(ILogger logger)
         _backWasDown = false;
         _released ??= [ReleaseSet(_set)];
 
-        var released = OpenVR.Input.UpdateActionState(_released, (uint)Marshal.SizeOf<VRActiveActionSet_t>());
+        var released = input.UpdateActionState(_released, (uint)Marshal.SizeOf<VRActiveActionSet_t>());
 
         if (released != EVRInputError.None)
         {
@@ -195,7 +204,7 @@ public sealed class VrActionInput(ILogger logger)
     /// </summary>
     public bool BackPressed()
     {
-        if (!_ready || !HoldingPriority)
+        if (_input is not { } input || !HoldingPriority)
         {
             _backWasDown = false;
             return false;
@@ -203,7 +212,7 @@ public sealed class VrActionInput(ILogger logger)
 
         var data = default(InputDigitalActionData_t);
 
-        var read = OpenVR.Input.GetDigitalActionData(
+        var read = input.GetDigitalActionData(
             _back,
             ref data,
             (uint)Marshal.SizeOf<InputDigitalActionData_t>(),
