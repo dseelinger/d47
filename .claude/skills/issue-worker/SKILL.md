@@ -1,6 +1,6 @@
 ---
 name: issue-worker
-description: Take one GitHub issue and land it — read it, fix it, keep the build clean, add the changelog entry when the change is user-visible, commit in the repository's form and push. The session that does the work, as opposed to the ones that decide it. Use when the user invokes /issue-worker, or says "you are the issue worker", "fix issue N", "take #N", "implement this issue".
+description: Take one GitHub issue and land it — read it, fix it, keep the build clean, add the changelog entry when the change is user-visible, and commit in the repository's form. Does not push — the maintainer pushes once the review has run. The session that does the work, as opposed to the ones that decide it. Use when the user invokes /issue-worker, or says "you are the issue worker", "fix issue N", "take #N", "implement this issue".
 ---
 
 # Issue worker
@@ -72,7 +72,7 @@ commit**. A test-only or tooling change gets none — `4bff303` is the precedent
 Prefer folding into the current unreleased heading over opening a new one; several commits routinely
 land under one version. The number is a guess and is reconciled when the release is cut.
 
-## Commit and push
+## Commit
 
 Commit messages are imperative and sentence case, with the issue number in parentheses when the
 commit closes one:
@@ -84,7 +84,8 @@ Run the live SteamVR checks on preconditions rather than a flag (#92)
 The body says what changed and why it is right, in the same plain style as the rest of the prose —
 no metaphor standing in for statement. End with the `Co-Authored-By` trailer.
 
-Then push. Do not open a PR.
+Do not push, and do not open a PR. The commit stays local so the review has something to read and
+its findings can be amended into it. The maintainer pushes.
 
 ## Reviews
 

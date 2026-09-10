@@ -89,7 +89,7 @@ PAGE_1 = {
     '0,2': run('build.cmd', 'build'),
     '1,2': run('ticking.cmd', 'ticking'),
     '2,2': run('test-drive.cmd', 'testdrive'),
-    '3,2': run('status.cmd', 'status'),
+    '3,2': run('restart-test-drive.cmd', 'restart'),
     '4,2': goto(2, 'release'),
 }
 

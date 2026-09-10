@@ -161,8 +161,8 @@ positioned. `d47 Capture` does the same, which is why it reads better than title
 Tiles are 144x144: near-black ground, an 11px accent bar along the top naming the category, a large
 glyph in the accent colour, and the label across the bottom. Draw at 4x and downsample with LANCZOS
 or thin strokes crawl. Colour-coding: violet opens a Claude session, cyan types into the focused
-terminal, green runs a script, amber is release, red is release-and-irreversible, slate is
-navigation or an off state.
+terminal, green runs a script, blue runs the app, amber is release, red is
+release-and-irreversible, slate is navigation or an off state.
 
 ## The d47 profile
 
@@ -174,7 +174,7 @@ navigation or an off state.
 | --- | --- | --- | --- | --- | --- |
 | **0** | Triage | Coord | Architect | Issue | Desktop |
 | **1** | Review | Prose | Ship | Voice on | Voice off |
-| **2** | Build | Ticking | Test drive | Status | Release > |
+| **2** | Build | Ticking | Test drive | Restart | Release > |
 
 **Page 2** — release: Patch, Minor, Major, Watch run across the top; Wrap up bottom-left; Back
 bottom-right. The three version keys show which field they bump, lit against two dim ones.

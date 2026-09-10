@@ -28,6 +28,7 @@ DIM = (70, 79, 92)
 VIOLET = (183, 148, 255)    # opens a Claude session
 CYAN = (79, 209, 245)       # types into the focused terminal
 GREEN = (91, 228, 155)      # runs a script
+BLUE = (77, 140, 255)       # runs the app
 AMBER = (255, 176, 32)      # release
 RED = (255, 122, 107)       # release, and irreversible
 SLATE = (147, 164, 191)     # navigation
@@ -173,6 +174,23 @@ def g_wheel(d, cx, cy, r, col):
                 cy + r * 0.80 * math.sin(math.radians(a))], fill=col, width=w)
 
 
+def g_restart(d, cx, cy, r, col):
+    """Circular arrow: close the test drive and bring it back up."""
+    w = max(2, int(r * 0.15))
+    d.arc([cx - r * 0.86, cy - r * 0.86, cx + r * 0.86, cy + r * 0.86],
+          start=310, end=210, fill=col, width=w)
+    # Arrowhead at the open end of the arc, pointing along the direction of travel.
+    a = math.radians(310)
+    hx, hy = cx + r * 0.86 * math.cos(a), cy + r * 0.86 * math.sin(a)
+    h = r * 0.34
+    d.polygon([(hx + h * math.cos(a - math.pi / 2), hy + h * math.sin(a - math.pi / 2)),
+               (hx + h * math.cos(a + math.pi / 2 - 0.9),
+                hy + h * math.sin(a + math.pi / 2 - 0.9)),
+               (hx + h * math.cos(a + math.pi / 2 + 0.9),
+                hy + h * math.sin(a + math.pi / 2 + 0.9))], fill=col)
+    _dot(d, cx, cy, r * 0.20, col)
+
+
 def g_eye(d, cx, cy, r, col):
     """Watch the run."""
     w = max(2, int(r * 0.14))
@@ -282,6 +300,8 @@ KEYS = {
     'ticking':    (g_clock, GREEN, 'Ticking'),
     'testdrive':  (g_wheel, GREEN, 'Test drive'),
     'status':     (g_branch, GREEN, 'Status'),
+
+    'restart':    (g_restart, BLUE, 'Restart'),
 
     'release':    (g_rocket, AMBER, 'Release'),
     'patch':      (lambda *a: g_semver(*a, lit=2), GREEN, 'Patch'),
