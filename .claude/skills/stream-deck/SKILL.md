@@ -1,12 +1,27 @@
 ---
 name: stream-deck
-description: Edit the maintainer's Stream Deck profiles by writing ProfilesV2 JSON directly, using the verified v2 format — the Keypad controller type, page folder name encoding, key images and the action entries the app accepts. Use when the user invokes /stream-deck, or asks to add, change or remove Stream Deck buttons, fix a profile that shows no keys, or build a new profile.
+description: Edit the maintainer's Stream Deck profiles by writing ProfilesV2 JSON directly, using the verified v2 format — the Keypad controller type, page folder name encoding, key images and the action entries the app accepts. Use when the user invokes /stream-deck, or asks to add, change or remove Stream Deck buttons, fix a key that does the wrong thing, fix a profile that shows no keys, or build a new profile.
 ---
 
 # Stream Deck profiles
 
 Verified on this machine against Stream Deck 7.4 and a MK.2. Written down because the same problem
-has now been solved from scratch three times, each time through the same failures.
+has been solved from scratch three times, each time through the same failures.
+
+## Changing the d47 profile
+
+It is generated, not hand-edited. Two scripts in `tools/deck/`, with Stream Deck **closed**:
+
+```bash
+python tools/deck/apply_profile.py --tiles
+```
+
+`gen_tiles.py` draws the key images; `apply_profile.py` writes the page manifests and then checks
+every launcher path and every image file before it finishes. Start Stream Deck afterwards.
+
+Adding a button is three edits: a `.cmd` in `tools/deck/`, an entry in `KEYS` in `gen_tiles.py`, and
+a line in `PAGE_1` or `PAGE_2` in `apply_profile.py`. Do not edit the profile JSON by hand — the
+next run of the script overwrites it.
 
 ## The one that costs the most time
 
@@ -46,7 +61,8 @@ proves the profile was parsed, and both were believed here and were wrong:
 - keys still present in the file after a quit — an unread file survives untouched too
 - the file still being pretty-printed rather than the app's compact style
 
-Ask the maintainer to look at the deck. There is no file-level substitute.
+Ask the maintainer to look at the deck. There is no file-level substitute. To show a design without
+making them squint at the hardware, paste the tiles onto a dark contact sheet and send that.
 
 ## Where things are
 
@@ -66,6 +82,15 @@ live programmatically** — ask the maintainer to pick it from the dropdown.
 
 Device: model `20GBA9901`, UUID `@(1)[4057/128/A00SA5022OQ7Y6]`. Keys are `"column,row"`,
 columns 0-4, rows 0-2.
+
+The built-in action ids are readable from the binary, which beats guessing:
+
+```bash
+grep -ao "com\.elgato\.streamdeck\.[a-z0-9.]*" "/c/Program Files/Elgato/StreamDeck/StreamDeck.exe" | sort -u
+```
+
+Stream Deck 7 has **no `multiactionswitch`**. The only two-state key action is
+`com.elgato.streamdeck.system.hotkeyswitch`, which sends keystrokes, not text.
 
 ## Page folder names are derived from the page UUID
 
@@ -120,33 +145,72 @@ Folder count = visible pages + 1 for `Default` + 1 per `profile.openchild` child
 renders the plugin's stock icon with a small title under it.
 
 ```json
-{"FontFamily": "Arial", "FontSize": 11, "FontStyle": "Bold", "FontUnderline": false,
- "Image": "Images/launch.png", "OutlineThickness": 2, "ShowTitle": true,
- "Title": "Triage", "TitleAlignment": "middle", "TitleColor": "#ffffff"}
+{"FontFamily": "Arial", "FontSize": 12, "FontStyle": "Bold", "FontUnderline": false,
+ "Image": "Images/triage.png", "OutlineThickness": 2, "ShowTitle": false,
+ "Title": "", "TitleAlignment": "bottom", "TitleColor": "#ffffff"}
 ```
 
 **`Image` is relative to the page folder** — `Profiles/<page folder>/Images/x.png`, not the profile
 root. The root `Images/` folder exists but is empty and is not where the app looks. Each page needs
 its own copy of the files it references.
 
-`ShowTitle: false` means the artwork carries the label; use it only with real icons.
+**Bake the label into the image and set `ShowTitle: false`.** Stream Deck's own title rendering
+clips anything past about ten characters at `FontSize` 11, wraps nothing, and cannot be tracked or
+positioned. `d47 Capture` does the same, which is why it reads better than titles over flat colour.
 
-At `FontSize` 11 a label of about ten characters fits. Longer titles clip rather than wrap.
+Tiles are 144x144: near-black ground, an 11px accent bar along the top naming the category, a large
+glyph in the accent colour, and the label across the bottom. Draw at 4x and downsample with LANCZOS
+or thin strokes crawl. Colour-coding: violet opens a Claude session, cyan types into the focused
+terminal, green runs a script, amber is release, red is release-and-irreversible, slate is
+navigation or an off state.
 
 ## The d47 profile
 
-`Directive 47 Development`, UUID `2CFD100A-59FE-4ADF-82B0-A12855B1A0B2`. Page 1 runs the launchers
-in `tools/deck/*.cmd`; page 2 holds the release keys. Tiles are 144x144 vertical gradients
-generated with `zlib` and `struct`, colour-coded: purple opens a Claude session, teal types into the
-focused terminal, slate runs a script, amber cuts a release, near-black switches page.
+`Directive 47 Development`, UUID `2CFD100A-59FE-4ADF-82B0-A12855B1A0B2`.
 
-Adding a button is three edits: a `.cmd` in `tools/deck/`, an action entry in the page manifest, and
-a tile in that page's `Images/`.
+**Page 1** — a session per key, then hand it over:
+
+| | 0 | 1 | 2 | 3 | 4 |
+| --- | --- | --- | --- | --- | --- |
+| **0** | Triage | Coord | Architect | Issue | Desktop |
+| **1** | Review | Prose | Ship | Voice on | Voice off |
+| **2** | Build | Ticking | Test drive | Status | Release > |
+
+**Page 2** — release: Patch, Minor, Major, Watch run across the top; Wrap up bottom-left; Back
+bottom-right. The three version keys show which field they bump, lit against two dim ones.
+
+The launchers open `claude` in the repo with a name, model, effort and an opening slash command.
+**Desktop** types `/desktop` into the focused terminal to hand that session to the desktop app, so
+work starts on a keypress and continues by clicking. The release keys ask Y/N in the terminal first.
+
+### Neural voice
+
+`/neural-voice` on, **`/neural-voice off`** off, `/neural-voice none` keeps the voice and only drops
+the session name — two neighbouring words for opposite things, and the wrong one shipped on the key
+at first. The state lives in the session and nowhere on disk (the skill forbids a hook, a settings
+write or a memory file), and sessions run in parallel with different settings, so **a Stream Deck
+key cannot detect whether it is on**. Two keys, not a toggle. The maintainer asked for a toggle and
+accepted this; do not quietly build a flag file to fake it, since that would make one session's
+voice global.
+
+## Not yet exercised
+
+As of 2026-09-10 the profile renders but **no key has been pressed**. If one misbehaves, separate
+the two layers before debugging:
+
+- Wrong thing happens, or nothing happens, and the terminal opens -> the fault is in
+  `tools/deck/*.cmd`, not the profile.
+- No terminal at all, or the wrong key art -> the fault is the profile; re-run `apply_profile.py`.
+
+Untested specifics worth suspecting first: whether a slash command works as `claude`'s opening
+prompt from a `.cmd` (it does from a shell), whether `system.text` reaches a terminal that has just
+launched without a focus race, and whether `PageIndex` is 1-based as assumed.
 
 ## Writing the script
 
 The Bash heredoc on this machine **collapses a doubled backslash to a single one**, so a Windows
 path written as a doubled escape arrives with real tab and formfeed characters in it. Build paths
 with `os.path.join` and `os.sep` and use no literal backslash anywhere in the script — or write the
-file with the Write tool, which does not mangle. Verify every `Settings.path` with `os.path.isfile`
-and every `Image` against the page folder before restarting; both classes of breakage are silent.
+file with the Write tool, which does not mangle. Long heredocs also fail outright with
+`unexpected EOF`. Verify every `Settings.path` with `os.path.isfile` and every `Image` against the
+page folder before restarting; both classes of breakage are silent.
