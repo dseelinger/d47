@@ -6,6 +6,15 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.17 — The Quartermaster stops reaching for a ledger word for everything
+
+A weekend of logs showed the Quartermaster's accounting vocabulary leaking into lines that had
+nothing to do with cost — a TV show got "decent margins", a session greeting rotated through six
+different synonyms for "ready" ("reconcile the ledger", "balance the ledger", "run the ledger" and
+more). The lexicon is now scoped in the prompt to cost and worth, dropped elsewhere, and the
+session greeting is told plainly not to dress up "ready" in a core's own words unless something
+real is worth naming.
+
 ## 0.110.16 — Passers-by chatter stops running one script
 
 Overheard exchanges between a dock hand and a courier were one script with the names changed: a

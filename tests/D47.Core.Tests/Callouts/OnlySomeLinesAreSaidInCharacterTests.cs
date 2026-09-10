@@ -197,6 +197,20 @@ public class OnlySomeLinesAreSaidInCharacterTests
     }
 
     /// <summary>
+    /// A row of synonyms for "ready" is worse than one plain greeting (#64): the instruction forbids
+    /// dressing the word up in a core's own vocabulary rather than relying on the model to notice.
+    /// </summary>
+    [Fact]
+    public void TheGreetingIsToldNotToInventASynonymOfReady()
+    {
+        var greeting = FlavourBriefs.For(
+            new Announcement(ContinuityCallout.Key, "Good evening, Commander. Ready to go."),
+            personalityEnabled: true);
+
+        Assert.Contains("without reaching for a synonym", greeting!.Instruction, StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// The carrier's tower does not, for the reason it gets no persona: a stranger on a comms channel
     /// does not know the Commander's history.
     /// </summary>

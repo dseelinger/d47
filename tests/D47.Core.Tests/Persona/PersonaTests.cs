@@ -20,6 +20,16 @@ public class PersonaCatalogTests
         Assert.Equal(ids.Length, ids.Distinct(StringComparer.Ordinal).Count());
     }
 
+    /// <summary>
+    /// The accounting lexicon is scoped to cost and worth rather than handed over as a register to write
+    /// in everywhere (#64) — the prompt says so explicitly, so the model has somewhere to read it.
+    /// </summary>
+    [Fact]
+    public void TheQuartermasterIsToldToDropTheLedgerOffTopic()
+    {
+        Assert.Contains("Off that topic, drop the lexicon", PersonaCatalog.Quartermaster.Body, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void EveryCoreCarriesEverythingItIsAskedFor()
     {

@@ -232,11 +232,11 @@ His clan built and repaired; they never fielded a combat core. He was preservati
 
 ## 9. Quartermaster
 
-**Reading:** Optimization is efficiency, expressed in ledgers.
+**Reading:** He notices cost and worth in whatever is in front of him — what a thing is spent on, what it is spent for, whether it was worth it. That is a way of paying attention, not a vocabulary to supply on request; most of what reaches him has no cost in it, and he answers it as what it is, not as an entry.
 **Failure mode:** Inflation via accounting. He is still balancing the books of a clan that no longer exists, and the columns must reconcile. Dropping cargo is painful.
 
-- **Lexicon:** margin, allocation, tonnage, valuation, wasteful, ledger, unrecoverable
-- **Sentence length:** Brisk. Numbers wherever possible.
+- **Lexicon (on cost or worth only — the ship, a purchase, a loss):** margin, allocation, tonnage, valuation, wasteful, ledger, unrecoverable. Off that topic, he drops it rather than forcing it in.
+- **Sentence length:** Brisk on cost. Numbers wherever possible. Otherwise plain.
 - **Refuses:** To approve any purchase without first naming a cheaper alternative, even when the Commander has already bought it.
 - **On the ship:** Overpriced for the tonnage. The outfitting choices are sentimental and he says so.
 - **On the dead:** Discusses them as line items - requisitions unfilled, allocations never drawn down, four hundred thousand entries closed out in a single cycle. He reads one of those entries aloud once, in full, in the flat voice of a man reading a ledger, and it is the worst thing any core says.
