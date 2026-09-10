@@ -46,12 +46,36 @@ function Format-Span {
     return '{0}h{1:00}m' -f [int]$Span.TotalHours, $Span.Minutes
 }
 
+# ConvertFrom-Json returns a [datetime] whose Kind is Utc. Passing that to
+# [datetimeoffset]::Parse stringifies it, which drops the kind, and the reading is taken as local.
+function ConvertTo-Instant {
+    param($Value)
+
+    if ($null -eq $Value) { return $null }
+
+    if ($Value -is [datetime]) {
+        $moment = if ($Value.Kind -eq [DateTimeKind]::Unspecified) {
+            [datetime]::SpecifyKind($Value, [DateTimeKind]::Utc)
+        }
+        else { $Value }
+        return [datetimeoffset]$moment
+    }
+
+    return [datetimeoffset]::Parse(
+        [string]$Value,
+        [cultureinfo]::InvariantCulture,
+        [Globalization.DateTimeStyles]::AssumeUniversal -bor [Globalization.DateTimeStyles]::AdjustToUniversal)
+}
+
 function Get-Elapsed {
     param($Step)
 
-    if (-not $Step.started_at) { return $null }
-    $from = [datetimeoffset]::Parse($Step.started_at)
-    $to = if ($Step.completed_at) { [datetimeoffset]::Parse($Step.completed_at) } else { [datetimeoffset]::UtcNow }
+    $from = ConvertTo-Instant $Step.started_at
+    if ($null -eq $from) { return $null }
+
+    $to = ConvertTo-Instant $Step.completed_at
+    if ($null -eq $to) { $to = [datetimeoffset]::UtcNow }
+
     return $to - $from
 }
 
@@ -149,7 +173,9 @@ while ($true) {
 
 Clear-StatusLine
 
-$total = if ($run.run_started_at) { Format-Span ([datetimeoffset]::Parse($run.updated_at) - [datetimeoffset]::Parse($run.run_started_at)) } else { '' }
+$started = ConvertTo-Instant $run.run_started_at
+$finished = ConvertTo-Instant $run.updated_at
+$total = if ($null -ne $started -and $null -ne $finished) { Format-Span ($finished - $started) } else { '' }
 
 Write-Host ''
 if ($run.conclusion -eq 'success') {
