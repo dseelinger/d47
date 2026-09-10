@@ -128,6 +128,32 @@ public class NpcChatterCalloutTests
         Assert.Equal(NpcChatterKind.Hail, NpcChatterCallout.KindFor(3, docked: true));
         Assert.Equal(NpcChatterKind.Hail, NpcChatterCallout.KindFor(7, docked: false));
     }
+
+    /// <summary>
+    /// Nobody is near a ship in supercruise or hyperspace (#43) — no exchange until it drops back to
+    /// normal space, whatever the interval says is due.
+    /// </summary>
+    [Fact]
+    public void SupercruiseIsSilenceUntilItDropsBackToNormalSpace()
+    {
+        var callout = Callout();
+
+        Assert.Empty(callout.Examine(Context(T0, StatusFlags.Supercruise | StatusFlags.InMainShip)));
+        Assert.Empty(callout.Examine(Context(
+            T0 + TimeSpan.FromMinutes(21), StatusFlags.Supercruise | StatusFlags.InMainShip)));
+
+        // Dropping out of supercruise is the first tick the gate lets through, and it seeds the clock
+        // exactly as launch does; the exchange arrives one interval after that.
+        var emitted = callout.Examine(Context(
+            T0 + TimeSpan.FromMinutes(42), StatusFlags.InMainShip)).ToList();
+
+        Assert.Empty(emitted);
+
+        emitted = callout.Examine(Context(
+            T0 + TimeSpan.FromMinutes(63), StatusFlags.InMainShip)).ToList();
+
+        Assert.Single(emitted);
+    }
 }
 
 /// <summary>The exchange itself: what the model is asked, and how strictly the reply is read.</summary>
@@ -386,5 +412,36 @@ public class NpcChatterScriptTests
         var none = NpcChatter.Instruction(NpcChatterKind.Passersby, NpcChatterCarrier.None);
 
         Assert.DoesNotContain("carrier", none, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// A Commander in normal space, away from a station, is given no dockside vocabulary to invent a
+    /// dock from (#43) — and the situation is said in words rather than left for the model to infer.
+    /// </summary>
+    [Theory]
+    [InlineData(NpcChatterKind.Passersby)]
+    [InlineData(NpcChatterKind.Hail)]
+    public void NormalSpaceGetsNoDockVocabulary(NpcChatterKind kind)
+    {
+        var flying = NpcChatter.Instruction(kind, NpcChatterCarrier.None, docked: false);
+
+        Assert.Contains("in normal space", flying, StringComparison.OrdinalIgnoreCase);
+
+        foreach (var phrase in new[] { "dock hand", "pad assignments", "grumble about the queue" })
+        {
+            Assert.DoesNotContain(phrase, flying, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    /// <summary>The docked scenes are unchanged by the normal-space fix (#43).</summary>
+    [Fact]
+    public void DockedScenesAreUnchanged()
+    {
+        var passersby = NpcChatter.Instruction(NpcChatterKind.Passersby, NpcChatterCarrier.None, docked: true);
+        var hail = NpcChatter.Instruction(NpcChatterKind.Hail, NpcChatterCarrier.None, docked: true);
+
+        Assert.Contains("a courier and a dock hand", passersby, StringComparison.Ordinal);
+        Assert.Contains("a grumble about the queue", hail, StringComparison.Ordinal);
+        Assert.Contains("docked at a station", passersby, StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -41,7 +41,12 @@ public sealed class NpcChatterCallout : ICallout
             _situationSince = context.Now;
         }
 
-        if (context.IsPriming || !Enabled() || Interval <= TimeSpan.Zero || situation == AmbientSituation.None)
+        // Nobody is near a ship in supercruise or hyperspace — Status.json reports both under the same
+        // flag, so this one check rules out the "chair-bound" modes NpcChatterCarrier.Of already knows.
+        if (context.IsPriming
+            || !Enabled()
+            || Interval <= TimeSpan.Zero
+            || situation is AmbientSituation.None or AmbientSituation.Supercruise)
         {
             yield break;
         }

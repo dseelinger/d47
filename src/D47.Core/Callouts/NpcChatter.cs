@@ -165,14 +165,26 @@ public static class NpcChatter
     /// What the model is asked for one exchange of the given kind, in the situation the Commander's own
     /// carrier is in.
     /// </summary>
-    public static string Instruction(NpcChatterKind kind, NpcChatterCarrier? carrier = null)
+    /// <param name="docked">
+    /// Whether the Commander's ship is currently docked — read live, not off the kind, so a scene never
+    /// keeps dock vocabulary the ship has since left behind.
+    /// </param>
+    public static string Instruction(NpcChatterKind kind, NpcChatterCarrier? carrier = null, bool docked = false)
     {
         var about = carrier ?? NpcChatterCarrier.None;
 
-        return Scene(kind, about) + Contract + Carrier(about);
+        return Situation(docked) + Scene(kind, about, docked) + Contract + Carrier(about);
     }
 
-    private static string Scene(NpcChatterKind kind, NpcChatterCarrier carrier) => kind switch
+    /// <summary>
+    /// The one sentence of live state the model cannot misread (#43): said in words, because a prompt
+    /// handed dock vocabulary invents a dock even where the scene never asked for one.
+    /// </summary>
+    private static string Situation(bool docked) => docked
+        ? "The Commander's ship is docked at a station. "
+        : "The Commander's ship is in normal space, under its own power, with no station nearby. ";
+
+    private static string Scene(NpcChatterKind kind, NpcChatterCarrier carrier, bool docked) => kind switch
     {
         // Docked is the only situation this pairing fires in, and while the Commander is at their own carrier
         // the only thing they can be docked at is that carrier — so the controller is named rather than left
@@ -189,10 +201,23 @@ public static class NpcChatter
             + "assignments, a telling-off. Procedure with a human edge. The Commander is not "
             + "part of it. ",
 
+        NpcChatterKind.Hail when !docked =>
+            "One invented person nearby says one or two lines to the Commander over the open "
+            + "channel — a compliment on the ship, a warning about a system ahead, a rumour "
+            + "picked up on the way. No pad, no dock, no queue: there is no station here. "
+            + "Statements only: they are not starting a conversation. ",
+
         NpcChatterKind.Hail =>
             "One invented person nearby says one or two lines to the Commander over the open "
             + "channel — a compliment on the ship, a grumble about the queue, a rumour heard in "
             + "the bar. Statements only: they are not starting a conversation. ",
+
+        _ when !docked =>
+            "Two invented people near the Commander — other crews on the open channel, a miner "
+            + "asking about a ring, a courier complaining about an interdiction, a wing sorting "
+            + "itself out — exchange 2 to 4 short lines about their own small business. No pad, "
+            + "no dock, no queue: there is no station here. The Commander is not part of it, "
+            + "and is not mentioned beyond perhaps being noticed in passing. ",
 
         _ =>
             "Two invented people near the Commander — crews on the local channel, a courier and "

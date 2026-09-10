@@ -6,6 +6,17 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.13 — NPC chatter stops inventing a dock in supercruise and normal space
+
+Overheard chatter talked about landing pads and dock queues while the Commander was crossing a
+system in supercruise, or flying in normal space nowhere near a station — an invented exchange
+about a ship sitting on a pad it was nowhere near. Two fixes: no chatter at all in supercruise or
+hyperspace, where nobody is near a ship to overhear; and the model is now told, in words, whether
+the ship is docked or in normal space, with a normal-space scene for the passers-by and hail
+pairings that has no pads, dock hands or queues to draw on. Docked scenes are unchanged, and a
+controller exchange asked for while docked is dropped rather than composed if the Commander lifts
+off before it is written.
+
 ## 0.110.12 — "Which of my ships has the best jump range" is answered rather than refused
 
 Asked which of their ships with at least 24 tonnes of cargo space had the best jump range,

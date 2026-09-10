@@ -4459,7 +4459,18 @@ public sealed class AppHost : IDisposable
         }
 
         var kind = NpcChatter.KindOf(marker.Key);
-        var carrier = NpcChatterCarrier.Of(GameState.Active?.Carrier, GameState.Active?.Location);
+        var location = GameState.Active?.Location;
+        var docked = location?.Docked ?? false;
+
+        // The kind was picked from the Docked flag when the marker was made; the exchange is composed
+        // later. A controller needs a dock to be at — one lifted off in between is worse than silence
+        // (#43).
+        if (kind == NpcChatterKind.Controller && !docked)
+        {
+            return [];
+        }
+
+        var carrier = NpcChatterCarrier.Of(GameState.Active?.Carrier, location);
 
         using var budget = new CancellationTokenSource(ChatterBudget);
 
@@ -4468,7 +4479,7 @@ public sealed class AppHost : IDisposable
             Turns.BackgroundModel,
             NpcChatter.Speaker,
             null,
-            NpcChatter.Instruction(kind, carrier),
+            NpcChatter.Instruction(kind, carrier, docked),
             Turns.LiveGameState?.Invoke(),
             Spend,
             PriceTable.Default,
