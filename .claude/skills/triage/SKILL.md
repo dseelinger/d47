@@ -65,7 +65,8 @@ A group is what ships under one version:
   reconciled when the release is actually cut.
 
 Name each group with the version it would take and a working title in the CHANGELOG's form
-(`## 0.110.10 — <title>`). The title is a guess and should be marked as one.
+(`0.110.10 — <title>`). The title is a guess and should be marked as one. The title carries the
+subject the group shares; if it cannot, the group is wrong and the issues belong elsewhere.
 
 ## Model and effort
 
@@ -113,19 +114,22 @@ is a triage the maintainer learns to skip, and then the one that mattered goes u
 
 ## Output
 
-Markdown, and short. Four parts:
+Markdown, and short. Three parts:
 
 1. One line: how many eligible, and what the filter removed.
-2. **Next up** — the queue, as a table:
+2. **Next up** — the queue and its release groups, as one table:
 
-   | # | Issue | Model | Effort | Review |
-   | --- | --- | --- | --- | --- |
-   | 105 | Join the experimental effect on its symbol | `sonnet` | `medium` | |
+   | Release | # | Issue | Model | Effort | Review |
+   | --- | --- | --- | --- | --- | --- |
+   | 0.110.10 — Tables answer for themselves *(guess)* | 105 | Join the experimental effect on its symbol | `sonnet` | `medium` | |
+   | | 104 | No way to ask which engineer works in a system | `sonnet` | `medium` | |
+
+   A group's issues are consecutive rows. The version and title go in the first of them; the
+   Release cell is blank on the rest, and blank throughout for an issue in no group. There is no
+   separate release section and no sentence explaining a group — the title says what they share.
 
    Shorten titles to the claim. The full title is one click away.
-3. **By release** — a heading per group, its issue numbers, and **one line** on why they ship
-   together. Not a paragraph.
-4. **Not now** — one line naming anything eligible you deliberately left out of every group, and
+3. **Not now** — one line naming anything eligible you deliberately left out of every group, and
    why. Omit the section when there is nothing.
 
 For the first group only, end with a copyable launch line per issue:
