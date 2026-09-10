@@ -558,6 +558,9 @@ public sealed class TurnLoop(
 
             var results = new List<ConversationContent>();
 
+            // Results the tool asked to have spoken as written (#111).
+            var relayed = new List<string>();
+
             foreach (var call in outcome.ToolUses)
             {
                 yield return new TurnEvent.ToolStarted(call.Name);
@@ -601,9 +604,32 @@ public sealed class TurnLoop(
                 yield return new TurnEvent.ToolFinished(call.Name, !result.IsError);
 
                 results.Add(new ConversationContent.ToolResult(call.Id, result.Content, result.IsError));
+
+                if (result.Relayed)
+                {
+                    relayed.Add(result.Content);
+                }
             }
 
             pending.Add(new ConversationMessage(ConversationRole.User, results));
+
+            // The turn ends on the tool's own sentence, so the model is never asked to report an action it
+            // has just taken. Any other result in the same round is committed to history unspoken, and a
+            // follow-up next turn is answered from the transcript rather than by running the tool again.
+            if (relayed.Count > 0)
+            {
+                var said = string.Join(' ', relayed);
+
+                if (previousRoundSpoke)
+                {
+                    yield return new TurnEvent.TextDelta(" ");
+                }
+
+                yield return new TurnEvent.TextDelta(said);
+
+                answer = previousRoundSpoke ? $"{answer} {said}" : said;
+                break;
+            }
         }
 
         availability.MarkAvailable();

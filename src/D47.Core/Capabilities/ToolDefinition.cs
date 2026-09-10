@@ -29,7 +29,13 @@ public sealed record ToolResult
 
     public required string Content { get; init; }
 
+    /// <summary>Spoken to the Commander as written; the model turn ends without the model reporting it.</summary>
+    public bool Relayed { get; init; }
+
     public static ToolResult Ok(string content) => new() { IsError = false, Content = content };
+
+    public static ToolResult Relay(string content) =>
+        new() { IsError = false, Content = content, Relayed = true };
 
     public static ToolResult Error(string content) => new() { IsError = true, Content = content };
 }
