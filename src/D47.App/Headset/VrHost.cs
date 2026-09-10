@@ -137,14 +137,17 @@ public sealed class VrHost : IDisposable
         D47.Core.Capabilities.CapabilityRegistry? capabilities = null,
         D47.Core.Knowledge.SourcingBoard? sourcingBoard = null,
         D47.Core.Knowledge.CarrierManifest? carrier = null,
-        Panel.RoutingSurface? routing = null)
+        Panel.RoutingSurface? routing = null,
+        Func<D47.Core.Journal.ModulePower>? modulePower = null,
+        Panel.ShipsDrawingsMemory? drawings = null)
     {
         VrHost? self = null;
 
         var panel = new VrPanelSurface(
             model, settings, slot => self?.AnchorFor(slot), avatars, dumpTo, settingsPage,
             checklists, timekeeper, alarmStore, ships, gameState, onFoot, unlocks, goals,
-            backfillGoals, adventures, viewState, capabilities, sourcingBoard, carrier, routing);
+            backfillGoals, adventures, viewState, capabilities, sourcingBoard, carrier, routing,
+            modulePower, drawings);
         var layer = new CaptionLayer { Settings = settings.Current.Vr.Captions };
         var captions = new VrCaptionSurface(layer);
 
@@ -304,6 +307,10 @@ public sealed class VrHost : IDisposable
             // And the route being flown, which is the fourth: a jump moves the Progress page with nothing
             // having been pressed (#52).
             _panel.TickRouting();
+
+            // And the fleet, for the same reason as Engineers above: nothing has to happen for the ship
+            // underneath the Commander to change (#53).
+            _panel.TickLoadout();
 
             Serve(context.Now);
         });

@@ -89,7 +89,12 @@ public partial class App(AppHost? host) : Application
 
                 // And where the Commander is going (Phase 37), from 2026-09-09 (#52): the window's own
                 // record, so the headset's copy of the tab cannot fall behind it.
-                window?.Routing);
+                window?.Routing,
+
+                // And the fleet's own arithmetic (Phase 27) and its hull-art switch (#53), the same store the
+                // window's copy reads so the switch is not left in two places at once.
+                () => host.ModulePower,
+                new Panel.ShipsDrawingsMemory(host.ViewState));
 
             // And the headset's copy of the panel can be the one asking for a spoken value (Phase 25), or
             // the one with a keyboard up for a value to be spelled onto (#51).

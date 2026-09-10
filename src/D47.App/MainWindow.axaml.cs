@@ -171,7 +171,11 @@ public partial class MainWindow : Window
             }
 
             // The fleet and its builds, what the Commander is wearing, and the arithmetic between them
-            // (Phases 26 and 27).
+            // (Phases 26 and 27). **Both surfaces from 2026-09-09** (#53): the tab was held back from the
+            // headset on the reasoning that a three-level drill ending in a search field was a bigger surface
+            // than one list of short rows, and every row it drills to turned out to be a button or a switch a
+            // ray already presses. Ctrl-drag of a slot onto another remains desktop-only — the one gesture
+            // the headset has no path for.
             Panel.EnableLoadout(
                 host.Ships,
                 host.Checklists,
@@ -304,7 +308,7 @@ public partial class MainWindow : Window
 
             // And the ship pages, for the same reason and by the same route (remediation.md 17, item 7).
             host.Tick.Add("loadout", _ =>
-                Avalonia.Threading.Dispatcher.UIThread.Post(Panel.TickLoadout));
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => Panel.TickLoadout()));
 
             // And the route being flown, by the same route again (Phase 37).
             host.Tick.Add("routing", _ =>

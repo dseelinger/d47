@@ -702,12 +702,14 @@ public partial class PanelView : UserControl
     /// <summary>
     /// Redraws the Loadout tab when the journal says the ship changed (remediation.md 17, item 7).
     /// </summary>
-    public void TickLoadout()
+    public bool TickLoadout()
     {
         if (_loadoutMode is not { } mode || Tab != PanelTab.Loadout)
         {
-            return;
+            return false;
         }
+
+        var changed = false;
 
         // The carrier moves on its own events rather than with the ship, so it is compared separately (#230):
         // a jump booked while the Commander is nowhere near it changes this page and changes nothing about
@@ -720,17 +722,19 @@ public partial class PanelView : UserControl
             _carrierSeen = carrier;
             _squadronSeen = squadron;
             _carrier?.Invalidate();
+            changed = true;
         }
 
         var current = _loadoutState?.Invoke()?.Ship;
 
-        if (ReferenceEquals(current, _loadoutSeen))
+        if (!ReferenceEquals(current, _loadoutSeen))
         {
-            return;
+            _loadoutSeen = current;
+            mode.Invalidate();
+            changed = true;
         }
 
-        _loadoutSeen = current;
-        mode.Invalidate();
+        return changed;
     }
 
     private ShipsMode? _loadoutMode;

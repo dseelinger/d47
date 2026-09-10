@@ -79,7 +79,12 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
         // Where the Commander is going (Phase 37), in the headset from 2026-09-09 (#52) — the same record the
         // window built, so neither surface has a list of this tab's needs the other has not got.
-        Panel.RoutingSurface? routing = null)
+        Panel.RoutingSurface? routing = null,
+
+        // The fleet and its builds, what the Commander is wearing and the gap between them (Phases 26-27), in
+        // the headset from 2026-09-09 (#53).
+        Func<D47.Core.Journal.ModulePower>? modulePower = null,
+        ShipsDrawingsMemory? drawings = null)
     {
         _dumpTo = dumpTo;
 
@@ -132,7 +137,17 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             _view.EnableAdventures(adventures);
         }
 
-        // `ships`, `gameState` and `onFoot` are still read below - Engineers needs all three.
+        if (ships is not null && checklists is not null && gameState is not null)
+        {
+            // The fleet and its builds, back in the headset (#53) — withheld until now on the reasoning that a
+            // three-level drill ending in a search field was a bigger surface than one list of short rows. Every
+            // row it drills to is a button or a switch a ray already presses; the one control that is not,
+            // Ctrl-drag of a slot onto another, has no pointer-moved path on this surface to ride on and stays a
+            // mouse convenience.
+            _view.EnableLoadout(ships, checklists, gameState, onFoot, modulePower, drawings);
+        }
+
+        // `ships`, `gameState` and `onFoot` are read again below - Engineers needs all three too.
 
         if (unlocks is not null && ships is not null && gameState is not null)
         {
@@ -196,6 +211,9 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     /// 28).
     /// </summary>
     public void TickEngineers() => _dirty |= _view.TickEngineers();
+
+    /// <summary>Redraws the Fleet tab when the journal says the ship changed, from the headset's own tick.</summary>
+    public void TickLoadout() => _dirty |= _view.TickLoadout();
 
     /// <summary>One frame of the d47 is composing animation (asked for 2026-08-22).</summary>
     public void TickAdventures() => _dirty |= _view.TickAdventures();

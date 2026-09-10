@@ -505,15 +505,17 @@ One bar along the top, and each tab is a surface of its own:
 Transcript   Fleet   Engineers   Checklist   Routing   Adventures   Utilities   Settings
 ```
 
-**The two surfaces do not carry the same tabs.** In the headset the panel is Transcript,
-Checklist, Engineers, Routing, Adventures, Utilities and Settings; Fleet is the window's. That is
-a choice rather than a limitation — a tab appears where a host asks for it, and asking is one
-line — and the reasons differ. Checklist and Loadout were both withdrawn on the Commander's own
-instruction, and the checklist went back on it — what a Commander is working on is worth reading
-in the one place there is no other way to read it (Phase 39). Routing followed it, every root of
-it: the plan forms were held back for wanting a keyboard, and their boxes reach the drawn one the
-same way the checklist's edit box does. Loadout stays where it is: a three-level drill ending in
-a search field is a bigger surface than a list of short rows, and it is a separate decision.
+**The two surfaces carry the same tabs, Settings aside** — the headset has no browser to open the
+site in and no window to show a settings surface inside, so that tab is the window's alone. Every
+other tab reached the headset in its own turn, for its own reason. Checklist and Loadout were both
+withdrawn on the Commander's own instruction, and Checklist went back first — what a Commander is
+working on is worth reading in the one place there is no other way to read it (Phase 39). Routing
+followed it, every root of it: the plan forms were held back for wanting a keyboard, and their
+boxes reach the drawn one the same way the checklist's edit box does. Fleet was held back longest,
+on the reasoning that a three-level drill ending in a search field is a bigger surface than a list
+of short rows — until it turned out that every row the drill leads to is a button or a switch a
+ray already presses. The one control that is not, Ctrl-drag of a slot onto another, has no
+headset path and stays a mouse convenience.
 
 A tab you have not got is a tab that is not drawn. The surfaces arrive as they are built.
 
