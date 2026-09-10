@@ -748,9 +748,11 @@ being spoken is cut off mid-word and the rest of the exchange is dropped rather 
 afterwards — you are asking, so the answer comes first, and losing half an overheard remark does not
 matter. It happens when you start talking rather than when the answer arrives, because
 transcription and the model together take several seconds and an exchange runs to its end inside
-them. Nothing else goes with it: a message the game sent you and a callout you switched on both keep
-their place in the queue and are still spoken. And only you do this — an unprompted line of
-Directive 47's own waits its turn like anything else.
+them. And chatter stays shut off until the answer is done and the loop is quiet again, because the
+next speaker is written and voiced while the first is still talking, and would otherwise arrive a
+second after you cut them off. Nothing else goes with it: a message the game sent you and a callout
+you switched on both keep their place in the queue and are still spoken. And only you do this — an
+unprompted line of Directive 47's own waits its turn like anything else.
 
 > "stop calling out npc chatter" / "start calling out npc chatter"
 

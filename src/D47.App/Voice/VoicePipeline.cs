@@ -278,13 +278,18 @@ public sealed class VoicePipeline(
     public void EnterState(LoopState state, bool cue)
     {
         // Invented chatter gets out of the way the moment the Commander starts talking, or a turn starts
-        // without them having talked at all — cut mid-word if it is playing, dropped if it is queued.
-        // Waiting for the answer is far too late: transcription and the model together run to several
-        // seconds, and a four-line exchange finishes inside them. Callouts and relayed in-game comms are
-        // in another group and are left where they are (#61).
+        // without them having talked at all — cut mid-word if it is playing, dropped if it is queued, and
+        // refused until the loop settles, because the lines after it are synthesised while it is speaking
+        // and would otherwise arrive behind the answer. Waiting for the answer is far too late:
+        // transcription and the model together run to several seconds, and a four-line exchange finishes
+        // inside them. Callouts and relayed in-game comms are in another group (#61).
         if (state is LoopState.Listening or LoopState.Thinking)
         {
-            arbiter.DropGroup(SpokenGroup.InventedChatter);
+            arbiter.CloseGroup(SpokenGroup.InventedChatter);
+        }
+        else if (state == LoopState.Idle)
+        {
+            arbiter.OpenGroup(SpokenGroup.InventedChatter);
         }
 
         arbiter.EnterState(state, cues(), Bed, CuesEnabled && cue, BedEnabled);
@@ -306,6 +311,7 @@ public sealed class VoicePipeline(
         }
 
         _state = LoopState.Idle;
+        arbiter.OpenGroup(SpokenGroup.InventedChatter);
         StateEntered?.Invoke(LoopState.Idle);
     }
 

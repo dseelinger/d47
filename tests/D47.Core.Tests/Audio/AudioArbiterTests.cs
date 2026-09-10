@@ -102,6 +102,58 @@ public class AudioArbiterTests
         Assert.Equal("queued alert", sink.Started[1].Clip.Name);
     }
 
+    /// <summary>The point of closing rather than dropping: what was still being synthesised.</summary>
+    [Fact]
+    public void AClosedGroupTurnsAwayWhatArrivesAfterItWasDropped()
+    {
+        var (arbiter, sink) = Build();
+
+        arbiter.Enqueue(Speech("overheard", group: "chatter"));
+        var playing = sink.Started[0].Id;
+
+        arbiter.CloseGroup("chatter");
+
+        Assert.Contains(playing, sink.Stopped);
+
+        arbiter.Enqueue(Speech("the next line of the same exchange", group: "chatter"));
+
+        Assert.Single(sink.Started);
+    }
+
+    [Fact]
+    public void AGroupTakesLinesAgainOnceItIsOpened()
+    {
+        var (arbiter, sink) = Build();
+
+        arbiter.CloseGroup("chatter");
+        arbiter.Enqueue(Speech("refused", group: "chatter"));
+
+        Assert.Empty(sink.Started);
+
+        arbiter.OpenGroup("chatter");
+        arbiter.Enqueue(Speech("taken", group: "chatter"));
+
+        Assert.Equal("taken", Assert.Single(sink.Started).Clip.Name);
+    }
+
+    /// <summary>Closing one group is not a way of quietening anything else.</summary>
+    [Fact]
+    public void AClosedGroupDoesNotHoldUpAnyOtherLine()
+    {
+        var (arbiter, sink) = Build();
+
+        arbiter.CloseGroup("chatter");
+
+        arbiter.Enqueue(Speech("docking request granted", group: "announcement"));
+        arbiter.Enqueue(Speech("one jump remaining"));
+
+        Assert.Equal("docking request granted", sink.Started[0].Clip.Name);
+
+        sink.CompleteCurrent();
+
+        Assert.Equal("one jump remaining", sink.Started[1].Clip.Name);
+    }
+
     /// <summary>Ranking decides who goes next, not who gets cut off.</summary>
     [Fact]
     public void SpeechWaitsForACueRatherThanTruncatingIt()

@@ -144,6 +144,60 @@ public class AskingCutsAheadOfInventedChatterTests
     }
 
     /// <summary>
+    /// The line after the one that was cut is already being synthesised when the microphone opens, so it
+    /// arrives afterwards and has to be turned away rather than queued.
+    /// </summary>
+    [Fact]
+    public async Task TheNextSpeakerInTheExchangeIsTurnedAwayToo()
+    {
+        var (voice, sink) = Build();
+
+        await voice.AnnounceAsync(Chatter("Pad seven is yours when you want it."));
+
+        voice.EnterState(LoopState.Listening);
+
+        await voice.AnnounceAsync(Chatter("Against Torvald's crew? He's throwing money away."));
+
+        sink.FinishEverything();
+
+        Assert.False(sink.Played("Against Torvald's crew?"));
+    }
+
+    /// <summary>And the next exchange is heard, once the answer is done and the loop has settled.</summary>
+    [Fact]
+    public async Task ChatterIsHeardAgainOnceTheLoopSettles()
+    {
+        var (voice, sink) = Build();
+
+        voice.EnterState(LoopState.Listening);
+
+        await voice.RunAsync(Reply(), cancellationToken: TestContext.Current.CancellationToken);
+
+        voice.Settle(new AudioActivity(Channel: null, Caption: null, BedPlaying: false));
+
+        await voice.AnnounceAsync(Chatter("Some people just like losing in style."));
+
+        // The answer is still playing, so the chatter is queued behind it rather than refused.
+        sink.FinishEverything();
+
+        Assert.True(sink.Played("Some people just like losing in style."));
+    }
+
+    /// <summary>A microphone opened and closed with nothing said leaves nothing shut off.</summary>
+    [Fact]
+    public async Task AnUtteranceTooShortToTranscribeLetsChatterBackIn()
+    {
+        var (voice, sink) = Build();
+
+        voice.EnterState(LoopState.Listening);
+        voice.EnterState(LoopState.Idle);
+
+        await voice.AnnounceAsync(Chatter("Some people just like losing in style."));
+
+        Assert.True(sink.Played("Some people just like losing in style."));
+    }
+
+    /// <summary>
     /// The flag the chatter loop reads to abandon the rest of an exchange, since the lines after the one
     /// that was cut are synthesised later and would otherwise queue up behind the answer.
     /// </summary>

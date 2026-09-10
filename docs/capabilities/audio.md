@@ -207,6 +207,10 @@ The middle row is the narrow one, and it fires when you open the microphone rath
 answer arrives. Transcription and the model together take several seconds, and a four-line exchange
 finishes inside them, so waiting for the answer would mean hearing the whole exchange out anyway.
 
+It stays shut until the loop goes quiet again, rather than only cutting what was audible at that
+moment. An exchange is written and voiced ahead of what you are hearing, so the next speaker is
+already on their way when the first is cut off, and would otherwise arrive a second later.
+
 It reaches invented chatter and nothing else: a message the game sent you, a callout you switched
 on, and a sound cue are all left where they are. And it is only ever you who does it — an
 unprompted line of Directive 47's own queues up behind the chatter like anything else, because

@@ -13,9 +13,11 @@ exchange, arriving after you had moved on. Invented chatter is now kept apart fr
 that gets spoken, and opening the microphone cuts the chatter line mid-word and drops the rest of
 the exchange. It goes on the microphone opening rather than on the answer arriving, because
 transcription and the model together take several seconds and a four-line exchange finishes inside
-them. Nothing else is dropped with it: a message the game sent you, a callout you switched on and
-the sound cue in front of the answer all keep their place. And only you do this — an unprompted line
-of Directive 47's own still waits its turn.
+them. Chatter then stays shut off until the answer is done and the loop is quiet again, because the
+next speaker in an exchange is written and voiced while the first is still talking and would
+otherwise arrive a second after you cut them off. Nothing else is dropped with it: a message the
+game sent you, a callout you switched on and the sound cue in front of the answer all keep their
+place. And only you do this — an unprompted line of Directive 47's own still waits its turn.
 
 ## 0.110.18 — A refused tool call is not tried again in the same turn
 

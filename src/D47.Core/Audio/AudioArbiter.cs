@@ -56,6 +56,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
 {
     private readonly Lock _gate = new();
     private readonly List<Pending> _queue = [];
+    private readonly HashSet<string> _closed = new(StringComparer.Ordinal);
 
     private long _nextId = 1;
     private Playing? _current;
@@ -142,6 +143,12 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
 
         lock (_gate)
         {
+            if (request.Group is { } closed && _closed.Contains(closed))
+            {
+                logger.LogDebug("{Group} is closed; {Clip} is not queued", closed, request.Clip.Name);
+                return;
+            }
+
             if (request.Channel == AudioChannel.Bed)
             {
                 StartBed(request);
@@ -208,6 +215,30 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         }
 
         ActivityChanged?.Invoke(activity);
+    }
+
+    /// <summary>
+    /// Drops a group and refuses anything more in it until <see cref="OpenGroup"/>. A caller that
+    /// synthesises ahead of playback has work in flight when it decides to stop, and that work arrives
+    /// after the drop; this is what turns it away (#61).
+    /// </summary>
+    public void CloseGroup(string group)
+    {
+        lock (_gate)
+        {
+            _closed.Add(group);
+        }
+
+        DropGroup(group);
+    }
+
+    /// <summary>Lets a closed group back in.</summary>
+    public void OpenGroup(string group)
+    {
+        lock (_gate)
+        {
+            _closed.Remove(group);
+        }
     }
 
     /// <summary>Shut up (Phase 5).</summary>

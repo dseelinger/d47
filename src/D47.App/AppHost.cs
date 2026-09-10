@@ -4890,18 +4890,20 @@ public sealed class AppHost : IDisposable
 
                 foreach (var announcement in lines)
                 {
-                    // The arbiter's drop only reaches what is already queued, and the rest of an exchange
-                    // is synthesised after it, so it is abandoned here instead (#61).
-                    if (announcement.Key == NpcChatter.LineKey && Voice.Engaged)
-                    {
-                        continue;
-                    }
-
-                    // Air between the lines of an exchange (#259), reported as two people never once leaving
-                    // a gap.
                     if (announcement.Key == NpcChatter.LineKey)
                     {
+                        // Air between the lines of an exchange (#259), reported as two people never once
+                        // leaving a gap.
                         await HoldTheBeatAsync(NpcChatter.Beat(beat++)).ConfigureAwait(false);
+
+                        // Checked after the beat rather than before it: this loop runs ahead of playback,
+                        // so the Commander starts talking while the next line is still waiting on its beat.
+                        // The arbiter refuses a line synthesised after that anyway; this only saves paying
+                        // to synthesise it (#61).
+                        if (Voice.Engaged)
+                        {
+                            continue;
+                        }
                     }
                     else
                     {
@@ -4941,7 +4943,7 @@ public sealed class AppHost : IDisposable
 
         for (var held = TimeSpan.Zero; held < beat; held += slice)
         {
-            if (Callouts.AnythingUrgentWaiting || Voice.Engaged)
+            if (Callouts.AnythingUrgentWaiting)
             {
                 return;
             }
