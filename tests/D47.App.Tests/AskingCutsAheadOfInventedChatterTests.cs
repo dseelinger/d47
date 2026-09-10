@@ -24,6 +24,9 @@ public class AskingCutsAheadOfInventedChatterTests
             BedEnabled = false,
         };
 
+        // Wired as the host wires it: the arbiter reporting silence is what returns the loop to idle.
+        arbiter.ActivityChanged += voice.Settle;
+
         return (voice, sink);
     }
 
@@ -35,6 +38,15 @@ public class AskingCutsAheadOfInventedChatterTests
         yield return new TurnEvent.TextDelta(Answer);
         yield return new TurnEvent.Completed(
             new TurnResult(TurnOutcome.Answered, TurnRoute.Model, Answer, null, null));
+
+        await Task.CompletedTask;
+    }
+
+    /// <summary>A turn that reaches no answer, so nothing is ever queued for the arbiter to report on.</summary>
+    private static async IAsyncEnumerable<TurnEvent> NoAnswer()
+    {
+        yield return new TurnEvent.Completed(
+            new TurnResult(TurnOutcome.Unsure, TurnRoute.Model, string.Empty, null, null));
 
         await Task.CompletedTask;
     }
@@ -195,6 +207,27 @@ public class AskingCutsAheadOfInventedChatterTests
         await voice.AnnounceAsync(Chatter("Some people just like losing in style."));
 
         Assert.True(sink.Played("Some people just like losing in style."));
+    }
+
+    /// <summary>
+    /// The loop is left showing the last turn's outcome until something audible ends, so a follow-up asked
+    /// before then opens the microphone from a state Settle acts on.
+    /// </summary>
+    [Fact]
+    public async Task AFollowUpAfterATurnThatSaidNothingStillShutsChatterOff()
+    {
+        var (voice, sink) = Build();
+
+        voice.EnterState(LoopState.Listening);
+        await voice.RunAsync(NoAnswer(), cancellationToken: TestContext.Current.CancellationToken);
+
+        voice.EnterState(LoopState.Listening);
+
+        await voice.AnnounceAsync(Chatter("Against Torvald's crew? He's throwing money away."));
+
+        sink.FinishEverything();
+
+        Assert.False(sink.Played("Against Torvald's crew?"));
     }
 
     /// <summary>

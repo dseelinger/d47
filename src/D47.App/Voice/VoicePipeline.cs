@@ -277,6 +277,11 @@ public sealed class VoicePipeline(
     /// <summary>Moves the loop, optionally without its cue.</summary>
     public void EnterState(LoopState state, bool cue)
     {
+        // The arbiter calls back into Settle before these calls return, so the loop has to be showing the
+        // state being entered first. Settle reading the state being left reopens the group just closed,
+        // and a follow-up asked while the loop still sits in Answered goes unsuppressed (#61).
+        _state = state;
+
         // Invented chatter gets out of the way the moment the Commander starts talking, or a turn starts
         // without them having talked at all — cut mid-word if it is playing, dropped if it is queued, and
         // refused until the loop settles, because the lines after it are synthesised while it is speaking
@@ -293,8 +298,12 @@ public sealed class VoicePipeline(
         }
 
         arbiter.EnterState(state, cues(), Bed, CuesEnabled && cue, BedEnabled);
-        _state = state;
-        StateEntered?.Invoke(state);
+
+        // Settle may have moved the loop on while that ran.
+        if (_state == state)
+        {
+            StateEntered?.Invoke(state);
+        }
     }
 
     /// <summary>Returns the loop to idle once nothing is audible any more.</summary>
