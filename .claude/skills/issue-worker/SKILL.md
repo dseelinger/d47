@@ -101,7 +101,12 @@ Stop and say so rather than pushing on. Name what it actually is: two issues, a 
 the Architect, or the same issue at a higher effort. An issue that grew a second subsystem is not
 the issue that was ranked.
 
-## Answering "how do I test this?"
+## Saying how to test it
 
 Say first whether it needs manual testing at all. If it does not, say so and stop. If it does, give
 the steps and nothing else.
+
+Say it unprompted as part of finishing, not only when asked. Steps are for what the suite cannot
+reach — the panel, the overlay, speech, a device, the game itself. Where the automated tests already
+cover the change, say they cover it and name them rather than inventing a manual pass over ground
+the suite walks every run.
