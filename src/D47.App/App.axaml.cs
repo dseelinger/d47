@@ -85,7 +85,11 @@ public partial class App(AppHost? host) : Application
                 // (#54).
                 host.Capabilities,
                 host.Sourcing,
-                host.Carrier);
+                host.Carrier,
+
+                // And where the Commander is going (Phase 37), from 2026-09-09 (#52): the window's own
+                // record, so the headset's copy of the tab cannot fall behind it.
+                window?.Routing);
 
             // And the headset's copy of the panel can be the one asking for a spoken value (Phase 25), or
             // the one with a keyboard up for a value to be spelled onto (#51).

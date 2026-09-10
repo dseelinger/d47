@@ -136,14 +136,15 @@ public sealed class VrHost : IDisposable
         Panel.AdventureSurface? adventures = null,
         D47.Core.Capabilities.CapabilityRegistry? capabilities = null,
         D47.Core.Knowledge.SourcingBoard? sourcingBoard = null,
-        D47.Core.Knowledge.CarrierManifest? carrier = null)
+        D47.Core.Knowledge.CarrierManifest? carrier = null,
+        Panel.RoutingSurface? routing = null)
     {
         VrHost? self = null;
 
         var panel = new VrPanelSurface(
             model, settings, slot => self?.AnchorFor(slot), avatars, dumpTo, settingsPage,
             checklists, timekeeper, alarmStore, ships, gameState, onFoot, unlocks, goals,
-            backfillGoals, adventures, viewState, capabilities, sourcingBoard, carrier);
+            backfillGoals, adventures, viewState, capabilities, sourcingBoard, carrier, routing);
         var layer = new CaptionLayer { Settings = settings.Current.Vr.Captions };
         var captions = new VrCaptionSurface(layer);
 
@@ -299,6 +300,10 @@ public sealed class VrHost : IDisposable
             // And one frame of the "d47 is composing" animation, which is the third reason a headset panel
             // changes with the Commander having done nothing (asked for 2026-08-22).
             _panel.TickAdventures();
+
+            // And the route being flown, which is the fourth: a jump moves the Progress page with nothing
+            // having been pressed (#52).
+            _panel.TickRouting();
 
             Serve(context.Now);
         });

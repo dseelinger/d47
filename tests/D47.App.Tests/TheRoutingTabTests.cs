@@ -31,8 +31,8 @@ public class TheRoutingTabTests
     }
 
     /// <summary>
-    /// The tab with Progress alone — which is also the shape the headset would be given if it ever got
-    /// this tab, and is the reason the roots are flags.
+    /// The tab with Progress alone: a surface that furnishes one root and not the others, which is
+    /// what the flags are for.
     /// </summary>
     private static PanelView Furnished(NavRoute route, string? here = null)
     {

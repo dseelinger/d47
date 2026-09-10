@@ -75,7 +75,11 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         // carrier figure is one number, and a number is what the drawn keyboard is for (#54).
         D47.Core.Capabilities.CapabilityRegistry? capabilities = null,
         D47.Core.Knowledge.SourcingBoard? sourcingBoard = null,
-        D47.Core.Knowledge.CarrierManifest? carrier = null)
+        D47.Core.Knowledge.CarrierManifest? carrier = null,
+
+        // Where the Commander is going (Phase 37), in the headset from 2026-09-09 (#52) — the same record the
+        // window built, so neither surface has a list of this tab's needs the other has not got.
+        Panel.RoutingSurface? routing = null)
     {
         _dumpTo = dumpTo;
 
@@ -113,6 +117,14 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
         // The journal's raw reading, in the headset (#231).
         _view.EnableRawJournal();
+
+        if (routing is not null)
+        {
+            // Every root, Plan included (#52): a form's boxes are plain text boxes and so reach the offscreen
+            // board, which has taken a spelled or dictated value since #51. Settings opens on this surface
+            // rather than on the window's, the same as Sourcing above.
+            _view.EnableRouting(routing with { OpenSettings = () => _view.Tab = PanelTab.Settings });
+        }
 
         if (adventures is not null)
         {
@@ -187,6 +199,9 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
     /// <summary>One frame of the d47 is composing animation (asked for 2026-08-22).</summary>
     public void TickAdventures() => _dirty |= _view.TickAdventures();
+
+    /// <summary>Redraws the route being flown, from the headset's own tick (#52).</summary>
+    public void TickRouting() => _dirty |= _view.TickRouting();
 
     /// <summary>Where this surface currently is, for a spoken phrase to move.</summary>
     public D47.Core.Interface.PanelNavigator Nav => _view.Nav;

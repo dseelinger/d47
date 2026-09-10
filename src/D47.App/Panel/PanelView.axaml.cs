@@ -884,12 +884,15 @@ public partial class PanelView : UserControl
         }
     }
 
-    /// <summary>Redraws the route being flown, from the host's tick.</summary>
-    public void TickRouting()
+    /// <summary>
+    /// Redraws the route being flown, from the host's tick, and says whether anything on it moved — the
+    /// headset serves a frame for a true and holds the last one for a false (#52).
+    /// </summary>
+    public bool TickRouting()
     {
         if (Tab != PanelTab.Routing)
         {
-            return;
+            return false;
         }
 
         var route = _routeState?.Invoke();
@@ -902,7 +905,7 @@ public partial class PanelView : UserControl
             && string.Equals(here, _routeWhere, StringComparison.Ordinal)
             && Nullable.Equals(range, _routeRangeSeen))
         {
-            return;
+            return false;
         }
 
         _routeSeen = route;
@@ -916,6 +919,8 @@ public partial class PanelView : UserControl
         // RefreshSupplied rather than Refresh: this fires on every jump, and rebuilding the page then would
         // throw away a half-typed destination.
         _routePlan?.RefreshSupplied();
+
+        return true;
     }
 
     private RouteProgressPage? _routeProgress;

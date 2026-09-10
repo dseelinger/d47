@@ -194,8 +194,12 @@ public partial class MainWindow : Window
             Panel.EnableEngineers(
                 host.Unlocks, host.Ships, () => host.GameState.Active, host.OnFootPlans);
 
-            // Where the Commander is going, in three readings of one journey (Phase 37).
-            Panel.EnableRouting(new RoutingSurface(
+            // Where the Commander is going, in three readings of one journey (Phase 37). **Both surfaces
+            // from 2026-09-09** (#52), on the Commander's instruction: the tab was desktop-only on the
+            // reasoning that the plan forms want a keyboard the headset has not got, and the headset has had
+            // a drawn one since 0.23.1 and taken spoken values into it since 0.25.0. Built here and handed to
+            // the headset copy, so the two surfaces read one list of what this tab needs.
+            Routing = new RoutingSurface(
                 () => host.Route,
                 () => host.GameState.Active?.Location.StarSystem,
                 host.Capabilities,
@@ -203,8 +207,7 @@ public partial class MainWindow : Window
                 () => host.Settings.Current.Knowledge.GalaxySearch,
                 OpenSettings,
 
-                // And the Market page beside them (Phase 49), for the same reason the plan forms are here and
-                // not in the headset: it wants a keyboard.
+                // And the Market page beside them (Phase 49).
                 host.Commodities,
 
                 // What the Neutron Plotter's jump range placeholder quotes (#253).
@@ -220,7 +223,9 @@ public partial class MainWindow : Window
                     at => CommodityLedger.Week(
                         at,
                         host.Settings.Current.Callouts.WeekBoundaryDay,
-                        host.Settings.Current.Callouts.WeekBoundaryHourUtc))));
+                        host.Settings.Current.Callouts.WeekBoundaryHourUtc)));
+
+            Panel.EnableRouting(Routing);
 
             // "Refresh" by voice means this search only while its page is what the window is showing (#296),
             // and the window is the one thing that knows that.
@@ -303,7 +308,7 @@ public partial class MainWindow : Window
 
             // And the route being flown, by the same route again (Phase 37).
             host.Tick.Add("routing", _ =>
-                Avalonia.Threading.Dispatcher.UIThread.Post(Panel.TickRouting));
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => Panel.TickRouting()));
 
             // And the same window is the one with a keyboard, so it is the one whose mini keeps the ask line
             // (Phase 51).
@@ -669,6 +674,9 @@ public partial class MainWindow : Window
 
     /// <summary>The settings surface, built the first time the tab is selected.</summary>
     internal AdventureSurface? Adventures { get; }
+
+    /// <summary>What the Routing tab reads and drives, for the headset copy of the panel (#52).</summary>
+    internal RoutingSurface? Routing { get; }
 
     public Control BuildSettingsPage()
     {

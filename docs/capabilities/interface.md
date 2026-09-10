@@ -506,15 +506,14 @@ Transcript   Fleet   Engineers   Checklist   Routing   Adventures   Utilities   
 ```
 
 **The two surfaces do not carry the same tabs.** In the headset the panel is Transcript,
-Checklist, Engineers, Utilities and Settings; Routing and Loadout are the window's. That is a
-choice rather than a limitation — a tab appears where a host asks for it, and asking is one line
-— and the reasons differ. Settings wants a 1180-pixel navigation column, which at a metre is a
-wall rather than a page. Routing's plan forms want a keyboard the headset has not got, though its
-Progress page would read well at a metre and may yet go there. Checklist and Loadout were both
-withdrawn on the Commander's own instruction, and the checklist went back on it — what a
-Commander is working on is worth reading in the one place there is no other way to read it
-(Phase 39). Loadout stays where it is: a three-level drill ending in a search field is a bigger
-surface than a list of short rows, and it is a separate decision.
+Checklist, Engineers, Routing, Adventures, Utilities and Settings; Fleet is the window's. That is
+a choice rather than a limitation — a tab appears where a host asks for it, and asking is one
+line — and the reasons differ. Checklist and Loadout were both withdrawn on the Commander's own
+instruction, and the checklist went back on it — what a Commander is working on is worth reading
+in the one place there is no other way to read it (Phase 39). Routing followed it, every root of
+it: the plan forms were held back for wanting a keyboard, and their boxes reach the drawn one the
+same way the checklist's edit box does. Loadout stays where it is: a three-level drill ending in
+a search field is a bigger surface than a list of short rows, and it is a separate decision.
 
 A tab you have not got is a tab that is not drawn. The surfaces arrive as they are built.
 

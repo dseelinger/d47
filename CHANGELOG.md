@@ -6,6 +6,19 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.10 — The Routing tab is in the headset, every root of it
+
+Where you are going was the window's alone: the plan forms wanted a keyboard, and the headset had
+none. It has had a drawn one since 0.23.1, spoken values into it since 0.25.0, and spelling since
+last release — so the reason had been false for a while. Plan, Progress, Course, Market and
+Community Goal are now all on the headset panel too, in the same place in the tab strip the window
+puts them, each remembering the reading it was left on the way every other tab does.
+
+A ray press on a form's box opens the drawn keyboard, so a destination is said whole and a jump
+range is spelled key by key. Copy and Copy and plot in the galaxy map work from the headset for
+the reason they always did: it is the same PC's clipboard and the same key sequence, and Elite is
+what is in front of you.
+
 ## 0.110.9 — Say a value onto a drawn keyboard, a letter at a time
 
 The keyboard a controller ray opens on a text box in the headset heard nothing: every character of
