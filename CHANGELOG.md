@@ -6,6 +6,24 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.21 — A command's refusal and the next callout no longer run together
+
+A key-binding refusal spoken in answer to a command could be followed straight away by an
+unrelated ambient callout — a High Grade Emissions report, a jump-remaining line — with no
+separation between them, so the two read as one continuous sentence about the same subject when
+they were coincidence. A short silence now separates two spoken lines from different groups, but
+only once the first one has actually finished; a line cut short by Silence, a dropped group or an
+alert does not wait for anything.
+
+## 0.110.20 — Asking a second time shuts the dock hands up as well as the first
+
+Chatter was cut off when you opened the microphone, but not always when you opened it again. If the
+previous turn ended without an answer, nothing was spoken and no sound cue played, so the loop was
+still showing that turn's outcome when you asked again. Opening the microphone then let the loop
+return to idle in the middle of shutting chatter off, and that let chatter straight back in for the
+whole of the second question. The loop now moves before the audio does, so a follow-up silences the
+exchange exactly as the first question did.
+
 ## 0.110.19 — Talking to Directive 47 stops the dock hands talking
 
 Ask something while a dock hand is mid-sentence and the answer used to queue up behind the whole

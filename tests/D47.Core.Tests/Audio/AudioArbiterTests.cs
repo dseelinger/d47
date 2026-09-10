@@ -149,9 +149,48 @@ public class AudioArbiterTests
 
         Assert.Equal("docking request granted", sink.Started[0].Clip.Name);
 
+        // A different group follows: a gap comes first (#44), then the line itself.
+        sink.CompleteCurrent();
         sink.CompleteCurrent();
 
-        Assert.Equal("one jump remaining", sink.Started[1].Clip.Name);
+        Assert.Equal("one jump remaining", sink.Started[2].Clip.Name);
+    }
+
+    /// <summary>
+    /// A direct answer and an unrelated ambient callout landing right behind it must not read as one
+    /// continuous sentence (#44) — the exact shape of the "separate and engage" report: the hyperspace
+    /// key-binding refusal ran straight into a High Grade Emissions callout.
+    /// </summary>
+    [Fact]
+    public void ACommandAnswerAndAnUnrelatedCalloutDoNotRunTogether()
+    {
+        var (arbiter, sink) = Build();
+
+        arbiter.Enqueue(Speech("bind it to a key or a mouse button and I can", group: "turn-1"));
+        arbiter.Enqueue(Speech("Gliese 9539 could be running high grade emissions", group: "announcement"));
+
+        sink.CompleteCurrent();
+
+        Assert.Equal("spoken-gap", sink.Started[1].Clip.Name);
+        Assert.Null(arbiter.Activity.Caption);
+
+        sink.CompleteCurrent();
+
+        Assert.Equal("Gliese 9539 could be running high grade emissions", sink.Started[2].Clip.Name);
+    }
+
+    /// <summary>Sentences of the same reply are one continuous thought and never split by a gap.</summary>
+    [Fact]
+    public void NoGapOpensBetweenTwoSentencesOfTheSameReply()
+    {
+        var (arbiter, sink) = Build();
+
+        arbiter.Enqueue(Speech("first", group: "turn-1"));
+        arbiter.Enqueue(Speech("second", group: "turn-1"));
+
+        sink.CompleteCurrent();
+
+        Assert.Equal("second", sink.Started[1].Clip.Name);
     }
 
     /// <summary>Ranking decides who goes next, not who gets cut off.</summary>

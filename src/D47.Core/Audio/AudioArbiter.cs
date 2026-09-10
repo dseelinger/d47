@@ -54,6 +54,14 @@ public sealed record AudioActivity(
 /// <summary>The one queue in front of every audible thing.</summary>
 public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) : IDisposable
 {
+    /// <summary>How long a silence separates two routine lines from different groups (#44).</summary>
+    private static readonly TimeSpan Gap = TimeSpan.FromMilliseconds(350);
+
+    private static readonly AudioClip GapClip = new(
+        "spoken-gap",
+        new byte[(int)(AudioFormat.Standard.SampleRate * Gap.TotalSeconds) * AudioFormat.Standard.BytesPerFrame],
+        AudioFormat.Standard);
+
     private readonly Lock _gate = new();
     private readonly List<Pending> _queue = [];
     private readonly HashSet<string> _closed = new(StringComparer.Ordinal);
@@ -64,6 +72,9 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
     private Playing? _music;
     private bool _subscribed;
     private AudioMix _mix = AudioMix.Default;
+
+    /// <summary>The group of the most recently started routine or alert line, or null before the first.</summary>
+    private string? _lastSpokenGroup;
 
     private sealed record Pending(long Id, AudioRequest Request);
 
@@ -254,6 +265,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             _queue.Clear();
             _current = null;
             _bed = null;
+            _lastSpokenGroup = null;
 
             // Silence is silence.
             _music = null;
@@ -371,17 +383,47 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         if (_current is null && _queue.Count > 0)
         {
             var next = _queue[0];
-            _queue.RemoveAt(0);
-            _current = new Playing(next.Id, next.Request);
-            sink.Play(new PlaybackRequest(
-                next.Id,
-                next.Request.Clip,
-                next.Request.Loop,
-                GainFor(next.Request.Channel)));
+
+            if (NeedsGap(next.Request))
+            {
+                // A cue, not speech: it must not show up as a spoken row in the flight recorder or claim the
+                // synthesis note waiting for the real line behind it. Claimed for that line's group up front,
+                // so the gap is not inserted twice for the same transition once it finishes and Pump runs
+                // again.
+                var gap = new AudioRequest { Channel = AudioChannel.Cue, Clip = GapClip, Group = next.Request.Group };
+
+                _current = new Playing(_nextId++, gap);
+                _lastSpokenGroup = next.Request.Group;
+                sink.Play(new PlaybackRequest(_current.Id, gap.Clip, Loop: false, GainFor(AudioChannel.Cue)));
+            }
+            else
+            {
+                _queue.RemoveAt(0);
+                _current = new Playing(next.Id, next.Request);
+
+                sink.Play(new PlaybackRequest(
+                    next.Id,
+                    next.Request.Clip,
+                    next.Request.Loop,
+                    GainFor(next.Request.Channel)));
+            }
         }
 
         Relevel();
     }
+
+    /// <summary>
+    /// Whether a short silence belongs ahead of this line: routine speech following a routine line that
+    /// finished on its own from a different group, so an answer to a direct command and an unrelated callout
+    /// landing right after it do not read as one continuous sentence (#44). A line that was cut off rather
+    /// than finished — Silence, a dropped group, an alert superseding it — leaves no group to compare against,
+    /// so nothing here holds up whatever plays next. An alert itself is never held up either; it already cuts
+    /// in mid-playback.
+    /// </summary>
+    private bool NeedsGap(AudioRequest request) =>
+        request.Channel == AudioChannel.Speech
+        && _lastSpokenGroup is not null
+        && _lastSpokenGroup != request.Group;
 
     /// <summary>Re-states the gain of everything already playing.</summary>
     private void Relevel()
@@ -429,6 +471,13 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             }
             else if (_current?.Id == playbackId)
             {
+                // Only a line that ran to its own end sets what the next gap check compares against — one
+                // Silence, DropGroup or an alert cut off does not count as a finished thought.
+                if (_current.Request.Channel is AudioChannel.Speech or AudioChannel.Alert)
+                {
+                    _lastSpokenGroup = _current.Request.Group;
+                }
+
                 _current = null;
                 Pump();
                 activity = Snapshot();
