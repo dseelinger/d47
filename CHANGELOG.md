@@ -6,6 +6,17 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.22 — Asking about a stored ship reads its modules instead of refusing
+
+"How is the Panther Clipper outfitted" used to answer with cargo, jump range and the like, then
+say there was no way to read out its module fit unless you were aboard it — even though every
+module of every ship you have ever sat in is kept in `loadouts.json`, the same file the checklist
+already reads. Naming a ship now answers from the loadout last seen for it, dated so a ship
+refitted since is visibly stale, and a ship you own but have never boarded says so rather than
+describing a different one. And asking with no ship named now answers about the one you are
+flying from memory after a restart, before Elite has written a fresh `Loadout` for it — the same
+gap #337 closed for engineering, one level down.
+
 ## 0.110.21 — A command's refusal and the next callout no longer run together
 
 A key-binding refusal spoken in answer to a command could be followed straight away by an

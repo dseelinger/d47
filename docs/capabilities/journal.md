@@ -170,6 +170,23 @@ Rebuy 9,694,497 cr.
 Unpowered: int_cargorack_size4_class1.
 ```
 
+**Name another ship you own** and the same report comes off `loadouts.json` — every `Loadout`
+Elite has ever written for it, kept whether or not you are aboard right now — dated so a ship
+refitted since you last boarded it is visibly stale:
+
+```text
+Campaigner, a Panther Clipper MkII, as of 2026-08-01 09:00 UTC.
+maximum jump range 48.14 ly, fuel tank 128 t, cargo capacity 1200 t, unladen mass 1575.4 t.
+40 modules fitted, 6 engineered.
+```
+
+A ship you own that no `Loadout` has been read for says so rather than describing a different one:
+
+```text
+Campaigner (Panther Clipper MkII) — no loadout has been read for it yet. That is written the
+next time you board it.
+```
+
 **Where your carrier is.** Ask *"where is my carrier"* and that is all you get back — the system
 and when it was last reported:
 
@@ -348,7 +365,14 @@ schema:
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
 ```
 
-`get_location`, `get_ship`, `get_materials` and `get_session_summary`.
+`get_location`, `get_materials` and `get_session_summary`.
+
+`get_ship` answers about the one being flown by default, and about any other ship the Commander
+owns when named — from the loadout last seen for it, dated, rather than refusing (#108):
+
+```json
+{"type":"object","properties":{"ship":{"type":"string","description":"Which ship, by name or hull. Omit for the one currently flown."}},"required":[],"additionalProperties":false}
+```
 
 `get_fleet` answers about the carrier, and lists the ships only when it was asked to:
 

@@ -1,5 +1,6 @@
 using System.Text;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 
 namespace D47.Core.Capabilities.Builtin;
 
@@ -88,10 +89,21 @@ public static class JournalCapability
                 {
                     Name = "get_ship",
                     Description =
-                        "Report the ship the Commander is flying: type, name, hull health, jump range, fuel, "
-                        + "cargo held and capacity, and the modules fitted, from the last Loadout event.",
+                        "Report a ship: type, name, hull health, jump range, fuel, cargo held and capacity, "
+                        + "and the modules fitted. Omit ship for the one the Commander is flying, live where "
+                        + "the journal has described it this session and remembered otherwise. Name any other "
+                        + "ship they own to read it from the loadout last seen for it, dated.",
+                    Parameters =
+                    [
+                        new ToolParameter
+                        {
+                            Name = "ship",
+                            Type = ToolParameterType.String,
+                            Description = "Which ship, by name or hull. Omit for the one currently flown.",
+                        },
+                    ],
                     Commands = Asking(Flying),
-                    Handler = (_, _) => Task.FromResult(ToolResult.Ok(DescribeShip(gameState))),
+                    Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(DescribeShip(gameState, arguments))),
                 },
                 new ToolDefinition
                 {
@@ -301,27 +313,58 @@ public static class JournalCapability
         return report.ToString();
     }
 
-    private static string DescribeShip(GameStateStore gameState)
+    private static string DescribeShip(GameStateStore gameState, ToolArguments arguments)
     {
         if (!TryActive(gameState, out var active, out var reason))
         {
             return reason;
         }
 
-        var ship = active.Ship;
+        var named = arguments.TryGetString("ship", out var spoken) && !string.IsNullOrWhiteSpace(spoken)
+            ? spoken.Trim()
+            : null;
 
-        if (!ship.IsKnown)
+        if (named is null)
         {
-            // Specific about why.
-            return "No Loadout event has been seen yet, so I do not know what you are flying. "
-                   + "It is written when you enter the game or change your outfitting.";
+            // The flown ship where the journal has described it this session, and the one last remembered
+            // for it otherwise (#337) — so a restart before Elite writes a fresh Loadout still answers,
+            // rather than saying the Commander's own ship is unknown.
+            var flown = active.FlownShip;
+
+            if (!flown.IsKnown)
+            {
+                // Specific about why.
+                return "No Loadout event has been seen yet, so I do not know what you are flying. "
+                       + "It is written when you enter the game or change your outfitting.";
+            }
+
+            var seenAt = active.Ship.IsKnown ? null : active.Loadouts.For(flown.ShipId)?.SeenAt;
+            return Report(active, flown, isFlown: true, seenAt);
         }
 
-        var report = new StringBuilder($"Flying {ship.Describe()}");
+        if (Remembered(active, named) is not { } found)
+        {
+            return UnknownShip(active, named);
+        }
+
+        var isCurrent = active.Ship.IsKnown && active.Ship.ShipId == found.Loadout.ShipId;
+        return Report(active, found.Loadout, isFlown: isCurrent, isCurrent ? null : found.SeenAt);
+    }
+
+    /// <summary>One ship's report: metrics and module counts, from the live loadout or a remembered
+    /// one — dated, and with no claim about the current cargo fill, when it is not (#108).</summary>
+    private static string Report(CommanderGameState active, ShipLoadout ship, bool isFlown, DateTimeOffset? seenAt)
+    {
+        var report = new StringBuilder(isFlown ? $"Flying {ship.Describe()}" : $"{ship.Describe()}");
 
         if (ship.Ident is { } ident)
         {
             report.Append($", ident {ident}");
+        }
+
+        if (seenAt is { } seen)
+        {
+            report.Append(AsOf(seen));
         }
 
         report.AppendLine(".");
@@ -340,8 +383,9 @@ public static class JournalCapability
 
         if (ship.CargoCapacity is { } cargo)
         {
-            // How full, not just how big (#329).
-            metrics.Add(active.Hold is { IsKnown: true, IsShip: true } hold
+            // How full, not just how big (#329) — but only for the hold this session actually read, not a
+            // remembered ship's last-seen capacity.
+            metrics.Add(seenAt is null && active.Hold is { IsKnown: true, IsShip: true } hold
                 ? $"cargo {hold.Count}/{cargo} t"
                 : $"cargo capacity {cargo} t");
         }
@@ -379,6 +423,61 @@ public static class JournalCapability
         }
 
         return report.ToString().TrimEnd();
+    }
+
+    /// <summary>
+    /// A named ship among everything remembered — the one being flown included — matched by the
+    /// Commander's own name for it first and by hull second. More than one hull of the same type keeps
+    /// the one seen most recently (#108).
+    /// </summary>
+    private static RememberedShip? Remembered(CommanderGameState active, string spoken)
+    {
+        var remembered = active.Loadouts.Ships.Values.ToArray();
+        var named = remembered.Select(ship => ship.Loadout.Name).OfType<string>().ToArray();
+
+        if (named.Length > 0 && Catalogue.Match(named, spoken) is { } byName)
+        {
+            return remembered.First(
+                ship => string.Equals(ship.Loadout.Name, byName, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (EliteSpecifications.Ship(spoken)?.Symbol is not { } symbol)
+        {
+            return null;
+        }
+
+        return remembered
+            .Where(ship => string.Equals(ship.Loadout.Type, symbol, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(ship => ship.SeenAt)
+            .FirstOrDefault();
+    }
+
+    /// <summary>
+    /// A ship named that no loadout has been read for — owned but never boarded, or not a ship the
+    /// Commander is known to have at all (#108).
+    /// </summary>
+    private static string UnknownShip(CommanderGameState active, string spoken)
+    {
+        var owned = active.Fleet.Ships.ToArray();
+        var named = owned.Select(ship => ship.Name).OfType<string>().ToArray();
+
+        var match = named.Length > 0 && Catalogue.Match(named, spoken) is { } byName
+            ? owned.FirstOrDefault(ship => string.Equals(ship.Name, byName, StringComparison.OrdinalIgnoreCase))
+            : EliteSpecifications.Ship(spoken)?.Symbol is { } symbol
+                ? owned.FirstOrDefault(ship => string.Equals(ship.Type, symbol, StringComparison.OrdinalIgnoreCase))
+                : null;
+
+        if (match is not null)
+        {
+            return $"{match.Describe()} — no loadout has been read for it yet. That is written the next "
+                   + "time you board it.";
+        }
+
+        var near = EliteSpecifications.NearShips(spoken);
+
+        return near.Count > 0
+            ? Catalogue.Unknown("ship", spoken, near)
+            : $"I don't know a ship called '{spoken}'.";
     }
 
     /// <summary>When a remembered figure was last reported.</summary>
