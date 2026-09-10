@@ -4346,6 +4346,9 @@ public sealed class AppHost : IDisposable
     /// <summary>Takes whatever the callouts queued this tick and says it.</summary>
     private readonly D47.Core.Callouts.SpokenReferent _referent = new();
 
+    /// <summary>Whether the next carrier exchange may make his owning it the subject (#88).</summary>
+    private readonly NpcChatterOwnershipSpotlight _carrierSpotlight = new();
+
     /// <summary>The systems a line could be about: where the Commander is, and where they are going.</summary>
     private string[] SystemsIn(string text) =>
         [.. new[] { GameState.Active?.Location.StarSystem, Route.Hops.LastOrDefault()?.StarSystem }
@@ -4482,6 +4485,7 @@ public sealed class AppHost : IDisposable
         }
 
         var carrier = NpcChatterCarrier.Of(GameState.Active?.Carrier, location);
+        var spotlight = _carrierSpotlight.Claim(carrier.Present);
 
         using var budget = new CancellationTokenSource(ChatterBudget);
 
@@ -4490,7 +4494,7 @@ public sealed class AppHost : IDisposable
             Turns.BackgroundModel,
             NpcChatter.Speaker,
             null,
-            NpcChatter.Instruction(kind, carrier, docked),
+            NpcChatter.Instruction(kind, carrier, docked, spotlight),
             Turns.LiveGameState?.Invoke(),
             Spend,
             PriceTable.Default,

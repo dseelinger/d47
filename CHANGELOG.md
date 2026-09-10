@@ -6,6 +6,16 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.15 — Invented chatter at your own carrier knows whose deck it is standing on
+
+Parked on your own fleet carrier, overheard chatter already knew whom to cast as the tower
+controller and the captain but told the scene nothing about what your owning the place means to
+the people in it. Now the model is told how your own crew regard you — deference or an easy
+grumble made to you, not surprise — and how a visiting pilot at somebody else's carrier can react:
+surprised, careful, or embarrassed to have been overheard. It colours the scene rather than
+narrating it: ownership is the subject of at most one exchange a visit, the rest may only show it,
+and none of this fires until you are actually on the carrier's deck.
+
 ## 0.110.14 — A System Authority vessel near your own carrier gets the owner treatment reliably
 
 A System Authority vessel's canned line, heard while the Commander shared a system with their own

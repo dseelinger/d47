@@ -687,6 +687,14 @@ one exchange in four — one line said to *you* over the open channel. Statement
 question: **nothing here is ever answered**, by you or by the ship's AI, and none of it enters the
 conversation or the comms record. It is theatre, heard once.
 
+**Parked on your own carrier, it knows whose deck it is standing on.** Its tower controller and its
+captain are cast as real people rather than invented, and everyone in the scene is told how to
+regard you: your own crew are not surprised you are aboard, and write it as deference or an easy
+grumble made *to* you; a visiting pilot docked at somebody else's carrier is the one who can be
+surprised, careful, or embarrassed to have been overheard. Ownership colours at most one exchange
+per visit as the thing actually being talked about — the rest may show it without a line remarking
+on it — and none of this fires at all until you are actually on the carrier's deck.
+
 **This is not the game's own NPC traffic.** Elite's real messages — station chatter, pirates,
 your wing — are re-voiced under Speech → *Speak incoming messages*, and they are somebody else's
 words. NPC chatter is Directive 47's own fiction, on its own switch, so you can have either

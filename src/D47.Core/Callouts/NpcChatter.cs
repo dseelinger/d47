@@ -92,6 +92,34 @@ public sealed record NpcChatterCarrier
 }
 
 /// <summary>
+/// Whether one more exchange at the Commander's own carrier may make his owning it the subject rather
+/// than only colour (#88). True at most once a visit: the first exchange found present claims it, and
+/// leaving — <see cref="NpcChatterCarrier.Present"/> going false — returns it for the next one.
+/// </summary>
+public sealed class NpcChatterOwnershipSpotlight
+{
+    private bool _spent;
+
+    /// <summary>Whether this exchange may spend the visit's one spotlight.</summary>
+    public bool Claim(bool present)
+    {
+        if (!present)
+        {
+            _spent = false;
+            return false;
+        }
+
+        if (_spent)
+        {
+            return false;
+        }
+
+        _spent = true;
+        return true;
+    }
+}
+
+/// <summary>
 /// Invented background radio traffic (#244): made-up conversations between people who do not exist —
 /// never the game's own NPC messages, which arrive through <see cref="IncomingMessages"/> and are
 /// somebody else's words.
@@ -169,11 +197,19 @@ public static class NpcChatter
     /// Whether the Commander's ship is currently docked — read live, not off the kind, so a scene never
     /// keeps dock vocabulary the ship has since left behind.
     /// </param>
-    public static string Instruction(NpcChatterKind kind, NpcChatterCarrier? carrier = null, bool docked = false)
+    /// <param name="spotlight">
+    /// Whether this exchange may make the Commander's owning his carrier the subject rather than only
+    /// colour — decided once per visit by <see cref="NpcChatterOwnershipSpotlight"/> (#88).
+    /// </param>
+    public static string Instruction(
+        NpcChatterKind kind,
+        NpcChatterCarrier? carrier = null,
+        bool docked = false,
+        bool spotlight = false)
     {
         var about = carrier ?? NpcChatterCarrier.None;
 
-        return Situation(docked) + Scene(kind, about, docked) + Contract + Carrier(about);
+        return Situation(docked) + Scene(kind, about, docked) + Contract + Carrier(about, spotlight);
     }
 
     /// <summary>
@@ -227,10 +263,10 @@ public static class NpcChatter
     };
 
     /// <summary>
-    /// The two rules the Commander's own carrier adds (#249): who its two posts are when he is at it,
-    /// and that it is not going anywhere when it is not.
+    /// The rules the Commander's own carrier adds (#249, #88): who its two posts are when he is at it,
+    /// how the people around him regard that, and that it is not going anywhere when it is not.
     /// </summary>
-    private static string Carrier(NpcChatterCarrier carrier)
+    private static string Carrier(NpcChatterCarrier carrier, bool spotlight = false)
     {
         if (!carrier.Owned)
         {
@@ -246,7 +282,19 @@ public static class NpcChatter
                 + $"{Called(carrier)}— two people aboard it are not invented, its tower "
                 + $"controller and its captain. If either speaks, that line's name is exactly "
                 + $"{TowerName} or exactly {CaptainName}, with nothing else in it, and no other "
-                + "speaker may use those two names.";
+                + "speaker may use those two names. "
+                + "Everybody here knows whose deck this is. His own crew — the tower, the "
+                + "captain, anyone working for him — are not surprised he is aboard; it is "
+                + "their job to be here, so write deference, easy familiarity, or a grumble made "
+                + "to him rather than about him. A visiting pilot docked at somebody else's "
+                + "carrier is the one who can be surprised, careful, chancing their arm, or "
+                + "embarrassed to have been overheard."
+                + (spotlight
+                    ? " This exchange may make his owning the place the thing being talked "
+                      + "about."
+                    : " Do not make his owning the place the subject of this exchange. Let it "
+                      + "colour what people are willing to say in front of him, or what they "
+                      + "stop saying when he walks past, without a line remarking on it.");
         }
 
         if (!carrier.JumpScheduled)
