@@ -6,9 +6,34 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
-## 0.110.11 — The Fleet tab is in the headset, drill and all
+## 0.110.9 — Routing and Fleet reach the headset, and a drawn keyboard takes a spelled value
 
-Your ships, their builds and your carrier were the window's alone. Fleet was withdrawn from the
+The keyboard a controller ray opens on a text box in the headset heard nothing: every character of
+a system name or a carrier figure had to be pointed at. Both drawn keyboards — that one and the
+panel's own — now take a spoken value. Say each letter as its word, NATO style, and the keys are
+pressed in order: "alpha bravo seven done" types `ab7` and commits, in one breath, because Done is
+a key. So are delete, clear and cancel, and digits are said either way.
+
+It is not a mode. Every utterance is tried as spelling first; if any word is not a key, nothing is
+pressed at all, the board names the word it could not take, and the whole utterance lands in the
+field as a value — so "Shinrarta Dezhra" is said rather than spelled, and "Alpha Centauri" arrives
+whole. That gives the headset's board dictation as well, which it also did not have. Spelling is
+live only while a keyboard is drawn, so "bravo" in conversation still means what it says.
+
+Ask "how do I spell something", "the phonetic alphabet" or "what is the word for K" and Directive
+47 answers from the same table the keyboard parses, without asking a model.
+
+Spelling was the last thing Routing was waiting for. Where you are going was the window's alone:
+the plan forms wanted a keyboard, and the headset had none. It has had a drawn one since 0.23.1 and
+spoken values into it since 0.25.0, so the reason had been false for a while, and now it is gone
+outright. Plan, Progress, Course, Market and Community Goal are all on the headset panel, in the
+same place in the tab strip the window puts them, each remembering the reading it was left on the
+way every other tab does. A ray press on a form's box opens the drawn keyboard, so a destination is
+said whole and a jump range is spelled key by key. Copy and Copy and plot in the galaxy map work
+from the headset for the reason they always did: it is the same PC's clipboard and the same key
+sequence, and Elite is what is in front of you.
+
+Your ships, their builds and your carrier only drew in the window too. Fleet was withdrawn from the
 headset panel during the redesign in 0.37.0 and left out again when Checklist came back, on the
 reading that a three-level drill ending in a search field was a bigger surface than one list of
 short rows. That no longer holds: every row it drills to is a button or a switch a controller ray
@@ -25,36 +50,6 @@ you can change without anything else happening first.
 Ctrl-dragging one slot onto another stays a desktop convenience. The headset surface has no
 pointer-moved path for that gesture to ride on, and no new gesture is being added before 1.0.0, so
 a module is copied there by the row's own action.
-
-## 0.110.10 — The Routing tab is in the headset, every root of it
-
-Where you are going was the window's alone: the plan forms wanted a keyboard, and the headset had
-none. It has had a drawn one since 0.23.1, spoken values into it since 0.25.0, and spelling since
-last release — so the reason had been false for a while. Plan, Progress, Course, Market and
-Community Goal are now all on the headset panel too, in the same place in the tab strip the window
-puts them, each remembering the reading it was left on the way every other tab does.
-
-A ray press on a form's box opens the drawn keyboard, so a destination is said whole and a jump
-range is spelled key by key. Copy and Copy and plot in the galaxy map work from the headset for
-the reason they always did: it is the same PC's clipboard and the same key sequence, and Elite is
-what is in front of you.
-
-## 0.110.9 — Say a value onto a drawn keyboard, a letter at a time
-
-The keyboard a controller ray opens on a text box in the headset heard nothing: every character of
-a system name or a carrier figure had to be pointed at. Both drawn keyboards — that one and the
-panel's own — now take a spoken value. Say each letter as its word, NATO style, and the keys are
-pressed in order: "alpha bravo seven done" types `ab7` and commits, in one breath, because Done is
-a key. So are delete, clear and cancel, and digits are said either way.
-
-It is not a mode. Every utterance is tried as spelling first; if any word is not a key, nothing is
-pressed at all, the board names the word it could not take, and the whole utterance lands in the
-field as a value — so "Shinrarta Dezhra" is said rather than spelled, and "Alpha Centauri" arrives
-whole. That gives the headset's board dictation as well, which it also did not have. Spelling is
-live only while a keyboard is drawn, so "bravo" in conversation still means what it says.
-
-Ask "how do I spell something", "the phonetic alphabet" or "what is the word for K" and Directive
-47 answers from the same table the keyboard parses, without asking a model.
 
 ## 0.110.8 — The empty Checklist names what it is filtered by, and the tab strip decides its own width
 
