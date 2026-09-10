@@ -166,6 +166,11 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     public Panel.PanelPrompts Prompts => _view.Prompts;
 
     /// <summary>
+    /// The keyboard a ray press on a plain text box opens, which takes speech while it is up (#51).
+    /// </summary>
+    public Panel.OffscreenSurface Board => _offscreen;
+
+    /// <summary>
     /// Back one level on this surface, and whether there was anything to go back from — so the
     /// controller button stays available to whatever else wants it at a root (Phase 25).
     /// </summary>

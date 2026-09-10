@@ -59,6 +59,26 @@ nav_order: 123
 </svg>
 </section>
 <section>
+<h2><span class="num">4</span> Spell a value onto a keyboard.</h2>
+<svg viewBox="0 0 880 252" role="img" aria-label="Saying alpha bravo seven done onto a drawn keyboard">
+ <rect x="20" y="16" width="840" height="212" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">System name</text>
+ <rect x="44" y="70" width="792" height="46" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="68" y="101" font-size="18" fill="var(--text)">ab7</text>
+ <text x="68" y="152" font-size="16" fill="var(--text-muted)">you said</text>
+ <text x="180" y="152" font-size="16" font-weight="700" fill="var(--text)">alpha bravo seven done</text>
+ <rect x="44" y="172" width="120" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <text x="104" y="200" text-anchor="middle" font-size="15" fill="var(--text)">delete</text>
+ <rect x="176" y="172" width="120" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <text x="236" y="200" text-anchor="middle" font-size="15" fill="var(--text)">clear</text>
+ <rect x="308" y="172" width="120" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <text x="368" y="200" text-anchor="middle" font-size="15" fill="var(--text)">cancel</text>
+ <rect x="440" y="172" width="120" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="500" y="200" text-anchor="middle" font-size="15" fill="var(--text)">done</text>
+ <text x="588" y="200" font-size="15" fill="var(--text-muted)">Say a key and it is pressed. Say anything else and it lands whole.</text>
+</svg>
+</section>
+<section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="Windows picks the default microphone, and it is often wrong.">
  <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
@@ -636,6 +656,70 @@ If the download fails — no network, the host refusing — the selection stays 
 Directive 47 says it has no speech model loaded when you ask. It tries again the next time it
 starts. Choose `none` if you would rather it stopped trying.
 
+### Spelling a value onto a keyboard {#spelling}
+
+Wherever Directive 47 draws a keyboard — the panel's own, and the one a controller ray opens on a
+text box in the headset — you can say the value instead of pointing at every key.
+
+Say each letter as its word:
+
+> "alpha bravo seven done"
+
+That types `ab7` and presses Done, in one breath. **Done is a key**, so an utterance can spell a
+value and commit it together. So are `delete`, `clear` and `cancel`.
+
+The words are the NATO alphabet, which is the one spelling alphabet a Commander in Elite already
+knows. It is also the one Whisper transcribes reliably: single letters come back as "bee", "sea"
+and "you", while "bravo", "charlie" and "uniform" are long, distinct, ordinary English.
+
+| Letter | Word | Letter | Word |
+|---|---|---|---|
+| A | alpha | N | november |
+| B | bravo | O | oscar |
+| C | charlie | P | papa |
+| D | delta | Q | quebec |
+| E | echo | R | romeo |
+| F | foxtrot | S | sierra |
+| G | golf | T | tango |
+| H | hotel | U | uniform |
+| I | india | V | victor |
+| J | juliett | W | whiskey |
+| K | kilo | X | x-ray |
+| L | lima | Y | yankee |
+| M | mike | Z | zulu |
+
+Digits are said either way — "seven" or "7". The keys that are neither a letter nor a digit have
+one word each: `space`, `dash`, `underscore`, `dot`, `delete`, `clear`, `done` and `cancel`.
+
+**It is not a mode.** Every utterance is tried as spelling first. If every word is a key, every
+key is pressed in order. If any word is not, **nothing is pressed at all** — the state line names
+the word it could not take, and the whole utterance lands in the field as a value instead. So
+"Shinrarta Dezhra" arrives whole, and "Alpha Centauri" fails on its second word and arrives whole
+too. Numbers are the case for spelling, and long names are the case for saying them.
+
+A value that is itself one word of the alphabet — a system called Delta — is spelled. There is no
+escape word: say `delta echo lima tango alpha` and it comes out right.
+
+This is live **only while a keyboard is drawn**. In the headset that is whenever the board is up.
+On the panel it is once the keys are showing, which is where a hearing that failed leaves you.
+Otherwise "bravo" in conversation reaches Directive 47 as the word it is.
+
+Presses go to the drawn keyboard and nowhere else. Nothing here reaches the keyboard Elite is
+listening to.
+
+Ask if you forget:
+
+> "how do I spell something"
+> "the phonetic alphabet"
+> "what is the word for K"
+
+```text
+K is kilo.
+```
+
+Those are answered from the same table the keyboard parses, so Directive 47 cannot teach you a
+word the keyboard would refuse.
+
 ### It knows what things are called
 
 Every utterance is transcribed knowing the names around you: the system you are in, the station,
@@ -678,6 +762,15 @@ Read-only. Takes no arguments.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+#### `get_spelling_alphabet`
+
+Read-only, and answered from the parser's own table rather than by the model, so it can never name
+a word the keyboard would refuse.
+
+```json
+{"type":"object","properties":{"letter":{"type":"string","description":"One letter to give the word for. Pass all for the whole alphabet. Left out, D47 says how spelling by voice works."}},"required":[],"additionalProperties":false}
 ```
 
 **One gate policy over a continuous stream.** The microphone runs whenever D47 runs, into a small

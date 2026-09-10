@@ -601,6 +601,12 @@ letter by letter is eleven wrong values on the way to the right one.
 Confident, valid, and *still* not what you meant is the one case no machine can catch, which is
 what the read-back is for.
 
+**A drawn keyboard can be spelled onto.** Rather than pointing a ray at every key, say
+"alpha bravo seven done" and the keys are pressed in order — Done included, so a value can be
+spelled and committed in one breath. Any utterance that is not entirely keys lands in the field
+whole instead, which is how a system name is said rather than spelled. The alphabet, and the
+rest of the rules, are on [Listening](listening.md#spelling).
+
 **There is no physical keyboard route, and that is deliberate.** Every way of receiving
 keystrokes while Elite has the foreground is closed: a global keyboard hook is forbidden outright,
 raw input would deliver every keystroke on the system including passwords typed into other

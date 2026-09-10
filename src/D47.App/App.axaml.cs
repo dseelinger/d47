@@ -87,17 +87,23 @@ public partial class App(AppHost? host) : Application
                 host.Sourcing,
                 host.Carrier);
 
-            // And the headset's copy of the panel can be the one asking for a spoken value (Phase 25).
+            // And the headset's copy of the panel can be the one asking for a spoken value (Phase 25), or
+            // the one with a keyboard up for a value to be spelled onto (#51).
             var prompts = host.Vr.Prompts;
+            var board = host.Vr.Board;
 
             host.RoutePrompts(heard =>
             {
-                if (!prompts.IsListening)
+                var taking = prompts.IsListening ? (D47.Core.Interface.IHearsText)prompts
+                    : board.IsListening ? board
+                    : null;
+
+                if (taking is null)
                 {
                     return false;
                 }
 
-                Avalonia.Threading.Dispatcher.UIThread.Post(() => prompts.Hear(heard));
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => taking.Hear(heard));
                 return true;
             });
 

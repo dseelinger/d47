@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using D47.Core.Configuration;
 using D47.Core.Input;
+using D47.Core.Interface;
 using D47.Core.Listening;
 
 namespace D47.Core.Capabilities.Builtin;
@@ -98,6 +99,38 @@ public static class ListeningCapability
         public Func<string, string>? KeyLabel { get; init; }
     }
 
+    public const string StatusTool = "get_listening_status";
+
+    /// <summary>The tutor for spelling a value onto a drawn keyboard by voice (#51).</summary>
+    public const string AlphabetTool = "get_spelling_alphabet";
+
+    /// <summary>
+    /// Every phrase the alphabet answers to, the letters taken from the parser's own table so a letter
+    /// the board accepts cannot be a letter the tutor has never heard of (#51).
+    /// </summary>
+    private static IEnumerable<CapabilityKeyword> SpellingPhrases()
+    {
+        yield return new CapabilityKeyword("how do i spell", AlphabetTool);
+        yield return new CapabilityKeyword("how do you spell", AlphabetTool);
+        yield return new CapabilityKeyword("spell by voice", AlphabetTool);
+
+        foreach (var whole in new[] { "phonetic alphabet", "nato alphabet", "the whole alphabet" })
+        {
+            yield return new CapabilityKeyword(whole, AlphabetTool) { Arguments = Asking("all") };
+        }
+
+        foreach (var letter in Spelling.Alphabet.Keys)
+        {
+            yield return new CapabilityKeyword($"the word for {letter}", AlphabetTool)
+            {
+                Arguments = Asking(letter.ToString()),
+            };
+        }
+    }
+
+    private static IReadOnlyDictionary<string, string> Asking(string letter) =>
+        new Dictionary<string, string>(StringComparer.Ordinal) { ["letter"] = letter };
+
     public static CapabilityDescriptor Create(SettingsService settings, ListeningSurface surface) => new()
     {
         Id = Id,
@@ -109,32 +142,55 @@ public static class ListeningCapability
             "can you hear me",
             "what microphone are you using",
             "is my push to talk key bound twice",
+            "what is the word for k",
         ],
         Keywords =
         [
-            "what microphone",
-            "which microphone",
-            "push to talk",
-            "is my key bound twice",
+            new("what microphone", StatusTool),
+            new("which microphone", StatusTool),
+            new("push to talk", StatusTool),
+            new("is my key bound twice", StatusTool),
+            .. SpellingPhrases(),
         ],
 
         // Only when spoken.
         SpokenKeywords =
         [
-            "can you hear me",
-            "are you listening",
+            new("can you hear me", StatusTool),
+            new("are you listening", StatusTool),
         ],
         Display = new CapabilityDisplay { PanelTitle = "Listening", Order = 3 },
         Tools =
         [
             new ToolDefinition
             {
-                Name = "get_listening_status",
+                Name = StatusTool,
                 Description =
                     "Report whether D47 can hear the Commander: the microphone in use, whether audio is "
                     + "flowing, the push-to-talk key, whether a transcription model is loaded, and whether "
                     + "that key collides with an Elite Dangerous binding.",
                 Handler = (_, _) => Task.FromResult(ToolResult.Ok(Describe(settings.Current, surface))),
+            },
+            new ToolDefinition
+            {
+                Name = AlphabetTool,
+                Description =
+                    "Report how to spell a value onto D47's drawn keyboard by voice: the shape of it, the "
+                    + "whole phonetic alphabet, or the word for one letter. Answered from the parser's own "
+                    + "table, so it can never name a word the keyboard would refuse.",
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "letter",
+                        Type = ToolParameterType.String,
+                        Description =
+                            "One letter to give the word for. Pass all for the whole alphabet. Left out, "
+                            + "D47 says how spelling by voice works.",
+                    },
+                ],
+                Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
+                    Spelling.Tutor(arguments.TryGetString("letter", out var letter) ? letter : null))),
             },
         ],
         Settings =

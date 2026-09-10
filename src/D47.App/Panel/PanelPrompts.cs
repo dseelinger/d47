@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -13,7 +14,7 @@ namespace D47.App.Panel;
 /// The two questions the panel can put to the Commander — pick one of these, and say or type this — and
 /// the two places either can be drawn (Phase 25, "Choosing takes the panel" and "Say it, or type it").
 /// </summary>
-public sealed class PanelPrompts
+public sealed class PanelPrompts : IHearsText
 {
     private readonly PanelNavigator _nav;
     private readonly Avalonia.Controls.Panel _layer;
@@ -313,7 +314,7 @@ public sealed class PanelPrompts
         board.Children.Add(Board(
             character => Typed(query + character),
             () => Typed(query.Length > 0 ? query[..^1] : query),
-            () => Typed(string.Empty)));
+            () => Typed(string.Empty)).Control);
 
         var swap = new Button { Content = "Type it instead", Padding = new Thickness(14, 6) };
 
@@ -427,11 +428,22 @@ public sealed class PanelPrompts
     }
 
     /// <summary>
+    /// Every key of the drawn board, so a spelled word can press the one it named (#51).
+    /// </summary>
+    /// <param name="Control">The board itself.</param>
+    private sealed record BoardKeys(
+        Control Control,
+        IReadOnlyDictionary<char, Button> Characters,
+        Button Delete,
+        Button Clear);
+
+    /// <summary>
     /// The drawn keyboard, as a control rather than as a method on the page that first needed one.
     /// </summary>
-    private static Control Board(Action<char> pressed, Action back, Action clear)
+    private static BoardKeys Board(Action<char> pressed, Action back, Action clear)
     {
         var board = new StackPanel { Spacing = 6 };
+        var characters = new Dictionary<char, Button>();
 
         foreach (var row in Keys)
         {
@@ -457,6 +469,7 @@ public sealed class PanelPrompts
 
                 button.Click += (_, _) => pressed(character);
 
+                characters[character] = button;
                 line.Children.Add(button);
             }
 
@@ -478,7 +491,7 @@ public sealed class PanelPrompts
             Children = { erase, empty },
         });
 
-        return board;
+        return new BoardKeys(board, characters, erase, empty);
     }
 
     /// <summary>
@@ -495,6 +508,13 @@ public sealed class PanelPrompts
         private readonly TextBlock _state;
         private readonly StackPanel _board = new() { Spacing = 6 };
         private readonly Button _swap;
+        private readonly Button _accept;
+
+        /// <summary>The keys, so a spelled word can press the one it named (#51).</summary>
+        private readonly BoardKeys _keys;
+
+        /// <summary>The one way out, which the Back button raises and the cancel key says.</summary>
+        private readonly Action _dismiss;
 
         /// <summary>
         /// The visible listening state, and it has to be visible or the Commander is talking at a blank
@@ -551,15 +571,15 @@ public sealed class PanelPrompts
             _swap = new Button { Padding = new Thickness(14, 6) };
             _swap.Click += (_, _) => Show(!_keyboard);
 
-            BuildBoard();
+            _keys = BuildBoard();
 
-            var accept = new Button
+            _accept = new Button
             {
                 Content = "Done",
                 Padding = new Thickness(18, 7),
             };
 
-            accept.Click += (_, _) => Commit(_typed);
+            _accept.Click += (_, _) => Commit(_typed);
 
             var actions = new StackPanel
             {
@@ -567,7 +587,7 @@ public sealed class PanelPrompts
                 Spacing = 8,
                 HorizontalAlignment = HorizontalAlignment.Right,
                 Margin = new Thickness(0, 12, 0, 0),
-                Children = { _swap, accept },
+                Children = { _swap, _accept },
             };
 
             var body = new DockPanel { LastChildFill = true };
@@ -585,14 +605,9 @@ public sealed class PanelPrompts
                 HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
             });
 
-            Content = Frame(
-                request.Title,
-                request.Context,
-                body,
-                () =>
-                {
-                    _host.Dismiss(request.Key, ChoiceSurface.Page);
-                });
+            _dismiss = () => _host.Dismiss(request.Key, ChoiceSurface.Page);
+
+            Content = Frame(request.Title, request.Context, body, _dismiss);
 
             Show(request.Surface == EntrySurface.Keyboard);
 
@@ -602,20 +617,19 @@ public sealed class PanelPrompts
         }
 
         /// <summary>Swaps between listening and typing, and says which one is on.</summary>
-        private void Show(bool keyboard)
+        /// <param name="say">
+        /// What to put above the board instead of the standing line, for the keyboard coming back on its
+        /// own.
+        /// </param>
+        private void Show(bool keyboard, string? say = null)
         {
             _keyboard = keyboard;
 
             _board.IsVisible = keyboard;
             _swap.Content = keyboard ? "Say it instead" : "Type it instead";
 
-            if (keyboard)
-            {
-                _host.Attend(null);
-                return;
-            }
-
-            _state.Text = Waiting;
+            // Listening either way (#51): with the keys drawn, what is heard is spelled onto them.
+            _state.Text = say ?? (keyboard ? Spelling.Shape : Waiting);
             _host.Attend(OnHeard);
         }
 
@@ -637,6 +651,13 @@ public sealed class PanelPrompts
 
         private void OnHeard(Heard heard)
         {
+            // With the keys drawn, an utterance is spelling before it is anything else (#51).
+            if (_keyboard)
+            {
+                Spell(heard);
+                return;
+            }
+
             // A partial is shown and never committed.
             if (!heard.Final)
             {
@@ -649,12 +670,72 @@ public sealed class PanelPrompts
 
             if (TextEntryLoop.Judge(heard, _request.Validate, out var verdict) is { } fallback)
             {
-                _state.Text = TextEntryLoop.Explain(fallback, verdict?.Complaint);
-                Show(keyboard: true);
+                Show(keyboard: true, TextEntryLoop.Explain(fallback, verdict?.Complaint));
                 return;
             }
 
             Commit(heard.Text.Trim());
+        }
+
+        /// <summary>
+        /// What was heard while the keys are drawn: pressed onto them when every word is a key, and
+        /// taken whole as the value when any word is not. Presses go through the same <see
+        /// cref="Button.Click"/> a press on the drawn key raises (#51).
+        /// </summary>
+        private void Spell(Heard heard)
+        {
+            var read = Spelling.Hear(heard);
+
+            switch (read.Outcome)
+            {
+                case SpelledOutcome.Waiting:
+                    _state.Text = read.Text.Length > 0 ? read.Text : Spelling.Shape;
+                    return;
+
+                case SpelledOutcome.NotCaught:
+                    _state.Text = read.Say;
+                    return;
+
+                case SpelledOutcome.Dictation:
+                    _state.Text = read.Say;
+                    _typed = read.Text;
+                    WriteBack();
+                    return;
+
+                default:
+                    _state.Text = read.Text;
+                    break;
+            }
+
+            foreach (var key in read.Keys)
+            {
+                if (key.Press == SpelledPress.Cancel)
+                {
+                    _dismiss();
+                    return;
+                }
+
+                var button = key.Press switch
+                {
+                    SpelledPress.Delete => _keys.Delete,
+                    SpelledPress.Clear => _keys.Clear,
+                    SpelledPress.Done => _accept,
+                    _ => _keys.Characters.GetValueOrDefault(key.Character),
+                };
+
+                if (button is null)
+                {
+                    continue;
+                }
+
+                button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent) { Source = button });
+
+                // Done takes the value, and there is nothing left to press into.
+                if (key.Press == SpelledPress.Done)
+                {
+                    return;
+                }
+            }
         }
 
         /// <summary>Takes the value, once, having asked whatever the caller wanted asking.</summary>
@@ -674,22 +755,29 @@ public sealed class PanelPrompts
         }
 
         /// <summary>The one board, drawn by the host rather than here (remediation.md 12, item 5).</summary>
-        private void BuildBoard() => _board.Children.Add(Board(
-            character =>
-            {
-                _typed += character;
-                WriteBack();
-            },
-            () =>
-            {
-                _typed = _typed.Length > 0 ? _typed[..^1] : _typed;
-                WriteBack();
-            },
-            () =>
-            {
-                _typed = string.Empty;
-                WriteBack();
-            }));
+        private BoardKeys BuildBoard()
+        {
+            var keys = Board(
+                character =>
+                {
+                    _typed += character;
+                    WriteBack();
+                },
+                () =>
+                {
+                    _typed = _typed.Length > 0 ? _typed[..^1] : _typed;
+                    WriteBack();
+                },
+                () =>
+                {
+                    _typed = string.Empty;
+                    WriteBack();
+                });
+
+            _board.Children.Add(keys.Control);
+
+            return keys;
+        }
     }
 
     /// <summary>One value picked from every value there is (#282).</summary>

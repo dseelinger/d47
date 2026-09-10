@@ -10,13 +10,18 @@ using Avalonia.Controls.Templates;
 using Avalonia.Platform;
 using Avalonia.Styling;
 using Avalonia.VisualTree;
+using D47.Core.Interface;
 
 namespace D47.App.Panel;
 
 /// <summary>
 /// A view, laid out and rasterised at a fixed pixel size, with nothing on screen to show for it.
 /// </summary>
-public sealed class OffscreenSurface : IDisposable
+/// <remarks>
+/// A spelled utterance is pressed into this surface's own keys and nowhere else (#51). Nothing here
+/// reaches the keyboard Elite is listening to.
+/// </remarks>
+public sealed class OffscreenSurface : IDisposable, IHearsText
 {
     private readonly Window _root;
     private readonly Control _view;
@@ -393,7 +398,20 @@ public sealed class OffscreenSurface : IDisposable
         Painted(shown, TemplatedControl.BackgroundProperty, Theming.ThemeManager.BackgroundKey);
         Painted(shown, TemplatedControl.BorderBrushProperty, Theming.ThemeManager.BorderKey);
 
+        // What the board says about what it heard, and it has to say something or a refused word looks
+        // like the microphone having failed (#51).
+        var state = new TextBlock
+        {
+            Text = Spelling.Shape,
+            FontSize = Theming.TypeScale.Body,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 0, 0, 12),
+        };
+
+        Painted(state, TextBlock.ForegroundProperty, Theming.ThemeManager.TextMutedKey);
+
         var board = new StackPanel { Spacing = 6 };
+        var characters = new Dictionary<char, Button>();
 
         foreach (var row in Keys)
         {
@@ -413,6 +431,7 @@ public sealed class OffscreenSurface : IDisposable
                     shown.Text = typed;
                 };
 
+                characters[character] = pressed;
                 line.Children.Add(pressed);
             }
 
@@ -465,9 +484,92 @@ public sealed class OffscreenSurface : IDisposable
             Children = { back, clear, cancel, done },
         };
 
-        var body = new StackPanel { Children = { shown, board, actions } };
+        var body = new StackPanel { Children = { shown, state, board, actions } };
 
         Overlay(Card(body));
+
+        var keys = new BoardKeys(characters, back, clear, done, cancel);
+
+        _typing = heard => Spell(
+            heard,
+            keys,
+            state,
+            dictated =>
+            {
+                typed = dictated;
+                shown.Text = typed;
+            });
+    }
+
+    /// <summary>Every key of one drawn board, so a spelled word can press the one it named (#51).</summary>
+    private sealed record BoardKeys(
+        IReadOnlyDictionary<char, Button> Characters,
+        Button Delete,
+        Button Clear,
+        Button Done,
+        Button Cancel);
+
+    /// <summary>Whichever board is up and taking speech, or none.</summary>
+    private Action<Heard>? _typing;
+
+    /// <summary>Whether a drawn keyboard is on this surface waiting on speech (#51).</summary>
+    public bool IsListening => _typing is not null;
+
+    /// <summary>Hands the board what was heard.</summary>
+    public void Hear(Heard heard) => _typing?.Invoke(heard);
+
+    /// <summary>
+    /// One utterance, either spelled into the board's own keys or taken whole as the value. Presses go
+    /// through the same <see cref="Button.Click"/> the ray raises, so there is one key handler.
+    /// </summary>
+    private static void Spell(Heard heard, BoardKeys keys, TextBlock state, Action<string> dictated)
+    {
+        var read = Spelling.Hear(heard);
+
+        switch (read.Outcome)
+        {
+            case SpelledOutcome.Waiting:
+                state.Text = read.Text.Length > 0 ? read.Text : Spelling.Shape;
+                return;
+
+            case SpelledOutcome.NotCaught:
+                state.Text = read.Say;
+                return;
+
+            case SpelledOutcome.Dictation:
+                state.Text = read.Say;
+                dictated(read.Text);
+                return;
+
+            default:
+                state.Text = read.Text;
+                break;
+        }
+
+        foreach (var key in read.Keys)
+        {
+            var button = key.Press switch
+            {
+                SpelledPress.Delete => keys.Delete,
+                SpelledPress.Clear => keys.Clear,
+                SpelledPress.Done => keys.Done,
+                SpelledPress.Cancel => keys.Cancel,
+                _ => keys.Characters.GetValueOrDefault(key.Character),
+            };
+
+            if (button is null)
+            {
+                continue;
+            }
+
+            button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent) { Source = button });
+
+            // Done and Cancel put the board away, and there is nothing left to press into.
+            if (key.Press is SpelledPress.Done or SpelledPress.Cancel)
+            {
+                return;
+            }
+        }
     }
 
     /// <summary>Puts one line of state on the panel, over whatever is under it, until it is dismissed.</summary>
@@ -521,6 +623,9 @@ public sealed class OffscreenSurface : IDisposable
     /// <summary>Puts a card over the page, and dims what is behind it.</summary>
     private void Overlay(Control card)
     {
+        // Whatever was listening is not on this layer any more.
+        _typing = null;
+
         // The dimmer is also what makes a press anywhere else land on this layer rather than on the page
         // underneath: the panel must not be pressable while something is over it.
         _over.Background = new SolidColorBrush(Color.FromArgb(0xB0, 0, 0, 0));
@@ -532,6 +637,7 @@ public sealed class OffscreenSurface : IDisposable
     /// <summary>Puts the chooser away, whether it was answered or not.</summary>
     public void Dismiss()
     {
+        _typing = null;
         _over.IsVisible = false;
         _over.Children.Clear();
     }

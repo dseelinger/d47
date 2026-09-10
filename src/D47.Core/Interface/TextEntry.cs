@@ -65,6 +65,19 @@ public sealed record EntryRequest(
 /// </param>
 public sealed record Heard(string Text, double Confidence, bool Final);
 
+/// <summary>
+/// Something drawn that takes a spoken value — a prompt waiting on speech, or a keyboard on screen
+/// (#51). One interface, so the host routes to either without knowing which it has.
+/// </summary>
+public interface IHearsText
+{
+    /// <summary>Whether this is taking speech right now, so the host knows to route it here.</summary>
+    bool IsListening { get; }
+
+    /// <summary>Hands it what was heard, partials included.</summary>
+    void Hear(Heard heard);
+}
+
 /// <summary>The correction loop, as arithmetic (Phase 25, "Say it, or type it").</summary>
 public static class TextEntryLoop
 {

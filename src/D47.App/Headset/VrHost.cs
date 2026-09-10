@@ -99,6 +99,12 @@ public sealed class VrHost : IDisposable
     /// </summary>
     public Panel.PanelPrompts Prompts => _panel.Prompts;
 
+    /// <summary>
+    /// The headset panel's drawn keyboard, so a value can be spelled onto it rather than only rayed
+    /// key by key (#51).
+    /// </summary>
+    public D47.Core.Interface.IHearsText Board => _panel.Board;
+
     /// <summary>Where the headset panel is, so a spoken phrase can move it (Phase 25).</summary>
     public D47.Core.Interface.PanelNavigator Nav => _panel.Nav;
 

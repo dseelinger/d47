@@ -1,8 +1,10 @@
 using System.Runtime.InteropServices;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using Avalonia.VisualTree;
 using D47.App.Headset;
 using D47.App.Panel;
 using D47.Core.Capabilities;
@@ -261,6 +263,64 @@ public class VrPanelRasterTests
             distinct.Count > 8,
             $"The submitted buffer has only {distinct.Count} distinct colours, which is a blank quad "
             + "rather than a rendered Sourcing page.");
+    }
+
+    /// <summary>
+    /// The board a ray press on a plain text box opens, with a value spelled onto it rather than
+    /// rayed key by key (#51).
+    /// </summary>
+    [AvaloniaFact]
+    public void TheHeadsetRastersTheDrawnBoardWithASpelledValueShowing()
+    {
+        var (surface, _, _) = WithSourcing();
+
+        Assert.True(surface.Nav.SelectRoot(D47.Core.Interface.PanelTab.Checklist, SourcingPage.RootKey));
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        var (width, height) = surface.Size;
+        var buffer = new VrPixels(width, height);
+
+        // Laid out, so the box has a place on the quad to be pointed at.
+        surface.Draw(buffer.Address, buffer.RowBytes);
+
+        var box = surface.Board.View.GetVisualDescendants().OfType<TextBox>().First(text => !text.IsReadOnly);
+        var centre = box.TranslatePoint(new Point(box.Bounds.Width / 2, box.Bounds.Height / 2), surface.Board.View);
+
+        Assert.NotNull(centre);
+        Assert.True(surface.Press((float)(centre!.Value.X / width), (float)(centre.Value.Y / height)));
+        Assert.True(surface.Board.IsListening);
+
+        surface.Board.Hear(new D47.Core.Interface.Heard("alpha bravo seven", 1, Final: true));
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(
+            "ab7",
+            surface.Board.View.GetVisualDescendants().OfType<TextBox>().First(text => text.IsReadOnly).Text);
+
+        surface.Invalidate();
+        surface.Draw(buffer.Address, buffer.RowBytes);
+
+        var distinct = new HashSet<uint>();
+
+        unsafe
+        {
+            var pixels = (uint*)buffer.Address;
+
+            for (var i = 0; i < width * height; i++)
+            {
+                distinct.Add(pixels[i]);
+
+                if (distinct.Count > 8)
+                {
+                    break;
+                }
+            }
+        }
+
+        Assert.True(
+            distinct.Count > 8,
+            $"The submitted buffer has only {distinct.Count} distinct colours, which is a blank quad "
+            + "rather than a rendered keyboard.");
     }
 
     /// <summary>

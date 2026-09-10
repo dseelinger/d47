@@ -6,6 +6,23 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.9 — Say a value onto a drawn keyboard, a letter at a time
+
+The keyboard a controller ray opens on a text box in the headset heard nothing: every character of
+a system name or a carrier figure had to be pointed at. Both drawn keyboards — that one and the
+panel's own — now take a spoken value. Say each letter as its word, NATO style, and the keys are
+pressed in order: "alpha bravo seven done" types `ab7` and commits, in one breath, because Done is
+a key. So are delete, clear and cancel, and digits are said either way.
+
+It is not a mode. Every utterance is tried as spelling first; if any word is not a key, nothing is
+pressed at all, the board names the word it could not take, and the whole utterance lands in the
+field as a value — so "Shinrarta Dezhra" is said rather than spelled, and "Alpha Centauri" arrives
+whole. That gives the headset's board dictation as well, which it also did not have. Spelling is
+live only while a keyboard is drawn, so "bravo" in conversation still means what it says.
+
+Ask "how do I spell something", "the phonetic alphabet" or "what is the word for K" and Directive
+47 answers from the same table the keyboard parses, without asking a model.
+
 ## 0.110.8 — The empty Checklist names what it is filtered by, and the tab strip decides its own width
 
 "Nothing on your list matches that." never said what "that" was. On the full panel the query box
