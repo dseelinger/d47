@@ -111,8 +111,7 @@ public static class EngineersHere
             return [];
         }
 
-        var here = EngineerDirectory.All
-            .Where(engineer => string.Equals(engineer.System, system, StringComparison.OrdinalIgnoreCase))
+        var here = EngineerDirectory.InSystem(system)
             .OrderBy(engineer => engineer.Name, StringComparer.Ordinal)
             .ToList();
 

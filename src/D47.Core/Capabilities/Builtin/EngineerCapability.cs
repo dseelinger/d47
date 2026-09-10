@@ -49,6 +49,9 @@ public static class EngineerCapability
             new("my engineers", "get_engineer_progress"),
             new("engineer progress", "get_engineer_progress"),
             new("who should I unlock next", "get_engineer_route"),
+            new("engineer in this system", "find_engineer"),
+            new("who's the engineer here", "find_engineer"),
+            new("which engineer is here", "find_engineer"),
         ],
         Tools =
         [
@@ -65,10 +68,11 @@ public static class EngineerCapability
             {
                 Name = "find_engineer",
                 Description =
-                    "Look an engineer up by name, or find who grades a kind of module. Says where they "
-                    + "work, what they modify and to what grade, who has to recommend them and at what "
-                    + "grade, what earns their invitation and what it asks for, and how far along the "
-                    + "Commander is both with them and with whoever refers them.",
+                    "Look an engineer up by name, find who grades a kind of module, or find who is based "
+                    + "in a system. Says where they work, what they modify and to what grade, who has to "
+                    + "recommend them and at what grade, what earns their invitation and what it asks "
+                    + "for, and how far along the Commander is both with them and with whoever refers "
+                    + "them.",
                 Parameters =
                 [
                     new ToolParameter
@@ -84,6 +88,14 @@ public static class EngineerCapability
                         Description =
                             "A kind of module to find engineers for — for example \"Frame Shift Drive\", "
                             + "\"Thrusters\" or \"Shield Generator\".",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "system",
+                        Type = ToolParameterType.String,
+                        Description =
+                            "A system to find the engineer based there, by name — the Commander's "
+                            + "current system when left out.",
                     },
                 ],
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(Find(commander, arguments))),
@@ -227,6 +239,7 @@ public static class EngineerCapability
     {
         arguments.TryGetString("engineer", out var name);
         arguments.TryGetString("grades", out var kind);
+        arguments.TryGetString("system", out var system);
 
         if (!string.IsNullOrWhiteSpace(name))
         {
@@ -235,11 +248,33 @@ public static class EngineerCapability
                 : Catalogue.Unknown("engineer", name.Trim(), EngineerDirectory.Near(name));
         }
 
-        if (string.IsNullOrWhiteSpace(kind))
+        if (!string.IsNullOrWhiteSpace(kind))
         {
-            return "Name an engineer, or say what kind of module needs grading.";
+            return ByKind(commander, kind);
         }
 
+        // A system, named or the Commander's own, is asked for by leaving both of the above out.
+        var resolved = string.IsNullOrWhiteSpace(system) ? commander()?.Location.StarSystem : system.Trim();
+
+        return string.IsNullOrWhiteSpace(resolved)
+            ? "Name an engineer, or say what kind of module needs grading."
+            : BySystem(commander, resolved);
+    }
+
+    private static string BySystem(Func<CommanderGameState?> commander, string system)
+    {
+        var here = EngineerDirectory.InSystem(system);
+
+        return here.Count switch
+        {
+            0 => $"No engineer of mine is based in {system}.",
+            1 => Describe(here[0], commander()),
+            _ => string.Join("\n\n", here.Select(engineer => Describe(engineer, commander()))),
+        };
+    }
+
+    private static string ByKind(Func<CommanderGameState?> commander, string kind)
+    {
         var grading = EngineerDirectory.Grading(kind);
 
         if (grading.Count == 0)

@@ -6,6 +6,15 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.11 — "Which engineer is in this system" finds them, instead of a lore lookup's empty answer
+
+Asked who the engineer was in Leesti, Directive 47 reached for system lore — the wrong tool, which
+knows nothing about engineers — and reported its empty result as "no record of an engineer based
+in Leesti." Didi Vatermann works there; the engineer table always had them. `find_engineer` now
+takes a `system`, named or left out for the Commander's own, and answers who is based there or
+says plainly that nobody is. "Engineer in this system," "who's the engineer here" and "which
+engineer is here" reach it without a model in the loop.
+
 ## 0.110.10 — An experimental effect confirms against its symbol, not its spoken name
 
 "Super Capacitors" never confirmed "Super Capacitor" on a shield booster, because Elite localises

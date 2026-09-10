@@ -418,8 +418,11 @@ it, which is exactly the shape the keyword router handles with no round trip at 
 
 #### `find_engineer`
 
+Say *"engineer in this system"*, *"who's the engineer here"* or *"which engineer is here"* to ask
+about the Commander's own system without naming it.
+
 ```json
-{"type":"object","properties":{"engineer":{"type":"string","description":"An engineer by name \u2014 for example \u0022Farseer\u0022 or \u0022Hera Tani\u0022."},"grades":{"type":"string","description":"A kind of module to find engineers for \u2014 for example \u0022Frame Shift Drive\u0022, \u0022Thrusters\u0022 or \u0022Shield Generator\u0022."}},"required":[],"additionalProperties":false}
+{"type":"object","properties":{"engineer":{"type":"string","description":"An engineer by name \u2014 for example \u0022Farseer\u0022 or \u0022Hera Tani\u0022."},"grades":{"type":"string","description":"A kind of module to find engineers for \u2014 for example \u0022Frame Shift Drive\u0022, \u0022Thrusters\u0022 or \u0022Shield Generator\u0022."},"system":{"type":"string","description":"A system to find the engineer based there, by name \u2014 the Commander\u0027s current system when left out."}},"required":[],"additionalProperties":false}
 ```
 
 #### `get_engineer_route`

@@ -148,6 +148,12 @@ public static class EngineerDirectory
     public static IReadOnlyList<string> Near(string spoken) =>
         Catalogue.Near([.. All.Select(engineer => engineer.Name)], spoken);
 
+    /// <summary>Every engineer based in a named system, case-insensitive.</summary>
+    public static IReadOnlyList<Engineer> InSystem(string? system) =>
+        string.IsNullOrWhiteSpace(system)
+            ? []
+            : [.. All.Where(engineer => string.Equals(engineer.System, system, StringComparison.OrdinalIgnoreCase))];
+
     /// <summary>Who grades a named thing, best grade first.</summary>
     public static IReadOnlyList<(Engineer Engineer, Speciality Speciality)> Grading(string? spoken)
     {

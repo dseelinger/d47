@@ -1,5 +1,6 @@
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
+using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -238,6 +239,77 @@ public class EngineerTests
             TestContext.Current.CancellationToken);
 
         Assert.Contains("Name an engineer", result.Content, StringComparison.Ordinal);
+    }
+
+    // ---- Asked by system rather than by name (#104) -------------------------------------------
+
+    private static CapabilityRegistry RegistryAt(string system)
+    {
+        var gameState = new GameStateStore();
+        gameState.Apply(Event("""{"timestamp":"3311-01-01T00:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}"""));
+        gameState.Apply(Event(
+            $$"""{"timestamp":"3311-01-01T00:00:30Z","event":"Location","StarSystem":"{{system}}","Docked":false}"""));
+
+        return CapabilityRegistry.Build([EngineerCapability.Create(() => gameState.Active)]);
+    }
+
+    [Fact]
+    public async Task TheEngineerInTheCommandersOwnSystemIsFoundWithTheSystemLeftOut()
+    {
+        var farseer = Assert.Single(EngineerDirectory.All, engineer => engineer.System == "Deciat");
+
+        var answer = await Ask(RegistryAt("Deciat"));
+
+        Assert.Contains(farseer.Name, answer, StringComparison.Ordinal);
+        Assert.Contains("Deciat", answer, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ANamedSystemIsAnsweredEvenAwayFromIt()
+    {
+        var farseer = Assert.Single(EngineerDirectory.All, engineer => engineer.System == "Deciat");
+
+        var answer = await Ask(RegistryAt("Leesti"), ("system", "Deciat"));
+
+        Assert.Contains(farseer.Name, answer, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ASystemWithNoEngineerSaysSoFromTheDirectoryRatherThanStayingSilent()
+    {
+        // A real, well-known system with no engineer table row — so the answer is a plain negative
+        // from the directory rather than reached through some other tool's empty result.
+        var answer = await Ask(RegistryAt("Alpha Centauri"));
+
+        Assert.Contains("No engineer of mine is based in Alpha Centauri", answer, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The exact case reported in #104: Didi Vatermann is Leesti's engineer, and asking by system
+    /// finds them even though "find_engineer" by name never came up.
+    /// </summary>
+    [Fact]
+    public async Task LeestisEngineerIsFoundByAskingForLeestiRatherThanByName()
+    {
+        var answer = await Ask(RegistryAt("Leesti"));
+
+        Assert.Contains("Didi Vatermann", answer, StringComparison.Ordinal);
+        Assert.Contains("Leesti", answer, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("engineer in this system")]
+    [InlineData("who's the engineer here")]
+    [InlineData("which engineer is here")]
+    public void AskingByLocationReachesFindEngineerThroughTheKeywordRouterWithNoModel(string phrase)
+    {
+        var registry = CapabilityRegistry.Build([EngineerCapability.Create(() => null)]);
+        var router = new KeywordRouter(registry);
+
+        var match = router.Match(phrase);
+
+        Assert.NotNull(match);
+        Assert.Equal("find_engineer", match.ToolName);
     }
 
     // ---- The chain, and where the Commander stands on it -------------------------------------

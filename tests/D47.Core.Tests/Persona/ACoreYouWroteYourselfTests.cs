@@ -75,6 +75,19 @@ public class ACoreYouWroteYourselfTests : IDisposable
     }
 
     /// <summary>
+    /// An empty tool result answers its own question, not whatever else the Commander asked
+    /// (#104) — restated here because a core that writes its own body still gets it.
+    /// </summary>
+    [Fact]
+    public void AnEmptyToolResultIsNotEvidence()
+    {
+        Assert.Contains(
+            "answered its own question, not the one the Commander asked",
+            D47.Core.Persona.Persona.StandingInstructions,
+            StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// A shipped id can never be shadowed by one somebody wrote, so "warden" is still Warden whatever a
     /// Commander calls their own core.
     /// </summary>
