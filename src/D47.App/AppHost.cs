@@ -4890,6 +4890,13 @@ public sealed class AppHost : IDisposable
 
                 foreach (var announcement in lines)
                 {
+                    // The arbiter's drop only reaches what is already queued, and the rest of an exchange
+                    // is synthesised after it, so it is abandoned here instead (#61).
+                    if (announcement.Key == NpcChatter.LineKey && Voice.Replying)
+                    {
+                        continue;
+                    }
+
                     // Air between the lines of an exchange (#259), reported as two people never once leaving
                     // a gap.
                     if (announcement.Key == NpcChatter.LineKey)
@@ -4934,7 +4941,7 @@ public sealed class AppHost : IDisposable
 
         for (var held = TimeSpan.Zero; held < beat; held += slice)
         {
-            if (Callouts.AnythingUrgentWaiting)
+            if (Callouts.AnythingUrgentWaiting || Voice.Replying)
             {
                 return;
             }

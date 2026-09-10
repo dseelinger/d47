@@ -192,6 +192,26 @@ Each has a **Level** from 0 to 1 and a **Mute**. They are separate on purpose: a
 and a mute sound identical and mean different things, and flicking the mute back should not cost
 you the level you had it at.
 
+### What silences what
+
+Ranking decides who goes next, not who gets cut off. Something already playing is normally left to
+finish, and there are exactly three exceptions:
+
+| What arrives | What it cuts | What it leaves alone |
+|---|---|---|
+| **An alert** | Anything being said, mid-word | Nothing; only "stop" overrules it |
+| **An answer to a question you asked** | Invented NPC chatter, playing or queued | Everything else, including the sound cue in front of it |
+| **"Stop"** | Everything audible, including the alert | Nothing |
+
+The middle row is the narrow one. It reaches invented chatter and nothing else: a message the game
+sent you, a callout you switched on, and a sound cue are all left where they are. It is also only
+ever an answer that does this — an unprompted line of Directive 47's own queues up behind the
+chatter like anything else, because nobody was waiting on it.
+
+The sound cue is the reason the rule is written this way. A cue is a fifth of a second and it plays
+immediately before the sentence it introduces, so anything allowed to cut in on rank alone would
+truncate the cue that announced it, every single turn.
+
 ### Ducking
 
 Speech and alerts are what everything else gets out of the way of, so the other three carry a

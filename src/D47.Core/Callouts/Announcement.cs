@@ -12,6 +12,16 @@ public enum CalloutUrgency
     Urgent,
 }
 
+/// <summary>The arbiter groups unprompted speech is spoken in.</summary>
+public static class SpokenGroup
+{
+    /// <summary>Callouts and relayed in-game comms.</summary>
+    public const string Announcement = "announcement";
+
+    /// <summary>Invented chatter, kept apart so a turn reply can drop it and nothing else (#61).</summary>
+    public const string InventedChatter = "invented-chatter";
+}
+
 /// <summary>Something d47 has decided to say without being asked (Phase 8).</summary>
 /// <param name="Key">
 /// Identity for cooldown purposes: two announcements sharing a key are the same warning said twice.
@@ -26,6 +36,10 @@ public sealed record Announcement(string Key, string Text, CalloutUrgency Urgenc
 
     public AudioChannel Channel =>
         Urgency == CalloutUrgency.Urgent ? AudioChannel.Alert : AudioChannel.Speech;
+
+    /// <summary>The arbiter group this is spoken in; a reply drops invented chatter by it.</summary>
+    public string Group =>
+        Key == NpcChatter.LineKey ? SpokenGroup.InventedChatter : SpokenGroup.Announcement;
 
     /// <summary>
     /// A marker played immediately ahead of the line, saying which warning this is before the sentence

@@ -26,6 +26,11 @@ public sealed class VoicePipeline(
     /// <summary>Whether this turn was spoken aloud.</summary>
     private bool _spoke;
 
+    private int _replying;
+
+    /// <summary>Whether a turn reply is being spoken right now (#61).</summary>
+    public bool Replying => Volatile.Read(ref _replying) != 0;
+
     /// <summary>The provider aboard the ship, or null when no voice is configured.</summary>
     public ITtsProvider? Tts { get; set; }
 
@@ -93,6 +98,14 @@ public sealed class VoicePipeline(
                         if (speech is null && Tts is { } provider)
                         {
                             _spoke = true;
+                            Volatile.Write(ref _replying, 1);
+
+                            // The Commander asked and is waiting, so invented chatter gets out of the way:
+                            // cut mid-word if it is playing, dropped if it is queued. Only a reply does
+                            // this, and an unprompted line of d47's own does not. Callouts and relayed
+                            // in-game comms are in another group and are left where they are (#61).
+                            arbiter.DropGroup(SpokenGroup.InventedChatter);
+
                             speech = new SpeechPipeline(
                                 arbiter,
                                 provider,
@@ -132,6 +145,8 @@ public sealed class VoicePipeline(
         }
         finally
         {
+            Volatile.Write(ref _replying, 0);
+
             if (speech is not null)
             {
                 speech.SynthesisFailed -= OnSynthesisFailed;
@@ -240,6 +255,9 @@ public sealed class VoicePipeline(
                 announcement.Text,
                 announcement.Channel,
                 voice,
+
+                // The group a reply may drop this by.
+                announcement.Group,
                 colour: RadioVoice.Colours(announcement.Voice),
 
                 // The sender where there is one and the role otherwise, which is the difference between "Ilse

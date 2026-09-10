@@ -743,6 +743,13 @@ settings row on purpose: the beat is something to get right rather than somethin
 urgent callout waiting behind an exchange cuts those pauses short**, so a fuel or danger warning is
 never held up by a courier chatting.
 
+**Asking a question ends the exchange.** When Directive 47 starts answering something you said, the
+chatter line being spoken is cut off mid-word and the rest of the exchange is dropped rather than
+kept for afterwards — you asked, so the answer comes first, and losing half an overheard remark
+does not matter. Nothing else goes with it: a message the game sent you and a callout you switched
+on both keep their place in the queue and are still spoken. Only a reply to you does this. An unprompted
+line of Directive 47's own waits its turn like anything else.
+
 > "stop calling out npc chatter" / "start calling out npc chatter"
 
 **Switching personality off silences these entirely**, which is the one place that switch
