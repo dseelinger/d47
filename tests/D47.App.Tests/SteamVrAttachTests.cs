@@ -17,7 +17,7 @@ public class SteamVrAttachTests
     private static string? Live =>
         SteamVrRuntime.SteamVrIsRunning()
             ? "SteamVR is running on this machine, so the attach path has nothing to prove here — "
-              + "and connecting would wake the headset (#35). Set D47_VR_LIVE=1 for the live checks."
+              + "SteamVrLiveTests takes the session that is up."
             : null;
 
     /// <summary>A first attempt that produced no session must leave the one-session slot free: the retry loop calls Start every few seconds forever, and a leaked slot makes every later attempt a permanent "already running".</summary>
@@ -70,14 +70,45 @@ public class SteamVrAttachTests
 /// <summary>Attaching to a session that is actually there.</summary>
 public class SteamVrLiveTests
 {
-    private static bool Enabled =>
-        Environment.GetEnvironmentVariable("D47_VR_LIVE") == "1";
+    /// <summary>
+    /// Why this file declined to run, or null when it ran. Attaching does not wake a headset that is
+    /// switched off, so these preconditions are the whole gate: any local run with SteamVR up and
+    /// d47 closed takes these tests.
+    /// </summary>
+    private static string? Waiting
+    {
+        get
+        {
+            if (!OpenVrBinding.Instance.Load())
+            {
+                return "No SteamVR runtime on this machine, which is a supported configuration.";
+            }
+
+            if (!SteamVrRuntime.SteamVrIsRunning())
+            {
+                return "SteamVR is not running, so there is no session to round-trip against.";
+            }
+
+            if (!OpenVrBinding.Instance.IsHmdPresent())
+            {
+                return "No headset is switched on.";
+            }
+
+            // A running copy owns the overlay keys, and the manifest below names this process as d47 to
+            // SteamVR. Neither belongs in a session that is already d47's.
+            return System.Diagnostics.Process.GetProcessesByName("d47").Length > 0
+                ? "d47 is running; close it to run the live checks."
+                : null;
+        }
+    }
+
+    /// <summary>Skips unless this machine can answer, in the one place that decides it.</summary>
+    private static void Ready() => Assert.SkipWhen(Waiting is not null, Waiting ?? string.Empty);
 
     [Fact]
     public void ARealSessionIsAttachedToRatherThanRefused()
     {
-        Assert.SkipUnless(Enabled, "set D47_VR_LIVE=1 to run tests that connect to SteamVR and wake the headset");
-        Assert.SkipUnless(SteamVrRuntime.SteamVrIsRunning(), "SteamVR is not running on this machine");
+        Ready();
 
         var runtime = new SteamVrRuntime([], NullLogger<SteamVrRuntime>.Instance, OpenVrBinding.Instance);
 
@@ -280,11 +311,7 @@ public class SteamVrLiveTests
     /// <summary>Attaches to the session that is already up, or skips. The caller shuts it down.</summary>
     private static IOpenVrSystem Attach()
     {
-        Assert.SkipUnless(Enabled, "set D47_VR_LIVE=1 to run tests that connect to SteamVR and wake the headset");
-        Assert.SkipUnless(SteamVrRuntime.SteamVrIsRunning(), "SteamVR is not running on this machine");
-
-        Assert.True(OpenVrBinding.Instance.Load(), "no SteamVR runtime to load on this machine");
-        Assert.True(OpenVrBinding.Instance.IsHmdPresent(), "no headset is switched on");
+        Ready();
 
         var error = EVRInitError.None;
         var system = OpenVrBinding.Instance.Init(ref error, EVRApplicationType.VRApplication_Overlay);
