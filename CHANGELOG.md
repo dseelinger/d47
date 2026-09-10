@@ -6,14 +6,16 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
-## 0.110.19 — A question you asked cuts ahead of invented chatter
+## 0.110.19 — Talking to Directive 47 stops the dock hands talking
 
-Ask something while a dock hand is talking and the answer used to queue up behind the whole
+Ask something while a dock hand is mid-sentence and the answer used to queue up behind the whole
 exchange, arriving after you had moved on. Invented chatter is now kept apart from everything else
-that gets spoken, so an answer to a question you asked cuts the chatter line mid-word and drops the
-rest of the exchange. Nothing else is dropped with it: a message the game sent you, a callout you
-switched on and the sound cue in front of the answer all keep their place. Only an answer does
-this — an unprompted line of Directive 47's own still waits its turn.
+that gets spoken, and opening the microphone cuts the chatter line mid-word and drops the rest of
+the exchange. It goes on the microphone opening rather than on the answer arriving, because
+transcription and the model together take several seconds and a four-line exchange finishes inside
+them. Nothing else is dropped with it: a message the game sent you, a callout you switched on and
+the sound cue in front of the answer all keep their place. And only you do this — an unprompted line
+of Directive 47's own still waits its turn.
 
 ## 0.110.18 — A refused tool call is not tried again in the same turn
 

@@ -7,8 +7,8 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>What a turn reply may silence to reach the Commander, and what it must leave alone (#61).</summary>
-public class AReplyCutsAheadOfInventedChatterTests
+/// <summary>What talking to the ship may silence to reach the Commander, and what it must leave alone (#61).</summary>
+public class AskingCutsAheadOfInventedChatterTests
 {
     private const string Answer = "Fuel is at ninety percent.";
 
@@ -127,24 +127,41 @@ public class AReplyCutsAheadOfInventedChatterTests
     }
 
     /// <summary>
-    /// The flag the chatter loop reads to abandon the rest of an exchange, since the lines after the one
-    /// that was cut are synthesised later and would otherwise queue up behind the reply.
+    /// Transcription and the model together run to several seconds, and a four-line exchange finishes
+    /// inside them, so the microphone opening is what has to stop it.
     /// </summary>
     [Fact]
-    public async Task ItSaysItIsReplyingWhileTheReplyIsBeingSpokenAndNotAfterwards()
+    public async Task OpeningTheMicrophoneCutsChatterBeforeAWordHasBeenTranscribed()
+    {
+        var (voice, sink) = Build();
+
+        await voice.AnnounceAsync(Chatter("Pad seven is yours when you want it."));
+        var chatter = sink.Started[0].Id;
+
+        voice.EnterState(LoopState.Listening);
+
+        Assert.Contains(chatter, sink.Stopped);
+    }
+
+    /// <summary>
+    /// The flag the chatter loop reads to abandon the rest of an exchange, since the lines after the one
+    /// that was cut are synthesised later and would otherwise queue up behind the answer.
+    /// </summary>
+    [Fact]
+    public async Task ItIsEngagedFromTheMicrophoneOpeningUntilTheLoopSettles()
     {
         var (voice, _) = Build();
-        var provider = (NamedClipProvider)voice.Tts!;
-        var midReply = false;
 
-        provider.Synthesising = () => midReply = voice.Replying;
+        Assert.False(voice.Engaged);
 
-        Assert.False(voice.Replying);
+        voice.EnterState(LoopState.Listening);
+        Assert.True(voice.Engaged);
 
         await voice.RunAsync(Reply(), cancellationToken: TestContext.Current.CancellationToken);
+        Assert.True(voice.Engaged);
 
-        Assert.True(midReply);
-        Assert.False(voice.Replying);
+        voice.Settle(new AudioActivity(Channel: null, Caption: null, BedPlaying: false));
+        Assert.False(voice.Engaged);
     }
 
     /// <summary>A sink that starts everything, stops nothing on its own, and finishes only when told.</summary>
@@ -206,20 +223,13 @@ public class AReplyCutsAheadOfInventedChatterTests
 
         public string Name => "Named clip";
 
-        /// <summary>Called as each sentence is rendered, for asserting what was true at that moment.</summary>
-        public Action? Synthesising { get; set; }
-
         public Task<VoiceCatalogue> ListVoicesAsync(CancellationToken cancellationToken = default) =>
             Task.FromResult(VoiceCatalogue.Of([new VoiceInfo("named-clip", "Named Clip", "en-GB")]));
 
         public Task<AudioClip> SynthesizeAsync(
             string text,
             VoiceSelection voice,
-            CancellationToken cancellationToken = default)
-        {
-            Synthesising?.Invoke();
-
-            return Task.FromResult(new AudioClip(text, new byte[9_600], AudioFormat.Standard));
-        }
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new AudioClip(text, new byte[9_600], AudioFormat.Standard));
     }
 }

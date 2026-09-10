@@ -4892,7 +4892,7 @@ public sealed class AppHost : IDisposable
                 {
                     // The arbiter's drop only reaches what is already queued, and the rest of an exchange
                     // is synthesised after it, so it is abandoned here instead (#61).
-                    if (announcement.Key == NpcChatter.LineKey && Voice.Replying)
+                    if (announcement.Key == NpcChatter.LineKey && Voice.Engaged)
                     {
                         continue;
                     }
@@ -4941,7 +4941,7 @@ public sealed class AppHost : IDisposable
 
         for (var held = TimeSpan.Zero; held < beat; held += slice)
         {
-            if (Callouts.AnythingUrgentWaiting || Voice.Replying)
+            if (Callouts.AnythingUrgentWaiting || Voice.Engaged)
             {
                 return;
             }

@@ -20,16 +20,17 @@ public sealed class VoicePipeline(
 
     private int _turnNumber;
 
-    /// <summary>The state the loop is showing.</summary>
-    private LoopState _state = LoopState.Idle;
+    /// <summary>The state the loop is showing. Read off the thread that speaks callouts.</summary>
+    private volatile LoopState _state = LoopState.Idle;
 
     /// <summary>Whether this turn was spoken aloud.</summary>
     private bool _spoke;
 
-    private int _replying;
-
-    /// <summary>Whether a turn reply is being spoken right now (#61).</summary>
-    public bool Replying => Volatile.Read(ref _replying) != 0;
+    /// <summary>
+    /// Whether the Commander is mid-exchange — from the moment the microphone opens until the answer
+    /// has been spoken and the loop has settled (#61).
+    /// </summary>
+    public bool Engaged => _state != LoopState.Idle;
 
     /// <summary>The provider aboard the ship, or null when no voice is configured.</summary>
     public ITtsProvider? Tts { get; set; }
@@ -98,14 +99,6 @@ public sealed class VoicePipeline(
                         if (speech is null && Tts is { } provider)
                         {
                             _spoke = true;
-                            Volatile.Write(ref _replying, 1);
-
-                            // The Commander asked and is waiting, so invented chatter gets out of the way:
-                            // cut mid-word if it is playing, dropped if it is queued. Only a reply does
-                            // this, and an unprompted line of d47's own does not. Callouts and relayed
-                            // in-game comms are in another group and are left where they are (#61).
-                            arbiter.DropGroup(SpokenGroup.InventedChatter);
-
                             speech = new SpeechPipeline(
                                 arbiter,
                                 provider,
@@ -145,8 +138,6 @@ public sealed class VoicePipeline(
         }
         finally
         {
-            Volatile.Write(ref _replying, 0);
-
             if (speech is not null)
             {
                 speech.SynthesisFailed -= OnSynthesisFailed;
@@ -286,6 +277,16 @@ public sealed class VoicePipeline(
     /// <summary>Moves the loop, optionally without its cue.</summary>
     public void EnterState(LoopState state, bool cue)
     {
+        // Invented chatter gets out of the way the moment the Commander starts talking, or a turn starts
+        // without them having talked at all — cut mid-word if it is playing, dropped if it is queued.
+        // Waiting for the answer is far too late: transcription and the model together run to several
+        // seconds, and a four-line exchange finishes inside them. Callouts and relayed in-game comms are
+        // in another group and are left where they are (#61).
+        if (state is LoopState.Listening or LoopState.Thinking)
+        {
+            arbiter.DropGroup(SpokenGroup.InventedChatter);
+        }
+
         arbiter.EnterState(state, cues(), Bed, CuesEnabled && cue, BedEnabled);
         _state = state;
         StateEntered?.Invoke(state);

@@ -743,12 +743,14 @@ settings row on purpose: the beat is something to get right rather than somethin
 urgent callout waiting behind an exchange cuts those pauses short**, so a fuel or danger warning is
 never held up by a courier chatting.
 
-**Asking a question ends the exchange.** When Directive 47 starts answering something you said, the
-chatter line being spoken is cut off mid-word and the rest of the exchange is dropped rather than
-kept for afterwards — you asked, so the answer comes first, and losing half an overheard remark
-does not matter. Nothing else goes with it: a message the game sent you and a callout you switched
-on both keep their place in the queue and are still spoken. Only a reply to you does this. An unprompted
-line of Directive 47's own waits its turn like anything else.
+**Talking to Directive 47 ends the exchange.** The moment you open the microphone, the chatter line
+being spoken is cut off mid-word and the rest of the exchange is dropped rather than kept for
+afterwards — you are asking, so the answer comes first, and losing half an overheard remark does not
+matter. It happens when you start talking rather than when the answer arrives, because
+transcription and the model together take several seconds and an exchange runs to its end inside
+them. Nothing else goes with it: a message the game sent you and a callout you switched on both keep
+their place in the queue and are still spoken. And only you do this — an unprompted line of
+Directive 47's own waits its turn like anything else.
 
 > "stop calling out npc chatter" / "start calling out npc chatter"
 
