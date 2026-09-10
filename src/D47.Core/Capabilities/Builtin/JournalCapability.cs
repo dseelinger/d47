@@ -116,6 +116,33 @@ public static class JournalCapability
                 },
                 new ToolDefinition
                 {
+                    Name = "get_fleet_loadouts",
+                    Description =
+                        "Compare the Commander's ships by what is fitted to each: cargo capacity, maximum "
+                        + "jump range, unladen mass, fuel, value and rebuy. Every ship they have been seen "
+                        + "flying is answerable, not only the one they are aboard. Use it for any question "
+                        + "that ranks or filters their ships.",
+                    Parameters =
+                    [
+                        new ToolParameter
+                        {
+                            Name = "min_cargo",
+                            Type = ToolParameterType.Integer,
+                            Description = "List only ships with at least this many tonnes of cargo capacity.",
+                        },
+                        new ToolParameter
+                        {
+                            Name = "order_by",
+                            Type = ToolParameterType.String,
+                            Description = "Rank the ships by this figure, largest first. Listed by name otherwise.",
+                            AllowedValues = ["jump_range", "cargo"],
+                        },
+                    ],
+                    Handler = (arguments, _) => Task.FromResult(
+                        ToolResult.Ok(DescribeFleetLoadouts(gameState, arguments))),
+                },
+                new ToolDefinition
+                {
                     Name = "get_stored_modules",
                     Description =
                         "List the modules the Commander has in storage and which system each one is in, "
@@ -480,6 +507,151 @@ public static class JournalCapability
         }
 
         return report.ToString().TrimEnd();
+    }
+
+    /// <summary>
+    /// Every ship as it was last seen fitted, from the remembered loadouts rather than from the one
+    /// being flown. The figures are the game's own, so ranking ships against each other needs no model
+    /// of jump range.
+    /// </summary>
+    private static string DescribeFleetLoadouts(GameStateStore gameState, ToolArguments arguments)
+    {
+        if (!TryActive(gameState, out var active, out var reason))
+        {
+            return reason;
+        }
+
+        var remembered = active.Loadouts.Ships.ToList();
+        var report = new StringBuilder();
+
+        if (remembered.Count == 0)
+        {
+            report.AppendLine(
+                "I have not read a loadout for any of your ships yet. One is written each time you board "
+                + "a ship, and D47 reads your journals for them when it starts.");
+
+            Uncovered(report, active);
+            return report.ToString().TrimEnd();
+        }
+
+        var wanted = remembered;
+
+        if (arguments.TryGetInt32("min_cargo", out var minimum))
+        {
+            wanted = [.. remembered.Where(ship => ship.Value.Loadout.CargoCapacity >= minimum)];
+        }
+
+        if (wanted.Count == 0)
+        {
+            var largest = remembered
+                .Select(ship => ship.Value.Loadout)
+                .Where(loadout => loadout.CargoCapacity is not null)
+                .OrderByDescending(loadout => loadout.CargoCapacity)
+                .FirstOrDefault();
+
+            report.AppendLine(largest is null
+                ? $"None of the {remembered.Count} ships I remember reports a cargo capacity at all."
+                : $"No ship I remember carries {minimum} t. The largest hold is "
+                  + $"{largest.Describe()} at {largest.CargoCapacity} t.");
+
+            Uncovered(report, active);
+            return report.ToString().TrimEnd();
+        }
+
+        var order = arguments.TryGetString("order_by", out var asked) ? asked : string.Empty;
+
+        var listed = order switch
+        {
+            "jump_range" => wanted.OrderByDescending(ship => ship.Value.Loadout.MaxJumpRange ?? double.MinValue),
+            "cargo" => wanted.OrderByDescending(ship => (double?)ship.Value.Loadout.CargoCapacity ?? double.MinValue),
+            _ => wanted.OrderBy(ship => ship.Value.Loadout.Describe() ?? string.Empty, StringComparer.OrdinalIgnoreCase),
+        };
+
+        report.AppendLine(
+            $"{wanted.Count} ship{(wanted.Count == 1 ? string.Empty : "s")}, each as it was last seen fitted "
+            + "— refit one and it reads as it was until you board it again. Jump range is the maximum on a "
+            + "full tank with an empty hold, as the game reports it, so a laden run is shorter.");
+
+        foreach (var ship in listed)
+        {
+            var loadout = ship.Value.Loadout;
+            var figures = new List<string>();
+
+            if (loadout.CargoCapacity is { } cargo)
+            {
+                figures.Add($"cargo {cargo} t");
+            }
+
+            if (loadout.MaxJumpRange is { } jump)
+            {
+                figures.Add($"jump {jump:0.##} ly");
+            }
+
+            if (loadout.UnladenMass is { } mass)
+            {
+                figures.Add($"unladen mass {mass:0.#} t");
+            }
+
+            if (loadout.FuelCapacity is { } fuel)
+            {
+                figures.Add($"fuel {fuel:0.##} t");
+            }
+
+            if (loadout.TotalValue is { } worth)
+            {
+                figures.Add($"worth {worth:N0} cr");
+            }
+
+            if (loadout.Rebuy is { } rebuy)
+            {
+                figures.Add($"rebuy {rebuy:N0} cr");
+            }
+
+            report.Append($"  {loadout.Describe()} — {WhereShipIs(active, ship.Key)}");
+
+            if (figures.Count > 0)
+            {
+                report.Append(", " + string.Join(", ", figures));
+            }
+
+            report.AppendLine(AsOf(ship.Value.SeenAt));
+        }
+
+        Uncovered(report, active);
+        return report.ToString().TrimEnd();
+    }
+
+    /// <summary>
+    /// Ships the Commander owns that no loadout has been read for, named so that a ranking is not
+    /// mistaken for the whole fleet.
+    /// </summary>
+    private static void Uncovered(StringBuilder report, CommanderGameState active)
+    {
+        var missing = active.Fleet.Ships
+            .Where(ship => !active.Loadouts.Ships.ContainsKey(ship.ShipId))
+            .Select(ship => ship.Describe())
+            .ToArray();
+
+        if (missing.Length > 0)
+        {
+            report.AppendLine($"No loadout read, so not covered above: {string.Join(", ", missing)}.");
+        }
+    }
+
+    /// <summary>Where a remembered ship is, by the journal's account of the fleet.</summary>
+    private static string WhereShipIs(CommanderGameState active, int shipId)
+    {
+        if (active.Ship.IsKnown && active.Ship.ShipId == shipId)
+        {
+            return "you are flying it";
+        }
+
+        return active.Fleet.Ships.FirstOrDefault(ship => ship.ShipId == shipId) switch
+        {
+            { InTransit: true } => "in transit",
+            { HasSystem: true } stored => stored.StarSystem,
+            _ => "location unknown",
+        };
     }
 
     /// <summary>What is in module storage, grouped by where it is.</summary>

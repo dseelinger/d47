@@ -6,6 +6,23 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.12 — "Which of my ships has the best jump range" is answered rather than refused
+
+Asked which of their ships with at least 24 tonnes of cargo space had the best jump range,
+Directive 47 said it could only see the loadout of the ship being flown. That was never true:
+every `Loadout` Elite writes is kept in `data\loadouts.json`, and cargo capacity and maximum jump
+range are both in it. What was missing was a tool that could read it. There is one now. It lists
+every ship as it was last seen fitted — cargo, jump range, unladen mass, fuel, value and rebuy —
+and can narrow to ships above a hold size and rank them by jump range or cargo, so the comparison
+is arithmetic on figures the game reported rather than a guess from hull specifications.
+
+Two things the answer always states, because both are true and neither is a reason to refuse: the
+jump range is the maximum on a full tank with an empty hold, which is the right figure for ranking
+ships against each other and the wrong one for a laden run; and every ship carries the date it was
+last seen, because one refitted since you last boarded it is remembered as it was. A ship you own
+that no `Loadout` has been read for is named rather than left out, so a ranking is not mistaken
+for the whole fleet.
+
 ## 0.110.11 — "Which engineer is in this system" finds them, instead of a lore lookup's empty answer
 
 Asked who the engineer was in Leesti, Directive 47 reached for system lore — the wrong tool, which

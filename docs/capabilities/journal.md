@@ -193,6 +193,24 @@ Currently flying Bold Endeavour, a Anaconda.
 The system is a heading and each ship is alone on the line under it, because a fleet of a dozen
 run together after one colon is a paragraph to read and a single breath to hear.
 
+**What every ship carries**, not just the one you are sitting in. Each `Loadout` Elite writes is
+kept, so *"which of my ships with at least 24 tonnes of cargo has the best jump range"* is a
+question about figures already on disk:
+
+```text
+2 ships, each as it was last seen fitted — refit one and it reads as it was until you board it again. Jump range is the maximum on a full tank with an empty hold, as the game reports it, so a laden run is shorter.
+  Bold Endeavour, a Anaconda — you are flying it, cargo 8 t, jump 52.31 ly, unladen mass 1122.6 t, fuel 32 t, worth 219,694,497 cr, rebuy 9,694,497 cr, as of 2026-09-05 16:36 UTC
+  Mule, a Python — Shinrarta Dezhra, cargo 128 t, jump 21.44 ly, unladen mass 350.6 t, fuel 32 t, worth 61,204,110 cr, rebuy 3,060,205 cr, as of 2026-08-14 19:02 UTC
+No loadout read, so not covered above: Wanderer (Asp Explorer).
+```
+
+Both caveats are in the answer because both are real. The jump range is the right figure for
+ranking ships against each other and the wrong one for a run with the hold full, and a ship
+refitted since you last boarded it is remembered as it was — which is what the timestamp on each
+line is for, and what **Rescan my journals** on the [Ships](ships.md) page repairs. A ship you
+own that no `Loadout` has been read for is named rather than left out, so a ranking is never
+mistaken for the whole fleet.
+
 **What is in module storage**, grouped by where it is, because the question underneath is nearly
 always "can I fit it here, or do I have to fetch it":
 
@@ -336,6 +354,13 @@ schema:
 
 ```json
 {"type":"object","properties":{"ships":{"type":"boolean","description":"List the ships the Commander owns and which system each one is stored in. Set it only when they asked what ships they have or what ships are in a system. Asking where the carrier is is not that question."}},"required":[],"additionalProperties":false}
+```
+
+`get_fleet_loadouts` reads the remembered loadouts rather than the flown one, and filters and ranks
+in the tool so the model is comparing figures rather than deriving them:
+
+```json
+{"type":"object","properties":{"min_cargo":{"type":"integer","description":"List only ships with at least this many tonnes of cargo capacity."},"order_by":{"type":"string","description":"Rank the ships by this figure, largest first. Listed by name otherwise.","enum":["jump_range","cargo"]}},"required":[],"additionalProperties":false}
 ```
 
 `get_stored_modules` takes an optional fragment to narrow the list:
