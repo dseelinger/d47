@@ -67,7 +67,22 @@ Write-Host 'Running D47.App.Tests...'
 dotnet test tests/D47.App.Tests -c Release --nologo
 if ($LASTEXITCODE -ne 0) { throw 'D47.App.Tests failed. Nothing dispatched.' }
 
+# `gh workflow run` names no run, so the newest id before dispatch is what the watcher waits past.
+$before = gh run list --workflow release.yml --limit 1 --json databaseId --jq '.[0].databaseId'
+if ($LASTEXITCODE -ne 0 -or -not $before) { $before = 0 }
+
 gh workflow run release.yml -f version=$next
 if ($LASTEXITCODE -ne 0) { throw 'Dispatch failed.' }
 
-Write-Host 'Dispatched. Watch it with: gh run watch'
+Write-Host "Dispatched v$next."
+
+# Watching is display only, and the release is already the runner's from here. A watcher that
+# cannot start says so and leaves the run alone.
+try {
+    & "$PSScriptRoot\watch-release.ps1" -After ([long]$before)
+    exit $LASTEXITCODE
+}
+catch {
+    Write-Warning "Could not follow the run: $_"
+    Write-Host 'It is still going. Re-attach with: tools\watch-release.ps1'
+}
