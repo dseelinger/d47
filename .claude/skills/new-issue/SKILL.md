@@ -1,6 +1,6 @@
 ---
 name: new-issue
-description: Turn a dictated request into an issue an issue worker can take without kicking it back — read the code first, verify every claim against the tree and the real journals, put the ambiguities to the maintainer as concrete choices, size it, then file. Files issues; changes no code. Use when the user invokes /new-issue, or says "new issue", "file an issue about this", "make an issue for", "write this up as an issue".
+description: Turn a dictated request into an issue an issue worker can take without kicking it back — read the code first, verify every claim against the tree and the real journals, decide what is obvious and put only the real ambiguities to the maintainer as concrete choices, size it, then file. Files issues; changes no code. Use when the user invokes /new-issue, or says "new issue", "file an issue about this", "make an issue for", "write this up as an issue".
 ---
 
 # New issue
@@ -11,14 +11,22 @@ You turn a request into an issue that an issue worker can take and finish withou
 turn. Only a bare `/new-issue` waits: acknowledge in one line, stop, and start when the maintainer
 says what it is about.
 
+## Turn the voice on first
+
+Once the instruction lands, the first step of the working turn is `/neural-voice New issue <subject>`,
+the subject in a word or two — `/neural-voice New issue engineers` for a request about the Engineers
+tab. Several of these sessions run at once and are told apart by ear, and the subject is what tells
+them apart. Where the request has no obvious subject yet, `/neural-voice New issue` on its own.
+
+It is a default, not a fixture: `/neural-voice off` stops it and the work carries on unchanged.
+
 ## The failure this exists to prevent
 
 A dictated request is a starting point, not a specification. Filed as dictated, it reaches an issue
 worker who finds it means two different things, or rests on data that does not exist, or is three
-jobs — and kicks it back. That round-trip costs a whole session. Every question you ask now costs a
-minute.
+jobs — and kicks it back. That round-trip costs a whole session.
 
-So: **the first telling is never the issue.** Read, verify, ask, size, then file.
+So: **the first telling is never the issue.** Read, verify, decide, size, then file.
 
 ## Read the code before you ask anything
 
@@ -67,10 +75,20 @@ Go looking for these. They are where dictated requests come apart.
   establish that d47 can know X. If it cannot, that is the real finding, and it outranks the
   original request.
 
+## Decide what is obvious; ask only what is not
+
+**A question with an obvious answer is not diligence, it is noise**, and a maintainer who is asked
+two of them stops reading the third. Where one option is plainly right — it costs nothing extra, it
+is what the maintainer already asked for, or the alternative leaves a known defect standing — take
+it and say so in the answer. The test: if you would write "(Recommended)" on one option and could
+not honestly argue for another, do not ask.
+
+Ask when the answer changes what gets built and the code cannot settle it.
+
 ## Ask in one batch, with a worked example
 
 Put the questions as choices, not as open prose, and send them together rather than one at a time.
-Four is the limit; three good ones beat four with a filler.
+Four is the limit; two real ones beat four with fillers.
 
 Every option says what it would cost, not only what it is. "Simplest, and the cost is that the two
 middle lines assert something d47 does not know" is a choice the maintainer can make. "Option B" is
@@ -99,8 +117,9 @@ Split only when the honest answer is that it is two jobs. When it is:
   need no rework when the large one lands. Say so in both bodies.
 - Cross-reference them by number after filing, in the body of each.
 
-Recommend the split to the maintainer with a reason before you file it. Do not decide it silently,
-and do not split a single job into two to look thorough.
+Where it is plainly two jobs, split it, file both and say so in one bold line. Ask first only where
+it is genuinely arguable. Do not decide it silently, and do not split a single job into two to look
+thorough.
 
 ## Everything you file is already eligible
 
@@ -136,11 +155,15 @@ if you want it checked.
 
 Write the body to a file and pass `--body-file`. A heredoc mangles backslashes and long bodies.
 
-## Name every deviation
+## Say what you chose, in bold
 
-Where the issue specifies something other than what was asked — a third state where two were
-requested, a role colour where green was — say so in the issue, in a paragraph of its own, with the
-reason. Then say it again in your answer to the maintainer, and offer to change it back.
+Every call you made rather than asked — a widened scope, a third state where two were requested, a
+role colour where green was, two issues where one was dictated — goes in your answer as **one bold
+line**, with the reason in that line or the next, and the offer to revert. Where the issue itself
+departs from the request, say it in the body too, in a paragraph of its own.
+
+The maintainer objects by reading one line, or reads nothing and it stands. So state the choice,
+give the reason once, and stop. Do not bury it in a paragraph of reasoning and do not re-argue it.
 
 An issue that quietly improves on the request is an issue the maintainer did not approve.
 
@@ -152,8 +175,10 @@ start the work. You read, you verify, you ask, you file.
 ## Output
 
 1. **Each issue filed** — number, title, label, and a line on what it covers. Link them.
-2. **Any deviation from what was asked**, with the reason and the offer to revert.
+2. **Every choice you made rather than asked**, one bold line each, with the reason and the offer
+   to revert.
 3. **What you found that the request did not know** — the thing that changes what gets built, in
    one or two sentences. This is often the most valuable part of the session.
 
-No closing summary of the process. The issues are the output.
+Short. The issue carries the detail; this is the part the maintainer reads standing up. No closing
+summary of the process, and no restating the grounding paragraph he can read in the body.
