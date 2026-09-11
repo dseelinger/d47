@@ -6,6 +6,14 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.36 — The published build no longer decompresses itself on every launch
+
+The single-file publish compressed every assembly into the exe and decompressed all of them into
+memory on each start, and none of them were precompiled, so every method Avalonia and d47 touched
+before the window appeared was JIT-compiled cold. Publish now leaves the assemblies uncompressed
+and ahead-of-time compiles them. The exe is larger on disk; nothing about the install, the update
+payload or the update check changes.
+
 ## 0.110.35 — The log says where startup time goes
 
 A launch measured on the maintainer's machine took 46 seconds, 35 of them inside two stretches that
