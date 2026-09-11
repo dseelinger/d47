@@ -362,6 +362,7 @@ public partial class PanelView : UserControl
 
             case nameof(PanelViewModel.Microphone):
             case nameof(PanelViewModel.MicrophoneDetail):
+            case nameof(PanelViewModel.ModelLoading):
                 if (Dispatcher.UIThread.CheckAccess())
                 {
                     ApplyMicrophone();
@@ -412,6 +413,13 @@ public partial class PanelView : UserControl
             D47.Core.Listening.MicrophoneState.Armed => ("D47.Info", "Listening..."),
             _ => ("D47.TextMuted", "PTT Ready"),
         };
+
+        // An open gate is open whatever the model is doing. Every other state would otherwise report that
+        // the microphone is ready while the model is still loading (#147).
+        if (_bound.ModelLoading && state != D47.Core.Listening.MicrophoneState.Open)
+        {
+            (key, label) = ("D47.Info", "Loading model...");
+        }
 
         MicrophoneGlyph.Bind(Avalonia.Controls.Shapes.Shape.StrokeProperty, this.GetResourceObservable(key));
         MicrophoneLabel.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(key));

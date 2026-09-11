@@ -1843,6 +1843,10 @@ public sealed class AppHost : IDisposable
         // one capability (Phase 13).
         gate.StateChanged += state => host.ShowMicrophone(state);
 
+        // Beside it, because a model that is still loading is not the same as a microphone that is ready
+        // (#147).
+        gate.ModelLoadingChanged += loading => host.Panel.ModelLoading = loading;
+
         // Stated once at startup as well as on every change, because the opening state is the one a Commander
         // sees for longest and nothing had raised an event yet.
         host.ShowMicrophone(gate.State);
@@ -3605,20 +3609,9 @@ public sealed class AppHost : IDisposable
         // The microphone has closed and the words are being worked out.
         Voice.EnterState(Core.Audio.LoopState.Transcribing);
 
-        if (!_transcriber.IsReady)
+        if (!_transcriber.IsReady && !_transcriber.IsLoading)
         {
-            // Captured but not transcribable.
-            _logger.LogInformation(
-                "Heard {Seconds:0.#}s but no speech model is loaded", utterance.Duration.TotalSeconds);
-
-            const string Cannot = "I heard you, but I have no speech model loaded to understand it.";
-
-            _ = Voice.AnnounceAsync(Cannot);
-            Said?.Invoke(Cannot);
-
-            // No cue: a sentence is about to be spoken saying the same thing, and a chime under it is d47
-            // telling the Commander twice.
-            Voice.EnterState(Core.Audio.LoopState.Idle, cue: false);
+            NoSpeechModel(utterance);
             return;
         }
 
@@ -3646,6 +3639,16 @@ public sealed class AppHost : IDisposable
         {
             try
             {
+                // A press made while the model was still loading waits for it here rather than being
+                // discarded (#147).
+                await _transcriber.Ready.ConfigureAwait(false);
+
+                if (!_transcriber.IsReady)
+                {
+                    NoSpeechModel(utterance);
+                    return;
+                }
+
                 // Journal-derived and network-free.
                 var nouns = ProperNouns.From(GameState.Active, _route?.Invoke());
 
@@ -3749,6 +3752,22 @@ public sealed class AppHost : IDisposable
                 Voice.EnterState(Core.Audio.LoopState.Failed);
             }
         });
+    }
+
+    /// <summary>An utterance arrived with nothing to transcribe it.</summary>
+    private void NoSpeechModel(Utterance utterance)
+    {
+        _logger.LogInformation(
+            "Heard {Seconds:0.#}s but no speech model is loaded", utterance.Duration.TotalSeconds);
+
+        const string Cannot = "I heard you, but I have no speech model loaded to understand it.";
+
+        _ = Voice.AnnounceAsync(Cannot);
+        Said?.Invoke(Cannot);
+
+        // No cue: a sentence is about to be spoken saying the same thing, and a chime under it is d47
+        // telling the Commander twice.
+        Voice.EnterState(Core.Audio.LoopState.Idle, cue: false);
     }
 
     /// <summary>The surfaces that may be waiting on a spoken value (Phase 25, "Say it, or type it").</summary>
@@ -3900,6 +3919,31 @@ public sealed class AppHost : IDisposable
     /// <summary>The model currently being fetched, or null.</summary>
     private string? _fetching;
 
+    /// <summary>
+    /// Loads the speech model off the calling thread, timing the step and setting the indicator while it
+    /// runs (#147).
+    /// </summary>
+    private async Task LoadModelAsync(string path, string modelId, bool useGpu)
+    {
+        // Set before the load is asked for, so the clear that follows the load cannot arrive first.
+        Listening.ModelLoading = true;
+
+        var timing = StartupTimer.Step("speech model");
+
+        try
+        {
+            await _transcriber.LoadAsync(path, modelId, useGpu).ConfigureAwait(false);
+        }
+        finally
+        {
+            timing.Dispose();
+
+            // From the transcriber rather than from here, because a later request may already have
+            // superseded this one.
+            Listening.ModelLoading = _transcriber.IsLoading;
+        }
+    }
+
     /// <summary>Downloads a selected model that is not on disk, then loads it.</summary>
     private async Task FetchModelAsync(WhisperModel model)
     {
@@ -3982,14 +4026,15 @@ public sealed class AppHost : IDisposable
         // The model, before the key.
         var model = ListeningWiring.PlanModel(listening, Models);
 
+        // Cleared here and set again by the load itself, so the two writes cannot arrive out of order.
+        Listening.ModelLoading = false;
+
         switch (model.Action)
         {
             case SpeechModelAction.Load:
-                using (StartupTimer.Step("speech model"))
-                {
-                    _transcriber.Load(model.Path!, model.Model!.Id, model.UseGpu);
-                }
-
+                // Off the calling thread: this runs on the startup path and again on the UI thread for every
+                // listening.* change, and a medium model takes over a second to load (#147).
+                _ = LoadModelAsync(model.Path!, model.Model!.Id, model.UseGpu);
                 break;
 
             case SpeechModelAction.Fetch:

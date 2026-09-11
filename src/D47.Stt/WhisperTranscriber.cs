@@ -42,6 +42,15 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
     private string? _loadedFrom;
     private bool _disposed;
 
+    /// <summary>Guards the pending load: the generation counter and the completion behind <see cref="Ready"/>.</summary>
+    private readonly Lock _loadGate = new();
+
+    /// <summary>Non-null while a load is pending.</summary>
+    private TaskCompletionSource? _pending;
+
+    /// <summary>Bumped by every request, so an older one can tell it has been superseded.</summary>
+    private int _generation;
+
     public WhisperTranscriber(ILogger<WhisperTranscriber> logger)
     {
         _logger = logger;
@@ -93,6 +102,122 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
     /// </summary>
     private bool _requestedGpu;
 
+    /// <summary>Whether a load is queued or running.</summary>
+    public bool IsLoading
+    {
+        get
+        {
+            lock (_loadGate)
+            {
+                return _pending is not null;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Completed when no load is pending. Wait on it before concluding that nothing is loaded, or a press
+    /// made while the model is still loading is answered with an empty transcription (#147).
+    /// </summary>
+    public Task Ready
+    {
+        get
+        {
+            lock (_loadGate)
+            {
+                return _pending?.Task ?? Task.CompletedTask;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Loads a model file on the thread pool. A request made while one is pending supersedes it, and the
+    /// superseded request's result is discarded.
+    /// </summary>
+    public Task<bool> LoadAsync(string modelPath, string modelId, bool useGpu)
+    {
+        if (_disposed)
+        {
+            Unavailable = "The transcriber has been shut down.";
+            return Task.FromResult(false);
+        }
+
+        int mine;
+
+        lock (_loadGate)
+        {
+            mine = ++_generation;
+            _pending ??= new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        }
+
+        return Task.Run(() =>
+        {
+            try
+            {
+                if (Superseded(mine))
+                {
+                    return false;
+                }
+
+                var loaded = Load(modelPath, modelId, useGpu);
+
+                return !Superseded(mine) && loaded;
+            }
+            finally
+            {
+                Settle(mine);
+            }
+        });
+    }
+
+    /// <summary>
+    /// Stands in for the native load while holding the same semaphore, so a test can hold one open at the
+    /// <see cref="Ready"/> seam (#147). Null everywhere but a test.
+    /// </summary>
+    internal Func<string, bool>? LoadsWith { get; set; }
+
+    /// <summary>Whether a newer request has arrived since this one was made.</summary>
+    private bool Superseded(int generation)
+    {
+        lock (_loadGate)
+        {
+            return _generation != generation;
+        }
+    }
+
+    /// <summary>Completes <see cref="Ready"/>, but only for the request that is still the current one.</summary>
+    private void Settle(int generation)
+    {
+        TaskCompletionSource? pending;
+
+        lock (_loadGate)
+        {
+            if (_generation != generation)
+            {
+                return;
+            }
+
+            pending = _pending;
+            _pending = null;
+        }
+
+        pending?.TrySetResult();
+    }
+
+    /// <summary>Supersedes any pending load and releases whatever is waiting on <see cref="Ready"/>.</summary>
+    private void CancelPending()
+    {
+        TaskCompletionSource? pending;
+
+        lock (_loadGate)
+        {
+            _generation++;
+            pending = _pending;
+            _pending = null;
+        }
+
+        pending?.TrySetResult();
+    }
+
     /// <summary>Loads a model file, replacing whatever was loaded before.</summary>
     public bool Load(string modelPath, string modelId, bool useGpu)
     {
@@ -106,6 +231,11 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
 
         try
         {
+            if (LoadsWith is { } stand)
+            {
+                return stand(modelPath);
+            }
+
             if (_loadedFrom == modelPath && _requestedGpu == useGpu && _processor is not null)
             {
                 return true;
@@ -272,6 +402,10 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
         IReadOnlyList<string> properNouns,
         CancellationToken cancellationToken = default)
     {
+        // Before the processor is read: a press made while the model is still loading is answered by that
+        // model, not by the absence of one (#147).
+        await Ready.ConfigureAwait(false);
+
         if (_processor is null)
         {
             return new Transcription(string.Empty);
@@ -462,6 +596,8 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
             return;
         }
 
+        CancelPending();
+
         _one.Wait();
 
         try
@@ -500,6 +636,8 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
         }
 
         _disposed = true;
+
+        CancelPending();
 
         _one.Wait();
 

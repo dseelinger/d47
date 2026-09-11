@@ -80,6 +80,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     private D47.Core.Listening.MicrophoneState _microphone = D47.Core.Listening.MicrophoneState.Off;
     private string? _switchesText;
     private string _microphoneDetail = string.Empty;
+    private bool _modelLoading;
 
     // True in every mode, and replaced by the host's own wording within a tick.
     private string _listeningPrompt = PanelPrompts.WaitingFallback;
@@ -222,6 +223,16 @@ public sealed class PanelViewModel : INotifyPropertyChanged
                 Raise(nameof(MicrophoneVisible));
             }
         }
+    }
+
+    /// <summary>
+    /// Whether the speech model is still loading, which the indicator says rather than reporting that
+    /// the microphone is ready (#147).
+    /// </summary>
+    public bool ModelLoading
+    {
+        get => _modelLoading;
+        set => Set(ref _modelLoading, value);
     }
 
     /// <summary>The rest of the sentence — which key to hold, or which name to say.</summary>

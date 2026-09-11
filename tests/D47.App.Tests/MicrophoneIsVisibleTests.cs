@@ -47,6 +47,24 @@ public class MicrophoneIsVisibleTests
             StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// A model still loading says so rather than claiming the microphone is ready, except where the gate
+    /// is already open and what is being said will be held for it (#147).
+    /// </summary>
+    [AvaloniaTheory]
+    [InlineData(MicrophoneState.Idle, "Loading model...")]
+    [InlineData(MicrophoneState.Armed, "Loading model...")]
+    [InlineData(MicrophoneState.Open, "MIC ON")]
+    public void ALoadingModelSaysSoInsteadOfReady(MicrophoneState state, string expected)
+    {
+        var model = new PanelViewModel { Microphone = state, ModelLoading = true };
+        var view = Bind(model);
+
+        Render(view, 1024, 640);
+
+        Assert.Equal(expected, ((TextBlock)Named(view, "MicrophoneLabel")).Text);
+    }
+
     /// <summary>The shape, not just the colour.</summary>
     [AvaloniaFact]
     public void OnlyTheOpenStateIsFilledIn()

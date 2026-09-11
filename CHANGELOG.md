@@ -6,6 +6,17 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.37 — Startup no longer waits for the speech model, and a press made while it loads is kept
+
+Loading the speech model ran on whichever thread asked for it: the startup path, and the window's own
+thread on every change to a listening setting. On the maintainer's machine `medium.en` took about 1.2
+seconds, the largest single step in a 3.5-second start, and picking a different model or microphone in
+Settings froze the window for the same time. The load now runs off that thread, so the window appears
+without waiting for it and Settings stays responsive while it happens. A press made before the load
+finished used to be captured and answered with "I have no speech model loaded to understand it"; it is
+now held and transcribed once the model is loaded. The microphone indicator says "Loading model..." while
+that is true, rather than reporting that it is ready.
+
 ## 0.110.36 — The published build no longer decompresses itself on every launch
 
 The single-file publish compressed every assembly into the exe and decompressed all of them into

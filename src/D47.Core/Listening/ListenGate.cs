@@ -125,6 +125,29 @@ public sealed class ListenGate(int sampleRate, ILogger<ListenGate> logger) : ICa
         }
     }
 
+    /// <summary>
+    /// Whether the speech model is still being loaded, so what is captured now is held rather than
+    /// transcribed (#147).
+    /// </summary>
+    public bool ModelLoading
+    {
+        get => _modelLoading;
+
+        set
+        {
+            if (_modelLoading == value)
+            {
+                return;
+            }
+
+            _modelLoading = value;
+            ModelLoadingChanged?.Invoke(value);
+        }
+    }
+
+    /// <summary>Raised when <see cref="ModelLoading"/> changed.</summary>
+    public event Action<bool>? ModelLoadingChanged;
+
     /// <summary>Whether d47 itself is currently audible.</summary>
     public bool FarEndActive
     {
@@ -179,6 +202,7 @@ public sealed class ListenGate(int sampleRate, ILogger<ListenGate> logger) : ICa
 
     private bool _capturing;
     private bool _farEnd;
+    private bool _modelLoading;
 
     /// <summary>
     /// What the detector decided on the audio thread and the tick thread has not carried out yet.
