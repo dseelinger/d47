@@ -53,6 +53,45 @@ public class AFleetAnswerSaysWhenItIsStillReadingTests
         Assert.Contains("not finished reading", result.Content, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// With no Commander identified the answer used to be that no journal had been detected, which is the
+    /// same claim of absence as the others and reached before any of them.
+    /// </summary>
+    [Fact]
+    public async Task TheCarrierQuestionSaysSoBeforeAnyCommanderHasBeenIdentified()
+    {
+        var registry = CapabilityRegistry.Build([JournalCapability.Create(new GameStateStore(), () => true)]);
+
+        var result = await registry.InvokeAsync(
+            "get_fleet", ToolArguments.Empty, TestContext.Current.CancellationToken);
+
+        Assert.Contains("not finished reading", result.Content, StringComparison.Ordinal);
+        Assert.DoesNotContain("No Elite Dangerous journal", result.Content, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task TheLoadoutsSaySoBeforeAnyCommanderHasBeenIdentified()
+    {
+        var registry = CapabilityRegistry.Build([JournalCapability.Create(new GameStateStore(), () => true)]);
+
+        var result = await registry.InvokeAsync(
+            "get_fleet_loadouts", ToolArguments.Empty, TestContext.Current.CancellationToken);
+
+        Assert.Contains("not finished reading", result.Content, StringComparison.Ordinal);
+    }
+
+    /// <summary>And once the walk is done, the no-journal answer is the true one again.</summary>
+    [Fact]
+    public async Task TheNoJournalAnswerSurvivesOnceTheWalkIsDone()
+    {
+        var registry = CapabilityRegistry.Build([JournalCapability.Create(new GameStateStore(), () => false)]);
+
+        var result = await registry.InvokeAsync(
+            "get_fleet", ToolArguments.Empty, TestContext.Current.CancellationToken);
+
+        Assert.Contains("No Elite Dangerous journal", result.Content, StringComparison.Ordinal);
+    }
+
     /// <summary>The status report names the walk, so a slow start can be diagnosed by asking.</summary>
     [Fact]
     public async Task TheStatusReportNamesTheWalkAndItsState()

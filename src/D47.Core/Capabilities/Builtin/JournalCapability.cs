@@ -501,7 +501,8 @@ public static class JournalCapability
     {
         if (!TryActive(gameState, out var active, out var reason))
         {
-            return reason;
+            // Ahead of the no-journal answer, which is the same claim of absence as the two below it (#148).
+            return reading ? $"{StillReading}I cannot answer about your fleet yet." : reason;
         }
 
         var report = new StringBuilder();
@@ -635,7 +636,7 @@ public static class JournalCapability
     {
         if (!TryActive(gameState, out var active, out var reason))
         {
-            return reason;
+            return reading ? $"{StillReading}I have no loadouts to report yet." : reason;
         }
 
         var remembered = active.Loadouts.Ships.ToList();
