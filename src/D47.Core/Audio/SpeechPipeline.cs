@@ -234,7 +234,8 @@ public sealed class SpeechPipeline : IAsyncDisposable
         var directed = AudioTags.For(plain, _tts.ReadsAudioTags);
 
         _rendered.Writer.TryWrite(
-            SynthesizeAsync(written, SpokenUnits.Rewrite(directed), directed));
+            SynthesizeAsync(
+                written, SpokenUnits.Rewrite(SpokenDesignations.Rewrite(directed)), directed));
     }
 
     /// <summary>

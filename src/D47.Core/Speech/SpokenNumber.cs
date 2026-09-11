@@ -157,7 +157,7 @@ public static class SpokenNumber
     }
 
     /// <summary>A run of digits read out one at a time, which is never wrong and never a reading.</summary>
-    private static string Digits(string digits) =>
+    public static string Digits(string digits) =>
         string.Join(" ", digits.Select(digit => Ones[digit - '0']));
 
     /// <summary>The scale words, largest first, which is the order they are said in.</summary>
@@ -244,7 +244,8 @@ public static class SpokenNumber
             : UpTo999(high) + " " + UpTo999(low);
     }
 
-    private static string UpTo999(int value)
+    /// <summary>Up to 999, said the casual way: <c>385</c> is three eighty-five.</summary>
+    public static string UpTo999(int value)
     {
         if (value < 20)
         {

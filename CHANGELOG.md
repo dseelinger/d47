@@ -6,6 +6,16 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.29 — A number in a system name is read as part of the name, the same way on every voice
+
+"HIP 3269" was read as "thirty-two sixty-nine" by the local voice and "three thousand two hundred and
+sixty-nine" by ElevenLabs, while Edge Neural, OpenAI and Cartesia were sent the digits and said
+whatever they chose. Numbers are now written out as words once, before any provider sees the line, so
+every voice says the same thing: a run of four or more digits is read digit by digit — "three two six
+nine" — and a run of three or fewer keeps the casual reading, so "Col 385" is still "three
+eighty-five". A number carrying a unit, a decimal point or a grouping comma is a quantity rather than
+a name, and is left as it was.
+
 ## 0.110.28 — A long system name survives two dropped letters; a short one stops out-ranking it
 
 "Set course for Shinrarta Dezhra" heard as "Shinrata Desra" was offered "Ra" — a real system whose

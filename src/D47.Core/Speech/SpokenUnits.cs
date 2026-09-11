@@ -23,6 +23,9 @@ public static class SpokenUnits
         @"(?<![\p{L}\d])(?<number>\d+(?:,\d{3})*(?:\.\d+)?)(?<gap>[ \t]+)(?<unit>ly|ls|t|MW|cr)(?![\p{L}\d])",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
+    /// <summary>Whether this token is a unit abbreviation this table knows.</summary>
+    public static bool Knows(string token) => Units.ContainsKey(token);
+
     /// <summary>One line as it should be spoken.</summary>
     public static string Rewrite(string? line) =>
         string.IsNullOrEmpty(line) ? line ?? string.Empty : Anchored.Replace(line, Say);
