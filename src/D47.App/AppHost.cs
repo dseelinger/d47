@@ -360,6 +360,41 @@ public sealed class AppHost : IDisposable
     /// <summary>Where Elite writes its journals, for the adventure catch-up that walks them.</summary>
     public string? JournalDirectory { get; private set; }
 
+    /// <summary>The walk back through older journals, which runs once the window is up (#148).</summary>
+    public HistoryBackfill History { get; private set; } = null!;
+
+    /// <summary>When the "is starting" line was written, for the line the window logs (#148).</summary>
+    private long _startedLogging;
+
+    /// <summary>Cancels a walk that has not started yet.</summary>
+    private readonly CancellationTokenSource _warming = new();
+
+    private Task? _warmingUp;
+
+    /// <summary>
+    /// Reads the journal history off the startup path. Idempotent: a second call is handed the first
+    /// call's task (#148).
+    /// </summary>
+    public Task WarmUp() => _warmingUp ??= Task.Run(History.Run, _warming.Token);
+
+    /// <summary>How long the window took to appear, measured from the line that opens the log (#148).</summary>
+    public void ReportWindowUp() =>
+        _logger.LogInformation(
+            "Window is up {Seconds} seconds after d47 started",
+            Math.Round(
+                System.Diagnostics.Stopwatch.GetElapsedTime(_startedLogging).TotalSeconds,
+                1));
+
+    /// <summary>What the walk over older journals is doing, for the panel's startup row (#148).</summary>
+    private void ShowHistory()
+    {
+        var saying = History.Pending
+            ? $"Reading journal history ({(int)History.Elapsed.TotalSeconds} s)"
+            : null;
+
+        Avalonia.Threading.Dispatcher.UIThread.Post(() => Panel.StartupText = saying);
+    }
+
     /// <summary>
     /// The stored loadouts, for the row that describes them and the press that rebuilds them (#128).
     /// </summary>
@@ -537,6 +572,9 @@ public sealed class AppHost : IDisposable
         var loggerFactory = new SerilogLoggerFactory(Log.Logger);
         var logger = loggerFactory.CreateLogger<AppHost>();
 
+        // What the line the window logs measures from (#148).
+        var startedLogging = System.Diagnostics.Stopwatch.GetTimestamp();
+
         // The earliest thing written, before settings, providers or the headset exist. The seconds cover
         // everything that ran before there was anywhere to log it.
         logger.LogInformation(
@@ -620,21 +658,6 @@ public sealed class AppHost : IDisposable
         lore.Store.Poll();
         loreVisits.Load();
 
-        // Lazy, and deliberately so: it reads back through older journal files, and the answer is wanted
-        // once, the first time a Commander is seen.
-        var recoveredFleets = new Lazy<IReadOnlyDictionary<string, FleetRegistry>>(
-            () => StartupTimer.Time(
-                "fleet backfill",
-                () => FleetBackfill.FromHistory(
-                    journalDirectory, loggerFactory.CreateLogger(nameof(FleetBackfill)))));
-
-        // And where the carrier is, on the same terms and for the same reason (#406).
-        var recoveredCarriers = new Lazy<IReadOnlyDictionary<string, CarrierState>>(
-            () => StartupTimer.Time(
-                "carrier backfill",
-                () => CarrierBackfill.FromHistory(
-                    journalDirectory, loggerFactory.CreateLogger(nameof(CarrierBackfill)))));
-
         // What every ship the Commander has flown was last seen holding, kept between sessions (#128).
         var loadouts = new LoadoutStore(
             Path.Combine(paths.Data, "loadouts.json"),
@@ -649,55 +672,40 @@ public sealed class AppHost : IDisposable
 
         heardNames.Load();
 
-        // The same deal for what is *in* those ships, and lazy for the same reason — seeded with the file, so
-        // the window's job is catching up on the gap since d47 last ran rather than being the whole memory.
-        var recoveredLoadouts = new Lazy<IReadOnlyDictionary<string, ShipLoadouts>>(
-            () => StartupTimer.Time(
-                "loadout backfill",
-                () => LoadoutBackfill.FromHistory(
-                    journalDirectory,
-                    loggerFactory.CreateLogger(nameof(LoadoutBackfill)),
-                    loadouts.All,
-                    loadouts.FoldedThrough)));
-
-        // The same deal for the names, and lazy for the same reason.
-        var recoveredNames = new Lazy<IReadOnlyDictionary<string, SpokenNames>>(() =>
+        // The four walks back through older journal files, run together and after the window is up (#148): on
+        // a data folder with no watermark the names walk reads every file in the folder, which is every first
+        // run of a fresh install. Nothing here reads a journal until WarmUp asks it to.
+        var history = new HistoryBackfill
         {
-            using var mining = StartupTimer.Step("spoken names");
-
-            var found = SpokenNameMiner.FromHistory(
-                journalDirectory,
-                loggerFactory.CreateLogger(nameof(SpokenNameMiner)),
-                heardNames.All.ToDictionary(
-                    entry => entry.Key, entry => entry.Value.Names, StringComparer.Ordinal),
-                heardNames.FoldedThrough);
-
-            // Written straight back, so the expensive first walk happens once rather than at every start
-            // until something else prompts a save.
-            heardNames.RememberNames(found, DateTimeOffset.Now);
-
-            return found;
-        });
+            Directory = journalDirectory,
+            Loggers = loggerFactory,
+            LoadoutFile = loadouts,
+            NameFile = heardNames,
+            Step = StartupTimer.Step,
+        };
 
         var gameState = new GameStateStore
         {
             Restore = sampling.For,
 
+            // Null until the walk is done, and the priming tick then takes what the current journal takes;
+            // RestoreLate offers these again once it is.
+            //
             // The fleet cannot always be refolded from the newest journal: StoredShips is written only on
             // docking at a shipyard, and a session may contain no such docking — which is how a Commander
             // with eleven ships was shown the one they were sitting in.
-            RestoreFleet = fid => recoveredFleets.Value.TryGetValue(fid, out var fleet) ? fleet : null,
+            RestoreFleet = fid => history.Fleets?.GetValueOrDefault(fid),
 
             // And Loadout describes one ship, so without this every parked ship's slots read as never seen
             // the moment the Commander swapped out of it.
-            RestoreLoadouts = fid => recoveredLoadouts.Value.TryGetValue(fid, out var seen) ? seen : null,
+            RestoreLoadouts = fid => history.Loadouts?.GetValueOrDefault(fid),
 
             // And where the carrier was parked, so "where is my carrier" survives a restart.
-            RestoreCarrier = fid => recoveredCarriers.Value.TryGetValue(fid, out var carrier) ? carrier : null,
+            RestoreCarrier = fid => history.Carriers?.GetValueOrDefault(fid),
 
             // And the names, so a failing lookup has something to match against on the very first question of
             // the session rather than after a few jumps.
-            RestoreNames = fid => recoveredNames.Value.TryGetValue(fid, out var names) ? names : null,
+            RestoreNames = fid => history.Names?.GetValueOrDefault(fid),
         };
 
         // The settings follow whoever the journal says is flying (Phase 44).
@@ -1023,6 +1031,22 @@ public sealed class AppHost : IDisposable
             {
                 loreVisits.Save();
             }
+        });
+
+        // Directly after the journal, so every subscriber registered below reads the adopted state on the
+        // same tick rather than the next one (#148). Game state is written on the tick thread and nowhere
+        // else, which is why the walk's result is taken here rather than where it finishes.
+        var adopted = false;
+
+        tick.Add("journal history", _ =>
+        {
+            if (adopted || history.State is not HistoryState.Done)
+            {
+                return;
+            }
+
+            adopted = true;
+            gameState.RestoreLate();
         });
 
         // A story under way is caught up before the priming tick replays the current session (Phase 47): the
@@ -1662,7 +1686,11 @@ public sealed class AppHost : IDisposable
 
                 // Where a nearest-first commodity search last sent the Commander (#325), threaded to the
                 // galaxy search that writes it and the ship command that reads it.
-                lastFoundSystem));
+                lastFoundSystem,
+
+                // So a fleet question says the history is still being read rather than reporting an absence
+                // it cannot yet know about (#148).
+                history));
 
         buildingRegistry.Dispose();
 
@@ -1932,6 +1960,11 @@ public sealed class AppHost : IDisposable
         host.Adventures = (adventureBook, adventureGenerator);
         host.Galaxy = galaxy;
         host.JournalDirectory = journalDirectory;
+        host.History = history;
+        host._startedLogging = startedLogging;
+
+        // Through the dispatcher: the walk raises this on the thread pool thread WarmUp put it on (#148).
+        history.Changed += host.ShowHistory;
         host._loadouts = loadouts;
         host._heardNames = heardNames;
         host.Plans = planBook;
@@ -5789,6 +5822,10 @@ public sealed class AppHost : IDisposable
         // First, so the reason survives whatever the teardown below does.
         _logger.LogInformation("d47 {Version} is stopping: {Why}", Version, StoppingBecause);
 
+        // First of the teardown: a walk that has not started never will. One already under way runs to the
+        // end of its file and its result is dropped, because the tick that would adopt it is gone (#148).
+        _warming.Cancel();
+
         CoverageRecorder?.Save();
 
         // The debrief, over what this session sounded like (#162).
@@ -5838,6 +5875,7 @@ public sealed class AppHost : IDisposable
 
         _clients.Clear();
         _slots.Clear();
+        _warming.Dispose();
 
         // Before the factory that owns the sink it writes to.
         _logger.LogInformation("d47 stopped cleanly");

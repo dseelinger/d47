@@ -30,12 +30,14 @@ public static class DiagnosticsCapability
     /// <param name="coverage">
     /// What has been exercised by hand, when this process was asked to record that.
     /// </param>
+    /// <param name="history">The walk over older journals, or null where nothing composed one (#148).</param>
     public static CapabilityDescriptor Create(
         AppPaths paths,
         ILogVerbosityControl verbosity,
         SettingsService settings,
         string version,
-        Func<string>? coverage = null)
+        Func<string>? coverage = null,
+        Journal.HistoryBackfill? history = null)
     {
         return new CapabilityDescriptor
         {
@@ -74,7 +76,8 @@ public static class DiagnosticsCapability
                     Name = "get_app_status",
                     Description =
                         "Report D47's version, where it keeps its writable files, and the current log level of every subsystem.",
-                    Handler = (_, _) => Task.FromResult(ToolResult.Ok(DescribeStatus(paths, verbosity, version))),
+                    Handler = (_, _) =>
+                        Task.FromResult(ToolResult.Ok(DescribeStatus(paths, verbosity, version, history))),
                 },
                 new ToolDefinition
                 {
@@ -107,7 +110,11 @@ public static class DiagnosticsCapability
         };
     }
 
-    private static string DescribeStatus(AppPaths paths, ILogVerbosityControl verbosity, string version)
+    private static string DescribeStatus(
+        AppPaths paths,
+        ILogVerbosityControl verbosity,
+        string version,
+        Journal.HistoryBackfill? history)
     {
         var report = new StringBuilder();
         // The full name, because this line is the report's heading rather than prose in it.
@@ -121,6 +128,14 @@ public static class DiagnosticsCapability
         report.AppendLine(
             $"Pronunciations: {paths.PronunciationsFile} "
             + (File.Exists(paths.PronunciationsFile) ? "(present)" : "(none written yet)"));
+
+        // What the answers about the fleet, the loadouts and the names are still waiting on (#148).
+        if (history is not null)
+        {
+            report.AppendLine(
+                $"Journal history: {history.State} after {history.Elapsed.TotalSeconds:0.0} s"
+                + (history.Failure is { } why ? $" — {why}" : string.Empty));
+        }
 
         report.AppendLine("Log levels:");
 

@@ -321,6 +321,24 @@
               Foreground="{DynamicResource D47.Accent}"
               Click="OnModeToggleClick" />
 
+      <Border x:Name="StartupRow"
+              DockPanel.Dock="Right"
+              IsVisible="{Binding StartupVisible}"
+              Margin="10,0,0,0"
+              Padding="7,2"
+              CornerRadius="3"
+              VerticalAlignment="Center"
+              Background="{DynamicResource D47.SurfaceAlt}"
+              BorderBrush="{DynamicResource D47.TextMuted}"
+              BorderThickness="1">
+        <TextBlock x:Name="StartupLabel"
+                   Text="{Binding StartupText}"
+                   VerticalAlignment="Center"
+                   TextWrapping="Wrap"
+                   FontSize="{StaticResource D47.Type.Small}"
+                   Foreground="{DynamicResource D47.TextMuted}" />
+      </Border>
+
       <Border x:Name="SwitchRow"
               DockPanel.Dock="Right"
               IsVisible="{Binding SwitchesVisible}"

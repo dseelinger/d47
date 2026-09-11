@@ -86,6 +86,38 @@ public sealed class GameStateStore
         }
     }
 
+    /// <summary>
+    /// Offers the restore hooks again to every Commander already met, for a walk over older journals that
+    /// finished after they were (#148). What the live journal has folded in the meantime wins.
+    /// </summary>
+    public void RestoreLate()
+    {
+        foreach (var (fid, state) in _byFrontierId)
+        {
+            if (!state.Fleet.IsKnown && RestoreFleet?.Invoke(fid) is { IsKnown: true } fleet)
+            {
+                state.Fleet = fleet;
+            }
+
+            if (!state.Carrier.IsKnown && RestoreCarrier?.Invoke(fid) is { IsKnown: true } carrier)
+            {
+                state.Carrier = carrier;
+            }
+
+            // Merged rather than taken or refused: a ship boarded this session is in the live set and every
+            // other ship the Commander owns is only in the recovered one.
+            if (RestoreLoadouts?.Invoke(fid) is { IsKnown: true } loadouts)
+            {
+                state.Loadouts = loadouts.With(state.Loadouts);
+            }
+
+            if (RestoreNames?.Invoke(fid) is { IsKnown: true } names)
+            {
+                state.Names = names.With(state.Names.Names);
+            }
+        }
+    }
+
     public void Apply(JournalEvent journalEvent) => Apply(journalEvent, null);
 
     public void Apply(JournalEvent journalEvent, SurfaceFix? at) => Apply(journalEvent, at, priming: false);

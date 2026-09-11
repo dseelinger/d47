@@ -12,8 +12,14 @@ public static class JournalCapability
 {
     public const string Id = "journal";
 
-    public static CapabilityDescriptor Create(GameStateStore gameState)
+    /// <param name="historyPending">
+    /// Whether the walk over older journals has yet to answer, so a fleet question says that rather than
+    /// reporting an absence it cannot yet know about (#148).
+    /// </param>
+    public static CapabilityDescriptor Create(GameStateStore gameState, Func<bool>? historyPending = null)
     {
+        var reading = historyPending ?? (() => false);
+
         return new CapabilityDescriptor
         {
             Id = Id,
@@ -124,7 +130,8 @@ public static class JournalCapability
                         },
                     ],
                     Commands = [.. Asking(WhereTheCarrierIs, NoArguments), .. Asking(WhichShips, WithShips)],
-                    Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(DescribeFleet(gameState, arguments))),
+                    Handler = (arguments, _) =>
+                        Task.FromResult(ToolResult.Ok(DescribeFleet(gameState, arguments, reading()))),
                 },
                 new ToolDefinition
                 {
@@ -151,7 +158,7 @@ public static class JournalCapability
                         },
                     ],
                     Handler = (arguments, _) => Task.FromResult(
-                        ToolResult.Ok(DescribeFleetLoadouts(gameState, arguments))),
+                        ToolResult.Ok(DescribeFleetLoadouts(gameState, arguments, reading()))),
                 },
                 new ToolDefinition
                 {
@@ -483,8 +490,14 @@ public static class JournalCapability
     /// <summary>When a remembered figure was last reported.</summary>
     private static string AsOf(DateTimeOffset when) => $", as of {when:yyyy-MM-dd HH:mm} UTC";
 
+    /// <summary>
+    /// The opening of every answer that would otherwise report an absence while the walk over older
+    /// journals is still going (#148).
+    /// </summary>
+    private const string StillReading = "I have not finished reading the journal history yet, so ";
+
     /// <summary>The carrier, and the ships only when they were asked for (#406).</summary>
-    private static string DescribeFleet(GameStateStore gameState, ToolArguments arguments)
+    private static string DescribeFleet(GameStateStore gameState, ToolArguments arguments, bool reading)
     {
         if (!TryActive(gameState, out var active, out var reason))
         {
@@ -537,6 +550,10 @@ public static class JournalCapability
 
             report.AppendLine(".");
         }
+        else if (reading)
+        {
+            report.AppendLine($"{StillReading}I cannot say yet whether you have a fleet carrier.");
+        }
         else
         {
             // Precise about the limit of the evidence, and the limit is the folder rather than the session
@@ -553,8 +570,9 @@ public static class JournalCapability
 
         if (!fleet.IsKnown)
         {
-            report.AppendLine(
-                "I have no ship list yet — it is written when you dock at a station with a shipyard.");
+            report.AppendLine(reading
+                ? $"{StillReading}I do not have your ship list yet."
+                : "I have no ship list yet — it is written when you dock at a station with a shipyard.");
         }
         else
         {
@@ -613,7 +631,7 @@ public static class JournalCapability
     /// being flown. The figures are the game's own, so ranking ships against each other needs no model
     /// of jump range.
     /// </summary>
-    private static string DescribeFleetLoadouts(GameStateStore gameState, ToolArguments arguments)
+    private static string DescribeFleetLoadouts(GameStateStore gameState, ToolArguments arguments, bool reading)
     {
         if (!TryActive(gameState, out var active, out var reason))
         {
@@ -625,9 +643,10 @@ public static class JournalCapability
 
         if (remembered.Count == 0)
         {
-            report.AppendLine(
-                "I have not read a loadout for any of your ships yet. One is written each time you board "
-                + "a ship, and D47 reads your journals for them when it starts.");
+            report.AppendLine(reading
+                ? $"{StillReading}I have no loadouts to report yet."
+                : "I have not read a loadout for any of your ships yet. One is written each time you board "
+                  + "a ship, and D47 reads your journals for them when it starts.");
 
             Uncovered(report, active);
             return report.ToString().TrimEnd();

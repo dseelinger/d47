@@ -40,6 +40,17 @@ public partial class App(AppHost? host) : Application
         // to do it on.
         if (host is not null)
         {
+            // The walk back through older journals starts here rather than inside Start, so the panel is on
+            // screen before a fresh install's first walk begins (#148).
+            if (window is not null)
+            {
+                window.Opened += (_, _) =>
+                {
+                    host.ReportWindowUp();
+                    _ = host.WarmUp();
+                };
+            }
+
             host.Vr = Headset.VrHost.Start(
                 host.Panel,
                 host.Audio,

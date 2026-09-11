@@ -79,6 +79,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     private D47.Core.Audio.LoopState _loopState = D47.Core.Audio.LoopState.Idle;
     private D47.Core.Listening.MicrophoneState _microphone = D47.Core.Listening.MicrophoneState.Off;
     private string? _switchesText;
+    private string? _startupText;
     private string _microphoneDetail = string.Empty;
     private bool _modelLoading;
 
@@ -269,6 +270,22 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     }
 
     public bool SwitchesVisible => !string.IsNullOrEmpty(_switchesText);
+
+    /// <summary>What startup is still doing, or null once it is doing nothing (#148).</summary>
+    public string? StartupText
+    {
+        get => _startupText;
+        set
+        {
+            if (Set(ref _startupText, value))
+            {
+                Raise(nameof(StartupVisible));
+            }
+        }
+    }
+
+    /// <summary>Whether the startup row is drawn at all.</summary>
+    public bool StartupVisible => !string.IsNullOrEmpty(_startupText);
 
     public string TurnLine
     {

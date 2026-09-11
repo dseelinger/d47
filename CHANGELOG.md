@@ -6,6 +6,19 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.38 — The window no longer waits for the journal history to be read
+
+Four walks back through older journal files — the fleet, the loadouts, the carrier and the place
+names — ran inside startup, before the window could be built. On a data folder that has already
+recorded how far it has read, none of them takes noticeable time. On one that has not, which is
+every first run of a fresh install, the names walk reads every journal in the folder: 13.7 seconds
+on one measurement, and 26 seconds on the launch that prompted this. The walks now run once the
+window is on screen, and what they recover is folded into the game state on the next tick, without
+displacing anything the current session's journal has already said. While a walk is running the
+panel shows "Reading journal history" with the seconds so far, and asking about the carrier, the
+ship list or the fleet loadouts answers that the history has not been read yet rather than
+reporting an absence it cannot yet know about. `get_app_status` names the walk and its state.
+
 ## 0.110.37 — Startup no longer waits for the speech model, and a press made while it loads is kept
 
 Loading the speech model ran on whichever thread asked for it: the startup path, and the window's own

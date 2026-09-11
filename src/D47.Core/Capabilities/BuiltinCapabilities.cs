@@ -155,11 +155,14 @@ public static class BuiltinCapabilities
 
         // The system a nearest-first commodity search last found (#325), so "set a course" and "set a course
         // and take us out" have something to act on.
-        Conversation.LastFoundSystem? lastFoundSystem = null) =>
+        Conversation.LastFoundSystem? lastFoundSystem = null,
+
+        // The walk over older journals, which finishes after the window is up (#148).
+        HistoryBackfill? history = null) =>
     [
         HelpCapability.Create(registry),
-        DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage),
-        JournalCapability.Create(gameState),
+        DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage, history),
+        JournalCapability.Create(gameState, () => history is { Pending: true }),
         CrewCapability.Create(() => gameState.Active),
         GalaxyCapability.Create(
             galaxy,

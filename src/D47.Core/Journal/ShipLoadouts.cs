@@ -52,6 +52,26 @@ public sealed record ShipLoadouts
         };
     }
 
+    /// <summary>These ships with <paramref name="newer"/>'s written over them, matched on ShipID.</summary>
+    public ShipLoadouts With(ShipLoadouts newer)
+    {
+        ArgumentNullException.ThrowIfNull(newer);
+
+        if (newer.Ships.Count == 0)
+        {
+            return this;
+        }
+
+        var merged = new Dictionary<int, RememberedShip>(Ships);
+
+        foreach (var (id, ship) in newer.Ships)
+        {
+            merged[id] = ship;
+        }
+
+        return this with { Ships = merged };
+    }
+
     /// <summary>
     /// The event kinds that can change what is remembered, so a caller deciding whether to write the
     /// file asks this rather than keeping a second copy of the list (#128).
