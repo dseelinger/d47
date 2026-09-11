@@ -1,9 +1,11 @@
 using System.Globalization;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
+using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Engineers;
 using D47.Core.Interface;
@@ -77,6 +79,40 @@ public static class EngineersPages
     /// <summary>What the directory's mark means: modules still to engineer this engineer could finish.</summary>
     internal static string Wanted(int many) =>
         many == 0 ? string.Empty : EngineerSay.Count(many, "module", "modules");
+
+    /// <summary>
+    /// One prerequisite, a drawn box in front of it rather than a character — the same box wherever a
+    /// criterion is shown (#126).
+    /// </summary>
+    internal static Control CriterionLine(UnlockCriterion criterion)
+    {
+        var (data, brush, says) = criterion.Met switch
+        {
+            true => (Glyphs.BoxChecked, ThemeManager.AccentKey, "met"),
+            false => (Glyphs.BoxEmpty, ThemeManager.TextMutedKey, "not met"),
+            _ => (Glyphs.BoxUndecided, ThemeManager.InfoKey, "not yet known"),
+        };
+
+        var box = Glyphs.Draw(data, brush);
+        AutomationProperties.SetName(box, says);
+
+        return new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 6,
+            Children =
+            {
+                box,
+                new SelectableTextBlock
+                {
+                    Text = criterion.Text,
+                    FontSize = TypeScale.Body,
+                    TextWrapping = TextWrapping.Wrap,
+                    VerticalAlignment = VerticalAlignment.Center,
+                },
+            },
+        };
+    }
 }
 
 /// <summary>
@@ -337,17 +373,7 @@ public sealed class EngineerPage : EngineerPageBase
 
             foreach (var criterion in entry.Criteria)
             {
-                _body.Children.Add(new SelectableTextBlock
-                {
-                    Text = criterion.Describe(),
-                    FontSize = TypeScale.Body,
-                    TextWrapping = TextWrapping.Wrap,
-                    [!TextBlock.ForegroundProperty] = App.Current!
-                        .GetResourceObservable(criterion.Met == true
-                            ? ThemeManager.AccentKey
-                            : ThemeManager.TextMutedKey)
-                        .ToBinding(),
-                });
+                _body.Children.Add(EngineersPages.CriterionLine(criterion));
             }
         }
 
@@ -497,6 +523,11 @@ public sealed class EngineerRoutePage : EngineerPageBase
                 FontSize = TypeScale.Body,
                 TextWrapping = TextWrapping.Wrap,
             });
+
+            foreach (var criterion in candidate.Criteria)
+            {
+                _body.Children.Add(EngineersPages.CriterionLine(criterion));
+            }
 
             foreach (var line in candidate.Working())
             {

@@ -375,7 +375,10 @@ public class EngineersTabTests
         surface.Window.Close();
     }
 
- /// <summary>An unlock criterion already met carries a checkmark.</summary>
+ /// <summary>
+    /// An unlock criterion carries a drawn box, named for a screen reader rather than a character, and
+    /// the three states are told apart by that name (#126).
+    /// </summary>
     [AvaloniaFact]
     public void AMetCriterionIsMarkedAndAnUnreadableOneIsNot()
     {
@@ -389,7 +392,7 @@ public class EngineersTabTests
         var shown = Text(surface.Panel);
 
         Assert.Contains("Unlock Prerequisites", shown);
-        Assert.Contains(shown, line => line.StartsWith("✓", StringComparison.Ordinal));
+        Assert.Contains(Boxes(surface.Panel), says => says == "met");
 
         // Marco Qwent, whose referral through Elvira Martuuk is not met and whose invitation is not readable.
         surface.Panel.Nav.Drill(
@@ -399,10 +402,18 @@ public class EngineersTabTests
 
         shown = Text(surface.Panel);
 
-        Assert.Contains(shown, line => line.StartsWith("· Grade 3 with Elvira Martuuk", StringComparison.Ordinal));
-        Assert.Contains(shown, line => line.StartsWith("?", StringComparison.Ordinal));
+        Assert.Contains(shown, line => line.StartsWith("Grade 3 with Elvira Martuuk", StringComparison.Ordinal));
+
+        var boxes = Boxes(surface.Panel);
+
+        Assert.Contains(boxes, says => says == "not met");
+        Assert.Contains(boxes, says => says == "not yet known");
 
         surface.Window.Close();
     }
 
+    private static IReadOnlyList<string?> Boxes(PanelView panel) =>
+        [.. panel.GetVisualDescendants()
+            .OfType<Avalonia.Controls.Shapes.Path>()
+            .Select(Avalonia.Automation.AutomationProperties.GetName)];
 }

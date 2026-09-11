@@ -6,6 +6,14 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.33 — Every engineer prerequisite draws a checkbox, on the Route page as well as the detail page
+
+The engineer detail page marked each unlock prerequisite with a character — `✓`, `·`, `?` — read out
+by nothing. Those become a drawn box, checked, empty or dashed, coloured accent, muted or informational
+so a met one, an unmet one and one nothing d47 can read decides are each visibly distinct, and named
+for a screen reader. The Route page's five ranked engineers now list the same prerequisites for the
+engineer the chain ends at, under the summary sentence and above the existing route lines.
+
 ## 0.110.32 — An engineer no longer appears as a prerequisite for themselves
 
 The engineer detail page's **What it takes** section used to end with "Liz Ryder works for you",

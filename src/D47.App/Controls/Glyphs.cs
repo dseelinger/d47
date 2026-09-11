@@ -74,6 +74,19 @@ public static class Glyphs
     public const string Spend =
         "M 3,6 L 21,6 L 21,18 L 3,18 Z  M 12,9 A 3,3 0 1 1 11.99,9";
 
+    /// <summary>A prerequisite not met: an empty box (#126).</summary>
+    public const string BoxEmpty = "M 5,5 L 19,5 L 19,19 L 5,19 Z";
+
+    /// <summary>A prerequisite met: the same box with a check inside it (#126).</summary>
+    public const string BoxChecked =
+        "M 5,5 L 19,5 L 19,19 L 5,19 Z  M 8,12.5 L 11,15.5 L 16.5,8.5";
+
+    /// <summary>
+    /// A prerequisite nothing d47 reads can decide: the same box with a dash, the mark an indeterminate
+    /// checkbox carries elsewhere (#126).
+    /// </summary>
+    public const string BoxUndecided = "M 5,5 L 19,5 L 19,19 L 5,19 Z  M 9,12 L 15,12";
+
     /// <summary>The eight tab marks (#234).</summary>
     public static class Tabs
     {

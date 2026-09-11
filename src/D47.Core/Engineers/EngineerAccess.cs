@@ -121,19 +121,7 @@ public sealed record UnlockChain(IReadOnlyList<UnlockStep> Steps)
 /// True where the journal settles it, false where the journal settles it the other way, and null where
 /// nothing d47 can read decides it.
 /// </param>
-public sealed record UnlockCriterion(string Text, bool? Met)
-{
-    /// <summary>The mark in front of it.</summary>
-    public string Mark => Met switch
-    {
-        true => "✓",
-        false => "·",
-        _ => "?",
-    };
-
-    /// <summary>The line as a surface with no columns draws it.</summary>
-    public string Describe() => $"{Mark} {Text}";
-}
+public sealed record UnlockCriterion(string Text, bool? Met);
 
 /// <summary>
 /// How far along the Commander is with one engineer, and what the way in looks like from where they are
@@ -221,8 +209,8 @@ public static class EngineerAccess
             criteria.Add(new UnlockCriterion(
                 engineer.ReferredBy.Count > 1
                     ? $"Grade {wanted.ToString(CultureInfo.InvariantCulture)} with {referrer} "
-                      + "(any one of the referrals will do)"
-                    : $"Grade {wanted.ToString(CultureInfo.InvariantCulture)} with {referrer}",
+                      + "(any one of the referrals will do)."
+                    : $"Grade {wanted.ToString(CultureInfo.InvariantCulture)} with {referrer}.",
                 met));
         }
 

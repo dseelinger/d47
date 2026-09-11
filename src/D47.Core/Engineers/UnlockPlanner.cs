@@ -22,6 +22,12 @@ public sealed record UnlockCandidate
     public IReadOnlyList<PlannedWork> Covers { get; init; } = [];
 
     /// <summary>
+    /// What it takes to reach the engineer this chain ends at, with the parts already done marked
+    /// (#126).
+    /// </summary>
+    public IReadOnlyList<UnlockCriterion> Criteria { get; init; } = [];
+
+    /// <summary>
     /// The trip, in the one unit everything else converted into: jumps per planned thing covered, or
     /// light years where no jump range is known.
     /// </summary>
@@ -264,6 +270,7 @@ public static class UnlockPlanner
                 Engineer = entry.Engineer,
                 Chain = chain,
                 Covers = covers,
+                Criteria = entry.Criteria,
                 Score = cost is { } known ? known / Math.Max(covers.Count, 1) : double.MaxValue,
                 ScoredInJumps = chain.Jumps is not null,
             });
