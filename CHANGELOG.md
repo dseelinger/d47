@@ -6,6 +6,17 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.35 — The log says where startup time goes
+
+A launch measured on the maintainer's machine took 46 seconds, 35 of them inside two stretches that
+logged nothing while they ran, so what was slow could only be guessed at from what each stretch ended
+with. Every step of startup is now timed — the settings and stores, each of the four journal
+backfills, the priming tick, the audio output, the transcriber, the echo canceller, the Elite window,
+the bindings, the controllers, the capability registry, the speech model and the three settings
+applies — and a step that took 250 milliseconds or more writes a line saying how long it took. The
+first and last lines of a launch also state how long the process had already been running, so the
+time before d47 had anywhere to write is measured rather than inferred.
+
 ## 0.110.34 — Closing SteamVR no longer crashes d47
 
 Closing SteamVR while the headset overlays were up crashed d47, with nothing in its own log after

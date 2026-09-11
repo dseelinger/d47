@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Reflection;
+using D47.App.Diagnostics;
 using D47.App.Input;
 using D47.App.Logging;
 using D47.App.Panel;
@@ -536,12 +537,19 @@ public sealed class AppHost : IDisposable
         var loggerFactory = new SerilogLoggerFactory(Log.Logger);
         var logger = loggerFactory.CreateLogger<AppHost>();
 
-        // The earliest thing written, before settings, providers or the headset exist.
-        logger.LogInformation("d47 {Version} is starting; data folder {Data}", version, paths.Data);
+        // The earliest thing written, before settings, providers or the headset exist. The seconds cover
+        // everything that ran before there was anywhere to log it.
+        logger.LogInformation(
+            "d47 {Version} is starting, {Seconds} seconds after the process did; data folder {Data}",
+            version,
+            Math.Round(StartupTimer.SinceProcessStart.TotalSeconds, 1),
+            paths.Data);
 
         // Immediately after it, because the thing this catches makes every line below it a description of a
         // build that is not running (bugs.md, 2026-08-23).
         StaleBuildCheck.Report(logger, Environment.ProcessPath ?? string.Empty);
+
+        var loadingStores = StartupTimer.Step("settings and stores");
 
         var store = new SettingsStore(paths, loggerFactory.CreateLogger<SettingsStore>());
         var loaded = new D47Settings();
@@ -615,12 +623,17 @@ public sealed class AppHost : IDisposable
         // Lazy, and deliberately so: it reads back through older journal files, and the answer is wanted
         // once, the first time a Commander is seen.
         var recoveredFleets = new Lazy<IReadOnlyDictionary<string, FleetRegistry>>(
-            () => FleetBackfill.FromHistory(journalDirectory, loggerFactory.CreateLogger(nameof(FleetBackfill))));
+            () => StartupTimer.Time(
+                "fleet backfill",
+                () => FleetBackfill.FromHistory(
+                    journalDirectory, loggerFactory.CreateLogger(nameof(FleetBackfill)))));
 
         // And where the carrier is, on the same terms and for the same reason (#406).
         var recoveredCarriers = new Lazy<IReadOnlyDictionary<string, CarrierState>>(
-            () => CarrierBackfill.FromHistory(
-                journalDirectory, loggerFactory.CreateLogger(nameof(CarrierBackfill))));
+            () => StartupTimer.Time(
+                "carrier backfill",
+                () => CarrierBackfill.FromHistory(
+                    journalDirectory, loggerFactory.CreateLogger(nameof(CarrierBackfill)))));
 
         // What every ship the Commander has flown was last seen holding, kept between sessions (#128).
         var loadouts = new LoadoutStore(
@@ -639,15 +652,19 @@ public sealed class AppHost : IDisposable
         // The same deal for what is *in* those ships, and lazy for the same reason — seeded with the file, so
         // the window's job is catching up on the gap since d47 last ran rather than being the whole memory.
         var recoveredLoadouts = new Lazy<IReadOnlyDictionary<string, ShipLoadouts>>(
-            () => LoadoutBackfill.FromHistory(
-                journalDirectory,
-                loggerFactory.CreateLogger(nameof(LoadoutBackfill)),
-                loadouts.All,
-                loadouts.FoldedThrough));
+            () => StartupTimer.Time(
+                "loadout backfill",
+                () => LoadoutBackfill.FromHistory(
+                    journalDirectory,
+                    loggerFactory.CreateLogger(nameof(LoadoutBackfill)),
+                    loadouts.All,
+                    loadouts.FoldedThrough)));
 
         // The same deal for the names, and lazy for the same reason.
         var recoveredNames = new Lazy<IReadOnlyDictionary<string, SpokenNames>>(() =>
         {
+            using var mining = StartupTimer.Step("spoken names");
+
             var found = SpokenNameMiner.FromHistory(
                 journalDirectory,
                 loggerFactory.CreateLogger(nameof(SpokenNameMiner)),
@@ -904,6 +921,8 @@ public sealed class AppHost : IDisposable
                 () => settings.Current.Actions.HonkOnArrival,
                 () => bindsRef!()));
 
+        loadingStores.Dispose();
+
         // The ~4-10 Hz loop.
         var tick = new TickLoop(loggerFactory.CreateLogger<TickLoop>());
 
@@ -1015,7 +1034,10 @@ public sealed class AppHost : IDisposable
         // Primed synchronously before anything reads game state, so a journal already on disk when d47 starts
         // is answered correctly, backlog and all — and so the panel's first status is not a race against the
         // first timer tick.
-        tick.Tick(DateTimeOffset.Now);
+        using (StartupTimer.Step("priming tick"))
+        {
+            tick.Tick(DateTimeOffset.Now);
+        }
 
         logger.LogInformation(
             "Journal folder {Directory}; tailing {File}",
@@ -1155,6 +1177,8 @@ public sealed class AppHost : IDisposable
 
         try
         {
+            using var opening = StartupTimer.Step("audio output");
+
             audioSink.Open(loaded.Speech.OutputDevice);
         }
         catch (Exception ex)
@@ -1166,16 +1190,19 @@ public sealed class AppHost : IDisposable
 
         // Listening.
         var models = new HttpModelStore(paths, loggerFactory.CreateLogger<HttpModelStore>());
-        var transcriber = new WhisperTranscriber(loggerFactory.CreateLogger<WhisperTranscriber>());
+        var transcriber = StartupTimer.Time(
+            "transcriber", () => new WhisperTranscriber(loggerFactory.CreateLogger<WhisperTranscriber>()));
         var gate = new ListenGate(WasapiMicrophone.SampleRate, loggerFactory.CreateLogger<ListenGate>());
 
         // Between the microphone and the gate, consuming the arbiter's render reference tap rather than a
         // loopback capture.
-        var echo = new EchoCanceller(
-            gate,
-            audioSink.ReferenceTap,
-            WasapiMicrophone.SampleRate,
-            loggerFactory.CreateLogger<EchoCanceller>());
+        var echo = StartupTimer.Time(
+            "echo canceller",
+            () => new EchoCanceller(
+                gate,
+                audioSink.ReferenceTap,
+                WasapiMicrophone.SampleRate,
+                loggerFactory.CreateLogger<EchoCanceller>()));
 
         // Whether d47 is currently audible, which the gate needs only when nothing is cancelling it:
         // uncancelled, a hands-free mode with speakers is a loop where d47 hears itself, transcribes itself
@@ -1190,7 +1217,8 @@ public sealed class AppHost : IDisposable
         var sources = new D47.Core.Hotas.PushToTalkSources();
 
         // The only thing that presses a key in the game.
-        var eliteWindow = new EliteWindow(loggerFactory.CreateLogger<EliteWindow>());
+        var eliteWindow = StartupTimer.Time(
+            "Elite window", () => new EliteWindow(loggerFactory.CreateLogger<EliteWindow>()));
 
         // Off unless D47_TRACE_INPUT=1 or --trace-input (#365).
         var inputTrace = Diagnostics.InputTraceWriter.Create(
@@ -1215,10 +1243,12 @@ public sealed class AppHost : IDisposable
         ActionSurface actionSurface;
 
         // Read at startup and re-read when Elite rewrites it.
-        var binds = new BindsWatch(
-            BindsResolver.DefaultBindingsDirectory(),
-            EliteInstallations(),
-            loggerFactory.CreateLogger<AppHost>());
+        var binds = StartupTimer.Time(
+            "bindings",
+            () => new BindsWatch(
+                BindsResolver.DefaultBindingsDirectory(),
+                EliteInstallations(),
+                loggerFactory.CreateLogger<AppHost>()));
 
         bindsRef = () => binds.Current;
 
@@ -1233,7 +1263,10 @@ public sealed class AppHost : IDisposable
         var switches = new SwitchStore(
             Path.Combine(paths.Data, "switches.json"), loggerFactory.CreateLogger<SwitchStore>());
 
-        var controllers = new HotasControllers(loggerFactory.CreateLogger<HotasControllers>());
+        // The constructor only: the "Game controller added" lines arrive from Windows.Gaming.Input
+        // callbacks after it has returned.
+        var controllers = StartupTimer.Time(
+            "controllers", () => new HotasControllers(loggerFactory.CreateLogger<HotasControllers>()));
         var reconciler = new SwitchReconciler(loggerFactory.CreateLogger<SwitchReconciler>());
 
         var cancellation = new TurnCancellation(loggerFactory.CreateLogger<TurnCancellation>());
@@ -1293,6 +1326,8 @@ public sealed class AppHost : IDisposable
             () => secrets.TryGet(CommunityGoalCapability.KeySecretName, out var key) ? key : null,
             version,
             loggerFactory.CreateLogger<D47.Knowledge.InaraCommunityGoalService>());
+
+        var buildingRegistry = StartupTimer.Step("capability registry");
 
         var capabilities = CapabilityRegistry.Build(
             BuiltinCapabilities.All(
@@ -1629,6 +1664,8 @@ public sealed class AppHost : IDisposable
                 // galaxy search that writes it and the ship command that reads it.
                 lastFoundSystem));
 
+        buildingRegistry.Dispose();
+
         built = capabilities;
 
         // The one late-bound edge in the composition: descriptors declare the settings rows and some
@@ -1814,9 +1851,20 @@ public sealed class AppHost : IDisposable
         // broke.
         voice.VoiceRejected += host.ForgetTheVoice;
 
-        host.ApplyLlmSettings();
-        host.ApplySpeechSettings();
-        host.ApplyListeningSettings();
+        using (StartupTimer.Step("model settings"))
+        {
+            host.ApplyLlmSettings();
+        }
+
+        using (StartupTimer.Step("speech settings"))
+        {
+            host.ApplySpeechSettings();
+        }
+
+        using (StartupTimer.Step("listening settings"))
+        {
+            host.ApplyListeningSettings();
+        }
 
         // The mixer as the file left it, before anything is audible.
         audio.Mix = loaded.Audio;
@@ -2104,7 +2152,8 @@ public sealed class AppHost : IDisposable
         // running against half-built state.
         if (startTicking)
         {
-            host._ticking = new TickDriver(tick, loggerFactory.CreateLogger<TickDriver>()).Start();
+            host._ticking = StartupTimer.Time(
+                "tick driver", () => new TickDriver(tick, loggerFactory.CreateLogger<TickDriver>()).Start());
         }
 
         return host;
@@ -3936,7 +3985,11 @@ public sealed class AppHost : IDisposable
         switch (model.Action)
         {
             case SpeechModelAction.Load:
-                _transcriber.Load(model.Path!, model.Model!.Id, model.UseGpu);
+                using (StartupTimer.Step("speech model"))
+                {
+                    _transcriber.Load(model.Path!, model.Model!.Id, model.UseGpu);
+                }
+
                 break;
 
             case SpeechModelAction.Fetch:
@@ -5663,9 +5716,10 @@ public sealed class AppHost : IDisposable
         var current = Settings.Current;
 
         _logger.LogInformation(
-            "d47 {Version} started. Model: {Provider}/{Model}. Speech: {Speech}. "
-            + "Hearing: {Whisper}, {Listening}. Headset: {Vr}. Data: {Data}",
+            "d47 {Version} started, {Seconds} seconds after the process did. Model: {Provider}/{Model}. "
+            + "Speech: {Speech}. Hearing: {Whisper}, {Listening}. Headset: {Vr}. Data: {Data}",
             Version,
+            Math.Round(StartupTimer.SinceProcessStart.TotalSeconds, 1),
             LlmProviderCatalog.Selected(current.Llm.Provider)?.Name ?? current.Llm.Provider,
 
             // A provider with no model chosen is the state on a fresh install, and "Anthropic/null" is a line

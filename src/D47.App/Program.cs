@@ -52,7 +52,11 @@ internal static class Program
             return;
         }
 
+        var wiring = Diagnostics.StartupTimer.Step("host");
+
         using var host = AppHost.Start();
+
+        wiring.Dispose();
 
         // Handed over when an accepted update starts the build that replaces this one.
         host.ReleaseSingleInstance = only.ReleaseForSuccessor;
