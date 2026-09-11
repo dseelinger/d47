@@ -74,11 +74,9 @@ public static class EngineersPages
         return button;
     }
 
-    /// <summary>What the directory's mark means: somebody one of the Commander's plans wants.</summary>
+    /// <summary>What the directory's mark means: modules still to engineer this engineer could finish.</summary>
     internal static string Wanted(int many) =>
-        many == 0
-            ? string.Empty
-            : $"{EngineerSay.Count(many, "planned thing", "planned things")} wants them";
+        many == 0 ? string.Empty : EngineerSay.Count(many, "module", "modules");
 }
 
 /// <summary>

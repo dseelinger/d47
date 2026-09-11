@@ -6,6 +6,18 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.30 — The Engineers directory counts modules left to finish, not rolls already done
+
+An engineer's count on the Engineers tab used to add up every planned blueprint and experimental
+effect they could in principle roll, including ones already applied and ones on a module they
+cannot actually grade — Selene Jean showed 63 planned things while her own work was already done,
+eight of them "Heavy Duty" on Shield Boosters, which she cannot touch at all. The count is now
+modules still to engineer that the engineer could finish: a slot with something already applied at
+the planned grade contributes nothing, a blueprint name shared by several module types is matched
+against the module actually fitted, and an engineer who can only apply an experimental effect
+without also being able to roll an outstanding blueprint on the same module is not counted for it.
+The row reads "1 module" or "43 modules" rather than "1 planned thing wants them".
+
 ## 0.110.29 — A number in a system name is read as part of the name, the same way on every voice
 
 "HIP 3269" was read as "thirty-two sixty-nine" by the local voice and "three thousand two hundred and

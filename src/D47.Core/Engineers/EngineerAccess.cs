@@ -154,7 +154,7 @@ public sealed record EngineerEntry
     /// <summary>The same in jumps of the ship being flown, or null when the range is unknown.</summary>
     public int? Jumps { get; init; }
 
-    /// <summary>How many planned things this engineer could roll.</summary>
+    /// <summary>How many modules still to engineer this engineer could finish (#137).</summary>
     public int Wanted { get; init; }
 
     /// <summary>What is still to be done to reach them.</summary>

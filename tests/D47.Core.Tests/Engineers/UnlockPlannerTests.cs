@@ -61,6 +61,105 @@ public class UnlockPlannerTests
             [new SlotPlan("Armour", "Heavy Duty", 1, Module: "Armour")]);
 
     /// <summary>
+    /// "Heavy Duty" with no module named, on a slot that (once the loadout is read) turns out to be a
+    /// Shield Booster — which Selene Jean cannot grade at all, though she grades Armour of the same name
+    /// (#137).
+    /// </summary>
+    private static ShipBuild ShieldBoosterHeavyDuty() =>
+        new("F1", "ship-5", "python", 12, "Bad Idea",
+            [new SlotPlan("TinyHardpoint1", "Heavy Duty", 1)]);
+
+    /// <summary>Dirty drives at grade 5, plus the "Double Braced" experimental on the same slot.</summary>
+    private static ShipBuild ThrustersWithExperimental() =>
+        new("F1", "ship-6", "python", 12, "Bad Idea",
+            [new SlotPlan("MainEngines", "Dirty Drive Tuning", 5, Experimental: "Double Braced")]);
+
+    /// <summary>Increased FSD Range at grade 3, plus the "Mass Manager" experimental on the same slot.</summary>
+    private static ShipBuild DriveWithExperimental() =>
+        new("F1", "ship-7", "krait_mkii", 13, "Long Way",
+            [new SlotPlan("FrameShiftDrive", "Increased FSD Range", 3, Experimental: "Mass Manager")]);
+
+    /// <summary>The remembered loadout of "Bad Idea", with grade 5 Dirty Drive Tuning already rolled.</summary>
+    private static string EngineeredThrusters() =>
+        """{"timestamp":"2026-08-18T09:05:00Z","event":"Loadout","Ship":"python","ShipID":12,"ShipName":"Bad Idea","ShipIdent":"BI-01","MaxJumpRange":30.0,"Modules":[{"Slot":"MainEngines","Item":"int_engine_size2_class1","On":true,"Health":1.0,"Engineering":{"BlueprintName":"Engine_Dirty","Level":5}}]}""";
+
+    /// <summary>The remembered loadout of "Bad Idea", with a Shield Booster in the tiny hardpoint.</summary>
+    private static string ShieldBoosterFitted() =>
+        """{"timestamp":"2026-08-18T09:05:00Z","event":"Loadout","Ship":"python","ShipID":12,"ShipName":"Bad Idea","ShipIdent":"BI-01","MaxJumpRange":30.0,"Modules":[{"Slot":"TinyHardpoint1","Item":"hpt_shieldbooster_size0_class1","On":true,"Health":1.0}]}""";
+
+    /// <summary>
+    /// The count is modules still to engineer, not rolls — a blueprint the loadout already carries at
+    /// the planned grade contributes to nobody's count (#137).
+    /// </summary>
+    [Fact]
+    public void AnAppliedBlueprintCountsForNobody()
+    {
+        var report = UnlockPlanner.Of([Thrusters()], [], State(EngineeredThrusters()));
+
+        Assert.All(report.Directory, entry => Assert.Equal(0, entry.Wanted));
+    }
+
+    /// <summary>
+    /// A blueprint name shared by several module types is matched against the module actually sitting
+    /// in the slot, not against every module that shares the name (#137).
+    /// </summary>
+    [Fact]
+    public void AnEngineerWhoCannotGradeTheFittedModuleIsNotCounted()
+    {
+        var report = UnlockPlanner.Of([ShieldBoosterHeavyDuty()], [], State(ShieldBoosterFitted()));
+
+        var selene = report.Directory.Single(entry => entry.Engineer.Name == "Selene Jean");
+        var brandon = report.Directory.Single(entry => entry.Engineer.Name == "Mel Brandon");
+
+        Assert.Equal(0, selene.Wanted);
+        Assert.Equal(1, brandon.Wanted);
+    }
+
+    /// <summary>
+    /// One slot with an outstanding blueprint and an outstanding experimental effect still contributes
+    /// at most 1 to an engineer's count, even where they could do both (#137).
+    /// </summary>
+    [Fact]
+    public void AModuleContributesAtMostOneToACount()
+    {
+        var report = UnlockPlanner.Of([DriveWithExperimental()], [], State());
+
+        var farseer = report.Directory.Single(entry => entry.Engineer.Name == "Felicity Farseer");
+
+        Assert.Equal(1, farseer.Wanted);
+    }
+
+    /// <summary>
+    /// An engineer who can only apply the experimental effect, and not roll the outstanding blueprint on
+    /// the same slot, is not the answer to that module and is not counted for it (#137).
+    /// </summary>
+    [Fact]
+    public void AnEngineerWhoCanOnlyHalfFinishAModuleIsNotCounted()
+    {
+        var report = UnlockPlanner.Of([ThrustersWithExperimental()], [], State());
+
+        var farseer = report.Directory.Single(entry => entry.Engineer.Name == "Felicity Farseer");
+        var brandon = report.Directory.Single(entry => entry.Engineer.Name == "Mel Brandon");
+
+        Assert.Equal(0, farseer.Wanted);
+        Assert.Equal(1, brandon.Wanted);
+    }
+
+    /// <summary>
+    /// Once the blueprint is applied there is no half left: an engineer who offers only the remaining
+    /// experimental effect is counted even though they could never have rolled the blueprint (#137).
+    /// </summary>
+    [Fact]
+    public void AnEngineerOfferingOnlyTheRemainingEffectIsCountedOnceTheBlueprintIsApplied()
+    {
+        var report = UnlockPlanner.Of([ThrustersWithExperimental()], [], State(EngineeredThrusters()));
+
+        var farseer = report.Directory.Single(entry => entry.Engineer.Name == "Felicity Farseer");
+
+        Assert.Equal(1, farseer.Wanted);
+    }
+
+    /// <summary>
     /// The plans are read for who could roll them, per grade — because the blueprint table states it
     /// per grade.
     /// </summary>

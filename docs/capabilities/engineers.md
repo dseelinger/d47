@@ -310,8 +310,8 @@ the name, the system and what they grade.
 1 of 38 unlocked, 12 within reach. 2 planned things are waiting on somebody you have not unlocked.
 
 You can go and get these now
-  * Felicity Farseer - 1 planned thing wants them     131 ly, about 5 jumps
-  * Elvira Martuuk - 1 planned thing wants them       182 ly, about 7 jumps
+  * Felicity Farseer - 1 module                        131 ly, about 5 jumps
+  * Elvira Martuuk - 1 module                          182 ly, about 7 jumps
     The Dweller                                        34 ly, about 2 jumps
     Jude Navarro                                       67 ly, about 3 jumps
 ```

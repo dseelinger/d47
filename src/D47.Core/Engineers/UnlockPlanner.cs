@@ -171,12 +171,13 @@ public static class UnlockPlanner
         var from = state?.Location.StarPos;
         var range = state?.Ship.MaxJumpRange;
         var planned = PlannedNeeds.Of(ships, onFoot);
+        var workload = EngineerWorkload.Outstanding(ships, onFoot, state);
 
         // What nobody the Commander can reach today can roll.
         var outstanding = planned.Where(work => !work.CanBeRolled(progress)).ToList();
 
         var directory = EngineerDirectory.All
-            .Select(engineer => Entry(engineer, progress, from, range, planned))
+            .Select(engineer => Entry(engineer, progress, from, range, workload))
             .OrderBy(entry => entry.Reach)
             .ThenByDescending(entry => entry.Wanted)
             .ThenBy(entry => entry.LightYears ?? double.MaxValue)
@@ -299,7 +300,7 @@ public static class UnlockPlanner
         EngineerProgressState? progress,
         StarPosition? from,
         double? range,
-        IReadOnlyList<PlannedWork> planned)
+        IReadOnlyDictionary<int, int> workload)
     {
         var light = engineer.DistanceFrom(from);
 
@@ -310,7 +311,7 @@ public static class UnlockPlanner
             Standing = progress?.For(engineer.Id),
             LightYears = light,
             Jumps = EngineerAccess.Jumps(light, range),
-            Wanted = planned.Count(work => EngineerDirectory.IsNamedIn(work.Engineers, engineer)),
+            Wanted = workload.GetValueOrDefault(engineer.Id),
             Chain = EngineerAccess.ChainTo(engineer, 1, progress, from, range),
             Criteria = EngineerAccess.CriteriaFor(engineer, progress),
         };
