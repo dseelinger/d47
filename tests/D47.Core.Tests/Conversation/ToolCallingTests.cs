@@ -1,5 +1,6 @@
 using D47.Core.Capabilities;
 using D47.Core.Conversation;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -56,7 +57,7 @@ public class ToolCallingTests
         };
     }
 
-    private static TurnLoop Build(CapabilityRegistry registry, ILlmProvider provider)
+    private static TurnLoop Build(CapabilityRegistry registry, ILlmProvider provider, ILogger<TurnLoop>? logger = null)
     {
         var loop = new TurnLoop(
             registry,
@@ -64,7 +65,7 @@ public class ToolCallingTests
             new LlmAvailabilityState(true),
             new SpendTracker(),
             PriceTable.Default,
-            NullLogger<TurnLoop>.Instance,
+            logger ?? NullLogger<TurnLoop>.Instance,
             provider,
             clock: new InstantClock());
 
@@ -187,6 +188,27 @@ public class ToolCallingTests
             .Single();
 
         Assert.True(sentBack.IsError);
+    }
+
+    /// <summary>A failed call's arguments are unrecoverable after the fact, so the log line carries them (#36).</summary>
+    [Fact]
+    public async Task AFailedCallsArgumentsAreInTheLogLine()
+    {
+        var spy = new SpyTool { Result = ToolResult.Error("The galaxy service did not answer.") };
+        var registry = CapabilityRegistry.Build([spy.Describe()]);
+
+        var provider = new RoundScriptedLlmProvider(
+            RoundScriptedLlmProvider.Calling("c", "look_up_distance", """{"system":"Shinrata Desra"}"""),
+            RoundScriptedLlmProvider.Saying("I couldn't reach the galaxy service just then."));
+
+        var logger = new RecordingLogger<TurnLoop>();
+
+        await RunAsync(Build(registry, provider, logger), "how far is Shinrata Desra");
+
+        Assert.Contains(
+            logger.Entries,
+            entry => entry.Message.Contains("error", StringComparison.Ordinal)
+                     && entry.Message.Contains("""{"system":"Shinrata Desra"}""", StringComparison.Ordinal));
     }
 
     [Fact]

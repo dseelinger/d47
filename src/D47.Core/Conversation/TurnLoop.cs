@@ -594,11 +594,21 @@ public sealed class TurnLoop(
 
                     triedThisTurn[key] = result;
 
-                    logger.LogInformation(
-                        "Model called {Tool} in round {Round}: {Status}",
-                        call.Name,
-                        round,
-                        result.IsError ? "error" : "ok");
+                    if (result.IsError)
+                    {
+                        logger.LogInformation(
+                            "Model called {Tool} in round {Round}: error, arguments {Arguments}",
+                            call.Name,
+                            round,
+                            call.InputJson);
+                    }
+                    else
+                    {
+                        logger.LogInformation(
+                            "Model called {Tool} in round {Round}: ok",
+                            call.Name,
+                            round);
+                    }
                 }
 
                 yield return new TurnEvent.ToolFinished(call.Name, !result.IsError);

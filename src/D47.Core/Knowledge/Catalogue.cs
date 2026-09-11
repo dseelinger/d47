@@ -100,6 +100,14 @@ public static class Catalogue
             .Where(name =>
             {
                 var candidate = Relax(name);
+
+                // A catalogue name under four letters is a fragment of almost anything spoken that contains
+                // it — "Ra" inside "Shinrata Desra" — so below that floor it has to be the whole word (#36).
+                if (candidate.Length < 4)
+                {
+                    return candidate == relaxed;
+                }
+
                 return candidate.Contains(relaxed, StringComparison.Ordinal)
                        || relaxed.Contains(candidate, StringComparison.Ordinal);
             })
@@ -111,8 +119,17 @@ public static class Catalogue
 
         var misspellings = catalogue
             .Except(fragments)
-            .Select(name => (Name: name, Distance: Distance(Relax(name), relaxed, budget)))
-            .Where(candidate => candidate.Distance <= budget)
+            .Select(name =>
+            {
+                var candidate = Relax(name);
+
+                // A long compound name has more positions where a hearing error can occur, so it is allowed
+                // one more edit than the length-scaled budget below would otherwise give it (#36).
+                var allowance = candidate.Length >= 12 ? budget + 1 : budget;
+
+                return (Name: name, Distance: Distance(candidate, relaxed, allowance), Allowance: allowance);
+            })
+            .Where(candidate => candidate.Distance <= candidate.Allowance)
             .OrderBy(candidate => candidate.Distance)
             .Select(candidate => candidate.Name);
 

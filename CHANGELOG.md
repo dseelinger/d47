@@ -6,6 +6,15 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.28 — A long system name survives two dropped letters; a short one stops out-ranking it
+
+"Set course for Shinrarta Dezhra" heard as "Shinrata Desra" was offered "Ra" — a real system whose
+name happens to sit inside the misheard one — while the Founders' World, three edits away against a
+budget of two, never came up. A catalogue name under four letters now has to be the whole word rather
+than merely appear inside what was said, and a long compound name is allowed one more edit than the
+length-scaled budget would otherwise give it. Separately, a failed tool call's arguments are now in
+the log line alongside it, since the call itself is unrecoverable once the turn has ended.
+
 ## 0.110.27 — A misheard commodity name is offered its nearest match, not just refused
 
 Asking for "Leavian Brandy" got told there was no such commodity, twice, because commodity lookup

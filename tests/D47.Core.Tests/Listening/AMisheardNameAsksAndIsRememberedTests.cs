@@ -55,6 +55,17 @@ public class AMisheardNameAsksAndIsRememberedTests : IDisposable
         Assert.Equal("Deciat", Assert.Single(visited.Near("Dessy at")));
     }
 
+    /// <summary>The reported case (#36): a two-letter catalogue name must not out-rank the longer name it
+    /// is merely a substring of.</summary>
+    [Fact]
+    public void AShortFragmentMustBeTheWholeWordRatherThanHideInsideALongerOne()
+    {
+        var near = Catalogue.Near(["Ra", "Shinrarta Dezhra"], "Shinrata Desra");
+
+        Assert.DoesNotContain("Ra", near);
+        Assert.Contains("Shinrarta Dezhra", near);
+    }
+
     /// <summary>The reason for holding it against the token.</summary>
     [Fact]
     public void ACorrectionLearnedFromOneQuestionFixesAnother()
