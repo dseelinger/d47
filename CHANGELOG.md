@@ -6,6 +6,14 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.27 — A misheard commodity name is offered its nearest match, not just refused
+
+Asking for "Leavian Brandy" got told there was no such commodity, twice, because commodity lookup
+never used the near-match table that already helps with ships, engineers and modules. It now checks
+a name that matches nothing against the cargo and rare-cargo ledgers and, if one is close, offers it
+by name — "Did you mean Lavian Brandy?" — instead of asking to be repeated. A name near a ship
+material rather than a commodity is left alone, since a material is answered by a different tool.
+
 ## 0.110.26 — Asking about a rare good names its one station and what is on offer there
 
 "How much Lavian Brandy can I get at a time?" used to be answered from the ship's cargo capacity,

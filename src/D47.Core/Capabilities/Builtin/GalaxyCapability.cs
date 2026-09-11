@@ -658,6 +658,19 @@ public static class GalaxyCapability
             return ToolResult.Ok($"{answer} {sold.Content}");
         }
 
+        // A misheard commodity gets the same nearest-name offer ships, engineers and modules already get,
+        // checked against the cargo and rare-cargo ledgers only so a material near-miss still falls through
+        // to the index below (#117).
+        if (arguments.TryGetString("commodity", out var spokenCommodity)
+            && !string.IsNullOrWhiteSpace(spokenCommodity)
+            && MaterialCatalogue.Find(spokenCommodity) is null
+            && RareCatalogue.Find(spokenCommodity) is null
+            && MaterialCatalogue.Near(spokenCommodity, MaterialLedger.Cargo, MaterialLedger.RareCargo) is
+                { Count: > 0 } nearCommodities)
+        {
+            return ToolResult.Ok(Catalogue.Unknown("commodity", spokenCommodity.Trim(), nearCommodities));
+        }
+
         if (galaxy is null || !settings.Current.Knowledge.GalaxySearch)
         {
             return ToolResult.Error(Unavailable);

@@ -128,6 +128,15 @@ public static class MaterialCatalogue
             [.. Loaded.Value.BySymbol.Values.Select(entry => entry.Name).Distinct(StringComparer.Ordinal)],
             spoken);
 
+    /// <summary>The same, restricted to names in the given ledgers.</summary>
+    public static IReadOnlyList<string> Near(string spoken, params MaterialLedger[] ledgers) =>
+        Catalogue.NearSpoken(
+            [.. Loaded.Value.BySymbol.Values
+                .Where(entry => ledgers.Contains(entry.Ledger))
+                .Select(entry => entry.Name)
+                .Distinct(StringComparer.Ordinal)],
+            spoken);
+
     /// <summary>Everything sharing a trader line, lowest grade first.</summary>
     public static IReadOnlyList<MaterialEntry> InLine(string? line) =>
         string.IsNullOrWhiteSpace(line)
