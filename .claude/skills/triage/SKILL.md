@@ -63,9 +63,10 @@ reproducing rather than fixing.
 
 ## Release groups
 
-The current version is the top entry of `CHANGELOG.md`. `git describe --tags` reports the last
-release that was cut, which trails the changelog by however many fixes are unreleased — use it
-only to answer what is installed in the field.
+The current version is the newest tag: `git tag --list 'v*' --sort=-v:refname | head -1`. The
+numbers above it in `CHANGELOG.md` are the per-commit guesses, reconciled when the release is
+cut — the batch guessing 0.110.23 to 0.110.26 went out as `v0.111.0`. Read them for what is
+unreleased, never for what the next number is.
 
 Number a group from what it does. A corrected behaviour is a patch. A user-visible capability
 added or removed is a minor, and the major is 1.0.0, which `tabled` is holding back. A run of
