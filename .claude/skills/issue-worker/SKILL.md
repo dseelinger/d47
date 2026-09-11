@@ -133,7 +133,9 @@ the issue that was ranked.
 ## Saying how to test it
 
 Say first whether it needs manual testing at all. If it does not, say so and stop. If it does, give
-the steps and nothing else.
+the steps as a numbered list and nothing else — one action per step, in the order the maintainer
+performs them, each step saying what to do and what to look for. Not a paragraph, and not a bulleted
+list: the numbers are what lets them say which step failed.
 
 Say it unprompted as part of finishing, not only when asked. Steps are for what the suite cannot
 reach — the panel, the overlay, speech, a device, the game itself. Where the automated tests already
