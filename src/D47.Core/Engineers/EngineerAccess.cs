@@ -198,8 +198,8 @@ public sealed record EngineerEntry
 public static class EngineerAccess
 {
     /// <summary>
-    /// What it takes to reach one engineer, with the parts already done marked (remediation.md 13, item
-    /// 12).
+    /// The prerequisites for reaching one engineer, with the parts already done marked (remediation.md
+    /// 13, item 12).
     /// </summary>
     public static IReadOnlyList<UnlockCriterion> CriteriaFor(
         Engineer engineer, EngineerProgressState? progress)
@@ -238,12 +238,6 @@ public static class EngineerAccess
         {
             criteria.Add(new UnlockCriterion(tribute, unlocked ? true : null));
         }
-
-        // Last, and it is the one line that is always decidable: the others are how you get here and this is
-        // whether you have.
-        criteria.Add(new UnlockCriterion(
-            $"{engineer.Name} works for you",
-            unlocked));
 
         return criteria;
     }

@@ -330,10 +330,10 @@ public sealed class EngineerPage : EngineerPageBase
         _body.Children.Add(LoadoutPages.Heading("Where you stand"));
         _body.Children.Add(LoadoutPages.Muted(entry.Status));
 
-        // What it takes, with what is already done marked (remediation.md 13, item 12).
+        // Unlock Prerequisites, with what is already done marked (remediation.md 13, item 12).
         if (entry.Criteria.Count > 0)
         {
-            _body.Children.Add(LoadoutPages.Heading("What it takes"));
+            _body.Children.Add(LoadoutPages.Heading("Unlock Prerequisites"));
 
             foreach (var criterion in entry.Criteria)
             {

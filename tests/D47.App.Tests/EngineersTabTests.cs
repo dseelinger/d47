@@ -388,19 +388,18 @@ public class EngineersTabTests
 
         var shown = Text(surface.Panel);
 
-        Assert.Contains("What it takes", shown);
-        Assert.Contains("✓ Liz Ryder works for you", shown);
+        Assert.Contains("Unlock Prerequisites", shown);
+        Assert.Contains(shown, line => line.StartsWith("✓", StringComparison.Ordinal));
 
-        // Somebody behind her, where the referral is met and the rest is not readable.
+        // Marco Qwent, whose referral through Elvira Martuuk is not met and whose invitation is not readable.
         surface.Panel.Nav.Drill(
-            EngineersPages.Crumb(EngineerDirectory.All.First(e => e.Name == "Hera Tani")));
+            EngineersPages.Crumb(EngineerDirectory.All.First(e => e.Name == "Marco Qwent")));
 
         Dispatcher.UIThread.RunJobs();
 
         shown = Text(surface.Panel);
 
-        Assert.Contains(shown, line => line.StartsWith("✓ Grade 3 with Liz Ryder", StringComparison.Ordinal));
-        Assert.Contains("· Hera Tani works for you", shown);
+        Assert.Contains(shown, line => line.StartsWith("· Grade 3 with Elvira Martuuk", StringComparison.Ordinal));
         Assert.Contains(shown, line => line.StartsWith("?", StringComparison.Ordinal));
 
         surface.Window.Close();

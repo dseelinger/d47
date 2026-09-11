@@ -6,6 +6,14 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.32 — An engineer no longer appears as a prerequisite for themselves
+
+The engineer detail page's **What it takes** section used to end with "Liz Ryder works for you",
+stating an engineer working for you as one of the conditions of that engineer working for you, when
+**Where you stand** above it already answers the same question with more detail. That line is gone,
+and the section is retitled **Unlock Prerequisites**, which reads correctly whether the engineer is
+unlocked or not.
+
 ## 0.110.31 — The Engineers summary counts the game's three states, not d47's reading of reach
 
 The line at the top of the Directory, the Route page, and the spoken answer to "who should I unlock
