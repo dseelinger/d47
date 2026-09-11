@@ -12,14 +12,18 @@ public class TheNameLadderTests
     [Fact]
     public void TheReportedExampleGoesDownTheLadderAsRuled()
     {
+        // Fed to Phonemiser directly rather than through SpeechPipeline, so this exercises the ladder
+        // below the seam on purpose: production text has already had SpokenDesignations rewrite its
+        // designation numbers to words by the time it reaches here (#122).
         var said = Rules.ToPhonemes("COL 385 SECTOR B0-GQPI");
 
         // COL parses as one syllable and is pronounced rather than spelled.
         Assert.DoesNotContain("siː, oʊ, ˈɛl", said, StringComparison.Ordinal);
 
-        // 385 is said casually, as a person reads a designation.
+        // 385 falls off the Number rung, and below the seam that is the digit-by-digit reading —
+        // never wrong, which is what a caller who bypassed the seam gets.
         Assert.Contains("θɹˈiː", said, StringComparison.Ordinal);
-        Assert.Contains("ˈeɪɾi", said, StringComparison.Ordinal);
+        Assert.Contains("ˈeɪt", said, StringComparison.Ordinal);
 
         // B0 is letters and digits with nothing between them, so it is spelled.
         Assert.Contains("biː, zˈiəɹoʊ", said, StringComparison.Ordinal);
@@ -87,26 +91,30 @@ public class TheNameLadderTests
     }
 
     /// <summary>
-    /// Numbers are said the way somebody reads a designation aloud, which the Commander stated
-    /// outright: three eighty-five, not three hundred and eighty-five. This is the casual reading a
-    /// run of one to three digits gets; #91 ruled that a run of four or more takes the length rule
-    /// below instead, applied at the seam by <see cref="SpokenDesignations"/> ahead of every voice.
+    /// Designation numbers are said the way somebody reads them aloud — three eighty-five, not three
+    /// hundred and eighty-five — but that casual reading is <see cref="SpokenDesignations"/>'s job now,
+    /// applied at the seam ahead of every voice (#91). <see cref="SpokenNumber.Say"/> itself no longer
+    /// tries to be clever about an unmeasured run: digit by digit is never wrong, and it is the reading
+    /// a caller gets if it reaches this rung without having gone through the seam (#122).
     /// </summary>
     [Theory]
-    [InlineData("385", "three eighty-five")]
-    [InlineData("12", "twelve")]
+    [InlineData("385", "three eight five")]
+    [InlineData("12", "one two")]
     [InlineData("7", "seven")]
-    [InlineData("100", "one hundred")]
-    public void NumbersAreSaidCasually(string digits, string expected) =>
+    [InlineData("100", "one zero zero")]
+    public void AnUnmeasuredRunIsReadDigitByDigit(string digits, string expected) =>
         Assert.Equal(expected, SpokenNumber.Say(digits));
 
     /// <summary>
-    /// A run of four or more digits in a name is read one at a time rather than casually — the #91
-    /// ruling, and the case that moved out of <see cref="NumbersAreSaidCasually"/> when it landed.
+    /// The casual, length-aware reading of a designation lives at the seam — the #91 ruling: three or
+    /// fewer digits stay casual, four or more are read one at a time.
     /// </summary>
     [Fact]
-    public void FourOrMoreDigitsAreReadOneAtATimeUnderTheLengthRule() =>
+    public void TheSeamGivesTheCasualReadingByLength()
+    {
+        Assert.Equal("three eighty-five", SpokenDesignations.Rewrite("385"));
         Assert.Equal("one nine eight five", SpokenDesignations.Rewrite("1985"));
+    }
 
     /// <summary>
     /// A three-digit boxel coordinate keeps the casual reading under the same rule, with no special

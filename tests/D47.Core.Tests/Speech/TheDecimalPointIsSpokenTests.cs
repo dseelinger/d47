@@ -14,7 +14,7 @@ public class TheDecimalPointIsSpokenTests
     [InlineData("5.79", "five point seven nine")]
     [InlineData("1.5", "one point five")]
     [InlineData("0.5", "zero point five")]
-    [InlineData("395", "three ninety-five")]
+    [InlineData("395", "three nine five")]
     public void ADecimalIsSaidWithItsPoint(string written, string expected) =>
         Assert.Equal(expected, SpokenNumber.Say(written));
 
@@ -29,10 +29,15 @@ public class TheDecimalPointIsSpokenTests
         Assert.Equal("two point five zero", SpokenNumber.Say("2.50"));
     }
 
-    /// <summary>#177 left the whole part on its casual reading, and #184 overturned that.</summary>
+    /// <summary>
+    /// #177 left the whole part on its casual reading, #184 overturned that for a measured quantity,
+    /// and #122 retired the casual reading from the unmeasured case too — that one is digit by digit now,
+    /// never wrong, since a caller reaching this rung with a bare designation has gone around the seam
+    /// that gives it the casual reading.
+    /// </summary>
     [Theory]
     [InlineData("128.5", "one hundred twenty-eight point five")]
-    [InlineData("128", "one twenty-eight")]
+    [InlineData("128", "one two eight")]
     public void TheWholePartTakesTheReadingItsShapeAsksFor(string written, string expected) =>
         Assert.Equal(expected, SpokenNumber.Say(written));
 

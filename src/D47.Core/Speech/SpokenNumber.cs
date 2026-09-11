@@ -126,8 +126,10 @@ public static class SpokenNumber
             : whole;
 
     /// <summary>
-    /// The whole part: the casual reading this rung has always given a run of digits, or the full one
-    /// where the token said it was a measured quantity (#184 — see <see cref="IsMeasured"/>).
+    /// The whole part: the full reading where the token said it was a measured quantity (#184 — see
+    /// <see cref="IsMeasured"/>), or digit by digit otherwise. The casual designation reading lives at
+    /// the seam now (<see cref="SpokenDesignations"/>, #91); an unmeasured run only reaches here when a
+    /// caller has gone around the seam, and digit by digit is never wrong (#122).
     /// </summary>
     private static string Whole(string digits, bool measured)
     {
@@ -139,21 +141,7 @@ public static class SpokenNumber
             return Digits(digits);
         }
 
-        if (measured)
-        {
-            return Measured(digits);
-        }
-
-        // Longer than four digits is an identifier rather than a quantity, and nobody says a fourteen-digit
-        // market id as a number.
-        if (digits.Length > 4)
-        {
-            return Digits(digits);
-        }
-
-        var value = int.Parse(digits, System.Globalization.CultureInfo.InvariantCulture);
-
-        return digits.Length == 4 ? FourDigits(value) : UpTo999(value);
+        return measured ? Measured(digits) : Digits(digits);
     }
 
     /// <summary>A run of digits read out one at a time, which is never wrong and never a reading.</summary>
@@ -226,25 +214,10 @@ public static class SpokenNumber
     }
 
     /// <summary>
-    /// <c>1985</c> as nineteen eighty-five, which is how a four-digit designation is read aloud — and
-    /// how a year is, which is what most four-digit runs in a name look like.
+    /// Up to 999, said the casual way: <c>385</c> is three eighty-five. Used by <see cref="Measured"/>
+    /// for a quantity's hundreds, and by <see cref="SpokenDesignations"/> at the seam for a designation
+    /// short enough to keep the casual reading.
     /// </summary>
-    private static string FourDigits(int value)
-    {
-        var high = value / 100;
-        var low = value % 100;
-
-        if (low == 0)
-        {
-            return UpTo999(high) + " hundred";
-        }
-
-        return low < 10
-            ? UpTo999(high) + " oh " + Ones[low]
-            : UpTo999(high) + " " + UpTo999(low);
-    }
-
-    /// <summary>Up to 999, said the casual way: <c>385</c> is three eighty-five.</summary>
     public static string UpTo999(int value)
     {
         if (value < 20)

@@ -59,24 +59,25 @@ public class TheWholePartOfAQuantityIsSaidInFullTests
     // ---- What the ruling deliberately leaves alone ---------------------------------------------
 
     /// <summary>
-    /// A bare run of digits keeps the casual designation reading, which is the Commander's own ruling
-    /// and the half of this that must not move.
+    /// A bare, unmeasured run of digits is read digit by digit here — the casual designation reading
+    /// the Commander asked for is still given, but by <see cref="SpokenDesignations"/> at the seam
+    /// rather than by <see cref="SpokenNumber"/> itself (#122).
     /// </summary>
     [Theory]
-    [InlineData("385", "three eighty-five")]
-    [InlineData("1985", "nineteen eighty-five")]
-    [InlineData("2637", "twenty-six thirty-seven")]
-    [InlineData("128", "one twenty-eight")]
-    [InlineData("100", "one hundred")]
-    [InlineData("12", "twelve")]
-    public void ABareRunOfDigitsIsStillReadCasually(string written, string expected) =>
+    [InlineData("385", "three eight five")]
+    [InlineData("1985", "one nine eight five")]
+    [InlineData("2637", "two six three seven")]
+    [InlineData("128", "one two eight")]
+    [InlineData("100", "one zero zero")]
+    [InlineData("12", "one two")]
+    public void ABareRunOfDigitsIsReadDigitByDigit(string written, string expected) =>
         Assert.Equal(expected, SpokenNumber.Say(written));
 
-    /// <summary>The cost of the ruling, asserted rather than left implied.</summary>
+    /// <summary>The casual reading a Commander actually hears, given at the seam rather than here.</summary>
     [Fact]
-    public void ABareQuantityWithAUnitKeepsTheCasualReading()
+    public void TheSeamStillGivesTheCasualReading()
     {
-        Assert.Equal("twelve thirty-four", SpokenNumber.Say("1234"));
+        Assert.Equal("three eighty-five", SpokenDesignations.Rewrite("385"));
 
         // Through the pipeline as it actually runs: the unit rewrite happens first, so by the time the ladder
         // reads the number there is no "t" left to notice — only the word "tonnes".
@@ -110,7 +111,7 @@ public class TheWholePartOfAQuantityIsSaidInFullTests
     /// quantity — #177 ruled the point itself away, and this is the same ruling read at the other end.
     /// </summary>
     [Theory]
-    [InlineData("1234.", "twelve thirty-four")]
+    [InlineData("1234.", "one two three four")]
     [InlineData("5.", "five")]
     public void ATrailingPointDoesNotMakeItAQuantity(string written, string expected) =>
         Assert.Equal(expected, SpokenNumber.Say(written));
