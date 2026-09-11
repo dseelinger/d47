@@ -77,13 +77,16 @@ Go looking for these. They are where dictated requests come apart.
 
 ## Decide what is obvious; ask only what is not
 
-**A question with an obvious answer is not diligence, it is noise**, and a maintainer who is asked
-two of them stops reading the third. Where one option is plainly right — it costs nothing extra, it
-is what the maintainer already asked for, or the alternative leaves a known defect standing — take
-it and say so in the answer. The test: if you would write "(Recommended)" on one option and could
-not honestly argue for another, do not ask.
+**A question that changes nothing is not diligence, it is noise**, and a maintainer who is asked
+two of them stops reading the third. The test is not whether you have a recommendation — it is
+whether a different answer would produce a different issue. Where every answer leads to the same
+body, you are asking to look thorough: drop it, or state your reading as an assumption he can
+correct.
 
-Ask when the answer changes what gets built and the code cannot settle it.
+Ask when the answer changes what gets built and the code cannot settle it. A recommendation does
+not excuse you from asking: widening the scope, splitting the job, or specifying something other
+than what was dictated are the maintainer's to approve, and those are worth asking even when one
+option is plainly the better one.
 
 ## Ask in one batch, with a worked example
 
