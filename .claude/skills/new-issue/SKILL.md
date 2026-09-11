@@ -1,6 +1,6 @@
 ---
 name: new-issue
-description: Turn a dictated request into an issue an issue worker can take without kicking it back — read the code first, verify every claim against the tree and the real journals, decide what is obvious and put only the real ambiguities to the maintainer as concrete choices, size it, then file. Files issues; changes no code. Use when the user invokes /new-issue, or says "new issue", "file an issue about this", "make an issue for", "write this up as an issue".
+description: Turn a dictated request into an issue an issue worker can take without kicking it back — read the code first, verify every claim against the tree and the real journals, decide what is obvious and put only the real ambiguities to the maintainer as concrete choices, size it, then show him the text and file it once he acknowledges. Files issues; changes no code. Use when the user invokes /new-issue, or says "new issue", "file an issue about this", "make an issue for", "write this up as an issue".
 ---
 
 # New issue
@@ -138,6 +138,26 @@ without him — it cannot, and that is the point of the label.
 The obligation this creates is on you: file nothing you would not be content to see an issue worker
 start on unread.
 
+## Nothing reaches the tracker until he has acknowledged it
+
+Every write to a GitHub issue — creating one, editing a title or a body, commenting, adding a label
+— is shown to the maintainer in full and waits for him to say go.
+
+Show the text you intend to write, not a summary of it: the title as it will read, the body as it
+will read, the label, and which issue it lands on. Then stop and wait. An instruction to write the
+thing up is not an instruction to file it, and a turn that ends without an answer files nothing.
+
+His answer is one of three: file it, file it with the changes he names, or do not file it. Only the
+first two reach `gh`.
+
+One acknowledgement covers one write. Where the work is plainly two issues, that is two texts shown,
+unless he acknowledges both in one reply. It does not carry forward to a later issue in the same
+session, or to a correction to something already filed.
+
+This rule outranks the rest of this skill. Where anything below says to file, to comment or to
+label, it means: show it, wait, then do it. The bold line naming what you chose rather than asked is
+shown with the text it applies to, not after the issue exists.
+
 ## The body
 
 The repository's form, in its writing style — literal, terse, no metaphor standing in for a
@@ -173,7 +193,8 @@ An issue that quietly improves on the request is an issue the maintainer did not
 ## What you never do
 
 You never change the working tree, never close or relabel an issue you did not file, and never
-start the work. You read, you verify, you ask, you file.
+start the work. You never write to the tracker without the acknowledgement above. You read, you
+verify, you ask, you show, you file.
 
 ## Output
 
