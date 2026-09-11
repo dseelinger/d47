@@ -25,7 +25,9 @@ gh issue list --state open --limit 300 --json number,title,labels,author,created
 
 Keep an issue only if **all** of these hold:
 
-- It does not carry `tabled`. That label is a moratorium on new-capability work, not a priority.
+- It does not carry `tabled`. That label means the work is not part of 1.0.0. It holds back the
+  major version and nothing else; it is not a priority and it does not decide how anything else in
+  the queue is numbered.
 - It does not carry `phase` or `design`. Both label descriptions say so outright — a `phase` is a
   product description for work not yet built, and a `design` is a promise to discuss that spawns
   build issues when it settles. Neither is implementable as written.
@@ -61,20 +63,29 @@ reproducing rather than fixing.
 
 ## Release groups
 
-The version line is `0.110.x`; `git describe --tags --abbrev=0 --match 'v*'` gives the last one.
-While the moratorium holds, groups are patch releases.
+The current version is the top entry of `CHANGELOG.md`. `git describe --tags` reports the last
+release that was cut, which trails the changelog by however many fixes are unreleased — use it
+only to answer what is installed in the field.
+
+Number a group from what it does. A corrected behaviour is a patch. A user-visible capability
+added or removed is a minor, and the major is 1.0.0, which `tabled` is holding back. A run of
+patches in the changelog records what has been worked on, not a rule about numbering.
 
 A group is what ships under one version:
 
 - **2 to 5 issues.** Fewer wastes a release; more delays every fix in it behind the slowest.
 - **They share a subject**, so they fold into one CHANGELOG entry. Precedent: several headset
   entries were folded into one 0.110.9 entry rather than shipped as separate versions.
+- **They take the same increment.** A group holding both a fix and a new capability is numbered
+  by the capability, which makes the patches in it read as features. Split it instead. A single
+  issue that adds or removes a capability is worth its own minor even though it is one issue.
 - Each fix commit still carries its own entry with a guessed version number. The numbers are
   reconciled when the release is actually cut.
 
 Name each group with the version it would take and a working title in the CHANGELOG's form
-(`0.110.10 — <title>`). The title is a guess and should be marked as one. The title carries the
-subject the group shares; if it cannot, the group is wrong and the issues belong elsewhere.
+(`0.110.26 — <title>`, `0.111.0 — <title>`). The title is a guess and should be marked as one.
+The title carries the subject the group shares; if it cannot, the group is wrong and the issues
+belong elsewhere.
 
 ## Model and effort
 
