@@ -6,6 +6,16 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.31 — The Engineers summary counts the game's three states, not d47's reading of reach
+
+The line at the top of the Directory, the Route page, and the spoken answer to "who should I unlock
+next" used to read "X of 38 unlocked, Y within reach" and a clause about planned work waiting on
+somebody not yet unlocked — d47's own judgement of what could be acted on today, which counted an
+engineer who has never been mentioned in the journal the same as one already invited. It now counts
+the three states Elite itself writes: "9 of 38 unlocked. 16 in progress. 13 not started." The waiting
+clause is gone; with it, nothing distinguishes a plan blocked on an engineer from one blocked on
+materials, which is a real loss and may come back as its own line later.
+
 ## 0.110.30 — The Engineers directory counts modules left to finish, not rolls already done
 
 An engineer's count on the Engineers tab used to add up every planned blueprint and experimental

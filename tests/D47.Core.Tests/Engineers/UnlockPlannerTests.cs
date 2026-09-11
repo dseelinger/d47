@@ -183,6 +183,26 @@ public class UnlockPlannerTests
     }
 
     /// <summary>
+    /// The top line counts the game's three states against the whole directory, and nothing about
+    /// what the solver judges reachable remains in it (#133).
+    /// </summary>
+    [Fact]
+    public void TheSummaryCountsTheGamesThreeStates()
+    {
+        var report = UnlockPlanner.Of([], [], State());
+
+        var total = report.Directory.Count;
+        var unlocked = report.Directory.Count(entry => entry.Standing?.IsUnlocked == true);
+        var inProgress = report.Directory.Count(entry => entry.Standing is { IsUnlocked: false });
+        var notStarted = report.Directory.Count(entry => entry.Standing is null);
+
+        Assert.Equal(total, unlocked + inProgress + notStarted);
+        Assert.Equal(
+            $"{unlocked} of {total} unlocked. {inProgress} in progress. {notStarted} not started.",
+            report.Summary());
+    }
+
+    /// <summary>
     /// The count that belongs to the other tab: how many planned things are waiting on somebody the
     /// Commander has not unlocked.
     /// </summary>
@@ -193,7 +213,6 @@ public class UnlockPlannerTests
 
         Assert.Equal(2, report.Planned.Count);
         Assert.Equal(2, report.Waiting);
-        Assert.Contains("waiting on somebody you have not unlocked", report.Summary());
 
         var unlocked = UnlockPlanner.Of([Thrusters(), Drive()], [], State(
             """{"timestamp":"2026-08-18T09:10:00Z","event":"EngineerProgress","Engineer":"Felicity Farseer","EngineerID":300100,"Progress":"Unlocked","Rank":5}"""));

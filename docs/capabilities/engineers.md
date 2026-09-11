@@ -307,7 +307,7 @@ the name, the system and what they grade.
 #### Who can I go and get
 
 ```text
-1 of 38 unlocked, 12 within reach. 2 planned things are waiting on somebody you have not unlocked.
+9 of 38 unlocked. 16 in progress. 13 not started.
 
 You can go and get these now
   * Felicity Farseer - 1 module                        131 ly, about 5 jumps
@@ -320,9 +320,10 @@ Sorted by what you can act on today — **within reach, then already yours, then
 else** — rather than alphabetically or by speciality, because the question is nearly always *who
 can I go and get*. Alphabetical order answers that for nobody.
 
-The line at the top carries the count that belongs to the Loadout tab: **how many of your plans are
-waiting on somebody you have not unlocked.** A plan blocked on a person is not a plan blocked on
-materials, and the gap analysis cannot tell you which it is.
+The line at the top counts the game's own three states — unlocked, in progress (known about or
+invited), not started — against the whole directory. It does not distinguish a plan blocked on an
+engineer from one blocked on materials; the gap analysis on the Loadout tab cannot tell the two
+apart either.
 
 One pane rather than two: a row already holds the name, where they are and what wants them, so a
 second column beside it would only repeat them.

@@ -126,7 +126,7 @@ public sealed record EngineerReport
 
     public int WithinReach => Directory.Count(entry => entry.Reach == EngineerReach.WithinReach);
 
-    /// <summary>The line at the top of the page: where they stand, and what is blocked on a person.</summary>
+    /// <summary>The line at the top of the page: where they stand in the game's own three states.</summary>
     public string Summary()
     {
         if (!ProgressKnown)
@@ -134,24 +134,13 @@ public sealed record EngineerReport
             return "No engineer progress yet — Elite writes it when you enter the game.";
         }
 
-        var said = new StringBuilder(
-            $"{Unlocked.ToString(CultureInfo.InvariantCulture)} of "
-            + $"{Directory.Count.ToString(CultureInfo.InvariantCulture)} unlocked, "
-            + $"{EngineerSay.Count(WithinReach, "within reach", "within reach")}.");
+        var inProgress = Directory.Count(entry => entry.Standing is { IsUnlocked: false });
+        var notStarted = Directory.Count(entry => entry.Standing is null);
 
-        if (Waiting > 0)
-        {
-            var waiting = EngineerSay.Count(Waiting, "planned thing is", "planned things are");
-
-            said.Append(CultureInfo.InvariantCulture,
-                $" {waiting} waiting on somebody you have not unlocked.");
-        }
-        else if (Planned.Count > 0)
-        {
-            said.Append(" Nothing you have planned is waiting on an engineer you have not unlocked.");
-        }
-
-        return said.ToString();
+        return $"{Unlocked.ToString(CultureInfo.InvariantCulture)} of "
+               + $"{Directory.Count.ToString(CultureInfo.InvariantCulture)} unlocked. "
+               + $"{inProgress.ToString(CultureInfo.InvariantCulture)} in progress. "
+               + $"{notStarted.ToString(CultureInfo.InvariantCulture)} not started.";
     }
 }
 
