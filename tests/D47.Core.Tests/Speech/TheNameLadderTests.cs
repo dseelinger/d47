@@ -88,16 +88,35 @@ public class TheNameLadderTests
 
     /// <summary>
     /// Numbers are said the way somebody reads a designation aloud, which the Commander stated
-    /// outright: three eighty-five, not three hundred and eighty-five.
+    /// outright: three eighty-five, not three hundred and eighty-five. This is the casual reading a
+    /// run of one to three digits gets; #91 ruled that a run of four or more takes the length rule
+    /// below instead, applied at the seam by <see cref="SpokenDesignations"/> ahead of every voice.
     /// </summary>
     [Theory]
     [InlineData("385", "three eighty-five")]
     [InlineData("12", "twelve")]
     [InlineData("7", "seven")]
     [InlineData("100", "one hundred")]
-    [InlineData("1985", "nineteen eighty-five")]
     public void NumbersAreSaidCasually(string digits, string expected) =>
         Assert.Equal(expected, SpokenNumber.Say(digits));
+
+    /// <summary>
+    /// A run of four or more digits in a name is read one at a time rather than casually — the #91
+    /// ruling, and the case that moved out of <see cref="NumbersAreSaidCasually"/> when it landed.
+    /// </summary>
+    [Fact]
+    public void FourOrMoreDigitsAreReadOneAtATimeUnderTheLengthRule() =>
+        Assert.Equal("one nine eight five", SpokenDesignations.Rewrite("1985"));
+
+    /// <summary>
+    /// A three-digit boxel coordinate keeps the casual reading under the same rule, with no special
+    /// case for the boxel shape — the one thing #91 flagged as worth hearing before ruling it right.
+    /// </summary>
+    [Fact]
+    public void AThreeDigitBoxelCoordinateStaysCasual() =>
+        Assert.Equal(
+            "Col two eighty-five Sector RE-Q d five-one thirty-two",
+            SpokenDesignations.Rewrite("Col 285 Sector RE-Q d5-132"));
 
     /// <summary>A leading zero is part of a designation rather than a quantity, so it is kept and said.</summary>
     [Fact]
