@@ -118,8 +118,8 @@ public class EngineersTabTests
     }
 
     /// <summary>
-    /// The directory leads with what can be acted on today, and its summary carries the count that
-    /// belongs to the other tab: what is waiting on a person rather than on materials.
+    /// The directory leads with what can be acted on today, and its summary counts the whole
+    /// directory in the game's three states.
     /// </summary>
     [AvaloniaFact]
     public void TheDirectoryLeadsWithWhatIsReachable()
@@ -128,8 +128,8 @@ public class EngineersTabTests
         var shown = Text(surface.Panel);
 
         Assert.Contains(shown, line => line.Contains("1 of 38 unlocked", StringComparison.Ordinal));
-        Assert.Contains(shown, line => line.Contains(
-            "waiting on somebody you have not unlocked", StringComparison.Ordinal));
+        Assert.Contains(shown, line => line.Contains("in progress", StringComparison.Ordinal)
+                                       && line.Contains("not started", StringComparison.Ordinal));
 
         Assert.Contains("Ready for Unlock", shown);
         Assert.Contains("Unlocked", shown);
@@ -252,7 +252,6 @@ public class EngineersTabTests
         var shown = Text(surface.Panel);
 
         Assert.Contains(shown, line => line.Contains("1 of 38 unlocked", StringComparison.Ordinal));
-        Assert.DoesNotContain(shown, line => line.Contains("waiting on somebody", StringComparison.Ordinal));
 
         surface.Window.Close();
     }
