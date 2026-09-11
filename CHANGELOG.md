@@ -6,6 +6,14 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.34 — Closing SteamVR no longer crashes d47
+
+Closing SteamVR while the headset overlays were up crashed d47, with nothing in its own log after
+the line saying the session had ended. The ninety-hertz thread that places the aim ray was
+inside an OpenVR call when the tick thread shut the session down, and the memory it was reading had
+already been freed. Ending a session now waits for that call to finish, and every call after it
+returns without reaching OpenVR at all.
+
 ## 0.110.33 — Every engineer prerequisite draws a checkbox, on the Route page as well as the detail page
 
 The engineer detail page marked each unlock prerequisite with a character — `✓`, `·`, `?` — read out

@@ -88,7 +88,24 @@ public sealed class FakeOpenVr :
         bDeviceIsConnected = true,
     };
 
-    private void Record(string function, ulong subject = 0) => Calls.Add(new VrCall(function, subject));
+    /// <summary>
+    /// Called on entry to every call, before it is recorded, so a test can hold one thread inside the
+    /// runtime while another tears the session down. Read <see cref="Calls"/> only once both are done.
+    /// </summary>
+    public Action<string>? Entered { get; set; }
+
+    private readonly Lock _recording = new();
+
+    private void Record(string function, ulong subject = 0)
+    {
+        // Outside the lock, so a test that blocks here does not also block the other thread's recording.
+        Entered?.Invoke(function);
+
+        lock (_recording)
+        {
+            Calls.Add(new VrCall(function, subject));
+        }
+    }
 
     public bool Load()
     {

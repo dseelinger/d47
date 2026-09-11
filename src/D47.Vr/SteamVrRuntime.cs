@@ -106,6 +106,14 @@ public sealed class SteamVrRuntime(
     private IOpenVrSystem? _system;
     private bool _claimed;
 
+    /// <summary>
+    /// Held across every OpenVR call the aim thread makes, and taken by <see cref="Stop"/> and
+    /// <see cref="Guides"/> before either gives back what that thread is calling into: a call in flight
+    /// when the native interfaces are freed faults the process rather than throwing (#134). The tick
+    /// thread waits for at most one aim frame.
+    /// </summary>
+    private readonly Lock _session = new();
+
     /// <summary>The last head pose read.</summary>
     public VrPose? Head { get; private set; }
 
@@ -180,6 +188,14 @@ public sealed class SteamVrRuntime(
 
     public void Stop()
     {
+        lock (_session)
+        {
+            Teardown();
+        }
+    }
+
+    private void Teardown()
+    {
         _buffers.Clear();
 
         _beam?.Dispose();
@@ -225,47 +241,59 @@ public sealed class SteamVrRuntime(
     /// Points the beam along a hand and stops it at <paramref name="lengthMetres"/>, or takes it off
     /// screen when nothing is being aimed at.
     /// </summary>
-    public void Reposition(VrSurface surface, VrPose where) => OverlayFor(surface)?.PlaceAbsolute(where);
+    public void Reposition(VrSurface surface, VrPose where)
+    {
+        lock (_session)
+        {
+            OverlayFor(surface)?.PlaceAbsolute(where);
+        }
+    }
 
     public void AimBeam(VrPose? along, VrPose head, float lengthMetres)
     {
-        if (_beam is null)
+        lock (_session)
         {
-            return;
-        }
+            if (_beam is null)
+            {
+                return;
+            }
 
-        if (along is not { } aim)
-        {
-            _beam.Show(false);
-            return;
-        }
+            if (along is not { } aim)
+            {
+                _beam.Show(false);
+                return;
+            }
 
-        if (!_beamLength.Equals(lengthMetres))
-        {
-            _beamLength = lengthMetres;
-            _beam.Look(VrAim.BeamWidthFor(lengthMetres), 0f, 1f);
-        }
+            if (!_beamLength.Equals(lengthMetres))
+            {
+                _beamLength = lengthMetres;
+                _beam.Look(VrAim.BeamWidthFor(lengthMetres), 0f, 1f);
+            }
 
-        _beam.PlaceAbsolute(VrAim.BeamAlong(aim, head.Position, lengthMetres));
-        _beam.Show(true);
+            _beam.PlaceAbsolute(VrAim.BeamAlong(aim, head.Position, lengthMetres));
+            _beam.Show(true);
+        }
     }
 
     /// <summary>Puts the cursor on a world point, or takes it off screen.</summary>
     public void ShowCursor(Vector3? at, VrPose head)
     {
-        if (_cursor is null)
+        lock (_session)
         {
-            return;
-        }
+            if (_cursor is null)
+            {
+                return;
+            }
 
-        if (at is not { } point)
-        {
-            _cursor.Show(false);
-            return;
-        }
+            if (at is not { } point)
+            {
+                _cursor.Show(false);
+                return;
+            }
 
-        _cursor.PlaceAbsolute(VrAim.CursorAt(point, head.Position));
-        _cursor.Show(true);
+            _cursor.PlaceAbsolute(VrAim.CursorAt(point, head.Position));
+            _cursor.Show(true);
+        }
     }
 
     /// <summary>The overlay a surface is drawn on, for the placement code to point rays at.</summary>
@@ -280,46 +308,49 @@ public sealed class SteamVrRuntime(
     /// </summary>
     public (IReadOnlyList<VrHand> Hands, VrPose? Head) HandsAndHead()
     {
-        if (_system is null)
+        lock (_session)
         {
-            return ([], null);
-        }
-
-        // The withdrawal, at the one place a controller is actually read (#198).
-        if (!Pointing)
-        {
-            return ([], ReadHead());
-        }
-
-        // Reused rather than allocated per call: sixty-four entries at frame rate is garbage this process
-        // makes while sharing a GPU with Elite, and it is the same array every time.
-        var poses = _poses ??= new TrackedDevicePose_t[OpenVR.k_unMaxTrackedDeviceCount];
-
-        // No prediction.
-        _system.GetDeviceToAbsoluteTrackingPose(
-            ETrackingUniverseOrigin.TrackingUniverseSeated,
-            0,
-            poses);
-
-        var found = new List<VrHand>(2);
-
-        for (uint device = 0; device < poses.Length; device++)
-        {
-            if (_system.GetTrackedDeviceClass(device) != ETrackedDeviceClass.Controller)
+            if (_system is null)
             {
-                continue;
+                return ([], null);
             }
 
-            Note(device, poses[device]);
-
-            if (VrMatrix.Real(poses[device]) is { } grip)
+            // The withdrawal, at the one place a controller is actually read (#198).
+            if (!Pointing)
             {
-                var aim = VrPose.FromMatrix(GripToTip(device) * grip.ToMatrix());
-                found.Add(new VrHand(device, grip, aim));
+                return ([], ReadHead());
             }
-        }
 
-        return (found, VrMatrix.Real(poses[OpenVR.k_unTrackedDeviceIndex_Hmd]));
+            // Reused rather than allocated per call: sixty-four entries at frame rate is garbage this
+            // process makes while sharing a GPU with Elite, and it is the same array every time.
+            var poses = _poses ??= new TrackedDevicePose_t[OpenVR.k_unMaxTrackedDeviceCount];
+
+            // No prediction.
+            _system.GetDeviceToAbsoluteTrackingPose(
+                ETrackingUniverseOrigin.TrackingUniverseSeated,
+                0,
+                poses);
+
+            var found = new List<VrHand>(2);
+
+            for (uint device = 0; device < poses.Length; device++)
+            {
+                if (_system.GetTrackedDeviceClass(device) != ETrackedDeviceClass.Controller)
+                {
+                    continue;
+                }
+
+                Note(device, poses[device]);
+
+                if (VrMatrix.Real(poses[device]) is { } grip)
+                {
+                    var aim = VrPose.FromMatrix(GripToTip(device) * grip.ToMatrix());
+                    found.Add(new VrHand(device, grip, aim));
+                }
+            }
+
+            return (found, VrMatrix.Real(poses[OpenVR.k_unTrackedDeviceIndex_Hmd]));
+        }
     }
 
     private TrackedDevicePose_t[]? _poses;
@@ -493,25 +524,30 @@ public sealed class SteamVrRuntime(
             return;
         }
 
-        _guidesFor = Pointing;
-
-        _beam?.Dispose();
-        _cursor?.Dispose();
-        _beam = null;
-        _cursor = null;
-        _beamLength = float.NaN;
-
-        if (!Pointing)
+        // Taken only on a toggle, and for the reason Stop takes it: the aim thread reads the beam and the
+        // cursor, and must not be inside one while it is being given back.
+        lock (_session)
         {
-            return;
+            _guidesFor = Pointing;
+
+            _beam?.Dispose();
+            _cursor?.Dispose();
+            _beam = null;
+            _cursor = null;
+            _beamLength = float.NaN;
+
+            if (!Pointing)
+            {
+                return;
+            }
+
+            // Both fail soft.
+            _beam = Sprite("com.dseelinger.D47.beam", "D47 aim", VrSprites.Beam(),
+                VrAim.BeamPixelsWide, VrAim.BeamPixelsTall, VrAim.BeamWidthFor(1f), sortOrder: 1);
+
+            _cursor = Sprite("com.dseelinger.D47.cursor", "D47 cursor", VrSprites.Cursor(),
+                VrSprites.CursorSize, VrSprites.CursorSize, VrAim.CursorSizeMetres, sortOrder: 2);
         }
-
-        // Both fail soft.
-        _beam = Sprite("com.dseelinger.D47.beam", "D47 aim", VrSprites.Beam(),
-            VrAim.BeamPixelsWide, VrAim.BeamPixelsTall, VrAim.BeamWidthFor(1f), sortOrder: 1);
-
-        _cursor = Sprite("com.dseelinger.D47.cursor", "D47 cursor", VrSprites.Cursor(),
-            VrSprites.CursorSize, VrSprites.CursorSize, VrAim.CursorSizeMetres, sortOrder: 2);
     }
 
     /// <summary>One of the two static quads: created, given its pixels once, sized, and left.</summary>
