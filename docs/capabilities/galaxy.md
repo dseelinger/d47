@@ -356,11 +356,24 @@ the coordinates, so "how far" has the same answer wherever it is asked from.
 
 #### `find_nearest_station`
 
-Where to buy a named module or ship, nearest first.
+Where to buy a named module or ship, nearest first. A rare good is answered from a table instead,
+since it has one selling station and no other.
 
 ```json
 {"type":"object","properties":{"commodity":{"type":"string","description":"A commodity traded there, by name."},"include_carriers":{"type":"boolean","description":"Also fleet carriers, whose prices are player-set and can move."},"large_pad":{"type":"boolean","description":"Only stations with a large landing pad."},"limit":{"type":"integer","description":"How many to return, 1 to 20. Default 5."},"max_distance":{"type":"number","description":"How far to look, in light years. Default 50."},"max_price_age_hours":{"type":"integer","description":"How stale a quoted price may be, in hours. Default 720, one month."},"max_station_distance":{"type":"number","description":"Furthest from the star, in light seconds."},"min_supply":{"type":"integer","description":"Least in stock, or least demand when selling."},"module":{"type":"string","description":"A module to be sold there, by name \u2014 \u0022Frame Shift Drive\u0022."},"module_class":{"type":"string","description":"Module size, 0 to 8.","enum":["0","1","2","3","4","5","6","7","8"]},"module_rating":{"type":"string","description":"Module rating, A to I.","enum":["A","B","C","D","E","F","G","H","I"]},"near":{"type":"string","description":"Search out from this system. Defaults to theirs."},"order_by":{"type":"string","description":"Nearest first, or best price first. Default price.","enum":["distance","price"]},"selling":{"type":"boolean","description":"Sell it rather than buy it."},"ship":{"type":"string","description":"A ship to be sold there, by name \u2014 \u0022Krait MkII\u0022."},"surface_stations":{"type":"boolean","description":"Also planetary ports and settlements. Default false."},"tag":{"type":"string","description":"Internal. Leave unset."},"tonnes":{"type":"integer","description":"How many tonnes, if they said."}},"required":[],"additionalProperties":false}
 ```
+
+**A rare good is answered from its one station, not from a sweep**
+([#118](https://github.com/dseelinger/d47/issues/118)). Each of the 142 rares is sold at exactly one
+station, which is usually far outside any radius worth searching, so asking the index for markets
+near you returns nothing useful. The station and system come from the shipped table, which
+needs no web access and answers with the galaxy search setting off. How much is on offer per visit
+is the one thing the table cannot hold — it is set by that station's economic state and can be far
+higher during a boom — so it is read as the market's own last report and given with its age. Where
+there is no report, or no web access to ask for one, the station is still named and the quantity is
+said to be unknown. The ship's hold is no part of the answer: what the station is offering is the
+ceiling on a visit, and it is nearly always the smaller of the two. Asking where to *sell* a rare is
+a different question, and the ordinary radius sweep still runs for it.
 
 **Commodity prices come from a second host** ([#350](https://github.com/dseelinger/d47/issues/350)).
 Everything else on this page is spansh; asking where to buy or sell one named commodity goes to

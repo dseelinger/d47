@@ -208,7 +208,8 @@ public static class GalaxyCapability
                 Name = "find_nearest_station",
                 Description =
                     "Find the nearest station selling a named module or ship, or trading a commodity "
-                    + "— cargo carried in tonnes, never an engineering material.",
+                    + "— cargo carried in tonnes, never an engineering material. A rare good answers "
+                    + "with its one selling station and the quantity currently on offer there.",
                 Parameters =
                 [
                     // Three short descriptions on purpose.
@@ -632,6 +633,29 @@ public static class GalaxyCapability
                 { Ledger: not (MaterialLedger.Cargo or MaterialLedger.RareCargo) } material)
         {
             return ToolResult.Ok(MaterialSeam.NotThisOne(material, MaterialSeam.MarketTool));
+        }
+
+        // A rare good is sold at one station and nowhere else, so the radius sweep cannot answer for it
+        // (#118). The table names the station and the one market's quote gives the quantity.
+        if (arguments.TryGetString("commodity", out var rareNamed)
+            && RareCatalogue.Find(rareNamed) is { } rare)
+        {
+            var answer = await RareAsync(rare, trade, settings, now, cancellationToken).ConfigureAwait(false);
+
+            arguments.TryGetBoolean("selling", out var selling);
+
+            // Where a rare can be sold is a different question, and the index does answer that one.
+            if (!selling || galaxy is null || !settings.Current.Knowledge.GalaxySearch)
+            {
+                return ToolResult.Ok(answer);
+            }
+
+            var sold = await FindCommodityAsync(
+                    trade, currentSystem, currentStation, board, now, clipboard, lastFound, arguments,
+                    rare.Name, cancellationToken)
+                .ConfigureAwait(false);
+
+            return ToolResult.Ok($"{answer} {sold.Content}");
         }
 
         if (galaxy is null || !settings.Current.Knowledge.GalaxySearch)
@@ -1101,17 +1125,70 @@ public static class GalaxyCapability
         }
 
         var whose = offer.IsTheirs ? "you saw it" : "reported";
-        var old = DateTimeOffset.UtcNow - when;
 
-        var howLong = old switch
+        return $"{whose} {Since(DateTimeOffset.UtcNow - when)}";
+    }
+
+    /// <summary>How long ago a report was taken, in the words a Commander would use.</summary>
+    private static string Since(TimeSpan old) => old switch
+    {
+        { TotalHours: < 1 } => "within the hour",
+        { TotalHours: < 24 } => $"{old.TotalHours:0} hours ago",
+        { TotalDays: < 14 } => $"{old.TotalDays:0} days ago",
+        _ => $"{old.TotalDays / 7:0} weeks ago",
+    };
+
+    /// <summary>
+    /// A rare good's one station, and how much that station last reported on offer (#118). The quantity
+    /// on offer is the ceiling per visit; it moves with the system's economic state, so no table holds
+    /// it and the station and system are still answered where the index cannot be read.
+    /// </summary>
+    private static async Task<string> RareAsync(
+        RareEntry rare,
+        ITradePlanService? trade,
+        Configuration.SettingsService settings,
+        Func<DateTimeOffset>? now,
+        CancellationToken cancellationToken)
+    {
+        var where = $"{rare.Name} is a rare good, sold at {rare.Station} in {rare.System} and nowhere else.";
+
+        var quote = trade is not null && settings.Current.Knowledge.GalaxySearch
+            ? await QuoteOrNothing(trade, rare, cancellationToken).ConfigureAwait(false)
+            : null;
+
+        if (quote is null)
         {
-            { TotalHours: < 1 } => "within the hour",
-            { TotalHours: < 24 } => $"{old.TotalHours:0} hours ago",
-            { TotalDays: < 14 } => $"{old.TotalDays:0} days ago",
-            _ => $"{old.TotalDays / 7:0} weeks ago",
-        };
+            return where
+                   + " The amount on offer per visit is set by the station and I have no recent report of"
+                   + " it. That amount, whatever it is on the day, is the ceiling on what can be bought in"
+                   + " one visit.";
+        }
 
-        return $"{whose} {howLong}";
+        var reported = quote.UpdatedAt is { } when
+            ? Since((now?.Invoke() ?? DateTimeOffset.UtcNow) - when)
+            : "undated";
+
+        return where
+               + $" Last reported stock {quote.Stock.ToString("N0", CultureInfo.InvariantCulture)},"
+               + $" {reported}. How much is on offer per visit is set by the station's economic state and"
+               + " can be far higher in a boom; that amount is the ceiling on what can be bought in one"
+               + " visit.";
+    }
+
+    /// <summary>Null wherever the index cannot be read, since the station and system still can be.</summary>
+    private static async Task<StationQuote?> QuoteOrNothing(
+        ITradePlanService trade,
+        RareEntry rare,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await trade.QuoteAsync(rare.MarketId, rare.Symbol, cancellationToken).ConfigureAwait(false);
+        }
+        catch (GalaxyUnavailableException)
+        {
+            return null;
+        }
     }
 
     private static async Task<ToolResult> FindBodyAsync(

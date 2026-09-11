@@ -6,6 +6,17 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.26 — Asking about a rare good names its one station and what is on offer there
+
+"How much Lavian Brandy can I get at a time?" used to be answered from the ship's cargo capacity,
+because nothing else was available to answer it with: a rare is sold at one station, and a search for
+markets near you finds nothing. D47 now names that station and system from a table it ships — no web
+access needed — and reads how much is on offer there from the market's own last report, given with
+its age. That figure, not the hold, is what limits a visit, and it moves with the station's economic
+state, so a boom can put far more on offer. Where there is no recent report, the station is still
+named and the quantity is said to be unknown. Asking where to sell one still sweeps the radius, since
+that is a question the market index can answer.
+
 ## 0.110.25 — Three more throttle positions, "military thrust" among them
 
 D47 could only set the throttle to zero or full. Elite's own preset already binds 25%, 50% and
