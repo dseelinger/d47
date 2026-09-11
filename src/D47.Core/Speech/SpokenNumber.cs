@@ -1,6 +1,12 @@
 namespace D47.Core.Speech;
 
-/// <summary>A run of digits as a person would say it inside a name.</summary>
+/// <summary>
+/// A run of digits as a person would say it inside a name, for the local phonemised path
+/// (<see cref="Phonemiser"/>). <see cref="D47.Core.Audio.SpokenNumbers"/> is the near-homonym on the
+/// ElevenLabs path, expanding a whole line rather than one run of digits. <see
+/// cref="SpokenDesignations"/> rewrites every designation to words at the seam before either sees the
+/// line, so a run of digits reaching this class is always a measured quantity.
+/// </summary>
 public static class SpokenNumber
 {
     private static readonly string[] Ones =

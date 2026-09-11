@@ -5,7 +5,11 @@ namespace D47.Core.Audio;
 
 /// <summary>
 /// Digits, written out as the words a voice should say them in (remediation.md, "ElevenLabs switches
-/// Warden to German mid-callout").
+/// Warden to German mid-callout"), for the ElevenLabs path. <see cref="D47.Core.Speech.SpokenNumber"/>
+/// is the near-homonym on the local phonemised path, reading one run of digits rather than expanding a
+/// whole line. <see cref="D47.Core.Speech.SpokenDesignations"/> rewrites every designation to words at
+/// the seam before either sees the line, so a run of digits reaching this class is always a measured
+/// quantity.
 /// </summary>
 public static class SpokenNumbers
 {
