@@ -247,8 +247,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     public bool Visible => Enabled;
 
     /// <summary>
-    /// The panel is the surface a hand can do something to — it is grab-to-move — so it is the one that
-    /// asks SteamVR for a laser and the mouse events that come back with it.
+    /// The panel is the surface a hand can press or carry, so it is the one d47's own ray is cast at.
     /// </summary>
     public bool TakesPointer => true;
 

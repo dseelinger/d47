@@ -249,7 +249,7 @@ and did not, because SteamVR refused the call it made and said so only in d47's 
 and its log says when the controllers are claimed and given back, and **"headset overlay off"**
 then **"headset overlay on"** still frees a controller on an older build. A controller that stops
 answering everything some way into a session is a different fault, open as
-[#18](https://github.com/dseelinger/d47/issues/18).
+[#1](https://github.com/dseelinger/d47/issues/1).
 
 Nothing turns it to face you while you hold it. A panel forced upright and square cannot be
 tilted to read from below or angled to sit beside you, which is most of what moving one is for.
@@ -299,7 +299,7 @@ one headset surface where a controller can genuinely press it.
 **Off out of the box, and that is a withdrawal rather than a preference.** A controller put down
 while Directive 47 was connected to SteamVR, that then went to standby, never woke up on its own —
 every time. Put down while Directive 47 was *not* connected, it always did. That is
-[#18](https://github.com/dseelinger/d47/issues/18), and it is not understood.
+[#1](https://github.com/dseelinger/d47/issues/1), and it is not understood.
 
 Directive 47 read your controllers' positions about ninety times a second for the whole session,
 whether or not you were pointing at anything — around 350,000 times in one hour-long session in
