@@ -31,6 +31,11 @@ public class WhereToBuyTheWholeBuildTests
 
             return Task.FromResult(Answer);
         }
+
+        public Task<StationQuote?> QuoteAsync(
+            long marketId,
+            string commodity,
+            CancellationToken cancellationToken) => Task.FromResult<StationQuote?>(null);
     }
 
     private const string Docked =

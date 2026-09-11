@@ -215,6 +215,13 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
                 Z = found.Z,
             };
 
+    /// <summary>What one station last reported about one commodity (#116).</summary>
+    public Task<StationQuote?> QuoteAsync(
+        long marketId,
+        string commodity,
+        CancellationToken cancellationToken) =>
+        _commodities.QuoteAsync(marketId, commodity, cancellationToken);
+
     /// <summary>Where to buy everything one construction site still needs (Phase 50).</summary>
     public async Task<SourcingAnswer> SourceConstructionAsync(
         SourcingSearch search,

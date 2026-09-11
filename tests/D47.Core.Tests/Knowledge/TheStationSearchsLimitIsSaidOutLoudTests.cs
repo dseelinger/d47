@@ -58,6 +58,11 @@ public class TheStationSearchsLimitIsSaidOutLoudTests
         public Task<SourcingAnswer> SourceConstructionAsync(
             SourcingSearch search,
             CancellationToken cancellationToken) => Task.FromResult(SourcingAnswer.Empty);
+
+        public Task<StationQuote?> QuoteAsync(
+            long marketId,
+            string commodity,
+            CancellationToken cancellationToken) => Task.FromResult<StationQuote?>(null);
     }
 
     /// <summary>The module-and-ship half — a module name, so the commodity fork is not taken.</summary>

@@ -28,6 +28,11 @@ public class TheCommoditySearchsKnobsAreTheModelsTests
         public Task<SourcingAnswer> SourceConstructionAsync(
             SourcingSearch search,
             CancellationToken cancellationToken) => Task.FromResult(SourcingAnswer.Empty);
+
+        public Task<StationQuote?> QuoteAsync(
+            long marketId,
+            string commodity,
+            CancellationToken cancellationToken) => Task.FromResult<StationQuote?>(null);
     }
 
     /// <summary>Nothing this file is about — the commodity fork happens above every one of these.</summary>

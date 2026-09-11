@@ -26,6 +26,8 @@ public sealed class ArdentCommodityService : IDisposable
 
     private const string Nearby = "v2/system/name/{0}/commodity/name/{1}/nearby/{2}";
 
+    private const string Market = "v2/market/{0}/commodity/name/{1}";
+
     /// <summary>One call's wait.</summary>
     private static readonly TimeSpan CallBudget = TimeSpan.FromSeconds(20);
 
@@ -115,6 +117,46 @@ public sealed class ArdentCommodityService : IDisposable
         var reference = await CoordinatesAsync(search.System, cancellationToken).ConfigureAwait(false);
 
         return new Reply(markets, reference, rows >= RowCeiling);
+    }
+
+    /// <summary>
+    /// What one station last reported about one commodity, or null where the index has no report for
+    /// that market (#116).
+    /// </summary>
+    public async Task<StationQuote?> QuoteAsync(
+        long marketId,
+        string commodity,
+        CancellationToken cancellationToken)
+    {
+        if (await SymbolAsync(commodity, cancellationToken).ConfigureAwait(false) is not { } symbol)
+        {
+            _logger.LogWarning("The market index lists no commodity called {Commodity}", commodity);
+
+            throw new GalaxyUnavailableException(
+                $"The market index has no commodity called \"{commodity}\".");
+        }
+
+        // The catalogue's answer, folded. This endpoint matches on letters and digits alone, case
+        // ignored: "lowtemperaturediamond" is found and "low_temperature_diamond" is not. Folding the
+        // spelling the Commander used instead would ask for "lowtemperaturediamonds", which the index
+        // spells singular and answers 404 for.
+        var url = string.Format(CultureInfo.InvariantCulture, Market, marketId, Fold(symbol));
+
+        using var document =
+            await SendAsync(url, missingIsNull: true, cancellationToken).ConfigureAwait(false);
+
+        if (document?.RootElement is not { ValueKind: JsonValueKind.Object } row)
+        {
+            return null;
+        }
+
+        return new StationQuote(
+            Whole(row, "stock"),
+            Whole(row, "stockBracket"),
+            Whole(row, "buyPrice"),
+            Whole(row, "demand"),
+            Whole(row, "sellPrice"),
+            Moment(row, "updatedAt"));
     }
 
     /// <summary>The rows, as <see cref="MarketSnapshot"/> reads them.</summary>
@@ -340,7 +382,17 @@ public sealed class ArdentCommodityService : IDisposable
             : null;
 
     /// <summary>One call, with every way it can go wrong turned into a sentence.</summary>
-    private async Task<JsonDocument> SendAsync(string url, CancellationToken cancellationToken)
+    private async Task<JsonDocument> SendAsync(string url, CancellationToken cancellationToken) =>
+        (await SendAsync(url, missingIsNull: false, cancellationToken).ConfigureAwait(false))!;
+
+    /// <summary>
+    /// The same call, where <paramref name="missingIsNull"/> reads a 404 or an empty body as the index
+    /// having no report rather than as a failure. Null only ever comes back under that flag.
+    /// </summary>
+    private async Task<JsonDocument?> SendAsync(
+        string url,
+        bool missingIsNull,
+        CancellationToken cancellationToken)
     {
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         deadline.CancelAfter(CallBudget);
@@ -371,6 +423,11 @@ public sealed class ArdentCommodityService : IDisposable
         {
             if (!response.IsSuccessStatusCode)
             {
+                if (missingIsNull && response.StatusCode == HttpStatusCode.NotFound)
+                {
+                    return null;
+                }
+
                 _logger.LogWarning("The market index answered {Status}", (int)response.StatusCode);
 
                 throw new GalaxyUnavailableException(response.StatusCode switch
@@ -381,6 +438,13 @@ public sealed class ArdentCommodityService : IDisposable
                         "The market search reported a server error. It should clear shortly.",
                     _ => "The market search refused that request.",
                 });
+            }
+
+            // The reply is read whole before this is asked, so the length is the body's own even where
+            // the wire carried no Content-Length header to state it.
+            if (missingIsNull && response.Content.Headers.ContentLength is 0)
+            {
+                return null;
             }
 
             try

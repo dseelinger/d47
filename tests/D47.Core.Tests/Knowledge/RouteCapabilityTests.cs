@@ -112,6 +112,11 @@ public class RouteCapabilityTests
                 ? Task.FromException<SourcingAnswer>(Throws)
                 : Task.FromResult(Sourcing);
         }
+
+        public Task<StationQuote?> QuoteAsync(
+            long marketId,
+            string commodity,
+            CancellationToken cancellationToken) => Task.FromResult<StationQuote?>(null);
     }
 
     private static void Apply(GameStateStore gameState, string json)

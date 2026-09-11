@@ -70,6 +70,11 @@ public class ThePriceAgeKnobIsSpelledOnceTests
         public Task<SourcingAnswer> SourceConstructionAsync(
             SourcingSearch search,
             CancellationToken cancellationToken) => Task.FromResult(SourcingAnswer.Empty);
+
+        public Task<StationQuote?> QuoteAsync(
+            long marketId,
+            string commodity,
+            CancellationToken cancellationToken) => Task.FromResult<StationQuote?>(null);
     }
 
     /// <summary>The same, for the galaxy half.</summary>

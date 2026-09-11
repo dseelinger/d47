@@ -28,6 +28,11 @@ public class TheFourInaraKnobsReachTheSearchTests
 
         public Task<SourcingAnswer> SourceConstructionAsync(SourcingSearch search, CancellationToken cancellationToken) =>
             Task.FromResult(SourcingAnswer.Empty);
+
+        public Task<StationQuote?> QuoteAsync(
+            long marketId,
+            string commodity,
+            CancellationToken cancellationToken) => Task.FromResult<StationQuote?>(null);
     }
 
     private sealed class SilentGalaxy : IGalaxyService

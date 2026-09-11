@@ -445,7 +445,29 @@ public interface ITradePlanService
 
     /// <summary>Where to buy everything one construction site still needs (Phase 50).</summary>
     Task<SourcingAnswer> SourceConstructionAsync(SourcingSearch search, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// One market's last reported figures for one commodity, or null where the index has no report for
+    /// that market. A commodity the index does not list at all raises
+    /// <see cref="GalaxyUnavailableException"/> rather than reading as an absent report (#116).
+    /// </summary>
+    Task<StationQuote?> QuoteAsync(long marketId, string commodity, CancellationToken cancellationToken);
 }
+
+/// <summary>
+/// What one station last reported about one commodity (#116). A rare good is sold at one station and
+/// nowhere else, so its per-visit quantity is this report rather than a figure any table can hold.
+/// </summary>
+/// <param name="Stock">How many tonnes are on offer, which moves with the system's economic state.</param>
+/// <param name="StockBracket">The index's own banding of that stock, 0 to 3.</param>
+/// <param name="UpdatedAt">When the market reported, or null where the index did not date it.</param>
+public sealed record StationQuote(
+    int Stock,
+    int StockBracket,
+    int BuyPrice,
+    int Demand,
+    int SellPrice,
+    DateTimeOffset? UpdatedAt);
 
 /// <summary>One build's sourcing question (Phase 50).</summary>
 /// <param name="System">Where to search out from.</param>

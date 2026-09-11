@@ -40,6 +40,11 @@ public class TheSourcingPageTests
 
             return Task.FromResult(Answer);
         }
+
+        public Task<StationQuote?> QuoteAsync(
+            long marketId,
+            string commodity,
+            CancellationToken cancellationToken) => Task.FromResult<StationQuote?>(null);
     }
 
     /// <summary>Secrets are not this page's business; the settings service simply wants one.</summary>
