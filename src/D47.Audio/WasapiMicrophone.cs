@@ -9,7 +9,7 @@ namespace D47.Audio;
 /// The microphone, running continuously into whatever <see cref="ICaptureSink"/> it was handed — the
 /// gate, or the echo canceller in front of it.
 /// </summary>
-public sealed class WasapiMicrophone : IDisposable
+public sealed class WasapiMicrophone : IDefaultDeviceReopener, IDisposable
 {
     /// <summary>What Whisper wants: 16 kHz mono.</summary>
     public const int SampleRate = 16000;
@@ -25,11 +25,13 @@ public sealed class WasapiMicrophone : IDisposable
     private readonly ICaptureSink _sink;
     private readonly ILogger<WasapiMicrophone> _logger;
     private readonly IAudioEndpointEnumerator _enumerator;
+    private readonly DefaultDeviceFollower _follower;
 
     private WasapiCapture? _capture;
     private MediaFoundationResampler? _resampler;
     private BufferedWaveProvider? _incoming;
     private string? _openDevice;
+    private string? _openEndpointId;
     private bool _disposed;
 
     private readonly Lock _lifecycle = new();
@@ -44,6 +46,7 @@ public sealed class WasapiMicrophone : IDisposable
         _sink = sink;
         _logger = logger;
         _enumerator = enumerator;
+        _follower = new DefaultDeviceFollower(enumerator, DataFlow.Capture, DefaultRole);
     }
 
     /// <summary>Whether audio is actually flowing.</summary>
@@ -82,72 +85,104 @@ public sealed class WasapiMicrophone : IDisposable
                 return;
             }
 
-            Stop();
-
-            try
-            {
-                var target = Resolve(deviceId);
-
-                using var enumerator = new MMDeviceEnumerator();
-
-                var device = target is { } endpoint
-                    ? enumerator.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.Active)
-                        .FirstOrDefault(candidate => candidate.ID == endpoint.Id)
-                    : null;
-
-                if (device is null)
-                {
-                    // A blank selection producing a silent default is the failure the checklist calls out by
-                    // name: a turn reports no speech detected with nothing indicating why.
-                    Unavailable = deviceId is { Length: > 0 }
-                        ? "The selected microphone is not available. Pick another in Settings."
-                        : "No microphone is available.";
-
-                    _logger.LogWarning("{Reason}", Unavailable);
-                    return;
-                }
-
-                _capture = new WasapiCapture(device);
-                _capture.DataAvailable += OnData;
-                _capture.RecordingStopped += OnStopped;
-
-                // The device decides its own format; d47 converts.
-                _incoming = new BufferedWaveProvider(_capture.WaveFormat)
-                {
-                    DiscardOnBufferOverflow = true,
-                    BufferDuration = TimeSpan.FromSeconds(2),
-
-                    // The other half of the ReadFully story, and the more damaging half.
-                    ReadFully = false,
-                };
-
-                _resampler = new MediaFoundationResampler(
-                    _incoming,
-                    WaveFormat.CreateIeeeFloatWaveFormat(SampleRate, 1))
-                {
-                    ResamplerQuality = 60,
-                };
-
-                _capture.StartRecording();
-
-                _openDevice = deviceId;
-                OpenDeviceName = device.FriendlyName;
-                IsCapturing = true;
-                Unavailable = null;
-
-                _logger.LogInformation(
-                    "Listening on {Device} ({Format})", device.FriendlyName, _capture.WaveFormat);
-            }
-            catch (Exception ex)
-            {
-                // No microphone is a capability being off, not a startup failure — d47 stays fully usable
-                // typed (Phase 3, "Capabilities as state, not guard").
-                Unavailable = $"The microphone could not be opened: {ex.Message}";
-                _logger.LogError(ex, "Could not open the microphone");
-                Stop();
-            }
+            OpenCore(deviceId);
         }
     }
+
+    /// <summary>
+    /// Re-opens even when <paramref name="deviceId"/> matches what is already configured — the resolved
+    /// endpoint behind "system default" may have moved (#67).
+    /// </summary>
+    public void Reopen(string? deviceId)
+    {
+        lock (_lifecycle)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            OpenCore(deviceId);
+        }
+    }
+
+    private void OpenCore(string? deviceId)
+    {
+        Stop();
+
+        try
+        {
+            var target = Resolve(deviceId);
+
+            using var enumerator = new MMDeviceEnumerator();
+
+            var device = target is { } endpoint
+                ? enumerator.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.Active)
+                    .FirstOrDefault(candidate => candidate.ID == endpoint.Id)
+                : null;
+
+            if (device is null)
+            {
+                // A blank selection producing a silent default is the failure the checklist calls out by
+                // name: a turn reports no speech detected with nothing indicating why.
+                Unavailable = deviceId is { Length: > 0 }
+                    ? "The selected microphone is not available. Pick another in Settings."
+                    : "No microphone is available.";
+
+                _logger.LogWarning("{Reason}", Unavailable);
+                return;
+            }
+
+            _capture = new WasapiCapture(device);
+            _capture.DataAvailable += OnData;
+            _capture.RecordingStopped += OnStopped;
+
+            // The device decides its own format; d47 converts.
+            _incoming = new BufferedWaveProvider(_capture.WaveFormat)
+            {
+                DiscardOnBufferOverflow = true,
+                BufferDuration = TimeSpan.FromSeconds(2),
+
+                // The other half of the ReadFully story, and the more damaging half.
+                ReadFully = false,
+            };
+
+            _resampler = new MediaFoundationResampler(
+                _incoming,
+                WaveFormat.CreateIeeeFloatWaveFormat(SampleRate, 1))
+            {
+                ResamplerQuality = 60,
+            };
+
+            _capture.StartRecording();
+
+            _openDevice = deviceId;
+            _openEndpointId = device.ID;
+            OpenDeviceName = device.FriendlyName;
+            IsCapturing = true;
+            Unavailable = null;
+
+            _logger.LogInformation(
+                "Listening on {Device} ({Format})", device.FriendlyName, _capture.WaveFormat);
+        }
+        catch (Exception ex)
+        {
+            // No microphone is a capability being off, not a startup failure — d47 stays fully usable
+            // typed (Phase 3, "Capabilities as state, not guard").
+            Unavailable = $"The microphone could not be opened: {ex.Message}";
+            _logger.LogError(ex, "Could not open the microphone");
+            Stop();
+        }
+    }
+
+    /// <summary>
+    /// Whether the Default Device has moved and settled, and is due to be followed. Call once per tick;
+    /// stays true until <see cref="AcknowledgeDefaultDeviceMove"/> (#67).
+    /// </summary>
+    public bool DefaultDeviceMoved(DateTimeOffset now) => _follower.Poll(now);
+
+    /// <summary>Marks a due default-device move as handled.</summary>
+    public void AcknowledgeDefaultDeviceMove() => _follower.Acknowledge();
+
+    /// <summary>Whether the device currently open has itself disappeared, as opposed to merely losing "default".</summary>
+    public bool OpenDeviceIsGone() =>
+        _openEndpointId is { Length: > 0 } id && !_enumerator.Active(DataFlow.Capture).Any(endpoint => endpoint.Id == id);
 
     private void OnData(object? sender, WaveInEventArgs e)
     {
@@ -247,6 +282,7 @@ public sealed class WasapiMicrophone : IDisposable
     {
         IsCapturing = false;
         OpenDeviceName = null;
+        _openEndpointId = null;
 
         if (_capture is { } capture)
         {
@@ -283,5 +319,8 @@ public sealed class WasapiMicrophone : IDisposable
             _disposed = true;
             Stop();
         }
+
+        _follower.Dispose();
+        (_enumerator as IDisposable)?.Dispose();
     }
 }

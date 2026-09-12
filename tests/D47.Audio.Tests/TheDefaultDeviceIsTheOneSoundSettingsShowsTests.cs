@@ -73,6 +73,12 @@ public class TheDefaultDeviceIsTheOneSoundSettingsShowsTests
     {
         public IReadOnlyList<AudioEndpoint> Active(DataFlow flow) => flow == DataFlow.Capture ? capture : render;
 
+        event Action<DataFlow, Role>? IAudioEndpointEnumerator.DefaultDeviceChanged
+        {
+            add { }
+            remove { }
+        }
+
         public AudioEndpoint? Default(DataFlow flow, Role role) => (flow, role) switch
         {
             (DataFlow.Capture, var r) when r == defaultCapture.Role => defaultCapture.Endpoint,

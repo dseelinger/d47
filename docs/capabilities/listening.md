@@ -289,11 +289,14 @@ having looked is not the same as having looked and found nothing.
 
 Which input to listen on. Leave it unset and Directive 47 follows your Default Device — the
 microphone Windows Sound settings shows first — not the separate Communications default some
-headsets split off.
+headsets split off. Left on "system default", it keeps following that row while it runs, so
+switching to a headset mid-session moves the open microphone with it. A device you have chosen by
+name stays chosen instead.
 
 If the one you chose disappears, the status answer names it rather than reporting generic
 silence. No microphone at all is a feature being off, not a failure — Directive 47 stays fully
-usable typed.
+usable typed. A move that lands mid-sentence says it did not catch that rather than dropping the
+words silently.
 
 #### Push-to-talk {#push-to-talk-key}
 

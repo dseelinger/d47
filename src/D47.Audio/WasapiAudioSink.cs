@@ -7,7 +7,7 @@ using NAudio.Wave.SampleProviders;
 namespace D47.Audio;
 
 /// <summary>The one output device, driven by the arbiter above it.</summary>
-public sealed class WasapiAudioSink : IAudioSink, IDisposable
+public sealed class WasapiAudioSink : IAudioSink, IDefaultDeviceReopener, IDisposable
 {
     /// <summary>
     /// The graph runs at 48 kHz stereo float regardless of what the clips are, because that is what
@@ -25,12 +25,14 @@ public sealed class WasapiAudioSink : IAudioSink, IDisposable
 
     private readonly ILogger<WasapiAudioSink> _logger;
     private readonly IAudioEndpointEnumerator _enumerator;
+    private readonly DefaultDeviceFollower _follower;
     private readonly Lock _gate = new();
     private readonly Dictionary<long, Input> _inputs = [];
     private readonly MixingSampleProvider _mixer;
     private readonly RenderTap _tap;
 
     private WasapiOut? _output;
+    private string? _openEndpointId;
     private bool _disposed;
 
     private sealed record Input(VolumeSampleProvider Volume, ISampleProvider Root);
@@ -44,6 +46,7 @@ public sealed class WasapiAudioSink : IAudioSink, IDisposable
     {
         _logger = logger;
         _enumerator = enumerator;
+        _follower = new DefaultDeviceFollower(enumerator, DataFlow.Render, DefaultRole);
 
         _mixer = new MixingSampleProvider(MixFormat)
         {
@@ -66,6 +69,9 @@ public sealed class WasapiAudioSink : IAudioSink, IDisposable
 
     /// <summary>What the system default (the Windows Default Device) currently resolves to, without opening anything.</summary>
     public string? DefaultDeviceName() => _enumerator.Default(DataFlow.Render, DefaultRole)?.Name;
+
+    /// <summary>The friendly name of the device currently open, for logging a move away from it.</summary>
+    public string? OpenDeviceName { get; private set; }
 
     /// <summary>The endpoint <paramref name="deviceId"/> names, or the Default Device when it is null.</summary>
     internal AudioEndpoint? ResolveEndpoint(string? deviceId) => deviceId is { Length: > 0 }
@@ -99,9 +105,10 @@ public sealed class WasapiAudioSink : IAudioSink, IDisposable
             _output.Init(_tap);
             _output.Play();
 
-            _logger.LogInformation(
-                "Audio output open on {Device}",
-                device?.FriendlyName ?? "the system default device");
+            _openEndpointId = device?.ID;
+            OpenDeviceName = device?.FriendlyName ?? "the system default device";
+
+            _logger.LogInformation("Audio output open on {Device}", OpenDeviceName);
         }
     }
 
@@ -120,6 +127,19 @@ public sealed class WasapiAudioSink : IAudioSink, IDisposable
 
         Open(deviceId);
     }
+
+    /// <summary>
+    /// Whether the Default Device has moved and settled, and is due to be followed. Call once per tick;
+    /// stays true until <see cref="AcknowledgeDefaultDeviceMove"/> (#67).
+    /// </summary>
+    public bool DefaultDeviceMoved(DateTimeOffset now) => _follower.Poll(now);
+
+    /// <summary>Marks a due default-device move as handled.</summary>
+    public void AcknowledgeDefaultDeviceMove() => _follower.Acknowledge();
+
+    /// <summary>Whether the device currently open has itself disappeared, as opposed to merely losing "default".</summary>
+    public bool OpenDeviceIsGone() =>
+        _openEndpointId is { Length: > 0 } id && !_enumerator.Active(DataFlow.Render).Any(endpoint => endpoint.Id == id);
 
     public void Play(PlaybackRequest request)
     {
@@ -234,5 +254,8 @@ public sealed class WasapiAudioSink : IAudioSink, IDisposable
             _output = null;
             _inputs.Clear();
         }
+
+        _follower.Dispose();
+        (_enumerator as IDisposable)?.Dispose();
     }
 }

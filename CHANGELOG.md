@@ -6,6 +6,18 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.41 — D47 follows the Default Device as it moves, not just where it started
+
+Left on "system default", the microphone and the speaker resolved which device that was once, at
+startup, and held it for the rest of the session. Switching on a headset mid-session moved
+Windows' own default without d47 noticing, so it kept listening to and speaking through whatever
+had been default before. Both now register for Windows' default-device notifications and re-open
+once a move settles — one re-open for a burst of several, and only on whichever direction is left
+on "system default"; a chosen device is unaffected. A line already playing finishes rather than
+being cut off mid-word, unless the device playing it has itself disappeared, in which case it
+stops rather than continuing on a device no longer there. A microphone move that lands
+mid-sentence says it did not catch that rather than dropping the words silently.
+
 ## 0.110.40 — D47 now listens on and speaks to the same Windows default
 
 The microphone and output device rows followed different Windows defaults: the microphone opened

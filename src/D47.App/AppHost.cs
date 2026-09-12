@@ -2042,6 +2042,10 @@ public sealed class AppHost : IDisposable
             gate.Poll(context.Now);
         });
 
+        // Windows moves its own default endpoint silently; nothing else notices while d47 holds a device
+        // open, so this asks (#67).
+        tick.Add("default-audio-devices", context => host.FollowDefaultDevices(context.Now));
+
         // Two sources, one gate (Phase 53).
         pushToTalk.Pressed += sources.KeyPressed;
         pushToTalk.Released += sources.KeyReleased;
@@ -3659,6 +3663,61 @@ public sealed class AppHost : IDisposable
                 _logger.LogError(ex, "Could not move audio output to {Device}", speech.OutputDevice);
             }
         }
+    }
+
+    /// <summary>
+    /// Follows the Windows Default Device as it moves, on whichever direction is left on "system default" —
+    /// a chosen device is unaffected. Waits for the arbiter, or the gate, to go idle unless the device that
+    /// was open has itself disappeared (#67).
+    /// </summary>
+    private void FollowDefaultDevices(DateTimeOffset now)
+    {
+        var speech = Settings.Current.Speech;
+        var listening = Settings.Current.Listening;
+
+        var outputMove = DefaultDeviceFollowPolicy.Poll(
+            _audioSink,
+            now,
+            followingDefault: string.IsNullOrEmpty(speech.OutputDevice),
+            configuredDeviceId: speech.OutputDevice,
+            isBusy: () => Audio.IsSpeaking,
+            interrupt: Audio.Silence);
+
+        if (outputMove is { } output)
+        {
+            _logger.LogInformation(
+                "The Default Device moved output from {Old} to {New}",
+                output.OldDeviceName ?? "(none)",
+                output.NewDeviceName ?? "(none)");
+        }
+
+        var inputMove = DefaultDeviceFollowPolicy.Poll(
+            _microphone,
+            now,
+            followingDefault: string.IsNullOrEmpty(listening.InputDevice),
+            configuredDeviceId: listening.InputDevice,
+            isBusy: () => Listening.IsListening,
+            interrupt: Listening.Reset);
+
+        if (inputMove is not { } input)
+        {
+            return;
+        }
+
+        _logger.LogInformation(
+            "The Default Device moved input from {Old} to {New}",
+            input.OldDeviceName ?? "(none)",
+            input.NewDeviceName ?? "(none)");
+
+        if (!input.Interrupted)
+        {
+            return;
+        }
+
+        // The gate was reset mid-utterance rather than left to time out silently.
+        const string problem = "I did not catch that — my microphone just moved to a different device.";
+        _ = Voice.AnnounceAsync(problem);
+        Said?.Invoke(problem);
     }
 
     /// <summary>Turns one captured utterance into words and hands them on.</summary>

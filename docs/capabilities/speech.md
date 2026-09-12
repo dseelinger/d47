@@ -721,6 +721,11 @@ Sound settings shows first — not the separate Communications default some head
 Change it and it moves immediately. If a device is unplugged it falls back to the default rather
 than going quiet.
 
+Left on "system default", it keeps following that row while it runs — switch a headset on and
+Directive 47 moves to it within a second, waiting for the line in progress to finish rather than
+cutting it off mid-word. A device you have chosen by name stays chosen; it only falls back if
+that specific device disappears.
+
 It shares the device rather than taking it over — the game is what matters on that output.
 
 #### Loop-state cues {#cues}
