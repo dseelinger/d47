@@ -26,13 +26,22 @@ public sealed class VrActionInput(ILogger logger, IOpenVrSession session)
     /// <summary>The refusal a failing release was last logged with, so ten a second is said once.</summary>
     private EVRInputError? _releaseRefused;
 
+    /// <summary>The refusals a failing registration has already been logged with, so each is said once.</summary>
+    private readonly HashSet<string> _registerRefused = new(StringComparer.Ordinal);
+
+    /// <summary>The manifest paths, written on the first attempt and reused by every retry.</summary>
+    private (string Actions, string Application)? _manifest;
+
     /// <summary>Whether the trigger can be read at all.</summary>
     public bool Ready => _input is not null;
 
     /// <summary>Whether this frame is claiming the controllers, for the diagnostic line.</summary>
     public bool HoldingPriority { get; private set; }
 
-    /// <summary>Registers with SteamVR and loads the manifest.</summary>
+    /// <summary>
+    /// Registers with SteamVR and loads the manifest. Called every tick until it succeeds: a refusal that
+    /// persists writes the manifest files once and logs each distinct reason once.
+    /// </summary>
     public void Register(string actionFolder)
     {
         if (_input is not null)
@@ -44,18 +53,27 @@ public sealed class VrActionInput(ILogger logger, IOpenVrSession session)
         {
             if (session.Applications is not { } applications || session.Input is not { } input)
             {
-                logger.LogWarning("SteamVR has no input interface; the panel stays display-only");
+                if (_registerRefused.Add("interface"))
+                {
+                    logger.LogWarning("SteamVR has no input interface; the panel stays display-only");
+                }
+
                 return;
             }
 
-            var actions = VrActionManifest.Write(actionFolder);
-            var application = VrActionManifest.WriteAppManifest(actionFolder, actions);
+            if (_manifest is null)
+            {
+                var written = VrActionManifest.Write(actionFolder);
+                _manifest = (written, VrActionManifest.WriteAppManifest(actionFolder, written));
+            }
+
+            var (actions, application) = _manifest.Value;
 
             // Temporary, so it evaporates on a SteamVR restart rather than accumulating stale entries in the
             // Commander's application list.
             var added = applications.AddApplicationManifest(application, true);
 
-            if (added != EVRApplicationError.None)
+            if (added != EVRApplicationError.None && _registerRefused.Add($"application:{added}"))
             {
                 logger.LogWarning("SteamVR would not take d47's application manifest: {Error}", added);
             }
@@ -64,7 +82,7 @@ public sealed class VrActionInput(ILogger logger, IOpenVrSession session)
                 (uint)Environment.ProcessId,
                 VrActionManifest.AppKey);
 
-            if (identified != EVRApplicationError.None)
+            if (identified != EVRApplicationError.None && _registerRefused.Add($"identify:{identified}"))
             {
                 logger.LogWarning("SteamVR would not identify d47 as {Key}: {Error}", VrActionManifest.AppKey, identified);
             }
@@ -73,7 +91,11 @@ public sealed class VrActionInput(ILogger logger, IOpenVrSession session)
 
             if (loaded != EVRInputError.None)
             {
-                logger.LogWarning("SteamVR would not load the action manifest at {Path}: {Error}", actions, loaded);
+                if (_registerRefused.Add($"manifest:{loaded}"))
+                {
+                    logger.LogWarning("SteamVR would not load the action manifest at {Path}: {Error}", actions, loaded);
+                }
+
                 return;
             }
 
@@ -85,7 +107,11 @@ public sealed class VrActionInput(ILogger logger, IOpenVrSession session)
                 || input.GetActionHandle(VrActionManifest.GrabAction, ref grab) != EVRInputError.None
                 || input.GetActionHandle(VrActionManifest.BackAction, ref back) != EVRInputError.None)
             {
-                logger.LogWarning("The action handles would not resolve; the panel stays display-only");
+                if (_registerRefused.Add("handles"))
+                {
+                    logger.LogWarning("The action handles would not resolve; the panel stays display-only");
+                }
+
                 return;
             }
 
@@ -93,13 +119,17 @@ public sealed class VrActionInput(ILogger logger, IOpenVrSession session)
             _grab = grab;
             _back = back;
             _input = input;
+            _registerRefused.Clear();
 
             logger.LogInformation("Controller input is on: the trigger carries the panel");
         }
         catch (Exception ex)
         {
             // No action input is a downgrade, not a failure.
-            logger.LogWarning(ex, "Controller input is unavailable; the panel stays display-only");
+            if (_registerRefused.Add($"exception:{ex.GetType()}"))
+            {
+                logger.LogWarning(ex, "Controller input is unavailable; the panel stays display-only");
+            }
         }
     }
 

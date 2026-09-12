@@ -6,6 +6,17 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.46 — A SteamVR registration that keeps being refused says so once
+
+D47 registers its controller bindings with SteamVR as soon as the headset session is up, and tries
+again on every tick until SteamVR takes them. When SteamVR refused for a reason that did not clear,
+that retry rewrote the six binding files on disk and wrote the same warning to the log ten times a
+second for as long as the session lasted.
+
+The retry is unchanged, because the refusal often does clear. The files are now written once, and each
+distinct reason is logged once. A different refusal is logged once more, and the registration
+finally going through still says that controller input is on.
+
 ## 0.110.45 — A part of D47 that keeps failing is paused rather than retried forever
 
 Almost everything D47 does runs off one loop that ticks ten times a second. A part of that loop

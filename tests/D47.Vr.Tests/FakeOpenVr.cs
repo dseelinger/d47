@@ -408,10 +408,13 @@ public sealed class FakeOpenVr :
         waiting.Enqueue(new VREvent_t { eventType = (uint)kind });
     }
 
+    /// <summary>What <c>SetActionManifestPath</c> answers with. None lets registration through.</summary>
+    public EVRInputError ManifestRefused { get; set; }
+
     public EVRInputError SetActionManifestPath(string path)
     {
         Record(nameof(SetActionManifestPath));
-        return EVRInputError.None;
+        return ManifestRefused;
     }
 
     public EVRInputError GetActionSetHandle(string name, ref ulong handle)
