@@ -99,16 +99,13 @@ public static class ChecklistEvaluator
         ShipLoadout loadout)
     {
 
-        // A ShipID now reporting a different hull makes the list stale and says so, rather than silently
-        // diffing an exploration Krait against a Cutter. **Compared as hulls and not as strings** (reported
-        // 2026-08-20).
+        // A ShipID now reporting a different hull is a ship that is gone: nothing is said, and
+        // ShipPlanService.DropGone deletes the line. Compared as hulls, not as strings.
         if (item.Hull is { } hull
             && loadout.Type is { } type
             && !SameHull(hull, type))
         {
-            return new ChecklistVerdict(
-                ChecklistState.Stale,
-                $"That ship id now reports a {loadout.TypeName ?? type}, and this plan was written for a {hull}.");
+            return null;
         }
 
         var module = Fitted(loadout, intent.Subject);
@@ -529,7 +526,7 @@ public static class ChecklistEvaluator
         string Name, int? Grade, IReadOnlyList<FittedModification> Modifications);
 
     /// <summary>Whether two hull spellings name the same ship.</summary>
-    private static bool SameHull(string planned, string flying) =>
+    internal static bool SameHull(string planned, string flying) =>
         string.Equals(planned, flying, StringComparison.OrdinalIgnoreCase)
         || (EliteSpecifications.Ship(planned) is { } was
             && EliteSpecifications.Ship(flying) is { } now

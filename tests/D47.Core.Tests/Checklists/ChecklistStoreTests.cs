@@ -36,6 +36,31 @@ public class ChecklistStoreTests
         Assert.Equal("buy limpets", store.For("F1").Items.Single().Text);
     }
 
+    /// <summary>Files written by older versions hold this state.</summary>
+    [Fact]
+    public void AStaleLineWrittenByAnOlderVersionStillLoads()
+    {
+        using var install = new TempInstall();
+        var store = Store(install);
+
+        File.WriteAllText(
+            store.Path,
+            """
+            {
+              "commanders": [
+                { "commanderFid": "F1", "items": [
+                  { "key": "blueprint-mainengines", "scope": { "group": "ship", "key": "12" },
+                    "kind": "derived", "source": "engineeringPlan", "text": "Grade 5 Dirty Drives",
+                    "intent": { "kind": "blueprint", "subject": "MainEngines", "detail": "Dirty Drives", "grade": 5 },
+                    "state": "stale", "hull": "sidewinder" } ] } ]
+            }
+            """);
+
+        Assert.True(store.Poll());
+        Assert.Empty(store.Problems);
+        Assert.Equal(ChecklistState.Stale, store.For("F1").Items.Single().State);
+    }
+
     [Fact]
     public void ABadLineIsReportedAndTheRestOfTheFileStillLoads()
     {

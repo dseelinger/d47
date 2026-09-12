@@ -1007,21 +1007,6 @@ public sealed class AppHost : IDisposable
             // The commodity board the Commander is standing in front of, if they have opened one (Phase 36).
             markets.Poll(gameState.Active?.Location.StarPos);
 
-            // A sold ship's list goes with the ship (change-requests.md 27).
-            if (!context.IsFirst)
-            {
-                foreach (var journalEvent in events)
-                {
-                    if (journalEvent.Kind == "ShipyardSell"
-                        && journalEvent.Int("SellShipID") is { } sold)
-                    {
-                        // What it cleared goes onto the list's own news queue, so the checklist callout
-                        // speaks it and the Commander can switch that off like anything else it says.
-                        checklists.ShipSold(sold);
-                    }
-                }
-            }
-
             // Before the callouts and inside this subscriber, so a verdict recomputed from this tick's events
             // is announced on this tick rather than the next.
             checklists.Poll(announce: !context.IsFirst);
@@ -2132,10 +2117,13 @@ public sealed class AppHost : IDisposable
 
         // Ship builds are hand-editable, and buying a hull the Commander had planned for offers to adopt the
         // plan onto it rather than making them re-point it (Phase 26).
-        tick.Add("ships", _unused =>
+        tick.Add("ships", context =>
         {
             shipBuilds.Poll();
             onFootBuilds.Poll();
+
+            // Before adoption, so a sale and a purchase reusing its id in one batch are taken in that order.
+            shipPlans.DropGone(context.IsFirst ? [] : arrived);
 
             // Both halves of the same offer.
             foreach (var adopted in shipPlans.Observe(arrived).Concat(onFootPlans.Observe(arrived)))

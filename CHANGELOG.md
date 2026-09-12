@@ -6,6 +6,20 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.112.3 — A sold ship's build is deleted with its checklist lines
+
+Elite reuses ship ids: sell a ship and the next one bought can take its number. A build pinned to
+that number stayed, and its checklist lines were spoken, ranked and drawn as "That ship id now
+reports a Panther Clipper Mk II, and this plan was written for a Sidewinder" — a plan for a ship
+that no longer exists, with nothing to do about it.
+
+A build is now deleted when its ship is sold, or when its ship id reports a different hull, which
+catches sales made while d47 was closed. Every checklist line the build put on the list is deleted
+with it, and nothing is said. The plan cannot be recovered.
+
+Notes you wrote yourself on a ship's list are no longer deleted when the ship is sold, and the sale
+is no longer announced as "I cleared 2 items from your list".
+
 ## 0.112.2 — The search box shows up on a filterable tab's first visit
 
 Opening Checklist, or another tab whose panes filter, from a cold start left the search box

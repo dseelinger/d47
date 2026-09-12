@@ -216,7 +216,7 @@ public class ChecklistEvaluatorTests
     }
 
     [Fact]
-    public void AShipIdNowReportingADifferentHullIsStaleRatherThanQuietlyDiffed()
+    public void AShipIdNowReportingADifferentHullIsNotDiffedAndSaysNothing()
     {
         var verdict = ChecklistEvaluator.Evaluate(
             Item(
@@ -224,7 +224,7 @@ public class ChecklistEvaluatorTests
                 hull: "cutter"),
             State());
 
-        Assert.Equal(ChecklistState.Stale, verdict!.Value.State);
+        Assert.Null(verdict);
     }
 
     [Fact]

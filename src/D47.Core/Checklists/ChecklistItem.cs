@@ -112,10 +112,7 @@ public enum ChecklistState
     /// <summary>The journal agrees with everything d47 can check and one thing it cannot.</summary>
     Unverified,
 
-    /// <summary>
-    /// The list is about something that is no longer there — a <c>ShipID</c> now reporting a different
-    /// hull.
-    /// </summary>
+    /// <summary>Never produced; kept so a file that holds it still loads.</summary>
     Stale,
 }
 

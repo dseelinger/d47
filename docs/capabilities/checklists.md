@@ -296,9 +296,8 @@ A state is a **next action**, not a badge:
 | `Elsewhere` | You own this. Transfer it rather than grinding for another. |
 | `Blocked` | Nothing to do until your rank with the engineer reaches the grade. |
 | `Unverified` | Your journal has something in that slot and Directive 47 cannot confirm it is this one, so it will not claim it. |
-| `Stale` | This is about a hull that is not there any more. |
 
-**Colour is spent only on the last two**, because they are the two where something is actually
+**Colour is spent only on `Unverified`**, because it is the one where something is actually
 wrong. A page where six things are coloured is a page where none of them is noticed.
 
 #### Suggestions
@@ -410,14 +409,12 @@ Leaving something out means **any**, not unknown. "Grade 5 dirty drives and I do
 thrusters" is a plan Directive 47 can hold and can meet.
 
 Progress is a diff against your live `Loadout`, so you never type in what you have already done.
-Four answers that are not "open":
+Three answers that are not "open":
 
 - **Elsewhere** — you own it and it is in Deciat, and moving it costs 2.1 million. A completely
   different next action from "go and grind it".
 - **Blocked** — grade 5 cannot be crafted at rank 3 *at all*. Not a slow route, no route; and the
   price of clearing it is quoted, because naming a blocker and shrugging at it is not an answer.
-- **Stale** — that ship id now reports a different hull, so the plan is about a ship that is not
-  there any more.
 - **Unverified** — see below.
 
 A grade counts as finished at **0.85 progress, not 1.0**. That is measured across 6,272 real crafts:

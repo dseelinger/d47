@@ -240,6 +240,23 @@ public sealed record ChecklistDocument
     }
 
     /// <summary>
+    /// Removes the derived items in one list that <paramref name="which"/> selects, tombstones included,
+    /// leaving nothing for a revision to revive.
+    /// </summary>
+    public ChecklistChange Forget(ChecklistScope scope, Func<ChecklistItem, bool> which)
+    {
+        var kept = Items
+            .Where(item => !(item.Kind == ChecklistItemKind.Derived && item.Scope.Same(scope) && which(item)))
+            .ToList();
+
+        var removed = Items.Count - kept.Count;
+
+        return removed == 0
+            ? new ChecklistChange(this, Changed: false, "Nothing to remove.")
+            : new ChecklistChange(this with { Items = kept }, Changed: true, $"Removed {removed} derived items.");
+    }
+
+    /// <summary>
     /// Moves an item up or down the Commander's own order (Phase 25, "The checklist leaves its
     /// window").
     /// </summary>

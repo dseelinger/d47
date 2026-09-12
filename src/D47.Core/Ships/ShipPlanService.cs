@@ -299,6 +299,70 @@ public sealed class ShipPlanService(
     }
 
     /// <summary>
+    /// Deletes each build whose ship is gone — sold in <paramref name="events"/>, or its id now reporting
+    /// a different hull — with the derived checklist lines about that ship, and says nothing. Pass no
+    /// events for a replayed backlog, where a sold id may already belong to a later ship.
+    /// </summary>
+    public void DropGone(IEnumerable<JournalEvent> events)
+    {
+        foreach (var journalEvent in events)
+        {
+            // A part exchange sells the current ship too.
+            if (journalEvent.Kind is "ShipyardSell" or "ShipyardBuy"
+                && journalEvent.Int("SellShipID") is { } sold)
+            {
+                Drop(ForShip(sold));
+                checklists.ForgetShip(sold, _ => true);
+            }
+        }
+
+        if (state()?.Loadouts is not { IsKnown: true } loadouts)
+        {
+            return;
+        }
+
+        // Only a loadout actually reported for the id counts: a sale removes the id's loadout, so a sold id is
+        // not compared.
+        foreach (var build in Mine)
+        {
+            if (build.ShipId is { } id
+                && loadouts.For(id)?.Loadout.Type is { } type
+                && !ChecklistEvaluator.SameHull(build.Hull, type))
+            {
+                Drop(build);
+                checklists.ForgetShip(id, item => item.Hull is not { } hull || !ChecklistEvaluator.SameHull(hull, type));
+            }
+        }
+
+        // Lines with no build behind them are judged by the hull written on each.
+        var ships = checklists.Document.Items
+            .Where(item => item is { Kind: ChecklistItemKind.Derived, Hull: not null }
+                           && item.Scope.Group == ChecklistGroup.Ship)
+            .Select(item => int.TryParse(item.Scope.Key, NumberStyles.Integer, CultureInfo.InvariantCulture, out var id)
+                ? id
+                : (int?)null)
+            .OfType<int>()
+            .Distinct()
+            .ToList();
+
+        foreach (var id in ships)
+        {
+            if (loadouts.For(id)?.Loadout.Type is { } type)
+            {
+                checklists.ForgetShip(id, item => item.Hull is { } hull && !ChecklistEvaluator.SameHull(hull, type));
+            }
+        }
+    }
+
+    private void Drop(ShipBuild? build)
+    {
+        if (build is not null)
+        {
+            store.Save([.. store.Builds.Where(other => other.Id != build.Id)]);
+        }
+    }
+
+    /// <summary>
     /// Offers a build to the checklist (Phase 26, "A plan reaches the checklist when you say so").
     /// </summary>
     public string Promote(string buildId)

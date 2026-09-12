@@ -331,7 +331,7 @@ public sealed class ChecklistService(
                         ? verdict.Says
                         : $"\"{said}\" is done. {verdict.Says}"));
             }
-            else if (verdict.State is ChecklistState.Blocked or ChecklistState.Stale)
+            else if (verdict.State == ChecklistState.Blocked)
             {
                 news.Add(new ChecklistNews($"checklist.{verdict.State}.{item.Id}", verdict.Says));
             }
@@ -859,43 +859,37 @@ public sealed class ChecklistService(
         list.Apply(Fid, Name, document => document.Uncomplete(id));
 
     /// <summary>
-    /// Clears the list a ship left behind when the Commander sold it (docs/plans/change-requests.md
-    /// item 27).
+    /// Removes the derived lines about one ship that <paramref name="which"/> selects, and any waiting plan
+    /// that would put one back, without saying anything.
     /// </summary>
-    public ChecklistNews? ShipSold(int shipId)
+    public void ForgetShip(int shipId, Func<ChecklistItem, bool> which)
     {
         var scope = ChecklistScope.Ship(shipId);
 
-        var doomed = list.For(Fid, Name).Items
-            .Where(item => item.Scope == scope)
-            .ToArray();
+        bool Doomed(ChecklistItem item) =>
+            item.Kind == ChecklistItemKind.Derived && item.Scope.Same(scope) && which(item);
 
-        if (doomed.Length == 0)
+        var waiting = proposals.PendingFor(Fid)
+            .Where(proposal => proposal.Scope.Same(scope) && proposal.Items.Any(Doomed))
+            .ToList();
+
+        if (waiting.Count > 0)
         {
-            return null;
+            proposals.Write([.. proposals.Pending.Except(waiting)]);
         }
 
-        // The hull, from the items themselves.
-        var hull = doomed.Select(item => item.Hull).FirstOrDefault(name => name is { Length: > 0 });
-
-        foreach (var item in doomed)
+        // Checked before writing, because this is asked on every tick.
+        if (!Document.Items.Any(Doomed))
         {
-            Delete(item.Id);
+            return;
         }
 
-        var what = doomed.Length == 1 ? "one item" : $"{doomed.Length} items";
+        var change = list.Apply(Fid, Name, document => document.Forget(scope, which));
 
-        var news = new ChecklistNews(
-            $"checklist.sold.{shipId}",
-            hull is { Length: > 0 }
-                ? $"You sold the {hull}. I cleared {what} from your list that were about it."
-                : $"That ship is sold. I cleared {what} from your list that were about it.");
-
-        // Onto the same queue everything else the list says goes through, so it is the callout that decides
-        // whether it is spoken and the Commander who can switch that off.
-        _news.Enqueue(news);
-
-        return news;
+        if (change.Changed && Selected is { } held && change.Document.Find(held) is null)
+        {
+            Select(null);
+        }
     }
 
     public ChecklistChange Delete(ChecklistItemId id)

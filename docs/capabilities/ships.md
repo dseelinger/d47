@@ -234,6 +234,11 @@ be believed.
 Comparing a combat fit against an exploration fit for the same hull is a planner feature this
 deliberately does not have. A slot holds one plan, because a slot holds one module.
 
+**A build is deleted with its ship.** Sell the ship, or come back to find its id reporting a different
+hull — Elite gives a sold ship's id to the next one you buy — and the build is deleted, with every
+line it put on your checklist. Nothing is said about it, and it cannot be undone. Notes you wrote
+yourself on that ship's list are left where they are.
+
 **Changing your mind about a slot is an edit, not a delete and an add.** Swapping a long-range
 pulse laser for an overcharged multi-cannon leaves you with the same third hardpoint on the same
 hull — with whatever history it had. Before this, the first time you changed your mind about a

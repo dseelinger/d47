@@ -66,16 +66,11 @@ public class AHullIsAHullHoweverItIsSpeltTests
     }
 
     [Fact]
-    public void APlanForADifferentShipIsStillStale()
+    public void APlanForADifferentShipIsStillNotDiffed()
     {
         // The check this fix must not disarm.
-        Assert.Equal(
-            ChecklistState.Stale,
-            ChecklistEvaluator.Evaluate(PlannedFor("Imperial Cutter"), InThePanther())!.Value.State);
-
-        Assert.Equal(
-            ChecklistState.Stale,
-            ChecklistEvaluator.Evaluate(PlannedFor("cutter"), InThePanther())!.Value.State);
+        Assert.Null(ChecklistEvaluator.Evaluate(PlannedFor("Imperial Cutter"), InThePanther()));
+        Assert.Null(ChecklistEvaluator.Evaluate(PlannedFor("cutter"), InThePanther()));
     }
 
     [Fact]
