@@ -244,6 +244,61 @@ public class NavigationAndCommsTests
         Assert.Equal("Course plotted to Colonia.", result.Content);
     }
 
+    /// <summary>A confirmed plot says the jump count and the distance in the same sentence (#120).</summary>
+    [Fact]
+    public async Task AConfirmedPlotSaysTheJumpCountAndTheDistance()
+    {
+        var result = await Invoke(
+            NavigationCapability.Create(new NavigationSurface
+            {
+                Clipboard = new RecordingClipboard(),
+                Actions = Actions(MapBinds(), new RecordingGameInput()),
+                AutoPlotEnabled = () => true,
+                WatchRoute = () => new FixedPlotWatch(true, jumpsRemaining: 43, distanceRemaining: 22000.4),
+                AwaitGalaxyMap = (_, _) => Task.FromResult<bool?>(true),
+            }),
+            "plot_course",
+            ("system", "Colonia"));
+
+        Assert.Equal("Course plotted to Colonia. 43 jumps, 22,000 light years.", result.Content);
+    }
+
+    /// <summary>A leg of unknown length gives the jump count with no hole where the distance would go.</summary>
+    [Fact]
+    public async Task AConfirmedPlotWithNoKnownDistanceSpeaksTheJumpCountAlone()
+    {
+        var result = await Invoke(
+            NavigationCapability.Create(new NavigationSurface
+            {
+                Clipboard = new RecordingClipboard(),
+                Actions = Actions(MapBinds(), new RecordingGameInput()),
+                AutoPlotEnabled = () => true,
+                WatchRoute = () => new FixedPlotWatch(true, jumpsRemaining: 1, distanceRemaining: null),
+                AwaitGalaxyMap = (_, _) => Task.FromResult<bool?>(true),
+            }),
+            "plot_course",
+            ("system", "Colonia"));
+
+        Assert.Equal("Course plotted to Colonia. 1 jump.", result.Content);
+    }
+
+    /// <summary>A plot that could not be confirmed says what it always said, untouched by the figures (#120).</summary>
+    [Fact]
+    public async Task APlotThatCannotBeConfirmedIsUnchangedByTheFigures()
+    {
+        var result = await Invoke(
+            NavigationCapability.Create(Navigation(
+                new RecordingClipboard(),
+                Actions(MapBinds(), new RecordingGameInput()),
+                autoPlot: true,
+                confirm: null)),
+            "plot_course",
+            ("system", "Colonia"));
+
+        Assert.Contains("cannot tell whether it worked", result.Content, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("jump", result.Content, StringComparison.OrdinalIgnoreCase);
+    }
+
     [Fact]
     public async Task APlotThatCannotBeCheckedIsNotDrivenAgain()
     {

@@ -6,6 +6,16 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.112.5 — A confirmed plot says the jump count and the distance
+
+A plotted course said only that it worked: "Course plotted to Colonia." The Commander still had to
+open the map to find out whether that was four jumps or four hundred.
+
+The confirmed sentence now carries both: "Course plotted to Colonia. 43 jumps, 22,000 light years."
+The jump count is the jumps still ahead of the Commander, not the hops in the route file. The
+distance is left out when any leg of the route has an unknown length. A route the Commander plots
+by hand, or a plot that could not be confirmed, is unchanged.
+
 ## 0.112.4 — A ship with no Fuel Scoop is warned when its fuel will not finish the route
 
 Flying without a Fuel Scoop silenced every route fuel warning, because each one was about a star

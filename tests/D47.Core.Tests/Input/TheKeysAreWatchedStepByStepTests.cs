@@ -68,8 +68,8 @@ public class TheKeysAreWatchedStepByStepTests
     /// <summary>A route file that says what it is, so the plot's declared evidence is a real string.</summary>
     private sealed class DescribingWatch(bool? answer, string description) : IPlotWatch
     {
-        public Task<bool?> ConfirmAsync(string system, CancellationToken cancellationToken) =>
-            Task.FromResult(answer);
+        public Task<PlotConfirmation> ConfirmAsync(string system, CancellationToken cancellationToken) =>
+            Task.FromResult(new PlotConfirmation(answer, null, null));
 
         public string Describe() => description;
     }
@@ -77,7 +77,7 @@ public class TheKeysAreWatchedStepByStepTests
     /// <summary>A route check that is interrupted, which is how a Commander cancels a turn mid-macro.</summary>
     private sealed class CancelledWatch : IPlotWatch
     {
-        public Task<bool?> ConfirmAsync(string system, CancellationToken cancellationToken) =>
+        public Task<PlotConfirmation> ConfirmAsync(string system, CancellationToken cancellationToken) =>
             throw new OperationCanceledException();
     }
 

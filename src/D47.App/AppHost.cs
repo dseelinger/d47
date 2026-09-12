@@ -1515,7 +1515,10 @@ public sealed class AppHost : IDisposable
                     Clipboard = new DesktopClipboard(loggerFactory.CreateLogger<DesktopClipboard>()),
                     Actions = actionSurface,
                     AutoPlotEnabled = () => settings.Current.Actions.AutoPlot,
-                    WatchRoute = () => new Input.RoutePlotWatch(route, loggerFactory.CreateLogger<Input.RoutePlotWatch>()),
+                    WatchRoute = () => new Input.RoutePlotWatch(
+                        route,
+                        loggerFactory.CreateLogger<Input.RoutePlotWatch>(),
+                        () => gameState.Active?.Location.StarSystem),
                     AwaitGalaxyMap = (open, token) => AwaitGalaxyMap(status, open, logger, token),
 
                     // Where the attempt says how far it got, on every exit including a cancelled turn (#365).

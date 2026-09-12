@@ -41,9 +41,9 @@ public class RoutePlotWatchTests
             Write(directory, Route("2026-08-22T00:20:00Z", "Oppi", "Scorpii Sector BB-O a6-2"), new DateTime(2026, 8, 22, 0, 20, 0, DateTimeKind.Utc));
             reader.Poll();
 
-            var watch = new RoutePlotWatch(reader, NullLogger.Instance, Quick);
+            var watch = new RoutePlotWatch(reader, NullLogger.Instance, () => null, Quick);
 
-            Assert.False(await watch.ConfirmAsync("Scorpii Sector BB-O a6-2", TestContext.Current.CancellationToken));
+            Assert.False((await watch.ConfirmAsync("Scorpii Sector BB-O a6-2", TestContext.Current.CancellationToken)).Confirmed);
         }
         finally
         {
@@ -61,12 +61,12 @@ public class RoutePlotWatchTests
             Write(directory, Route("2026-08-22T00:20:00Z", "Oppi", "HR 7169"), new DateTime(2026, 8, 22, 0, 20, 0, DateTimeKind.Utc));
             reader.Poll();
 
-            var watch = new RoutePlotWatch(reader, NullLogger.Instance, Quick);
+            var watch = new RoutePlotWatch(reader, NullLogger.Instance, () => null, Quick);
 
             // The plot lands while the watch is waiting.
             Write(directory, Route("2026-08-22T00:29:31Z", "Oppi", "Scorpii Sector BB-O a6-2"), new DateTime(2026, 8, 22, 0, 29, 31, DateTimeKind.Utc));
 
-            Assert.True(await watch.ConfirmAsync("Scorpii Sector BB-O a6-2", TestContext.Current.CancellationToken));
+            Assert.True((await watch.ConfirmAsync("Scorpii Sector BB-O a6-2", TestContext.Current.CancellationToken)).Confirmed);
         }
         finally
         {
@@ -81,11 +81,11 @@ public class RoutePlotWatchTests
 
         try
         {
-            var watch = new RoutePlotWatch(reader, NullLogger.Instance, Quick);
+            var watch = new RoutePlotWatch(reader, NullLogger.Instance, () => null, Quick);
 
             Write(directory, Route("2026-08-22T00:29:31Z", "Oppi", "HR 7169"), new DateTime(2026, 8, 22, 0, 29, 31, DateTimeKind.Utc));
 
-            Assert.False(await watch.ConfirmAsync("Scorpii Sector BB-O a6-2", TestContext.Current.CancellationToken));
+            Assert.False((await watch.ConfirmAsync("Scorpii Sector BB-O a6-2", TestContext.Current.CancellationToken)).Confirmed);
         }
         finally
         {
@@ -104,9 +104,66 @@ public class RoutePlotWatchTests
 
         try
         {
-            var watch = new RoutePlotWatch(reader, NullLogger.Instance, Quick);
+            var watch = new RoutePlotWatch(reader, NullLogger.Instance, () => null, Quick);
 
-            Assert.Null(await watch.ConfirmAsync("Colonia", TestContext.Current.CancellationToken));
+            Assert.Null((await watch.ConfirmAsync("Colonia", TestContext.Current.CancellationToken)).Confirmed);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    /// <summary>A confirmed plot counts the jumps still ahead of the Commander, not the hops in the file (#120).</summary>
+    [Fact]
+    public async Task AConfirmedPlotCountsJumpsAheadRatherThanHopsInTheFile()
+    {
+        var (directory, reader) = Folder();
+
+        try
+        {
+            var watch = new RoutePlotWatch(reader, NullLogger.Instance, () => "Oppi", Quick);
+
+            Write(
+                directory,
+                Route("2026-08-22T00:29:31Z", "Oppi", "HR 7169", "Scorpii Sector BB-O a6-2"),
+                new DateTime(2026, 8, 22, 0, 29, 31, DateTimeKind.Utc));
+
+            var confirmation = await watch.ConfirmAsync("Scorpii Sector BB-O a6-2", TestContext.Current.CancellationToken);
+
+            Assert.True(confirmation.Confirmed);
+            Assert.Equal(2, confirmation.JumpsRemaining);
+            Assert.NotNull(confirmation.DistanceRemaining);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    /// <summary>A leg of unknown length blanks the distance without hiding the jump count.</summary>
+    [Fact]
+    public async Task AConfirmedPlotWithAnUnmeasuredLegGivesNoDistance()
+    {
+        var (directory, reader) = Folder();
+
+        try
+        {
+            var watch = new RoutePlotWatch(reader, NullLogger.Instance, () => "Oppi", Quick);
+
+            var json = "{ \"timestamp\":\"2026-08-22T00:29:31Z\", \"event\":\"NavRoute\", \"Route\":[ "
+                + "{ \"StarSystem\":\"Oppi\", \"SystemAddress\":1000, \"StarPos\":[0,0,0], \"StarClass\":\"K\" }, "
+                + "{ \"StarSystem\":\"HR 7169\", \"SystemAddress\":1001, \"StarClass\":\"K\" }, "
+                + "{ \"StarSystem\":\"Scorpii Sector BB-O a6-2\", \"SystemAddress\":1002, \"StarPos\":[0,0,2], \"StarClass\":\"K\" } "
+                + "] }";
+
+            Write(directory, json, new DateTime(2026, 8, 22, 0, 29, 31, DateTimeKind.Utc));
+
+            var confirmation = await watch.ConfirmAsync("Scorpii Sector BB-O a6-2", TestContext.Current.CancellationToken);
+
+            Assert.True(confirmation.Confirmed);
+            Assert.Equal(2, confirmation.JumpsRemaining);
+            Assert.Null(confirmation.DistanceRemaining);
         }
         finally
         {

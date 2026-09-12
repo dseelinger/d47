@@ -12,14 +12,16 @@ public sealed class RoutePlotWatch : IPlotWatch
 
     private readonly NavRouteReader _route;
     private readonly ILogger _logger;
+    private readonly Func<string?> _currentSystem;
     private readonly TimeSpan _patience;
     private readonly DateTimeOffset? _writtenBefore;
     private readonly string? _endedAtBefore;
 
-    public RoutePlotWatch(NavRouteReader route, ILogger logger, TimeSpan? patience = null)
+    public RoutePlotWatch(NavRouteReader route, ILogger logger, Func<string?> currentSystem, TimeSpan? patience = null)
     {
         _route = route;
         _logger = logger;
+        _currentSystem = currentSystem;
         _patience = patience ?? Patience;
 
         // The tick loop re-reads the file ten times a second, so Current is fresh enough to be the "before"
@@ -28,7 +30,7 @@ public sealed class RoutePlotWatch : IPlotWatch
         _endedAtBefore = LastHop(route.Current);
     }
 
-    public async Task<bool?> ConfirmAsync(string system, CancellationToken cancellationToken)
+    public async Task<PlotConfirmation> ConfirmAsync(string system, CancellationToken cancellationToken)
     {
         var deadline = DateTimeOffset.Now + _patience;
         var sawTheFile = false;
@@ -52,7 +54,10 @@ public sealed class RoutePlotWatch : IPlotWatch
                         written,
                         _writtenBefore,
                         _endedAtBefore ?? "nothing");
-                    return true;
+
+                    var progress = RouteProgress.For(current, _currentSystem());
+
+                    return new PlotConfirmation(true, progress.JumpsRemaining, progress.DistanceRemaining);
                 }
             }
 
@@ -62,7 +67,7 @@ public sealed class RoutePlotWatch : IPlotWatch
             }
             catch (OperationCanceledException)
             {
-                return null;
+                return new PlotConfirmation(null, null, null);
             }
         }
 
@@ -77,7 +82,7 @@ public sealed class RoutePlotWatch : IPlotWatch
             _writtenBefore,
             LastHop(after) ?? "nothing");
 
-        return sawTheFile ? false : null;
+        return new PlotConfirmation(sawTheFile ? false : null, null, null);
     }
 
     /// <summary>Where the route already went when this watch was opened.</summary>

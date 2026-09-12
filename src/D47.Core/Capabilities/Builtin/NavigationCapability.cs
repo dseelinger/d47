@@ -52,7 +52,7 @@ public sealed record NavigationSurface
 public interface IPlotWatch
 {
     /// <summary>Whether a route ending at the named system was written after this watch was opened.</summary>
-    Task<bool?> ConfirmAsync(string system, CancellationToken cancellationToken);
+    Task<PlotConfirmation> ConfirmAsync(string system, CancellationToken cancellationToken);
 
     /// <summary>
     /// The system the route in the file already ended at when this watch was opened, or null where
@@ -67,16 +67,26 @@ public interface IPlotWatch
     string Describe() => string.Empty;
 }
 
+/// <summary>What a plot check found, beyond whether the route matched (#120).</summary>
+/// <param name="Confirmed">Whether a route ending at the named system was written after the watch opened.</param>
+/// <param name="JumpsRemaining">Jumps ahead of the Commander, known only when <paramref name="Confirmed"/> is true.</param>
+/// <param name="DistanceRemaining">Light years ahead, or null when any leg of the route has an unknown length.</param>
+public sealed record PlotConfirmation(bool? Confirmed, int? JumpsRemaining, double? DistanceRemaining);
+
 /// <summary>A watch that answers what it was told to.</summary>
-/// <param name="answer">What <see cref="ConfirmAsync"/> reports.</param>
+/// <param name="answer">What <see cref="ConfirmAsync"/> reports as confirmed.</param>
 /// <param name="endsAt">
 /// Where the route already went, for the caller that asks before it drives anything.
 /// </param>
-public sealed class FixedPlotWatch(bool? answer, string? endsAt = null) : IPlotWatch
+/// <param name="jumpsRemaining">What <see cref="ConfirmAsync"/> reports as jumps ahead.</param>
+/// <param name="distanceRemaining">What <see cref="ConfirmAsync"/> reports as light years ahead.</param>
+public sealed class FixedPlotWatch(bool? answer, string? endsAt = null, int? jumpsRemaining = null, double? distanceRemaining = null)
+    : IPlotWatch
 {
     public string? EndsAt => endsAt;
 
-    public Task<bool?> ConfirmAsync(string system, CancellationToken cancellationToken) => Task.FromResult(answer);
+    public Task<PlotConfirmation> ConfirmAsync(string system, CancellationToken cancellationToken) =>
+        Task.FromResult(new PlotConfirmation(answer, jumpsRemaining, distanceRemaining));
 }
 
 /// <summary>A clipboard that records instead of writing.</summary>
@@ -285,7 +295,7 @@ public static class NavigationCapability
 
             trace?.Declare("route at open", watch.Describe());
 
-            bool? confirmed = null;
+            PlotConfirmation? confirmation = null;
 
             // Two goes at it (#404).
             for (var attempt = 1; attempt <= Attempts; attempt++)
@@ -366,18 +376,18 @@ public static class NavigationCapability
 
                 // Plotted or not, the map is toggled shut: the Commander asked for a course, not for a map
                 // left open over the cockpit.
-                confirmed = await watch.ConfirmAsync(system, cancellationToken).ConfigureAwait(false);
+                confirmation = await watch.ConfirmAsync(system, cancellationToken).ConfigureAwait(false);
 
                 reached = "the route was checked";
                 trace?.Declare("route at the verdict", watch.Describe());
 
                 // Recorded the moment it is known, and again if a second attempt answers differently.
                 ending = (
-                    confirmed switch { true => "plotted", false => "no route", null => "cannot tell" },
-                    $"the route watch answered {confirmed?.ToString() ?? "nothing"} for {system}");
+                    confirmation.Confirmed switch { true => "plotted", false => "no route", null => "cannot tell" },
+                    $"the route watch answered {confirmation.Confirmed?.ToString() ?? "nothing"} for {system}");
 
                 // Only a checked "no route" is worth another go: see <see cref="Attempts"/>.
-                if (confirmed is not false)
+                if (confirmation.Confirmed is not false)
                 {
                     break;
                 }
@@ -398,9 +408,9 @@ public static class NavigationCapability
 
             // The three answers are genuinely different and the middle one is the reason this is verified at
             // all: believing a course is set when it is not is the failure that strands somebody.
-            return confirmed switch
+            return confirmation?.Confirmed switch
             {
-                true => ToolResult.Relay($"Course plotted to {system}.{stillOpen}"),
+                true => ToolResult.Relay($"Course plotted to {system}.{Figures(confirmation)}{stillOpen}"),
                 false => ToolResult.Relay(
                     $"I tried to plot {system} and no route appeared, so assume it did not work. {copied} "
                     + $"I cannot tell why.{stillOpen}"),
@@ -431,6 +441,24 @@ public static class NavigationCapability
 
     /// <summary>What the plot's trace folder is named after (#365).</summary>
     private const string TraceCaller = "galaxy-map-plot";
+
+    /// <summary>
+    /// The jump count and distance a confirmed plot found, as a sentence of its own — empty where the
+    /// watch carried none (#120).
+    /// </summary>
+    private static string Figures(PlotConfirmation? confirmation)
+    {
+        if (confirmation?.JumpsRemaining is not { } jumps)
+        {
+            return string.Empty;
+        }
+
+        var distance = confirmation.DistanceRemaining is { } lightYears
+            ? $", {lightYears:N0} light years"
+            : string.Empty;
+
+        return $" {jumps} jump{(jumps == 1 ? "" : "s")}{distance}.";
+    }
 
     /// <summary>
     /// The five bindings the macro presses, resolved against the Commander's own file and the mode they
