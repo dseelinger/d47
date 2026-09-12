@@ -15,6 +15,9 @@ system name the panel draws now carries the same copy glyph, wired through one s
 available everywhere a system name is shown — desktop and headset alike, since the shared control
 never depends on the desktop window's own clipboard.
 
+The Journal reading now draws the same glyph beside any line whose event names a system — an
+`FSDJump`, a `Docked`, a `Location` — and none beside a line that names none.
+
 ## 0.112.9 — Controls that draw their state
 
 The Engineers tab's Colonia filter was a button that rewrote its own label — "Hide the Colonia

@@ -4,6 +4,7 @@ using Avalonia.Controls.Documents;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
@@ -202,6 +203,11 @@ public partial class PanelView : UserControl
             "Tokens, cost, and what this has come to over time");
 
         Watch(Transcript);
+
+        // Built once, checking `_copy` at render time rather than caching it, so a page opened before
+        // `EnableCopy` runs still draws the glyph once it does (#158).
+        JournalList.ItemTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<D47.Core.Journal.JournalEntry>(
+            (entry, _) => JournalRow(entry));
 
         // The three readings of one exchange, registered as the Transcript tab's roots.
         Nav.Register(
@@ -2441,17 +2447,17 @@ public partial class PanelView : UserControl
         JournalSplitter.IsVisible = model.JournalDetail;
 
         // Filtered, which is this reading's answer to the search box (#232).
-        var shown = _query.Length == 0
+        var shown = (_query.Length == 0
             ? model.Journal
-            : [.. model.Journal.Where(entry =>
+            : model.Journal.Where(entry =>
                 entry.Line.Contains(_query, StringComparison.OrdinalIgnoreCase)
-                || entry.Kind.Contains(_query, StringComparison.OrdinalIgnoreCase))];
+                || entry.Kind.Contains(_query, StringComparison.OrdinalIgnoreCase))).ToList();
 
-        JournalList.ItemsSource = shown.Select(entry => entry.Line).ToList();
+        JournalList.ItemsSource = shown;
 
         // Against the filtered list rather than the whole one.
         var selected = model.JournalSelected >= 0 && model.JournalSelected < model.Journal.Count
-            ? shown.ToList().IndexOf(model.Journal[model.JournalSelected])
+            ? shown.IndexOf(model.Journal[model.JournalSelected])
             : -1;
 
         JournalList.SelectedIndex = selected;
@@ -2459,6 +2465,27 @@ public partial class PanelView : UserControl
         JournalDetail.Text = selected >= 0 ? model.JournalDetailText : string.Empty;
 
         ShowJournalCount(shown.Count, model.Journal.Count);
+    }
+
+    /// <summary>
+    /// A journal row: the line, with a copy glyph beside it where the event names a system (#158).
+    /// Built for a null entry too — Avalonia clears a recycled container's content before it is reused.
+    /// </summary>
+    private Control JournalRow(D47.Core.Journal.JournalEntry? entry)
+    {
+        var text = new TextBlock { Text = entry?.Line ?? string.Empty };
+
+        if (entry?.StarSystem is not { Length: > 0 } system || _copy is not { } copy)
+        {
+            return text;
+        }
+
+        return new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 6,
+            Children = { text, Controls.CopyGlyph.For(system, copy) },
+        };
     }
 
     /// <summary>

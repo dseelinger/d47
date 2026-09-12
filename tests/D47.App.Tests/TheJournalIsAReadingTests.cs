@@ -1,9 +1,11 @@
 using System.Text.Json;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Panel;
+using D47.Core.Capabilities.Builtin;
 using D47.Core.Interface;
 using D47.Core.Journal;
 using Xunit;
@@ -162,7 +164,7 @@ public sealed class TheJournalIsAReadingTests
         panel.Page = TranscriptPage.Journal;
         Dispatcher.UIThread.RunJobs();
 
-        var lines = List(panel).ItemsSource!.Cast<string>().ToList();
+        var lines = List(panel).ItemsSource!.Cast<JournalEntry>().Select(entry => entry.Line).ToList();
 
         Assert.Equal(2, lines.Count);
         Assert.Contains("Jameson Memorial", lines[0]);
@@ -207,12 +209,12 @@ public sealed class TheJournalIsAReadingTests
         panel.Page = TranscriptPage.Journal;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(2, List(panel).ItemsSource!.Cast<string>().Count());
+        Assert.Equal(2, List(panel).ItemsSource!.Cast<JournalEntry>().Count());
 
         panel.ShowJournalNoise(true);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(3, List(panel).ItemsSource!.Cast<string>().Count());
+        Assert.Equal(3, List(panel).ItemsSource!.Cast<JournalEntry>().Count());
 
         window.Close();
     }
@@ -265,6 +267,81 @@ public sealed class TheJournalIsAReadingTests
         Assert.Contains("{\"event\":\"Docked\"", model.JournalRawText);
         Assert.DoesNotContain("  \"event\"", model.JournalRawText);
         Assert.DoesNotContain("Undocked from", model.JournalRawText);
+
+        window.Close();
+    }
+
+    private static JournalLog WithAStarSystemAndAMusicEvent()
+    {
+        var log = new JournalLog();
+
+        log.Add([
+            Event(
+                "FSDJump",
+                """{"event":"FSDJump","StarSystem":"Kusauts","StarPos":[0,0,0],"SystemAddress":1}""",
+                1),
+            Event("Music", """{"event":"Music","MusicTrack":"NoTrack"}""", 2),
+        ]);
+
+        return log;
+    }
+
+    /// <summary>
+    /// A row whose event names a system draws the copy glyph beside it; a row that names none, such
+    /// as <c>Music</c>, draws none (#158).
+    /// </summary>
+    [AvaloniaFact]
+    public void ARowThatNamesASystemDrawsAGlyphAndOneThatDoesNotDrawsNone()
+    {
+        var (panel, window) = Shown(rawJournal: true, WithAStarSystemAndAMusicEvent());
+
+        panel.EnableCopy(new RecordingClipboard());
+        panel.Page = TranscriptPage.Journal;
+        Dispatcher.UIThread.RunJobs();
+
+        var glyphs = panel.GetVisualDescendants().OfType<Button>()
+            .Where(button => Avalonia.Automation.AutomationProperties.GetName(button) == "Copy Kusauts")
+            .ToList();
+
+        Assert.Single(glyphs);
+
+        window.Close();
+    }
+
+    /// <summary>Clicking the glyph writes that row's system to the clipboard (#158).</summary>
+    [AvaloniaFact]
+    public void ClickingTheGlyphWritesThatRowsSystemToTheClipboard()
+    {
+        var (panel, window) = Shown(rawJournal: true, WithAStarSystemAndAMusicEvent());
+
+        var clipboard = new RecordingClipboard();
+        panel.EnableCopy(clipboard);
+        panel.Page = TranscriptPage.Journal;
+        Dispatcher.UIThread.RunJobs();
+
+        var glyph = panel.GetVisualDescendants().OfType<Button>()
+            .Single(button => Avalonia.Automation.AutomationProperties.GetName(button) == "Copy Kusauts");
+
+        glyph.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal("Kusauts", clipboard.Last);
+
+        window.Close();
+    }
+
+    /// <summary>With no copy delegate enabled, no row draws a glyph (#158).</summary>
+    [AvaloniaFact]
+    public void WithNoCopyDelegateEnabledNoRowDrawsAGlyph()
+    {
+        var (panel, window) = Shown(rawJournal: true, WithAStarSystemAndAMusicEvent());
+
+        panel.Page = TranscriptPage.Journal;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.DoesNotContain(
+            panel.GetVisualDescendants().OfType<Button>(),
+            button => Avalonia.Automation.AutomationProperties.GetName(button) == "Copy Kusauts");
 
         window.Close();
     }
