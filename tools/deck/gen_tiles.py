@@ -30,8 +30,6 @@ CYAN = (79, 209, 245)       # types into the focused terminal
 GREEN = (91, 228, 155)      # runs a script
 BLUE = (77, 140, 255)       # runs the app
 AMBER = (255, 176, 32)      # release
-RED = (255, 122, 107)       # release, and irreversible
-SLATE = (147, 164, 191)     # navigation
 
 FONT_PATH = os.path.join(os.environ.get('WINDIR', r'C:\Windows'), 'Fonts', 'arialbd.ttf')
 
@@ -109,57 +107,13 @@ def g_magnifier(d, cx, cy, r, col):
     d.line([ox + r * 0.44, oy + r * 0.44, cx + r * 0.80, cy + r * 0.80], fill=col, width=int(w * 1.4))
 
 
-def g_nib(d, cx, cy, r, col):
-    """A pen nib: the prose pass."""
-    w = max(2, int(r * 0.12))
-    d.polygon([(cx, cy + r * 0.92), (cx - r * 0.56, cy - r * 0.24),
-               (cx - r * 0.30, cy - r * 0.86), (cx + r * 0.30, cy - r * 0.86),
-               (cx + r * 0.56, cy - r * 0.24)], outline=col, width=w)
-    d.line([cx, cy + r * 0.28, cx, cy - r * 0.70], fill=col, width=w)
-    _dot(d, cx, cy - r * 0.02, r * 0.19, col)
-
-
 def g_push(d, cx, cy, r, col):
-    """Arrow leaving a line: commit and push."""
+    """Arrow leaving a line: push."""
     w = max(2, int(r * 0.15))
     d.line([cx - r * 0.80, cy + r * 0.78, cx + r * 0.80, cy + r * 0.78], fill=col, width=w)
     d.line([cx, cy + r * 0.42, cx, cy - r * 0.44], fill=col, width=w)
     d.polygon([(cx, cy - r * 0.92), (cx - r * 0.50, cy - r * 0.28),
                (cx + r * 0.50, cy - r * 0.28)], fill=col)
-
-
-def g_mic(d, cx, cy, r, col, muted=False):
-    """Microphone; the muted variant carries a slash."""
-    w = max(2, int(r * 0.13))
-    d.rounded_rectangle([cx - r * 0.34, cy - r * 0.92, cx + r * 0.34, cy + r * 0.10],
-                        radius=r * 0.34, fill=col)
-    d.arc([cx - r * 0.66, cy - r * 0.34, cx + r * 0.66, cy + r * 0.52],
-          start=0, end=180, fill=col, width=w)
-    d.line([cx, cy + r * 0.52, cx, cy + r * 0.84], fill=col, width=w)
-    d.line([cx - r * 0.40, cy + r * 0.84, cx + r * 0.40, cy + r * 0.84], fill=col, width=w)
-    if muted:
-        d.line([cx - r * 0.86, cy - r * 0.86, cx + r * 0.86, cy + r * 0.86],
-               fill=BG, width=int(w * 2.6))
-        d.line([cx - r * 0.80, cy - r * 0.80, cx + r * 0.80, cy + r * 0.80],
-               fill=col, width=int(w * 1.2))
-
-
-def g_hammer(d, cx, cy, r, col):
-    """Build."""
-    w = max(2, int(r * 0.15))
-    d.polygon([(cx - r * 0.88, cy - r * 0.70), (cx + r * 0.16, cy - r * 0.70),
-               (cx + r * 0.16, cy - r * 0.14), (cx - r * 0.88, cy - r * 0.14)], fill=col)
-    d.line([cx - r * 0.36, cy - r * 0.14, cx + r * 0.52, cy + r * 0.86],
-           fill=col, width=int(w * 1.7))
-
-
-def g_clock(d, cx, cy, r, col):
-    """The tick loop."""
-    w = max(2, int(r * 0.14))
-    _ring(d, cx, cy, r * 0.86, col, w)
-    d.line([cx, cy, cx, cy - r * 0.50], fill=col, width=w)
-    d.line([cx, cy, cx + r * 0.40, cy + r * 0.22], fill=col, width=w)
-    _dot(d, cx, cy, r * 0.11, col)
 
 
 def g_wheel(d, cx, cy, r, col):
@@ -191,14 +145,6 @@ def g_restart(d, cx, cy, r, col):
     _dot(d, cx, cy, r * 0.20, col)
 
 
-def g_eye(d, cx, cy, r, col):
-    """Watch the run."""
-    w = max(2, int(r * 0.14))
-    d.ellipse([cx - r * 0.96, cy - r * 0.56, cx + r * 0.96, cy + r * 0.56],
-              outline=col, width=w)
-    _dot(d, cx, cy, r * 0.30, col)
-
-
 def g_branch(d, cx, cy, r, col):
     """Where the tree stands."""
     w = max(2, int(r * 0.14))
@@ -208,20 +154,6 @@ def g_branch(d, cx, cy, r, col):
     _dot(d, cx - r * 0.42, cy - r * 0.72, r * 0.26, col)
     _dot(d, cx - r * 0.42, cy + r * 0.74, r * 0.26, col)
     _dot(d, cx + r * 0.86, cy - r * 0.30, r * 0.26, col)
-
-
-def g_rocket(d, cx, cy, r, col):
-    """Cut a release."""
-    w = max(2, int(r * 0.12))
-    d.polygon([(cx, cy - r * 0.96), (cx + r * 0.42, cy - r * 0.20),
-               (cx + r * 0.42, cy + r * 0.44), (cx - r * 0.42, cy + r * 0.44),
-               (cx - r * 0.42, cy - r * 0.20)], fill=col)
-    d.polygon([(cx - r * 0.42, cy + r * 0.02), (cx - r * 0.88, cy + r * 0.56),
-               (cx - r * 0.42, cy + r * 0.44)], fill=col)
-    d.polygon([(cx + r * 0.42, cy + r * 0.02), (cx + r * 0.88, cy + r * 0.56),
-               (cx + r * 0.42, cy + r * 0.44)], fill=col)
-    _dot(d, cx, cy - r * 0.26, r * 0.19, BG)
-    d.line([cx, cy + r * 0.56, cx, cy + r * 0.92], fill=col, width=w)
 
 
 def g_semver(d, cx, cy, r, col, lit):
@@ -248,13 +180,6 @@ def g_flag(d, cx, cy, r, col):
             d.rectangle([x0, y0, x0 + cell, y0 + cell], fill=col)
     d.rectangle([cx - r * 0.54, cy - r * 0.74, cx - r * 0.54 + 3 * cell, cy - r * 0.74 + 2 * cell],
                 outline=col, width=max(2, int(w * 0.6)))
-
-
-def g_chevron(d, cx, cy, r, col, left=False):
-    w = max(3, int(r * 0.22))
-    sign = -1 if left else 1
-    d.line([cx - sign * r * 0.34, cy - r * 0.64, cx + sign * r * 0.34, cy], fill=col, width=w)
-    d.line([cx + sign * r * 0.34, cy, cx - sign * r * 0.34, cy + r * 0.64], fill=col, width=w)
 
 
 # ---------------------------------------------------------------- tile assembly
@@ -288,27 +213,18 @@ KEYS = {
     'architect':  (g_compass, VIOLET, 'Architect'),
     'issue':      (g_issue, VIOLET, 'Issue'),
     'review':     (g_magnifier, VIOLET, 'Review'),
-    'prose':      (g_nib, VIOLET, 'Prose'),
 
     'desktop':    (g_handoff, CYAN, 'Desktop'),
-    'ship':       (g_push, CYAN, 'Ship'),
-    'voice_on':   (lambda *a: g_mic(*a, muted=False), CYAN, 'Voice on'),
-    'voice_off':  (lambda *a: g_mic(*a, muted=True), SLATE, 'Voice off'),
+    'push':       (g_push, CYAN, 'Push'),
     'wrapup':     (g_flag, CYAN, 'Wrap up'),
 
-    'build':      (g_hammer, GREEN, 'Build'),
-    'ticking':    (g_clock, GREEN, 'Ticking'),
     'testdrive':  (g_wheel, GREEN, 'Test drive'),
     'status':     (g_branch, GREEN, 'Status'),
 
     'restart':    (g_restart, BLUE, 'Restart'),
 
-    'release':    (g_rocket, AMBER, 'Release'),
     'patch':      (lambda *a: g_semver(*a, lit=2), GREEN, 'Patch'),
     'minor':      (lambda *a: g_semver(*a, lit=1), AMBER, 'Minor'),
-    'major':      (lambda *a: g_semver(*a, lit=0), RED, 'Major'),
-    'watch':      (g_eye, AMBER, 'Watch run'),
-    'back':       (lambda *a: g_chevron(*a, left=True), SLATE, 'Back'),
 }
 
 

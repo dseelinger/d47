@@ -28,3 +28,6 @@ __pycache__/
 
 # wrangler's machine-local state from Worker provisioning; never repository material
 worker/.wrangler/
+
+# The last triage's grid, read by the issue launcher. A snapshot of a queue that moves.
+.claude/triage-state.json

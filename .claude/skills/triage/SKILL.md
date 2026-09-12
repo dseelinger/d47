@@ -166,6 +166,35 @@ claude -n "#105" --model sonnet --effort medium "Fix #105."
 No preamble, no summary of what triage is, no restating the rules above. The maintainer ran this to
 find out what to do next.
 
+## Save the grid
+
+After the report, write the same rows to `.claude/triage-state.json` with the Write tool. The
+Stream Deck's Issue key reads it: it asks for a number and launches the session on the model and
+effort chosen here, so a row missing from this file is a session that starts on the defaults.
+
+```json
+{
+  "generated": "2026-09-12T15:04:00Z",
+  "eligible": 36,
+  "issues": {
+    "105": {"title": "Join the experimental effect on its symbol",
+            "model": "opus", "effort": "high",
+            "release": "0.110.10 - Tables answer for themselves (guess)",
+            "review": "/code-review"}
+  }
+}
+```
+
+- `generated` is UTC, and the launcher shows its age. Get it from `date`, never from memory.
+- Every issue in the **Next up** table gets a row, whether or not it landed in a release group.
+- `model` and `effort` carry the exact tokens from the table. The launcher accepts
+  `opus`/`sonnet`/`haiku` and `low`/`medium`/`high`/`xhigh`/`max`, and falls back to
+  `sonnet`/`medium` for anything else.
+- `release` and `review` are optional; leave them out where the table's cell is blank.
+- Write the whole file each run. It is this triage's grid, not a record that accumulates.
+
+Say it was written in one line at the end of the report, with the issue count. Nothing else.
+
 ## What this does not do
 
 It files nothing, labels nothing, closes nothing and starts no work. Applying a `ready` label or

@@ -161,50 +161,48 @@ positioned. `d47 Capture` does the same, which is why it reads better than title
 Tiles are 144x144: near-black ground, an 11px accent bar along the top naming the category, a large
 glyph in the accent colour, and the label across the bottom. Draw at 4x and downsample with LANCZOS
 or thin strokes crawl. Colour-coding: violet opens a Claude session, cyan types into the focused
-terminal, green runs a script, blue runs the app, amber is release, red is
-release-and-irreversible, slate is navigation or an off state.
+session, green runs a script, blue runs the app, amber is release.
 
 ## The d47 profile
 
 `Directive 47 Development`, UUID `2CFD100A-59FE-4ADF-82B0-A12855B1A0B2`.
 
-**Page 1** — a session per key, then hand it over:
+One page, 12 keys. Row 0 opens a session, row 1 types into the session that has focus, row 2 runs
+the app and cuts releases.
 
 | | 0 | 1 | 2 | 3 | 4 |
 | --- | --- | --- | --- | --- | --- |
-| **0** | Triage | Coord | Architect | Issue | Desktop |
-| **1** | Review | Prose | Ship | Voice on | Voice off |
-| **2** | Build | Ticking | Test drive | Restart | Release > |
-
-**Page 2** — release: Patch, Minor, Major, Watch run across the top; Wrap up bottom-left; Back
-bottom-right. The three version keys show which field they bump, lit against two dim ones.
+| **0** | Triage | Coord | Architect | Issue | Review |
+| **1** | Desktop | Push | Wrap up | | |
+| **2** | Test drive | Restart | | Patch | Minor |
 
 The launchers open `claude` in the repo with a name, model, effort and an opening slash command.
+**Issue** is the one that asks a question first: it reads an issue number from the terminal and
+takes that issue's model and effort from `.claude/triage-state.json`, which `/triage` writes. A
+number triage does not name starts on `sonnet`/`medium` and says so. The session cannot correct
+itself afterwards — the desktop app refuses `set_session_model` and `set_session_effort` for the
+session making the call — so the launcher is the only place this can be set.
 **Desktop** types `/desktop` into the focused terminal to hand that session to the desktop app, so
-work starts on a keypress and continues by clicking. The release keys ask Y/N in the terminal first.
+work starts on a keypress and continues by clicking. **Review** reviews against `origin/main`: the
+issue worker commits and does not push, so the working diff is empty by the time anyone reviews.
+The release keys ask Y/N in the terminal first, and `release.ps1` follows the run to the end on its
+own — a separate watch key duplicates it. **Major is deliberately not on the deck**: cut one with
+`tools\release.ps1 -Major`.
 
-### Neural voice
+The profile keeps its second page in the manifest, empty, with nothing navigating to it.
 
-`/neural-voice` on, **`/neural-voice off`** off, `/neural-voice none` keeps the voice and only drops
-the session name — two neighbouring words for opposite things, and the wrong one shipped on the key
-at first. The state lives in the session and nowhere on disk (the skill forbids a hook, a settings
-write or a memory file), and sessions run in parallel with different settings, so **a Stream Deck
-key cannot detect whether it is on**. Two keys, not a toggle. The maintainer asked for a toggle and
-accepted this; do not quietly build a flag file to fake it, since that would make one session's
-voice global.
+A neural-voice key was tried and dropped. If one is asked for again: the state lives in the session
+and nowhere on disk, and sessions run in parallel with different settings, so **a key cannot detect
+whether it is on** and a toggle is impossible. Two keys or none. Do not fake it with a flag file,
+which would make one session's voice global.
 
-## Not yet exercised
+## When a key misbehaves
 
-As of 2026-09-10 the profile renders but **no key has been pressed**. If one misbehaves, separate
-the two layers before debugging:
+Separate the two layers before debugging:
 
 - Wrong thing happens, or nothing happens, and the terminal opens -> the fault is in
   `tools/deck/*.cmd`, not the profile.
 - No terminal at all, or the wrong key art -> the fault is the profile; re-run `apply_profile.py`.
-
-Untested specifics worth suspecting first: whether a slash command works as `claude`'s opening
-prompt from a `.cmd` (it does from a shell), whether `system.text` reaches a terminal that has just
-launched without a focus race, and whether `PageIndex` is 1-based as assumed.
 
 ## Writing the script
 

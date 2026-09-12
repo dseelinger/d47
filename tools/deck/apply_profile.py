@@ -65,43 +65,27 @@ def send(text, image):
                     'isSendingEnter': True, 'isTypingMode': False, 'pastedText': text}, image)
 
 
-def goto(page_index, image):
-    # Plugin.UUID is the plugin id and differs from the action id for this one.
-    return _action('com.elgato.streamdeck.page.goto', 'Go to Page', 'Pages',
-                   'com.elgato.streamdeck.page', {'PageIndex': page_index}, image)
-
-
+# Row 0 opens a session, row 1 types into the session that has focus, row 2 runs the app and
+# cuts releases. Both release scripts follow the run to the end on their own.
 PAGE_1 = {
     '0,0': run('triage.cmd', 'triage'),
     '1,0': run('coordinator.cmd', 'coord'),
     '2,0': run('architect.cmd', 'architect'),
     '3,0': run('issue-worker.cmd', 'issue'),
-    '4,0': send('/desktop', 'desktop'),
+    '4,0': run('review.cmd', 'review'),
 
-    '0,1': run('review.cmd', 'review'),
-    '1,1': run('prose.cmd', 'prose'),
-    '2,1': send('commit and push', 'ship'),
-    # /neural-voice off is the one that stops the speaking. /neural-voice none keeps the voice
-    # and only drops the session name.
-    '3,1': send('/neural-voice', 'voice_on'),
-    '4,1': send('/neural-voice off', 'voice_off'),
+    '0,1': send('/desktop', 'desktop'),
+    '1,1': send('push', 'push'),
+    '2,1': send('/wrap-up', 'wrapup'),
 
-    '0,2': run('build.cmd', 'build'),
-    '1,2': run('ticking.cmd', 'ticking'),
-    '2,2': run('test-drive.cmd', 'testdrive'),
-    '3,2': run('restart-test-drive.cmd', 'restart'),
-    '4,2': goto(2, 'release'),
+    '0,2': run('test-drive.cmd', 'testdrive'),
+    '1,2': run('restart-test-drive.cmd', 'restart'),
+    '3,2': run('release-patch.cmd', 'patch'),
+    '4,2': run('release-minor.cmd', 'minor'),
 }
 
-PAGE_2 = {
-    '0,0': run('release-patch.cmd', 'patch'),
-    '1,0': run('release-minor.cmd', 'minor'),
-    '2,0': run('release-major.cmd', 'major'),
-    '3,0': run('watch-release.cmd', 'watch'),
-
-    '0,2': send('/wrap-up', 'wrapup'),
-    '4,2': goto(1, 'back'),
-}
+# Nothing navigates here. A major release is deliberate: tools\release.ps1 -Major.
+PAGE_2 = {}
 
 
 def main():

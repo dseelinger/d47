@@ -116,10 +116,24 @@ carry the subject reference alone.
 Do not push, and do not open a PR. The commit stays local so the review has something to read and
 its findings can be amended into it. The maintainer pushes, and the push is what closes the issue.
 
+## What triage chose
+
+`.claude/triage-state.json` holds the last triage's grid, keyed by issue number. Read the entry for
+this issue when the file is there; it is a snapshot of a queue that moves, so treat a missing entry
+as no information rather than a verdict.
+
+The Stream Deck's Issue key has already applied `model` and `effort` at launch. **A session cannot
+change its own model or effort** — the desktop app refuses both for the session itself. So where
+the entry names a model other than the one you are running as, say so in one line and carry on;
+switching is the maintainer's, from the model picker.
+
+`review` is the other reason to read it: it is how triage's recommendation reaches you.
+
 ## Reviews
 
-Do not run `/code-review` by default. Run it when triage flagged this issue for one, or when the
-fix ended up touching the tick loop, a trust boundary, the layering rule or the update asset names.
+Do not run `/code-review` by default. Run it when the triage state flags this issue for one, or
+when the fix ended up touching the tick loop, a trust boundary, the layering rule or the update
+asset names.
 Otherwise the build and the filtered tests are the check.
 
 `/prose` is worth a pass when the change added comments or a changelog entry of any length.
