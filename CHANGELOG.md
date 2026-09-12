@@ -6,6 +6,18 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.47 — A stick that is plugged in is no longer reported missing at startup
+
+Windows takes a moment to report every game controller it has, and D47 waits for that list to stop
+changing before reading it. The wait was not counted properly: the fifteen reads a bound stick gets
+to turn up in were being spent on reads taken during the wait, which report nothing whatever is
+plugged in. Whether D47 then warned that push-to-talk was bound to a controller that is not here
+came down to which side of that moment the reads happened to fall.
+
+The stick is now read only once the list has settled, so the fifteen reads are fifteen real chances.
+A stick that is genuinely absent is still reported, and the push-to-talk key on the keyboard is read
+on every tick as before.
+
 ## 0.110.46 — A SteamVR registration that keeps being refused says so once
 
 D47 registers its controller bindings with SteamVR as soon as the headset session is up, and tries

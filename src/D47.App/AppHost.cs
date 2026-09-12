@@ -2052,13 +2052,7 @@ public sealed class AppHost : IDisposable
             pushToTalk.Poll();
 
             // And the stick, on the same tick (Phase 53).
-            var buttons = controllers.Poll();
-
-            pushToTalkButton.Poll(buttons);
-            host._cancelButton.Poll(buttons);
-
-            // And then, and only then, whether the stick it is bound to turned up (#45).
-            host.WarnIfTheStickIsMissing();
+            PollTheStick(controllers, pushToTalkButton, host._cancelButton, host._logger);
 
             // Whether the device is actually delivering audio, which only it knows and which is half of what
             // the panel's microphone indicator says.
@@ -4257,23 +4251,44 @@ public sealed class AppHost : IDisposable
         }
     }
 
-    /// <summary>The stick bound to push-to-talk is not here (Phase 53).</summary>
-    private void WarnIfTheStickIsMissing()
+    /// <summary>
+    /// Polls the stick and the buttons bound to it, on settled readings only (#146). An unsettled
+    /// reader returns nothing by construction, and <see cref="D47.Core.Hotas.BoundButton"/> counts every
+    /// poll it is given toward the threshold its absence notice fires at.
+    /// </summary>
+    private static void PollTheStick(
+        D47.Core.Hotas.IHotasReader? reader,
+        D47.Core.Hotas.BoundButton pushToTalkButton,
+        D47.Core.Hotas.BoundButton cancelButton,
+        Microsoft.Extensions.Logging.ILogger logger)
     {
-        // Not while the readers are still enumerating: a single enumeration at startup reported three of six
-        // devices on the bench, which is the whole of Phase 21's finding 1, and a warning raised then would
-        // be wrong more often than right.
-        if (Controllers?.IsSettled != true)
+        // A single enumeration at startup reported three of six devices on the bench, which is Phase 21's
+        // finding 1.
+        if (reader?.IsSettled != true)
         {
             return;
         }
 
-        if (_pushToTalkButton.MissingDeviceNotice() is not { } button)
+        var buttons = reader.Poll();
+
+        pushToTalkButton.Poll(buttons);
+        cancelButton.Poll(buttons);
+
+        // And then, and only then, whether the stick it is bound to turned up (#45).
+        WarnIfTheStickIsMissing(pushToTalkButton, logger);
+    }
+
+    /// <summary>The stick bound to push-to-talk is not here (Phase 53). Asked on settled polls only.</summary>
+    private static void WarnIfTheStickIsMissing(
+        D47.Core.Hotas.BoundButton pushToTalkButton,
+        Microsoft.Extensions.Logging.ILogger logger)
+    {
+        if (pushToTalkButton.MissingDeviceNotice() is not { } button)
         {
             return;
         }
 
-        _logger.LogWarning(
+        logger.LogWarning(
             "Push-to-talk is bound to {Button} on a controller that is not here",
             button.Describe());
     }
