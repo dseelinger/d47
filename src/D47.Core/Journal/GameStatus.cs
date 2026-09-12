@@ -85,6 +85,12 @@ public enum GuiFocus
     Codex = 11,
 }
 
+/// <summary>What the Commander has selected to travel to, as Status.json reports it.</summary>
+/// <param name="System">The system's address.</param>
+/// <param name="Body">The body's id, and zero where the destination is the system itself.</param>
+/// <param name="Name">What Elite calls it.</param>
+public readonly record struct StatusDestination(long System, long Body, string? Name);
+
 /// <summary>
 /// The live state Elite writes to Status.json — the only continuous signal the game gives, and the one
 /// Phase 8's danger callouts need.
@@ -120,6 +126,9 @@ public sealed record GameStatus
     public double? Heat { get; init; }
 
     public string? BodyName { get; init; }
+
+    /// <summary>What is selected in the nav panel, or null where nothing is.</summary>
+    public StatusDestination? Destination { get; init; }
 
     public long? Balance { get; init; }
 
@@ -241,6 +250,7 @@ public sealed class GameStatusReader(string directory, ILogger logger)
                 Cargo = root.Double("Cargo"),
                 Heat = root.Double("Temperature"),
                 BodyName = root.String("BodyName"),
+                Destination = Destination(root),
                 Balance = root.Long("Balance"),
 
                 // Absent everywhere except near a surface, and absent is not zero — see the remarks on these
@@ -263,4 +273,12 @@ public sealed class GameStatusReader(string directory, ILogger logger)
             return false;
         }
     }
+
+    private static StatusDestination? Destination(JsonElement root) =>
+        root.Object("Destination") is { } destination
+            ? new StatusDestination(
+                destination.Long("System") ?? 0,
+                destination.Long("Body") ?? 0,
+                destination.String("Name"))
+            : null;
 }

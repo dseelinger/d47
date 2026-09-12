@@ -6,6 +6,19 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.42 — Ask D47 to request docking
+
+D47 could take a ship out of a station and could not bring it in. Say **request docking** — or
+*request permission to dock*, *permission to dock*, *ask for docking*, or *take us in* — and it
+walks the left panel's contacts tab and asks the station for permission. Elite binds no action for
+requesting docking, so this is a menu walk, and a blinder one than taking us out: the status file
+says a panel is open and never which tab is showing or which row is selected. D47 therefore
+confirms by the journal instead, and says whether a request actually went in rather than assuming
+the walk worked. It refuses before pressing anything unless the ship is undocked, in normal space
+and has a destination selected, and *take us in* refuses with no docking computer fitted, since
+that phrase promises an approach D47 does not fly. It has its own settings row beside the other
+compound commands.
+
 ## 0.110.41 — D47 follows the Default Device as it moves, not just where it started
 
 Left on "system default", the microphone and the speaker resolved which device that was once, at

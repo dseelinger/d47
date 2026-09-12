@@ -364,6 +364,46 @@ that was tried. The compound phrase goes on to launch on that same best-effort b
 clipboard failure, which is the one thing `plot_course` treats as an actual error, stops it short
 of the pad.
 
+### Request docking
+
+Say **request docking** on your way in and Directive 47 asks the station for permission. *Request
+permission to dock*, *permission to dock* and *ask for docking* all do the same thing. **Take us
+in** does too, and is the one phrase that expects a docking computer: with none fitted it says so
+and presses nothing, because the phrase promises an approach Directive 47 cannot fly.
+
+**This is a blind menu walk, and blinder than taking us out.** Elite has no binding for requesting
+docking — it is a walk through the left panel's contacts tab — and the status file says only that
+a panel is open, never which tab is showing or which row is selected. So Directive 47 opens the
+comms panel, opens the left one, moves along two tabs, selects the contact, goes right into its
+actions and selects again, then closes the panel. The comms panel goes first so that the next
+press opens the left panel rather than toggling it shut.
+
+**It confirms by the journal rather than by what it can see.** Elite writes a `DockingRequested`
+event the moment a request goes in, so instead of assuming the walk worked, Directive 47 watches
+for that event and answers on what it finds:
+
+```
+I walked the contacts panel and no docking request went in.
+The panel may have opened on another tab, or the station may not have been
+the first contact in the list.
+```
+
+That last sentence names the two failures the walk cannot see. Elite remembers which tab you left
+the left panel on, and the two tab presses reach contacts from the navigation tab and from nowhere
+else — left anywhere else, the rest of the walk goes into the wrong tab. And the walk assumes the
+station is the first contact, so when it is not, the select lands on something else: another ship,
+a beacon. Nothing in the status file could have warned it of either. The panel closes either way,
+so nothing is left open on your screen.
+
+Before it presses anything it insists you are undocked, flying in normal space, and have something
+selected as a destination. Docked, in supercruise, on foot or in the SRV it refuses and names which
+of those was true. It also refuses with a map or a scanner mode up — the galaxy map, the system
+map, the orrery, either scanner, the codex — because those take the direction keys for themselves,
+and the walk pressed into the system map is a worse outcome than being told to close it. Any of
+the four cockpit panels may be open; the walk starts by switching between two of them.
+
+It has its own switch, separate from the others, for the reason *take us out* does.
+
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
 
@@ -395,7 +435,7 @@ nearest-first search just found and leave the pad. Spoken only — the Commander
 voice or from the panel.
 
 ```json
-{"type":"object","properties":{"command":{"type":"string","description":"Which command to run.","enum":["take_us_out","separate_and_engage","separate_and_supercruise","set_course_and_take_us_out"]}},"required":["command"],"additionalProperties":false}
+{"type":"object","properties":{"command":{"type":"string","description":"Which command to run.","enum":["take_us_out","separate_and_engage","separate_and_supercruise","set_course_and_take_us_out","request_docking","take_us_in"]}},"required":["command"],"additionalProperties":false}
 ```
 
 **Protected, so the model never sees this one.** It is registered, and it is left out of the
@@ -405,10 +445,12 @@ that has to wait for a model round trip is a command given at the wrong moment, 
 close enough to its ceiling that a tool nobody needs advertised should not be paying for a place
 there.
 
-Each of the first three has its own settings row, and every one of them is gated by *let D47 press
-keys in Elite* as well, so a Commander who has not allowed key injection at all has not allowed
-these. **Set a course and take us out** reads the switch that guards taking us out, since it wraps
-that exact action — it is two tools run in order, `plot_course` and then the same launch, rather
-than a key sequence of its own.
+There are four settings rows behind these six values, and every one of them is gated by *let D47
+press keys in Elite* as well, so a Commander who has not allowed key injection at all has not
+allowed these. **Set a course and take us out** reads the switch that guards taking us out, since
+it wraps that exact action — it is two tools run in order, `plot_course` and then the same launch,
+rather than a key sequence of its own. **Take us in** reads the switch that guards requesting
+docking, for the same reason: it is that walk, under a phrase that also expects a docking computer
+to be fitted.
 
 </details>

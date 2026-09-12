@@ -64,6 +64,18 @@ public sealed record ShipCommandSurface
     /// <summary>Awaits the next status sample, which is what the boost loop watches.</summary>
     public required Func<CancellationToken, Task<GameStatus>> NextStatus { get; init; }
 
+    /// <summary>
+    /// Opens a watch on the journal before the contacts walk sends its first key, so the confirmation
+    /// cannot count a docking request that was already in (#150).
+    /// </summary>
+    public Func<IDockingWatch> WatchDockingRequest { get; init; } = () => new FixedDockingWatch(null);
+
+    /// <summary>
+    /// Whether a docking computer is fitted, or null where the loadout cannot answer — which "take us
+    /// in" treats as fitted rather than refusing on no evidence (#150).
+    /// </summary>
+    public Func<bool?> DockingComputerFitted { get; init; } = () => null;
+
     /// <summary>The wall clock, injected because no Core type reads one.</summary>
     public required Func<DateTimeOffset> Now { get; init; }
 

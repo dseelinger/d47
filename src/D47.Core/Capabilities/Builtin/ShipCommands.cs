@@ -6,7 +6,7 @@ namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
 /// The compound spoken commands: take us out, separate and engage, separate and supercruise (Phase 52),
-/// and set a course and take us out (#325).
+/// set a course and take us out (#325), and request docking (#150).
 /// </summary>
 public static class ShipCommands
 {
@@ -14,10 +14,15 @@ public static class ShipCommands
     public const string SeparateAndEngage = "separate_and_engage";
     public const string SeparateAndSupercruise = "separate_and_supercruise";
     public const string SetCourseAndTakeUsOut = "set_course_and_take_us_out";
+    public const string RequestDocking = "request_docking";
+
+    /// <summary>The same walk, said by a Commander who expects the docking computer to fly it.</summary>
+    public const string TakeUsIn = "take_us_in";
 
     public const string LaunchKey = "actions.takeUsOut";
     public const string SeparateEngageKey = "actions.separateAndEngage";
     public const string SeparateSupercruiseKey = "actions.separateAndSupercruise";
+    public const string RequestDockingKey = "actions.requestDocking";
 
     /// <summary>The tool.</summary>
     /// <param name="navigation">
@@ -33,9 +38,9 @@ public static class ShipCommands
     {
         Name = "ship_command",
         Description =
-            "Compound ship commands: leave the pad, break a mass lock and engage, or set a course "
-            + "to what a nearest-first search just found and leave the pad. Spoken only — the "
-            + "Commander reaches these by voice or from the panel.",
+            "Compound ship commands: leave the pad, break a mass lock and engage, set a course "
+            + "to what a nearest-first search just found and leave the pad, or request docking. "
+            + "Spoken only — the Commander reaches these by voice or from the panel.",
         Protected = true,
         Parameters =
         [
@@ -45,7 +50,15 @@ public static class ShipCommands
                 Type = ToolParameterType.String,
                 Description = "Which command to run.",
                 Required = true,
-                AllowedValues = [TakeUsOut, SeparateAndEngage, SeparateAndSupercruise, SetCourseAndTakeUsOut],
+                AllowedValues =
+                [
+                    TakeUsOut,
+                    SeparateAndEngage,
+                    SeparateAndSupercruise,
+                    SetCourseAndTakeUsOut,
+                    RequestDocking,
+                    TakeUsIn,
+                ],
             },
         ],
         Commands =
@@ -63,6 +76,8 @@ public static class ShipCommands
             new ToolCommandPhrase(
                 "set a course and take us out",
                 new Dictionary<string, string>(StringComparer.Ordinal) { ["command"] = SetCourseAndTakeUsOut }),
+
+            .. DockingPhrases(),
         ],
         Handler = (arguments, cancellationToken) => Run(arguments, actions, commands, navigation, lastFound, cancellationToken),
     };
@@ -82,6 +97,23 @@ public static class ShipCommands
             select new ToolCommandPhrase(
                 $"{opening} and {finisher}",
                 new Dictionary<string, string>(StringComparer.Ordinal) { ["command"] = SeparateAndEngage });
+    }
+
+    /// <summary>
+    /// Every way of asking for docking. "Take us in" is the same walk under its own command value,
+    /// because it is the one phrase that needs a docking computer to mean what it says.
+    /// </summary>
+    private static IEnumerable<ToolCommandPhrase> DockingPhrases()
+    {
+        string[] asking = ["request docking", "request permission to dock", "permission to dock", "ask for docking"];
+
+        return asking
+            .Select(phrase => new ToolCommandPhrase(
+                phrase,
+                new Dictionary<string, string>(StringComparer.Ordinal) { ["command"] = RequestDocking }))
+            .Append(new ToolCommandPhrase(
+                "take us in",
+                new Dictionary<string, string>(StringComparer.Ordinal) { ["command"] = TakeUsIn }));
     }
 
     private static async Task<ToolResult> Run(
@@ -110,6 +142,19 @@ public static class ShipCommands
             return ToolResult.Error(
                 $"{Name(command)} is switched off. It has its own row in settings, separate from the "
                 + "others, and only the Commander can turn it on.");
+        }
+
+        if (command is RequestDocking or TakeUsIn)
+        {
+            var asked = await Docking
+                .RunAsync(
+                    actions,
+                    commands.WatchDockingRequest,
+                    command == TakeUsIn ? commands.DockingComputerFitted : null,
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            return asked.Ok ? ToolResult.Ok(asked.Message) : ToolResult.Error(asked.Message);
         }
 
         // One launch, whether or not a course is plotted into it first: the compound command is the plain one
@@ -177,6 +222,7 @@ public static class ShipCommands
         SeparateAndEngage => "Separate and engage",
         SeparateAndSupercruise => "Separate and supercruise",
         SetCourseAndTakeUsOut => "Taking us out",
+        RequestDocking or TakeUsIn => "Requesting docking",
         _ => command,
     };
 
@@ -254,6 +300,31 @@ public static class ShipCommands
                 Write = (s, v) => s with { Actions = s.Actions with { SeparateAndSupercruise = v is "true" } },
             },
         },
+
+        new()
+        {
+            Key = RequestDockingKey,
+            Advanced = true,
+            Label = "Let D47 request docking",
+            Help = "Lets \"request docking\" walk the left panel's contacts tab and ask the station for "
+                   + "permission. Elite has no binding for it, so this is a menu walk that cannot see "
+                   + "the list it is walking; it reads the journal afterwards to say whether a request "
+                   + "actually went in. Needs key presses to be allowed as well.",
+            Kind = SettingKind.Toggle,
+            DefaultDisplay = "on",
+            DocsAnchor = "request-docking",
+            Protected = true,
+            Commands =
+            [
+                new SettingCommandPhrase("you may request docking", "true"),
+                new SettingCommandPhrase("do not request docking", "false"),
+            ],
+            Binding = new SettingBinding
+            {
+                Read = s => s.Actions.RequestDocking ? "true" : "false",
+                Write = (s, v) => s with { Actions = s.Actions with { RequestDocking = v is "true" } },
+            },
+        },
     ];
 
     /// <summary>Which switch a command reads, for the host that wires <see cref="ShipCommandSurface"/>.</summary>
@@ -266,6 +337,10 @@ public static class ShipCommands
         // Its own launch key is Taking us out's own switch (#325): the command wraps that exact action, and a
         // Commander who has told d47 not to walk the panel has told it once.
         SetCourseAndTakeUsOut => settings.Actions.TakeUsOut,
+
+        // One row for one walk: "take us in" differs only in expecting a docking computer to fly what it
+        // asked for.
+        RequestDocking or TakeUsIn => settings.Actions.RequestDocking,
         _ => false,
     };
 }

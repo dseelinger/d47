@@ -972,6 +972,10 @@ public sealed class AppHost : IDisposable
         var tracingInput = Diagnostics.InputTraceWriter.Enabled;
         string? musicTrack = null;
 
+        // The journal's own witness that a docking request went in (#150): counted on the tick thread, read
+        // by the wait the contacts walk ends on.
+        var dockingRequests = 0;
+
         tick.Add("journal", context =>
         {
             // The first tick is the replay of the backlog, and the switch signal has to know that (Phase 44):
@@ -984,6 +988,11 @@ public sealed class AppHost : IDisposable
                 && events.LastOrDefault(journalEvent => journalEvent.Kind == "Music") is { } playing)
             {
                 musicTrack = playing.String("MusicTrack");
+            }
+
+            if (events.Any(journalEvent => journalEvent.Kind == "DockingRequested"))
+            {
+                Interlocked.Increment(ref dockingRequests);
             }
 
             // Kept for the Journal page to read (#51).
@@ -1630,6 +1639,14 @@ public sealed class AppHost : IDisposable
                         token),
 
                     NextStatus = token => NextStatus(status, token),
+
+                    // Opened before the contacts walk sends a key, so a request already in is not read as
+                    // this one (#150).
+                    WatchDockingRequest = () => new Input.DockingRequestWatch(
+                        () => Volatile.Read(ref dockingRequests), logger),
+
+                    DockingComputerFitted = () =>
+                        gameState.Active?.FlownShip.Fitted(Core.Journal.ShipLoadout.DockingComputer),
 
                     // The boost loop's pacing.
                     Now = () => DateTimeOffset.Now,

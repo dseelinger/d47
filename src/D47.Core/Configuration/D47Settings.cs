@@ -227,6 +227,9 @@ public sealed record ActionSettings
 
     /// <summary>The same, ending in supercruise.</summary>
     public bool SeparateAndSupercruise { get; init; } = true;
+
+    /// <summary>Whether "request docking" may walk the left panel's contacts tab (#150).</summary>
+    public bool RequestDocking { get; init; } = true;
 }
 
 /// <summary>The headset (Phase 9).</summary>
