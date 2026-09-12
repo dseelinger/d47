@@ -1297,6 +1297,9 @@ public sealed class IndexPage : LoadoutPage
     /// <summary>The index's own switch, kept so it can be withdrawn when it has nothing to do.</summary>
     private readonly ToggleSwitch? _switch;
 
+    /// <summary>The box the switch and its label share, withdrawn along with the switch.</summary>
+    private readonly StackPanel? _switchBox;
+
     public IndexPage(ILoadoutMode mode, PanelNavigator nav, PanelPrompts prompts)
         : base(mode)
     {
@@ -1321,13 +1324,16 @@ public sealed class IndexPage : LoadoutPage
         if (mode.IndexToggle is { } toggle)
         {
             // A ToggleSwitch, the same control the raw-journal switch uses — a Commander asked for that one
-            // by name, and two switches in one app that look different are two controls.
+            // by name, and two switches in one app that look different are two controls. The label sits
+            // beside it rather than inside it: a ToggleSwitch stacks its Content above the knob, which
+            // wraps one word onto two lines in a bar this short.
             _switch = new ToggleSwitch
             {
-                Content = toggle.Label,
+                Name = "FleetToggle",
                 IsChecked = toggle.On,
+                OnContent = null,
+                OffContent = null,
                 FontSize = TypeScale.Secondary,
-                HorizontalAlignment = HorizontalAlignment.Right,
                 VerticalAlignment = VerticalAlignment.Center,
             };
 
@@ -1341,8 +1347,26 @@ public sealed class IndexPage : LoadoutPage
                 Lay(_scroller.Bounds.Width);
             };
 
-            DockPanel.SetDock(_switch, Dock.Right);
-            head.Children.Add(_switch);
+            _switchBox = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                VerticalAlignment = VerticalAlignment.Center,
+                Spacing = 6,
+                Children =
+                {
+                    new TextBlock
+                    {
+                        Text = toggle.Label,
+                        FontSize = TypeScale.Secondary,
+                        VerticalAlignment = VerticalAlignment.Center,
+                    },
+                    _switch,
+                },
+            };
+
+            DockPanel.SetDock(_switchBox, Dock.Right);
+            head.Children.Add(_switchBox);
         }
 
         DockPanel.SetDock(head, Dock.Top);

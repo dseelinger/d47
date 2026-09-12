@@ -115,7 +115,7 @@ public sealed class ShipsMode(
     public LoadoutToggle? IndexToggle =>
         drawings is null
             ? null
-            : new LoadoutToggle("Drawings", drawings.Drawings, drawings.Remember);
+            : new LoadoutToggle("Large cards", drawings.Drawings, drawings.Remember);
 
     /// <summary>A hull to plan a build for before it is bought.</summary>
     public void New(PanelPrompts prompts, Action done) =>

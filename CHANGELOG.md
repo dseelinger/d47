@@ -22,6 +22,11 @@ the arms were shorter than the pen was wide, so the mark read as a plus sign. Bo
 arrows — heads outward for expand, inward for shrink — drawn on a finer pen and at the size the
 rest of the mark family uses.
 
+The Ships index carried the one switch in the app that did not follow the settings page's own
+pattern: a `ToggleSwitch` with its label as `Content`, which stacks the word above the knob and
+wraps it onto a second line. It now reads **Large cards**, the label as a `TextBlock` beside a bare
+switch with no `On`/`Off` text, on one line in both the desktop panel and the headset.
+
 ## 0.112.8 — An engineer's row says who it opens
 
 An engineer whose referral gates somebody else drew no line about it, however much the Commander's

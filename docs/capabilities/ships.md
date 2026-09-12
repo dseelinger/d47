@@ -26,7 +26,7 @@ nav_order: 111
  <rect x="20" y="16" width="840" height="264" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <rect x="20" y="16" width="840" height="42" rx="8" fill="var(--surface)"/>
  <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Ships</text>
- <text x="836" y="44" text-anchor="end" font-size="14" fill="var(--text-muted)">Drawings</text>
+ <text x="836" y="44" text-anchor="end" font-size="14" fill="var(--text-muted)">Large cards</text>
 
  <rect x="44" y="78" width="256" height="152" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="3"/>
  <path d="M78 130 L214 120 L266 148 L214 166 L112 168 Z" fill="var(--text-muted)"/>
@@ -271,7 +271,7 @@ question rather than a guess.
 
 Every card carries a drawing of the hull, and it is a render of Elite's own geometry rather than
 artwork somebody drew: the shipyard preview, captured, posed in the game's camera and drawn as
-orange lines over a dark hull. **Drawings** at the top of the fleet puts them away.
+orange lines over a dark hull. **Large cards** at the top of the fleet puts them away.
 
 **The small one came with Directive 47.** All forty-seven fit in eleven megabytes, so a fresh
 installation has a fleet with pictures on it before anything is downloaded.

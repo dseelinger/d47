@@ -267,7 +267,7 @@ public class TheFleetTabIsInTheHeadsetTests
 
     /// <summary>And the mode switch beside the cards: a <see cref="ToggleSwitch"/>, the ray presses it too.</summary>
     [AvaloniaFact]
-    public void TheDrawingsSwitchTakesARayPress()
+    public void TheFleetSwitchTakesARayPress()
     {
         // The switch withdraws itself when the fleet has no captured hull to draw (LoadoutPages.IndexPage.
         // Refresh) - "python" needs its own art on disk to make the switch worth pressing.
@@ -282,7 +282,7 @@ public class TheFleetTabIsInTheHeadsetTests
 
             // Not just "any ToggleSwitch": PanelView carries its own raw-JSON switch, hidden but still in
             // the visual tree, and FirstOrDefault would happily land on that one instead.
-            var toggle = Pressable(panel, control => control is ToggleSwitch { Content: "Drawings" });
+            var toggle = Pressable(panel, control => control is ToggleSwitch { Name: "FleetToggle" });
 
             Assert.NotNull(toggle);
 

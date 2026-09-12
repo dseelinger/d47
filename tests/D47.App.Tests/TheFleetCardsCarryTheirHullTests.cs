@@ -135,7 +135,7 @@ public class TheFleetCardsCarryTheirHullTests
     private static ToggleSwitch Switch(PanelView panel) =>
         panel.GetVisualDescendants()
             .OfType<ToggleSwitch>()
-            .Single(box => box.Content as string == "Drawings");
+            .Single(box => box.Name == "FleetToggle");
 
     /// <summary>Opens the card for a ship, which is what the Commander does to get to its page.</summary>
     private static void Open(PanelView panel, string named)
