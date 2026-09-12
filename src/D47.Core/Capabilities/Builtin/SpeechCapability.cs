@@ -203,6 +203,12 @@ public static class SpeechCapability
 
         public Func<string, string>? DeviceLabel { get; init; }
 
+        /// <summary>
+        /// What "the system default" actually resolves to right now, or null when that cannot be
+        /// determined.
+        /// </summary>
+        public Func<string?>? DefaultDeviceName { get; init; }
+
         public Func<VoiceGroup, string, string>? VoiceLabel { get; init; }
 
         /// <summary>
@@ -273,9 +279,17 @@ public static class SpeechCapability
             {
                 Key = OutputDeviceKey,
                 Label = "Output device",
-                Help = "Where D47 speaks. Defaults to whatever Windows is using.",
+                Help =
+                    "Where D47 speaks. Leaving this unset follows the Default Device — the one Sound "
+                    + "settings shows first, not the separate Communications default some headsets split "
+                    + "off.",
                 Kind = SettingKind.Choice,
                 DefaultDisplay = "(the system default)",
+
+                // Names the device the default actually resolves to.
+                DefaultDisplaySource = _ => surface.DefaultDeviceName?.Invoke() is { Length: > 0 } resolved
+                    ? $"(the system default — {resolved}, your Windows Default Device)"
+                    : "(the system default)",
                 AllowsFreeText = true,
                 ChoiceSource = _ => surface.OutputDevices?.Invoke() ?? [],
                 ChoiceLabel = id => surface.DeviceLabel?.Invoke(id) ?? id,

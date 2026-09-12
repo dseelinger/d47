@@ -716,8 +716,10 @@ screen; it does not reach the model as something to act on.
 
 #### Output device {#output-device}
 
-Where Directive 47 speaks, defaulting to whatever Windows is using. Change it and it moves
-immediately. If a device is unplugged it falls back to the default rather than going quiet.
+Where Directive 47 speaks. Leaving this unset follows your Default Device — the speaker Windows
+Sound settings shows first — not the separate Communications default some headsets split off.
+Change it and it moves immediately. If a device is unplugged it falls back to the default rather
+than going quiet.
 
 It shares the device rather than taking it over — the game is what matters on that output.
 

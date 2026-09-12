@@ -6,6 +6,18 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.40 — D47 now listens on and speaks to the same Windows default
+
+The microphone and output device rows followed different Windows defaults: the microphone opened
+the Communications device, the speaker opened whatever NAudio's own default happened to be, and
+neither matched the Default Device a Commander sees first in Sound settings. Windows only splits
+Communications off from the Default Device once a headset or voice-chat app is involved, which is
+why the two roles agreed on some machines and named different devices on others. Both rows now
+follow the Default Device, and the settings page names the device and which Windows row it came
+from. **On an existing install left on "the system default", the
+microphone d47 opens may change after this update** — check the Microphone row if a Commander
+notices d47 has gone quiet or stopped hearing them.
+
 ## 0.110.39 — A journal history walk that did not finish is no longer reported as an absence
 
 The walk over older journals ends one of three ways: it finishes, it throws, or it is stopped when

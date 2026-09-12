@@ -9,10 +9,22 @@ namespace D47.Audio;
 /// The microphone, running continuously into whatever <see cref="ICaptureSink"/> it was handed — the
 /// gate, or the echo canceller in front of it.
 /// </summary>
-public sealed class WasapiMicrophone(ICaptureSink sink, ILogger<WasapiMicrophone> logger) : IDisposable
+public sealed class WasapiMicrophone : IDisposable
 {
     /// <summary>What Whisper wants: 16 kHz mono.</summary>
     public const int SampleRate = 16000;
+
+    /// <summary>
+    /// The Windows role "system default" follows: the Default Device, the row Sound settings shows
+    /// first. Not <see cref="Role.Communications"/> — Windows only splits that row off from the
+    /// Default Device once a headset or voice-chat app is involved, and a Commander does not look at
+    /// it (#65).
+    /// </summary>
+    internal const Role DefaultRole = Role.Console;
+
+    private readonly ICaptureSink _sink;
+    private readonly ILogger<WasapiMicrophone> _logger;
+    private readonly IAudioEndpointEnumerator _enumerator;
 
     private WasapiCapture? _capture;
     private MediaFoundationResampler? _resampler;
@@ -21,6 +33,18 @@ public sealed class WasapiMicrophone(ICaptureSink sink, ILogger<WasapiMicrophone
     private bool _disposed;
 
     private readonly Lock _lifecycle = new();
+
+    public WasapiMicrophone(ICaptureSink sink, ILogger<WasapiMicrophone> logger)
+        : this(sink, logger, new WasapiEndpointEnumerator())
+    {
+    }
+
+    internal WasapiMicrophone(ICaptureSink sink, ILogger<WasapiMicrophone> logger, IAudioEndpointEnumerator enumerator)
+    {
+        _sink = sink;
+        _logger = logger;
+        _enumerator = enumerator;
+    }
 
     /// <summary>Whether audio is actually flowing.</summary>
     public bool IsCapturing { get; private set; }
@@ -32,42 +56,19 @@ public sealed class WasapiMicrophone(ICaptureSink sink, ILogger<WasapiMicrophone
     public string? OpenDeviceName { get; private set; }
 
     /// <summary>The input devices offered, as id/name pairs for the settings picker.</summary>
-    public static IReadOnlyList<(string Id, string Name)> Devices()
-    {
-        try
-        {
-            using var enumerator = new MMDeviceEnumerator();
+    public IReadOnlyList<(string Id, string Name)> Devices() =>
+        [.. _enumerator.Active(DataFlow.Capture).Select(device => (device.Id, device.Name))];
 
-            return
-            [
-                .. enumerator
-                    .EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.Active)
-                    .Select(device => (device.ID, device.FriendlyName)),
-            ];
-        }
-        catch (Exception)
-        {
-            // A machine with no audio subsystem at all.
-            return [];
-        }
-    }
+    /// <summary>What the system default (the Windows Default Device) currently resolves to, without opening anything.</summary>
+    public string? DefaultDeviceName() => _enumerator.Default(DataFlow.Capture, DefaultRole)?.Name;
 
-    /// <summary>What the system default currently resolves to, without opening anything.</summary>
-    public static string? DefaultDeviceName()
-    {
-        try
-        {
-            using var enumerator = new MMDeviceEnumerator();
-
-            // Communications, matching Open: reporting the multimedia default would name a different device
-            // from the one d47 would actually listen on.
-            return enumerator.GetDefaultAudioEndpoint(DataFlow.Capture, Role.Communications).FriendlyName;
-        }
-        catch (Exception)
-        {
-            return null;
-        }
-    }
+    /// <summary>The endpoint <paramref name="deviceId"/> names, or the Default Device when it is null.</summary>
+    internal AudioEndpoint? Resolve(string? deviceId) => deviceId is { Length: > 0 }
+        ? _enumerator.Active(DataFlow.Capture)
+            .Where(candidate => candidate.Id == deviceId)
+            .Select(candidate => (AudioEndpoint?)candidate)
+            .FirstOrDefault()
+        : _enumerator.Default(DataFlow.Capture, DefaultRole);
 
     /// <summary>Opens the chosen device, or the system default when null.</summary>
     public void Open(string? deviceId)
@@ -85,12 +86,14 @@ public sealed class WasapiMicrophone(ICaptureSink sink, ILogger<WasapiMicrophone
 
             try
             {
+                var target = Resolve(deviceId);
+
                 using var enumerator = new MMDeviceEnumerator();
 
-                var device = deviceId is { Length: > 0 }
+                var device = target is { } endpoint
                     ? enumerator.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.Active)
-                        .FirstOrDefault(candidate => candidate.ID == deviceId)
-                    : enumerator.GetDefaultAudioEndpoint(DataFlow.Capture, Role.Communications);
+                        .FirstOrDefault(candidate => candidate.ID == endpoint.Id)
+                    : null;
 
                 if (device is null)
                 {
@@ -100,7 +103,7 @@ public sealed class WasapiMicrophone(ICaptureSink sink, ILogger<WasapiMicrophone
                         ? "The selected microphone is not available. Pick another in Settings."
                         : "No microphone is available.";
 
-                    logger.LogWarning("{Reason}", Unavailable);
+                    _logger.LogWarning("{Reason}", Unavailable);
                     return;
                 }
 
@@ -132,7 +135,7 @@ public sealed class WasapiMicrophone(ICaptureSink sink, ILogger<WasapiMicrophone
                 IsCapturing = true;
                 Unavailable = null;
 
-                logger.LogInformation(
+                _logger.LogInformation(
                     "Listening on {Device} ({Format})", device.FriendlyName, _capture.WaveFormat);
             }
             catch (Exception ex)
@@ -140,7 +143,7 @@ public sealed class WasapiMicrophone(ICaptureSink sink, ILogger<WasapiMicrophone
                 // No microphone is a capability being off, not a startup failure — d47 stays fully usable
                 // typed (Phase 3, "Capabilities as state, not guard").
                 Unavailable = $"The microphone could not be opened: {ex.Message}";
-                logger.LogError(ex, "Could not open the microphone");
+                _logger.LogError(ex, "Could not open the microphone");
                 Stop();
             }
         }
@@ -162,12 +165,12 @@ public sealed class WasapiMicrophone(ICaptureSink sink, ILogger<WasapiMicrophone
             Drain(
                 _resampler,
                 OutputBytesFor(e.BytesRecorded, _incoming.WaveFormat, _resampler.WaveFormat),
-                sink);
+                _sink);
         }
         catch (Exception ex)
         {
             // This is a real-time callback.
-            logger.LogError(ex, "Dropping a capture buffer");
+            _logger.LogError(ex, "Dropping a capture buffer");
         }
     }
 
@@ -215,13 +218,13 @@ public sealed class WasapiMicrophone(ICaptureSink sink, ILogger<WasapiMicrophone
         {
             // Usually the device being unplugged mid-session.
             Unavailable = $"The microphone stopped: {ex.Message}";
-            logger.LogWarning(ex, "Microphone capture stopped");
+            _logger.LogWarning(ex, "Microphone capture stopped");
         }
 
         IsCapturing = false;
 
         // Anything the gate had open is now incomplete.
-        sink.Reset();
+        _sink.Reset();
     }
 
     /// <summary>Closes the device and stays reusable, which is what "push-to-talk is unbound" means.</summary>
@@ -256,7 +259,7 @@ public sealed class WasapiMicrophone(ICaptureSink sink, ILogger<WasapiMicrophone
             }
             catch (Exception ex)
             {
-                logger.LogDebug(ex, "The microphone did not stop cleanly");
+                _logger.LogDebug(ex, "The microphone did not stop cleanly");
             }
 
             capture.Dispose();

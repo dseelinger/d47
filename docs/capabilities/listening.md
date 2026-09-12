@@ -287,7 +287,9 @@ having looked is not the same as having looked and found nothing.
 
 #### Microphone {#microphone}
 
-Which input to listen on. Leave it unset for whatever Windows is using.
+Which input to listen on. Leave it unset and Directive 47 follows your Default Device — the
+microphone Windows Sound settings shows first — not the separate Communications default some
+headsets split off.
 
 If the one you chose disappears, the status answer names it rather than reporting generic
 silence. No microphone at all is a feature being off, not a failure — Directive 47 stays fully

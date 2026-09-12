@@ -16,7 +16,15 @@ public sealed class WasapiAudioSink : IAudioSink, IDisposable
     /// </summary>
     private static readonly WaveFormat MixFormat = WaveFormat.CreateIeeeFloatWaveFormat(48_000, 2);
 
+    /// <summary>
+    /// The Windows role "system default" follows, matching <see cref="WasapiMicrophone.DefaultRole"/>:
+    /// the Default Device, not the Communications device NAudio's own parameterless
+    /// <see cref="WasapiOut"/> constructor picks (#65).
+    /// </summary>
+    internal const Role DefaultRole = Role.Console;
+
     private readonly ILogger<WasapiAudioSink> _logger;
+    private readonly IAudioEndpointEnumerator _enumerator;
     private readonly Lock _gate = new();
     private readonly Dictionary<long, Input> _inputs = [];
     private readonly MixingSampleProvider _mixer;
@@ -28,8 +36,14 @@ public sealed class WasapiAudioSink : IAudioSink, IDisposable
     private sealed record Input(VolumeSampleProvider Volume, ISampleProvider Root);
 
     public WasapiAudioSink(ILogger<WasapiAudioSink> logger)
+        : this(logger, new WasapiEndpointEnumerator())
+    {
+    }
+
+    internal WasapiAudioSink(ILogger<WasapiAudioSink> logger, IAudioEndpointEnumerator enumerator)
     {
         _logger = logger;
+        _enumerator = enumerator;
 
         _mixer = new MixingSampleProvider(MixFormat)
         {
@@ -47,17 +61,19 @@ public sealed class WasapiAudioSink : IAudioSink, IDisposable
     public event Action<long>? Finished;
 
     /// <summary>The output devices to offer in settings.</summary>
-    public static IReadOnlyList<(string Id, string Name)> Devices()
-    {
-        using var enumerator = new MMDeviceEnumerator();
+    public IReadOnlyList<(string Id, string Name)> Devices() =>
+        [.. _enumerator.Active(DataFlow.Render).Select(device => (device.Id, device.Name))];
 
-        return
-        [
-            .. enumerator
-                .EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active)
-                .Select(device => (device.ID, device.FriendlyName)),
-        ];
-    }
+    /// <summary>What the system default (the Windows Default Device) currently resolves to, without opening anything.</summary>
+    public string? DefaultDeviceName() => _enumerator.Default(DataFlow.Render, DefaultRole)?.Name;
+
+    /// <summary>The endpoint <paramref name="deviceId"/> names, or the Default Device when it is null.</summary>
+    internal AudioEndpoint? ResolveEndpoint(string? deviceId) => deviceId is { Length: > 0 }
+        ? _enumerator.Active(DataFlow.Render)
+            .Where(candidate => candidate.Id == deviceId)
+            .Select(candidate => (AudioEndpoint?)candidate)
+            .FirstOrDefault()
+        : _enumerator.Default(DataFlow.Render, DefaultRole);
 
     /// <summary>Opens the device.</summary>
     public void Open(string? deviceId = null)
@@ -183,7 +199,9 @@ public sealed class WasapiAudioSink : IAudioSink, IDisposable
 
     private MMDevice? Resolve(string? deviceId)
     {
-        if (string.IsNullOrWhiteSpace(deviceId))
+        var target = ResolveEndpoint(deviceId);
+
+        if (target is not { } endpoint)
         {
             return null;
         }
@@ -191,12 +209,12 @@ public sealed class WasapiAudioSink : IAudioSink, IDisposable
         try
         {
             using var enumerator = new MMDeviceEnumerator();
-            return enumerator.GetDevice(deviceId);
+            return enumerator.GetDevice(endpoint.Id);
         }
         catch (Exception ex)
         {
             // A device that has been unplugged since it was chosen.
-            _logger.LogWarning(ex, "Output device {DeviceId} is unavailable; using the default", deviceId);
+            _logger.LogWarning(ex, "Output device {DeviceId} is unavailable; using the default", endpoint.Id);
             return null;
         }
     }

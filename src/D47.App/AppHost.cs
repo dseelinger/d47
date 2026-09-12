@@ -1407,9 +1407,10 @@ public sealed class AppHost : IDisposable
                             self.SwitchLocalVoiceBuild(build, progress, cancellationToken),
                     Beds = () => [.. (self?.Cues ?? cues).BedNames],
                     BedLabel = name => (self?.Cues ?? cues).IsCustom(name) ? $"{name} (yours)" : name,
-                    OutputDevices = () => [.. WasapiAudioSink.Devices().Select(device => device.Id)],
-                    DeviceLabel = id => WasapiAudioSink.Devices()
+                    OutputDevices = () => [.. audioSink.Devices().Select(device => device.Id)],
+                    DeviceLabel = id => audioSink.Devices()
                         .FirstOrDefault(device => device.Id == id).Name ?? id,
+                    DefaultDeviceName = audioSink.DefaultDeviceName,
 
                     // Late-bound like the headset surface below, and for the same reason: the list is fetched
                     // from the provider over the network after this point.
@@ -1456,11 +1457,11 @@ public sealed class AppHost : IDisposable
                     "Spoken help was asked what D47 can do before the registry finished building."),
                 new ListeningCapability.ListeningSurface
                 {
-                    InputDevices = () => [.. WasapiMicrophone.Devices().Select(device => device.Id)],
-                    DeviceLabel = id => WasapiMicrophone.Devices()
+                    InputDevices = () => [.. microphone.Devices().Select(device => device.Id)],
+                    DeviceLabel = id => microphone.Devices()
                         .FirstOrDefault(device => device.Id == id).Name ?? id,
                     CaptureState = () => (microphone.IsCapturing, microphone.Unavailable),
-                    DefaultDeviceName = WasapiMicrophone.DefaultDeviceName,
+                    DefaultDeviceName = microphone.DefaultDeviceName,
 
                     // The demonstration beats any assertion about device state: if words arrived recently,
                     // hearing works, and that is the answer.

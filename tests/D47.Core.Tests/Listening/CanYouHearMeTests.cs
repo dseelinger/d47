@@ -137,7 +137,10 @@ public class CanYouHearMeTests
             Settings(device: null),
             Working(sinceHeard: TimeSpan.FromSeconds(2), defaultDevice: "Microphone (Virtual Desktop Audio)"));
 
-        Assert.Contains("the system default (Microphone (Virtual Desktop Audio))", text, StringComparison.Ordinal);
+        Assert.Contains(
+            "the system default (Microphone (Virtual Desktop Audio), your Windows Default Device)",
+            text,
+            StringComparison.Ordinal);
     }
 
     /// <summary>Nothing to resolve it with degrades to a general phrasing rather than to a lie.</summary>

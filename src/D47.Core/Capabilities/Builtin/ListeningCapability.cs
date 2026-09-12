@@ -200,14 +200,16 @@ public static class ListeningCapability
                 Key = DeviceKey,
                 Label = "Microphone",
                 Help =
-                    "Which input D47 listens on. Leaving this unset uses the system default, which is the "
-                    + "one setting whose failure looks like D47 simply not hearing you.",
+                    "Which input D47 listens on. Leaving this unset follows the Default Device — the one "
+                    + "Sound settings shows first, not the separate Communications default some headsets "
+                    + "split off — which is the one setting whose failure looks like D47 simply not "
+                    + "hearing you.",
                 Kind = SettingKind.Choice,
                 DefaultDisplay = "(the system default)",
 
                 // Names the device the default actually resolves to.
                 DefaultDisplaySource = _ => surface.DefaultDeviceName?.Invoke() is { Length: > 0 } resolved
-                    ? $"(the system default — {resolved})"
+                    ? $"(the system default — {resolved}, your Windows Default Device)"
                     : "(the system default)",
                 AllowsFreeText = false,
                 ChoiceSource = _ => surface.InputDevices(),
@@ -999,7 +1001,7 @@ public static class ListeningCapability
         }
 
         return surface.DefaultDeviceName?.Invoke() is { Length: > 0 } resolved
-            ? $"the system default ({resolved})"
+            ? $"the system default ({resolved}, your Windows Default Device)"
             : "the system default";
     }
 }
