@@ -73,24 +73,34 @@ public class LoreCalloutTests : IDisposable
     }
 
     [Fact]
-    public void TheSameSystemIsNotRemarkedOnTwiceInsideADay()
+    public void TheSameSystemIsNotRemarkedOnTwiceInsideAWeek()
     {
         var visits = Visits();
         var callout = new LoreCallout(new LoreBook(Store()), visits);
 
         Assert.Single(Spoken(callout, At(Start, priming: false, Jump(Sol))));
 
-        // Twenty-three hours later, and still the same day's worth of silence.
-        Assert.Empty(Spoken(callout, At(Start.AddHours(23), priming: false, Jump(Sol))));
+        // Six days later, and still the same week's worth of silence.
+        Assert.Empty(Spoken(callout, At(Start.AddDays(6), priming: false, Jump(Sol))));
     }
 
     [Fact]
-    public void ADayLaterItIsWorthSayingAgain()
+    public void AWeekLaterItIsWorthSayingAgain()
     {
         var callout = new LoreCallout(new LoreBook(Store()), Visits());
 
         Assert.Single(Spoken(callout, At(Start, priming: false, Jump(Sol))));
-        Assert.Single(Spoken(callout, At(Start.AddHours(24), priming: false, Jump(Sol))));
+        Assert.Single(Spoken(callout, At(Start.AddDays(7), priming: false, Jump(Sol))));
+    }
+
+    [Fact]
+    public void TheQuietPeriodIsWhateverTheWindowIsSet()
+    {
+        var callout = new LoreCallout(new LoreBook(Store()), Visits()) { Window = TimeSpan.FromDays(2) };
+
+        Assert.Single(Spoken(callout, At(Start, priming: false, Jump(Sol))));
+        Assert.Empty(Spoken(callout, At(Start.AddDays(1), priming: false, Jump(Sol))));
+        Assert.Single(Spoken(callout, At(Start.AddDays(2), priming: false, Jump(Sol))));
     }
 
     [Fact]
@@ -134,10 +144,10 @@ public class LoreCalloutTests : IDisposable
     }
 
     [Fact]
-    public void PrimingDoesNotUseUpTheDaysOneRemark()
+    public void PrimingDoesNotUseUpTheWeeksOneRemark()
     {
         // A folded backlog must not leave the system marked as spoken about, or starting d47 after an hour of
-        // flying would silence the next arrival for a day.
+        // flying would silence the next arrival for a week.
         var callout = new LoreCallout(new LoreBook(Store()), Visits());
 
         Spoken(callout, At(Start, priming: true, Jump(Sol)));

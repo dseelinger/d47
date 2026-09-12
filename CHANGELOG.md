@@ -6,6 +6,12 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.112.7 — Lore is remarked on once a week, not once a day
+
+A Commander whose home system is where they spend most sessions heard the same lore remark every
+day. The quiet period between remarks on the same system is now a week by default, and a row under
+Lore in Settings — "How often a system's lore is worth repeating" — holds the number of days.
+
 ## 0.112.6 — A squadron acceptance is spoken, naming the squadron
 
 A squadron accepting the Commander's application went unsaid, the same as any other journal event

@@ -61,8 +61,8 @@ nav_order: 116
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">Some systems mean more than their astrography. It ships knowing about twenty, and keeps whatever you tell it about the rest.</p>
 <section>
-<h2><span class="num">1</span> Once per system per day.</h2>
-<svg viewBox="0 0 880 240" role="img" aria-label="A system with lore attached is remarked on once a day, so a return visit the same evening is silent">
+<h2><span class="num">1</span> Once per system per week.</h2>
+<svg viewBox="0 0 880 240" role="img" aria-label="A system with lore attached is remarked on once a week, so a return visit the same evening is silent">
  <rect x="20" y="44" width="250" height="96" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="145" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">FIRST ARRIVAL</text>
  <text x="145" y="114" text-anchor="middle" font-size="14" fill="var(--text-muted)">it says so, unprompted</text>
@@ -70,12 +70,12 @@ nav_order: 116
  <text x="435" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text-muted)">AGAIN, TONIGHT</text>
  <text x="435" y="114" text-anchor="middle" font-size="14" fill="var(--text-muted)">silence</text>
  <rect x="600" y="44" width="260" height="96" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="730" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">TOMORROW</text>
+ <text x="730" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">A WEEK LATER</text>
  <text x="730" y="114" text-anchor="middle" font-size="14" fill="var(--text-muted)">it says so again</text>
  <text x="440" y="182" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">The difference between a companion and a tour guide who forgot meeting you.</text>
- <text x="440" y="216" text-anchor="middle" font-size="16" fill="var(--text)">Measured, not picked: 30.1% of 7,966 real jumps re-enter a system visited within the day.</text>
+ <text x="440" y="216" text-anchor="middle" font-size="16" fill="var(--text)">A Commander whose home system is where most sessions start should not hear the same remark every day.</text>
 </svg>
-<p class="body">Stretching it to a week would suppress only 4.2 points more, because 88% of repeat visits happen inside the first day. The clock survives a restart, so logging off somewhere and coming back an hour later is quiet. A carrier jump counts as arriving — you were asleep in the back, but you are still somewhere new.</p>
+<p class="body">The clock survives a restart, so logging off somewhere and coming back an hour later is quiet. A carrier jump counts as arriving — you were asleep in the back, but you are still somewhere new. <em>How often a system's lore is worth repeating</em>, under Lore in Settings, holds the number of days; it defaults to seven and can be set to whatever fits your own play.</p>
 </section>
 <section>
 <h2><span class="num">2</span> Three states, not two switches.</h2>
@@ -154,11 +154,10 @@ John Jameson's Cobra Mark Three came down on the first planet's moon B and is st
 wreck every Commander eventually visits.
 ```
 
-**Once per system per day**, and that rule is the whole difference between a companion and a tour
-guide who has forgotten meeting you. It was measured rather than picked: across 913 real journals,
-**30.1% of all 7,966 jumps re-enter a system visited within the last day**. Without the rule, nearly
-a third of arrivals would be something you had already heard. Stretching it to a week would suppress
-only 4.2 points more, because 88% of repeat visits happen inside the first day.
+**Once per system per week**, and that rule is the whole difference between a companion and a tour
+guide who has forgotten meeting you. A Commander whose home system is where most sessions start
+would otherwise hear the same remark every day. **How often a system's lore is worth repeating**,
+under **Settings → Lore**, holds the length of the quiet period in days; it defaults to seven.
 
 The clock survives a restart, so logging off in Shinrarta Dezhra and coming back an hour later is
 quiet.

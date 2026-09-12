@@ -21,7 +21,7 @@ public enum LoreRemarks
 
 /// <summary>
 /// Something about where you have just arrived, when there is something to say (Phase 23, "Remark on
-/// arrival, and not again today").
+/// arrival, and not again for a while").
 /// </summary>
 public sealed class LoreCallout(LoreBook book, LoreVisits visits) : ICallout
 {
@@ -36,7 +36,7 @@ public sealed class LoreCallout(LoreBook book, LoreVisits visits) : ICallout
     public Func<LoreRemarks> Remarks { get; set; } = () => LoreRemarks.Lookup;
 
     /// <summary>How long a system stays quiet after being remarked on.</summary>
-    public TimeSpan Window { get; set; } = TimeSpan.FromHours(24);
+    public TimeSpan Window { get; set; } = TimeSpan.FromDays(7);
 
     /// <summary>
     /// Which system a remark was about, from its key — what the app needs to run the lookup for it.
@@ -85,9 +85,9 @@ public sealed class LoreCallout(LoreBook book, LoreVisits visits) : ICallout
                 // Routine, and it never silences anything.
                 Urgency = CalloutUrgency.Routine,
 
-                // The 24-hour rule is the cooldown, and it lives in the visit store rather than in the
-                // engine's table: the engine's is per session, and this one has to survive a restart or
-                // logging off in a system means hearing about it again on return.
+                // The cooldown lives in the visit store rather than in the engine's table: the engine's is
+                // per session, and this one has to survive a restart or logging off in a system means
+                // hearing about it again on return.
                 Cooldown = TimeSpan.Zero,
             };
         }

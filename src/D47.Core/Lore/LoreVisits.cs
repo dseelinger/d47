@@ -6,7 +6,7 @@ namespace D47.Core.Lore;
 
 /// <summary>
 /// When each system was last remarked on, kept between sessions (Phase 23, "Remark on arrival, and not
-/// again today").
+/// again for a while").
 /// </summary>
 public sealed class LoreVisits(string path, ILogger<LoreVisits> logger)
 {

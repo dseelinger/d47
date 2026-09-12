@@ -1,4 +1,5 @@
-﻿using D47.Core.Callouts;
+﻿using System.Globalization;
+using D47.Core.Callouts;
 using D47.Core.Configuration;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -12,6 +13,8 @@ public static class LoreCapability
     public const string Id = "lore";
 
     public const string RemarksKey = "callouts.lore";
+
+    public const string CooldownDaysKey = "callouts.loreCooldownDays";
 
     /// <summary>The Commander's own notes, as a disclosure with the way into them beside it.</summary>
     public const string BookKey = "lore.book";
@@ -57,7 +60,7 @@ public static class LoreCapability
             "is there anything out here",
         ],
         Display = new CapabilityDisplay { PanelTitle = "Lore", Order = 65 },
-        Settings = [RemarksRow(), BookRow(book)],
+        Settings = [RemarksRow(), CooldownDaysRow(), BookRow(book)],
         Tools =
         [
             // Argument-free and first, so "what is notable about this system" reaches it through the keyword
@@ -197,6 +200,33 @@ public static class LoreCapability
                         "remark" => LoreRemarks.Remark,
                         _ => LoreRemarks.Lookup,
                     },
+                },
+            },
+        },
+    };
+
+    private static SettingRow CooldownDaysRow() => new()
+    {
+        Key = CooldownDaysKey,
+        Advanced = true,
+        Label = "How often a system's lore is worth repeating",
+        Help = "In days, how long a system stays quiet after being remarked on. Lower means a "
+               + "return visit is more likely to hear the same remark again; 0 remarks every time.",
+        Kind = SettingKind.Number,
+        DefaultDisplay = "7",
+        DocsAnchor = "remarks",
+        AppliesWhen = s => s.Callouts.Lore != LoreRemarks.Off,
+        Binding = new SettingBinding
+        {
+            Read = s => s.Callouts.LoreCooldownDays.ToString(CultureInfo.InvariantCulture),
+            Write = (s, v) => s with
+            {
+                Callouts = s.Callouts with
+                {
+                    LoreCooldownDays = int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out var days)
+                        && days >= 0
+                            ? days
+                            : new CalloutSettings().LoreCooldownDays,
                 },
             },
         },

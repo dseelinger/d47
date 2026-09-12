@@ -2406,6 +2406,7 @@ public sealed class AppHost : IDisposable
                     // the lookup off is obeyed on the next arrival rather than on the next launch — the
                     // same shape the ambient row below has.
                     lore.Remarks = () => settings.Current.Callouts.Lore;
+                    lore.Window = TimeSpan.FromDays(callouts.LoreCooldownDays);
                     break;
 
                 case AmbientCallout ambient:

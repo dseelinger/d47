@@ -458,6 +458,9 @@ public sealed record CalloutSettings
     /// <summary>What to say on arriving in a system d47 knows something about (Phase 23).</summary>
     public Callouts.LoreRemarks Lore { get; init; } = Callouts.LoreRemarks.Lookup;
 
+    /// <summary>How long a system stays quiet after being remarked on (#101).</summary>
+    public int LoreCooldownDays { get; init; } = 7;
+
     /// <summary>
     /// One line at the start of a session, picking up where the Commander left off (Phase 31, "Picking
     /// up where you left off").
