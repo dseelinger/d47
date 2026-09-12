@@ -6,6 +6,15 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.49 — Turning off a chat or chatter switch now takes effect immediately
+
+Seven rows in Speech, "Other voices" and the personality half of the two chatter gates were read
+once, when d47 built its callouts at startup, and never read again. Turning "Include NPC chatter"
+off, or any of the six channel switches next to it, changed nothing until the next launch. Turning
+personality off silenced neither "In Ship chatter" nor invented "NPC chatter" without a restart.
+
+All of them now read the live settings, so a switch in the panel is obeyed on the next tick.
+
 ## 0.110.48 — A version number is read aloud instead of throwing on ElevenLabs
 
 Reading a version like 0.112.0 out loud threw, because the number reader split it on the first

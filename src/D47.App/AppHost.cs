@@ -937,7 +937,7 @@ public sealed class AppHost : IDisposable
             () => unlocksRef);
 
         var callouts = BuildCallouts(
-            loaded,
+            settings,
             loggerFactory,
             checklists,
             lore,
@@ -2249,7 +2249,7 @@ public sealed class AppHost : IDisposable
 
     /// <summary>The callouts d47 ships with, in the order they are examined.</summary>
     private static CalloutEngine BuildCallouts(
-        D47Settings settings,
+        SettingsService settings,
         ILoggerFactory loggers,
         ChecklistService checklists,
         LoreBook lore,
@@ -2324,18 +2324,18 @@ public sealed class AppHost : IDisposable
             .Add(new AmbientCallout())
             .Add(new IncomingMessages
             {
-                Enabled = () => settings.Speech.SpeakIncomingMessages,
-                IncludeNpcs = () => settings.Speech.SpeakNpcMessages,
+                Enabled = () => settings.Current.Speech.SpeakIncomingMessages,
+                IncludeNpcs = () => settings.Current.Speech.SpeakNpcMessages,
 
                 // squadleaders follows the Squadron row (#299) — a Commander does not know Elite writes those
                 // as two channels, so there is one switch, not two.
                 ChannelEnabled = channel => channel switch
                 {
-                    "starsystem" => settings.Speech.SpeakSystemChat,
-                    "local" => settings.Speech.SpeakLocalChat,
-                    "wing" => settings.Speech.SpeakWingChat,
-                    "squadron" or "squadleaders" => settings.Speech.SpeakSquadronChat,
-                    "player" => settings.Speech.SpeakDirectMessages,
+                    "starsystem" => settings.Current.Speech.SpeakSystemChat,
+                    "local" => settings.Current.Speech.SpeakLocalChat,
+                    "wing" => settings.Current.Speech.SpeakWingChat,
+                    "squadron" or "squadleaders" => settings.Current.Speech.SpeakSquadronChat,
+                    "player" => settings.Current.Speech.SpeakDirectMessages,
                     _ => true,
                 },
 
@@ -2357,11 +2357,12 @@ public sealed class AppHost : IDisposable
 
     /// <summary>
     /// Pushes the callout settings into the engine and into the individual callouts that carry a
-    /// tunable.
+    /// tunable. Every lambda closes over the live <paramref name="settings"/> rather than a snapshot
+    /// (#139).
     /// </summary>
-    private static void ApplyCalloutSettings(CalloutEngine engine, D47Settings settings)
+    private static void ApplyCalloutSettings(CalloutEngine engine, SettingsService settings)
     {
-        var callouts = settings.Callouts;
+        var callouts = settings.Current.Callouts;
 
         // The clock the engine does not have, so it can tell a callout switched off seconds after it spoke
         // from one switched off an hour later (#162).
@@ -2404,15 +2405,15 @@ public sealed class AppHost : IDisposable
                     break;
 
                 case LimpetCallout limpets:
-                    limpets.Floor = () => callouts.LimpetCargoFloor;
-                    limpets.Percent = () => callouts.LimpetPercent;
+                    limpets.Floor = () => settings.Current.Callouts.LimpetCargoFloor;
+                    limpets.Percent = () => settings.Current.Callouts.LimpetPercent;
                     break;
 
                 case LoreCallout lore:
-                    // Read through the settings the switch was handed rather than captured once, so a
-                    // Commander who turns the lookup off is obeyed on the next arrival rather than on the
-                    // next launch — the same shape the ambient row below has.
-                    lore.Remarks = () => callouts.Lore;
+                    // Read through the live settings rather than captured once, so a Commander who turns
+                    // the lookup off is obeyed on the next arrival rather than on the next launch — the
+                    // same shape the ambient row below has.
+                    lore.Remarks = () => settings.Current.Callouts.Lore;
                     break;
 
                 case AmbientCallout ambient:
@@ -2420,7 +2421,7 @@ public sealed class AppHost : IDisposable
                     ambient.Longest = TimeSpan.FromSeconds(callouts.AmbientMaxSeconds);
 
                     // Silent while personality is off.
-                    ambient.Enabled = () => settings.Callouts.Ambient && settings.Llm.PersonalityEnabled;
+                    ambient.Enabled = () => settings.Current.Callouts.Ambient && settings.Current.Llm.PersonalityEnabled;
                     break;
 
                 case NpcChatterCallout chatter:
@@ -2429,7 +2430,7 @@ public sealed class AppHost : IDisposable
 
                     // The ambient pair of gates (#244): theatre is personality by any reading, and the
                     // no-model half lives at the compose step for the reason above.
-                    chatter.Enabled = () => settings.Callouts.NpcChatter && settings.Llm.PersonalityEnabled;
+                    chatter.Enabled = () => settings.Current.Callouts.NpcChatter && settings.Current.Llm.PersonalityEnabled;
                     break;
             }
         }
@@ -5440,7 +5441,7 @@ public sealed class AppHost : IDisposable
                 break;
 
             case SettingsSubsystem.Callouts:
-                ApplyCalloutSettings(Callouts, Settings.Current);
+                ApplyCalloutSettings(Callouts, Settings);
                 break;
 
             case SettingsSubsystem.Listening:
