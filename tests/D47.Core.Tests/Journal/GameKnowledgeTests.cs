@@ -67,24 +67,31 @@ public class GameKnowledgeTests
             """{"timestamp":"3311-01-01T00:01:00Z","event":"StartJump","JumpType":"Hyperspace","StarSystem":"Wolf 359","StarClass":"M"}""");
 
         Assert.Equal(FlightMode.Hyperspace, hyperspace.Location.Mode);
-        Assert.Equal("Wolf 359", hyperspace.Location.NextJumpSystem);
-        Assert.Equal("M", hyperspace.Location.NextJumpStarClass);
+        Assert.Equal("Wolf 359", hyperspace.Location.JumpDestination);
+        Assert.Equal("M", hyperspace.Location.JumpDestinationStarClass);
     }
 
+    /// <summary>
+    /// The ordering the game actually writes on a plotted route (#152): the FSDTarget for the hop after
+    /// this one lands about seven seconds into the tunnel, before the arrival.
+    /// </summary>
     [Fact]
-    public void ArrivingConsumesTheNextJumpTarget()
+    public void ArrivingConsumesTheDestinationOfTheJumpJustFlown()
     {
         var state = Fold(
-            """{"timestamp":"3311-01-01T00:01:00Z","event":"FSDTarget","Name":"Wolf 359","StarClass":"M","RemainingJumpsInRoute":3}""",
             """{"timestamp":"3311-01-01T00:02:00Z","event":"StartJump","JumpType":"Hyperspace","StarSystem":"Wolf 359","StarClass":"M"}""",
+            """{"timestamp":"3311-01-01T00:02:07Z","event":"FSDTarget","Name":"Alpha Centauri","StarClass":"G","RemainingJumpsInRoute":3}""",
             """{"timestamp":"3311-01-01T00:03:00Z","event":"FSDJump","StarSystem":"Wolf 359","JumpDist":7.8,"FuelLevel":28.5}""");
 
         Assert.Equal("Wolf 359", state.Location.StarSystem);
         Assert.Equal(FlightMode.Supercruise, state.Location.Mode);
 
         // Left set, Phase 8 would warn about a star the Commander is now sitting next to.
-        Assert.Null(state.Location.NextJumpSystem);
+        Assert.Null(state.Location.JumpDestination);
         Assert.Equal(28.5, state.Location.FuelMain);
+
+        // The class of the system arrived at, not of the one targeted mid-tunnel.
+        Assert.Equal("M", state.Location.StarClass);
     }
 
     [Fact]

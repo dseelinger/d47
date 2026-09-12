@@ -1734,7 +1734,11 @@ public sealed class AppHost : IDisposable
 
                 // So a fleet question says the history is still being read rather than reporting an absence
                 // it cannot yet know about (#148).
-                history));
+                history,
+
+                // Where "how many jumps are left" is answered from (#152), which is the file the Route
+                // Progress page already draws.
+                () => route.Current));
 
         buildingRegistry.Dispose();
 
@@ -1810,7 +1814,8 @@ public sealed class AppHost : IDisposable
                 // The live Status.json read alongside the folded journal (#360): read per turn like
                 // everything else here, not captured once, so the balance the model sees is the balance the
                 // game is showing.
-                Situation.Describe(gameState.Active, status.Current, SystemWallClock.Instance.UtcNow),
+                Situation.Describe(
+                    gameState.Active, status.Current, SystemWallClock.Instance.UtcNow, route.Current),
                 Join(
                     ActionCapabilities.Describe(actionSurface),
                     Join(

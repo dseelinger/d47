@@ -16,9 +16,14 @@ public static class JournalCapability
     /// How far the walk over older journals has got, so a fleet question says that rather than reporting
     /// an absence the walk has not ruled out (#148).
     /// </param>
-    public static CapabilityDescriptor Create(GameStateStore gameState, Func<HistoryState>? history = null)
+    /// <param name="route">The plotted route, which is where a jump count comes from (#152).</param>
+    public static CapabilityDescriptor Create(
+        GameStateStore gameState,
+        Func<HistoryState>? history = null,
+        Func<NavRoute>? route = null)
     {
         var state = history ?? (() => HistoryState.Done);
+        var plotted = route ?? (() => NavRoute.None);
 
         return new CapabilityDescriptor
         {
@@ -89,7 +94,7 @@ public static class JournalCapability
                     Description =
                         "Report the current Commander's star system, body, docking state and what they are "
                         + "doing — supercruise, hyperspace, landed, on foot — from the journal.",
-                    Handler = (_, _) => Task.FromResult(ToolResult.Ok(DescribeLocation(gameState))),
+                    Handler = (_, _) => Task.FromResult(ToolResult.Ok(DescribeLocation(gameState, plotted()))),
                 },
                 new ToolDefinition
                 {
@@ -273,7 +278,7 @@ public static class JournalCapability
         return false;
     }
 
-    private static string DescribeLocation(GameStateStore gameState)
+    private static string DescribeLocation(GameStateStore gameState, NavRoute route)
     {
         if (!TryActive(gameState, out var active, out var reason))
         {
@@ -306,18 +311,43 @@ public static class JournalCapability
             report.Append($" Currently {Speak(location.Mode)}.");
         }
 
-        if (location.NextJumpSystem is { } next)
-        {
-            report.Append($" Next jump: {next}");
-            report.Append(location.NextJumpStarClass is { } starClass ? $" (class {starClass}).": ".");
-
-            if (location.JumpsRemaining is { } remaining and > 0)
-            {
-                report.Append($" {remaining} jump{(remaining == 1 ? "" : "s")} left on the route.");
-            }
-        }
+        AppendRoute(report, route, location.StarSystem);
 
         return report.ToString();
+    }
+
+    /// <summary>
+    /// What is left of the plotted route, from <c>NavRoute.json</c> — the same source the Route Progress
+    /// panel reads (#152).
+    /// </summary>
+    private static void AppendRoute(StringBuilder report, NavRoute route, string here)
+    {
+        if (!route.IsPlotted)
+        {
+            return;
+        }
+
+        // Both RouteProgress and NavRoute.Ahead count the whole route as ahead when the Commander is not
+        // on it, so a jump count taken without this check overstates it.
+        if (RouteProgress.For(route, here).OffRoute)
+        {
+            report.Append(" A route is plotted, but this system is not on it.");
+
+            return;
+        }
+
+        var ahead = route.Ahead(here);
+
+        if (ahead.Count == 0)
+        {
+            report.Append(" This is the last system on the plotted route.");
+
+            return;
+        }
+
+        report.Append($" Next jump: {ahead[0].StarSystem}");
+        report.Append(ahead[0].StarClass is { } starClass ? $" (class {starClass})." : ".");
+        report.Append($" {ahead.Count} jump{(ahead.Count == 1 ? "" : "s")} left on the route.");
     }
 
     private static string DescribeShip(GameStateStore gameState, ToolArguments arguments)

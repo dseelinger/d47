@@ -6,6 +6,22 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.44 — Jumps left is read from the plotted route
+
+Asked how many jumps were left in a route, D47 answered with how many had been made this session.
+It kept its own note of where the ship was heading, taken from the journal's `FSDTarget` event, and
+treated arriving as spending that note. On a plotted route Elite targets the *next* hop about seven
+seconds into the hyperspace tunnel, before it writes the arrival, so arriving threw away a target
+the game had already set. The route line then said nothing at all while the Commander sat in a
+system mid-route, and the only jump count in front of the model was the session's completed jumps.
+
+The spoken answer and the Route Progress panel now read the same file, `NavRoute.json`, so the two
+cannot disagree. Both name the next hop and the jumps left from where the Commander is standing;
+both say the Commander is not on the route rather than counting the whole route as still ahead when
+they have jumped off it; and neither mentions a route when none is plotted. The remark on a long
+crossing names the system being flown to rather than the hop after it, and a system name read aloud
+states the class of the star the Commander is actually sitting next to.
+
 ## 0.110.43 — Target the next system in the route by voice
 
 Say **next system**, *target the next system* or *target the next system in route* and D47 targets

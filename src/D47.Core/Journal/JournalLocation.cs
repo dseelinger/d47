@@ -54,20 +54,21 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
 
     public FlightMode Mode { get; init; } = FlightMode.Unknown;
 
-    /// <summary>The next system on the route, from FSDTarget.</summary>
-    public string? NextJumpSystem { get; init; }
+    /// <summary>
+    /// Where the jump now under way is going, from StartJump; null outside a hyperspace crossing. Not
+    /// the route's next hop — Elite targets the hop after this one while the ship is still in the
+    /// tunnel, so route questions are answered from <see cref="NavRoute"/> instead.
+    /// </summary>
+    public string? JumpDestination { get; init; }
 
-    /// <summary>The next system's star class, which is what decides whether it can be scooped.</summary>
-    public string? NextJumpStarClass { get; init; }
+    /// <summary>That system's star class, which is what decides whether it can be scooped.</summary>
+    public string? JumpDestinationStarClass { get; init; }
 
     /// <summary>
     /// The class of the star the Commander is at now (Phase 18, "Read a system name" — a variant's
     /// colour follows the star, and the variant is what sets an organic's price).
     /// </summary>
     public string? StarClass { get; init; }
-
-    /// <summary>Jumps left in the plotted route, from FSDTarget.</summary>
-    public int? JumpsRemaining { get; init; }
 
     /// <summary>
     /// Fuel in the main tank as of the last event that reported it — FSDJump and FuelScoop both do.
@@ -137,12 +138,13 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
             FuelMain = journalEvent.Double("FuelLevel") ?? FuelMain,
             ControllingPower = journalEvent.String("ControllingPower"),
 
-            // Not discarded on arrival — moved.
-            StarClass = journalEvent.String("StarSystem") == NextJumpSystem ? NextJumpStarClass : null,
+            // Not discarded on arrival — moved. StartJump named this system and its class when the jump
+            // began, and nothing between the two events overwrites that.
+            StarClass = journalEvent.String("StarSystem") == JumpDestination ? JumpDestinationStarClass : null,
 
             // Consumed by arriving.
-            NextJumpSystem = null,
-            NextJumpStarClass = null,
+            JumpDestination = null,
+            JumpDestinationStarClass = null,
         },
 
         "Docked" => this with
@@ -222,22 +224,16 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
                 : FlightMode.Normal,
         },
 
-        // Charging for a jump.
+        // Charging for a jump. Assigned rather than coalesced: a new crossing replaces the old
+        // destination outright.
         "StartJump" => journalEvent.String("JumpType") == "Hyperspace"
             ? this with
             {
                 Mode = FlightMode.Hyperspace,
-                NextJumpSystem = journalEvent.String("StarSystem") ?? NextJumpSystem,
-                NextJumpStarClass = journalEvent.String("StarClass") ?? NextJumpStarClass,
+                JumpDestination = journalEvent.String("StarSystem"),
+                JumpDestinationStarClass = journalEvent.String("StarClass"),
             }
             : this,
-
-        "FSDTarget" => this with
-        {
-            NextJumpSystem = journalEvent.String("Name") ?? NextJumpSystem,
-            NextJumpStarClass = journalEvent.String("StarClass") ?? NextJumpStarClass,
-            JumpsRemaining = journalEvent.Int("RemainingJumpsInRoute") ?? JumpsRemaining,
-        },
 
         "FuelScoop" => this with { FuelMain = journalEvent.Double("Total") ?? FuelMain },
 

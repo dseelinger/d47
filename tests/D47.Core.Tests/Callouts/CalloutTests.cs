@@ -589,6 +589,28 @@ public class CalloutTests
     }
 
     [Fact]
+    public void ALongCrossingNamesTheSystemBeingFlownToRatherThanTheHopAfterIt()
+    {
+        // #152: on a plotted route the target for the next hop lands about seven seconds into the tunnel,
+        // so the journal's target says Andceeth while the ship is still crossing to Eta Crucis.
+        var callout = new LongJumpCallout { Threshold = TimeSpan.FromSeconds(20) };
+
+        var crossing =
+            """{"timestamp":"3311-01-01T00:00:00Z","event":"StartJump","JumpType":"Hyperspace","StarSystem":"Eta Crucis","StarClass":"K"}""";
+
+        var state = StateFrom(
+            crossing,
+            """{"timestamp":"3311-01-01T00:00:07Z","event":"FSDTarget","Name":"Andceeth","StarClass":"M","RemainingJumpsInRoute":4}""");
+
+        callout.Examine(Context(state, events: [crossing])).ToArray();
+
+        var remark = Assert.Single(callout.Examine(Context(state, atSecond: 25)));
+
+        Assert.Contains("Eta Crucis", remark.Text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Andceeth", remark.Text, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ASupercruiseStartJumpIsNotAJump()
     {
         var callout = new LongJumpCallout { Threshold = TimeSpan.FromSeconds(20) };

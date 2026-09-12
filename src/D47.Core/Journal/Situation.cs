@@ -15,10 +15,14 @@ public static class Situation
     /// now.
     /// </param>
     /// <param name="now">The wall clock, injected because no Core type here reads one.</param>
+    /// <param name="route">
+    /// The plotted route as Elite last wrote it, which is where a jump count comes from (#152).
+    /// </param>
     public static string? Describe(
         CommanderGameState? state,
         GameStatus? status = null,
-        DateTimeOffset? now = null)
+        DateTimeOffset? now = null,
+        NavRoute? route = null)
     {
         if (state is null)
         {
@@ -28,6 +32,7 @@ public static class Situation
         var lines = new List<string>();
 
         AppendLocation(state, lines);
+        AppendRoute(state, route, lines);
         AppendShip(state, lines);
         AppendDrive(status, now, lines);
         AppendCredits(status, now, lines);
@@ -97,23 +102,47 @@ public static class Situation
 
             lines.Add($"Status: {Describe(location.Mode)}{notDocked}");
         }
+    }
 
-        if (location.NextJumpSystem is { } next)
+    /// <summary>
+    /// What is left of the plotted route, read from <c>NavRoute.json</c> — the same source the Route
+    /// Progress panel reads, so the two cannot disagree.
+    /// </summary>
+    private static void AppendRoute(CommanderGameState state, NavRoute? route, List<string> lines)
+    {
+        if (route is not { IsPlotted: true } || state.Location.StarSystem is not { } here)
         {
-            var route = new StringBuilder($"Next jump: {next}");
-
-            if (location.NextJumpStarClass is { } starClass)
-            {
-                route.Append($", star class {starClass}");
-            }
-
-            if (location.JumpsRemaining is { } remaining and > 0)
-            {
-                route.Append($"; {remaining} jump{(remaining == 1 ? "" : "s")} left on the route");
-            }
-
-            lines.Add(route.ToString());
+            return;
         }
+
+        // Off the route, RouteProgress and NavRoute.Ahead both count the whole route as still ahead, so a
+        // jump count taken without this check overstates it.
+        if (RouteProgress.For(route, here).OffRoute)
+        {
+            lines.Add("Route: a route is plotted, but the Commander is not on it.");
+
+            return;
+        }
+
+        var ahead = route.Ahead(here);
+
+        if (ahead.Count == 0)
+        {
+            lines.Add("Route: at the last system on the plotted route.");
+
+            return;
+        }
+
+        var report = new StringBuilder($"Next jump: {ahead[0].StarSystem}");
+
+        if (ahead[0].StarClass is { } starClass)
+        {
+            report.Append($", star class {starClass}");
+        }
+
+        report.Append($"; {ahead.Count} jump{(ahead.Count == 1 ? "" : "s")} left on the route");
+
+        lines.Add(report.ToString());
     }
 
     private static void AppendShip(CommanderGameState state, List<string> lines)

@@ -158,11 +158,15 @@ public static class BuiltinCapabilities
         Conversation.LastFoundSystem? lastFoundSystem = null,
 
         // The walk over older journals, which finishes after the window is up (#148).
-        HistoryBackfill? history = null) =>
+        HistoryBackfill? history = null,
+
+        // The plotted route as Elite last wrote it, so a jump count is read from the route file rather than
+        // from a journal note the game overwrites mid-jump (#152).
+        Func<Journal.NavRoute>? route = null) =>
     [
         HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage, history),
-        JournalCapability.Create(gameState, () => history?.State ?? Journal.HistoryState.Done),
+        JournalCapability.Create(gameState, () => history?.State ?? Journal.HistoryState.Done, route),
         CrewCapability.Create(() => gameState.Active),
         GalaxyCapability.Create(
             galaxy,

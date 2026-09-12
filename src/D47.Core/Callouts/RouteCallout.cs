@@ -167,7 +167,7 @@ public sealed class LongJumpCallout : ICallout
 
         _remarked = true;
 
-        var destination = context.State?.Location.NextJumpSystem;
+        var destination = context.State?.Location.JumpDestination;
 
         yield return new Announcement(
             "jump.long",

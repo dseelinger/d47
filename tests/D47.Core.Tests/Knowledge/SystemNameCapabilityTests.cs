@@ -1,4 +1,4 @@
-using D47.Core.Capabilities;
+﻿using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Journal;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -79,36 +79,36 @@ public class SystemNameCapabilityTests
     public async Task WithNoNameItReadsTheSystemTheCommanderIsIn()
     {
         var result = await Ask(Store(
-            """{"timestamp":"2026-08-16T09:10:00Z","event":"FSDTarget","Name":"Dryafea PO-X d2-0","StarClass":"M"}""",
+            """{"timestamp":"2026-08-16T09:10:00Z","event":"StartJump","JumpType":"Hyperspace","StarSystem":"Dryafea PO-X d2-0","StarClass":"M"}""",
             """{"timestamp":"2026-08-16T09:11:00Z","event":"FSDJump","StarSystem":"Dryafea PO-X d2-0"}"""));
 
         Assert.Contains("Sector: Dryafea", result.Content, StringComparison.Ordinal);
     }
 
     /// <summary>
-    /// The star class comes from the <c>FSDTarget</c> that preceded the jump — measured at 99.7% of
-    /// arrivals against 28.6% for the arrival auto-scan, which is the source that looks obvious and
-    /// usually is not there.
+    /// The star class comes from the <c>StartJump</c> that began the jump — present at 99.7% of arrivals
+    /// against 28.6% for the arrival auto-scan, which is the source that looks obvious and usually is not
+    /// there.
     /// </summary>
     [Fact]
-    public async Task TheStarClassComesFromTheRouteRatherThanFromAScan()
+    public async Task TheStarClassComesFromTheJumpRatherThanFromAScan()
     {
         var result = await Ask(Store(
-            """{"timestamp":"2026-08-16T09:10:00Z","event":"FSDTarget","Name":"Dryafea PO-X d2-0","StarClass":"M"}""",
+            """{"timestamp":"2026-08-16T09:10:00Z","event":"StartJump","JumpType":"Hyperspace","StarSystem":"Dryafea PO-X d2-0","StarClass":"M"}""",
             """{"timestamp":"2026-08-16T09:11:00Z","event":"FSDJump","StarSystem":"Dryafea PO-X d2-0"}"""));
 
         Assert.Contains("Main star:", result.Content, StringComparison.Ordinal);
     }
 
     /// <summary>
-    /// A jump that ended somewhere other than the plotted target must carry no class rather than the
-    /// target's — the one way this could report a star the Commander is not looking at.
+    /// A jump that ended somewhere other than the system it was charged for must carry no class rather
+    /// than that system's — the one way this could report a star the Commander is not looking at.
     /// </summary>
     [Fact]
-    public async Task ArrivingSomewhereOtherThanTheTargetCarriesNoStarClass()
+    public async Task ArrivingSomewhereOtherThanTheDestinationCarriesNoStarClass()
     {
         var result = await Ask(Store(
-            """{"timestamp":"2026-08-16T09:10:00Z","event":"FSDTarget","Name":"Dryafea PO-X d2-0","StarClass":"M"}""",
+            """{"timestamp":"2026-08-16T09:10:00Z","event":"StartJump","JumpType":"Hyperspace","StarSystem":"Dryafea PO-X d2-0","StarClass":"M"}""",
             """{"timestamp":"2026-08-16T09:11:00Z","event":"FSDJump","StarSystem":"Fixture AA-A b1-2"}"""));
 
         Assert.DoesNotContain("Main star:", result.Content, StringComparison.Ordinal);
@@ -122,7 +122,7 @@ public class SystemNameCapabilityTests
     public async Task ANameReadAloudBorrowsNoStarFromWhereTheCommanderIsStanding()
     {
         var gameState = Store(
-            """{"timestamp":"2026-08-16T09:10:00Z","event":"FSDTarget","Name":"Dryafea PO-X d2-0","StarClass":"M"}""",
+            """{"timestamp":"2026-08-16T09:10:00Z","event":"StartJump","JumpType":"Hyperspace","StarSystem":"Dryafea PO-X d2-0","StarClass":"M"}""",
             """{"timestamp":"2026-08-16T09:11:00Z","event":"FSDJump","StarSystem":"Dryafea PO-X d2-0"}""");
 
         var elsewhere = await Ask(gameState, """{"name":"Fixture AA-A b1-2"}""");

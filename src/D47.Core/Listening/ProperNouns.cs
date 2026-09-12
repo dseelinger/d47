@@ -33,7 +33,7 @@ public static class ProperNouns
             state.Location.Body,
 
             // Where they are going.
-            state.Location.NextJumpSystem,
+            state.Location.JumpDestination,
 
             // What they are flying, by name and by type.
             state.Ship.Name,
