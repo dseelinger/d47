@@ -141,12 +141,17 @@ Markdown, and short. Three parts:
 
    | Release | # | Issue | Model | Effort | Review |
    | --- | --- | --- | --- | --- | --- |
-   | 0.110.10 — Tables answer for themselves *(guess)* | 105 | Join the experimental effect on its symbol | `sonnet` | `medium` | |
-   | | 104 | No way to ask which engineer works in a system | `sonnet` | `medium` | |
+   | 0.110.10 — Tables answer for themselves *(guess)* | [105](https://github.com/dseelinger/d47/issues/105) | Join the experimental effect on its symbol | `sonnet` | `medium` | |
+   | | [104](https://github.com/dseelinger/d47/issues/104) | No way to ask which engineer works in a system | `sonnet` | `medium` | |
 
    A group's issues are consecutive rows. The version and title go in the first of them; the
    Release cell is blank on the rest, and blank throughout for an issue in no group. There is no
    separate release section and no sentence explaining a group — the title says what they share.
+
+   **Every issue number is a link** — `[105](https://github.com/dseelinger/d47/issues/105)` in the
+   table's `#` column, and `[#105](https://github.com/dseelinger/d47/issues/105)` wherever a number
+   appears in the prose, including **Not now**. The report is read in the desktop app, where a bare
+   number is a number to go and look up.
 
    Shorten titles to the claim. The full title is one click away.
 3. **Not now** — one line naming anything eligible you deliberately left out of every group, and
