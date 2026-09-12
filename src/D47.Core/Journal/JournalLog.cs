@@ -16,6 +16,9 @@ public sealed record JournalEntry(
 
     /// <summary>The line as the list draws it: the time, then what happened.</summary>
     public string Line => $"{Timestamp.ToLocalTime():HH:mm:ss}  {Said}";
+
+    /// <summary>The event's own <c>StarSystem</c> field, or null when it has none.</summary>
+    public string? StarSystem { get; init; }
 }
 
 /// <summary>
@@ -76,7 +79,14 @@ public sealed class JournalLog(int keep = 4000)
             journalEvent.Kind,
             JournalSentence.For(journalEvent),
             Raw(journalEvent.Raw, indented: true),
-            Raw(journalEvent.Raw, indented: false));
+            Raw(journalEvent.Raw, indented: false))
+        {
+            StarSystem = journalEvent.Raw.ValueKind == JsonValueKind.Object
+                && journalEvent.Raw.TryGetProperty("StarSystem", out var system)
+                && system.ValueKind == JsonValueKind.String
+                    ? system.GetString()
+                    : null,
+        };
 
     /// <summary>The event's own JSON, indented.</summary>
     private static string Raw(JsonElement raw, bool indented)

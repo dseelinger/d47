@@ -357,6 +357,12 @@ public sealed class AppHost : IDisposable
     /// <summary>The galaxy service, for the adventure editor to check a typed place against (Phase 47).</summary>
     public D47.Core.Knowledge.IGalaxyService? Galaxy { get; private set; }
 
+    /// <summary>The system names d47 holds, for the finder that picks them out of text (#156).</summary>
+    public D47.Core.Knowledge.SystemsInPlay? SystemsInPlay { get; private set; }
+
+    /// <summary>The desktop clipboard.</summary>
+    public IClipboard? Clipboard { get; private set; }
+
     /// <summary>Where Elite writes its journals, for the adventure catch-up that walks them.</summary>
     public string? JournalDirectory { get; private set; }
 
@@ -1151,6 +1157,8 @@ public sealed class AppHost : IDisposable
         // Late-bound, because several things built here have to read something that does not exist until the
         // host does — the voice list, the headset report, and now the cue library, which is replaced whenever
         // the Commander drops a file into data/audio.
+        var clipboard = new DesktopClipboard(loggerFactory.CreateLogger<DesktopClipboard>());
+
         AppHost? self = null;
 
         // A session, written up (Phase 33).
@@ -1345,8 +1353,8 @@ public sealed class AppHost : IDisposable
             () => DateTimeOffset.Now,
             loggerFactory.CreateLogger<D47.App.Coverage.CoverageRecorder>());
 
-        var galaxy = new D47.Knowledge.SpanshGalaxyService(
-            loggerFactory.CreateLogger<D47.Knowledge.SpanshGalaxyService>());
+        var galaxy = new D47.Core.Knowledge.GalaxySearchNames(new D47.Knowledge.SpanshGalaxyService(
+            loggerFactory.CreateLogger<D47.Knowledge.SpanshGalaxyService>()));
 
         var routePlanner = new D47.Knowledge.SpanshRouteService(
             loggerFactory.CreateLogger<D47.Knowledge.SpanshRouteService>());
@@ -1512,7 +1520,7 @@ public sealed class AppHost : IDisposable
                 () => AutonomousCapability.Describe(autonomous),
                 new NavigationSurface
                 {
-                    Clipboard = new DesktopClipboard(loggerFactory.CreateLogger<DesktopClipboard>()),
+                    Clipboard = clipboard,
                     Actions = actionSurface,
                     AutoPlotEnabled = () => settings.Current.Actions.AutoPlot,
                     WatchRoute = () => new Input.RoutePlotWatch(
@@ -2009,6 +2017,66 @@ public sealed class AppHost : IDisposable
         host._loadouts = loadouts;
         host._heardNames = heardNames;
         host.Plans = planBook;
+
+        // Every system name d47 already holds, for the finder that picks them out of text (#156).
+        var systemsInPlay = new D47.Core.Knowledge.SystemsInPlay();
+
+        systemsInPlay.Add(() => [clipboardOffer.Text]);
+        systemsInPlay.Add(() => gameState.Active is not { } active
+            ? []
+            : [
+                active.Location.StarSystem,
+                active.Carrier.StarSystem,
+                active.Carrier.DestinationSystem,
+                active.SquadronCarrier.StarSystem,
+                active.SquadronCarrier.DestinationSystem,
+                .. active.Fleet.Ships.Select(ship => ship.StarSystem),
+                .. active.Modules.Modules.Select(module => module.StarSystem),
+                .. active.Colonisation.All.Select(site => site.StarSystem),
+            ]);
+        systemsInPlay.Add(() => route.Current.Hops.Select(hop => hop.StarSystem));
+        systemsInPlay.Add(() => D47.Core.Knowledge.EngineerDirectory.All.Select(engineer => engineer.System));
+        systemsInPlay.Add(() => D47.Core.Knowledge.LoreDirectory.All.Select(entry => entry.Name));
+        systemsInPlay.Add(() => PlannedSystems(planBook));
+        systemsInPlay.Add(() => commodityBoard.Last is not { } posting
+            ? []
+            : [posting.Near, .. posting.Answer.Offers.Select(offer => offer.Market.System)]);
+        systemsInPlay.Add(() => galaxy.Names);
+
+        static IEnumerable<string?> PlannedSystems(D47.Core.Knowledge.RoutePlanBook book)
+        {
+            foreach (var kind in Enum.GetValues<D47.Core.Knowledge.RoutePlanKind>())
+            {
+                if (book.Last(kind) is not { } plan)
+                {
+                    continue;
+                }
+
+                if (plan.Jump is { } jump)
+                {
+                    yield return jump.Origin;
+                    yield return jump.Destination;
+
+                    foreach (var waypoint in jump.Waypoints)
+                    {
+                        yield return waypoint.System;
+                    }
+                }
+
+                foreach (var stop in plan.Riches?.Stops ?? [])
+                {
+                    yield return stop.System;
+                }
+
+                foreach (var stop in plan.Trade?.Stops ?? [])
+                {
+                    yield return stop.System;
+                }
+            }
+        }
+
+        host.SystemsInPlay = systemsInPlay;
+        host.Clipboard = clipboard;
         host.Controllers = controllers;
         host.Commodities = commodityBoard;
         host.CommunityGoalSearch = communityGoalSearch;
