@@ -21,6 +21,11 @@ An engineer's page and the spoken engineer report no longer carry a "Reputation 
 line. It stated the same mechanic for every engineer — crafting and selling raise it — and the base
 above it already named the one activity that was specific to them.
 
+An engineer's page named nowhere which of the Commander's plans it was the answer to, though the
+directory counted them. It now lists the planned work that names them, before the cost of reaching
+them — "Planned work" once unlocked, "What unlocking them buys" while they are not, capped at eight
+with an "and N more" tail.
+
 ## 0.112.7 — Lore is remarked on once a week, not once a day
 
 A Commander whose home system is where they spend most sessions heard the same lore remark every

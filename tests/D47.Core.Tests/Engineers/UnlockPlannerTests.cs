@@ -404,6 +404,23 @@ public class UnlockPlannerTests
     }
 
     /// <summary>
+    /// An engineer's entry carries the planned things they can roll, not only the count of them — the
+    /// detail page draws the list from this rather than from a second pass over the plans (#109).
+    /// </summary>
+    [Fact]
+    public void AnEngineersEntryCarriesThePlannedWorkThatNamesThem()
+    {
+        var report = UnlockPlanner.Of([Thrusters()], [], State());
+
+        var brandon = report.Directory.Single(entry => entry.Engineer.Name == "Mel Brandon");
+        var farseer = report.Directory.Single(entry => entry.Engineer.Name == "Felicity Farseer");
+
+        Assert.Single(brandon.Planned);
+        Assert.Equal("Dirty Drive Tuning", brandon.Planned[0].Wants);
+        Assert.Empty(farseer.Planned);
+    }
+
+    /// <summary>
     /// The route promotes as a chain rather than a line: one checklist item per stop, in flying order,
     /// each carrying the grade that stop actually needs.
     /// </summary>

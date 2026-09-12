@@ -151,6 +151,9 @@ public sealed record EngineerEntry
     /// </summary>
     public IReadOnlyList<Engineer> Gate { get; init; } = [];
 
+    /// <summary>The planned things this engineer can roll, whether or not they are unlocked yet (#109).</summary>
+    public IReadOnlyList<PlannedWork> Planned { get; init; } = [];
+
     /// <summary>The line about it, or null where the gate draws nothing (#138).</summary>
     public string? GateLine =>
         Gate.Count == 0

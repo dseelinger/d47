@@ -310,6 +310,7 @@ public static class UnlockPlanner
             Jumps = EngineerAccess.Jumps(light, range),
             Wanted = workload.GetValueOrDefault(engineer.Id),
             Gate = EngineerAccess.Gate(engineer, progress, planned),
+            Planned = [.. planned.Where(work => EngineerDirectory.IsNamedIn(work.Engineers, engineer))],
             Chain = EngineerAccess.ChainTo(engineer, 1, progress, from, range),
             Criteria = EngineerAccess.CriteriaFor(engineer, progress),
         };

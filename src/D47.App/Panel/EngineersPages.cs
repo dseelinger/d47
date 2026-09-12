@@ -297,6 +297,8 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage
 /// <summary>One engineer (Phase 28, "Who can roll this").</summary>
 public sealed class EngineerPage : EngineerPageBase
 {
+    private const int PlannedShown = 8;
+
     private readonly string _id;
     private readonly PanelNavigator _nav;
     private readonly StackPanel _body = new() { Spacing = 2 };
@@ -381,6 +383,24 @@ public sealed class EngineerPage : EngineerPageBase
 
         _body.Children.Add(LoadoutPages.Heading("Where you stand"));
         _body.Children.Add(LoadoutPages.Muted(entry.Status));
+
+        // The reason to care about this engineer, before what reaching them costs (#109).
+        if (entry.Planned.Count > 0)
+        {
+            _body.Children.Add(LoadoutPages.Heading(
+                entry.Reach == EngineerReach.Unlocked ? "Planned work" : "What unlocking them buys"));
+
+            foreach (var work in entry.Planned.Take(PlannedShown))
+            {
+                _body.Children.Add(LoadoutPages.Muted("•  " + work.Describe()));
+            }
+
+            if (entry.Planned.Count > PlannedShown)
+            {
+                _body.Children.Add(LoadoutPages.Muted(
+                    $"and {(entry.Planned.Count - PlannedShown).ToString(CultureInfo.InvariantCulture)} more."));
+            }
+        }
 
         // Unlock Prerequisites, with what is already done marked (remediation.md 13, item 12).
         if (entry.Criteria.Count > 0)
