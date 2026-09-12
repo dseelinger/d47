@@ -6,6 +6,16 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.48 — A version number is read aloud instead of throwing on ElevenLabs
+
+Reading a version like 0.112.0 out loud threw, because the number reader split it on the first
+full stop only and then read the rest, "112.0", against a digit table meant for single digits.
+The sentence was dropped and a warning logged instead of being spoken.
+
+Every dot-separated group after the first is now read digit by digit, the way a decimal fraction
+already is: 0.112.0 is "zero point one one two point zero". Asking Directive 47 for its status
+now gets an answer on ElevenLabs.
+
 ## 0.110.47 — A stick that is plugged in is no longer reported missing at startup
 
 Windows takes a moment to report every game controller it has, and D47 waits for that list to stop

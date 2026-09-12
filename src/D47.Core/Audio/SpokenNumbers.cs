@@ -110,34 +110,30 @@ public static class SpokenNumbers
     /// <summary>One numeral as words, or null when it is not one this will attempt.</summary>
     private static string? Say(string numeral)
     {
-        var point = numeral.IndexOf('.', StringComparison.Ordinal);
+        var groups = numeral.Split('.');
 
-        var whole = (point < 0 ? numeral : numeral[..point]).Replace(",", string.Empty);
-        var fraction = point < 0 ? string.Empty : numeral[(point + 1)..].Replace(",", string.Empty);
-
-        if (!long.TryParse(whole, NumberStyles.None, CultureInfo.InvariantCulture, out var value)
+        if (!long.TryParse(groups[0].Replace(",", string.Empty), NumberStyles.None, CultureInfo.InvariantCulture, out var value)
             || value > Ceiling)
         {
             return null;
         }
 
-        var said = Whole(value);
+        var said = new StringBuilder(Whole(value));
 
-        if (fraction.Length == 0)
+        // Every group after the first is a version-style segment, read digit by digit and preceded by
+        // "point": "0.112.0" is "zero point one one two point zero", not "zero point one hundred and
+        // twelve point zero".
+        for (var g = 1; g < groups.Length; g++)
         {
-            return said;
+            said.Append(" point");
+
+            foreach (var digit in groups[g].Replace(",", string.Empty))
+            {
+                said.Append(' ').Append(Ones[digit - '0']);
+            }
         }
 
-        // Digit by digit after the point, which is how a decimal is read aloud: "12.75" is "twelve point
-        // seven five", never "twelve point seventy-five".
-        var digits = new StringBuilder(said).Append(" point");
-
-        foreach (var digit in fraction)
-        {
-            digits.Append(' ').Append(Ones[digit - '0']);
-        }
-
-        return digits.ToString();
+        return said.ToString();
     }
 
     private static string Whole(long value)

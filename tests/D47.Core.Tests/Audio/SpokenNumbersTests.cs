@@ -34,6 +34,28 @@ public class SpokenNumbersTests
     public void ADecimalIsReadDigitByDigitAfterThePoint(string numeral, string said) =>
         Assert.Equal(said, SpokenNumbers.Expand(numeral));
 
+    /// <summary>
+    /// A version number is read group by group, the same way a decimal fraction already is: every dot
+    /// splits off another group, read digit by digit.
+    /// </summary>
+    [Theory]
+    [InlineData("0.112.0", "zero point one one two point zero")]
+    [InlineData("0.1.0", "zero point one point zero")]
+    [InlineData("1.2.3.4", "one point two point three point four")]
+    public void AVersionStyleNumberIsReadGroupByGroup(string numeral, string said) =>
+        Assert.Equal(said, SpokenNumbers.Expand(numeral));
+
+    [Theory]
+    [InlineData("0.112.0")]
+    [InlineData("0.1.0")]
+    [InlineData("1.2.3.4")]
+    [InlineData("12.5")]
+    [InlineData("1,000")]
+    [InlineData("100. Next")]
+    [InlineData("9999999999999999")]
+    public void NoTokenOfDigitsAndFullStopsMakesExpandThrow(string text) =>
+        Assert.NotNull(SpokenNumbers.Expand(text));
+
     [Fact]
     public void TheReportedCalloutComesOutEntirelyInWords()
     {
