@@ -448,6 +448,9 @@ public static class JournalSentence
             "JoinedSquadron" => "Joined a squadron",
             "LeftSquadron" => "Left a squadron",
             "AppliedToSquadron" => "Applied to a squadron",
+            "SquadronApplicationApproved" => Named(raw, "SquadronName") is { } approved
+                ? $"Application to {approved} approved"
+                : "Squadron application approved",
             "SquadronCreated" => "Created a squadron",
             "SquadronPromotion" => "Promoted in the squadron",
             "SharedBookmarkToSquadron" => "Shared a bookmark with the squadron",

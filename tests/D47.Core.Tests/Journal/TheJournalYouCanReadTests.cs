@@ -44,6 +44,9 @@ public class TheJournalYouCanReadTests
     [InlineData(
         """{ "timestamp":"2026-02-03T13:23:28Z", "event":"Died", "KillerName":"Martin Caspersson" }""",
         "Destroyed by Martin Caspersson")]
+    [InlineData(
+        """{ "timestamp":"2026-01-03T01:00:07Z", "event":"SquadronApplicationApproved", "SquadronID":57404, "SquadronName":"GREYBEARD DELTA" }""",
+        "Application to GREYBEARD DELTA approved")]
     public void ARealLineReadsAsASentence(string line, string expected)
     {
         Assert.Equal(expected, Said(line));

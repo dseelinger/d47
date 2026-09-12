@@ -122,6 +122,21 @@ public static class HandledEvents
     ], StringComparer.Ordinal);
 
     /// <summary>
+    /// Events Frontier writes that d47 deliberately answers neither block for: <c>Backpack</c> and
+    /// <c>BackpackChange</c> are the on-foot inventory, read from <c>Backpack.json</c> instead;
+    /// <c>CancelDropship</c> is a cancelled on-foot dropship booking, carrying a refund and nothing
+    /// d47 tracks; <c>FCMaterials</c> is the carrier's materials market, tabled to the carrier
+    /// reminder work (#24).
+    /// </summary>
+    public static readonly FrozenSet<string> Intentional = FrozenSet.ToFrozenSet<string>(
+    [
+        "Backpack",
+        "BackpackChange",
+        "CancelDropship",
+        "FCMaterials",
+    ], StringComparer.Ordinal);
+
+    /// <summary>
     /// Events only the Journal File reading knows: it has a sentence for each, or hides it as noise,
     /// and nothing else in d47 reacts to it.
     /// </summary>
@@ -231,6 +246,7 @@ public static class HandledEvents
         "ShipyardBankDeposit",
         "ShipyardRedeem",
         "ShipyardTransfer",
+        "SquadronApplicationApproved",
         "SquadronCreated",
         "SquadronPromotion",
         "SquadronStartup",
@@ -244,8 +260,9 @@ public static class HandledEvents
         "WingLeave",
     ], StringComparer.Ordinal);
 
-    /// <summary>Both blocks: whether d47 knows the event at all.</summary>
-    public static readonly FrozenSet<string> All = ActedOn.Concat(NarratedOnly).ToFrozenSet(StringComparer.Ordinal);
+    /// <summary>All three blocks: whether d47 knows the event at all.</summary>
+    public static readonly FrozenSet<string> All =
+        ActedOn.Concat(NarratedOnly).Concat(Intentional).ToFrozenSet(StringComparer.Ordinal);
 
     /// <summary>
     /// Of the event names seen — in a corpus, a session, a Frontier update's notes — the ones nothing

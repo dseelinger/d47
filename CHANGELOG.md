@@ -6,6 +6,12 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.112.6 — A squadron acceptance is spoken, naming the squadron
+
+A squadron accepting the Commander's application went unsaid, the same as any other journal event
+d47 did not recognise. It is now a narrated line naming the squadron: "Application to GREYBEARD
+DELTA approved."
+
 ## 0.112.5 — A confirmed plot says the jump count and the distance
 
 A plotted course said only that it worked: "Course plotted to Colonia." The Commander still had to
