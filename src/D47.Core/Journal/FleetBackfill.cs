@@ -8,7 +8,10 @@ public static class FleetBackfill
     /// <summary>
     /// The fleet as of the newest journal that recorded one, folded forward to the end of history.
     /// </summary>
-    public static IReadOnlyDictionary<string, FleetRegistry> FromHistory(string directory, ILogger logger)
+    public static IReadOnlyDictionary<string, FleetRegistry> FromHistory(
+        string directory,
+        ILogger logger,
+        CancellationToken cancellation = default)
     {
         ArgumentNullException.ThrowIfNull(logger);
 
@@ -21,13 +24,15 @@ public static class FleetBackfill
         return FromHistory(
             [.. Directory.EnumerateFiles(directory, JournalFolder.FilePattern)
                 .OrderBy(Path.GetFileName, StringComparer.Ordinal)],
-            logger);
+            logger,
+            cancellation);
     }
 
     /// <summary>The same, over an explicit list oldest-first.</summary>
     public static IReadOnlyDictionary<string, FleetRegistry> FromHistory(
         IReadOnlyList<string> files,
-        ILogger logger)
+        ILogger logger,
+        CancellationToken cancellation = default)
     {
         ArgumentNullException.ThrowIfNull(files);
         ArgumentNullException.ThrowIfNull(logger);
@@ -45,6 +50,8 @@ public static class FleetBackfill
 
         for (var i = files.Count - 1; i >= floor; i--)
         {
+            cancellation.ThrowIfCancellationRequested();
+
             var (owner, holds) = Scan(files[i], logger);
 
             if (owner is null)

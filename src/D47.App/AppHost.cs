@@ -366,7 +366,7 @@ public sealed class AppHost : IDisposable
     /// <summary>When the "is starting" line was written, for the line the window logs (#148).</summary>
     private long _startedLogging;
 
-    /// <summary>Cancels a walk that has not started yet.</summary>
+    /// <summary>Stops the walk, whether or not it has started.</summary>
     private readonly CancellationTokenSource _warming = new();
 
     private Task? _warmingUp;
@@ -375,7 +375,33 @@ public sealed class AppHost : IDisposable
     /// Reads the journal history off the startup path. Idempotent: a second call is handed the first
     /// call's task (#148).
     /// </summary>
-    public Task WarmUp() => _warmingUp ??= Task.Run(History.Run, _warming.Token);
+    public Task WarmUp() => _warmingUp ??= Task.Run(() => History.Run(_warming.Token), _warming.Token);
+
+    /// <summary>
+    /// Waits for a cancelled walk to reach the end of the journal file it is on, so that teardown does not
+    /// close the logging it writes through or race its write of the heard-names file (#148).
+    /// </summary>
+    private void StopWarmingUp()
+    {
+        if (_warmingUp is not { } walk)
+        {
+            return;
+        }
+
+        try
+        {
+            // One journal file, not the whole walk. Bounded, because a file that will not read must not
+            // hold up the quit.
+            if (!walk.Wait(TimeSpan.FromSeconds(5)))
+            {
+                _logger.LogWarning("The journal history walk did not stop within five seconds of being asked");
+            }
+        }
+        catch (Exception ex) when (ex is OperationCanceledException or AggregateException)
+        {
+            // Cancelled before it started, or it reported its own failure when it ran.
+        }
+    }
 
     /// <summary>How long the window took to appear, measured from the line that opens the log (#148).</summary>
     public void ReportWindowUp() =>
@@ -5822,9 +5848,11 @@ public sealed class AppHost : IDisposable
         // First, so the reason survives whatever the teardown below does.
         _logger.LogInformation("d47 {Version} is stopping: {Why}", Version, StoppingBecause);
 
-        // First of the teardown: a walk that has not started never will. One already under way runs to the
-        // end of its file and its result is dropped, because the tick that would adopt it is gone (#148).
+        // First of the teardown: a walk that has not started never will, and one under way stops at the end
+        // of the journal file it is on. Its result is dropped, because the tick that would adopt it is gone.
+        // Waited for, because the teardown below closes what it logs through (#148).
         _warming.Cancel();
+        StopWarmingUp();
 
         CoverageRecorder?.Save();
 

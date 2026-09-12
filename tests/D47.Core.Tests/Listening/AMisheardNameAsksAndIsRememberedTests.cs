@@ -251,7 +251,8 @@ public class AMisheardNameAsksAndIsRememberedTests : IDisposable
             """{"timestamp":"2026-08-27T19:20:00Z","event":"Docked","StarSystem":"Eurybia","StationName":"Ray Gateway"}""",
         ]);
 
-        var mined = SpokenNameMiner.FromHistory([journal], NullLogger.Instance);
+        var mined = SpokenNameMiner.FromHistory(
+            [journal], NullLogger.Instance, cancellation: TestContext.Current.CancellationToken);
 
         var names = mined["F1"];
 

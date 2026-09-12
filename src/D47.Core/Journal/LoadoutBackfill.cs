@@ -22,7 +22,8 @@ public static class LoadoutBackfill
         string directory,
         ILogger logger,
         IReadOnlyDictionary<string, ShipLoadouts>? stored = null,
-        DateTimeOffset? since = null)
+        DateTimeOffset? since = null,
+        CancellationToken cancellation = default)
     {
         ArgumentNullException.ThrowIfNull(logger);
 
@@ -50,7 +51,7 @@ public static class LoadoutBackfill
                 since);
         }
 
-        return FromHistory(walking, logger, stored);
+        return FromHistory(walking, logger, stored, cancellation: cancellation);
     }
 
     /// <summary>
@@ -99,7 +100,8 @@ public static class LoadoutBackfill
         IReadOnlyList<string> files,
         ILogger logger,
         IReadOnlyDictionary<string, ShipLoadouts>? stored = null,
-        IProgress<double>? progress = null)
+        IProgress<double>? progress = null,
+        CancellationToken cancellation = default)
     {
         ArgumentNullException.ThrowIfNull(files);
         ArgumentNullException.ThrowIfNull(logger);
@@ -115,6 +117,8 @@ public static class LoadoutBackfill
         // Every file it was handed.
         for (var i = 0; i < files.Count; i++)
         {
+            cancellation.ThrowIfCancellationRequested();
+
             // Before the file rather than after it, so a walk of 943 starts at nought rather than sitting
             // empty through the first one.
             progress?.Report((double)i / Math.Max(1, files.Count));

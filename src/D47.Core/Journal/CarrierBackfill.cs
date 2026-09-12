@@ -8,7 +8,10 @@ namespace D47.Core.Journal;
 public static class CarrierBackfill
 {
     /// <summary>Every Commander's own carrier as their journals last reported it, keyed by Frontier id.</summary>
-    public static IReadOnlyDictionary<string, CarrierState> FromHistory(string directory, ILogger logger)
+    public static IReadOnlyDictionary<string, CarrierState> FromHistory(
+        string directory,
+        ILogger logger,
+        CancellationToken cancellation = default)
     {
         ArgumentNullException.ThrowIfNull(logger);
 
@@ -21,13 +24,15 @@ public static class CarrierBackfill
         return FromHistory(
             [.. Directory.EnumerateFiles(directory, JournalFolder.FilePattern)
                 .OrderBy(Path.GetFileName, StringComparer.Ordinal)],
-            logger);
+            logger,
+            cancellation);
     }
 
     /// <summary>The same, over an explicit list oldest-first.</summary>
     public static IReadOnlyDictionary<string, CarrierState> FromHistory(
         IReadOnlyList<string> files,
-        ILogger logger)
+        ILogger logger,
+        CancellationToken cancellation = default)
     {
         ArgumentNullException.ThrowIfNull(files);
         ArgumentNullException.ThrowIfNull(logger);
@@ -37,6 +42,8 @@ public static class CarrierBackfill
 
         foreach (var file in files)
         {
+            cancellation.ThrowIfCancellationRequested();
+
             foreach (var line in Lines(file, logger))
             {
                 // The text test, before any JSON is touched: three event names out of the hundreds a journal

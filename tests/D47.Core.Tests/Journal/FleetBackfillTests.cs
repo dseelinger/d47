@@ -14,7 +14,7 @@ public class FleetBackfillTests
     {
         using var install = new TempInstall();
 
-        var fleets = FleetBackfill.FromHistory(install.Root, NullLogger.Instance);
+        var fleets = Fleets(install);
 
         Assert.Empty(fleets);
     }
@@ -29,7 +29,7 @@ public class FleetBackfillTests
         using var install = new TempInstall();
         Write(install, "Journal.2026-08-01T100000.01.log", LoadGame, Loadout);
 
-        var fleets = FleetBackfill.FromHistory(install.Root, NullLogger.Instance);
+        var fleets = Fleets(install);
 
         Assert.Empty(fleets);
     }
@@ -42,7 +42,7 @@ public class FleetBackfillTests
         Write(install, "Journal.2026-08-01T100000.01.log", LoadGame, Stored(("Anaconda", 51), ("Python", 52)));
         Write(install, "Journal.2026-08-02T100000.01.log", LoadGame, Loadout);
 
-        var fleet = FleetBackfill.FromHistory(install.Root, NullLogger.Instance)[Fid];
+        var fleet = Fleets(install)[Fid];
 
         Assert.True(fleet.IsKnown);
         Assert.Equal([51, 52], fleet.Ships.Select(ship => ship.ShipId).Order());
@@ -60,7 +60,7 @@ public class FleetBackfillTests
             LoadGame,
             """{ "timestamp":"2026-08-02T10:05:00Z", "event":"ShipyardSell", "ShipType":"python", "SellShipID":52 }""");
 
-        var fleet = FleetBackfill.FromHistory(install.Root, NullLogger.Instance)[Fid];
+        var fleet = Fleets(install)[Fid];
 
         Assert.Equal([51], fleet.Ships.Select(ship => ship.ShipId));
     }
@@ -78,7 +78,7 @@ public class FleetBackfillTests
             Docked,
             """{ "timestamp":"2026-08-02T10:05:00Z", "event":"ShipyardSwap", "ShipType":"anaconda", "ShipID":51, "StoreOldShip":"PantherMkII", "StoreShipID":41 }""");
 
-        var fleet = FleetBackfill.FromHistory(install.Root, NullLogger.Instance)[Fid];
+        var fleet = Fleets(install)[Fid];
 
         // The Anaconda is now being flown, so it leaves the registry; the Panther takes its place.
         Assert.Equal([41], fleet.Ships.Select(ship => ship.ShipId));
@@ -98,7 +98,7 @@ public class FleetBackfillTests
             """{ "timestamp":"2026-08-02T10:05:00Z", "event":"ShipyardBuy", "ShipType":"typex", "StoreOldShip":"CobraMkV", "StoreShipID":37 }""",
             """{ "timestamp":"2026-08-02T10:05:01Z", "event":"ShipyardNew", "ShipType":"typex", "NewShipID":60 }""");
 
-        var fleet = FleetBackfill.FromHistory(install.Root, NullLogger.Instance)[Fid];
+        var fleet = Fleets(install)[Fid];
 
         Assert.Equal([37, 51], fleet.Ships.Select(ship => ship.ShipId).Order());
         Assert.DoesNotContain(fleet.Ships, ship => ship.ShipId == 60);
@@ -119,7 +119,7 @@ public class FleetBackfillTests
             """{ "timestamp":"2026-08-02T10:00:00Z", "event":"LoadGame", "FID":"F7654321", "Commander":"Other" }""",
             """{ "timestamp":"2026-08-02T10:10:00Z", "event":"StoredShips", "StarSystem":"Somewhere", "StationName":"Somewhere Station", "ShipsHere":[{"ShipID":1,"ShipType":"Sidewinder","Value":1}], "ShipsRemote":[] }""");
 
-        var fleets = FleetBackfill.FromHistory(install.Root, NullLogger.Instance);
+        var fleets = Fleets(install);
 
         Assert.Equal([51], fleets[Fid].Ships.Select(ship => ship.ShipId));
         Assert.Equal([1], fleets["F7654321"].Ships.Select(ship => ship.ShipId));
@@ -138,7 +138,7 @@ public class FleetBackfillTests
             Write(install, $"Journal.2026-09-{day:00}T100000.01.log", LoadGame, Loadout);
         }
 
-        var fleets = FleetBackfill.FromHistory(install.Root, NullLogger.Instance);
+        var fleets = Fleets(install);
 
         Assert.Empty(fleets);
     }
@@ -153,6 +153,9 @@ public class FleetBackfillTests
         Assert.False(fleet.IsKnown);
         Assert.Empty(fleet.Ships);
     }
+
+    private static IReadOnlyDictionary<string, FleetRegistry> Fleets(TempInstall install) =>
+        FleetBackfill.FromHistory(install.Root, NullLogger.Instance, TestContext.Current.CancellationToken);
 
     private const string LoadGame =
         """{ "timestamp":"2026-08-01T10:00:00Z", "event":"LoadGame", "FID":"F1234567", "Commander":"Fixture" }""";

@@ -1,4 +1,5 @@
 using D47.Core.Journal;
+using D47.Core.Listening;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -53,7 +54,7 @@ public class AHistoryWalkThatFinishesLateIsStillAdoptedTests
         var store = StoreOver(backfill);
 
         store.Apply(Event(LoadGame));
-        backfill.Run();
+        backfill.Run(TestContext.Current.CancellationToken);
         store.RestoreLate();
 
         Assert.Equal(HistoryState.Done, backfill.State);
@@ -75,7 +76,7 @@ public class AHistoryWalkThatFinishesLateIsStillAdoptedTests
         store.Apply(Event(CarrierStats));
         store.Apply(Event("""{"timestamp":"2026-09-08T09:00:00Z","event":"CarrierJump","StarSystem":"Colonia"}"""));
 
-        backfill.Run();
+        backfill.Run(TestContext.Current.CancellationToken);
         store.RestoreLate();
 
         Assert.Equal("Colonia", store.Active!.Carrier.StarSystem);
@@ -97,7 +98,7 @@ public class AHistoryWalkThatFinishesLateIsStillAdoptedTests
         store.Apply(Event(LoadGame));
         store.Apply(Event(Loadout(shipId: 9, "Anaconda")));
 
-        backfill.Run();
+        backfill.Run(TestContext.Current.CancellationToken);
         store.RestoreLate();
 
         var ships = store.Active!.Loadouts.Ships;
@@ -123,7 +124,7 @@ public class AHistoryWalkThatFinishesLateIsStillAdoptedTests
         store.Apply(Event(LoadGame));
         store.Apply(Event("""{"timestamp":"2026-09-08T11:00:00Z","event":"FSDJump","StarSystem":"Deciat"}"""));
 
-        backfill.Run();
+        backfill.Run(TestContext.Current.CancellationToken);
         store.RestoreLate();
 
         Assert.True(store.Active!.Names.Knows("Deciat"));
@@ -138,10 +139,10 @@ public class AHistoryWalkThatFinishesLateIsStillAdoptedTests
         Write(install, "Journal.2026-09-05T100000.01.log", LoadGame, CarrierStats, CarrierLocation("Meene"));
 
         var backfill = Backfill(install);
-        backfill.Run();
+        backfill.Run(TestContext.Current.CancellationToken);
 
         var walked = backfill.Carriers;
-        backfill.Run();
+        backfill.Run(TestContext.Current.CancellationToken);
 
         Assert.Same(walked, backfill.Carriers);
     }
@@ -156,11 +157,46 @@ public class AHistoryWalkThatFinishesLateIsStillAdoptedTests
             Loggers = NullLoggerFactory.Instance,
         };
 
-        backfill.Run();
+        backfill.Run(TestContext.Current.CancellationToken);
 
         Assert.Equal(HistoryState.Done, backfill.State);
         Assert.Null(backfill.Failure);
         Assert.Empty(backfill.Carriers!);
+    }
+
+    /// <summary>
+    /// A caller shutting down cancels the walk and waits for it, so it has to end promptly and leave the
+    /// heard-names file alone: that file is written at the end of the walk, and the logging the walk writes
+    /// through is closed next (#148).
+    /// </summary>
+    [Fact]
+    public void AWalkToldToStopEndsWithoutWritingTheNamesFile()
+    {
+        using var install = new TempInstall();
+        Write(install, "Journal.2026-09-05T100000.01.log", LoadGame, CarrierStats, CarrierLocation("Meene"));
+
+        var file = Path.Combine(install.Paths.Data, "heard-names.json");
+        var names = new HeardNamesStore(file, NullLogger<HeardNamesStore>.Instance);
+
+        names.Load();
+
+        using var stopping = new CancellationTokenSource();
+        stopping.Cancel();
+
+        var backfill = new HistoryBackfill
+        {
+            Directory = install.Root,
+            Loggers = NullLoggerFactory.Instance,
+            NameFile = names,
+        };
+
+        backfill.Run(stopping.Token);
+
+        Assert.Equal(HistoryState.Stopped, backfill.State);
+        Assert.False(backfill.Pending);
+        Assert.Null(backfill.Failure);
+        Assert.Null(backfill.Names);
+        Assert.False(File.Exists(file));
     }
 
     private static HistoryBackfill Backfill(TempInstall install) => new()

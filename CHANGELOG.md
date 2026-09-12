@@ -6,6 +6,16 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.39 — A journal history walk that did not finish is no longer reported as an absence
+
+The walk over older journals ends one of three ways: it finishes, it throws, or it is stopped when
+d47 quits. Only the first of those has read any history, but the carrier, ship list and loadout
+answers treated a walk that threw as one that had finished, and said no carrier appears in any
+journal read. They now say the history was not finished reading, the same as while it is still
+running. Quitting while a walk was running also left it running, so it could still be writing the
+file of heard names and logging after the log had been closed; quitting now stops the walk at the
+next journal file and waits for it to stop.
+
 ## 0.110.38 — The window no longer waits for the journal history to be read
 
 Four walks back through older journal files — the fleet, the loadouts, the carrier and the place

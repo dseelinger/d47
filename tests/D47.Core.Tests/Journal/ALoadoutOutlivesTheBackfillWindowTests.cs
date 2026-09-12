@@ -191,7 +191,8 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
             """{"timestamp":"2026-08-21T10:05:00Z","event":"ShipyardSell","SellShipID":42}""",
         ]);
 
-        var caught = LoadoutBackfill.FromHistory([journal], NullLogger.Instance, store.All);
+        var caught = LoadoutBackfill.FromHistory(
+            [journal], NullLogger.Instance, store.All, cancellation: TestContext.Current.CancellationToken);
 
         Assert.True(caught.TryGetValue("F1", out var ships));
         Assert.Null(ships.For(42));
@@ -236,7 +237,8 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
         // Wider than the floor, because the gap is wider than the floor.
         Assert.True(window.Count > 25, $"walked {window.Count} files");
 
-        var caught = LoadoutBackfill.FromHistory(window, NullLogger.Instance, store.All);
+        var caught = LoadoutBackfill.FromHistory(
+            window, NullLogger.Instance, store.All, cancellation: TestContext.Current.CancellationToken);
 
         Assert.Null(caught["F1"].For(42));
         Assert.NotNull(caught["F1"].For(51));
@@ -488,7 +490,8 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
             Boarding("2026-08-21T10:05:00Z", "anaconda", 51, "int_engine_size7_class2").ReplaceLineEndings(" "),
         ]);
 
-        var rebuilt = LoadoutBackfill.FromHistory([journal], NullLogger.Instance, corrupt.All);
+        var rebuilt = LoadoutBackfill.FromHistory(
+            [journal], NullLogger.Instance, corrupt.All, cancellation: TestContext.Current.CancellationToken);
 
         Assert.NotNull(rebuilt["F1"].For(51));
     }

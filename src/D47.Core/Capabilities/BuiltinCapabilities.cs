@@ -162,7 +162,7 @@ public static class BuiltinCapabilities
     [
         HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage, history),
-        JournalCapability.Create(gameState, () => history is { Pending: true }),
+        JournalCapability.Create(gameState, () => history?.State ?? Journal.HistoryState.Done),
         CrewCapability.Create(() => gameState.Active),
         GalaxyCapability.Create(
             galaxy,

@@ -18,6 +18,9 @@ public enum HistoryState
 
     /// <summary>Threw; the four dictionaries are not there and never will be.</summary>
     Failed,
+
+    /// <summary>Told to stop part-way; the four dictionaries are not there and never will be.</summary>
+    Stopped,
 }
 
 /// <summary>
@@ -71,9 +74,10 @@ public sealed class HistoryBackfill
 
     /// <summary>
     /// Walks the four, in order, on the calling thread. A second call does nothing: the answer is wanted
-    /// once.
+    /// once. Cancelling stops it at the next journal file and leaves it <see cref="HistoryState.Stopped"/>,
+    /// so a caller shutting down can wait for it before closing what it logs and writes through (#148).
     /// </summary>
-    public void Run()
+    public void Run(CancellationToken cancellation = default)
     {
         if (State is not HistoryState.Pending)
         {
@@ -89,7 +93,10 @@ public sealed class HistoryBackfill
             // The order the restore hooks read them in.
             Fleets = Timed(
                 "fleet backfill",
-                () => FleetBackfill.FromHistory(Directory, Loggers.CreateLogger(nameof(FleetBackfill))));
+                () => FleetBackfill.FromHistory(
+                    Directory,
+                    Loggers.CreateLogger(nameof(FleetBackfill)),
+                    cancellation));
 
             Loadouts = Timed(
                 "loadout backfill",
@@ -97,15 +104,25 @@ public sealed class HistoryBackfill
                     Directory,
                     Loggers.CreateLogger(nameof(LoadoutBackfill)),
                     LoadoutFile?.All,
-                    LoadoutFile?.FoldedThrough));
+                    LoadoutFile?.FoldedThrough,
+                    cancellation));
 
             Carriers = Timed(
                 "carrier backfill",
-                () => CarrierBackfill.FromHistory(Directory, Loggers.CreateLogger(nameof(CarrierBackfill))));
+                () => CarrierBackfill.FromHistory(
+                    Directory,
+                    Loggers.CreateLogger(nameof(CarrierBackfill)),
+                    cancellation));
 
-            Names = Timed("spoken names", MineNames);
+            Names = Timed("spoken names", () => MineNames(cancellation));
 
             State = HistoryState.Done;
+        }
+        catch (OperationCanceledException)
+        {
+            // Told to stop, which is not a failure: the caller is shutting down and nothing will read the
+            // answer.
+            State = HistoryState.Stopped;
         }
         catch (Exception ex)
         {
@@ -122,14 +139,15 @@ public sealed class HistoryBackfill
         }
     }
 
-    private IReadOnlyDictionary<string, SpokenNames> MineNames()
+    private IReadOnlyDictionary<string, SpokenNames> MineNames(CancellationToken cancellation)
     {
         var found = SpokenNameMiner.FromHistory(
             Directory,
             Loggers.CreateLogger(nameof(SpokenNameMiner)),
             NameFile?.All.ToDictionary(entry => entry.Key, entry => entry.Value.Names, StringComparer.Ordinal),
             NameFile?.FoldedThrough,
-            new Ticking(this));
+            new Ticking(this),
+            cancellation);
 
         // Written straight back, so the expensive first walk happens once rather than at every start until
         // something else prompts a save.

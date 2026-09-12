@@ -15,7 +15,7 @@ public class CarrierBackfillTests
     {
         using var install = new TempInstall();
 
-        Assert.Empty(CarrierBackfill.FromHistory(install.Root, NullLogger.Instance));
+        Assert.Empty(Carriers(install));
     }
 
     /// <summary>
@@ -28,7 +28,7 @@ public class CarrierBackfillTests
         using var install = new TempInstall();
         Write(install, "Journal.2026-08-01T100000.01.log", LoadGame, Stored);
 
-        Assert.Empty(CarrierBackfill.FromHistory(install.Root, NullLogger.Instance));
+        Assert.Empty(Carriers(install));
     }
 
     /// <summary>The reported fault, in one test: the carrier moved in an older session.</summary>
@@ -39,7 +39,7 @@ public class CarrierBackfillTests
         Write(install, "Journal.2026-09-05T100000.01.log", LoadGame, Stats, Location("Meene"));
         Write(install, "Journal.2026-09-07T100000.01.log", LoadGame, Stored);
 
-        var carrier = CarrierBackfill.FromHistory(install.Root, NullLogger.Instance)[Fid];
+        var carrier = Carriers(install)[Fid];
 
         Assert.Equal("Meene", carrier.StarSystem);
         Assert.Equal("BNH-T2F", carrier.CallSign);
@@ -58,7 +58,7 @@ public class CarrierBackfillTests
             LoadGame,
             """{ "timestamp":"2026-09-06T09:00:00Z", "event":"CarrierJump", "StarSystem":"Colonia" }""");
 
-        var carrier = CarrierBackfill.FromHistory(install.Root, NullLogger.Instance)[Fid];
+        var carrier = Carriers(install)[Fid];
 
         Assert.Equal("Colonia", carrier.StarSystem);
         Assert.Equal(At("2026-09-06T09:00:00Z"), carrier.SeenAt);
@@ -77,7 +77,7 @@ public class CarrierBackfillTests
             Location("Meene"),
             """{ "timestamp":"2026-09-05T16:37:00Z", "event":"CarrierLocation", "CarrierID":3713474048, "CarrierType":"SquadronCarrier", "StarSystem":"Somewhere Else" }""");
 
-        var carrier = CarrierBackfill.FromHistory(install.Root, NullLogger.Instance)[Fid];
+        var carrier = Carriers(install)[Fid];
 
         Assert.Equal("Meene", carrier.StarSystem);
     }
@@ -97,7 +97,7 @@ public class CarrierBackfillTests
             """{ "timestamp":"2026-09-06T10:00:00Z", "event":"LoadGame", "FID":"F7654321", "Commander":"Other" }""",
             """{ "timestamp":"2026-09-06T10:05:00Z", "event":"CarrierLocation", "CarrierID":99, "CarrierType":"FleetCarrier", "StarSystem":"Deciat" }""");
 
-        var carriers = CarrierBackfill.FromHistory(install.Root, NullLogger.Instance);
+        var carriers = Carriers(install);
 
         Assert.Equal("Meene", carriers[Fid].StarSystem);
         Assert.Equal("Deciat", carriers["F7654321"].StarSystem);
@@ -110,7 +110,7 @@ public class CarrierBackfillTests
         using var install = new TempInstall();
         Write(install, "Journal.2026-09-05T100000.01.log", LoadGame, Stats, Location("Meene"));
 
-        var carrier = CarrierBackfill.FromHistory(install.Root, NullLogger.Instance)[Fid];
+        var carrier = Carriers(install)[Fid];
 
         Assert.Null(carrier.FuelLevel);
         Assert.Null(carrier.Balance);
@@ -132,8 +132,11 @@ public class CarrierBackfillTests
             Write(install, $"Journal.2026-02-{day:00}T100000.01.log", LoadGame, Stored);
         }
 
-        Assert.Equal("Meene", CarrierBackfill.FromHistory(install.Root, NullLogger.Instance)[Fid].StarSystem);
+        Assert.Equal("Meene", Carriers(install)[Fid].StarSystem);
     }
+
+    private static IReadOnlyDictionary<string, CarrierState> Carriers(TempInstall install) =>
+        CarrierBackfill.FromHistory(install.Root, NullLogger.Instance, TestContext.Current.CancellationToken);
 
     private const string LoadGame =
         """{ "timestamp":"2026-09-05T10:00:00Z", "event":"LoadGame", "FID":"F1234567", "Commander":"Fixture" }""";

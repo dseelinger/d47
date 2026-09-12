@@ -17,7 +17,8 @@ public static class SpokenNameMiner
         ILogger logger,
         IReadOnlyDictionary<string, SpokenNames>? stored = null,
         DateTimeOffset? since = null,
-        IProgress<double>? progress = null)
+        IProgress<double>? progress = null,
+        CancellationToken cancellation = default)
     {
         ArgumentNullException.ThrowIfNull(logger);
 
@@ -35,7 +36,7 @@ public static class SpokenNameMiner
         // catalogue is one that cannot recover the name the Commander is about to say.
         var walking = since is null ? all : LoadoutBackfill.Window(all, since);
 
-        return FromHistory(walking, logger, stored, progress);
+        return FromHistory(walking, logger, stored, progress, cancellation);
     }
 
     /// <summary>The same, over an explicit list oldest-first.</summary>
@@ -43,7 +44,8 @@ public static class SpokenNameMiner
         IReadOnlyList<string> files,
         ILogger logger,
         IReadOnlyDictionary<string, SpokenNames>? stored = null,
-        IProgress<double>? progress = null)
+        IProgress<double>? progress = null,
+        CancellationToken cancellation = default)
     {
         ArgumentNullException.ThrowIfNull(files);
         ArgumentNullException.ThrowIfNull(logger);
@@ -56,6 +58,8 @@ public static class SpokenNameMiner
 
         for (var i = 0; i < files.Count; i++)
         {
+            cancellation.ThrowIfCancellationRequested();
+
             progress?.Report((double)i / Math.Max(1, files.Count));
 
             var reader = new JournalReader(files[i], logger);

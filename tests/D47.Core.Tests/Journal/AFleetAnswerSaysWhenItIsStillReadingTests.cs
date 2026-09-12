@@ -8,25 +8,51 @@ using Xunit;
 namespace D47.Core.Tests.Journal;
 
 /// <summary>
-/// An absence and an answer that has not arrived yet are two different things, and while the walk over
-/// older journals is going the fleet questions can only report the second (#148).
+/// An absence and an answer that has not arrived are two different things, and until the walk over older
+/// journals has read one the fleet questions can only report the second (#148).
 /// </summary>
 public class AFleetAnswerSaysWhenItIsStillReadingTests
 {
     [Fact]
     public async Task TheCarrierQuestionSaysTheHistoryIsStillBeingRead()
     {
-        var result = await Registry(reading: true)
+        var result = await Registry(HistoryState.Running)
             .InvokeAsync("get_fleet", ToolArguments.Empty, TestContext.Current.CancellationToken);
 
         Assert.Contains("not finished reading", result.Content, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// A walk that threw read no older journal either, so the answer is still that d47 does not know
+    /// rather than that there is nothing to know.
+    /// </summary>
+    [Fact]
+    public async Task TheCarrierQuestionSaysSoWhenTheWalkDidNotFinish()
+    {
+        var result = await Registry(HistoryState.Failed)
+            .InvokeAsync("get_fleet", ToolArguments.Empty, TestContext.Current.CancellationToken);
+
+        Assert.Contains("did not finish", result.Content, StringComparison.Ordinal);
+
+        Assert.DoesNotContain(
+            "No fleet carrier appears in any journal read", result.Content, StringComparison.Ordinal);
+    }
+
+    /// <summary>And the same for a walk stopped part-way, which read no more than a failed one did.</summary>
+    [Fact]
+    public async Task TheLoadoutsSaySoWhenTheWalkWasStopped()
+    {
+        var result = await Registry(HistoryState.Stopped)
+            .InvokeAsync("get_fleet_loadouts", ToolArguments.Empty, TestContext.Current.CancellationToken);
+
+        Assert.Contains("did not finish", result.Content, StringComparison.Ordinal);
     }
 
     /// <summary>And once it has been read, the absence is a real one and says so.</summary>
     [Fact]
     public async Task TheCarrierQuestionReportsTheAbsenceOnceTheWalkIsDone()
     {
-        var result = await Registry(reading: false)
+        var result = await Registry(HistoryState.Done)
             .InvokeAsync("get_fleet", ToolArguments.Empty, TestContext.Current.CancellationToken);
 
         Assert.Contains("No fleet carrier appears in any journal read", result.Content, StringComparison.Ordinal);
@@ -36,18 +62,18 @@ public class AFleetAnswerSaysWhenItIsStillReadingTests
     [Fact]
     public async Task TheShipListSaysTheHistoryIsStillBeingRead()
     {
-        var result = await Registry(reading: true).InvokeAsync(
+        var result = await Registry(HistoryState.Running).InvokeAsync(
             "get_fleet",
             ToolArguments.FromJson("""{"ships":true}"""),
             TestContext.Current.CancellationToken);
 
-        Assert.Contains("do not have your ship list yet", result.Content, StringComparison.Ordinal);
+        Assert.Contains("do not have your ship list", result.Content, StringComparison.Ordinal);
     }
 
     [Fact]
     public async Task TheLoadoutsSayTheHistoryIsStillBeingRead()
     {
-        var result = await Registry(reading: true)
+        var result = await Registry(HistoryState.Running)
             .InvokeAsync("get_fleet_loadouts", ToolArguments.Empty, TestContext.Current.CancellationToken);
 
         Assert.Contains("not finished reading", result.Content, StringComparison.Ordinal);
@@ -60,7 +86,8 @@ public class AFleetAnswerSaysWhenItIsStillReadingTests
     [Fact]
     public async Task TheCarrierQuestionSaysSoBeforeAnyCommanderHasBeenIdentified()
     {
-        var registry = CapabilityRegistry.Build([JournalCapability.Create(new GameStateStore(), () => true)]);
+        var registry = CapabilityRegistry.Build(
+            [JournalCapability.Create(new GameStateStore(), () => HistoryState.Running)]);
 
         var result = await registry.InvokeAsync(
             "get_fleet", ToolArguments.Empty, TestContext.Current.CancellationToken);
@@ -72,7 +99,8 @@ public class AFleetAnswerSaysWhenItIsStillReadingTests
     [Fact]
     public async Task TheLoadoutsSaySoBeforeAnyCommanderHasBeenIdentified()
     {
-        var registry = CapabilityRegistry.Build([JournalCapability.Create(new GameStateStore(), () => true)]);
+        var registry = CapabilityRegistry.Build(
+            [JournalCapability.Create(new GameStateStore(), () => HistoryState.Running)]);
 
         var result = await registry.InvokeAsync(
             "get_fleet_loadouts", ToolArguments.Empty, TestContext.Current.CancellationToken);
@@ -84,7 +112,8 @@ public class AFleetAnswerSaysWhenItIsStillReadingTests
     [Fact]
     public async Task TheNoJournalAnswerSurvivesOnceTheWalkIsDone()
     {
-        var registry = CapabilityRegistry.Build([JournalCapability.Create(new GameStateStore(), () => false)]);
+        var registry = CapabilityRegistry.Build(
+            [JournalCapability.Create(new GameStateStore(), () => HistoryState.Done)]);
 
         var result = await registry.InvokeAsync(
             "get_fleet", ToolArguments.Empty, TestContext.Current.CancellationToken);
@@ -130,7 +159,7 @@ public class AFleetAnswerSaysWhenItIsStillReadingTests
         Assert.Contains("Journal history: Pending", result.Content, StringComparison.Ordinal);
     }
 
-    private static CapabilityRegistry Registry(bool reading)
+    private static CapabilityRegistry Registry(HistoryState state)
     {
         var gameState = new GameStateStore();
 
@@ -141,6 +170,6 @@ public class AFleetAnswerSaysWhenItIsStillReadingTests
 
         gameState.Apply(identified!);
 
-        return CapabilityRegistry.Build([JournalCapability.Create(gameState, () => reading)]);
+        return CapabilityRegistry.Build([JournalCapability.Create(gameState, () => state)]);
     }
 }

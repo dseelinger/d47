@@ -12,13 +12,13 @@ public static class JournalCapability
 {
     public const string Id = "journal";
 
-    /// <param name="historyPending">
-    /// Whether the walk over older journals has yet to answer, so a fleet question says that rather than
-    /// reporting an absence it cannot yet know about (#148).
+    /// <param name="history">
+    /// How far the walk over older journals has got, so a fleet question says that rather than reporting
+    /// an absence the walk has not ruled out (#148).
     /// </param>
-    public static CapabilityDescriptor Create(GameStateStore gameState, Func<bool>? historyPending = null)
+    public static CapabilityDescriptor Create(GameStateStore gameState, Func<HistoryState>? history = null)
     {
-        var reading = historyPending ?? (() => false);
+        var state = history ?? (() => HistoryState.Done);
 
         return new CapabilityDescriptor
         {
@@ -131,7 +131,7 @@ public static class JournalCapability
                     ],
                     Commands = [.. Asking(WhereTheCarrierIs, NoArguments), .. Asking(WhichShips, WithShips)],
                     Handler = (arguments, _) =>
-                        Task.FromResult(ToolResult.Ok(DescribeFleet(gameState, arguments, reading()))),
+                        Task.FromResult(ToolResult.Ok(DescribeFleet(gameState, arguments, Unread(state())))),
                 },
                 new ToolDefinition
                 {
@@ -158,7 +158,7 @@ public static class JournalCapability
                         },
                     ],
                     Handler = (arguments, _) => Task.FromResult(
-                        ToolResult.Ok(DescribeFleetLoadouts(gameState, arguments, reading()))),
+                        ToolResult.Ok(DescribeFleetLoadouts(gameState, arguments, Unread(state())))),
                 },
                 new ToolDefinition
                 {
@@ -491,18 +491,26 @@ public static class JournalCapability
     private static string AsOf(DateTimeOffset when) => $", as of {when:yyyy-MM-dd HH:mm} UTC";
 
     /// <summary>
-    /// The opening of every answer that would otherwise report an absence while the walk over older
-    /// journals is still going (#148).
+    /// The opening of every answer that would otherwise report an absence the walk over older journals
+    /// has not ruled out, or null once it has ruled one out (#148). A walk that failed or was stopped read
+    /// no older journal, so its silence is not evidence of absence either.
     /// </summary>
-    private const string StillReading = "I have not finished reading the journal history yet, so ";
+    private static string? Unread(HistoryState state) => state switch
+    {
+        HistoryState.Pending or HistoryState.Running =>
+            "I have not finished reading the journal history yet, so ",
+        HistoryState.Failed or HistoryState.Stopped =>
+            "Reading the journal history did not finish, so ",
+        _ => null,
+    };
 
     /// <summary>The carrier, and the ships only when they were asked for (#406).</summary>
-    private static string DescribeFleet(GameStateStore gameState, ToolArguments arguments, bool reading)
+    private static string DescribeFleet(GameStateStore gameState, ToolArguments arguments, string? unread)
     {
         if (!TryActive(gameState, out var active, out var reason))
         {
             // Ahead of the no-journal answer, which is the same claim of absence as the two below it (#148).
-            return reading ? $"{StillReading}I cannot answer about your fleet yet." : reason;
+            return unread is { } opening ? $"{opening}I cannot answer about your fleet." : reason;
         }
 
         var report = new StringBuilder();
@@ -551,9 +559,9 @@ public static class JournalCapability
 
             report.AppendLine(".");
         }
-        else if (reading)
+        else if (unread is { } opening)
         {
-            report.AppendLine($"{StillReading}I cannot say yet whether you have a fleet carrier.");
+            report.AppendLine($"{opening}I cannot say whether you have a fleet carrier.");
         }
         else
         {
@@ -571,8 +579,8 @@ public static class JournalCapability
 
         if (!fleet.IsKnown)
         {
-            report.AppendLine(reading
-                ? $"{StillReading}I do not have your ship list yet."
+            report.AppendLine(unread is { } opening
+                ? $"{opening}I do not have your ship list."
                 : "I have no ship list yet — it is written when you dock at a station with a shipyard.");
         }
         else
@@ -632,11 +640,14 @@ public static class JournalCapability
     /// being flown. The figures are the game's own, so ranking ships against each other needs no model
     /// of jump range.
     /// </summary>
-    private static string DescribeFleetLoadouts(GameStateStore gameState, ToolArguments arguments, bool reading)
+    private static string DescribeFleetLoadouts(
+        GameStateStore gameState,
+        ToolArguments arguments,
+        string? unread)
     {
         if (!TryActive(gameState, out var active, out var reason))
         {
-            return reading ? $"{StillReading}I have no loadouts to report yet." : reason;
+            return unread is { } opening ? $"{opening}I have no loadouts to report." : reason;
         }
 
         var remembered = active.Loadouts.Ships.ToList();
@@ -644,8 +655,8 @@ public static class JournalCapability
 
         if (remembered.Count == 0)
         {
-            report.AppendLine(reading
-                ? $"{StillReading}I have no loadouts to report yet."
+            report.AppendLine(unread is { } opening
+                ? $"{opening}I have no loadouts to report."
                 : "I have not read a loadout for any of your ships yet. One is written each time you board "
                   + "a ship, and D47 reads your journals for them when it starts.");
 
