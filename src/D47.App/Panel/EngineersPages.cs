@@ -242,10 +242,21 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage
             }
 
             var line = entry.Engineer.Name;
+            var notes = new List<string>();
 
             if (EngineersPages.Wanted(entry.Wanted) is { Length: > 0 } wanted)
             {
-                line += $" — {wanted}";
+                notes.Add(wanted);
+            }
+
+            if (entry.GateLine is { Length: > 0 } gate)
+            {
+                notes.Add(gate);
+            }
+
+            if (notes.Count > 0)
+            {
+                line += $" — {string.Join(" · ", notes)}";
             }
 
             // Which row the right pane is drawing, and it is one comparison rather than a second piece of
@@ -257,7 +268,7 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage
             _list.Children.Add(LoadoutPages.Row(
                 line,
                 entry.Aside,
-                entry.Wanted > 0,
+                entry.Wanted > 0 || entry.GateLine is not null,
                 () => _nav.Drill(crumb),
                 showing: showing));
         }
@@ -347,6 +358,11 @@ public sealed class EngineerPage : EngineerPageBase
         });
 
         _body.Children.Add(LoadoutPages.Muted(entry.Aside));
+
+        if (entry.GateLine is { Length: > 0 } gate)
+        {
+            _body.Children.Add(LoadoutPages.Muted(gate));
+        }
 
         // One per line rather than one running clause (remediation.md 16, item 6).
         _body.Children.Add(LoadoutPages.Heading("Grades"));

@@ -6,6 +6,17 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.112.8 — An engineer's row says who it opens
+
+An engineer whose referral gates somebody else drew no line about it, however much the Commander's
+plans needed the other end. Marco Qwent's own page said nothing about the fact that reaching grade
+3 with him is what opens Professor Palin, Lori Jameson and Chloe Sedesi.
+
+An engineer not yet at the referral grade a plan-named dependant needs now says so, on the
+directory row and the engineer's own page: "grade 3 opens Professor Palin, Lori Jameson and Chloe
+Sedesi." An engineer whose referral is already met, or whose dependants no plan wants, says nothing
+extra.
+
 ## 0.112.7 — Lore is remarked on once a week, not once a day
 
 A Commander whose home system is where they spend most sessions heard the same lore remark every

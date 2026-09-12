@@ -227,4 +227,54 @@ public class EngineerAccessTests
         Assert.Null(chain.LightYears);
         Assert.Null(chain.Jumps);
     }
+
+    /// <summary>A dependant no plan names draws no gate, whatever the Commander's standing (#138).</summary>
+    [Fact]
+    public void ADependantNoPlanNamesDrawsNoGate()
+    {
+        var gate = EngineerAccess.Gate(Named("Marco Qwent"), EngineerProgressState.Empty, []);
+
+        Assert.Empty(gate);
+    }
+
+    /// <summary>
+    /// An unmet referral gate names the dependants the plans actually want, direct dependants only —
+    /// Elvira Martuuk gates Marco Qwent, but that is a step too far for Marco Qwent's own line (#138).
+    /// </summary>
+    [Fact]
+    public void AnUnmetGateNamesTheDependantsThePlansWant()
+    {
+        var planned = new[]
+        {
+            new PlannedWork("build · slot", "wants", 1, ["Chloe Sedesi"]),
+            new PlannedWork("build · slot", "wants", 1, ["Lori Jameson"]),
+        };
+
+        var gate = EngineerAccess.Gate(Named("Marco Qwent"), EngineerProgressState.Empty, planned);
+
+        Assert.Equal(["Chloe Sedesi", "Lori Jameson"], gate.Select(dependant => dependant.Name));
+    }
+
+    /// <summary>Holding at least the referral grade with the gate closes it — there is nothing left to earn.</summary>
+    [Fact]
+    public void AGateAlreadyMetDrawsNothing()
+    {
+        var progress = Progress(
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"EngineerProgress","Engineers":[{"Engineer":"Marco Qwent","EngineerID":300200,"Progress":"Unlocked","Rank":3}]}""");
+
+        var planned = new[] { new PlannedWork("build · slot", "wants", 1, ["Chloe Sedesi"]) };
+
+        Assert.Empty(EngineerAccess.Gate(Named("Marco Qwent"), progress, planned));
+    }
+
+    /// <summary>An engineer the journal has never mentioned still gates whatever the plans want from them.</summary>
+    [Fact]
+    public void AnUnmentionedEngineerIsNotASatisfiedGate()
+    {
+        var planned = new[] { new PlannedWork("build · slot", "wants", 1, ["Chloe Sedesi"]) };
+
+        var gate = EngineerAccess.Gate(Named("Marco Qwent"), null, planned);
+
+        Assert.Equal(["Chloe Sedesi"], gate.Select(dependant => dependant.Name));
+    }
 }

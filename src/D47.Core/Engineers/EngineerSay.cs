@@ -35,4 +35,13 @@ public static class EngineerSay
     /// <summary>A count and the thing counted, pluralised the boring way.</summary>
     public static string Count(int many, string one, string more) =>
         $"{many.ToString(CultureInfo.InvariantCulture)} {(many == 1 ? one : more)}";
+
+    /// <summary>A list of names — "Alice", "Alice and Bob", "Alice, Bob and Carol" (#138).</summary>
+    public static string List(IReadOnlyList<string> names) => names.Count switch
+    {
+        0 => string.Empty,
+        1 => names[0],
+        2 => $"{names[0]} and {names[1]}",
+        _ => $"{string.Join(", ", names.Take(names.Count - 1))} and {names[^1]}",
+    };
 }

@@ -145,6 +145,22 @@ public sealed record EngineerEntry
     /// <summary>How many modules still to engineer this engineer could finish (#137).</summary>
     public int Wanted { get; init; }
 
+    /// <summary>
+    /// The direct dependants this engineer's referral gates that the Commander's plans want, not yet
+    /// opened (#138).
+    /// </summary>
+    public IReadOnlyList<Engineer> Gate { get; init; } = [];
+
+    /// <summary>The line about it, or null where the gate draws nothing (#138).</summary>
+    public string? GateLine =>
+        Gate.Count == 0
+            ? null
+            : string.Join(
+                "; ",
+                Gate.GroupBy(dependant => dependant.ReferralGrade ?? EngineeringRules.ReferralGrade)
+                    .Select(group => $"grade {group.Key.ToString(CultureInfo.InvariantCulture)} opens "
+                                      + EngineerSay.List([.. group.Select(dependant => dependant.Name)])));
+
     /// <summary>What is still to be done to reach them.</summary>
     public UnlockChain Chain { get; init; } = UnlockChain.Done;
 
@@ -229,6 +245,30 @@ public static class EngineerAccess
 
         return criteria;
     }
+
+    /// <summary>
+    /// The engineers this one refers into, whose plans name them and whose referral through this
+    /// engineer is not yet satisfied — direct dependants only, ordered by name (#138).
+    /// </summary>
+    public static IReadOnlyList<Engineer> Gate(
+        Engineer engineer, EngineerProgressState? progress, IReadOnlyList<PlannedWork> planned)
+    {
+        var standing = progress?.For(engineer.Id);
+
+        return
+        [
+            .. EngineerDirectory.All
+                .Where(dependant => dependant.ReferredBy
+                    .Any(name => EngineerDirectory.ByName(name)?.Id == engineer.Id))
+                .Where(dependant => planned.Any(work => EngineerDirectory.IsNamedIn(work.Engineers, dependant)))
+                .Where(dependant => !GateMet(standing, dependant.ReferralGrade ?? EngineeringRules.ReferralGrade))
+                .OrderBy(dependant => dependant.Name, StringComparer.Ordinal),
+        ];
+    }
+
+    /// <summary>Whether the Commander already holds at least the wanted grade with a referrer.</summary>
+    private static bool GateMet(EngineerStanding? standing, int wanted) =>
+        standing is { IsUnlocked: true } && (standing.Rank ?? 0) >= wanted;
 
     /// <summary>Whether the Commander can act on this engineer today, from their journal and the table.</summary>
     public static EngineerReach ReachOf(Engineer engineer, EngineerProgressState? progress)

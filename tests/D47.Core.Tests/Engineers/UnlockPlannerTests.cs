@@ -386,6 +386,24 @@ public class UnlockPlannerTests
     }
 
     /// <summary>
+    /// An engineer who gates a dependant the plans want, and whose referral is not yet met, says so on
+    /// their own directory entry — Marco Qwent opens Chloe Sedesi once a plan wants her (#138).
+    /// </summary>
+    [Fact]
+    public void AnEngineerWhoGatesAWantedDependantSaysSo()
+    {
+        var chloeSedesi = new ShipBuild("F1", "ship-8", "python", 12, "Bad Idea",
+            [new SlotPlan("MainEngines", "Dirty Drive Tuning", 5, Engineer: "Chloe Sedesi")]);
+
+        var report = UnlockPlanner.Of([chloeSedesi], [], State());
+
+        var qwent = report.Directory.Single(entry => entry.Engineer.Name == "Marco Qwent");
+
+        Assert.Equal(["Chloe Sedesi"], qwent.Gate.Select(dependant => dependant.Name));
+        Assert.Equal("grade 3 opens Chloe Sedesi", qwent.GateLine);
+    }
+
+    /// <summary>
     /// The route promotes as a chain rather than a line: one checklist item per stop, in flying order,
     /// each carrying the grade that stop actually needs.
     /// </summary>

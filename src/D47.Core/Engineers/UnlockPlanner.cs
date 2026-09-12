@@ -172,7 +172,7 @@ public static class UnlockPlanner
         var outstanding = planned.Where(work => !work.CanBeRolled(progress)).ToList();
 
         var directory = EngineerDirectory.All
-            .Select(engineer => Entry(engineer, progress, from, range, workload))
+            .Select(engineer => Entry(engineer, progress, from, range, workload, planned))
             .OrderBy(entry => entry.Reach)
             .ThenByDescending(entry => entry.Wanted)
             .ThenBy(entry => entry.LightYears ?? double.MaxValue)
@@ -296,7 +296,8 @@ public static class UnlockPlanner
         EngineerProgressState? progress,
         StarPosition? from,
         double? range,
-        IReadOnlyDictionary<int, int> workload)
+        IReadOnlyDictionary<int, int> workload,
+        IReadOnlyList<PlannedWork> planned)
     {
         var light = engineer.DistanceFrom(from);
 
@@ -308,6 +309,7 @@ public static class UnlockPlanner
             LightYears = light,
             Jumps = EngineerAccess.Jumps(light, range),
             Wanted = workload.GetValueOrDefault(engineer.Id),
+            Gate = EngineerAccess.Gate(engineer, progress, planned),
             Chain = EngineerAccess.ChainTo(engineer, 1, progress, from, range),
             Criteria = EngineerAccess.CriteriaFor(engineer, progress),
         };

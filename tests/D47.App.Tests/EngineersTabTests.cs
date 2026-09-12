@@ -411,6 +411,61 @@ public class EngineersTabTests
         surface.Window.Close();
     }
 
+    /// <summary>
+    /// Marco Qwent gates Chloe Sedesi, and the plans want her — so his row and his own page both say
+    /// the referral opens her, until his referral is met (#138).
+    /// </summary>
+    [AvaloniaFact]
+    public void AGatingEngineerNamesTheDependantThePlansWant()
+    {
+        var root = TempFolders.Create("d47-engineers-gate-tests");
+        var state = State();
+
+        var checklists = new ChecklistService(
+            new ChecklistStore(Path.Combine(root, "checklist.json"), NullLogger<ChecklistStore>.Instance),
+            new ChecklistProposalStore(
+                Path.Combine(root, "checklist-proposals.json"),
+                NullLogger<ChecklistProposalStore>.Instance),
+            () => state);
+
+        var builds = new ShipBuildStore(
+            Path.Combine(root, "ships.json"), NullLogger<ShipBuildStore>.Instance);
+
+        builds.Save([
+            new ShipBuild("F1", "ship-1", "python", 12, "Bad Idea",
+                [new SlotPlan("MainEngines", "Dirty Drive Tuning", 5, Engineer: "Chloe Sedesi")]),
+        ]);
+
+        var kit = new OnFootBuildStore(
+            Path.Combine(root, "on-foot.json"), NullLogger<OnFootBuildStore>.Instance);
+
+        var ships = new ShipPlanService(builds, checklists, () => state);
+        var onFoot = new OnFootPlanService(kit, checklists, () => state);
+        var unlocks = new EngineerPlanService(builds, kit, checklists, () => state);
+
+        var panel = new PanelView { DataContext = new PanelViewModel() };
+
+        panel.EnableEngineers(unlocks, ships, () => state, onFoot);
+
+        var window = new Window { Content = panel, Width = 900, Height = 700 };
+        window.Show();
+
+        panel.Tab = PanelTab.Engineers;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Contains(
+            Text(panel),
+            line => line.Contains("Marco Qwent", StringComparison.Ordinal)
+                    && line.Contains("grade 3 opens Chloe Sedesi", StringComparison.Ordinal));
+
+        panel.Nav.Drill(EngineersPages.Crumb(EngineerDirectory.All.First(e => e.Name == "Marco Qwent")));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Contains(Text(panel), line => line.Contains("grade 3 opens Chloe Sedesi", StringComparison.Ordinal));
+
+        window.Close();
+    }
+
     private static IReadOnlyList<string?> Boxes(PanelView panel) =>
         [.. panel.GetVisualDescendants()
             .OfType<Avalonia.Controls.Shapes.Path>()
