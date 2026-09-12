@@ -84,7 +84,8 @@ A group is what ships under one version:
   reconciled when the release is actually cut.
 
 Name each group with the version it would take and a working title in the CHANGELOG's form
-(`0.110.26 — <title>`, `0.111.0 — <title>`). The title is a guess and should be marked as one.
+(`0.110.26 — <title>`, `0.111.0 — <title>`). Both are provisional, and the maintainer knows it: do
+not mark them as guesses.
 The title carries the subject the group shares; if it cannot, the group is wrong and the issues
 belong elsewhere.
 
@@ -141,7 +142,7 @@ Markdown, and short. Three parts:
 
    | Release | # | Issue | Model | Effort | Review |
    | --- | --- | --- | --- | --- | --- |
-   | 0.110.10 — Tables answer for themselves *(guess)* | [105](https://github.com/dseelinger/d47/issues/105) | Join the experimental effect on its symbol | `sonnet` | `medium` | |
+   | 0.110.10 — Tables answer for themselves | [105](https://github.com/dseelinger/d47/issues/105) | Join the experimental effect on its symbol | `sonnet` | `medium` | |
    | | [104](https://github.com/dseelinger/d47/issues/104) | No way to ask which engineer works in a system | `sonnet` | `medium` | |
 
    A group's issues are consecutive rows. The version and title go in the first of them; the
@@ -179,7 +180,7 @@ effort chosen here, so a row missing from this file is a session that starts on 
   "issues": {
     "105": {"title": "Join the experimental effect on its symbol",
             "model": "opus", "effort": "high",
-            "release": "0.110.10 - Tables answer for themselves (guess)",
+            "release": "0.110.10 - Tables answer for themselves",
             "review": "/code-review"}
   }
 }

@@ -1,4 +1,7 @@
-"""Writes the key layout of the Directive 47 Development Stream Deck profile.
+"""Writes the key layout of every Stream Deck profile named Directive 47 Development.
+
+One profile per device: the MK.2 gets PAGE_1 and PAGE_2, Stream Deck Mobile gets MOBILE_PAGE_1.
+Create the profile in the app first for a new device, then run this.
 
 Stream Deck must be closed: it holds profiles in memory and writes them back on exit, so an edit
 made while it runs is lost. Run gen_tiles.py first, or pass --tiles to run it here.
@@ -20,7 +23,7 @@ import subprocess
 import sys
 import uuid
 
-PROFILE_UUID = '2CFD100A-59FE-4ADF-82B0-A12855B1A0B2'
+PROFILE_NAME = 'Directive 47 Development'
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DECK = os.path.join(REPO, 'tools', 'deck')
 
@@ -87,24 +90,51 @@ PAGE_1 = {
 # Nothing navigates here. A major release is deliberate: tools\release.ps1 -Major.
 PAGE_2 = {}
 
+MOBILE_MODEL = 'VSD2/WiFi'
+
+# The free Mobile tier: six keys, three columns by two rows, shown on the phone as three rows of two.
+MOBILE_PAGE_1 = {
+    '0,0': run('claude.cmd', 'claude'),
+    '0,1': send('/desktop', 'desktop'),
+
+    '1,0': send('push', 'push'),
+
+    '2,0': run('release-patch.cmd', 'patch'),
+    '2,1': run('release-minor.cmd', 'minor'),
+}
+
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--tiles', action='store_true', help='regenerate the key images first')
     args = ap.parse_args()
 
-    profile = os.path.join(os.environ['APPDATA'], 'Elgato', 'StreamDeck', 'ProfilesV2',
-                           PROFILE_UUID + '.sdProfile')
-    if not os.path.isdir(profile):
-        sys.exit('Profile not found: ' + profile)
+    root = os.path.join(os.environ['APPDATA'], 'Elgato', 'StreamDeck', 'ProfilesV2')
+    profiles = []
+    for entry in sorted(os.listdir(root)):
+        manifest = os.path.join(root, entry, 'manifest.json')
+        if os.path.isfile(manifest):
+            top = json.load(open(manifest, encoding='utf-8'))
+            if top.get('Name') == PROFILE_NAME:
+                profiles.append((os.path.join(root, entry), top))
+    if not profiles:
+        sys.exit('No profile named {0} in {1}'.format(PROFILE_NAME, root))
 
-    top = json.load(open(os.path.join(profile, 'manifest.json'), encoding='utf-8'))
+    for profile, top in profiles:
+        print('{0} ({1})'.format(os.path.basename(profile), top['Device']['Model']))
+        apply(profile, top, args.tiles)
+
+
+def apply(profile, top, tiles):
     pages = top['Pages']['Pages']
     default = top['Pages']['Default']
-    layouts = dict(zip(pages, (PAGE_1, PAGE_2)))
+    if top['Device']['Model'] == MOBILE_MODEL:
+        layouts = dict(zip(pages, (MOBILE_PAGE_1,)))
+    else:
+        layouts = dict(zip(pages, (PAGE_1, PAGE_2)))
     layouts[default] = {}
 
-    if args.tiles:
+    if tiles:
         dirs = [os.path.join(profile, 'Profiles', folder_for(p), 'Images') for p in layouts]
         subprocess.check_call([sys.executable, os.path.join(DECK, 'gen_tiles.py')] + dirs)
 

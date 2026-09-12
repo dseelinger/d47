@@ -57,6 +57,14 @@ def g_triage(d, cx, cy, r, col):
         _bar(d, cx - r + r * frac, cy - gap + i * gap, r * frac, r * 0.15, col)
 
 
+def g_prompt(d, cx, cy, r, col):
+    """A terminal prompt: a plain session."""
+    w = max(2, int(r * 0.16))
+    d.line([cx - r * 0.78, cy - r * 0.52, cx - r * 0.18, cy, cx - r * 0.78, cy + r * 0.52],
+           fill=col, width=w, joint='curve')
+    _bar(d, cx + r * 0.42, cy + r * 0.52, r * 0.36, r * 0.09, col)
+
+
 def g_hub(d, cx, cy, r, col):
     """A hub with three satellites: work being routed."""
     w = max(2, int(r * 0.13))
@@ -208,6 +216,7 @@ def tile(path, glyph, accent, label, bar=None):
 
 # key name -> (glyph, accent, label)
 KEYS = {
+    'claude':     (g_prompt, VIOLET, 'Claude'),
     'triage':     (g_triage, VIOLET, 'Triage'),
     'coord':      (g_hub, VIOLET, 'Coord'),
     'architect':  (g_compass, VIOLET, 'Architect'),

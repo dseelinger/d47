@@ -165,7 +165,11 @@ session, green runs a script, blue runs the app, amber is release.
 
 ## The d47 profile
 
-`Directive 47 Development`, UUID `2CFD100A-59FE-4ADF-82B0-A12855B1A0B2`.
+`Directive 47 Development`, one per device: MK.2 `2CFD100A-59FE-4ADF-82B0-A12855B1A0B2`, Stream
+Deck Mobile (`VSD2/WiFi`) `C7D36E8A-DF76-45A6-A064-C66CC4D38BB2`. `apply_profile.py` writes every
+profile with that name and picks the layout by device model. Mobile is the free six-key tier,
+stored as columns 0-2 and rows 0-1, with its own layout in `MOBILE_PAGE_1`: a plain Opus session,
+Desktop, Push, Patch, Minor.
 
 One page, 12 keys. Row 0 opens a session, row 1 types into the session that has focus, row 2 runs
 the app and cuts releases.
