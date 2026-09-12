@@ -331,10 +331,6 @@ public sealed class ChecklistService(
                         ? verdict.Says
                         : $"\"{said}\" is done. {verdict.Says}"));
             }
-            else if (verdict.State == ChecklistState.Blocked)
-            {
-                news.Add(new ChecklistNews($"checklist.{verdict.State}.{item.Id}", verdict.Says));
-            }
         }
 
         if (announce && news.Count > 0)
@@ -468,17 +464,13 @@ public sealed class ChecklistService(
                 : "Nothing on your checklist matches that.");
         }
 
-        // One set for the whole answer, not one per scope: the explanation is about an engineer and does not
-        // become new again because the next heading is a different ship (#33).
-        var explained = new HashSet<string>(StringComparer.Ordinal);
-
         foreach (var scope in open.Select(item => item.Scope).Distinct())
         {
             report.AppendLine($"{Heading(scope)}:");
 
             foreach (var item in open.Where(item => item.Scope.Same(scope)))
             {
-                report.AppendLine("  " + Line(item, explained: explained));
+                report.AppendLine("  " + Line(item));
             }
         }
 
@@ -489,7 +481,7 @@ public sealed class ChecklistService(
 
             foreach (var item in done)
             {
-                report.AppendLine("  " + Line(item, naming: true, explained: explained));
+                report.AppendLine("  " + Line(item, naming: true));
             }
         }
 
@@ -813,7 +805,7 @@ public sealed class ChecklistService(
 
     /// <summary>One line, carrying its own verdict.</summary>
     /// <param name="naming">Whether the line has to name its own ship.</param>
-    private string Line(ChecklistItem item, bool naming = false, HashSet<string>? explained = null)
+    private string Line(ChecklistItem item, bool naming = false)
     {
         var box = item.IsComplete ? "[x]" : "[ ]";
         var text = $"{box} {(naming ? ChecklistWording.Line(item, State) : Said(item))}";
@@ -826,17 +818,9 @@ public sealed class ChecklistService(
         var verdict = ChecklistEvaluator.Evaluate(item, State);
 
         return verdict is { } known
-            ? $"{text} — {Explaining(known, explained)}"
+            ? $"{text} — {known.Says}"
             : $"{text} — {Stale(item)}";
     }
-
-    /// <summary>
-    /// A verdict's sentence, with the explanation dropped where this answer has already given it (#33).
-    /// </summary>
-    private static string Explaining(ChecklistVerdict verdict, HashSet<string>? explained) =>
-        verdict.Advice is { Length: > 0 } advice && explained is not null && !explained.Add(advice)
-            ? verdict.Reason
-            : verdict.Says;
 
     private static string Stale(ChecklistItem item) => item.State switch
     {

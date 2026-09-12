@@ -20,6 +20,12 @@ with it, and nothing is said. The plan cannot be recovered.
 Notes you wrote yourself on a ship's list are no longer deleted when the ship is sold, and the sale
 is no longer announced as "I cleared 2 items from your list".
 
+A rank gate on the checklist no longer teaches the engineering rank mechanic every time an item
+becomes blocked. "Grade 5 cannot be crafted at rank 3 with Marco Qwent at all" is still said and
+still shown; "Rank rises by working with them, and it compounds" no longer follows it, on the
+twentieth unlock or the first. The Checklist page still shows a blocked item with its reason, and
+asking still answers — only the unprompted callout is silenced.
+
 ## 0.112.2 — The search box shows up on a filterable tab's first visit
 
 Opening Checklist, or another tab whose panes filter, from a cold start left the search box

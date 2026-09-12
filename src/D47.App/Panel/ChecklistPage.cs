@@ -355,17 +355,9 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     /// </summary>
     private void OnChanged() => Dispatcher.UIThread.Post(Rebuild);
 
-    /// <summary>
-    /// The explanations already drawn on this pass, so one fact about an engineer is said once (#33).
-    /// </summary>
-    private readonly HashSet<string> _explained = new(StringComparer.Ordinal);
-
     private void Rebuild()
     {
         _list.Children.Clear();
-
-        // One fact about an engineer is said by the first line that needs it and by none of the rest (#33).
-        _explained.Clear();
 
         var document = _checklists.Document;
         var pending = _checklists.Proposals.PendingFor(document.CommanderFid);
@@ -783,10 +775,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         }
         else if (!item.TicksByHand && _checklists.Verdict(item) is { } verdict)
         {
-            // The explanation rides the first line that needs it.
-            aside.Add(verdict.Advice is { Length: > 0 } advice && !_explained.Add(advice)
-                ? verdict.Reason
-                : verdict.Says);
+            aside.Add(verdict.Says);
         }
 
         var caption = Muted(string.Join(" · ", aside));

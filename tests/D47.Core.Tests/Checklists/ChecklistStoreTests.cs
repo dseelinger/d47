@@ -210,6 +210,72 @@ public class ChecklistStoreTests
         Assert.Empty(checklists.Drain());
     }
 
+    /// <summary>A move into Blocked is shown, on the Checklist page and to a direct question, but not spoken.</summary>
+    [Fact]
+    public void AMoveIntoBlockedIsShownButNeverSpoken()
+    {
+        using var install = new TempInstall();
+
+        var gameState = new GameStateStore();
+        var checklists = TestSurface.Checklists(install.Paths, gameState);
+
+        void Apply(string line)
+        {
+            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
+            gameState.Apply(parsed!);
+        }
+
+        Apply("""{ "timestamp":"2026-08-16T08:00:00Z", "event":"Commander", "FID":"F1", "Name":"Jameson" }""");
+
+        Apply(
+            """
+            { "timestamp":"2026-08-16T10:00:00Z", "event":"Loadout", "Ship":"krait_mkii", "ShipID":12,
+              "Modules":[ { "Slot":"Slot01_Size4", "Item":"int_shieldgenerator_size4_class5", "On":true } ] }
+            """);
+
+        var intent = new ChecklistIntent(ChecklistIntentKind.Blueprint, "Slot01_Size4")
+        {
+            Detail = "Reinforced",
+            Grade = 5,
+            Engineer = "Elvira Martuuk",
+        };
+
+        checklists.List.Save(
+        [
+            ChecklistDocument.For("F1", "Jameson") with
+            {
+                Items =
+                [
+                    new ChecklistItem
+                    {
+                        Key = ChecklistKeys.For(intent),
+                        Scope = ChecklistScope.Ship(12),
+                        Kind = ChecklistItemKind.Derived,
+                        Source = ChecklistSource.EngineeringPlan,
+                        Text = "Grade 5 reinforced shields",
+                        Intent = intent,
+                        Hull = "krait_mkii",
+                    },
+                ],
+            },
+        ]);
+
+        checklists.Poll();
+        Assert.Empty(checklists.Drain());
+
+        // The rank Elvira Martuuk can never grow past for this Commander, which is what moves the item.
+        Apply(
+            """
+            { "timestamp":"2026-08-16T09:30:00Z", "event":"EngineerProgress",
+              "Engineers":[ {"Engineer":"Elvira Martuuk","EngineerID":300160,"Progress":"Unlocked","Rank":3} ] }
+            """);
+
+        checklists.Poll();
+
+        Assert.Equal(ChecklistState.Blocked, checklists.Document.Items.Single().State);
+        Assert.Empty(checklists.Drain());
+    }
+
     /// <summary>
     /// Reported 2026-08-23 as a stream of "X is done" for work finished while d47 was not running.
     /// </summary>

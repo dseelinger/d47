@@ -492,10 +492,9 @@ public class ChecklistTabTests
             .Select(block => block.Text ?? string.Empty)
             .Where(text => text.Length > 0)];
 
-    /// <summary>One fact about an engineer is said once: "This is being repeated once per module [...] That
-    /// line should only appear for a new Engineer and only once."</summary>
+    /// <summary>A rank gate says why each line is blocked, and teaches no lesson about how rank works.</summary>
     [AvaloniaFact]
-    public void TheRankExplanationIsDrawnOnceHoweverManyModulesWaitOnIt()
+    public void ARankGateNamesTheBlockAndTeachesNothing()
     {
         var state = InLaksakWithAShieldBooster(rank: 1);
         var checklists = Checklists(TempFolders.Create("d47-one-explanation"), () => state);
@@ -517,8 +516,7 @@ public class ChecklistTabTests
             2,
             drawn.Count(line => line.Contains("cannot be crafted at rank 1", StringComparison.Ordinal)));
 
-        // The engineer is explained once.
-        Assert.Equal(1, drawn.Count(line => line.Contains("compounds", StringComparison.Ordinal)));
+        Assert.DoesNotContain(drawn, line => line.Contains("compounds", StringComparison.Ordinal));
 
         window.Close();
     }

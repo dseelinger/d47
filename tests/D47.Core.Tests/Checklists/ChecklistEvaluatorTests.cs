@@ -162,31 +162,6 @@ public class ChecklistEvaluatorTests
         // Not a slow route — no route.
         Assert.Equal(ChecklistState.Blocked, verdict!.Value.State);
         Assert.Contains("no amount of gathering fixes that", verdict.Value.Reason, StringComparison.Ordinal);
-
- // The price is still said, and it is now said from its own field: the state is a fact about
-        // this module and the explanation is a fact about the engineer.
-        Assert.Contains("compounds", verdict.Value.Advice, StringComparison.Ordinal);
-        Assert.DoesNotContain("compounds", verdict.Value.Reason, StringComparison.Ordinal);
-        Assert.Equal($"{verdict.Value.Reason} {verdict.Value.Advice}", verdict.Value.Says);
-    }
-
-    /// <summary>
-    /// A verdict with nothing to explain says only its reason — no stray space, and <see
-    /// cref="ChecklistVerdict.Says"/> is the same string the reason is.
-    /// </summary>
-    [Fact]
-    public void AVerdictWithNoExplanationSaysExactlyItsReason()
-    {
-        var verdict = ChecklistEvaluator.Evaluate(
-            Item(new ChecklistIntent(ChecklistIntentKind.Blueprint, "MainEngines")
-            {
-                Detail = "Dirty",
-                Grade = 5,
-            }),
-            State());
-
-        Assert.Null(verdict!.Value.Advice);
-        Assert.Equal(verdict.Value.Reason, verdict.Value.Says);
     }
 
     [Fact]

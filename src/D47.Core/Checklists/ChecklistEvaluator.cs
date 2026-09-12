@@ -10,14 +10,8 @@ namespace D47.Core.Checklists;
 /// </param>
 public readonly record struct ChecklistVerdict(ChecklistState State, string Reason)
 {
-    /// <summary>
-    /// What is true of the Commander's relationship with an engineer, kept apart from the reason rather
-    /// than appended to it (#26).
-    /// </summary>
-    public string? Advice { get; init; }
-
     /// <summary>The whole verdict as one sentence, which is what every surface has always drawn.</summary>
-    public string Says => Advice is { Length: > 0 } advice ? $"{Reason} {advice}" : Reason;
+    public string Says => Reason;
 }
 
 /// <summary>
@@ -253,14 +247,9 @@ public static class ChecklistEvaluator
     {
         var who = intent.Engineer is { } engineer ? $" with {engineer}" : string.Empty;
 
-        // The explanation rides its own field rather than the sentence (#26): it is a fact about the
-        // engineer, not about this module, and Says composes the two exactly as they read before.
         return new ChecklistVerdict(
             ChecklistState.Blocked,
-            $"Grade {grade} cannot be crafted at rank {rank}{who} at all — no amount of gathering fixes that.")
-        {
-            Advice = EngineeringRules.RankRises,
-        };
+            $"Grade {grade} cannot be crafted at rank {rank}{who} at all — no amount of gathering fixes that.");
     }
 
     /// <summary>Nothing in the slot.</summary>
@@ -321,11 +310,7 @@ public static class ChecklistEvaluator
             return new ChecklistVerdict(ChecklistState.Done, $"{engineer.Name} is at rank {rank}.");
         }
 
-        return new ChecklistVerdict(
-            ChecklistState.Open, $"{engineer.Name} is at rank {rank} of {wanted}.")
-        {
-            Advice = EngineeringRules.RankRises,
-        };
+        return new ChecklistVerdict(ChecklistState.Open, $"{engineer.Name} is at rank {rank} of {wanted}.");
     }
 
     // ----------------------------------------------------------- colonising
