@@ -18,10 +18,18 @@ public sealed class RouteMarketPage : UserControl
     /// <summary>How long a search may run.</summary>
     private static readonly TimeSpan Budget = TimeSpan.FromSeconds(70);
 
+    // The Station column is a name cell, a gap and a copy button, and the header above it has to line up
+    // with every row (#157).
+    private const double StationTextWidth = 200;
+    private const double CopyGap = 6;
+    private const double CopyButtonSize = 24;
+    private const double StationColumnWidth = StationTextWidth + CopyGap + CopyButtonSize;
+
     private readonly CapabilityRegistry _registry;
     private readonly CommodityBoard _board;
     private readonly Func<bool> _lookupsEnabled;
     private readonly Action? _openSettings;
+    private readonly Func<string, Task<bool>>? _copy;
 
     private readonly StackPanel _body = new() { Spacing = 12 };
 
@@ -63,12 +71,14 @@ public sealed class RouteMarketPage : UserControl
         CapabilityRegistry registry,
         CommodityBoard board,
         Func<bool> lookupsEnabled,
-        Action? openSettings = null)
+        Action? openSettings = null,
+        Func<string, Task<bool>>? copy = null)
     {
         _registry = registry;
         _board = board;
         _lookupsEnabled = lookupsEnabled;
         _openSettings = openSettings;
+        _copy = copy;
 
         _status = Text(string.Empty, TypeScale.Secondary, ThemeManager.TextMutedKey, wrap: true);
         _status.IsVisible = false;
@@ -315,7 +325,7 @@ public sealed class RouteMarketPage : UserControl
     {
         var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
 
-        row.Children.Add(Cell("Station", 200, muted: true));
+        row.Children.Add(Cell("Station", StationColumnWidth, muted: true));
 
         if (distances)
         {
@@ -335,13 +345,13 @@ public sealed class RouteMarketPage : UserControl
         return row;
     }
 
-    private static Control OfferRow(CommodityOffer offer, CommodityPosting posting)
+    private Control OfferRow(CommodityOffer offer, CommodityPosting posting)
     {
         var buying = posting.Query.Side == TradeSide.Buying;
         var quote = offer.Market.Quote(posting.Query.Commodity);
         var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
 
-        row.Children.Add(Cell($"{offer.Market.Station} ({offer.Market.System})", 200));
+        row.Children.Add(StationCell(offer.Market.Station, offer.Market.System));
 
         if (posting.Answer.OriginKnown)
         {
@@ -375,6 +385,25 @@ public sealed class RouteMarketPage : UserControl
         { TotalDays: < 14 } => $"{old.TotalDays:0} days ago",
         _ => $"{old.TotalDays / 7:0} weeks ago",
     };
+
+    /// <summary>The Station column: the name, and a copy glyph for the system it names (#157).</summary>
+    private Control StationCell(string station, string system)
+    {
+        var cells = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = CopyGap,
+            Width = StationColumnWidth,
+            Children = { Cell($"{station} ({system})", StationTextWidth) },
+        };
+
+        if (_copy is { } copy)
+        {
+            cells.Children.Add(D47.App.Controls.CopyGlyph.For(system, copy));
+        }
+
+        return cells;
+    }
 
     private static Control Cell(string text, double width, bool muted = false)
     {

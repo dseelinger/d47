@@ -109,7 +109,10 @@ public partial class App(AppHost? host) : Application
 
                 // And the Engineers tab's two checkbox filters (#132), on the same terms as the drawing
                 // switch above.
-                new Panel.EngineerDirectoryMemory(host.ViewState));
+                new Panel.EngineerDirectoryMemory(host.ViewState),
+
+                // And the clipboard, on the same terms as the window's copy (#157).
+                host.Clipboard);
 
             // And the headset's copy of the panel can be the one asking for a spoken value (Phase 25), or
             // the one with a keyboard up for a value to be spelled onto (#51).

@@ -52,10 +52,9 @@ public sealed record LoadoutLine(string Text, LoadoutTone Tone = LoadoutTone.Mut
 /// <param name="Set">Applies a new value.</param>
 public sealed record LoadoutStep(int Value, IReadOnlyList<int> Offered, Action<int> Set);
 
-/// <summary>Something on a line worth putting on the clipboard, and what to say it is.</summary>
+/// <summary>Something on a line worth putting on the clipboard.</summary>
 /// <param name="Value">Exactly what goes on the clipboard.</param>
-/// <param name="Tip">What the pointer says the glyph will do.</param>
-public sealed record LoadoutCopy(string Value, string Tip);
+public sealed record LoadoutCopy(string Value);
 
 /// <summary>A second figure on a gauge's bar, drawn as a mark rather than as fill (Phase 38).</summary>
 /// <param name="At">Where it sits, 0 to 1 of the bar's width.</param>

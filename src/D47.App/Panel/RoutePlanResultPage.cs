@@ -11,9 +11,9 @@ namespace D47.App.Panel;
 /// <summary>A plan that was made, drawn whole (Phase 37, "Plan").</summary>
 public sealed class RoutePlanResultPage : UserControl
 {
-    private readonly Action<string>? _copy;
+    private readonly Func<string, Task<bool>>? _copy;
 
-    public RoutePlanResultPage(StoredRoutePlan plan, Action<string>? copy = null)
+    public RoutePlanResultPage(StoredRoutePlan plan, Func<string, Task<bool>>? copy = null)
     {
         _copy = copy;
 
@@ -206,17 +206,29 @@ public sealed class RoutePlanResultPage : UserControl
     /// </summary>
     private Control Wrap(Control content, string system)
     {
+        Control body = content;
+
+        if (_copy is { } copy)
+        {
+            body = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 6,
+                Children = { content, D47.App.Controls.CopyGlyph.For(system, copy) },
+            };
+        }
+
         var row = new Border
         {
             Padding = new Thickness(8, 5),
             CornerRadius = new CornerRadius(3),
-            Child = content,
+            Child = body,
         };
 
-        if (_copy is { } copy)
+        if (_copy is { } tap)
         {
             row.Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand);
-            row.Tapped += (_, _) => copy(system);
+            row.Tapped += (_, _) => _ = tap(system);
             ToolTip.SetTip(row, $"Copy {system}");
         }
 

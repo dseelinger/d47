@@ -132,6 +132,12 @@ public partial class MainWindow : Window
             // nothing and therefore has no Settings tab (Phase 12).
             Panel.EnableSettings(BuildSettingsPage, RevealSetting);
 
+            // Every system name the panel draws goes through this one seam (#157).
+            if (host.Clipboard is { } clipboard)
+            {
+                Panel.EnableCopy(clipboard);
+            }
+
             // The checklist, on the other hand, goes to both surfaces — which is the whole headline of the
             // item that moved it out of a Window.
             Panel.EnableChecklist(
@@ -144,7 +150,8 @@ public partial class MainWindow : Window
                     host.Carrier,
                     () => host.GameState.Active,
                     () => host.Settings.Current.Knowledge.GalaxySearch,
-                    OpenSettings));
+                    OpenSettings,
+                    host.Clipboard is { } clip ? text => clip.SetTextAsync(text) : null));
 
             // The stories the Commander flies (Phase 47). **Both surfaces from 2026-08-22**, on the
             // Commander's instruction: the tab was desktop-only on the reasoning that the editor and the ask
@@ -228,7 +235,8 @@ public partial class MainWindow : Window
                     at => CommodityLedger.Week(
                         at,
                         host.Settings.Current.Callouts.WeekBoundaryDay,
-                        host.Settings.Current.Callouts.WeekBoundaryHourUtc)));
+                        host.Settings.Current.Callouts.WeekBoundaryHourUtc)),
+                Clipboard: host.Clipboard);
 
             Panel.EnableRouting(Routing);
 

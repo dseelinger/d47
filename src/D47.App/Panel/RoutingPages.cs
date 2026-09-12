@@ -21,6 +21,7 @@ namespace D47.App.Panel;
 /// The last commodity answer (Phase 49), written by whoever asked — by voice or from the Market page —
 /// so both routes show one answer rather than two searches that could disagree.
 /// </param>
+/// <param name="Clipboard">Where a system name goes when a Commander copies one from this tab.</param>
 public sealed record RoutingSurface(
     Func<NavRoute> Route,
     Func<string?> Here,
@@ -35,7 +36,8 @@ public sealed record RoutingSurface(
 
     // The Community Goal page's own needs (#296): the saved search, the ledger, and who and when to ask them
     // about.
-    CommunityGoalSurface? CommunityGoal = null);
+    CommunityGoalSurface? CommunityGoal = null,
+    D47.Core.Capabilities.Builtin.IClipboard? Clipboard = null);
 
 /// <summary>What the Community Goal page reads and drives (#296).</summary>
 /// <param name="Search">The saved query — its commodity is the one field the page edits.</param>
@@ -127,7 +129,8 @@ public static class RoutingPages
                 registry,
                 board,
                 surface.LookupsEnabled ?? (() => false),
-                surface.OpenSettings)
+                surface.OpenSettings,
+                Copy(surface))
             : Missing("Market lookups are not available on this surface.");
 
     private static Control CommunityGoal(RoutingSurface surface) =>
@@ -156,16 +159,8 @@ public static class RoutingPages
     }
 
     /// <summary>Copying a system name, wherever one is drawn on this tab.</summary>
-    private static Action<string>? Copy(RoutingSurface surface) =>
-        surface.Registry is { } registry
-            ? system => _ = registry.InvokeAsync(
-                "copy_to_clipboard",
-                new ToolArguments(new Dictionary<string, string>(StringComparer.Ordinal)
-                {
-                    ["text"] = system,
-                }),
-                CancellationToken.None)
-            : null;
+    private static Func<string, Task<bool>>? Copy(RoutingSurface surface) =>
+        surface.Clipboard is { } clipboard ? text => clipboard.SetTextAsync(text) : null;
 
     private static Control Missing(string why) =>
         new TextBlock

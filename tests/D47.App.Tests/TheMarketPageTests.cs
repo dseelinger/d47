@@ -54,7 +54,8 @@ public class TheMarketPageTests
         return board;
     }
 
-    private static PanelView Furnished(CommodityBoard board, bool lookups = true)
+    private static PanelView Furnished(
+        CommodityBoard board, bool lookups = true, D47.Core.Capabilities.Builtin.IClipboard? clipboard = null)
     {
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
@@ -66,7 +67,8 @@ public class TheMarketPageTests
                 Plans: null,
                 LookupsEnabled: () => lookups,
                 OpenSettings: null,
-                Commodities: board),
+                Commodities: board,
+                Clipboard: clipboard),
             plan: false,
             progress: false,
             course: false);
@@ -83,6 +85,26 @@ public class TheMarketPageTests
             .OfType<TextBlock>()
             .Select(block => block.Text ?? string.Empty)
             .Where(text => text.Length > 0)];
+
+    /// <summary>Every offer row carries a copy glyph for the system it names (#157).</summary>
+    [AvaloniaFact]
+    public void EachOfferRowCarriesACopyGlyphForItsSystem()
+    {
+        var clipboard = new D47.Core.Capabilities.Builtin.RecordingClipboard();
+        var panel = Furnished(Board(Market("Cheap", "Deciat", 0, 500, 1000)), clipboard: clipboard);
+
+        panel.Tab = PanelTab.Routing;
+        Dispatcher.UIThread.RunJobs();
+
+        var glyph = panel.GetVisualDescendants()
+            .OfType<Button>()
+            .Single(button => Avalonia.Automation.AutomationProperties.GetName(button) == "Copy Deciat");
+
+        glyph.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(["Deciat"], clipboard.Written);
+    }
 
     [AvaloniaFact]
     public void TheMarketRootIsTheOneFurnished()

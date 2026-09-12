@@ -6,6 +6,15 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.113.0 — Copy any system name the panel shows
+
+A system name could be copied from the Ships whereabouts line, the Community Goal table, or a
+route being planned or flown — three different mechanisms, each reaching the clipboard its own
+way, and none of the three reaching the Carrier, Sourcing, Market or Engineers pages at all. Every
+system name the panel draws now carries the same copy glyph, wired through one seam, so it is
+available everywhere a system name is shown — desktop and headset alike, since the shared control
+never depends on the desktop window's own clipboard.
+
 ## 0.112.9 — Controls that draw their state
 
 The Engineers tab's Colonia filter was a button that rewrote its own label — "Hide the Colonia

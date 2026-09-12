@@ -13,7 +13,7 @@ public sealed class RouteProgressPage : UserControl
 {
     private readonly Func<NavRoute> _route;
     private readonly Func<string?> _here;
-    private readonly Action<string>? _copy;
+    private readonly Func<string, Task<bool>>? _copy;
 
     private readonly TextBlock _headline = new()
     {
@@ -42,7 +42,7 @@ public sealed class RouteProgressPage : UserControl
     public RouteProgressPage(
         Func<NavRoute> route,
         Func<string?> here,
-        Action<string>? copy = null)
+        Func<string, Task<bool>>? copy = null)
     {
         _route = route;
         _here = here;
@@ -165,6 +165,11 @@ public sealed class RouteProgressPage : UserControl
             Children = { name, detail },
         };
 
+        if (_copy is { } glyph)
+        {
+            line.Children.Add(D47.App.Controls.CopyGlyph.For(hop.StarSystem, glyph));
+        }
+
         if (hop.Hazardous)
         {
             line.Children.Add(Badge(BadgeWord(hop), ThemeManager.DangerKey));
@@ -200,7 +205,7 @@ public sealed class RouteProgressPage : UserControl
             // Every system name on this page is a copy target (Phase 37, "Course"): the clipboard is the part
             // of plotting that always works, whatever the map is doing.
             row.Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand);
-            row.Tapped += (_, _) => copy(hop.StarSystem);
+            row.Tapped += (_, _) => _ = copy(hop.StarSystem);
             ToolTip.SetTip(row, $"Copy {hop.StarSystem}");
         }
 

@@ -51,7 +51,7 @@ public class EngineersTabTests
         return store.Active!;
     }
 
-    private static Surface Open(bool planned = true)
+    private static Surface Open(bool planned = true, D47.Core.Capabilities.Builtin.IClipboard? clipboard = null)
     {
         var root = TempFolders.Create("d47-engineers-tab-tests");
         var state = State();
@@ -86,6 +86,11 @@ public class EngineersTabTests
         var memory = new EngineerDirectoryMemory(viewState);
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
+
+        if (clipboard is not null)
+        {
+            panel.EnableCopy(clipboard);
+        }
 
         panel.EnableEngineers(unlocks, ships, () => state, onFoot, memory);
 
@@ -194,6 +199,28 @@ public class EngineersTabTests
 
         // Frontier's own sentence, printed rather than summarised away.
         Assert.Contains(shown, line => line.Contains("exploration rank Scout", StringComparison.Ordinal));
+
+        surface.Window.Close();
+    }
+
+    /// <summary>The engineer's system carries a copy glyph, wired to the surface's clipboard (#157).</summary>
+    [AvaloniaFact]
+    public void TheEngineersSystemCarriesACopyGlyph()
+    {
+        var clipboard = new D47.Core.Capabilities.Builtin.RecordingClipboard();
+        var surface = Open(clipboard: clipboard);
+
+        Press(surface.Panel, "Felicity Farseer").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var glyph = surface.Panel.GetVisualDescendants()
+            .OfType<Button>()
+            .Single(button => Avalonia.Automation.AutomationProperties.GetName(button) == "Copy Deciat");
+
+        glyph.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(["Deciat"], clipboard.Written);
 
         surface.Window.Close();
     }

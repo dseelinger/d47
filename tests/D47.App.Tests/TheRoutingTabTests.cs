@@ -177,7 +177,8 @@ public class TheRoutingTabTests
         NavRoute route,
         RoutePlanBook plans,
         bool lookups = true,
-        Action? openSettings = null)
+        Action? openSettings = null,
+        D47.Core.Capabilities.Builtin.IClipboard? clipboard = null)
     {
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
@@ -187,7 +188,8 @@ public class TheRoutingTabTests
             CapabilityRegistry.Build([]),
             plans,
             () => lookups,
-            openSettings));
+            openSettings,
+            Clipboard: clipboard));
 
         return Laid(panel);
     }
@@ -306,6 +308,46 @@ public class TheRoutingTabTests
             Assert.Contains("Waypoint 0", drawn);
             Assert.Contains("Waypoint 29", drawn);
             Assert.Contains(drawn, text => text.Contains("168 jumps", StringComparison.Ordinal));
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    /// <summary>Every waypoint on a stored plan carries a copy glyph, wired to the surface's clipboard (#157).</summary>
+    [AvaloniaFact]
+    public void AStoredPlansWaypointsEachCarryACopyGlyph()
+    {
+        var folder = Scratch();
+
+        try
+        {
+            var plans = Book(folder);
+
+            plans.Record(
+                new PlottedRoute(
+                    "Sol", "Colonia", 22_000, 168,
+                    [new RouteWaypoint("Waypoint 0", 3, 1000, IsNeutron: false)]),
+                "Sol to Colonia",
+                new DateTimeOffset(2026, 8, 20, 9, 0, 0, TimeSpan.Zero));
+
+            var clipboard = new D47.Core.Capabilities.Builtin.RecordingClipboard();
+            var panel = FullyFurnished(NavRoute.None, plans, clipboard: clipboard);
+
+            panel.Tab = PanelTab.Routing;
+            panel.Nav.SelectRoot(RoutingPages.PlanRoot);
+            panel.Nav.Drill(RoutingPages.ResultCrumb(RoutePlanKind.Jump, "Sol to Colonia"));
+            Dispatcher.UIThread.RunJobs();
+
+            var glyph = panel.GetVisualDescendants()
+                .OfType<Button>()
+                .Single(button => AutomationProperties.GetName(button) == "Copy Waypoint 0");
+
+            glyph.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+            Dispatcher.UIThread.RunJobs();
+
+            Assert.Equal(["Waypoint 0"], clipboard.Written);
         }
         finally
         {

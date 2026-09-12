@@ -34,8 +34,9 @@ public class TheCarrierPageDrawsWhatIsKnownTests
         return new JournalEvent(DateTimeOffset.UtcNow, root.GetProperty("event").GetString()!, root);
     }
 
-    /// <summary>What the carrier page draws, for a Commander whose journal held these events.</summary>
-    private static string Shown(params string[] events)
+    /// <summary>The page, live, for a Commander whose journal held these events.</summary>
+    private static (Window Window, PanelView Panel) Open(
+        D47.Core.Capabilities.Builtin.IClipboard? clipboard, params string[] events)
     {
         var root = TempFolders.Create("d47-carrier-page-tests");
 
@@ -60,6 +61,11 @@ public class TheCarrierPageDrawsWhatIsKnownTests
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
+        if (clipboard is not null)
+        {
+            panel.EnableCopy(clipboard);
+        }
+
         panel.EnableLoadout(ships, checklists, () => state);
 
         var window = new Window { Content = panel, Width = 900, Height = 700 };
@@ -69,6 +75,14 @@ public class TheCarrierPageDrawsWhatIsKnownTests
         panel.Tab = PanelTab.Loadout;
         panel.Nav.SelectRoot(PanelTab.Loadout, LoadoutPages.CarrierRoot);
         Dispatcher.UIThread.RunJobs();
+
+        return (window, panel);
+    }
+
+    /// <summary>What the carrier page draws, for a Commander whose journal held these events.</summary>
+    private static string Shown(params string[] events)
+    {
+        var (window, panel) = Open(clipboard: null, events);
 
         var text = string.Join(
             " | ",
@@ -177,5 +191,28 @@ public class TheCarrierPageDrawsWhatIsKnownTests
 
         Assert.Contains("No carrier has turned up in the journal yet", text, StringComparison.Ordinal);
         Assert.Contains("open its management panel", text, StringComparison.Ordinal);
+    }
+
+    /// <summary>The carrier's system carries a copy glyph, wired to the surface's clipboard (#157).</summary>
+    [AvaloniaFact]
+    public void TheCarriersSystemCarriesACopyGlyph()
+    {
+        var clipboard = new D47.Core.Capabilities.Builtin.RecordingClipboard();
+
+        var (window, panel) = Open(
+            clipboard,
+            Stats,
+            """{"event":"CarrierLocation","StarSystem":"Deciat"}""");
+
+        var glyph = panel.GetVisualDescendants()
+            .OfType<Button>()
+            .Single(button => Avalonia.Automation.AutomationProperties.GetName(button) == "Copy Deciat");
+
+        glyph.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(["Deciat"], clipboard.Written);
+
+        window.Close();
     }
 }

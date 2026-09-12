@@ -58,6 +58,12 @@ public static class Glyphs
     public const string Copy =
         "M 9,9 L 20,9 L 20,20 L 9,20 Z  M 15,9 L 15,4 L 4,4 L 4,15 L 9,15";
 
+    /// <summary>A copy landed: a check mark.</summary>
+    public const string Tick = "M 8,12.5 L 11,15.5 L 16.5,8.5";
+
+    /// <summary>A copy failed: an X.</summary>
+    public const string Cross = "M 6,6 L 18,18  M 18,6 L 6,18";
+
     /// <summary>A plus.</summary>
     public const string Add = "M 12,5 L 12,19  M 5,12 L 19,12";
 

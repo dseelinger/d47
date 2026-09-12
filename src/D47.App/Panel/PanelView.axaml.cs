@@ -555,6 +555,15 @@ public partial class PanelView : UserControl
     /// Gives this surface the fleet, what the Commander is wearing, and the arithmetic between them
     /// (Phase 26, "Ships"; Phase 27, "Suits and weapons, and the gap").
     /// </summary>
+    /// <summary>
+    /// Gives this surface a clipboard, so every system name the panel draws can carry a copy glyph
+    /// (#157).
+    /// </summary>
+    public void EnableCopy(D47.Core.Capabilities.Builtin.IClipboard clipboard) =>
+        _copy = text => clipboard.SetTextAsync(text);
+
+    private Func<string, Task<bool>>? _copy;
+
     public void EnableLoadout(
         D47.Core.Ships.ShipPlanService ships,
         D47.Core.Checklists.ChecklistService checklists,
@@ -627,7 +636,7 @@ public partial class PanelView : UserControl
 
         Furnish(
             PanelTab.Loadout,
-            crumb => LoadoutPages.Build(crumb, modes, gap, _carrier, Nav, Prompts),
+            crumb => LoadoutPages.Build(crumb, modes, gap, _carrier, Nav, Prompts, _copy),
             [.. roots]);
     }
 
@@ -678,7 +687,7 @@ public partial class PanelView : UserControl
 
         Furnish(
             PanelTab.Engineers,
-            crumb => EngineersPages.Build(crumb, source, Nav, memory),
+            crumb => EngineersPages.Build(crumb, source, Nav, memory, _copy),
             new NavCrumb(EngineersPages.DirectoryRoot, "Directory") { Help = help },
             new NavCrumb(EngineersPages.RouteRoot, "Route") { Help = help });
     }

@@ -77,7 +77,8 @@ public class TheSourcingPageTests
               "RequiredAmount":300, "ProvidedAmount":0, "Payment":5000 } ] }
         """;
 
-    private static Surface Open(SourcingAnswer? answer = null, bool lookups = true)
+    private static Surface Open(
+        SourcingAnswer? answer = null, bool lookups = true, IClipboard? clipboard = null)
     {
         var root = TempFolders.Create("d47-sourcing-page-tests");
 
@@ -142,7 +143,13 @@ public class TheSourcingPageTests
             checklists,
             null,
             null,
-            () => new SourcingPage(registry, board, carrier, () => live, () => settings.Current.Knowledge.GalaxySearch));
+            () => new SourcingPage(
+                registry,
+                board,
+                carrier,
+                () => live,
+                () => settings.Current.Knowledge.GalaxySearch,
+                copy: clipboard is null ? null : text => clipboard.SetTextAsync(text)));
 
         var window = new Window { Content = panel, Width = 1100, Height = 900 };
 
@@ -399,6 +406,50 @@ public class TheSourcingPageTests
 
         // Nothing is dropped in silence, on the page as much as in the sentence.
         Assert.Contains(drawn, said => said.Contains("Nothing in range prices: Steel", StringComparison.Ordinal));
+
+        surface.Window.Close();
+    }
+
+    /// <summary>Each stop's system carries a copy glyph, wired to the surface's clipboard (#157).</summary>
+    [AvaloniaFact]
+    public void EachStopCarriesACopyGlyphForItsSystem()
+    {
+        var clipboard = new D47.Core.Capabilities.Builtin.RecordingClipboard();
+
+        var surface = Open(
+            new SourcingAnswer(
+                new SourcingPlan(
+                    [
+                        new SourcingStop(
+                            new MarketSnapshot
+                            {
+                                Station = "Hutton Orbital",
+                                System = "Alpha Centauri",
+                                UpdatedAt = DateTimeOffset.UnixEpoch,
+                            },
+                            [new SourcingLot("Aluminium", "aluminium", 400, 300)],
+                            14.5),
+                    ],
+                    [],
+                    new Dictionary<string, int>(StringComparer.Ordinal)),
+                12,
+                0,
+                true),
+            clipboard: clipboard);
+
+        Open(surface);
+
+        Press(surface.Panel, "Where to buy it").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var glyph = surface.Panel.GetVisualDescendants()
+            .OfType<Button>()
+            .Single(button => Avalonia.Automation.AutomationProperties.GetName(button) == "Copy Alpha Centauri");
+
+        glyph.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(["Alpha Centauri"], clipboard.Written);
 
         surface.Window.Close();
     }

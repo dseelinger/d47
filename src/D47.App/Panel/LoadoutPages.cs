@@ -6,7 +6,6 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Documents;
 
 using Avalonia.Input;
-using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -51,11 +50,12 @@ public static class LoadoutPages
         GapSource? gap,
         CarrierSource? carrier,
         PanelNavigator nav,
-        PanelPrompts prompts)
+        PanelPrompts prompts,
+        Func<string, Task<bool>>? copy = null)
     {
         if (crumb.Key == CarrierRoot && carrier is not null)
         {
-            return new CarrierPage(carrier);
+            return new CarrierPage(carrier, copy: copy);
         }
 
         foreach (var mode in modes)
@@ -63,12 +63,12 @@ public static class LoadoutPages
             if (crumb.Key.StartsWith(mode.SlotPrefix, StringComparison.Ordinal))
             {
                 var (item, slot) = SplitSlot(crumb.Key[mode.SlotPrefix.Length..]);
-                return new SlotPage(mode, prompts, item, slot);
+                return new SlotPage(mode, prompts, item, slot, copy);
             }
 
             if (crumb.Key.StartsWith(mode.ItemPrefix, StringComparison.Ordinal))
             {
-                return new ItemPage(mode, nav, crumb.Key[mode.ItemPrefix.Length..], prompts);
+                return new ItemPage(mode, nav, crumb.Key[mode.ItemPrefix.Length..], prompts, copy);
             }
         }
 
@@ -447,9 +447,9 @@ public static class LoadoutPages
     }
 
     /// <summary>One line of a page, drawn the way its tone says.</summary>
-    internal static Control Stepped(LoadoutLine line)
+    internal static Control Stepped(LoadoutLine line, Func<string, Task<bool>>? copy)
     {
-        if (line.Copy is { } copy)
+        if (line.Copy is { } target && copy is not null)
         {
             // Beside the text for the same reason the stepper is: the line is one string that is both shown
             // and spoken, so it keeps its sentence and the control sits next to it.
@@ -461,7 +461,7 @@ public static class LoadoutPages
             };
 
             copyable.Children.Add(Line(line));
-            copyable.Children.Add(CopyGlyph(copy));
+            copyable.Children.Add(D47.App.Controls.CopyGlyph.For(target.Value, copy));
 
             return copyable;
         }
@@ -497,47 +497,6 @@ public static class LoadoutPages
         row.Children.Add(Nudge("▼", at >= 0 && at < step.Offered.Count - 1, () => step.Set(step.Offered[at + 1])));
 
         return row;
-    }
-
-    /// <summary>
-    /// The glyph that puts one value on the clipboard — a system name, so it can be pasted into the
-    /// Galaxy Map's search.
-    /// </summary>
-    private static Button CopyGlyph(LoadoutCopy copy)
-    {
-        var button = new Button
-        {
-            Content = "⧉",
-            FontSize = TypeScale.Secondary,
-            Padding = new Thickness(6, 0),
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-
-        ToolTip.SetTip(button, copy.Tip);
-
-        button.Click += async (_, _) =>
-        {
-            if (TopLevel.GetTopLevel(button)?.Clipboard is not { } clipboard)
-            {
-                return;
-            }
-
-            try
-            {
-                await clipboard.SetTextAsync(copy.Value);
-                button.Content = "✓";
-            }
-            catch (Exception)
-            {
-                button.Content = "✗";
-            }
-        };
-
-        // Shut where there is nowhere to put it, decided when the line is drawn.
-        button.AttachedToVisualTree += (_, _) =>
-            button.IsEnabled = TopLevel.GetTopLevel(button)?.Clipboard is not null;
-
-        return button;
     }
 
     private static Button Nudge(string glyph, bool live, Action pressed)
@@ -1508,6 +1467,7 @@ public sealed class ItemPage : LoadoutPage
     private readonly PanelNavigator _nav;
     private readonly PanelPrompts? _prompts;
     private readonly string _item;
+    private readonly Func<string, Task<bool>>? _copy;
     private readonly Button? _drop;
     private readonly StackPanel _list = new() { Spacing = 3 };
 
@@ -1532,12 +1492,18 @@ public sealed class ItemPage : LoadoutPage
     {
     }
 
-    public ItemPage(ILoadoutMode mode, PanelNavigator nav, string item, PanelPrompts? prompts)
+    public ItemPage(
+        ILoadoutMode mode,
+        PanelNavigator nav,
+        string item,
+        PanelPrompts? prompts,
+        Func<string, Task<bool>>? copy = null)
         : base(mode)
     {
         _nav = nav;
         _item = item;
         _prompts = prompts;
+        _copy = copy;
 
         LoadoutPages.Themed(_title, TextBlock.ForegroundProperty, ThemeManager.TextKey);
         LoadoutPages.Themed(_summary, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
@@ -1688,7 +1654,7 @@ public sealed class ItemPage : LoadoutPage
         {
             // Stepped rather than Line, for the copy glyph a whereabouts line carries: the system a ship is
             // parked in goes on the clipboard from here, to be pasted into the Galaxy Map.
-            facts.Children.Add(LoadoutPages.Stepped(line));
+            facts.Children.Add(LoadoutPages.Stepped(line, _copy));
         }
 
         // Power and jump range, at the head of the slot list and under the hull's own figures (Phase 38).
@@ -1946,14 +1912,17 @@ public sealed class SlotPage : LoadoutPage
     private readonly PanelPrompts _prompts;
     private readonly string _item;
     private readonly string _slot;
+    private readonly Func<string, Task<bool>>? _copy;
     private readonly StackPanel _body = new() { Spacing = 4 };
 
-    public SlotPage(ILoadoutMode mode, PanelPrompts prompts, string item, string slot)
+    public SlotPage(
+        ILoadoutMode mode, PanelPrompts prompts, string item, string slot, Func<string, Task<bool>>? copy = null)
         : base(mode)
     {
         _prompts = prompts;
         _item = item;
         _slot = slot;
+        _copy = copy;
 
         var root = new DockPanel { Margin = new Thickness(14) };
         var say = LoadoutPages.SayLine(mode.SayAtSlot(slot));
@@ -1985,7 +1954,7 @@ public sealed class SlotPage : LoadoutPage
         {
             // Stepped, because the grade on this page is a control: moving it re-costs the block below
             // without leaving the page (remediation.md 15, item 4).
-            _body.Children.Add(LoadoutPages.Stepped(line));
+            _body.Children.Add(LoadoutPages.Stepped(line, _copy));
         }
 
         Buttons(Mode.HasPlan(_item, _slot));

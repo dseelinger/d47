@@ -27,6 +27,7 @@ public sealed class SourcingPage : UserControl
     private readonly Func<CommanderGameState?> _commander;
     private readonly Func<bool> _lookupsEnabled;
     private readonly Action? _openSettings;
+    private readonly Func<string, Task<bool>>? _copy;
 
     private readonly StackPanel _body = new() { Spacing = 12 };
 
@@ -46,7 +47,8 @@ public sealed class SourcingPage : UserControl
         CarrierManifest? carrier,
         Func<CommanderGameState?> commander,
         Func<bool> lookupsEnabled,
-        Action? openSettings = null)
+        Action? openSettings = null,
+        Func<string, Task<bool>>? copy = null)
     {
         _registry = registry;
         _board = board;
@@ -54,6 +56,7 @@ public sealed class SourcingPage : UserControl
         _commander = commander;
         _lookupsEnabled = lookupsEnabled;
         _openSettings = openSettings;
+        _copy = copy;
 
         _status = Text(string.Empty, TypeScale.Secondary, ThemeManager.TextMutedKey, wrap: true);
         _status.IsVisible = false;
@@ -450,11 +453,12 @@ public sealed class SourcingPage : UserControl
         _body.Children.Add(Card("What came back", stack));
     }
 
-    private static Control Stop(SourcingStop stop, bool distances)
+    private Control Stop(SourcingStop stop, bool distances)
     {
         var body = new StackPanel { Spacing = 4 };
+        var head = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
 
-        var head = Text(
+        var name = Text(
             $"{stop.Market.Station} ({stop.Market.System})"
             + (distances ? $", {stop.Distance:0.#} ly" : string.Empty)
             + $" — covers {stop.Covers}, {stop.Total:N0} cr",
@@ -462,7 +466,14 @@ public sealed class SourcingPage : UserControl
             ThemeManager.TextKey,
             wrap: true);
 
-        head.FontWeight = FontWeight.SemiBold;
+        name.FontWeight = FontWeight.SemiBold;
+        head.Children.Add(name);
+
+        if (_copy is { } copy)
+        {
+            head.Children.Add(D47.App.Controls.CopyGlyph.For(stop.Market.System, copy));
+        }
+
         body.Children.Add(head);
 
         var lots = new StackPanel { Spacing = 4 };

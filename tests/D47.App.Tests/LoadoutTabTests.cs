@@ -23,7 +23,12 @@ namespace D47.App.Tests;
 public class LoadoutTabTests
 {
     private sealed record Surface(
-        Window Window, PanelView Panel, ShipPlanService Ships, ChecklistService Checklists, Sitting In)
+        Window Window,
+        PanelView Panel,
+        ShipPlanService Ships,
+        ChecklistService Checklists,
+        Sitting In,
+        D47.Core.Capabilities.Builtin.RecordingClipboard Clipboard)
     {
         /// <summary>The Commander gets into a ship, as the journal would say so.</summary>
         public void Board(CommanderGameState state) => In.State = state;
@@ -54,7 +59,9 @@ public class LoadoutTabTests
         var ships = new ShipPlanService(store, checklists, () => sitting.State);
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
+        var clipboard = new D47.Core.Capabilities.Builtin.RecordingClipboard();
 
+        panel.EnableCopy(clipboard);
         panel.EnableLoadout(ships, checklists, () => sitting.State);
 
         // A second tab, for the tests that need somewhere to go and come back from.
@@ -69,7 +76,7 @@ public class LoadoutTabTests
         panel.Tab = PanelTab.Loadout;
         Dispatcher.UIThread.RunJobs();
 
-        return new Surface(window, panel, ships, checklists, sitting);
+        return new Surface(window, panel, ships, checklists, sitting, clipboard);
     }
 
     private static CommanderGameState Flying(bool engineered = false)
@@ -1351,18 +1358,13 @@ public class LoadoutTabTests
         Dispatcher.UIThread.RunJobs();
 
         var copy = surface.Panel.GetVisualDescendants().OfType<Button>()
-            .Single(button => button.Content as string == "⧉");
+            .Single(button => AutomationProperties.GetName(button) == "Copy Shinrarta Dezhra");
 
-        // The pointer says what pressing it will do, and names the thing that goes on the clipboard — a glyph
-        // on its own is a control the Commander has to press to understand.
-        var tip = ToolTip.GetTip(copy) as string;
-
-        Assert.NotNull(tip);
-        Assert.Contains("Shinrarta Dezhra", tip, StringComparison.Ordinal);
-        Assert.Contains("Galaxy Map", tip, StringComparison.Ordinal);
+        copy.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
 
         // Not the station, which is on the same line and which the Galaxy Map does not take.
-        Assert.DoesNotContain("Jameson Memorial", tip, StringComparison.Ordinal);
+        Assert.Equal(["Shinrarta Dezhra"], surface.Clipboard.Written);
 
         surface.Window.Close();
     }

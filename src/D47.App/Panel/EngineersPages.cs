@@ -27,11 +27,15 @@ public static class EngineersPages
 
     /// <summary>Draws whichever level a crumb names.</summary>
     public static Control Build(
-        NavCrumb crumb, EngineerSource source, PanelNavigator nav, EngineerDirectoryMemory? memory = null)
+        NavCrumb crumb,
+        EngineerSource source,
+        PanelNavigator nav,
+        EngineerDirectoryMemory? memory = null,
+        Func<string, Task<bool>>? copy = null)
     {
         if (crumb.Key.StartsWith(WhoPrefix, StringComparison.Ordinal))
         {
-            return new EngineerPage(source, crumb.Key[WhoPrefix.Length..], nav);
+            return new EngineerPage(source, crumb.Key[WhoPrefix.Length..], nav, copy);
         }
 
         return crumb.Key == RouteRoot
@@ -331,6 +335,7 @@ public sealed class EngineerPage : EngineerPageBase
 
     private readonly string _id;
     private readonly PanelNavigator _nav;
+    private readonly Func<string, Task<bool>>? _copy;
     private readonly StackPanel _body = new() { Spacing = 2 };
     private readonly TextBlock _said = new()
     {
@@ -340,11 +345,12 @@ public sealed class EngineerPage : EngineerPageBase
         Margin = new Thickness(0, 8, 0, 0),
     };
 
-    public EngineerPage(EngineerSource source, string id, PanelNavigator nav)
+    public EngineerPage(EngineerSource source, string id, PanelNavigator nav, Func<string, Task<bool>>? copy = null)
         : base(source)
     {
         _id = id;
         _nav = nav;
+        _copy = copy;
 
         var root = new DockPanel { Margin = new Thickness(14) };
         var say = LoadoutPages.SayLine("where is Felicity Farseer");
@@ -381,13 +387,27 @@ public sealed class EngineerPage : EngineerPageBase
 
         var engineer = entry.Engineer;
 
-        _body.Children.Add(new SelectableTextBlock
+        var where = new SelectableTextBlock
         {
             Text = engineer.Where,
             FontSize = TypeScale.Body,
             FontWeight = FontWeight.SemiBold,
             TextWrapping = TextWrapping.Wrap,
-        });
+        };
+
+        if (engineer.System is { Length: > 0 } system && _copy is { } copy)
+        {
+            _body.Children.Add(new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 6,
+                Children = { where, CopyGlyph.For(system, copy) },
+            });
+        }
+        else
+        {
+            _body.Children.Add(where);
+        }
 
         _body.Children.Add(LoadoutPages.Muted(entry.Aside));
 

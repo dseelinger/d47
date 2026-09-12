@@ -180,11 +180,7 @@ public sealed class ShipsMode(
             lines.Add(new LoadoutLine(Whereabouts(stored, entry.IsActive), LoadoutTone.Body)
             {
                 // The system, on the clipboard, for Elite's Galaxy Map search.
-                Copy = stored.HasSystem
-                    ? new LoadoutCopy(
-                        stored.StarSystem,
-                        $"Copy “{stored.StarSystem}” — paste it into the Galaxy Map")
-                    : null,
+                Copy = stored.HasSystem ? new LoadoutCopy(stored.StarSystem) : null,
             });
 
             if (stored.TransferPrice is { } price)

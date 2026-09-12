@@ -85,7 +85,10 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         // the headset from 2026-09-09 (#53).
         Func<D47.Core.Journal.ModulePower>? modulePower = null,
         ShipsDrawingsMemory? drawings = null,
-        EngineerDirectoryMemory? engineersMemory = null)
+        EngineerDirectoryMemory? engineersMemory = null,
+
+        // The clipboard, on the same terms as the window's copy (#157).
+        D47.Core.Capabilities.Builtin.IClipboard? clipboard = null)
     {
         _dumpTo = dumpTo;
 
@@ -97,6 +100,11 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
         // The Commander's own avatar frames reach the headset copy too.
         _view.Avatar.Library = avatars;
+
+        if (clipboard is not null)
+        {
+            _view.EnableCopy(clipboard);
+        }
 
         if (settingsPage is not null)
         {
@@ -114,7 +122,8 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
                     carrier,
                     gameState ?? (() => null),
                     () => settings.Current.Knowledge.GalaxySearch,
-                    () => _view.Tab = PanelTab.Settings)
+                    () => _view.Tab = PanelTab.Settings,
+                    clipboard is { } sourcingClipboard ? text => sourcingClipboard.SetTextAsync(text) : null)
                 : null;
 
             // What the Commander is working on, back in the headset (Phase 39).

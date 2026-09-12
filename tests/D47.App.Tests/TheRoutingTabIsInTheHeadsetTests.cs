@@ -24,41 +24,8 @@ namespace D47.App.Tests;
 /// </summary>
 public class TheRoutingTabIsInTheHeadsetTests
 {
-    /// <summary>What was copied, so a press on a Progress row has somewhere to land.</summary>
-    private static CapabilityRegistry Registry(List<string> copied) =>
-        CapabilityRegistry.Build(
-        [
-            new CapabilityDescriptor
-            {
-                Id = "navigation",
-                Group = "Acting on the game",
-                Name = "Navigation",
-                Summary = "Stands in for the clipboard, so the press has an effect a test can read.",
-                Tools =
-                [
-                    new ToolDefinition
-                    {
-                        Name = "copy_to_clipboard",
-                        Description = "Records what a row asked to copy.",
-                        Parameters =
-                        [
-                            new ToolParameter
-                            {
-                                Name = "text",
-                                Type = ToolParameterType.String,
-                                Description = "What to put on the clipboard.",
-                                Required = true,
-                            },
-                        ],
-                        Handler = (arguments, _) =>
-                        {
-                            copied.Add(arguments.TryGetString("text", out var text) ? text : string.Empty);
-                            return Task.FromResult(ToolResult.Ok("copied"));
-                        },
-                    },
-                ],
-            },
-        ]);
+    /// <summary>No tools of its own — Plan and Market validate client-side before reaching one.</summary>
+    private static CapabilityRegistry Registry() => CapabilityRegistry.Build([]);
 
     private static RouteHop Hop(string system, double x) => new(system, "G") { Position = (x, 0, 0) };
 
@@ -66,7 +33,8 @@ public class TheRoutingTabIsInTheHeadsetTests
     /// The tab as the composition root hands it over: one record, every root furnished, nothing about
     /// it particular to a surface.
     /// </summary>
-    private static RoutingSurface Surface(string folder, CapabilityRegistry registry) =>
+    private static RoutingSurface Surface(
+        string folder, CapabilityRegistry registry, D47.Core.Capabilities.Builtin.IClipboard clipboard) =>
         new(
             () => new NavRoute { Hops = [Hop("Sol", 0), Hop("Shinrarta Dezhra", 65)] },
             () => "Sol",
@@ -82,7 +50,8 @@ public class TheRoutingTabIsInTheHeadsetTests
                 new CommodityLedger(),
                 () => "F1",
                 () => new DateTimeOffset(2026, 9, 9, 12, 0, 0, TimeSpan.Zero),
-                at => CommodityLedger.Week(at, DayOfWeek.Thursday, 7)));
+                at => CommodityLedger.Week(at, DayOfWeek.Thursday, 7)),
+            clipboard);
 
     private static ChecklistService Checklists(string folder) =>
         new(
@@ -94,7 +63,8 @@ public class TheRoutingTabIsInTheHeadsetTests
             () => null);
 
     /// <summary>A headset surface with the tab on it, drawn once so everything has a place on the quad.</summary>
-    private static (VrPanelSurface Panel, VrPixels Pixels, List<string> Copied) Headset()
+    private static (VrPanelSurface Panel, VrPixels Pixels, D47.Core.Capabilities.Builtin.RecordingClipboard Clipboard)
+        Headset()
     {
         var (settings, _, paths) = TestSurface.Create();
 
@@ -106,21 +76,21 @@ public class TheRoutingTabIsInTheHeadsetTests
 
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
 
-        var copied = new List<string>();
+        var clipboard = new D47.Core.Capabilities.Builtin.RecordingClipboard();
 
         var panel = new VrPanelSurface(
             new PanelViewModel(),
             settings,
             _ => null,
             checklists: Checklists(paths.Data),
-            routing: Surface(paths.Data, Registry(copied)));
+            routing: Surface(paths.Data, Registry(), clipboard));
 
         Dispatcher.UIThread.RunJobs();
 
         var (width, height) = panel.Size;
         var pixels = new VrPixels(width, height);
 
-        return (panel, pixels, copied);
+        return (panel, pixels, clipboard);
     }
 
     /// <summary>Selects a root and rasterises it, the way the runtime asks for a frame.</summary>
@@ -195,13 +165,13 @@ public class TheRoutingTabIsInTheHeadsetTests
     [AvaloniaFact]
     public void RoutingFollowsChecklistOnTheHeadsetAsItDoesInTheWindow()
     {
-        var (panel, _, copied) = Headset();
+        var (panel, _, clipboard) = Headset();
         var (_, _, paths) = TestSurface.Create();
 
         var window = new PanelView { DataContext = new PanelViewModel() };
 
         window.EnableChecklist(Checklists(paths.Data));
-        window.EnableRouting(Surface(paths.Data, Registry(copied)));
+        window.EnableRouting(Surface(paths.Data, Registry(), clipboard));
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(Tabs(window.Nav), Tabs(panel.Nav));
@@ -278,7 +248,7 @@ public class TheRoutingTabIsInTheHeadsetTests
     [AvaloniaFact]
     public void AProgressRowCopiesItsSystemWhenARayPressesIt()
     {
-        var (panel, pixels, copied) = Headset();
+        var (panel, pixels, clipboard) = Headset();
 
         Draw(panel, pixels, RoutingPages.ProgressRoot);
 
@@ -289,7 +259,7 @@ public class TheRoutingTabIsInTheHeadsetTests
         Assert.True(Press(panel, row));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(["Shinrarta Dezhra"], copied);
+        Assert.Equal(["Shinrarta Dezhra"], clipboard.Written);
     }
 
     /// <summary>

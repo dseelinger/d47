@@ -26,12 +26,14 @@ public sealed class CarrierPage : UserControl
 {
     private readonly CarrierSource _carrier;
     private readonly Func<DateTimeOffset> _now;
+    private readonly Func<string, Task<bool>>? _copy;
     private readonly StackPanel _body = new() { Spacing = 4 };
 
-    public CarrierPage(CarrierSource carrier, Func<DateTimeOffset>? now = null)
+    public CarrierPage(CarrierSource carrier, Func<DateTimeOffset>? now = null, Func<string, Task<bool>>? copy = null)
     {
         _carrier = carrier;
         _now = now ?? (() => DateTimeOffset.UtcNow);
+        _copy = copy;
 
         carrier.Changed += OnChanged;
 
@@ -177,7 +179,7 @@ public sealed class CarrierPage : UserControl
     {
         if (carrier.DestinationSystem is not { Length: > 0 } destination)
         {
-            return Row("System", carrier.StarSystem ?? "not seen");
+            return Row("System", carrier.StarSystem ?? "not seen", carrier.StarSystem);
         }
 
         var parking = string.IsNullOrWhiteSpace(carrier.DestinationBody)
@@ -186,7 +188,7 @@ public sealed class CarrierPage : UserControl
 
         if (carrier.DepartureTime is not { } departure)
         {
-            return Row("Jumping to", parking);
+            return Row("Jumping to", parking, destination);
         }
 
         // Counted against the clock the caller supplies rather than one read here, so a test can stand where
@@ -197,7 +199,8 @@ public sealed class CarrierPage : UserControl
             "Jumping to",
             left > TimeSpan.Zero
                 ? $"{parking} — leaves in {Left(left)}"
-                : $"{parking} — leaving now");
+                : $"{parking} — leaving now",
+            destination);
     }
 
     private void Services(CarrierState carrier)
@@ -252,7 +255,8 @@ public sealed class CarrierPage : UserControl
                 : $"{(int)span.TotalDays} days ago";
     }
 
-    private static Control Row(string label, string value)
+    /// <summary>A label and its value, with a copy glyph beside the value where <paramref name="system"/> names one.</summary>
+    private Control Row(string label, string value, string? system = null)
     {
         var grid = new Grid
         {
@@ -270,10 +274,25 @@ public sealed class CarrierPage : UserControl
             FontSize = Theming.TypeScale.Body,
         };
 
-        Grid.SetColumn(said, 1);
-
         grid.Children.Add(name);
-        grid.Children.Add(said);
+
+        if (system is { Length: > 0 } target && _copy is { } copy)
+        {
+            var content = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 6,
+                Children = { said, D47.App.Controls.CopyGlyph.For(target, copy) },
+            };
+
+            Grid.SetColumn(content, 1);
+            grid.Children.Add(content);
+        }
+        else
+        {
+            Grid.SetColumn(said, 1);
+            grid.Children.Add(said);
+        }
 
         return grid;
     }

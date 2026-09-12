@@ -35,7 +35,7 @@ public sealed class RouteCommunityGoalPage : UserControl
     private readonly CommunityGoalSurface _goal;
     private readonly Func<bool> _lookupsEnabled;
     private readonly Action? _openSettings;
-    private readonly Action<string>? _copy;
+    private readonly Func<string, Task<bool>>? _copy;
 
     private readonly Border _off;
     private readonly Border _form;
@@ -79,7 +79,7 @@ public sealed class RouteCommunityGoalPage : UserControl
         CommunityGoalSurface goal,
         Func<bool> lookupsEnabled,
         Action? openSettings = null,
-        Action<string>? copy = null)
+        Func<string, Task<bool>>? copy = null)
     {
         _registry = registry;
         _board = board;
@@ -459,21 +459,7 @@ public sealed class RouteCommunityGoalPage : UserControl
 
         if (_copy is { } copy)
         {
-            var button = new Button
-            {
-                Width = CopyButtonSize,
-                Height = CopyButtonSize,
-                Padding = new Thickness(4),
-                Background = Brushes.Transparent,
-                BorderThickness = new Thickness(0),
-            };
-
-            button.Click += (_, _) => copy(system);
-
-            D47.App.Controls.Glyphs.Mark(
-                button, D47.App.Controls.Glyphs.Copy, ThemeManager.AccentKey, $"Copy {system}", size: 12);
-
-            cells.Children.Add(button);
+            cells.Children.Add(D47.App.Controls.CopyGlyph.For(system, copy));
         }
 
         return cells;
