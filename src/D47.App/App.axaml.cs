@@ -105,7 +105,11 @@ public partial class App(AppHost? host) : Application
                 // And the fleet's own arithmetic (Phase 27) and its hull-art switch (#53), the same store the
                 // window's copy reads so the switch is not left in two places at once.
                 () => host.ModulePower,
-                new Panel.ShipsDrawingsMemory(host.ViewState));
+                new Panel.ShipsDrawingsMemory(host.ViewState),
+
+                // And the Engineers tab's two checkbox filters (#132), on the same terms as the drawing
+                // switch above.
+                new Panel.EngineerDirectoryMemory(host.ViewState));
 
             // And the headset's copy of the panel can be the one asking for a spoken value (Phase 25), or
             // the one with a keyboard up for a value to be spelled onto (#51).
@@ -157,6 +161,7 @@ public partial class App(AppHost? host) : Application
                     Ships = host.Ships,
                     GameState = () => host.GameState.Active,
                     OnFoot = host.OnFootPlans,
+                    EngineersMemory = new Panel.EngineerDirectoryMemory(host.ViewState),
                     Timekeeper = host.Timekeeper,
                     Alarms = host.Alarms,
                 });

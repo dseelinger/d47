@@ -26,7 +26,8 @@ public static class EngineersPages
     public const string WhoPrefix = "engineers.who:";
 
     /// <summary>Draws whichever level a crumb names.</summary>
-    public static Control Build(NavCrumb crumb, EngineerSource source, PanelNavigator nav)
+    public static Control Build(
+        NavCrumb crumb, EngineerSource source, PanelNavigator nav, EngineerDirectoryMemory? memory = null)
     {
         if (crumb.Key.StartsWith(WhoPrefix, StringComparison.Ordinal))
         {
@@ -34,9 +35,13 @@ public static class EngineersPages
         }
 
         return crumb.Key == RouteRoot
-            ? new EngineerRoutePage(source, nav)
-            : new EngineerDirectoryPage(source, nav);
+            ? new EngineerRoutePage(source, nav, memory)
+            : new EngineerDirectoryPage(source, nav, memory);
     }
+
+    /// <summary>Whether the two checkbox filters leave this engineer on the list (#132).</summary>
+    internal static bool Shown(EngineerDirectoryMemory? memory, Engineer engineer) =>
+        memory is null || !memory.Hides(engineer);
 
     /// <summary>The crumb for one engineer, keyed on the id the journal writes rather than a name.</summary>
     public static NavCrumb Crumb(Engineer engineer) =>
@@ -161,34 +166,64 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage
     };
 
     private readonly StackPanel _list = new() { Spacing = 3 };
-    private readonly Button _colonia;
+    private readonly EngineerDirectoryMemory? _memory;
+
+    private readonly CheckBox _colonia = new()
+    {
+        Content = "Hide the Colonia eight",
+        MinHeight = 30,
+        VerticalAlignment = VerticalAlignment.Center,
+    };
+
+    private readonly CheckBox _onFoot = new()
+    {
+        Content = "Hide on-foot engineers",
+        MinHeight = 30,
+        VerticalAlignment = VerticalAlignment.Center,
+    };
+
     private string? _query;
 
-    /// <summary>Whether the eight engineers out at Colonia are on the list (remediation.md 13, item 11).</summary>
-    private bool _far = true;
-
-    public EngineerDirectoryPage(EngineerSource source, PanelNavigator nav)
+    public EngineerDirectoryPage(EngineerSource source, PanelNavigator nav, EngineerDirectoryMemory? memory = null)
         : base(source)
     {
         _nav = nav;
+        _memory = memory;
 
-        _colonia = LoadoutPages.Press(string.Empty, () =>
+        _colonia.IsChecked = memory?.HideColonia ?? false;
+        _onFoot.IsChecked = memory?.HideOnFoot ?? false;
+
+        // The switch owns the flag rather than mirroring it back — the same reason the goals band's
+        // toggle does (ChecklistPage._arcsToggle).
+        _colonia.IsCheckedChanged += (_, _) =>
         {
-            _far = !_far;
+            _memory?.RememberColonia(_colonia.IsChecked == true);
             Refresh();
-        });
+        };
 
-        _colonia.Margin = new Thickness(0, 0, 0, 10);
+        _onFoot.IsCheckedChanged += (_, _) =>
+        {
+            _memory?.RememberOnFoot(_onFoot.IsChecked == true);
+            Refresh();
+        };
+
+        var checks = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 12,
+            Margin = new Thickness(0, 0, 0, 10),
+            Children = { _colonia, _onFoot },
+        };
 
         var root = new DockPanel { Margin = new Thickness(14) };
         var say = LoadoutPages.SayLine("who should I unlock next");
 
         DockPanel.SetDock(_summary, Dock.Top);
-        DockPanel.SetDock(_colonia, Dock.Top);
+        DockPanel.SetDock(checks, Dock.Top);
         DockPanel.SetDock(say, Dock.Bottom);
 
         root.Children.Add(_summary);
-        root.Children.Add(_colonia);
+        root.Children.Add(checks);
         root.Children.Add(say);
         root.Children.Add(LoadoutPages.Scrolling(_list));
 
@@ -216,11 +251,7 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage
         _summary.Text = report.Summary();
         _list.Children.Clear();
 
-        // Short enough to survive a narrow pane: a button does not wrap, and the first draft of this label
-        // was cut off mid-word at the default panel width.
-        _colonia.Content = _far ? "Hide the Colonia eight" : "Show Colonia again";
-
-        var shown = report.Directory.Where(Matches).Where(Near).ToList();
+        var shown = report.Directory.Where(Matches).Where(NotHidden).ToList();
 
         if (shown.Count == 0)
         {
@@ -274,9 +305,8 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage
         }
     }
 
-    /// <summary>Whether this engineer survives the Colonia filter (remediation.md 13, item 11).</summary>
-    private bool Near(EngineerEntry entry) =>
-        _far || entry.Engineer.IsFarFromTheBubble != true;
+    /// <summary>Whether this engineer survives the two checkbox filters (#132).</summary>
+    private bool NotHidden(EngineerEntry entry) => EngineersPages.Shown(_memory, entry.Engineer);
 
     private bool Matches(EngineerEntry entry) =>
         _query is not { } query
@@ -490,6 +520,7 @@ public sealed class EngineerRoutePage : EngineerPageBase
     private const int Shown = 5;
 
     private readonly PanelNavigator _nav;
+    private readonly EngineerDirectoryMemory? _memory;
 
     private readonly StackPanel _body = new() { Spacing = 2 };
     private readonly TextBlock _said = new()
@@ -500,10 +531,11 @@ public sealed class EngineerRoutePage : EngineerPageBase
         Margin = new Thickness(0, 8, 0, 0),
     };
 
-    public EngineerRoutePage(EngineerSource source, PanelNavigator nav)
+    public EngineerRoutePage(EngineerSource source, PanelNavigator nav, EngineerDirectoryMemory? memory = null)
         : base(source)
     {
         _nav = nav;
+        _memory = memory;
         var root = new DockPanel { Margin = new Thickness(14) };
         var say = LoadoutPages.SayLine("who should I unlock next");
 
@@ -537,7 +569,12 @@ public sealed class EngineerRoutePage : EngineerPageBase
         // What the ranking was measured from, said out loud.
         _body.Children.Add(LoadoutPages.Muted(Measured(report)));
 
-        if (report.Route.Count == 0)
+        // The Directory's two ticks take rows off this ranking too, without touching the ranking itself
+        // (#132) — EngineerPlanService.Describe() reads the same UnlockPlanner.Rank output for the
+        // spoken answer, which stays unfiltered.
+        var route = report.Route.Where(candidate => EngineersPages.Shown(_memory, candidate.Engineer)).ToList();
+
+        if (route.Count == 0)
         {
             _body.Children.Add(LoadoutPages.Muted(
                 "There is nobody left to unlock at the grade your plans ask for."));
@@ -545,7 +582,7 @@ public sealed class EngineerRoutePage : EngineerPageBase
             return;
         }
 
-        foreach (var candidate in report.Route.Take(Shown))
+        foreach (var candidate in route.Take(Shown))
         {
             // The ranked name opens that engineer rather than merely heading a block (remediation.md 12, item
             // 7).
@@ -578,11 +615,11 @@ public sealed class EngineerRoutePage : EngineerPageBase
             _body.Children.Add(promote);
         }
 
-        if (report.Route.Count > Shown)
+        if (route.Count > Shown)
         {
             // Said rather than silently cut.
             _body.Children.Add(LoadoutPages.Muted(
-                $"{(report.Route.Count - Shown).ToString(CultureInfo.InvariantCulture)} more ranked "
+                $"{(route.Count - Shown).ToString(CultureInfo.InvariantCulture)} more ranked "
                 + "below these, on the Directory."));
         }
     }

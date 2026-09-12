@@ -6,6 +6,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Panel;
 using D47.Core.Checklists;
+using D47.Core.Configuration;
 using D47.Core.Engineers;
 using D47.Core.Interface;
 using D47.Core.Journal;
@@ -80,9 +81,13 @@ public class EngineersTabTests
         var onFoot = new OnFootPlanService(kit, checklists, () => state);
         var unlocks = new EngineerPlanService(builds, kit, checklists, () => state);
 
+        var viewState = new ViewStateStore(
+            new D47.Core.AppPaths(root), NullLogger<ViewStateStore>.Instance);
+        var memory = new EngineerDirectoryMemory(viewState);
+
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
-        panel.EnableEngineers(unlocks, ships, () => state, onFoot);
+        panel.EnableEngineers(unlocks, ships, () => state, onFoot, memory);
 
         var window = new Window { Content = panel, Width = 900, Height = 700 };
         window.Show();
@@ -346,8 +351,12 @@ public class EngineersTabTests
         surface.Window.Close();
     }
 
+    private static CheckBox Check(PanelView panel, string label) =>
+        panel.GetVisualDescendants().OfType<CheckBox>().Single(box => box.Content?.ToString() == label);
+
     /// <summary>
- /// The eight engineers out at Colonia can be taken off the list.
+    /// The eight engineers out at Colonia can be taken off the list, and back, without touching who is
+    /// on foot (#132).
     /// </summary>
     [AvaloniaFact]
     public void TheColoniaEngineersCanBeHidden()
@@ -358,7 +367,7 @@ public class EngineersTabTests
         Assert.Contains(Text(surface.Panel), line => line.StartsWith("Mel Brandon", StringComparison.Ordinal));
         Assert.Contains(Text(surface.Panel), line => line.StartsWith("Felicity Farseer", StringComparison.Ordinal));
 
-        Press(surface.Panel, "Hide the Colonia eight").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Check(surface.Panel, "Hide the Colonia eight").IsChecked = true;
         Dispatcher.UIThread.RunJobs();
 
         Assert.DoesNotContain(Text(surface.Panel), line => line.StartsWith("Mel Brandon", StringComparison.Ordinal));
@@ -366,12 +375,123 @@ public class EngineersTabTests
         Assert.Contains(Text(surface.Panel), line => line.StartsWith("Felicity Farseer", StringComparison.Ordinal));
 
         // And back, because a filter that cannot be undone is a setting nobody meant to change.
-        Press(surface.Panel, "Show Colonia again").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Check(surface.Panel, "Hide the Colonia eight").IsChecked = false;
         Dispatcher.UIThread.RunJobs();
 
         Assert.Contains(Text(surface.Panel), line => line.StartsWith("Mel Brandon", StringComparison.Ordinal));
 
         surface.Window.Close();
+    }
+
+    /// <summary>The on-foot engineers can be taken off the list independently of the Colonia tick (#132).</summary>
+    [AvaloniaFact]
+    public void TheOnFootEngineersCanBeHidden()
+    {
+        var surface = Open();
+
+        Assert.Contains(Text(surface.Panel), line => line.StartsWith("Jude Navarro", StringComparison.Ordinal));
+        Assert.Contains(Text(surface.Panel), line => line.StartsWith("Domino Green", StringComparison.Ordinal));
+
+        Check(surface.Panel, "Hide on-foot engineers").IsChecked = true;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.DoesNotContain(Text(surface.Panel), line => line.StartsWith("Jude Navarro", StringComparison.Ordinal));
+        Assert.DoesNotContain(Text(surface.Panel), line => line.StartsWith("Domino Green", StringComparison.Ordinal));
+        Assert.Contains(Text(surface.Panel), line => line.StartsWith("Felicity Farseer", StringComparison.Ordinal));
+
+        surface.Window.Close();
+    }
+
+    /// <summary>Both ticked together leaves 21 rows, Baltanos counted off once rather than twice (#132).</summary>
+    [AvaloniaFact]
+    public void BothTicksTogetherLeaveTwentyOne()
+    {
+        var surface = Open();
+
+        Check(surface.Panel, "Hide the Colonia eight").IsChecked = true;
+        Check(surface.Panel, "Hide on-foot engineers").IsChecked = true;
+        Dispatcher.UIThread.RunJobs();
+
+        // Baltanos is on both lists — gone once, not counted twice anywhere, and the summary above the
+        // ticks still counts the whole directory.
+        Assert.DoesNotContain(Text(surface.Panel), line => line.StartsWith("Baltanos", StringComparison.Ordinal));
+        Assert.Contains(Text(surface.Panel), line => line.Contains("1 of 38 unlocked", StringComparison.Ordinal));
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
+    /// The Route page has no checkboxes of its own — it carries nobody a Directory tick has hidden
+    /// (#132).
+    /// </summary>
+    [AvaloniaFact]
+    public void ARouteHiddenOnTheDirectoryDoesNotRank()
+    {
+        var surface = Open();
+
+        Check(surface.Panel, "Hide on-foot engineers").IsChecked = true;
+        Dispatcher.UIThread.RunJobs();
+
+        surface.Panel.Nav.SelectRoot(EngineersPages.RouteRoot);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.DoesNotContain(Text(surface.Panel), line => line == "Jude Navarro");
+
+        surface.Window.Close();
+    }
+
+    /// <summary>Both ticks are remembered, so reopening the tab restores them as they were left (#132).</summary>
+    [AvaloniaFact]
+    public void BothTicksAreRememberedAcrossAReopen()
+    {
+        var root = TempFolders.Create("d47-engineers-tick-memory-tests");
+        var state = State();
+
+        var checklists = new ChecklistService(
+            new ChecklistStore(Path.Combine(root, "checklist.json"), NullLogger<ChecklistStore>.Instance),
+            new ChecklistProposalStore(
+                Path.Combine(root, "checklist-proposals.json"),
+                NullLogger<ChecklistProposalStore>.Instance),
+            () => state);
+
+        var builds = new ShipBuildStore(Path.Combine(root, "ships.json"), NullLogger<ShipBuildStore>.Instance);
+        var kit = new OnFootBuildStore(Path.Combine(root, "on-foot.json"), NullLogger<OnFootBuildStore>.Instance);
+        var ships = new ShipPlanService(builds, checklists, () => state);
+        var onFoot = new OnFootPlanService(kit, checklists, () => state);
+        var unlocks = new EngineerPlanService(builds, kit, checklists, () => state);
+        var paths = new D47.Core.AppPaths(root);
+
+        var firstPanel = new PanelView { DataContext = new PanelViewModel() };
+
+        firstPanel.EnableEngineers(
+            unlocks, ships, () => state, onFoot,
+            new EngineerDirectoryMemory(new ViewStateStore(paths, NullLogger<ViewStateStore>.Instance)));
+
+        var firstWindow = new Window { Content = firstPanel, Width = 900, Height = 700 };
+        firstWindow.Show();
+        firstPanel.Tab = PanelTab.Engineers;
+        Dispatcher.UIThread.RunJobs();
+
+        Check(firstPanel, "Hide the Colonia eight").IsChecked = true;
+        Check(firstPanel, "Hide on-foot engineers").IsChecked = true;
+        Dispatcher.UIThread.RunJobs();
+        firstWindow.Close();
+
+        var secondPanel = new PanelView { DataContext = new PanelViewModel() };
+
+        secondPanel.EnableEngineers(
+            unlocks, ships, () => state, onFoot,
+            new EngineerDirectoryMemory(new ViewStateStore(paths, NullLogger<ViewStateStore>.Instance)));
+
+        var secondWindow = new Window { Content = secondPanel, Width = 900, Height = 700 };
+        secondWindow.Show();
+        secondPanel.Tab = PanelTab.Engineers;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(Check(secondPanel, "Hide the Colonia eight").IsChecked);
+        Assert.True(Check(secondPanel, "Hide on-foot engineers").IsChecked);
+
+        secondWindow.Close();
     }
 
  /// <summary>

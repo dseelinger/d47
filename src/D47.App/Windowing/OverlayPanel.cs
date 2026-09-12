@@ -156,7 +156,7 @@ public sealed class OverlayPanel : Window
 
         if (tabs.Unlocks is { } unlocks && tabs.Ships is { } ships && tabs.GameState is { } state)
         {
-            _view.EnableEngineers(unlocks, ships, state, tabs.OnFoot);
+            _view.EnableEngineers(unlocks, ships, state, tabs.OnFoot, tabs.EngineersMemory);
         }
 
         if (tabs.Timekeeper is { } timekeeper && tabs.Alarms is { } alarms)

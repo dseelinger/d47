@@ -84,7 +84,8 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         // The fleet and its builds, what the Commander is wearing and the gap between them (Phases 26-27), in
         // the headset from 2026-09-09 (#53).
         Func<D47.Core.Journal.ModulePower>? modulePower = null,
-        ShipsDrawingsMemory? drawings = null)
+        ShipsDrawingsMemory? drawings = null,
+        EngineerDirectoryMemory? engineersMemory = null)
     {
         _dumpTo = dumpTo;
 
@@ -152,7 +153,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         if (unlocks is not null && ships is not null && gameState is not null)
         {
             // And who to go and get next (Phase 28).
-            _view.EnableEngineers(unlocks, ships, gameState, onFoot);
+            _view.EnableEngineers(unlocks, ships, gameState, onFoot, engineersMemory);
         }
 
         if (timekeeper is not null && alarmStore is not null)

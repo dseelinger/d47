@@ -50,6 +50,12 @@ public sealed record ViewState
     /// <summary>Whether the Ships index draws its hull artwork, or packs the cards down to their names.</summary>
     public bool ShipsDrawingsOff { get; init; }
 
+    /// <summary>Whether the Engineers tab has taken the Colonia eight off its lists (#132).</summary>
+    public bool EngineersColoniaHidden { get; init; }
+
+    /// <summary>Whether the Engineers tab has taken the on-foot engineers off its lists (#132).</summary>
+    public bool EngineersOnFootHidden { get; init; }
+
     /// <summary>
     /// Which reading each tab was left on, by tab name and root key (#268) — the Transcript on the log
     /// file, Routing on Course.

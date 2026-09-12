@@ -140,7 +140,8 @@ public sealed class VrHost : IDisposable
         D47.Core.Knowledge.CarrierManifest? carrier = null,
         Panel.RoutingSurface? routing = null,
         Func<D47.Core.Journal.ModulePower>? modulePower = null,
-        Panel.ShipsDrawingsMemory? drawings = null)
+        Panel.ShipsDrawingsMemory? drawings = null,
+        Panel.EngineerDirectoryMemory? engineersMemory = null)
     {
         VrHost? self = null;
 
@@ -148,7 +149,7 @@ public sealed class VrHost : IDisposable
             model, settings, slot => self?.AnchorFor(slot), avatars, dumpTo, settingsPage,
             checklists, timekeeper, alarmStore, ships, gameState, onFoot, unlocks, goals,
             backfillGoals, adventures, viewState, capabilities, sourcingBoard, carrier, routing,
-            modulePower, drawings);
+            modulePower, drawings, engineersMemory);
         var layer = new CaptionLayer { Settings = settings.Current.Vr.Captions };
         var captions = new VrCaptionSurface(layer);
 

@@ -59,6 +59,9 @@ public sealed record Engineer
     public bool? IsFarFromTheBubble =>
         Position is { } there ? there.DistanceTo(StarPosition.Origin) > 5000 : null;
 
+    /// <summary>Whether they grade Odyssey suits and weapons rather than a ship (#132).</summary>
+    public bool IsOnFoot => Id >= 400000;
+
     /// <summary>How the Commander learns they exist, in prose.</summary>
     public string? Discovery { get; init; }
 

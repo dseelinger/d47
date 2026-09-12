@@ -656,7 +656,8 @@ public partial class PanelView : UserControl
         D47.Core.Engineers.EngineerPlanService unlocks,
         D47.Core.Ships.ShipPlanService ships,
         Func<D47.Core.Journal.CommanderGameState?> state,
-        D47.Core.Loadout.OnFootPlanService? onFoot = null)
+        D47.Core.Loadout.OnFootPlanService? onFoot = null,
+        EngineerDirectoryMemory? memory = null)
     {
         var source = new EngineerSource(unlocks.Report, engineer => unlocks.Promote(engineer));
 
@@ -677,7 +678,7 @@ public partial class PanelView : UserControl
 
         Furnish(
             PanelTab.Engineers,
-            crumb => EngineersPages.Build(crumb, source, Nav),
+            crumb => EngineersPages.Build(crumb, source, Nav, memory),
             new NavCrumb(EngineersPages.DirectoryRoot, "Directory") { Help = help },
             new NavCrumb(EngineersPages.RouteRoot, "Route") { Help = help });
     }

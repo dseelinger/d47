@@ -6,6 +6,17 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.112.9 — Controls that draw their state
+
+The Engineers tab's Colonia filter was a button that rewrote its own label — "Hide the Colonia
+eight" or "Show Colonia again" — so the only way to read which way it was set was to read the
+offer to change it, and the setting was gone at the next launch.
+
+It is now two checkboxes, **Hide the Colonia eight** and **Hide on-foot engineers**, both
+unticked by default and both remembered between sessions. Either can take rows off the Directory
+and the Route page's ranked list without touching how the ranking itself is worked out or what the
+spoken answer says.
+
 ## 0.112.8 — An engineer's row says who it opens
 
 An engineer whose referral gates somebody else drew no line about it, however much the Commander's
