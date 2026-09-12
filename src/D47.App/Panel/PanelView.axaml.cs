@@ -2366,6 +2366,10 @@ public partial class PanelView : UserControl
             // a tab that grows levels needs nothing added here.
             page = new DrillView(Nav, tab, build);
 
+            // The strip's first draw runs on attachment to the visual tree, which on a cold start happens
+            // after this method returns and ShowSearch() has already asked whether the page filters.
+            page.Drawn += (_, _) => ShowSearch();
+
             // A strip built after the host furnished this surface still gets handles - the tabs are built on
             // first sight rather than up front, so most of them arrive here (Phase 55).
             if (_paneWidths is not null)

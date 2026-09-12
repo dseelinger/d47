@@ -40,6 +40,12 @@ public sealed class DrillView : UserControl, IFilterablePage
     /// <summary>What is currently laid out, so a redraw that changes nothing does nothing.</summary>
     private IReadOnlyList<string> _showing = [];
 
+    /// <summary>
+    /// Raised whenever a draw changes what is showing, so a search row decided before the first draw
+    /// (cold start attaches the strip after the pane already asked) gets asked again.
+    /// </summary>
+    public event EventHandler? Drawn;
+
     private int _panes = 1;
 
     /// <summary>
@@ -135,6 +141,7 @@ public sealed class DrillView : UserControl, IFilterablePage
         {
             Empty();
             _showing = [];
+            Drawn?.Invoke(this, EventArgs.Empty);
             return;
         }
 
@@ -204,6 +211,8 @@ public sealed class DrillView : UserControl, IFilterablePage
                 _strip.Children.Add(Handle(index));
             }
         }
+
+        Drawn?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>The grab area on one rule (Phase 55).</summary>

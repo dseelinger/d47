@@ -6,6 +6,17 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.112.2 — The search box shows up on a filterable tab's first visit
+
+Opening Checklist, or another tab whose panes filter, from a cold start left the search box
+missing until the tab was left and revisited. The row was decided from the tab's drill strip
+before the strip had drawn its panes for the first time, so the question "does this tab filter"
+was asked and answered "no" a layout pass too early, with nothing to ask it again once the strip
+had finished drawing.
+
+The strip now says when it has drawn, and the panel asks the question again when it does. The
+search box is there on the first look.
+
 ## 0.110.49 — Turning off a chat or chatter switch now takes effect immediately
 
 Seven rows in Speech, "Other voices" and the personality half of the two chatter gates were read
