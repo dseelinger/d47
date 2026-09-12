@@ -13,10 +13,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>
-/// The way out of mini, seated rather than given a row of its own, and drawn half the size it
-/// was.
-/// </summary>
+/// <summary>The way out of mini, seated rather than given a row of its own.</summary>
 public class TheWayOutTakesASeatTests
 {
     [AvaloniaFact]
@@ -111,9 +108,9 @@ public class TheWayOutTakesASeatTests
         window.Close();
     }
 
- /// <summary>Half of the 17 it was, and smaller than the 14 every other mark takes.</summary>
+    /// <summary>The size every other mark in the family takes, on a finer pen than they use.</summary>
     [AvaloniaFact]
-    public void TheMarkIsHalfTheSizeItWas()
+    public void TheMarkMatchesTheRestOfTheFamily()
     {
         var (window, panel) = Open();
 
@@ -124,8 +121,9 @@ public class TheWayOutTakesASeatTests
         {
             var glyph = Assert.IsType<Avalonia.Controls.Shapes.Path>(panel.GetControl<Button>(name).Content);
 
-            Assert.Equal(8.5, glyph.Width);
-            Assert.Equal(8.5, glyph.Height);
+            Assert.Equal(14, glyph.Width);
+            Assert.Equal(14, glyph.Height);
+            Assert.Equal(0.8, glyph.StrokeThickness);
         }
 
         window.Close();

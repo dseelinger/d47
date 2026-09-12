@@ -180,15 +180,17 @@ internal sealed class HullPicture : Grid
             () => Resize(HullPictureSize.Wide)));
 
         _marks.Children.Add(Step(
-            Glyphs.Expand, "The whole window, with zoom", showing: false, Expand));
+            Glyphs.Expand, "The whole window, with zoom", showing: false, Expand, strokeThickness: 0.8));
     }
 
-    private static Button Step(string glyph, string said, bool showing, Action pressed)
+    private static Button Step(
+        string glyph, string said, bool showing, Action pressed, double strokeThickness = 2)
     {
         var button = new Button
         {
             Content = Glyphs.Draw(
-                glyph, showing ? ThemeManager.AccentKey : ThemeManager.TextMutedKey, size: 13),
+                glyph, showing ? ThemeManager.AccentKey : ThemeManager.TextMutedKey, size: 13,
+                strokeThickness: strokeThickness),
             Padding = new Thickness(6, 2),
             Background = Brushes.Transparent,
             BorderThickness = new Thickness(showing ? 1 : 0),

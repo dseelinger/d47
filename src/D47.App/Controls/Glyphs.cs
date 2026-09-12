@@ -15,19 +15,17 @@ namespace D47.App.Controls;
 /// </summary>
 public static class Glyphs
 {
-    /// <summary>
-    /// Show more: four corner brackets opening outwards, which is the mark every video player and
-    /// browser uses for full screen.
-    /// </summary>
+    /// <summary>Show more: four diagonal arrows, heads pointing outward to the corners.</summary>
     public const string Expand =
-        "M 4,10 L 4,4 L 10,4  M 14,4 L 20,4 L 20,10  M 20,14 L 20,20 L 14,20  M 10,20 L 4,20 L 4,14";
+        "M 4.8,7.6 L 4.8,4.8 L 7.6,4.8  M 4.8,4.8 L 9.8,9.8  M 16.4,4.8 L 19.2,4.8 L 19.2,7.6"
+        + "  M 19.2,4.8 L 14.2,9.8  M 19.2,16.4 L 19.2,19.2 L 16.4,19.2  M 19.2,19.2 L 14.2,14.2"
+        + "  M 7.6,19.2 L 4.8,19.2 L 4.8,16.4  M 4.8,19.2 L 9.8,14.2";
 
-    /// <summary>
-    /// Show less: the same four brackets pulled inwards, which is the same players' mark for leaving
-    /// full screen.
-    /// </summary>
+    /// <summary>Show less: four diagonal arrows, heads pointing inward to the centre.</summary>
     public const string Shrink =
-        "M 4,10 L 10,10 L 10,4  M 20,10 L 14,10 L 14,4  M 20,14 L 14,14 L 14,20  M 4,14 L 10,14 L 10,20";
+        "M 7.2,10 L 10,10 L 10,7.2  M 10,10 L 4.5,4.5  M 16.8,10 L 14,10 L 14,7.2  M 14,10 L 19.5,4.5"
+        + "  M 16.8,14 L 14,14 L 14,16.8  M 14,14 L 19.5,19.5  M 7.2,14 L 10,14 L 10,16.8"
+        + "  M 10,14 L 4.5,19.5";
 
     /// <summary>
     /// A picture in half the width with the words beside it: a box on the right, short lines to its
@@ -135,9 +133,14 @@ public static class Glyphs
     /// <param name="size">
     /// Pixels across, square. 14 sits beside secondary text; the microphone uses 13 beside small text.
     /// </param>
-    public static Path Draw(string data, string brush, double size = 14, bool filled = false)
+    /// <param name="strokeThickness">
+    /// Pen weight. 2 for every mark but <see cref="Expand"/> and <see cref="Shrink"/>, whose
+    /// arrowheads need a finer pen to read as points rather than as thickenings of the shaft.
+    /// </param>
+    public static Path Draw(
+        string data, string brush, double size = 14, bool filled = false, double strokeThickness = 2)
     {
-        var glyph = Made(data, size);
+        var glyph = Made(data, size, strokeThickness);
 
         // Bound rather than assigned, so switching theme repaints it — colour by role, never by literal, and
         // never a colour read once at build time (Phase 4).
@@ -158,7 +161,7 @@ public static class Glyphs
     /// The box is the mark's own shape, not always a square (reported 2026-09-01 — the minus "is at the
     /// top of the square block").
     /// </summary>
-    private static Path Made(string data, double size)
+    private static Path Made(string data, double size, double strokeThickness = 2)
     {
         var geometry = Geometry.Parse(data);
         var bounds = geometry.Bounds;
@@ -171,7 +174,7 @@ public static class Glyphs
             Width = size * bounds.Width / longest,
             Height = size * bounds.Height / longest,
             Stretch = Stretch.Uniform,
-            StrokeThickness = 2,
+            StrokeThickness = strokeThickness,
             StrokeLineCap = PenLineCap.Round,
             StrokeJoin = PenLineJoin.Round,
             Data = geometry,
@@ -185,9 +188,10 @@ public static class Glyphs
     /// the name a screen reader says.
     /// </summary>
     public static void Mark(
-        Button button, string data, string brush, string says, double size = 14, bool filled = false)
+        Button button, string data, string brush, string says, double size = 14, bool filled = false,
+        double strokeThickness = 2)
     {
-        button.Content = Draw(data, brush, size, filled);
+        button.Content = Draw(data, brush, size, filled, strokeThickness);
 
         ToolTip.SetTip(button, says);
         Avalonia.Automation.AutomationProperties.SetName(button, says);

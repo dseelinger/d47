@@ -17,6 +17,11 @@ unticked by default and both remembered between sessions. Either can take rows o
 and the Route page's ranked list without touching how the ranking itself is worked out or what the
 spoken answer says.
 
+The expand and shrink marks on the mini panel's way out were four corner brackets at a size where
+the arms were shorter than the pen was wide, so the mark read as a plus sign. Both are now diagonal
+arrows — heads outward for expand, inward for shrink — drawn on a finer pen and at the size the
+rest of the mark family uses.
+
 ## 0.112.8 — An engineer's row says who it opens
 
 An engineer whose referral gates somebody else drew no line about it, however much the Commander's

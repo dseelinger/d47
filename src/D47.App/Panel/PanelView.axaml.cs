@@ -1839,8 +1839,10 @@ public partial class PanelView : UserControl
                 Theming.ThemeManager.AccentKey,
                 full ? "Shrink to the mini panel" : "Expand to the whole panel",
 
-                // Half of the 17 this was, and smaller than the 14 every other mark takes (#193).
-                size: 8.5);
+                // Diagonal arrows read as points rather than shaft-thickenings at the family's usual weight,
+                // so this pair takes a finer pen (#140).
+                size: 14,
+                strokeThickness: 0.8);
         }
 
         // Mini is "the transcript's tail and the provenance line" and nothing else, so the tabs, the mode
