@@ -6,6 +6,22 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.112.4 — A ship with no Fuel Scoop is warned when its fuel will not finish the route
+
+Flying without a Fuel Scoop silenced every route fuel warning, because each one was about a star
+that could not be scooped. A Commander whose only way to refuel is a station heard nothing when the
+route was longer than their fuel would last.
+
+Fuel on a route is now its own warning. It works out how many jumps the fuel in the tank covers,
+from the fuel each jump has actually used this session, and warns when the route is longer than
+that with nowhere to refuel inside it: "Fuel warning. At 2.1 tonnes a jump there is fuel for 4
+jumps, and the route has 9 jumps left." A ship with no scoop hears nothing about stars. A ship with
+a scoop hears how far away the nearest scoopable star on the route is.
+
+The line that said an unscoopable next star left too little fuel for the jump beyond it is replaced
+by this warning. The warning about an unscoopable star before a jump that is out of range is
+unchanged.
+
 ## 0.112.3 — A sold ship's build is deleted with its checklist lines
 
 Elite reuses ship ids: sell a ship and the next one bought can take its number. A build pinned to

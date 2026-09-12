@@ -245,29 +245,54 @@ model** — the spoken line is chosen by which id arrived and is otherwise a con
 
 #### Fuel and range {#fuel}
 
-Low fuel is the easy half. The half that matters is this one:
+Three separate warnings, each answering a different question.
+
+**How much is in the tank.** Low fuel at 25%, critical at 10%, said once as the level crosses
+each line.
+
+**Whether your fuel reaches somewhere to refuel.** On a plotted route, Directive 47 works out how
+many more jumps the fuel in your tank covers, and warns when the route runs longer than that with
+nowhere to refuel inside it:
+
+```text
+Fuel warning. At 2.1 tonnes a jump there is fuel for 4 jumps, and the route has 9 jumps left.
+Replot through a station to refuel.
+```
+
+That is the wording for a ship with no Fuel Scoop: nothing in it is about stars. With a scoop
+fitted, the nearest scoopable star on the route counts as a refuel, and the warning says how far
+away it is:
+
+```text
+Fuel warning. At 2.1 tonnes a jump there is fuel for 2 jumps, and the nearest scoopable star on
+the route is 3 jumps away. Refuel or replot.
+```
+
+It is said once per route, and again when the fuel covers only one more jump or none. A new route
+or a different ship is checked afresh. It needs one jump in the ship you are flying to know what a
+jump costs, and says nothing before then. Stations along the route
+are not looked up, so for a ship with no scoop it tells you the fuel will not finish the route, not
+where to stop.
+
+**Whether the next star strands you.** With a scoop fitted, an unscoopable next star is mentioned,
+and it becomes urgent when the jump beyond it is further than your range:
 
 ```text
 Route warning. Hyades Sector DB-X d1-112 is class T and cannot be scooped, and the jump beyond
 it is 61.2 light years against a maximum range of 52.3. Replot before you jump.
 ```
 
-That is not a low-fuel warning — your tank can be nearly full when it becomes true — and without
-it the first you know is when you are parked at a brown dwarf with no way out.
+That is not about fuel at all: your tank can be full when it becomes true.
 
-Every number in it came from your own game: the route and star classes from the route file, your
-jump range from your ship's loadout, your fuel from the status file, and how much you actually
-burn per jump averaged from the jumps you have already made this session. Nothing is looked up
-anywhere.
+Every number in these came from your own game: the route and star classes from the route file,
+your jump range from your ship's loadout, your fuel from the status file, and how much you burn
+per jump averaged from the jumps you have made this session. Nothing is looked up anywhere.
 
-**Fly without a Fuel Scoop and none of this is said.** Every line of it is about scooping — this
-star cannot be scooped, and here is what that costs you — and if you cannot scoop at all then the
-star being singled out is not the exception, it is every star on the route. Directive 47 goes quiet
-rather than rewording it. **The low-fuel warnings stay**, because those are about your tank, and
-flying without a scoop is when you want them most. It takes a loadout Directive 47 can see — and
-since it remembers what every ship of yours was last carrying, joining a session already in flight
-no longer means it cannot see one. Only a ship it has never watched you fly leaves it warning you
-as before.
+**Fly without a Fuel Scoop and the star lines are not said.** Each one is about scooping, and if
+you cannot scoop at all then every star on the route is one you cannot scoop. The tank warnings
+and the fuel-reach warning still speak, because they are about your fuel. Leaving the star lines
+out needs a loadout Directive 47 can see, and it remembers what every ship of yours was last carrying, so joining a
+session already in flight still counts. A ship it has never watched you fly hears all three.
 
 #### Route progress {#route}
 

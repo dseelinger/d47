@@ -3,7 +3,10 @@ using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Callouts;
 
-/// <summary>Fuel, and the specific way a Commander gets stranded (Phase 8, "Fuel and range safety").</summary>
+/// <summary>
+/// The tank level, and the plotted route's unscoopable stars (Phase 8, "Fuel and range safety"). Every route
+/// line is a claim about scooping; whether the fuel reaches a refuel is <see cref="FuelReachCallout"/>.
+/// </summary>
 /// <param name="logger">
 /// Where to say that neither the journal nor the remembered loadouts can describe the ship (#337).
 /// </param>
@@ -22,25 +25,8 @@ public sealed class FuelCallout(ILogger? logger = null) : ICallout
     private bool _wasCritical;
     private string? _warnedAboutRouteFrom;
 
-    /// <summary>Fuel actually burned on the jumps seen this session.</summary>
-    private double _fuelBurned;
-
-    private int _jumpsBurned;
-
-    private double? AverageFuelPerJump => _jumpsBurned > 0 ? _fuelBurned / _jumpsBurned : null;
-
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
-        // Folded even while priming — that is the point of priming.
-        foreach (var journalEvent in context.Events)
-        {
-            if (journalEvent.Kind == "FSDJump" && journalEvent.Double("FuelUsed") is { } used and > 0)
-            {
-                _fuelBurned += used;
-                _jumpsBurned++;
-            }
-        }
-
         if (context.State is not { } state)
         {
             yield break;
@@ -101,7 +87,7 @@ public sealed class FuelCallout(ILogger? logger = null) : ICallout
         _wasCritical = critical;
     }
 
-    /// <summary>The strand case.</summary>
+    /// <summary>An unscoopable next star, and the strand case where the jump beyond it is out of range.</summary>
     private IEnumerable<Announcement> Route(CalloutContext context, CommanderGameState state)
     {
         var current = state.Location.StarSystem;
@@ -178,25 +164,7 @@ public sealed class FuelCallout(ILogger? logger = null) : ICallout
             yield break;
         }
 
-        // The softer case: reachable in principle, but not on the fuel that would be left.
-        if (AverageFuelPerJump is { } perJump &&
-            context.Status.FuelMain is { } fuel &&
-            fuel - (perJump * 2) < 0)
-        {
-            yield return new Announcement(
-                "fuel.route.tight",
-                $"{next.StarSystem} is {StarClasses.Speak(next.StarClass)} and cannot be scooped. "
-                + $"At {perJump:0.##} tonnes a jump you do not have fuel for the one beyond it.",
-                CalloutUrgency.Urgent)
-            {
-                Cooldown = StrandCooldown,
-            };
-
-            yield break;
-        }
-
-        // Neither stranding condition holds, but an unscoopable next star is still worth one quiet line — it
-        // is the thing that makes the two above possible.
+        // In range, but an unscoopable next star is still worth one quiet line.
         yield return new Announcement(
             "fuel.route.unscoopable",
             $"Next jump is {StarClasses.Speak(next.StarClass)} — no fuel at {next.StarSystem}.")

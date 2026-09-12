@@ -2255,6 +2255,7 @@ public sealed class AppHost : IDisposable
             // Above everything except danger itself (Phase 15).
             .Add(new AnnouncedAttackCallout())
             .Add(new FuelCallout(loggers.CreateLogger<FuelCallout>()))
+            .Add(new FuelReachCallout(loggers.CreateLogger<FuelReachCallout>()))
             .Add(new RouteCallout(loggers.CreateLogger<RouteCallout>()))
             .Add(new LongJumpCallout())
             .Add(new ArrivalCallout())

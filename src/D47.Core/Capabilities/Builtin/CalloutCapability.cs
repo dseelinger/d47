@@ -139,7 +139,7 @@ public static class CalloutCapability
             Toggle(
                 FuelKey,
                 "Fuel and range",
-                "Low fuel, and a route whose next star cannot be scooped when the jump beyond it cannot be made.",
+                "Low fuel, a route longer than the fuel lasts with nowhere to refuel, and an unscoopable star before a jump out of range.",
                 "fuel",
                 "fuel",
                 s => s.Callouts.Fuel,
