@@ -17,6 +17,10 @@ directory row and the engineer's own page: "grade 3 opens Professor Palin, Lori 
 Sedesi." An engineer whose referral is already met, or whose dependants no plan wants, says nothing
 extra.
 
+An engineer's page and the spoken engineer report no longer carry a "Reputation rises fastest by"
+line. It stated the same mechanic for every engineer — crafting and selling raise it — and the base
+above it already named the one activity that was specific to them.
+
 ## 0.112.7 — Lore is remarked on once a week, not once a day
 
 A Commander whose home system is where they spend most sessions heard the same lore remark every

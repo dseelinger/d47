@@ -447,7 +447,6 @@ public sealed class EngineerPage : EngineerPageBase
                  {
                      ("Earning the invitation", engineer.Meeting),
                      ("The invitation asks for", engineer.Unlock),
-                     ("Reputation rises fastest by", engineer.Reputation),
                  })
         {
             if (text is { Length: > 0 })

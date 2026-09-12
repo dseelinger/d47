@@ -418,7 +418,6 @@ public class EngineerTests
 
         Assert.Contains("Earning the invitation: ", answer, StringComparison.Ordinal);
         Assert.Contains("Their invitation asks for Bromellite ×50.", answer, StringComparison.Ordinal);
-        Assert.Contains("Reputation with them rises fastest by: ", answer, StringComparison.Ordinal);
     }
 
     [Fact]

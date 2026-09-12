@@ -1,3 +1,4 @@
+using D47.Core.Journal;
 using D47.Core.Knowledge;
 using Xunit;
 
@@ -104,7 +105,6 @@ public class EngineerChainTests
         Assert.False(farseer.NeedsReferral);
         Assert.NotNull(farseer.Meeting);
         Assert.NotNull(farseer.Unlock);
-        Assert.NotNull(farseer.Reputation);
 
         // The tribute is still the material list, and the prose is the same fact in words.
         var bill = EngineerDirectory.ByName("Bill Turner")!;
@@ -118,9 +118,16 @@ public class EngineerChainTests
     {
         // "Rank 5 with Farseer" is only an answer if d47 can also say how a rank goes up.
         Assert.Contains("working with them", EngineeringRules.RankRises, StringComparison.Ordinal);
+    }
 
-        // The table's own advice per engineer survives and is separate: how reputation with this one rises
-        // fastest is a fact about them rather than a price on a grade.
-        Assert.NotNull(EngineerDirectory.ByName("Farseer")!.Reputation);
+    [Fact]
+    public void FarseerIsWhereTheShippedTableSaysSheIs()
+    {
+        // The parser reads coordinates by column index, right after the columns this test guards
+        // against moving. A shifted index still parses — it just reads the wrong column — so this
+        // is checked against a known position rather than only against null.
+        var farseer = EngineerDirectory.ByName("Farseer")!;
+
+        Assert.Equal(new StarPosition(122.625, -0.8125, -47.28125), farseer.Position);
     }
 }

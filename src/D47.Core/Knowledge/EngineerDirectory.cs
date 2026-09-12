@@ -68,9 +68,6 @@ public sealed record Engineer
     /// <summary>What the invitation itself asks for, in prose.</summary>
     public string? Unlock { get; init; }
 
-    /// <summary>How reputation with them is raised fastest, in prose.</summary>
-    public string? Reputation { get; init; }
-
     /// <summary>Whether anybody has to recommend them first.</summary>
     public bool NeedsReferral => ReferredBy.Count > 0;
 
@@ -231,7 +228,6 @@ public static class EngineerDirectory
                 Discovery = Text(cells, 9),
                 Meeting = Text(cells, 10),
                 Unlock = Text(cells, 11),
-                Reputation = Text(cells, 12),
                 Position = ReadPosition(cells),
             });
         }
@@ -246,7 +242,7 @@ public static class EngineerDirectory
 
         for (var index = 0; index < 3; index++)
         {
-            if (Text(cells, 13 + index) is not { } cell ||
+            if (Text(cells, 12 + index) is not { } cell ||
                 !double.TryParse(cell, CultureInfo.InvariantCulture, out axes[index]))
             {
                 return null;

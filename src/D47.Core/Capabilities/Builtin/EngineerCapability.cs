@@ -360,11 +360,6 @@ public static class EngineerCapability
             report.AppendLine($"Their invitation asks for: {unlock}");
         }
 
-        if (engineer.Reputation is { } reputation)
-        {
-            report.AppendLine($"Reputation with them rises fastest by: {reputation}");
-        }
-
         var standing = active?.Engineers.For(engineer.Id);
 
         if (standing is not null)

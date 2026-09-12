@@ -239,7 +239,6 @@ Grades: Frame Shift Drive to 5, Sensors to 3, Surface Scanner to 3, Thrusters to
 Nobody has to recommend them — public data sources.
 Earning the invitation: Gain exploration rank Scout or higher.
 Their invitation asks for Meta-alloys ×1.
-Reputation with them rises fastest by: Craft modules for a major increase. Sell exploration data at Farseer Inc.
 The Commander has them unlocked at grade 5, 40% to the next.
 ```
 
@@ -256,7 +255,6 @@ Reached through Selene Jean at grade 3.
 The Commander is grade 2 with Selene Jean, and the referral needs grade 3 — 2,000,000 cr of profit sold at their workshop, plus roughly half the bar to the grade after it.
 Earning the invitation: Gain Friendly status with Alliance. You will also need Allied status with Alioth Independents to get a permit to access the Alioth starsystem.
 Their invitation asks for Bromellite ×50.
-Reputation with them rises fastest by: Craft modules for a major increase. Sell commodities to Turner Metallics Inc.
 The Commander has not met them.
 ```
 
@@ -456,9 +454,9 @@ one thing:
 - **msarilar/EDEngineer** (MIT) `blueprints.json` is what they grade: every blueprint names the
   engineers who offer it and the grade it reaches.
 - **EDDiscovery/EliteDangerousCore** (Apache-2.0) is the chain and the prose around it — who refers
-  whom and at what grade, the body the base orbits, how each is discovered and met, and how
-  reputation with them rises. Parsed out of C# source rather than read from data, so the generator
-  asserts a hard count of 38 rows and fails the run outright if that shape changes.
+  whom and at what grade, the body the base orbits, and how each is discovered and met. Parsed out
+  of C# source rather than read from data, so the generator asserts a hard count of 38 rows and
+  fails the run outright if that shape changes.
 
 A speciality's grade is **0 where the source states none**, which is every Odyssey suit and weapon
 row — those blueprints are ungraded in the game rather than missing a figure. Zero is not a grade
