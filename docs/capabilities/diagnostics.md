@@ -220,12 +220,29 @@ Both log files get the same detail — `d47-<date>.log` to read and `d47-<date>.
 or hand to something that parses JSON. Turning a part up to `Trace` affects both, and `Trace`
 grows a log file quickly, so it is worth turning back down once you have what you needed.
 
+### When part of D47 stops running
+
+Most of what D47 does runs off one loop that ticks ten times a second — reading the journal,
+polling the macros, driving the overlay. A part of it that fails ten times running is paused: it
+stops being called, and is tried again once a minute until it succeeds.
+
+Whatever that part does is not happening until it succeeds, so ask for the status and the report
+names it:
+
+```text
+Paused after repeated failures: journal
+```
+
+The Diagnostics card carries a row saying the same thing while it is paused. The log says what the
+part threw, and the line at shutdown says whether it was still paused when D47 closed.
+
 ### Settings
 
 | Row | What it does |
 |---|---|
 | Default log level | Applies to any part without its own level |
 | *&lt;Part&gt;* log level | One row per part, offering the same levels |
+| Paused after repeated failures | Present only while a part of the loop has stopped; names it |
 
 Asking out loud and changing the row do the same thing, and both survive a restart. There is no
 second, temporary kind of change to keep track of.

@@ -162,10 +162,13 @@ public static class BuiltinCapabilities
 
         // The plotted route as Elite last wrote it, so a jump count is read from the route file rather than
         // from a journal note the game overwrites mid-jump (#152).
-        Func<Journal.NavRoute>? route = null) =>
+        Func<Journal.NavRoute>? route = null,
+
+        // The loop itself, so the diagnostics card can name a subscriber it has paused (#58).
+        Ticking.TickLoop? ticking = null) =>
     [
         HelpCapability.Create(registry),
-        DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage, history),
+        DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage, history, ticking),
         JournalCapability.Create(gameState, () => history?.State ?? Journal.HistoryState.Done, route),
         CrewCapability.Create(() => gameState.Active),
         GalaxyCapability.Create(

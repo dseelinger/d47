@@ -1738,7 +1738,11 @@ public sealed class AppHost : IDisposable
 
                 // Where "how many jumps are left" is answered from (#152), which is the file the Route
                 // Progress page already draws.
-                () => route.Current));
+                () => route.Current,
+
+                // So a subscriber the loop has paused is named on the diagnostics card rather than only in
+                // the log (#58).
+                tick));
 
         buildingRegistry.Dispose();
 

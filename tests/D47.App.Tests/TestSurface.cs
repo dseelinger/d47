@@ -33,13 +33,15 @@ public static class TestSurface
     /// <param name="coverage">A hand-testing coverage summary, which is what makes the Diagnostics coverage row exist at all.</param>
     /// <param name="personas">The core host the persona rows read and the introductions row clears.</param>
     /// <param name="voices">What the speech provider offers.</param>
+    /// <param name="ticking">The loop the diagnostics card names a paused subscriber from (#58).</param>
     public static (SettingsService Settings, ViewStateStore ViewState, AppPaths Paths, CapabilityRegistry Registry, SecretStore Secrets) CreateFull(
         Func<string>? coverage = null,
         D47.Core.Persona.PersonaHost? personas = null,
         IReadOnlyList<VoiceInfo>? voices = null,
         LongPress? localVoice = null,
         D47.Core.Diagnostics.Recording.RecordingLog? recording = null,
-        LongPress? rescan = null)
+        LongPress? rescan = null,
+        D47.Core.Ticking.TickLoop? ticking = null)
     {
         var root = TempFolders.Create("d47-app-tests");
         var paths = new AppPaths(root);
@@ -127,7 +129,11 @@ public static class TestSurface
             // #78: every About delegate supplied, because a null one makes its row *absent* and an absent row
             // is one no test can see.
             about: D47.Core.Capabilities.Builtin.AboutSurface.Inert,
-            recording: recording));
+            recording: recording,
+
+            // Always a real loop, for the reason the surfaces above are real: a null one makes the paused
+            // row absent, and a test could then not tell a missing row from a working one.
+            ticking: ticking ?? new D47.Core.Ticking.TickLoop(NullLogger<D47.Core.Ticking.TickLoop>.Instance)));
 
         built = registry;
 

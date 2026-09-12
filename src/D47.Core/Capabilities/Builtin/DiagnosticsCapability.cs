@@ -31,13 +31,17 @@ public static class DiagnosticsCapability
     /// What has been exercised by hand, when this process was asked to record that.
     /// </param>
     /// <param name="history">The walk over older journals, or null where nothing composed one (#148).</param>
+    /// <param name="ticking">
+    /// The tick loop, so a subscriber it has paused is named somewhere a person can find it (#58).
+    /// </param>
     public static CapabilityDescriptor Create(
         AppPaths paths,
         ILogVerbosityControl verbosity,
         SettingsService settings,
         string version,
         Func<string>? coverage = null,
-        Journal.HistoryBackfill? history = null)
+        Journal.HistoryBackfill? history = null,
+        Ticking.TickLoop? ticking = null)
     {
         return new CapabilityDescriptor
         {
@@ -77,7 +81,7 @@ public static class DiagnosticsCapability
                     Description =
                         "Report D47's version, where it keeps its writable files, and the current log level of every subsystem.",
                     Handler = (_, _) =>
-                        Task.FromResult(ToolResult.Ok(DescribeStatus(paths, verbosity, version, history))),
+                        Task.FromResult(ToolResult.Ok(DescribeStatus(paths, verbosity, version, history, ticking))),
                 },
                 new ToolDefinition
                 {
@@ -106,7 +110,7 @@ public static class DiagnosticsCapability
                     Handler = (arguments, _) => Task.FromResult(SetVerbosity(arguments, settings)),
                 },
             ],
-            Settings = BuildSettingRows(coverage),
+            Settings = BuildSettingRows(coverage, ticking),
         };
     }
 
@@ -114,7 +118,8 @@ public static class DiagnosticsCapability
         AppPaths paths,
         ILogVerbosityControl verbosity,
         string version,
-        Journal.HistoryBackfill? history)
+        Journal.HistoryBackfill? history,
+        Ticking.TickLoop? ticking)
     {
         var report = new StringBuilder();
         // The full name, because this line is the report's heading rather than prose in it.
@@ -135,6 +140,13 @@ public static class DiagnosticsCapability
             report.AppendLine(
                 $"Journal history: {history.State} after {history.Elapsed.TotalSeconds:0.0} s"
                 + (history.Failure is { } why ? $" — {why}" : string.Empty));
+        }
+
+        // Each of these is a feature that has stopped running — the journal not being read, the macros not
+        // being polled — and nothing else says so (#58).
+        if (ticking?.Paused is { Count: > 0 } paused)
+        {
+            report.AppendLine($"Paused after repeated failures: {string.Join(", ", paused)}");
         }
 
         report.AppendLine("Log levels:");
@@ -179,7 +191,10 @@ public static class DiagnosticsCapability
     /// </summary>
     public const string CoverageKey = "diagnostics.coverage";
 
-    private static IReadOnlyList<SettingRow> BuildSettingRows(Func<string>? coverage)
+    /// <summary>The row that names the tick subscribers repeated failure has paused (#58).</summary>
+    public const string PausedKey = "diagnostics.paused";
+
+    private static IReadOnlyList<SettingRow> BuildSettingRows(Func<string>? coverage, Ticking.TickLoop? ticking)
     {
         var rows = new List<SettingRow>
         {
@@ -243,6 +258,24 @@ public static class DiagnosticsCapability
                 },
             },
         }));
+
+        if (ticking is not null)
+        {
+            // Present only while something is paused, and not folded away with the advanced rows: it
+            // reports a feature that has stopped running.
+            rows.Add(new SettingRow
+            {
+                Key = PausedKey,
+                Label = "Paused after repeated failures",
+                Help =
+                    "Each of these stopped after failing ten times running and is retried once a minute. "
+                    + "Whatever it does — reading the journal, polling the macros — is not happening until "
+                    + "it succeeds. The log says what it threw.",
+                Kind = SettingKind.Info,
+                AppliesWhen = _ => ticking.Paused.Count > 0,
+                Binding = new SettingBinding { Read = _ => string.Join(", ", ticking.Paused) },
+            });
+        }
 
         if (coverage is not null)
         {

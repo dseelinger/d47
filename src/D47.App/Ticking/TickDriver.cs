@@ -56,6 +56,15 @@ public sealed class TickDriver : IDisposable
         }
 
         _logger.LogInformation("Tick loop stopped after {Count} ticks", _loop.Count);
+
+        // A subscriber still paused here ran for part of the session and not the rest of it, and nothing
+        // else at shutdown reports that (#58).
+        if (_loop.Paused is { Count: > 0 } paused)
+        {
+            _logger.LogWarning(
+                "Tick subscribers still paused after repeated failures: {Names}",
+                string.Join(", ", paused));
+        }
     }
 
     public void Dispose()

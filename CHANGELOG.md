@@ -6,6 +6,22 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.45 — A part of D47 that keeps failing is paused rather than retried forever
+
+Almost everything D47 does runs off one loop that ticks ten times a second. A part of that loop
+which threw on every tick was called again on the next one regardless: one installed build threw
+25,000 times in an hour, wrote 250 error lines, and ran the part of its work that came before the
+throw ten times a second for the whole hour.
+
+A part that fails ten times running now stops being called, and is tried again once a minute until
+it succeeds. It resumes by itself when the fault clears, so a window that has since opened or a
+file that has since appeared no longer needs a restart. One part failing on and off is untouched:
+the ten have to be consecutive.
+
+A paused part is a feature that is not running, so it is named rather than left to be inferred.
+Ask **what's your status** and the report names it, the Diagnostics card carries a row naming it
+while it is paused, and the log at shutdown says whether it was still paused when D47 closed.
+
 ## 0.110.44 — Jumps left is read from the plotted route
 
 Asked how many jumps were left in a route, D47 answered with how many had been made this session.
