@@ -112,7 +112,11 @@ public partial class App(AppHost? host) : Application
                 new Panel.EngineerDirectoryMemory(host.ViewState),
 
                 // And the clipboard, on the same terms as the window's copy (#157).
-                host.Clipboard);
+                host.Clipboard,
+
+                // And every system name d47 already holds, so a ship turn naming one draws a chip in the
+                // headset too (#159).
+                host.SystemsInPlay);
 
             // And the headset's copy of the panel can be the one asking for a spoken value (Phase 25), or
             // the one with a keyboard up for a value to be spelled onto (#51).

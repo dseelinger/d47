@@ -138,6 +138,12 @@ public partial class MainWindow : Window
                 Panel.EnableCopy(clipboard);
             }
 
+            // Every system name a ship turn names, so it draws a chip beside it too (#159).
+            if (host.SystemsInPlay is { } systemsInPlay)
+            {
+                Panel.EnableSystemNames(systemsInPlay);
+            }
+
             // The checklist, on the other hand, goes to both surfaces — which is the whole headline of the
             // item that moved it out of a Window.
             Panel.EnableChecklist(

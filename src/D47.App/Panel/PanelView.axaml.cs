@@ -147,9 +147,9 @@ public partial class PanelView : UserControl
 
     /// <summary>
     /// The bubbles on the conversation page, in order, each with the offset into the page where its
-    /// text begins.
+    /// text begins and the strip of system-name chips beneath it, where one is drawn (#159).
     /// </summary>
-    private readonly List<(SelectableTextBlock Block, int Start)> _bubbles = [];
+    private readonly List<(SelectableTextBlock Block, int Start, WrapPanel? Strip)> _bubbles = [];
 
     /// <summary>What those bubbles were drawn from, as three comparable things each.</summary>
     private IReadOnlyList<(TranscriptVoice Voice, bool Marker, string Text)> _shape = [];
@@ -569,6 +569,14 @@ public partial class PanelView : UserControl
         _copy = text => clipboard.SetTextAsync(text);
 
     private Func<string, Task<bool>>? _copy;
+
+    /// <summary>
+    /// Gives this surface the system names d47 already holds, so a conversation turn that names one draws a
+    /// copy chip beneath it (#159).
+    /// </summary>
+    public void EnableSystemNames(D47.Core.Knowledge.SystemsInPlay known) => _systemsInPlay = known;
+
+    private D47.Core.Knowledge.SystemsInPlay? _systemsInPlay;
 
     public void EnableLoadout(
         D47.Core.Ships.ShipPlanService ships,
@@ -1795,7 +1803,9 @@ public partial class PanelView : UserControl
 
         // Which block holds the hit, and where that block sits in the page.
         var (block, start) = Bubbles.IsVisible
-            ? _bubbles.LastOrDefault(bubble => bubble.Start <= _matches[_hit].Start)
+            ? _bubbles
+                .Select(bubble => (bubble.Block, bubble.Start))
+                .LastOrDefault(bubble => bubble.Start <= _matches[_hit].Start)
             : (Transcript, 0);
 
         if (block?.TextLayout is not { } layout)
@@ -2631,6 +2641,10 @@ public partial class PanelView : UserControl
                 Text: string.Concat(turn.Segments.Select(segment => segment.Text))))
             .ToArray();
 
+        // One snapshot of what d47 already knows, shared by every chip this call draws, so a name that
+        // arrives mid-draw does not make one turn's chips disagree with another's (#159).
+        var known = _systemsInPlay?.Snapshot();
+
         if (appended
             && _query.Length == 0
             && shape.Length > 0
@@ -2639,6 +2653,7 @@ public partial class PanelView : UserControl
             && shape.Take(shape.Length - 1).SequenceEqual(_shape.Take(_shape.Count - 1)))
         {
             Fill(_bubbles[^1].Block, turns[^1], _bubbles[^1].Start);
+            FillStrip(_bubbles[^1].Strip, turns[^1], known);
             _shape = shape;
             return;
         }
@@ -2663,8 +2678,17 @@ public partial class PanelView : UserControl
             Watch(block);
             Fill(block, turn, at);
 
-            Bubbles.Children.Add(Bubble(block, turn, mini));
-            _bubbles.Add((block, at));
+            var strip = turn.Marker || known is null || _copy is null ? null : new WrapPanel
+            {
+                Margin = new Thickness(0, mini ? 3 : 6, 0, 0),
+                ItemSpacing = mini ? 6 : 8,
+                LineSpacing = 4,
+            };
+
+            FillStrip(strip, turn, known);
+
+            Bubbles.Children.Add(Bubble(block, turn, mini, strip));
+            _bubbles.Add((block, at, strip));
 
             at += turn.Segments.Sum(segment => segment.Text.Length);
         }
@@ -2672,8 +2696,49 @@ public partial class PanelView : UserControl
         _shape = shape;
     }
 
+    /// <summary>
+    /// The strip's chips, one per distinct system name <paramref name="turn"/> mentions, in first-appearance
+    /// order (#159).
+    /// </summary>
+    private void FillStrip(WrapPanel? strip, DrawnTurn turn, IReadOnlyCollection<string>? known)
+    {
+        if (strip is null || known is null || _copy is not { } copy)
+        {
+            return;
+        }
+
+        strip.Children.Clear();
+
+        var text = string.Concat(turn.Segments.Select(segment => segment.Text));
+        var names = new List<string>();
+
+        foreach (var hit in D47.Core.Knowledge.SystemNameFinder.Find(text, known))
+        {
+            if (!names.Contains(hit.Name, StringComparer.OrdinalIgnoreCase))
+            {
+                names.Add(hit.Name);
+            }
+        }
+
+        foreach (var name in names)
+        {
+            strip.Children.Add(new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 4,
+                Children =
+                {
+                    new TextBlock { Text = name, VerticalAlignment = VerticalAlignment.Center },
+                    Controls.CopyGlyph.For(name, copy),
+                },
+            });
+        }
+
+        strip.IsVisible = strip.Children.Count > 0;
+    }
+
     /// <summary>One turn, dressed.</summary>
-    private Control Bubble(SelectableTextBlock block, DrawnTurn turn, bool mini)
+    private Control Bubble(SelectableTextBlock block, DrawnTurn turn, bool mini, WrapPanel? strip)
     {
         if (turn.Marker)
         {
@@ -2687,7 +2752,7 @@ public partial class PanelView : UserControl
 
         var bubble = new Border
         {
-            Child = block,
+            Child = strip is null ? block : new StackPanel { Children = { block, strip } },
             CornerRadius = new CornerRadius(mini ? 6 : 10),
             Padding = mini ? new Thickness(7, 4) : new Thickness(11, 8),
             Margin = new Thickness(0, mini ? 2 : 4),

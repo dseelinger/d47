@@ -88,7 +88,10 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         EngineerDirectoryMemory? engineersMemory = null,
 
         // The clipboard, on the same terms as the window's copy (#157).
-        D47.Core.Capabilities.Builtin.IClipboard? clipboard = null)
+        D47.Core.Capabilities.Builtin.IClipboard? clipboard = null,
+
+        // Every system name d47 already holds, on the same terms as the window's copy (#159).
+        D47.Core.Knowledge.SystemsInPlay? known = null)
     {
         _dumpTo = dumpTo;
 
@@ -104,6 +107,11 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         if (clipboard is not null)
         {
             _view.EnableCopy(clipboard);
+        }
+
+        if (known is not null)
+        {
+            _view.EnableSystemNames(known);
         }
 
         if (settingsPage is not null)

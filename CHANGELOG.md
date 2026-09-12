@@ -18,6 +18,10 @@ never depends on the desktop window's own clipboard.
 The Journal reading now draws the same glyph beside any line whose event names a system — an
 `FSDJump`, a `Docked`, a `Location` — and none beside a line that names none.
 
+The In Ship reading now draws a copy chip under any turn that names a system, one per name in the
+order it was said, whichever side of the conversation said it and in the headset as well as on the
+desktop.
+
 ## 0.112.9 — Controls that draw their state
 
 The Engineers tab's Colonia filter was a button that rewrote its own label — "Hide the Colonia
