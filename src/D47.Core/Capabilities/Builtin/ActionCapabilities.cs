@@ -304,6 +304,11 @@ public static class ActionCapabilities
             return ToolResult.Error(reach.Reason);
         }
 
+        if (action.Id == "target_next_route_system" && !surface.SystemTargeted())
+        {
+            return ToolResult.Error("Nothing is plotted, so there is no next system to target.");
+        }
+
         var wanted = arguments.TryGetString("state", out var state)
             ? state.ToLowerInvariant() switch
             {

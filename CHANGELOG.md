@@ -6,6 +6,13 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.110.43 — Target the next system in the route by voice
+
+Say **next system**, *target the next system* or *target the next system in route* and D47 targets
+the next system on a plotted route, the way `TargetNextRouteSystem` does on its own binding. It
+refuses rather than pressing a key with nothing to target: with no route plotted, or standing on
+the last hop, it says so instead of acknowledging a key that would have done nothing.
+
 ## 0.110.42 — Ask D47 to request docking
 
 D47 could take a ship out of a station and could not bring it in. Say **request docking** — or

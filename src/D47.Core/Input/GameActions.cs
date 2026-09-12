@@ -283,6 +283,20 @@ public static class GameActions
             Phrases = [("engage boost", DesiredState.Toggle), ("boost us", DesiredState.Toggle)],
         },
 
+        new()
+        {
+            Id = "target_next_route_system",
+            Label = "the next system in the route",
+            Group = Flight,
+            Variants = [new ActionVariant("TargetNextRouteSystem", ControlContext.Flying)],
+            Phrases =
+            [
+                ("next system", DesiredState.Toggle),
+                ("target the next system", DesiredState.Toggle),
+                ("target the next system in route", DesiredState.Toggle),
+            ],
+        },
+
         // ---- Ship systems (item 7) ----------------------------------------------------------
         new()
         {
