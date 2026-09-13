@@ -27,8 +27,8 @@ name it tried and rejected is not a species this generator invented; it is what 
 data says is not sellable.
 
 `api/bodies/search`, filtered to one species by `landmark_subtype`, returns up to 250
-surveyed bodies a page. Two pages (500 bodies) is the same sample size the prototype used,
-which matched 84 of 97 species the maintainer sampled against their own journals.
+surveyed bodies a page; two pages (500 bodies) is the sample each species' ranges are
+learned from.
 
 One normalisation, on both sides of the table
 -----------------------------------------------
@@ -65,8 +65,7 @@ PAGE_SIZE = 250
 # outlying survey.
 CATEGORICAL_THRESHOLD = 0.02
 
-# The prototype used the 2nd-98th percentile band and matched 84 of 97; widened by two points
-# a side here to give the range a little more room before a real body falls outside it.
+# The band each species' gravity, temperature and pressure ranges are learned from.
 PERCENTILE_LOW = 1
 PERCENTILE_HIGH = 99
 
