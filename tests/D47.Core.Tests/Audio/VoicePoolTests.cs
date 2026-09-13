@@ -76,4 +76,36 @@ public class VoicePoolTests
 
         Assert.Equal(["ryan", "aria"], VoicePool.From(account));
     }
+
+    /// <summary>An en-GB locale reads as British; every other English locale does not (#68).</summary>
+    [Fact]
+    public void ALocaleTaggedAccountPicksOutTheBritishVoicesById()
+    {
+        VoiceInfo Voice(string id, string locale) => new(id, id, locale);
+
+        var account = new[]
+        {
+            Voice("ryan", "en-GB"),
+            Voice("aria", "en-US"),
+            Voice("natasha", "en-AU"),
+        };
+
+        Assert.Equal(new HashSet<string> { "ryan" }, VoicePool.British(account));
+    }
+
+    /// <summary>ElevenLabs' accent label is a word, not a locale, and "british" is read the same way.</summary>
+    [Fact]
+    public void AnAccentTaggedAccountPicksOutTheWordBritish()
+    {
+        VoiceInfo Voice(string id, string accent) => new(id, id, accent);
+
+        var account = new[]
+        {
+            Voice("v1", "american"),
+            Voice("v2", "british"),
+            Voice("v3", "irish"),
+        };
+
+        Assert.Equal(new HashSet<string> { "v2" }, VoicePool.British(account));
+    }
 }

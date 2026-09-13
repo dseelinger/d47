@@ -448,4 +448,58 @@ public class IncomingMessageTests
     [Fact]
     public void AMessageThatWasOnlyDirectionIsNotSpokenAtAll() =>
         Assert.Null(Reader().Read(Message("Vex", "[whispers]", "wing")));
+
+    /// <summary>
+    /// The station the Commander is docked at carries its allegiance through to the voice (#68).
+    /// </summary>
+    [Fact]
+    public void TheDockedStationsAllegianceReachesTheAnnouncement()
+    {
+        var reader = Reader();
+        reader.DockedStationName = () => "Evans Port";
+        reader.DockedStationAllegiance = () => "Empire";
+
+        var read = reader.Read(Message("Evans Port", "$STATION_docking_granted;", "npc", localised: "Docking granted."));
+
+        Assert.NotNull(read);
+        Assert.Equal("Empire", read.SpeakerAllegiance);
+    }
+
+    /// <summary>A stranger on the open channel is not the docked station, so no allegiance follows them.</summary>
+    [Fact]
+    public void ANpcThatIsNotTheDockedStationCarriesNoAllegiance()
+    {
+        var reader = Reader();
+        reader.DockedStationName = () => "Evans Port";
+        reader.DockedStationAllegiance = () => "Empire";
+
+        var read = reader.Read(Message("$ShipName_Police_Federation;", "Scanning.", "npc", localised: "Scanning."));
+
+        Assert.NotNull(read);
+        Assert.Null(read.SpeakerAllegiance);
+    }
+
+    /// <summary>A player is never handed a station's allegiance, whatever their name happens to match.</summary>
+    [Fact]
+    public void APlayerNeverCarriesAStationsAllegiance()
+    {
+        var reader = Reader();
+        reader.DockedStationName = () => "Vex";
+        reader.DockedStationAllegiance = () => "Empire";
+
+        var read = reader.Read(Message("$cmdr_decorate:#name=Vex;", "hello", "wing"));
+
+        Assert.NotNull(read);
+        Assert.Null(read.SpeakerAllegiance);
+    }
+
+    /// <summary>The majority case — no allegiance known for the docked station — carries none forward.</summary>
+    [Fact]
+    public void NoDockedStationIsNoAllegiance()
+    {
+        var read = Reader().Read(Message("Metz Enterprise", "$STATION_docking_granted;", "npc", localised: "Docking granted."));
+
+        Assert.NotNull(read);
+        Assert.Null(read.SpeakerAllegiance);
+    }
 }

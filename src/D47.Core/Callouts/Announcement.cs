@@ -72,6 +72,12 @@ public sealed record Announcement(string Key, string Text, CalloutUrgency Urgenc
     public bool SpeakerIsPlayer { get; init; }
 
     /// <summary>
+    /// The docked station's <c>StationAllegiance</c> when <see cref="Speaker"/> is that station, or null
+    /// — most stations have none, and every other speaker is unaffected (#68).
+    /// </summary>
+    public string? SpeakerAllegiance { get; init; }
+
+    /// <summary>
     /// The in-game chat channel this arrived on, or null for a line that is not chat — every callout,
     /// the crew, the carrier (Phase 57).
     /// </summary>

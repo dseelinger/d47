@@ -29,6 +29,19 @@ public static class VoicePool
             StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
+    /// Which of them read as British, by id, so an Empire station can be given one (#68): a locale of
+    /// <c>en-GB</c> where the tag is a locale, or the word "british" where it is an accent label
+    /// instead, the same distinction <see cref="Eligible"/> already draws.
+    /// </summary>
+    public static IReadOnlySet<string> British(IEnumerable<VoiceInfo> voices) =>
+        new HashSet<string>(
+            voices
+                .Where(voice => voice.Locale.StartsWith("en-GB", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(voice.Locale, "british", StringComparison.OrdinalIgnoreCase))
+                .Select(voice => voice.Id),
+            StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
     /// What a provider's gender tag says, as something with three states rather than a boolean (#146).
     /// </summary>
     public static VoiceGender GenderOf(string? tag) => tag switch

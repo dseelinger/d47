@@ -53,6 +53,9 @@ public sealed class VoiceCast
     /// <summary>Which of the pool's voices are a woman's, by id.</summary>
     public IReadOnlySet<string> Feminine { get; set; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>Which of the pool's voices read as British, by id (#68).</summary>
+    public IReadOnlySet<string> British { get; set; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>Speaking rate, normalised.</summary>
     public double Rate { get; set; } = 1.0;
 
@@ -80,7 +83,14 @@ public sealed class VoiceCast
     /// </summary>
     /// <param name="sender">The name as the game reported it.</param>
     /// <param name="isPlayer">Whether this is another Commander.</param>
-    public VoiceSelection ForSender(string sender, bool isPlayer, VoiceRole role = VoiceRole.Comms)
+    /// <param name="allegiance">
+    /// The docked station's <c>StationAllegiance</c>, or null — most stations have none (#68).
+    /// </param>
+    public VoiceSelection ForSender(
+        string sender,
+        bool isPlayer,
+        VoiceRole role = VoiceRole.Comms,
+        string? allegiance = null)
     {
         // A role the Commander has cast has one voice, and a sender does not override it (<a
         // href=".com/dseelinger/d47/issues/109">#109</a>).
@@ -125,12 +135,20 @@ public sealed class VoiceCast
             return For(role);
         }
 
-        // Of the right sex where there is a right sex to be had.
-        var matching = eligible
+        // An Empire station sounds British where the pool has a British voice to give it (#68). Federation
+        // and Alliance are left as they are: neither has a canon accent as settled as the Empire's.
+        var accentMatched = allegiance == "Empire"
+            ? eligible.Where(British.Contains).ToList()
+            : eligible;
+
+        var accentPool = accentMatched.Count > 0 ? accentMatched : eligible;
+
+        // Of the right sex where there is a right sex to be had, within whichever pool the accent left.
+        var matching = accentPool
             .Where(voice => Feminine.Contains(voice) == GivenNames.ReadsFemale(sender))
             .ToList();
 
-        var drawnFrom = matching.Count > 0 ? matching : eligible;
+        var drawnFrom = matching.Count > 0 ? matching : accentPool;
 
         // Voices already spoken for are stepped past rather than reused, so a system with four NPCs in it has
         // four distinct voices as long as there are four to give out.

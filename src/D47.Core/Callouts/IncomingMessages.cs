@@ -58,6 +58,12 @@ public sealed partial class IncomingMessages : ICallout
     /// </summary>
     public Func<bool> AuthorityNearOwnCarrier { get; set; } = () => false;
 
+    /// <summary>The station the Commander is docked at right now, or null (#68).</summary>
+    public Func<string?> DockedStationName { get; set; } = () => null;
+
+    /// <summary>That station's <c>StationAllegiance</c>, read live alongside <see cref="DockedStationName"/>.</summary>
+    public Func<string?> DockedStationAllegiance { get; set; } = () => null;
+
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
         // Never from the backlog.
@@ -183,6 +189,14 @@ public sealed partial class IncomingMessages : ICallout
             Voice = IsMyCarrier(sender) ? VoiceRole.TowerControl : VoiceRole.Comms,
             Speaker = sender,
             SpeakerIsPlayer = isPlayer,
+
+            // Only the station the Commander is actually docked at names an allegiance — a stranger on
+            // the open channel is not the local controller (#68).
+            SpeakerAllegiance = !isPlayer
+                && DockedStationName() is { Length: > 0 } docked
+                && string.Equals(docked, sender, StringComparison.OrdinalIgnoreCase)
+                ? DockedStationAllegiance()
+                : null,
 
             // Which slot pays for this line, and it is not derivable from the boolean above: a squadron mate
             // and a stranger in local are both players (Phase 57).

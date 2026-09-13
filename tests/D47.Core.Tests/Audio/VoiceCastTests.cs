@@ -355,6 +355,92 @@ public class TextToSpeechEgressTests
     }
 }
 
+/// <summary>An Empire station sounds like the Empire (#68).</summary>
+public class AnEmpireStationSoundsLikeTheEmpireTests
+{
+    private static VoiceCast Cast() => new()
+    {
+        DefaultVoice = "ship-ai",
+        Pool = ["us1", "us2", "gb1", "gb2"],
+        British = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "gb1", "gb2" },
+    };
+
+    [Fact]
+    public void AnEmpireAllegianceDrawsFromTheBritishVoices()
+    {
+        var cast = Cast();
+
+        var voice = cast.ForSender("Zeppelin Depot", isPlayer: false, allegiance: "Empire").VoiceId;
+
+        Assert.Contains(voice, new[] { "gb1", "gb2" });
+    }
+
+    [Fact]
+    public void NoAllegianceIsTheVoiceGivenToday()
+    {
+        var withAllegiance = new VoiceCast
+        {
+            DefaultVoice = "ship-ai",
+            Pool = ["us1", "us2", "gb1", "gb2"],
+            British = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "gb1", "gb2" },
+        };
+
+        var withoutTheFeature = new VoiceCast
+        {
+            DefaultVoice = "ship-ai",
+            Pool = ["us1", "us2", "gb1", "gb2"],
+        };
+
+        // Same seed, same pool, so a station with no allegiance lands on the same voice whether or not
+        // British is ever populated — the majority case is untouched.
+        Assert.Equal(
+            withoutTheFeature.ForSender("Metz Enterprise", isPlayer: false).VoiceId,
+            withAllegiance.ForSender("Metz Enterprise", isPlayer: false).VoiceId);
+    }
+
+    [Fact]
+    public void FederationAndAllianceAreNotGivenAnAccent()
+    {
+        var cast = Cast();
+
+        var federation = cast.ForSender("Evans Port", isPlayer: false, allegiance: "Federation").VoiceId;
+        var alliance = cast.ForSender("Jameson Base", isPlayer: false, allegiance: "Alliance").VoiceId;
+
+        // Neither is required to land in the British set, and neither is required to land outside it —
+        // only that they are decided the same way as no allegiance at all, not steered by this rule.
+        var noAllegianceFederation = new VoiceCast
+        {
+            DefaultVoice = "ship-ai",
+            Pool = ["us1", "us2", "gb1", "gb2"],
+            British = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "gb1", "gb2" },
+        }.ForSender("Evans Port", isPlayer: false).VoiceId;
+
+        Assert.Equal(noAllegianceFederation, federation);
+        Assert.NotNull(alliance);
+    }
+
+    /// <summary>The same station keeps its voice across docks in the same session.</summary>
+    [Fact]
+    public void TheSameStationKeepsTheSameVoiceAcrossDocks()
+    {
+        var cast = Cast();
+
+        var first = cast.ForSender("Zeppelin Depot", isPlayer: false, allegiance: "Empire").VoiceId;
+        var second = cast.ForSender("Zeppelin Depot", isPlayer: false, allegiance: "Empire").VoiceId;
+
+        Assert.Equal(first, second);
+    }
+
+    /// <summary>Where the pool has no British voice at all, an Empire station still gets one rather than none.</summary>
+    [Fact]
+    public void NoBritishVoiceInThePoolFallsBackRatherThanFallingSilent()
+    {
+        var cast = new VoiceCast { DefaultVoice = "ship-ai", Pool = ["us1", "us2"] };
+
+        Assert.NotNull(cast.ForSender("Zeppelin Depot", isPlayer: false, allegiance: "Empire").VoiceId);
+    }
+}
+
 /// <summary> A woman on the radio sounds like one. </summary>
 public class VoicesMatchTheNameTests
 {

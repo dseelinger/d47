@@ -52,6 +52,12 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
     /// <summary>Coriolis, Outpost, FleetCarrier and so on.</summary>
     public string? StationType { get; init; }
 
+    /// <summary>
+    /// The superpower the docked station answers to — <c>Empire</c>, <c>Federation</c>, <c>Alliance</c>
+    /// — or null, which most stations are (#68).
+    /// </summary>
+    public string? StationAllegiance { get; init; }
+
     public FlightMode Mode { get; init; } = FlightMode.Unknown;
 
     /// <summary>
@@ -106,6 +112,7 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
             Docked = journalEvent.Bool("Docked"),
             StationName = journalEvent.String("StationName") ?? StationName,
             StationType = journalEvent.String("StationType") ?? StationType,
+            StationAllegiance = journalEvent.String("StationAllegiance") ?? StationAllegiance,
             MarketId = journalEvent.Bool("Docked") ? journalEvent.Long("MarketID") : null,
             BodyId = journalEvent.Int("BodyID"),
 
@@ -132,6 +139,7 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
             Docked = false,
             StationName = null,
             StationType = null,
+            StationAllegiance = null,
             MarketId = null,
             BodyId = journalEvent.Int("BodyID"),
             Mode = FlightMode.Supercruise,
@@ -152,6 +160,7 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
             Docked = true,
             StationName = journalEvent.String("StationName") ?? StationName,
             StationType = journalEvent.String("StationType") ?? StationType,
+            StationAllegiance = journalEvent.String("StationAllegiance"),
             StarSystem = journalEvent.String("StarSystem") ?? StarSystem,
             SystemAddress = Addressed(journalEvent, SystemAddress),
             MarketId = journalEvent.Long("MarketID") ?? MarketId,
@@ -163,6 +172,7 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
             Docked = false,
             StationName = null,
             StationType = null,
+            StationAllegiance = null,
             MarketId = null,
             Mode = FlightMode.Normal,
         },

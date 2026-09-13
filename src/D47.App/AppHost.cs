@@ -2411,6 +2411,12 @@ public sealed class AppHost : IDisposable
                     && active.Carrier.Owned
                     && active.Carrier.StarSystem is { Length: > 0 } parked
                     && string.Equals(parked, active.Location.StarSystem, StringComparison.OrdinalIgnoreCase),
+
+                // Read live rather than followed, for the same reason as the authority check above (#68).
+                DockedStationName = () => gameState.Active?.Location is { Docked: true } here
+                    ? here.StationName
+                    : null,
+                DockedStationAllegiance = () => gameState.Active?.Location.StationAllegiance,
             });
 
         // Elite echoes what you send back to you on the channel it went out on.
@@ -3308,6 +3314,9 @@ public sealed class AppHost : IDisposable
 
             // And which of them are a woman's, so a sender whose name reads as one is given one.
             cast.Feminine = VoicePool.Feminine(listed.Voices);
+
+            // And which read as British, so an Empire station can be given one (#68).
+            cast.British = VoicePool.British(listed.Voices);
 
             // Both numbers, because one of them alone is what hid that: "1 voice available" is alarming
             // beside "473 offered" and unremarkable on its own.
@@ -4729,7 +4738,7 @@ public sealed class AppHost : IDisposable
             VoiceGroups.Of(announcement.Voice, announcement.CommsChannel)));
 
         var voice = announcement.Speaker is { Length: > 0 } speaker
-            ? cast.ForSender(speaker, announcement.SpeakerIsPlayer, announcement.Voice)
+            ? cast.ForSender(speaker, announcement.SpeakerIsPlayer, announcement.Voice, announcement.SpeakerAllegiance)
             : cast.For(announcement.Voice);
 
         // Written before it is spoken, and whether or not the speaking works: a message that could not be

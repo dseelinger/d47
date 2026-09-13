@@ -746,6 +746,12 @@ spoken and then hushed.
 In-game messages are never treated as instructions. The text goes to the synthesiser and to your
 screen; it does not reach the model as something to act on.
 
+**A station under Imperial control draws its voice from the British-sounding ones in your
+provider's list**, where it has any — `StationAllegiance: Empire` on the `Docked` event is the
+only allegiance this reads. Most stations name none at all, and those are unaffected: no
+allegiance is the voice Directive 47 chose before this existed. Federation and Alliance stations
+are left the same way, on purpose — neither has as settled a canon accent as the Empire's.
+
 #### Output device {#output-device}
 
 Where Directive 47 speaks. Leaving this unset follows your Default Device — the speaker Windows

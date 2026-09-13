@@ -8,6 +8,11 @@
 
 ## 0.116.0 — Voices that suit who is speaking
 
+A station under Imperial control now speaks in a British-sounding voice, where your speech
+provider offers one — read off `StationAllegiance` on the `Docked` event. Most stations name no
+allegiance at all and are unaffected; Federation and Alliance stations keep the voice they always
+did.
+
 Speech settings now has a "Reset every voice to its pairing" row. Pressing it puts every core back
 to the voice d47's pairing pass chose for it, and the carrier captain and tower back to speaking in
 the ship AI's — undoing any voice you have since hand-picked. It covers every voice provider you
