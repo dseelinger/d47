@@ -398,6 +398,9 @@ public sealed record CalloutSettings
     /// <summary>Whether the arrival star's autoscan shows up as undiscovered (#201).</summary>
     public bool Discovery { get; init; } = true;
 
+    /// <summary>The first footfall on a body (#203).</summary>
+    public bool Footfall { get; init; } = true;
+
     /// <summary>How often route progress is reported, in jumps. 0 silences the progress line.</summary>
     public int RouteEveryNJumps { get; init; } = 3;
 

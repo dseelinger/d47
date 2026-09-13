@@ -8,6 +8,11 @@
 
 ## 0.124.0 — Supercharge
 
+Stepping onto a body for the first time now gets a spoken callout: "First footfall on Smojue
+EB-O d6-37 AB 1 b." Directive 47 infers it from the body's scan and the `Disembark` that follows,
+since Elite writes no event for a first footfall. On by default, with its own toggle beside the
+other callouts.
+
 Arriving at a system nobody has sold data on now gets a spoken callout: "Undiscovered system.
 Nobody has sold data on this star yet." It fires on the arrival star's own autoscan, so a
 `NavBeaconDetail` scan carrying the same flag in a populated system stays silent. On by default,

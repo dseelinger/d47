@@ -31,6 +31,7 @@ public static class CalloutCapability
 
     public const string SamplingKey = "callouts.sampling";
     public const string DiscoveryKey = "callouts.discovery";
+    public const string FootfallKey = "callouts.footfall";
     public const string AnnouncedAttackKey = "callouts.announcedAttack";
     public const string RivalTerritoryKey = "callouts.rivalTerritory";
     public const string ChecklistKey = "callouts.checklist";
@@ -240,6 +241,15 @@ public static class CalloutCapability
                 "undiscovered systems",
                 s => s.Callouts.Discovery,
                 (s, v) => s with { Callouts = s.Callouts with { Discovery = v } }),
+
+            Toggle(
+                FootfallKey,
+                "First footfall",
+                "The first time you disembark onto a body, once its scan shows nobody has walked it yet.",
+                "footfall",
+                "first footfall",
+                s => s.Callouts.Footfall,
+                (s, v) => s with { Callouts = s.Callouts with { Footfall = v } }),
 
             Toggle(
                 AnnouncedAttackKey,

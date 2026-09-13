@@ -2416,6 +2416,7 @@ public sealed class AppHost : IDisposable
             // Phase 17.
             .Add(new SamplingCallout())
             .Add(new DiscoveryCallout())
+            .Add(new FootfallCallout())
             .Add(new ProspectorCallout())
             .Add(new CoreAsteroidCallout())
             .Add(new ChecklistCallout(checklists))

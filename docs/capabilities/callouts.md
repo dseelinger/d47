@@ -552,6 +552,18 @@ judge four hundred metres across a ridge, and getting it wrong wastes the sample
 how far you moved and **never whether it was far enough**: that figure is in the species' Codex entry
 in-game, and no table of it ships here. See [Exobiology](exobiology.md) for why.
 
+#### First footfall {#footfall}
+
+The first time you step onto a body whose scan has not yet recorded a footfall there:
+
+```text
+First footfall on Smojue EB-O d6-37 AB 1 b.
+```
+
+Elite writes no event for a first footfall; Directive 47 infers it from `WasFootfalled` on the
+body's `Scan` and the `Disembark` that follows it. A second `Disembark` on the same body says
+nothing, since the body's scan is marked the moment the first one lands.
+
 #### Undiscovered systems {#discovery}
 
 On arrival, the game auto-scans the star you jumped to:
