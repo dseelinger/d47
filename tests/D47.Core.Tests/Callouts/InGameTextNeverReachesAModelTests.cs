@@ -6,7 +6,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Callouts;
 
-/// <summary>A re-voiced in-game message is never handed to a model to be reworded.</summary>
+/// <summary>A re-voiced in-game message that somebody typed is never handed to a model to be reworded.</summary>
 public class InGameTextNeverReachesAModelTests
 {
     private static IncomingMessages Reader() => new()

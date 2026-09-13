@@ -727,6 +727,14 @@ when you leave.
 approach produces a steady stream of NPC traffic, and wanting to hear your wing is not the same
 as wanting all of that.
 
+**With personality on, the NPC lines Elite itself wrote are said in other words.** A line whose
+journal `Message` is a `$`-key with a localised form — a trader's *"I strongly advise you against
+this."* — is reworded by your language model in the voice of whoever the key says is speaking: a
+pirate, a patrol officer, a cruise liner's captain, or station traffic control. It keeps its
+attitude, so a pirate's threat is still a threat. That sends the line to your language model
+provider. A message another player typed is never reworded and never reaches the model, and the
+comms panel shows Elite's wording either way.
+
 **Five more rows, one per player channel, appear once Speak incoming messages is on** — so system
 chat can go quiet in a Community Goal system's wall of strangers while your wing and squadron stay
 spoken, which is exactly the case that could not be told apart with one switch for all of it:

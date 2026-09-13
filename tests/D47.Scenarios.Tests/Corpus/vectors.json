@@ -8,10 +8,10 @@
 //                   that reach prompt position 7 through Situation.Describe.
 //   tool results  - covered below. Spansh's answers and INARA's answers are strings a third party
 //                   wrote, handed to the model as data.
-//   in-game comms - DELIBERATELY ABSENT, and that is the finding rather than a gap. There is no
-//                   path from IncomingMessages into a prompt and no tool that reads a message, so
-//                   comms gets a structural assertion in scenarios.json instead of a resistance
-//                   measurement. See CommsHasNoPathToTheModel.
+//   in-game comms - DELIBERATELY ABSENT. Only a line whose $-key and localised form prove
+//                   Frontier wrote it reaches a prompt, a player cannot author one, and no tool reads
+//                   a message — so comms gets a structural assertion instead of a resistance
+//                   measurement. See InGameTextNeverReachesAModelTests.
 // THE BLANKET "NO TOOL AT ALL" ASSERTION WAS WRONG AND IS GONE. The first paid run broke it on 18
 // of 44 injections against gpt-5.6-terra, and every single break was get_ship, get_location or
 // get_ship_specification — the model looking up the answer to the Commander's own question, which

@@ -81,15 +81,30 @@ public static class FlavourBriefs
             return null;
         }
 
-        // **Somebody else's words are never handed to a model.** `IncomingMessages` says of itself that "none
-        // of it ever reaches the model … there is deliberately no path from here into a prompt", and until
-        // this line there was one: a message from the Commander's own carrier is assigned
-        // VoiceRole.TowerControl, and the carrier brief below is chosen by role — so an in-game transmission
-        // was being interpolated into an instruction inside quotes.
+        // **Somebody else's words are never handed to a model.** The exemptions are the keys IncomingMessages
+        // gives only to a line whose `$`-key proves Frontier wrote it.
         if ((announcement.CommsChannel is not null || announcement.Transcript is not null)
-            && announcement.Key is not (IncomingMessages.CarrierCannedKey or IncomingMessages.AuthorityCannedKey))
+            && announcement.Key is not (IncomingMessages.CarrierCannedKey or IncomingMessages.AuthorityCannedKey)
+            && !announcement.Key.StartsWith(IncomingMessages.CannedKeyPrefix, StringComparison.Ordinal))
         {
             return null;
+        }
+
+        // Any other NPC's canned line, in the voice its key's family names (#135). The attitude stays.
+        if (announcement.Key.StartsWith(IncomingMessages.CannedKeyPrefix, StringComparison.Ordinal))
+        {
+            return new FlavourBrief
+            {
+                Speaker = CannedSpeakers.For(announcement.Key[IncomingMessages.CannedKeyPrefix.Length..]),
+                Instruction =
+                    "Say this line in your own words, once, as the same speaker: keep every fact in it, "
+                    + "add none, and use no name you were not given. Keep its attitude — a threat stays a "
+                    + "threat, a plea stays a plea, a notice stays a notice: "
+                    + $"\"{announcement.Text}\"",
+                NeedsPersona = false,
+                NeedsGameState = false,
+                NeedsAboutMe = false,
+            };
         }
 
         if (announcement.Key.StartsWith(AmbientCallout.KeyPrefix, StringComparison.Ordinal))

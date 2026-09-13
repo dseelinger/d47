@@ -129,9 +129,9 @@ public class IncomingMessageTests
         Assert.Contains("not subordinate", brief.Instruction, StringComparison.Ordinal);
     }
 
-    /// <summary>Away from the carrier there is no owner context, and it is just a message.</summary>
+    /// <summary>Away from the carrier there is no owner context: the line takes the general canned road and keeps its taunt.</summary>
     [Fact]
-    public void AuthorityCannedAwayFromTheCarrierIsJustAMessage()
+    public void AuthorityCannedAwayFromTheCarrierGetsNoOwnerTreatment()
     {
         var read = Reader().Read(Message(
             "$ShipName_Police_Independent;",
@@ -140,7 +140,111 @@ public class IncomingMessageTests
             localised: "We didn't find anything on you... this time."));
 
         Assert.NotNull(read);
-        Assert.NotEqual(IncomingMessages.AuthorityCannedKey, read.Key);
+        Assert.Equal(IncomingMessages.CannedKeyPrefix + "Police", read.Key);
+
+        var brief = FlavourBriefs.For(read, personalityEnabled: true);
+
+        Assert.NotNull(brief);
+        Assert.DoesNotContain("not subordinate", brief.Instruction, StringComparison.Ordinal);
+    }
+
+    private static FlavourBrief? CannedBrief(string key, string localised) =>
+        FlavourBriefs.For(
+            Reader().Read(Message("$npc_name_decorate:#name=Fuzz Deniz;", key, "npc", localised))!,
+            personalityEnabled: true);
+
+    /// <summary>The trader line heard 942 times reaches the brief, while the page keeps Elite's words (#135).</summary>
+    [Fact]
+    public void ATradersCannedLineIsSaidInOtherWords()
+    {
+        var read = Reader().Read(Message(
+            "$npc_name_decorate:#name=Fuzz Deniz;",
+            "$Trader_OnEnemyShipDetection02;",
+            "npc",
+            localised: "I strongly advise you against this."));
+
+        Assert.NotNull(read);
+        Assert.Equal(IncomingMessages.CannedKeyPrefix + "Trader", read.Key);
+        Assert.Equal(VoiceRole.Comms, read.Voice);
+        Assert.Equal("Fuzz Deniz: I strongly advise you against this.\n", read.Transcript);
+
+        var brief = FlavourBriefs.For(read, personalityEnabled: true);
+
+        Assert.NotNull(brief);
+        Assert.Equal(CannedSpeakers.For("Trader"), brief.Speaker);
+        Assert.Contains("\"I strongly advise you against this.\"", brief.Instruction, StringComparison.Ordinal);
+        Assert.False(brief.NeedsPersona);
+        Assert.False(brief.NeedsGameState);
+        Assert.False(brief.NeedsAboutMe);
+    }
+
+    /// <summary>A pirate and a patrol officer are different people.</summary>
+    [Fact]
+    public void APirateAndAPatrolOfficerAreDifferentSpeakers()
+    {
+        var pirate = CannedBrief("$Pirate_OnStartScanCargo07;", "Let's see what you are carrying.");
+        var police = CannedBrief("$Police_StartPatrol03;", "Receiving five by five, I'm in the air now, joining patrol.");
+
+        Assert.NotNull(pirate);
+        Assert.NotNull(police);
+        Assert.NotEqual(pirate.Speaker, police.Speaker);
+    }
+
+    /// <summary>A pirate's threat stays a threat: the canned attitude is kept, not replaced as the owner road replaces it.</summary>
+    [Fact]
+    public void ACannedLineKeepsItsAttitude()
+    {
+        var brief = CannedBrief("$Pirate_OnStartScanCargo07;", "Let's see what you are carrying.");
+
+        Assert.NotNull(brief);
+        Assert.Contains("Keep its attitude", brief.Instruction, StringComparison.Ordinal);
+        Assert.DoesNotContain("yours to replace", brief.Instruction, StringComparison.Ordinal);
+    }
+
+    /// <summary>A family Frontier adds later still gets a speaker.</summary>
+    [Fact]
+    public void AFamilyWithNoSpeakerOfItsOwnGetsTheFallback()
+    {
+        var brief = CannedBrief("$Hitchhiker_Wave01;", "Hello there.");
+
+        Assert.NotNull(brief);
+        Assert.Equal(CannedSpeakers.Fallback, brief.Speaker);
+    }
+
+    [Theory]
+    [InlineData("$Trader_OnEnemyShipDetection02;", "Trader")]
+    [InlineData("$STATION_docking_granted;", "STATION")]
+    [InlineData("$PowersSecurity_PassedStopAndSearchAlliedPower07:#myPowerName=Edmund Mahon;", "PowersSecurity")]
+    [InlineData("$MinerCriticalDamage04;", "MinerCriticalDamage")]
+    public void TheFamilyIsReadBeforeAnyParameterOrNumber(string key, string family) =>
+        Assert.Equal(family, IncomingMessages.FamilyOf(key));
+
+    /// <summary>Personality off means said as written.</summary>
+    [Fact]
+    public void PersonalityOffReadsACannedLineAsWritten()
+    {
+        var read = Reader().Read(Message(
+            "$npc_name_decorate:#name=Fuzz Deniz;",
+            "$Trader_OnEnemyShipDetection02;",
+            "npc",
+            localised: "I strongly advise you against this."));
+
+        Assert.NotNull(read);
+        Assert.Null(FlavourBriefs.For(read, personalityEnabled: false));
+    }
+
+    /// <summary>A player channel is a person typing, whatever the text looks like.</summary>
+    [Fact]
+    public void ADollarKeyOnAPlayerChannelIsNotCanned()
+    {
+        var read = Reader().Read(Message(
+            "$cmdr_decorate:#name=Vex;",
+            "$Trader_OnEnemyShipDetection02;",
+            "wing",
+            localised: "I strongly advise you against this."));
+
+        Assert.NotNull(read);
+        Assert.Equal("message.wing", read.Key);
         Assert.Null(FlavourBriefs.For(read, personalityEnabled: true));
     }
 

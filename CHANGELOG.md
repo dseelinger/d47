@@ -13,6 +13,13 @@ provider offers one — read off `StationAllegiance` on the `Docked` event. Most
 allegiance at all and are unaffected; Federation and Alliance stations keep the voice they always
 did.
 
+With personality on, the game's own NPC lines are now said in other words rather than word for
+word each time. A trader's "I strongly advise you against this." is reworded in a trader's voice,
+a pirate's in a pirate's, and station traffic stays a procedural notice; each keeps its attitude,
+so a threat is still a threat. Only lines Elite itself wrote are reworded — a message another
+player typed is still read exactly as sent — and the comms panel still shows Elite's wording.
+With personality off, they are said as written.
+
 Speech settings now has a "Reset every voice to its pairing" row. Pressing it puts every core back
 to the voice d47's pairing pass chose for it, and the carrier captain and tower back to speaking in
 the ship AI's — undoing any voice you have since hand-picked. It covers every voice provider you

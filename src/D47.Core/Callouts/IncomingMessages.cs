@@ -52,6 +52,33 @@ public sealed partial class IncomingMessages : ICallout
     public const string AuthorityCannedKey = "authority.comms";
 
     /// <summary>
+    /// Any other NPC's Frontier-canned line, followed by the family its <c>$</c>-key names (#135). Starts
+    /// with <c>message.</c>, so the session record still writes it down.
+    /// </summary>
+    public const string CannedKeyPrefix = "message.canned.";
+
+    /// <summary>
+    /// The family a canned key names: the text between the leading <c>$</c> and the first <c>_</c>,
+    /// <c>;</c> or <c>:</c>, with trailing digits dropped — <c>$Pirate_Scan01;</c> is <c>Pirate</c>,
+    /// <c>$MinerCriticalDamage04;</c> is <c>MinerCriticalDamage</c>.
+    /// </summary>
+    public static string FamilyOf(string key)
+    {
+        ArgumentNullException.ThrowIfNull(key);
+
+        var body = key.StartsWith('$') ? key[1..] : key;
+        var end = body.IndexOfAny(['_', ';', ':']);
+
+        return (end < 0 ? body : body[..end]).TrimEnd("0123456789".ToCharArray());
+    }
+
+    /// <summary>Whether a message is Frontier's own string: a <c>$</c>-key with a localised form, which no player typed.</summary>
+    private static bool IsFrontiersString(JournalEvent journalEvent) =>
+        journalEvent.String("Message") is { Length: > 1 } key
+        && key[0] == '$'
+        && journalEvent.String("Message_Localised") is { Length: > 0 };
+
+    /// <summary>
     /// Whether the Commander currently shares a system with their own carrier (#248's second half,
     /// asked in the same chat): the condition under which a System Authority vessel's canned line is
     /// worth the owner treatment.
@@ -150,10 +177,9 @@ public sealed partial class IncomingMessages : ICallout
 
         // **A canned line from the Commander's own carrier is Frontier's string, not somebody else's words**
         // (#248).
-        if (IsMyCarrier(sender)
-            && journalEvent.String("Message") is { Length: > 1 } key
-            && key[0] == '$'
-            && journalEvent.String("Message_Localised") is { Length: > 0 })
+        var frontiers = IsFrontiersString(journalEvent);
+
+        if (IsMyCarrier(sender) && frontiers)
         {
             return new Announcement(CarrierCannedKey, text)
             {
@@ -168,9 +194,7 @@ public sealed partial class IncomingMessages : ICallout
         if (AuthorityNearOwnCarrier()
             && journalEvent.String("From") is { } authority
             && authority.StartsWith("$ShipName_Police", StringComparison.OrdinalIgnoreCase)
-            && journalEvent.String("Message") is { Length: > 1 } policeKey
-            && policeKey[0] == '$'
-            && journalEvent.String("Message_Localised") is { Length: > 0 })
+            && frontiers)
         {
             return new Announcement(AuthorityCannedKey, text)
             {
@@ -183,7 +207,12 @@ public sealed partial class IncomingMessages : ICallout
             };
         }
 
-        return new Announcement($"message.{channel}", Spoken(sender, text, isPlayer))
+        // **Any other NPC's canned line goes to the brief for its family** (#135). A player channel never does.
+        var key = !isPlayer && frontiers
+            ? CannedKeyPrefix + FamilyOf(journalEvent.String("Message")!)
+            : $"message.{channel}";
+
+        return new Announcement(key, Spoken(sender, text, isPlayer))
         {
             // A carrier's traffic is its tower talking, and the Commander has cast a voice for it.
             Voice = IsMyCarrier(sender) ? VoiceRole.TowerControl : VoiceRole.Comms,

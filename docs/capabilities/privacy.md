@@ -108,7 +108,9 @@ can — which is why the answer is worth more than the page.
 question, the conversation so far, the guardrails, the persona, your About Me text, and the game
 state assembled from your journal. The lines D47 says in character without being asked — ambient
 remarks, the greeting, a core's first words — carry your character sheet too, and about one ambient
-remark in four carries your About Me story; the carrier's captain and tower get neither. What does
+remark in four carries your About Me story; the carrier's captain and tower get neither. With
+personality on, the NPC lines Elite itself wrote go too, to be said in other words — a pirate's
+threat, a station's docking notice; a message another player typed never does. What does
 not: journal files, your key, or anything about your machine. Inactive when the provider is `none`, and also when a provider that *needs* a key is
 chosen and has none stored — selected-but-inert sends nothing.
 
