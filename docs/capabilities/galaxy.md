@@ -554,6 +554,32 @@ crowd-sourced, and only the rings holding what you asked for are listed — a me
 no Painite in it is not part of the answer to "where is Painite", and naming it invites a trip to
 the wrong one of two rings around the same planet.
 
+#### `how_to_get`
+
+How anything is acquired — a ship, module, suit, hand weapon, modification, material, ship-locker
+item or commodity — asked as one question rather than three.
+
+```json
+{"type":"object","properties":{"item":{"type":"string","description":"The thing to get, by name."},"near":{"type":"string","description":"Search out from this system. Defaults to theirs."}},"required":["item"],"additionalProperties":false}
+```
+
+Before this, the model chose among `find_nearest_station`, `find_material` and
+`find_micro_resource` on its own, and a name that landed on the wrong one was redirected rather
+than answered. `how_to_get` asks `AcquisitionGuide` instead, which already resolves a name against
+every one of those catalogues, and answers in order: what the thing is, how it is acquired in
+words, what has to be reached or held first, and any further detail the table carries.
+
+At most one search follows, the first of these that applies: a shipyard or outfitting search for a
+ship or module; a commodity market search for anything bought or sold by the tonne; a body search
+for something mined from a ring, with the material as the hotspot filter; a station search for the
+nearest material trader of the right kind. A rare good is answered from its one station in the
+table and searches nothing, and surface mining is said in words and searches nothing, since neither
+question the galaxy search answers is the one being asked. Every search is cut to the nearest one
+result — this tool asks where to go first, not for a ranked list.
+
+With no web access, or a search that fails, the method is still the answer; only the "nearest"
+half is missing. A name nothing here recognises gets the nearest names instead of a guess.
+
 ### Notes for anyone reading the code
 
 There is no published API for this service; the endpoints are reverse-engineered by every third

@@ -6,6 +6,14 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.119.0 — Ask how to get it
+
+A new question, "how do I get X", answers for anything named — a ship, module, suit, hand weapon,
+modification, material, ship-locker item, or commodity — rather than only the three things the
+model could already ask about separately. It says how the thing is acquired first, then names the
+nearest shipyard, market, mining ring, or material trader where finding one is part of the answer.
+A rare good and a tech broker unlock are answered from the table alone, with no search needed.
+
 ## 0.117.0 — Engineering, seen two new ways
 
 A ship gated behind an Empire or Federation naval rank now says which rank it needs — the

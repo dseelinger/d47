@@ -209,7 +209,8 @@ public static class GalaxyCapability
                 Description =
                     "Find the nearest station selling a named module or ship, or trading a commodity "
                     + "— cargo carried in tonnes, never an engineering material. A rare good answers "
-                    + "with its one selling station and the quantity currently on offer there.",
+                    + "with its one selling station and the quantity currently on offer there. For "
+                    + "something that may not be for sale, use how_to_get.",
                 Parameters =
                 [
                     // Three short descriptions on purpose.
@@ -427,6 +428,32 @@ public static class GalaxyCapability
                 ],
                 Handler = (arguments, cancellationToken) =>
                     FindBodyAsync(galaxy, currentSystem, settings, arguments, cancellationToken),
+            },
+            new ToolDefinition
+            {
+                Name = "how_to_get",
+                Description =
+                    "How to get anything — a ship, module, suit, hand weapon, modification, material, "
+                    + "ship-locker item or commodity: the method first, and the nearest place when "
+                    + "buying, mining or trading is the method.",
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "item",
+                        Type = ToolParameterType.String,
+                        Description = "The thing to get, by name.",
+                        Required = true,
+                    },
+                    new ToolParameter
+                    {
+                        Name = "near",
+                        Type = ToolParameterType.String,
+                        Description = "Search out from this system. Defaults to theirs.",
+                    },
+                ],
+                Handler = (arguments, cancellationToken) =>
+                    HowToGetAsync(galaxy, trade, currentSystem, settings, arguments, cancellationToken),
             },
         ],
         Settings =
@@ -1262,6 +1289,246 @@ public static class GalaxyCapability
             return ToolResult.Error(ex.Message);
         }
     }
+
+    /// <summary>
+    /// How anything named is acquired: the method first, from <see cref="AcquisitionGuide"/>, then at
+    /// most one search for where.
+    /// </summary>
+    private static async Task<ToolResult> HowToGetAsync(
+        IGalaxyService? galaxy,
+        ITradePlanService? trade,
+        Func<string?> currentSystem,
+        Configuration.SettingsService settings,
+        ToolArguments arguments,
+        CancellationToken cancellationToken)
+    {
+        if (!arguments.TryGetString("item", out var item) || string.IsNullOrWhiteSpace(item))
+        {
+            return ToolResult.Error("Name a thing to get.");
+        }
+
+        var trimmed = item.Trim();
+        var acquisition = AcquisitionGuide.For(trimmed);
+
+        if (acquisition is null)
+        {
+            var near = AcquisitionGuide.Near(trimmed);
+
+            return ToolResult.Ok(near.Count == 0
+                ? $"I don't know anything called '{trimmed}'."
+                : $"I don't know anything called '{trimmed}'. Did you mean {string.Join(", ", near)}?");
+        }
+
+        // A commodity defaults to a market even where the table names no method for it; everything else
+        // with nothing named is not a search that can help.
+        if (acquisition.Methods.Count == 0 && acquisition.Kind != AcquisitionKind.Commodity)
+        {
+            return ToolResult.Ok($"I know {acquisition.Name}, but I have no sourcing for it.");
+        }
+
+        var said = HowToGetSaid(acquisition);
+
+        if (galaxy is null || !settings.Current.Knowledge.GalaxySearch)
+        {
+            return ToolResult.Ok(said);
+        }
+
+        var near2 = arguments.TryGetString("near", out var explicitNear) && !string.IsNullOrWhiteSpace(explicitNear)
+            ? explicitNear.Trim()
+            : currentSystem();
+
+        if (string.IsNullOrWhiteSpace(near2))
+        {
+            return ToolResult.Ok(said);
+        }
+
+        try
+        {
+            var search = await HowToGetSearch(acquisition, galaxy, trade, near2, cancellationToken)
+                .ConfigureAwait(false);
+
+            return ToolResult.Ok(search is null ? said : $"{said} {search}");
+        }
+        catch (GalaxyUnavailableException)
+        {
+            return ToolResult.Ok(said);
+        }
+    }
+
+    /// <summary>What the thing is, its methods in words, the Gate, and the Detail — in that order.</summary>
+    private static string HowToGetSaid(Acquisition acquisition)
+    {
+        var said = new StringBuilder();
+
+        said.Append(acquisition.Name).Append(" is ").Append(KindWords(acquisition.Kind)).Append('.');
+
+        if (acquisition.Methods.Count > 0)
+        {
+            said.Append(' ')
+                .Append(Capitalised(string.Join(", or ", acquisition.Methods.Select(MethodWords))))
+                .Append('.');
+        }
+
+        if (acquisition.Gate is { Length: > 0 } gate)
+        {
+            said.Append(" It needs ").Append(gate).Append('.');
+        }
+
+        if (acquisition.Detail is { Length: > 0 } detail)
+        {
+            said.Append(' ').Append(detail);
+
+            if (!detail.EndsWith('.'))
+            {
+                said.Append('.');
+            }
+        }
+
+        return said.ToString();
+    }
+
+    /// <summary>At most one search, the first rule below that applies; null where none does.</summary>
+    private static async Task<string?> HowToGetSearch(
+        Acquisition acquisition,
+        IGalaxyService galaxy,
+        ITradePlanService? trade,
+        string near,
+        CancellationToken cancellationToken)
+    {
+        if (acquisition.Kind is AcquisitionKind.Ship or AcquisitionKind.Module
+            && (acquisition.Methods.Contains(AcquisitionMethod.Shipyard)
+                || acquisition.Methods.Contains(AcquisitionMethod.Outfitting)))
+        {
+            if (!StationQuery.TryParse(
+                    near,
+                    acquisition.Kind == AcquisitionKind.Module ? acquisition.Name : null,
+                    null,
+                    null,
+                    acquisition.Kind == AcquisitionKind.Ship ? acquisition.Name : null,
+                    false,
+                    DefaultDistance,
+                    1,
+                    out var query,
+                    out _))
+            {
+                return null;
+            }
+
+            var stations = await galaxy.FindStationsAsync(query, cancellationToken).ConfigureAwait(false);
+
+            return NearestStation(stations, query.MaxDistance);
+        }
+
+        if (acquisition.Kind == AcquisitionKind.Commodity
+            && (acquisition.Methods.Count == 0 || acquisition.Methods.Contains(AcquisitionMethod.Market)))
+        {
+            if (trade is null)
+            {
+                return null;
+            }
+
+            var query = new CommodityQuery(
+                acquisition.Name, TradeSide.Buying, null, DefaultDistance, false, false, 1, null, null, false,
+                CommodityOrder.Distance, null);
+
+            var answer = await trade
+                .FindCommodityAsync(new CommoditySearch(near, null, query, DefaultPriceAgeHours), cancellationToken)
+                .ConfigureAwait(false);
+
+            if (answer.Offers.Count == 0)
+            {
+                var nothing = $"Nothing within {DefaultDistance:0} light years of {near} trades it.";
+
+                return acquisition.Methods.Count == 0
+                    ? nothing + " I have no other sourcing for it."
+                    : nothing;
+            }
+
+            var winner = answer.Offers[0];
+
+            return $"Nearest: {winner.Market.Station} ({winner.Market.System}), {winner.Distance:0.#} ly.";
+        }
+
+        if (acquisition.Methods.Contains(AcquisitionMethod.RingMining))
+        {
+            if (!BodyQuery.TryParse(
+                    near, null, null, null, acquisition.Name, null, null, null, null, null, DefaultDistance, 1,
+                    out var query, out _))
+            {
+                return null;
+            }
+
+            var bodies = await galaxy.FindBodiesAsync(query, cancellationToken).ConfigureAwait(false);
+
+            return bodies.Bodies.Count == 0
+                ? $"Nothing within {DefaultDistance:0} light years of {near} has that in its rings."
+                : $"Nearest: {bodies.Bodies[0].Name} ({bodies.Bodies[0].SystemName})"
+                  + (bodies.Bodies[0].Distance is { } distance ? $", {distance:0.#} ly." : ".");
+        }
+
+        if (acquisition.Methods.Contains(AcquisitionMethod.MaterialTrader))
+        {
+            var category = MaterialCatalogue.Find(acquisition.Name)?.Category;
+
+            var stations = await galaxy
+                .FindStationsAsync(StationQuery.ForTrader(near, category, DefaultDistance, 1), cancellationToken)
+                .ConfigureAwait(false);
+
+            return NearestStation(stations, DefaultDistance);
+        }
+
+        return null;
+    }
+
+    private static string NearestStation(StationSearchResult result, double maxDistance) =>
+        result.Stations.Count == 0
+            ? $"Nowhere within {maxDistance:0} light years is reported to sell it."
+            : $"Nearest: {result.Stations[0].Name} ({result.Stations[0].SystemName})"
+              + (result.Stations[0].Distance is { } distance ? $", {distance:0.#} ly." : ".");
+
+    private static string Capitalised(string text) =>
+        text.Length == 0 ? text : char.ToUpperInvariant(text[0]) + text[1..];
+
+    private static string KindWords(AcquisitionKind kind) => kind switch
+    {
+        AcquisitionKind.Ship => "a ship",
+        AcquisitionKind.Module => "a module",
+        AcquisitionKind.Suit => "a suit",
+        AcquisitionKind.HandWeapon => "a hand weapon",
+        AcquisitionKind.SuitTool => "a suit tool",
+        AcquisitionKind.SuitModification => "a suit modification",
+        AcquisitionKind.WeaponModification => "a weapon modification",
+        AcquisitionKind.Material => "an engineering material",
+        AcquisitionKind.ShipLocker => "an Odyssey ship-locker item",
+        AcquisitionKind.Commodity => "a market commodity",
+        AcquisitionKind.RareCommodity => "a rare commodity",
+        _ => "something",
+    };
+
+    private static string MethodWords(AcquisitionMethod method) => method switch
+    {
+        AcquisitionMethod.Shipyard => "bought at a shipyard",
+        AcquisitionMethod.Outfitting => "bought at outfitting",
+        AcquisitionMethod.Market => "bought at a market",
+        AcquisitionMethod.RareMarket => "sold at one station only, allocation-limited",
+        AcquisitionMethod.PioneerSupplies => "bought at Pioneer Supplies",
+        AcquisitionMethod.ComesWithSuit => "issued with a suit",
+        AcquisitionMethod.MaterialTrader => "exchanged at a material trader",
+        AcquisitionMethod.Bartender => "exchanged with the Bartender for other Components",
+        AcquisitionMethod.RingMining => "mined from asteroid rings",
+        AcquisitionMethod.SurfaceMining =>
+            "surface mining from a Rhino SRV, at a Planetary Mining Location the Detailed Surface Scanner finds",
+        AcquisitionMethod.SurfaceProspecting => "found by surface prospecting",
+        AcquisitionMethod.Settlement => "found in settlements",
+        AcquisitionMethod.Salvage => "salvaged",
+        AcquisitionMethod.Scanning => "found by scanning",
+        AcquisitionMethod.MissionReward => "given as a mission reward",
+        AcquisitionMethod.GuardianSite => "found at Guardian sites",
+        AcquisitionMethod.TechBroker => "unlocked at a tech broker",
+        AcquisitionMethod.Engineer => "applied by an engineer",
+        AcquisitionMethod.Unobtainable => "no longer obtainable",
+        _ => method.ToString(),
+    };
 
     /// <summary>A boolean argument as three states rather than two.</summary>
     private static bool? Flag(ToolArguments arguments, string name) =>
