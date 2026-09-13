@@ -1052,6 +1052,9 @@ public sealed class AppHost : IDisposable
             // (#296).
             commodityLedger.Apply(events);
 
+            // Moves a stored plan's reached stop forward on arrival, replay included (#199).
+            planBook.Apply(events);
+
             var calloutContext = new CalloutContext(
                 context.Now,
                 IsPriming: context.IsFirst,

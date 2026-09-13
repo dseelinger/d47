@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using D47.Core.Journal;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Knowledge;
@@ -36,6 +37,9 @@ public sealed record StoredRoutePlan
     public RichesRoute? Riches { get; init; }
 
     public TradeRoute? Trade { get; init; }
+
+    /// <summary>The furthest stop the Commander has reached, as an index into the plan's own stop list.</summary>
+    public int? Reached { get; init; }
 }
 
 /// <summary>
@@ -87,14 +91,100 @@ public sealed class RoutePlanBook(string path, ILogger<RoutePlanBook> logger)
             Riches = route,
         });
 
-    public void Record(TradeRoute route, string headline, DateTimeOffset at) =>
+    /// <summary>
+    /// <paramref name="currentSystem"/> is the Commander's system as the plan was made: the first stop of a
+    /// trade route is the station they were already standing on, so no arrival event follows it (#199).
+    /// </summary>
+    public void Record(TradeRoute route, string headline, DateTimeOffset at, string? currentSystem = null) =>
         Keep(new StoredRoutePlan
         {
             Kind = RoutePlanKind.Trade,
             PlottedAt = at,
             Headline = headline,
             Trade = route,
+            Reached = route.Stops.Count > 0 &&
+                      string.Equals(route.Stops[0].System, currentSystem, StringComparison.OrdinalIgnoreCase)
+                ? 0
+                : null,
         });
+
+    /// <summary>
+    /// Moves a stored plan's reached stop forward on arrival, one plan and one kind at a time (#199).
+    /// </summary>
+    public void Apply(IReadOnlyList<JournalEvent> events)
+    {
+        var moved = false;
+
+        lock (_gate)
+        {
+            foreach (var journalEvent in events)
+            {
+                if (journalEvent.Kind is not ("FSDJump" or "CarrierJump" or "Location"))
+                {
+                    continue;
+                }
+
+                if (journalEvent.String("StarSystem") is not { Length: > 0 } system)
+                {
+                    continue;
+                }
+
+                foreach (var kind in _plans.Keys.ToArray())
+                {
+                    var plan = _plans[kind];
+
+                    if (journalEvent.Timestamp < plan.PlottedAt)
+                    {
+                        continue;
+                    }
+
+                    if (Stops(plan) is not { } stops)
+                    {
+                        continue;
+                    }
+
+                    var from = plan.Reached is { } reached ? reached + 1 : 0;
+                    var found = -1;
+
+                    for (var i = from; i < stops.Count; i++)
+                    {
+                        if (string.Equals(stops[i], system, StringComparison.OrdinalIgnoreCase))
+                        {
+                            found = i;
+                            break;
+                        }
+                    }
+
+                    if (found < 0)
+                    {
+                        continue;
+                    }
+
+                    _plans[kind] = plan with { Reached = found };
+                    moved = true;
+                }
+            }
+
+            if (moved)
+            {
+                Save();
+            }
+        }
+
+        if (moved)
+        {
+            Changed?.Invoke();
+        }
+    }
+
+    /// <summary>The systems a plan visits in order, or null for a kind with no plan recorded.</summary>
+    private static IReadOnlyList<string>? Stops(StoredRoutePlan plan) => plan.Kind switch
+    {
+        RoutePlanKind.Jump => plan.Jump?.Waypoints.Select(waypoint => waypoint.System).ToArray(),
+        RoutePlanKind.Riches => plan.Riches?.Stops.Select(stop => stop.System).ToArray(),
+        RoutePlanKind.Trade => plan.Trade?.Stops.Select(stop => stop.System).ToArray(),
+        _ => null,
+    };
 
     private void Keep(StoredRoutePlan plan)
     {

@@ -1,3 +1,4 @@
+using D47.Core.Journal;
 using D47.Core.Knowledge;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -31,6 +32,36 @@ public class RoutePlanBookTests : IDisposable
         Capital = 50_000_000,
         TotalProfit = 412_800,
     };
+
+    private static PlottedRoute JumpWithTwoWaypoints() => new(
+        "Sol",
+        "Colonia",
+        22_000,
+        168,
+        [
+            new RouteWaypoint("PSR J1752-2806", 10, 15_000, true),
+            new RouteWaypoint("Colonia", 158, 0, false),
+        ]);
+
+    private static TradeRoute TradeLoop() => new(
+    [
+        new TradeStop("Sol", "Abraham Lincoln"),
+        new TradeStop("Wolf 359", "Whitehead Vision"),
+        new TradeStop("Sol", "Abraham Lincoln"),
+    ])
+    {
+        Capital = 50_000_000,
+        TotalProfit = 412_800,
+        Loop = true,
+    };
+
+    private static JournalEvent Arrival(string kind, string system, DateTimeOffset at) =>
+        JournalEvent.TryParse(
+            $$"""{"timestamp":"{{at:O}}","event":"{{kind}}","StarSystem":"{{system}}"}""",
+            NullLogger.Instance,
+            out var parsed)
+            ? parsed!
+            : throw new InvalidOperationException("bad journal fixture");
 
     public void Dispose()
     {
@@ -159,5 +190,138 @@ public class RoutePlanBookTests : IDisposable
         // profit on it means nothing.
         Assert.Equal(50_000_000, read.Last(RoutePlanKind.Trade)?.Trade?.Capital);
         Assert.Equal(412_800, read.Last(RoutePlanKind.Trade)?.Trade?.TotalProfit);
+    }
+
+    [Fact]
+    public void ANewPlanStartsWithNothingReached()
+    {
+        var book = Book();
+
+        book.Record(Jump(), "Sol to Colonia", At);
+
+        Assert.Null(book.Last(RoutePlanKind.Jump)?.Reached);
+    }
+
+    [Fact]
+    public void ArrivingAtEachWaypointInOrderMovesTheReachedStopForward()
+    {
+        var book = Book();
+
+        book.Record(JumpWithTwoWaypoints(), "Sol to Colonia", At);
+
+        book.Apply([Arrival("FSDJump", "PSR J1752-2806", At.AddMinutes(10))]);
+        Assert.Equal(0, book.Last(RoutePlanKind.Jump)?.Reached);
+
+        book.Apply([Arrival("FSDJump", "Colonia", At.AddMinutes(20))]);
+        Assert.Equal(1, book.Last(RoutePlanKind.Jump)?.Reached);
+    }
+
+    [Fact]
+    public void JumpingPastAWaypointCountsItAsReachedToo()
+    {
+        var book = Book();
+
+        book.Record(JumpWithTwoWaypoints(), "Sol to Colonia", At);
+
+        // The Commander's own jump range cleared the first waypoint in one hop.
+        book.Apply([Arrival("FSDJump", "Colonia", At.AddMinutes(10))]);
+
+        Assert.Equal(1, book.Last(RoutePlanKind.Jump)?.Reached);
+    }
+
+    [Fact]
+    public void AnArrivalBeforeThePlanWasMadeMovesNothing()
+    {
+        var book = Book();
+
+        book.Record(JumpWithTwoWaypoints(), "Sol to Colonia", At);
+
+        book.Apply([Arrival("FSDJump", "PSR J1752-2806", At.AddMinutes(-5))]);
+
+        Assert.Null(book.Last(RoutePlanKind.Jump)?.Reached);
+    }
+
+    [Fact]
+    public void AnArrivalNotOnThePlanMovesNothing()
+    {
+        var book = Book();
+
+        book.Record(JumpWithTwoWaypoints(), "Sol to Colonia", At);
+
+        book.Apply([Arrival("FSDJump", "Deciat", At.AddMinutes(10))]);
+
+        Assert.Null(book.Last(RoutePlanKind.Jump)?.Reached);
+    }
+
+    [Fact]
+    public void ATradeLoopEndingWhereItStartedReachesTheLastStopNotTheFirst()
+    {
+        var book = Book();
+
+        book.Record(TradeLoop(), "2 stops from Abraham Lincoln", At);
+
+        book.Apply([Arrival("Location", "Wolf 359", At.AddMinutes(10))]);
+        Assert.Equal(1, book.Last(RoutePlanKind.Trade)?.Reached);
+
+        book.Apply([Arrival("Location", "Sol", At.AddMinutes(20))]);
+        Assert.Equal(2, book.Last(RoutePlanKind.Trade)?.Reached);
+    }
+
+    [Fact]
+    public void ATradePlanMadeStandingOnTheFirstStopStartsThereReached()
+    {
+        var book = Book();
+
+        book.Record(Trade(), "1 stop from Abraham Lincoln", At, currentSystem: "Sol");
+
+        Assert.Equal(0, book.Last(RoutePlanKind.Trade)?.Reached);
+    }
+
+    [Fact]
+    public void ChangedIsRaisedWhenAReachedStopMovesAndNotOtherwise()
+    {
+        var book = Book();
+        book.Record(JumpWithTwoWaypoints(), "Sol to Colonia", At);
+
+        var raised = 0;
+        book.Changed += () => raised++;
+
+        book.Apply([Arrival("FSDJump", "Deciat", At.AddMinutes(10))]);
+        Assert.Equal(0, raised);
+
+        book.Apply([Arrival("FSDJump", "PSR J1752-2806", At.AddMinutes(10))]);
+        Assert.Equal(1, raised);
+    }
+
+    [Fact]
+    public void AReachedStopSurvivesLoad()
+    {
+        var written = Book();
+        written.Record(JumpWithTwoWaypoints(), "Sol to Colonia", At);
+        written.Apply([Arrival("FSDJump", "PSR J1752-2806", At.AddMinutes(10))]);
+
+        var read = Book();
+        read.Load();
+
+        Assert.Equal(0, read.Last(RoutePlanKind.Jump)?.Reached);
+    }
+
+    [Fact]
+    public void AFileWithNoReachedFieldStillLoadsWithNothingReached()
+    {
+        Directory.CreateDirectory(_folder);
+        File.WriteAllText(
+            Path_,
+            """
+            [{"kind":"jump","plottedAt":"2026-08-20T09:00:00Z","headline":"Sol to Colonia",
+              "jump":{"origin":"Sol","destination":"Colonia","totalDistance":22000,"totalJumps":168,
+                "waypoints":[{"system":"PSR J1752-2806","jumps":10,"distanceLeft":21629,"isNeutron":true}]}}]
+            """);
+
+        var book = Book();
+        book.Load();
+
+        Assert.NotNull(book.Last(RoutePlanKind.Jump));
+        Assert.Null(book.Last(RoutePlanKind.Jump)?.Reached);
     }
 }

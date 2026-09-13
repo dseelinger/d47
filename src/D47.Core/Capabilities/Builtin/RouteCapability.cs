@@ -519,7 +519,8 @@ public static class RouteCapability
             plans?.Record(
                 route,
                 $"{route.Stops.Count} stops from {query.Station}",
-                now?.Invoke() ?? default);
+                now?.Invoke() ?? default,
+                query.System);
 
             return ToolResult.Ok(Describe(route, query));
         }
