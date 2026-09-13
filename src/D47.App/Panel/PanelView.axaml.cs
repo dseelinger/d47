@@ -695,9 +695,14 @@ public partial class PanelView : UserControl
         D47.Core.Ships.ShipPlanService ships,
         Func<D47.Core.Journal.CommanderGameState?> state,
         D47.Core.Loadout.OnFootPlanService? onFoot = null,
-        EngineerDirectoryMemory? memory = null)
+        EngineerDirectoryMemory? memory = null,
+        D47.Core.Checklists.ChecklistService? checklists = null)
     {
-        var source = new EngineerSource(unlocks.Report, engineer => unlocks.Promote(engineer));
+        var source = new EngineerSource(
+            unlocks.Report,
+            engineer => unlocks.Promote(engineer),
+            checklists is null ? null : checklists.IsPinned,
+            checklists is null ? null : checklists.Pin);
 
         // A plan moving changes who is worth flying to, and neither store knows about this page.
         ships.Store.Changed += source.Invalidate;
@@ -705,6 +710,12 @@ public partial class PanelView : UserControl
         if (onFoot is not null)
         {
             onFoot.Store.Changed += source.Invalidate;
+        }
+
+        // A pin set or cleared here is exactly what this page exists to show (#113).
+        if (checklists is not null)
+        {
+            checklists.PinnedChanged += source.Invalidate;
         }
 
         _engineers = source;

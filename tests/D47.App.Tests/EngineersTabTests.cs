@@ -92,7 +92,7 @@ public class EngineersTabTests
             panel.EnableCopy(clipboard);
         }
 
-        panel.EnableEngineers(unlocks, ships, () => state, onFoot, memory);
+        panel.EnableEngineers(unlocks, ships, () => state, onFoot, memory, checklists);
 
         var window = new Window { Content = panel, Width = 900, Height = 700 };
         window.Show();
@@ -611,6 +611,37 @@ public class EngineersTabTests
         Assert.Contains(Text(panel), line => line.Contains("grade 3 opens Chloe Sedesi", StringComparison.Ordinal));
 
         window.Close();
+    }
+
+    /// <summary>
+    /// An engineer's own page is where a pin is entered, since d47 has no journal event for one
+    /// (#113).
+    /// </summary>
+    [AvaloniaFact]
+    public void ABlueprintCanBePinnedFromTheEngineersOwnPage()
+    {
+        var surface = Open();
+
+        surface.Panel.Nav.Drill(
+            EngineersPages.Crumb(EngineerDirectory.All.First(e => e.Name == "Liz Ryder")));
+
+        Dispatcher.UIThread.RunJobs();
+
+        var pin = Check(surface.Panel, "A blueprint is pinned with them");
+
+        Assert.False(surface.Checklists.IsPinned(300080));
+
+        pin.IsChecked = true;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(surface.Checklists.IsPinned(300080));
+
+        pin.IsChecked = false;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.False(surface.Checklists.IsPinned(300080));
+
+        surface.Window.Close();
     }
 
     private static IReadOnlyList<string?> Boxes(PanelView panel) =>

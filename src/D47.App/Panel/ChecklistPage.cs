@@ -262,6 +262,10 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         // (#93).
         _checklists.HereChanged += OnChanged;
 
+        // A pin set or cleared on the Engineers tab redraws this one too, wherever the Commander toggled it
+        // (#113).
+        _checklists.PinnedChanged += OnChanged;
+
         if (_goals is not null)
         {
             _goals.Store.Changed += OnChanged;
@@ -290,6 +294,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         _checklists.Proposals.Changed -= OnChanged;
         _checklists.FilterChanged -= OnChanged;
         _checklists.HereChanged -= OnChanged;
+        _checklists.PinnedChanged -= OnChanged;
 
         if (_goals is not null)
         {
@@ -691,6 +696,13 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         if (Chosen == ChecklistService.HereKey)
         {
             return _checklists.OfferedHere(item);
+        }
+
+        // The other filter about where the line could be finished rather than about the line itself —
+        // anywhere, this time, because a pin does not care what system the Commander is standing in (#113).
+        if (Chosen == ChecklistService.PinnedKey)
+        {
+            return _checklists.OfferedPinned(item);
         }
 
         return Chosen.Equals(item.Kind.ToString(), StringComparison.OrdinalIgnoreCase)

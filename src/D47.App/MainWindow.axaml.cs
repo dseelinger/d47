@@ -210,7 +210,7 @@ public partial class MainWindow : Window
             // Who to go and unlock next, read across both plan stores (Phase 28).
             Panel.EnableEngineers(
                 host.Unlocks, host.Ships, () => host.GameState.Active, host.OnFootPlans,
-                new EngineerDirectoryMemory(host.ViewState));
+                new EngineerDirectoryMemory(host.ViewState), host.Checklists);
 
             // Where the Commander is going, in three readings of one journey (Phase 37). **Both surfaces
             // from 2026-09-09** (#52), on the Commander's instruction: the tab was desktop-only on the

@@ -824,6 +824,7 @@ public sealed class AppHost : IDisposable
             {
                 ChecklistFilter = view.Filter,
                 ChecklistPartialGrades = view.IncludePartialGrades,
+                PinnedEngineers = view.PinnedEngineers ?? [],
             }));
 
         // The engineer filter is a question about where the ship is, so the list is re-read when it moves
@@ -833,7 +834,8 @@ public sealed class AppHost : IDisposable
         checklists.Restore(
             new ChecklistView(
                 viewState.Load().ChecklistFilter ?? ChecklistService.Everything,
-                viewState.Load().ChecklistPartialGrades));
+                viewState.Load().ChecklistPartialGrades,
+                viewState.Load().PinnedEngineers));
 
         // What d47 remembers about the Commander (Phase 31).
         var memories = new MemoryStore(

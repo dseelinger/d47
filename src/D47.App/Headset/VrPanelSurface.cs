@@ -181,7 +181,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         if (unlocks is not null && ships is not null && gameState is not null)
         {
             // And who to go and get next (Phase 28).
-            _view.EnableEngineers(unlocks, ships, gameState, onFoot, engineersMemory);
+            _view.EnableEngineers(unlocks, ships, gameState, onFoot, engineersMemory, checklists);
         }
 
         if (timekeeper is not null && alarmStore is not null)

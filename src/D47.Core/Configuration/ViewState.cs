@@ -57,6 +57,12 @@ public sealed record ViewState
     public bool EngineersOnFootHidden { get; init; }
 
     /// <summary>
+    /// Which engineers the Commander has told d47 a blueprint is pinned with — entered on the engineer's
+    /// own page, since d47 has no journal event for a pin (#113).
+    /// </summary>
+    public IReadOnlyList<int> PinnedEngineers { get; init; } = [];
+
+    /// <summary>
     /// Which reading each tab was left on, by tab name and root key (#268) — the Transcript on the log
     /// file, Routing on Course.
     /// </summary>

@@ -115,11 +115,17 @@ public static class EngineersHere
             .OrderBy(engineer => engineer.Name, StringComparer.Ordinal)
             .ToList();
 
-        if (here.Count == 0)
-        {
-            return [];
-        }
+        return here.Count == 0 ? [] : Assess(here, items, state);
+    }
 
+    /// <summary>
+    /// What each of <paramref name="engineers"/> could do with the open list — the half <see
+    /// cref="EngineersHere"/> and <see cref="EngineersPinned"/> share, which differ only in which
+    /// engineers are asked (#113).
+    /// </summary>
+    internal static IReadOnlyList<EngineerAtHand> Assess(
+        IReadOnlyList<Engineer> engineers, IReadOnlyList<ChecklistItem> items, CommanderGameState state)
+    {
         // Open, derived, and about engineering.
         var open = items
             .Where(item => item.IsLive && !item.IsComplete)
@@ -131,7 +137,7 @@ public static class EngineersHere
 
         return
         [
-            .. here.Select(engineer =>
+            .. engineers.Select(engineer =>
             {
                 var standing = state.Engineers.Standings
                     .FirstOrDefault(known => known.Id == engineer.Id);

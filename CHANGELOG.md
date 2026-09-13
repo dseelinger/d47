@@ -6,6 +6,15 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.117.0 — Engineering, seen two new ways
+
+The checklist can now be filtered to what a pinned blueprint can finish, wherever you are docked —
+not only where the engineer's own workshop is. Pin a blueprint on an engineer's page in the
+Engineers tab ("A blueprint is pinned with them"); the filter then keeps the lines that engineer
+covers and your rank with them already clears, dropping anything that would still need a trip to
+the workshop. It sits under its own heading in the Show chooser, and does not go away when you
+leave the system an engineer works in — the point of a pin is that you do not have to be there.
+
 ## 0.116.0 — Voices that suit who is speaking
 
 A station under Imperial control now speaks in a British-sounding voice, where your speech

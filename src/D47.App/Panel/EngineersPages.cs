@@ -411,6 +411,18 @@ public sealed class EngineerPage : EngineerPageBase
 
         _body.Children.Add(LoadoutPages.Muted(entry.Aside));
 
+        // Where the pin lives — d47 has no journal event for one, so the Commander says so here (#113).
+        var pinned = new CheckBox
+        {
+            Content = "A blueprint is pinned with them",
+            IsChecked = Source.IsPinned(engineer.Id),
+            MinHeight = 30,
+        };
+
+        pinned.IsCheckedChanged += (_, _) => Source.Pin(engineer.Id, pinned.IsChecked == true);
+
+        _body.Children.Add(pinned);
+
         if (entry.GateLine is { Length: > 0 } gate)
         {
             _body.Children.Add(LoadoutPages.Muted(gate));

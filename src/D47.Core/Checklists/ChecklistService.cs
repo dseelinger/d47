@@ -2,6 +2,7 @@ using System.Globalization;
 
 using System.Text;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 
 namespace D47.Core.Checklists;
 
@@ -18,7 +19,9 @@ public sealed record ChecklistNews(string Key, string Text);
 /// Whether the engineer filter also shows work an engineer here can only take part of the way
 /// (change-requests.md 35).
 /// </param>
-public sealed record ChecklistView(string Filter, bool IncludePartialGrades);
+/// <param name="PinnedEngineers">Which engineers a blueprint is pinned with, or null for none (#113).</param>
+public sealed record ChecklistView(
+    string Filter, bool IncludePartialGrades, IReadOnlyList<int>? PinnedEngineers = null);
 
 /// <summary>
 /// The one place the checklist is read from and written to (Phase 17, "TheApp keeps 'The Ultimate'
@@ -127,7 +130,36 @@ public sealed class ChecklistService(
         FilterChanged?.Invoke();
     }
 
-    private void Remember() => remember?.Invoke(new ChecklistView(Filter, IncludePartialGrades));
+    /// <summary>
+    /// Which engineers the Commander has told d47 a blueprint is pinned with — entered on the engineer's
+    /// own page, since d47 has no journal event for a pin (#113).
+    /// </summary>
+    public IReadOnlyList<int> PinnedEngineers { get; private set; } = [];
+
+    /// <summary>Raised when a blueprint is pinned or unpinned, so a surface under the pinned filter can redraw.</summary>
+    public event Action? PinnedChanged;
+
+    /// <summary>Whether the Commander has told d47 a blueprint is pinned with this engineer.</summary>
+    public bool IsPinned(int engineerId) => PinnedEngineers.Contains(engineerId);
+
+    /// <summary>Records or clears a pin (#113).</summary>
+    public void Pin(int engineerId, bool pinned)
+    {
+        if (IsPinned(engineerId) == pinned)
+        {
+            return;
+        }
+
+        PinnedEngineers = pinned
+            ? [.. PinnedEngineers, engineerId]
+            : [.. PinnedEngineers.Where(id => id != engineerId)];
+
+        Remember();
+        PinnedChanged?.Invoke();
+    }
+
+    private void Remember() =>
+        remember?.Invoke(new ChecklistView(Filter, IncludePartialGrades, PinnedEngineers));
 
     /// <summary>Narrows the list to what a Commander typed, or clears it.</summary>
     public void Search(string? query)
@@ -153,6 +185,7 @@ public sealed class ChecklistService(
 
         Filter = string.IsNullOrWhiteSpace(view.Filter) ? Everything : view.Filter.Trim();
         IncludePartialGrades = view.IncludePartialGrades;
+        PinnedEngineers = view.PinnedEngineers ?? [];
     }
 
     /// <summary>Points the selection at a line, or clears it.</summary>
@@ -724,6 +757,27 @@ public sealed class ChecklistService(
     private IReadOnlyList<EngineerAtHand> Here() =>
         EngineersHere.For(Document.Items.Where(live => live.IsLive).ToList(), State);
 
+    /// <summary>The key for the pinned-blueprint axis (#113).</summary>
+    public const string PinnedKey = "pinned";
+
+    /// <summary>
+    /// Whether a pinned blueprint can take this line all the way — the engineer offers it and the
+    /// Commander's rank with them already covers the grade it asks for. Nothing that would still need a
+    /// trip to the workshop (#113).
+    /// </summary>
+    public bool OfferedPinned(ChecklistItem item) =>
+        Pinned().Any(engineer => engineer.Ready.Any(ready => ready.Id.Same(item.Id)));
+
+    private IReadOnlyList<EngineerAtHand> Pinned() =>
+        EngineersPinned.For(Document.Items.Where(live => live.IsLive).ToList(), State, PinnedEngineers);
+
+    /// <summary>The engineers a blueprint is pinned with, named and alphabetical.</summary>
+    private IReadOnlyList<Engineer> PinnedNamed() =>
+        [.. PinnedEngineers
+            .Select(EngineerDirectory.ById)
+            .OfType<Engineer>()
+            .OrderBy(engineer => engineer.Name, StringComparer.Ordinal)];
+
     public IReadOnlyList<ChecklistFilter> FilterAxes()
     {
         var live = Document.Items.Where(item => item.IsLive).ToList();
@@ -772,6 +826,18 @@ public sealed class ChecklistService(
                         ? $"What {workshops[0].Engineer.Name} can do here"
                         : "What the engineers here can do",
                     "Where you are")]
+                : Array.Empty<ChecklistFilter>(),
+
+            // **What a pinned blueprint can finish, wherever the Commander is** (#113) — offered whenever
+            // anything is pinned, so leaving the system an engineer works in does not take the row away, the
+            // way it would for HereKey above.
+            .. PinnedEngineers.Count > 0
+                ? [new ChecklistFilter(
+                    PinnedKey,
+                    PinnedNamed() is [{ } only]
+                        ? $"What {only.Name} can finish, wherever you are"
+                        : "What a pinned blueprint can finish, wherever you are",
+                    "What you can finish anywhere")]
                 : Array.Empty<ChecklistFilter>(),
         ];
     }
