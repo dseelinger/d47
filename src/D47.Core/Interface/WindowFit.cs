@@ -45,6 +45,21 @@ public static class WindowFit
             Math.Min(desiredHeight, workAreaHeight * Fraction));
     }
 
+    /// <summary>The size to open a remembered window at: no smaller margin than the work area itself.</summary>
+    public static (double Width, double Height) ClampRemembered(
+        double desiredWidth,
+        double desiredHeight,
+        double workAreaWidth,
+        double workAreaHeight)
+    {
+        if (workAreaWidth <= 0 || workAreaHeight <= 0)
+        {
+            return (desiredWidth, desiredHeight);
+        }
+
+        return (Math.Min(desiredWidth, workAreaWidth), Math.Min(desiredHeight, workAreaHeight));
+    }
+
     /// <summary>How much of the working area a window with nothing remembered opens at.</summary>
     public const double DefaultWidthFraction = 0.55;
 

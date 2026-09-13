@@ -8,6 +8,11 @@
 
 ## 0.122.0 — How do I
 
+A window left at full height comes back at full height. Restoring a remembered size used to
+apply the same 90% margin as a fresh window's opening size, so a window snapped to fill the
+screen reopened noticeably short of the taskbar; the margin now applies only when there is
+nothing remembered.
+
 The desktop window no longer shrinks to mini. It was always the full panel now: the setting, the
 `Ctrl+M` hotkey, the spoken phrases and the shrink mark are gone. The headset's own mini panel and
 the flat overlay are unchanged.

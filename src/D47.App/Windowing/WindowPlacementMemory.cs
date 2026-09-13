@@ -51,11 +51,14 @@ public sealed class WindowPlacementMemory
         if (screen is not null)
         {
             // The work area is physical pixels and the window is sized in device-independent ones.
-            (width, height) = WindowFit.Clamp(
-                width,
-                height,
-                screen.WorkingArea.Width / screen.Scaling,
-                screen.WorkingArea.Height / screen.Scaling);
+            var areaWidth = screen.WorkingArea.Width / screen.Scaling;
+            var areaHeight = screen.WorkingArea.Height / screen.Scaling;
+
+            // A remembered size is honoured up to the work area itself; the 90% margin is only for a
+            // window with nothing remembered.
+            (width, height) = remembered?.Width > 0
+                ? WindowFit.ClampRemembered(width, height, areaWidth, areaHeight)
+                : WindowFit.Clamp(width, height, areaWidth, areaHeight);
         }
 
         window.Width = width;

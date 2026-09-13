@@ -35,6 +35,27 @@ public class WindowFitTests
         Assert.True(height * 1.5 < 1032 * 0.95, "the window should not fill nearly the whole work area");
     }
 
+    /// <summary>
+    /// The case from the issue: a window snapped to fill the work area height comes back at that height,
+    /// not at 90% of it.
+    /// </summary>
+    [Fact]
+    public void ARememberedFullHeightWindowIsRestoredAtFullHeight()
+    {
+        var (_, height) = WindowFit.ClampRemembered(1278, 1360, 2560, 1392);
+
+        Assert.Equal(1360, height);
+    }
+
+    [Fact]
+    public void ARememberedSizeLargerThanTheWorkAreaIsStillReducedToFit()
+    {
+        var (width, height) = WindowFit.ClampRemembered(2000, 1500, 1920, 1032);
+
+        Assert.Equal(1920, width);
+        Assert.Equal(1032, height);
+    }
+
     [Fact]
     public void ARoomyScreenLeavesTheDefaultAlone()
     {
