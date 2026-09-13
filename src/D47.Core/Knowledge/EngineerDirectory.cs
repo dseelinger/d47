@@ -71,6 +71,12 @@ public sealed record Engineer
     /// <summary>What the invitation itself asks for, in prose.</summary>
     public string? Unlock { get; init; }
 
+    /// <summary>What earns the invitation, as a test rather than prose, or null where none is stated.</summary>
+    public UnlockTest? MeetingTest { get; init; }
+
+    /// <summary>What the invitation asks for, as a test rather than prose, or null where none is stated.</summary>
+    public UnlockTest? UnlockTest { get; init; }
+
     /// <summary>Whether anybody has to recommend them first.</summary>
     public bool NeedsReferral => ReferredBy.Count > 0;
 
@@ -232,6 +238,8 @@ public static class EngineerDirectory
                 Meeting = Text(cells, 10),
                 Unlock = Text(cells, 11),
                 Position = ReadPosition(cells),
+                MeetingTest = UnlockTest.Parse(Text(cells, 15)),
+                UnlockTest = UnlockTest.Parse(Text(cells, 16)),
             });
         }
 

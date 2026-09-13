@@ -103,6 +103,7 @@ EDDISCOVERY = (
 EXPECTED_ENGINEERS = 38
 
 OUTPUT = Path(__file__).resolve().parent.parent / "src" / "D47.Core" / "Knowledge" / "Engineers.tsv"
+MATERIALS = Path(__file__).resolve().parent.parent / "src" / "D47.Core" / "Knowledge" / "Materials.tsv"
 
 COLUMNS = [
     "id", "name", "system", "station", "tribute", "specialities",
@@ -111,7 +112,136 @@ COLUMNS = [
     # Appended rather than inserted, so no column index moves under a reader that already
     # shipped.
     "x", "y", "z",
+
+    # Appended after z for the same reason: the game's own prose in `meeting` and `unlock`
+    # cannot be parsed at runtime, so these two carry the same fact as a fixed grammar
+    # `UnlockTest.Parse` reads instead. Empty where the prose states nothing this generator
+    # can turn into a test — see MEETING_TEST_REASONS and UNLOCK_TEST_REASONS below.
+    "meeting_test", "unlock_test",
 ]
+
+# Rank event keys `Rank` writes, in order, lower case for lookup. "Elite" tops three of the five
+# and is never itself a meeting requirement in the corpus, but the table is complete rather than
+# trimmed to what is used today.
+RANK_NAMES = {
+    "Combat": ["harmless", "mostly harmless", "novice", "competent", "expert", "master",
+               "dangerous", "deadly", "elite"],
+    "Trade": ["penniless", "mostly penniless", "peddler", "dealer", "merchant", "broker",
+              "entrepreneur", "tycoon", "elite"],
+    "Explore": ["aimless", "mostly aimless", "scout", "surveyor", "trailblazer", "pathfinder",
+                "ranger", "pioneer", "elite"],
+    "Empire": ["none", "outsider", "serf", "master", "squire", "knight", "lord", "baron",
+               "viscount", "count", "earl", "marquis", "duke", "prince", "king"],
+    "Federation": ["none", "recruit", "cadet", "midshipman", "petty officer",
+                   "chief petty officer", "warrant officer", "ensign", "lieutenant",
+                   "lt commander", "post commander", "post captain", "rear admiral",
+                   "vice admiral", "admiral"],
+}
+
+# "Gain combat rank Competent or higher." — the career named in the sentence itself.
+RANK_CAREER_PROSE = {"combat": "Combat", "trade": "Trade", "exploration": "Explore"}
+RANK_CAREER_RE = re.compile(
+    r"Gain (combat|trade|exploration) rank ([A-Za-z ]+?) or higher\.", re.IGNORECASE)
+
+# "Gain rank Outsider or higher with the Empire." / "...with the Federal Navy." — the career
+# named as a faction instead, because the journal's own `Rank` event does the same.
+RANK_FACTION_PROSE = {"empire": "Empire", "federal navy": "Federation"}
+RANK_FACTION_RE = re.compile(
+    r"Gain rank ([A-Za-z ]+?) or higher with the (Empire|Federal Navy)\.", re.IGNORECASE)
+
+# Every band `EngineerStanding`'s reputation can name, in ascending order.
+BANDS = ["hostile", "unfriendly", "neutral", "cordial", "friendly", "allied"]
+
+REPUTATION_AT_MOST_RE = re.compile(
+    r"Reach (\w+) reputation or lower with (?:the )?([^.]+)\.", re.IGNORECASE)
+REPUTATION_EITHER_RE = re.compile(
+    r"Gain (\w+) or (\w+) status with (?:the )?([^.]+)\.", re.IGNORECASE)
+REPUTATION_REACH_RE = re.compile(
+    r"Reach (\w+) reputation with (?:the )?([^.]+)\.", re.IGNORECASE)
+REPUTATION_STATUS_RE = re.compile(
+    r"Gain (\w+) status with (?:the )?([^.]+)\.", re.IGNORECASE)
+REPUTATION_BARE_RE = re.compile(
+    r"^(\w+) with (?:the )?([^.]+)\.$", re.IGNORECASE)
+
+# A small set of patterns, one per statistic the corpus's `Statistics` event is known to carry
+# that also matches an engineer's prose exactly. Not a general parser of arbitrary figures —
+# each entry is a phrase this generator recognises, not a grammar it infers.
+STATISTIC_PATTERNS = [
+    (re.compile(r"maximum distance from your career start location of at least ([\d,]+) light years",
+                re.IGNORECASE),
+     "Exploration.Greatest_Distance_From_Start", lambda n: n),
+    (re.compile(r"travel at least ([\d,]+) light years in shuttles", re.IGNORECASE),
+     "Exploration.Shuttle_Distance_Travelled", lambda n: n),
+    (re.compile(r"earn more than ([\d,]+) combat bonds", re.IGNORECASE),
+     "Combat.Combat_Bonds", lambda n: n + 1),
+    (re.compile(r"traded in over ([\d,]+) markets", re.IGNORECASE),
+     "Trading.Markets_Traded_With", lambda n: n + 1),
+    (re.compile(r"deal with at least ([\d,]+) black markets", re.IGNORECASE),
+     "Smuggling.Black_Markets_Traded_With", lambda n: n),
+    (re.compile(r"mine at least ([\d,]+) tons of ore", re.IGNORECASE),
+     "Mining.Quantity_Mined", lambda n: n),
+    (re.compile(r"earn more than ([\d,]+) bounty vouchers", re.IGNORECASE),
+     "Combat.Bounties_Claimed", lambda n: n + 1),
+]
+
+# "Provide 50 units of Bromellite." and "Mine 10 units of Osmium." — a delivery or a mined
+# quantity, named the same way in every row that has one.
+CONTRIBUTION_UNITS_RE = re.compile(
+    r"(?:Provide|Mine) ([\d,]+) units? of ([A-Za-z][A-Za-z '\-]*?)\.", re.IGNORECASE)
+
+# "Provide 100,000 credits worth of bounty vouchers." — one figure, no "or". Where the prose
+# gives two figures joined by "or" (Juri Ishmaak's combat bonds), this does not match and the
+# row is listed with a reason instead: which of the two the game actually wants is not stated.
+CONTRIBUTION_CREDITS_RE = re.compile(
+    r"^Provide ([\d,]+) credits worth of bounty vouchers\.$", re.IGNORECASE)
+
+# The tribute name a Commander hears is not always the symbol `Materials.tsv` ships it under —
+# Frontier's own text for Zacariah Nemo names "Xihe Companions", and the table (from
+# EDEngineer's fuller "Xihe Biomorphic Companions") does not relax to the same string. The one
+# disagreement is stated here rather than silently patched, the same way BILL_TURNER is above.
+TRIBUTE_ALIASES = {"xihecompanions": "xihecompanions"}
+
+# Colonel Bris Dekker's prose names two figures — "1,000,000 or 10,000,000 credits worth of
+# federal combat bonds" — but the Commander's own journal settles it: his `EngineerContribution`
+# is `Type` Bond, `TotalQuantity` 1000000. Stated here rather than parsed, the same as
+# BILL_TURNER above.
+BRIS_DEKKER_UNLOCK_OVERRIDE = ("Colonel Bris Dekker", "contribution Bond 1000000")
+
+# Every row this generator's patterns do not turn into a test, with the reason — so a row with
+# neither a test nor a reason fails the run rather than shipping silently empty.
+MEETING_TEST_REASONS = {
+    "marcoqwent": "an invitation, which EngineerProgress already decides",
+    "melbrandon": "an invitation, which EngineerProgress already decides",
+    "zacariahnemo": "an invitation, which EngineerProgress already decides",
+    "eleanorbresa": "Settlements_Visited is not limited to Colonia",
+    "heroferrari": "whether ConflictZone_Total counts surface zones is not established",
+    "judenavarro": "no matching counter",
+    "kitfowler": "no matching counter",
+    "odengeiger": "no matching counter",
+    "rosadayette": "no matching counter",
+    "terravelasquez": "no matching counter",
+    "wellingtonbeck": "no matching counter",
+    "yardenbond": "no matching counter",
+    "yishen": "no matching counter",
+}
+
+UNLOCK_TEST_REASONS = {
+    "juriishmaak": "two figures in the prose, no contribution in the corpus",
+    "thedweller": "a credit payment, no event seen",
+    "baltanos": "the tribute is a ship-locker item; the corpus holds no EngineerContribution for it",
+    "dominogreen": "the tribute is a ship-locker item; unlocked with no EngineerContribution seen",
+    "eleanorbresa": "the tribute is a ship-locker item; the corpus holds no EngineerContribution for it",
+    "heroferrari": "the tribute is a ship-locker item; the corpus holds no EngineerContribution for it",
+    "judenavarro": "the tribute is a ship-locker item; unlocked with no EngineerContribution seen",
+    "kitfowler": "the tribute is a ship-locker item; unlocked with no EngineerContribution seen",
+    "rosadayette": "the tribute is a ship-locker item; the corpus holds no EngineerContribution for it",
+    "terravelasquez": "the tribute is a ship-locker item; the corpus holds no EngineerContribution for it",
+    "wellingtonbeck": "the tribute is a ship-locker item; the corpus holds no EngineerContribution for it",
+    "odengeiger": "no tribute stated",
+    "umalaszlo": "no tribute stated",
+    "yardenbond": "no tribute stated",
+    "yishen": "no tribute stated",
+}
 
 # One step of Elite's coordinate grid. Both sources state coordinates exactly, so this is the
 # widest two figures can differ and still be one place; past it they are two places. Not a
@@ -206,6 +336,120 @@ def relax(name: str) -> str:
             stripped.append(character)
 
     return "".join(c.lower() for c in "".join(stripped) if c.isalnum())
+
+
+def load_material_symbols() -> dict[str, tuple[str, str]]:
+    """Every tribute name a Commander could be asked for, relaxed, to its symbol and ledger.
+
+    Read straight from the shipped `Materials.tsv` rather than a network source: the tsv is
+    already this repository's one place that states a material's symbol, and asking twice would
+    only be able to disagree with itself.
+    """
+    symbols: dict[str, tuple[str, str]] = {}
+
+    with MATERIALS.open(encoding="utf-8") as handle:
+        for line in handle:
+            if line.startswith("#") or line.startswith("symbol\t"):
+                continue
+
+            cells = line.rstrip("\n").split("\t")
+
+            if len(cells) < 3:
+                continue
+
+            symbol, name, ledger = cells[0], cells[1], cells[2]
+            symbols[relax(name)] = (symbol, ledger)
+
+    return symbols
+
+
+LEDGER_TYPE = {"cargo": "Commodity", "rare-cargo": "Commodity", "material": "Materials"}
+
+
+def number(text: str) -> int:
+    return int(text.replace(",", ""))
+
+
+def rank_test(prose: str) -> str | None:
+    """"Gain combat rank Competent or higher." and its faction-worded twin, to `rank <Career> <n>`."""
+    if (match := RANK_CAREER_RE.search(prose)) is not None:
+        career = RANK_CAREER_PROSE[match.group(1).lower()]
+        rank = match.group(2).strip().lower()
+    elif (match := RANK_FACTION_RE.search(prose)) is not None:
+        career = RANK_FACTION_PROSE[match.group(2).lower()]
+        rank = match.group(1).strip().lower()
+    else:
+        return None
+
+    names = RANK_NAMES[career]
+
+    return f"rank {career} {names.index(rank)}" if rank in names else None
+
+
+def reputation_test(prose: str) -> str | None:
+    """The five reputation shapes the corpus's engineers use, to `reputation at-least|at-most <band> <faction>`."""
+    if (match := REPUTATION_AT_MOST_RE.search(prose)) is not None:
+        band, faction, at_most = match.group(1), match.group(2), True
+    elif (match := REPUTATION_EITHER_RE.search(prose)) is not None:
+        first, second, faction = match.group(1).lower(), match.group(2).lower(), match.group(3)
+        band = first if BANDS.index(first) < BANDS.index(second) else second
+        at_most = False
+    elif (match := REPUTATION_REACH_RE.search(prose)) is not None:
+        band, faction, at_most = match.group(1), match.group(2), False
+    elif (match := REPUTATION_STATUS_RE.search(prose.split(". ")[0] + ".")) is not None:
+        band, faction, at_most = match.group(1), match.group(2), False
+    elif (match := REPUTATION_BARE_RE.search(prose)) is not None:
+        band, faction, at_most = match.group(1), match.group(2), False
+    else:
+        return None
+
+    band = band.lower()
+
+    if band not in BANDS:
+        return None
+
+    kind = "at-most" if at_most else "at-least"
+    return f"reputation {kind} {band} {faction.strip()}"
+
+
+def statistic_test(prose: str) -> str | None:
+    """The seven journal-`Statistics` phrasings this generator recognises, to `statistic <Path> <n>`."""
+    for pattern, path, transform in STATISTIC_PATTERNS:
+        if (match := pattern.search(prose)) is not None:
+            return f"statistic {path} {transform(number(match.group(1)))}"
+
+    return None
+
+
+def meeting_test(key: str, prose: str) -> str | None:
+    return rank_test(prose) or reputation_test(prose) or statistic_test(prose)
+
+
+def unlock_test(key: str, prose: str, symbols: dict[str, tuple[str, str]]) -> str | None:
+    """The invitation cost, to `contribution <Type> [<symbol>] <n>`."""
+    if key == relax(BRIS_DEKKER_UNLOCK_OVERRIDE[0]):
+        return BRIS_DEKKER_UNLOCK_OVERRIDE[1]
+
+    if (match := CONTRIBUTION_CREDITS_RE.search(prose)) is not None:
+        return f"contribution Bounty {number(match.group(1))}"
+
+    if (match := CONTRIBUTION_UNITS_RE.search(prose)) is not None:
+        quantity = number(match.group(1))
+        item = relax(match.group(2))
+
+        if item in TRIBUTE_ALIASES:
+            symbol, ledger = TRIBUTE_ALIASES[item], "rare-cargo"
+        elif item in symbols:
+            symbol, ledger = symbols[item]
+        elif item.endswith("s") and item[:-1] in symbols:
+            symbol, ledger = symbols[item[:-1]]
+        else:
+            return None
+
+        kind = LEDGER_TYPE.get(ledger)
+        return f"contribution {kind} {symbol} {quantity}" if kind else None
+
+    return None
 
 
 def fetch(url: str, timeout: int = 60) -> bytes:
@@ -464,10 +708,13 @@ def main() -> None:
     rows = list(csv.DictReader(io.StringIO(fetch(FDEV_IDS).decode("utf-8-sig"))))
     offered, tribute, spelled = blueprints()
     graph = chain()
+    symbols = load_material_symbols()
 
     built, placeless, silent, chainless = [], [], [], []
     disputed, confirmed, unplaced = [], 0, []
     joined = set()
+    unreasoned_meeting, unreasoned_unlock = [], []
+    meeting_tests = unlock_tests = 0
 
     for row in rows:
         name = (row.get("name") or "").strip()
@@ -555,7 +802,31 @@ def main() -> None:
             *(str(axis) for axis in (position or ("", "", ""))),
         ])
 
+        meeting_prose, unlock_prose = links.get("meeting", ""), links.get("unlock", "")
+        meeting = meeting_test(key, meeting_prose) if meeting_prose else None
+        unlock = unlock_test(key, unlock_prose, symbols) if unlock_prose else None
+
+        if meeting is not None:
+            meeting_tests += 1
+        elif key not in MEETING_TEST_REASONS:
+            unreasoned_meeting.append(name)
+
+        if unlock is not None:
+            unlock_tests += 1
+        elif key not in UNLOCK_TEST_REASONS:
+            unreasoned_unlock.append(name)
+
+        built[-1] += [meeting or "", unlock or ""]
+
     unknown = sorted(name for name in spelled if relax(name) not in joined)
+
+    if unreasoned_meeting or unreasoned_unlock:
+        raise SystemExit(
+            "no meeting_test and no listed reason for: "
+            f"{', '.join(unreasoned_meeting) or 'none'}; "
+            "no unlock_test and no listed reason for: "
+            f"{', '.join(unreasoned_unlock) or 'none'}"
+        )
 
     if disputed:
         print("Coordinates not written — two sources disagree about where somebody works:")
@@ -582,7 +853,10 @@ def main() -> None:
         "# engineers have no EDEngineer rows at all and their modification lists were read from the",
         "# wiki; see tools/gen-engineers.py. Coordinates are spansh's, and every one of them agreed",
         "# with EDDiscovery's to within a step of Elite's 1/32 ly grid; the run refuses to write a",
-        "# row where they do not. Game data is Frontier's, used",
+        "# row where they do not. meeting_test and unlock_test are a fixed grammar derived from the",
+        "# prose in meeting and unlock by this generator — see UnlockTest.Parse — and empty wherever",
+        "# the prose states nothing that grammar can hold; the run fails unless every empty cell is",
+        "# listed with a reason in the script. Game data is Frontier's, used",
         "# under their media usage rules — see NOTICE.",
         f"# Engineers: {len(built)}.",
         "\t".join(COLUMNS),
@@ -593,6 +867,10 @@ def main() -> None:
     OUTPUT.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
     print(f"Wrote {len(built)} engineers to {OUTPUT}")
+    print(f"Meeting tests: {meeting_tests} of {len(built)}, "
+          f"{len(MEETING_TEST_REASONS)} accounted for with a reason")
+    print(f"Unlock tests: {unlock_tests} of {len(built)}, "
+          f"{len(UNLOCK_TEST_REASONS)} accounted for with a reason")
 
     if placeless:
         print(f"No system resolved for: {', '.join(placeless)}")
