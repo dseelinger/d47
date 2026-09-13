@@ -6,6 +6,14 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.121.0 — Did you mean, and what can you do
+
+A command missed by a word is no longer handed to the language model to refuse. Say "set focus on
+elite" and d47 asks "Did you mean 'set focus to elite'?"; say "yes" and it does it. Where only one
+harmless command fits once "on" and "to" are read as the same word, d47 just runs it. Anything that
+presses a key in Elite is always asked first, and anything other than a yes or a pick drops the
+question.
+
 ## 0.119.0 — Ask how to get it
 
 A new question, "how do I get X", answers for anything named — a ship, module, suit, hand weapon,

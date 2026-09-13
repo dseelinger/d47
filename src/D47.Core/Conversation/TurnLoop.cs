@@ -390,6 +390,47 @@ public sealed class TurnLoop(
             yield break;
         }
 
+        // Near misses: one unguarded Equivalent runs, anything else is offered.
+        var candidates = keywordRouter.Book.Candidates(input, source);
+
+        if (candidates is [{ Match: PhraseMatch.Equivalent, Guarded: false } only])
+        {
+            logger.LogInformation("Read \"{Said}\" as the phrase \"{Phrase}\"", input, only.Phrase);
+
+            var ran = new Routing();
+
+            await foreach (var turnEvent in ModelFreeAsync(only.Phrase, source, ran, cancellationToken)
+                               .ConfigureAwait(false))
+            {
+                yield return turnEvent;
+            }
+
+            if (ran.Handled)
+            {
+                yield break;
+            }
+        }
+        else if (candidates.Count > 0)
+        {
+            List<PhraseCandidate> offered = [.. candidates.Take(OfferedAtMost)];
+
+            logger.LogInformation(
+                "Offered {Phrases} for \"{Said}\"", string.Join(", ", offered.Select(c => c.Phrase)), input);
+
+            Offers.Open(new Offer(
+            [
+                .. offered.Select(candidate => new OfferChoice(
+                    candidate.Phrase, new OfferTarget.RoutePhrase(candidate.Phrase, candidate.Guarded))),
+            ]));
+
+            foreach (var turnEvent in Offered(DidYouMean(offered), input))
+            {
+                yield return turnEvent;
+            }
+
+            yield break;
+        }
+
         // 4.
         var activeProvider = Provider;
 
@@ -414,6 +455,19 @@ public sealed class TurnLoop(
         {
             yield return turnEvent;
         }
+    }
+
+    /// <summary>How many near misses one offer names.</summary>
+    private const int OfferedAtMost = 3;
+
+    /// <summary>"Did you mean 'a'?", "Did you mean 'a', or 'b'?", and so on.</summary>
+    private static string DidYouMean(IReadOnlyList<PhraseCandidate> offered)
+    {
+        var quoted = offered.Select(candidate => $"'{candidate.Phrase}'").ToList();
+
+        return quoted.Count == 1
+            ? $"Did you mean {quoted[0]}?"
+            : $"Did you mean {string.Join(", ", quoted.SkipLast(1))}, or {quoted[^1]}?";
     }
 
     /// <summary>Whether a model-free route answered.</summary>

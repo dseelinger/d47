@@ -49,6 +49,9 @@ public sealed record PhraseEntry
     public required bool Guarded { get; init; }
 }
 
+/// <summary>A phrase a near miss could have meant, guarded when any phrase it stands for is.</summary>
+public sealed record PhraseCandidate(string Phrase, PhraseMatch Match, bool Guarded);
+
 /// <summary>Every phrase the model-free router accepts, with what each reaches.</summary>
 public sealed class PhraseBook
 {
@@ -131,6 +134,77 @@ public sealed class PhraseBook
         }
 
         return new PhraseBook(entries);
+    }
+
+    /// <summary>
+    /// The phrases an utterance could have meant, best first: read the four ways
+    /// <see cref="KeywordRouter.MatchSetting"/> reads it, one candidate per phrase and per thing reached,
+    /// named by the phrase closest to what was said.
+    /// </summary>
+    public IReadOnlyList<PhraseCandidate> Candidates(string utterance, InputSource source)
+    {
+        var said = KeywordRouter.Utterance(utterance);
+
+        string[] readings =
+        [
+            .. new[]
+            {
+                said,
+                SpokenOpeners.Strip(said),
+                SpokenTails.Strip(said),
+                SpokenTails.Strip(SpokenOpeners.Strip(said)),
+            }.Distinct(StringComparer.OrdinalIgnoreCase),
+        ];
+
+        var scored = Entries
+            .Select((entry, order) => (Entry: entry, Order: order))
+            .Where(item => source == InputSource.Spoken || item.Entry.Source != PhraseSource.SpokenKeyword)
+            .Select(item => (
+                item.Entry,
+                item.Order,
+                Match: readings
+                    .Select(reading => PhraseScore.Score(reading, item.Entry.Phrase))
+                    .Where(match => match is not null)
+                    .OrderBy(match => match == PhraseMatch.Equivalent ? 0 : 1)
+                    .FirstOrDefault(),
+                Distance: readings.Min(reading => PhraseScore.Distance(reading, item.Entry.Phrase))))
+            .Where(item => item.Match is not null)
+            .OrderBy(item => item.Match == PhraseMatch.Equivalent ? 0 : 1)
+            .ThenBy(item => item.Distance)
+            .ThenBy(item => item.Order)
+            .ToList();
+
+        return
+        [
+            .. scored
+                .GroupBy(item => Target(item.Entry), StringComparer.Ordinal)
+                .Select(group => (Best: group.First(), Guarded: group.Any(item => item.Entry.Guarded)))
+                .GroupBy(choice => choice.Best.Entry.Phrase, StringComparer.OrdinalIgnoreCase)
+                .Select(group => new PhraseCandidate(
+                    group.First().Best.Entry.Phrase,
+                    group.First().Best.Match!.Value,
+                    group.Any(choice => choice.Guarded))),
+        ];
+    }
+
+    /// <summary>What an entry reaches, so two phrases for the same thing are one candidate.</summary>
+    private static string Target(PhraseEntry entry)
+    {
+        if (entry.Row is { } row)
+        {
+            return $"setting {row.Key}={entry.Value}";
+        }
+
+        if (entry.ToolName is null)
+        {
+            return $"phrase {entry.Phrase.ToLowerInvariant()}";
+        }
+
+        var arguments = entry.Arguments
+            .OrderBy(argument => argument.Key, StringComparer.Ordinal)
+            .Select(argument => $"{argument.Key}={argument.Value}");
+
+        return $"tool {entry.CapabilityId}/{entry.ToolName}?{string.Join('&', arguments)}";
     }
 
     private static IEnumerable<PhraseEntry> Keywords(

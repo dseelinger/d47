@@ -71,6 +71,12 @@ public static class PhraseScore
             .OrderBy(scored => scored.Match == PhraseMatch.Equivalent ? 0 : 1)
             .Select(scored => new PhraseRank(scored.Phrase, scored.Match!.Value))];
 
+    /// <summary>How many words apart two utterances are as said, before any folding.</summary>
+    internal static int Distance(string utterance, string phrase) =>
+        WordEditDistance(
+            KeywordRouter.Words(KeywordRouter.Utterance(utterance)),
+            KeywordRouter.Words(KeywordRouter.Utterance(phrase)));
+
     /// <summary>
     /// The word sequence with every run matching an equivalence class member replaced by that
     /// class's canonical word, and a trailing plural "s" dropped from the last word.

@@ -152,6 +152,21 @@ The third row is not an error. It produces an **unsure** turn: D47 says it doesn
 tells you what it can still do. That is a real answer, and the reason there is no separate
 failure handler to write.
 
+### A phrase missed by a word
+
+When a question matches no keyword but comes within a word of a declared phrase — "set focus on
+elite" for "set focus to elite", "put the gear dawn" for "put the gear down" — the router answers
+it before the model sees it. D47 treats "on" and "to", "put" and "set", and "elite" and "the game"
+as the same word for this.
+
+- **Run without asking:** exactly one phrase matches once those words are treated as the same,
+  and that phrase changes nothing D47 guards. The phrase runs as if you had said it.
+- **Offered:** anything else — a guarded phrase, a phrase one word off, or more than one match.
+  D47 asks "Did you mean 'set focus to elite'?", naming up to three, and the next thing you say
+  picks one: "yes" when there is one, "the first", or its name. Anything else drops the offer.
+
+Anything that presses a key in Elite, and any protected setting, is always offered rather than run.
+
 ### Running with no model at all
 
 Setting the provider to `none` — or simply never configuring a key — is a supported
