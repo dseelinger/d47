@@ -66,6 +66,9 @@ public sealed record MaterialEntry
     /// <summary>What the Bartender charges in barter value for one of these.</summary>
     public int? BarterCost { get; init; }
 
+    /// <summary>How a Commander comes to hold it, typed from the origins column.</summary>
+    public IReadOnlyList<AcquisitionMethod> Methods { get; init; } = [];
+
     /// <summary>Whether a material trader will deal in it.</summary>
     public bool IsTradeable => Ledger == MaterialLedger.Material && Line is not null;
 
@@ -211,6 +214,7 @@ public static class MaterialCatalogue
         Containers = Origins(cells, 9),
         BarterValue = Barter(cells, 0),
         BarterCost = Barter(cells, 1),
+        Methods = Methods(cells, 11),
     };
 
     /// <summary>One half of the <c>value/cost</c> cell.</summary>
@@ -241,4 +245,12 @@ public static class MaterialCatalogue
         Text(cells, index) is not { } text
             ? []
             : [.. text.Split(';').Select(part => part.Trim()).Where(part => part.Length > 0)];
+
+    private static IReadOnlyList<AcquisitionMethod> Methods(string[] cells, int index) =>
+        Text(cells, index) is not { } text
+            ? []
+            : [.. text.Split(';')
+                .Select(part => part.Trim())
+                .Where(part => part.Length > 0)
+                .Select(part => Enum.Parse<AcquisitionMethod>(part))];
 }

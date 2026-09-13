@@ -288,6 +288,14 @@ public static class AcquisitionGuide
                 break;
         }
 
+        foreach (var method in entry.Methods)
+        {
+            if (!methods.Contains(method))
+            {
+                methods.Add(method);
+            }
+        }
+
         return new Acquisition
         {
             Name = entry.Name,

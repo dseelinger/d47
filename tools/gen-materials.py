@@ -119,7 +119,54 @@ EDDISCOVERY = (
 OUTPUT = Path(__file__).resolve().parent.parent / "src" / "D47.Core" / "Knowledge" / "Materials.tsv"
 
 COLUMNS = ["symbol", "name", "ledger", "category", "grade", "line", "origins",
-           "settlements", "buildings", "containers", "barter"]
+           "settlements", "buildings", "containers", "barter", "methods"]
+
+# Each EDEngineer origin string, matched on its leading words (case-insensitive: EDEngineer
+# spells "Thargoid scavengers" both ways), to the AcquisitionMethod it names. "Needed for…" is
+# an engineer's unlock cost rather than a source and names no method. Order matters only in
+# that every prefix here is checked in turn; none is a prefix of another.
+ORIGIN_METHODS = [
+    ("Markets", "Market"),
+    ("Mining", "RingMining"),
+    ("Surface prospecting", "SurfaceProspecting"),
+    ("Planetary Settlement", "Settlement"),
+    ("Mission reward", "MissionReward"),
+    ("Signal source", "Salvage"),
+    ("Ship salvage", "Salvage"),
+    ("Irregular Markers", "Salvage"),
+    ("Crashed Satellite", "Salvage"),
+    ("Surface Crash Site", "Salvage"),
+    ("Surface POI", "Salvage"),
+    ("Degraded Emissions Signal Sources", "Salvage"),
+    ("Distress Call POI", "Salvage"),
+    ("Thargoid scavengers", "Salvage"),
+    ("Ship scanning", "Scanning"),
+    ("High wake scanning", "Scanning"),
+    ("Base scanning", "Scanning"),
+    ("Surface data point", "Scanning"),
+    ("Deep space data beacon", "Scanning"),
+    ("Ancient/Guardian ruins", "GuardianSite"),
+    ("Needed for", None),
+]
+
+# The 13 FDevIDs symbols the 4.4.1.0 update notes name under "Surface Mining gameplay added",
+# https://www.elitedangerous.com/news/updates/4-4-1-0, 2 September 2026. EDEngineer gives them
+# no origins at all, so this is the only source for them.
+SURFACE_MINED = {
+    "bastnasite", "deuterium", "diamond", "helium", "helium3", "iridium", "magnesite",
+    "olivine", "periclasedunite", "quartzpyroxenite", "ruby", "sapphire", "thortveitite",
+}
+
+
+def method_of(origin: str) -> str | None:
+    """The AcquisitionMethod one EDEngineer origin string names, matched on its leading words."""
+    folded = origin.casefold()
+
+    for prefix, method in ORIGIN_METHODS:
+        if folded.startswith(prefix.casefold()):
+            return method
+
+    raise SystemExit(f"gen-materials.py has no acquisition method mapped for the origin {origin!r}")
 
 # Measured against the game, which the published figure disagrees with. See the module
 # docstring; asserted below so a fix upstream retires this rather than double-counting.
@@ -269,8 +316,9 @@ def check_lines(built: list[list[str]]) -> int:
     return len(mapping)
 
 
-def origins() -> tuple[dict[tuple[str, str], str], list[str], set[str], int]:
-    """Where each thing is found, keyed by (display name, ledger).
+def origins() -> tuple[dict[tuple[str, str], str], dict[tuple[str, str], list[str]],
+                        list[str], set[str], int]:
+    """Where each thing is found, keyed by (display name, ledger), and the method each names.
 
     Keyed on the *name* rather than EDEngineer's `FormattedName`, which is not Frontier's
     symbol and silently loses 22 Encoded materials — see the module docstring.
@@ -286,6 +334,7 @@ def origins() -> tuple[dict[tuple[str, str], str], list[str], set[str], int]:
     corrected: list[str] = []
 
     found: dict[tuple[str, str], str] = {}
+    methods: dict[tuple[str, str], list[str]] = {}
     onfoot: dict[str, list[str]] = {}
     spelled: set[str] = set()
     carrying: set[str] = set()
@@ -293,7 +342,8 @@ def origins() -> tuple[dict[tuple[str, str], str], list[str], set[str], int]:
 
     for entry in entries:
         name = (entry.get("Name") or "").strip()
-        detail = "; ".join(entry.get("OriginDetails") or [])
+        origin_list = entry.get("OriginDetails") or []
+        detail = "; ".join(origin_list)
 
         if not name:
             continue
@@ -319,6 +369,12 @@ def origins() -> tuple[dict[tuple[str, str], str], list[str], set[str], int]:
         if detail:
             carrying.add(name)
 
+        entry_methods = []
+        for origin in origin_list:
+            method = method_of(origin)
+            if method and method not in entry_methods:
+                entry_methods.append(method)
+
         ledgers = KINDS.get(entry.get("Kind") or "")
 
         for ledger in (ledgers,) if isinstance(ledgers, str) else (ledgers or ()):
@@ -335,6 +391,7 @@ def origins() -> tuple[dict[tuple[str, str], str], list[str], set[str], int]:
                 continue
 
             found[key] = detail
+            methods[key] = entry_methods
 
     if not corrected:
         raise SystemExit(
@@ -343,7 +400,7 @@ def origins() -> tuple[dict[tuple[str, str], str], list[str], set[str], int]:
             "can see is dead."
         )
 
-    return (found, onfoot, sorted(spelled), {e.get("Kind") or "" for e in entries},
+    return (found, methods, onfoot, sorted(spelled), {e.get("Kind") or "" for e in entries},
             collapsed, len(carrying), corrected)
 
 
@@ -352,7 +409,8 @@ def main() -> None:
     by_name: dict[str, list[str]] = {}
     counts: dict[str, int] = {}
 
-    sourced, onfoot, spelled, kinds, collapsed, carrying, corrected = origins()
+    sourced, sourced_methods, onfoot, spelled, kinds, collapsed, carrying, corrected = origins()
+    surface_mined_found: set[str] = set()
 
     unknown_kinds = kinds - set(KINDS)
     if unknown_kinds:
@@ -374,6 +432,13 @@ def main() -> None:
             category = (row.get("category") or "").strip()
             kind = (row.get("type") or "").strip()
 
+            methods = list(sourced_methods.get((name.casefold(), ledger), []))
+
+            if ledger == "cargo" and symbol.lower() in SURFACE_MINED:
+                surface_mined_found.add(symbol.lower())
+                if "SurfaceMining" not in methods:
+                    methods.append("SurfaceMining")
+
             built.append([
                 symbol.lower(),
                 name,
@@ -389,9 +454,17 @@ def main() -> None:
                 # Blank for everything that is not an Odyssey ingredient, which is most of the
                 # table. Only the ship-locker ledger has any of this.
                 *(onfoot.get(name.casefold(), BLANK) if ledger == "ship-locker" else BLANK),
+
+                "; ".join(methods),
             ])
 
             by_name.setdefault(name, []).append(ledger)
+
+    missing_surface_mined = sorted(SURFACE_MINED - surface_mined_found)
+    if missing_surface_mined:
+        raise SystemExit(
+            f"SURFACE_MINED names symbols not found as commodity.csv rows: {missing_surface_mined}"
+        )
 
     # The curated three, after the authority has had its say and before anything is checked, so
     # they are held to every rule below rather than exempted from it (#127).
@@ -402,7 +475,7 @@ def main() -> None:
             retired.append(symbol)
             continue
 
-        built.append([symbol, name, "material", category, str(grade), "", "", *BLANK])
+        built.append([symbol, name, "material", category, str(grade), "", "", *BLANK, ""])
         by_name.setdefault(name, []).append("material")
         counts["material"] = counts.get("material", 0) + 1
 
@@ -438,8 +511,10 @@ def main() -> None:
         "# disagree. Origins from msarilar/EDEngineer entryData.json (MIT), joined on display",
         "# name. The four on-foot columns come from the same file; barter is value/cost and sits",
         "# on exactly the 33 Components. One barter figure is overruled against the game — see",
-        "# docs/spikes/journal-corpus-on-foot.md §2. Game data is Frontier's, used under their",
-        "# media usage rules — see NOTICE.",
+        "# docs/spikes/journal-corpus-on-foot.md §2. methods types each origin string as an",
+        "# AcquisitionMethod, plus SurfaceMining for the 4.4.1.0 surface-mined commodities, which",
+        "# EDEngineer gives no origin at all. Game data is Frontier's, used under their media",
+        "# usage rules — see NOTICE.",
         f"# Rows: {len(built)} ("
         + ", ".join(f"{ledger} {count}" for ledger, count in counts.items())
         + f"). Trader lines: {lines}. Built: {stamp}.",
@@ -467,6 +542,9 @@ def main() -> None:
     detailed = sum(1 for row in built if row[8])
     print(f"On foot: {detailed} rows carrying a building type, {bartered} carrying a barter rate")
     print("Barter figures overruled against the game: " + ", ".join(corrected))
+
+    typed = sum(1 for row in built if row[11])
+    print(f"Methods: {typed} rows typed, {len(SURFACE_MINED)} surface-mined by 4.4.1.0")
 
     if unkeyed:
         # Loud on purpose. Each of these is something EDEngineer models and FDevIDs has no
