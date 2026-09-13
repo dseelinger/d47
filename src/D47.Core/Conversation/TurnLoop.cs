@@ -16,6 +16,9 @@ public enum TurnRoute
     /// <summary>A game action performed by the model-free router from a declared phrase.</summary>
     ActionCommand,
 
+    /// <summary>An answer to the offer d47 left standing.</summary>
+    Offer,
+
     /// <summary>Answered by the language model.</summary>
     Model,
 
@@ -268,6 +271,9 @@ public sealed class TurnLoop(
     /// </summary>
     public Func<string, string>? Heard { get; set; }
 
+    /// <summary>The choices put to the Commander, read before any other route.</summary>
+    public OfferWindow Offers { get; } = new();
+
     public string? AboutMe { get; set; }
 
     /// <summary>
@@ -318,9 +324,125 @@ public sealed class TurnLoop(
             }
         }
 
+        switch (Offers.Read(input))
+        {
+            case OfferReading.Picked { Choice.Target: OfferTarget.RoutePhrase route }:
+                var picked = new Routing();
+
+                await foreach (var turnEvent in ModelFreeAsync(route.Phrase, source, picked, cancellationToken)
+                                   .ConfigureAwait(false))
+                {
+                    yield return turnEvent;
+                }
+
+                if (!picked.Handled)
+                {
+                    foreach (var turnEvent in Offered("That isn't available right now.", input, TurnOutcome.Unsure))
+                    {
+                        yield return turnEvent;
+                    }
+                }
+
+                yield break;
+
+            case OfferReading.Picked { Choice.Target: OfferTarget.Answer answer }:
+                var answered = answer.Respond();
+
+                if (answered.Next is { } next)
+                {
+                    Offers.Open(next);
+                }
+
+                foreach (var turnEvent in Offered(answered.Text, input))
+                {
+                    yield return turnEvent;
+                }
+
+                yield break;
+
+            case OfferReading.Declined:
+                foreach (var turnEvent in Offered("Dropped.", input))
+                {
+                    yield return turnEvent;
+                }
+
+                yield break;
+
+            case OfferReading.Unclear:
+                foreach (var turnEvent in Offered("Which one?", input))
+                {
+                    yield return turnEvent;
+                }
+
+                yield break;
+        }
+
+        var routed = new Routing();
+
+        await foreach (var turnEvent in ModelFreeAsync(input, source, routed, cancellationToken)
+                           .ConfigureAwait(false))
+        {
+            yield return turnEvent;
+        }
+
+        if (routed.Handled)
+        {
+            yield break;
+        }
+
+        // 4.
+        var activeProvider = Provider;
+
+        if (activeProvider is null || !availability.CanAttemptModelTurn)
+        {
+            var reason = availability.Reason ?? "No language model provider is configured.";
+            logger.LogInformation("No model available for this turn: {Reason}", reason);
+
+            var text =
+                $"I'm not sure — I have no way to work that out right now. {reason} " +
+                "Ask me something one of my own capabilities covers and I can still answer.";
+
+            yield return new TurnEvent.Routed(TurnRoute.NoCapability, Effort: null);
+            yield return new TurnEvent.TextDelta(text);
+            yield return new TurnEvent.Completed(new TurnResult(
+                TurnOutcome.Unsure, TurnRoute.NoCapability, text, Effort: null, Cost: null));
+            yield break;
+        }
+
+        await foreach (var turnEvent in RunModelTurnAsync(input, activeProvider, cancellationToken)
+                           .ConfigureAwait(false))
+        {
+            yield return turnEvent;
+        }
+    }
+
+    /// <summary>Whether a model-free route answered.</summary>
+    private sealed class Routing
+    {
+        public bool Handled { get; set; }
+    }
+
+    private IEnumerable<TurnEvent> Offered(string text, string input, TurnOutcome outcome = TurnOutcome.Answered)
+    {
+        yield return new TurnEvent.Routed(TurnRoute.Offer, Effort: null);
+
+        Said(text, input);
+
+        yield return new TurnEvent.TextDelta(text);
+        yield return new TurnEvent.Completed(new TurnResult(outcome, TurnRoute.Offer, text, Effort: null, Cost: null));
+    }
+
+    /// <summary>Steps 1-3, which never reach the model.</summary>
+    private async IAsyncEnumerable<TurnEvent> ModelFreeAsync(
+        string input,
+        InputSource source,
+        Routing routing,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
         // 1.
         if (settings is not null && keywordRouter.MatchSetting(input) is { } settingCommand)
         {
+            routing.Handled = true;
             yield return new TurnEvent.Routed(TurnRoute.SettingCommand, Effort: null);
 
             var applied = settings.Apply(settingCommand.Row.Key, settingCommand.Value, SettingsCaller.KeywordRouter);
@@ -350,6 +472,7 @@ public sealed class TurnLoop(
         // 2.
         if (keywordRouter.MatchToolCommand(input) is { } toolCommand)
         {
+            routing.Handled = true;
             yield return new TurnEvent.Routed(TurnRoute.ActionCommand, Effort: null);
 
             var actioned = await capabilities
@@ -377,6 +500,7 @@ public sealed class TurnLoop(
         // 3.
         if (keywordRouter.Match(input, source) is { } match)
         {
+            routing.Handled = true;
             yield return new TurnEvent.Routed(TurnRoute.KeywordRouter, Effort: null);
 
             var result = await capabilities
@@ -396,32 +520,6 @@ public sealed class TurnLoop(
                 result.Spoken,
                 Effort: null,
                 Cost: null));
-            yield break;
-        }
-
-        // 4.
-        var activeProvider = Provider;
-
-        if (activeProvider is null || !availability.CanAttemptModelTurn)
-        {
-            var reason = availability.Reason ?? "No language model provider is configured.";
-            logger.LogInformation("No model available for this turn: {Reason}", reason);
-
-            var text =
-                $"I'm not sure — I have no way to work that out right now. {reason} " +
-                "Ask me something one of my own capabilities covers and I can still answer.";
-
-            yield return new TurnEvent.Routed(TurnRoute.NoCapability, Effort: null);
-            yield return new TurnEvent.TextDelta(text);
-            yield return new TurnEvent.Completed(new TurnResult(
-                TurnOutcome.Unsure, TurnRoute.NoCapability, text, Effort: null, Cost: null));
-            yield break;
-        }
-
-        await foreach (var turnEvent in RunModelTurnAsync(input, activeProvider, cancellationToken)
-                           .ConfigureAwait(false))
-        {
-            yield return turnEvent;
         }
     }
 
