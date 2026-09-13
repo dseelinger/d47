@@ -97,6 +97,7 @@ OUTPUT = Path(__file__).resolve().parent.parent / "src" / "D47.Core" / "Knowledg
 SHIP_COLUMNS = [
     "symbol", "name", "manufacturer", "pad", "speed", "boost", "armour", "shields",
     "hardness", "hull_mass", "fuel", "crew", "masslock", "cost", "hardpoints", "internals",
+    "requirement",
 ]
 
 MODULE_COLUMNS = [
@@ -277,6 +278,31 @@ def ship_documents(paths: list[str]) -> list[dict]:
     ]
 
 
+def requirement(ship: dict) -> str:
+    """The rank or unlock coriolis-data gates this hull behind, or empty for none.
+
+    `horizons` marks every post-Horizons hull and is not a gate worth naming. A `requirements`
+    key this function does not know fails the run rather than silently dropping a gate.
+    """
+    requirements = ship.get("requirements") or {}
+    known = {"federationRank", "empireRank", "horizonsEarlyAdoption", "horizons"}
+    unknown = sorted(set(requirements) - known)
+
+    if unknown:
+        raise SystemExit(f"unknown ship requirement key(s): {', '.join(unknown)}")
+
+    if requirements.get("horizonsEarlyAdoption"):
+        return "early-adoption"
+
+    if rank := requirements.get("federationRank"):
+        return f"federation:{rank}"
+
+    if rank := requirements.get("empireRank"):
+        return f"empire:{rank}"
+
+    return ""
+
+
 def build_ships(documents: list[dict]) -> tuple[list[list[str]], list[str]]:
     by_id = {int(row["id"]): row for row in rows("shipyard.csv")}
 
@@ -313,6 +339,7 @@ def build_ships(documents: list[dict]) -> tuple[list[list[str]], list[str]]:
             ",".join(str(size) for size in slots.get("hardpoints") or [] if size),
             ",".join(str(size) for size in slots.get("internal") or []
                      if isinstance(size, int) and size),
+            requirement(ship),
         ])
 
     # A hull with no id row cannot be keyed to anything the journal writes, so its figures

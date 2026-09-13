@@ -53,6 +53,12 @@ public sealed record ShipSpecification
 
     /// <summary>Optional internal compartment sizes, largest first.</summary>
     public IReadOnlyList<int> Internals { get; init; } = [];
+
+    /// <summary>
+    /// <c>empire:&lt;n&gt;</c> or <c>federation:&lt;n&gt;</c> for a naval rank gate, <c>early-adoption</c>
+    /// for a Horizons early-adoption hull, null otherwise.
+    /// </summary>
+    public string? Requirement { get; init; }
 }
 
 /// <summary>One outfitting module, at one class and rating.</summary>
@@ -672,6 +678,7 @@ public static class EliteSpecifications
         Cost = Long(cells, 13),
         Hardpoints = Sizes(cells, 14),
         Internals = Sizes(cells, 15),
+        Requirement = Text(cells, 16),
     };
 
     private static ModuleSpecification ReadModule(string[] cells) => new()

@@ -8,6 +8,10 @@
 
 ## 0.117.0 — Engineering, seen two new ways
 
+A ship gated behind an Empire or Federation naval rank now says which rank it needs — the
+Imperial Cutter asks for Duke, the Federal Corvette for Rear Admiral — and the Cobra Mk IV says it
+is Horizons early-adoption only rather than reading as an ordinary shipyard buy.
+
 The checklist can now be filtered to what a pinned blueprint can finish, wherever you are docked —
 not only where the engineer's own workshop is. Pin a blueprint on an engineer's page in the
 Engineers tab ("A blueprint is pinned with them"); the filter then keeps the lines that engineer

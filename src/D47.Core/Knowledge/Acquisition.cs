@@ -114,7 +114,7 @@ public static class AcquisitionGuide
 
         foreach (var ship in EliteSpecifications.Ships)
         {
-            Add(new Acquisition { Name = ship.Name, Kind = AcquisitionKind.Ship, Methods = [AcquisitionMethod.Shipyard] });
+            Add(Ship(ship));
         }
 
         foreach (var variants in EliteSpecifications.Modules.GroupBy(module => module.Name, StringComparer.Ordinal))
@@ -153,6 +153,32 @@ public static class AcquisitionGuide
         }
 
         return new Index(names, byName);
+    }
+
+    private static Acquisition Ship(ShipSpecification ship)
+    {
+        var gating = ship.Requirement switch
+        {
+            "early-adoption" => new Gating([AcquisitionMethod.Unobtainable], "Horizons early adoption only"),
+
+            { } requirement when requirement.StartsWith("empire:", StringComparison.Ordinal)
+                && int.TryParse(requirement["empire:".Length..], out var rank) =>
+                new Gating([AcquisitionMethod.Shipyard], $"Empire rank {NavalRanks.EmpireName(rank)}"),
+
+            { } requirement when requirement.StartsWith("federation:", StringComparison.Ordinal)
+                && int.TryParse(requirement["federation:".Length..], out var rank) =>
+                new Gating([AcquisitionMethod.Shipyard], $"Federal navy rank {NavalRanks.FederationName(rank)}"),
+
+            _ => new Gating([AcquisitionMethod.Shipyard], null),
+        };
+
+        return new Acquisition
+        {
+            Name = ship.Name,
+            Kind = AcquisitionKind.Ship,
+            Methods = gating.Methods,
+            Gate = gating.Gate,
+        };
     }
 
     private static Acquisition Module(string name, IReadOnlyList<ModuleSpecification> variants)
