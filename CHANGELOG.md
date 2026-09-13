@@ -6,6 +6,14 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.122.0 — How do I
+
+"How do I plot a course", "how can I get my ship engineered", "how would I turn off silent
+running" — these now land on the one feature they mean, without the model. Where the words fit
+two or three features equally well, d47 asks which; where they fit none, a configured model
+answers instead, and with none configured this falls back to the top of the spoken map rather
+than saying it has no way to work it out.
+
 ## 0.121.0 — Did you mean, and what can you do
 
 A command missed by a word is no longer handed to the language model to refuse. Say "set focus on

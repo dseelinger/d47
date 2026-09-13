@@ -164,6 +164,30 @@ gear down' or 'retract hardpoints'. It has a page on the panel called Flight and
 Say something the drill was not expecting and it drops the question and answers normally, rather
 than insisting on an answer to a menu you have stopped answering.
 
+### "How do I ..."
+
+> "how do I plot a course"
+> "how can I get my ship engineered"
+> "how would I turn off silent running"
+
+This lands on the one feature the words point to, from the same spoken map — never on the
+model — matching a leaf by the content words a goal shares with its name, its sentence and the
+phrases that reach its capability:
+
+```text
+Put a system name on your clipboard, and try to plot a course to it. Say 'plot a course to
+Shinrarta Dezhra' or 'copy that system name'. It has a page on the panel called Navigation.
+```
+
+Where two or three leaves fit equally well, it asks which, the same way a near miss does:
+
+```text
+Two ways: Journal, or Commander's log. Which one?
+```
+
+Where nothing fits, a configured model answers instead; without one, this falls back to the top
+level of the spoken map rather than saying it has no way to work it out.
+
 ### Asked by the model
 
 The model itself is never handed the drill — a Commander answering "the second one" a minute

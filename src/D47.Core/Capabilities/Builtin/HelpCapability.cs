@@ -89,7 +89,7 @@ public static class HelpCapability
     };
 
     /// <summary>What a level says: the count, the names, and a question.</summary>
-    private static (string Text, Offer Offer) LevelAnswer(IReadOnlyList<HelpNode> children, CapabilityRegistry registry)
+    internal static (string Text, Offer Offer) LevelAnswer(IReadOnlyList<HelpNode> children, CapabilityRegistry registry)
     {
         var names = children.Select(child => child.Name).ToArray();
         var text = $"{names.Length} areas: {Listed(names)}. Which one?";
@@ -104,7 +104,7 @@ public static class HelpCapability
     }
 
     /// <summary>What picking one choice says, and what it opens next.</summary>
-    private static OfferAnswer Answer(HelpNode node, CapabilityRegistry registry)
+    internal static OfferAnswer Answer(HelpNode node, CapabilityRegistry registry)
     {
         if (node.CapabilityId is not { } capabilityId)
         {
@@ -144,7 +144,7 @@ public static class HelpCapability
     /// What the Commander could say for this capability: its tool command phrases first, then its
     /// keywords, then its examples — the order a phrase is most likely to actually work.
     /// </summary>
-    private static IEnumerable<string> Phrases(CapabilityDescriptor descriptor) =>
+    internal static IEnumerable<string> Phrases(CapabilityDescriptor descriptor) =>
         descriptor.Tools.SelectMany(tool => tool.Commands.Select(command => command.Phrase))
             .Concat(descriptor.Keywords.Select(keyword => keyword.Phrase))
             .Concat(descriptor.Examples)

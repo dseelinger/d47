@@ -508,6 +508,56 @@ public sealed class TurnLoop(
             yield break;
         }
 
+        // 3.5. "How do I ...": land on a feature by the words that reach it, rather than the model
+        // (#170). A goal matching nothing falls through to the model below when one is configured, and
+        // to the top level of the spoken map when none is.
+        if (Help.HowDoI.GoalFor(input) is { } goal)
+        {
+            var matched = Help.HowDoI.Match(goal, capabilities);
+
+            if (matched.Count == 1)
+            {
+                var text = Capabilities.Builtin.HelpCapability.Answer(matched[0], capabilities).Text;
+
+                foreach (var turnEvent in AnsweredByRouter(text, input))
+                {
+                    yield return turnEvent;
+                }
+
+                yield break;
+            }
+
+            if (matched.Count is 2 or 3)
+            {
+                Offers.Open(new Offer(
+                [
+                    .. matched.Select(node => new OfferChoice(
+                        node.Name,
+                        new OfferTarget.Answer(() => Capabilities.Builtin.HelpCapability.Answer(node, capabilities)))),
+                ]));
+
+                foreach (var turnEvent in Offered(Ways(matched), input))
+                {
+                    yield return turnEvent;
+                }
+
+                yield break;
+            }
+
+            if (matched.Count is 0 or > 3 && (Provider is null || !availability.CanAttemptModelTurn))
+            {
+                var (text, offer) = Capabilities.Builtin.HelpCapability.LevelAnswer(Help.HelpTaxonomy.Top, capabilities);
+                Offers.Open(offer);
+
+                foreach (var turnEvent in AnsweredByRouter(text, input))
+                {
+                    yield return turnEvent;
+                }
+
+                yield break;
+            }
+        }
+
         // 4.
         var activeProvider = Provider;
 
@@ -545,6 +595,31 @@ public sealed class TurnLoop(
         return quoted.Count == 1
             ? $"Did you mean {quoted[0]}?"
             : $"Did you mean {string.Join(", ", quoted.SkipLast(1))}, or {quoted[^1]}?";
+    }
+
+    /// <summary>"Two ways: 'a', or 'b'. Which one?" for a "how do I" that matched two or three leaves.</summary>
+    private static string Ways(IReadOnlyList<Help.HelpNode> matched)
+    {
+        var names = matched.Select(node => node.Name).ToArray();
+        var count = names.Length == 2 ? "Two" : "Three";
+
+        var listed = names.Length == 2
+            ? $"{names[0]}, or {names[1]}"
+            : $"{names[0]}, {names[1]}, or {names[2]}";
+
+        return $"{count} ways: {listed}. Which one?";
+    }
+
+    /// <summary>A model-free answer that is not a reply to a standing offer, such as a "how do I" leaf.</summary>
+    private IEnumerable<TurnEvent> AnsweredByRouter(string text, string input)
+    {
+        yield return new TurnEvent.Routed(TurnRoute.KeywordRouter, Effort: null);
+
+        Said(text, input);
+
+        yield return new TurnEvent.TextDelta(text);
+        yield return new TurnEvent.Completed(new TurnResult(
+            TurnOutcome.Answered, TurnRoute.KeywordRouter, text, Effort: null, Cost: null));
     }
 
     /// <summary>Whether a model-free route answered.</summary>
