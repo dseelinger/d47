@@ -8,6 +8,12 @@
 
 ## 0.124.0 — Supercharge
 
+Mini's Routing tab now shows the last neutron route plotted, as a list of waypoints with the next
+one marked, instead of the three planner forms. The next waypoint comes from `NavRoute.json` where
+it names one, otherwise from the Commander's current system; where neither matches, the list is
+still drawn with nothing marked. The full panel is unchanged, and the other three Routing roots
+keep drawing their full-size pages in mini.
+
 A route warning no longer fires on a leg that a neutron star or white dwarf supercharge would
 clear. The strand check now measures the jump beyond an unscoopable star against the boosted
 range for the fitted frame shift drive — six times normal range at a neutron star and three at a

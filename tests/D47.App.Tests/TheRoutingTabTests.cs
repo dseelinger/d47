@@ -178,13 +178,14 @@ public class TheRoutingTabTests
         RoutePlanBook plans,
         bool lookups = true,
         Action? openSettings = null,
-        D47.Core.Capabilities.Builtin.IClipboard? clipboard = null)
+        D47.Core.Capabilities.Builtin.IClipboard? clipboard = null,
+        string? here = null)
     {
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
         panel.EnableRouting(new RoutingSurface(
             () => route,
-            () => null,
+            () => here,
             CapabilityRegistry.Build([]),
             plans,
             () => lookups,
@@ -192,6 +193,19 @@ public class TheRoutingTabTests
             Clipboard: clipboard));
 
         return Laid(panel);
+    }
+
+    /// <summary>Opens the tab's Plan root already at mini's size.</summary>
+    private static PanelView MiniOnPlan(NavRoute route, RoutePlanBook plans, string? here = null)
+    {
+        var panel = FullyFurnished(route, plans, here: here);
+
+        panel.Tab = PanelTab.Routing;
+        panel.Nav.SelectRoot(RoutingPages.PlanRoot);
+        panel.Mode = PanelMode.Mini;
+        Dispatcher.UIThread.RunJobs();
+
+        return panel;
     }
 
     /// <summary>
@@ -376,6 +390,276 @@ public class TheRoutingTabTests
             Assert.Contains(
                 TextOf(panel),
                 text => text.Contains("no longer here", StringComparison.Ordinal));
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    /// <summary>A three-waypoint Jump plan, recorded into the given book (#197).</summary>
+    private static void RecordJumpPlan(RoutePlanBook plans) =>
+        plans.Record(
+            new PlottedRoute(
+                "Sol",
+                "Colonia",
+                1_000,
+                3,
+                [
+                    new RouteWaypoint("Waypoint 0", 1, 700, IsNeutron: true),
+                    new RouteWaypoint("Waypoint 1", 1, 300, IsNeutron: false),
+                    new RouteWaypoint("Colonia", 1, 0, IsNeutron: false),
+                ]),
+            "Sol to Colonia",
+            new DateTimeOffset(2026, 9, 1, 9, 0, 0, TimeSpan.Zero));
+
+    /// <summary>
+    /// Mini's Plan root shows the stored plan as a list of waypoints, not the three planner forms
+    /// (#197).
+    /// </summary>
+    [AvaloniaFact]
+    public void MiniOnThePlanRootShowsTheStoredPlanRatherThanTheForms()
+    {
+        var folder = Scratch();
+
+        try
+        {
+            var plans = Book(folder);
+            RecordJumpPlan(plans);
+
+            var panel = MiniOnPlan(NavRoute.None, plans);
+
+            var drawn = TextOf(panel).ToArray();
+
+            Assert.Contains("Sol", drawn);
+            Assert.Contains("Waypoint 0", drawn);
+            Assert.Contains("Waypoint 1", drawn);
+            Assert.Contains("Colonia", drawn);
+
+            Assert.DoesNotContain("Neutron Plotter", drawn);
+            Assert.DoesNotContain("Road to Riches", drawn);
+            Assert.DoesNotContain("Trade run", drawn);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    /// <summary>With no stored plan, mini says so rather than drawing the forms (#197).</summary>
+    [AvaloniaFact]
+    public void MiniWithNoStoredPlanSaysSo()
+    {
+        var folder = Scratch();
+
+        try
+        {
+            var panel = MiniOnPlan(NavRoute.None, Book(folder));
+
+            var drawn = TextOf(panel).ToArray();
+
+            Assert.Contains(drawn, text => text.Contains("No neutron route is plotted", StringComparison.Ordinal));
+            Assert.DoesNotContain("Neutron Plotter", drawn);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    /// <summary>NavRoute.json ending at a waypoint marks that one next, ahead of position (#197).</summary>
+    [AvaloniaFact]
+    public void MiniMarksTheWaypointNavRouteEndsAt()
+    {
+        var folder = Scratch();
+
+        try
+        {
+            var plans = Book(folder);
+            RecordJumpPlan(plans);
+
+            var route = Route(Hop("Sol"), Hop("Waypoint 0", 10));
+            var panel = MiniOnPlan(route, plans, here: "Waypoint 1");
+
+            var drawn = TextOf(panel).ToArray();
+
+            Assert.Equal(1, drawn.Count(text => text == "next"));
+
+            var next = panel.GetVisualDescendants()
+                .OfType<StackPanel>()
+                .First(row => row.GetVisualDescendants().OfType<TextBlock>().Any(text => text.Text == "next"));
+
+            Assert.Contains(
+                next.GetVisualDescendants().OfType<TextBlock>(),
+                text => text.Text == "Waypoint 0");
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    /// <summary>With no route plotted, being at waypoint k marks waypoint k+1 next (#197).</summary>
+    [AvaloniaFact]
+    public void MiniMarksTheWaypointAfterWhereTheCommanderIs()
+    {
+        var folder = Scratch();
+
+        try
+        {
+            var plans = Book(folder);
+            RecordJumpPlan(plans);
+
+            var panel = MiniOnPlan(NavRoute.None, plans, here: "Waypoint 0");
+
+            var next = panel.GetVisualDescendants()
+                .OfType<StackPanel>()
+                .First(row => row.GetVisualDescendants().OfType<TextBlock>().Any(text => text.Text == "next"));
+
+            Assert.Contains(
+                next.GetVisualDescendants().OfType<TextBlock>(),
+                text => text.Text == "Waypoint 1");
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    /// <summary>Standing on the final waypoint says the destination is reached, with nothing marked next (#197).</summary>
+    [AvaloniaFact]
+    public void MiniSaysTheDestinationIsReachedAtTheFinalWaypoint()
+    {
+        var folder = Scratch();
+
+        try
+        {
+            var plans = Book(folder);
+            RecordJumpPlan(plans);
+
+            var panel = MiniOnPlan(NavRoute.None, plans, here: "Colonia");
+
+            var drawn = TextOf(panel).ToArray();
+
+            Assert.Contains(drawn, text => text.Contains("destination is reached", StringComparison.Ordinal));
+            Assert.DoesNotContain(drawn, text => text == "next");
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    /// <summary>Neither the route file nor the current system matching a waypoint marks nothing (#197).</summary>
+    [AvaloniaFact]
+    public void MiniMarksNothingWhenNeitherTheRouteNorThePositionMatch()
+    {
+        var folder = Scratch();
+
+        try
+        {
+            var plans = Book(folder);
+            RecordJumpPlan(plans);
+
+            var panel = MiniOnPlan(NavRoute.None, plans, here: "Shinrarta Dezhra");
+
+            var drawn = TextOf(panel).ToArray();
+
+            Assert.Contains("Waypoint 0", drawn);
+            Assert.DoesNotContain(drawn, text => text == "next");
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    /// <summary>Galaxy search being off does not hide a plan already stored (#197).</summary>
+    [AvaloniaFact]
+    public void MiniShowsAStoredPlanEvenWithGalaxySearchOff()
+    {
+        var folder = Scratch();
+
+        try
+        {
+            var plans = Book(folder);
+            RecordJumpPlan(plans);
+
+            var panel = FullyFurnished(NavRoute.None, plans, lookups: false);
+
+            panel.Tab = PanelTab.Routing;
+            panel.Nav.SelectRoot(RoutingPages.PlanRoot);
+            panel.Mode = PanelMode.Mini;
+            Dispatcher.UIThread.RunJobs();
+
+            Assert.Contains("Waypoint 0", TextOf(panel));
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    /// <summary>The mark follows the Commander without leaving mini, on the same tick every other reading uses (#197).</summary>
+    [AvaloniaFact]
+    public void MiniMovesTheMarkOnATickAsThePositionChanges()
+    {
+        var folder = Scratch();
+
+        try
+        {
+            var plans = Book(folder);
+            RecordJumpPlan(plans);
+
+            var here = "Waypoint 0";
+            var panel = new PanelView { DataContext = new PanelViewModel() };
+
+            panel.EnableRouting(new RoutingSurface(
+                () => NavRoute.None,
+                () => here,
+                CapabilityRegistry.Build([]),
+                plans));
+
+            Laid(panel);
+            panel.Tab = PanelTab.Routing;
+            panel.Nav.SelectRoot(RoutingPages.PlanRoot);
+            panel.Mode = PanelMode.Mini;
+            Dispatcher.UIThread.RunJobs();
+
+            Assert.Equal(1, TextOf(panel).Count(text => text == "next"));
+
+            here = "Colonia";
+            panel.TickRouting();
+            Dispatcher.UIThread.RunJobs();
+
+            var drawn = TextOf(panel).ToArray();
+
+            Assert.Contains(drawn, text => text.Contains("destination is reached", StringComparison.Ordinal));
+            Assert.DoesNotContain(drawn, text => text == "next");
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    /// <summary>Switching back to full shows RoutePlanPage as it does today, not mini's list (#197).</summary>
+    [AvaloniaFact]
+    public void ReturningToFullShowsRoutePlanPage()
+    {
+        var folder = Scratch();
+
+        try
+        {
+            var plans = Book(folder);
+            RecordJumpPlan(plans);
+
+            var panel = MiniOnPlan(NavRoute.None, plans);
+
+            panel.Mode = PanelMode.Full;
+            Dispatcher.UIThread.RunJobs();
+
+            Assert.Contains("Neutron Plotter", TextOf(panel));
         }
         finally
         {

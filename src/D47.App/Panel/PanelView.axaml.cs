@@ -706,7 +706,7 @@ public partial class PanelView : UserControl
             });
 
         // And the same story at mini's size (asked for 2026-08-22).
-        MiniPane.Child = new AdventureMini(surface);
+        _adventureMini = new AdventureMini(surface);
         ApplyChrome();
     }
 
@@ -944,6 +944,12 @@ public partial class PanelView : UserControl
         _routeHere = surface.Here;
         _routeRange = surface.JumpRange;
 
+        // Mini's own reading of the Plan root, wherever there is a book to read it from (#197).
+        if (surface.Plans is { } miniPlans)
+        {
+            _routeMini = new RouteMini(miniPlans, surface.Route, surface.Here);
+        }
+
         Furnish(
             PanelTab.Routing,
             crumb =>
@@ -960,10 +966,15 @@ public partial class PanelView : UserControl
             [.. roots]);
 
         // A plot made anywhere - this tab's own button, or a spoken tool call - leaves the Plan page one
-        // redraw out of date, because "show the last one" is drawn from the book.
+        // redraw out of date, because "show the last one" is drawn from the book. Mini reads the same
+        // book, so it moves with the same event.
         if (surface.Plans is { } plans)
         {
-            plans.Changed += () => _routePlan?.Refresh();
+            plans.Changed += () =>
+            {
+                _routePlan?.Refresh();
+                _routeMini?.Refresh();
+            };
         }
     }
 
@@ -1003,12 +1014,17 @@ public partial class PanelView : UserControl
         // throw away a half-typed destination.
         _routePlan?.RefreshSupplied();
 
+        // The mark on mini's waypoint list is read from the same route and position (#197).
+        _routeMini?.Refresh();
+
         return true;
     }
 
     private RouteProgressPage? _routeProgress;
     private RoutePlanPage? _routePlan;
     private RouteCommunityGoalPage? _routeCommunityGoal;
+    private AdventureMini? _adventureMini;
+    private RouteMini? _routeMini;
     private Func<D47.Core.Journal.NavRoute>? _routeState;
     private Func<string?>? _routeHere;
     private Func<double?>? _routeRange;
@@ -1860,8 +1876,18 @@ public partial class PanelView : UserControl
 
         var modal = ModalPane.Child is not null;
 
-        // Mini reading the Adventures tab (asked for 2026-08-22).
-        var miniStory = !full && Tab == PanelTab.Adventures && MiniPane.Child is not null;
+        // Mini reading the Adventures tab (asked for 2026-08-22) or the Routing tab's Plan root (#197) — the
+        // rest of Routing keeps drawing its full-size page even at mini's size.
+        Control? miniControl = Tab switch
+        {
+            PanelTab.Adventures => _adventureMini,
+            PanelTab.Routing when Nav.RootKeyOf(Tab) == RoutingPages.PlanRoot => _routeMini,
+            _ => null,
+        };
+
+        MiniPane.Child = miniControl;
+
+        var miniStory = !full && miniControl is not null;
 
         // The chooser takes the region rather than sitting over it.
         ModalPane.IsVisible = modal;
