@@ -960,6 +960,7 @@ public partial class PanelView : UserControl
                 _routeProgress = page as RouteProgressPage ?? _routeProgress;
                 _routePlan = page as RoutePlanPage ?? _routePlan;
                 _routeCommunityGoal = page as RouteCommunityGoalPage ?? _routeCommunityGoal;
+                _routeResult = page as RoutePlanResultPage ?? _routeResult;
 
                 return page;
             },
@@ -974,6 +975,7 @@ public partial class PanelView : UserControl
             {
                 _routePlan?.Refresh();
                 _routeMini?.Refresh();
+                _routeResult?.Refresh();
             };
         }
     }
@@ -1017,12 +1019,17 @@ public partial class PanelView : UserControl
         // The mark on mini's waypoint list is read from the same route and position (#197).
         _routeMini?.Refresh();
 
+        // The plan's reached stop moves on the same arrival that moves the route and position, so it rides
+        // this same guard (#200).
+        _routeResult?.Refresh();
+
         return true;
     }
 
     private RouteProgressPage? _routeProgress;
     private RoutePlanPage? _routePlan;
     private RouteCommunityGoalPage? _routeCommunityGoal;
+    private RoutePlanResultPage? _routeResult;
     private AdventureMini? _adventureMini;
     private RouteMini? _routeMini;
     private Func<D47.Core.Journal.NavRoute>? _routeState;

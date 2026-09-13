@@ -1,9 +1,12 @@
+using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Panel;
+using D47.App.Theming;
 using D47.Core.Interface;
 using D47.Core.Capabilities;
 using D47.Core.Journal;
@@ -832,6 +835,124 @@ public class TheRoutingTabTests
                 .ToArray();
 
             Assert.Empty(offenders);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    private static JournalEvent Arrival(string kind, string system, DateTimeOffset at) =>
+        JournalEvent.TryParse(
+            $$"""{"timestamp":"{{at:O}}","event":"{{kind}}","StarSystem":"{{system}}"}""",
+            NullLogger.Instance,
+            out var parsed)
+            ? parsed!
+            : throw new InvalidOperationException("bad journal fixture");
+
+    private static Color? Colour(IBrush? brush) => (brush as ISolidColorBrush)?.Color;
+
+    /// <summary>The row whose text block reads the given name, on the plan's result page.</summary>
+    private static Border ResultRow(PanelView panel, string text) =>
+        (Border)panel.GetVisualDescendants()
+            .OfType<TextBlock>()
+            .First(block => block.Text == text)
+            .FindAncestorOfType<Border>()!;
+
+    /// <summary>
+    /// Reached rows on the result page carry a tick and read muted; the row after the reached stop is
+    /// not reached, and the one further on is untouched (#200).
+    /// </summary>
+    [AvaloniaFact]
+    public void ReachedRowsOnTheResultPageAreTickedAndTheNextRowIsNot()
+    {
+        var folder = Scratch();
+
+        try
+        {
+            var plans = Book(folder);
+            RecordJumpPlan(plans);
+            plans.Apply([Arrival("FSDJump", "Waypoint 0", new DateTimeOffset(2026, 9, 1, 9, 5, 0, TimeSpan.Zero))]);
+
+            var panel = FullyFurnished(NavRoute.None, plans);
+
+            panel.Tab = PanelTab.Routing;
+            panel.Nav.SelectRoot(RoutingPages.PlanRoot);
+            panel.Nav.Drill(RoutingPages.ResultCrumb(RoutePlanKind.Jump, "Sol to Colonia"));
+            Dispatcher.UIThread.RunJobs();
+
+            var drawn = TextOf(panel).ToArray();
+
+            Assert.Contains("✓ Waypoint 0", drawn);
+            Assert.Contains("Waypoint 1", drawn);
+            Assert.DoesNotContain("✓ Waypoint 1", drawn);
+            Assert.DoesNotContain("✓ Colonia", drawn);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    /// <summary>
+    /// The row after the reached stop gets the current-row treatment RouteProgressPage.Row uses; with
+    /// nothing reached, that is the first row (#200).
+    /// </summary>
+    [AvaloniaFact]
+    public void TheRowAfterTheReachedStopGetsTheCurrentRowTreatment()
+    {
+        var folder = Scratch();
+
+        try
+        {
+            new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(themeId: null);
+
+            var plans = Book(folder);
+            RecordJumpPlan(plans);
+            plans.Apply([Arrival("FSDJump", "Waypoint 0", new DateTimeOffset(2026, 9, 1, 9, 5, 0, TimeSpan.Zero))]);
+
+            var panel = FullyFurnished(NavRoute.None, plans);
+
+            panel.Tab = PanelTab.Routing;
+            panel.Nav.SelectRoot(RoutingPages.PlanRoot);
+            panel.Nav.Drill(RoutingPages.ResultCrumb(RoutePlanKind.Jump, "Sol to Colonia"));
+            Dispatcher.UIThread.RunJobs();
+
+            var fill = Colour(panel.FindResource(ThemeManager.SurfaceAltKey) as IBrush);
+
+            Assert.Equal(fill, Colour(ResultRow(panel, "Waypoint 1").Background));
+            Assert.NotEqual(fill, Colour(ResultRow(panel, "Colonia").Background));
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    /// <summary>The result page redraws when the reached stop moves, without being reopened (#200).</summary>
+    [AvaloniaFact]
+    public void TheResultPageRedrawsWhenTheReachedStopMovesWithoutReopening()
+    {
+        var folder = Scratch();
+
+        try
+        {
+            var plans = Book(folder);
+            RecordJumpPlan(plans);
+
+            var panel = FullyFurnished(NavRoute.None, plans);
+
+            panel.Tab = PanelTab.Routing;
+            panel.Nav.SelectRoot(RoutingPages.PlanRoot);
+            panel.Nav.Drill(RoutingPages.ResultCrumb(RoutePlanKind.Jump, "Sol to Colonia"));
+            Dispatcher.UIThread.RunJobs();
+
+            Assert.DoesNotContain("✓ Waypoint 0", TextOf(panel));
+
+            plans.Apply([Arrival("FSDJump", "Waypoint 0", new DateTimeOffset(2026, 9, 1, 9, 5, 0, TimeSpan.Zero))]);
+            Dispatcher.UIThread.RunJobs();
+
+            Assert.Contains("✓ Waypoint 0", TextOf(panel));
         }
         finally
         {

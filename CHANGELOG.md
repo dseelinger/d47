@@ -8,6 +8,12 @@
 
 ## 0.124.0 — Supercharge
 
+A stored plan's result page now ticks off the stops the Commander has reached, muted, with the
+row after them marked as the next one to copy. The page redraws as the reached stop moves,
+without needing to be reopened, on the desktop window and in the headset. This applies to all
+three plan kinds; on Road to Riches and trade plans, a tick means the Commander got there, not
+that the bodies are mapped or the cargo is traded.
+
 Mini's Routing tab now shows the last neutron route plotted, as a list of waypoints with the next
 one marked, instead of the three planner forms. The next waypoint comes from `NavRoute.json` where
 it names one, otherwise from the Commander's current system; where neither matches, the list is

@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Threading;
 using D47.App.Theming;
 using D47.Core.Knowledge;
 
@@ -12,28 +13,58 @@ namespace D47.App.Panel;
 public sealed class RoutePlanResultPage : UserControl
 {
     private readonly Func<string, Task<bool>>? _copy;
+    private readonly RoutePlanBook? _plans;
+    private readonly RoutePlanKind _kind;
+    private readonly StackPanel _stack = new() { Spacing = 4 };
 
-    public RoutePlanResultPage(StoredRoutePlan plan, Func<string, Task<bool>>? copy = null)
+    private int? _reachedSeen;
+
+    public RoutePlanResultPage(StoredRoutePlan plan, Func<string, Task<bool>>? copy = null, RoutePlanBook? plans = null)
     {
         _copy = copy;
-
-        var stack = new StackPanel { Spacing = 4 };
-
-        stack.Children.Add(Heading(plan));
-        stack.Children.Add(Aside(Provenance(plan)));
-
-        foreach (var row in Rows(plan))
-        {
-            stack.Children.Add(row);
-        }
+        _plans = plans;
+        _kind = plan.Kind;
 
         Content = new ScrollViewer
         {
             Padding = new Thickness(14),
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-            Content = stack,
+            Content = _stack,
         };
+
+        Draw(plan);
+    }
+
+    /// <summary>
+    /// Redraws from the book rather than the plan passed at construction, because the stored record is
+    /// replaced on arrival, not mutated (#200). Returns whether the reached stop actually moved, so a caller
+    /// can tell whether the redraw is worth serving to the headset.
+    /// </summary>
+    public bool Refresh()
+    {
+        if (_plans?.Last(_kind) is not { } plan || plan.Reached == _reachedSeen)
+        {
+            return false;
+        }
+
+        Dispatcher.UIThread.Post(() => Draw(plan));
+
+        return true;
+    }
+
+    private void Draw(StoredRoutePlan plan)
+    {
+        _reachedSeen = plan.Reached;
+
+        _stack.Children.Clear();
+        _stack.Children.Add(Heading(plan));
+        _stack.Children.Add(Aside(Provenance(plan)));
+
+        foreach (var row in Rows(plan))
+        {
+            _stack.Children.Add(row);
+        }
     }
 
     private Control Heading(StoredRoutePlan plan)
@@ -89,15 +120,25 @@ public sealed class RoutePlanResultPage : UserControl
 
     private IEnumerable<Control> Rows(StoredRoutePlan plan) => plan switch
     {
-        { Jump: { } jump } => jump.Waypoints.Select(Waypoint),
-        { Riches: { } riches } => riches.Stops.Select(Stop),
-        { Trade: { } trade } => trade.Stops.Select(Stop),
+        { Jump: { } jump } => jump.Waypoints.Select((waypoint, index) => Waypoint(waypoint, State(index, plan.Reached))),
+        { Riches: { } riches } => riches.Stops.Select((stop, index) => Stop(stop, State(index, plan.Reached))),
+        { Trade: { } trade } => trade.Stops.Select((stop, index) => Stop(stop, State(index, plan.Reached))),
         _ => [],
     };
 
-    private Control Waypoint(RouteWaypoint waypoint)
+    /// <summary>
+    /// Whether a row is behind the Commander or is the next one to copy. With nothing reached, the first
+    /// row is next (#200).
+    /// </summary>
+    private readonly record struct RowState(bool Reached, bool Next);
+
+    private static RowState State(int index, int? reached) => new(
+        Reached: reached is { } r && index <= r,
+        Next: index == (reached is { } r2 ? r2 + 1 : 0));
+
+    private Control Waypoint(RouteWaypoint waypoint, RowState state)
     {
-        var line = Line(waypoint.System);
+        var line = Line(waypoint.System, state);
 
         line.Children.Add(Muted(
             waypoint.Jumps == 1 ? "1 jump" : $"{waypoint.Jumps} jumps"));
@@ -114,12 +155,12 @@ public sealed class RoutePlanResultPage : UserControl
             line.Children.Add(Badge("neutron — supercharge here", ThemeManager.AccentKey));
         }
 
-        return Wrap(line, waypoint.System);
+        return Wrap(line, waypoint.System, state);
     }
 
-    private Control Stop(RichesStop stop)
+    private Control Stop(RichesStop stop, RowState state)
     {
-        var line = Line(stop.System);
+        var line = Line(stop.System, state);
 
         line.Children.Add(Muted(stop.Jumps == 1 ? "1 jump" : $"{stop.Jumps} jumps"));
         line.Children.Add(Muted(
@@ -137,12 +178,12 @@ public sealed class RoutePlanResultPage : UserControl
             stack.Children.Add(Muted(detail));
         }
 
-        return Wrap(stack, stop.System);
+        return Wrap(stack, stop.System, state);
     }
 
-    private Control Stop(TradeStop stop)
+    private Control Stop(TradeStop stop, RowState state)
     {
-        var line = Line($"{stop.Station} in {stop.System}");
+        var line = Line($"{stop.Station} in {stop.System}", state);
 
         if (stop.Distance is { } distance)
         {
@@ -184,12 +225,13 @@ public sealed class RoutePlanResultPage : UserControl
                     : $"    prices reported {seen.ToLocalTime():d MMM yyyy}"
                 : "    prices of unknown age"));
 
-        return Wrap(stack, stop.System);
+        return Wrap(stack, stop.System, state);
     }
 
-    private static StackPanel Line(string title)
+    private static StackPanel Line(string title, RowState state)
     {
-        var name = Text(title, TypeScale.Body, ThemeManager.TextKey);
+        var text = state.Reached ? $"✓ {title}" : title;
+        var name = Text(text, TypeScale.Body, state.Reached ? ThemeManager.TextMutedKey : ThemeManager.TextKey);
         name.VerticalAlignment = VerticalAlignment.Center;
 
         return new StackPanel
@@ -204,7 +246,7 @@ public sealed class RoutePlanResultPage : UserControl
     /// Every system name here is a copy target, for the reason the Course page gives: the clipboard is
     /// the part of plotting that always works.
     /// </summary>
-    private Control Wrap(Control content, string system)
+    private Control Wrap(Control content, string system, RowState state)
     {
         Control body = content;
 
@@ -224,6 +266,13 @@ public sealed class RoutePlanResultPage : UserControl
             CornerRadius = new CornerRadius(3),
             Child = body,
         };
+
+        if (state.Next)
+        {
+            row.Bind(
+                Border.BackgroundProperty,
+                Application.Current!.Resources.GetResourceObservable(ThemeManager.SurfaceAltKey));
+        }
 
         if (_copy is { } tap)
         {

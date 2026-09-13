@@ -155,7 +155,7 @@ public static class RoutingPages
             return Missing("That plan is no longer here. Plot it again.");
         }
 
-        return new RoutePlanResultPage(plan, Copy(surface));
+        return new RoutePlanResultPage(plan, Copy(surface), plans);
     }
 
     /// <summary>Copying a system name, wherever one is drawn on this tab.</summary>
