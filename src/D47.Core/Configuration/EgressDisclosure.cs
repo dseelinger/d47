@@ -186,13 +186,17 @@ public static class EgressDisclosure
                 UpdateCheck,
                 NameOf(UpdateCheck),
                 GitHubReleasesEndpoint,
-                "One request for the latest release tag at startup. Nothing about you goes with it — no key, "
+                "One request for the latest release tag at startup, and another each time you press "
+                + "Check for updates in Settings > About. Nothing about you goes with it — no key, "
                 + "no journal content, and no identifier beyond the request itself. Accepting an offered "
                 + "update downloads that release from github.com and replaces D47 with it; nothing is "
                 + "downloaded unless you ask for it.",
                 Active: true)
             : EgressEntry.Silent(
-                UpdateCheck, NameOf(UpdateCheck), "The startup update check is off, so nothing is requested."),
+                UpdateCheck,
+                NameOf(UpdateCheck),
+                "Nothing at startup. Pressing Check for updates in Settings > About still makes the same "
+                + "request, on demand."),
 
         // On demand.
         SpeechModels => settings.Listening.Model == Listening.WhisperModels.NoneId

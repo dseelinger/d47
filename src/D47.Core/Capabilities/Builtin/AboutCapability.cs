@@ -19,6 +19,8 @@ public static class AboutCapability
 
     public const string ChangelogOnlineKey = "about.changelogOnline";
 
+    public const string InstallUpdateKey = "about.installUpdate";
+
     public const string StartMenuKey = "about.startMenu";
 
     public const string SetUpKeysKey = "about.setUpKeys";
@@ -31,33 +33,17 @@ public static class AboutCapability
         + "Elite Dangerous is a registered trademark of Frontier Developments plc. "
         + "All game data is the property of Frontier Developments plc.";
 
-    /// <summary>
     /// <param name="version">The version a Commander would quote — <c>BuildInfo.Semantic</c>.</param>
-    /// <param name="channel"> Whether GitHub calls this build's Release a pre-release, asked each time
-    /// the row is drawn because the answer arrives over the network after the page exists — and because
-    /// promoting a pre-release changes it without changing the binary (#92).
-    /// </summary>
-    /// <param name="version">
-    /// The version a Commander would quote — <c>BuildInfo.Semantic</c>.
-    /// </param>
+    /// <param name="build">The full build string including the commit.</param>
     /// <param name="channel">
-    /// Whether GitHub calls this build's Release a pre-release, asked each time the row is drawn
-    /// because the answer arrives over the network after the page exists — and because promoting a
-    /// pre-release changes it without changing the binary (#92).
+    /// Whether GitHub calls this build's Release a pre-release, asked each time the row is drawn because
+    /// the answer arrives over the network after the page exists (#92).
     /// </param>
-    /// <param name="build">
-    /// The full build string including the commit, which is the thing a bug report cannot do without
-    /// and the reason this area exists at all.
+    /// <param name="checkForUpdate">Checks GitHub for a newer release, on demand (#193).</param>
+    /// <param name="installUpdate">Installs the release <paramref name="checkForUpdate"/> found (#193).</param>
+    /// <param name="pendingUpdateVersion">
+    /// The version <paramref name="checkForUpdate"/> found, or null while none is pending (#193).
     /// </param>
-    /// <param name="showChangelog">
-    /// Opens the changelog that shipped inside this build.
-    /// </param>
-    /// <param name="showChangelogOnline">Opens the changelog on the web.</param>
-    /// <param name="addToStartMenu">
-    /// The permanent way in, since declining the first-run offer once would otherwise make that
-    /// decision irreversible.
-    /// </param>
-    /// <param name="setUpKeys">Reopens the guided key setup (Phase 16).</param>
     public static CapabilityDescriptor Create(
         AppPaths paths,
         string version,
@@ -69,6 +55,9 @@ public static class AboutCapability
         Action? setUpKeys = null,
         Action? showCommunity = null,
         Func<Updates.ReleaseChannel>? channel = null,
+        LongPress? checkForUpdate = null,
+        LongPress? installUpdate = null,
+        Func<string?>? pendingUpdateVersion = null,
 
         // Opens the folder the row above it names.
         Action? openDataFolder = null)
@@ -81,7 +70,9 @@ public static class AboutCapability
                 () => Updates.ReleaseChannelText.Marked(version, channel?.Invoke() ?? Updates.ReleaseChannel.Unknown),
                 "version",
                 "Which release this is. A pre-release says so: it is a build offered to nobody "
-                + "automatically, and it is not final."),
+                + "automatically, and it is not final.",
+                checkForUpdate,
+                checkForUpdate is null ? null : "Check for updates"),
             Stated(
                 BuildKey,
                 "Build",
@@ -89,22 +80,41 @@ public static class AboutCapability
                 "build",
                 "The exact commit this was built from. Quote it in a bug report — a version alone "
                 + "cannot tell two builds of the same release apart."),
-            new SettingRow
-            {
-                Key = DataFolderKey,
-                Label = "Data folder",
-                Help =
-                    "Where D47 keeps everything it writes. Settings are saved as you go, to "
-                    + $"{paths.SettingsFile}. Keys are encrypted separately in secrets.json, and "
-                    + "how the panel is left is remembered in view-state.json.",
-                Kind = SettingKind.Info,
-                DocsAnchor = "data-folder",
-                PressLabel = openDataFolder is null ? null : "Open data folder",
-                Press = openDataFolder,
-                Binding = new SettingBinding { Read = _ => paths.Data },
-            },
-            Stated(AttributionKey, "Attribution", Attribution, "attribution", "Frontier's own wording, verbatim."),
         };
+
+        if (installUpdate is not null)
+        {
+            rows.Add(new SettingRow
+            {
+                Key = InstallUpdateKey,
+                Label = "Install",
+                Help =
+                    "Downloads the release Check for updates found, replaces this build with it, and "
+                    + "restarts. Present only while a newer release is known.",
+                Kind = SettingKind.Info,
+                DocsAnchor = "install-update",
+                AppliesWhen = _ => pendingUpdateVersion?.Invoke() is not null,
+                PressLabelFor = () => pendingUpdateVersion?.Invoke() is { } pending ? $"Install {pending}" : "Install",
+                PressAsync = installUpdate,
+            });
+        }
+
+        rows.Add(new SettingRow
+        {
+            Key = DataFolderKey,
+            Label = "Data folder",
+            Help =
+                "Where D47 keeps everything it writes. Settings are saved as you go, to "
+                + $"{paths.SettingsFile}. Keys are encrypted separately in secrets.json, and "
+                + "how the panel is left is remembered in view-state.json.",
+            Kind = SettingKind.Info,
+            DocsAnchor = "data-folder",
+            PressLabel = openDataFolder is null ? null : "Open data folder",
+            Press = openDataFolder,
+            Binding = new SettingBinding { Read = _ => paths.Data },
+        });
+
+        rows.Add(Stated(AttributionKey, "Attribution", Attribution, "attribution", "Frontier's own wording, verbatim."));
 
         if (showChangelog is { } changelog)
         {
@@ -208,7 +218,14 @@ public static class AboutCapability
     /// change while d47 is running: the release channel arrives from the network some moments after the
     /// page is built (#92).
     /// </summary>
-    private static SettingRow Live(string key, string label, Func<string> value, string anchor, string help) =>
+    private static SettingRow Live(
+        string key,
+        string label,
+        Func<string> value,
+        string anchor,
+        string help,
+        LongPress? pressAsync = null,
+        string? pressLabel = null) =>
         new()
         {
             Key = key,
@@ -217,6 +234,8 @@ public static class AboutCapability
             Kind = SettingKind.Info,
             DocsAnchor = anchor,
             Binding = new SettingBinding { Read = _ => value() },
+            PressAsync = pressAsync,
+            PressLabel = pressLabel,
         };
 
     private static SettingRow Stated(string key, string label, string value, string anchor, string help) =>
@@ -264,6 +283,15 @@ public sealed record AboutSurface
     /// </summary>
     public Action? OpenDataFolder { get; init; }
 
+    /// <summary>Checks GitHub for a release newer than this build, on demand (#193).</summary>
+    public LongPress? CheckForUpdate { get; init; }
+
+    /// <summary>Downloads and installs the update <see cref="CheckForUpdate"/> found (#193).</summary>
+    public LongPress? InstallUpdate { get; init; }
+
+    /// <summary>The version <see cref="CheckForUpdate"/> found, or null while none is pending (#193).</summary>
+    public Func<string?>? PendingUpdateVersion { get; init; }
+
     /// <summary>
     /// Every member supplied, each doing nothing — the surface a test binds when the test is not about
     /// About (#79).
@@ -279,5 +307,8 @@ public sealed record AboutSurface
         SetUpKeys = () => { },
         ShowCommunity = () => { },
         OpenDataFolder = () => { },
+        CheckForUpdate = (_, _) => Task.FromResult<string?>(null),
+        InstallUpdate = (_, _) => Task.FromResult<string?>(null),
+        PendingUpdateVersion = () => null,
     };
 }

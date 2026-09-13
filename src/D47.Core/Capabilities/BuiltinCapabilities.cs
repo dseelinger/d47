@@ -308,6 +308,9 @@ public static class BuiltinCapabilities
             about?.SetUpKeys,
             about?.ShowCommunity,
             about?.Channel,
+            about?.CheckForUpdate,
+            about?.InstallUpdate,
+            about?.PendingUpdateVersion,
             about?.OpenDataFolder),
     ];
 

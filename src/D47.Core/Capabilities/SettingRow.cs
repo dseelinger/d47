@@ -246,6 +246,13 @@ public sealed record SettingRow
     public string? PressLabel { get; init; }
 
     /// <summary>
+    /// The same, computed each time the row is drawn, for a button whose text names something only
+    /// discovered after the row was built — the version a pending update installs (#193). Takes
+    /// precedence over <see cref="PressLabel"/> where both are set.
+    /// </summary>
+    public Func<string>? PressLabelFor { get; init; }
+
+    /// <summary>
     /// A press this row acts on only asks the first time; a second press within a few seconds is the
     /// confirmation, and the ask lapses on its own if the second press does not come (#85).
     /// </summary>

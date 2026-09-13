@@ -692,6 +692,11 @@ public partial class MainWindow : Window
                 _ = new Controls.ChangelogWindow(D47.Core.Help.Changelog.Text).Over(this);
 
             _host.SetUpKeys = ShowKeySetupAsync;
+
+            // The About area's own way to ask for the same check the startup path runs, and to install
+            // what it finds (#193).
+            _host.CheckForUpdate = CheckForUpdateOnDemandAsync;
+            _host.InstallUpdate = RunUpdateInstallAsync;
         }
 
         // A card's question mark draws help in the panel rather than launching a browser (asked for
@@ -1096,14 +1101,59 @@ public partial class MainWindow : Window
         // that goes wrong leaves the channel Unknown and shows no marker (#92).
         await ShowReleaseChannelAsync(host);
 
-        var update = await host.Updates.CheckAsync(host.Version, CancellationToken.None);
-        if (update is null)
+        var result = await host.Updates.ResultAsync(host.Version, CancellationToken.None);
+        if (result.Outcome != UpdateCheckOutcome.NewerAvailable || result.Update is not { } update)
         {
             return;
         }
 
-        _availableUpdate = update;
+        SetPendingUpdate(update);
         _model.UpdateText = $"D47 {update.Version} is available — you're on {host.Version}.";
+    }
+
+    /// <summary>
+    /// The same check, run from the Version row's own button rather than at startup — so it works with
+    /// startup checking off, and says which of the four outcomes it found rather than only "found one"
+    /// (#193).
+    /// </summary>
+    private async Task<string?> CheckForUpdateOnDemandAsync(IProgress<double> progress, CancellationToken cancellationToken)
+    {
+        if (_host is not { } host)
+        {
+            return "D47 could not check for an update.";
+        }
+
+        await ShowReleaseChannelAsync(host);
+
+        var result = await host.Updates.ResultAsync(host.Version, cancellationToken);
+
+        switch (result.Outcome)
+        {
+            case UpdateCheckOutcome.NewerAvailable when result.Update is { } update:
+                SetPendingUpdate(update);
+                _model.UpdateText = $"D47 {update.Version} is available — you're on {host.Version}.";
+                return $"D47 {update.Version} is available.";
+
+            case UpdateCheckOutcome.UpToDate:
+                return $"D47 {host.Version} is the latest release.";
+
+            case UpdateCheckOutcome.NotARelease:
+                return "This build is not a release, so there is nothing to compare it with.";
+
+            default:
+                return "Could not reach GitHub, so D47 does not know whether there is a newer release.";
+        }
+    }
+
+    /// <summary>The single record of the pending update, so About's Install row and the home banner agree.</summary>
+    private void SetPendingUpdate(AvailableUpdate update)
+    {
+        _availableUpdate = update;
+
+        if (_host is { } host)
+        {
+            host.PendingUpdateVersion = update.Version;
+        }
     }
 
     /// <summary>Puts the pre-release mark in the three places it belongs, or leaves them bare (#92).</summary>
@@ -1122,59 +1172,88 @@ public partial class MainWindow : Window
         Panel?.ShowChannel(host.Channel);
     }
 
+    /// <summary>The home banner's own way in, running the same install the About area's button runs.</summary>
+    private async void OnUpdateAccepted() =>
+        await RunUpdateInstallAsync(new Progress<double>(), CancellationToken.None);
+
+    /// <summary>Whether an install is already running, on either surface (#193).</summary>
+    private bool _updateInstalling;
+
     /// <summary>
     /// Downloads the new build, verifies it, puts it where this one is and starts it (Phase 19: "the
-    /// user is given an opportunity to exit, install it, and restart").
+    /// user is given an opportunity to exit, install it, and restart"). Shared by the home banner and the
+    /// About area's Install row, so only one download runs at a time and both surfaces agree on progress
+    /// (#193).
     /// </summary>
-    private async void OnUpdateAccepted()
+    private async Task<string?> RunUpdateInstallAsync(IProgress<double> progress, CancellationToken cancellationToken)
     {
         if (_availableUpdate is not { } update || _host is null)
         {
-            return;
+            return null;
         }
 
-        if (!update.CanInstall)
+        if (_updateInstalling)
         {
-            OpenReleasePage(update, "This release has no installable build attached.");
-            return;
+            return $"D47 {update.Version} is already downloading.";
         }
 
-        _model.UpdateBusy = true;
-        _model.UpdateText = $"Downloading D47 {update.Version}…";
-
-        var progress = new Progress<double>(fraction =>
-            _model.UpdateText = $"Downloading D47 {update.Version} — {fraction:P0}");
-
-        var (payload, failure) = await _host.Installer
-            .DownloadAsync(update, progress, CancellationToken.None);
-
-        if (payload is null)
+        _updateInstalling = true;
+        try
         {
-            _model.UpdateBusy = false;
-            OpenReleasePage(update, Explain(failure));
-            return;
+            if (!update.CanInstall)
+            {
+                var reason = "This release has no installable build attached.";
+                OpenReleasePage(update, reason);
+                return reason;
+            }
+
+            _model.UpdateBusy = true;
+            _model.UpdateText = $"Downloading D47 {update.Version}…";
+
+            var reported = new Progress<double>(fraction =>
+            {
+                progress.Report(fraction);
+                _model.UpdateText = $"Downloading D47 {update.Version} — {fraction:P0}";
+            });
+
+            var (payload, failure) = await _host.Installer
+                .DownloadAsync(update, reported, cancellationToken);
+
+            if (payload is null)
+            {
+                _model.UpdateBusy = false;
+                var reason = Explain(failure);
+                OpenReleasePage(update, reason);
+                return reason;
+            }
+
+            _model.UpdateText = $"Installing D47 {update.Version}…";
+
+            if (Environment.ProcessPath is not { } running
+                || !_host.Installer.TrySwap(running, payload))
+            {
+                _model.UpdateBusy = false;
+                var reason = Explain(UpdateFailure.CouldNotReplace);
+                OpenReleasePage(update, reason);
+                return reason;
+            }
+
+            // The successor starts before this one has exited, so the slot has to be handed over first or it
+            // would find d47 "already running" and close itself — an accepted update that looks like the app
+            // simply quitting.
+            _host.StoppingBecause = "an accepted update is replacing this build";
+            _host.ReleaseSingleInstance?.Invoke();
+
+            // Started before this one exits, so the Commander sees d47 come back rather than watching it
+            // vanish and having to find it again.
+            Process.Start(new ProcessStartInfo(running) { UseShellExecute = true });
+            Close();
+            return null;
         }
-
-        _model.UpdateText = $"Installing D47 {update.Version}…";
-
-        if (Environment.ProcessPath is not { } running
-            || !_host.Installer.TrySwap(running, payload))
+        finally
         {
-            _model.UpdateBusy = false;
-            OpenReleasePage(update, Explain(UpdateFailure.CouldNotReplace));
-            return;
+            _updateInstalling = false;
         }
-
-        // The successor starts before this one has exited, so the slot has to be handed over first or it
-        // would find d47 "already running" and close itself — an accepted update that looks like the app
-        // simply quitting.
-        _host.StoppingBecause = "an accepted update is replacing this build";
-        _host.ReleaseSingleInstance?.Invoke();
-
-        // Started before this one exits, so the Commander sees d47 come back rather than watching it vanish
-        // and having to find it again.
-        Process.Start(new ProcessStartInfo(running) { UseShellExecute = true });
-        Close();
     }
 
     /// <summary>Offers a Start Menu entry, once, on the first run that does not already have one.</summary>

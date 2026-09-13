@@ -137,6 +137,15 @@ public sealed class AppHost : IDisposable
     /// <summary>Reopens the guided key setup (#50).</summary>
     public Func<Task>? SetUpKeys { get; set; }
 
+    /// <summary>Checks GitHub for an update on demand, from the About area (#193).</summary>
+    public LongPress? CheckForUpdate { get; set; }
+
+    /// <summary>Downloads and installs the update <see cref="CheckForUpdate"/> found (#193).</summary>
+    public LongPress? InstallUpdate { get; set; }
+
+    /// <summary>The version <see cref="CheckForUpdate"/> found, or null while none is pending (#193).</summary>
+    public string? PendingUpdateVersion { get; set; }
+
     public AppPaths Paths { get; }
 
     public SerilogVerbosityControl Verbosity { get; }
@@ -1715,6 +1724,16 @@ public sealed class AppHost : IDisposable
 
                     StartMenuWanted = () => !StartMenuShortcut.Exists() && Environment.ProcessPath is not null,
                     SetUpKeys = () => _ = self?.SetUpKeys?.Invoke(),
+
+                    CheckForUpdate = (progress, token) => self?.CheckForUpdate is { } check
+                        ? check(progress, token)
+                        : Task.FromResult<string?>(null),
+
+                    InstallUpdate = (progress, token) => self?.InstallUpdate is { } install
+                        ? install(progress, token)
+                        : Task.FromResult<string?>(null),
+
+                    PendingUpdateVersion = () => self?.PendingUpdateVersion,
 
                     ShowCommunity = () => System.Diagnostics.Process.Start(
                         new System.Diagnostics.ProcessStartInfo(Controls.ChangelogWindow.CommunityUrl)

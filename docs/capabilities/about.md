@@ -50,7 +50,7 @@ nav_order: 145
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text)">the changelog for this build</text>
  <rect x="44" y="182" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="210" font-size="16" fill="var(--text)">Check for updates</text>
- <text x="812" y="210" text-anchor="end" font-size="16" fill="var(--text-muted)">asks GitHub, once, at startup</text>
+ <text x="812" y="210" text-anchor="end" font-size="16" fill="var(--text-muted)">asks GitHub whenever you press it</text>
  <text x="44" y="278" font-size="15" fill="var(--text-muted)">Buttons only a person presses. There is nothing here for the AI to do.</text>
 </svg>
 </section>
@@ -90,6 +90,26 @@ Attribution    This app is unofficial and is not endorsed by Frontier Developmen
 #### Version {#version}
 
 Which release this is — `0.76.0`, and the same string the title bar carries.
+
+**Check for updates**, under the value, asks GitHub for the latest release — the same request the
+startup check makes, run on demand. It works whether or not **Check for updates at startup** is on,
+and it says which of four things it found:
+
+```text
+D47 0.111.0 is available.
+D47 0.110.0 is the latest release.
+Could not reach GitHub, so D47 does not know whether there is a newer release.
+This build is not a release, so there is nothing to compare it with.
+```
+
+The last one is a local or dev build, not a mistake — there is no tag for it to compare against.
+
+#### Install {#install-update}
+
+Present only while a check — either one — has found a release newer than this build. Pressing it
+downloads that release, replaces this build with it, and restarts, the same as **Update now** on
+the home tab: the two are one path, so accepting from either surface leaves the other with nothing
+further to offer while it runs.
 
 #### Build {#build}
 

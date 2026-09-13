@@ -1,4 +1,5 @@
 using D47.App.Updates;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.App.Tests;
@@ -9,6 +10,19 @@ namespace D47.App.Tests;
 /// </summary>
 public class UpdateCheckerTests
 {
+    /// <summary>No network call is made: a version that does not parse is refused before the request goes
+    /// out, which is the one outcome this can test without reaching GitHub (#193).</summary>
+    [Fact]
+    public async Task ARunningVersionThatDoesNotParseComparesToNothing()
+    {
+        var checker = new UpdateChecker(NullLogger<UpdateChecker>.Instance);
+
+        var result = await checker.ResultAsync("unknown", TestContext.Current.CancellationToken);
+
+        Assert.Equal(UpdateCheckOutcome.NotARelease, result.Outcome);
+        Assert.Null(result.Update);
+    }
+
     [Theory]
     [InlineData("https://github.com/dseelinger/d47/releases/tag/v0.2.0")]
     [InlineData("https://github.com/dseelinger/d47/releases/latest")]

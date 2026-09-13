@@ -21,6 +21,25 @@ public sealed record AvailableUpdate(
     public bool CanInstall => DownloadUrl is not null && ChecksumUrl is not null;
 }
 
+/// <summary>The outcomes <see cref="UpdateChecker.ResultAsync"/> tells apart (#193).</summary>
+public enum UpdateCheckOutcome
+{
+    /// <summary>A release newer than the one running.</summary>
+    NewerAvailable,
+
+    /// <summary>The running build is already the latest release.</summary>
+    UpToDate,
+
+    /// <summary>GitHub could not be reached, or answered with something D47 could not use.</summary>
+    RequestFailed,
+
+    /// <summary>The running version is not a release D47 knows how to compare — a local or dev build.</summary>
+    NotARelease,
+}
+
+/// <summary>What one update check found, with enough detail to tell the four outcomes apart (#193).</summary>
+public sealed record UpdateCheckResult(UpdateCheckOutcome Outcome, AvailableUpdate? Update = null);
+
 /// <summary>
 /// Checks GitHub Releases for a build newer than the one currently running (Phase 19, "Check for
 /// Updates on start").
@@ -55,11 +74,23 @@ public sealed class UpdateChecker
 
     public async Task<AvailableUpdate?> CheckAsync(string runningVersion, CancellationToken cancellationToken)
     {
+        var result = await ResultAsync(runningVersion, cancellationToken).ConfigureAwait(false);
+
+        return result.Outcome == UpdateCheckOutcome.NewerAvailable ? result.Update : null;
+    }
+
+    /// <summary>
+    /// The same check as <see cref="CheckAsync"/>, but telling apart the three outcomes it otherwise
+    /// answers with the same null: up to date, the request failed, and a running version that does not
+    /// parse (#193).
+    /// </summary>
+    public async Task<UpdateCheckResult> ResultAsync(string runningVersion, CancellationToken cancellationToken)
+    {
         // Dev builds report "unknown" (AppHost.Start) or a non-tag Version; neither compares to anything
         // meaningfully.
         if (!ReleaseVersion.TryParse(runningVersion, out var current))
         {
-            return null;
+            return new UpdateCheckResult(UpdateCheckOutcome.NotARelease);
         }
 
         try
@@ -68,7 +99,7 @@ public sealed class UpdateChecker
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogInformation("Update check skipped: GitHub returned {Status}", response.StatusCode);
-                return null;
+                return new UpdateCheckResult(UpdateCheckOutcome.RequestFailed);
             }
 
             await using var body = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
@@ -84,31 +115,33 @@ public sealed class UpdateChecker
 
             if (!ReleaseVersion.TryParse(tag, out var latest))
             {
-                return null;
+                return new UpdateCheckResult(UpdateCheckOutcome.RequestFailed);
             }
 
             if (!IsTrustedReleaseUrl(url))
             {
                 // Fails closed: no prompt at all rather than a prompt that opens somewhere else.
                 _logger.LogWarning("Update check ignored a release whose link was not a {Prefix} URL", ReleaseUrlPrefix);
-                return null;
+                return new UpdateCheckResult(UpdateCheckOutcome.RequestFailed);
             }
 
             if (!latest.IsNewerThan(current))
             {
-                return null;
+                return new UpdateCheckResult(UpdateCheckOutcome.UpToDate);
             }
 
-            return new AvailableUpdate(
-                latest.ToString(),
-                url!,
-                AssetUrl(document.RootElement, ArchiveAsset),
-                AssetUrl(document.RootElement, ChecksumAsset));
+            return new UpdateCheckResult(
+                UpdateCheckOutcome.NewerAvailable,
+                new AvailableUpdate(
+                    latest.ToString(),
+                    url!,
+                    AssetUrl(document.RootElement, ArchiveAsset),
+                    AssetUrl(document.RootElement, ChecksumAsset)));
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
         {
             _logger.LogInformation(ex, "Update check failed; continuing without one");
-            return null;
+            return new UpdateCheckResult(UpdateCheckOutcome.RequestFailed);
         }
     }
 

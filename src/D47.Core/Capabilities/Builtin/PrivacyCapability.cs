@@ -133,7 +133,9 @@ public static class PrivacyCapability
             {
                 Key = UpdateCheckKey,
                 Label = "Check for updates at startup",
-                Help = "One request to GitHub for the latest release tag. Off means D47 makes no network call of its own.",
+                Help = "One request to GitHub for the latest release tag, made automatically when this is on. "
+                    + "Off only stops that automatic request — pressing Check for updates in Settings > About "
+                    + "still makes it on demand.",
                 Kind = SettingKind.Toggle,
                 DefaultDisplay = "on",
                 DocsAnchor = "update-check",

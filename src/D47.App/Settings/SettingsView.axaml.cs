@@ -2047,16 +2047,26 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
     private (Control, Action, bool) BuildPressable(SettingRow row, TextBlock message)
     {
-        var (inset, refresh, _) = BuildInfo(row);
+        var (inset, baseRefresh, _) = BuildInfo(row);
 
         var press = new Button
         {
             Name = $"Press_{row.Key.Replace('.', '_')}",
-            Content = row.PressLabel,
+            Content = row.PressLabelFor?.Invoke() ?? row.PressLabel,
             FontSize = TypeScale.Body,
             Padding = new Thickness(10, 4),
             HorizontalAlignment = HorizontalAlignment.Left,
         };
+
+        // A label computed from state discovered after the row was built — a pending update's version —
+        // has to be re-read on every refresh, not only when the button is first drawn (#193).
+        var refresh = row.PressLabelFor is { } label
+            ? () =>
+            {
+                baseRefresh();
+                press.Content = label();
+            }
+            : baseRefresh;
 
         // Along the bottom of the button rather than across the row, because it is the button's work it is
         // reporting.

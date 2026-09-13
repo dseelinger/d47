@@ -27,6 +27,13 @@ to work it out. If it shares words with a feature, d47 names that area and offer
 for the list gives the same drill "what can you do" would. With a model configured, an unmatched
 utterance still reaches it as before.
 
+Settings → About's Version row now has a Check for updates button, so a release that comes out
+while d47 is running can be found without restarting. It works whether or not the startup check is
+on, and says what it found: an update, that this build is already the latest, that GitHub could not
+be reached, or that a local build has no release to compare against. Finding one adds an Install
+row beside it, doing what Update now on the home tab already does — either button reaches the same
+install, so only one runs at a time.
+
 ## 0.121.0 — Did you mean, and what can you do
 
 A command missed by a word is no longer handed to the language model to refuse. Say "set focus on
