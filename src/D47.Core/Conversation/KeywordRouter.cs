@@ -221,13 +221,13 @@ public sealed class KeywordRouter(
     /// One utterance, reduced to what was said: no surrounding punctuation, no doubled spaces, and
     /// apostrophes normalised the same way <see cref="ContainsPhrase"/> normalises them.
     /// </summary>
-    private static string Utterance(string text) => string.Join(' ', Words(text));
+    internal static string Utterance(string text) => string.Join(' ', Words(text));
 
     /// <summary>
     /// The words of an utterance, which is the one split <see cref="Utterance"/> and the length bound
     /// both work from, so punctuation and doubled spaces cannot make them disagree.
     /// </summary>
-    private static string[] Words(string text) =>
+    internal static string[] Words(string text) =>
         Normalise(text).Split(
             [' ', '\t', '\r', '\n', '.', ',', '!', '?', ';', ':'],
             StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
