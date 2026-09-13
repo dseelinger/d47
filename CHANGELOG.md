@@ -18,6 +18,11 @@ A wording d47 has learned now has a page: Settings → Learned phrases lists eve
 first, said next to the phrase it runs. Press Forget, or say "forget 'set focus on elite'", and it
 stops matching — it goes back to being offered as a near miss rather than run silently.
 
+With no model configured, an utterance nothing else can answer no longer just says it has no way
+to work it out. If it shares words with a feature, d47 names that area and offers its list; asking
+for the list gives the same drill "what can you do" would. With a model configured, an unmatched
+utterance still reaches it as before.
+
 ## 0.121.0 — Did you mean, and what can you do
 
 A command missed by a word is no longer handed to the language model to refuse. Say "set focus on

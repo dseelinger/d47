@@ -566,9 +566,7 @@ public sealed class TurnLoop(
             var reason = availability.Reason ?? "No language model provider is configured.";
             logger.LogInformation("No model available for this turn: {Reason}", reason);
 
-            var text =
-                $"I'm not sure — I have no way to work that out right now. {reason} " +
-                "Ask me something one of my own capabilities covers and I can still answer.";
+            var text = NoCapabilityText(input, reason);
 
             yield return new TurnEvent.Routed(TurnRoute.NoCapability, Effort: null);
             yield return new TurnEvent.TextDelta(text);
@@ -595,6 +593,31 @@ public sealed class TurnLoop(
         return quoted.Count == 1
             ? $"Did you mean {quoted[0]}?"
             : $"Did you mean {string.Join(", ", quoted.SkipLast(1))}, or {quoted[^1]}?";
+    }
+
+    /// <summary>
+    /// With no model, names the #166 area nearest the utterance and offers its list, or says there is
+    /// nothing for it when no leaf shares enough words (#172).
+    /// </summary>
+    private string NoCapabilityText(string input, string reason)
+    {
+        var matched = Help.HowDoI.Match(input, capabilities);
+
+        if (matched.Count == 0)
+        {
+            return $"I have nothing for that. Say 'what can you do' for the list. {reason}";
+        }
+
+        var category = Help.HelpTaxonomy.CategoryOf(matched[0]) ?? matched[0];
+
+        Offers.Open(new Offer(
+        [
+            new OfferChoice(
+                category.Name,
+                new OfferTarget.Answer(() => Capabilities.Builtin.HelpCapability.Answer(category, capabilities))),
+        ]));
+
+        return $"I have nothing for that. The closest area is {category.Name}; want the list? {reason}";
     }
 
     /// <summary>"Two ways: 'a', or 'b'. Which one?" for a "how do I" that matched two or three leaves.</summary>

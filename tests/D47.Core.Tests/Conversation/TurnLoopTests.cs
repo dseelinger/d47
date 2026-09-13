@@ -83,7 +83,40 @@ public class TurnLoopTests
 
         Assert.Equal(TurnOutcome.Unsure, result.Outcome);
         Assert.Equal(TurnRoute.NoCapability, result.Route);
-        Assert.Contains("not sure", text, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("I have nothing for that. Say 'what can you do' for the list.", text, StringComparison.Ordinal);
+        Assert.Contains("No language model provider is configured.", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task WithNoProviderAnUnmatchedQuestionIsOfferedTheNearestArea()
+    {
+        using var install = new TempInstall();
+        var loop = Build(BuiltinRegistry(install), provider: null, out _, out _);
+
+        var (result, text) = await RunAsync(loop, "how far along is this engineer");
+
+        Assert.Equal(TurnOutcome.Unsure, result.Outcome);
+        Assert.Equal(TurnRoute.NoCapability, result.Route);
+        Assert.Contains("The closest area is Loadout and engineering; want the list?", text, StringComparison.Ordinal);
+        Assert.Contains("No language model provider is configured.", text, StringComparison.Ordinal);
+
+        var (yes, yesText) = await RunAsync(loop, "yes");
+
+        Assert.Equal(TurnRoute.Offer, yes.Route);
+        Assert.Contains("Ship and module specifications", yesText, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AProviderStillAnswersUtterancesThatWouldOtherwiseOfferAnArea()
+    {
+        using var install = new TempInstall();
+        var provider = FakeLlmProvider.Answering("Fetch me the numbers.");
+        var loop = Build(BuiltinRegistry(install), provider, out _, out _);
+
+        var (result, _) = await RunAsync(loop, "how far along is this engineer");
+
+        Assert.Equal(TurnRoute.Model, result.Route);
+        Assert.Equal(1, provider.CallCount);
     }
 
     [Fact]

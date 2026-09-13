@@ -267,4 +267,23 @@ public static class HelpTaxonomy
     public static IEnumerable<HelpNode> Leaves(IEnumerable<HelpNode>? nodes = null) =>
         (nodes ?? Top).SelectMany(node =>
             node.CapabilityId is not null ? [node] : Leaves(node.Children));
+
+    /// <summary>The category directly containing a leaf, or null when it is not in the tree (#172).</summary>
+    public static HelpNode? CategoryOf(HelpNode leaf, IReadOnlyList<HelpNode>? level = null)
+    {
+        foreach (var node in level ?? Top)
+        {
+            if (node.Children.Contains(leaf))
+            {
+                return node;
+            }
+
+            if (CategoryOf(leaf, node.Children) is { } found)
+            {
+                return found;
+            }
+        }
+
+        return null;
+    }
 }
