@@ -23,9 +23,20 @@ public sealed class LearnedPhrasesStore(string path, ILogger<LearnedPhrasesStore
 
     private readonly Lock _gate = new();
 
+    /// <summary>
+    /// Serialises <see cref="Learn"/> and <see cref="Forget"/> against each other, across the read that
+    /// decides what changes and the write that applies it — <see cref="_gate"/> alone only protects one
+    /// snapshot at a time, and two callers each starting from the same snapshot would otherwise silently
+    /// undo one another's change.
+    /// </summary>
+    private readonly Lock _writeGate = new();
+
     private Dictionary<string, Dictionary<string, LearnedPhrase>> _byCommander = new(StringComparer.Ordinal);
 
     public string Path => path;
+
+    /// <summary>Raised when a phrase is learned or forgotten, whoever changed it.</summary>
+    public event Action? Changed;
 
     public void Load()
     {
@@ -101,27 +112,58 @@ public sealed class LearnedPhrasesStore(string path, ILogger<LearnedPhrasesStore
     /// <summary>Records that an utterance stands for a phrase, replacing any earlier mapping for it.</summary>
     public void Learn(string frontierId, string said, string phrase, DateTimeOffset at)
     {
-        Dictionary<string, Dictionary<string, LearnedPhrase>> merged;
-
-        lock (_gate)
+        lock (_writeGate)
         {
-            merged = _byCommander.ToDictionary(
-                entry => entry.Key,
-                entry => new Dictionary<string, LearnedPhrase>(entry.Value, StringComparer.OrdinalIgnoreCase),
-                StringComparer.Ordinal);
+            var merged = CloneReplacing(frontierId, out var forCommander);
+
+            forCommander[KeywordRouter.Utterance(said)] = new LearnedPhrase(said, phrase, at);
+
+            Write(merged);
         }
-
-        if (!merged.TryGetValue(frontierId, out var forCommander))
-        {
-            forCommander = new Dictionary<string, LearnedPhrase>(StringComparer.OrdinalIgnoreCase);
-            merged[frontierId] = forCommander;
-        }
-
-        forCommander[KeywordRouter.Utterance(said)] = new LearnedPhrase(said, phrase, at);
-
-        Write(merged);
 
         logger.LogInformation("Learned that \"{Said}\" means \"{Phrase}\"", said, phrase);
+    }
+
+    /// <summary>Forgets one learned utterance, so a mishearing accepted once does not stay in the router.</summary>
+    public bool Forget(string frontierId, string said)
+    {
+        lock (_writeGate)
+        {
+            if (!_byCommander.TryGetValue(frontierId, out var learned)
+                || !learned.ContainsKey(KeywordRouter.Utterance(said)))
+            {
+                return false;
+            }
+
+            var merged = CloneReplacing(frontierId, out var forCommander);
+
+            forCommander.Remove(KeywordRouter.Utterance(said));
+            Write(merged);
+        }
+
+        logger.LogInformation("Forgot \"{Said}\"", said);
+
+        return true;
+    }
+
+    /// <summary>
+    /// The outer dictionary, shallow-copied so every other Commander's map is reused rather than cloned,
+    /// with <paramref name="frontierId"/>'s own map deep-copied so it can be changed without touching what
+    /// <see cref="_byCommander"/> still points at. Called only while holding <see cref="_writeGate"/>, so
+    /// it always starts from the latest write rather than a snapshot an earlier caller has since replaced.
+    /// </summary>
+    private Dictionary<string, Dictionary<string, LearnedPhrase>> CloneReplacing(
+        string frontierId, out Dictionary<string, LearnedPhrase> forCommander)
+    {
+        var merged = new Dictionary<string, Dictionary<string, LearnedPhrase>>(_byCommander, StringComparer.Ordinal);
+
+        forCommander = merged.TryGetValue(frontierId, out var existing)
+            ? new Dictionary<string, LearnedPhrase>(existing, StringComparer.OrdinalIgnoreCase)
+            : new Dictionary<string, LearnedPhrase>(StringComparer.OrdinalIgnoreCase);
+
+        merged[frontierId] = forCommander;
+
+        return merged;
     }
 
     private void Write(Dictionary<string, Dictionary<string, LearnedPhrase>> merged)
@@ -160,6 +202,8 @@ public sealed class LearnedPhrasesStore(string path, ILogger<LearnedPhrasesStore
         {
             _byCommander = merged;
         }
+
+        Changed?.Invoke();
     }
 
     private sealed class Document

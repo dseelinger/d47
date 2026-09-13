@@ -475,18 +475,45 @@ public partial class PanelView : UserControl
     /// Gives this surface a settings page, built by <paramref name="build"/> the first time it is
     /// selected.
     /// </summary>
-    /// <paramref name="build"/>the first time it is selected.</paramref>
-    public void EnableSettings(Func<Control> build, Action<string>? reveal = null)
+    /// <param name="build">The settings page itself.</param>
+    /// <param name="reveal">Jumps the settings page to one capability's card.</param>
+    /// <param name="learnedPhrases">
+    /// What the flying Commander has taught D47 stands for a declared phrase (#171), as a second root on
+    /// this tab — or null for a surface that does not get one.
+    /// </param>
+    public void EnableSettings(
+        Func<Control> build,
+        Action<string>? reveal = null,
+        Func<LearnedPhrasesPage>? learnedPhrases = null)
     {
         _revealSetting = reveal;
 
-        Furnish(
-            PanelTab.Settings,
-            _ => build(),
-            new NavCrumb("settings", "Settings")
+        LearnedPhrasesPage? phrases = null;
+
+        var roots = new List<NavCrumb>
+        {
+            new("settings", "Settings")
             {
                 Help = D47.Core.Capabilities.Builtin.SettingsCapability.Id,
+            },
+        };
+
+        if (learnedPhrases is not null)
+        {
+            roots.Add(new NavCrumb(LearnedPhrasesPage.RootKey, "Learned phrases")
+            {
+                Help = D47.Core.Capabilities.Builtin.LearnedPhrasesCapability.Id,
             });
+        }
+
+        Furnish(
+            PanelTab.Settings,
+            crumb => crumb.Key switch
+            {
+                LearnedPhrasesPage.RootKey when learnedPhrases is not null => phrases ??= learnedPhrases(),
+                _ => build(),
+            },
+            [.. roots]);
     }
 
     /// <summary>How this surface shows one settings section, or null where it has no settings.</summary>

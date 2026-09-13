@@ -102,7 +102,11 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         D47.Core.Capabilities.Builtin.IClipboard? clipboard = null,
 
         // Every system name d47 already holds, on the same terms as the window's copy (#159).
-        D47.Core.Knowledge.SystemsInPlay? known = null)
+        D47.Core.Knowledge.SystemsInPlay? known = null,
+
+        // What the flying Commander has taught D47 stands for a declared phrase (#171), null unless the
+        // caller supplies both this and the registry — the same rule Sourcing above follows.
+        D47.Core.Conversation.LearnedPhrasesStore? learnedPhrases = null)
     {
         _dumpTo = dumpTo;
 
@@ -127,7 +131,11 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
         if (settingsPage is not null)
         {
-            _view.EnableSettings(settingsPage);
+            Func<Panel.LearnedPhrasesPage>? phrases = capabilities is not null && learnedPhrases is not null
+                ? () => new Panel.LearnedPhrasesPage(capabilities, learnedPhrases, gameState ?? (() => null))
+                : null;
+
+            _view.EnableSettings(settingsPage, learnedPhrases: phrases);
         }
 
         if (checklists is not null)

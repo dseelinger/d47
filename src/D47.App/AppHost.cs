@@ -438,8 +438,14 @@ public sealed class AppHost : IDisposable
     /// </summary>
     private HeardNamesStore? _heardNames;
 
-    /// <summary>What this Commander has taught d47 their own wording means (#169).</summary>
+    /// <summary>
+    /// What this Commander has taught d47 their own wording means (#169), for the panel page that lists
+    /// and forgets one (#171).
+    /// </summary>
     private LearnedPhrasesStore? _learnedPhrases;
+
+    /// <summary>The same store, for the panel page that lists and forgets a learned phrase (#171).</summary>
+    public LearnedPhrasesStore? LearnedPhrases => _learnedPhrases;
 
     /// <summary>The one name a lookup is waiting to be corrected about.</summary>
     private readonly MishearingWatch _mishearings = new();
@@ -1764,7 +1770,8 @@ public sealed class AppHost : IDisposable
 
                 // Timers and alarms register only for a run started with the switch (#90).
                 timersAndAlarms: timersAndAlarms is not null,
-                offers: offers));
+                offers: offers,
+                learnedPhrases: learnedPhrases));
 
         buildingRegistry.Dispose();
 
@@ -1811,7 +1818,12 @@ public sealed class AppHost : IDisposable
                 // last found. "Set a course and take us out" is not here — it is a fixed phrase on
                 // ship_command's own compound tool, since it runs two tools in order rather than baking one
                 // argument.
-                .Concat(CommunityGoalCourse.Phrases(lastFoundSystem));
+                .Concat(CommunityGoalCourse.Phrases(lastFoundSystem))
+
+                // And "forget 'set focus on elite'" (#171), one per phrase the flying Commander has taught
+                // d47 stands for a declared phrase.
+                .Concat(LearnedPhrasesCapability.Phrases(
+                    learnedPhrases, () => gameState.Active?.Identity.FrontierId ?? string.Empty));
 
         var router = new KeywordRouter(
             capabilities, () => MacroCapability.Phrases(macros).Concat(OtherDynamicCommands()));

@@ -235,6 +235,12 @@ public sealed class TestSurface
             () => state.Active?.Identity.FrontierId,
             () => new D47.Core.Memory.MemorySituation());
 
+        // A real store over a real (empty) file, for the reason ship cores is one below: the documentation
+        // gate reads this registry, and a capability built with none registers with no tool at all.
+        var learnedPhrases = new LearnedPhrasesStore(
+            Path.Combine(install.Paths.Data, "phrases.json"),
+            NullLogger<LearnedPhrasesStore>.Instance);
+
         CapabilityRegistry? built = null;
         var offers = new OfferWindow();
 
@@ -272,7 +278,8 @@ public sealed class TestSurface
             // The documentation gate numbers its pages from this registry, so timers and alarms register unless
             // a test asks otherwise (#90).
             timersAndAlarms: timersAndAlarms,
-            offers: offers));
+            offers: offers,
+            learnedPhrases: learnedPhrases));
 
         built = registry;
 

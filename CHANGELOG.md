@@ -14,6 +14,10 @@ two or three features equally well, d47 asks which; where they fit none, a confi
 answers instead, and with none configured this falls back to the top of the spoken map rather
 than saying it has no way to work it out.
 
+A wording d47 has learned now has a page: Settings → Learned phrases lists every one, newest
+first, said next to the phrase it runs. Press Forget, or say "forget 'set focus on elite'", and it
+stops matching — it goes back to being offered as a near miss rather than run silently.
+
 ## 0.121.0 — Did you mean, and what can you do
 
 A command missed by a word is no longer handed to the language model to refuse. Say "set focus on

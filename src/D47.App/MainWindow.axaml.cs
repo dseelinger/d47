@@ -130,7 +130,13 @@ public partial class MainWindow : Window
 
             // The window that can show settings says so; the headset's copy of this same view is handed
             // nothing and therefore has no Settings tab (Phase 12).
-            Panel.EnableSettings(BuildSettingsPage, RevealSetting);
+            Panel.EnableSettings(
+                BuildSettingsPage,
+                RevealSetting,
+                host.LearnedPhrases is { } learnedPhrases
+                    ? () => new LearnedPhrasesPage(
+                        host.Capabilities, learnedPhrases, () => host.GameState.Active)
+                    : null);
 
             // Every system name the panel draws goes through this one seam (#157).
             if (host.Clipboard is { } clipboard)

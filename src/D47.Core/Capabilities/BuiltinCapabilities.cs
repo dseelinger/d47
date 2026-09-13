@@ -173,7 +173,11 @@ public static class BuiltinCapabilities
 
         // The same instance TurnLoop reads, so the offer the drill opens is one TurnLoop can answer (#168).
         // Null builds a private one that nothing else reads, for a caller with no offer of its own.
-        OfferWindow? offers = null) =>
+        OfferWindow? offers = null,
+
+        // What the flying Commander has taught D47 stands for a declared phrase (#169), listed and
+        // forgotten on its own panel page (#171).
+        Conversation.LearnedPhrasesStore? learnedPhrases = null) =>
     [
         HelpCapability.Create(registry, offers ?? new OfferWindow()),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage, history, ticking),
@@ -251,6 +255,7 @@ public static class BuiltinCapabilities
         SpeechCapability.Create(speech),
         AudioCapability.Create(audioDrops),
         ListeningCapability.Create(settings, listening),
+        LearnedPhrasesCapability.Create(learnedPhrases, () => gameState.Active?.Identity.FrontierId ?? string.Empty),
         CalloutCapability.Create(settings, () => CalloutCapability.Describe(callouts, settings.Current)),
         InterfaceCapability.Create(),
         VrCapability.Create(settings, headset),

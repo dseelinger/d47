@@ -26,8 +26,12 @@ public static class HelpTaxonomy
     /// <summary>No level says more than this many things at once.</summary>
     public const int MostAtOnce = 6;
 
-    /// <summary>Capability ids left out of the tree on purpose, starting with help itself.</summary>
-    public static readonly IReadOnlyList<string> Unspoken = ["help"];
+    /// <summary>
+    /// Capability ids left out of the tree on purpose, starting with help itself. Learned phrases has no
+    /// leaf of its own: it is reached through the "did you mean" offer that teaches it and the panel page
+    /// that lists it, not through a spoken drill (#171).
+    /// </summary>
+    public static readonly IReadOnlyList<string> Unspoken = ["help", "learned-phrases"];
 
     public static readonly IReadOnlyList<HelpNode> Top =
     [
