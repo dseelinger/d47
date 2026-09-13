@@ -448,6 +448,127 @@ public class CalloutTests
         Assert.Contains("80", announced.Text);
     }
 
+    /// <summary>Loadout JSON for a Caspian: a fuel scoop, and the named frame shift drive.</summary>
+    private static string CaspianLoadout(string driveItem, double maxJumpRange = 85) =>
+        $$"""
+        {"timestamp":"3311-01-01T00:00:00Z","event":"Loadout","Ship":"explorer_nx","MaxJumpRange":{{maxJumpRange}},
+        "FuelCapacity":{"Main":32},"Modules":[
+        {"Slot":"Slot03_Size6","Item":"int_fuelscoop_size6_class5","On":true,"Health":1.0},
+        {"Slot":"FrameShiftDrive","Item":"{{driveItem}}","On":true,"Health":1.0}]}
+        """;
+
+    private const string MkIiDrive = "int_hyperdrive_overcharge_size8_class5_overchargebooster_mkii";
+    private const string SoftwareOverchargeDrive = "int_hyperdrive_overcharge_size5_class5";
+    private const string PlainDrive = "int_hyperdrive_size5_class5";
+
+    [Fact]
+    public void ANeutronBoostWithinRangeIsAQuietSupercharge()
+    {
+        var callout = new FuelCallout();
+        var state = StateFrom(
+            CaspianLoadout(MkIiDrive),
+            """{"timestamp":"3311-01-01T00:00:01Z","event":"FSDJump","StarSystem":"Here","JumpDist":40}""");
+
+        // 85 * 6 = 510, comfortably clear of the 229.6 ly leg beyond.
+        var route = Route(("Here", "K", 0), ("Nova Aquila", "N", 40), ("Beyond", "K", 40 + 229.6));
+
+        var announced = callout
+            .Examine(Context(state, Status(StatusFlags.None, fuel: 30), route))
+            .ToList();
+
+        Assert.DoesNotContain(announced, a => a.Key == "fuel.route.strand");
+
+        var supercharge = announced.Single(a => a.Key == "fuel.route.supercharge");
+        Assert.NotEqual(CalloutUrgency.Urgent, supercharge.Urgency);
+        Assert.Contains("Supercharge", supercharge.Text);
+        Assert.Contains("229.6", supercharge.Text);
+    }
+
+    [Fact]
+    public void AnOverchargeDriveBoostsNeutronByFourNotSix()
+    {
+        var callout = new FuelCallout();
+        var state = StateFrom(
+            CaspianLoadout(SoftwareOverchargeDrive),
+            """{"timestamp":"3311-01-01T00:00:01Z","event":"FSDJump","StarSystem":"Here","JumpDist":40}""");
+
+        // 85 * 4 = 340.
+        var inRange = Route(("Here", "K", 0), ("Nova Aquila", "N", 40), ("Beyond", "K", 40 + 300));
+
+        Assert.DoesNotContain(
+            callout.Examine(Context(state, Status(StatusFlags.None, fuel: 30), inRange)),
+            a => a.Key == "fuel.route.strand");
+
+        var callout2 = new FuelCallout();
+        var outOfRange = Route(("Here", "K", 0), ("Nova Aquila", "N", 40), ("Beyond", "K", 40 + 400));
+
+        var strand = callout2
+            .Examine(Context(state, Status(StatusFlags.None, fuel: 30), outOfRange))
+            .Single(a => a.Key == "fuel.route.strand");
+
+        Assert.Contains("340", strand.Text);
+    }
+
+    [Fact]
+    public void APlainDriveBoostsLikeTheOverchargeDrive()
+    {
+        var callout = new FuelCallout();
+        var state = StateFrom(
+            CaspianLoadout(PlainDrive),
+            """{"timestamp":"3311-01-01T00:00:01Z","event":"FSDJump","StarSystem":"Here","JumpDist":40}""");
+
+        var outOfRange = Route(("Here", "K", 0), ("Nova Aquila", "N", 40), ("Beyond", "K", 40 + 400));
+
+        var strand = callout
+            .Examine(Context(state, Status(StatusFlags.None, fuel: 30), outOfRange))
+            .Single(a => a.Key == "fuel.route.strand");
+
+        Assert.Contains("340", strand.Text);
+    }
+
+    [Fact]
+    public void AWhiteDwarfBoostIsSmallerThanNeutron()
+    {
+        var mkIiState = StateFrom(
+            CaspianLoadout(MkIiDrive),
+            """{"timestamp":"3311-01-01T00:00:01Z","event":"FSDJump","StarSystem":"Here","JumpDist":40}""");
+
+        // 85 * 3 = 255, clear of the 200 ly leg beyond.
+        var route = Route(("Here", "K", 0), ("White Star", "DA", 40), ("Beyond", "K", 40 + 200));
+
+        Assert.DoesNotContain(
+            new FuelCallout().Examine(Context(mkIiState, Status(StatusFlags.None, fuel: 30), route)),
+            a => a.Key == "fuel.route.strand");
+
+        // 85 * 1.5 = 127.5, short of the same 200 ly leg.
+        var scoState = StateFrom(
+            CaspianLoadout(SoftwareOverchargeDrive),
+            """{"timestamp":"3311-01-01T00:00:01Z","event":"FSDJump","StarSystem":"Here","JumpDist":40}""");
+
+        var strand = new FuelCallout()
+            .Examine(Context(scoState, Status(StatusFlags.None, fuel: 30), route))
+            .Single(a => a.Key == "fuel.route.strand");
+
+        Assert.Contains("127.5", strand.Text);
+    }
+
+    [Fact]
+    public void ABrownDwarfStrandsWhateverTheDrive()
+    {
+        var callout = new FuelCallout();
+        var state = StateFrom(
+            CaspianLoadout(MkIiDrive, maxJumpRange: 50),
+            """{"timestamp":"3311-01-01T00:00:01Z","event":"FSDJump","StarSystem":"Here","JumpDist":40}""");
+
+        var route = Route(("Here", "K", 0), ("Dead End", "T", 40), ("Far", "K", 40 + 80));
+
+        var strand = callout
+            .Examine(Context(state, Status(StatusFlags.None, fuel: 30), route))
+            .Single(a => a.Key == "fuel.route.strand");
+
+        Assert.Contains("80", strand.Text);
+    }
+
     [Fact]
     public void AScoopableNextStarProducesNoRouteWarningAtAll()
     {

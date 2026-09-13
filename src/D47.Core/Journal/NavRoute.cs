@@ -87,6 +87,45 @@ public static class StarClasses
         { } dwarf when IsWhiteDwarf(dwarf) => "a white dwarf",
         { } other => $"class {other}",
     };
+
+    /// <summary>The Mk II overcharge booster's item suffix — the only drive that reaches ×6/×3.</summary>
+    private const string OverchargeBoosterMkIiSuffix = "_overchargebooster_mkii";
+
+    /// <summary>The frame shift drive family, boosted or plain.</summary>
+    private const string HyperdrivePrefix = "int_hyperdrive";
+
+    /// <summary>
+    /// The jump range multiplier a fitted frame shift drive gets from supercharging at
+    /// <paramref name="starClass"/> — null where the star does not supercharge, or the drive is
+    /// unknown.
+    /// </summary>
+    public static double? SuperchargeMultiplier(string? starClass, string? frameShiftDriveItem)
+    {
+        if (frameShiftDriveItem is null)
+        {
+            return null;
+        }
+
+        var mkTwo = frameShiftDriveItem.Contains(OverchargeBoosterMkIiSuffix, StringComparison.OrdinalIgnoreCase);
+        var anyDrive = mkTwo || frameShiftDriveItem.StartsWith(HyperdrivePrefix, StringComparison.OrdinalIgnoreCase);
+
+        if (!anyDrive)
+        {
+            return null;
+        }
+
+        if (IsNeutron(starClass))
+        {
+            return mkTwo ? 6.0 : 4.0;
+        }
+
+        if (IsWhiteDwarf(starClass))
+        {
+            return mkTwo ? 3.0 : 1.5;
+        }
+
+        return null;
+    }
 }
 
 /// <summary>One system on the plotted route.</summary>

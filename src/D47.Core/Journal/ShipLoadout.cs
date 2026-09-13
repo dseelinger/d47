@@ -193,6 +193,10 @@ public sealed record ShipLoadout
     /// <summary>The Fuel Scoop symbol family.</summary>
     public const string FuelScoop = "int_fuelscoop";
 
+    /// <summary>The fitted frame shift drive, or null where the loadout does not list one.</summary>
+    public ShipModule? FrameShiftDrive =>
+        Modules.FirstOrDefault(module => string.Equals(module.Slot, "FrameShiftDrive", StringComparison.OrdinalIgnoreCase));
+
     /// <summary>The Docking Computer symbol family, which matches the advanced variant as well.</summary>
     public const string DockingComputer = "int_dockingcomputer";
 

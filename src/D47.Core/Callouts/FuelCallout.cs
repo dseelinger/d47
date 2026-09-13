@@ -99,8 +99,9 @@ public sealed class FuelCallout(ILogger? logger = null) : ICallout
 
         // Nothing here is news to a ship that cannot scoop: see the class summary.
         var asking = FlownShipLoadout.Asked(context.Events, "the plotted route");
+        var scoopFitted = state.Fitted(ShipLoadout.FuelScoop, asking, logger);
 
-        if (state.Fitted(ShipLoadout.FuelScoop, asking, logger) is false)
+        if (scoopFitted is false)
         {
             yield break;
         }
@@ -148,14 +149,34 @@ public sealed class FuelCallout(ILogger? logger = null) : ICallout
         var onward = next.DistanceTo(after);
         var range = state.Ship.MaxJumpRange;
 
-        // Pure geometry against a range the game reported.
+        // Credit the supercharge only on a scoop confirmed fitted — a null answer (loadout unread)
+        // stays today's behaviour, same as the fuel scoop check above.
+        var driveItem = scoopFitted is true ? state.FlownShip.FrameShiftDrive?.Item : null;
+        var multiplier = StarClasses.SuperchargeMultiplier(next.StarClass, driveItem);
+        var boostedRange = multiplier is { } factor && range is { } known ? known * factor : (double?)null;
+
         if (onward is { } distance && range is { } maximum && distance > maximum)
         {
+            if (boostedRange is { } boosted && distance <= boosted)
+            {
+                yield return new Announcement(
+                    "fuel.route.supercharge",
+                    $"Next jump is {StarClasses.Speak(next.StarClass)} — no fuel at {next.StarSystem}. "
+                    + $"Supercharge there for the {distance:0.#} light year jump beyond.")
+                {
+                    Cooldown = StrandCooldown,
+                };
+
+                yield break;
+            }
+
+            var quotedRange = boostedRange ?? maximum;
+
             yield return new Announcement(
                 "fuel.route.strand",
                 $"Route warning. {next.StarSystem} is {StarClasses.Speak(next.StarClass)} and cannot be "
                 + $"scooped, and the jump beyond it is {distance:0.#} light years against a maximum range "
-                + $"of {maximum:0.#}. Replot before you jump.",
+                + $"of {quotedRange:0.#}. Replot before you jump.",
                 CalloutUrgency.Urgent)
             {
                 Cooldown = StrandCooldown,

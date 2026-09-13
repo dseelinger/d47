@@ -6,6 +6,15 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.124.0 — Supercharge
+
+A route warning no longer fires on a leg that a neutron star or white dwarf supercharge would
+clear. The strand check now measures the jump beyond an unscoopable star against the boosted
+range for the fitted frame shift drive — six times normal range at a neutron star and three at a
+white dwarf for the Mk II overcharge booster, four and one and a half for any other hyperdrive.
+Where the boost clears the leg, the urgent warning is replaced by a quiet line naming the
+supercharge; where it does not, the warning still fires, quoting the boosted range.
+
 ## 0.122.0 — How do I
 
 A window left at full height comes back at full height. Restoring a remembered size used to
