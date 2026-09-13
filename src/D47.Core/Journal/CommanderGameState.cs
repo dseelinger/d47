@@ -67,6 +67,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>What their surface scans found on each body (Phase 18).</summary>
     public BodySignals Bodies { get; private set; } = BodySignals.Empty;
 
+    /// <summary>What each body's own scan said, and when it was first footfalled (#202).</summary>
+    public BodyScans Scans { get; private set; } = BodyScans.Empty;
+
     /// <summary>What they have sampled, per body and per genus (Phase 18).</summary>
     public OrganicSampling Sampling { get; internal set; } = OrganicSampling.Empty;
 
@@ -130,6 +133,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         CommunityGoals = CommunityGoals.Apply(journalEvent);
         Pledge = Pledge.Apply(journalEvent);
         Bodies = Bodies.Apply(journalEvent);
+        Scans = Scans.Apply(journalEvent);
         Sampling = Sampling.Apply(journalEvent, at);
         Session = Session.Apply(journalEvent);
 
