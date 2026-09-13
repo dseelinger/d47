@@ -19,7 +19,7 @@ nav_order: 137
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="intro">Two steps to timers that say their own name.</p>
+<p class="intro">Off unless D47 is started with --utilities. Then two steps to timers that say their own name.</p>
 <section>
 <h2><span class="num">1</span> Ask what time it is, in either world.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
@@ -130,6 +130,17 @@ nav_order: 137
 ## The details
 
 What time it is, in both worlds at once, and timers and alarms that say their own name.
+
+### Off unless you turn it on
+
+Clocks and timers are not part of a normal run. Start Directive 47 with `--utilities` on the
+command line, or with the environment variable `D47_UTILITIES=1` set, and everything on this page
+is there for that run. Nothing is saved to settings, so the next run without the switch is back
+to off.
+
+Without the switch none of it exists: no Utilities tab on the desktop, in the headset or on the
+overlay strip, no timer or alarm tools, none of the phrases below, and `alarms.json` is not read.
+Directive 47 does not know the date either, and says so when asked rather than working one out.
 
 ### Ask for it
 

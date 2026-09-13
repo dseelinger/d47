@@ -25,6 +25,9 @@ internal static class Program
         // whether tracing is on while it wires the injector (#365).
         Diagnostics.InputTraceWriter.ReadCommandLine(args);
 
+        // Timers and alarms register only for a run that asks for them (#90).
+        Timekeeping.TimersAndAlarms.ReadCommandLine(args);
+
         // A crash must not be silent.
         AppDomain.CurrentDomain.UnhandledException += (_, crash) =>
         {

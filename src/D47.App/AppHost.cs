@@ -284,8 +284,8 @@ public sealed class AppHost : IDisposable
     /// <summary>The Commander's checklist, and the proposals waiting on it (Phase 17).</summary>
     public ChecklistService Checklists { get; private set; } = null!;
 
-    /// <summary>The Commander's timers and alarms (Phase 24).</summary>
-    public Timekeeper Timekeeper { get; private set; } = null!;
+    /// <summary>The Commander's timers and alarms; null unless the run was started with the switch (#90).</summary>
+    public Timekeeper? Timekeeper { get; private set; }
 
     /// <summary>The Commander's ship builds, joined to the fleet (Phase 26).</summary>
     public ShipPlanService Ships { get; private set; } = null!;
@@ -302,8 +302,8 @@ public sealed class AppHost : IDisposable
     /// <summary>Which engineer to go and get next, read across both plan stores (Phase 28).</summary>
     public D47.Core.Engineers.EngineerPlanService Unlocks { get; private set; } = null!;
 
-    /// <summary>Where the alarms are kept, for the panel to follow and for a hand edit to reach.</summary>
-    public AlarmStore Alarms { get; private set; } = null!;
+    /// <summary>Where the alarms are kept; null whenever <see cref="Timekeeper"/> is.</summary>
+    public AlarmStore? Alarms { get; private set; }
 
     /// <summary>
     /// Every phrase d47 already answers to, so the macro editor can refuse one that would shadow a
@@ -1106,14 +1106,8 @@ public sealed class AppHost : IDisposable
 
         var spend = new SpendTracker(spendLedger);
 
-        // Clocks, timers and alarms (Phase 24).
-        var alarms = new AlarmStore(
-            Path.Combine(paths.Data, "alarms.json"),
-            loggerFactory.CreateLogger<AlarmStore>());
-
-        alarms.Poll();
-
-        var timekeeper = new Timekeeper(alarms);
+        // Clocks, timers and alarms (Phase 24): null unless this run was started with the switch (#90).
+        var timersAndAlarms = Timekeeping.TimersAndAlarms.Create(paths, loggerFactory);
 
         // The Commander's ship builds (Phase 26).
         var shipBuilds = new ShipBuildStore(
@@ -1570,7 +1564,7 @@ public sealed class AppHost : IDisposable
                 lore,
 
                 // The Commander's timers and alarms (Phase 24).
-                timekeeper,
+                timersAndAlarms?.Timekeeper,
 
                 // How to present an instant locally.
                 () => TimeZoneInfo.Local,
@@ -1738,7 +1732,10 @@ public sealed class AppHost : IDisposable
 
                 // So a subscriber the loop has paused is named on the diagnostics card rather than only in
                 // the log (#58).
-                tick));
+                tick,
+
+                // Timers and alarms register only for a run started with the switch (#90).
+                timersAndAlarms: timersAndAlarms is not null));
 
         buildingRegistry.Dispose();
 
@@ -1832,9 +1829,9 @@ public sealed class AppHost : IDisposable
 
                             Join(
                                 // Both dates, already worked out, below the cache breakpoint where a per-turn
-                                // value costs nothing (Phase 24).
-                                UtilitiesCapability.Live(
-                                    timekeeper, SystemWallClock.Instance.UtcNow, TimeZoneInfo.Local),
+                                // value costs nothing (Phase 24). Absent without the switch (#90).
+                                Timekeeping.TimersAndAlarms.Live(
+                                    timersAndAlarms, SystemWallClock.Instance.UtcNow, TimeZoneInfo.Local),
 
                                 // Why d47 cannot look something up, when it cannot.
                                 ConversationCapability.LiveSearch(
@@ -1961,13 +1958,13 @@ public sealed class AppHost : IDisposable
         host.Macros = macros;
         host.OwnPersonas = ownPersonas;
         host.Checklists = checklists;
-        host.Timekeeper = timekeeper;
+        host.Timekeeper = timersAndAlarms?.Timekeeper;
         host.Ships = shipPlans;
         host.ShipBuilds = shipBuilds;
         host.OnFootPlans = onFootPlans;
         host.Unlocks = unlocks;
         host.OnFootBuilds = onFootBuilds;
-        host.Alarms = alarms;
+        host.Alarms = timersAndAlarms?.Alarms;
 
         // The Commander switch (Phase 44).
         host.Drift = drift;
@@ -2180,11 +2177,14 @@ public sealed class AppHost : IDisposable
         });
 
         // The first thing d47 does that nothing external triggers (Phase 24).
-        tick.Add("reminders", context =>
+        if (timersAndAlarms is { } clocks)
         {
-            alarms.Poll();
-            host.SoundReminders(timekeeper.Poll(context.Now));
-        });
+            tick.Add("reminders", context =>
+            {
+                clocks.Alarms.Poll();
+                host.SoundReminders(clocks.Timekeeper.Poll(context.Now));
+            });
+        }
 
         // Ship builds are hand-editable, and buying a hull the Commander had planned for offers to adopt the
         // plan onto it rather than making them re-point it (Phase 26).

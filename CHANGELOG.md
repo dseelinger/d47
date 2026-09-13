@@ -6,6 +6,14 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.114.0 — Timers and alarms behind a startup flag
+
+Clocks, timers and alarms are off unless d47 is started with `--utilities` or with
+`D47_UTILITIES=1` set, and the switch lasts for that run only. Without it there is no Utilities
+tab on the desktop, in the headset or on the overlay strip, no timer or alarm tools, no "what time
+is it" or "cancel the timer" phrases, and `alarms.json` is not read. d47 also does not know the
+date in that case, and says so when asked rather than working one out.
+
 ## 0.113.0 — Copy any system name the panel shows
 
 A system name could be copied from the Ships whereabouts line, the Community Goal table, or a

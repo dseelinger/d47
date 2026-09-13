@@ -263,12 +263,15 @@ public partial class MainWindow : Window
                 && !Panel.Nav.Modal
                 && _onScreen;
 
-            // And the clocks, timers and alarms (Phase 24).
-            Panel.EnableUtilities(
-                host.Timekeeper,
-                host.Alarms,
-                () => D47.Core.SystemWallClock.Instance.UtcNow,
-                () => TimeZoneInfo.Local);
+            // And the clocks, timers and alarms (Phase 24), for a run started with the switch (#90).
+            if (host.Timekeeper is { } timekeeper && host.Alarms is { } alarms)
+            {
+                Panel.EnableUtilities(
+                    timekeeper,
+                    alarms,
+                    () => D47.Core.SystemWallClock.Instance.UtcNow,
+                    () => TimeZoneInfo.Local);
+            }
 
             // And the same window is the one with a keyboard, so it is the one that gets a search box.
             Panel.EnableSearch();

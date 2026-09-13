@@ -165,7 +165,11 @@ public static class BuiltinCapabilities
         Func<Journal.NavRoute>? route = null,
 
         // The loop itself, so the diagnostics card can name a subscriber it has paused (#58).
-        Ticking.TickLoop? ticking = null) =>
+        Ticking.TickLoop? ticking = null,
+
+        // Whether timers and alarms register at all (#90). The app passes its startup flag; the default is the
+        // registry the documentation gate numbers its pages from.
+        bool timersAndAlarms = true) =>
     [
         HelpCapability.Create(registry),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage, history, ticking),
@@ -253,7 +257,7 @@ public static class BuiltinCapabilities
         CommsCapability.Create(actions, () => settings.Current.Actions.Chat),
         MacroCapability.Create(macros, actions),
         SwitchCapability.Create(switches ?? SwitchSurface.Inert, () => settings.Current.Actions.Keyboard),
-        UtilitiesCapability.Create(timekeeper, now, zone),
+        .. Optional(timersAndAlarms, () => UtilitiesCapability.Create(timekeeper, now, zone)),
 
         // Beside Privacy rather than anywhere near the game capabilities, and immediately before it so that
         // adding this shifted two documentation pages rather than twenty-seven — the nav order is the
@@ -297,4 +301,7 @@ public static class BuiltinCapabilities
             about?.Channel,
             about?.OpenDataFolder),
     ];
+
+    private static IEnumerable<CapabilityDescriptor> Optional(bool registered, Func<CapabilityDescriptor> create) =>
+        registered ? [create()] : [];
 }

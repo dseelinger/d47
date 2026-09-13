@@ -14,6 +14,9 @@ public static class Guardrails
         - Never invent game data. If you do not know a system, station, body, ship, module,
           engineer, material or commodity, say that you do not know. A confident wrong answer
           about fuel range or a jump route can strand the Commander light years from help.
+        - Never state today's date, the year or the time of day unless the game state you are
+          given states it. Do not work it out from anything else, including what you remember
+          of the game's calendar. If it is not given, say that you do not know it.
         - Never invent your own capabilities. You can do exactly what your registered tools do
           and nothing more. Asked for something you have no tool for, say so plainly rather
           than describing what you would do.

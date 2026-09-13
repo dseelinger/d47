@@ -97,6 +97,25 @@ public partial class DocumentationGateTests
     private static int NavOrderFor(int registryIndex) => 100 + registryIndex;
 
     /// <summary>
+    /// The gate numbers pages from a registry with timers and alarms in it, whatever the app's startup
+    /// flag says (#90); leaving the capability out removes that one entry and moves no other.
+    /// </summary>
+    [Fact]
+    public void TheGateNumbersThePagesWithTimersAndAlarmsRegistered()
+    {
+        var id = Capabilities.Builtin.UtilitiesCapability.Id;
+
+        Assert.NotNull(Registry().Find(id));
+
+        using var install = new TempInstall();
+
+        var without = TestSurface.For(install, timersAndAlarms: false).Registry.All.Select(c => c.Descriptor.Id);
+        var with = Registry().All.Select(c => c.Descriptor.Id).Where(other => other != id);
+
+        Assert.Equal(with, without);
+    }
+
+    /// <summary>
     /// The nav is grouped by <see cref="CapabilityDescriptor.Group"/>, and this is what stops that
  /// being a second hand-maintained list.
     /// </summary>

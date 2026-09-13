@@ -203,7 +203,8 @@ public sealed class TestSurface
         GameStateStore? gameState = null,
         D47Settings? settings = null,
         D47.Core.Persona.PersonaHost? personas = null,
-        bool loadFailed = false)
+        bool loadFailed = false,
+        bool timersAndAlarms = true)
     {
         var store = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance);
         var secrets = new SecretStore(install.Paths, new ReversibleProtector(), NullLogger<SecretStore>.Instance);
@@ -257,7 +258,11 @@ public sealed class TestSurface
 
             // #78: every About delegate supplied, because a null one makes its row *absent* and an absent row
             // is one no test can see.
-            about: D47.Core.Capabilities.Builtin.AboutSurface.Inert));
+            about: D47.Core.Capabilities.Builtin.AboutSurface.Inert,
+
+            // The documentation gate numbers its pages from this registry, so timers and alarms register unless
+            // a test asks otherwise (#90).
+            timersAndAlarms: timersAndAlarms));
 
         built = registry;
 
