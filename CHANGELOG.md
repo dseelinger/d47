@@ -22,6 +22,11 @@ The In Ship reading now draws a copy chip under any turn that names a system, on
 order it was said, whichever side of the conversation said it and in the headset as well as on the
 desktop.
 
+A drag on the In Ship page that starts in one bubble and ends in another now keeps both ends and
+every bubble between them, rather than only the bubble it started in. Copy puts the whole
+selection on the clipboard, d47's lines and the Commander's own both included, in the order they
+are shown.
+
 ## 0.112.9 — Controls that draw their state
 
 The Engineers tab's Colonia filter was a button that rewrote its own label — "Hide the Colonia
