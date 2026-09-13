@@ -30,6 +30,7 @@ public static class CalloutCapability
     public const string CoreAsteroidKey = "callouts.coreAsteroid";
 
     public const string SamplingKey = "callouts.sampling";
+    public const string DiscoveryKey = "callouts.discovery";
     public const string AnnouncedAttackKey = "callouts.announcedAttack";
     public const string RivalTerritoryKey = "callouts.rivalTerritory";
     public const string ChecklistKey = "callouts.checklist";
@@ -230,6 +231,15 @@ public static class CalloutCapability
                 "sampling progress",
                 s => s.Callouts.Sampling,
                 (s, v) => s with { Callouts = s.Callouts with { Sampling = v } }),
+
+            Toggle(
+                DiscoveryKey,
+                "Undiscovered systems",
+                "The arrival star's autoscan, when nobody has sold data on it yet.",
+                "discovery",
+                "undiscovered systems",
+                s => s.Callouts.Discovery,
+                (s, v) => s with { Callouts = s.Callouts with { Discovery = v } }),
 
             Toggle(
                 AnnouncedAttackKey,

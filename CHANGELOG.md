@@ -8,6 +8,11 @@
 
 ## 0.124.0 — Supercharge
 
+Arriving at a system nobody has sold data on now gets a spoken callout: "Undiscovered system.
+Nobody has sold data on this star yet." It fires on the arrival star's own autoscan, so a
+`NavBeaconDetail` scan carrying the same flag in a populated system stays silent. On by default,
+with its own toggle beside the other callouts.
+
 "Plot next neutron jump", "plot next riches stop" and "plot next trade stop" plot the next stop on
 a stored plan through the galaxy map, by voice, with no model needed. The next stop is the first
 one after the furthest reached whose system is not the one the Commander is already in, so a

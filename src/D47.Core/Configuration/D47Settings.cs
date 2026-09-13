@@ -395,6 +395,9 @@ public sealed record CalloutSettings
     /// <summary>Organic sampling progress on the surface (Phase 18).</summary>
     public bool Sampling { get; init; } = true;
 
+    /// <summary>Whether the arrival star's autoscan shows up as undiscovered (#201).</summary>
+    public bool Discovery { get; init; } = true;
+
     /// <summary>How often route progress is reported, in jumps. 0 silences the progress line.</summary>
     public int RouteEveryNJumps { get; init; } = 3;
 

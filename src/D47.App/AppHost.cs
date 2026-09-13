@@ -2415,6 +2415,7 @@ public sealed class AppHost : IDisposable
 
             // Phase 17.
             .Add(new SamplingCallout())
+            .Add(new DiscoveryCallout())
             .Add(new ProspectorCallout())
             .Add(new CoreAsteroidCallout())
             .Add(new ChecklistCallout(checklists))
@@ -2511,6 +2512,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("announced-attack", callouts.AnnouncedAttack, now);
         engine.SetEnabled("rival-territory", callouts.RivalTerritory, now);
         engine.SetEnabled("sampling", callouts.Sampling, now);
+        engine.SetEnabled("discovery", callouts.Discovery, now);
         engine.SetEnabled("prospector", callouts.Prospector, now);
         engine.SetEnabled("core-asteroid", callouts.CoreAsteroid, now);
         engine.SetEnabled("checklist", callouts.Checklist, now);

@@ -552,6 +552,19 @@ judge four hundred metres across a ridge, and getting it wrong wastes the sample
 how far you moved and **never whether it was far enough**: that figure is in the species' Codex entry
 in-game, and no table of it ships here. See [Exobiology](exobiology.md) for why.
 
+#### Undiscovered systems {#discovery}
+
+On arrival, the game auto-scans the star you jumped to:
+
+```text
+Undiscovered system. Nobody has sold data on this star yet.
+```
+
+`WasDiscovered` is false until a Commander sells data on the star — it means nobody has sold it, not
+nobody has been there. The callout fires on the arrival star's own autoscan only: a `NavBeaconDetail`
+scan can carry the same flag in a populated system, and a scan of any other body in the system is not
+the arrival.
+
 #### Picking up where you left off {#continuity}
 
 One line at the start of a session — a greeting on your own clock, and a readiness:
