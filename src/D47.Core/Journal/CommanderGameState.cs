@@ -46,6 +46,15 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>Where they stand in every career ladder (Phase 34).</summary>
     public RankState Ranks { get; private set; } = RankState.Empty;
 
+    /// <summary>Their career statistics, from the last <c>Statistics</c> event.</summary>
+    public CareerStatistics Statistics { get; private set; } = CareerStatistics.Empty;
+
+    /// <summary>Their reputation with the superpowers and with every faction met.</summary>
+    public ReputationState Reputation { get; private set; } = ReputationState.Empty;
+
+    /// <summary>What they have contributed to each engineer.</summary>
+    public EngineerContributions Contributions { get; private set; } = EngineerContributions.Empty;
+
     /// <summary>Every community goal their journal has reported, and where they stand on it.</summary>
     public CommunityGoalBoard CommunityGoals { get; private set; } = CommunityGoalBoard.Empty;
 
@@ -82,6 +91,13 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <param name="at">Where the Commander was standing, where that is known.</param>
     public void Apply(JournalEvent journalEvent, SurfaceFix? at)
     {
+        if (journalEvent.Kind == "NewCommander")
+        {
+            Reputation = Reputation.WithoutFactions();
+            Contributions = EngineerContributions.Empty;
+            return;
+        }
+
         if (CommanderIdentity.From(journalEvent) is { } identity && identity.FrontierId == Identity.FrontierId)
         {
             Identity = identity; // The name can change (rename); the FID is the stable key.
@@ -108,6 +124,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         Materials = Materials.Apply(journalEvent);
         Engineers = Engineers.Apply(journalEvent);
         Ranks = Ranks.Apply(journalEvent);
+        Statistics = Statistics.Apply(journalEvent);
+        Reputation = Reputation.Apply(journalEvent);
+        Contributions = Contributions.Apply(journalEvent);
         CommunityGoals = CommunityGoals.Apply(journalEvent);
         Pledge = Pledge.Apply(journalEvent);
         Bodies = Bodies.Apply(journalEvent);

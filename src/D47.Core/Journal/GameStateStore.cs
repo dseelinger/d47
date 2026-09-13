@@ -146,45 +146,17 @@ public sealed class GameStateStore
 
     private void Fold(JournalEvent journalEvent, SurfaceFix? at, bool priming)
     {
+        // Goes to the Commander the event names, which is not necessarily the active one.
+        if (journalEvent.Kind == "NewCommander" && journalEvent.String("FID") is { } created)
+        {
+            Admit(new CommanderIdentity(created, journalEvent.String("Name") ?? created)).Apply(journalEvent);
+            return;
+        }
+
         if (CommanderIdentity.From(journalEvent) is { } identity)
         {
             var previous = Active?.Identity;
-
-            if (!_byFrontierId.TryGetValue(identity.FrontierId, out var state))
-            {
-                state = new CommanderGameState(identity);
-
-                // Anything this Commander had before d47 last stopped.
-                if (Restore?.Invoke(identity.FrontierId) is { } restored)
-                {
-                    state.Sampling = restored;
-                }
-
-                if (RestoreFleet?.Invoke(identity.FrontierId) is { IsKnown: true } fleet)
-                {
-                    state.Fleet = fleet;
-                }
-
-                if (RestoreLoadouts?.Invoke(identity.FrontierId) is { IsKnown: true } loadouts)
-                {
-                    state.Loadouts = loadouts;
-                }
-
-                // Applied only where the recovered state actually knows something, so a Commander with no
-                // carrier in any journal stays at None rather than being handed an empty carrier that reads
-                // the same as one d47 has merely lost track of (#406).
-                if (RestoreCarrier?.Invoke(identity.FrontierId) is { IsKnown: true } carrier)
-                {
-                    state.Carrier = carrier;
-                }
-
-                if (RestoreNames?.Invoke(identity.FrontierId) is { IsKnown: true } names)
-                {
-                    state.Names = names;
-                }
-
-                _byFrontierId[identity.FrontierId] = state;
-            }
+            var state = Admit(identity);
 
             var switched = !string.Equals(previous?.FrontierId, identity.FrontierId, StringComparison.Ordinal);
 
@@ -201,5 +173,48 @@ public sealed class GameStateStore
 
         // Every other event belongs to whoever is currently active.
         Active?.Apply(journalEvent, at);
+    }
+
+    /// <summary>The state held for this Commander, created and restored first if they are not yet known.</summary>
+    private CommanderGameState Admit(CommanderIdentity identity)
+    {
+        if (_byFrontierId.TryGetValue(identity.FrontierId, out var state))
+        {
+            return state;
+        }
+
+        state = new CommanderGameState(identity);
+
+        // Anything this Commander had before d47 last stopped.
+        if (Restore?.Invoke(identity.FrontierId) is { } restored)
+        {
+            state.Sampling = restored;
+        }
+
+        if (RestoreFleet?.Invoke(identity.FrontierId) is { IsKnown: true } fleet)
+        {
+            state.Fleet = fleet;
+        }
+
+        if (RestoreLoadouts?.Invoke(identity.FrontierId) is { IsKnown: true } loadouts)
+        {
+            state.Loadouts = loadouts;
+        }
+
+        // Applied only where the recovered state actually knows something, so a Commander with no
+        // carrier in any journal stays at None rather than being handed an empty carrier that reads
+        // the same as one d47 has merely lost track of (#406).
+        if (RestoreCarrier?.Invoke(identity.FrontierId) is { IsKnown: true } carrier)
+        {
+            state.Carrier = carrier;
+        }
+
+        if (RestoreNames?.Invoke(identity.FrontierId) is { IsKnown: true } names)
+        {
+            state.Names = names;
+        }
+
+        _byFrontierId[identity.FrontierId] = state;
+        return state;
     }
 }

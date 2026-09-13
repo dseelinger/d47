@@ -27,10 +27,26 @@ public class RankStateTests
         Assert.Equal(1, state.For("Combat")?.Rank);
         Assert.Equal(7, state.For("Trade")?.Rank);
         Assert.Equal(0, state.For("Soldier")?.Rank);
+    }
 
-        // Empire and Federation are navy ranks with no Elite at the top, so they are not careers this reads
-        // at all.
-        Assert.Null(state.For("Empire"));
+    [Fact]
+    public void TheNavyRanksAreReadWithoutBecomingCareers()
+    {
+        var state = RankState.Empty.Apply(Event("Rank", "\"Combat\":1,\"Empire\":1,\"Federation\":3"));
+
+        Assert.Equal(1, state.For("Empire")?.Rank);
+        Assert.Equal(3, state.For("Federation")?.Rank);
+        Assert.Equal(6, RankState.Careers.Count);
+        Assert.DoesNotContain("Empire", RankState.Careers);
+    }
+
+    [Fact]
+    public void ANavyRankPastEightIsNotElite()
+    {
+        var federation = RankState.Empty.Apply(Event("Rank", "\"Federation\":14")).For("Federation");
+
+        Assert.False(federation?.IsElite);
+        Assert.Equal("rank 14", federation?.Describe());
     }
 
     [Fact]

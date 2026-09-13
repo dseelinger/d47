@@ -11,10 +11,15 @@ public sealed record RankStanding(string Career, int Rank)
     /// <summary>Percent into the current rank, from the <c>Progress</c> event.</summary>
     public int? Percent { get; init; }
 
-    public bool IsElite => Rank >= Elite;
+    /// <summary>Whether this is one of <see cref="RankState.Careers"/>; a navy rank has no Elite.</summary>
+    public bool IsCareer => RankState.Careers.Contains(Career, StringComparer.OrdinalIgnoreCase);
+
+    public bool IsElite => IsCareer && Rank >= Elite;
 
     /// <summary>How a Commander hears it.</summary>
-    public string Describe() => IsElite
+    public string Describe() => !IsCareer
+        ? Percent is { } navyPercent ? $"rank {Rank}, {navyPercent}% into it" : $"rank {Rank}"
+        : IsElite
         ? Rank == Elite
             ? "Elite"
             : $"Elite, {Rank - Elite} grade{(Rank - Elite == 1 ? string.Empty : "s")} past it"
@@ -32,6 +37,9 @@ public sealed record RankState
     /// <summary>The journal's key for each career an arc is offered for.</summary>
     public static readonly IReadOnlyList<string> Careers =
         ["Combat", "Trade", "Explore", "Soldier", "Exobiologist", "CQC"];
+
+    /// <summary>Every key folded: the careers and the two navy ranks.</summary>
+    private static readonly IReadOnlyList<string> Folded = [.. Careers, "Empire", "Federation"];
 
     public static readonly RankState Empty = new();
 
@@ -62,7 +70,7 @@ public sealed record RankState
     /// <summary>The startup snapshot.</summary>
     private RankState Snapshot(JournalEvent journalEvent)
     {
-        var standings = Careers
+        var standings = Folded
             .Select(career => (Career: career, Rank: journalEvent.Raw.Int(career)))
             .Where(pair => pair.Rank is not null)
             .Select(pair => new RankStanding(pair.Career, pair.Rank!.Value)
@@ -84,7 +92,7 @@ public sealed record RankState
         var seen = false;
         var standings = new List<RankStanding>(Standings);
 
-        foreach (var career in Careers)
+        foreach (var career in Folded)
         {
             if (journalEvent.Raw.Int(career) is not { } percent)
             {
@@ -113,7 +121,7 @@ public sealed record RankState
     /// <summary>One career moved.</summary>
     private RankState Promoted(JournalEvent journalEvent)
     {
-        var promoted = Careers
+        var promoted = Folded
             .Select(career => (Career: career, Rank: journalEvent.Raw.Int(career)))
             .Where(pair => pair.Rank is not null)
             .ToList();
