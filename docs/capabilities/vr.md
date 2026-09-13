@@ -262,6 +262,44 @@ switching that panel's lock to **head**, which brings it to your face, and then 
 first nudge sets a head-locked panel down in front of you, at knee height, before it moves. Two
 steps where re-anchoring was one; that command was retired in 0.94.0.
 
+### Resizing it
+
+**Say "resize the panel"** and the panel on screen goes into resize mode: a coloured handle runs
+along each of its edges. Point a controller at an edge or a corner — the handle under the ray
+thickens — hold the trigger and pull. An edge changes one dimension and a corner changes both,
+and the opposite edges stay where they were.
+
+> "resize the panel" / "panel resize mode"
+> "stop resizing" / "done resizing"
+
+**Resizing changes the panel's shape, and the content reflows into it.** Pull the panel wider and
+it gets more pixels as well as more metres, at the same density, so more room means more rows
+rather than bigger ones. To make what is drawn larger without moving the edges, zoom instead.
+
+Resize mode is a mode because the panel is something you press all session, and an edge that
+resized whenever a ray brushed it would spoil presses near the edge. Out of the mode, a press on an
+edge is a press. In the mode, a press anywhere away from the handles still presses, and the
+**grip** leaves the mode rather than going back a page.
+
+A drag stops at a smallest and a largest size, so a panel cannot be shrunk past the point where
+its handles can be found again. Letting go writes the new size and resolution to the settings of
+the panel you resized; the big panel and the mini panel each keep their own. A panel that was
+riding your head is put down in the room when you take hold of a handle, the same as picking it
+up.
+
+Resizing needs the motion controllers. With them off, the **Size** and **Resolution** settings
+below change the same two things.
+
+### Zooming it
+
+> "zoom the panel in" / "make the panel text bigger"
+> "zoom the panel out" / "make the panel text smaller"
+> "reset the panel zoom"
+
+Each step moves the panel's **Scale** one rung along the ladder the desktop window zooms with, and
+reset puts it back to 100%. It acts on whichever panel is on screen. The panel's edges do not
+move; the content is laid out again at the new size.
+
 ### Settings
 
 #### Show Directive 47 in the headset {#enabled}
@@ -287,7 +325,11 @@ Ask for either by name, in whichever words come out:
 The two keep their own placements, so parking mini out to one side while the full panel stays in
 front of you works the way you would expect.
 
-**Mini carries no controls, only what they were showing you.** It is 512 pixels wide, chosen so the
+**Mini means a minimal interface, not a fixed size.** It starts at 512 by 280 pixels and 0.34 m
+across, and both are yours to change — with its own [resolution](#placing-a-surface) setting, or by
+[resizing it](#resizing-it) in the headset to whatever shape you want.
+
+**Mini carries no controls, only what they were showing you.** Its starting size was chosen so the
 text is readable rather than so there is room — every button on it would be space taken from the
 thing you opened it for. So a page's own bar goes: the checklist's filter, its ordering, its
 import, its Goals tick. What stays is the list itself, **including the tick beside each line**, so
@@ -328,7 +370,7 @@ a session that never did, which is the state the evidence above calls safe.
 
 #### Placing a surface
 
-Five settings each, and the mini panel has its own copies of all five. The big panel has a sixth.
+Six settings each, and the mini panel has its own copies of all six.
 
 **Ask for a change and it lands on the panel you are looking at.** The two surfaces keep their own
 numbers — that is the point of mini, which exists to sit smaller and further out of the way — so
@@ -348,7 +390,7 @@ the right size is Scale.
 | Size {#panel-size} | How wide, in metres. Height follows the panel's proportions, so there is nothing else to set |
 | Curvature {#panel-curve} | 0 is flat, 1 is wrapped around you |
 | Scale {#panel-scale} | How large the content is drawn, on the same steps the desktop window zooms with |
-| Resolution {#panel-resolution} | How many pixels the big panel is rendered at. Big panel only |
+| Resolution {#panel-resolution} | How many pixels the panel is rendered at, which also sets its shape. The big panel starts at 1024x640, the mini panel at 512x280 |
 
 ##### Opacity is one knob for both {#opacity}
 
@@ -374,8 +416,10 @@ Size, Scale and Resolution all sound like "how big", and keeping them apart is w
   worth of layout and a whole ship's slots fit; at 200% it presents 512x320 and you can read it
   from across the cockpit.
 
-Every resolution is the same shape, so changing it never changes the proportions of the thing in
-front of you — only how much detail is in it. **More pixels cost more to render, every frame**,
+Every size on the offered list is the same shape as the big panel's default, so picking one of
+them changes how much detail is in the panel and not its proportions. A size a
+[resize](#resizing-it) produced keeps the shape you pulled it to, and is listed beside them.
+**More pixels cost more to render, every frame**,
 and past the point where the panel covers what your headset can actually resolve they buy you
 nothing. Pick by looking at it, not by picking the biggest number.
 
@@ -398,7 +442,7 @@ everything on the panel is, mini changes how much of it there is. Zooming a pane
 makes it readable; switching to mini gives you less to read.
 
 The mini rows work the same way: [locking](#mini-lock), [distance](#mini-distance),
-[size](#mini-size), [curvature](#mini-curve) and [scale](#mini-scale) — but not opacity, which
+[size](#mini-size), [curvature](#mini-curve), [scale](#mini-scale) and resolution — but not opacity, which
 [both panels share](#opacity).
 The mini panel defaults to 0.34 m across — it is meant to sit at the edge of vision — against
 1.1 m for the full one.
@@ -549,6 +593,25 @@ Up and down are the room's vertical, not the panel's own, and nearer and further
 floor rather than along the tilted face — otherwise bringing a panel closer would raise it at the
 same time, which is one gesture doing two things.
 
+#### `zoom_headset_panel`
+
+Steps `vr.current.scale` one rung along `ZoomLadder`, or back to its default, so it lands on
+whichever panel is on screen.
+
+```json
+{"type":"object","properties":{"direction":{"type":"string","description":"in draws it one step larger, out one step smaller, reset at 100%.","enum":["in","out","reset"]}},"required":["direction"],"additionalProperties":false}
+```
+
+#### `resize_headset_panel`
+
+Turns resize mode on or off. The mode lives in the headset host rather than in settings, so it
+ends with the session. Turning it on is refused with the motion controllers off, since nothing
+could then take hold of a handle.
+
+```json
+{"type":"object","properties":{"on":{"type":"boolean","description":"True to enter resize mode, false to leave it."}},"required":["on"],"additionalProperties":false}
+```
+
 It exists because asking to see the panel used to reach `get_headset_status`, that being the only
 headset-shaped thing on the surface — so *"show the VR panel"* was answered with *"the overlays
 are dark, Commander"*, which is true and is not what was asked. `set_setting` could always have
@@ -570,6 +633,8 @@ Two quads: `com.dseelinger.d47.panel` and `com.dseelinger.d47.captions`. Apparen
 the texture's pixel count and the quad's width in metres *together*, so mini is a genuinely
 smaller image as well as less content — drawing the full panel and hanging it nearer gives text a
 third of the size.
+
+Out of the box, before anything is resized:
 
 ```text
 full       1024 x 640 px   at 1.10 m wide

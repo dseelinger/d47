@@ -79,9 +79,12 @@ public sealed record VrSurfaceSettings
     /// </summary>
     public string Pixels { get; init; } = string.Empty;
 
-    /// <summary>The rung <see cref="Pixels"/> names, snapped, with the default for anything else.</summary>
-    public (int Width, int Height) Resolution => Interface.PanelResolution.Parse(
-        string.IsNullOrWhiteSpace(Pixels) ? null : Pixels);
+    /// <summary>The size <see cref="Pixels"/> names, with the big panel's default for anything else.</summary>
+    public (int Width, int Height) Resolution => ResolutionOr(Interface.PanelResolution.Default);
+
+    /// <summary>The size <see cref="Pixels"/> names, with <paramref name="fallback"/> for anything else.</summary>
+    public (int Width, int Height) ResolutionOr((int Width, int Height) fallback) =>
+        Interface.PanelResolution.Parse(string.IsNullOrWhiteSpace(Pixels) ? null : Pixels, fallback);
 
     /// <summary>Where this surface goes and what it looks like.</summary>
     public SurfacePlacement ToPlacement(double opacity) => new SurfacePlacement

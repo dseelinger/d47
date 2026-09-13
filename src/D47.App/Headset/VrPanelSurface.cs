@@ -17,13 +17,24 @@ namespace D47.App.Headset;
 /// </summary>
 public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 {
-    /// <summary>
-    /// Mini, and it is 512 wide rather than 640 because that is the lever on apparent text size.
-    /// </summary>
-    private static readonly PixelSize Mini =
-        new(PanelResolution.Mini.Width, PanelResolution.Mini.Height);
+    /// <summary>How thick a resize handle is drawn, in pixels, and how thick while a ray is on it.</summary>
+    private const double EdgePixels = 6;
+
+    private const double LitEdgePixels = 16;
 
     private readonly PanelViewModel _model;
+
+    /// <summary>The resize handles, drawn over the content: left, right, top, bottom.</summary>
+    private readonly Border _left = Edge(Avalonia.Layout.HorizontalAlignment.Left, Avalonia.Layout.VerticalAlignment.Stretch);
+    private readonly Border _right = Edge(Avalonia.Layout.HorizontalAlignment.Right, Avalonia.Layout.VerticalAlignment.Stretch);
+    private readonly Border _top = Edge(Avalonia.Layout.HorizontalAlignment.Stretch, Avalonia.Layout.VerticalAlignment.Top);
+    private readonly Border _bottom = Edge(Avalonia.Layout.HorizontalAlignment.Stretch, Avalonia.Layout.VerticalAlignment.Bottom);
+
+    private bool _handlesShown;
+    private VrHandle _handlesLit;
+
+    /// <summary>The width and pixels a resize drag has reached, until it is written to settings.</summary>
+    private (float WidthMetres, (int Width, int Height) Pixels)? _reshaping;
     private readonly string? _dumpTo;
 
     private bool _kept;
@@ -197,9 +208,16 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         // mechanism seen from two rooms.
         var pixels = settings.Current.Vr.Panel.Resolution;
 
-        _offscreen = new OffscreenSurface(
-            new LayoutTransformControl { LayoutTransform = _scale, Child = _view },
-            new PixelSize(pixels.Width, pixels.Height));
+        var framed = new Avalonia.Controls.Panel();
+        framed.Children.Add(new LayoutTransformControl { LayoutTransform = _scale, Child = _view });
+
+        foreach (var edge in new[] { _left, _right, _top, _bottom })
+        {
+            edge.Bind(Border.BackgroundProperty, edge.GetResourceObservable(Theming.ThemeManager.AccentKey));
+            framed.Children.Add(edge);
+        }
+
+        _offscreen = new OffscreenSurface(framed, new PixelSize(pixels.Width, pixels.Height));
 
         // Anything the panel shows changing is a reason to redraw, and nothing else is.
         model.PropertyChanged += OnModelChanged;
@@ -276,6 +294,11 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         {
             var placement = Settings().ToPlacement(_settings.Current.Vr.Opacity);
 
+            if (_reshaping is { } live)
+            {
+                placement = (placement with { WidthMetres = live.WidthMetres }).Sane();
+            }
+
             return _anchor(Slot) is { } anchor
                 ? placement with { Placed = anchor.Placed, PlacedAgainst = anchor.Against }
                 : placement;
@@ -287,12 +310,78 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         ? D47.Core.Capabilities.Builtin.VrCapability.MiniSlot
         : D47.Core.Capabilities.Builtin.VrCapability.PanelSlot;
 
-    /// <summary>
-    /// How many pixels to render, which is the Commander's since Phase 25 for the big panel and fixed
-    /// for mini.
-    /// </summary>
+    /// <summary>How many pixels to render: a resize drag's while one is running, otherwise the slot's own.</summary>
     public (int Width, int Height) Size =>
-        Mode == PanelMode.Mini ? (Mini.Width, Mini.Height) : Settings().Resolution;
+        _reshaping?.Pixels
+        ?? (Mode == PanelMode.Mini ? Settings().ResolutionOr(PanelResolution.Mini) : Settings().Resolution);
+
+    /// <summary>Renders at a width and pixel size a resize drag has reached, ahead of settings (#107).</summary>
+    public void Reshape(float widthMetres, (int Width, int Height) pixels)
+    {
+        if (_reshaping == (widthMetres, pixels))
+        {
+            return;
+        }
+
+        _reshaping = (widthMetres, pixels);
+        _dirty = true;
+    }
+
+    /// <summary>Goes back to reading the slot's settings, once a drag has been written to them.</summary>
+    public void Reshaped()
+    {
+        _reshaping = null;
+        _dirty = true;
+    }
+
+    /// <summary>Draws the resize handles, with the edges a ray is on lit (#107).</summary>
+    public void ShowHandles(bool shown, VrHandle lit)
+    {
+        lit = shown ? lit : VrHandle.None;
+
+        if (shown == _handlesShown && lit == _handlesLit)
+        {
+            return;
+        }
+
+        _handlesShown = shown;
+        _handlesLit = lit;
+
+        Light(_left, lit.HasFlag(VrHandle.Left), across: false);
+        Light(_right, lit.HasFlag(VrHandle.Right), across: false);
+        Light(_top, lit.HasFlag(VrHandle.Top), across: true);
+        Light(_bottom, lit.HasFlag(VrHandle.Bottom), across: true);
+
+        _dirty = true;
+
+        void Light(Border edge, bool on, bool across)
+        {
+            edge.IsVisible = shown;
+            edge.Opacity = on ? 1 : 0.55;
+
+            if (across)
+            {
+                edge.Height = on ? LitEdgePixels : EdgePixels;
+            }
+            else
+            {
+                edge.Width = on ? LitEdgePixels : EdgePixels;
+            }
+        }
+    }
+
+    /// <summary>Whether the resize handles are drawn.</summary>
+    public bool HandlesShown => _handlesShown;
+
+    private static Border Edge(Avalonia.Layout.HorizontalAlignment across, Avalonia.Layout.VerticalAlignment down) => new()
+    {
+        HorizontalAlignment = across,
+        VerticalAlignment = down,
+        Width = across == Avalonia.Layout.HorizontalAlignment.Stretch ? double.NaN : EdgePixels,
+        Height = down == Avalonia.Layout.VerticalAlignment.Stretch ? double.NaN : EdgePixels,
+        IsHitTestVisible = false,
+        IsVisible = false,
+    };
 
     public bool IsDirty => _dirty;
 

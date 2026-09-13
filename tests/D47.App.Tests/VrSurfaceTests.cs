@@ -58,6 +58,32 @@ public class VrSurfaceTests
         Assert.True(mini.WidthMetres < full.WidthMetres);
     }
 
+    /// <summary>
+    /// A resize drag is drawn at the size it has reached before anything is written, and the slot's own
+    /// pixels are read again once it is (#107).
+    /// </summary>
+    [AvaloniaFact]
+    public void TheMiniPanelRendersAtItsOwnPixelsAndADragOverridesThemUntilWritten()
+    {
+        var (settings, _, _) = TestSurface.Create();
+        settings.Apply(VrCapability.EnabledKey, "true", SettingsCaller.Panel);
+        settings.Apply(VrCapability.ModeKey, "mini", SettingsCaller.Panel);
+
+        using var surface = new VrPanelSurface(new PanelViewModel(), settings, _ => null);
+
+        Assert.Equal(D47.Core.Interface.PanelResolution.Mini, surface.Size);
+
+        settings.Apply("vr.mini.resolution", "1024x640", SettingsCaller.Panel);
+        Assert.Equal((1024, 640), surface.Size);
+
+        surface.Reshape(0.5f, (700, 380));
+        Assert.Equal((700, 380), surface.Size);
+        Assert.Equal(0.5f, surface.Placement.WidthMetres, 3);
+
+        surface.Reshaped();
+        Assert.Equal((1024, 640), surface.Size);
+    }
+
     [AvaloniaFact]
     public void EachModeReadsItsOwnPlacementSlot()
     {

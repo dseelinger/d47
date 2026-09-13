@@ -1493,6 +1493,7 @@ public sealed class AppHost : IDisposable
                         : (Core.Vr.VrState.Connecting, "Looking for a headset."),
                     Nudge = (nudge, steps) =>
                         self?.Vr?.Nudge(nudge, steps) ?? Core.Vr.VrNudgeOutcome.NoHeadset,
+                    Resize = on => self?.Vr?.Resize(on) ?? Core.Vr.VrResizeOutcome.NoHeadset,
                 },
                 actionSurface = new ActionSurface
                 {

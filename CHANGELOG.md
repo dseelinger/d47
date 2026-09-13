@@ -13,6 +13,15 @@ overlay strip takes drag handles on its top edge, its bottom edge and all four c
 drags both dimensions, an edge drags one. A drag stops at a minimum rather than going to nothing,
 and the new size is remembered the way the position already is.
 
+The headset panels resize too. Say "resize the panel" and the panel on screen shows a handle along
+each edge; point a controller at an edge or a corner, hold the trigger and pull. The panel changes
+shape in the room and its content reflows into the new space rather than being stretched. Say
+"stop resizing" or press the grip to leave the mode. The mini panel's resolution is now a setting
+like the full panel's, so mini describes how much is shown rather than a fixed size.
+
+The panel's zoom can be stepped from inside the headset: "zoom the panel in", "zoom the panel out"
+and "reset the panel zoom" change how large the content is drawn without moving the panel's edges.
+
 ## 0.114.0 — Timers and alarms behind a startup flag
 
 Clocks, timers and alarms are off unless d47 is started with `--utilities` or with

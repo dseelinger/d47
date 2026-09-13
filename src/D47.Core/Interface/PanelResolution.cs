@@ -47,26 +47,37 @@ public static class PanelResolution
     }
 
     /// <summary>
-    /// The rung a "1280x800" names, or the default when it names nothing — which is what a hand-edited
+    /// The size a "1280x800" names, or the default when it names nothing — which is what a hand-edited
     /// file, an older settings revision and an empty string all arrive as.
     /// </summary>
-    public static (int Width, int Height) Parse(string? value)
+    public static (int Width, int Height) Parse(string? value) => Parse(value, Default);
+
+    /// <summary>
+    /// The size a "1280x800" names, kept to the bounds a resize drag keeps to, or
+    /// <paramref name="fallback"/> when it names nothing. A size off the ladder is kept, because a
+    /// drag produces one (#107).
+    /// </summary>
+    public static (int Width, int Height) Parse(string? value, (int Width, int Height) fallback)
     {
         if (value is null)
         {
-            return Default;
+            return fallback;
         }
 
         var at = value.IndexOf('x', StringComparison.OrdinalIgnoreCase);
 
         if (at <= 0
             || !int.TryParse(value[..at], out var width)
-            || !int.TryParse(value[(at + 1)..], out var height))
+            || !int.TryParse(value[(at + 1)..], out var height)
+            || width <= 0
+            || height <= 0)
         {
-            return Default;
+            return fallback;
         }
 
-        return Snap(width, height);
+        return (
+            Math.Clamp(width, Vr.VrResize.FewestPixels.Width, Vr.VrResize.MostPixels.Width),
+            Math.Clamp(height, Vr.VrResize.FewestPixels.Height, Vr.VrResize.MostPixels.Height));
     }
 
     /// <summary>What a mini panel presents at, which is not on this ladder and is not meant to be.</summary>

@@ -64,6 +64,14 @@ public sealed class VrHost : IDisposable
 
     private uint _carryingHand;
 
+    /// <summary>Whether the panels answer to their edges (#107). Set from a tool call, read by the tick.</summary>
+    private volatile bool _resizeMode;
+
+    /// <summary>The resize drag a hand is holding, and the device holding it.</summary>
+    private VrResizeGrab? _resizing;
+
+    private uint _resizingHand;
+
     /// <summary>The last time a tick supplied.</summary>
     private DateTimeOffset _now = DateTimeOffset.MinValue;
 
@@ -236,6 +244,31 @@ public sealed class VrHost : IDisposable
             down ? string.Empty : ", having first been put down in front of the Commander");
 
         return down ? VrNudgeOutcome.Moved : VrNudgeOutcome.PutDown;
+    }
+
+    /// <summary>Puts the panels into resize mode or takes them out of it (#107).</summary>
+    public VrResizeOutcome Resize(bool on)
+    {
+        if (!on)
+        {
+            _resizeMode = false;
+            return VrResizeOutcome.Off;
+        }
+
+        if (!_settings.Current.Vr.Controllers)
+        {
+            return VrResizeOutcome.NoControllers;
+        }
+
+        if (_lifecycle.State != VrState.Active)
+        {
+            return VrResizeOutcome.NoHeadset;
+        }
+
+        _resizeMode = true;
+        _logger.LogInformation("The headset panels are in resize mode");
+
+        return VrResizeOutcome.On;
     }
 
     /// <summary>Where a surface was put down, if it has been.</summary>
@@ -488,19 +521,42 @@ public sealed class VrHost : IDisposable
         // Claimed only while a ray is on the panel or a carry is already running — the second because a hand
         // can swing the panel far enough that its own ray leaves it, and dropping the claim there would drop
         // the panel mid-move.
-        var held = _runtime.Actions.TriggerHeld(found is not null || _carrying is not null);
+        var held = _runtime.Actions.TriggerHeld(found is not null || _carrying is not null || _resizing is not null);
 
-        // Back, on the grip (Phase 25).
-        if (_runtime.Actions.BackPressed() && _panel.Back())
+        // Back, on the grip (Phase 25), which leaves resize mode instead while the panel is in it.
+        if (_runtime.Actions.BackPressed() && _resizing is null)
         {
-            _panel.Invalidate();
+            if (_resizeMode)
+            {
+                _resizeMode = false;
+                _logger.LogInformation("Resize mode was left from the grip");
+            }
+            else if (_panel.Back())
+            {
+                _panel.Invalidate();
+            }
         }
+
+        var resizeMode = _resizeMode;
+
+        var onHandle = _resizing?.Handle
+            ?? (resizeMode && found is { } aimed
+                ? VrResize.HandleAt(aimed.Hit.U, aimed.Hit.V, extent)
+                : VrHandle.None);
+
+        _panel.ShowHandles(resizeMode || _resizing is not null, onHandle);
 
         // What the ray is resting on, lit so the Commander can see they have found it.
         _panel.Aim(found?.Hit.U, found?.Hit.V);
 
         if (!held)
         {
+            if (_resizing is not null)
+            {
+                LetGoOfTheHandle(slot);
+                return;
+            }
+
             if (_scrolling)
             {
                 _scrolling = false;
@@ -541,6 +597,20 @@ public sealed class VrHost : IDisposable
             return;
         }
 
+        if (_resizing is { } resize)
+        {
+            // The hand that took the handle, and only that one.
+            if (Holding(hands, _resizingHand) is { } puller)
+            {
+                var shape = VrResize.Drag(resize, puller.Aim);
+
+                _anchors[slot] = Anchor(shape.Pose, head);
+                _panel.Reshape(shape.WidthMetres, (shape.PixelsWide, shape.PixelsTall));
+            }
+
+            return;
+        }
+
         if (_carrying is null)
         {
             if (found is not { } start)
@@ -551,6 +621,17 @@ public sealed class VrHost : IDisposable
             // One button does both, so the gesture has to say which.
             if (_pressed is not { } pressed)
             {
+                // In resize mode a press that lands on a handle is a resize, decided here and not revisited.
+                if (onHandle != VrHandle.None
+                    && VrResize.Grab(
+                        new VrPanelShape(resting, placement.WidthMetres, width, height),
+                        onHandle,
+                        start.Hand.Aim) is { } handle)
+                {
+                    TakeHoldOfAHandle(slot, handle, start.Hand.Device, resting, head);
+                    return;
+                }
+
                 _pressed = new Press(_now, start.Hit.U, start.Hit.V);
 
                 // A hand that came down on a scrollbar is scrolling, not carrying — decided at the moment of
@@ -596,12 +677,56 @@ public sealed class VrHost : IDisposable
         }
 
         // The hand that took it, and only that one.
-        if (Holding(hands) is not { } carrier)
+        if (Holding(hands, _carryingHand) is not { } carrier)
         {
             return;
         }
 
         _anchors[slot] = Anchor(VrPlacementMath.Carried(_carrying.Value, carrier.Aim), head);
+    }
+
+    /// <summary>Starts a resize drag, putting the panel down in the room first if it was riding the head.</summary>
+    private void TakeHoldOfAHandle(string slot, VrResizeGrab grab, uint device, VrPose resting, VrPose head)
+    {
+        _resizing = grab;
+        _resizingHand = device;
+        _anchors[slot] = Anchor(resting, head);
+
+        if (_panel.Placement.Lock != SurfaceLock.WorldLocked)
+        {
+            var locked = _settings.Apply(VrCapability.LockKey(slot), "world", SettingsCaller.Hotkey);
+
+            if (locked.Status != SettingApplyStatus.Applied)
+            {
+                _logger.LogWarning(
+                    "The panel's handle was taken but {Key} would not go to world: {Status} — {Detail}",
+                    VrCapability.LockKey(slot),
+                    locked.Status,
+                    locked.Message);
+            }
+        }
+
+        _logger.LogDebug("The {Slot} panel's {Handle} handle was taken by device {Device}", slot, grab.Handle, device);
+    }
+
+    /// <summary>Ends a resize drag, writing the size and pixels it reached to the slot's settings.</summary>
+    private void LetGoOfTheHandle(string slot)
+    {
+        _resizing = null;
+
+        var width = Math.Round((double)_panel.Placement.WidthMetres, 3);
+        var pixels = D47.Core.Interface.PanelResolution.Describe(_panel.Size);
+
+        _settings.Replace(
+            "the headset panel was resized",
+            s => slot == VrCapability.MiniSlot
+                ? s with { Vr = s.Vr with { Mini = s.Vr.Mini with { Width = width, Pixels = pixels } } }
+                : s with { Vr = s.Vr with { Panel = s.Vr.Panel with { Width = width, Pixels = pixels } } });
+
+        _panel.Reshaped();
+        Remember();
+
+        _logger.LogInformation("The {Slot} panel was resized to {Width} m at {Pixels}", slot, width, pixels);
     }
 
     /// <summary>
@@ -623,6 +748,15 @@ public sealed class VrHost : IDisposable
         }
 
         _pressed = null;
+
+        _resizeMode = false;
+
+        if (_resizing is not null)
+        {
+            LetGoOfTheHandle(_panel.Slot);
+        }
+
+        _panel.ShowHandles(false, VrHandle.None);
 
         if (_carrying is not null)
         {
@@ -700,7 +834,7 @@ public sealed class VrHost : IDisposable
             // meet whether or not the curvature model is right about where that point is.
             point = VrAim.PointAlong(on.Hand.Aim, on.Hit.DistanceMetres);
         }
-        else if (_carrying is not null && Holding(hands) is { } carrier)
+        else if (_carrying is not null && Holding(hands, _carryingHand) is { } carrier)
         {
             // Kept through a carry that has swung the panel off its own ray.
             aim = carrier.Aim;
@@ -719,12 +853,12 @@ public sealed class VrHost : IDisposable
         _runtime.ShowCursor(point, head);
     }
 
-    /// <summary>The hand currently carrying the panel, if it is still being tracked.</summary>
-    private VrHand? Holding(IReadOnlyList<VrHand> hands)
+    /// <summary>The hand with this device, if it is still being tracked.</summary>
+    private static VrHand? Holding(IReadOnlyList<VrHand> hands, uint device)
     {
         foreach (var hand in hands)
         {
-            if (hand.Device == _carryingHand)
+            if (hand.Device == device)
             {
                 return hand;
             }

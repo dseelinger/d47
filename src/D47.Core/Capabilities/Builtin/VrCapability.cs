@@ -65,7 +65,13 @@ public static class VrCapability
 
         /// <summary>Moves whichever panel is on screen one or more steps, and says what happened (#199).</summary>
         public required Func<VrNudge, int, VrNudgeOutcome> Nudge { get; init; }
+
+        /// <summary>Puts the panels into resize mode or takes them out of it, and says what happened (#107).</summary>
+        public Func<bool, VrResizeOutcome> Resize { get; init; } = _ => VrResizeOutcome.NoHeadset;
     }
+
+    /// <summary>The words <c>zoom_headset_panel</c> takes, in order.</summary>
+    public static IReadOnlyList<string> ZoomDirections { get; } = ["in", "out", "reset"];
 
     public static CapabilityDescriptor Create(SettingsService settings, HeadsetSurface headset) => new()
     {
@@ -137,6 +143,51 @@ public static class VrCapability
                 ],
                 Commands = [.. NudgePhrases()],
                 Handler = (arguments, _) => Task.FromResult(Move(headset, arguments)),
+            },
+
+            new ToolDefinition
+            {
+                Name = "zoom_headset_panel",
+                Description =
+                    "Make everything drawn on the headset panel larger or smaller, one step at a time, "
+                    + "or put it back to 100%. The panel's edges do not move; the content reflows. "
+                    + "Acts on whichever panel is on screen.",
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "direction",
+                        Type = ToolParameterType.String,
+                        Description = "in draws it one step larger, out one step smaller, reset at 100%.",
+                        Required = true,
+                        AllowedValues = ZoomDirections,
+                    },
+                ],
+                Commands = [.. ZoomPhrases()],
+                Handler = (arguments, _) => Task.FromResult(Zoom(settings, arguments)),
+            },
+
+            new ToolDefinition
+            {
+                Name = "resize_headset_panel",
+                Description =
+                    "Put the headset panel into resize mode, where its edges and corners can be dragged "
+                    + "with a motion controller to change its shape, or take it out again.",
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "on",
+                        Type = ToolParameterType.Boolean,
+                        Description = "True to enter resize mode, false to leave it.",
+                        Required = true,
+                    },
+                ],
+                Commands = [.. ResizePhrases()],
+                Handler = (arguments, _) => Task.FromResult(
+                    arguments.TryGetBoolean("on", out var on)
+                        ? ToolResult.Ok(VrResize.Describe(headset.Resize(on)))
+                        : ToolResult.Error("Say whether to enter resize mode or leave it.")),
             },
         ],
         Settings =
@@ -480,28 +531,45 @@ public static class VrCapability
             (v, x) => v with { Zoom = Interface.ZoomLadder.Snap((int)Parse(x, v.Zoom)) },
             [.. Interface.ZoomLadder.Steps.Select(step => step.ToString(CultureInfo.InvariantCulture))]);
 
-        // The big panel only.
-        if (slot != PanelSlot)
-        {
-            yield break;
-        }
+        (int Width, int Height) Fallback(Configuration.D47Settings s) =>
+            mini || (current && IsMini(s)) ? Interface.PanelResolution.Mini : Interface.PanelResolution.Default;
 
         yield return Row(
             "resolution",
             "Resolution",
-            "How many pixels the panel is rendered at, and the third of three levers that are worth keeping "
-            + "apart: pixels decide how much the image can hold, Size decides how big it looks in the room, "
-            + "and Scale decides how much layout those pixels carry. More pixels cost more to render every "
-            + "frame, and past what the quad covers in your headset they buy nothing - so this is a trade "
-            + "you make by looking, not a number to maximise.",
+            "How many pixels the panel is rendered at, which also sets its shape: the height in the room "
+            + "follows from these two numbers and Size. Pixels decide how much the image can hold, Size "
+            + "decides how big it looks in the room, and Scale decides how much layout those pixels carry. "
+            + "Dragging the panel's edges in resize mode sets this and Size together. More pixels cost more "
+            + "to render every frame, and past what the quad covers in your headset they buy nothing.",
             SettingKind.Choice,
-            v => Interface.PanelResolution.Describe(v.Resolution),
-            (v, x) => v with
+            _ => null,
+            (v, _) => v,
+            [.. Interface.PanelResolution.Choices]) with
+        {
+            ChoiceSource = s => ResolutionChoices(read(s).ResolutionOr(Fallback(s)), Fallback(s)),
+            Binding = new SettingBinding
             {
-                Pixels = Interface.PanelResolution.Describe(Interface.PanelResolution.Parse(x)),
+                Read = s => Interface.PanelResolution.Describe(read(s).ResolutionOr(Fallback(s))),
+                Write = (s, v) => write(s, read(s) with
+                {
+                    Pixels = Interface.PanelResolution.Describe(Interface.PanelResolution.Parse(v, Fallback(s))),
+                }),
             },
-            [.. Interface.PanelResolution.Choices]);
+        };
     }
+
+    /// <summary>The ladder, plus the surface's default and its current size when either is off it.</summary>
+    private static IReadOnlyList<string> ResolutionChoices(
+        (int Width, int Height) now,
+        (int Width, int Height) fallback) =>
+        [
+            .. new[] { fallback, now }
+                .Concat(Interface.PanelResolution.Steps)
+                .Distinct()
+                .OrderBy(size => (long)size.Width * size.Height)
+                .Select(Interface.PanelResolution.Describe),
+        ];
 
     private static string Number(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
 
@@ -590,6 +658,85 @@ public static class VrCapability
         yield return (VrNudge.TurnRight, ["turn the panel right", "yaw the panel right"]);
         yield return (VrNudge.TiltUp, ["tilt the panel up", "tilt the panel back"]);
         yield return (VrNudge.TiltDown, ["tilt the panel down", "tilt the panel forward"]);
+    }
+
+    /// <summary>Steps the scale of whichever panel is on screen along the zoom ladder (#107).</summary>
+    private static ToolResult Zoom(SettingsService settings, ToolArguments arguments)
+    {
+        var said = arguments.TryGetString("direction", out var direction)
+            ? direction.Trim().ToLowerInvariant()
+            : null;
+
+        if (said is null || !ZoomDirections.Contains(said))
+        {
+            return ToolResult.Error($"Say which way to zoom the panel: {string.Join(", ", ZoomDirections)}.");
+        }
+
+        var at = Interface.ZoomLadder.Snap(Facing(settings.Current).Zoom);
+
+        var wanted = said switch
+        {
+            "in" => Interface.ZoomLadder.In(at),
+            "out" => Interface.ZoomLadder.Out(at),
+            _ => Interface.ZoomLadder.Default,
+        };
+
+        var applied = settings.Apply(
+            $"vr.{CurrentSlot}.scale",
+            wanted.ToString(CultureInfo.InvariantCulture),
+            SettingsCaller.Model);
+
+        var drawn = Interface.ZoomLadder.Describe(wanted);
+
+        return applied.Status switch
+        {
+            SettingApplyStatus.Applied => ToolResult.Ok($"The panel is drawn at {drawn}."),
+            SettingApplyStatus.Unchanged when said == "in" => ToolResult.Ok($"The panel is already drawn at its largest, {drawn}."),
+            SettingApplyStatus.Unchanged when said == "out" => ToolResult.Ok($"The panel is already drawn at its smallest, {drawn}."),
+            SettingApplyStatus.Unchanged => ToolResult.Ok($"The panel is already drawn at {drawn}."),
+            _ => ToolResult.Error(applied.Message ?? "The panel's zoom could not be changed."),
+        };
+    }
+
+    /// <summary>The phrases that reach <c>zoom_headset_panel</c> with no model in the path.</summary>
+    private static IEnumerable<ToolCommandPhrase> ZoomPhrases()
+    {
+        (string Direction, string[] Spellings)[] all =
+        [
+            ("in", ["zoom the panel in", "zoom in on the panel", "panel zoom in", "make the panel text bigger"]),
+            ("out", ["zoom the panel out", "zoom out on the panel", "panel zoom out", "make the panel text smaller"]),
+            ("reset", ["reset the panel zoom", "reset panel zoom", "panel zoom reset"]),
+        ];
+
+        foreach (var (direction, spellings) in all)
+        {
+            var arguments = new Dictionary<string, string>(StringComparer.Ordinal) { ["direction"] = direction };
+
+            foreach (var spelling in spellings)
+            {
+                yield return new ToolCommandPhrase(spelling, arguments);
+            }
+        }
+    }
+
+    /// <summary>The phrases that reach <c>resize_headset_panel</c> with no model in the path.</summary>
+    private static IEnumerable<ToolCommandPhrase> ResizePhrases()
+    {
+        (string On, string[] Spellings)[] all =
+        [
+            ("true", ["resize the panel", "resize panel", "panel resize mode", "start resizing the panel"]),
+            ("false", ["stop resizing the panel", "stop resizing", "done resizing", "finish resizing the panel"]),
+        ];
+
+        foreach (var (on, spellings) in all)
+        {
+            var arguments = new Dictionary<string, string>(StringComparer.Ordinal) { ["on"] = on };
+
+            foreach (var spelling in spellings)
+            {
+                yield return new ToolCommandPhrase(spelling, arguments);
+            }
+        }
     }
 
     /// <summary>Turns the headset overlays on or off, and then says what that produced.</summary>
