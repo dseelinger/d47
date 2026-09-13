@@ -6,6 +6,15 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.116.0 — Voices that suit who is speaking
+
+Speech settings now has a "Reset every voice to its pairing" row. Pressing it puts every core back
+to the voice d47's pairing pass chose for it, and the carrier captain and tower back to speaking in
+the ship AI's — undoing any voice you have since hand-picked. It covers every voice provider you
+have used, not only the one selected now, and a core with no recorded pairing is paired again
+rather than left as it was. A first press only asks; a second press within a few seconds is the
+confirmation.
+
 ## 0.115.0 — Resize the panel where it sits
 
 Place mode (`Ctrl+Alt+M`) now offers a resize as well as a move. While the border is up, the

@@ -24,12 +24,20 @@ public sealed record VoiceChoices
     public IReadOnlyDictionary<string, string> Cores { get; init; } =
         new Dictionary<string, string>(StringComparer.Ordinal);
 
+    /// <summary>
+    /// The voice the pairing pass chose for each core on this provider, kept even after a hand-picked
+    /// choice overwrites <see cref="Cores"/> (#85).
+    /// </summary>
+    public IReadOnlyDictionary<string, string> PairedCores { get; init; } =
+        new Dictionary<string, string>(StringComparer.Ordinal);
+
     /// <summary>Whether the background pairing has run against this provider's voice list.</summary>
     public bool Paired { get; init; }
 
     /// <summary>Nothing was ever chosen here.</summary>
     public bool IsEmpty =>
-        Ship is null && CarrierCaptain is null && Tower is null && Cores.Count == 0 && !Paired;
+        Ship is null && CarrierCaptain is null && Tower is null
+        && Cores.Count == 0 && PairedCores.Count == 0 && !Paired;
 }
 
 /// <summary>
@@ -154,6 +162,7 @@ public static class VoiceMemory
         {
             Ship = taking.Ship,
             Cores = taking.Cores,
+            PairedCores = taking.PairedCores,
             Paired = taking.Paired,
         },
     };
@@ -176,6 +185,7 @@ public static class VoiceMemory
                 Persona = settings.Persona with
                 {
                     Voices = new Dictionary<string, string>(restoring.Cores, StringComparer.Ordinal),
+                    PairedVoices = new Dictionary<string, string>(restoring.PairedCores, StringComparer.Ordinal),
 
                     // Restored with the pairings it describes.
                     VoicesPaired = restoring.Paired,
@@ -190,6 +200,153 @@ public static class VoiceMemory
         CarrierCaptain = settings.Speech.CarrierCaptainVoice,
         Tower = settings.Speech.TowerVoice,
         Cores = new Dictionary<string, string>(settings.Persona.Voices, StringComparer.Ordinal),
+        PairedCores = new Dictionary<string, string>(settings.Persona.PairedVoices, StringComparer.Ordinal),
         Paired = settings.Persona.VoicesPaired,
     };
+
+    /// <summary>What a reset to the pairing's own choices did (#85).</summary>
+    public sealed record VoiceResetOutcome(
+        int Restored,
+        int PairingPending,
+        int ProvidersTouched,
+        bool ClearedOtherVoices)
+    {
+        /// <summary>What the reset row says afterwards.</summary>
+        public string Said
+        {
+            get
+            {
+                var parts = new List<string>
+                {
+                    Restored switch
+                    {
+                        0 => "No core had a recorded pairing.",
+                        1 => "One core now has the voice d47 paired it with.",
+                        _ => $"{Restored} cores now have the voice d47 paired them with.",
+                    },
+                };
+
+                if (PairingPending > 0)
+                {
+                    parts.Add(PairingPending == 1
+                        ? "One core had no recorded pairing, so it will be paired again the next chance d47 gets."
+                        : $"{PairingPending} cores had no recorded pairing, so they will be paired again the "
+                          + "next chance d47 gets.");
+                }
+
+                if (ClearedOtherVoices)
+                {
+                    parts.Add("The carrier captain and tower are back to speaking in the ship AI's voice.");
+                }
+
+                parts.Add(ProvidersTouched == 1
+                    ? "Covered the voice provider in use."
+                    : $"Covered all {ProvidersTouched} voice providers you have used, so switching providers "
+                      + "will not bring a hand-picked voice back.");
+
+                return string.Join(" ", parts);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Puts every core, on every voice provider the Commander has used, back to the voice the pairing
+    /// pass chose for it, and clears the carrier's two voices back to following the ship AI's. A core
+    /// with no recorded pairing is dropped instead, so it is paired again the next chance d47 gets
+    /// (#85).
+    /// </summary>
+    public static (D47Settings Settings, VoiceResetOutcome Outcome) ResetToPairing(D47Settings settings)
+    {
+        var (persona, restored, pending) = ResetPersona(settings.Persona);
+
+        var clearedAny = settings.Speech.Voice is not null
+            || settings.Speech.CarrierCaptainVoice is not null
+            || settings.Speech.TowerVoice is not null;
+
+        var providerVoices = new Dictionary<string, VoiceChoices>(
+            settings.Speech.ProviderVoices, StringComparer.OrdinalIgnoreCase);
+
+        foreach (var (provider, choices) in settings.Speech.ProviderVoices)
+        {
+            var (updated, stashRestored, stashPending) = ResetStashed(choices);
+
+            providerVoices[provider] = updated;
+            restored += stashRestored;
+            pending += stashPending;
+            clearedAny = clearedAny
+                || choices.Ship is not null || choices.CarrierCaptain is not null || choices.Tower is not null;
+        }
+
+        var updatedSettings = settings with
+        {
+            Persona = persona,
+            Speech = settings.Speech with
+            {
+                Voice = null,
+                CarrierCaptainVoice = null,
+                TowerVoice = null,
+                ProviderVoices = providerVoices,
+            },
+        };
+
+        var outcome = new VoiceResetOutcome(
+            restored,
+            pending,
+            ProvidersTouched: 1 + settings.Speech.ProviderVoices.Count,
+            ClearedOtherVoices: clearedAny);
+
+        return (updatedSettings, outcome);
+    }
+
+    /// <summary>The live slot's part of a reset.</summary>
+    private static (PersonaSettings Persona, int Restored, int Pending) ResetPersona(PersonaSettings persona)
+    {
+        var (voices, restored, pending) = WithPairingsRestored(persona.Voices, persona.PairedVoices);
+
+        return (persona with { Voices = voices, VoicesPaired = persona.VoicesPaired && pending == 0 }, restored, pending);
+    }
+
+    /// <summary>The same reset for one provider's stashed choices.</summary>
+    private static (VoiceChoices Choices, int Restored, int Pending) ResetStashed(VoiceChoices choices)
+    {
+        var (cores, restored, pending) = WithPairingsRestored(choices.Cores, choices.PairedCores);
+
+        return (
+            choices with
+            {
+                Cores = cores,
+                Paired = choices.Paired && pending == 0,
+                Ship = null,
+                CarrierCaptain = null,
+                Tower = null,
+            },
+            restored,
+            pending);
+    }
+
+    /// <summary>
+    /// Every entry a pairing was recorded for, put back to it; every entry with none dropped rather
+    /// than left as it was hand-picked (#85).
+    /// </summary>
+    private static (IReadOnlyDictionary<string, string> Voices, int Restored, int Pending) WithPairingsRestored(
+        IReadOnlyDictionary<string, string> live,
+        IReadOnlyDictionary<string, string> recorded)
+    {
+        var restored = new Dictionary<string, string>(StringComparer.Ordinal);
+        var pending = 0;
+
+        foreach (var id in live.Keys.Union(recorded.Keys, StringComparer.Ordinal))
+        {
+            if (recorded.TryGetValue(id, out var paired))
+            {
+                restored[id] = paired;
+            }
+            else
+            {
+                pending++;
+            }
+        }
+
+        return (restored, restored.Count, pending);
+    }
 }

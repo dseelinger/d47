@@ -41,7 +41,10 @@ public static class TestSurface
         LongPress? localVoice = null,
         D47.Core.Diagnostics.Recording.RecordingLog? recording = null,
         LongPress? rescan = null,
-        D47.Core.Ticking.TickLoop? ticking = null)
+        D47.Core.Ticking.TickLoop? ticking = null,
+
+        // Appended, like every optional here: the composition root passes these positionally.
+        Func<string>? resetVoices = null)
     {
         var root = TempFolders.Create("d47-app-tests");
         var paths = new AppPaths(root);
@@ -72,6 +75,9 @@ public static class TestSurface
                 // surface these tests bind is then not the one that ships.
                 LocalVoiceState = () => "Not downloaded. About 350 MB, fetched once.",
                 DownloadLocalVoice = () => localVoice ?? ((_, _) => Task.FromResult<string?>(null)),
+
+                // Supplied rather than left null, for the same reason as the local voice download above.
+                ResetVoices = () => resetVoices ?? (() => string.Empty),
             },
             new ShipsCapability.ShipsSurface
             {
@@ -152,9 +158,11 @@ public static class TestSurface
         IReadOnlyList<VoiceInfo>? voices = null,
         LongPress? localVoice = null,
         D47.Core.Diagnostics.Recording.RecordingLog? recording = null,
-        LongPress? rescan = null)
+        LongPress? rescan = null,
+        Func<string>? resetVoices = null)
     {
-        var (settings, viewState, paths, _, _) = CreateFull(coverage, personas, voices, localVoice, recording, rescan);
+        var (settings, viewState, paths, _, _) =
+            CreateFull(coverage, personas, voices, localVoice, recording, rescan, resetVoices: resetVoices);
         return (settings, viewState, paths);
     }
 

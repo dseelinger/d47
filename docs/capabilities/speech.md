@@ -677,6 +677,38 @@ Both offer the same play glyphs as the voice row, and both audition as themselve
 reciting the ship AI's opening — a tower saying "You're cleared for landing pad seven" is what you
 are actually listening for when you cast one.
 
+#### Reset every voice to its pairing {#reset-voices}
+
+"Default" here means one specific thing: **the voice the pairing pass picked as the best match for
+that core**, not a shipped constant. Once you hand-pick a voice for a core, it overwrites the
+pairing pass's own choice in the same slot — and that choice was never kept anywhere else, so there
+was nothing to put back. This row is what fixes that: the pairing pass now records what it chose in
+a second slot a hand-pick never touches, and the row restores from it.
+
+Pressing it once only asks — the button changes to *"Press again to confirm"* and reverts on its
+own after a few seconds if nothing follows. A second press inside that window is what actually
+runs it:
+
+- Every core goes back to the voice the pairing pass chose for it. A core you never touched by hand
+  is unaffected.
+- The carrier captain and tower go back to following the ship AI's voice — there is no separate
+  pairing for them, so "default" for those two means empty, exactly as the row above already says.
+- **Every voice provider you have used is covered, not only the one selected now.** A reset that
+  touched only the live slot would be undone the next time you switched providers, because
+  switching restores whatever was filed away under the provider you are switching to.
+- A core with no recorded pairing — set before this row existed — is dropped rather than left as it
+  was, and paired again the next chance d47 gets, since nothing was recorded for it to restore.
+
+The row says afterwards what happened:
+
+```text
+One core now has the voice d47 paired it with. The carrier captain and tower are back to speaking
+in the ship AI's voice. Covered the voice provider in use.
+```
+
+No model call and no network are needed for the restore itself — only a core with nothing recorded
+needs pairing again, and that runs the same background pass startup already uses.
+
 #### Speak incoming messages {#incoming-messages}
 
 Reads in-game chat aloud, each sender in their own voice — never your ship AI's, because a

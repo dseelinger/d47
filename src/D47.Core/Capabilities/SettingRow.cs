@@ -237,6 +237,12 @@ public sealed record SettingRow
     public string? PressLabel { get; init; }
 
     /// <summary>
+    /// A press this row acts on only asks the first time; a second press within a few seconds is the
+    /// confirmation, and the ask lapses on its own if the second press does not come (#85).
+    /// </summary>
+    public bool ConfirmPress { get; init; }
+
+    /// <summary>
     /// A <see cref="SettingKind.Choice"/> row whose choices have to be fetched before they can be
     /// selected (#139).
     /// </summary>

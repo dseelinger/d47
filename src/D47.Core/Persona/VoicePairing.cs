@@ -363,6 +363,29 @@ public static class VoicePairing
         return new VoiceRepair(repaired, complete);
     }
 
+    /// <summary>
+    /// The recorded pairing with every entry that actually changed between <paramref name="before"/>
+    /// and <paramref name="after"/> added or refreshed — a hand-picked voice that passed through a
+    /// repair untouched is not one of them (#85).
+    /// </summary>
+    public static IReadOnlyDictionary<string, string> WithPairingsRecorded(
+        IReadOnlyDictionary<string, string> recorded,
+        IReadOnlyDictionary<string, string> before,
+        IReadOnlyDictionary<string, string> after)
+    {
+        var merged = new Dictionary<string, string>(recorded, StringComparer.Ordinal);
+
+        foreach (var (id, voice) in after)
+        {
+            if (!string.Equals(before.GetValueOrDefault(id), voice, StringComparison.Ordinal))
+            {
+                merged[id] = voice;
+            }
+        }
+
+        return merged;
+    }
+
     /// <summary>The model's answer, as persona id to voice id.</summary>
     private static async Task<IReadOnlyDictionary<string, string>> AskAsync(
         IReadOnlyList<VoiceInfo> voices,

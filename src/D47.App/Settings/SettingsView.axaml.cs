@@ -2069,7 +2069,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             IsVisible = false,
         };
 
-        if (row.PressAsync is { } running)
+        if (row.ConfirmPress)
+        {
+            WireConfirmPress(row, press, bar, message);
+        }
+        else if (row.PressAsync is { } running)
         {
             press.Click += async (_, _) => await RunPressAsync(row, running, press, bar, message);
         }
@@ -2100,6 +2104,60 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             : new StackPanel { Spacing = 8, Children = { inset, pressed } };
 
         return (stack, refresh, false);
+    }
+
+    /// <summary>How long a first press stays armed before a second press has to ask again (#85).</summary>
+    internal static readonly TimeSpan ConfirmPressWindow = TimeSpan.FromSeconds(4);
+
+    /// <summary>
+    /// A press this row acts on only asks the first time: it arms the button, and the actual work
+    /// waits for a second press inside the window. Nothing else on the panel is touched by the first
+    /// press, and the ask lapses back to the row's own label on its own if the second press does not
+    /// come — pressable exactly like any other row, so the headset ray reaches it too (#85).
+    /// </summary>
+    private void WireConfirmPress(SettingRow row, Button press, ProgressBar bar, TextBlock message)
+    {
+        var armed = false;
+        DispatcherTimer? lapse = null;
+
+        void Disarm()
+        {
+            armed = false;
+            press.Content = row.PressLabel;
+            lapse?.Stop();
+        }
+
+        void Arm()
+        {
+            armed = true;
+            press.Content = "Press again to confirm";
+
+            lapse?.Stop();
+            lapse = new DispatcherTimer { Interval = ConfirmPressWindow };
+            lapse.Tick += (_, _) => Disarm();
+            lapse.Start();
+        }
+
+        press.Click += async (_, _) =>
+        {
+            if (!armed)
+            {
+                Arm();
+                return;
+            }
+
+            Disarm();
+
+            if (row.PressAsync is { } running)
+            {
+                await RunPressAsync(row, running, press, bar, message);
+            }
+            else
+            {
+                row.Press!();
+                Refresh();
+            }
+        };
     }
 
     /// <summary>Whether a long press is already running.</summary>

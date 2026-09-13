@@ -35,6 +35,9 @@ public static class SpeechCapability
     public const string SpeakIncomingKey = "speech.speakIncomingMessages";
     public const string CharacterPriceKey = "speech.characterPrice";
 
+    /// <summary>Puts every voice back to what the pairing pass chose (#85).</summary>
+    public const string ResetVoicesKey = "speech.resetVoices";
+
     /// <summary>
     /// The same row for a provider billed by the length of the audio rather than by the characters
     /// handed over (#63).
@@ -197,6 +200,13 @@ public static class SpeechCapability
 
         /// <summary>Tries a provider's stored key against the real service (Phase 16).</summary>
         public Func<string, CancellationToken, Task<SecretCheck>>? VerifyKey { get; init; }
+
+        /// <summary>
+        /// Puts every core, on every provider used, back to the voice the pairing pass chose for it,
+        /// and reports what that did. Late-bound like <see cref="DownloadLocalVoice"/>, for the same
+        /// reason: rows are built before the host that answers a press exists (#85).
+        /// </summary>
+        public Func<Func<string>?>? ResetVoices { get; init; }
 
         /// <summary>Output devices, as id/label pairs the picker can render.</summary>
         public Func<IReadOnlyList<string>>? OutputDevices { get; init; }
@@ -614,6 +624,29 @@ public static class SpeechCapability
             },
             new SettingRow
             {
+                Key = ResetVoicesKey,
+                Advanced = true,
+                Label = "Reset every voice to its pairing",
+                Help =
+                    "Puts every core back to the voice d47 paired it with, and the carrier captain "
+                    + "and tower back to speaking in the ship AI's — undoing any voice you have "
+                    + "since hand-picked. Covers every voice provider you have used, not only the "
+                    + "one selected now, so switching providers afterwards will not bring a "
+                    + "hand-picked voice back. A core with no recorded pairing — set before this row "
+                    + "existed — is paired again rather than left as it was.",
+                Kind = SettingKind.Info,
+                ConfirmPress = true,
+                AppliesWhen = s => s.Speech.Provider != NoneId,
+                DocsAnchor = "reset-voices",
+                Group = "Other voices",
+                PressLabel = "Reset every voice",
+                PressAsync = surface.ResetVoices is null
+                    ? null
+                    : (_, _) => Task.FromResult<string?>(surface.ResetVoices.Invoke()?.Invoke()),
+                Binding = new SettingBinding { Read = DescribeVoiceResetState },
+            },
+            new SettingRow
+            {
                 Key = SpeakIncomingKey,
                 Advanced = true,
                 Label = "Speak incoming messages",
@@ -1024,6 +1057,26 @@ public static class SpeechCapability
             });
 
         return rows;
+    }
+
+    /// <summary>How many of the cores with a voice are on the one the pairing pass chose (#85).</summary>
+    private static string DescribeVoiceResetState(D47Settings settings)
+    {
+        var live = settings.Persona.Voices;
+
+        if (live.Count == 0)
+        {
+            return "No core has a voice chosen yet.";
+        }
+
+        var recorded = settings.Persona.PairedVoices;
+        var onPairing = live.Count(pair =>
+            recorded.TryGetValue(pair.Key, out var paired) && string.Equals(paired, pair.Value, StringComparison.Ordinal));
+
+        return onPairing == live.Count
+            ? $"All {live.Count} core(s) with a voice are on the one d47 paired them with."
+            : $"{onPairing} of {live.Count} core(s) are on the voice d47 paired them with; "
+              + $"{live.Count - onPairing} have been changed by hand.";
     }
 
     /// <summary>What one slot's row says it is for, with the warning where the warning belongs.</summary>

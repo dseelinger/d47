@@ -1429,6 +1429,9 @@ public sealed class AppHost : IDisposable
                     VerifyKey = (provider, token) => self is { } host
                         ? host.VerifySpeechKeyAsync(provider, token)
                         : Task.FromResult(SecretCheck.Unreachable("D47 is still starting up.")),
+
+                    // Late-bound for the same reason as the local voice download above.
+                    ResetVoices = () => self is null ? null : self.ResetVoices,
                 },
                 new ShipsCapability.ShipsSurface
                 {
@@ -2748,6 +2751,10 @@ public sealed class AppHost : IDisposable
                     {
                         [persona.Id] = voice,
                     },
+                    PairedVoices = VoicePairing.WithPairingsRecorded(
+                        current.Persona.PairedVoices,
+                        current.Persona.Voices,
+                        new Dictionary<string, string>(StringComparer.Ordinal) { [persona.Id] = voice }),
                 },
             });
 
@@ -2785,6 +2792,7 @@ public sealed class AppHost : IDisposable
             {
                 Voices = repair.Voices,
                 VoicesGenderChecked = repair.Complete,
+                PairedVoices = VoicePairing.WithPairingsRecorded(current.Persona.PairedVoices, before, repair.Voices),
             },
         });
 
@@ -2827,6 +2835,7 @@ public sealed class AppHost : IDisposable
             {
                 Voices = repair.Voices,
                 VoicesRepaired = repair.Complete ? VoicePairing.RepairRevision : current.Persona.VoicesRepaired,
+                PairedVoices = VoicePairing.WithPairingsRecorded(current.Persona.PairedVoices, before, repair.Voices),
             },
         });
 
@@ -2852,9 +2861,11 @@ public sealed class AppHost : IDisposable
 
         try
         {
+            var before = Settings.Current.Persona.Voices;
+
             var paired = await VoicePairing.ChooseAsync(
                 AboardVoices.Voices,
-                Settings.Current.Persona.Voices,
+                before,
                 Turns.Provider,
                 Turns.BackgroundModel,
                 Spend,
@@ -2865,7 +2876,12 @@ public sealed class AppHost : IDisposable
             // Flagged as run even when no model was configured and only the named defaults were written.
             Settings.Replace("persona.voices", current => current with
             {
-                Persona = current.Persona with { Voices = paired, VoicesPaired = true },
+                Persona = current.Persona with
+                {
+                    Voices = paired,
+                    VoicesPaired = true,
+                    PairedVoices = VoicePairing.WithPairingsRecorded(current.Persona.PairedVoices, before, paired),
+                },
             });
 
             // The core aboard may have just acquired a voice, and nothing else will notice.
@@ -2876,6 +2892,27 @@ public sealed class AppHost : IDisposable
             // Pairing is a convenience.
             _logger.LogWarning(ex, "Could not pair voices to personas");
         }
+    }
+
+    /// <summary>
+    /// Puts every core, on every provider the Commander has used, back to the voice d47 paired it
+    /// with, and reports what that did (#85).
+    /// </summary>
+    private string ResetVoices()
+    {
+        var (updated, outcome) = VoiceMemory.ResetToPairing(Settings.Current);
+
+        Settings.Replace("speech.resetVoices", _ => updated);
+        ApplySpeechSettings();
+
+        // A core with no recorded pairing was dropped rather than restored: paired again now, rather than
+        // waiting for whatever next fetches the voice list.
+        if (outcome.PairingPending > 0)
+        {
+            _ = PairPersonaVoicesAsync();
+        }
+
+        return outcome.Said;
     }
 
     /// <summary>

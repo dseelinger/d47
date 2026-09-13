@@ -175,6 +175,14 @@ public sealed record PersonaSettings
     public IReadOnlyDictionary<string, string> Voices { get; init; } =
         new Dictionary<string, string>();
 
+    /// <summary>
+    /// The voice the pairing pass chose for each core, keyed by persona id. Written only by the
+    /// pairing pass and its repairs, never by a hand-picked choice, so a reset has something to put
+    /// back (#85).
+    /// </summary>
+    public IReadOnlyDictionary<string, string> PairedVoices { get; init; } =
+        new Dictionary<string, string>(StringComparer.Ordinal);
+
     /// <summary>Which ship the core-binding rows are pointed at, by its <c>ShipID</c>.</summary>
     public int ShipCoreShip { get; init; }
 
