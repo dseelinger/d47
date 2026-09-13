@@ -88,6 +88,12 @@ public sealed class TurnLoop(
 
     private string? _lastModelUsed;
 
+    /// <summary>An offer to learn a phrase, waiting on the Commander's next reply (#169).</summary>
+    private (string Said, string Phrase)? _pendingLearn;
+
+    /// <summary>Utterances declined for learning this session, reduced (#169).</summary>
+    private readonly HashSet<string> _declinedLearn = new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>How hard to try before saying so out loud.</summary>
     public RetryPolicy Retry { get; set; } = RetryPolicy.Default;
 
@@ -273,6 +279,19 @@ public sealed class TurnLoop(
     public Func<string, string>? Heard { get; set; }
 
     /// <summary>
+    /// The phrase this Commander has taught d47 an utterance stands for, or null for nothing learned.
+    /// Applied to typed and spoken input alike after <see cref="Heard"/>, and only when the phrase is still
+    /// in <see cref="KeywordRouter.Book"/> (#169).
+    /// </summary>
+    public Func<string, string?>? LearnedPhraseFor { get; set; }
+
+    /// <summary>The Frontier id of whoever is flying, or null when none is known (#169).</summary>
+    public Func<string?>? CommanderId { get; set; }
+
+    /// <summary>Records that an utterance stands for a phrase, for whoever is flying (#169).</summary>
+    public Action<string, string>? LearnPhrase { get; set; }
+
+    /// <summary>
     /// The choices put to the Commander, read before any other route. Shared with a capability that
     /// opens its own offer directly, such as <see cref="Capabilities.Builtin.HelpCapability"/> (#168).
     /// </summary>
@@ -328,14 +347,53 @@ public sealed class TurnLoop(
             }
         }
 
+        if (LearnedPhraseFor?.Invoke(input) is { } taught && InBook(taught))
+        {
+            logger.LogInformation("Read \"{Said}\" as the learned phrase \"{Phrase}\"", input, taught);
+            input = taught;
+        }
+
+        if (_pendingLearn is { } pending)
+        {
+            _pendingLearn = null;
+
+            if (IsAffirmative(input))
+            {
+                LearnPhrase?.Invoke(pending.Said, pending.Phrase);
+
+                foreach (var turnEvent in Offered("Learned.", input))
+                {
+                    yield return turnEvent;
+                }
+            }
+            else
+            {
+                _declinedLearn.Add(KeywordRouter.Utterance(pending.Said));
+
+                foreach (var turnEvent in Offered("Dropped.", input))
+                {
+                    yield return turnEvent;
+                }
+            }
+
+            yield break;
+        }
+
         switch (Offers.Read(input))
         {
             case OfferReading.Picked { Choice.Target: OfferTarget.RoutePhrase route }:
                 var picked = new Routing();
+                TurnResult? ran = null;
 
                 await foreach (var turnEvent in ModelFreeAsync(route.Phrase, source, picked, cancellationToken)
                                    .ConfigureAwait(false))
                 {
+                    if (turnEvent is TurnEvent.Completed completed)
+                    {
+                        ran = completed.Result;
+                        continue;
+                    }
+
                     yield return turnEvent;
                 }
 
@@ -345,8 +403,23 @@ public sealed class TurnLoop(
                     {
                         yield return turnEvent;
                     }
+
+                    yield break;
                 }
 
+                if (route.Said is { } said && ShouldOfferToLearn(said, route.Phrase))
+                {
+                    _pendingLearn = (said, route.Phrase);
+
+                    var question = $"Want me to remember '{said}' as another way to say that?";
+                    var text = $"{ran!.Text} {question}";
+
+                    yield return new TurnEvent.TextDelta(" " + question);
+                    yield return new TurnEvent.Completed(ran with { Text = text });
+                    yield break;
+                }
+
+                yield return new TurnEvent.Completed(ran!);
                 yield break;
 
             case OfferReading.Picked { Choice.Target: OfferTarget.Answer answer }:
@@ -424,7 +497,7 @@ public sealed class TurnLoop(
             Offers.Open(new Offer(
             [
                 .. offered.Select(candidate => new OfferChoice(
-                    candidate.Phrase, new OfferTarget.RoutePhrase(candidate.Phrase, candidate.Guarded))),
+                    candidate.Phrase, new OfferTarget.RoutePhrase(candidate.Phrase, candidate.Guarded, Said: input))),
             ]));
 
             foreach (var turnEvent in Offered(DidYouMean(offered), input))
@@ -478,6 +551,61 @@ public sealed class TurnLoop(
     private sealed class Routing
     {
         public bool Handled { get; set; }
+    }
+
+    /// <summary>
+    /// Whether a run from a near miss (#167) is worth asking to learn: a Commander is known, the wording
+    /// has not already been declined this session, is more than one word, is not already a declared phrase,
+    /// and is not already learned for something else (#169).
+    /// </summary>
+    private bool ShouldOfferToLearn(string said, string phrase)
+    {
+        if (CommanderId?.Invoke() is not { Length: > 0 })
+        {
+            return false;
+        }
+
+        var reduced = KeywordRouter.Utterance(said);
+
+        if (KeywordRouter.Words(reduced).Length <= 1)
+        {
+            return false;
+        }
+
+        if (_declinedLearn.Contains(reduced))
+        {
+            return false;
+        }
+
+        if (string.Equals(reduced, KeywordRouter.Utterance(phrase), StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (InBook(said))
+        {
+            return false;
+        }
+
+        return LearnedPhraseFor?.Invoke(said) is null;
+    }
+
+    /// <summary>Whether a phrase (as opposed to an arbitrary utterance) is one the router still declares.</summary>
+    private bool InBook(string phrase)
+    {
+        var reduced = KeywordRouter.Utterance(phrase);
+
+        return keywordRouter.Book.Entries.Any(entry =>
+            string.Equals(KeywordRouter.Utterance(entry.Phrase), reduced, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>Reads a yes/no answer the same way the offer window would, for the one standing choice.</summary>
+    private static bool IsAffirmative(string input)
+    {
+        var probe = new OfferWindow();
+        probe.Open(new Offer([new OfferChoice("that", new OfferTarget.Answer(() => new OfferAnswer(string.Empty)))]));
+
+        return probe.Read(input) is OfferReading.Picked;
     }
 
     private IEnumerable<TurnEvent> Offered(string text, string input, TurnOutcome outcome = TurnOutcome.Answered)

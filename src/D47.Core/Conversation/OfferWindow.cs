@@ -13,8 +13,12 @@ public abstract record OfferTarget
     {
     }
 
-    /// <summary>Routes the phrase model-free as if the Commander had said it; never handed to the model.</summary>
-    public sealed record RoutePhrase(string Phrase, bool Guarded) : OfferTarget;
+    /// <summary>
+    /// Routes the phrase model-free as if the Commander had said it; never handed to the model.
+    /// <paramref name="Said"/> is the utterance that missed it, held so a run from a near miss can ask to
+    /// learn it (#169); null for a route offered by some other means.
+    /// </summary>
+    public sealed record RoutePhrase(string Phrase, bool Guarded, string? Said = null) : OfferTarget;
 
     /// <summary>Speaks the text it returns, and opens the next offer when there is one.</summary>
     public sealed record Answer(Func<OfferAnswer> Respond) : OfferTarget;

@@ -19,6 +19,12 @@ names them, then asks which one. Answer with an ordinal, a name, or enough of on
 level deeper, down to one feature — its own sentence, a phrase or two that works, and the panel
 page it lives on where it has one. Anything else drops the question and answers normally.
 
+Say "yes" to a "did you mean" offer and, once it has run, d47 asks whether to remember your own
+wording as another way to say it. Say "yes" again and it does — say it that way next time and it
+runs with no offer at all. It never asks twice about the same wording in one session, and never
+asks at all for a one-word utterance, one that is already a declared phrase, or one already
+remembered for something else.
+
 ## 0.119.0 — Ask how to get it
 
 A new question, "how do I get X", answers for anything named — a ship, module, suit, hand weapon,

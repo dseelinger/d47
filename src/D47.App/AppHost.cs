@@ -438,6 +438,9 @@ public sealed class AppHost : IDisposable
     /// </summary>
     private HeardNamesStore? _heardNames;
 
+    /// <summary>What this Commander has taught d47 their own wording means (#169).</summary>
+    private LearnedPhrasesStore? _learnedPhrases;
+
     /// <summary>The one name a lookup is waiting to be corrected about.</summary>
     private readonly MishearingWatch _mishearings = new();
 
@@ -703,6 +706,13 @@ public sealed class AppHost : IDisposable
             loggerFactory.CreateLogger<HeardNamesStore>());
 
         heardNames.Load();
+
+        // What this Commander has taught d47 stands for a declared phrase, on a "did you mean" yes (#169).
+        var learnedPhrases = new LearnedPhrasesStore(
+            Path.Combine(paths.Data, "phrases.json"),
+            loggerFactory.CreateLogger<LearnedPhrasesStore>());
+
+        learnedPhrases.Load();
 
         // The five walks back through older journal files, run together and after the window is up (#148): on
         // a data folder with no watermark the names walk reads every file in the folder, which is every first
@@ -2033,6 +2043,7 @@ public sealed class AppHost : IDisposable
         history.Changed += host.ShowHistory;
         host._loadouts = loadouts;
         host._heardNames = heardNames;
+        host._learnedPhrases = learnedPhrases;
         host.Plans = planBook;
 
         // Every system name d47 already holds, for the finder that picks them out of text (#156).
@@ -2578,6 +2589,11 @@ public sealed class AppHost : IDisposable
         // What the transcriber gets wrong, put right before anything reads the sentence (#134).
         Turns.Heard = HeardAsMeant;
 
+        // What this Commander's own wording means, put right after (#169).
+        Turns.LearnedPhraseFor = LearnedPhraseFor;
+        Turns.CommanderId = () => Flying is { Length: > 0 } fid ? fid : null;
+        Turns.LearnPhrase = LearnPhrase;
+
         // Position 3.5, and asked of the client that will speak rather than of the settings, so the prompt
         // describes the voice a Commander will actually hear.
         Turns.CanBeDirected = () => DirectableIn(VoiceGroup.Aboard);
@@ -3033,6 +3049,19 @@ public sealed class AppHost : IDisposable
                 DateTimeOffset.Now,
                 word => ReservedPhrases.Any(phrase =>
                     phrase.Contains(word, StringComparison.OrdinalIgnoreCase)));
+        }
+    }
+
+    /// <summary>What this Commander has taught d47 an utterance stands for, or null for nothing (#169).</summary>
+    internal string? LearnedPhraseFor(string utterance) =>
+        Flying is { Length: > 0 } fid ? _learnedPhrases?.PhraseFor(fid, utterance) : null;
+
+    /// <summary>Records that an utterance stands for a phrase, for whoever is flying (#169).</summary>
+    internal void LearnPhrase(string said, string phrase)
+    {
+        if (Flying is { Length: > 0 } fid)
+        {
+            _learnedPhrases?.Learn(fid, said, phrase, DateTimeOffset.Now);
         }
     }
 
