@@ -121,7 +121,11 @@ public sealed record UnlockChain(IReadOnlyList<UnlockStep> Steps)
 /// True where the journal settles it, false where the journal settles it the other way, and null where
 /// nothing d47 can read decides it.
 /// </param>
-public sealed record UnlockCriterion(string Text, bool? Met);
+public sealed record UnlockCriterion(string Text, bool? Met)
+{
+    /// <summary>d47's own words about the reading behind <see cref="Met"/>, kept apart from Frontier's prose.</summary>
+    public string? Reading { get; init; }
+}
 
 /// <summary>
 /// How far along the Commander is with one engineer, and what the way in looks like from where they are
@@ -206,12 +210,12 @@ public static class EngineerAccess
 {
     /// <summary>
     /// The prerequisites for reaching one engineer, with the parts already done marked (remediation.md
-    /// 13, item 12).
+    /// 13, item 12), read where the game states a test for one and folded from the shipped prose
+    /// otherwise (#183).
     /// </summary>
-    public static IReadOnlyList<UnlockCriterion> CriteriaFor(
-        Engineer engineer, EngineerProgressState? progress)
+    public static IReadOnlyList<UnlockCriterion> CriteriaFor(Engineer engineer, UnlockEvidence evidence)
     {
-        var standing = progress?.For(engineer.Id);
+        var standing = evidence.Progress?.For(engineer.Id);
         var unlocked = standing?.IsUnlocked == true;
         var criteria = new List<UnlockCriterion>();
 
@@ -219,7 +223,7 @@ public static class EngineerAccess
         {
             var wanted = engineer.ReferralGrade ?? EngineeringRules.ReferralGrade;
             var held = EngineerDirectory.ByName(referrer) is { } known
-                ? progress?.For(known.Id)
+                ? evidence.Progress?.For(known.Id)
                 : null;
 
             var met = unlocked
@@ -236,18 +240,106 @@ public static class EngineerAccess
         if (engineer.Meeting is { Length: > 0 } meeting)
         {
             // Their invitation task, in Frontier's words.
-            criteria.Add(new UnlockCriterion(
-                meeting,
-                unlocked || standing?.IsInvited == true ? true : null));
+            var (met, reading) = unlocked || standing?.IsInvited == true
+                ? (Met: (bool?)true, Reading: null)
+                : Evaluate(engineer.MeetingTest, engineer, evidence);
+
+            criteria.Add(new UnlockCriterion(meeting, met) { Reading = reading });
         }
 
         if (engineer.Unlock is { Length: > 0 } tribute)
         {
-            criteria.Add(new UnlockCriterion(tribute, unlocked ? true : null));
+            var (met, reading) = unlocked
+                ? (Met: (bool?)true, Reading: null)
+                : Evaluate(engineer.UnlockTest, engineer, evidence);
+
+            criteria.Add(new UnlockCriterion(tribute, met) { Reading = reading });
         }
 
         return criteria;
     }
+
+    /// <summary>One structured test read against the evidence, and d47's own words about the reading.</summary>
+    private static (bool? Met, string? Reading) Evaluate(
+        UnlockTest? test, Engineer engineer, UnlockEvidence evidence) => test switch
+    {
+        UnlockTest.Rank rank => RankResult(rank, evidence),
+        UnlockTest.Reputation reputation => ReputationResult(reputation, evidence),
+        UnlockTest.Statistic statistic => StatisticResult(statistic, evidence),
+        UnlockTest.Contribution contribution => ContributionResult(contribution, engineer, evidence),
+        _ => (null, null),
+    };
+
+    private static (bool? Met, string? Reading) RankResult(UnlockTest.Rank test, UnlockEvidence evidence)
+    {
+        var standing = evidence.Ranks?.For(test.Career);
+
+        return standing is null ? (null, null) : (standing.Rank >= test.AtLeast, null);
+    }
+
+    /// <summary>Whatever reading exists, however old, with its date shown once it predates the session.</summary>
+    private static (bool? Met, string? Reading) ReputationResult(
+        UnlockTest.Reputation test, UnlockEvidence evidence)
+    {
+        var reading = evidence.Reputation?.Reading(test.Faction);
+
+        if (reading is null)
+        {
+            return (null, null);
+        }
+
+        var met = test.AtMost
+            ? reading.MyReputation < CeilingFor(test.Band)
+            : reading.MyReputation >= FloorFor(test.Band);
+
+        var stale = evidence.SessionStart is { } start && reading.SeenAt < start;
+
+        return (met, stale ? $"as of {reading.SeenAt.ToString("d MMM yyyy", CultureInfo.InvariantCulture)}" : null);
+    }
+
+    /// <summary>Only ever a floor: a Statistics reading below it says nothing the game did not also let pass.</summary>
+    private static (bool? Met, string? Reading) StatisticResult(
+        UnlockTest.Statistic test, UnlockEvidence evidence)
+    {
+        var value = evidence.Statistics?.Read(test.Path);
+
+        return value switch
+        {
+            null => (null, null),
+            var reached when reached >= test.AtLeast => (true, null),
+            var short_ => (null, $"Last reported {short_.Value.ToString("N0", CultureInfo.InvariantCulture)}"),
+        };
+    }
+
+    private static (bool? Met, string? Reading) ContributionResult(
+        UnlockTest.Contribution test, Engineer engineer, UnlockEvidence evidence)
+    {
+        var total = evidence.Contributions?.Total(engineer.Id, test.Type, test.Symbol);
+
+        return total switch
+        {
+            null => (null, null),
+            var reached when reached >= test.Quantity => (true, null),
+            var short_ => (false, $"{short_.Value.ToString(CultureInfo.InvariantCulture)} of "
+                                   + $"{test.Quantity.ToString(CultureInfo.InvariantCulture)} handed over"),
+        };
+    }
+
+    /// <summary>Where a reputation band starts, on Frontier's own scale.</summary>
+    private static double FloorFor(ReputationBand band) => band switch
+    {
+        ReputationBand.Hostile => -100,
+        ReputationBand.Unfriendly => -90,
+        ReputationBand.Neutral => -35,
+        ReputationBand.Cordial => 4,
+        ReputationBand.Friendly => 35,
+        ReputationBand.Allied => 90,
+        _ => throw new ArgumentOutOfRangeException(nameof(band)),
+    };
+
+    /// <summary>Where the next band up starts — "at-most" this band means staying below it.</summary>
+    private static double CeilingFor(ReputationBand band) =>
+        band == ReputationBand.Allied ? double.PositiveInfinity : FloorFor(band + 1);
 
     /// <summary>
     /// The engineers this one refers into, whose plans name them and whose referral through this

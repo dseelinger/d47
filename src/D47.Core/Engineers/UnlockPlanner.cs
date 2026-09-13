@@ -163,6 +163,7 @@ public static class UnlockPlanner
         CommanderGameState? state)
     {
         var progress = state?.Engineers;
+        var evidence = UnlockEvidence.From(state);
         var from = state?.Location.StarPos;
         var range = state?.Ship.MaxJumpRange;
         var planned = PlannedNeeds.Of(ships, onFoot);
@@ -172,7 +173,7 @@ public static class UnlockPlanner
         var outstanding = planned.Where(work => !work.CanBeRolled(progress)).ToList();
 
         var directory = EngineerDirectory.All
-            .Select(engineer => Entry(engineer, progress, from, range, workload, planned))
+            .Select(engineer => Entry(engineer, progress, evidence, from, range, workload, planned))
             .OrderBy(entry => entry.Reach)
             .ThenByDescending(entry => entry.Wanted)
             .ThenBy(entry => entry.LightYears ?? double.MaxValue)
@@ -294,6 +295,7 @@ public static class UnlockPlanner
     private static EngineerEntry Entry(
         Engineer engineer,
         EngineerProgressState? progress,
+        UnlockEvidence evidence,
         StarPosition? from,
         double? range,
         IReadOnlyDictionary<int, int> workload,
@@ -312,7 +314,7 @@ public static class UnlockPlanner
             Gate = EngineerAccess.Gate(engineer, progress, planned),
             Planned = [.. planned.Where(work => EngineerDirectory.IsNamedIn(work.Engineers, engineer))],
             Chain = EngineerAccess.ChainTo(engineer, 1, progress, from, range),
-            Criteria = EngineerAccess.CriteriaFor(engineer, progress),
+            Criteria = EngineerAccess.CriteriaFor(engineer, evidence),
         };
     }
 }

@@ -15,6 +15,12 @@ covers and your rank with them already clears, dropping anything that would stil
 the workshop. It sits under its own heading in the Show chooser, and does not go away when you
 leave the system an engineer works in — the point of a pin is that you do not have to be there.
 
+An engineer's unlock prerequisites now read your rank, reputation, career statistics and
+contributions where the game states one of those as the test, instead of only what your journal's
+`EngineerProgress` says about them directly. Where the reading falls short, the criterion shows it
+— "Last reported 4,558", "18 of 25 handed over", or a stale reputation reading's date — on both the
+engineer's own page and the Route page, in the SteamVR overlay as well as the window.
+
 ## 0.116.0 — Voices that suit who is speaking
 
 A station under Imperial control now speaks in a British-sounding voice, where your speech

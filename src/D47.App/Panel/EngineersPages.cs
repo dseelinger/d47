@@ -105,7 +105,7 @@ public static class EngineersPages
         var box = Glyphs.Draw(data, brush);
         AutomationProperties.SetName(box, says);
 
-        return new StackPanel
+        var row = new StackPanel
         {
             Orientation = Orientation.Horizontal,
             Spacing = 6,
@@ -120,6 +120,18 @@ public static class EngineersPages
                     VerticalAlignment = VerticalAlignment.Center,
                 },
             },
+        };
+
+        if (criterion.Reading is not { Length: > 0 } reading)
+        {
+            return row;
+        }
+
+        return new StackPanel
+        {
+            Orientation = Orientation.Vertical,
+            Spacing = 2,
+            Children = { row, LoadoutPages.Muted(reading) },
         };
     }
 }
