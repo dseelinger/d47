@@ -234,6 +234,33 @@ rather than in a preamble.
 Trade stops carry **when the market was last reported**, for the same reason outfitting stock does.
 A route can be arithmetically perfect against a four-year-old price and worth nothing at all.
 
+#### `plot_next_stop`
+
+Plots the next stop on a stored plan — the Neutron Plotter's waypoints, a Road to Riches loop's
+stops, or a trade run's stops — through the galaxy map, the same way `plot_course` does. "Plot
+next neutron jump", "plot next riches stop" and "plot next trade stop" reach this with no model
+involved, through the keyword router.
+
+```json
+{"type":"object","properties":{"kind":{"type":"string","description":"Which stored plan to plot the next stop from.","enum":["neutron","riches","trade"]}},"required":["kind"],"additionalProperties":false}
+```
+
+The next stop is the first one after the furthest reached (kept by the plan, see
+[navigation](navigation.md)) whose system is not the one the Commander is standing in — so a
+trade plan's first stop, the station it was plotted from, is never plotted back to. Where nothing
+has been reached, the search starts at the first stop.
+
+The answer says where the stop sits on the plan, "stop 2 of 21", and a trade stop's answer also
+names the station:
+
+```text
+Course plotted to PSR J1752-2806. Stop 2 of 21.
+```
+
+Asking for a kind with nothing stored says so rather than plotting anything, and so does asking
+past the last stop. Only an arrival moves the reached stop forward — asking for the next one
+again before then plots the same system again.
+
 ### Mining routes
 
 There are none, and that is a measurement rather than an omission: `api/mining/route` is a **404**.

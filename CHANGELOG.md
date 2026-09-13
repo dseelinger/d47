@@ -8,6 +8,12 @@
 
 ## 0.124.0 — Supercharge
 
+"Plot next neutron jump", "plot next riches stop" and "plot next trade stop" plot the next stop on
+a stored plan through the galaxy map, by voice, with no model needed. The next stop is the first
+one after the furthest reached whose system is not the one the Commander is already in, so a
+trade plan's first stop — the station it was plotted from — is never plotted back to. The answer
+names where the stop sits on the plan, and a trade stop's answer also names the station.
+
 A stored plan's result page now ticks off the stops the Commander has reached, muted, with the
 row after them marked as the next one to copy. The page redraws as the reached stop moves,
 without needing to be reopened, on the desktop window and in the headset. This applies to all

@@ -24,13 +24,18 @@ public static class RouteCapability
     /// Where a plan is kept once it is made (Phase 37), or null where nothing is drawing them.
     /// </param>
     /// <param name="now">The clock, injected.</param>
+    /// <param name="navigation">
+    /// What <c>plot_next_stop</c> plots through — the same surface <c>plot_course</c> itself uses
+    /// (#211) — or null where none is composed, as under the designer.
+    /// </param>
     public static CapabilityDescriptor Create(
         IRouteService? routes,
         ITradePlanService? trade,
         Func<CommanderGameState?> commander,
         Configuration.SettingsService settings,
         RoutePlanBook? plans = null,
-        Func<DateTimeOffset>? now = null) => new()
+        Func<DateTimeOffset>? now = null,
+        NavigationSurface? navigation = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -215,9 +220,57 @@ public static class RouteCapability
                 Handler = (arguments, cancellationToken) =>
                     PlanTradeAsync(trade, commander, settings, plans, now, arguments, cancellationToken),
             },
+            new ToolDefinition
+            {
+                Name = "plot_next_stop",
+                Description =
+                    "Plot the next stop on a stored route plan — the Neutron Plotter's waypoints, a "
+                    + "Road to Riches loop's stops, or a trade run's stops — through the galaxy map. "
+                    + "Skips a stop whose system is the one the Commander is already in.",
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "kind",
+                        Type = ToolParameterType.String,
+                        Description = "Which stored plan to plot the next stop from.",
+                        Required = true,
+                        AllowedValues = ["neutron", "riches", "trade"],
+                    },
+                ],
+                Commands =
+                [
+                    .. NextStopPhrases(
+                        "neutron",
+                        "plot next neutron jump",
+                        "plot the next neutron jump",
+                        "next neutron jump",
+                        "plot next waypoint",
+                        "plot the next waypoint"),
+                    .. NextStopPhrases(
+                        "riches",
+                        "plot next riches stop",
+                        "plot the next riches stop",
+                        "plot the next road to riches stop",
+                        "next riches stop"),
+                    .. NextStopPhrases(
+                        "trade",
+                        "plot next trade stop",
+                        "plot the next trade stop",
+                        "next trade stop"),
+                ],
+                SendsInput = true,
+                Handler = (arguments, cancellationToken) =>
+                    PlotNextStopAsync(plans, navigation, commander, arguments, cancellationToken),
+            },
         ],
         Display = new CapabilityDisplay { PanelTitle = "Route planning", Order = 48 },
     };
+
+    private static IEnumerable<ToolCommandPhrase> NextStopPhrases(string kind, params string[] phrases) =>
+        phrases.Select(phrase => new ToolCommandPhrase(
+            phrase,
+            new Dictionary<string, string>(StringComparer.Ordinal) { ["kind"] = kind }));
 
     private const string Unavailable =
         "Route planning is switched off, so I can't plot that. It shares the galaxy search setting, "
@@ -632,6 +685,105 @@ public static class RouteCapability
 
         return report.ToString().TrimEnd();
     }
+
+    private static async Task<ToolResult> PlotNextStopAsync(
+        RoutePlanBook? plans,
+        NavigationSurface? navigation,
+        Func<CommanderGameState?> commander,
+        ToolArguments arguments,
+        CancellationToken cancellationToken)
+    {
+        if (navigation is null)
+        {
+            return ToolResult.Error("Navigation isn't available.");
+        }
+
+        if (!arguments.TryGetString("kind", out var kindArgument) || !TryParseKind(kindArgument, out var kind))
+        {
+            return ToolResult.Error("No plan kind was named.");
+        }
+
+        if (plans?.Last(kind) is not { } plan || Stops(plan) is not { Count: > 0 } stops)
+        {
+            return ToolResult.Ok($"No {Noun(kind)} plan is stored.");
+        }
+
+        var current = commander()?.Location.StarSystem;
+        var from = plan.Reached is { } reached ? reached + 1 : 0;
+
+        var next = -1;
+
+        for (var i = from; i < stops.Count; i++)
+        {
+            if (!string.Equals(stops[i].System, current, StringComparison.OrdinalIgnoreCase))
+            {
+                next = i;
+                break;
+            }
+        }
+
+        if (next < 0)
+        {
+            return ToolResult.Ok($"The last stop on the {Noun(kind)} plan is reached. There is nothing left to plot.");
+        }
+
+        var plotted = await NavigationCapability
+            .Plot(
+                new ToolArguments(
+                    new Dictionary<string, string>(StringComparer.Ordinal) { ["system"] = stops[next].System }),
+                navigation,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        if (plotted.IsError)
+        {
+            return plotted;
+        }
+
+        var station = stops[next].Station is { Length: > 0 } name ? $", {name}" : string.Empty;
+
+        return ToolResult.Relay($"{plotted.Content} Stop {next + 1} of {stops.Count}{station}.");
+    }
+
+    private static bool TryParseKind(string value, out RoutePlanKind kind)
+    {
+        // Case-insensitively, matching the registry's own check of AllowedValues before the handler runs.
+        switch (value.ToLowerInvariant())
+        {
+            case "neutron":
+                kind = RoutePlanKind.Jump;
+                return true;
+            case "riches":
+                kind = RoutePlanKind.Riches;
+                return true;
+            case "trade":
+                kind = RoutePlanKind.Trade;
+                return true;
+            default:
+                kind = default;
+                return false;
+        }
+    }
+
+    private static string Noun(RoutePlanKind kind) => kind switch
+    {
+        RoutePlanKind.Jump => "neutron",
+        RoutePlanKind.Riches => "Road to Riches",
+        RoutePlanKind.Trade => "trade",
+        _ => "route",
+    };
+
+    /// <summary>One stop on a stored plan, whatever kind produced it.</summary>
+    private sealed record PlanStop(string System, string? Station);
+
+    /// <summary>A stored plan's stops in order, or null for a kind with nothing recorded.</summary>
+    private static IReadOnlyList<PlanStop>? Stops(StoredRoutePlan plan) => plan.Kind switch
+    {
+        RoutePlanKind.Jump => plan.Jump?.Waypoints.Select(w => new PlanStop(w.System, null)).ToArray(),
+        RoutePlanKind.Riches => plan.Riches?.Stops.Select(s => new PlanStop(s.System, null)).ToArray(),
+        RoutePlanKind.Trade => plan.Trade?.Stops.Select(s => new PlanStop(s.System, s.Station)).ToArray(),
+        _ => null,
+    };
 
     private static double? Number(ToolArguments arguments, string name) =>
         arguments.Values.TryGetValue(name, out var raw)

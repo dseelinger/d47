@@ -125,11 +125,12 @@ public class RouteCapabilityTests
         gameState.Apply(parsed!);
     }
 
-    private static (CapabilityRegistry Registry, FakeRoutes Routes, FakeTrade Trade) Build(
+    private static (CapabilityRegistry Registry, FakeRoutes Routes, FakeTrade Trade, GameStateStore GameState) Build(
         TempInstall install,
         bool enabled = true,
         bool docked = true,
-        RoutePlanBook? plans = null)
+        RoutePlanBook? plans = null,
+        NavigationSurface? navigation = null)
     {
         var gameState = new GameStateStore();
         Apply(gameState, """{"timestamp":"2026-01-01T00:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""");
@@ -158,10 +159,12 @@ public class RouteCapabilityTests
                     () => gameState.Active,
                     settings,
                     plans,
-                    () => PlottedAt),
+                    () => PlottedAt,
+                    navigation),
             ]),
             routes,
-            trade);
+            trade,
+            gameState);
     }
 
     /// <summary>A fixed instant, so a stored plan's timestamp is assertable.</summary>
@@ -175,7 +178,7 @@ public class RouteCapabilityTests
     {
         // Nobody says "plot me a route to Colonia from Sol at 52.31 light years a jump".
         using var install = new TempInstall();
-        var (registry, routes, trade) = Build(install);
+        var (registry, routes, trade, _) = Build(install);
 
         var result = await registry.InvokeAsync(
             "plot_route",
@@ -192,7 +195,7 @@ public class RouteCapabilityTests
     {
         // Accepted and then failed to route, measured Sol to Colonia on 2026-08-14.
         using var install = new TempInstall();
-        var (registry, routes, trade) = Build(install);
+        var (registry, routes, trade, _) = Build(install);
 
         await registry.InvokeAsync(
             "plot_route",
@@ -206,7 +209,7 @@ public class RouteCapabilityTests
     public async Task AShipTooShortRangedToPlotForIsToldSoRatherThanRefusedByTheService()
     {
         using var install = new TempInstall();
-        var (registry, routes, trade) = Build(install);
+        var (registry, routes, trade, _) = Build(install);
 
         var result = await registry.InvokeAsync(
             "plot_route",
@@ -223,7 +226,7 @@ public class RouteCapabilityTests
     public async Task TheDestinationWaypointSaysNothingAboutDistanceLeft()
     {
         using var install = new TempInstall();
-        var (registry, routes, trade) = Build(install);
+        var (registry, routes, trade, _) = Build(install);
 
         routes.Route = new PlottedRoute(
             "CD-39 3269",
@@ -263,7 +266,7 @@ public class RouteCapabilityTests
     public async Task ALongRouteSaysHowManyWaypointsThereAreRatherThanReadingThemAllOut()
     {
         using var install = new TempInstall();
-        var (registry, routes, trade) = Build(install);
+        var (registry, routes, trade, _) = Build(install);
 
         routes.Route = new PlottedRoute(
             "Sol",
@@ -289,7 +292,7 @@ public class RouteCapabilityTests
     public async Task NoRouteIsAnAnswerRatherThanAFailure()
     {
         using var install = new TempInstall();
-        var (registry, routes, trade) = Build(install);
+        var (registry, routes, trade, _) = Build(install);
 
         routes.Route = null;
 
@@ -310,7 +313,7 @@ public class RouteCapabilityTests
     {
         // The one figure here that is about the Commander rather than their ship.
         using var install = new TempInstall();
-        var (registry, routes, trade) = Build(install);
+        var (registry, routes, trade, _) = Build(install);
 
         // Required in the schema, so the model is stopped before a turn is spent on it…
         var omitted = await registry.InvokeAsync(
@@ -336,7 +339,7 @@ public class RouteCapabilityTests
     public async Task ATradeRouteDoesFillInTheHoldFromTheShip()
     {
         using var install = new TempInstall();
-        var (registry, routes, trade) = Build(install);
+        var (registry, routes, trade, _) = Build(install);
 
         await registry.InvokeAsync(
             "plot_trade_route",
@@ -355,7 +358,7 @@ public class RouteCapabilityTests
     public async Task TheStalenessBoundIsSpelledWithItsUnit()
     {
         using var install = new TempInstall();
-        var (registry, _, trade) = Build(install);
+        var (registry, _, trade, _) = Build(install);
 
         await registry.InvokeAsync(
             "plot_trade_route",
@@ -369,7 +372,7 @@ public class RouteCapabilityTests
     public async Task ATradeRouteCannotBePlottedFromSupercruise()
     {
         using var install = new TempInstall();
-        var (registry, routes, trade) = Build(install, docked: false);
+        var (registry, routes, trade, _) = Build(install, docked: false);
 
         var result = await registry.InvokeAsync(
             "plot_trade_route",
@@ -387,7 +390,7 @@ public class RouteCapabilityTests
     public async Task ARichesRouteReportsWhatItIsWorthAndHowFarItGoes()
     {
         using var install = new TempInstall();
-        var (registry, routes, trade) = Build(install);
+        var (registry, routes, trade, _) = Build(install);
 
         routes.Riches = new RichesRoute(
         [
@@ -422,7 +425,7 @@ public class RouteCapabilityTests
     public async Task PlottingIsOffWithTheGalaxySearchAndSaysWhichSettingItIs()
     {
         using var install = new TempInstall();
-        var (registry, routes, trade) = Build(install, enabled: false);
+        var (registry, routes, trade, _) = Build(install, enabled: false);
 
         var result = await registry.InvokeAsync(
             "plot_route",
@@ -438,7 +441,7 @@ public class RouteCapabilityTests
     public async Task AnUnreachablePlotterIsAnErrorResultNotAnException()
     {
         using var install = new TempInstall();
-        var (registry, routes, trade) = Build(install);
+        var (registry, routes, trade, _) = Build(install);
 
         routes.Throws = new GalaxyUnavailableException("The route plotter is still working after 90 seconds.");
 
@@ -461,7 +464,7 @@ public class RouteCapabilityTests
             Path.Combine(install.Root, "data", "route-plans.json"),
             Microsoft.Extensions.Logging.Abstractions.NullLogger<RoutePlanBook>.Instance);
 
-        var (registry, _, _) = Build(install, plans: plans);
+        var (registry, _, _, _) = Build(install, plans: plans);
 
         var result = await registry.InvokeAsync(
             "plot_route",
@@ -489,7 +492,7 @@ public class RouteCapabilityTests
             Path.Combine(install.Root, "data", "route-plans.json"),
             Microsoft.Extensions.Logging.Abstractions.NullLogger<RoutePlanBook>.Instance);
 
-        var (registry, routes, _) = Build(install, plans: plans);
+        var (registry, routes, _, _) = Build(install, plans: plans);
 
         routes.Route = null;
 
@@ -500,5 +503,222 @@ public class RouteCapabilityTests
 
         Assert.False(result.IsError);
         Assert.Null(plans.Last(RoutePlanKind.Jump));
+    }
+
+    /// <summary>
+    /// Plotting the next stop on a stored plan by voice (#211): the Neutron Plotter, Road to Riches
+    /// and trade planners all share this tool, told apart by <c>kind</c>.
+    /// </summary>
+    private static RoutePlanBook PlanBook(TempInstall install) => new(
+        Path.Combine(install.Root, "data", "route-plans.json"),
+        NullLogger<RoutePlanBook>.Instance);
+
+    /// <summary>A navigation surface whose clipboard works but never drives the galaxy map.</summary>
+    private static NavigationSurface CopyOnlyNavigation() => new()
+    {
+        Clipboard = new RecordingClipboard(),
+        Actions = ActionSurface.Inert,
+        AutoPlotEnabled = () => false,
+        WatchRoute = () => new FixedPlotWatch(null),
+        AwaitGalaxyMap = (_, _) => Task.FromResult<bool?>(null),
+    };
+
+    /// <summary>Automatic plotting allowed, but with nothing bound to drive the map.</summary>
+    private static NavigationSurface AutoPlotNavigation() => new()
+    {
+        Clipboard = new RecordingClipboard(),
+        Actions = ActionSurface.Inert with { Enabled = () => true },
+        AutoPlotEnabled = () => true,
+        WatchRoute = () => new FixedPlotWatch(null),
+        AwaitGalaxyMap = (_, _) => Task.FromResult<bool?>(null),
+    };
+
+    private static JournalEvent Arrival(string kind, string system, DateTimeOffset at) =>
+        JournalEvent.TryParse(
+            $$"""{"timestamp":"{{at:O}}","event":"{{kind}}","StarSystem":"{{system}}"}""",
+            NullLogger.Instance,
+            out var parsed)
+            ? parsed!
+            : throw new InvalidOperationException("bad journal fixture");
+
+    private static PlottedRoute TwoWaypointJump() => new(
+        "Procyon",
+        "Byua Euq XQ-G c10-18",
+        500,
+        21,
+        [
+            new RouteWaypoint("PSR J1752-2806", 10, 400, true),
+            new RouteWaypoint("Col 359 Sector NN-T e3-3", 11, 0, false),
+        ]);
+
+    [Fact]
+    public async Task WithNoStoredPlanOfThatKindNothingIsPlottedAndItSaysSo()
+    {
+        using var install = new TempInstall();
+        var plans = PlanBook(install);
+        plans.Record(TwoWaypointJump(), "Procyon to Byua Euq XQ-G c10-18", PlottedAt);
+
+        var navigation = CopyOnlyNavigation();
+        var (registry, _, _, _) = Build(install, plans: plans, navigation: navigation);
+
+        // Trade was never asked for, only jump was stored.
+        var result = await registry.InvokeAsync(
+            "plot_next_stop",
+            Args(("kind", "trade")),
+            TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsError);
+        Assert.Contains("No trade plan is stored", result.Content, StringComparison.Ordinal);
+        Assert.Empty(((RecordingClipboard)navigation.Clipboard).Written);
+    }
+
+    [Fact]
+    public async Task WithNothingReachedItPlotsTheFirstStop()
+    {
+        using var install = new TempInstall();
+        var plans = PlanBook(install);
+        plans.Record(TwoWaypointJump(), "Procyon to Byua Euq XQ-G c10-18", PlottedAt);
+
+        var navigation = CopyOnlyNavigation();
+        var (registry, _, _, _) = Build(install, plans: plans, navigation: navigation);
+
+        var result = await registry.InvokeAsync(
+            "plot_next_stop",
+            Args(("kind", "neutron")),
+            TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsError);
+        Assert.Equal("PSR J1752-2806", ((RecordingClipboard)navigation.Clipboard).Last);
+        Assert.Contains("Stop 1 of 2", result.Content, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task WithAStopReachedItPlotsTheOneAfter()
+    {
+        using var install = new TempInstall();
+        var plans = PlanBook(install);
+        plans.Record(TwoWaypointJump(), "Procyon to Byua Euq XQ-G c10-18", PlottedAt);
+        plans.Apply([Arrival("FSDJump", "PSR J1752-2806", PlottedAt.AddMinutes(10))]);
+
+        var navigation = CopyOnlyNavigation();
+        var (registry, _, _, _) = Build(install, plans: plans, navigation: navigation);
+
+        var result = await registry.InvokeAsync(
+            "plot_next_stop",
+            Args(("kind", "neutron")),
+            TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsError);
+        Assert.Equal("Col 359 Sector NN-T e3-3", ((RecordingClipboard)navigation.Clipboard).Last);
+        Assert.Contains("Stop 2 of 2", result.Content, StringComparison.Ordinal);
+
+        // Plotting reads the reached stop; only an arrival moves it.
+        Assert.Equal(0, plans.Last(RoutePlanKind.Jump)?.Reached);
+    }
+
+    [Fact]
+    public async Task WithTheLastStopReachedNothingIsPlottedAndItSaysSo()
+    {
+        using var install = new TempInstall();
+        var plans = PlanBook(install);
+        plans.Record(TwoWaypointJump(), "Procyon to Byua Euq XQ-G c10-18", PlottedAt);
+        plans.Apply(
+        [
+            Arrival("FSDJump", "PSR J1752-2806", PlottedAt.AddMinutes(10)),
+            Arrival("FSDJump", "Col 359 Sector NN-T e3-3", PlottedAt.AddMinutes(20)),
+        ]);
+
+        var navigation = CopyOnlyNavigation();
+        var (registry, _, _, _) = Build(install, plans: plans, navigation: navigation);
+
+        var result = await registry.InvokeAsync(
+            "plot_next_stop",
+            Args(("kind", "neutron")),
+            TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsError);
+        Assert.Contains("last stop", result.Content, StringComparison.OrdinalIgnoreCase);
+        Assert.Empty(((RecordingClipboard)navigation.Clipboard).Written);
+    }
+
+    /// <summary>
+    /// A trade plan's first stop is the station the Commander plotted from, so it is skipped rather than
+    /// plotted back to — and its own kind's tool never reads another kind's book.
+    /// </summary>
+    [Fact]
+    public async Task ATradeStopInTheCurrentSystemIsSkippedAndTheStationIsNamed()
+    {
+        using var install = new TempInstall();
+        var plans = PlanBook(install);
+        plans.Record(TwoWaypointJump(), "Procyon to Byua Euq XQ-G c10-18", PlottedAt);
+
+        var trade = new TradeRoute(
+        [
+            new TradeStop("Sol", "Abraham Lincoln"),
+            new TradeStop("RR Caeli", "Diaz Chemical Holdings"),
+        ])
+        {
+            Capital = 50_000_000,
+            TotalProfit = 412_800,
+        };
+
+        // Build() docks the Commander at Sol, and the plan is not recorded with a current system, so
+        // nothing is reached yet — the tool itself has to skip the first stop.
+        plans.Record(trade, "2 stops from Abraham Lincoln", PlottedAt);
+
+        var navigation = CopyOnlyNavigation();
+        var (registry, _, _, _) = Build(install, plans: plans, navigation: navigation);
+
+        var result = await registry.InvokeAsync(
+            "plot_next_stop",
+            Args(("kind", "trade")),
+            TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsError);
+        Assert.Equal("RR Caeli", ((RecordingClipboard)navigation.Clipboard).Last);
+        Assert.Contains("Stop 2 of 2", result.Content, StringComparison.Ordinal);
+        Assert.Contains("Diaz Chemical Holdings", result.Content, StringComparison.Ordinal);
+
+        // Neutron is untouched by asking for trade.
+        Assert.Null(plans.Last(RoutePlanKind.Jump)?.Reached);
+    }
+
+    [Fact]
+    public async Task AKindArgumentInAnyCaseStillReachesTheRightPlan()
+    {
+        // The registry checks AllowedValues case-insensitively before the handler ever sees it.
+        using var install = new TempInstall();
+        var plans = PlanBook(install);
+        plans.Record(TwoWaypointJump(), "Procyon to Byua Euq XQ-G c10-18", PlottedAt);
+
+        var navigation = CopyOnlyNavigation();
+        var (registry, _, _, _) = Build(install, plans: plans, navigation: navigation);
+
+        var result = await registry.InvokeAsync(
+            "plot_next_stop",
+            Args(("kind", "Neutron")),
+            TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsError);
+        Assert.Equal("PSR J1752-2806", ((RecordingClipboard)navigation.Clipboard).Last);
+    }
+
+    [Fact]
+    public async Task AutomaticPlottingBothOnAndOffStillNamesTheStop()
+    {
+        using var install = new TempInstall();
+        var plans = PlanBook(install);
+        plans.Record(TwoWaypointJump(), "Procyon to Byua Euq XQ-G c10-18", PlottedAt);
+
+        var navigation = AutoPlotNavigation();
+        var (registry, _, _, _) = Build(install, plans: plans, navigation: navigation);
+
+        var result = await registry.InvokeAsync(
+            "plot_next_stop",
+            Args(("kind", "neutron")),
+            TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsError);
+        Assert.Contains("Stop 1 of 2", result.Content, StringComparison.Ordinal);
     }
 }
