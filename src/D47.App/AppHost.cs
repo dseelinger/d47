@@ -1381,6 +1381,10 @@ public sealed class AppHost : IDisposable
 
         var buildingRegistry = StartupTimer.Step("capability registry");
 
+        // Built once and shared with TurnLoop below, so the drill capability (#168) opens an offer TurnLoop
+        // itself reads, rather than one nobody looks at.
+        var offers = new OfferWindow();
+
         var capabilities = CapabilityRegistry.Build(
             BuiltinCapabilities.All(
                 paths,
@@ -1749,7 +1753,8 @@ public sealed class AppHost : IDisposable
                 tick,
 
                 // Timers and alarms register only for a run started with the switch (#90).
-                timersAndAlarms: timersAndAlarms is not null));
+                timersAndAlarms: timersAndAlarms is not null,
+                offers: offers));
 
         buildingRegistry.Dispose();
 
@@ -1808,7 +1813,8 @@ public sealed class AppHost : IDisposable
             spend,
             PriceTable.Default,
             loggerFactory.CreateLogger<TurnLoop>(),
-            settings: settings)
+            settings: settings,
+            offers: offers)
         {
             // Asked once per turn rather than assigned, so the state the model sees is the state as of the
             // moment the prompt was built — not as of whenever something last pushed it in.

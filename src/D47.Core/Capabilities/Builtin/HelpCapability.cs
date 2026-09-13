@@ -1,4 +1,6 @@
 using System.Text;
+using D47.Core.Conversation;
+using D47.Core.Help;
 
 namespace D47.Core.Capabilities.Builtin;
 
@@ -7,11 +9,16 @@ public static class HelpCapability
 {
     public const string Id = "help";
 
+    public const string DrillToolName = "drill_capabilities";
+
+    /// <summary>How many phrases a leaf says before it stops, in order of how well they are known.</summary>
+    private const int PhrasesPerLeaf = 2;
+
     /// <summary>
     /// Deliberately late-bound: the registry cannot be handed to a descriptor that is being built to go
     /// into it.
     /// </summary>
-    public static CapabilityDescriptor Create(Func<CapabilityRegistry> registry) => new()
+    public static CapabilityDescriptor Create(Func<CapabilityRegistry> registry, OfferWindow offers) => new()
     {
         Id = Id,
         Group = "Foundation",
@@ -29,12 +36,12 @@ public static class HelpCapability
         // route" is not a request for a capability list.
         Keywords =
         [
-            "what can you do",
-            "what can you help with",
-            "what are you capable of",
-            "what are your capabilities",
-            "list your capabilities",
-            "what do you do",
+            new CapabilityKeyword("what can you do", DrillToolName),
+            new CapabilityKeyword("what can you help with", DrillToolName),
+            new CapabilityKeyword("what are you capable of", DrillToolName),
+            new CapabilityKeyword("what are your capabilities", DrillToolName),
+            new CapabilityKeyword("list your capabilities", DrillToolName),
+            new CapabilityKeyword("what do you do", DrillToolName),
         ],
         Display = new CapabilityDisplay { PanelTitle = "Help", Order = 10 },
         Tools =
@@ -63,10 +70,96 @@ public static class HelpCapability
                     return Task.FromResult(ToolResult.Ok(Describe(registry(), group)));
                 },
             },
+            new ToolDefinition
+            {
+                Name = DrillToolName,
+                Description = "Walk the spoken map of what D47 can do, one level at a time.",
+
+                // Reached only by the Commander: a model asking "what can you do" gets get_capabilities,
+                // never an offer that would then capture whatever the Commander says next.
+                Protected = true,
+                Handler = (_, _) =>
+                {
+                    var (text, offer) = LevelAnswer(HelpTaxonomy.Top, registry());
+                    offers.Open(offer);
+                    return Task.FromResult(ToolResult.Ok(text));
+                },
+            },
         ],
     };
 
-    /// <summary>The overview, or one group in detail.</summary>
+    /// <summary>What a level says: the count, the names, and a question.</summary>
+    private static (string Text, Offer Offer) LevelAnswer(IReadOnlyList<HelpNode> children, CapabilityRegistry registry)
+    {
+        var names = children.Select(child => child.Name).ToArray();
+        var text = $"{names.Length} areas: {Listed(names)}. Which one?";
+
+        var offer = new Offer(
+        [
+            .. children.Select(child => new OfferChoice(
+                child.Name, new OfferTarget.Answer(() => Answer(child, registry)))),
+        ]);
+
+        return (text, offer);
+    }
+
+    /// <summary>What picking one choice says, and what it opens next.</summary>
+    private static OfferAnswer Answer(HelpNode node, CapabilityRegistry registry)
+    {
+        if (node.CapabilityId is not { } capabilityId)
+        {
+            var (text, offer) = LevelAnswer(node.Children, registry);
+            return new OfferAnswer(text, offer);
+        }
+
+        return new OfferAnswer(LeafAnswer(node, registry.Find(capabilityId)?.Descriptor));
+    }
+
+    /// <summary>A leaf: its sentence, one or two phrases to say, and its panel page.</summary>
+    private static string LeafAnswer(HelpNode node, CapabilityDescriptor? descriptor)
+    {
+        if (descriptor is null)
+        {
+            return node.Sentence;
+        }
+
+        var parts = new List<string> { node.Sentence };
+
+        var phrases = Phrases(descriptor).Take(PhrasesPerLeaf).ToArray();
+
+        if (phrases.Length > 0)
+        {
+            parts.Add($"Say {Listed(phrases.Select(phrase => $"'{phrase}'").ToArray(), conjunction: "or")}.");
+        }
+
+        if (descriptor.Display is { ShowOnPanel: true, PanelTitle: { Length: > 0 } title })
+        {
+            parts.Add($"It has a page on the panel called {title}.");
+        }
+
+        return string.Join(' ', parts);
+    }
+
+    /// <summary>
+    /// What the Commander could say for this capability: its tool command phrases first, then its
+    /// keywords, then its examples — the order a phrase is most likely to actually work.
+    /// </summary>
+    private static IEnumerable<string> Phrases(CapabilityDescriptor descriptor) =>
+        descriptor.Tools.SelectMany(tool => tool.Commands.Select(command => command.Phrase))
+            .Concat(descriptor.Keywords.Select(keyword => keyword.Phrase))
+            .Concat(descriptor.Examples)
+            .Distinct(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>"a", "a, and b", "a, b, and c" — the join <see cref="Conversation.TurnLoop"/>'s "did you mean" uses.</summary>
+    private static string Listed(IReadOnlyList<string> items, string conjunction = "and") => items.Count switch
+    {
+        0 => string.Empty,
+        1 => items[0],
+        2 => $"{items[0]} {conjunction} {items[1]}",
+        _ => $"{string.Join(", ", items.SkipLast(1))}, {conjunction} {items[^1]}",
+    };
+
+    /// <summary>The overview, or one area in detail.</summary>
     public static string Describe(CapabilityRegistry registry, string? group = null)
     {
         var visible = registry.All
@@ -79,80 +172,88 @@ public static class HelpCapability
         }
 
         return group is { Length: > 0 }
-            ? DescribeGroup(registry, visible, group)
-            : DescribeOverview(registry, visible);
+            ? DescribeArea(registry, group)
+            : DescribeOverview(visible);
     }
 
-    private static string DescribeOverview(CapabilityRegistry registry, RegisteredCapability[] visible)
+    private static string DescribeOverview(RegisteredCapability[] visible)
     {
-        var report = new StringBuilder($"I have {visible.Length} capabilities, in these groups:");
+        var report = new StringBuilder($"I have {visible.Length} capabilities, in these areas:");
 
-        foreach (var group in Grouped(registry, visible))
+        foreach (var category in HelpTaxonomy.Top)
         {
             report.AppendLine();
-            report.Append($"  {group.Key} — {string.Join(", ", group.Select(c => c.Descriptor.Name))}");
+            report.Append($"  {category.Name} — {category.Sentence}");
         }
 
         report.AppendLine();
-        report.Append("Ask about a group by name for the detail.");
+        report.Append("Ask about an area by name for the detail.");
 
         return report.ToString();
     }
 
-    private static string DescribeGroup(
-        CapabilityRegistry registry,
-        RegisteredCapability[] visible,
-        string group)
+    private static string DescribeArea(CapabilityRegistry registry, string group)
     {
-        var matching = Ranked(
-                registry,
-                visible.Where(c => c.Descriptor.Group.Contains(group, StringComparison.OrdinalIgnoreCase)))
-            .ToArray();
-
-        if (matching.Length == 0)
+        if (Find(HelpTaxonomy.Top, group) is not { } node)
         {
-            // Names the real groups rather than saying "no".
-            var groups = Grouped(registry, visible).Select(g => g.Key);
-            return $"I have no group called \"{group}\". I have: {string.Join(", ", groups)}.";
+            var areas = HelpTaxonomy.Top.Select(category => category.Name);
+            return $"I have no area called \"{group}\". I have: {string.Join(", ", areas)}.";
         }
 
+        return node.CapabilityId is { } capabilityId
+            ? DescribeCapability(registry, capabilityId)
+            : DescribeChildren(registry, node);
+    }
+
+    /// <summary>The node whose name contains <paramref name="name"/>, checked level by level.</summary>
+    private static HelpNode? Find(IReadOnlyList<HelpNode> level, string name)
+    {
+        foreach (var node in level)
+        {
+            if (node.Name.Contains(name, StringComparison.OrdinalIgnoreCase))
+            {
+                return node;
+            }
+        }
+
+        foreach (var node in level)
+        {
+            if (Find(node.Children, name) is { } found)
+            {
+                return found;
+            }
+        }
+
+        return null;
+    }
+
+    private static string DescribeChildren(CapabilityRegistry registry, HelpNode node)
+    {
         var report = new StringBuilder();
 
-        foreach (var capability in matching)
+        foreach (var child in node.Children)
         {
-            var descriptor = capability.Descriptor;
-
-            report.AppendLine($"{descriptor.Name}: {descriptor.Summary}");
-
-            if (descriptor.Examples.Count > 0)
-            {
-                // The Commander's own words, not the tool names.
-                report.AppendLine($"  Try: {string.Join("; ", descriptor.Examples.Select(e => $"\"{e}\""))}");
-            }
+            report.AppendLine(
+                child.CapabilityId is { } capabilityId
+                    ? DescribeCapability(registry, capabilityId)
+                    : $"{child.Name}: {child.Sentence}");
         }
 
         return report.ToString().TrimEnd();
     }
 
-    /// <summary>Groups in declaration order, with the capabilities inside each one ranked by use.</summary>
-    private static IEnumerable<IGrouping<string, RegisteredCapability>> Grouped(
-        CapabilityRegistry registry,
-        IEnumerable<RegisteredCapability> capabilities) =>
-        Ranked(registry, capabilities)
-            .GroupBy(capability => capability.Descriptor.Group, StringComparer.OrdinalIgnoreCase);
-
-    private static IEnumerable<RegisteredCapability> Ranked(
-        CapabilityRegistry registry,
-        IEnumerable<RegisteredCapability> capabilities)
+    private static string DescribeCapability(CapabilityRegistry registry, string capabilityId)
     {
-        // Registration order is the tiebreak, so an unused set comes out in the order the app declared it
-        // rather than in dictionary order.
-        var order = registry.All
-            .Select((capability, index) => (capability.Descriptor.Id, index))
-            .ToDictionary(x => x.Id, x => x.index, StringComparer.Ordinal);
+        var descriptor = registry.Find(capabilityId)!.Descriptor;
+        var report = new StringBuilder($"{descriptor.Name}: {descriptor.Summary}");
 
-        return capabilities
-            .OrderByDescending(capability => registry.UseCountOf(capability.Descriptor.Id))
-            .ThenBy(capability => order.GetValueOrDefault(capability.Descriptor.Id, int.MaxValue));
+        if (descriptor.Examples.Count > 0)
+        {
+            // The Commander's own words, not the tool names.
+            report.AppendLine();
+            report.Append($"  Try: {string.Join("; ", descriptor.Examples.Select(e => $"\"{e}\""))}");
+        }
+
+        return report.ToString();
     }
 }

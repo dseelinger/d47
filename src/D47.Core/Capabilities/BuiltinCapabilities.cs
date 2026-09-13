@@ -169,9 +169,13 @@ public static class BuiltinCapabilities
 
         // Whether timers and alarms register at all (#90). The app passes its startup flag; the default is the
         // registry the documentation gate numbers its pages from.
-        bool timersAndAlarms = true) =>
+        bool timersAndAlarms = true,
+
+        // The same instance TurnLoop reads, so the offer the drill opens is one TurnLoop can answer (#168).
+        // Null builds a private one that nothing else reads, for a caller with no offer of its own.
+        OfferWindow? offers = null) =>
     [
-        HelpCapability.Create(registry),
+        HelpCapability.Create(registry, offers ?? new OfferWindow()),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage, history, ticking),
         JournalCapability.Create(gameState, () => history?.State ?? Journal.HistoryState.Done, route),
         CrewCapability.Create(() => gameState.Active),

@@ -138,30 +138,48 @@ nav_order: 100
 What Directive 47 can actually do, answered from its own list of capabilities rather than from
 the model's memory.
 
-### Ask for it
+### Ask for it, out loud
 
 > "what can you do"
 > "what are your capabilities"
 > "tell me about the voice capabilities"
 
-This one works with no model configured and no network — it never needs to ask anything outside
-the machine what is on the machine.
-
-### What you get
-
-An overview first, because reading forty capabilities aloud is not help:
+Said or typed by you, this walks a spoken map one level at a time — a small question, then
+another, down to one feature. It never needs a model or a network, because it is projected from
+the same registry that decides what Directive 47 can actually do:
 
 ```text
-I have 9 capabilities, in these groups:
-  Foundation — Journal, Diagnostics, Privacy, Settings
-  Conversation — Conversation
-  Voice — Speech, Callouts
-  Interface — Interface
-Ask about a group by name for the detail.
+6 areas: Flying, Trading and goals, Ship and engineering, Talking and voices, Seeing what
+happened, and Settings and safety. Which one?
 ```
 
-Then, by group, the detail and the phrases that actually work — your words rather than internal
-names, because a list you cannot say out loud is a list you cannot use:
+Answer with an ordinal ("the second one"), the area's own name, or enough of it to be unambiguous,
+and it goes one level deeper — more areas, or a feature, whichever the map holds there:
+
+```text
+Operate the landing gear, lights, cargo scoop, hardpoints and the frame shift drive. Say 'put the
+gear down' or 'retract hardpoints'. It has a page on the panel called Flight and navigation.
+```
+
+Say something the drill was not expecting and it drops the question and answers normally, rather
+than insisting on an answer to a menu you have stopped answering.
+
+### Asked by the model
+
+The model itself is never handed the drill — a Commander answering "the second one" a minute
+later is not something a tool call can tell apart from a fresh question, so the drill is reachable
+only by the router and the panel. What the model gets instead is the plain projection below, with
+an optional area name:
+
+```text
+I have 9 capabilities, in these areas:
+  Flying — Everything about handling the ship in the moment.
+  Trading and goals — Finding what to do next, and what a place is worth.
+Ask about an area by name for the detail.
+```
+
+Asked for an area, it lists what is in it — the phrases that actually work, your words rather than
+internal names, because a list you cannot say out loud is a list you cannot use:
 
 ```text
 Speech: Speak replies aloud, mark each loop state with its own cue, and stop on command.
@@ -170,11 +188,12 @@ Callouts: Speak up about danger, fuel, route progress and arrivals without waiti
   Try: "what are you watching for"; "stop calling things out"; "start calling things out"
 ```
 
-Ask for a group that does not exist and it names the real ones instead of refusing. If you asked
-for the wrong group you want the right one, and this is the moment Directive 47 knows both:
+Ask for an area that does not exist and it names the real ones instead of refusing. If you asked
+for the wrong area you want the right one, and this is the moment Directive 47 knows both:
 
 ```text
-I have no group called "Navigation". I have: Foundation, Conversation, Voice, Interface.
+I have no area called "Navigation". I have: Flying, Trading and goals, Ship and engineering,
+Talking and voices, Seeing what happened, Settings and safety.
 ```
 
 ### Why it will not make things up
@@ -203,8 +222,8 @@ than claiming a usage history it does not have.
 
 #### `get_capabilities`
 
-Projects the registry: groups, the capabilities in them, and their declared example phrasings.
-The optional group name expands one of them.
+Projects the registry: the top-level areas of the spoken map, the capabilities under one of them,
+and their declared example phrasings. The optional area name expands one of them.
 
 ```json
 {"type":"object","properties":{"group":{"type":"string","description":"Optional group name to expand, such as Voice. Omit for the overview."}},"required":[],"additionalProperties":false}
@@ -217,5 +236,19 @@ at all, which made "what can you do" match nothing: the one capability whose ent
 being answerable without the model was unreachable without it, purely for offering a refinement
 it does not need. The rule is now "no required parameters", and the router invokes with empty
 arguments.
+
+#### `drill_capabilities`
+
+No parameters. Opens the top level of the spoken map as a standing offer, read against whatever
+the Commander says next.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+Protected: reachable from the router and the panel, refused to the model. A model call answering
+"what can you do" opens no offer of its own — nothing distinguishes its next tool call from a
+Commander's next sentence, so a model-opened offer would be captured by whatever the model asked
+for after it, not by the Commander.
 
 </details>

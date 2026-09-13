@@ -79,7 +79,8 @@ public sealed class TurnLoop(
     ILlmProvider? provider = null,
     string? model = null,
     SettingsService? settings = null,
-    ITurnClock? clock = null)
+    ITurnClock? clock = null,
+    OfferWindow? offers = null)
 {
     private readonly ITurnClock _clock = clock ?? SystemTurnClock.Instance;
 
@@ -271,8 +272,11 @@ public sealed class TurnLoop(
     /// </summary>
     public Func<string, string>? Heard { get; set; }
 
-    /// <summary>The choices put to the Commander, read before any other route.</summary>
-    public OfferWindow Offers { get; } = new();
+    /// <summary>
+    /// The choices put to the Commander, read before any other route. Shared with a capability that
+    /// opens its own offer directly, such as <see cref="Capabilities.Builtin.HelpCapability"/> (#168).
+    /// </summary>
+    public OfferWindow Offers { get; } = offers ?? new();
 
     public string? AboutMe { get; set; }
 

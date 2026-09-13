@@ -14,6 +14,11 @@ harmless command fits once "on" and "to" are read as the same word, d47 just run
 presses a key in Elite is always asked first, and anything other than a yes or a pick drops the
 question.
 
+"What can you do" is now a drill rather than one long answer: d47 says how many areas there are and
+names them, then asks which one. Answer with an ordinal, a name, or enough of one, and it goes a
+level deeper, down to one feature — its own sentence, a phrase or two that works, and the panel
+page it lives on where it has one. Anything else drops the question and answers normally.
+
 ## 0.119.0 — Ask how to get it
 
 A new question, "how do I get X", answers for anything named — a ship, module, suit, hand weapon,

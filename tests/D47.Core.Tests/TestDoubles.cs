@@ -118,7 +118,8 @@ public sealed class TestSurface
         SpendTracker spend,
         FakeVerbosityControl verbosity,
         D47.Core.Checklists.ChecklistService checklists,
-        D47.Core.Memory.MemoryBook memories)
+        D47.Core.Memory.MemoryBook memories,
+        OfferWindow offers)
     {
         Verbosity = verbosity;
         ChecklistService = checklists;
@@ -131,6 +132,7 @@ public sealed class TestSurface
         GameState = gameState;
         Availability = availability;
         Spend = spend;
+        Offers = offers;
     }
 
     public const string Version = "1.0.0-test";
@@ -161,6 +163,12 @@ public sealed class TestSurface
 
     /// <summary>What d47 remembers about the Commander, so the privacy surface has a store to empty.</summary>
     public D47.Core.Memory.MemoryBook Memories { get; }
+
+    /// <summary>
+    /// The same instance the registry was built with, so a <see cref="TurnLoop"/> a test builds over
+    /// <see cref="Registry"/> reads the offer a capability opens directly (#168).
+    /// </summary>
+    public OfferWindow Offers { get; }
 
     public KeywordRouter Router => new(Registry);
 
@@ -228,6 +236,7 @@ public sealed class TestSurface
             () => new D47.Core.Memory.MemorySituation());
 
         CapabilityRegistry? built = null;
+        var offers = new OfferWindow();
 
         var registry = CapabilityRegistry.Build(BuiltinCapabilities.All(
             install.Paths, verbosity, state, service, availability, spend, Version, SilentSpeech(), NoFleet(), Capabilities.Builtin.SpokenNamesSurface.Inert,
@@ -262,7 +271,8 @@ public sealed class TestSurface
 
             // The documentation gate numbers its pages from this registry, so timers and alarms register unless
             // a test asks otherwise (#90).
-            timersAndAlarms: timersAndAlarms));
+            timersAndAlarms: timersAndAlarms,
+            offers: offers));
 
         built = registry;
 
@@ -275,7 +285,7 @@ public sealed class TestSurface
 
         return new TestSurface(
             install.Paths, store, secrets, service, registry, state, availability, spend, verbosity,
-            checklists, memories);
+            checklists, memories, offers);
     }
 
     /// <summary>The headset surface on a machine with none.</summary>
