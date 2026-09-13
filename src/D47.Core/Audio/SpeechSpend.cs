@@ -307,6 +307,10 @@ public sealed class MeteredTtsProvider(ITtsProvider inner, SpeechSpend spend, Vo
 
     public int GroupsSentencesUpTo => inner.GroupsSentencesUpTo;
 
+    /// <summary>Not recorded: a sample synthesises nothing and bills nothing.</summary>
+    public Task<AudioClip?> PreviewAsync(string voiceId, CancellationToken cancellationToken = default) =>
+        inner.PreviewAsync(voiceId, cancellationToken);
+
     public async Task<AudioClip> SynthesizeAsync(
         string text,
         VoiceSelection voice,

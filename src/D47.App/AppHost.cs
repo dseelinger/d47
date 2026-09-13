@@ -1423,6 +1423,10 @@ public sealed class AppHost : IDisposable
                     Audition = (voiceId, role, token) => self is { } host
                         ? host.AuditionVoiceAsync(voiceId, role, token)
                         : Task.CompletedTask,
+                    Preview = (voiceId, role, token) => self is { } host
+                        ? host.AuditionPreviewAsync(voiceId, role, token)
+                        : Task.CompletedTask,
+                    HasPreview = (group, id) => self?.HasPreviewFor(group, id) ?? false,
 
                     // Late-bound like the two above, because the check is a network call made by a host that
                     // does not exist yet at this point in composition.
@@ -4652,6 +4656,44 @@ public sealed class AppHost : IDisposable
             Caption = clip.Name,
         });
     }
+
+    /// <summary>
+    /// Plays a voice's free sample from its provider, which bills nothing (#106). The sample is the
+    /// provider's own sentence, so it carries no caption.
+    /// </summary>
+    internal async Task AuditionPreviewAsync(string voiceId, VoiceRole role, CancellationToken cancellationToken)
+    {
+        if (Speaker(VoiceGroups.Of(role)) is not { } provider)
+        {
+            throw new InvalidOperationException("No voice provider is selected.");
+        }
+
+        Audio.DropGroup(AuditionGroup);
+
+        var key = (provider.Id, $"sample:{voiceId}");
+
+        if (!_auditions.TryGetValue(key, out var clip))
+        {
+            clip = await provider.PreviewAsync(voiceId, cancellationToken).ConfigureAwait(false)
+                   ?? throw new InvalidOperationException($"{provider.Name} has no free sample of that voice.");
+
+            _auditions[key] = clip;
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+
+        Audio.Enqueue(new AudioRequest
+        {
+            Channel = AudioChannel.Speech,
+            Clip = clip,
+            Group = AuditionGroup,
+        });
+    }
+
+    /// <summary>Whether one voice in a slot's list has a free sample.</summary>
+    internal bool HasPreviewFor(VoiceGroup group, string id) =>
+        VoicesFor(group).Voices.Any(voice =>
+            string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase) && voice.PreviewUrl is not null);
 
     /// <summary>One autonomous action at a time.</summary>
     private readonly SemaphoreSlim _acting = new(1, 1);

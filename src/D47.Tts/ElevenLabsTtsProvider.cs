@@ -5,6 +5,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using D47.Core.Audio;
 using Microsoft.Extensions.Logging;
+using NAudio.Wave;
+using NAudio.Wave.SampleProviders;
 
 namespace D47.Tts;
 
@@ -23,6 +25,9 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
     /// </summary>
     private const int MaxConcurrent = 3;
 
+    /// <summary>The largest free sample accepted, far above the few seconds ElevenLabs hosts.</summary>
+    private const int MaxPreviewBytes = 5 * 1024 * 1024;
+
     private readonly SemaphoreSlim _inFlight = new(MaxConcurrent, MaxConcurrent);
 
     /// <summary>What speaks when nobody has chosen.</summary>
@@ -36,7 +41,9 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
         "The text of every line D47 speaks is sent to ElevenLabs to be turned into audio, along " +
         "with your API key. That includes re-voiced in-game messages when you have turned those " +
         "on, which are written by other players. No journal content, game state or other keys " +
-        "are sent. Selecting a different voice provider stops all of it.";
+        "are sent. Playing a voice's free sample in the voice list fetches it from ElevenLabs or " +
+        "storage.googleapis.com with no key and no text. Selecting a different voice provider " +
+        "stops all of it.";
 
     /// <summary>
     /// ElevenLabs accepts a speaking rate between these, and rejects the request outright outside them
@@ -153,7 +160,10 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
                         // ElevenLabs voices are not locale-tagged the way Edge's are — the model is
                         // multilingual and a voice carries an accent rather than a locale.
                         voice.Labels?.GetValueOrDefault("accent") ?? "multilingual",
-                        voice.Labels?.GetValueOrDefault("gender"))),
+                        voice.Labels?.GetValueOrDefault("gender"))
+                    {
+                        PreviewUrl = PreviewFrom(voice.PreviewUrl),
+                    }),
             ]);
 
             _logger.LogInformation("ElevenLabs offers {Count} voices", _voices.Count);
@@ -164,6 +174,137 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
             _logger.LogWarning(ex, "Could not list ElevenLabs voices");
             return VoiceCatalogue.Unreachable(ex.Message);
         }
+    }
+
+    /// <summary>A listed sample address, or null where it is not one D47 fetches from.</summary>
+    internal static string? PreviewFrom(string? url) =>
+        Uri.TryCreate(url, UriKind.Absolute, out var uri) && IsPreviewHost(uri) ? url : null;
+
+    /// <summary>
+    /// Whether a sample may be fetched from this address: https, on ElevenLabs or the storage host it
+    /// lists. The egress disclosure names exactly these.
+    /// </summary>
+    internal static bool IsPreviewHost(Uri uri) =>
+        uri.Scheme == Uri.UriSchemeHttps
+        && (string.Equals(uri.Host, "storage.googleapis.com", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(uri.Host, "elevenlabs.io", StringComparison.OrdinalIgnoreCase)
+            || uri.Host.EndsWith(".elevenlabs.io", StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// ElevenLabs' own sample of a listed voice, fetched without the key so it cannot be billed, or null
+    /// where the voice has none (#106).
+    /// </summary>
+    public async Task<AudioClip?> PreviewAsync(string voiceId, CancellationToken cancellationToken = default)
+    {
+        var listed = await ListVoicesAsync(cancellationToken).ConfigureAwait(false);
+
+        if (listed.Voices.FirstOrDefault(voice => string.Equals(voice.Id, voiceId, StringComparison.Ordinal))
+            is not { PreviewUrl: { } url } voice)
+        {
+            return null;
+        }
+
+        try
+        {
+            // No xi-api-key header.
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+
+            using var response = await _http
+                .SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
+                .ConfigureAwait(false);
+
+            // After redirects, so the sample never comes from a host the disclosure does not name.
+            if ((response.RequestMessage?.RequestUri ?? request.RequestUri) is not { } landed
+                || !IsPreviewHost(landed))
+            {
+                throw new TtsException(
+                    $"ElevenLabs' sample of {voice.Name} is at an address D47 does not fetch from.");
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new TtsException(
+                    $"ElevenLabs' sample of {voice.Name} could not be fetched: it answered {(int)response.StatusCode}.");
+            }
+
+            var mp3 = await ReadCappedAsync(response.Content, cancellationToken).ConfigureAwait(false);
+
+            return new AudioClip($"{voice.Name} sample", DecodePreview(mp3), AudioFormat.Standard);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (TtsException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new TtsException($"ElevenLabs' sample of {voice.Name} could not be played: {ex.Message}", ex);
+        }
+    }
+
+    private static async Task<byte[]> ReadCappedAsync(HttpContent content, CancellationToken cancellationToken)
+    {
+        if (content.Headers.ContentLength > MaxPreviewBytes)
+        {
+            throw new TtsException("ElevenLabs' sample is larger than D47 will download.");
+        }
+
+        var stream = await content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+
+        await using (stream.ConfigureAwait(false))
+        {
+            using var buffer = new MemoryStream();
+            var chunk = new byte[81_920];
+            int read;
+
+            while ((read = await stream.ReadAsync(chunk, cancellationToken).ConfigureAwait(false)) > 0)
+            {
+                if (buffer.Length + read > MaxPreviewBytes)
+                {
+                    throw new TtsException("ElevenLabs' sample is larger than D47 will download.");
+                }
+
+                buffer.Write(chunk, 0, read);
+            }
+
+            return buffer.ToArray();
+        }
+    }
+
+    /// <summary>A sample's MP3 to <see cref="AudioFormat.Standard"/>: mono, 48 kHz, 16-bit.</summary>
+    internal static byte[] DecodePreview(byte[] mp3)
+    {
+        using var source = new MemoryStream(mp3);
+        using var reader = new Mp3FileReader(source);
+
+        var samples = reader.ToSampleProvider();
+
+        samples = samples.WaveFormat.Channels switch
+        {
+            1 => samples,
+            2 => new StereoToMonoSampleProvider(samples),
+            var channels => throw new TtsException($"ElevenLabs sent a sample with {channels} channels."),
+        };
+
+        if (samples.WaveFormat.SampleRate != AudioFormat.Standard.SampleRate)
+        {
+            samples = new WdlResamplingSampleProvider(samples, AudioFormat.Standard.SampleRate);
+        }
+
+        var pcm16 = new SampleToWaveProvider16(samples);
+        using var pcm = new MemoryStream();
+        var buffer = new byte[pcm16.WaveFormat.AverageBytesPerSecond];
+        int read;
+
+        while ((read = pcm16.Read(buffer, 0, buffer.Length)) > 0)
+        {
+            pcm.Write(buffer, 0, read);
+        }
+
+        return pcm.ToArray();
     }
 
     /// <summary>Numerals spelled out, and nothing else changed.</summary>
@@ -342,6 +483,9 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
         public string? Name { get; init; }
 
         public Dictionary<string, string>? Labels { get; init; }
+
+        [JsonPropertyName("preview_url")]
+        public string? PreviewUrl { get; init; }
     }
 
     private sealed record SynthesisRequest

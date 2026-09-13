@@ -348,6 +348,83 @@ public class AuditionDoesNotCommitTests
         Assert.False(picker.IsVisible);
     }
 
+    private static PickerRequest Sampled(List<string> played)
+    {
+        var request = Voices((voice, _) =>
+        {
+            played.Add($"line:{voice}");
+            return Task.CompletedTask;
+        });
+
+        return request with
+        {
+            Audition = request.Audition! with
+            {
+                Preview = (voice, _) =>
+                {
+                    played.Add($"sample:{voice}");
+                    return Task.CompletedTask;
+                },
+                HasPreview = voice => voice == "en-GB-SoniaNeural",
+                LineCost = "Hear it say its own line. Costs about $0.070.",
+            },
+        };
+    }
+
+    /// <summary>The second glyph on one row, the one that says the line.</summary>
+    private static Button LineGlyph(PickerWindow picker, string value) =>
+        picker.GetVisualDescendants().OfType<Button>()
+            .Where(button => (button.DataContext as PickerChoice)?.Value == value)
+            .ElementAt(1);
+
+    /// <summary>A voice with a free sample plays it from the play glyph, and says its line only from the second (#106).</summary>
+    [AvaloniaFact]
+    public async Task PlayPlaysTheFreeSampleAndTheSecondGlyphPaysForTheLine()
+    {
+        var played = new List<string>();
+        var picker = Shown(Sampled(played));
+
+        Glyph(picker, "en-GB-SoniaNeural").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        await Task.Yield();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        LineGlyph(picker, "en-GB-SoniaNeural").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        await Task.Yield();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(["sample:en-GB-SoniaNeural", "line:en-GB-SoniaNeural"], played);
+
+        var row = Rows(picker).First(item => item.Value == "en-GB-SoniaNeural");
+
+        Assert.True(row.HasSample);
+        Assert.True(LineGlyph(picker, "en-GB-SoniaNeural").IsVisible);
+        Assert.Equal("Hear it say its own line. Costs about $0.070.", row.LineWhy);
+        Assert.DoesNotContain("$", row.Why, StringComparison.Ordinal);
+
+        picker.Close();
+    }
+
+    /// <summary>A voice with no sample keeps one glyph, and that glyph is the priced line.</summary>
+    [AvaloniaFact]
+    public async Task AVoiceWithNoSampleHasOnlyThePricedGlyph()
+    {
+        var played = new List<string>();
+        var picker = Shown(Sampled(played));
+        var row = Rows(picker).First(item => item.Value == "en-GB-RyanNeural");
+
+        Assert.False(row.HasSample);
+        Assert.Equal("Hear it say its own line. Costs about $0.070.", row.Why);
+        Assert.False(LineGlyph(picker, "en-GB-RyanNeural").IsVisible);
+
+        Glyph(picker, "en-GB-RyanNeural").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        await Task.Yield();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(["line:en-GB-RyanNeural"], played);
+
+        picker.Close();
+    }
+
     /// <summary>Turns the dispatcher until something is true.</summary>
     private static void Pump(Func<bool> until, string complaint)
     {

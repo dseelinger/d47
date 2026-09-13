@@ -5,6 +5,9 @@ public sealed record VoiceInfo(string Id, string Name, string Locale, string? Ge
 {
     /// <summary>How the picker labels it.</summary>
     public string Label => Gender is null ? $"{Name} ({Locale})" : $"{Name} — {Gender}, {Locale}";
+
+    /// <summary>A hosted sample of this voice that costs nothing to fetch, or null where there is none (#106).</summary>
+    public string? PreviewUrl { get; init; }
 }
 
 /// <summary>A voice, plus how fast to say it.</summary>
@@ -131,6 +134,13 @@ public interface ITtsProvider
         string text,
         VoiceSelection voice,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// The provider's own free sample of one listed voice, rendered to <see cref="AudioFormat.Standard"/>,
+    /// or null where it offers none. Bills nothing (#106).
+    /// </summary>
+    Task<AudioClip?> PreviewAsync(string voiceId, CancellationToken cancellationToken = default) =>
+        Task.FromResult<AudioClip?>(null);
 
     /// <summary>
     /// How many characters this provider would rather be handed at once, or zero for one sentence at a

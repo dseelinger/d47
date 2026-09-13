@@ -13,6 +13,11 @@ provider offers one — read off `StationAllegiance` on the `Docked` event. Most
 allegiance at all and are unaffected; Federation and Alliance stations keep the voice they always
 did.
 
+Listening to ElevenLabs voices in the voice list no longer costs money. The play button now plays
+ElevenLabs' own free sample of each voice. A second button beside it has the voice say your core's
+line, billed as before, and the price above the list now refers to that button. A voice with no
+sample keeps the single paid button.
+
 With personality on, the game's own NPC lines are now said in other words rather than word for
 word each time. A trader's "I strongly advise you against this." is reworded in a trader's voice,
 a pirate's in a pirate's, and station traffic stays a procedural notice; each keeps its attitude,

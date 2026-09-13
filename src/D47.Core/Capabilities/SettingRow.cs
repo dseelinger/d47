@@ -37,6 +37,15 @@ public sealed record SettingAudition
     /// <summary>What a press costs, as a sentence.</summary>
     public required Func<D47Settings, string> Cost { get; init; }
 
+    /// <summary>Plays one value's free sample, where the provider offers one (#106).</summary>
+    public Func<string, CancellationToken, Task>? Preview { get; init; }
+
+    /// <summary>Whether one value has a sample for <see cref="Preview"/> to play.</summary>
+    public Func<string, bool>? HasPreview { get; init; }
+
+    /// <summary>What one press of <see cref="Play"/> costs, as a sentence, or null where <see cref="Cost"/> says it.</summary>
+    public Func<D47Settings, string>? LineCost { get; init; }
+
     /// <summary>Why it cannot be pressed, or null when it can.</summary>
     public Func<D47Settings, string?>? Unavailable { get; init; }
 }

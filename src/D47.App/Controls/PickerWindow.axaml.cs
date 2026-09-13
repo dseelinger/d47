@@ -57,6 +57,15 @@ public sealed record PickerAudition
 
     /// <summary>Why nothing here can be played, or null when it can.</summary>
     public string? Unavailable { get; init; }
+
+    /// <summary>Plays one value's free sample, where it has one (#106).</summary>
+    public Func<string, CancellationToken, Task>? Preview { get; init; }
+
+    /// <summary>Whether one value has a sample for <see cref="Preview"/>.</summary>
+    public Func<string, bool>? HasPreview { get; init; }
+
+    /// <summary>What one press of <see cref="Play"/> costs, or null where <see cref="Cost"/> says it.</summary>
+    public string? LineCost { get; init; }
 }
 
 /// <summary>The chosen value, where null means "clear this and use the default".</summary>
@@ -73,7 +82,12 @@ public sealed class PickerChoice : INotifyPropertyChanged
 
     private static readonly Geometry Stop = Geometry.Parse("M 6,6 L 18,6 L 18,18 L 6,18 Z");
 
+    /// <summary>A speech bubble, for the line the voice would actually say.</summary>
+    private static readonly Geometry Speak = Geometry.Parse("M 4,5 L 20,5 L 20,15 L 11,15 L 6,19 L 6,15 L 4,15 Z");
+
     private bool _playing;
+
+    private bool _playingLine;
 
     /// <summary>What choosing this row writes to settings — an id, not the words above it.</summary>
     public required string Value { get; init; }
@@ -89,6 +103,32 @@ public sealed class PickerChoice : INotifyPropertyChanged
 
     /// <summary>The pointer text on the glyph: what a press costs, or why it cannot be pressed.</summary>
     public string? Why { get; init; }
+
+    /// <summary>
+    /// Whether the play glyph plays a free sample, which puts the paid line on a second glyph beside it
+    /// (#106).
+    /// </summary>
+    public bool HasSample { get; init; }
+
+    /// <summary>The pointer text on the second glyph.</summary>
+    public string? LineWhy { get; init; }
+
+    public bool PlayingLine
+    {
+        get => _playingLine;
+        set
+        {
+            if (_playingLine == value)
+            {
+                return;
+            }
+
+            _playingLine = value;
+            Raise(nameof(PlayingLine));
+            Raise(nameof(LineGlyph));
+            Raise(nameof(LineActionName));
+        }
+    }
 
     public bool Playing
     {
@@ -112,6 +152,12 @@ public sealed class PickerChoice : INotifyPropertyChanged
 
     /// <summary>What the glyph is for, in words.</summary>
     public string ActionName => _playing ? $"Stop {Text}" : $"Play {Text}";
+
+    /// <summary>Say the line, or stop while this row's line is the one talking.</summary>
+    public Geometry LineGlyph => _playingLine ? Stop : Speak;
+
+    /// <summary>What the second glyph is for, in words.</summary>
+    public string LineActionName => _playingLine ? $"Stop {Text}" : $"Say the line in {Text}";
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -207,13 +253,22 @@ public partial class PickerWindow : Window
             AuditionNote.Text = audition.Unavailable ?? audition.Cost;
         }
 
-        _all = [.. _request.Choices.Select(value => new PickerChoice
+        _all = [.. _request.Choices.Select(value =>
         {
-            Value = value,
-            Text = Label(value),
-            CanPlay = _request.Audition is not null,
-            Playable = _request.Audition is { Unavailable: null },
-            Why = _request.Audition is { } offered ? offered.Unavailable ?? offered.Cost : null,
+            var sample = _request.Audition is { Preview: not null, HasPreview: { } has } && has(value);
+
+            return new PickerChoice
+            {
+                Value = value,
+                Text = Label(value),
+                CanPlay = _request.Audition is not null,
+                Playable = _request.Audition is { Unavailable: null },
+                HasSample = sample,
+                Why = _request.Audition is { } offered
+                    ? offered.Unavailable ?? (sample ? FreeSample : offered.LineCost ?? offered.Cost)
+                    : null,
+                LineWhy = _request.Audition is { } paid ? paid.Unavailable ?? paid.LineCost ?? paid.Cost : null,
+            };
         })];
 
         ApplyFilter();
@@ -388,22 +443,49 @@ public partial class PickerWindow : Window
     /// <summary>The audition in flight, so the next press can drop it.</summary>
     private CancellationTokenSource? _auditioning;
 
+    /// <summary>What the play glyph says on a row whose glyph plays a free sample.</summary>
+    private const string FreeSample = "Hear this voice's free sample. It costs nothing.";
+
     /// <summary>
     /// Plays the row the glyph is on — not the selection, which is the point of moving it there
     /// (change-requests.md 18): a Commander can listen to one voice while another stays highlighted,
-    /// and pressing play commits to nothing whatsoever.
+    /// and pressing play commits to nothing whatsoever. The free sample where the row has one, and the
+    /// paid line otherwise.
     /// </summary>
     private async void OnPlayClick(object? sender, RoutedEventArgs e)
     {
-        if (sender is not Control control
-            || control.DataContext is not PickerChoice choice
-            || _request.Audition is not { Unavailable: null } audition)
+        if (sender is Control control
+            && control.DataContext is PickerChoice choice
+            && _request.Audition is { Unavailable: null } audition)
         {
-            return;
+            await AuditionAsync(
+                control,
+                choice,
+                line: false,
+                choice.HasSample && audition.Preview is { } preview ? preview : audition.Play);
         }
+    }
 
+    /// <summary>Has the row's voice say its own line, from the glyph beside a free sample (#106).</summary>
+    private async void OnSayLineClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control control
+            && control.DataContext is PickerChoice choice
+            && _request.Audition is { Unavailable: null } audition)
+        {
+            await AuditionAsync(control, choice, line: true, audition.Play);
+        }
+    }
+
+    /// <summary>One audition from one glyph: a second press on that glyph stops it, and any press stops the rest.</summary>
+    private async Task AuditionAsync(
+        Control control,
+        PickerChoice choice,
+        bool line,
+        Func<string, CancellationToken, Task> play)
+    {
         // Read before stopping, because stopping is what clears it.
-        var stopping = choice.Playing;
+        var stopping = line ? choice.PlayingLine : choice.Playing;
 
         await StopAsync();
 
@@ -414,15 +496,15 @@ public partial class PickerWindow : Window
 
         var mine = new CancellationTokenSource();
         _auditioning = mine;
-        choice.Playing = true;
+        SetPlaying(choice, line, playing: true);
 
         try
         {
-            await audition.Play(choice.Value, mine.Token);
+            await play(choice.Value, mine.Token);
         }
         catch (OperationCanceledException)
         {
-        // A second press, or the shut-up key.
+            // A second press, or the shut-up key.
         }
         catch (Exception ex)
         {
@@ -432,7 +514,7 @@ public partial class PickerWindow : Window
         }
         finally
         {
-            choice.Playing = false;
+            SetPlaying(choice, line, playing: false);
 
             if (ReferenceEquals(_auditioning, mine))
             {
@@ -440,6 +522,18 @@ public partial class PickerWindow : Window
             }
 
             mine.Dispose();
+        }
+    }
+
+    private static void SetPlaying(PickerChoice choice, bool line, bool playing)
+    {
+        if (line)
+        {
+            choice.PlayingLine = playing;
+        }
+        else
+        {
+            choice.Playing = playing;
         }
     }
 
@@ -454,6 +548,7 @@ public partial class PickerWindow : Window
         foreach (var row in _all)
         {
             row.Playing = false;
+            row.PlayingLine = false;
         }
 
         if (previous is not null)

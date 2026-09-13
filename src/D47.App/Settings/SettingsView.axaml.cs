@@ -2901,7 +2901,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                     ? new PickerAudition
                     {
                         Play = audition.Play,
+                        Preview = audition.Preview,
+                        HasPreview = audition.HasPreview,
                         Cost = audition.Cost(_settings.Current),
+                        LineCost = audition.LineCost?.Invoke(_settings.Current),
                         Unavailable = audition.Unavailable?.Invoke(_settings.Current),
                     }
                     : null,

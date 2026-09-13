@@ -113,13 +113,16 @@ public static class SpeechCapability
         surface.Audition is not { } play ? null : new SettingAudition
         {
             Play = (voiceId, token) => play(voiceId, role, token),
+            Preview = surface.Preview is { } preview ? (voiceId, token) => preview(voiceId, role, token) : null,
+            HasPreview = surface.HasPreview is { } has ? voiceId => has(VoiceGroups.Of(role), voiceId) : null,
 
             // Priced and gated against the provider speaking for *this* row's slot, not the ship's.
             Cost = AuditionCost(VoiceGroups.Of(role)),
+            LineCost = LineCost(VoiceGroups.Of(role)),
             Unavailable = AuditionUnavailable(surface, VoiceGroups.Of(role)),
         };
 
-    /// <summary>What auditioning a voice costs.</summary>
+    /// <summary>What auditioning a voice costs, said once above the list.</summary>
     private static Func<D47Settings, string> AuditionCost(VoiceGroup group) => settings =>
     {
         var provider = TtsProviderCatalog.Selected(VoiceGroups.ProviderFor(settings.Speech, group));
@@ -129,12 +132,39 @@ public static class SpeechCapability
             return "Play a voice to hear it. This provider costs nothing.";
         }
 
-        // Cached for the session, so this is what the *first* press of a given voice costs and the ones after
-        // it are nothing.
-        return SpeechSpend.RateFor(settings, provider.Id) is { } rate
-            ? $"Play a voice to hear it. Each one costs about {(rate * AuditionLine.TypicalCharacters / 1000m):C3}."
-            : "Play a voice to hear it. This provider charges for each one.";
+        var price = PriceOfALine(settings, provider);
+
+        return provider.OffersFreePreviews
+            ? $"Play a voice to hear {provider.Name}'s free sample of it. The speech button has it say "
+              + $"its own line instead, which {(price is null ? "is charged" : $"costs about {price}")}."
+            : price is null
+                ? "Play a voice to hear it. This provider charges for each one."
+                : $"Play a voice to hear it. Each one costs about {price}.";
     };
+
+    /// <summary>What hearing a voice say its own line costs, on the control that does it.</summary>
+    private static Func<D47Settings, string> LineCost(VoiceGroup group) => settings =>
+    {
+        var provider = TtsProviderCatalog.Selected(VoiceGroups.ProviderFor(settings.Speech, group));
+
+        if (!provider.Billed)
+        {
+            return "Hear it say its own line. This provider costs nothing.";
+        }
+
+        return PriceOfALine(settings, provider) is { } price
+            ? $"Hear it say its own line. Costs about {price}."
+            : "Hear it say its own line. This provider charges for it.";
+    };
+
+    /// <summary>
+    /// The first synthesis of one audition line, formatted, or null where no rate is known. Replays are
+    /// cached for the session and cost nothing.
+    /// </summary>
+    private static string? PriceOfALine(D47Settings settings, TtsProviderInfo provider) =>
+        SpeechSpend.RateFor(settings, provider.Id) is { } rate
+            ? (rate * AuditionLine.TypicalCharacters / 1000m).ToString("C3", System.Globalization.CultureInfo.CurrentCulture)
+            : null;
 
     /// <summary>Why the button cannot be pressed.</summary>
     private static Func<D47Settings, string?> AuditionUnavailable(SpeechSurface surface, VoiceGroup group) =>
@@ -192,6 +222,12 @@ public static class SpeechCapability
 
         /// <summary>Speaks one voice so it can be judged before it is chosen (Phase 19).</summary>
         public Func<string, VoiceRole, CancellationToken, Task>? Audition { get; init; }
+
+        /// <summary>Plays one voice's free sample from its provider, which bills nothing (#106).</summary>
+        public Func<string, VoiceRole, CancellationToken, Task>? Preview { get; init; }
+
+        /// <summary>Whether one voice in a slot's list has a free sample for <see cref="Preview"/>.</summary>
+        public Func<VoiceGroup, string, bool>? HasPreview { get; init; }
 
         /// <summary>
         /// Whether the selected provider has whatever credential it needs, or true where it needs none.

@@ -144,6 +144,25 @@
                   </Canvas>
                 </Viewbox>
               </Button>
+              <!-- The paid line, present only on a row whose play glyph plays a free sample (#106). -->
+              <Button DockPanel.Dock="Right"
+                      IsVisible="{Binding HasSample}"
+                      IsEnabled="{Binding Playable}"
+                      ToolTip.Tip="{Binding LineWhy}"
+                      AutomationProperties.Name="{Binding LineActionName}"
+                      Click="OnSayLineClick"
+                      Background="Transparent"
+                      BorderThickness="0"
+                      Padding="6,0"
+                      MinWidth="0"
+                      VerticalAlignment="Center"
+                      Cursor="Hand">
+                <Viewbox Width="15" Height="15">
+                  <Canvas Width="24" Height="24">
+                    <Path Data="{Binding LineGlyph}" Fill="{DynamicResource D47.TextMuted}" />
+                  </Canvas>
+                </Viewbox>
+              </Button>
               <TextBlock Text="{Binding Text}"
                          VerticalAlignment="Center"
                          TextTrimming="CharacterEllipsis" />

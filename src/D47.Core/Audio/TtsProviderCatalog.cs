@@ -30,6 +30,9 @@ public sealed record TtsProviderInfo
     /// <summary>Whether speaking through this provider costs the Commander money at all.</summary>
     public bool Billed { get; init; }
 
+    /// <summary>Whether a voice can be heard from the provider's own free sample instead of a billed synthesis (#106).</summary>
+    public bool OffersFreePreviews { get; init; }
+
     /// <summary>
     /// The published list price in US dollars per thousand characters, or null where the provider does
     /// not publish one.
@@ -117,14 +120,16 @@ public static class TtsProviderCatalog
         Name = "ElevenLabs",
         Label = "ElevenLabs (paid — needs a key)",
         KeySecretName = "elevenlabs.apiKey",
-        Destination = "api.elevenlabs.io",
+        Destination = "api.elevenlabs.io, storage.googleapis.com",
 
         // "JBFqnCBsd6RMkjVDRZzb" is a real one, and it is what the Voice row showed.
         VoiceIdsAreOpaque = true,
         Egress = "The text of every line D47 speaks is sent to ElevenLabs to be turned into audio, "
                  + "along with your API key. That includes re-voiced in-game messages when you have "
                  + "turned those on, which are written by other players. No journal content, game "
-                 + "state or other keys are sent.",
+                 + "state or other keys are sent. Playing a voice's free sample in the voice list "
+                 + "fetches it from ElevenLabs or storage.googleapis.com, with no key and no text.",
+        OffersFreePreviews = true,
 
         // ElevenLabs rejects a speed outside this outright rather than clamping, so the range is declared
         // here and the settings row narrows to it while this provider is selected.

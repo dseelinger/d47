@@ -440,6 +440,12 @@ anything — *"Play a voice to hear it. This provider costs nothing"* on Edge Ne
 dollars on ElevenLabs. Each voice is synthesised once per session and replayed after that, so
 walking back and forth over four candidates costs four auditions rather than eight.
 
+**On ElevenLabs the play glyph costs nothing.** ElevenLabs hosts a short sample of each voice, and
+the glyph plays that: ElevenLabs' own sentence in its own delivery, fetched with no key and no
+text, so it is never billed. A speech-bubble glyph beside it has the voice say the core's own line
+through the synthesis you pay for, and the line above the list gives its price. A voice with no
+sample has only the one glyph, and that glyph is the paid line.
+
 It goes through the same audio path as everything else Directive 47 says: it ducks the game, the
 shut-up key cuts it off, and starting a second audition drops the first mid-word rather than
 queueing behind it.
