@@ -50,10 +50,10 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     public CareerStatistics Statistics { get; private set; } = CareerStatistics.Empty;
 
     /// <summary>Their reputation with the superpowers and with every faction met.</summary>
-    public ReputationState Reputation { get; private set; } = ReputationState.Empty;
+    public ReputationState Reputation { get; internal set; } = ReputationState.Empty;
 
     /// <summary>What they have contributed to each engineer.</summary>
-    public EngineerContributions Contributions { get; private set; } = EngineerContributions.Empty;
+    public EngineerContributions Contributions { get; internal set; } = EngineerContributions.Empty;
 
     /// <summary>Every community goal their journal has reported, and where they stand on it.</summary>
     public CommunityGoalBoard CommunityGoals { get; private set; } = CommunityGoalBoard.Empty;

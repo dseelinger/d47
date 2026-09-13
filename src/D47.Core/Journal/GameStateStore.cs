@@ -62,6 +62,12 @@ public sealed class GameStateStore
     public Func<string, Listening.SpokenNames?>? RestoreNames { get; init; }
 
     /// <summary>
+    /// This Commander's faction readings and engineer contributions from older journals, on the same terms as
+    /// <see cref="RestoreNames"/>. Merged per reading, the later one kept.
+    /// </summary>
+    public Func<string, UnlockEvidence?>? RestoreEvidence { get; init; }
+
+    /// <summary>
     /// Raised when the Commander whose journal is being tailed changes (Phase 44, "One switch signal").
     /// </summary>
     public event Action<CommanderSwitch>? CommanderChanged;
@@ -114,6 +120,12 @@ public sealed class GameStateStore
             if (RestoreNames?.Invoke(fid) is { IsKnown: true } names)
             {
                 state.Names = names.With(state.Names.Names);
+            }
+
+            if (RestoreEvidence?.Invoke(fid) is { IsKnown: true } evidence)
+            {
+                state.Reputation = evidence.Reputation.With(state.Reputation);
+                state.Contributions = evidence.Contributions.With(state.Contributions);
             }
         }
     }
@@ -212,6 +224,12 @@ public sealed class GameStateStore
         if (RestoreNames?.Invoke(identity.FrontierId) is { IsKnown: true } names)
         {
             state.Names = names;
+        }
+
+        if (RestoreEvidence?.Invoke(identity.FrontierId) is { IsKnown: true } evidence)
+        {
+            state.Reputation = evidence.Reputation;
+            state.Contributions = evidence.Contributions;
         }
 
         _byFrontierId[identity.FrontierId] = state;

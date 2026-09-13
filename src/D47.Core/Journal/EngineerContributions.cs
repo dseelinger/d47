@@ -29,6 +29,22 @@ public sealed record EngineerContributions
     public long? Total(int engineerId, string type, string? symbol) =>
         Reading(engineerId, type, symbol)?.TotalQuantity;
 
+    /// <summary>These totals and <paramref name="live"/>'s, keeping the later per key; a tie keeps the live one.</summary>
+    internal EngineerContributions With(EngineerContributions live)
+    {
+        var merged = Readings;
+
+        foreach (var (key, reading) in live.Readings)
+        {
+            if (!merged.TryGetValue(key, out var held) || reading.SeenAt >= held.SeenAt)
+            {
+                merged = merged.SetItem(key, reading);
+            }
+        }
+
+        return new EngineerContributions { Readings = merged };
+    }
+
     public EngineerContributions Apply(JournalEvent journalEvent)
     {
         ArgumentNullException.ThrowIfNull(journalEvent);

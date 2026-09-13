@@ -13,18 +13,18 @@ public enum HistoryState
     /// <summary>Walking.</summary>
     Running,
 
-    /// <summary>Finished; the four dictionaries are there.</summary>
+    /// <summary>Finished; the five dictionaries are there.</summary>
     Done,
 
-    /// <summary>Threw; the four dictionaries are not there and never will be.</summary>
+    /// <summary>Threw; the five dictionaries are not there and never will be.</summary>
     Failed,
 
-    /// <summary>Told to stop part-way; the four dictionaries are not there and never will be.</summary>
+    /// <summary>Told to stop part-way; the five dictionaries are not there and never will be.</summary>
     Stopped,
 }
 
 /// <summary>
-/// The four folds over journals d47 was not running for, run together and off the startup path. Owns no
+/// The five folds over journals d47 was not running for, run together and off the startup path. Owns no
 /// thread: a caller runs <see cref="Run"/> on whichever one it wants the walk on (#148).
 /// </summary>
 public sealed class HistoryBackfill
@@ -72,8 +72,10 @@ public sealed class HistoryBackfill
 
     public IReadOnlyDictionary<string, SpokenNames>? Names { get; private set; }
 
+    public IReadOnlyDictionary<string, UnlockEvidence>? Evidence { get; private set; }
+
     /// <summary>
-    /// Walks the four, in order, on the calling thread. A second call does nothing: the answer is wanted
+    /// Walks the five, in order, on the calling thread. A second call does nothing: the answer is wanted
     /// once. Cancelling stops it at the next journal file and leaves it <see cref="HistoryState.Stopped"/>,
     /// so a caller shutting down can wait for it before closing what it logs and writes through (#148).
     /// </summary>
@@ -115,6 +117,13 @@ public sealed class HistoryBackfill
                     cancellation));
 
             Names = Timed("spoken names", () => MineNames(cancellation));
+
+            Evidence = Timed(
+                "unlock evidence backfill",
+                () => UnlockEvidenceBackfill.FromHistory(
+                    Directory,
+                    Loggers.CreateLogger(nameof(UnlockEvidenceBackfill)),
+                    cancellation));
 
             State = HistoryState.Done;
         }

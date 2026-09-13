@@ -704,7 +704,7 @@ public sealed class AppHost : IDisposable
 
         heardNames.Load();
 
-        // The four walks back through older journal files, run together and after the window is up (#148): on
+        // The five walks back through older journal files, run together and after the window is up (#148): on
         // a data folder with no watermark the names walk reads every file in the folder, which is every first
         // run of a fresh install. Nothing here reads a journal until WarmUp asks it to.
         var history = new HistoryBackfill
@@ -738,6 +738,10 @@ public sealed class AppHost : IDisposable
             // And the names, so a failing lookup has something to match against on the very first question of
             // the session rather than after a few jumps.
             RestoreNames = fid => history.Names?.GetValueOrDefault(fid),
+
+            // And faction reputation and engineer contributions, which Elite writes only where the faction is
+            // present or the engineer is visited.
+            RestoreEvidence = fid => history.Evidence?.GetValueOrDefault(fid),
         };
 
         // The settings follow whoever the journal says is flying (Phase 44).

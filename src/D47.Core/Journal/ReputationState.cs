@@ -21,6 +21,8 @@ public sealed record ReputationState
     private ImmutableDictionary<string, FactionReading> FactionReadings { get; init; } =
         ImmutableDictionary.Create<string, FactionReading>(StringComparer.OrdinalIgnoreCase);
 
+    public bool IsKnown => !SuperpowerReadings.IsEmpty || !FactionReadings.IsEmpty;
+
     /// <summary>The last reading for a superpower or faction. A faction absent from later events keeps it.</summary>
     public FactionReading? Reading(string name)
     {
@@ -35,6 +37,13 @@ public sealed record ReputationState
 
     /// <summary>The same superpower readings, with no faction readings.</summary>
     internal ReputationState WithoutFactions() => this with { FactionReadings = FactionReadings.Clear() };
+
+    /// <summary>These readings and <paramref name="live"/>'s, keeping the later per name; a tie keeps the live one.</summary>
+    internal ReputationState With(ReputationState live) => new()
+    {
+        SuperpowerReadings = Later(SuperpowerReadings, live.SuperpowerReadings),
+        FactionReadings = Later(FactionReadings, live.FactionReadings),
+    };
 
     public ReputationState Apply(JournalEvent journalEvent)
     {
@@ -74,5 +83,22 @@ public sealed record ReputationState
             .ToList();
 
         return seen.Count == 0 ? this : this with { FactionReadings = FactionReadings.SetItems(seen) };
+    }
+
+    private static ImmutableDictionary<string, FactionReading> Later(
+        ImmutableDictionary<string, FactionReading> restored,
+        ImmutableDictionary<string, FactionReading> live)
+    {
+        var merged = restored;
+
+        foreach (var (name, reading) in live)
+        {
+            if (!merged.TryGetValue(name, out var held) || reading.SeenAt >= held.SeenAt)
+            {
+                merged = merged.SetItem(name, reading);
+            }
+        }
+
+        return merged;
     }
 }
