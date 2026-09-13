@@ -242,6 +242,7 @@ public static class ActionCapabilities
                         },
                     ],
                     Commands = [.. Phrases(actions)],
+                    SendsInput = true,
                     Handler = (arguments, cancellationToken) => Perform(arguments, surface, cancellationToken),
                 },
 

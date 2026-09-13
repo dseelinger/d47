@@ -53,6 +53,9 @@ public sealed class KeywordRouter(
             ? descriptor.Keywords.Concat(descriptor.SpokenKeywords)
             : descriptor.Keywords;
 
+    /// <summary>Every phrase this router accepts, over its registry and the dynamic commands live now.</summary>
+    public PhraseBook Book => PhraseBook.From(registry, dynamicCommands?.Invoke() ?? []);
+
     public KeywordMatch? Match(string input, InputSource source = InputSource.Typed) =>
         Match(input, source, bounded: true);
 
@@ -92,7 +95,7 @@ public sealed class KeywordRouter(
     /// <summary>
     /// Which tool a matched keyword reaches, or null when the router would have to guess (#161).
     /// </summary>
-    private static ToolDefinition? Answering(CapabilityDescriptor descriptor, CapabilityKeyword keyword)
+    internal static ToolDefinition? Answering(CapabilityDescriptor descriptor, CapabilityKeyword keyword)
     {
         // No *required* parameters, rather than no parameters at all.
         var eligible = descriptor.Tools.Where(t => !t.Parameters.Any(p => p.Required)).ToList();

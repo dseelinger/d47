@@ -48,6 +48,7 @@ public static class MacroCapability
                         Required = true,
                     },
                 ],
+                SendsInput = true,
                 Handler = (arguments, cancellationToken) => Run(arguments, store, actions, cancellationToken),
             },
         ],

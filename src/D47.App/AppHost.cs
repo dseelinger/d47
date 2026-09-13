@@ -6005,30 +6005,17 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>
-    /// <param name="dynamicCommands"> The phrases already claimed by dynamic commands — loaded macros,
-    /// a standing clipboard offer, the carrier course, the gap questions and the Community Goal search
-    /// — so a new macro sharing one is refused at load time like every other phrase collision already
-    /// is (#319).
+    /// The phrases a new macro or heard name may not take (#319, #134): the phrase book, less the
+    /// spoken-only keywords.
     /// </summary>
-    /// <param name="dynamicCommands">
-    /// The phrases already claimed by dynamic commands — loaded macros, a standing clipboard offer, the
-    /// carrier course, the gap questions and the Community Goal search — so a new macro sharing one is
-    /// refused at load time like every other phrase collision already is (#319).
-    /// </param>
     private static IReadOnlyList<string> PhrasesAlreadyTaken(
         CapabilityRegistry? registry, IEnumerable<DynamicCommand> dynamicCommands) =>
         registry is null
             ? []
             : [
-                .. registry.All.SelectMany(c => c.Descriptor.Keywords).Select(keyword => keyword.Phrase),
-                .. registry.All.SelectMany(c => c.Descriptor.InterruptKeywords),
-                .. registry.All.SelectMany(c => c.Descriptor.Tools).SelectMany(t => t.Commands)
-                    .Select(command => command.Phrase),
-                .. registry.All.SelectMany(c => c.Descriptor.Settings).SelectMany(row => row.Commands)
-                    .Select(command => command.Phrase),
-                .. dynamicCommands.Select(command => command.Phrase),
-                .. D47.Core.Conversation.ClipboardOffer.EveryPhrase,
-                D47.Core.Capabilities.Builtin.CommunityGoalCourse.SetCourse,
+                .. PhraseBook.From(registry, dynamicCommands).Entries
+                    .Where(entry => entry.Source != PhraseSource.SpokenKeyword)
+                    .Select(entry => entry.Phrase),
             ];
 
     private static IReadOnlyList<string> EliteInstallations()

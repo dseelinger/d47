@@ -42,6 +42,7 @@ public static class ShipCommands
             + "to what a nearest-first search just found and leave the pad, or request docking. "
             + "Spoken only — the Commander reaches these by voice or from the panel.",
         Protected = true,
+        SendsInput = true,
         Parameters =
         [
             new ToolParameter

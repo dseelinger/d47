@@ -87,5 +87,8 @@ public sealed record ToolDefinition
     /// </summary>
     public bool Protected { get; init; }
 
+    /// <summary>The handler presses keys, moves the mouse or pastes into Elite.</summary>
+    public bool SendsInput { get; init; }
+
     public required ToolHandler Handler { get; init; }
 }

@@ -60,6 +60,7 @@ public static class CommsCapability
                         AllowedValues = ["local", "system", "wing", "squadron"],
                     },
                 ],
+                SendsInput = true,
                 Handler = (arguments, cancellationToken) => Send(arguments, actions, enabled, cancellationToken),
             },
         ],

@@ -200,6 +200,7 @@ public static class NavigationCapability
                         Required = true,
                     },
                 ],
+                SendsInput = true,
                 Handler = (arguments, cancellationToken) => Plot(arguments, surface, cancellationToken),
             },
         ],
