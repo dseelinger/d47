@@ -19,7 +19,7 @@ nav_order: 126
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="intro">Three steps to putting the window where you want it.</p>
+<p class="intro">Two steps to making the window your own.</p>
 <section>
 <h2><span class="num">1</span> Learn the tab strip. Everything is behind it.</h2>
 <svg viewBox="0 0 880 208" role="img" aria-label="The Transcript  Checklist  Ships  Settings tab">
@@ -34,28 +34,17 @@ nav_order: 126
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> Shrink it to mini when you want it out of the way.</h2>
-<svg viewBox="0 0 880 308" role="img" aria-label="Hotkeys">
- <rect x="20" y="16" width="840" height="268" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+<h2><span class="num">2</span> The two hotkeys worth knowing.</h2>
+<svg viewBox="0 0 880 250" role="img" aria-label="Hotkeys">
+ <rect x="20" y="16" width="840" height="210" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Hotkeys</text>
  <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="68" y="98" font-size="16" fill="var(--text)">Put the window into mini and back</text>
- <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">Ctrl+M</text>
+ <text x="68" y="98" font-size="16" fill="var(--text)">Open Settings</text>
+ <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">Ctrl+comma</text>
  <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
- <text x="68" y="154" font-size="16" fill="var(--text)">Open Settings</text>
- <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">Ctrl+comma</text>
- <rect x="44" y="182" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
- <text x="68" y="210" font-size="16" fill="var(--text)">Jump to the ask box — or scroll the reading, on the Transcript tab</text>
- <text x="812" y="210" text-anchor="end" font-size="16" fill="var(--text-muted)">Ctrl+L</text>
- <text x="44" y="278" font-size="15" fill="var(--text-muted)">Mini takes the chrome away. Ctrl+M is the way back, and so is the title bar.</text>
-</svg>
-</section>
-<section>
-<h2><span class="num">!</span> The one that stops people.</h2>
-<svg viewBox="0 0 880 152" role="img" aria-label="Mini hides the tab strip too.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
- <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Mini hides the tab strip too.</text>
- <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">That is the point of it, and it is why the way out is a key rather than a button on the surface.</text>
+ <text x="68" y="154" font-size="16" fill="var(--text)">Jump to the ask box — or scroll the reading, on the Transcript tab</text>
+ <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">Ctrl+L</text>
+ <text x="44" y="200" font-size="15" fill="var(--text-muted)">Ctrl and the scroll wheel zoom the panel, the way a browser does.</text>
 </svg>
 </section>
 </div></div>
@@ -225,7 +214,7 @@ what it does *not* mean: it is not emphasis, and it is not "this changed".
 
 It applies where nothing else says the control is a control — a bare glyph or a bare word on a
 transparent background. The help mark, the copy mark, the checklist's **+**, the reset marks in
-settings, the way out of mini. Things that already say it by shape keep their own look: checkboxes
+settings. Things that already say it by shape keep their own look: checkboxes
 and their labels, the tab strip, scrollbars, and anything that uses the accent as a *background*.
 A control that is switched off keeps its switched-off look, because an accent on something that
 cannot be pressed is the colour making a promise the control cannot keep.
@@ -271,72 +260,6 @@ when what it is showing has a real minimum width it cannot go below, which the s
 and the transcript does not.
 
 It applies to the settings window too, and the level survives a restart like the theme does.
-
-#### Window content {#window-mode}
-
-**Full or mini.** Full is everything. Mini is the transcript's last few lines, the ask box, and the
-line under it — the same panel showing less, not a smaller copy of it.
-
-It is the shape for the very ordinary case of one monitor and wanting Directive 47 out of the way
-without losing it. The window stays interactive: **you can still type into it**, which is the
-difference between a mini window worth having and one you switch off the same day.
-
-**Four ways back.** Mini takes the tab strip, the reading control, the breadcrumb, the search box,
-the banners and the header, all of it on purpose — so three of the four deliberately do not live on
-the panel at all:
-
-```text
-⤢ in the corner      the expand mark, in the panel's bottom-right
-Ctrl+M               the key, which works with nothing at all on the surface
-"full window"        said out loud
-the title bar        mini keeps its decorations, so ✕ still closes it
-```
-
-The mark is the four-corner one every video player uses for full screen, and in the full window it
-is the same mark pulled inwards. Hover it for the words. It is on every page mini has, and it stays
-put while a chooser is open — a chooser is exactly the state you can feel stuck in, so it is the one
-control that is never the thing you are stuck behind.
-
-That last one is a decision rather than an oversight. A chromeless strip pinned over the game is
-the [overlay](#overlay) and a different thing; keeping the frame here means the window can still be
-moved, resized and closed by the means you already know.
-
-**It says "window", never "panel".** *Mini panel* and *full panel* belong to the headset and always
-did. A Commander wearing one must not shrink a window they cannot see, and one at a desk must not
-resize a quad they are not wearing, so each phrase reaches exactly one surface:
-
-```text
-mini window / small window / little window / shrink the window   this window
-full window / big window / large window                          this window
-mini panel / small panel / little panel / minimal panel          the headset
-full panel / big panel / large panel                             the headset
-```
-
-**Mini shows every page except Settings.** The checklist, the engineers, the clocks and the story
-all read fine at this size; Settings does not — its nav collapses below 900 pixels and its body
-wants 700, against a window 512 wide. So switching to mini while you are on Settings moves to the
-transcript, and switching back puts Settings up again. While you are in mini, asking for Settings is
-declined rather than queued.
-
-**Size is measured, not a number.** Mini is the headset's 512 by 280 plus whatever the ask box
-actually wants, at whatever [zoom](#zoom) you are on — so mini at 150% is a bigger mini window
-rather than a clipped one.
-
-**Its rectangle is its own.** Where you leave the mini window is remembered separately from where
-you leave the full one, so going mini and back lands on the pixel it started on, and a mini window
-you widened stays widened. Both survive a restart. The first time you go mini it appears at the
-corner the full window was at, rather than jumping across the desk.
-
-This is machine-wide rather than per-Commander: a window is a property of the desk, not of whoever
-is flying today.
-
-#### Switch the window between full and mini {#window-mode-key}
-
-`Ctrl+M` out of the box. It works while Directive 47 has focus — which is every moment it is
-wanted, because you are looking at the window it acts on.
-
-It flips the row above, so what you did with the key and what Settings says are one thing and
-survive a restart together.
 
 #### Window size and position
 

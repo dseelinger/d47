@@ -19,11 +19,6 @@ public static class InterfaceCapability
 
     public const string FocusAskHotkeyKey = "hotkeys.focusAsk";
 
-    /// <summary>Which content set the desktop window is showing (Phase 51).</summary>
-    public const string WindowModeKey = "ui.mode";
-
-    public const string WindowModeHotkeyKey = "hotkeys.windowMode";
-
     /// <summary>The flat mini panel, on or off (Phase 48).</summary>
     public const string OverlayKey = "ui.overlay.enabled";
 
@@ -98,36 +93,6 @@ public static class InterfaceCapability
                     },
                 },
             },
-            new SettingRow
-            {
-                Key = WindowModeKey,
-                Label = "Window content",
-                Help = "Full is everything. Mini is the transcript's tail, the ask box and the "
-                       + "line under it - the same panel showing less, not a smaller copy. The "
-                       + "window keeps its title bar in mini, so it can still be moved and closed.",
-                Kind = SettingKind.Choice,
-                Choices = ["full", "mini"],
-                DocsAnchor = "window-mode",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Ui.Mode,
-                    Write = (s, v) => s with { Ui = s.Ui with { Mode = v == "mini" ? "mini" : "full" } },
-                },
-
-                // And these must not collide with the headset's. `VrCapability.ModeKey` already owns
-                // "mini panel" and "full panel"; a Commander in a headset who says those must not shrink a
-                // window they cannot see, and one at a desk must not resize a quad they are not wearing.
-                Commands =
-                [
-                    new SettingCommandPhrase("mini window", "mini"),
-                    new SettingCommandPhrase("small window", "mini"),
-                    new SettingCommandPhrase("little window", "mini"),
-                    new SettingCommandPhrase("shrink the window", "mini"),
-                    new SettingCommandPhrase("full window", "full"),
-                    new SettingCommandPhrase("big window", "full"),
-                    new SettingCommandPhrase("large window", "full"),
-                ],
-            },
             HotkeyRow(
                 OpenSettingsHotkeyKey,
                 "Open settings",
@@ -140,12 +105,6 @@ public static class InterfaceCapability
                 "focus-ask",
                 s => s.Hotkeys.FocusAsk,
                 (s, v) => s with { Hotkeys = s.Hotkeys with { FocusAsk = v } }),
-            HotkeyRow(
-                WindowModeHotkeyKey,
-                "Switch the window between full and mini",
-                "window-mode-key",
-                s => s.Hotkeys.WindowMode,
-                (s, v) => s with { Hotkeys = s.Hotkeys with { WindowMode = v } }),
 
             // Seventy-five knobs is not a welcome (#60).
             new SettingRow

@@ -8,6 +8,10 @@
 
 ## 0.122.0 — How do I
 
+The desktop window no longer shrinks to mini. It was always the full panel now: the setting, the
+`Ctrl+M` hotkey, the spoken phrases and the shrink mark are gone. The headset's own mini panel and
+the flat overlay are unchanged.
+
 "How do I plot a course", "how can I get my ship engineered", "how would I turn off silent
 running" — these now land on the one feature they mean, without the model. Where the words fit
 two or three features equally well, d47 asks which; where they fit none, a configured model

@@ -192,13 +192,6 @@ public sealed record PersonaSettings
     /// <summary>Whether the pairings have been checked against the gender each core is written with.</summary>
     public bool VoicesGenderChecked { get; init; }
 
-    /// <summary>
-    /// Superseded by <see cref="VoicesRepaired"/>, and kept because unknown keys are rejected on load:
-    /// every file written between v0.6.2 and v0.6.4 carries this, and removing the property would
-    /// refuse those files rather than ignore the value.
-    /// </summary>
-    public bool VoicesNamedChecked { get; init; }
-
     /// <summary>Which revision of the named-default repair this file has had.</summary>
     public int VoicesRepaired { get; init; }
 }
@@ -475,11 +468,6 @@ public sealed record CalloutSettings
     /// </summary>
     public bool Continuity { get; init; } = true;
 
-    /// <summary>
-    /// Retired with Habits itself in v0.83.0, and kept because unknown keys are rejected on load.
-    /// </summary>
-    public bool Habits { get; init; }
-
     /// <summary>A beat of the Commander's adventure, said when it is reached (Phase 47).</summary>
     public bool Adventure { get; init; } = true;
 }
@@ -712,9 +700,6 @@ public sealed record UiSettings
     /// <summary>How large the panel is drawn, as a percentage (Phase 9, "Zoom the desktop window").</summary>
     public int ZoomPercent { get; init; } = Interface.ZoomLadder.Default;
 
-    /// <summary>Which content set the desktop window is showing: "full" or "mini" (Phase 51).</summary>
-    public string Mode { get; init; } = "full";
-
     /// <summary>The mini panel on a monitor, for a Commander with no headset (Phase 48).</summary>
     public OverlaySettings Overlay { get; init; } = new();
 
@@ -776,9 +761,6 @@ public sealed record HotkeySettings
     /// and gives them back the moment it is done (Phase 48).
     /// </summary>
     public string? MoveOverlay { get; init; } = "Ctrl+Alt+M";
-
-    /// <summary>Puts the desktop window into mini and back (Phase 51).</summary>
-    public string? WindowMode { get; init; } = "Ctrl+M";
 }
 
 public sealed record UpdateSettings

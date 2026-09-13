@@ -338,30 +338,13 @@ public partial class MainWindow : Window
             host.Tick.Add("routing", _ =>
                 Avalonia.Threading.Dispatcher.UIThread.Post(() => Panel.TickRouting()));
 
-            // And the same window is the one with a keyboard, so it is the one whose mini keeps the ask line
-            // (Phase 51).
-            Panel.EnableAskInMini();
-
-            // And a control you can see, which is the way out a Commander finds without being told (asked for
-            // 2026-08-24).
-            Panel.EnableModeToggle(mode => host.Settings.Apply(
-                InterfaceCapability.WindowModeKey,
-                mode == PanelMode.Mini ? "mini" : "full",
-                SettingsCaller.Panel));
-
             // And every tab back on the reading it was left on (#268).
             Panel.RememberRoots(new PanelRootMemory(host.ViewState));
 
             // And the tab itself, back where it was left (#276).
             Panel.RememberTab(new PanelTabMemory(host.ViewState));
 
-            // Both before the window is shown.
-            var mini = IsMini(host.Settings.Current);
-
-            Panel.Mode = mini ? PanelMode.Mini : PanelMode.Full;
-
-            _placement = WindowPlacementMemory.Attach(
-                this, host.ViewState, startMini: mini, miniSize: mini ? MiniSize() : null);
+            _placement = WindowPlacementMemory.Attach(this, host.ViewState);
 
             // Read before the first paint for the same reason: the worked example appearing and then
             // vanishing is worse than either state, and it is the Commander who has already asked — the one
@@ -463,16 +446,6 @@ public partial class MainWindow : Window
             {
                 BindOverlayKeys();
             }
-
-            // Mini and back, with no restart (Phase 51, and Phase 4's rule about every setting).
-            if (change.Key == InterfaceCapability.WindowModeKey)
-            {
-                ApplyWindowMode();
-            }
-            else if (change.Key == InterfaceCapability.ZoomKey)
-            {
-                _placement?.Remeasured(MiniSize());
-            }
         });
 
         // Deliberately not focusing the Ask box.
@@ -562,16 +535,6 @@ public partial class MainWindow : Window
             {
                 e.Handled = true;
                 Panel.FocusAsk();
-            }
-            else if (Matches(_host.Settings.Current.Hotkeys.WindowMode, e))
-            {
-                // The way back that works when there is nothing at all on the surface (Phase 51).
-                e.Handled = true;
-
-                _host.Settings.Apply(
-                    InterfaceCapability.WindowModeKey,
-                    Panel.Mode == PanelMode.Full ? "mini" : "full",
-                    SettingsCaller.Hotkey);
             }
         }
 
@@ -663,42 +626,8 @@ public partial class MainWindow : Window
 
     private void OpenSettings() => Panel.Tab = PanelTab.Settings;
 
-    /// <summary>The two rectangles this window remembers, and which one it is in.</summary>
+    /// <summary>The rectangle this window remembers.</summary>
     private WindowPlacementMemory? _placement;
-
-    private static bool IsMini(D47Settings settings) =>
-        string.Equals(settings.Ui.Mode, "mini", StringComparison.OrdinalIgnoreCase);
-
-    /// <summary>Puts the window into the shape the setting names, and back (Phase 51).</summary>
-    private void ApplyWindowMode()
-    {
-        if (_host is null)
-        {
-            return;
-        }
-
-        var mini = IsMini(_host.Settings.Current);
-
-        if (mini == (Panel.Mode == PanelMode.Mini))
-        {
-            return;
-        }
-
-        _placement?.Resize(mini, MiniSize());
-
-        Panel.Mode = mini ? PanelMode.Mini : PanelMode.Full;
-    }
-
-    /// <summary>What mini wants: measured rather than typed (Phase 51).</summary>
-    private Size MiniSize()
-    {
-        var scale = ZoomLadder.ScaleOf(
-            ZoomLadder.Snap(_host?.Settings.Current.Ui.ZoomPercent ?? ZoomLadder.Default));
-
-        return new Size(
-            PanelResolution.Mini.Width * scale,
-            (PanelResolution.Mini.Height + Panel.MiniExtraHeight(PanelResolution.Mini.Width)) * scale);
-    }
 
     /// <summary>The settings surface, built the first time the tab is selected.</summary>
     internal AdventureSurface? Adventures { get; }

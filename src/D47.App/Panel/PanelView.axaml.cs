@@ -48,12 +48,6 @@ public partial class PanelView : UserControl
 
     private PanelViewModel? _bound;
 
-    /// <summary>Whether this surface keeps its ask line in mini.</summary>
-    private bool _asksInMini;
-
-    /// <summary>How this surface changes its own mode, or null where it cannot.</summary>
-    private Action<PanelMode>? _switchMode;
-
     /// <summary>
     /// The tab that was showing when mini took it away, so leaving mini can put it back (Phase 51).
     /// </summary>
@@ -1070,29 +1064,6 @@ public partial class PanelView : UserControl
         return true;
     }
 
-    /// <summary>
-    /// Gives this surface the tools that belong to the page being read — the search box, and the button
-    /// that copies the page (Phase 19, "Copy log").
-    /// </summary>
-    public double MiniExtraHeight(double width) => Wanted(AskRow, width) + Wanted(ModeRow, width);
-
-    /// <summary>What one row wants, or zero when it is not drawn.</summary>
-    private static double Wanted(Control row, double width)
-    {
-        if (!row.IsVisible)
-        {
-            return 0;
-        }
-
-        row.Measure(new Size(width, double.PositiveInfinity));
-
-        var wanted = row.DesiredSize.Height;
-
-        row.InvalidateMeasure();
-
-        return wanted;
-    }
-
     /// <summary>Moves the page this surface is showing, by however much was asked for (#34).</summary>
     public PanelScrollOutcome Scroll(PanelScrollStep step)
     {
@@ -1159,23 +1130,6 @@ public partial class PanelView : UserControl
         return ReferenceEquals(pane, TranscriptPane)
             ? TranscriptScroller
             : pane.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
-    }
-
-    /// <summary>Draws a control that switches this surface between full and mini (asked for 2026-08-24).</summary>
-    public void EnableModeToggle(Action<PanelMode> switchTo)
-    {
-        _switchMode = switchTo;
-        ApplyChrome();
-    }
-
-    private void OnModeToggleClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e) =>
-        _switchMode?.Invoke(Mode == PanelMode.Full ? PanelMode.Mini : PanelMode.Full);
-
-    /// <summary>Keeps the ask line on this surface in mini (Phase 51).</summary>
-    public void EnableAskInMini()
-    {
-        _asksInMini = true;
-        ApplyChrome();
     }
 
     public void EnableSearch()
@@ -1893,35 +1847,11 @@ public partial class PanelView : UserControl
         // A furnished tab brings its own footer — the settings surface has the storage line, About and the
         // data folder — so the ask line and the provenance line give way to it rather than sitting under it
         // saying nothing about a page with no turns on it.
-        AskRow.IsVisible = (full || _asksInMini) && transcript;
+        AskRow.IsVisible = full && transcript;
 
         // The provenance line and the microphone indicator together, because both are about the transcript
         // and no other tab has turns on it.
         StatusRow.IsVisible = transcript;
-
-        // And the way out, on every tab this surface has, because a way out with a hole in it is the failure
-        // this control exists to prevent (asked for 2026-08-24).
-        var furnished = _switchMode is not null;
-
-        ModeRow.IsVisible = furnished && !transcript;
-        ModeToggleSeat.IsVisible = furnished && transcript;
-
-        // Both marked from one call, which is what keeps two buttons from becoming two behaviours: same
-        // glyph, same tooltip, same name a screen reader says, and one Click handler between them in the
-        // markup.
-        foreach (var toggle in new[] { ModeToggle, ModeToggleSeat })
-        {
-            Controls.Glyphs.Mark(
-                toggle,
-                full ? Controls.Glyphs.Shrink : Controls.Glyphs.Expand,
-                Theming.ThemeManager.AccentKey,
-                full ? "Shrink to the mini panel" : "Expand to the whole panel",
-
-                // Diagonal arrows read as points rather than shaft-thickenings at the family's usual weight,
-                // so this pair takes a finer pen (#140).
-                size: 14,
-                strokeThickness: 0.8);
-        }
 
         // Mini is "the transcript's tail and the provenance line" and nothing else, so the tabs, the mode
         // control, the breadcrumb and the search box go with the rest of the chrome.

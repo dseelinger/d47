@@ -296,31 +296,6 @@
         Docked right, so it never pushes the microphone indicator around — the two change on
         completely different clocks.
       -->
-      <!--
-        The way out, seated rather than given a row of its own on the transcript page (#194).
-        First right-docked child, so it takes the outer edge — outboard of Details and the switch
-        annunciator, where a way out belongs.
-
-        It is a second button rather than ModeToggle reparented here: a Visual belongs to exactly
-        one visual tree, so one control cannot sit in both places, and moving it on every tab
-        change would mutate the tree for a saving of one row. The two cannot drift because
-        neither is marked on its own — PanelView.Show marks both in one call, with one handler
-        between them.
-      -->
-      <Button x:Name="ModeToggleSeat"
-              DockPanel.Dock="Right"
-              IsVisible="False"
-              Margin="8,0,0,0"
-              Padding="6,1"
-              MinWidth="0"
-              VerticalAlignment="Center"
-              Background="Transparent"
-              BorderThickness="0"
-              Cursor="Hand"
-              FontSize="{StaticResource D47.Type.Secondary}"
-              Foreground="{DynamicResource D47.Accent}"
-              Click="OnModeToggleClick" />
-
       <Border x:Name="StartupRow"
               DockPanel.Dock="Right"
               IsVisible="{Binding StartupVisible}"
@@ -397,39 +372,6 @@
                  FontSize="{StaticResource D47.Type.Secondary}"
                  Foreground="{DynamicResource D47.TextMuted}"
                  TextWrapping="Wrap" />
-    </DockPanel>
-
-    <!--
-      The way out of mini, drawn (asked for 2026-08-24). Phase 51 ruled that the way back must not
-      live in the thing that disappears and listed three that do not: the hotkey, the phrase and
-      the title bar. The Commander's answer on meeting it was that a surface with no visible
-      control to leave by is one you have to be told about — so there is one, and the other three
-      stand beside it rather than being replaced.
-
-      This row is now the exception rather than the rule (#194). On the transcript page the way
-      out takes a seat in StatusRow and this row is not drawn at all; everywhere else it is drawn
-      and the seat is not. The reason the row exists has not gone away — StatusRow is the
-      transcript's, hidden on every other tab, so a way out that lived only there would vanish on
-      the tabs that have no turns on them, which is a way out with a hole in it. What changed is
-      that the hole is now filled by this row rather than by refusing the seat.
-
-      Hidden unless a host furnishes it, exactly as TurnDetails above is — so the headset's mini is
-      untouched and the flat overlay, which the pointer goes straight through, does not draw a
-      button nobody could press.
-    -->
-    <DockPanel x:Name="ModeRow" DockPanel.Dock="Bottom" IsVisible="False" Margin="0,8,0,0">
-      <Button x:Name="ModeToggle"
-              DockPanel.Dock="Right"
-              Padding="6,1"
-              MinWidth="0"
-              VerticalAlignment="Center"
-              Background="Transparent"
-              BorderThickness="0"
-              Cursor="Hand"
-              FontSize="{StaticResource D47.Type.Secondary}"
-              Foreground="{DynamicResource D47.Accent}"
-              Click="OnModeToggleClick" />
-      <TextBlock />
     </DockPanel>
 
     <!--
@@ -528,8 +470,8 @@
 
             And the hover feedback goes with them rather than being replaced. The colour was saying
             two things — "this can be pressed" and "you are pointing at it" — and the first is the one
-            worth keeping. `TurnDetails` and `ModeToggle` are accent at rest and change nothing on
-            hover; the button's own background wash is what says the pointer is here.
+            worth keeping. `TurnDetails` is accent at rest and changes nothing on hover; the
+            button's own background wash is what says the pointer is here.
           -->
           <Path x:Name="HelpGlyph"
                 Width="8.4" Height="17"

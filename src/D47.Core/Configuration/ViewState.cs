@@ -17,9 +17,6 @@ public sealed record ViewState
     /// </summary>
     public WindowPlacement? MainWindow { get; init; }
 
-    /// <summary>And where it was left in mini, kept apart from the rectangle above (Phase 51).</summary>
-    public WindowPlacement? MainWindowMini { get; init; }
-
     /// <summary>Whether the Commander has been asked about a Start Menu entry.</summary>
     public bool StartMenuOffered { get; init; }
 
@@ -201,11 +198,6 @@ public sealed record ViewState
 
     /// <summary>Records where the main window was left.</summary>
     public ViewState With(WindowPlacement placement) => this with { MainWindow = placement };
-
-    /// <summary>Records where the window was left, in whichever of its two shapes it was in (Phase 51).</summary>
-    public ViewState With(WindowPlacement placement, bool mini) => mini
-        ? this with { MainWindowMini = placement }
-        : this with { MainWindow = placement };
 
     /// <summary>Records where the flat mini panel was dragged to (Phase 48).</summary>
     public ViewState With(OverlayPlacement placement) => this with { Overlay = placement };

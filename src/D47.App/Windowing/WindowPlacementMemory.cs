@@ -18,38 +18,21 @@ public sealed class WindowPlacementMemory
 
     private WindowPlacement _last;
 
-    /// <summary>The mini rectangle, kept apart from the full one (Phase 51).</summary>
-    private WindowPlacement? _lastMini;
-
-    /// <summary>Which of the two shapes the window is in, so a sample lands in the right one.</summary>
-    private bool _mini;
-
-    private WindowPlacementMemory(
-        Window window, ViewStateStore store, WindowPlacement seed, WindowPlacement? mini, bool startMini)
+    private WindowPlacementMemory(Window window, ViewStateStore store, WindowPlacement seed)
     {
         _window = window;
         _store = store;
         _last = seed;
-        _lastMini = mini;
-        _mini = startMini;
     }
 
     /// <summary>
     /// Applies the remembered placement, or clamps the default to the screen, then keeps watching.
     /// </summary>
     /// <param name="zoom">The zoom level the surface will be drawn at, when it has one.</param>
-    /// <param name="startMini">Whether the window is opening in mini (Phase 51).</param>
-    public static WindowPlacementMemory Attach(
-        Window window,
-        ViewStateStore store,
-        Func<int>? zoom = null,
-        bool startMini = false,
-        Size? miniSize = null)
+    public static WindowPlacementMemory Attach(Window window, ViewStateStore store, Func<int>? zoom = null)
     {
         var state = store.Load();
-
-        // The rectangle for the shape it is opening in.
-        var remembered = (startMini ? state.MainWindowMini : state.MainWindow) ?? state.MainWindow;
+        var remembered = state.MainWindow;
 
         var scale = remembered is null && zoom is not null ? ZoomLadder.ScaleOf(zoom()) : 1.0;
 
@@ -118,22 +101,7 @@ public sealed class WindowPlacementMemory
             MaximizedOnY = remembered?.MaximizedOnY,
         };
 
-        var memory = new WindowPlacementMemory(
-            window,
-            store,
-            startMini ? state.MainWindow ?? seed : seed,
-            startMini ? seed : state.MainWindowMini,
-            startMini);
-
-        // A window opening in mini for the first time has no rectangle of its own, so it has just been sized
-        // as the full window.
-        if (startMini && state.MainWindowMini is null && miniSize is { } wanted)
-        {
-            window.Width = wanted.Width;
-            window.Height = wanted.Height;
-
-            memory._lastMini = seed with { Width = wanted.Width, Height = wanted.Height };
-        }
+        var memory = new WindowPlacementMemory(window, store, seed);
 
         // Sampled while the window is in its normal state rather than read at close, because a maximised
         // window reports the maximised rectangle and restoring to that would leave a Commander who maximises
@@ -192,21 +160,6 @@ public sealed class WindowPlacementMemory
         return screens.Primary ?? screens.All.FirstOrDefault();
     }
 
-    /// <summary>The rectangle for the shape the window is in now.</summary>
-    private WindowPlacement Current => _mini ? _lastMini ?? _last : _last;
-
-    private void Record(WindowPlacement placement)
-    {
-        if (_mini)
-        {
-            _lastMini = placement;
-        }
-        else
-        {
-            _last = placement;
-        }
-    }
-
     private void Sample()
     {
         if (_window.WindowState != WindowState.Normal)
@@ -215,21 +168,20 @@ public sealed class WindowPlacementMemory
 
             // Which screen, while there is still a window on one to ask about.
             var screen = maximised ? _window.Screens?.ScreenFromWindow(_window) : null;
-            var was = Current;
 
-            Record(was with
+            _last = _last with
             {
                 Maximized = maximised,
-                MaximizedOnX = screen?.WorkingArea.X ?? was.MaximizedOnX,
-                MaximizedOnY = screen?.WorkingArea.Y ?? was.MaximizedOnY,
-            });
+                MaximizedOnX = screen?.WorkingArea.X ?? _last.MaximizedOnX,
+                MaximizedOnY = screen?.WorkingArea.Y ?? _last.MaximizedOnY,
+            };
 
             return;
         }
 
-        var previous = Current;
+        var previous = _last;
 
-        Record(new WindowPlacement
+        _last = new WindowPlacement
         {
             Width = _window.Width,
             Height = _window.Height,
@@ -240,114 +192,20 @@ public sealed class WindowPlacementMemory
             // Kept rather than cleared.
             MaximizedOnX = previous.MaximizedOnX,
             MaximizedOnY = previous.MaximizedOnY,
-        });
-    }
-
-    /// <summary>
-    /// Puts the window into its other shape (Phase 51): the rectangle it is leaving is written down,
-    /// and the one it is going to is applied.
-    /// </summary>
-    /// <param name="mini">Which shape it is going into.</param>
-    /// <param name="measured">
-    /// What mini wants, for the first time there is no mini rectangle to go back to.
-    /// </param>
-    public void Resize(bool mini, Size? measured)
-    {
-        if (mini == _mini)
-        {
-            return;
-        }
-
-        // The shape being left, before anything moves.
-        Sample();
-        Save();
-
-        _mini = mini;
-
-        // A maximised window that goes mini has to come out of it first, or the platform ignores the size and
-        // the Commander gets a full-screen window with a strip of content in it.
-        if (mini && _window.WindowState != WindowState.Normal)
-        {
-            _window.WindowState = WindowState.Normal;
-        }
-
-        var wanted = mini ? _lastMini : _last;
-
-        if (mini && wanted is null && measured is { } size)
-        {
-            // The first mini takes the full window's corner, so the strip appears where the window already
-            // was rather than jumping across the desk on its first use.
-            wanted = new WindowPlacement
-            {
-                Width = size.Width,
-                Height = size.Height,
-                X = _window.Position.X,
-                Y = _window.Position.Y,
-            };
-        }
-
-        if (wanted is null)
-        {
-            return;
-        }
-
-        Apply(wanted);
-        Record(wanted);
-    }
-
-    /// <summary>
-    /// The measured size mini wants, applied to a window already in mini — what a zoom change means
-    /// (Phase 51).
-    /// </summary>
-    public void Remeasured(Size size)
-    {
-        if (!_mini || _window.WindowState != WindowState.Normal)
-        {
-            return;
-        }
-
-        _window.Width = size.Width;
-        _window.Height = size.Height;
-    }
-
-    private void Apply(WindowPlacement placement)
-    {
-        if (placement.Width > 0 && placement.Height > 0)
-        {
-            _window.Width = placement.Width;
-            _window.Height = placement.Height;
-        }
-
-        if (placement is { X: { } x, Y: { } y })
-        {
-            _window.Position = new PixelPoint((int)x, (int)y);
-        }
-
-        if (placement.Maximized)
-        {
-            _window.WindowState = WindowState.Maximized;
-        }
+        };
     }
 
     private void Save()
     {
-        // Both, because a mini toggle writes one of them and the Commander may never open the other again
-        // before closing.
-        var state = _store.Load();
-
-        if (_last.Width > 0 && _last.Height > 0)
+        if (_last.Width <= 0 || _last.Height <= 0)
         {
-            state = state.With(_last, mini: false);
-        }
-
-        if (_lastMini is { Width: > 0, Height: > 0 } mini)
-        {
-            state = state.With(mini, mini: true);
+            return;
         }
 
         // Read-modify-write against the file rather than against a snapshot taken at startup: the settings
         // page writes card collapse state into the same store while this window is open, and saving a stale
         // copy here would silently undo it.
-        _store.Save(state);
+        var state = _store.Load();
+        _store.Save(state.With(_last));
     }
 }
