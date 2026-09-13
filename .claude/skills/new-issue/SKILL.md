@@ -164,7 +164,8 @@ The repository's form, in its writing style — literal, terse, no metaphor stan
 statement. Read the CLAUDE.md writing rule before you write prose, and the `/prose` skill is there
 if you want it checked.
 
-- **Title**: the claim, and the mechanism or cause after a colon where one is needed.
+- **Title**: seven words or fewer. Count them before showing the text. The cause goes in the body,
+  not after a colon.
 - **A grounding paragraph** naming the code this rests on, with paths and symbols you have read.
   This is the part that stops it coming back.
 - **`### What is wanted`** — the decision, in the maintainer's terms.

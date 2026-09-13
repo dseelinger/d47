@@ -30,7 +30,8 @@ Triage is a report. You are the session that stays open after it.
   on `main`, and `HEAD` matches `origin/main` — `tools/release.ps1` refuses otherwise, and the
   full suite runs on the runner as the gate. Say which of those is not yet true.
 - **"This turned out bigger than it looked."** Recommend splitting it, or moving it to `design` for
-  the Architect, rather than pushing on with an effort level that no longer fits.
+  the Architect, rather than pushing on with an effort level that no longer fits. Any title you
+  propose for a split-off issue is seven words or fewer.
 
 ## Eligibility
 

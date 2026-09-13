@@ -101,7 +101,8 @@ File nothing you would not be content to see an issue worker start on unread.
 
 Each one takes the repository's form:
 
-- **Title**: the claim, then the cause or the mechanism after a colon.
+- **Title**: seven words or fewer. Count them before showing the text. The cause or mechanism goes
+  in the body, not after a colon.
 - **A grounding paragraph** naming the code the design rests on, with paths and symbols you have
   actually read. This is what stops the issue coming back to you.
 - **`## What changes`** — one bullet per decision, in the order they stand up.
