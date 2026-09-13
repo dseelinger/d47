@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using D47.App.Input;
@@ -174,6 +175,190 @@ public class TheOverlayWithoutAHeadsetTests
         Assert.Equal(PanelResolution.Mini.Height * 1.5, overlay.Height);
 
         overlay.Close();
+    }
+
+    /// <summary>Dragging a corner in place mode grows both dimensions (#89).</summary>
+    [AvaloniaFact]
+    public void DraggingTheBottomRightCornerGrowsBothDimensions()
+    {
+        var (overlay, _, _, _) = Open(on: true, eliteInFront: true);
+
+        overlay.Position = new PixelPoint(100, 100);
+        overlay.Place();
+
+        var startWidth = overlay.Width;
+        var startHeight = overlay.Height;
+        var corner = new Point(startWidth - 2, startHeight - 2);
+        var dragged = corner + new Vector(40, 30);
+
+        overlay.MouseDown(corner, MouseButton.Left);
+        overlay.MouseMove(dragged);
+        overlay.MouseUp(dragged, MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.False(overlay.IsPlacing);
+        Assert.Equal(startWidth + 40, overlay.Width, 3);
+        Assert.Equal(startHeight + 30, overlay.Height, 3);
+        Assert.Equal(new PixelPoint(100, 100), overlay.Position);
+
+        overlay.Close();
+    }
+
+    /// <summary>
+    /// Dragging one edge changes only that dimension, and dragging the top or left edge carries the
+    /// corner it moved along with it (#89).
+    /// </summary>
+    [AvaloniaFact]
+    public void DraggingTheTopEdgeGrowsHeightAloneAndMovesTheTopUp()
+    {
+        var (overlay, _, _, _) = Open(on: true, eliteInFront: true);
+
+        overlay.Position = new PixelPoint(100, 200);
+        overlay.Place();
+
+        var width = overlay.Width;
+        var startHeight = overlay.Height;
+        var top = new Point(width / 2, 2);
+        var dragged = top + new Vector(0, -25);
+
+        overlay.MouseDown(top, MouseButton.Left);
+        overlay.MouseMove(dragged);
+        overlay.MouseUp(dragged, MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(width, overlay.Width);
+        Assert.Equal(startHeight + 25, overlay.Height, 3);
+        Assert.Equal(100, overlay.Position.X);
+        Assert.Equal(175, overlay.Position.Y);
+
+        overlay.Close();
+    }
+
+    /// <summary>Dragging the body rather than an edge still just moves the strip (#89).</summary>
+    [AvaloniaFact]
+    public void DraggingTheBodyStillJustMovesIt()
+    {
+        var (overlay, _, _, _) = Open(on: true, eliteInFront: true);
+
+        overlay.Position = new PixelPoint(100, 100);
+        overlay.Place();
+
+        var width = overlay.Width;
+        var height = overlay.Height;
+        var body = new Point(width / 2, height / 2);
+        var dragged = body + new Vector(30, 15);
+
+        overlay.MouseDown(body, MouseButton.Left);
+        overlay.MouseMove(dragged);
+        overlay.MouseUp(dragged, MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(width, overlay.Width);
+        Assert.Equal(height, overlay.Height);
+        Assert.Equal(new PixelPoint(130, 115), overlay.Position);
+
+        overlay.Close();
+    }
+
+    /// <summary>
+    /// A drag past the minimum stops there instead of going to nothing, and the same corner can still
+    /// be found afterwards (#89).
+    /// </summary>
+    [AvaloniaFact]
+    public void ADragPastTheMinimumStopsThereAndStaysGrabbable()
+    {
+        var (overlay, _, _, _) = Open(on: true, eliteInFront: true);
+
+        overlay.Position = new PixelPoint(100, 100);
+        overlay.Place();
+
+        var corner = new Point(overlay.Width - 2, overlay.Height - 2);
+        var dragged = corner + new Vector(-10_000, -10_000);
+
+        overlay.MouseDown(corner, MouseButton.Left);
+        overlay.MouseMove(dragged);
+        overlay.MouseUp(dragged, MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+
+        var minWidth = PanelResolution.Mini.Width * ZoomLadder.ScaleOf(ZoomLadder.Minimum);
+        var minHeight = PanelResolution.Mini.Height * ZoomLadder.ScaleOf(ZoomLadder.Minimum);
+
+        Assert.Equal(minWidth, overlay.Width, 3);
+        Assert.Equal(minHeight, overlay.Height, 3);
+
+        // Grabbable again: the same corner still resizes it rather than having nothing left to catch.
+        overlay.Place();
+
+        var corner2 = new Point(overlay.Width - 2, overlay.Height - 2);
+        var dragged2 = corner2 + new Vector(20, 20);
+
+        overlay.MouseDown(corner2, MouseButton.Left);
+        overlay.MouseMove(dragged2);
+        overlay.MouseUp(dragged2, MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(minWidth + 20, overlay.Width, 3);
+        Assert.Equal(minHeight + 20, overlay.Height, 3);
+
+        overlay.Close();
+    }
+
+    /// <summary>Outside place mode the strip has no handles, so the same drag does nothing at all (#89).</summary>
+    [AvaloniaFact]
+    public void OutsidePlaceModeTheStripHasNoHandles()
+    {
+        var (overlay, _, _, _) = Open(on: true, eliteInFront: true);
+
+        overlay.Position = new PixelPoint(100, 100);
+
+        var width = overlay.Width;
+        var height = overlay.Height;
+        var corner = new Point(width - 2, height - 2);
+        var dragged = corner + new Vector(40, 40);
+
+        overlay.MouseDown(corner, MouseButton.Left);
+        overlay.MouseMove(dragged);
+        overlay.MouseUp(dragged, MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(width, overlay.Width);
+        Assert.Equal(height, overlay.Height);
+        Assert.Equal(new PixelPoint(100, 100), overlay.Position);
+
+        overlay.Close();
+    }
+
+    /// <summary>A dragged size survives the way a dragged position already does (#89).</summary>
+    [AvaloniaFact]
+    public void ANewSizeSurvivesARestart()
+    {
+        var (overlay, _, elite, tick) = Open(on: true, eliteInFront: true);
+        var viewState = _viewState!;
+
+        overlay.Position = new PixelPoint(100, 100);
+        overlay.Place();
+
+        var corner = new Point(overlay.Width - 2, overlay.Height - 2);
+        var dragged = corner + new Vector(40, 20);
+
+        overlay.MouseDown(corner, MouseButton.Left);
+        overlay.MouseMove(dragged);
+        overlay.MouseUp(dragged, MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+
+        var width = overlay.Width;
+        var height = overlay.Height;
+
+        overlay.Close();
+
+        var again = OverlayPanel.Attach(
+            new PanelViewModel(), _settings!, viewState, tick, elite,
+            NullLogger<OverlayPanel>.Instance);
+
+        Assert.Equal(width, again.Width);
+        Assert.Equal(height, again.Height);
+
+        again.Close();
     }
 
     /// <summary>

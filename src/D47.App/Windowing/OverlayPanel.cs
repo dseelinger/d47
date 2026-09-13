@@ -57,8 +57,35 @@ public sealed class OverlayPanel : Window
     /// <summary>Whether the Commander has put the strip somewhere themselves (#36).</summary>
     private bool _placed;
 
+    /// <summary>Whether the Commander has dragged a handle to a size of their own (#89).</summary>
+    private bool _sized;
+
     private bool _placing;
     private Point? _grab;
+    private ResizeEdge _resizeEdge;
+
+    /// <summary>
+    /// How small the strip can be dragged: the lowest zoom rung applied to the same resolution
+    /// <see cref="ApplyScale"/> starts it at, so a corner is never dragged past the point where the
+    /// same corner can no longer be found (#89).
+    /// </summary>
+    private static readonly Size MinimumSize = new(
+        PanelResolution.Mini.Width * ZoomLadder.ScaleOf(ZoomLadder.Minimum),
+        PanelResolution.Mini.Height * ZoomLadder.ScaleOf(ZoomLadder.Minimum));
+
+    /// <summary>How close the pointer has to be to an edge, in device-independent pixels, to grab it.</summary>
+    private const double ResizeMargin = 8;
+
+    /// <summary>Which edges of the strip a drag in place mode is holding (#89).</summary>
+    [Flags]
+    private enum ResizeEdge
+    {
+        None = 0,
+        Top = 1,
+        Bottom = 2,
+        Left = 4,
+        Right = 8,
+    }
 
     /// <summary>
     /// Whether this window has been closed — which nothing in d47 does, and which happened once anyway
@@ -413,10 +440,15 @@ public sealed class OverlayPanel : Window
         _scale.ScaleX = factor;
         _scale.ScaleY = factor;
 
-        // The headset's mini panel is fixed at 512x280 because apparent size there is the pixel count and the
-        // quad's width in metres together.
-        Width = PanelResolution.Mini.Width * factor;
-        Height = PanelResolution.Mini.Height * factor;
+        // A strip the Commander has dragged to a size of its own keeps that size across a zoom change; only
+        // the legibility of what is already there changes (#89).
+        if (!_sized)
+        {
+            // The headset's mini panel is fixed at 512x280 because apparent size there is the pixel count and
+            // the quad's width in metres together.
+            Width = PanelResolution.Mini.Width * factor;
+            Height = PanelResolution.Mini.Height * factor;
+        }
 
         // The remembered corner is the top-left, so a strip that grew still starts where it was put and is
         // pushed back on screen only if growing took it off.
@@ -449,6 +481,14 @@ public sealed class OverlayPanel : Window
 
         _placed = true;
         Position = new PixelPoint((int)placement.X, (int)placement.Y);
+
+        if (placement is { Width: { } width, Height: { } height })
+        {
+            _sized = true;
+            Width = Math.Max(MinimumSize.Width, width);
+            Height = Math.Max(MinimumSize.Height, height);
+        }
+
         Clamp();
     }
 
@@ -520,23 +560,117 @@ public sealed class OverlayPanel : Window
         }
 
         _grab = e.GetPosition(this);
+        _resizeEdge = EdgeAt(_grab.Value);
         e.Pointer.Capture(this);
     }
 
-    /// <summary>Moves the window by however far the pointer has travelled since it was grabbed.</summary>
+    /// <summary>
+    /// Which edges a point in place mode is close enough to grab. None of them means the strip is
+    /// dragged by the body, which is a move rather than a resize (#89).
+    /// </summary>
+    private ResizeEdge EdgeAt(Point point)
+    {
+        var edge = ResizeEdge.None;
+
+        if (point.Y <= ResizeMargin)
+        {
+            edge |= ResizeEdge.Top;
+        }
+        else if (point.Y >= Height - ResizeMargin)
+        {
+            edge |= ResizeEdge.Bottom;
+        }
+
+        if (point.X <= ResizeMargin)
+        {
+            edge |= ResizeEdge.Left;
+        }
+        else if (point.X >= Width - ResizeMargin)
+        {
+            edge |= ResizeEdge.Right;
+        }
+
+        return edge;
+    }
+
+    /// <summary>The cursor names the edge the pointer is over, which is the only handle this strip has.</summary>
+    private static Cursor CursorFor(ResizeEdge edge) => edge switch
+    {
+        ResizeEdge.Top or ResizeEdge.Bottom => new Cursor(StandardCursorType.SizeNorthSouth),
+        ResizeEdge.Left or ResizeEdge.Right => new Cursor(StandardCursorType.SizeWestEast),
+        ResizeEdge.Top | ResizeEdge.Left or ResizeEdge.Bottom | ResizeEdge.Right =>
+            new Cursor(StandardCursorType.TopLeftCorner),
+        ResizeEdge.Top | ResizeEdge.Right or ResizeEdge.Bottom | ResizeEdge.Left =>
+            new Cursor(StandardCursorType.TopRightCorner),
+        _ => Cursor.Default,
+    };
+
+    /// <summary>
+    /// Moves or resizes the strip by however far the pointer has travelled since it was grabbed,
+    /// depending on which edges the grab landed on (#89).
+    /// </summary>
     private void OnPointerMoved(object? sender, PointerEventArgs e)
     {
-        if (!_placing || _grab is not { } grab)
+        if (!_placing)
         {
             return;
         }
 
         var now = e.GetPosition(this);
-        var scaling = Screens?.ScreenFromWindow(this)?.Scaling ?? 1.0;
 
-        Position = new PixelPoint(
-            Position.X + (int)Math.Round((now.X - grab.X) * scaling),
-            Position.Y + (int)Math.Round((now.Y - grab.Y) * scaling));
+        if (_grab is not { } grab)
+        {
+            // Not dragging yet — the cursor is the only sign there is a handle here at all.
+            Cursor = CursorFor(EdgeAt(now));
+            return;
+        }
+
+        if (_resizeEdge == ResizeEdge.None)
+        {
+            var scaling = Screens?.ScreenFromWindow(this)?.Scaling ?? 1.0;
+
+            Position = new PixelPoint(
+                Position.X + (int)Math.Round((now.X - grab.X) * scaling),
+                Position.Y + (int)Math.Round((now.Y - grab.Y) * scaling));
+            return;
+        }
+
+        Resize(now, grab);
+    }
+
+    /// <summary>
+    /// Grows or shrinks whichever edges are held, in device-independent pixels, and nudges the
+    /// top-left corner along with an edge that moved it (#89).
+    /// </summary>
+    private void Resize(Point now, Point grab)
+    {
+        var scaling = Screens?.ScreenFromWindow(this)?.Scaling ?? 1.0;
+        var dx = now.X - grab.X;
+        var dy = now.Y - grab.Y;
+
+        if (_resizeEdge.HasFlag(ResizeEdge.Right))
+        {
+            Width = Math.Max(MinimumSize.Width, Width + dx);
+        }
+        else if (_resizeEdge.HasFlag(ResizeEdge.Left))
+        {
+            var wanted = Math.Max(MinimumSize.Width, Width - dx);
+            Position = new PixelPoint(Position.X + (int)Math.Round((Width - wanted) * scaling), Position.Y);
+            Width = wanted;
+        }
+
+        if (_resizeEdge.HasFlag(ResizeEdge.Bottom))
+        {
+            Height = Math.Max(MinimumSize.Height, Height + dy);
+        }
+        else if (_resizeEdge.HasFlag(ResizeEdge.Top))
+        {
+            var wanted = Math.Max(MinimumSize.Height, Height - dy);
+            Position = new PixelPoint(Position.X, Position.Y + (int)Math.Round((Height - wanted) * scaling));
+            Height = wanted;
+        }
+
+        _sized = true;
     }
 
     private void OnPointerReleased(object? sender, PointerReleasedEventArgs e)
@@ -547,6 +681,7 @@ public sealed class OverlayPanel : Window
         }
 
         e.Pointer.Capture(null);
+        _resizeEdge = ResizeEdge.None;
         Settle();
     }
 
@@ -558,6 +693,8 @@ public sealed class OverlayPanel : Window
     {
         _placing = false;
         _grab = null;
+        _resizeEdge = ResizeEdge.None;
+        Cursor = Cursor.Default;
 
         _frame.BorderThickness = new Thickness(0);
 
@@ -575,7 +712,13 @@ public sealed class OverlayPanel : Window
         // From here the corner is theirs, and nothing picks one again (#36).
         _placed = true;
 
-        var placement = new OverlayPlacement { X = Position.X, Y = Position.Y };
+        var placement = new OverlayPlacement
+        {
+            X = Position.X,
+            Y = Position.Y,
+            Width = _sized ? Width : null,
+            Height = _sized ? Height : null,
+        };
 
         _viewState.Save(_viewState.Load().With(placement));
 

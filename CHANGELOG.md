@@ -6,6 +6,13 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.115.0 — Resize the panel where it sits
+
+Place mode (`Ctrl+Alt+M`) now offers a resize as well as a move. While the border is up, the
+overlay strip takes drag handles on its top edge, its bottom edge and all four corners — a corner
+drags both dimensions, an edge drags one. A drag stops at a minimum rather than going to nothing,
+and the new size is remembered the way the position already is.
+
 ## 0.114.0 — Timers and alarms behind a startup flag
 
 Clocks, timers and alarms are off unless d47 is started with `--utilities` or with

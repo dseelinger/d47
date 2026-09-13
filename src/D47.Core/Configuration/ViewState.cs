@@ -275,6 +275,11 @@ public sealed record OverlayPlacement
     public double X { get; init; }
 
     public double Y { get; init; }
+
+    /// <summary>The strip's own size, or null when the Commander has never dragged a handle (#89).</summary>
+    public double? Width { get; init; }
+
+    public double? Height { get; init; }
 }
 
 /// <summary>The third store, and the one that shrugs hardest.</summary>

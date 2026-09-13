@@ -474,13 +474,18 @@ Press it and the strip briefly takes clicks so you can drag it, with a border ro
 has hold of them. Let go and it hands them straight back — press again without dragging and it does
 the same. It still never takes the foreground from Elite, even mid-drag.
 
+While that border is up, the strip also takes a resize: the top edge, the bottom edge and each
+corner. Drag a corner and both dimensions follow; drag an edge and only that one does. The cursor
+changes over an edge or corner to show it is there, since nothing else marks it. There is a minimum
+size, so a drag that overshoots stops there rather than leaving nothing to grab next time.
+
 It comes up for this even if the game is not running, so you can put it where you want it before
 you launch.
 
-**Where you put it is remembered, and it is not a setting.** A screen coordinate is not something
-you typed, so it goes to `view-state.json` beside the main window's position and the headset's
-panel anchors rather than into `settings.json`. If it ends up on a monitor you later unplug, it
-comes back on one you have.
+**Where you put it and how big you left it are both remembered, and neither is a setting.** A
+screen coordinate and a size are not something you typed, so they go to `view-state.json` beside
+the main window's position and the headset's panel anchors rather than into `settings.json`. If it
+ends up on a monitor you later unplug, it comes back on one you have.
 
 **Until you place it, it follows the game.** With no corner of your own chosen, the strip goes to
 the bottom-right of **whichever monitor Elite is on** — asked afresh every time it appears, so
