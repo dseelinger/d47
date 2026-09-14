@@ -314,6 +314,58 @@ public sealed class SettingsService
     }
 
     /// <summary>
+    /// The bound rows a <see cref="SettingsLayout"/> place or tab place draws, in the layout's order — a
+    /// single-key entry resolves to the one row with that key, a family entry to every bound row its
+    /// predicate matches, in declaration order.
+    /// </summary>
+    public IReadOnlyList<SettingRow> RowsForPlace(string placeId) =>
+        [.. EntriesForPlace(placeId).SelectMany(RowsForEntry)];
+
+    /// <summary>Every row on one <see cref="SettingsLayout"/> place or tab place, put back to its default.</summary>
+    public int ResetPlace(string placeId, SettingsCaller caller)
+    {
+        var keys = RowsForPlace(placeId)
+            .Select(row => row.Key)
+            .Where(IsChanged)
+            .ToList();
+
+        return keys.Count(key => Reset(key, caller).Status == SettingApplyStatus.Applied);
+    }
+
+    private static IEnumerable<SettingsEntry> EntriesForPlace(string placeId)
+    {
+        var place = SettingsLayout.Areas
+            .SelectMany(area => area.Places)
+            .FirstOrDefault(p => string.Equals(p.Id, placeId, StringComparison.Ordinal));
+
+        if (place is not null)
+        {
+            return place.Groups.SelectMany(g => g.Entries);
+        }
+
+        var tab = SettingsLayout.Tabs.FirstOrDefault(t => string.Equals(t.Id, placeId, StringComparison.Ordinal));
+
+        if (tab is not null)
+        {
+            return tab.Entries;
+        }
+
+        throw new ArgumentException($"There is no settings place called '{placeId}'.", nameof(placeId));
+    }
+
+    private IEnumerable<SettingRow> RowsForEntry(SettingsEntry entry)
+    {
+        var byKey = _byKey ?? throw new InvalidOperationException("Bind() has not been called.");
+
+        if (entry.Key is { } key)
+        {
+            return byKey.TryGetValue(key, out var row) ? [row] : [];
+        }
+
+        return Sections.SelectMany(s => s.Rows).Where(row => entry.Family!(row.Key));
+    }
+
+    /// <summary>
     /// Removes this Commander's own answer for a row, or null when there is nothing of theirs to remove
     /// and the ordinary write should handle it.
     /// </summary>

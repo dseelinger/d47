@@ -212,7 +212,11 @@ public sealed class TestSurface
         D47Settings? settings = null,
         D47.Core.Persona.PersonaHost? personas = null,
         bool loadFailed = false,
-        bool timersAndAlarms = true)
+        bool timersAndAlarms = true,
+
+        // Wires audioDrops, coverage, recording and ticking — null by default, like About was before #78,
+        // so a row that only exists behind one of them stays absent unless a test is about the full set.
+        bool everyOptionalSurface = false)
     {
         var store = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance);
         var secrets = new SecretStore(install.Paths, new ReversibleProtector(), NullLogger<SecretStore>.Instance);
@@ -279,7 +283,20 @@ public sealed class TestSurface
             // a test asks otherwise (#90).
             timersAndAlarms: timersAndAlarms,
             offers: offers,
-            learnedPhrases: learnedPhrases));
+            learnedPhrases: learnedPhrases,
+
+            // Same story as About (#78): a null one makes the row it guards absent. Null by default so
+            // every other test keeps today's row set; a test about the full row set asks for it.
+            audioDrops: everyOptionalSurface ? () => "Nothing found in data/audio." : null,
+            coverage: everyOptionalSurface ? () => "Nothing exercised yet." : null,
+            recording: everyOptionalSurface
+                ? new D47.Core.Diagnostics.Recording.RecordingLog(
+                    Path.Combine(install.Paths.Data, "recordings"),
+                    NullLogger.Instance)
+                : null,
+            ticking: everyOptionalSurface
+                ? new D47.Core.Ticking.TickLoop(NullLogger<D47.Core.Ticking.TickLoop>.Instance)
+                : null));
 
         built = registry;
 
