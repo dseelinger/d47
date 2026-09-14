@@ -315,6 +315,11 @@ public class OneRowForPushToTalkTests
     public void ASystemWideRowStillIgnoresABareModifier()
     {
         var (settings, host) = Open();
+
+        // Screens' own area (#220).
+        host.View.Reveal(InterfaceCapability.Id);
+        Dispatcher.UIThread.RunJobs();
+
         var row = Row(host, "Show or hide the overlay")!;
 
         Bind(row).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));

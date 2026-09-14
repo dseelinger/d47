@@ -615,7 +615,9 @@ public class SearchTheTabTests
     }
 
     private static int Cards(SettingsHost host) =>
-        ((StackPanel)host.View.FindControl<Control>("Cards")!).Children.Count(card => card.IsVisible);
+        // Borders only (#220): a query now draws an area's own title above its matches, one more visible
+        // child that is not a card.
+        ((StackPanel)host.View.FindControl<Control>("Cards")!).Children.OfType<Border>().Count(card => card.IsVisible);
 
     private static int Nav(SettingsHost host) =>
         ((StackPanel)host.View.FindControl<Control>("NavItems")!).Children.Count(item => item.IsVisible);

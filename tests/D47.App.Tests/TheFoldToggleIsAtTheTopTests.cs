@@ -22,6 +22,9 @@ public class TheFoldToggleIsAtTheTopTests
         // SettingsHost shows the whole page for every test that is about a row.
         settings.Apply(InterfaceCapability.ShowEverySettingKey, "false", SettingsCaller.Panel);
         host.View.Refresh();
+
+        // Language model's own area, which #220 no longer draws by default.
+        host.View.Reveal(D47.Core.Capabilities.Builtin.ConversationCapability.Id);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         return host;

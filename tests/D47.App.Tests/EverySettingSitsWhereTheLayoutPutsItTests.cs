@@ -40,16 +40,41 @@ public sealed class EverySettingSitsWhereTheLayoutPutsItTests
     private static string LabelOf(SettingsService settings, string key) =>
         settings.Sections.SelectMany(section => section.Rows).First(row => row.Key == key).Label;
 
+    /// <summary>The area an area's title names, in <see cref="SettingsLayout.Areas"/> order.</summary>
+    private static int AreaIndex(string title) =>
+        SettingsLayout.Areas.ToList().FindIndex(area => area.Title == title);
+
     [AvaloniaFact]
-    public void TheNavHeadingsAreTheAreasAndEveryCardIsAPlace()
+    public void TheNavHeadingsAreTheAreasAndEveryPlaceIsASectionSomewhere()
     {
         var host = Open(out _);
         var places = SettingsLayout.Areas.SelectMany(area => area.Places).ToList();
 
         Assert.Equal(SettingsLayout.Areas.Select(area => area.Title), Nav(host.View, SettingsView.NavAreaClass).Select(Words));
-        Assert.Equal(places.Select(place => place.Title), Nav(host.View, SettingsView.NavPlaceClass).Select(Words));
+
+        // Every place is built, whether or not its area is the one open right now (#220).
         Assert.Equal(places.Select(place => place.Id), host.View.SectionIds);
-        Assert.Equal(places.Select(place => place.Title), Cards(host.View).Select(Title));
+
+        host.Close();
+    }
+
+    /// <summary>An area's own places are all the nav lists, and all the cards it draws (#220).</summary>
+    [AvaloniaTheory]
+    [InlineData("Voice and hearing")]
+    [InlineData("The ship's AI")]
+    [InlineData("Privacy and this install")]
+    public void OnlyTheSelectedAreasPlacesAreListedAndDrawn(string areaTitle)
+    {
+        var host = Open(out _);
+        var area = SettingsLayout.Areas.Single(a => a.Title == areaTitle);
+
+        host.View.SelectArea(AreaIndex(areaTitle));
+        Jobs();
+
+        var listed = Nav(host.View, SettingsView.NavPlaceClass).Where(item => item.IsVisible).ToList();
+
+        Assert.Equal(area.Places.Select(place => place.Title), listed.Select(Words));
+        Assert.Equal(area.Places.Select(place => place.Title), Cards(host.View).Select(Title));
 
         host.Close();
     }
@@ -58,6 +83,9 @@ public sealed class EverySettingSitsWhereTheLayoutPutsItTests
     public void AttemptsIsDrawnInWhenATurnFailsUnderTheShipsAi()
     {
         var host = Open(out var settings);
+
+        host.View.SelectArea(AreaIndex("The ship's AI"));
+        Jobs();
 
         var card = Cards(host.View).Single(card => Title(card) == "When a turn fails");
 
@@ -115,6 +143,9 @@ public sealed class EverySettingSitsWhereTheLayoutPutsItTests
     public void ResettingWhenATurnFailsLeavesTheVoiceProviderAlone()
     {
         var host = Open(out var settings);
+
+        host.View.SelectArea(AreaIndex("The ship's AI"));
+        Jobs();
 
         var provider = settings.Sections.SelectMany(section => section.Rows)
             .First(row => row.Key == SpeechCapability.ProviderKey)

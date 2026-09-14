@@ -222,6 +222,25 @@ public class ARowThatOpensAWindowRefusesTheRayTests
             .Where(button => OpensAWindow(button, opening))];
     }
 
+    /// <summary>
+    /// Every opener on the page, gathered one area at a time (#220): each area's cards are drawn only
+    /// while it is the one selected, so a sweep across the whole page has to select each in turn.
+    /// </summary>
+    private static List<Button> AllOpeners(SettingsView view)
+    {
+        var found = new List<Button>();
+
+        for (var i = 0; i < D47.Core.Configuration.SettingsLayout.Areas.Count; i++)
+        {
+            view.SelectArea(i);
+            Expand(view);
+
+            found.AddRange(Openers(view));
+        }
+
+        return found;
+    }
+
     /// <summary>What to call a button in a failure: its name, or what it says about itself.</summary>
     private static string Describe(Button button) =>
         button.Name ?? Avalonia.Automation.AutomationProperties.GetName(button)
@@ -250,9 +269,8 @@ public class ARowThatOpensAWindowRefusesTheRayTests
 
         window.Show();
         Jobs();
-        Expand(view);
 
-        var openers = Openers(view);
+        var openers = AllOpeners(view);
 
         Assert.Equal(Built, openers.Select(Describe).Distinct().Order().ToArray());
 
@@ -301,23 +319,34 @@ public class ARowThatOpensAWindowRefusesTheRayTests
         using var _ = surface;
 
         var host = (Window)surface.Root;
+        var pressed = new List<string>();
 
-        // The ones a ray can land on: the secret editor's clear button is hidden until there is a key to
-        // clear, and a press where it is not lands on the box behind it.
-        var openers = Openers(view).Where(button => button.IsVisible).ToList();
-
-        Assert.Equal(Shown, openers.Select(Describe).Distinct().Order().ToArray());
-
-        foreach (var button in openers)
+        // One area at a time (#220): each area's cards are drawn only while it is selected.
+        for (var i = 0; i < D47.Core.Configuration.SettingsLayout.Areas.Count; i++)
         {
-            Assert.False(surface.Click(Reach(surface, button)), $"{Describe(button)} was pressed");
+            view.SelectArea(i);
+            Expand(view);
+            surface.Render();
 
-            Jobs();
+            // The ones a ray can land on: the secret editor's clear button is hidden until there is a key
+            // to clear, and a press where it is not lands on the box behind it.
+            var openers = Openers(view).Where(button => button.IsVisible).ToList();
 
-            Assert.Empty(host.OwnedWindows);
+            foreach (var button in openers)
+            {
+                pressed.Add(Describe(button));
 
-            surface.Dismiss();
+                Assert.False(surface.Click(Reach(surface, button)), $"{Describe(button)} was pressed");
+
+                Jobs();
+
+                Assert.Empty(host.OwnedWindows);
+
+                surface.Dismiss();
+            }
         }
+
+        Assert.Equal(Shown, pressed.Distinct().Order().ToArray());
     }
 
     /// <summary>And the panel says why, rather than appearing to have missed the press.</summary>
@@ -326,6 +355,11 @@ public class ARowThatOpensAWindowRefusesTheRayTests
     {
         var (surface, view) = Headset();
         using var _ = surface;
+
+        // Diagnostics' own area (#220).
+        view.SelectArea(D47.Core.Configuration.SettingsLayout.Areas.ToList().FindIndex(a => a.Id == "install"));
+        Expand(view);
+        surface.Render();
 
         var coverage = Openers(view).Single(button => button.Name == "OpenCoverage");
 
@@ -349,6 +383,9 @@ public class ARowThatOpensAWindowRefusesTheRayTests
 
         window.Show();
         Jobs();
+
+        // Diagnostics' own area (#220).
+        view.SelectArea(D47.Core.Configuration.SettingsLayout.Areas.ToList().FindIndex(a => a.Id == "install"));
         Expand(view);
 
         view.GetVisualDescendants().OfType<Button>()

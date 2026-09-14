@@ -30,6 +30,10 @@ public class SecretRowTests
 
         var host = SettingsHost.Open(settings, viewState, paths);
 
+        // Language model's own area (#220).
+        host.View.Reveal(D47.Core.Capabilities.Builtin.ConversationCapability.Id);
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
         Assert.Contains("No key", Texts(host));
         Assert.DoesNotContain("Key stored", Texts(host));
 

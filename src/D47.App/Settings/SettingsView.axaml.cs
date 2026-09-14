@@ -40,7 +40,24 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     private readonly List<(IReadOnlyList<SettingRow> Rows, Button Button)> _cardResets = [];
 
     /// <summary>Each area's nav heading, and the run of sections beneath it.</summary>
-    private readonly List<(Border Heading, int First, int Count)> _navAreas = [];
+    private readonly List<AreaView> _navAreas = [];
+
+    /// <summary>Which area's places the scroller is showing (#220), or −1 before <see cref="Build"/> runs.</summary>
+    private int _activeArea = -1;
+
+    /// <summary>The selected area's title and sentence, drawn above its cards.</summary>
+    private TextBlock? _areaHeaderTitle;
+
+    private TextBlock? _areaHeaderSentence;
+
+    private StackPanel? _areaHeader;
+
+    /// <summary>The area picker shown once the nav has collapsed (#220).</summary>
+    private ComboBox? _areaDropdown;
+
+    /// <summary>True while <see cref="SelectArea"/> is writing <see cref="_areaDropdown"/>, so its own
+    /// selection change does not loop back into another select.</summary>
+    private bool _settingAreaDropdown;
 
     /// <summary>Marks an area's heading in the nav, for a test to tell it from a place.</summary>
     public const string NavAreaClass = "nav-area";
@@ -77,6 +94,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// The strip above the cards holding the page's own controls, or null where there are none (#60).
     /// </summary>
     private StackPanel? _pageStrip;
+
+    /// <summary>Whichever control sits above the area header — <see cref="_pageStrip"/> or the bulk row alone.</summary>
+    private Control? _topStrip;
     private ViewStateStore? _viewStateStore;
     private ViewState _viewState = new();
     private AppPaths? _paths;
@@ -290,13 +310,22 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         _collapsed.Clear();
         _navAreas.Clear();
         _activeSection = -1;
+        _activeArea = -1;
         _pageStrip = null;
+        _topStrip = null;
+        _areaHeader = null;
+        _areaHeaderTitle = null;
+        _areaHeaderSentence = null;
+        _areaDropdown = null;
 
         if (_tabPlaceId is { } placeId)
         {
             BuildTabPlace(settings, placeId);
             return;
         }
+
+        _areaDropdown = BuildAreaDropdown();
+        Cards.Children.Add(_areaDropdown);
 
         // The rows that govern the page rather than a card, drawn once above everything
         // .com/dseelinger/d47/issues/60). "Show every setting" decides what the whole page draws, and a
@@ -346,6 +375,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
             Cards.Children.Add(strip);
             _pageStrip = strip;
+            _topStrip = strip;
         }
         else
         {
@@ -355,7 +385,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
             alone.Margin = new Thickness(18, 0, 18, 6);
             Cards.Children.Add(alone);
+            _topStrip = alone;
         }
+
+        _areaHeader = BuildAreaHeader(out _areaHeaderTitle, out _areaHeaderSentence);
+        Cards.Children.Add(_areaHeader);
 
         var owners = new Dictionary<string, CapabilityDescriptor>(StringComparer.Ordinal);
 
@@ -370,15 +404,16 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         foreach (var area in SettingsLayout.Areas)
         {
             var first = _sections.Count;
-            var areaHeading = BuildNavArea(area.Title);
+            var areaIndex = _navAreas.Count;
+            var (areaHeading, areaHeadingText) = BuildNavArea(area.Title, areaIndex);
 
             NavItems.Children.Add(areaHeading);
+
+            var filterHeading = BuildFilterAreaHeading(area.Title);
 
             foreach (var place in area.Places)
             {
                 var (card, content, heading, expand) = BuildCard(settings, owners, place, _sections.Count);
-
-                Cards.Children.Add(card);
 
                 var nav = BuildNavItem(_sections.Count, place.Title);
                 NavItems.Children.Add(nav.Item);
@@ -390,11 +425,18 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                     });
             }
 
-            _navAreas.Add((areaHeading, first, _sections.Count - first));
+            _navAreas.Add(
+                new AreaView(area.Id, area.Title, area.Sentence, areaHeading, areaHeadingText, filterHeading, first, _sections.Count - first));
         }
 
-        SetActiveSection(_sections.Count > 0 ? 0 : -1);
-        Refresh();
+        if (_sections.Count > 0)
+        {
+            SelectArea(0, resetScroll: false);
+        }
+        else
+        {
+            Refresh();
+        }
     }
 
     /// <summary>
@@ -691,8 +733,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         return stack;
     }
 
-    /// <summary>An area's title in the nav; pressing it goes to the first of its places still shown.</summary>
-    private Border BuildNavArea(string title)
+    /// <summary>An area's title in the nav; pressing it selects the area (#220).</summary>
+    private (Border Item, TextBlock Text) BuildNavArea(string title, int areaIndex)
     {
         var text = new TextBlock
         {
@@ -712,16 +754,111 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         };
 
         item.Classes.Add(NavAreaClass);
-        item.PointerPressed += (_, _) => ScrollTo(FirstShownPlace(item));
+        item.PointerPressed += (_, _) => SelectArea(areaIndex);
 
-        return item;
+        return (item, text);
     }
 
+    /// <summary>The area's title, drawn once above its group of cards while a query is active (#220).</summary>
+    private Control BuildFilterAreaHeading(string title)
+    {
+        var heading = new TextBlock
+        {
+            Text = title,
+            FontSize = TypeScale.Subheading,
+            FontWeight = FontWeight.Medium,
+            Margin = new Thickness(18, 18, 18, 4),
+        };
+        Themed(heading, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+
+        return heading;
+    }
+
+    /// <summary>The selected area's own title and sentence, drawn above its cards (#220).</summary>
+    private StackPanel BuildAreaHeader(out TextBlock title, out TextBlock sentence)
+    {
+        title = new TextBlock { FontSize = TypeScale.Heading, FontWeight = FontWeight.Medium };
+        Themed(title, TextBlock.ForegroundProperty, ThemeManager.TextKey);
+
+        sentence = new TextBlock { FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 3, 0, 0) };
+        Themed(sentence, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+
+        return new StackPanel
+        {
+            Margin = new Thickness(18, 4, 18, 10),
+            Children = { title, sentence },
+        };
+    }
+
+    /// <summary>The area picker shown once the nav has collapsed (#220).</summary>
+    private ComboBox BuildAreaDropdown()
+    {
+        var combo = new ComboBox
+        {
+            Name = "AreaDropdown",
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            Margin = new Thickness(18, 0, 18, 10),
+            IsVisible = false,
+        };
+        DressAsAChoice(combo);
+
+        combo.SelectionChanged += (_, _) =>
+        {
+            if (_settingAreaDropdown || combo.SelectedIndex < 0)
+            {
+                return;
+            }
+
+            SelectArea(_dropdownAreaIndexes[combo.SelectedIndex]);
+        };
+
+        return combo;
+    }
+
+    /// <summary>Which area index each entry in <see cref="_areaDropdown"/> names, since a structurally empty
+    /// area is left out (#220).</summary>
+    private readonly List<int> _dropdownAreaIndexes = [];
+
+    /// <summary>Refills the area dropdown from the areas that currently have anything to show.</summary>
+    private void SyncAreaDropdown()
+    {
+        if (_areaDropdown is not { } combo)
+        {
+            return;
+        }
+
+        _dropdownAreaIndexes.Clear();
+        var titles = new List<string>();
+
+        for (var i = 0; i < _navAreas.Count; i++)
+        {
+            if (!_navAreas[i].Heading.IsVisible)
+            {
+                continue;
+            }
+
+            _dropdownAreaIndexes.Add(i);
+            titles.Add(_navAreas[i].Title);
+        }
+
+        _settingAreaDropdown = true;
+        try
+        {
+            combo.ItemsSource = titles;
+            combo.SelectedIndex = _dropdownAreaIndexes.IndexOf(_activeArea);
+        }
+        finally
+        {
+            _settingAreaDropdown = false;
+        }
+    }
+
+    /// <summary>The first of an area's places still showing a card, or its first place where none are.</summary>
     private int FirstShownPlace(Border areaHeading)
     {
-        var (_, first, count) = _navAreas.First(area => area.Heading == areaHeading);
+        var area = _navAreas.First(a => a.Heading == areaHeading);
 
-        for (var i = first; i < first + count; i++)
+        for (var i = area.First; i < area.First + area.Count; i++)
         {
             if (_sections[i].Card.IsVisible)
             {
@@ -729,7 +866,78 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             }
         }
 
-        return first;
+        return area.First;
+    }
+
+    /// <summary>Selects an area, drawing its places under it and marking one of them active (#220).</summary>
+    public void SelectArea(int areaIndex) => SelectArea(areaIndex, resetScroll: true);
+
+    private void SelectArea(int areaIndex, bool resetScroll)
+    {
+        if (areaIndex < 0 || areaIndex >= _navAreas.Count)
+        {
+            return;
+        }
+
+        var changed = _activeArea != areaIndex;
+        _activeArea = areaIndex;
+
+        UpdateAreaVisuals();
+        Refresh();
+
+        if (changed && resetScroll && _query.Length == 0)
+        {
+            Scroller.Offset = new Vector(0, 0);
+        }
+
+        if (_query.Length == 0)
+        {
+            SetActiveSection(FirstShownPlace(_navAreas[areaIndex].Heading));
+        }
+    }
+
+    /// <summary>Which area index a section belongs to.</summary>
+    private int AreaOf(int sectionIndex) =>
+        _navAreas.FindIndex(area => sectionIndex >= area.First && sectionIndex < area.First + area.Count);
+
+    /// <summary>The area currently selected, by its id, for a test to read.</summary>
+    internal string? ActiveAreaId => _activeArea >= 0 && _activeArea < _navAreas.Count ? _navAreas[_activeArea].Id : null;
+
+    private void UpdateAreaVisuals()
+    {
+        for (var i = 0; i < _navAreas.Count; i++)
+        {
+            PaintAreaHeading(_navAreas[i], i == _activeArea);
+        }
+    }
+
+    /// <summary>The selected area's heading is marked the same way the selected place is (#220).</summary>
+    private void PaintAreaHeading(AreaView area, bool active)
+    {
+        if (area.PaintedActive == active)
+        {
+            return;
+        }
+
+        area.PaintedActive = active;
+
+        area.Ink?.Dispose();
+        area.Ink = Themed(
+            area.HeadingText,
+            TextBlock.ForegroundProperty,
+            active ? ThemeManager.TextKey : ThemeManager.TextMutedKey);
+
+        area.Fill?.Dispose();
+        area.Fill = null;
+
+        if (active)
+        {
+            area.Fill = Themed(area.Heading, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
+        }
+        else
+        {
+            area.Heading.Background = Brushes.Transparent;
+        }
     }
 
     private (Border Item, Border Bar, TextBlock Text) BuildNavItem(int index, string title)
@@ -1007,7 +1215,30 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         return -1;
     }
 
+    /// <summary>
+    /// Goes to a section, selecting its area first when the section is not the one currently drawn (#220).
+    /// </summary>
     private void ScrollTo(int index)
+    {
+        if (index < 0 || index >= _sections.Count)
+        {
+            return;
+        }
+
+        // A query draws every area at once, so there is no area to switch to.
+        if (_query.Length == 0 && AreaOf(index) != _activeArea)
+        {
+            SelectArea(AreaOf(index), resetScroll: false);
+
+            // After the layout the area switch caused, not before it — see the note on Reveal.
+            Dispatcher.UIThread.Post(() => JumpTo(index), DispatcherPriority.Loaded);
+            return;
+        }
+
+        JumpTo(index);
+    }
+
+    private void JumpTo(int index)
     {
         if (index < 0 || index >= _sections.Count)
         {
@@ -1076,11 +1307,23 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         Nav.IsVisible = show;
         Root.ColumnDefinitions[0].Width = new GridLength(show ? NavWidth : 0);
         Root.MinWidth = show ? WideFloor : NarrowFloor;
+
+        if (_areaDropdown is { } dropdown)
+        {
+            dropdown.IsVisible = !show;
+        }
     }
+
+    /// <summary>The sections actually drawn right now, in page order — the selected area's, or every area's
+    /// matches while a query narrows all of them (#220).</summary>
+    private IEnumerable<int> DrawnSections() =>
+        Enumerable.Range(0, _sections.Count).Where(i => _sections[i].Card.IsVisible);
 
     private void OnScrollChanged(object? sender, ScrollChangedEventArgs e)
     {
-        if (_sections.Count == 0)
+        var drawn = DrawnSections().ToList();
+
+        if (drawn.Count == 0)
         {
             return;
         }
@@ -1089,14 +1332,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         // the classic scroll-spy edge.
         if (Scroller.Offset.Y >= Scroller.Extent.Height - Scroller.Viewport.Height - 2)
         {
-            SetActiveSection(_sections.Count - 1);
+            SetActiveSection(drawn[^1]);
             return;
         }
 
         var offset = Scroller.Offset.Y;
-        var topmost = 0;
+        var topmost = drawn[0];
 
-        for (var i = 0; i < _sections.Count; i++)
+        foreach (var i in drawn)
         {
             // Topmost once its head has passed the top edge, with a little tolerance so a card sitting
             // exactly at the edge does not flicker between two answers.
@@ -1113,12 +1356,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         SetActiveSection(topmost);
     }
 
-    /// <summary>Open every card, or shut every card (#223).</summary>
+    /// <summary>Open every drawn card, or shut every drawn card (#223, restricted to what is on screen by
+    /// #220).</summary>
     private void SetEveryCard(bool expanded)
     {
-        foreach (var section in _sections)
+        foreach (var i in DrawnSections())
         {
-            section.Expand?.Invoke(expanded);
+            _sections[i].Expand?.Invoke(expanded);
         }
     }
 
@@ -1478,17 +1722,109 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             // entirely.
             var anyRows = showing[i] > 0;
 
-            section.Card.IsVisible = (!filtering || holds) && anyRows;
-            section.NavItem.IsVisible = (!filtering || holds) && anyRows;
+            // Every area's matches draw while a query is narrowing the page; otherwise only the selected
+            // area's places do (#220).
+            var inSelectedArea = filtering || AreaOf(i) == _activeArea;
+
+            section.Card.IsVisible = (!filtering || holds) && anyRows && inSelectedArea;
+            section.NavItem.IsVisible = (!filtering || holds) && anyRows && inSelectedArea;
 
             section.Content.IsVisible = filtering ? holds : !_collapsed.Contains(i);
         }
 
-        // An area heading goes with the last of its places.
-        foreach (var (heading, first, count) in _navAreas)
+        // An area heading is absent once every one of its places has nothing to show, independent of the
+        // query — the same reading the old per-place rule took, moved up a level (#220).
+        for (var a = 0; a < _navAreas.Count; a++)
         {
-            heading.IsVisible = _sections.Skip(first).Take(count).Any(section => section.NavItem.IsVisible);
+            var area = _navAreas[a];
+            area.Heading.IsVisible = Enumerable.Range(area.First, area.Count).Any(i => showing[i] > 0);
         }
+
+        SyncAreaDropdown();
+        LayoutCards();
+    }
+
+    /// <summary>
+    /// Assembles the scroller's content: the selected area's cards behind its own title and sentence, or
+    /// while a query is active, every area's matches behind that area's own title (#220).
+    /// </summary>
+    /// <remarks>
+    /// A no-op when the desired order already matches, so an ordinary row edit — which calls
+    /// <see cref="Refresh"/> without changing which cards are drawn — never resets the scroll offset.
+    /// </remarks>
+    private void LayoutCards()
+    {
+        if (_tabPlaceId is not null)
+        {
+            return;
+        }
+
+        var desired = DesiredCardsOrder();
+
+        if (Cards.Children.SequenceEqual(desired))
+        {
+            return;
+        }
+
+        Cards.Children.Clear();
+        Cards.Children.AddRange(desired);
+    }
+
+    private List<Control> DesiredCardsOrder()
+    {
+        var order = new List<Control>();
+
+        if (_areaDropdown is { } dropdown)
+        {
+            order.Add(dropdown);
+        }
+
+        if (_topStrip is { } strip)
+        {
+            order.Add(strip);
+        }
+
+        if (_query.Length > 0)
+        {
+            foreach (var area in _navAreas)
+            {
+                var cards = Enumerable.Range(area.First, area.Count)
+                    .Where(i => _sections[i].Card.IsVisible)
+                    .ToList();
+
+                if (cards.Count == 0)
+                {
+                    continue;
+                }
+
+                order.Add(area.FilterHeading);
+                order.AddRange(cards.Select(i => (Control)_sections[i].Card));
+            }
+
+            return order;
+        }
+
+        if (_activeArea < 0 || _activeArea >= _navAreas.Count)
+        {
+            return order;
+        }
+
+        var selected = _navAreas[_activeArea];
+
+        _areaHeaderTitle!.Text = selected.Title;
+        _areaHeaderSentence!.Text = selected.Sentence;
+
+        if (_areaHeader is { } header)
+        {
+            order.Add(header);
+        }
+
+        order.AddRange(
+            Enumerable.Range(selected.First, selected.Count)
+                .Where(i => _sections[i].Card.IsVisible)
+                .Select(i => (Control)_sections[i].Card));
+
+        return order;
     }
 
     /// <summary>
@@ -3385,6 +3721,27 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         public IDisposable? NavInk { get; set; }
 
         public IDisposable? NavFill { get; set; }
+    }
+
+    /// <summary>One area's nav heading, its title and sentence, and the run of sections beneath it (#220).</summary>
+    private sealed record AreaView(
+        string Id,
+        string Title,
+        string Sentence,
+        Border Heading,
+        TextBlock HeadingText,
+
+        /// <summary>Drawn above this area's cards while a query is narrowing every area at once.</summary>
+        Control FilterHeading,
+        int First,
+        int Count)
+    {
+        /// <summary>How the heading is currently painted, or null before it has been painted at all.</summary>
+        public bool? PaintedActive { get; set; }
+
+        public IDisposable? Ink { get; set; }
+
+        public IDisposable? Fill { get; set; }
     }
 
     private sealed record RowView(SettingRow Row, Control Container, Action Refresh)

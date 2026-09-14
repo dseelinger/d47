@@ -120,7 +120,13 @@ public class ChoiceControlsLookAlikeTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
 
-        return SettingsHost.Open(settings, viewState, paths);
+        var host = SettingsHost.Open(settings, viewState, paths);
+
+        // Provider and Model live in Language model, The ship's AI's own area (#220).
+        host.View.Reveal(D47.Core.Capabilities.Builtin.ConversationCapability.Id);
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        return host;
     }
 
     private static Grid Row(SettingsHost host, string label) =>

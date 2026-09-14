@@ -6,6 +6,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Settings;
 using D47.App.Theming;
+using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Persona;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -29,6 +30,10 @@ public class IntroductionsRowTests
             .FollowSettings(settings);
 
         var host = SettingsHost.Open(settings, viewState, paths);
+
+        // Persona's own area (#220).
+        host.View.Reveal(PersonaCapability.Id);
+        Dispatcher.UIThread.RunJobs();
 
         Assert.Contains("Cora, Kex", Disclosures(host.View));
 

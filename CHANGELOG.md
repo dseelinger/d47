@@ -6,6 +6,15 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.129.0 — Settings one area at a time
+
+The Settings page shows one area at a time: the nav lists every area, but only the selected one's
+sections, and the page opens on that area's own title and sentence above its cards. Following a help
+card into a setting, or reopening the page on a setting you were last reading, switches to its area
+first. A search still draws matches from every area at once, each behind its own area's name, and
+clearing it goes back to the area you had open. Below the width the nav collapses at, a dropdown of
+area titles takes its place.
+
 ## 0.128.0 — Settings arranged by area
 
 Fleet › Ships, Routing › Community Goal and Adventures now carry a "Settings for this page" strip of

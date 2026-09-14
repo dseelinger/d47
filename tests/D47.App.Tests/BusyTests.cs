@@ -191,6 +191,10 @@ public class BusyTests
 
         var host = SettingsHost.Open(settings, viewState, paths);
 
+        // Persona's own area (#220).
+        host.View.Reveal(D47.Core.Capabilities.Builtin.PersonaCapability.Id);
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
         Assert.DoesNotContain(host.View.GetVisualDescendants().OfType<BusyGlyph>(), glyph => glyph.IsVisible);
 
         host.View.ShowBusy(D47.Core.Capabilities.Builtin.PersonaCapability.PersonaKey, busy: true);

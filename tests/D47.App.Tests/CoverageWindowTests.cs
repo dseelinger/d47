@@ -139,6 +139,10 @@ public class CoverageWindowTests
 
         var host = SettingsHost.Open(settings, viewState, paths, recording ? Report : null);
 
+        // Diagnostics' own area (#220).
+        host.View.Reveal(D47.Core.Capabilities.Builtin.DiagnosticsCapability.Id);
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
         var offered = host.View.GetVisualDescendants()
             .OfType<Button>()
             .Any(button => button.Name == "OpenCoverage");

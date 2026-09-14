@@ -85,8 +85,11 @@ public class SettingsNavTests
     {
         var (window, _, view) = OpenLikeTheApp();
 
-        var labels = NavLabels(view);
-        var items = ((StackPanel)view.FindControl<Control>("NavItems")!).Children.Where(item => item.Classes.Contains(SettingsView.NavPlaceClass)).ToList();
+        // Only the selected area's places are drawn (#220) — the rest sit in the nav collapsed to nothing.
+        var labels = NavLabels(view).Where(label => label.IsEffectivelyVisible).ToList();
+        var items = ((StackPanel)view.FindControl<Control>("NavItems")!).Children
+            .Where(item => item.Classes.Contains(SettingsView.NavPlaceClass) && item.IsVisible)
+            .ToList();
         var scroller = (ScrollViewer)view.FindControl<Control>("Scroller")!;
 
         Assert.NotEqual(Colour(labels[0].Foreground), Colour(labels[1].Foreground));

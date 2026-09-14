@@ -79,6 +79,10 @@ public class TheRecordingRowIsAbsentUnlessAskedForTests : IDisposable
 
         var host = SettingsHost.Open(settings, viewState, paths, recording: (log, () => Noon));
 
+        // Privacy and egress' own area (#220).
+        host.View.Reveal(D47.Core.Capabilities.Builtin.PrivacyCapability.Id);
+        Dispatcher.UIThread.RunJobs();
+
         Assert.Contains(ReviewButton, ButtonNames(host.View));
         Assert.Contains(WipeButton, ButtonNames(host.View));
         Assert.Contains("1 utterances", Disclosures(host.View), StringComparison.Ordinal);
@@ -111,6 +115,10 @@ public class TheRecordingRowIsAbsentUnlessAskedForTests : IDisposable
             .FollowSettings(settings);
 
         var host = SettingsHost.Open(settings, viewState, paths, recording: (log, () => Noon));
+
+        // Privacy and egress' own area (#220).
+        host.View.Reveal(D47.Core.Capabilities.Builtin.PrivacyCapability.Id);
+        Dispatcher.UIThread.RunJobs();
 
         var wipe = host.View.GetVisualDescendants()
             .OfType<Button>()

@@ -45,6 +45,10 @@ public class AWrittenCoreIsReachableFromThePanelTests : IDisposable
 
         var host = SettingsHost.Open(settings, viewState, paths, ownPersonas: store);
 
+        // Persona's own area (#220).
+        host.View.Reveal(D47.Core.Capabilities.Builtin.PersonaCapability.Id);
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
         var button = host.View.GetVisualDescendants().OfType<Button>()
             .Single(found => found.Name == "OpenOwnPersonas");
 

@@ -57,6 +57,10 @@ public class AboutTests
 
         var host = SettingsHost.Open(settings, viewState, paths);
 
+        // Its own area (#220), reached the way a help card reaches it.
+        host.View.Reveal(D47.Core.Capabilities.Builtin.AboutCapability.Id);
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
         var text = host.View.GetVisualDescendants().OfType<TextBlock>()
             .Where(block => block.IsEffectivelyVisible)
             .Select(block => block.Text ?? string.Empty)
