@@ -55,6 +55,9 @@ public class TheCommoditySearchsKnobsAreTheModelsTests
             ColonisationQuery query,
             CancellationToken cancellationToken) =>
             Task.FromResult(new ColonisationScan("Eurybia", 0, []));
+
+        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
     }
 
     /// <summary>One market, so the positive answer is a fixed string rather than an empty one.</summary>

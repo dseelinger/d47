@@ -56,6 +56,9 @@ public class AMisheardCommodityIsOfferedItsNearestNameTests
         public Task<ColonisationScan> ScanForColonisationAsync(
             ColonisationQuery query,
             CancellationToken cancellationToken) => Task.FromResult(new ColonisationScan("Ega", 0, []));
+
+        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
     }
 
     private static async Task<string> AskAsync(IGalaxyService? galaxy, ITradePlanService? trade, string commodity)

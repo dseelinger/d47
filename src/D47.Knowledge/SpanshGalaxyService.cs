@@ -97,6 +97,19 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
         return SpanshResponse.ReadColonisation(document!);
     }
 
+    public async Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken)
+    {
+        using var document = await SendAsync(
+            token => _http.GetAsync($"api/system/{systemAddress}", token),
+            "the system lookup",
+            cancellationToken,
+            missingWhen: HttpStatusCode.NotFound).ConfigureAwait(false);
+
+        return document is null
+            ? new SystemBiology(systemAddress, [])
+            : SpanshResponse.ReadSystemBiology(document, systemAddress);
+    }
+
     public async Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken)
     {
         var origin = await CoordinatesAsync(from, cancellationToken).ConfigureAwait(false);
@@ -138,7 +151,7 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
             token => _http.PostAsync("api/systems/search", content, token),
             "the galaxy search",
             cancellationToken,
-            rejectionMeansMissing: true).ConfigureAwait(false);
+            missingWhen: HttpStatusCode.BadRequest).ConfigureAwait(false);
 
         return document is null ? null : SpanshResponse.ReadReferenceCoordinates(document);
     }
@@ -148,15 +161,13 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
         new(StringComparer.Ordinal) { ["distance"] = "0-1" };
 
     /// <summary>One request, with every way it can go wrong turned into a sentence.</summary>
-    /// <param name="rejectionMeansMissing">
-    /// Whether a 400 is "there is no such system" rather than a fault.
-    /// </param>
+    /// <param name="missingWhen">The status that means "there is no such record" rather than a fault.</param>
     /// <param name="budget">How long to wait, defaulting to <see cref="Ordinary"/>.</param>
     private async Task<JsonDocument?> SendAsync(
         Func<CancellationToken, Task<HttpResponseMessage>> send,
         string what,
         CancellationToken cancellationToken,
-        bool rejectionMeansMissing = false,
+        HttpStatusCode? missingWhen = null,
         TimeSpan? budget = null)
     {
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -189,7 +200,7 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
             {
                 _logger.LogWarning("{What} answered {Status}", what, (int)response.StatusCode);
 
-                if (rejectionMeansMissing && response.StatusCode == HttpStatusCode.BadRequest)
+                if (response.StatusCode == missingWhen)
                 {
                     return null;
                 }

@@ -51,6 +51,9 @@ public class TheFourInaraKnobsReachTheSearchTests
 
         public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new ColonisationScan("Ega", 0, []));
+
+        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
     }
 
     private static MarketSnapshot Station(string name, double x, int supply, double arrival) => new()

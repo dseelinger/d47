@@ -51,4 +51,7 @@ public sealed class GalaxySearchNames(IGalaxyService inner) : IGalaxyService
     public Task<ColonisationScan> ScanForColonisationAsync(
         ColonisationQuery query, CancellationToken cancellationToken) =>
         inner.ScanForColonisationAsync(query, cancellationToken);
+
+    public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
+        inner.SystemBiologyAsync(systemAddress, cancellationToken);
 }

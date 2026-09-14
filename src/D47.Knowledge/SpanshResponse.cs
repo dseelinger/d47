@@ -238,6 +238,48 @@ internal static class SpanshResponse
         return new ExobiologyRoute(stops);
     }
 
+    /// <summary>The bodies of one <c>api/system</c> record that carry a landmark value above zero.</summary>
+    public static SystemBiology ReadSystemBiology(JsonDocument document, long systemAddress)
+    {
+        var bodies = new List<SurveyedBody>();
+
+        foreach (var body in (document.RootElement.Object("record") ?? default).Items("bodies"))
+        {
+            var value = Integer(body, "landmark_value") ?? 0;
+
+            if (value <= 0 || Integer(body, "id64") is not { } id64)
+            {
+                continue;
+            }
+
+            var species = new List<ExobiologySpecies>();
+
+            foreach (var landmark in body.Items("landmarks"))
+            {
+                species.Add(new ExobiologySpecies(
+                    String(landmark, "type") ?? "an unnamed genus",
+                    String(landmark, "subtype") ?? "an unnamed species",
+                    landmark.Int("count") ?? 1,
+                    Integer(landmark, "value") ?? 0));
+            }
+
+            if (species.Count == 0)
+            {
+                continue;
+            }
+
+            bodies.Add(new SurveyedBody(
+                String(body, "name") ?? "an unnamed body",
+
+                // A body's id64 carries its BodyID in the top nine bits.
+                (int)((ulong)id64 >> 55),
+                value,
+                species));
+        }
+
+        return new SystemBiology(systemAddress, bodies);
+    }
+
     /// <summary>Array members, or empty.</summary>
     private static IEnumerable<JsonElement> Items(this JsonElement element, string name) =>
         element.ValueKind == JsonValueKind.Object

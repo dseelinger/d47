@@ -51,6 +51,9 @@ public class ColonisationCandidateTests
 
         public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new StationSearchResult("Sol", 0, []));
+
+        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
     }
 
     /// <summary>A system the index knows something about.</summary>

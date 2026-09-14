@@ -67,6 +67,9 @@ public class GalaxyCapabilityTests
             ColonisationQuery query,
             CancellationToken cancellationToken) =>
             Task.FromResult(new ColonisationScan("Sol", 0, []));
+
+        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
     }
 
     private static (CapabilityRegistry Registry, FakeGalaxy Galaxy) Build(

@@ -108,6 +108,9 @@ public class TheCorrectionReachesTheWholeSentenceTests
 
         public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) =>
             throw new NotSupportedException("Not what these tests drive.");
+
+        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
     }
 
     /// <summary>The reported turn, through the real tool.</summary>

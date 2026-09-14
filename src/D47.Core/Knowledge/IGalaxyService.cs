@@ -37,6 +37,18 @@ public sealed record GalaxySearchResult(
     int Total,
     IReadOnlyList<SystemSummary> Systems);
 
+/// <summary>A body with reported biology.</summary>
+/// <param name="BodyId">The journal's <c>BodyID</c>.</param>
+/// <param name="LandmarkValue">What its species are worth together, in credits.</param>
+public sealed record SurveyedBody(
+    string Name,
+    int BodyId,
+    long LandmarkValue,
+    IReadOnlyList<ExobiologySpecies> Species);
+
+/// <summary>The bodies in one system whose biology has been reported, with their species.</summary>
+public sealed record SystemBiology(long SystemAddress, IReadOnlyList<SurveyedBody> Bodies);
+
 /// <summary>The seam to whatever knows about the galaxy.</summary>
 public interface IGalaxyService
 {
@@ -63,6 +75,9 @@ public interface IGalaxyService
     /// worth colonising").
     /// </summary>
     Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken);
+
+    /// <summary>The reported biology in a system, by id64. Empty when the service does not know the system.</summary>
+    Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken);
 }
 
 /// <summary>The service could not answer.</summary>

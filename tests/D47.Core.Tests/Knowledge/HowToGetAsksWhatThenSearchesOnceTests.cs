@@ -42,6 +42,9 @@ public class HowToGetAsksWhatThenSearchesOnceTests
             ColonisationQuery query,
             CancellationToken cancellationToken) =>
             Task.FromResult(new ColonisationScan("Sol", 0, []));
+
+        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
     }
 
     /// <summary>Records the commodity search it was handed, and answers whatever it was given.</summary>

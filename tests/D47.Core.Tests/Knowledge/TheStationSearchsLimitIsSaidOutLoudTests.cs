@@ -37,6 +37,9 @@ public class TheStationSearchsLimitIsSaidOutLoudTests
             ColonisationQuery query,
             CancellationToken cancellationToken) =>
             Task.FromResult(new ColonisationScan("Eurybia", 0, []));
+
+        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
     }
 
     /// <summary>Records the commodity search it was handed, and answers nothing.</summary>
