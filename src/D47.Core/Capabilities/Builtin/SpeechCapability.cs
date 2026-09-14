@@ -59,6 +59,17 @@ public static class SpeechCapability
     public const string SpeakSquadronKey = "speech.speakSquadronChat";
     public const string SpeakDirectMessagesKey = "speech.speakDirectMessages";
 
+    /// <summary>The eight Guardian voice toggles (#225), global to every core and off by default.</summary>
+    public const string GuardianCylonKey = "speech.guardianVoice.cylon";
+
+    public const string GuardianPitchDownKey = "speech.guardianVoice.pitchDown";
+    public const string GuardianOctaveDownKey = "speech.guardianVoice.octaveDown";
+    public const string GuardianChorusKey = "speech.guardianVoice.chorus";
+    public const string GuardianCombKey = "speech.guardianVoice.comb";
+    public const string GuardianRingModKey = "speech.guardianVoice.ringMod";
+    public const string GuardianGlitchKey = "speech.guardianVoice.glitch";
+    public const string GuardianReverbKey = "speech.guardianVoice.reverb";
+
     /// <summary>The secret row key for a voice provider's API key.</summary>
     public static string KeyRowFor(TtsProviderInfo provider) => $"speech.{provider.Id}.apiKey";
 
@@ -813,6 +824,166 @@ public static class SpeechCapability
                     Write = (s, v) => s with
                     {
                         Speech = s.Speech with { SpeakDirectMessages = v is not "false" and not null },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = GuardianCylonKey,
+                Advanced = true,
+                Label = "Cylon",
+                Help = "Channel vocoder onto a fixed-pitch carrier. Off by default.",
+                Kind = SettingKind.Toggle,
+                DefaultDisplay = "off",
+                AppliesWhen = s => s.Speech.Provider != NoneId,
+                Group = "Guardian voice",
+                DocsAnchor = "guardian-voice-cylon",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Speech.GuardianVoiceCylon ? "true" : "false",
+                    Write = (s, v) => s with
+                    {
+                        Speech = s.Speech with { GuardianVoiceCylon = v is not "false" and not null },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = GuardianPitchDownKey,
+                Advanced = true,
+                Label = "Pitch down",
+                Help = "Four semitones lower, duration kept. Off by default.",
+                Kind = SettingKind.Toggle,
+                DefaultDisplay = "off",
+                AppliesWhen = s => s.Speech.Provider != NoneId,
+                Group = "Guardian voice",
+                DocsAnchor = "guardian-voice-pitch-down",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Speech.GuardianVoicePitchDown ? "true" : "false",
+                    Write = (s, v) => s with
+                    {
+                        Speech = s.Speech with { GuardianVoicePitchDown = v is not "false" and not null },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = GuardianOctaveDownKey,
+                Advanced = true,
+                Label = "Octave-down layer",
+                Help = "The line an octave lower, mixed under the dry voice. Off by default.",
+                Kind = SettingKind.Toggle,
+                DefaultDisplay = "off",
+                AppliesWhen = s => s.Speech.Provider != NoneId,
+                Group = "Guardian voice",
+                DocsAnchor = "guardian-voice-octave-down",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Speech.GuardianVoiceOctaveDown ? "true" : "false",
+                    Write = (s, v) => s with
+                    {
+                        Speech = s.Speech with { GuardianVoiceOctaveDown = v is not "false" and not null },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = GuardianChorusKey,
+                Advanced = true,
+                Label = "Chorus",
+                Help = "Three swept delayed copies mixed under the dry voice. Off by default.",
+                Kind = SettingKind.Toggle,
+                DefaultDisplay = "off",
+                AppliesWhen = s => s.Speech.Provider != NoneId,
+                Group = "Guardian voice",
+                DocsAnchor = "guardian-voice-chorus",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Speech.GuardianVoiceChorus ? "true" : "false",
+                    Write = (s, v) => s with
+                    {
+                        Speech = s.Speech with { GuardianVoiceChorus = v is not "false" and not null },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = GuardianCombKey,
+                Advanced = true,
+                Label = "Metallic resonance",
+                Help = "A 9 ms feedback comb filter. Off by default.",
+                Kind = SettingKind.Toggle,
+                DefaultDisplay = "off",
+                AppliesWhen = s => s.Speech.Provider != NoneId,
+                Group = "Guardian voice",
+                DocsAnchor = "guardian-voice-comb",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Speech.GuardianVoiceComb ? "true" : "false",
+                    Write = (s, v) => s with
+                    {
+                        Speech = s.Speech with { GuardianVoiceComb = v is not "false" and not null },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = GuardianRingModKey,
+                Advanced = true,
+                Label = "Ring modulation",
+                Help = "A 45 Hz ring modulator blended with the dry voice. Off by default.",
+                Kind = SettingKind.Toggle,
+                DefaultDisplay = "off",
+                AppliesWhen = s => s.Speech.Provider != NoneId,
+                Group = "Guardian voice",
+                DocsAnchor = "guardian-voice-ring-mod",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Speech.GuardianVoiceRingMod ? "true" : "false",
+                    Write = (s, v) => s with
+                    {
+                        Speech = s.Speech with { GuardianVoiceRingMod = v is not "false" and not null },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = GuardianGlitchKey,
+                Advanced = true,
+                Label = "Glitch",
+                Help = "Short damaged stretches at irregular intervals. Off by default.",
+                Kind = SettingKind.Toggle,
+                DefaultDisplay = "off",
+                AppliesWhen = s => s.Speech.Provider != NoneId,
+                Group = "Guardian voice",
+                DocsAnchor = "guardian-voice-glitch",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Speech.GuardianVoiceGlitch ? "true" : "false",
+                    Write = (s, v) => s with
+                    {
+                        Speech = s.Speech with { GuardianVoiceGlitch = v is not "false" and not null },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = GuardianReverbKey,
+                Advanced = true,
+                Label = "Reverb",
+                Help = "Schroeder reverb, adding a half-second tail. Off by default.",
+                Kind = SettingKind.Toggle,
+                DefaultDisplay = "off",
+                AppliesWhen = s => s.Speech.Provider != NoneId,
+                Group = "Guardian voice",
+                DocsAnchor = "guardian-voice-reverb",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Speech.GuardianVoiceReverb ? "true" : "false",
+                    Write = (s, v) => s with
+                    {
+                        Speech = s.Speech with { GuardianVoiceReverb = v is not "false" and not null },
                     },
                 },
             },

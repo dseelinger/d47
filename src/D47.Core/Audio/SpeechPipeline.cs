@@ -51,6 +51,12 @@ public sealed class SpeechPipeline : IAsyncDisposable
     private readonly Func<AudioClip, AudioClip>? _colour;
 
     /// <summary>
+    /// Whether <see cref="_colour"/> is the Guardian voice rather than a radio link — the two would
+    /// otherwise both read as "over the air" in the log (#225).
+    /// </summary>
+    private readonly bool _guardianTreated;
+
+    /// <summary>
     /// Who this is, for the log line — a sender's name, a role, or null when the caller has nothing
     /// more specific to say than the group already does.
     /// </summary>
@@ -106,7 +112,8 @@ public sealed class SpeechPipeline : IAsyncDisposable
         // (remediation.md 11, item 9).
         Action<SynthesisNote>? noted = null,
         string? captionSpeaker = null,
-        SpokenAddress? address = null)
+        SpokenAddress? address = null,
+        bool guardianTreated = false)
     {
         _arbiter = arbiter;
         _tts = tts;
@@ -115,6 +122,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
         _logger = logger;
         _channel = channel;
         _colour = colour;
+        _guardianTreated = guardianTreated;
         _speaker = speaker;
         _captioned = captioned;
         _noted = noted;
@@ -329,7 +337,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
 
             // Which side of the hull this came from, because "it did not sound like a radio" is otherwise a
             // report with nothing to check it against.
-            _colour is null ? "in the room" : "over the air");
+            _colour is null ? "in the room" : _guardianTreated ? "guardian-treated" : "over the air");
     }
 
     /// <summary>

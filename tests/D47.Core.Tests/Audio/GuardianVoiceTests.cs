@@ -1,5 +1,7 @@
 using D47.Core.Audio;
+using D47.Core.Configuration;
 using Xunit;
+using VoiceGender = D47.Core.Persona.VoiceGender;
 
 namespace D47.Core.Tests.Audio;
 
@@ -296,5 +298,58 @@ public class GuardianVoiceTests
             Assert.True(left > 1_000, $"{treatment} silenced the left channel");
             Assert.True(right < 32, $"{treatment} put {right} into the silent channel");
         }
+    }
+
+    [Fact]
+    public void EveryToggleOffCombinesToNoTreatment() =>
+        Assert.Equal(GuardianTreatment.None, GuardianVoice.TreatmentsFrom(new SpeechSettings()));
+
+    [Fact]
+    public void EveryToggleOnCombinesToEveryTreatment()
+    {
+        var speech = new SpeechSettings
+        {
+            GuardianVoiceCylon = true,
+            GuardianVoicePitchDown = true,
+            GuardianVoiceOctaveDown = true,
+            GuardianVoiceChorus = true,
+            GuardianVoiceComb = true,
+            GuardianVoiceRingMod = true,
+            GuardianVoiceGlitch = true,
+            GuardianVoiceReverb = true,
+        };
+
+        Assert.Equal(
+            GuardianTreatment.Cylon
+                | GuardianTreatment.PitchDown
+                | GuardianTreatment.OctaveDown
+                | GuardianTreatment.Chorus
+                | GuardianTreatment.Comb
+                | GuardianTreatment.RingMod
+                | GuardianTreatment.Glitch
+                | GuardianTreatment.Reverb,
+            GuardianVoice.TreatmentsFrom(speech));
+    }
+
+    [Theory]
+    [InlineData(VoiceGender.Male, 124)]
+    [InlineData(VoiceGender.Female, 209)]
+    [InlineData(VoiceGender.Unspecified, 165)]
+    public void TheCarrierPitchComesFromTheCoresGender(VoiceGender gender, double expected) =>
+        Assert.Equal(expected, GuardianVoice.BasePitchHz(gender));
+
+    [Fact]
+    public void NoToggleMeansNoTreatment() =>
+        Assert.Null(GuardianVoice.ColourFor(new SpeechSettings(), VoiceGender.Unspecified));
+
+    [Fact]
+    public void OneToggleTreatsTheClip()
+    {
+        var speech = new SpeechSettings { GuardianVoiceCylon = true };
+
+        var colour = GuardianVoice.ColourFor(speech, VoiceGender.Male);
+
+        Assert.NotNull(colour);
+        Assert.EndsWith("(guardian)", colour(Tone(220)).Name, StringComparison.Ordinal);
     }
 }

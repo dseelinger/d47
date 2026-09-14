@@ -3878,6 +3878,7 @@ public sealed class AppHost : IDisposable
         Voice.CuesEnabled = speech.CuesEnabled;
         Voice.BedEnabled = speech.ThinkingBedEnabled;
         Voice.Bed = speech.ThinkingBed;
+        Voice.GuardianColour = GuardianVoice.ColourFor(speech, Personas.Current.VoiceHint.Gender);
 
         Turns.Retry = SpeechCapability.RetryFrom(speech);
 
@@ -5211,6 +5212,7 @@ public sealed class AppHost : IDisposable
             host.Turns.Persona = persona;
             host.Voice.Voice = voice;
             host.Voice.CaptionSpeaker = captionSpeaker;
+            host.Voice.SpeakingAsCrew = false;
         }
     }
 
@@ -5235,6 +5237,7 @@ public sealed class AppHost : IDisposable
         // Not a Guardian core.
         Turns.Persona = CrewAddressing.Brief(addressed.Member, GameState.Active?.Ship.Name);
         Voice.Voice = Cast.ForSender(addressed.Member.Name, isPlayer: false, VoiceRole.Crew);
+        Voice.SpeakingAsCrew = true;
 
         // And the caption says who is answering (#201).
         Voice.CaptionSpeaker = addressed.Member.Name;

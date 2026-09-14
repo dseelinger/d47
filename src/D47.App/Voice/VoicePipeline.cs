@@ -72,6 +72,15 @@ public sealed class VoicePipeline(
 
     public string? Bed { get; set; }
 
+    /// <summary>The ship AI's Guardian treatment for the settings in force, or null with every toggle off (#225).</summary>
+    public Func<AudioClip, AudioClip>? GuardianColour { get; set; }
+
+    /// <summary>
+    /// Whether the reply in progress is spoken by a crew member rather than the ship's AI, so Guardian
+    /// treatment — global to every core, never to Crew — is not applied to it (#225).
+    /// </summary>
+    public bool SpeakingAsCrew { get; set; }
+
     /// <summary>Told what each sentence was rendered by, when something is recording (#164).</summary>
     public Action<SynthesisNote>? Synthesised { get; set; }
 
@@ -114,16 +123,22 @@ public sealed class VoicePipeline(
                         if (speech is null && Tts is { } provider)
                         {
                             _spoke = true;
+
+                            var role = SpeakingAsCrew ? VoiceRole.Crew : VoiceRole.ShipAi;
+                            var colour = Colour(role);
+
                             speech = new SpeechPipeline(
                                 arbiter,
                                 provider,
                                 Introduce(Voice),
                                 group,
                                 loggers.CreateLogger<SpeechPipeline>(),
+                                colour: colour,
                                 speaker: "D47",
                                 noted: Synthesised,
                                 captionSpeaker: CaptionSpeaker,
-                                address: _address);
+                                address: _address,
+                                guardianTreated: IsGuardianTreated(role, colour));
                             speech.SynthesisFailed += OnSynthesisFailed;
                             speech.VoiceRejected += OnVoiceRejected;
                         }
@@ -182,6 +197,11 @@ public sealed class VoicePipeline(
     /// <param name="speaker">
     /// Who is talking, for the log line that records which voice said it.
     /// </param>
+    /// <param name="role">
+    /// Who this is, for choosing a treatment when <paramref name="colour"/> is not given: an
+    /// over-the-air role gets a radio link, the ship AI gets its Guardian treatment where one is
+    /// switched on, and every other role is unchanged (#225).
+    /// </param>
     public async Task AnnounceAsync(
         string text,
         AudioChannel channel = AudioChannel.Speech,
@@ -191,12 +211,15 @@ public sealed class VoicePipeline(
         string? speaker = null,
         bool captioned = true,
         VoiceGroup slot = VoiceGroup.Aboard,
-        string? captionSpeaker = null)
+        string? captionSpeaker = null,
+        VoiceRole role = VoiceRole.ShipAi)
     {
         if (Speaker(slot) is not { } provider)
         {
             return;
         }
+
+        var applied = colour ?? Colour(role);
 
         // The voice is a parameter rather than always the ship AI's, because Phase 11 has several things to
         // say that are not the ship AI speaking — a re-voiced in-game message, a carrier's tower, a crew
@@ -208,12 +231,13 @@ public sealed class VoicePipeline(
             group,
             loggers.CreateLogger<SpeechPipeline>(),
             channel,
-            colour,
+            applied,
             speaker,
             captioned,
             Synthesised,
             captionSpeaker,
-            _address);
+            _address,
+            IsGuardianTreated(role, applied));
 
         speech.SynthesisFailed += OnSynthesisFailed;
         speech.VoiceRejected += OnVoiceRejected;
@@ -266,7 +290,7 @@ public sealed class VoicePipeline(
 
                 // The group a reply may drop this by.
                 announcement.Group,
-                colour: RadioVoice.Colours(announcement.Voice),
+                role: announcement.Voice,
 
                 // The sender where there is one and the role otherwise, which is the difference between "Ilse
                 // Bruhn" and "Comms" in the log — and the reason for writing the voice down is being able
@@ -342,6 +366,17 @@ public sealed class VoicePipeline(
     }
 
     private void OnSynthesisFailed(string reason) => SynthesisFailed?.Invoke(reason);
+
+    /// <summary>
+    /// A radio link for an over-the-air role, the ship AI's Guardian treatment where one is switched
+    /// on, and no treatment for every other role — Crew included (#225).
+    /// </summary>
+    private Func<AudioClip, AudioClip>? Colour(VoiceRole role) =>
+        RadioVoice.Colours(role) ?? (role == VoiceRole.ShipAi ? GuardianColour : null);
+
+    /// <summary>Whether a resolved colour is the Guardian treatment rather than a radio link, for the log.</summary>
+    private static bool IsGuardianTreated(VoiceRole role, Func<AudioClip, AudioClip>? colour) =>
+        role == VoiceRole.ShipAi && colour is not null;
 
     /// <summary>The same selection with the voice's name attached, where the host can say what it is.</summary>
     internal VoiceSelection Introduce(VoiceSelection voice) =>

@@ -45,6 +45,12 @@ A callout, carrier line, canned message or story beat with an in-character rewor
 the model only half the time by default; the rest of the time it is spoken exactly as written, with
 no model call. Ambient remarks are unaffected and are still reworded every time.
 
+Eight optional Guardian voice treatments for the ship AI — Cylon, pitch down, an octave-down layer,
+chorus, metallic resonance, ring modulation, glitch and reverb — are now switches under Its voice,
+all off by default and global to every core. Turning any on reaches the ship AI's turn replies, its
+own callouts and a persona's introduction or return; the crew, the carrier and every over-the-air
+voice are unchanged.
+
 ## 0.128.0 — Settings arranged by area
 
 Fleet › Ships, Routing › Community Goal and Adventures now carry a "Settings for this page" strip of

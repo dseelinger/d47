@@ -1,3 +1,5 @@
+using D47.Core.Configuration;
+
 namespace D47.Core.Audio;
 
 /// <summary>The treatments a Guardian core's voice can be given, in any combination.</summary>
@@ -118,6 +120,80 @@ public static class GuardianVoice
             Name = $"{clip.Name} (guardian)",
             Pcm = Encode(treated, Level(dry, treated, frames)),
         };
+    }
+
+    /// <summary>Every treatment switched on in settings, combined (#225).</summary>
+    public static GuardianTreatment TreatmentsFrom(SpeechSettings speech)
+    {
+        var treatments = GuardianTreatment.None;
+
+        if (speech.GuardianVoiceCylon)
+        {
+            treatments |= GuardianTreatment.Cylon;
+        }
+
+        if (speech.GuardianVoicePitchDown)
+        {
+            treatments |= GuardianTreatment.PitchDown;
+        }
+
+        if (speech.GuardianVoiceOctaveDown)
+        {
+            treatments |= GuardianTreatment.OctaveDown;
+        }
+
+        if (speech.GuardianVoiceChorus)
+        {
+            treatments |= GuardianTreatment.Chorus;
+        }
+
+        if (speech.GuardianVoiceComb)
+        {
+            treatments |= GuardianTreatment.Comb;
+        }
+
+        if (speech.GuardianVoiceRingMod)
+        {
+            treatments |= GuardianTreatment.RingMod;
+        }
+
+        if (speech.GuardianVoiceGlitch)
+        {
+            treatments |= GuardianTreatment.Glitch;
+        }
+
+        if (speech.GuardianVoiceReverb)
+        {
+            treatments |= GuardianTreatment.Reverb;
+        }
+
+        return treatments;
+    }
+
+    /// <summary>
+    /// The Cylon carrier's base pitch for a core's <see cref="VoiceHint.Gender"/> — the median pitches
+    /// measured for Edge Andrew and Ava (#224).
+    /// </summary>
+    public static double BasePitchHz(D47.Core.Persona.VoiceGender gender) => gender switch
+    {
+        D47.Core.Persona.VoiceGender.Male => 124,
+        D47.Core.Persona.VoiceGender.Female => 209,
+        _ => 165,
+    };
+
+    /// <summary>The ship AI's treatment for the settings in force, or null when every toggle is off (#225).</summary>
+    public static Func<AudioClip, AudioClip>? ColourFor(SpeechSettings speech, D47.Core.Persona.VoiceGender gender)
+    {
+        var treatments = TreatmentsFrom(speech);
+
+        if (treatments == GuardianTreatment.None)
+        {
+            return null;
+        }
+
+        var basePitch = BasePitchHz(gender);
+
+        return clip => Apply(clip, treatments, basePitch);
     }
 
     private static double[] Chain(double[] signal, GuardianTreatment treatments, double basePitchHz, int rate)

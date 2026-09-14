@@ -596,6 +596,49 @@ ElevenLabs that gives you two paid options for a re-voiced slot — and the warn
 any of them is unchanged, because a paid provider there bills you per character for text somebody
 else wrote and can write as much of as they like.
 
+#### Guardian voice {#guardian-voice}
+
+Eight optional treatments for the ship AI's voice, each off by default. They apply to what the ship
+AI says — turn replies, its own callouts, and a persona's introduction or return — and to nothing
+else: your crew, the carrier and every over-the-air voice are unchanged. Any combination can be
+switched on at once, and they run in the same fixed order regardless of which ones are on:
+
+##### Cylon {#guardian-voice-cylon}
+
+A channel vocoder onto a fixed-pitch carrier, so the words come out toneless.
+
+##### Pitch down {#guardian-voice-pitch-down}
+
+Four semitones lower, with the sentence's length unchanged.
+
+##### Octave-down layer {#guardian-voice-octave-down}
+
+The line an octave lower, mixed in under the dry voice.
+
+##### Chorus {#guardian-voice-chorus}
+
+Three delayed copies, each swept, mixed in under the dry voice.
+
+##### Metallic resonance {#guardian-voice-comb}
+
+A short feedback comb filter.
+
+##### Ring modulation {#guardian-voice-ring-mod}
+
+A slow ring modulator blended with the dry voice.
+
+##### Glitch {#guardian-voice-glitch}
+
+Short damaged stretches at irregular intervals.
+
+##### Reverb {#guardian-voice-reverb}
+
+A Schroeder reverb, adding a short tail after the sentence ends.
+
+They are global settings — one set for every core, not one per persona — because it is your
+choice of how the cockpit sounds rather than a character trait of whichever Guardian is currently
+aboard. Switching one on or off takes effect from the next sentence; nothing needs a restart.
+
 #### What the voices cost {#voice-cost}
 
 **Providers disagree about what they are selling, so they disagree about what they charge for.**

@@ -59,9 +59,11 @@ public static class SettingsLayout
     /// <summary>
     /// Place ids where <see cref="MostEntriesPerPlace"/> is exceeded today: <c>sounds</c> spells out
     /// Level/Mute/Duck for all five audio channels rather than collapsing them into one family entry (17
-    /// entries, all Advanced, so 0 shown).
+    /// entries, all Advanced, so 0 shown); <c>voice</c> spells out the eight Guardian voice toggles
+    /// rather than collapsing them into one family entry (22 entries, all eight Advanced, so 0 shown
+    /// beyond what already applied) (#225).
     /// </summary>
-    public static readonly IReadOnlyList<string> TotalLimitExceptions = ["sounds"];
+    public static readonly IReadOnlyList<string> TotalLimitExceptions = ["sounds", "voice"];
 
     private static SettingsEntry E(string key, bool under = false) => new(key, Under: under);
 
@@ -171,6 +173,19 @@ public static class SettingsLayout
                             "Where each voice comes from",
                             "Every voice that is not the ship's own can come from a different provider.",
                             [F(IsVoiceProviderSlotFamily)]),
+                        G(
+                            "Guardian voice",
+                            "Optional treatments for the ship AI's voice, all off by default and global to every core.",
+                            [
+                                E("speech.guardianVoice.cylon"),
+                                E("speech.guardianVoice.pitchDown"),
+                                E("speech.guardianVoice.octaveDown"),
+                                E("speech.guardianVoice.chorus"),
+                                E("speech.guardianVoice.comb"),
+                                E("speech.guardianVoice.ringMod"),
+                                E("speech.guardianVoice.glitch"),
+                                E("speech.guardianVoice.reverb"),
+                            ]),
                         G(
                             "What it costs",
                             "What this session has spent, and the rates it was priced at.",

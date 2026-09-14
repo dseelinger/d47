@@ -671,6 +671,26 @@ public sealed record SpeechSettings
     /// <summary>Which bed.</summary>
     public string? ThinkingBed { get; init; }
 
+    /// <summary>
+    /// The eight Guardian voice treatments, all off by default and global to every core rather than
+    /// per persona (#225).
+    /// </summary>
+    public bool GuardianVoiceCylon { get; init; }
+
+    public bool GuardianVoicePitchDown { get; init; }
+
+    public bool GuardianVoiceOctaveDown { get; init; }
+
+    public bool GuardianVoiceChorus { get; init; }
+
+    public bool GuardianVoiceComb { get; init; }
+
+    public bool GuardianVoiceRingMod { get; init; }
+
+    public bool GuardianVoiceGlitch { get; init; }
+
+    public bool GuardianVoiceReverb { get; init; }
+
     /// <summary>Cancel (Phase 5 as "Shut up"; widened by #221).</summary>
     public string? ShutUpHotkey { get; init; } = "Ctrl+Alt+X";
 
