@@ -21,13 +21,13 @@ nav_order: 117
 <div class="d47-howto"><div class="d47-frame">
 <p class="intro">Two steps to knowing what a plant is worth before you land.</p>
 <section>
-<h2><span class="num">1</span> Scan something, or ask about a genus by name.</h2>
+<h2><span class="num">1</span> Scan a body, then ask what is on it.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
- <text x="44" y="57" font-size="17" fill="var(--text)">what is bacterium aurasus worth</text>
+ <text x="44" y="57" font-size="17" fill="var(--text)">what biology is on this body</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
- <text x="20" y="118" font-size="16" fill="var(--text-muted)">The value tables ship with D47 and need no network.</text>
- <text x="20" y="152" font-size="16" fill="var(--text-muted)">Ask about the genus and it answers for the whole family.</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">Before mapping, it names the possible genera and a best case.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">After mapping, it narrows to a low–high range over the named genera.</text>
 </svg>
 </section>
 <section>

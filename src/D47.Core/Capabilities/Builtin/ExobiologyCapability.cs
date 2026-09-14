@@ -179,13 +179,27 @@ public static class ExobiologyCapability
 
         report.AppendLine($"{body.BodyName}, {seenHow} {Stamp(body.SeenAt)}.");
 
+        var scan = body.SystemAddress is { } systemAddress && body.BodyId is { } bodyId
+            ? state.Scans.For(systemAddress, bodyId)
+            : null;
+
+        var namedGenera = body.Source == BodySignalSource.SurfaceScan ? body.Genera : [];
+
+        var estimate = scan is not null && body.BiologicalCount > 0
+            ? BiologyPotential.For(scan, body.BiologicalCount, namedGenera)
+            : null;
+
         if (body.Source == BodySignalSource.Fss && body.BiologicalCount > 0)
         {
-            // The FSS says how many; it never says which genus.
+            // The FSS says how many; it never says which genus. The scan conditions can narrow a guess.
             report.AppendLine(
                 $"  The FSS reported {body.BiologicalCount} biological signal"
                 + $"{(body.BiologicalCount == 1 ? "" : "s")}. It has not been mapped, so I do not know "
-                + "the genus.");
+                + "the genus"
+                + (estimate is { Genera.Count: > 0 }
+                    ? $", but the conditions say it could hold up to {Number(estimate.BestCase)} credits: "
+                      + $"{string.Join(", ", estimate.Genera)}."
+                    : "."));
         }
         else if (!body.HasBiology)
         {
@@ -214,8 +228,14 @@ public static class ExobiologyCapability
         {
             // Said once, on the answer that would otherwise invite the question.
             report.AppendLine();
+
+            var range = estimate is { Low: { } low, High: { } high }
+                ? $"That could be worth {Number(low)} to {Number(high)} credits. "
+                : string.Empty;
+
             report.AppendLine(
-                "Elite names the genus and not the species, and the species is what sets the price — "
+                range
+                + "Elite names the genus and not the species, and the species is what sets the price — "
                 + "so I cannot tell you what this is worth until you sample it.");
         }
 

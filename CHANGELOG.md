@@ -14,6 +14,10 @@ Bacterium." The figure is the best case from the species the body's conditions a
 once a surface scan names the genera, the line gives a range over those. Said once per body. On by
 default, with its own toggle and threshold beside the other callouts.
 
+Asking what is on a body now says the same estimate. An FSS-only body names the possible genera and a
+best case; a surface-scanned body gives a low–high range over the genera it actually found. Either way,
+the exact value still waits on a sample — the genus is all Elite ever names before then.
+
 ## 0.124.0 — Supercharge
 
 Stepping onto a body for the first time now gets a spoken callout: "First footfall on Smojue

@@ -91,6 +91,18 @@ public class ExobiologyCapabilityTests
          "Genuses":[{"Genus":"$Codex_Ent_Brancae_Name;","Genus_Localised":"Brain Trees"}]}
         """;
 
+    /// <summary>
+    /// The <c>Scan</c> journal event, which is what carries the gravity and temperature
+    /// <see cref="D47.Core.Knowledge.BiologyPotential"/> is matched on. 0.5 g and 200 K admit Bacterium and
+    /// Stratum, the same fixture <c>BiologyCallout</c>'s tests use — reused here for the same known totals.
+    /// </summary>
+    private static string ScanEvent(long systemAddress, int bodyId, string bodyName) => $$"""
+        {"timestamp":"2026-08-16T10:01:00Z","event":"Scan","ScanType":"Detailed",
+         "SystemAddress":{{systemAddress}},"BodyID":{{bodyId}},"BodyName":"{{bodyName}}",
+         "PlanetClass":"Rocky body","Atmosphere":"thin carbon dioxide atmosphere","Volcanism":"",
+         "SurfaceGravity":4.903325,"SurfaceTemperature":200,"SurfacePressure":2026.5,"Landable":true}
+        """;
+
     // ------------------------------------------------------------- the body
 
     [Fact]
@@ -175,6 +187,57 @@ public class ExobiologyCapabilityTests
         Assert.Contains("FSS reported 3 biological signals", result.Content, StringComparison.Ordinal);
         Assert.Contains("not been mapped", result.Content, StringComparison.Ordinal);
         Assert.DoesNotContain("No biological signals", result.Content, StringComparison.Ordinal);
+        Assert.DoesNotContain("could hold", result.Content, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// With a <c>Scan</c> on file for the body, an FSS-only row can be narrowed to the genera the
+    /// conditions admit and a best case, without claiming to know which genus is really down there.
+    /// </summary>
+    [Fact]
+    public async Task AnFssOnlyBodyWithScanConditionsNamesThePossibleGeneraAndABestCase()
+    {
+        var result = await Ask(
+            Store(
+                """
+                {"timestamp":"2026-08-16T10:00:00Z","event":"FSSBodySignals","BodyName":"Fixture 3 b",
+                 "SystemAddress":1,"BodyID":23,
+                 "Signals":[{"Type":"$SAA_SignalType_Biological;","Type_Localised":"Biological","Count":2}]}
+                """,
+                ScanEvent(1, 23, "Fixture 3 b")),
+            "get_body_biology");
+
+        Assert.Contains("not been mapped", result.Content, StringComparison.Ordinal);
+        Assert.Contains(
+            "could hold up to 18,151,800 credits: Stratum, Bacterium",
+            result.Content,
+            StringComparison.Ordinal);
+    }
+
+    /// <summary>A surface-scanned body's named genera get a low–high range instead of just a list.</summary>
+    [Fact]
+    public async Task ASurfaceScannedBodyAddsALowHighRangeOverTheNamedGenera()
+    {
+        var result = await Ask(
+            Store(
+                ScanEvent(1, 23, "Fixture 3 b"),
+                """
+                {"timestamp":"2026-08-16T10:02:00Z","event":"SAASignalsFound","BodyName":"Fixture 3 b",
+                 "SystemAddress":1,"BodyID":23,
+                 "Signals":[{"Type":"$SAA_SignalType_Biological;","Type_Localised":"Biological","Count":1}],
+                 "Genuses":[{"Genus":"$Codex_Ent_Osseus_Genus_Name;","Genus_Localised":"Stratum"}]}
+                """),
+            "get_body_biology");
+
+        Assert.Contains("Stratum", result.Content, StringComparison.Ordinal);
+        Assert.Contains(
+            "That could be worth 2,637,500 to 16,202,800 credits.",
+            result.Content,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "cannot tell you what this is worth until you sample it",
+            result.Content,
+            StringComparison.Ordinal);
     }
 
     /// <summary>
