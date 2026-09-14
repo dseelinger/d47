@@ -46,8 +46,9 @@ public sealed class BiologyCallout : ICallout
             }
 
             var genera = biology.Source == BodySignalSource.SurfaceScan ? biology.Genera : [];
+            var region = state.Location.StarPos is { } starPos ? GalacticRegions.Find(starPos) : null;
 
-            if (BiologyPotential.For(scan, biology.BiologicalCount, genera) is not { } estimate
+            if (BiologyPotential.For(scan, biology.BiologicalCount, genera, region) is not { } estimate
                 || estimate.Genera.Count == 0
                 || estimate.BestCase < Threshold())
             {

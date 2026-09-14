@@ -18,6 +18,9 @@ Asking what is on a body now says the same estimate. An FSS-only body names the 
 best case; a surface-scanned body gives a low–high range over the genera it actually found. Either way,
 the exact value still waits on a sample — the genus is all Elite ever names before then.
 
+Both now drop a species that cannot occur in the Commander's own galactic region, so a body near the
+Scutum-Centaurus Arm no longer gets credited with a variant that only pays out elsewhere.
+
 ## 0.124.0 — Supercharge
 
 Stepping onto a body for the first time now gets a spoken callout: "First footfall on Smojue

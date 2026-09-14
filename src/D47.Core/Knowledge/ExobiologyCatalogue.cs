@@ -76,8 +76,11 @@ public static class ExobiologyCatalogue
 
     public static IReadOnlyList<ExobiologyEntry> All => Loaded.Value;
 
-    /// <summary>Every species whose surveyed columns and ranges contain the body's conditions.</summary>
-    public static IReadOnlyList<ExobiologyEntry> Possible(BodyConditions body)
+    /// <summary>
+    /// Every species whose surveyed columns and ranges contain the body's conditions. With
+    /// <paramref name="region"/> given, also drops a species whose surveyed regions do not include it.
+    /// </summary>
+    public static IReadOnlyList<ExobiologyEntry> Possible(BodyConditions body, string? region = null)
     {
         var planetType = NormalisePlanetType(body.PlanetClass);
         var atmosphere = NormaliseAtmosphere(body.Atmosphere);
@@ -91,7 +94,8 @@ public static class ExobiologyCatalogue
                 && entry.Volcanism.Contains(volcanism, StringComparer.Ordinal)
                 && body.Gravity >= entry.GravityLow && body.Gravity <= entry.GravityHigh
                 && body.Temperature >= entry.TemperatureLow && body.Temperature <= entry.TemperatureHigh
-                && body.Pressure >= entry.PressureLow && body.Pressure <= entry.PressureHigh),
+                && body.Pressure >= entry.PressureLow && body.Pressure <= entry.PressureHigh
+                && (region is null || entry.Regions.Contains(region, StringComparer.Ordinal))),
         ];
     }
 

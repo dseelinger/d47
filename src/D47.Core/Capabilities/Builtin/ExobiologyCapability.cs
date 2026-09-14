@@ -184,9 +184,10 @@ public static class ExobiologyCapability
             : null;
 
         var namedGenera = body.Source == BodySignalSource.SurfaceScan ? body.Genera : [];
+        var region = state.Location.StarPos is { } starPos ? GalacticRegions.Find(starPos) : null;
 
         var estimate = scan is not null && body.BiologicalCount > 0
-            ? BiologyPotential.For(scan, body.BiologicalCount, namedGenera)
+            ? BiologyPotential.For(scan, body.BiologicalCount, namedGenera, region)
             : null;
 
         if (body.Source == BodySignalSource.Fss && body.BiologicalCount > 0)

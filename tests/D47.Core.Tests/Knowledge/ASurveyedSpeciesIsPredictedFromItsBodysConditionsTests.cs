@@ -58,6 +58,38 @@ public class ASurveyedSpeciesIsPredictedFromItsBodysConditionsTests
         Assert.Contains(possible, entry => entry.Species == "Stratum Araneamus");
     }
 
+    /// <summary>
+    /// Frutexa Flammasis and Frutexa Flabellum admit the same conditions and differ only by region
+    /// (#210).
+    /// </summary>
+    private static BodyConditions FrutexaConditions() => new()
+    {
+        PlanetClass = "Rocky body",
+        Atmosphere = "ammonia atmosphere",
+        Volcanism = "",
+        Gravity = 0.1,
+        Temperature = 160,
+        Pressure = 0.002,
+    };
+
+    [Fact]
+    public void ARegionExcludesASpeciesWhoseRegionsColumnLacksIt()
+    {
+        var possible = ExobiologyCatalogue.Possible(FrutexaConditions(), "Inner Scutum-Centaurus Arm");
+
+        Assert.Contains(possible, entry => entry.Species == "Frutexa Flammasis");
+        Assert.DoesNotContain(possible, entry => entry.Species == "Frutexa Flabellum");
+    }
+
+    [Fact]
+    public void ANullRegionExcludesNothingOnRegion()
+    {
+        var possible = ExobiologyCatalogue.Possible(FrutexaConditions());
+
+        Assert.Contains(possible, entry => entry.Species == "Frutexa Flammasis");
+        Assert.Contains(possible, entry => entry.Species == "Frutexa Flabellum");
+    }
+
     [Fact]
     public void EveryRowHasAGenusAPositiveValueAndARangeWhereLowIsNoHigherThanHigh()
     {

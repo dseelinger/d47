@@ -23,22 +23,26 @@ public static class BiologyPotential
     /// Genera a surface scan named. A named genus with no species admitted by the conditions draws on every
     /// species of that genus in the table.
     /// </param>
-    public static BiologyEstimate? For(BodyScan scan, int biologicalCount, IReadOnlyList<string> namedGenera)
+    /// <param name="region">The Commander's current galactic region, or null to consider every region.</param>
+    public static BiologyEstimate? For(
+        BodyScan scan, int biologicalCount, IReadOnlyList<string> namedGenera, string? region = null)
     {
         if (scan.SurfaceGravity is not { } gravity || scan.SurfaceTemperature is not { } temperature)
         {
             return null;
         }
 
-        var possible = ExobiologyCatalogue.Possible(new BodyConditions
-        {
-            PlanetClass = scan.PlanetClass,
-            Atmosphere = scan.Atmosphere,
-            Volcanism = scan.Volcanism,
-            Gravity = gravity / StandardGravity,
-            Temperature = temperature,
-            Pressure = (scan.SurfacePressure ?? 0) / StandardAtmosphere,
-        });
+        var possible = ExobiologyCatalogue.Possible(
+            new BodyConditions
+            {
+                PlanetClass = scan.PlanetClass,
+                Atmosphere = scan.Atmosphere,
+                Volcanism = scan.Volcanism,
+                Gravity = gravity / StandardGravity,
+                Temperature = temperature,
+                Pressure = (scan.SurfacePressure ?? 0) / StandardAtmosphere,
+            },
+            region);
 
         if (namedGenera.Count == 0)
         {
