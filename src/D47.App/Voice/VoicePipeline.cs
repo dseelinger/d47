@@ -1,6 +1,8 @@
+using D47.Core;
 using D47.Core.Audio;
 using D47.Core.Callouts;
 using D47.Core.Conversation;
+using D47.Core.Speech;
 using Microsoft.Extensions.Logging;
 
 namespace D47.App.Voice;
@@ -14,9 +16,22 @@ namespace D47.App.Voice;
 public sealed class VoicePipeline(
     AudioArbiter arbiter,
     Func<CueLibrary> cues,
-    ILoggerFactory loggers)
+    ILoggerFactory loggers,
+    IWallClock? clock = null)
 {
     private readonly ILogger<VoicePipeline> _logger = loggers.CreateLogger<VoicePipeline>();
+
+    /// <summary>
+    /// The thirty-second window shared by every voice, so the second pipeline of a turn knows what the
+    /// first one just said (#196).
+    /// </summary>
+    private readonly SpokenAddress _address = new(clock ?? SystemWallClock.Instance);
+
+    /// <summary>The Commander's name, so the address rule knows the surname to recognise.</summary>
+    public string? CommanderName
+    {
+        set => _address.CommanderName = value;
+    }
 
     private int _turnNumber;
 
@@ -107,7 +122,8 @@ public sealed class VoicePipeline(
                                 loggers.CreateLogger<SpeechPipeline>(),
                                 speaker: "D47",
                                 noted: Synthesised,
-                                captionSpeaker: CaptionSpeaker);
+                                captionSpeaker: CaptionSpeaker,
+                                address: _address);
                             speech.SynthesisFailed += OnSynthesisFailed;
                             speech.VoiceRejected += OnVoiceRejected;
                         }
@@ -196,7 +212,8 @@ public sealed class VoicePipeline(
             speaker,
             captioned,
             Synthesised,
-            captionSpeaker);
+            captionSpeaker,
+            _address);
 
         speech.SynthesisFailed += OnSynthesisFailed;
         speech.VoiceRejected += OnVoiceRejected;

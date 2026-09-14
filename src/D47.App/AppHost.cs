@@ -5243,6 +5243,8 @@ public sealed class AppHost : IDisposable
             {
                 callout.CommanderName = commander;
             }
+
+            Voice.CommanderName = commander;
         }
 
         // And their own carrier, so its traffic comes in the tower's voice (#28).

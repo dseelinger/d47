@@ -37,6 +37,10 @@ Motion controllers default on for a new install — a settings file that already
 whatever it held, so an existing install turns them on with "motion controllers on". The Motion
 controllers row no longer carries a warning pill or sentence.
 
+A line spoken within thirty seconds of the last time the Commander was addressed by name — from any
+voice, ship AI, callout, carrier captain or tower — now drops "Commander" from what is said aloud.
+Captions and the flight recorder still show it; only the audio changes.
+
 ## 0.128.0 — Settings arranged by area
 
 Fleet › Ships, Routing › Community Goal and Adventures now carry a "Settings for this page" strip of

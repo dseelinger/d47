@@ -71,6 +71,9 @@ public sealed class SpeechPipeline : IAsyncDisposable
     /// <summary>Told what each sentence was rendered by, or null when nobody is recording.</summary>
     private readonly Action<SynthesisNote>? _noted;
 
+    /// <summary>Drops a repeated "Commander" from what is spoken, shared with every other pipeline (#196).</summary>
+    private readonly SpokenAddress? _address;
+
     private readonly CancellationTokenSource _abandon = new();
     private readonly Task _drain;
 
@@ -102,7 +105,8 @@ public sealed class SpeechPipeline : IAsyncDisposable
         // positionally, so a parameter added in the middle silently rebinds every argument after it
         // (remediation.md 11, item 9).
         Action<SynthesisNote>? noted = null,
-        string? captionSpeaker = null)
+        string? captionSpeaker = null,
+        SpokenAddress? address = null)
     {
         _arbiter = arbiter;
         _tts = tts;
@@ -115,6 +119,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
         _captioned = captioned;
         _noted = noted;
         _captionSpeaker = captionSpeaker;
+        _address = address;
 
         // Shut up has to reach synthesis, not just the queue.
         _arbiter.Silenced += Abandon;
@@ -232,10 +237,20 @@ public sealed class SpeechPipeline : IAsyncDisposable
         }
 
         var directed = AudioTags.For(plain, _tts.ReadsAudioTags);
+        var spoken = SpokenUnits.Rewrite(SpokenDesignations.Rewrite(directed));
 
-        _rendered.Writer.TryWrite(
-            SynthesizeAsync(
-                written, SpokenUnits.Rewrite(SpokenDesignations.Rewrite(directed)), directed));
+        if (_address is not null)
+        {
+            spoken = _address.Rewrite(spoken);
+        }
+
+        // The address was all there was to say — nothing left to send the provider (#196).
+        if (!spoken.Any(char.IsLetterOrDigit))
+        {
+            return;
+        }
+
+        _rendered.Writer.TryWrite(SynthesizeAsync(written, spoken, directed));
     }
 
     /// <summary>
