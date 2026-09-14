@@ -33,6 +33,7 @@ public static class CalloutCapability
     public const string DiscoveryKey = "callouts.discovery";
     public const string FootfallKey = "callouts.footfall";
     public const string BiologyKey = "callouts.biologyValue";
+    public const string SurveyedBiologyKey = "callouts.surveyedBiology";
     public const string BiologyThresholdKey = "callouts.biologyThreshold";
     public const string AnnouncedAttackKey = "callouts.announcedAttack";
     public const string RivalTerritoryKey = "callouts.rivalTerritory";
@@ -261,6 +262,17 @@ public static class CalloutCapability
                 "high-value biology",
                 s => s.Callouts.Biology,
                 (s, v) => s with { Callouts = s.Callouts with { Biology = v } }),
+
+            Toggle(
+                SurveyedBiologyKey,
+                "Surveyed biology on arrival",
+                "On arriving in a system, the bodies Spansh has surveyed biology on that reach the threshold "
+                + "below. Needs galaxy search.",
+                "surveyed-biology",
+                "surveyed biology",
+                s => s.Callouts.SurveyedBiology,
+                (s, v) => s with { Callouts = s.Callouts with { SurveyedBiology = v } },
+                appliesWhen: s => s.Knowledge.GalaxySearch),
 
             Toggle(
                 AnnouncedAttackKey,
@@ -562,11 +574,12 @@ public static class CalloutCapability
             Key = BiologyThresholdKey,
             Advanced = true,
             Label = "Call out biology from",
-            Help = "In credits: the least a body's biology could reach, at best, before it is said.",
+            Help = "In credits: the least a body's biology could reach at best, or was surveyed at, before it is said.",
             Kind = SettingKind.Number,
             DefaultDisplay = "10000000",
             DocsAnchor = "biology-threshold",
-            AppliesWhen = s => s.Callouts is { Enabled: true, Biology: true },
+            AppliesWhen = s => s.Callouts is { Enabled: true } callouts
+                && (callouts.Biology || (callouts.SurveyedBiology && s.Knowledge.GalaxySearch)),
             Binding = new SettingBinding
             {
                 Read = s => s.Callouts.BiologyThreshold.ToString(CultureInfo.InvariantCulture),

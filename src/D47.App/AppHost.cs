@@ -1384,6 +1384,11 @@ public sealed class AppHost : IDisposable
         var galaxy = new D47.Core.Knowledge.GalaxySearchNames(new D47.Knowledge.SpanshGalaxyService(
             loggerFactory.CreateLogger<D47.Knowledge.SpanshGalaxyService>()));
 
+        foreach (var surveyed in callouts.Callouts.OfType<SurveyedBiologyCallout>())
+        {
+            surveyed.Galaxy = () => settings.Current.Knowledge.GalaxySearch ? galaxy : null;
+        }
+
         var routePlanner = new D47.Knowledge.SpanshRouteService(
             loggerFactory.CreateLogger<D47.Knowledge.SpanshRouteService>());
 
@@ -2385,6 +2390,10 @@ public sealed class AppHost : IDisposable
         D47.Core.Knowledge.CommunityGoalSearch communityGoal,
         GameStateStore gameState)
     {
+        var surveyedBiology = new SurveyedBiologyCallout(loggers.CreateLogger<SurveyedBiologyCallout>());
+        var biology = new BiologyCallout { AlreadySaid = surveyedBiology.Reported };
+        surveyedBiology.AlreadySaid = biology.Named;
+
         var engine = new CalloutEngine(loggers.CreateLogger<CalloutEngine>())
             .Add(new DangerCallout())
 
@@ -2417,7 +2426,8 @@ public sealed class AppHost : IDisposable
             .Add(new SamplingCallout())
             .Add(new DiscoveryCallout())
             .Add(new FootfallCallout())
-            .Add(new BiologyCallout())
+            .Add(surveyedBiology)
+            .Add(biology)
             .Add(new ProspectorCallout())
             .Add(new CoreAsteroidCallout())
             .Add(new ChecklistCallout(checklists))
@@ -2516,6 +2526,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("sampling", callouts.Sampling, now);
         engine.SetEnabled("discovery", callouts.Discovery, now);
         engine.SetEnabled("biology", callouts.Biology, now);
+        engine.SetEnabled("surveyed-biology", callouts.SurveyedBiology, now);
         engine.SetEnabled("prospector", callouts.Prospector, now);
         engine.SetEnabled("core-asteroid", callouts.CoreAsteroid, now);
         engine.SetEnabled("checklist", callouts.Checklist, now);
@@ -2542,6 +2553,10 @@ public sealed class AppHost : IDisposable
 
                 case BiologyCallout biology:
                     biology.Threshold = () => settings.Current.Callouts.BiologyThreshold;
+                    break;
+
+                case SurveyedBiologyCallout surveyed:
+                    surveyed.Threshold = () => settings.Current.Callouts.BiologyThreshold;
                     break;
 
                 case LimpetCallout limpets:

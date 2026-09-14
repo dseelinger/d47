@@ -122,8 +122,12 @@ public static class EgressDisclosure
                 + "so how much your hold carries and the figure you gave to trade with never leave this "
                 + "machine — and neither does your actual balance, which is never read. Asking where to "
                 + "buy or sell one named commodity goes to the second host instead, and sends the same "
-                + "three things: the commodity, the system to search out from, and how far to look. No "
-                + "key, no identifier, and nothing else from your journal.",
+                + "three things: the commodity, the system to search out from, and how far to look. "
+                + (settings.Callouts is { Enabled: true, SurveyedBiology: true }
+                    ? "Arriving in a system sends that system's address to spansh.co.uk, to ask what biology "
+                    + "has been surveyed there; switching off the surveyed biology callout stops it. "
+                    : string.Empty)
+                + "No key, no identifier, and nothing else from your journal.",
                 Active: true)
             : EgressEntry.Silent(
                 GalaxySearch,

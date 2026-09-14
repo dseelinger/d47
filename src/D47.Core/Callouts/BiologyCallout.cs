@@ -9,11 +9,18 @@ public sealed class BiologyCallout : ICallout
     public const long DefaultThreshold = 10_000_000;
 
     private readonly HashSet<(long SystemAddress, int BodyId)> _said = [];
+    private readonly HashSet<(long SystemAddress, int BodyId)> _named = [];
 
     public string Id => "biology";
 
     /// <summary>The least best case, in credits, that is said.</summary>
     public Func<long> Threshold { get; set; } = () => DefaultThreshold;
+
+    /// <summary>Whether another callout has already named the body.</summary>
+    public Func<long, int, bool> AlreadySaid { get; set; } = (_, _) => false;
+
+    /// <summary>Whether this callout has named the body. Tick thread only.</summary>
+    public bool Named(long systemAddress, int bodyId) => _named.Contains((systemAddress, bodyId));
 
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
@@ -39,6 +46,7 @@ public sealed class BiologyCallout : ICallout
             }
 
             if (_said.Contains((systemAddress, bodyId))
+                || AlreadySaid(systemAddress, bodyId)
                 || state.Scans.For(systemAddress, bodyId) is not { Landable: true } scan
                 || state.Bodies.Named(scan.BodyName) is not { BiologicalCount: > 0 } biology)
             {
@@ -56,6 +64,7 @@ public sealed class BiologyCallout : ICallout
             }
 
             _said.Add((systemAddress, bodyId));
+            _named.Add((systemAddress, bodyId));
 
             yield return new Announcement(
                 $"biology.{systemAddress}.{bodyId}",
@@ -72,14 +81,14 @@ public sealed class BiologyCallout : ICallout
         return $"{body} could hold {amount} in biology: {string.Join(", ", estimate.Genera)}.";
     }
 
-    private static string Credits(long amount)
+    internal static string Credits(long amount)
     {
         var banded = SpokenCredits.Band(amount);
 
         return amount < 1_000_000 ? banded + " Cr" : banded;
     }
 
-    private static string Short(string bodyName, string? system) =>
+    internal static string Short(string bodyName, string? system) =>
         system is { Length: > 0 }
         && bodyName.Length > system.Length + 1
         && bodyName.StartsWith(system + " ", StringComparison.OrdinalIgnoreCase)

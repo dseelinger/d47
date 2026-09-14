@@ -6,6 +6,15 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.126.0 — Surveyed biology from Spansh
+
+Arriving in a system now gets a spoken callout naming the bodies Spansh has surveyed biology on, when
+their species together reach the biology threshold: "Spansh has surveyed biology here: 3 b at 15
+million, 3 c at 12 million." It needs galaxy search, which is off by default, and while it is on each
+jump sends the system's address to spansh.co.uk; the Privacy and egress section says so. A body it
+names is not called out again when you scan it. On by default, with its own toggle beside the other
+callouts.
+
 ## 0.125.0 — What a body could hold
 
 Scanning a landable body the FSS has counted biological signals on now gets a spoken callout when its

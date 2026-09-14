@@ -579,6 +579,23 @@ counted signals, highest first. It speaks when that best case reaches the
 gives a range drawn from those genera alone. It is what the biology could fetch at best, not what the
 body is worth: the species actually there may be the cheapest of its genus.
 
+#### Surveyed biology on arrival {#surveyed-biology}
+
+When you arrive in a system and [galaxy search](galaxy.md) is on:
+
+```text
+Spansh has surveyed biology here: 3 b at 15 million, 3 c at 12 million.
+```
+
+Directive 47 asks Spansh which bodies in the system have reported biology, and names those whose
+surveyed species together reach the [threshold](#biology-threshold), highest first. It says nothing
+when none do, when the lookup fails, or when the answer arrives after you have jumped to another
+system. A body named here is not said again by the [high-value biology](#biology) callout when you
+scan it, and a body that callout has already named is left out here.
+
+The lookup sends the system's address to spansh.co.uk on every jump while this callout is on. The
+**Privacy and egress** section of the panel lists it under galaxy search.
+
 #### Undiscovered systems {#discovery}
 
 On arrival, the game auto-scans the star you jumped to:
@@ -686,7 +703,8 @@ In seconds, counted from entering hyperspace.
 
 #### Biology threshold {#biology-threshold}
 
-In credits, default 10,000,000. The least best case the [high-value biology](#biology) callout says.
+In credits, default 10,000,000. The least best case the [high-value biology](#biology) callout says,
+and the least surveyed value the [surveyed biology](#surveyed-biology) callout says.
 
 #### Home system {#home-system}
 

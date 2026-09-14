@@ -404,7 +404,13 @@ public sealed record CalloutSettings
     /// <summary>A landable body whose biology could reach <see cref="BiologyThreshold"/>, said on its scan.</summary>
     public bool Biology { get; init; } = true;
 
-    /// <summary>The least best case, in credits, the biology callout says.</summary>
+    /// <summary>
+    /// On arrival, the bodies Spansh has surveyed biology on that reach <see cref="BiologyThreshold"/>. Needs
+    /// <see cref="KnowledgeSettings.GalaxySearch"/>.
+    /// </summary>
+    public bool SurveyedBiology { get; init; } = true;
+
+    /// <summary>The least value, in credits, the two biology callouts say.</summary>
     public long BiologyThreshold { get; init; } = 10_000_000;
 
     /// <summary>How often route progress is reported, in jumps. 0 silences the progress line.</summary>
