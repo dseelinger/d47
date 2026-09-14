@@ -154,9 +154,15 @@ rebind your keys, and was never given a way to.
 
 #### Show every setting {#show-every-setting}
 
-**At the top of the settings page, above every card**, rather than inside this one. It decides what
+The settings page is arranged in six areas, in this order: Voice and hearing, The ship's AI,
+Speaking up, Acting on the game, Screens, and Privacy and this install. The nav lists each area's
+name with its sections beneath it; pressing an area's name goes to its first section. A section is
+one card, and it gathers the rows for one job wherever in Directive 47 they are declared — *When a
+turn fails* sits under The ship's AI.
+
+**At the top of the settings page, above every section**, rather than inside one. It decides what
 the whole page draws, and somebody who cannot see the rest of the settings should not have to go
-looking for the reason four rows into Interface.
+looking for the reason four rows into Window.
 
 Off by default. Directive 47 shows the settings most Commanders change, and folds the rest away
 until you ask for them.
@@ -179,9 +185,10 @@ Four kinds of row are on the page whatever this says:
 - **The rows you need to get running**: a provider, a model, a voice, a microphone, and one switch
   that stops Directive 47 talking.
 
-**A card with nothing left on it disappears rather than sitting there empty**, which does more for
-the clutter than folding rows does — Diagnostics goes, and so does the headset card when there is
-no headset.
+**A section with nothing left in it disappears rather than sitting there empty**, from the page and
+from the nav, which does more for the clutter than folding rows does — Diagnostics goes, and so
+does Headset when there is no headset. An area whose sections have all gone takes its name out of
+the nav with them.
 
 **Following a help link always works.** If a page says "change X here" and X is folded, the jump
 unfolds the page for the rest of the session. It does not turn this setting on behind your back.

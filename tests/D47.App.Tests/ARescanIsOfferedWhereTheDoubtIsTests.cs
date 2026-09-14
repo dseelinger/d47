@@ -23,7 +23,9 @@ public class ARescanIsOfferedWhereTheDoubtIsTests
         where T : Control =>
         root.GetVisualDescendants().OfType<T>().Single(found => found.Name == name);
 
-    /// <summary>The row is there, it says what is stored, and the button runs the rescan.</summary>
+    /// <summary>
+    /// The row is on the Fleet › Ships strip, it says what is stored, and the button runs the rescan.
+    /// </summary>
     [AvaloniaFact]
     public async Task TheRowSaysWhatIsStoredAndOffersToRebuildIt()
     {
@@ -39,10 +41,15 @@ public class ARescanIsOfferedWhereTheDoubtIsTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
 
-        var host = SettingsHost.Open(settings, viewState, paths);
+        var view = new SettingsView();
+        view.Attach(settings, viewState, paths, tabPlaceId: "fleet-ships");
 
-        var button = Find<Button>(host.View, ButtonName);
-        var bar = Find<ProgressBar>(host.View, BarName);
+        var window = new Window { Content = view, Width = 600, Height = 600 };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var button = Find<Button>(view, ButtonName);
+        var bar = Find<ProgressBar>(view, BarName);
 
         Assert.Equal("Rescan my journals", button.Content);
         Assert.True(button.IsEnabled);
@@ -50,7 +57,7 @@ public class ARescanIsOfferedWhereTheDoubtIsTests
 
         // What is stored is drawn above the button, from the host rather than from a guess.
         Assert.Contains(
-            host.View.GetVisualDescendants().OfType<TextBlock>()
+            view.GetVisualDescendants().OfType<TextBlock>()
                 .Select(block => block.Text ?? string.Empty),
             text => text.Contains("the oldest last seen 3 months ago", StringComparison.Ordinal));
 
@@ -74,7 +81,7 @@ public class ARescanIsOfferedWhereTheDoubtIsTests
         Assert.True(button.IsEnabled);
         Assert.False(bar.IsVisible);
 
-        host.Close();
+        window.Close();
     }
 
     /// <summary>The help says the sentence the Commander asked for, in their words.</summary>

@@ -676,9 +676,6 @@ public static class CalloutCapability
         DefaultDisplay = defaultOn ? "on" : "off",
         DocsAnchor = anchor,
         Group = "What D47 speaks up about",
-        GroupHelp =
-            "Each one is separately switchable, because finding route progress chatty is not a "
-            + "reason to lose the interdiction warning.",
 
         // Protected, like the master switch and for the same reason: anything the model can call, a hostile
         // in-game message can attempt to invoke.

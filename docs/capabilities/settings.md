@@ -131,6 +131,21 @@ Everything is changeable from the settings panel with no file to hand-edit, and 
 takes effect at once — there is no save button and no restart. This page is about the other way
 in: what you can change by talking to it.
 
+### Where things are on the page
+
+The Settings tab is one scrolling page in six areas: **Voice and hearing**, **The ship's AI**,
+**Speaking up**, **Acting on the game**, **Screens**, and **Privacy and this install**. Each area
+holds a few sections, and each section is one card. The nav down the side lists the areas with
+their sections beneath them, and marks the section at the top of the page as you scroll.
+
+A section is about one job rather than one part of Directive 47, so it can hold rows from several:
+*Its name* has both the ship's name and the wake words. A section's reset puts back only that
+section's rows, and its **?** opens the page for the part of Directive 47 it is mostly about.
+
+A few rows are on the tab they concern instead, under **Settings for this page**: Rescan my
+journals and Hull pictures on Fleet › Ships, the Inara API key and the week's turn on Routing ›
+Community Goal, and Notable places for adventures on Adventures.
+
 ### Ask for it
 
 > "what can you change"

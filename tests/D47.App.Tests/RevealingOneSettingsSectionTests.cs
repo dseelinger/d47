@@ -15,8 +15,8 @@ public class RevealingOneSettingsSectionTests
 {
     private static void Jobs() => Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-    /// <summary>The section this is about, by the title its capability declares for the panel.</summary>
-    private const string Heading = "Listening";
+    /// <summary>The section this is about, by its place's title.</summary>
+    private const string Heading = "Microphone";
 
     /// <summary>The card whose heading says this, as the Commander sees it.</summary>
     private static Border Card(SettingsView view) =>
@@ -42,7 +42,7 @@ public class RevealingOneSettingsSectionTests
         var (settings, viewState, paths) = TestSurface.Create();
 
         // How the Commander left it last time.
-        viewState.Save(viewState.Load().With(ListeningCapability.Id, expanded: false));
+        viewState.Save(viewState.Load().With("microphone", expanded: false));
 
         var host = SettingsHost.Open(settings, viewState, paths);
         var card = Card(host.View);
@@ -57,6 +57,48 @@ public class RevealingOneSettingsSectionTests
 
         // And the chevron came with it.
         Assert.Equal("▾", Chevron(card).Text);
+
+        host.Close();
+    }
+
+    /// <summary>A capability is revealed at the place holding its first row on the page.</summary>
+    [AvaloniaFact]
+    public void ACapabilityIsRevealedWhereItsFirstRowIs()
+    {
+        var (settings, viewState, paths) = TestSurface.Create();
+        var host = SettingsHost.Open(settings, viewState, paths);
+
+        host.View.Reveal(MemoryCapability.Id);
+        Jobs();
+
+        Assert.Equal("memory", host.View.SectionIds[host.View.ActiveSection]);
+
+        host.View.Reveal(ListeningCapability.Id);
+        Jobs();
+
+        Assert.Equal("microphone", host.View.SectionIds[host.View.ActiveSection]);
+
+        host.Close();
+    }
+
+    /// <summary>A capability whose rows are all on tabs changes nothing.</summary>
+    [AvaloniaFact]
+    public void ACapabilityWithNoRowOnThePageChangesNothing()
+    {
+        var (settings, viewState, paths) = TestSurface.Create();
+        var host = SettingsHost.Open(settings, viewState, paths);
+
+        host.View.Reveal(MemoryCapability.Id);
+        Jobs();
+
+        var active = host.View.ActiveSection;
+        var open = Enumerable.Range(0, host.View.SectionIds.Count).Select(host.View.IsSectionExpanded).ToList();
+
+        host.View.Reveal(ShipsCapability.Id);
+        Jobs();
+
+        Assert.Equal(active, host.View.ActiveSection);
+        Assert.Equal(open, Enumerable.Range(0, host.View.SectionIds.Count).Select(host.View.IsSectionExpanded));
 
         host.Close();
     }

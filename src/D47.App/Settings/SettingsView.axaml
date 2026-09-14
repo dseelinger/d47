@@ -40,9 +40,8 @@
                      Foreground="{DynamicResource D47.TextMuted}" />
         </StackPanel>
         <!--
-          The nav scrolls (remediation.md 17, item 3). One entry per capability that declares any
-          settings, which is now more than twenty against a window that opens 640 tall, so the
-          tail of the list was off the bottom edge and unreachable.
+          The nav scrolls (remediation.md 17, item 3). One heading per area of the layout and one
+          entry per place beneath it, which is far more than a window that opens 640 tall can show.
 
           Its own scroller rather than a taller column: the heading above it stays put while the
           entries move, which is what makes the list feel like an index rather than a page.

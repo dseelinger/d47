@@ -467,9 +467,6 @@ public static class VrCapability
             // the mini panel keeping its own copies.
             DocsAnchor = "placing-a-surface",
             Group = $"{what} placement",
-            GroupHelp = $"Where the {what.ToLowerInvariant()} sits and what it looks like. You can also just "
-                        + "reach out and grab it with a controller, which is what the numbers are here for "
-                        + "when you would rather not.",
             AppliesWhen = s => s.Vr.Enabled,
             PageOnly = pageOnly,
             Binding = new SettingBinding
@@ -603,10 +600,6 @@ public static class VrCapability
         Choices = choices ?? [],
         DocsAnchor = anchor,
         Group = "Captions",
-        GroupHelp = "What D47 says, written under it, following the closed-caption standard: "
-                    + "at most forty-two characters a line, a rolling two-line window, a longer "
-                    + "sentence shown two lines at a time until it is done, and a dwell timed "
-                    + "from the end of speech rather than the start of it.",
         AppliesWhen = s => s.Vr.Enabled,
         Binding = new SettingBinding { Read = read, Write = write },
     };

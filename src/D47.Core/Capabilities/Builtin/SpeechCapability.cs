@@ -528,11 +528,6 @@ public static class SpeechCapability
                         ? list.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)
                         : "(not published — no price will be quoted)",
                 Group = "What it costs",
-                GroupHelp =
-                    "D47 counts what it actually sent and how much audio came back, which are "
-                    + "facts; turning either into money needs a rate, which is not. Providers "
-                    + "disagree about which of the two they bill for, so this row asks about "
-                    + "whichever one yours uses.",
                 DocsAnchor = "voice-cost",
                 Binding = new SettingBinding
                 {
@@ -625,9 +620,6 @@ public static class SpeechCapability
                 // Only on offer to a Commander who has one.
                 AppliesWhen = s => s.Speech.Provider != NoneId,
                 Group = "Other voices",
-                GroupHelp =
-                    "Who else D47 speaks as. Each of these is a different person from your ship's AI, "
-                    + "and they never borrow its voice unless you leave them empty.",
                 DocsAnchor = "carrier-voices",
                 Binding = new SettingBinding
                 {
@@ -887,9 +879,6 @@ public static class SpeechCapability
                 Help = "How many times a failing turn is tried in total. 1 means do not retry.",
                 DefaultDisplay = "3",
                 Group = "When a turn fails",
-                GroupHelp =
-                    "A turn that stalls is answered out loud rather than left as silence, which is " +
-                    "otherwise indistinguishable from D47 having ignored you.",
                 DocsAnchor = "retry",
                 Binding = new SettingBinding
                 {
@@ -1009,11 +998,6 @@ public static class SpeechCapability
                 DefaultDisplay = "(the same as your ship's)",
                 AppliesWhen = s => s.Speech.Provider != NoneId,
                 Group = "Where each voice comes from",
-                GroupHelp =
-                    "Every voice that reaches you over a radio can come from somewhere different "
-                    + "from the one in your cockpit. Anything carrying another Commander's words "
-                    + "defaults to Edge, which is free — so nobody else can spend your money by "
-                    + "typing.",
                 DocsAnchor = "voice-slots",
                 EgressId = EgressDisclosure.TextToSpeech,
 

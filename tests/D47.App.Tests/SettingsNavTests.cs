@@ -48,6 +48,7 @@ public class SettingsNavTests
 
     private static List<TextBlock> NavLabels(SettingsView view) =>
         [.. ((StackPanel)view.FindControl<Control>("NavItems")!).Children
+            .Where(item => item.Classes.Contains(SettingsView.NavPlaceClass))
             .Select(item => item.GetVisualDescendants().OfType<TextBlock>().First())];
 
     private static Color? Colour(IBrush? brush) => (brush as ISolidColorBrush)?.Color;
@@ -85,7 +86,7 @@ public class SettingsNavTests
         var (window, _, view) = OpenLikeTheApp();
 
         var labels = NavLabels(view);
-        var items = ((StackPanel)view.FindControl<Control>("NavItems")!).Children;
+        var items = ((StackPanel)view.FindControl<Control>("NavItems")!).Children.Where(item => item.Classes.Contains(SettingsView.NavPlaceClass)).ToList();
         var scroller = (ScrollViewer)view.FindControl<Control>("Scroller")!;
 
         Assert.NotEqual(Colour(labels[0].Foreground), Colour(labels[1].Foreground));
@@ -115,7 +116,7 @@ public class SettingsNavTests
         var (window, _, view) = OpenLikeTheApp(height: 500);
 
         var nav = (ScrollViewer)view.FindControl<Control>("NavScroller")!;
-        var items = ((StackPanel)view.FindControl<Control>("NavItems")!).Children;
+        var items = ((StackPanel)view.FindControl<Control>("NavItems")!).Children.Where(item => item.Classes.Contains(SettingsView.NavPlaceClass)).ToList();
         var cards = (ScrollViewer)view.FindControl<Control>("Scroller")!;
 
         Assert.True(

@@ -37,7 +37,19 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// The per-card reset controls, so each can be hidden again once its card is back at its defaults
     /// (#61).
     /// </summary>
-    private readonly List<(SettingsSection Section, Button Button)> _cardResets = [];
+    private readonly List<(IReadOnlyList<SettingRow> Rows, Button Button)> _cardResets = [];
+
+    /// <summary>Each area's nav heading, and the run of sections beneath it.</summary>
+    private readonly List<(Border Heading, int First, int Count)> _navAreas = [];
+
+    /// <summary>Marks an area's heading in the nav, for a test to tell it from a place.</summary>
+    public const string NavAreaClass = "nav-area";
+
+    /// <summary>Marks a place's item in the nav.</summary>
+    public const string NavPlaceClass = "nav-place";
+
+    /// <summary>How far an entry marked <see cref="SettingsEntry.Under"/> is drawn in.</summary>
+    private const double UnderIndent = 24;
 
     /// <summary>
     /// The name on a row's reset glyph, so a lookup for the row's own control can exclude it (#61).
@@ -276,6 +288,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         _sections.Clear();
         _rows.Clear();
         _collapsed.Clear();
+        _navAreas.Clear();
         _activeSection = -1;
         _pageStrip = null;
 
@@ -344,22 +357,40 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Cards.Children.Add(alone);
         }
 
+        var owners = new Dictionary<string, CapabilityDescriptor>(StringComparer.Ordinal);
+
         foreach (var section in settings.Sections)
         {
-            var title = section.Capability.Display.PanelTitle ?? section.Capability.Name;
-            var (card, content, heading, expand) = BuildCard(section, title, _sections.Count);
+            foreach (var row in section.Rows)
+            {
+                owners.TryAdd(row.Key, section.Capability);
+            }
+        }
 
-            Cards.Children.Add(card);
+        foreach (var area in SettingsLayout.Areas)
+        {
+            var first = _sections.Count;
+            var areaHeading = BuildNavArea(area.Title);
 
-            var nav = BuildNavItem(_sections.Count, title);
-            NavItems.Children.Add(nav.Item);
+            NavItems.Children.Add(areaHeading);
 
-            _sections.Add(
-                new SectionView(
-                    section.Capability.Id, title, card, content, heading, nav.Item, nav.Bar, nav.Text)
-                {
-                    Expand = expand,
-                });
+            foreach (var place in area.Places)
+            {
+                var (card, content, heading, expand) = BuildCard(settings, owners, place, _sections.Count);
+
+                Cards.Children.Add(card);
+
+                var nav = BuildNavItem(_sections.Count, place.Title);
+                NavItems.Children.Add(nav.Item);
+
+                _sections.Add(
+                    new SectionView(place.Id, place.Title, card, content, heading, nav.Item, nav.Bar, nav.Text)
+                    {
+                        Expand = expand,
+                    });
+            }
+
+            _navAreas.Add((areaHeading, first, _sections.Count - first));
         }
 
         SetActiveSection(_sections.Count > 0 ? 0 : -1);
@@ -433,6 +464,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         strip.Children.Add(content);
 
         Cards.Children.Add(strip);
+
+        Refresh();
     }
 
     /// <summary>Marks the strip a tab place draws, for a test to find it by name (#218).</summary>
@@ -442,18 +475,22 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     private static CapabilityDescriptor SectionOwning(SettingsService settings, SettingRow row) =>
         settings.Sections.First(section => section.Rows.Any(other => other.Key == row.Key)).Capability;
 
+    /// <summary>One <see cref="SettingsLayout"/> place as a card: its groups, in order, and every row they resolve to.</summary>
     private (Border Card, StackPanel Content, TextBlock Heading, Action<bool> Expand) BuildCard(
-        SettingsSection section,
-        string title,
+        SettingsService settings,
+        IReadOnlyDictionary<string, CapabilityDescriptor> owners,
+        SettingsPlace place,
         int index)
     {
+        var title = place.Title;
+
         var content = new StackPanel
         {
             Spacing = 18,
             Margin = new Thickness(18, 4, 18, 18),
             // Applied while building, not after painting: a card that flashes open and then collapses is
             // worse than one that never remembered (Phase 4).
-            IsVisible = _viewState.IsExpanded(section.Capability.Id, section.Capability.Display.StartCollapsed),
+            IsVisible = _viewState.IsExpanded(place.Id, place.StartCollapsed),
         };
 
         if (!content.IsVisible)
@@ -461,25 +498,32 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             _collapsed.Add(index);
         }
 
-        string? currentGroup = null;
+        var rows = new List<SettingRow>();
 
-        // Minus the page's own, which are drawn above every card rather than inside one (#60).
-        foreach (var row in section.Rows.Where(row => !row.PageTop))
+        foreach (var group in place.Groups)
         {
             // A group heading, stated once, in place of the same sentence on every row.
-            if (row.Group is { } group && group != currentGroup)
+            if (group.Title is { } groupTitle)
             {
-                content.Children.Add(BuildGroupHeading(group, row.GroupHelp));
-                currentGroup = group;
-            }
-            else if (row.Group is null)
-            {
-                currentGroup = null;
+                content.Children.Add(BuildGroupHeading(groupTitle, group.Help));
             }
 
-            var view = BuildRow(section.Capability, row) with { Section = index };
-            _rows.Add(view);
-            content.Children.Add(view.Container);
+            foreach (var entry in group.Entries)
+            {
+                foreach (var row in settings.RowsForEntry(entry))
+                {
+                    var view = BuildRow(owners[row.Key], row) with { Section = index };
+
+                    if (entry.Under)
+                    {
+                        view.Container.Margin = new Thickness(UnderIndent, 0, 0, 0);
+                    }
+
+                    _rows.Add(view);
+                    rows.Add(row);
+                    content.Children.Add(view.Container);
+                }
+            }
         }
 
         var chevron = new TextBlock
@@ -519,7 +563,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         Themed(docs, Button.ForegroundProperty, ThemeManager.TextMutedKey);
         ToolTip.SetTip(docs, $"Open the setup guide for {title}");
 
-        docs.Click += (_, _) => OpenDocs(section.Capability);
+        docs.Click += (_, _) => OpenDocs(place.DocsCapabilityId);
 
         // Stops the click reaching the header underneath, which would collapse the card the Commander just
         // asked to read about.
@@ -539,7 +583,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             VerticalAlignment = VerticalAlignment.Center,
             Background = Brushes.Transparent,
             BorderThickness = new Thickness(0),
-            IsVisible = CardHasChanges(section),
+            IsVisible = CardHasChanges(rows),
         };
 
         // With the mark rather than against it (#208).
@@ -552,16 +596,16 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         reset.Click += (_, _) =>
         {
-            _settings!.ResetCard(section.Capability.Id, SettingsCaller.Panel);
+            _settings!.ResetPlace(place.Id, SettingsCaller.Panel);
 
             // And forget what has been said about whether this card is open (#223).
-            SaveViewState(state => state.Forgetting(section.Capability.Id));
+            SaveViewState(state => state.Forgetting(place.Id));
 
             Refresh();
         };
 
         // Held so its visibility can follow the card's state, the same way each row's glyph follows its own.
-        _cardResets.Add((section, reset));
+        _cardResets.Add((rows, reset));
 
         reset.PointerPressed += (_, e) => e.Handled = true;
 
@@ -592,7 +636,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 _collapsed.Add(index);
             }
 
-            RememberCollapse(section.Capability.Id, expanded);
+            RememberCollapse(place.Id, expanded);
         }
 
         header.PointerPressed += (_, _) => Expand(!content.IsVisible);
@@ -647,6 +691,47 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         return stack;
     }
 
+    /// <summary>An area's title in the nav; pressing it goes to the first of its places still shown.</summary>
+    private Border BuildNavArea(string title)
+    {
+        var text = new TextBlock
+        {
+            Text = title,
+            FontSize = TypeScale.Secondary,
+            FontWeight = FontWeight.Medium,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+        };
+        Themed(text, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+
+        var item = new Border
+        {
+            Padding = new Thickness(8, 12, 8, 4),
+            Background = Brushes.Transparent,
+            Cursor = new Cursor(StandardCursorType.Hand),
+            Child = text,
+        };
+
+        item.Classes.Add(NavAreaClass);
+        item.PointerPressed += (_, _) => ScrollTo(FirstShownPlace(item));
+
+        return item;
+    }
+
+    private int FirstShownPlace(Border areaHeading)
+    {
+        var (_, first, count) = _navAreas.First(area => area.Heading == areaHeading);
+
+        for (var i = first; i < first + count; i++)
+        {
+            if (_sections[i].Card.IsVisible)
+            {
+                return i;
+            }
+        }
+
+        return first;
+    }
+
     private (Border Item, Border Bar, TextBlock Text) BuildNavItem(int index, string title)
     {
         var bar = new Border
@@ -675,12 +760,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         var item = new Border
         {
             Padding = new Thickness(8, 7),
+            Margin = new Thickness(8, 0, 0, 0),
             CornerRadius = new CornerRadius(4),
             Background = Brushes.Transparent,
             Cursor = new Cursor(StandardCursorType.Hand),
             Child = layout,
         };
 
+        item.Classes.Add(NavPlaceClass);
         item.PointerPressed += (_, _) => ScrollTo(index);
         item.PointerEntered += (_, _) =>
         {
@@ -721,11 +808,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         Dispatcher.UIThread.Post(
             () =>
             {
-                // A capability id this build no longer registers is a stale name, and a stale name is worth
-                // the top of the page rather than a failure - the same reading Reveal takes of one it cannot
-                // find.
+                // An id that names no place is a stale name, and a stale name is worth the top of the page
+                // rather than a failure - the same reading Reveal takes of one it cannot find.
                 var index = _sections.FindIndex(
-                    section => string.Equals(section.CapabilityId, remembered, StringComparison.Ordinal));
+                    section => string.Equals(section.PlaceId, remembered, StringComparison.Ordinal));
 
                 if (index >= 0)
                 {
@@ -741,10 +827,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     private bool _rememberingSection;
 
     /// <summary>
-    /// The sections' capability ids, in page order, and which one the scroll-spy is naming (−1 for
-    /// none).
+    /// The sections' place ids, in page order, and which one the scroll-spy is naming (−1 for none).
     /// </summary>
-    internal IReadOnlyList<string> SectionIds => [.. _sections.Select(section => section.CapabilityId)];
+    internal IReadOnlyList<string> SectionIds => [.. _sections.Select(section => section.PlaceId)];
 
     /// <inheritdoc cref="SectionIds"/>
     internal int ActiveSection => _activeSection;
@@ -784,7 +869,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             return;
         }
 
-        var section = _sections[_activeSection].CapabilityId;
+        var section = _sections[_activeSection].PlaceId;
 
         if (!string.Equals(_viewState.SettingsSection, section, StringComparison.Ordinal))
         {
@@ -874,13 +959,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     }
 
     /// <summary>
-    /// Shows one section, named by the capability that owns it — what a help card pressed on the
-    /// Transcript page does (asked for 2026-08-23).
+    /// Shows the section holding a capability's first row on this page — what a help card pressed on
+    /// the Transcript page does. A capability with no row here changes nothing.
     /// </summary>
     public void Reveal(string capabilityId)
     {
-        var index = _sections.FindIndex(
-            section => string.Equals(section.CapabilityId, capabilityId, StringComparison.Ordinal));
+        var index = SectionHolding(capabilityId);
 
         if (index < 0)
         {
@@ -899,6 +983,28 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         // After the layout the expansion caused, not before it: CardTop reads the card's position in the
         // scroller's content, and the cards below one that just opened have not moved yet.
         Dispatcher.UIThread.Post(() => ScrollTo(index), DispatcherPriority.Loaded);
+    }
+
+    /// <summary>The section holding a capability's first row on this page, or −1 where it has none here.</summary>
+    private int SectionHolding(string capabilityId)
+    {
+        var owned = _settings?.Sections.FirstOrDefault(
+            section => string.Equals(section.Capability.Id, capabilityId, StringComparison.Ordinal));
+
+        if (owned is null)
+        {
+            return -1;
+        }
+
+        foreach (var row in owned.Rows)
+        {
+            if (_rows.FirstOrDefault(view => view.Section >= 0 && view.Row.Key == row.Key) is { } drawn)
+            {
+                return drawn.Section;
+            }
+        }
+
+        return -1;
     }
 
     private void ScrollTo(int index)
@@ -1022,8 +1128,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
     private void OnCollapseAllClick(object? sender, RoutedEventArgs e) => SetEveryCard(false);
 
-    private void RememberCollapse(string capabilityId, bool expanded) =>
-        SaveViewState(state => state.With(capabilityId, expanded));
+    private void RememberCollapse(string placeId, bool expanded) =>
+        SaveViewState(state => state.With(placeId, expanded));
 
     /// <summary>Changes one thing about the view state and writes it down, re-reading first (#268).</summary>
     private void SaveViewState(Func<ViewState, ViewState> change)
@@ -1051,9 +1157,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                        && _sections[i].Title.Contains(_query, StringComparison.OrdinalIgnoreCase);
         }
 
-        foreach (var (section, button) in _cardResets)
+        foreach (var (rows, button) in _cardResets)
         {
-            button.IsVisible = CardHasChanges(section);
+            button.IsVisible = CardHasChanges(rows);
         }
 
         var pageRowsShown = 0;
@@ -1323,8 +1429,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         EventHandler<PointerPressedEventArgs> handler = (_, e) =>
         {
             // Whichever section the first link on this caption names.
-            var target = targets[0].Target!;
-            var index = _sections.FindIndex(section => section.CapabilityId == target);
+            var index = SectionHolding(targets[0].Target!);
 
             if (index >= 0)
             {
@@ -1378,6 +1483,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
             section.Content.IsVisible = filtering ? holds : !_collapsed.Contains(i);
         }
+
+        // An area heading goes with the last of its places.
+        foreach (var (heading, first, count) in _navAreas)
+        {
+            heading.IsVisible = _sections.Skip(first).Take(count).Any(section => section.NavItem.IsVisible);
+        }
     }
 
     /// <summary>
@@ -1403,9 +1514,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     private bool ShowingEverything =>
         _tabPlaceId is not null || _revealedByJump || (_settings?.Current.Ui.ShowEverySetting ?? true);
 
-    private bool CardHasChanges(SettingsSection section) =>
+    private bool CardHasChanges(IReadOnlyList<SettingRow> rows) =>
         _settings is { } settings
-        && section.Rows.Any(row => row.Applies(settings.Current) && settings.IsChanged(row.Key));
+        && rows.Any(row => row.Applies(settings.Current) && settings.IsChanged(row.Key));
 
     private void DressAsAChoice(TemplatedControl control)
     {
@@ -3232,22 +3343,22 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     public void EnableHelp(Action<string> open) => _openHelp = open;
 
     /// <summary>A card's question mark.</summary>
-    private void OpenDocs(CapabilityDescriptor capability)
+    private void OpenDocs(string capabilityId)
     {
         if (_openHelp is { } open)
         {
-            open(capability.Id);
+            open(capabilityId);
             return;
         }
 
-        Process.Start(new ProcessStartInfo(DocsSite.Capability(capability.Id))
+        Process.Start(new ProcessStartInfo(DocsSite.Capability(capabilityId))
         {
             UseShellExecute = true,
         });
     }
 
     private sealed record SectionView(
-        string CapabilityId,
+        string PlaceId,
         string Title,
         Border Card,
         StackPanel Content,

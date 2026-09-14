@@ -35,10 +35,6 @@ public static class InterfaceCapability
 
     private const string OverlayGroup = "The overlay";
 
-    private const string OverlayGroupHelp =
-        "The mini panel on your monitor, for flying without a headset. It draws over the game, "
-        + "the pointer goes straight through it, and it appears only while Elite is in front.";
-
     /// <summary>
     /// <param name="display"> What Elite's display mode is, for the row that says whether the overlay
     /// will be visible at all.
@@ -154,7 +150,6 @@ public static class InterfaceCapability
                        + "straight through, so nothing it shows can take a click Elite wanted.",
                 Kind = SettingKind.Toggle,
                 Group = OverlayGroup,
-                GroupHelp = OverlayGroupHelp,
                 DocsAnchor = "overlay",
                 Binding = new SettingBinding
                 {
@@ -181,7 +176,6 @@ public static class InterfaceCapability
                 Choices = [.. ZoomLadder.Steps.Select(step => step.ToString(CultureInfo.InvariantCulture))],
                 ChoiceLabel = value => ZoomLadder.Describe(Parse(value)),
                 Group = OverlayGroup,
-                GroupHelp = OverlayGroupHelp,
                 DocsAnchor = "overlay-size",
                 Binding = new SettingBinding
                 {
@@ -211,7 +205,6 @@ public static class InterfaceCapability
                 Minimum = 0.2,
                 Maximum = 1,
                 Group = OverlayGroup,
-                GroupHelp = OverlayGroupHelp,
                 DocsAnchor = "overlay-opacity",
                 Binding = new SettingBinding
                 {
@@ -241,7 +234,6 @@ public static class InterfaceCapability
                        + "nothing to diagnose. So D47 reads which one Elite is set to and says.",
                 Kind = SettingKind.Info,
                 Group = OverlayGroup,
-                GroupHelp = OverlayGroupHelp,
                 DocsAnchor = "overlay-fullscreen",
                 Binding = new SettingBinding
                 {

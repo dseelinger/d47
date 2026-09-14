@@ -11,8 +11,14 @@
 Fleet › Ships, Routing › Community Goal and Adventures now carry a "Settings for this page" strip of
 their own — Rescan my journals and Hull pictures on Ships; the Inara API key and the week's turn on
 Community Goal; Notable places for adventures on Adventures. Closed by default, and remembered open or
-closed on its own account. The same rows stay on the Settings page too, in the window and in the
-headset.
+closed on its own account. Those rows are no longer on the Settings page.
+
+The Settings page, in the window and in the headset, is arranged in six areas: Voice and hearing, The
+ship's AI, Speaking up, Acting on the game, Screens, and Privacy and this install. The nav lists each
+area with its sections beneath it, and a section gathers the rows for one job from wherever they were
+declared, so When a turn fails is under The ship's AI and its reset puts back only its own rows. Which
+sections you had closed, and where the page was left, start again from the defaults, except for
+Persona, Callouts, Privacy and egress, and Diagnostics.
 
 ## 0.127.0 — Open the new plan after plotting
 

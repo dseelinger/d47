@@ -55,7 +55,6 @@ public static class AudioCapability
 
             // Stated rather than defaulted (#83).
             Order = 96,
-            StartCollapsed = true,
         },
         Settings =
         [
@@ -77,7 +76,6 @@ public static class AudioCapability
                + "ambience. They are picked up without a restart.",
         Kind = SettingKind.Info,
         Group = "Your own audio",
-        GroupHelp = "What D47 found beside the set it ships with.",
         DocsAnchor = "your-own-sounds",
         Binding = new SettingBinding { Read = _ => drops() },
     };
@@ -86,7 +84,6 @@ public static class AudioCapability
     {
         var (name, what) = Describe(channel);
         var group = name;
-        var groupHelp = $"Level and mute for {what}.";
 
         yield return new SettingRow
         {
@@ -100,7 +97,6 @@ public static class AudioCapability
             Minimum = 0,
             Maximum = 1,
             Group = group,
-            GroupHelp = groupHelp,
             // The page explains the five categories together and has no heading per channel, so this points
             // at the section rather than at a heading that would have to be written to satisfy a link (#123).
             DocsAnchor = "the-five-categories",
@@ -116,7 +112,6 @@ public static class AudioCapability
                    + "different things.",
             Kind = SettingKind.Toggle,
             Group = group,
-            GroupHelp = groupHelp,
             DocsAnchor = "the-five-categories",
             Binding = Bind(
                 channel,
@@ -142,7 +137,6 @@ public static class AudioCapability
             Minimum = 0,
             Maximum = 1,
             Group = group,
-            GroupHelp = groupHelp,
             DocsAnchor = "ducking",
             Binding = Bind(
                 channel,

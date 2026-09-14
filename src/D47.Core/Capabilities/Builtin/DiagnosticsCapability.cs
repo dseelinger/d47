@@ -66,12 +66,11 @@ public static class DiagnosticsCapability
                 "log level",
                 "logging level",
             ],
-            // Last on the panel and closed by default.
+            // Last on the panel.
             Display = new CapabilityDisplay
             {
                 PanelTitle = "Diagnostics",
                 Order = 90,
-                StartCollapsed = true,
             },
             Tools =
             [
@@ -229,9 +228,6 @@ public static class DiagnosticsCapability
             Label = Subsystems.DisplayName(subsystem),
             Help = string.Empty,
             Group = "Per-subsystem levels",
-            GroupHelp =
-                "Each overrides the default above for one subsystem. Leave a subsystem on "
-                + "(default) to follow it. Changes apply on the next log line.",
             Kind = SettingKind.Choice,
             Choices = LogLevelNames,
             DocsAnchor = "the-parts-you-can-turn-up",

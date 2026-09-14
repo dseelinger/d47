@@ -573,15 +573,15 @@ public class SearchTheTabTests
             new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
 
         // And a named section keeps the rows it has, rather than only the ones that happen to repeat the
-        // word. "Audio mixer" is the case that proves it: nothing inside that card says "audio mixer", so
+        // word. "Sounds and levels" is the case that proves it: nothing inside that card says "sounds and levels", so
         // before this the card answered a search for its own name by emptying itself and then vanishing for
         // being empty.
-        box.Text = "Audio mixer";
+        box.Text = "Sounds and levels";
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(1, Cards(host));
         Assert.NotEmpty(VisibleRowLabels(host));
-        Assert.Contains(MarkedIn(host.View.FindControl<Control>("Cards")!), run => run.Text == "Audio mixer");
+        Assert.Contains(MarkedIn(host.View.FindControl<Control>("Cards")!), run => run.Text == "Sounds and levels");
 
         box.Text = string.Empty;
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();

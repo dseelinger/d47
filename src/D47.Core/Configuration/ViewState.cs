@@ -8,7 +8,7 @@ namespace D47.Core.Configuration;
 /// <summary>How the panel was left, as opposed to how d47 is configured.</summary>
 public sealed record ViewState
 {
-    /// <summary>Capability ids the Commander collapsed.</summary>
+    /// <summary>Card ids the Commander collapsed.</summary>
     public IReadOnlyList<string> CollapsedCards { get; init; } = [];
 
     /// <summary>
@@ -29,7 +29,7 @@ public sealed record ViewState
     /// <summary>Where the Commander put the flat mini panel, or null if they never moved it (Phase 48).</summary>
     public OverlayPlacement? Overlay { get; init; }
 
-    /// <summary>Capability ids the Commander expanded.</summary>
+    /// <summary>Card ids the Commander expanded.</summary>
     public IReadOnlyList<string> ExpandedCards { get; init; } = [];
 
     /// <summary>Which filter the checklist was left under — the chooser's key, or null for none.</summary>
@@ -108,7 +108,7 @@ public sealed record ViewState
     /// </summary>
     public string? LastTabVr { get; init; }
 
-    /// <summary>Which settings section the page was left scrolled to, by capability id, or null (#268).</summary>
+    /// <summary>Which settings section the page was left scrolled to, by place id, or null (#268).</summary>
     public string? SettingsSection { get; init; }
 
     /// <summary>Whether the Commander has ever asked d47 anything, by any route.</summary>
@@ -160,17 +160,17 @@ public sealed record ViewState
     }
 
     /// <summary>
-    /// Whether a card should be open, given what the capability asked for and what the Commander has
+    /// Whether a card should be open, given what the card asked for and what the Commander has
     /// since said.
     /// </summary>
-    public bool IsExpanded(string capabilityId, bool startCollapsed)
+    public bool IsExpanded(string id, bool startCollapsed)
     {
-        if (CollapsedCards.Contains(capabilityId, StringComparer.Ordinal))
+        if (CollapsedCards.Contains(id, StringComparer.Ordinal))
         {
             return false;
         }
 
-        if (ExpandedCards.Contains(capabilityId, StringComparer.Ordinal))
+        if (ExpandedCards.Contains(id, StringComparer.Ordinal))
         {
             return true;
         }
@@ -203,20 +203,20 @@ public sealed record ViewState
     public ViewState With(OverlayPlacement placement) => this with { Overlay = placement };
 
     /// <summary>Records a card's new state as an explicit choice.</summary>
-    public ViewState With(string capabilityId, bool expanded) => this with
+    public ViewState With(string id, bool expanded) => this with
     {
-        CollapsedCards = Without(CollapsedCards, capabilityId, add: !expanded),
-        ExpandedCards = Without(ExpandedCards, capabilityId, add: expanded),
+        CollapsedCards = Without(CollapsedCards, id, add: !expanded),
+        ExpandedCards = Without(ExpandedCards, id, add: expanded),
     };
 
     /// <summary>
     /// Forgets what the Commander said about one card, so <see
-    /// cref="CapabilityDisplay.StartCollapsed"/> decides again (#223).
+    /// cref="SettingsPlace.StartCollapsed"/> decides again (#223).
     /// </summary>
-    public ViewState Forgetting(string capabilityId) => this with
+    public ViewState Forgetting(string id) => this with
     {
-        CollapsedCards = Without(CollapsedCards, capabilityId, add: false),
-        ExpandedCards = Without(ExpandedCards, capabilityId, add: false),
+        CollapsedCards = Without(CollapsedCards, id, add: false),
+        ExpandedCards = Without(ExpandedCards, id, add: false),
     };
 
     private static IReadOnlyList<string> Without(IReadOnlyList<string> ids, string id, bool add)

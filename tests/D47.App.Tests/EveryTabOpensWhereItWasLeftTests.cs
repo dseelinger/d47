@@ -158,10 +158,10 @@ public sealed class EveryTabOpensWhereItWasLeftTests
 
         var (_, view, window) = Settings(settings, viewState, paths);
 
-        // Two along, so the answer cannot be the top of the page by accident.
-        var section = view.SectionIds[2];
+        // Well down the page, so the answer cannot be the top of the page by accident.
+        const string section = "memory";
 
-        view.Reveal(section);
+        view.Reveal(MemoryCapability.Id);
         Jobs();
 
         // What the settle timer calls.
@@ -206,16 +206,18 @@ public sealed class EveryTabOpensWhereItWasLeftTests
     }
 
     /// <summary>
-    /// A section this build no longer registers is a stale name, and a stale name is worth the top of
-    /// the page rather than a failure.
+    /// An id that names no place — a retired name, or a capability id — is a stale name, and a stale
+    /// name is worth the top of the page rather than a failure.
     /// </summary>
-    [AvaloniaFact]
-    public void AStaleSectionNameLeavesThePageAtTheTop()
+    [AvaloniaTheory]
+    [InlineData("a.capability.that.was.retired")]
+    [InlineData(SpeechCapability.Id)]
+    public void AStaleSectionNameLeavesThePageAtTheTop(string stale)
     {
         var (settings, viewState, paths) = TestSurface.Create();
 
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).FollowSettings(settings);
-        viewState.Save(viewState.Load() with { SettingsSection = "a.capability.that.was.retired" });
+        viewState.Save(viewState.Load() with { SettingsSection = stale });
 
         var (_, view, window) = Settings(settings, viewState, paths);
 

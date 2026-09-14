@@ -21,6 +21,9 @@ public class EveryCardOpensAndShutsAtOnceTests
 {
     private static void Jobs() => Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
+    /// <summary>A place id, as the card state is keyed.</summary>
+    private const string Window = "window";
+
     private static (Window Window, SettingsView View, SettingsService Settings) Open()
     {
         var (settings, viewState, paths) = TestSurface.Create();
@@ -187,7 +190,7 @@ public class EveryCardOpensAndShutsAtOnceTests
     }
 
     /// <summary>
-    /// And a card's own reset forgets what was said about it, so <c>Display.StartCollapsed</c> can
+    /// And a card's own reset forgets what was said about it, so <c>SettingsPlace.StartCollapsed</c> can
  /// decide again.
     /// </summary>
     [AvaloniaFact]
@@ -196,15 +199,15 @@ public class EveryCardOpensAndShutsAtOnceTests
         var (settings, viewState, paths) = TestSurface.Create();
 
         var state = viewState.Load();
-        var shut = state.With(InterfaceCapability.Id, expanded: false);
+        var shut = state.With(Window, expanded: false);
 
-        Assert.False(shut.IsExpanded(InterfaceCapability.Id, startCollapsed: false));
+        Assert.False(shut.IsExpanded(Window, startCollapsed: false));
 
         // Forgetting is what the card's reset does, and the default decides again.
-        var forgotten = shut.Forgetting(InterfaceCapability.Id);
+        var forgotten = shut.Forgetting(Window);
 
-        Assert.True(forgotten.IsExpanded(InterfaceCapability.Id, startCollapsed: false));
-        Assert.False(forgotten.IsExpanded(InterfaceCapability.Id, startCollapsed: true));
+        Assert.True(forgotten.IsExpanded(Window, startCollapsed: false));
+        Assert.False(forgotten.IsExpanded(Window, startCollapsed: true));
 
         _ = settings;
         _ = paths;

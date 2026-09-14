@@ -59,7 +59,7 @@ public class NavFollowsTheScrollTests
         [.. ((StackPanel)view.FindControl<Control>("Cards")!).Children.OfType<Border>()];
 
     private static IReadOnlyList<Border> NavItems(SettingsView view) =>
-        [.. ((StackPanel)view.FindControl<Control>("NavItems")!).Children.OfType<Border>()];
+        [.. ((StackPanel)view.FindControl<Control>("NavItems")!).Children.OfType<Border>().Where(item => item.Classes.Contains(SettingsView.NavPlaceClass))];
 
     /// <summary>The nav item wearing the active fill, or -1 when none is.</summary>
     private static int Active(SettingsView view)

@@ -254,9 +254,6 @@ public static class PrivacyCapability
             // The heading below says "read-only" once for all of them.
             Help = string.Empty,
             Group = "What leaves this machine",
-            GroupHelp =
-                "Read-only, and computed from the settings as they stand right now — not a "
-                + "description of what D47 could do in general.",
             Kind = SettingKind.Info,
             DocsAnchor = $"egress-{id}",
             Binding = new SettingBinding

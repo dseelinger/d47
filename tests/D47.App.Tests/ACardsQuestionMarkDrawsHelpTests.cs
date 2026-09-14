@@ -38,7 +38,7 @@ public class ACardsQuestionMarkDrawsHelpTests
         button.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
 
     /// <summary>
-    /// Pressed on Listening, it draws the Listening band — that card's own subject, not the page about
+    /// Pressed on Microphone, it draws the Listening band — that card's own subject, not the page about
     /// Settings that the tab's mark opens.
     /// </summary>
     [AvaloniaFact]
@@ -46,7 +46,7 @@ public class ACardsQuestionMarkDrawsHelpTests
     {
         var host = Open();
 
-        Click(Mark(host.View, "Listening"));
+        Click(Mark(host.View, "Microphone"));
         Jobs();
 
         Assert.True(host.Panel.Nav.Modal, "help took the panel");
@@ -70,7 +70,7 @@ public class ACardsQuestionMarkDrawsHelpTests
 
         Assert.Equal("Settings", host.Panel.Nav.Trail[^1].Word);
 
-        Click(Mark(host.View, "Listening"));
+        Click(Mark(host.View, "Microphone"));
         Jobs();
 
         Assert.Equal("Help", host.Panel.Nav.Trail[^1].Word);
@@ -91,7 +91,7 @@ public class ACardsQuestionMarkDrawsHelpTests
     {
         var host = Open();
 
-        Click(Mark(host.View, "Listening"));
+        Click(Mark(host.View, "Microphone"));
         Jobs();
 
         var shown = host.Panel.GetVisualDescendants().OfType<TextBlock>()
@@ -120,14 +120,14 @@ public class ACardsQuestionMarkDrawsHelpTests
 
         // Only meaningful while that page is a section on this surface; skip rather than assert something
         // about a capability that declares no settings.
-        if (!heading.Any(text => string.Equals(text, "Privacy", StringComparison.Ordinal))
+        if (!heading.Any(text => string.Equals(text, "Privacy and egress", StringComparison.Ordinal))
             || !string.Equals(bandless, "privacy", StringComparison.Ordinal))
         {
             host.Close();
             return;
         }
 
-        Click(Mark(host.View, "Privacy"));
+        Click(Mark(host.View, "Privacy and egress"));
         Jobs();
 
         Assert.True(host.Panel.Nav.Modal, "the mark always opens something");

@@ -8,9 +8,6 @@ public sealed record CapabilityDisplay
     public int Order { get; init; } = 100;
 
     public bool ShowOnPanel { get; init; } = true;
-
-    /// <summary>Whether the settings card starts collapsed on a panel that has never been touched.</summary>
-    public bool StartCollapsed { get; init; }
 }
 
 /// <summary>One capability, declared once at startup and never mutated.</summary>

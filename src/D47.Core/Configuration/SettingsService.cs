@@ -353,7 +353,8 @@ public sealed class SettingsService
         throw new ArgumentException($"There is no settings place called '{placeId}'.", nameof(placeId));
     }
 
-    private IEnumerable<SettingRow> RowsForEntry(SettingsEntry entry)
+    /// <summary>The bound rows one <see cref="SettingsLayout"/> entry resolves to.</summary>
+    public IEnumerable<SettingRow> RowsForEntry(SettingsEntry entry)
     {
         var byKey = _byKey ?? throw new InvalidOperationException("Bind() has not been called.");
 

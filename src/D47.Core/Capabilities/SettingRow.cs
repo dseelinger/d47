@@ -280,9 +280,6 @@ public sealed record SettingRow
     /// <summary>An optional subheading these rows sit under.</summary>
     public string? Group { get; init; }
 
-    /// <summary>Shown under the group heading, once, for the whole group.</summary>
-    public string? GroupHelp { get; init; }
-
     /// <summary>
     /// Never settable through a tool the model can call — the panel, a hotkey and the model-free
     /// keyword router reach it, the LLM path does not (Phase 4).

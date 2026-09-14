@@ -46,9 +46,9 @@ public class AboutTests
         window.Close();
     }
 
- /// <summary>About is an area in the settings nav rather than a button in the footer.</summary>
+ /// <summary>About's rows are a section in the settings nav, Updates and install, rather than a button in the footer.</summary>
     [AvaloniaFact]
-    public void AboutIsACardInTheSettingsNav()
+    public void AboutsRowsAreASectionInTheSettingsNav()
     {
         var (settings, viewState, paths) = TestSurface.Create();
 
@@ -62,7 +62,7 @@ public class AboutTests
             .Select(block => block.Text ?? string.Empty)
             .ToList();
 
-        Assert.Contains("About", text, StringComparer.Ordinal);
+        Assert.Contains("Updates and install", text, StringComparer.Ordinal);
 
         host.Close();
     }
