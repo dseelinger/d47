@@ -15,6 +15,10 @@ first. A search still draws matches from every area at once, each behind its own
 clearing it goes back to the area you had open. Below the width the nav collapses at, a dropdown of
 area titles takes its place.
 
+A section whose rows are all hidden behind "Show every setting" now keeps its card, with a "Show N
+more" button in place of its rows; pressing it draws that section's own hidden rows without opening
+any other section's. Following a help card into a setting still unfolds only the section it lands on.
+
 ## 0.128.0 — Settings arranged by area
 
 Fleet › Ships, Routing › Community Goal and Adventures now carry a "Settings for this page" strip of

@@ -87,8 +87,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         button?.Name is { } name
         && (name == RowResetName || name.StartsWith(RowInfoPrefix, StringComparison.Ordinal));
 
-    /// <summary>Whether a jump has revealed the folded rows for this session (#60).</summary>
-    private bool _revealedByJump;
+    /// <summary>Which sections a jump or a "Show N more" press has unfolded for this session (#60, #221).
+    /// Not saved: a fresh Build folds every place again.</summary>
+    private readonly HashSet<int> _revealedSections = [];
 
     /// <summary>
     /// The strip above the cards holding the page's own controls, or null where there are none (#60).
@@ -308,6 +309,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         _sections.Clear();
         _rows.Clear();
         _collapsed.Clear();
+        _revealedSections.Clear();
         _navAreas.Clear();
         _activeSection = -1;
         _activeArea = -1;
@@ -413,7 +415,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
             foreach (var place in area.Places)
             {
-                var (card, content, heading, expand) = BuildCard(settings, owners, place, _sections.Count);
+                var (card, content, heading, expand, foldButton) = BuildCard(settings, owners, place, _sections.Count);
 
                 var nav = BuildNavItem(_sections.Count, place.Title);
                 NavItems.Children.Add(nav.Item);
@@ -422,6 +424,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                     new SectionView(place.Id, place.Title, card, content, heading, nav.Item, nav.Bar, nav.Text)
                     {
                         Expand = expand,
+                        FoldButton = foldButton,
                     });
             }
 
@@ -518,7 +521,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         settings.Sections.First(section => section.Rows.Any(other => other.Key == row.Key)).Capability;
 
     /// <summary>One <see cref="SettingsLayout"/> place as a card: its groups, in order, and every row they resolve to.</summary>
-    private (Border Card, StackPanel Content, TextBlock Heading, Action<bool> Expand) BuildCard(
+    private (Border Card, StackPanel Content, TextBlock Heading, Action<bool> Expand, Button FoldButton) BuildCard(
         SettingsService settings,
         IReadOnlyDictionary<string, CapabilityDescriptor> owners,
         SettingsPlace place,
@@ -567,6 +570,36 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 }
             }
         }
+
+        // "Show N more" for this place's own folded rows, with no effect on any other place (#221). Its
+        // own visibility and label are set by Refresh, which is the only place that knows how many rows a
+        // fold is currently hiding.
+        var foldButton = new Button
+        {
+            FontSize = TypeScale.Secondary,
+            Padding = new Thickness(0),
+            MinWidth = 0,
+            Margin = new Thickness(0, -6, 0, 0),
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            Cursor = new Cursor(StandardCursorType.Hand),
+            IsVisible = false,
+        };
+
+        Themed(foldButton, Button.ForegroundProperty, ThemeManager.AccentKey);
+
+        foldButton.Click += (_, _) =>
+        {
+            if (!_revealedSections.Remove(index))
+            {
+                _revealedSections.Add(index);
+            }
+
+            Refresh();
+        };
+
+        content.Children.Add(foldButton);
 
         var chevron = new TextBlock
         {
@@ -700,7 +733,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         Themed(card, Border.BackgroundProperty, ThemeManager.SurfaceKey);
         Themed(card, Border.BorderBrushProperty, ThemeManager.BorderKey);
 
-        return (card, content, heading, Expand);
+        return (card, content, heading, Expand, foldButton);
     }
 
     private Control BuildGroupHeading(string group, string? help)
@@ -1179,10 +1212,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             return;
         }
 
-        // A jump unfolds (#60).
-        if (!_revealedByJump)
+        // A jump unfolds the place it lands on, and only that place (#60, #221).
+        if (_revealedSections.Add(index))
         {
-            _revealedByJump = true;
             Refresh();
         }
 
@@ -1392,6 +1424,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         var showing = new int[_sections.Count];
 
+        // Rows a fold would hide in this section, regardless of whether a reveal is currently drawing
+        // them — what "Show N more" counts (#221).
+        var folded = new int[_sections.Count];
+
         // Which sections the query names.
         var named = new bool[_sections.Count];
 
@@ -1415,13 +1451,21 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             {
                 // A row that does not apply is absent, not disabled: a greyed-out control still asserts that
                 // the setting exists (Phase 4).
-                var shown = row.Row.Applies(_settings.Current)
-                            && !row.Row.DrawnElsewhere
-                            && !SettingsFold.IsFolded(
-                                row.Row,
-                                _settings.Current,
-                                row.Row.BoundKeys.Any(_settings.IsChanged),
-                                ShowingEverything)
+                var applies = row.Row.Applies(_settings.Current) && !row.Row.DrawnElsewhere;
+
+                var isFolded = applies
+                               && SettingsFold.IsFolded(
+                                   row.Row,
+                                   _settings.Current,
+                                   row.Row.BoundKeys.Any(_settings.IsChanged),
+                                   ShowingEverything);
+
+                // A place's own "Show N more" draws its folded rows without unfolding any other place
+                // (#221).
+                var revealed = row.Section >= 0 && _revealedSections.Contains(row.Section);
+
+                var shown = applies
+                            && (!isFolded || revealed)
                             && (Matches(row.Row) || (row.Section >= 0 && named[row.Section]));
 
                 row.Container.IsVisible = shown;
@@ -1441,6 +1485,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 {
                     pageRowsShown++;
                 }
+
+                if (isFolded && row.Section >= 0)
+                {
+                    folded[row.Section]++;
+                }
             }
         }
         finally
@@ -1453,14 +1502,26 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             strip.IsVisible = pageRowsShown > 0;
         }
 
-        // The section's own name, marked in both places it is written.
+        var filtering = _query.Length > 0;
+
+        // The section's own name, marked in both places it is written, and its "Show N more" beside it.
         for (var i = 0; i < _sections.Count; i++)
         {
             Paint(_sections[i].Heading, _sections[i].Title);
             Paint(_sections[i].NavText, _sections[i].Title);
+
+            if (_sections[i].FoldButton is not { } button)
+            {
+                continue;
+            }
+
+            var revealed = _revealedSections.Contains(i);
+
+            button.IsVisible = !ShowingEverything && !filtering && (folded[i] > 0 || revealed);
+            button.Content = revealed ? "Show fewer" : $"Show {folded[i]} more";
         }
 
-        ApplyFilterToCards(showing, named);
+        ApplyFilterToCards(showing, folded, named);
     }
 
     /// <summary>What the surface is being filtered by, or empty when it is not.</summary>
@@ -1706,7 +1767,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// A card with nothing left in it goes, and so does its nav item — a sidebar still listing fourteen
     /// sections when three of them hold anything is a sidebar that has stopped telling the truth.
     /// </summary>
-    private void ApplyFilterToCards(int[] showing, bool[] named)
+    private void ApplyFilterToCards(int[] showing, int[] folded, bool[] named)
     {
         var filtering = _query.Length > 0;
 
@@ -1719,8 +1780,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
             // A card the fold has emptied is absent rather than an empty box (#60), which does more for the
             // anxiety than folding rows does — it takes Diagnostics, and VR with no headset, off the page
-            // entirely.
-            var anyRows = showing[i] > 0;
+            // entirely. A place whose rows are all folded is the exception: its card stays, holding its
+            // own "Show N more" button (#221).
+            var anyRows = showing[i] > 0 || folded[i] > 0;
 
             // Every area's matches draw while a query is narrowing the page; otherwise only the selected
             // area's places do (#220).
@@ -1848,7 +1910,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
     /// <summary>One look for the two controls that open a list.</summary>
     private bool ShowingEverything =>
-        _tabPlaceId is not null || _revealedByJump || (_settings?.Current.Ui.ShowEverySetting ?? true);
+        _tabPlaceId is not null || (_settings?.Current.Ui.ShowEverySetting ?? true);
 
     private bool CardHasChanges(IReadOnlyList<SettingRow> rows) =>
         _settings is { } settings
@@ -3710,6 +3772,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         /// cref="SettingsView.Reveal"/> both go through it, so neither can leave the two disagreeing.
         /// </summary>
         public Action<bool>? Expand { get; init; }
+
+        /// <summary>This place's own "Show N more" for the rows its fold is hiding (#221).</summary>
+        public Button? FoldButton { get; init; }
 
         /// <summary>
         /// How the nav item is currently painted, or null before it has been painted at all — which is
