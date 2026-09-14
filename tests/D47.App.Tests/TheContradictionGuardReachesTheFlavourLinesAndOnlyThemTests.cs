@@ -25,14 +25,15 @@ public class TheContradictionGuardReachesTheFlavourLinesAndOnlyThemTests
     /// <summary>
     /// Three of the four have an authored line behind the model's, and all three of those are checked
     /// as well: an authored line asserting cargo that was not aboard is the incident this guard was
-    /// reported for.
+    /// reported for. The announcement path checks its authored line twice: once as the fallback, and
+    /// once when the reword chance keeps the line as written (#214).
     /// </summary>
     [Fact]
     public void EveryAuthoredFallbackBehindAFlavourLineIsCheckedToo()
     {
         var checkedFallbacks = CodeLinesContaining("ContradictedClaims.Sayable(");
 
-        Assert.Equal(FlavourCallSites - 1, checkedFallbacks.Count);
+        Assert.Equal(FlavourCallSites - 1 + 1, checkedFallbacks.Count);
     }
 
     /// <summary>And nowhere else in the app.</summary>
