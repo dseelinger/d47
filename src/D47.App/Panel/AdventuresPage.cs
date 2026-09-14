@@ -57,7 +57,8 @@ public sealed class AdventuresPage : UserControl
 
     private bool _showAside;
 
-    public AdventuresPage(AdventureSurface surface, PanelNavigator nav, PanelPrompts prompts)
+    public AdventuresPage(
+        AdventureSurface surface, PanelNavigator nav, PanelPrompts prompts, Control? settingsStrip = null)
     {
         _surface = surface;
         _nav = nav;
@@ -77,6 +78,13 @@ public sealed class AdventuresPage : UserControl
         bar.Children.Add(Muted("Stories you fly, told by the ship's AI. Progress comes from your own journal."));
 
         var root = new DockPanel { Margin = new Thickness(14) };
+
+        if (settingsStrip is not null)
+        {
+            DockPanel.SetDock(settingsStrip, Dock.Top);
+            root.Children.Add(settingsStrip);
+        }
+
         DockPanel.SetDock(bar, Dock.Top);
         DockPanel.SetDock(_problems, Dock.Top);
         _problems.Margin = new Thickness(0, 0, 0, 10);

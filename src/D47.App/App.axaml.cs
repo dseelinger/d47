@@ -116,7 +116,10 @@ public partial class App(AppHost? host) : Application
 
                 // And every system name d47 already holds, so a ship turn naming one draws a chip in the
                 // headset too (#159).
-                host.SystemsInPlay);
+                host.SystemsInPlay,
+
+                // And a tab's own settings strip (#218), on the same terms as the settings page above.
+                window is null ? null : window.BuildSettingsStrip);
 
             // And the headset's copy of the panel can be the one asking for a spoken value (Phase 25), or
             // the one with a keyboard up for a value to be spelled onto (#51).

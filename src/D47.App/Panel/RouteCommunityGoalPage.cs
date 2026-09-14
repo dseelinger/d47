@@ -79,7 +79,11 @@ public sealed class RouteCommunityGoalPage : UserControl
         CommunityGoalSurface goal,
         Func<bool> lookupsEnabled,
         Action? openSettings = null,
-        Func<string, Task<bool>>? copy = null)
+        Func<string, Task<bool>>? copy = null,
+
+        // Community Goal's own settings, on the tab they only affect (#218). Prepended below and
+        // never touched by Build(), so it survives every Refresh().
+        Control? settingsStrip = null)
     {
         _registry = registry;
         _board = board;
@@ -105,7 +109,17 @@ public sealed class RouteCommunityGoalPage : UserControl
         _off = SwitchedOff();
         _form = SearchCard();
 
-        var body = new StackPanel { Spacing = 12, Children = { _off, _form, _results, _ledger } };
+        var body = new StackPanel { Spacing = 12 };
+
+        if (settingsStrip is not null)
+        {
+            body.Children.Add(settingsStrip);
+        }
+
+        body.Children.Add(_off);
+        body.Children.Add(_form);
+        body.Children.Add(_results);
+        body.Children.Add(_ledger);
 
         Content = new ScrollViewer
         {

@@ -218,11 +218,12 @@ your journals it has been read, so the next start picks up exactly where it left
 long that is. Come back after a year away and the first start takes a few seconds longer while it
 reads the gap, and says so in the log.
 
-**Not look right? Rescan.** The Ships card in Settings says how many ships are remembered and how
-stale the oldest of them is, and offers **Rescan my journals**: it reads every journal on disk
-again and rebuilds the lot from scratch. A ship nothing in your journals supports stops existing,
-and one that has been sitting there wrong is put back the way the game described it. It takes a few
-seconds — about three on a year of flying — and you can do it as often as you like.
+**Not look right? Rescan.** Fleet › Ships' own "Settings for this page" strip says how many ships
+are remembered and how stale the oldest of them is, and offers **Rescan my journals**: it reads
+every journal on disk again and rebuilds the lot from scratch. A ship nothing in your journals
+supports stops existing, and one that has been sitting there wrong is put back the way the game
+described it. It takes a few seconds — about three on a year of flying — and you can do it as
+often as you like.
 
 Nothing else is touched. Your plans, your checklist and your settings are not read and not written,
 and a rescan that finds no journals at all changes nothing rather than emptying the file: a journal
@@ -287,10 +288,10 @@ files for that hull, from the same GitHub release it updates itself from, and ke
 The hull symbol is all that is sent. Not your Commander name, not which ships you own, not where
 you are, nothing from your journal.
 
-**Turn it off and nothing breaks.** The Ships card in Settings has **Hull pictures**; off, nothing
-is fetched and every ship keeps the small drawing it came with. Files already on disk stay and are
-still shown. Offline is the same thing without the setting: the small drawing stays, and the log
-says why the large one did not arrive.
+**Turn it off and nothing breaks.** Fleet › Ships' own settings strip has **Hull pictures**; off,
+nothing is fetched and every ship keeps the small drawing it came with. Files already on disk stay
+and are still shown. Offline is the same thing without the setting: the small drawing stays, and
+the log says why the large one did not arrive.
 
 **Three sizes, above the picture.** Half the pane with the ship's own figures beside it, which is
 where it opens; the width of the pane, with the figures under it; and the whole window. The size

@@ -106,7 +106,11 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
         // What the flying Commander has taught D47 stands for a declared phrase (#171), null unless the
         // caller supplies both this and the registry — the same rule Sourcing above follows.
-        D47.Core.Conversation.LearnedPhrasesStore? learnedPhrases = null)
+        D47.Core.Conversation.LearnedPhrasesStore? learnedPhrases = null,
+
+        // Builds one tab's own settings strip by its root key, on the same terms as settingsPage above
+        // (#218) — the window's builder, so this surface's copy cannot fall behind it.
+        Func<string, Control?>? buildSettingsStrip = null)
     {
         _dumpTo = dumpTo;
 
@@ -165,7 +169,11 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             // Every root, Plan included (#52): a form's boxes are plain text boxes and so reach the offscreen
             // board, which has taken a spelled or dictated value since #51. Settings opens on this surface
             // rather than on the window's, the same as Sourcing above.
-            _view.EnableRouting(routing with { OpenSettings = () => _view.Tab = PanelTab.Settings });
+            _view.EnableRouting(
+                routing with { OpenSettings = () => _view.Tab = PanelTab.Settings },
+                settingsStrip: buildSettingsStrip is null
+                    ? null
+                    : () => buildSettingsStrip(RoutingPages.CommunityGoalRoot));
 
             if (routing.Plans is { } plans)
             {
@@ -179,7 +187,11 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         if (adventures is not null)
         {
             // The stories, in the headset (asked for 2026-08-22).
-            _view.EnableAdventures(adventures);
+            _view.EnableAdventures(
+                adventures,
+                settingsStrip: buildSettingsStrip is null
+                    ? null
+                    : () => buildSettingsStrip(AdventuresPage.RootKey));
         }
 
         if (ships is not null && checklists is not null && gameState is not null)
@@ -189,7 +201,16 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             // row it drills to is a button or a switch a ray already presses; the one control that is not,
             // Ctrl-drag of a slot onto another, has no pointer-moved path on this surface to ride on and stays a
             // mouse convenience.
-            _view.EnableLoadout(ships, checklists, gameState, onFoot, modulePower, drawings);
+            _view.EnableLoadout(
+                ships,
+                checklists,
+                gameState,
+                onFoot,
+                modulePower,
+                drawings,
+                settingsStrip: buildSettingsStrip is null
+                    ? null
+                    : () => buildSettingsStrip(LoadoutPages.FleetRoot));
         }
 
         // `ships`, `gameState` and `onFoot` are read again below - Engineers needs all three too.

@@ -620,7 +620,10 @@ public partial class PanelView : UserControl
         Func<D47.Core.Journal.CommanderGameState?> state,
         D47.Core.Loadout.OnFootPlanService? onFoot = null,
         Func<D47.Core.Journal.ModulePower>? modulePower = null,
-        ShipsDrawingsMemory? drawings = null)
+        ShipsDrawingsMemory? drawings = null,
+
+        // Ships' own settings, on the tab they only affect (#218).
+        Func<Control?>? settingsStrip = null)
     {
         var shipsMode = new ShipsMode(ships, checklists, state, modulePower, drawings);
 
@@ -686,19 +689,20 @@ public partial class PanelView : UserControl
 
         Furnish(
             PanelTab.Loadout,
-            crumb => LoadoutPages.Build(crumb, modes, gap, _carrier, Nav, Prompts, _copy),
+            crumb => LoadoutPages.Build(crumb, modes, gap, _carrier, Nav, Prompts, _copy, settingsStrip),
             [.. roots]);
     }
 
     /// <summary>Gives this surface the Commander's adventures (Phase 47).</summary>
-    public void EnableAdventures(AdventureSurface surface)
+    /// <param name="settingsStrip">Adventures' own settings, on the tab they only affect (#218).</param>
+    public void EnableAdventures(AdventureSurface surface, Func<Control?>? settingsStrip = null)
     {
         AdventuresPage? page = null;
 
         Furnish(
             PanelTab.Adventures,
             crumb => crumb.Key == AdventuresPage.RootKey
-                ? page = new AdventuresPage(surface, Nav, Prompts)
+                ? page = new AdventuresPage(surface, Nav, Prompts, settingsStrip?.Invoke())
                 : page?.Build(crumb) ?? new TextBlock { Text = "Nothing here." },
             new NavCrumb(AdventuresPage.RootKey, "Adventures")
             {
@@ -881,7 +885,10 @@ public partial class PanelView : UserControl
         bool progress = true,
         bool course = true,
         bool market = true,
-        bool communityGoal = true)
+        bool communityGoal = true,
+
+        // Community Goal's own settings, on the tab they only affect (#218).
+        Func<Control?>? settingsStrip = null)
     {
         var roots = new List<NavCrumb>();
 
@@ -954,7 +961,7 @@ public partial class PanelView : UserControl
             PanelTab.Routing,
             crumb =>
             {
-                var page = RoutingPages.Build(crumb, surface, Nav);
+                var page = RoutingPages.Build(crumb, surface, Nav, settingsStrip);
 
                 // Held onto so the tick can redraw Progress and a plot made elsewhere can redraw Plan.
                 _routeProgress = page as RouteProgressPage ?? _routeProgress;

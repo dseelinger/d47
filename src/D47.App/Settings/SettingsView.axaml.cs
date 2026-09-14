@@ -116,6 +116,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
     private int _activeSection = -1;
 
+    /// <summary>
+    /// Limits this instance to one <see cref="SettingsLayout"/> tab place — a tab's own strip rather
+    /// than the settings page (#218).
+    /// </summary>
+    private string? _tabPlaceId;
+
     public SettingsView()
     {
         InitializeComponent();
@@ -197,7 +203,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         // At the end, by the rule the comment above records the cost of (#162).
         (D47.Core.Debrief.DebriefBook Book, Func<DateTimeOffset> Now,
-            Func<D47.Core.Persona.Persona> Core)? debrief = null)
+            Func<D47.Core.Persona.Persona> Core)? debrief = null,
+
+        // At the end, by the same rule — the tab this view is limited to, or null for the settings
+        // page (#218).
+        string? tabPlaceId = null)
     {
         _setUpKeys = setUpKeys;
         _downloadModel = downloadModel;
@@ -216,10 +226,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         _debrief = debrief;
         _logbook = logbook;
         _reserved = reservedPhrases ?? [];
+        _tabPlaceId = tabPlaceId;
 
         Build();
 
-        RestoreSection();
+        if (_tabPlaceId is null)
+        {
+            RestoreSection();
+        }
 
         settings.Changed += OnSettingsChanged;
 
@@ -264,6 +278,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         _collapsed.Clear();
         _activeSection = -1;
         _pageStrip = null;
+
+        if (_tabPlaceId is { } placeId)
+        {
+            BuildTabPlace(settings, placeId);
+            return;
+        }
 
         // The rows that govern the page rather than a card, drawn once above everything
         // .com/dseelinger/d47/issues/60). "Show every setting" decides what the whole page draws, and a
@@ -345,6 +365,78 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         SetActiveSection(_sections.Count > 0 ? 0 : -1);
         Refresh();
     }
+
+    /// <summary>
+    /// Draws one <see cref="SettingsLayout"/> tab place's rows behind a "Settings for this page"
+    /// disclosure — no nav, no page-top strip, no card header, no width floor, and no fold (#218).
+    /// </summary>
+    private void BuildTabPlace(SettingsService settings, string placeId)
+    {
+        Nav.IsVisible = false;
+        Root.ColumnDefinitions[0].Width = new GridLength(0);
+        Root.MinWidth = 0;
+
+        var rows = settings.RowsForPlace(placeId);
+
+        var content = new StackPanel { Spacing = 18, Margin = new Thickness(0, 10, 0, 0) };
+
+        foreach (var row in rows)
+        {
+            var view = BuildRow(SectionOwning(settings, row), row);
+            _rows.Add(view);
+            content.Children.Add(view.Container);
+        }
+
+        var expanded = _viewState.IsExpanded(placeId, startCollapsed: true);
+        content.IsVisible = expanded;
+
+        var chevron = new TextBlock
+        {
+            Text = expanded ? "▾" : "▸",
+            FontSize = TypeScale.Body,
+            Width = 14,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        Themed(chevron, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+
+        var heading = new TextBlock
+        {
+            Text = $"Settings for this page ({rows.Count})",
+            FontSize = TypeScale.Subheading,
+            FontWeight = FontWeight.Medium,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        Themed(heading, TextBlock.ForegroundProperty, ThemeManager.TextKey);
+
+        var headerRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+        headerRow.Children.Add(chevron);
+        headerRow.Children.Add(heading);
+
+        var header = new Border
+        {
+            Padding = new Thickness(0, 6),
+            Background = Brushes.Transparent,
+            Cursor = new Cursor(StandardCursorType.Hand),
+            Child = headerRow,
+        };
+
+        header.PointerPressed += (_, _) =>
+        {
+            var open = !content.IsVisible;
+            content.IsVisible = open;
+            chevron.Text = open ? "▾" : "▸";
+            SaveViewState(state => state.With(placeId, open));
+        };
+
+        var strip = new StackPanel { Name = TabStripName, Spacing = 10 };
+        strip.Children.Add(header);
+        strip.Children.Add(content);
+
+        Cards.Children.Add(strip);
+    }
+
+    /// <summary>Marks the strip a tab place draws, for a test to find it by name (#218).</summary>
+    public const string TabStripName = "SettingsForThisPage";
 
     /// <summary>The capability a page-level row still belongs to.</summary>
     private static CapabilityDescriptor SectionOwning(SettingsService settings, SettingRow row) =>
@@ -829,6 +921,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// </summary>
     private void OnScrollerSizeChanged(object? sender, SizeChangedEventArgs e)
     {
+        // A tab's own strip has no width floor to hold (#218).
+        if (_tabPlaceId is not null)
+        {
+            return;
+        }
+
         const double Floor = 420;
         const double Ceiling = 700;
 
@@ -854,6 +952,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// <summary>Collapses the nav column on a narrow page, and brings it back on a wide one.</summary>
     private void OnRootSizeChanged(object? sender, SizeChangedEventArgs e)
     {
+        // A tab's own strip has no nav to collapse or floor to hold (#218).
+        if (_tabPlaceId is not null)
+        {
+            return;
+        }
+
         var show = e.NewSize.Width >= NavCollapsesBelow;
 
         if (_navShown == show)
@@ -1297,7 +1401,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
     /// <summary>One look for the two controls that open a list.</summary>
     private bool ShowingEverything =>
-        _revealedByJump || (_settings?.Current.Ui.ShowEverySetting ?? true);
+        _tabPlaceId is not null || _revealedByJump || (_settings?.Current.Ui.ShowEverySetting ?? true);
 
     private bool CardHasChanges(SettingsSection section) =>
         _settings is { } settings

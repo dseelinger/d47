@@ -6,6 +6,14 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.128.0 — Settings arranged by area
+
+Fleet › Ships, Routing › Community Goal and Adventures now carry a "Settings for this page" strip of
+their own — Rescan my journals and Hull pictures on Ships; the Inara API key and the week's turn on
+Community Goal; Notable places for adventures on Adventures. Closed by default, and remembered open or
+closed on its own account. The same rows stay on the Settings page too, in the window and in the
+headset.
+
 ## 0.127.0 — Open the new plan after plotting
 
 Plotting the Neutron Plotter, Road to Riches or a trade run now opens that plan's result page rather

@@ -51,7 +51,11 @@ public static class LoadoutPages
         CarrierSource? carrier,
         PanelNavigator nav,
         PanelPrompts prompts,
-        Func<string, Task<bool>>? copy = null)
+        Func<string, Task<bool>>? copy = null,
+
+        // Ships' own settings (#218), drawn only on FleetRoot — Suits and the other modes share
+        // IndexPage but not this strip.
+        Func<Control?>? settingsStrip = null)
     {
         if (crumb.Key == CarrierRoot && carrier is not null)
         {
@@ -79,7 +83,8 @@ public static class LoadoutPages
 
         var root = modes.FirstOrDefault(mode => mode.RootKey == crumb.Key) ?? modes[0];
 
-        return new IndexPage(root, nav, prompts);
+        return new IndexPage(
+            root, nav, prompts, root.RootKey == FleetRoot ? settingsStrip?.Invoke() : null);
     }
 
     /// <summary>The crumb for a ship, and for a slot of it.</summary>
@@ -1259,7 +1264,7 @@ public sealed class IndexPage : LoadoutPage
     /// <summary>The box the switch and its label share, withdrawn along with the switch.</summary>
     private readonly StackPanel? _switchBox;
 
-    public IndexPage(ILoadoutMode mode, PanelNavigator nav, PanelPrompts prompts)
+    public IndexPage(ILoadoutMode mode, PanelNavigator nav, PanelPrompts prompts, Control? settingsStrip = null)
         : base(mode)
     {
         _nav = nav;
@@ -1326,6 +1331,12 @@ public sealed class IndexPage : LoadoutPage
 
             DockPanel.SetDock(_switchBox, Dock.Right);
             head.Children.Add(_switchBox);
+        }
+
+        if (settingsStrip is not null)
+        {
+            DockPanel.SetDock(settingsStrip, Dock.Top);
+            root.Children.Add(settingsStrip);
         }
 
         DockPanel.SetDock(head, Dock.Top);

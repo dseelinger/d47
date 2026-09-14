@@ -186,7 +186,8 @@ public partial class MainWindow : Window
                         : null,
                     OpenSettings);
 
-                Panel.EnableAdventures(Adventures);
+                Panel.EnableAdventures(
+                    Adventures, settingsStrip: () => BuildSettingsStrip(AdventuresPage.RootKey));
             }
 
             // The fleet and its builds, what the Commander is wearing, and the arithmetic between them
@@ -201,7 +202,8 @@ public partial class MainWindow : Window
                 () => host.GameState.Active,
                 host.OnFootPlans,
                 () => host.ModulePower,
-                new ShipsDrawingsMemory(host.ViewState));
+                new ShipsDrawingsMemory(host.ViewState),
+                settingsStrip: () => BuildSettingsStrip(LoadoutPages.FleetRoot));
 
             // Where the hull art is read from, in the order it is searched.
             ShipArt.Folder = host.Paths.Ships;
@@ -250,7 +252,8 @@ public partial class MainWindow : Window
                         host.Settings.Current.Callouts.WeekBoundaryHourUtc)),
                 Clipboard: host.Clipboard);
 
-            Panel.EnableRouting(Routing);
+            Panel.EnableRouting(
+                Routing, settingsStrip: () => BuildSettingsStrip(RoutingPages.CommunityGoalRoot));
 
             // "Refresh" by voice means this search only while its page is what the window is showing (#296),
             // and the window is the one thing that knows that.
@@ -635,49 +638,67 @@ public partial class MainWindow : Window
     /// <summary>What the Routing tab reads and drives, for the headset copy of the panel (#52).</summary>
     internal RoutingSurface? Routing { get; }
 
+    /// <summary>
+    /// Attaches a <see cref="SettingsView"/> to the host's services — the settings page, or one tab's
+    /// own strip limited to <paramref name="tabPlaceId"/> (#218). The 16 positional arguments are
+    /// assembled here once so a strip does not carry a second copy of the list (comment at
+    /// <see cref="SettingsView.Attach"/>).
+    /// </summary>
+    private void AttachSettingsView(SettingsView view, string? tabPlaceId = null)
+    {
+        if (_host is null)
+        {
+            return;
+        }
+
+        view.Attach(
+            _host.Settings,
+            _host.ViewState,
+            _host.Paths,
+            _host.CoverageRecorder is { } recorder ? recorder.Report : null,
+            _host.Macros,
+            _host.Checklists,
+            _host.ReservedPhrases,
+            _host.SwitchEditing,
+
+            // The choice is the go-ahead: it states its size in the list it was made from, and the row
+            // shows what it is doing while it does it.
+            (model, progress) => _host.InstallModelAsync(model, progress),
+
+            // About's way back in.
+            ShowKeySetupAsync,
+
+            // The Commander's own notes, and the search that decides how one is filed.
+            _host.LoreEditing,
+            _host.Memories,
+
+            // And the log those journals can be turned into (Phase 33).
+            _host.Logbook,
+
+            // And the cores the Commander wrote themselves (remediation.md 11, item 9).
+            _host.OwnPersonas,
+
+            // And what the audio recorder kept, when this process was asked to record (#164).
+            _host.AudioRecorder is { } recording
+                ? (recording.Log, (Func<DateTimeOffset>)(() => DateTimeOffset.Now))
+                : null,
+
+            // And what the debrief drafted from the last session (#162).
+            _host.Debrief is { } debrief
+                ? (debrief.Book, debrief.Now, (Func<D47.Core.Persona.Persona>)(() => _host.Personas.Current))
+                : null,
+
+            tabPlaceId);
+    }
+
     public Control BuildSettingsPage()
     {
         var view = new SettingsView();
 
+        AttachSettingsView(view);
+
         if (_host is not null)
         {
-            view.Attach(
-                _host.Settings,
-                _host.ViewState,
-                _host.Paths,
-                _host.CoverageRecorder is { } recorder ? recorder.Report : null,
-                _host.Macros,
-                _host.Checklists,
-                _host.ReservedPhrases,
-                _host.SwitchEditing,
-
-                // The choice is the go-ahead: it states its size in the list it was made from, and the row
-                // shows what it is doing while it does it.
-                (model, progress) => _host.InstallModelAsync(model, progress),
-
-                // About's way back in.
-                ShowKeySetupAsync,
-
-                // The Commander's own notes, and the search that decides how one is filed.
-                _host.LoreEditing,
-                _host.Memories,
-
-                // And the log those journals can be turned into (Phase 33).
-                _host.Logbook,
-
-                // And the cores the Commander wrote themselves (remediation.md 11, item 9).
-                _host.OwnPersonas,
-
-                // And what the audio recorder kept, when this process was asked to record (#164).
-                _host.AudioRecorder is { } recording
-                    ? (recording.Log, (Func<DateTimeOffset>)(() => DateTimeOffset.Now))
-                    : null,
-
-                // And what the debrief drafted from the last session (#162).
-                _host.Debrief is { } debrief
-                    ? (debrief.Book, debrief.Now, (Func<D47.Core.Persona.Persona>)(() => _host.Personas.Current))
-                    : null);
-
             // The gap reaction happens in the host, on whatever thread resolved the switch, and the
             // affordance it belongs to is a row on this surface.
             _host.PersonaSettling += settling => Avalonia.Threading.Dispatcher.UIThread.Post(
@@ -704,6 +725,34 @@ public partial class MainWindow : Window
         view.EnableHelp(capabilityId => Panel.OpenHelpFor(capabilityId));
 
         _settingsPage = view;
+        return view;
+    }
+
+    /// <summary>
+    /// A tab's own settings, drawn from its <see cref="D47.Core.Configuration.SettingsLayout"/> tab
+    /// place — null where <paramref name="rootKey"/> names no tab place, or one with no strip (#218).
+    /// A fresh instance every call: two surfaces drawing the same root, the window's and the
+    /// headset's, need their own — see <see cref="_settingsPage"/>, which this does not touch.
+    /// </summary>
+    public Control? BuildSettingsStrip(string rootKey)
+    {
+        if (_host is null)
+        {
+            return null;
+        }
+
+        var tab = SettingsLayout.Tabs.FirstOrDefault(
+            t => string.Equals(t.RootKey, rootKey, StringComparison.Ordinal));
+
+        if (tab is not { Strip: true })
+        {
+            return null;
+        }
+
+        var view = new SettingsView();
+
+        AttachSettingsView(view, tab.Id);
+
         return view;
     }
 

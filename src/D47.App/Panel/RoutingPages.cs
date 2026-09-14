@@ -84,7 +84,8 @@ public static class RoutingPages
         new($"{ResultPrefix}{kind}", headline) { Level = "routing.result" };
 
     /// <summary>Draws whichever root or level a crumb names.</summary>
-    public static Control Build(NavCrumb crumb, RoutingSurface surface, PanelNavigator nav)
+    public static Control Build(
+        NavCrumb crumb, RoutingSurface surface, PanelNavigator nav, Func<Control?>? settingsStrip = null)
     {
         if (crumb.Key.StartsWith(ResultPrefix, StringComparison.Ordinal))
         {
@@ -96,7 +97,7 @@ public static class RoutingPages
             PlanRoot => Plan(surface, nav),
             CourseRoot => Course(surface),
             MarketRoot => Market(surface),
-            CommunityGoalRoot => CommunityGoal(surface),
+            CommunityGoalRoot => CommunityGoal(surface, settingsStrip),
 
             // Progress is the fallback rather than Plan, because it is the mode that works with nothing
             // switched on and nothing typed.
@@ -133,7 +134,7 @@ public static class RoutingPages
                 Copy(surface))
             : Missing("Market lookups are not available on this surface.");
 
-    private static Control CommunityGoal(RoutingSurface surface) =>
+    private static Control CommunityGoal(RoutingSurface surface, Func<Control?>? settingsStrip) =>
         surface is { Registry: { } registry, Commodities: { } board, CommunityGoal: { } goal }
             ? new RouteCommunityGoalPage(
                 registry,
@@ -141,7 +142,8 @@ public static class RoutingPages
                 goal,
                 surface.LookupsEnabled ?? (() => false),
                 surface.OpenSettings,
-                Copy(surface))
+                Copy(surface),
+                settingsStrip?.Invoke())
             : Missing("The Community Goal search is not available on this surface.");
 
     private static Control Result(NavCrumb crumb, RoutingSurface surface)

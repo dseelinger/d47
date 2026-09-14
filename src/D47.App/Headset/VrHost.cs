@@ -151,7 +151,11 @@ public sealed class VrHost : IDisposable
         Panel.ShipsDrawingsMemory? drawings = null,
         Panel.EngineerDirectoryMemory? engineersMemory = null,
         D47.Core.Capabilities.Builtin.IClipboard? clipboard = null,
-        D47.Core.Knowledge.SystemsInPlay? known = null)
+        D47.Core.Knowledge.SystemsInPlay? known = null,
+
+        // The same builder the window uses for a tab's own strip, on the same terms as settingsPage
+        // above (#218).
+        Func<string, Control?>? buildSettingsStrip = null)
     {
         VrHost? self = null;
 
@@ -159,7 +163,8 @@ public sealed class VrHost : IDisposable
             model, settings, slot => self?.AnchorFor(slot), avatars, dumpTo, settingsPage,
             checklists, timekeeper, alarmStore, ships, gameState, onFoot, unlocks, goals,
             backfillGoals, adventures, viewState, capabilities, sourcingBoard, carrier, routing,
-            modulePower, drawings, engineersMemory, clipboard, known);
+            modulePower, drawings, engineersMemory, clipboard, known,
+            buildSettingsStrip: buildSettingsStrip);
         var layer = new CaptionLayer { Settings = settings.Current.Vr.Captions };
         var captions = new VrCaptionSurface(layer);
 
