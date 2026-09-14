@@ -30,6 +30,12 @@ internal static class OpenAiPrompt
 
         foreach (var message in prompt.History)
         {
+            // Opaque blocks are never sent over the OpenAI protocols; a message holding only opaque blocks is skipped.
+            if (message.Content.Count > 0 && message.Content.All(part => part is ConversationContent.Opaque))
+            {
+                continue;
+            }
+
             var text = new System.Text.StringBuilder();
             var calls = new List<ConversationContent.ToolUse>();
             var results = new List<ConversationContent.ToolResult>();
@@ -53,6 +59,9 @@ internal static class OpenAiPrompt
 
                     case ConversationContent.ToolResult result:
                         results.Add(result);
+                        break;
+
+                    case ConversationContent.Opaque:
                         break;
                 }
             }

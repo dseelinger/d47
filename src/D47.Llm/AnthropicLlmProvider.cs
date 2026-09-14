@@ -244,23 +244,35 @@ public sealed class AnthropicLlmProvider : ILlmProvider
 
         // The blocks the last message was built from, or null when it was built from a plain string.
         List<ContentBlockParam>? lastBlocks = null;
+        var lastText = string.Empty;
 
         foreach (var turn in prompt.History)
         {
             var role = turn.Role == ConversationRole.Assistant ? Role.Assistant : Role.User;
 
+            // Another provider's blocks are not sent.
+            var parts = turn.Content
+                .Where(part => part is not ConversationContent.Opaque opaque || opaque.ProviderId == Id)
+                .ToList();
+
+            if (parts.Count == 0)
+            {
+                continue;
+            }
+
             // An ordinary text turn stays an ordinary string on the wire.
-            if (turn.Content is [ConversationContent.Text only])
+            if (parts is [ConversationContent.Text only])
             {
                 messages.Add(new MessageParam { Role = role, Content = only.Value });
                 blocksSinceBreakpoint++;
                 lastBlocks = null;
+                lastText = only.Value;
                 continue;
             }
 
             var blocks = new List<ContentBlockParam>();
 
-            foreach (var part in turn.Content)
+            foreach (var part in parts)
             {
                 blocksSinceBreakpoint++;
 
@@ -284,7 +296,7 @@ public sealed class AnthropicLlmProvider : ILlmProvider
                         // results are what make a turn long enough to need one.
                         var spendHere = blocksSinceBreakpoint >= BlocksPerBreakpoint
                                         && breakpointsSpent < MaxBreakpoints
-                                        && ReferenceEquals(part, turn.Content[^1]);
+                                        && ReferenceEquals(part, parts[^1]);
 
                         blocks.Add(new ToolResultBlockParam
                         {
@@ -298,6 +310,14 @@ public sealed class AnthropicLlmProvider : ILlmProvider
                         {
                             breakpointsSpent++;
                             blocksSinceBreakpoint = 0;
+                        }
+
+                        break;
+
+                    case ConversationContent.Opaque opaque:
+                        using (var document = System.Text.Json.JsonDocument.Parse(opaque.Json))
+                        {
+                            blocks.Add(new ContentBlockParam(document.RootElement.Clone()));
                         }
 
                         break;
@@ -324,7 +344,7 @@ public sealed class AnthropicLlmProvider : ILlmProvider
                 // second user turn in a row, and in the middle of a tool round it would stand between a
                 // tool_use and the result answering it.
                 messages[^1] = lastBlocks is null
-                    ? new MessageParam { Role = last.Role, Content = $"{reminder}\n\n{TextOf(prompt.History[^1])}" }
+                    ? new MessageParam { Role = last.Role, Content = $"{reminder}\n\n{lastText}" }
 
                     // After the blocks rather than before them, because a user message carrying tool results
                     // has to open with them.
@@ -365,13 +385,6 @@ public sealed class AnthropicLlmProvider : ILlmProvider
             Messages = messages,
         };
     }
-
-    /// <summary>
-    /// The text a turn of a single text block was built from — the one shape that goes on the wire as a
-    /// plain string rather than as a list of blocks.
-    /// </summary>
-    private static string TextOf(ConversationMessage turn) =>
-        turn.Content is [ConversationContent.Text only] ? only.Value : string.Empty;
 
     /// <summary>The web search declaration, or nothing.</summary>
     private static IEnumerable<ToolUnion> WebSearchTool(LlmRequest request)

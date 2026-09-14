@@ -20,6 +20,12 @@ public abstract record ConversationContent
 
     /// <summary>The answer to one <see cref="ToolUse"/>, matched by <paramref name="ToolUseId"/>.</summary>
     public sealed record ToolResult(string ToolUseId, string Content, bool IsError) : ConversationContent;
+
+    /// <summary>
+    /// A block Core does not read, sent back verbatim and in place to the provider named by
+    /// <paramref name="ProviderId"/> and to no other. Never drawn or spoken.
+    /// </summary>
+    public sealed record Opaque(string ProviderId, string Json) : ConversationContent;
 }
 
 /// <summary>One turn of conversation history.</summary>

@@ -217,10 +217,11 @@ public sealed class TurnLoop(
         var cut = _history.Count - TranscriptKept;
 
         // Forward past any message that would leave a dangling half: a tool result whose call is being
-        // dropped, and the assistant call it belongs to.
+        // dropped, the assistant call it belongs to, and a provider block tied to either.
         while (cut < _history.Count
                && _history[cut].Content.Any(part => part is ConversationContent.ToolResult
-                                                     or ConversationContent.ToolUse))
+                                                     or ConversationContent.ToolUse
+                                                     or ConversationContent.Opaque))
         {
             cut++;
         }
@@ -860,6 +861,10 @@ public sealed class TurnLoop(
         // the end of it without a space (#87).
         var previousRoundSpoke = false;
 
+        // The last round's content when it asked for no tools, and the standing offer appended to its answer.
+        IReadOnlyList<ConversationContent>? closingContent = null;
+        string? standingAdded = null;
+
         for (var round = 1; ; round++)
         {
             // The last round is offered no tools at all.
@@ -924,19 +929,12 @@ public sealed class TurnLoop(
 
             if (outcome.ToolUses.Count == 0)
             {
+                closingContent = outcome.Content;
                 break;
             }
 
-            // The assistant's own turn, carrying the calls it asked for.
-            var asked = new List<ConversationContent>();
-
-            if (answer.Length > 0)
-            {
-                asked.Add(new ConversationContent.Text(answer));
-            }
-
-            asked.AddRange(outcome.ToolUses);
-            pending.Add(new ConversationMessage(ConversationRole.Assistant, asked));
+            // The assistant's own turn, carrying the calls it asked for, in the order they arrived.
+            pending.Add(new ConversationMessage(ConversationRole.Assistant, [.. outcome.Content]));
 
             var results = new List<ConversationContent>();
 
@@ -1033,6 +1031,7 @@ public sealed class TurnLoop(
         {
             yield return new TurnEvent.TextDelta(" " + standingBefore);
             answer = $"{answer} {standingBefore}";
+            standingAdded = standingBefore;
 
             StandingSaid?.Invoke();
         }
@@ -1060,7 +1059,7 @@ public sealed class TurnLoop(
         {
             // The tool rounds are committed too, not just the question and the answer.
             _history.AddRange(pending);
-            _history.Add(new ConversationMessage(ConversationRole.Assistant, answer));
+            _history.Add(Closing(answer, closingContent, standingAdded));
 
             Bound();
         }
@@ -1077,10 +1076,40 @@ public sealed class TurnLoop(
         yield return new TurnEvent.Completed(new TurnResult(turnOutcome, TurnRoute.Model, answer, effortReported, cost));
     }
 
+    /// <summary>
+    /// The assistant message that ends a turn: the answer as prose, or the closing round's content in order
+    /// when it holds a provider block.
+    /// </summary>
+    private static ConversationMessage Closing(
+        string answer,
+        IReadOnlyList<ConversationContent>? closingContent,
+        string? standingAdded)
+    {
+        if (closingContent is null || !closingContent.Any(part => part is ConversationContent.Opaque))
+        {
+            return new ConversationMessage(ConversationRole.Assistant, answer);
+        }
+
+        List<ConversationContent> content = [.. closingContent];
+
+        if (standingAdded is not null)
+        {
+            content.Add(new ConversationContent.Text(standingAdded));
+        }
+
+        return new ConversationMessage(ConversationRole.Assistant, content);
+    }
+
     /// <summary>What one round of the model turn produced.</summary>
     private sealed class RoundOutcome
     {
+        private readonly System.Text.StringBuilder _run = new();
+
+        /// <summary>All of the round's text, for speaking.</summary>
         public System.Text.StringBuilder Reply { get; } = new();
+
+        /// <summary>Text runs, provider blocks and tool calls, in the order they arrived.</summary>
+        public List<ConversationContent> Content { get; } = [];
 
         public List<ConversationContent.ToolUse> ToolUses { get; } = [];
 
@@ -1089,6 +1118,46 @@ public sealed class TurnLoop(
         public LlmStopReason StopReason { get; set; } = LlmStopReason.Completed;
 
         public string? Failure { get; set; }
+
+        public void AddText(string text)
+        {
+            Reply.Append(text);
+            _run.Append(text);
+        }
+
+        public void Add(ConversationContent part)
+        {
+            EndRun();
+            Content.Add(part);
+
+            if (part is ConversationContent.ToolUse call)
+            {
+                ToolUses.Add(call);
+            }
+        }
+
+        /// <summary>Closes the text run in progress. Call once the stream has ended.</summary>
+        public void EndRun()
+        {
+            var text = _run.ToString().Trim();
+            _run.Clear();
+
+            if (text.Length > 0)
+            {
+                Content.Add(new ConversationContent.Text(text));
+            }
+        }
+
+        public void Reset()
+        {
+            _run.Clear();
+            Reply.Clear();
+            Content.Clear();
+            ToolUses.Clear();
+            Usage = LlmUsage.None;
+            StopReason = LlmStopReason.Completed;
+            Failure = null;
+        }
     }
 
     /// <summary>One turn is several rounds, and the bill is their sum.</summary>
@@ -1151,11 +1220,7 @@ public sealed class TurnLoop(
                 await _clock.DelayAsync(wait, cancellationToken).ConfigureAwait(false);
             }
 
-            outcome.Reply.Clear();
-            outcome.ToolUses.Clear();
-            outcome.Usage = LlmUsage.None;
-            outcome.StopReason = LlmStopReason.Completed;
-            outcome.Failure = null;
+            outcome.Reset();
             transient = false;
             var spokeThisAttempt = false;
 
@@ -1165,7 +1230,7 @@ public sealed class TurnLoop(
                 switch (streamEvent)
                 {
                     case LlmStreamEvent.TextDelta text:
-                        outcome.Reply.Append(text.Text);
+                        outcome.AddText(text.Text);
                         spokeThisAttempt = true;
                         yield return new TurnEvent.TextDelta(text.Text);
                         break;
@@ -1175,8 +1240,11 @@ public sealed class TurnLoop(
                         break;
 
                     case LlmStreamEvent.ToolUse toolUse:
-                        outcome.ToolUses.Add(
-                            new ConversationContent.ToolUse(toolUse.Id, toolUse.Name, toolUse.InputJson));
+                        outcome.Add(new ConversationContent.ToolUse(toolUse.Id, toolUse.Name, toolUse.InputJson));
+                        break;
+
+                    case LlmStreamEvent.Opaque opaque:
+                        outcome.Add(new ConversationContent.Opaque(activeProvider.Id, opaque.Json));
                         break;
 
                     case LlmStreamEvent.Completed completed:
@@ -1195,6 +1263,8 @@ public sealed class TurnLoop(
                         break;
                 }
             }
+
+            outcome.EndRun();
 
             // A configuration failure will fail identically next time, so retrying it only spends the
             // Commander's silence.

@@ -107,6 +107,9 @@ public abstract record LlmStreamEvent
     /// <summary>The model has asked for a tool, with its arguments fully assembled.</summary>
     public sealed record ToolUse(string Id, string Name, string InputJson) : LlmStreamEvent;
 
+    /// <summary>A content block that must go back to this provider unchanged, in its place in the reply.</summary>
+    public sealed record Opaque(string Json) : LlmStreamEvent;
+
     public sealed record Completed(LlmUsage Usage, LlmStopReason StopReason) : LlmStreamEvent;
 
     /// <summary>
