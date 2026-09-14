@@ -233,10 +233,10 @@ moves it, exactly as picking it up with a controller used to.
 No model is needed for any of this. The phrases above are matched by name, so they work with no
 provider configured.
 
-**Motion controllers are off out of the box** — see [below](#controllers) for why, and for what
-turning them back on gets you.
+**Motion controllers are on by default** — see [below](#controllers) for what turning them off
+costs.
 
-With them on, point a controller at the panel, pull the **trigger**, and it comes with you —
+Point a controller at the panel, pull the **trigger**, and it comes with you —
 position and angle together, so it feels attached rather than dragged. Let go and it stays.
 
 While a ray is on the panel, Directive 47 asks SteamVR for the trigger and grip of that controller
@@ -248,8 +248,8 @@ too. With it on, the hand-back is what returns the trigger — 0.48.6 meant to d
 and did not, because SteamVR refused the call it made and said so only in d47's log; 0.52.2 does,
 and its log says when the controllers are claimed and given back, and **"headset overlay off"**
 then **"headset overlay on"** still frees a controller on an older build. A controller that stops
-answering everything some way into a session is a different fault, open as
-[#1](https://github.com/dseelinger/d47/issues/1).
+answering everything some way into a session is a different fault, tracked as
+[#1](https://github.com/dseelinger/d47/issues/1) and closed as not reproducing on 0.111.3.
 
 Nothing turns it to face you while you hold it. A panel forced upright and square cannot be
 tilted to read from below or angled to sit beside you, which is most of what moving one is for.
@@ -338,33 +338,16 @@ that is the one headset surface where a controller can genuinely press it.
 
 #### Motion controllers {#controllers}
 
-**Off out of the box, and that is a withdrawal rather than a preference.** A controller put down
-while Directive 47 was connected to SteamVR, that then went to standby, never woke up on its own —
-every time. Put down while Directive 47 was *not* connected, it always did. That is
-[#1](https://github.com/dseelinger/d47/issues/1), and it is not understood.
+**On by default for new installs.** An install that already had a settings file keeps whatever
+that file held — the default only reaches a fresh one.
 
-Directive 47 read your controllers' positions about ninety times a second for the whole session,
-whether or not you were pointing at anything — around 350,000 times in one hour-long session in
-which no ray ever touched the panel. A read like that running across the moment SteamVR puts a
-controller to sleep is the one interaction the evidence points at, and turning it off is the only
-way to test it.
-
-**What you lose while it is off.** Nothing on the panel can be pressed in the headset: no buttons,
+**What you lose with them off.** Nothing on the panel can be pressed in the headset: no buttons,
 no toggles, no checklist ticks, no combo boxes, no on-panel keyboard, no scrollbar dragging, no
 grip-to-go-back, and no Settings tab. You cannot grab the panel and carry it.
 
 **What still works.** Everything by voice: moving between tabs, going back, scrolling, answering a
 question the panel is already asking, and placing the panel — see
 [Moving it about](#moving-it-about) above, which is the replacement for the carry.
-
-**It is not forever.** Turn it back on and everything above returns, exactly as it was. A session
-with it on and a session with it off are the experiment; if the fault comes back with it on, that
-is the answer, and if it happens anyway with it off, the controller was never the cause.
-
-**The row wears a warning badge, and the advice on it is deliberate**: when you finish trying it
-on, turn it back off *and restart Directive 47*. Turning it off mid-session stops the pose reads,
-but the session has already touched the controllers by then — the restart is what puts you back in
-a session that never did, which is the state the evidence above calls safe.
 
 > "motion controllers on" / "motion controllers off"
 

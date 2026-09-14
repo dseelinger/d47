@@ -92,12 +92,6 @@ public sealed record SettingRow
     /// <summary>The short form.</summary>
     public required string Help { get; init; }
 
-    /// <summary>
-    /// A hazard the Commander is accepting by using this row, or null on the rows that carry none —
-    /// which is all of them but one (#237).
-    /// </summary>
-    public string? Warning { get; init; }
-
     public required SettingKind Kind { get; init; }
 
     /// <summary>

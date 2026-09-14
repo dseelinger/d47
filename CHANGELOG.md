@@ -33,6 +33,10 @@ Fleet › Ships, Routing › Community Goal, Adventures, or the Checklist tab's 
 under "On other tabs" with a button that opens the tab and root it belongs to, its own strip open
 where it has one.
 
+Motion controllers default on for a new install — a settings file that already exists keeps
+whatever it held, so an existing install turns them on with "motion controllers on". The Motion
+controllers row no longer carries a warning pill or sentence.
+
 ## 0.128.0 — Settings arranged by area
 
 Fleet › Ships, Routing › Community Goal and Adventures now carry a "Settings for this page" strip of

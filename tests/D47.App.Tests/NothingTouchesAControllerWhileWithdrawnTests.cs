@@ -10,11 +10,11 @@ namespace D47.App.Tests;
 /// hopeful.</summary>
 public class NothingTouchesAControllerWhileWithdrawnTests
 {
-    /// <summary>Out of the box d47 does not touch them at all.</summary>
+    /// <summary>Out of the box d47 uses them.</summary>
     [Fact]
-    public void TheyAreOffOutOfTheBox()
+    public void TheyAreOnOutOfTheBox()
     {
-        Assert.False(new D47.Core.Configuration.D47Settings().Vr.Controllers);
+        Assert.True(new D47.Core.Configuration.D47Settings().Vr.Controllers);
     }
 
     /// <summary>One choke point for every per-device call.</summary>

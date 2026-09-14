@@ -253,7 +253,7 @@ public sealed record VrSettings
     /// Whether d47 touches the motion controllers at all — the action manifest, the trigger, the grip,
     /// and the ninety-times-a-second pose read behind the aim ray (#198).
     /// </summary>
-    public bool Controllers { get; init; }
+    public bool Controllers { get; init; } = true;
 
     /// <summary>Where the full panel sits and what it looks like.</summary>
     public VrSurfaceSettings Panel { get; init; } = new();

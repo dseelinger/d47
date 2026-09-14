@@ -271,14 +271,11 @@ public static class VrCapability
             {
                 Key = ControllersKey,
                 Advanced = true,
-                // Two sentences and a badge, since #237.
                 Label = "Motion controllers",
                 Help = "Whether D47 uses your motion controllers - the pointing ray, the trigger "
                        + "and the grip. With it off nothing on the panel can be pressed in the "
                        + "headset and the panel cannot be grabbed - say \"move the panel left\" "
                        + "instead.",
-                Warning = "Known bug: with this on, a controller you put down may never wake from "
-                          + "standby. When you finish trying it, turn it back off and restart D47.",
                 Kind = SettingKind.Toggle,
                 DocsAnchor = "controllers",
                 AppliesWhen = s => s.Vr.Enabled,

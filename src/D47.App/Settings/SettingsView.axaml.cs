@@ -1952,7 +1952,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         _query.Length == 0
         || row.Label.Contains(_query, StringComparison.OrdinalIgnoreCase)
         || D47.Core.Interface.HelpLinks.Plain(row.Help).Contains(_query, StringComparison.OrdinalIgnoreCase)
-        || row.Warning?.Contains(_query, StringComparison.OrdinalIgnoreCase) == true
         || row.Key.Contains(_query, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
@@ -2186,26 +2185,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             header.Children.Add(pill);
         }
 
-        if (row.Warning is not null)
-        {
-            // The badge half of a row's Warning (#237): the same pill the declarations above use, in the
-            // danger colour, so a hazard reads as one at a glance rather than as another property tag.
-            var tag = new TextBlock { Text = "warning", FontSize = TypeScale.Small, VerticalAlignment = VerticalAlignment.Center };
-            Themed(tag, TextBlock.ForegroundProperty, ThemeManager.DangerKey);
-
-            var pill = new Border
-            {
-                Padding = new Thickness(6, 1),
-                CornerRadius = new CornerRadius(8),
-                BorderThickness = new Thickness(1),
-                VerticalAlignment = VerticalAlignment.Center,
-                Child = tag,
-            };
-            Themed(pill, Border.BorderBrushProperty, ThemeManager.DangerKey);
-
-            header.Children.Add(pill);
-        }
-
         // **The help is behind a glyph now** (asked for 2026-09-01 — *"That is WAY too much text"*).
         var help = new TextBlock
         {
@@ -2216,18 +2195,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             IsVisible = false,
         };
         Themed(help, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
-
-        // The sentence half (#237): under the help, in the danger colour, because the one thing this line
-        // must not do is read as more background.
-        var warning = new TextBlock
-        {
-            Text = row.Warning,
-            FontSize = TypeScale.Secondary,
-            Margin = new Thickness(0, 2, 0, 0),
-            TextWrapping = TextWrapping.Wrap,
-            IsVisible = !string.IsNullOrWhiteSpace(row.Warning),
-        };
-        Themed(warning, TextBlock.ForegroundProperty, ThemeManager.DangerKey);
 
         var message = new TextBlock
         {
@@ -2320,7 +2287,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         var caption = new StackPanel { Spacing = 0 };
         caption.Children.Add(header);
         caption.Children.Add(help);
-        caption.Children.Add(warning);
         caption.Children.Add(keyLine);
 
         if (row is { ValueAsHint: true, Binding: { } hinted })
