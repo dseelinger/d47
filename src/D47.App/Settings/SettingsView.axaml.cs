@@ -155,6 +155,27 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// </summary>
     private string? _tabPlaceId;
 
+    /// <summary>The tab strip's own disclosure content and chevron, so a search match can open it (#222).</summary>
+    private StackPanel? _tabStripContent;
+
+    private TextBlock? _tabStripChevron;
+
+    /// <summary>Every named group in every place, for a query that matches a group's title or help (#222).</summary>
+    private readonly List<GroupView> _groups = [];
+
+    /// <summary>Every row a <see cref="SettingsLayout.Tabs"/> place resolves to, for the "On other tabs" list a
+    /// query builds on the settings page (#222).</summary>
+    private readonly List<(SettingsTabPlace Tab, SettingRow Row)> _tabPlaceRows = [];
+
+    /// <summary>The "On other tabs" section and its list of matches, built once on the settings page and empty
+    /// off it (#222).</summary>
+    private Control? _otherTabsSection;
+
+    private StackPanel? _otherTabsList;
+
+    /// <summary>Opens the tab and root a search match under "On other tabs" names (#222).</summary>
+    private Action<string>? _openTabPlace;
+
     public SettingsView()
     {
         InitializeComponent();
@@ -319,12 +340,28 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         _areaHeaderTitle = null;
         _areaHeaderSentence = null;
         _areaDropdown = null;
+        _groups.Clear();
+        _tabPlaceRows.Clear();
+        _otherTabsSection = null;
+        _otherTabsList = null;
+        _tabStripContent = null;
+        _tabStripChevron = null;
 
         if (_tabPlaceId is { } placeId)
         {
             BuildTabPlace(settings, placeId);
             return;
         }
+
+        foreach (var tab in SettingsLayout.Tabs)
+        {
+            foreach (var row in settings.RowsForPlace(tab.Id))
+            {
+                _tabPlaceRows.Add((tab, row));
+            }
+        }
+
+        _otherTabsSection = BuildOtherTabsSection(out _otherTabsList);
 
         _areaDropdown = BuildAreaDropdown();
         Cards.Children.Add(_areaDropdown);
@@ -421,7 +458,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 NavItems.Children.Add(nav.Item);
 
                 _sections.Add(
-                    new SectionView(place.Id, place.Title, card, content, heading, nav.Item, nav.Bar, nav.Text)
+                    new SectionView(
+                        place.Id, place.Title, place.Terms, card, content, heading, nav.Item, nav.Bar, nav.Text)
                     {
                         Expand = expand,
                         FoldButton = foldButton,
@@ -465,6 +503,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         var expanded = _viewState.IsExpanded(placeId, startCollapsed: true);
         content.IsVisible = expanded;
+        _tabStripContent = content;
 
         var chevron = new TextBlock
         {
@@ -474,6 +513,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             VerticalAlignment = VerticalAlignment.Center,
         };
         Themed(chevron, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        _tabStripChevron = chevron;
 
         var heading = new TextBlock
         {
@@ -547,17 +587,24 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         foreach (var group in place.Groups)
         {
-            // A group heading, stated once, in place of the same sentence on every row.
+            // A group heading, stated once, in place of the same sentence on every row — and, once it has
+            // one, something a query can match to reveal every row under it (#222).
+            var groupIndex = -1;
+
             if (group.Title is { } groupTitle)
             {
-                content.Children.Add(BuildGroupHeading(groupTitle, group.Help));
+                var (groupHeading, headingText, helpText) = BuildGroupHeading(groupTitle, group.Help);
+
+                content.Children.Add(groupHeading);
+                groupIndex = _groups.Count;
+                _groups.Add(new GroupView(index, groupTitle, group.Help, headingText, helpText));
             }
 
             foreach (var entry in group.Entries)
             {
                 foreach (var row in settings.RowsForEntry(entry))
                 {
-                    var view = BuildRow(owners[row.Key], row) with { Section = index };
+                    var view = BuildRow(owners[row.Key], row) with { Section = index, GroupIndex = groupIndex };
 
                     if (entry.Under)
                     {
@@ -736,7 +783,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         return (card, content, heading, Expand, foldButton);
     }
 
-    private Control BuildGroupHeading(string group, string? help)
+    private (Control Container, TextBlock Heading, TextBlock? Help) BuildGroupHeading(string group, string? help)
     {
         // Full text colour at the row-label size, not muted at help-text size.
         var heading = new TextBlock
@@ -756,14 +803,16 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         stack.Children.Add(rule);
         stack.Children.Add(heading);
 
+        TextBlock? note = null;
+
         if (!string.IsNullOrWhiteSpace(help))
         {
-            var note = new TextBlock { Text = help, FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap };
+            note = new TextBlock { Text = help, FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap };
             Themed(note, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
             stack.Children.Add(note);
         }
 
-        return stack;
+        return (stack, heading, note);
     }
 
     /// <summary>An area's title in the nav; pressing it selects the area (#220).</summary>
@@ -793,7 +842,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     }
 
     /// <summary>The area's title, drawn once above its group of cards while a query is active (#220).</summary>
-    private Control BuildFilterAreaHeading(string title)
+    private TextBlock BuildFilterAreaHeading(string title)
     {
         var heading = new TextBlock
         {
@@ -805,6 +854,68 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         Themed(heading, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
 
         return heading;
+    }
+
+    /// <summary>
+    /// Marks the "On other tabs" section, for a test to find it (#222).
+    /// </summary>
+    public const string OtherTabsName = "OtherTabs";
+
+    /// <summary>
+    /// A query's matches on tab places this page has no card for — every row shown by name, and a
+    /// button that opens the tab and root it lives on. Built once; <see cref="UpdateOtherTabs"/> fills
+    /// it in on every <see cref="Refresh"/> (#222).
+    /// </summary>
+    private Control BuildOtherTabsSection(out StackPanel list)
+    {
+        var heading = new TextBlock
+        {
+            Text = "On other tabs",
+            FontSize = TypeScale.Subheading,
+            FontWeight = FontWeight.Medium,
+            Margin = new Thickness(18, 18, 18, 4),
+        };
+        Themed(heading, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+
+        list = new StackPanel { Spacing = 6, Margin = new Thickness(18, 0, 18, 12) };
+
+        return new StackPanel
+        {
+            Name = OtherTabsName,
+            IsVisible = false,
+            Children = { heading, list },
+        };
+    }
+
+    /// <summary>One matched row on another tab, and the button that opens it there (#222).</summary>
+    private Control BuildOtherTabRow(SettingsTabPlace tab, SettingRow row)
+    {
+        var text = new TextBlock
+        {
+            Text = $"{row.Label} — on {tab.Title}",
+            FontSize = TypeScale.Body,
+            VerticalAlignment = VerticalAlignment.Center,
+            TextWrapping = TextWrapping.Wrap,
+        };
+        Themed(text, TextBlock.ForegroundProperty, ThemeManager.TextKey);
+
+        var button = new Button
+        {
+            Content = tab.Strip ? $"Open {tab.Title}" : $"Open the {tab.Title} tab",
+            FontSize = TypeScale.Secondary,
+            Padding = new Thickness(8, 2),
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(12, 0, 0, 0),
+        };
+
+        button.Click += (_, _) => _openTabPlace?.Invoke(tab.RootKey);
+
+        var line = new DockPanel { LastChildFill = true };
+        DockPanel.SetDock(button, Dock.Right);
+        line.Children.Add(button);
+        line.Children.Add(text);
+
+        return line;
     }
 
     /// <summary>The selected area's own title and sentence, drawn above its cards (#220).</summary>
@@ -1428,13 +1539,41 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         // them — what "Show N more" counts (#221).
         var folded = new int[_sections.Count];
 
-        // Which sections the query names.
+        // Which areas the query names, by title (#222).
+        var areaNamed = new bool[_navAreas.Count];
+
+        for (var a = 0; a < _navAreas.Count; a++)
+        {
+            areaNamed[a] = _query.Length > 0
+                           && _navAreas[a].Title.Contains(_query, StringComparison.OrdinalIgnoreCase);
+        }
+
+        // Which sections the query names — by the section's own title, one of its search terms, or the
+        // area holding it (#222).
         var named = new bool[_sections.Count];
 
         for (var i = 0; i < _sections.Count; i++)
         {
+            var section = _sections[i];
+
             named[i] = _query.Length > 0
-                       && _sections[i].Title.Contains(_query, StringComparison.OrdinalIgnoreCase);
+                       && (section.Title.Contains(_query, StringComparison.OrdinalIgnoreCase)
+                           || section.Terms.Any(term => term.Contains(_query, StringComparison.OrdinalIgnoreCase))
+                           || areaNamed[AreaOf(i)]);
+        }
+
+        // Which named groups the query matches, by title or help (#222).
+        var groupNamed = new bool[_groups.Count];
+
+        for (var g = 0; g < _groups.Count; g++)
+        {
+            var group = _groups[g];
+
+            groupNamed[g] = _query.Length > 0
+                            && (group.Title.Contains(_query, StringComparison.OrdinalIgnoreCase)
+                                || (group.Help is { } help
+                                    && D47.Core.Interface.HelpLinks.Plain(help)
+                                        .Contains(_query, StringComparison.OrdinalIgnoreCase)));
         }
 
         foreach (var (rows, button) in _cardResets)
@@ -1466,7 +1605,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
                 var shown = applies
                             && (!isFolded || revealed)
-                            && (Matches(row.Row) || (row.Section >= 0 && named[row.Section]));
+                            && (Matches(row.Row)
+                                || (row.Section >= 0 && named[row.Section])
+                                || (row.GroupIndex >= 0 && groupNamed[row.GroupIndex]));
 
                 row.Container.IsVisible = shown;
                 row.Refresh();
@@ -1521,7 +1662,58 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             button.Content = revealed ? "Show fewer" : $"Show {folded[i]} more";
         }
 
+        // An area's title, marked in both places it is written (#222).
+        foreach (var area in _navAreas)
+        {
+            Paint(area.HeadingText, area.Title);
+            Paint(area.FilterHeading, area.Title);
+        }
+
+        // A group's own title and help, the other two things a query can match (#222).
+        foreach (var group in _groups)
+        {
+            Paint(group.HeadingText, group.Title);
+
+            if (group.HelpText is { } helpText && group.Help is { } help)
+            {
+                Paint(helpText, help);
+            }
+        }
+
+        UpdateOtherTabs();
         ApplyFilterToCards(showing, folded, named);
+    }
+
+    /// <summary>
+    /// Fills in the "On other tabs" section with this query's matches on the tab places — empty and
+    /// hidden with no query, and always empty off the settings page (#222).
+    /// </summary>
+    private void UpdateOtherTabs()
+    {
+        if (_otherTabsSection is not { } section || _otherTabsList is not { } list || _settings is null)
+        {
+            return;
+        }
+
+        list.Children.Clear();
+
+        if (_query.Length == 0)
+        {
+            section.IsVisible = false;
+            return;
+        }
+
+        var matches = _tabPlaceRows
+            .Where(entry => entry.Row.Applies(_settings.Current) && !entry.Row.DrawnElsewhere)
+            .Where(entry => Matches(entry.Row))
+            .ToList();
+
+        foreach (var (tab, row) in matches)
+        {
+            list.Children.Add(BuildOtherTabRow(tab, row));
+        }
+
+        section.IsVisible = matches.Count > 0;
     }
 
     /// <summary>What the surface is being filtered by, or empty when it is not.</summary>
@@ -1861,6 +2053,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
                 order.Add(area.FilterHeading);
                 order.AddRange(cards.Select(i => (Control)_sections[i].Card));
+            }
+
+            if (_otherTabsSection is { } otherTabs)
+            {
+                order.Add(otherTabs);
             }
 
             return order;
@@ -3740,6 +3937,29 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// <summary>Gives the card marks somewhere to go that is not a browser (asked for 2026-08-23).</summary>
     public void EnableHelp(Action<string> open) => _openHelp = open;
 
+    /// <summary>
+    /// Gives an "On other tabs" match somewhere to go — this view has no way to change tab itself
+    /// (#222). <paramref name="open"/> takes the matched <see cref="SettingsTabPlace.RootKey"/>.
+    /// </summary>
+    public void EnableTabJump(Action<string> open) => _openTabPlace = open;
+
+    /// <summary>
+    /// Opens this instance's own tab strip — a no-op off a tab place, or where it is already open. What
+    /// an "On other tabs" match asks for once the tab and root it names are on screen (#222).
+    /// </summary>
+    public void ExpandTabStrip()
+    {
+        if (_tabPlaceId is not { } placeId || _tabStripContent is not { } content
+            || _tabStripChevron is not { } chevron || content.IsVisible)
+        {
+            return;
+        }
+
+        content.IsVisible = true;
+        chevron.Text = "▾";
+        SaveViewState(state => state.With(placeId, true));
+    }
+
     /// <summary>A card's question mark.</summary>
     private void OpenDocs(string capabilityId)
     {
@@ -3758,6 +3978,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     private sealed record SectionView(
         string PlaceId,
         string Title,
+
+        /// <summary>The place's own search abbreviations — "ptt" for Microphone, and so on (#222).</summary>
+        IReadOnlyList<string> Terms,
         Border Card,
         StackPanel Content,
 
@@ -3797,7 +4020,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         TextBlock HeadingText,
 
         /// <summary>Drawn above this area's cards while a query is narrowing every area at once.</summary>
-        Control FilterHeading,
+        TextBlock FilterHeading,
         int First,
         int Count)
     {
@@ -3809,10 +4032,20 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         public IDisposable? Fill { get; set; }
     }
 
+    /// <summary>A named group heading within a place, so a query matching it reveals every row under it
+    /// (#222).</summary>
+    private sealed record GroupView(int Section, string Title, string? Help, TextBlock HeadingText, TextBlock? HelpText);
+
     private sealed record RowView(SettingRow Row, Control Container, Action Refresh)
     {
         /// <summary>Which card this row is in, so a filter can hide a card that has emptied.</summary>
         public int Section { get; init; } = -1;
+
+        /// <summary>
+        /// Which of <see cref="_groups"/> this row is under, or −1 where its group has no title to
+        /// search (#222).
+        /// </summary>
+        public int GroupIndex { get; init; } = -1;
 
         /// <summary>The control the Commander touches, so a slow answer can shut it.</summary>
         public Control? Control { get; init; }

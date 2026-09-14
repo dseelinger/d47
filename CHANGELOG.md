@@ -19,6 +19,14 @@ A section whose rows are all hidden behind "Show every setting" now keeps its ca
 more" button in place of its rows; pressing it draws that section's own hidden rows without opening
 any other section's. Following a help card into a setting still unfolds only the section it lands on.
 
+A search now also matches an area's name, a section's name or one of its search terms (Microphone
+answers to "mic" and "ptt", Its voice to "tts", Speech recognition to "stt" and "whisper", Privacy and
+egress to "telemetry" and "data"), and a named group's title or help — each shows every row under it,
+marked the same way a row's own words are. A row that lives on a tab rather than the Settings page —
+Fleet › Ships, Routing › Community Goal, Adventures, or the Checklist tab's own row — now shows up
+under "On other tabs" with a button that opens the tab and root it belongs to, its own strip open
+where it has one.
+
 ## 0.128.0 — Settings arranged by area
 
 Fleet › Ships, Routing › Community Goal and Adventures now carry a "Settings for this page" strip of

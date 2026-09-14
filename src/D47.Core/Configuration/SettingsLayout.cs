@@ -26,7 +26,9 @@ public sealed record SettingsArea(string Id, string Title, string Sentence, IRea
 /// D47.App.
 /// </param>
 /// <param name="Strip">Whether the tab draws these rows with its own chrome stripped to match the page.</param>
-public sealed record SettingsTabPlace(string Id, string RootKey, bool Strip, IReadOnlyList<SettingsEntry> Entries);
+/// <param name="Title">How this tab and root read together, for a search match found elsewhere (#222).</param>
+public sealed record SettingsTabPlace(
+    string Id, string RootKey, bool Strip, string Title, IReadOnlyList<SettingsEntry> Entries);
 
 /// <summary>
 /// The hand-authored map of every settings row into areas and places (#217), the precedent being
@@ -103,7 +105,7 @@ public static class SettingsLayout
                     "Microphone",
                     "The input device, and how D47 decides you are talking to it.",
                     "listening",
-                    [],
+                    ["mic", "ptt"],
                     false,
                     [
                         G(
@@ -141,7 +143,7 @@ public static class SettingsLayout
                     "Speech recognition",
                     "Which model turns speech into words, and where it runs.",
                     "listening",
-                    [],
+                    ["stt", "whisper"],
                     false,
                     [
                         G([E("listening.model"), E("listening.useGpu")]),
@@ -151,7 +153,7 @@ public static class SettingsLayout
                     "Its voice",
                     "Where spoken replies are synthesised, in which voice, and what it costs.",
                     "speech",
-                    [],
+                    ["tts", "text to speech"],
                     false,
                     [
                         G(
@@ -560,7 +562,7 @@ public static class SettingsLayout
                     "Privacy and egress",
                     "What D47 forgets on request, and exactly what leaves this machine.",
                     "privacy",
-                    [],
+                    ["telemetry", "data"],
                     false,
                     [
                         G(
@@ -618,18 +620,20 @@ public static class SettingsLayout
 
     public static readonly IReadOnlyList<SettingsTabPlace> Tabs =
     [
-        new SettingsTabPlace("fleet-ships", "loadout.ships", true, [E("ships.remembered"), E("ships.art")]),
+        new SettingsTabPlace(
+            "fleet-ships", "loadout.ships", true, "Fleet › Ships", [E("ships.remembered"), E("ships.art")]),
         new SettingsTabPlace(
             "routing-community-goal",
             "routing.communityGoal",
             true,
+            "Routing › Community Goal",
             [
                 E("knowledge.inaraKey"),
                 E("callouts.weekBoundaryDay"),
                 E("callouts.weekBoundaryHourUtc", under: true),
             ]),
-        new SettingsTabPlace("adventures", "adventures", true, [E("knowledge.notablePlaces")]),
-        new SettingsTabPlace("checklist", "checklist", false, [E("checklists.summary")]),
+        new SettingsTabPlace("adventures", "adventures", true, "Adventures", [E("knowledge.notablePlaces")]),
+        new SettingsTabPlace("checklist", "checklist", false, "Checklist", [E("checklists.summary")]),
     ];
 
     /// <summary>

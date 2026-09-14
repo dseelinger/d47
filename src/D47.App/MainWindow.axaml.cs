@@ -724,8 +724,36 @@ public partial class MainWindow : Window
         // 2026-08-23).
         view.EnableHelp(capabilityId => Panel.OpenHelpFor(capabilityId));
 
+        // An "On other tabs" match has no way to change tab itself (#222).
+        view.EnableTabJump(OpenTabPlace);
+
         _settingsPage = view;
         return view;
+    }
+
+    /// <summary>Every tab strip built so far, by its <see cref="SettingsTabPlace.Id"/>, so a search match found
+    /// on the settings page can open the one it names (#222).</summary>
+    private readonly Dictionary<string, SettingsView> _settingsStrips = [];
+
+    /// <summary>
+    /// Puts the panel on the tab and root an "On other tabs" match names, and opens that tab's own
+    /// strip once it is on screen (#222).
+    /// </summary>
+    private void OpenTabPlace(string rootKey)
+    {
+        var tab = SettingsLayout.Tabs.FirstOrDefault(t => string.Equals(t.RootKey, rootKey, StringComparison.Ordinal));
+
+        if (tab is null)
+        {
+            return;
+        }
+
+        Panel.Nav.Show(rootKey);
+
+        if (tab.Strip && _settingsStrips.TryGetValue(tab.Id, out var strip))
+        {
+            strip.ExpandTabStrip();
+        }
     }
 
     /// <summary>
@@ -752,6 +780,7 @@ public partial class MainWindow : Window
         var view = new SettingsView();
 
         AttachSettingsView(view, tab.Id);
+        _settingsStrips[tab.Id] = view;
 
         return view;
     }
