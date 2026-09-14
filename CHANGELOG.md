@@ -8,6 +8,12 @@
 
 ## 0.129.0 — Settings one area at a time
 
+Every two-state control in the app is now drawn as a switch — the checklist's Goals and Include
+Partial Grades toggles, the engineer directory's two filters and a pinned blueprint, the route
+planners' loop and pad checkboxes, the market page's three filters, the logbook's date range, Help
+Improve's two toggles, the key editor's reveal, an adventure's "This ship only", and the two
+keyboard swaps — in place of a ticked square or a button that changed colour to show a state.
+
 The Settings page shows one area at a time: the nav lists every area, but only the selected one's
 sections, and the page opens on that area's own title and sentence above its cards. Following a help
 card into a setting, or reopening the page on a setting you were last reading, switches to its area

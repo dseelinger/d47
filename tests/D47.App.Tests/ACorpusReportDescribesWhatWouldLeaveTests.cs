@@ -28,7 +28,7 @@ public class ACorpusReportDescribesWhatWouldLeaveTests
 
  // The history half of the merged window, which is one press in: one donation page for every
         // reading opens on the excerpt, and the toggle is what asks for the other half.
-        Control<CheckBox>(window, "IncludeHistory").IsChecked = true;
+        Control<ToggleSwitch>(window, "IncludeHistory").IsChecked = true;
         Dispatcher.UIThread.RunJobs();
 
         return window;

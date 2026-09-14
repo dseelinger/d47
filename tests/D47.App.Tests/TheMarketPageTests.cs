@@ -312,8 +312,7 @@ public class TheMarketPageTests
 
         panel.GetVisualDescendants().OfType<TextBox>().Single(box => box.PlaceholderText == "which one").Text
             = "Tritium";
-        panel.GetVisualDescendants().OfType<CheckBox>().Single(box => Equals(box.Content, "Include surface stations"))
-            .IsChecked = true;
+        Switches.Single(panel, "Include surface stations").IsChecked = true;
 
         panel.GetVisualDescendants().OfType<Button>().Single(b => Equals(b.Content, "Find it"))
             .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));

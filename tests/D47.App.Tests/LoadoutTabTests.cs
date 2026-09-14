@@ -313,11 +313,11 @@ public class LoadoutTabTests
     }
 
     /// <summary>
-    /// A plan carries the journal's verdict and no checkbox: a derived item's progress is a diff
+    /// A plan carries the journal's verdict and no tick: a derived item's progress is a diff
     /// against live state, and a tick would be undone or left standing and lying by the next read.
     /// </summary>
     [AvaloniaFact]
-    public void APlanCarriesAVerdictAndNoCheckbox()
+    public void APlanCarriesAVerdictAndNoTick()
     {
         var surface = Open();
 
@@ -331,7 +331,7 @@ public class LoadoutTabTests
 
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Empty(surface.Panel.GetVisualDescendants().OfType<CheckBox>());
+        Assert.Empty(Ticks.On(surface.Panel));
 
         // The engines are fitted and unengineered, so the verdict is that it is not done - said, rather than
         // left blank.

@@ -144,9 +144,9 @@ public class ChecklistTabTests
 
         var ticks = Ticks.On(panel);
 
-        // One authored item and one derived one, and exactly one checkbox.
+        // One authored item and one derived one, and exactly one switch.
         Assert.Single(ticks);
-        Assert.Equal("buy limpets", ticks[0].Content);
+        Assert.Equal("buy limpets", Ticks.Label(ticks[0]));
 
         window.Close();
     }
@@ -211,8 +211,8 @@ public class ChecklistTabTests
 
         // The innermost border that holds the line, which is the card.
         var second = panel.GetVisualDescendants().OfType<Border>()
-            .Last(border => border.GetVisualDescendants().OfType<CheckBox>()
-                .Any(tick => tick.Content as string == "fit a fuel scoop"));
+            .Last(border => border.GetVisualDescendants().OfType<ToggleSwitch>()
+                .Any(tick => Ticks.Label(tick) == "fit a fuel scoop"));
 
         second.RaiseEvent(new Avalonia.Input.PointerPressedEventArgs(
             second,
@@ -316,8 +316,8 @@ public class ChecklistTabTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Contains(
-            panel.GetVisualDescendants().OfType<CheckBox>(),
-            tick => tick.Content as string == "buy limpets");
+            panel.GetVisualDescendants().OfType<ToggleSwitch>(),
+            tick => Ticks.Label(tick) == "buy limpets");
 
         window.Close();
     }
@@ -611,8 +611,7 @@ public class ChecklistTabTests
         // Unchecked stays exactly what shipped.
         Assert.DoesNotContain(Lines(panel), line => line.Contains("Grade 5", StringComparison.Ordinal));
 
-        var box = panel.GetVisualDescendants().OfType<CheckBox>()
-            .Single(check => check.Content?.ToString() == "Include Partial Grades");
+        var box = Switches.Single(panel, "Include Partial Grades");
 
         box.IsChecked = true;
         Dispatcher.UIThread.RunJobs();
@@ -642,9 +641,7 @@ public class ChecklistTabTests
 
         var (window, panel) = Open(checklists);
 
-        Assert.DoesNotContain(
-            panel.GetVisualDescendants().OfType<CheckBox>(),
-            check => check.Content?.ToString() == "Include Partial Grades");
+        Assert.Empty(Switches.Labelled(panel, "Include Partial Grades"));
 
         window.Close();
     }

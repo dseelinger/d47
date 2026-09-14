@@ -1,14 +1,12 @@
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
-using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
-using Avalonia.Styling;
 using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Capabilities;
@@ -25,8 +23,8 @@ public sealed class SecretEditor : UserControl
     private readonly SettingRow _row;
     private readonly SettingsService _settings;
     private readonly TextBox _box;
-    private readonly ToggleButton _reveal;
-    private readonly Path _revealSlash;
+    private readonly StackPanel _reveal;
+    private readonly ToggleSwitch _revealSwitch;
     private readonly Button _clear;
     private readonly Button _store;
     private readonly Button _check;
@@ -37,7 +35,7 @@ public sealed class SecretEditor : UserControl
 
     private SecretCheck _result = SecretCheck.Untested;
 
-    /// <summary>Marks the two glyph controls that live inside the field rather than beside it.</summary>
+    /// <summary>Marks the glyph control that lives inside the field rather than beside it.</summary>
     private const string InBoxClass = "in-box";
 
     /// <summary>Raised after a key is stored or cleared, so a host can advance or re-read state.</summary>
@@ -57,31 +55,15 @@ public sealed class SecretEditor : UserControl
 
         // Masked by default with a reveal, because the commonest reason a key does not work is that it was
         // pasted wrong and a Commander cannot see that through bullets.
-        _revealSlash = Stroked("M 3.8,3.8 L 20.2,20.2");
-        _revealSlash.IsVisible = false;
+        (_reveal, _, _revealSwitch) = LabeledSwitch.Build("Show key");
 
-        _reveal = new ToggleButton
+        _revealSwitch.IsCheckedChanged += (_, _) =>
         {
-            Content = Glyph(
-                16,
-                Stroked("M 1.5,12 C 4.5,6 8,3.5 12,3.5 C 16,3.5 19.5,6 22.5,12"
-                        + " C 19.5,18 16,20.5 12,20.5 C 8,20.5 4.5,18 1.5,12 Z"),
-                Filled(new EllipseGeometry(new Rect(8.1, 8.1, 7.8, 7.8))),
-                _revealSlash),
-        };
-
-        InTheBox(_reveal, "Show the key while you paste it");
-
-        _reveal.IsCheckedChanged += (_, _) =>
-        {
-            var shown = _reveal.IsChecked == true;
+            var shown = _revealSwitch.IsChecked == true;
             _box.PasswordChar = shown ? '\0' : '•';
 
-            // The eye is struck through while the key is legible, so the glyph says what is true now rather
-            // than what pressing it would do.
-            _revealSlash.IsVisible = shown;
-            ToolTip.SetTip(_reveal, shown ? "Hide the key" : "Show the key while you paste it");
-            AutomationProperties.SetName(_reveal, shown ? "Hide the key" : "Show the key");
+            ToolTip.SetTip(_revealSwitch, shown ? "Hide the key" : "Show the key while you paste it");
+            AutomationProperties.SetName(_revealSwitch, shown ? "Hide the key" : "Show the key");
         };
 
         // An undo arrow, and deliberately the one control here that asks before it acts: it blanks the box,
@@ -126,13 +108,8 @@ public sealed class SecretEditor : UserControl
 
         Themed(_message, TextBlock.ForegroundProperty, ThemeManager.DangerKey);
 
-        // Both glyphs ride inside the field.
-        _box.InnerRightContent = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            VerticalAlignment = VerticalAlignment.Center,
-            Children = { _reveal, _clear },
-        };
+        // The clear glyph rides inside the field; the reveal switch sits beside it (#223).
+        _box.InnerRightContent = _clear;
 
         // "Save" with nothing behind it, "Overwrite" once there is: the second warns that a stored key is
         // about to be replaced, which "Store" said either way.
@@ -147,6 +124,7 @@ public sealed class SecretEditor : UserControl
 
         var controls = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
         controls.Children.Add(_box);
+        controls.Children.Add(_reveal);
         controls.Children.Add(_store);
         controls.Children.Add(_check);
         controls.Children.Add(_badge);
@@ -155,15 +133,6 @@ public sealed class SecretEditor : UserControl
         stack.Children.Add(controls);
         stack.Children.Add(_verdict);
         stack.Children.Add(_message);
-
-        // A checked ToggleButton paints itself in the accent, which inside a text box is a solid chip sitting
-        // on the field — loud enough to read as the state rather than as the button, when the state is
-        // already said by the stroke through the eye.
-        Styles.Add(new Style(x => x.OfType<ToggleButton>().Class(InBoxClass).Class(":checked")
-            .Template().OfType<ContentPresenter>())
-        {
-            Setters = { new Setter(ContentPresenter.BackgroundProperty, Brushes.Transparent) },
-        });
 
         Content = stack;
         Refresh();
@@ -199,7 +168,7 @@ public sealed class SecretEditor : UserControl
 
         // Never held in a control after it is stored.
         _box.Text = string.Empty;
-        _reveal.IsChecked = false;
+        _revealSwitch.IsChecked = false;
 
         // A new key makes any previous verdict a statement about a value that is gone.
         _result = SecretCheck.Untested;
@@ -240,7 +209,7 @@ public sealed class SecretEditor : UserControl
     private void Clear()
     {
         _box.Text = string.Empty;
-        _reveal.IsChecked = false;
+        _revealSwitch.IsChecked = false;
         _result = SecretCheck.Untested;
 
         var result = _settings.Apply(_row.Key, null, SettingsCaller.Panel);

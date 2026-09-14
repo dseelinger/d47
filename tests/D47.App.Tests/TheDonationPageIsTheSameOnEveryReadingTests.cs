@@ -77,7 +77,7 @@ public class TheDonationPageIsTheSameOnEveryReadingTests
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        var toggle = Control<CheckBox>(window, "IncludeHistory");
+        var toggle = Control<ToggleSwitch>(window, "IncludeHistory");
 
         Assert.True(toggle.IsVisible);
         Assert.False(toggle.IsChecked);

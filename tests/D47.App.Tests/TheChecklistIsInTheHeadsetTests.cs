@@ -202,7 +202,7 @@ public class TheChecklistIsInTheHeadsetTests
 
         var targets = Page(view).GetVisualDescendants()
             .OfType<Control>()
-            .Where(control => control is Button or CheckBox)
+            .Where(control => control is Button or ToggleSwitch)
             .Where(control => control.IsVisible && control.Bounds.Height > 0)
             .ToList();
 
@@ -281,8 +281,8 @@ public class TheChecklistIsInTheHeadsetTests
 
         // And the last line is inside the quad rather than merely realised: a row measured below the viewport
         // is a row that exists and cannot be read.
-        var last = Page(view).GetVisualDescendants().OfType<CheckBox>()
-            .Single(tick => tick.Content as string == "line 59: fit a fuel scoop");
+        var last = Page(view).GetVisualDescendants().OfType<ToggleSwitch>()
+            .Single(tick => Ticks.Label(tick) == "line 59: fit a fuel scoop");
 
         var where = last.TranslatePoint(new Point(0, last.Bounds.Height), view);
 
@@ -301,8 +301,8 @@ public class TheChecklistIsInTheHeadsetTests
         using var _disposable = panel;
 
         var tick = Page(view).GetVisualDescendants()
-            .OfType<CheckBox>()
-            .Single(box => box.Content as string == "buy limpets");
+            .OfType<ToggleSwitch>()
+            .Single(box => Ticks.Label(box) == "buy limpets");
 
         Assert.False(checklists.Document.Items.Single(item => item.Text == "buy limpets").IsComplete);
 

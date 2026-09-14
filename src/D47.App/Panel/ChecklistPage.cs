@@ -6,6 +6,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
+using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Checklists;
 using D47.Core.Interface;
@@ -48,13 +49,10 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         IsVisible = false,
     };
 
-    /// <summary>The goals band, opened and closed (#203).</summary>
-    private readonly CheckBox _arcsToggle = new()
-    {
-        MinHeight = TouchTarget,
-        VerticalAlignment = VerticalAlignment.Center,
-        IsVisible = false,
-    };
+    /// <summary>The goals band, opened and closed (#203). A left cluster, so the switch leads its label.</summary>
+    private readonly StackPanel _arcsToggle;
+    private readonly TextBlock _arcsLabel;
+    private readonly ToggleSwitch _arcsSwitch;
 
     private readonly StackPanel _list = new() { Spacing = 4 };
     private readonly TextBlock _problems = new()
@@ -72,14 +70,10 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
     /// <summary>
     /// Include Partial Grades (change-requests.md 35): also show work an engineer here can start and
-    /// somebody else has to finish.
+    /// somebody else has to finish. A left cluster, so the switch leads its label.
     /// </summary>
-    private readonly CheckBox _partial = new()
-    {
-        Content = "Include Partial Grades",
-        MinHeight = TouchTarget,
-        VerticalAlignment = VerticalAlignment.Center,
-    };
+    private readonly StackPanel _partial;
+    private readonly ToggleSwitch _partialSwitch;
 
     /// <summary>
     /// The bar's controls, held so the one above can be taken out of the tree entirely rather than
@@ -151,6 +145,15 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         _backfill = backfill;
         _now = now ?? (() => DateTimeOffset.Now);
 
+        (_arcsToggle, _arcsLabel, _arcsSwitch) = LabeledSwitch.Build(string.Empty, labelFirst: false);
+        _arcsToggle.MinHeight = TouchTarget;
+        _arcsToggle.VerticalAlignment = VerticalAlignment.Center;
+        _arcsToggle.IsVisible = false;
+
+        (_partial, _, _partialSwitch) = LabeledSwitch.Build("Include Partial Grades", labelFirst: false);
+        _partial.MinHeight = TouchTarget;
+        _partial.VerticalAlignment = VerticalAlignment.Center;
+
         Themed(_problems, TextBlock.ForegroundProperty, ThemeManager.DangerKey);
 
         // A chooser rather than a combo box, and declared as a layer rather than as a page: the scopes on a
@@ -160,17 +163,17 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         _scopeButton.Click += (_, _) => ChooseScope();
 
         // Through the service, like the filter beside it: shared across surfaces and remembered.
-        _partial.IsCheckedChanged += (_, _) => _checklists.IncludePartial(_partial.IsChecked == true);
+        _partialSwitch.IsCheckedChanged += (_, _) => _checklists.IncludePartial(_partialSwitch.IsChecked == true);
         _orderButton.Click += (_, _) => ChooseProject();
 
         _suggestions.Click += (_, _) =>
             _nav.Drill(new NavCrumb(SuggestionsKey, "Suggestions"));
 
-        // The checkbox owns the flag rather than mirroring it: nothing else writes _showArcs, so RebuildArcs
+        // The switch owns the flag rather than mirroring it: nothing else writes _showArcs, so RebuildArcs
         // never assigns IsChecked back and there is no loop to break.
-        _arcsToggle.IsCheckedChanged += (_, _) =>
+        _arcsSwitch.IsCheckedChanged += (_, _) =>
         {
-            _showArcs = _arcsToggle.IsChecked == true;
+            _showArcs = _arcsSwitch.IsChecked == true;
             Rebuild();
         };
 
@@ -384,7 +387,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         var offerPartial = Chosen == ChecklistService.HereKey
                            && (_checklists.IncludePartialGrades || _checklists.HasPartialWorkHere());
 
-        _partial.IsChecked = _checklists.IncludePartialGrades;
+        _partialSwitch.IsChecked = _checklists.IncludePartialGrades;
 
         if (offerPartial && !_controls.Children.Contains(_partial))
         {
@@ -480,7 +483,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         _arcsToggle.IsVisible = true;
 
         // The count, whichever way the box is set (#203).
-        _arcsToggle.Content = $"Goals ({running} running)";
+        _arcsLabel.Text = $"Goals ({running} running)";
         _band.IsVisible = _showArcs;
 
         if (!_showArcs)
@@ -727,11 +730,20 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         if (item.TicksByHand)
         {
-            var tick = new CheckBox { Content = said, IsChecked = item.IsComplete };
-
-            tick.Click += (_, _) =>
+            // A line spans the list, so it reads label first with the switch after it — and the switch is
+            // docked right rather than merely trailing, so every line's switch lands in one column (#223).
+            var label = new TextBlock { Text = said, VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap };
+            var toggle = new ToggleSwitch
             {
-                var change = tick.IsChecked == true
+                OnContent = null,
+                OffContent = null,
+                IsChecked = item.IsComplete,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+            toggle.Click += (_, _) =>
+            {
+                var change = toggle.IsChecked == true
                     ? _checklists.Complete(item.Id)
                     : _checklists.Uncomplete(item.Id);
 
@@ -741,11 +753,16 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
                 }
             };
 
+            var tick = new DockPanel();
+            DockPanel.SetDock(toggle, Dock.Right);
+            tick.Children.Add(toggle);
+            tick.Children.Add(label);
+
             body.Children.Add(tick);
         }
         else
         {
-            // No checkbox at all, rather than a disabled one.
+            // No switch at all, rather than a disabled one.
             body.Children.Add(new TextBlock
             {
                 Text = (item.IsComplete ? "✓  " : "•  ") + said,
@@ -1280,7 +1297,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
                 "checklist.add",
                 "Add",
                 "Add a line",
-                "Your own note. It gets a checkbox, because it is yours to tick.",
+                "Your own note. It gets a switch, because it is yours to tick.",
                 string.Empty,
                 EntrySurface.Voice,
                 value => string.IsNullOrWhiteSpace(value)

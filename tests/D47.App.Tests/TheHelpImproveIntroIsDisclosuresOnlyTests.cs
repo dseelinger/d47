@@ -45,8 +45,8 @@ public sealed class TheHelpImproveIntroIsDisclosuresOnlyTests
         // history intro — so ticking it where it exists is what makes this the history page rather than a
         // second reading of the excerpt one.
         var toggle = window.GetVisualDescendants()
-            .OfType<CheckBox>()
-            .SingleOrDefault(found => found.Name == "IncludeHistory" && found.IsVisible);
+            .OfType<ToggleSwitch>()
+            .SingleOrDefault(found => found.Name == "IncludeHistory" && found.IsEffectivelyVisible);
 
         if (toggle is not null)
         {
@@ -256,7 +256,7 @@ public sealed class TheHelpImproveIntroIsDisclosuresOnlyTests
         if (history)
         {
             window.GetVisualDescendants()
-                .OfType<CheckBox>()
+                .OfType<ToggleSwitch>()
                 .Single(found => found.Name == "IncludeHistory")
                 .IsChecked = true;
 

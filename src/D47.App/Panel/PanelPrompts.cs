@@ -5,6 +5,7 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
+using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Interface;
 
@@ -316,13 +317,8 @@ public sealed class PanelPrompts : IHearsText
             () => Typed(query.Length > 0 ? query[..^1] : query),
             () => Typed(string.Empty)).Control);
 
-        var swap = new Button { Content = "Type it instead", Padding = new Thickness(14, 6) };
-
-        swap.Click += (_, _) =>
-        {
-            board.IsVisible = !board.IsVisible;
-            swap.Content = board.IsVisible ? "Hide the keyboard" : "Type it instead";
-        };
+        var (swap, _, swapSwitch) = LabeledSwitch.Build("Keyboard");
+        swapSwitch.IsCheckedChanged += (_, _) => board.IsVisible = swapSwitch.IsChecked == true;
 
         var head = new DockPanel { Margin = new Thickness(0, 0, 0, 8) };
 
@@ -507,7 +503,8 @@ public sealed class PanelPrompts : IHearsText
         private readonly TextBox _shown;
         private readonly TextBlock _state;
         private readonly StackPanel _board = new() { Spacing = 6 };
-        private readonly Button _swap;
+        private readonly StackPanel _swap;
+        private readonly ToggleSwitch _swapSwitch;
         private readonly Button _accept;
 
         /// <summary>The keys, so a spelled word can press the one it named (#51).</summary>
@@ -568,8 +565,16 @@ public sealed class PanelPrompts : IHearsText
                 TextBlock.ForegroundProperty,
                 App.Current!.GetResourceObservable(ThemeManager.TextMutedKey));
 
-            _swap = new Button { Padding = new Thickness(14, 6) };
-            _swap.Click += (_, _) => Show(!_keyboard);
+            (_swap, _, _swapSwitch) = LabeledSwitch.Build("Keyboard");
+            _swapSwitch.IsCheckedChanged += (_, _) =>
+            {
+                var keyboard = _swapSwitch.IsChecked == true;
+
+                if (keyboard != _keyboard)
+                {
+                    Show(keyboard);
+                }
+            };
 
             _keys = BuildBoard();
 
@@ -626,7 +631,7 @@ public sealed class PanelPrompts : IHearsText
             _keyboard = keyboard;
 
             _board.IsVisible = keyboard;
-            _swap.Content = keyboard ? "Say it instead" : "Type it instead";
+            _swapSwitch.IsChecked = keyboard;
 
             // Listening either way (#51): with the keys drawn, what is heard is spelled onto them.
             _state.Text = say ?? (keyboard ? Spelling.Shape : Waiting);

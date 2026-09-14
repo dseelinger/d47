@@ -5,6 +5,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
+using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Adventures;
 using D47.Core.Interface;
@@ -444,7 +445,7 @@ public sealed class AdventuresPage : UserControl
 
         var reachButton = new Button { Padding = new Thickness(12, 4), MinHeight = TouchTarget };
         var lengthButton = new Button { Padding = new Thickness(12, 4), MinHeight = TouchTarget };
-        var usingButton = new Button { Padding = new Thickness(12, 4), MinHeight = TouchTarget };
+        var (usingBox, _, usingSwitch) = LabeledSwitch.Build("This ship only");
         var briefButton = new Button { Padding = new Thickness(12, 4), MinHeight = TouchTarget };
         var status = Muted(string.Empty);
         var go = new Button { Content = "Go", Padding = new Thickness(14, 4), MinHeight = TouchTarget };
@@ -465,7 +466,6 @@ public sealed class AdventuresPage : UserControl
                 _ => "an evening",
             };
 
-            usingButton.Content = "Using: " + (thisShipOnly ? "this ship only" : "anything I own");
             briefButton.Content = string.IsNullOrWhiteSpace(brief) ? "Brief: none" : $"Brief: \"{brief}\"";
         }
 
@@ -507,23 +507,12 @@ public sealed class AdventuresPage : UserControl
                 Label();
             });
 
-        usingButton.Click += (_, _) => _prompts.Choose(
-            new ChoiceRequest(
-                "adventure.using",
-                "Using",
-                "Which ships may the story use?",
-                "This ship only is a story that stays aboard; anything you own lets it send you to fetch another.",
-                [
-                    new ChoiceOption("any", "Anything I own"),
-                    new ChoiceOption("this", "This ship only"),
-                ],
-                thisShipOnly ? "this" : "any",
-                ChoiceSurface.Layer),
-            option =>
-            {
-                thisShipOnly = option.Key == "this";
-                Label();
-            });
+        ToolTip.SetTip(
+            usingBox,
+            "This ship only is a story that stays aboard; anything you own lets it send you to fetch another.");
+
+        usingSwitch.IsChecked = thisShipOnly;
+        usingSwitch.IsCheckedChanged += (_, _) => thisShipOnly = usingSwitch.IsChecked == true;
 
         briefButton.Click += (_, _) => _prompts.Enter(
             new EntryRequest(
@@ -572,7 +561,7 @@ public sealed class AdventuresPage : UserControl
         // Left out rather than hidden when there is nothing to choose between (#202).
         if (hasChoice)
         {
-            page.Children.Add(usingButton);
+            page.Children.Add(usingBox);
         }
 
         page.Children.Add(briefButton);

@@ -41,7 +41,7 @@ nav_order: 110
  <text x="44" y="128" font-size="15" font-weight="700" fill="var(--text-muted)">NEXT STOP</text>
  <rect x="44" y="142" width="22" height="22" rx="4" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="84" y="160" font-size="16" fill="var(--text)">grade 3 dirty drive at Farseer</text>
- <text x="44" y="200" font-size="15" fill="var(--text-muted)">Say "tick off the fuel scoop", or press the box.</text>
+ <text x="44" y="200" font-size="15" fill="var(--text-muted)">Say "tick off the fuel scoop", or press the switch.</text>
 </svg>
 </section>
 <section>
@@ -193,7 +193,7 @@ never something you pick.
 | Can un-complete itself | No | Yes, and it says so once |
 
 A derived item refuses a manual tick because the next journal read would either undo it or, worse,
-leave it standing and lying. In the panel there is no checkbox on one at all — a greyed-out tick
+leave it standing and lying. In the panel there is no switch on one at all — a greyed-out switch
 would still assert that ticking is the mechanism, and it is not.
 
 ### Three groups
@@ -326,13 +326,13 @@ them"*. There is no switch for it, because you came to the workshop to find out 
 
 ##### Include Partial Grades {#partial-grades}
 
-Beside the engineer filter, and only there, is a checkbox. It decides which of two questions the
+Beside the engineer filter, and only there, is a switch. It decides which of two questions the
 page is answering, and they are a sentence apart:
 
-- **unchecked** — what this engineer can take **all the way** to the grade the line asks for;
-- **checked** — *and* lines they can only take **part of the way**, which somebody else must finish.
+- **off** — what this engineer can take **all the way** to the grade the line asks for;
+- **on** — *and* lines they can only take **part of the way**, which somebody else must finish.
 
-Unchecked is the default and is what you had before the box existed. Checked, a line says how far it
+Off is the default and is what you had before the switch existed. On, a line says how far it
 goes on the line itself — *"Lei Cheung takes this to 3 of 5"* — so the answer is on screen and not
 only here.
 

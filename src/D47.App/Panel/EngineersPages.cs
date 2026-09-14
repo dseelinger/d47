@@ -184,19 +184,11 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage
     private readonly StackPanel _list = new() { Spacing = 3 };
     private readonly EngineerDirectoryMemory? _memory;
 
-    private readonly CheckBox _colonia = new()
-    {
-        Content = "Hide the Colonia eight",
-        MinHeight = 30,
-        VerticalAlignment = VerticalAlignment.Center,
-    };
+    private readonly StackPanel _colonia;
+    private readonly ToggleSwitch _coloniaSwitch;
 
-    private readonly CheckBox _onFoot = new()
-    {
-        Content = "Hide on-foot engineers",
-        MinHeight = 30,
-        VerticalAlignment = VerticalAlignment.Center,
-    };
+    private readonly StackPanel _onFoot;
+    private readonly ToggleSwitch _onFootSwitch;
 
     private string? _query;
 
@@ -206,20 +198,23 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage
         _nav = nav;
         _memory = memory;
 
-        _colonia.IsChecked = memory?.HideColonia ?? false;
-        _onFoot.IsChecked = memory?.HideOnFoot ?? false;
+        (_colonia, _, _coloniaSwitch) = LabeledSwitch.Build("Hide the Colonia eight");
+        (_onFoot, _, _onFootSwitch) = LabeledSwitch.Build("Hide on-foot engineers");
+
+        _coloniaSwitch.IsChecked = memory?.HideColonia ?? false;
+        _onFootSwitch.IsChecked = memory?.HideOnFoot ?? false;
 
         // The switch owns the flag rather than mirroring it back — the same reason the goals band's
-        // toggle does (ChecklistPage._arcsToggle).
-        _colonia.IsCheckedChanged += (_, _) =>
+        // toggle does (ChecklistPage._arcsSwitch).
+        _coloniaSwitch.IsCheckedChanged += (_, _) =>
         {
-            _memory?.RememberColonia(_colonia.IsChecked == true);
+            _memory?.RememberColonia(_coloniaSwitch.IsChecked == true);
             Refresh();
         };
 
-        _onFoot.IsCheckedChanged += (_, _) =>
+        _onFootSwitch.IsCheckedChanged += (_, _) =>
         {
-            _memory?.RememberOnFoot(_onFoot.IsChecked == true);
+            _memory?.RememberOnFoot(_onFootSwitch.IsChecked == true);
             Refresh();
         };
 
@@ -424,14 +419,10 @@ public sealed class EngineerPage : EngineerPageBase
         _body.Children.Add(LoadoutPages.Muted(entry.Aside));
 
         // Where the pin lives — d47 has no journal event for one, so the Commander says so here (#113).
-        var pinned = new CheckBox
-        {
-            Content = "A blueprint is pinned with them",
-            IsChecked = Source.IsPinned(engineer.Id),
-            MinHeight = 30,
-        };
+        var (pinned, _, pinnedSwitch) = LabeledSwitch.Build("A blueprint is pinned with them");
+        pinnedSwitch.IsChecked = Source.IsPinned(engineer.Id);
 
-        pinned.IsCheckedChanged += (_, _) => Source.Pin(engineer.Id, pinned.IsChecked == true);
+        pinnedSwitch.IsCheckedChanged += (_, _) => Source.Pin(engineer.Id, pinnedSwitch.IsChecked == true);
 
         _body.Children.Add(pinned);
 

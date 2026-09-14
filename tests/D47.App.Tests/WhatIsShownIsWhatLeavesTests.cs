@@ -54,7 +54,7 @@ public class WhatIsShownIsWhatLeavesTests
 
         Assert.Equal("10 back, speech False", window.Text);
 
-        Control<CheckBox>(window, "IncludeMySpeech").IsChecked = true;
+        Control<ToggleSwitch>(window, "IncludeMySpeech").IsChecked = true;
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal("10 back, speech True", window.Text);
@@ -75,7 +75,7 @@ public class WhatIsShownIsWhatLeavesTests
     {
         var window = Shown(_ => string.Empty);
 
-        Assert.False(Control<CheckBox>(window, "IncludeMySpeech").IsChecked);
+        Assert.False(Control<ToggleSwitch>(window, "IncludeMySpeech").IsChecked);
     }
 
     /// <summary>And all of it is readable without going looking for it.</summary>

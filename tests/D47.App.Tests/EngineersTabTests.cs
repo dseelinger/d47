@@ -378,8 +378,7 @@ public class EngineersTabTests
         surface.Window.Close();
     }
 
-    private static CheckBox Check(PanelView panel, string label) =>
-        panel.GetVisualDescendants().OfType<CheckBox>().Single(box => box.Content?.ToString() == label);
+    private static ToggleSwitch Check(PanelView panel, string label) => Switches.Single(panel, label);
 
     /// <summary>
     /// The eight engineers out at Colonia can be taken off the list, and back, without touching who is
@@ -448,7 +447,7 @@ public class EngineersTabTests
     }
 
     /// <summary>
-    /// The Route page has no checkboxes of its own — it carries nobody a Directory tick has hidden
+    /// The Route page has no switches of its own — it carries nobody a Directory tick has hidden
     /// (#132).
     /// </summary>
     [AvaloniaFact]

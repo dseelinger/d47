@@ -95,18 +95,29 @@ public class MiniCarriesNoPageChromeTests
             return [];
         }
 
-        return
-        [
-            .. page.GetSelfAndVisualDescendants()
-                .OfType<ContentControl>()
-                .Where(control => control is Button or CheckBox or ToggleButton)
-                .Where(control => control is not RepeatButton)
-                .Where(control => !control.GetSelfAndVisualAncestors().OfType<ScrollBar>().Any())
-                .Where(control => Drawn(control, view))
-                .Select(control => control.Content as string ?? string.Empty)
-                .Where(word => word.Length > 0),
-        ];
+        var controlWords = page.GetSelfAndVisualDescendants()
+            .OfType<ContentControl>()
+            .Where(control => control is Button or ToggleButton)
+            .Where(control => control is not RepeatButton)
+            .Where(control => !control.GetSelfAndVisualAncestors().OfType<ScrollBar>().Any())
+            .Where(control => Drawn(control, view))
+            .Select(control => control.Content as string ?? string.Empty);
+
+        // A switch carries no Content of its own (#223): the word it shows is the TextBlock beside it.
+        var switchWords = page.GetSelfAndVisualDescendants()
+            .OfType<ToggleSwitch>()
+            .Where(toggle => !toggle.GetSelfAndVisualAncestors().OfType<ScrollBar>().Any())
+            .Where(toggle => Drawn(toggle, view))
+            .Select(SwitchLabel);
+
+        return [.. controlWords.Concat(switchWords).Where(word => word.Length > 0)];
     }
+
+    /// <summary>The label beside a switch, wherever it sits among the switch's siblings.</summary>
+    private static string SwitchLabel(ToggleSwitch toggle) =>
+        toggle.GetVisualParent() is Control parent
+            ? parent.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault()?.Text ?? string.Empty
+            : string.Empty;
 
     /// <summary>Whether anything between this control and the surface is hiding it.</summary>
     private static bool Drawn(Control control, PanelView view) =>

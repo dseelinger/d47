@@ -34,7 +34,7 @@
 
     <b>Exact `Button`, deliberately.</b> Avalonia matches the type rather than the hierarchy unless
     asked with `:is()`, and that is the distinction wanted here: a `Button` exists to be pressed and
-    is nothing without a pointer, while `CheckBox` shows whether a checklist line is done and
+    is nothing without a pointer, while `ToggleSwitch` shows whether a checklist line is done and
     `RepeatButton` is half of a scrollbar. Removing those would take away the data rather than make
     room for it.
   -->

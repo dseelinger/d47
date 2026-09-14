@@ -221,7 +221,7 @@ what it does *not* mean: it is not emphasis, and it is not "this changed".
 
 It applies where nothing else says the control is a control — a bare glyph or a bare word on a
 transparent background. The help mark, the copy mark, the checklist's **+**, the reset marks in
-settings. Things that already say it by shape keep their own look: checkboxes
+settings. Things that already say it by shape keep their own look: switches
 and their labels, the tab strip, scrollbars, and anything that uses the accent as a *background*.
 A control that is switched off keeps its switched-off look, because an accent on something that
 cannot be pressed is the colour making a promise the control cannot keep.
@@ -327,7 +327,7 @@ surface.
 
 **And why it draws no buttons.** A control nobody can press is a control spending room the data
 wants, so the strip leaves them out — the checklist's filter and its Add, and anything else whose
-whole purpose was being pressed. Checkboxes and the scrollbar stay, because those show you
+whole purpose was being pressed. Switches and the scrollbar stay, because those show you
 something.
 
 **There is no interlock with the headset.** If you are wearing one you have no use for this, but

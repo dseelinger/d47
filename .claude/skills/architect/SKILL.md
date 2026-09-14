@@ -51,6 +51,7 @@ Read CLAUDE.md before proposing anything. The constraints are not preferences:
   hotkey is still refused to the LLM.
 - **Egress.** Every destination is disclosed from live settings in `EgressDisclosure`. A new
   destination is a new disclosure entry, and that is part of the design, not follow-up work.
+- **Switches.** A two-state control is a `ToggleSwitch` (#223); "checkbox" in a request means one.
 - **No elevation.** Per-user install to a fixed unversioned path, because `data\` lives beside the
   exe.
 - **The asset contract.** `d47.zip` and `d47.zip.sha256` are hardcoded in `UpdateChecker`. Anything

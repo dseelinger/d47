@@ -204,8 +204,8 @@ public class OnFootLoadoutTabTests
         // And what the two upgrade steps cost, exactly - nothing on foot is rolled.
         Assert.Contains("What it costs", shown);
 
-        // No checkbox: a derived item's progress is a diff against live state.
-        Assert.Empty(surface.Panel.GetVisualDescendants().OfType<CheckBox>());
+        // No tick: a derived item's progress is a diff against live state.
+        Assert.Empty(Ticks.On(surface.Panel));
 
         surface.Window.Close();
     }

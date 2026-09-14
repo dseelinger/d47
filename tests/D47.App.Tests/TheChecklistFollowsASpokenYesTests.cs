@@ -48,7 +48,7 @@ public class TheChecklistFollowsASpokenYesTests
             panel.GetVisualDescendants()
                 .OfType<TextBlock>()
                 .Select(block => block.Text)
-                .Concat(panel.GetVisualDescendants().OfType<CheckBox>().Select(tick => tick.Content as string))
+                .Concat(Ticks.On(panel).Select(Ticks.Label))
                 .Concat(panel.GetVisualDescendants().OfType<Button>().Select(button => button.Content as string))
                 .Where(text => !string.IsNullOrWhiteSpace(text)));
 
@@ -105,8 +105,8 @@ public class TheChecklistFollowsASpokenYesTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Contains(
-            panel.GetVisualDescendants().OfType<CheckBox>(),
-            tick => (tick.Content as string) == "Run to the supermarket");
+            Ticks.On(panel),
+            tick => Ticks.Label(tick) == "Run to the supermarket");
     }
 
     /// <summary>The subscription has to survive the page being reparented.</summary>
@@ -125,7 +125,7 @@ public class TheChecklistFollowsASpokenYesTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Contains(
-            panel.GetVisualDescendants().OfType<CheckBox>(),
-            tick => (tick.Content as string) == "Fit a fuel scoop");
+            Ticks.On(panel),
+            tick => Ticks.Label(tick) == "Fit a fuel scoop");
     }
 }

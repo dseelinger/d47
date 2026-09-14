@@ -71,8 +71,8 @@ nav_order: 202
  <text x="660" y="66" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">DO NOT</text>
  <text x="660" y="98" text-anchor="middle" font-size="15" fill="var(--text-muted)">leaves you at the far end,</text>
  <text x="660" y="122" text-anchor="middle" font-size="15" fill="var(--text-muted)">covering more ground per stop</text>
- <text x="440" y="192" text-anchor="middle" font-size="16" fill="var(--text)">Ticked out of the box, because unsold scan data is worth nothing at all.</text>
- <text x="440" y="216" text-anchor="middle" font-size="15" fill="var(--text-muted)">Untick it when you are already heading somewhere and want the scanning on the way.</text>
+ <text x="440" y="192" text-anchor="middle" font-size="16" fill="var(--text)">On out of the box, because unsold scan data is worth nothing at all.</text>
+ <text x="440" y="216" text-anchor="middle" font-size="15" fill="var(--text-muted)">Turn it off when you are already heading somewhere and want the scanning on the way.</text>
 </svg>
 </section>
 <div class="next">
@@ -97,7 +97,7 @@ The card called **Road to Riches** on the Routing tab's Plan page, and the
 | **Stops** | How many systems the tour visits | 10 |
 | **Radius (ly)** | How far from the start it may look | 500 |
 | **Least worth stopping for (cr)** | The floor a body must clear to be included | 500,000 |
-| **Come back to the start** | Whether the last stop is where the first was | Ticked |
+| **Come back to the start** | Whether the last stop is where the first was | On |
 
 It starts from where you are. There is no destination box, because there is no destination — the
 route is the point.

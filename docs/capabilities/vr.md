@@ -332,9 +332,9 @@ across, and both are yours to change — with its own [resolution](#placing-a-su
 **Mini carries no controls, only what they were showing you.** Its starting size was chosen so the
 text is readable rather than so there is room — every button on it would be space taken from the
 thing you opened it for. So a page's own bar goes: the checklist's filter, its ordering, its
-import, its Goals tick. What stays is the list itself, **including the tick beside each line**, so
-you can still mark work done from the headset. The big panel keeps the whole bar, and that is the
-one headset surface where a controller can genuinely press it.
+import, its Goals switch. What stays is the list itself, **including the switch beside each
+line**, so you can still mark work done from the headset. The big panel keeps the whole bar, and
+that is the one headset surface where a controller can genuinely press it.
 
 #### Motion controllers {#controllers}
 

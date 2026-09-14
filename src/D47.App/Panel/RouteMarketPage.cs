@@ -52,16 +52,19 @@ public sealed class RouteMarketPage : UserControl
         HorizontalAlignment = HorizontalAlignment.Left,
     };
 
-    private readonly CheckBox _selling = new() { Content = "Selling it, not buying" };
+    private readonly StackPanel _selling;
+    private readonly ToggleSwitch _sellingSwitch;
 
-    private readonly CheckBox _largePad = new() { Content = "Large pad only" };
+    private readonly StackPanel _largePad;
+    private readonly ToggleSwitch _largePadSwitch;
 
     /// <summary>
     /// Opts back into surface stations (#309): #296 defaulted <c>surface_stations</c> to false for
     /// every search, so a commodity only available at a Planetary Port was otherwise unreachable from
     /// this page.
     /// </summary>
-    private readonly CheckBox _surfaceStations = new() { Content = "Include surface stations" };
+    private readonly StackPanel _surfaceStations;
+    private readonly ToggleSwitch _surfaceStationsSwitch;
 
     private readonly TextBlock _status;
 
@@ -79,6 +82,10 @@ public sealed class RouteMarketPage : UserControl
         _lookupsEnabled = lookupsEnabled;
         _openSettings = openSettings;
         _copy = copy;
+
+        (_selling, _, _sellingSwitch) = D47.App.Controls.LabeledSwitch.Build("Selling it, not buying");
+        (_largePad, _, _largePadSwitch) = D47.App.Controls.LabeledSwitch.Build("Large pad only");
+        (_surfaceStations, _, _surfaceStationsSwitch) = D47.App.Controls.LabeledSwitch.Build("Include surface stations");
 
         _status = Text(string.Empty, TypeScale.Secondary, ThemeManager.TextMutedKey, wrap: true);
         _status.IsVisible = false;
@@ -136,7 +143,7 @@ public sealed class RouteMarketPage : UserControl
     private Control SearchCard()
     {
         // _commodity, _tonnes, _selling and _largePad are readonly fields, built once and reused across every
-        // Build() — Labelled() wraps the two boxes in a fresh StackPanel each call, and the checkboxes join a
+        // Build() — Labelled() wraps the two boxes in a fresh StackPanel each call, and the switches join a
         // fresh form StackPanel directly, so a second call finds each one still parented to the wrapper
         // Build() just discarded.
         Detach(_commodity);
@@ -251,17 +258,17 @@ public sealed class RouteMarketPage : UserControl
             values["tonnes"] = _tonnes.Text!.Replace(",", string.Empty).Trim();
         }
 
-        if (_selling.IsChecked == true)
+        if (_sellingSwitch.IsChecked == true)
         {
             values["selling"] = "true";
         }
 
-        if (_largePad.IsChecked == true)
+        if (_largePadSwitch.IsChecked == true)
         {
             values["large_pad"] = "true";
         }
 
-        if (_surfaceStations.IsChecked == true)
+        if (_surfaceStationsSwitch.IsChecked == true)
         {
             values["surface_stations"] = "true";
         }

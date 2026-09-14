@@ -89,8 +89,8 @@ behind it.
 | **Credits to trade with** | Your working capital | **Required** — never inferred |
 | **Hops** | How many buy-and-sell legs | 5 |
 | **Longest leg (ly)** | The furthest one hop may reach | 40 |
-| **End where it started** | Whether the circuit closes | Unticked |
-| **Large pads only** | Skip stations your ship cannot land at | Unticked |
+| **End where it started** | Whether the circuit closes | Off |
+| **Large pads only** | Skip stations your ship cannot land at | Off |
 
 It plans **from the station you are docked at**. There is no origin box, because a trade run that
 starts somewhere you are not is a trade run that starts with an empty leg.
@@ -119,7 +119,7 @@ rather than the queued-job wording the others use.
 
 **Large pads only** is not a preference. A route with a medium-pad station in it is a route with a
 leg you cannot fly in a Type-9, and the plan will not tell you at the point of plotting which stop
-that is. Tick it if your ship needs it.
+that is. Turn it on if your ship needs it.
 
 ### Every stop carries a date
 

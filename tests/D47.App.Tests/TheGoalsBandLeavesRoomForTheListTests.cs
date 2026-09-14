@@ -59,11 +59,15 @@ public class TheGoalsBandLeavesRoomForTheListTests
     private static ScrollViewer BandScroller(PanelView panel) =>
         panel.GetVisualDescendants().OfType<ScrollViewer>().First(scroller => scroller.Name == "GoalsBand");
 
-    /// <summary>The control that opens the band.</summary>
-    private static CheckBox Band(PanelView panel) =>
+    /// <summary>The label beside the switch that opens the band.</summary>
+    private static TextBlock BandLabel(PanelView panel) =>
         panel.GetVisualDescendants()
-            .OfType<CheckBox>()
-            .First(box => (box.Content as string)?.StartsWith("Goals", StringComparison.Ordinal) == true);
+            .OfType<TextBlock>()
+            .First(text => text.Text?.StartsWith("Goals", StringComparison.Ordinal) == true);
+
+    /// <summary>The control that opens the band.</summary>
+    private static ToggleSwitch Band(PanelView panel) =>
+        BandLabel(panel).GetVisualParent()!.GetVisualDescendants().OfType<ToggleSwitch>().Single();
 
     /// <summary>Opens or closes it the way a press does, so the page rebuilds around it.</summary>
     private static void Toggle(PanelView panel)
@@ -79,7 +83,7 @@ public class TheGoalsBandLeavesRoomForTheListTests
         panel.GetVisualDescendants()
             .OfType<ScrollViewer>()
             .First(scroller => scroller.Content is StackPanel stack
-                               && stack.GetVisualDescendants().OfType<CheckBox>().Any());
+                               && stack.GetVisualDescendants().OfType<ToggleSwitch>().Any());
 
     /// <summary>The report itself: open the band and the list is still there to work in.</summary>
     [AvaloniaFact]
@@ -91,7 +95,7 @@ public class TheGoalsBandLeavesRoomForTheListTests
 
  // **The count survives being open**.
         Assert.True(Band(panel).IsChecked);
-        Assert.StartsWith("Goals (", (string)Band(panel).Content!, StringComparison.Ordinal);
+        Assert.StartsWith("Goals (", BandLabel(panel).Text!, StringComparison.Ordinal);
 
         var list = ListScroller(panel);
 

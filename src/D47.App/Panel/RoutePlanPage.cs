@@ -189,12 +189,13 @@ public sealed class RoutePlanPage : UserControl
         var stops = Field("Stops", "10");
         var radius = Field("Radius (ly)", "500");
         var minimum = Field("Least worth stopping for (cr)", "500,000");
-        var loop = new CheckBox { Content = "Come back to the start", IsChecked = true };
+        var (loopRow, _, loop) = LabeledSwitch.Build("Come back to the start");
+        loop.IsChecked = true;
 
         var form = new StackPanel
         {
             Spacing = 8,
-            Children = { Row(stops, radius), Row(minimum, null), loop },
+            Children = { Row(stops, radius), Row(minimum, null), loopRow },
         };
 
         return Plottable(
@@ -219,8 +220,8 @@ public sealed class RoutePlanPage : UserControl
         var capital = Field("Credits to trade with", "how much", FieldNeed.Required);
         var hops = Field("Hops", "5");
         var maxHop = Field("Longest leg (ly)", "40");
-        var loop = new CheckBox { Content = "End where it started" };
-        var largePad = new CheckBox { Content = "Large pads only" };
+        var (loopRow, _, loop) = LabeledSwitch.Build("End where it started");
+        var (largePadRow, _, largePad) = LabeledSwitch.Build("Large pads only");
 
         var form = new StackPanel
         {
@@ -229,8 +230,8 @@ public sealed class RoutePlanPage : UserControl
             {
                 Row(capital, hops),
                 Row(maxHop, null),
-                loop,
-                largePad,
+                loopRow,
+                largePadRow,
 
                 // The one figure on this page that is about the Commander rather than their ship, and the
                 // reason it is typed every time rather than remembered: what they are worth is nobody's
