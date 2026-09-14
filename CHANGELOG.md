@@ -6,6 +6,14 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.125.0 — What a body could hold
+
+Scanning a landable body the FSS has counted biological signals on now gets a spoken callout when its
+biology could reach 10 million credits or more: "3 b could hold up to 18.2 million in biology: Stratum,
+Bacterium." The figure is the best case from the species the body's conditions admit, one per genus;
+once a surface scan names the genera, the line gives a range over those. Said once per body. On by
+default, with its own toggle and threshold beside the other callouts.
+
 ## 0.124.0 — Supercharge
 
 Stepping onto a body for the first time now gets a spoken callout: "First footfall on Smojue

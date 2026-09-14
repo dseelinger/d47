@@ -401,6 +401,12 @@ public sealed record CalloutSettings
     /// <summary>The first footfall on a body (#203).</summary>
     public bool Footfall { get; init; } = true;
 
+    /// <summary>A landable body whose biology could reach <see cref="BiologyThreshold"/>, said on its scan.</summary>
+    public bool Biology { get; init; } = true;
+
+    /// <summary>The least best case, in credits, the biology callout says.</summary>
+    public long BiologyThreshold { get; init; } = 10_000_000;
+
     /// <summary>How often route progress is reported, in jumps. 0 silences the progress line.</summary>
     public int RouteEveryNJumps { get; init; } = 3;
 

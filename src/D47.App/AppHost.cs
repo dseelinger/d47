@@ -2417,6 +2417,7 @@ public sealed class AppHost : IDisposable
             .Add(new SamplingCallout())
             .Add(new DiscoveryCallout())
             .Add(new FootfallCallout())
+            .Add(new BiologyCallout())
             .Add(new ProspectorCallout())
             .Add(new CoreAsteroidCallout())
             .Add(new ChecklistCallout(checklists))
@@ -2514,6 +2515,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("rival-territory", callouts.RivalTerritory, now);
         engine.SetEnabled("sampling", callouts.Sampling, now);
         engine.SetEnabled("discovery", callouts.Discovery, now);
+        engine.SetEnabled("biology", callouts.Biology, now);
         engine.SetEnabled("prospector", callouts.Prospector, now);
         engine.SetEnabled("core-asteroid", callouts.CoreAsteroid, now);
         engine.SetEnabled("checklist", callouts.Checklist, now);
@@ -2536,6 +2538,10 @@ public sealed class AppHost : IDisposable
 
                 case ArrivalCallout arrival:
                     arrival.HomeSystem = callouts.HomeSystem;
+                    break;
+
+                case BiologyCallout biology:
+                    biology.Threshold = () => settings.Current.Callouts.BiologyThreshold;
                     break;
 
                 case LimpetCallout limpets:

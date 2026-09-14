@@ -32,6 +32,8 @@ public static class CalloutCapability
     public const string SamplingKey = "callouts.sampling";
     public const string DiscoveryKey = "callouts.discovery";
     public const string FootfallKey = "callouts.footfall";
+    public const string BiologyKey = "callouts.biologyValue";
+    public const string BiologyThresholdKey = "callouts.biologyThreshold";
     public const string AnnouncedAttackKey = "callouts.announcedAttack";
     public const string RivalTerritoryKey = "callouts.rivalTerritory";
     public const string ChecklistKey = "callouts.checklist";
@@ -250,6 +252,15 @@ public static class CalloutCapability
                 "first footfall",
                 s => s.Callouts.Footfall,
                 (s, v) => s with { Callouts = s.Callouts with { Footfall = v } }),
+
+            Toggle(
+                BiologyKey,
+                "High-value biology",
+                "A landable body whose biology could reach the threshold below, said when you scan it.",
+                "biology",
+                "high-value biology",
+                s => s.Callouts.Biology,
+                (s, v) => s with { Callouts = s.Callouts with { Biology = v } }),
 
             Toggle(
                 AnnouncedAttackKey,
@@ -541,6 +552,33 @@ public static class CalloutCapability
                         LimpetPercent = int.TryParse(v, out var percent) && percent is >= 0 and <= 100
                             ? percent
                             : s.Callouts.LimpetPercent,
+                    },
+                },
+            },
+        });
+
+        rows.Add(new SettingRow
+        {
+            Key = BiologyThresholdKey,
+            Advanced = true,
+            Label = "Call out biology from",
+            Help = "In credits: the least a body's biology could reach, at best, before it is said.",
+            Kind = SettingKind.Number,
+            DefaultDisplay = "10000000",
+            DocsAnchor = "biology-threshold",
+            AppliesWhen = s => s.Callouts is { Enabled: true, Biology: true },
+            Binding = new SettingBinding
+            {
+                Read = s => s.Callouts.BiologyThreshold.ToString(CultureInfo.InvariantCulture),
+                Write = (s, v) => s with
+                {
+                    Callouts = s.Callouts with
+                    {
+                        BiologyThreshold =
+                            long.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out var credits)
+                            && credits >= 0
+                                ? credits
+                                : s.Callouts.BiologyThreshold,
                     },
                 },
             },

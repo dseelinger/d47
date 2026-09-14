@@ -564,6 +564,21 @@ Elite writes no event for a first footfall; Directive 47 infers it from `WasFoot
 body's `Scan` and the `Disembark` that follows it. A second `Disembark` on the same body says
 nothing, since the body's scan is marked the moment the first one lands.
 
+#### High-value biology {#biology}
+
+When you scan a landable body the FSS has already counted biological signals on:
+
+```text
+3 b could hold up to 18.2 million in biology: Stratum, Bacterium.
+```
+
+A body holds at most one species per genus. Directive 47 takes the species the body's scanned
+conditions admit, keeps the most valuable one in each genus, and adds up as many genera as the FSS
+counted signals, highest first. It speaks when that best case reaches the
+[threshold](#biology-threshold), once per body. Once a surface scan has named the genera, the line
+gives a range drawn from those genera alone. It is what the biology could fetch at best, not what the
+body is worth: the species actually there may be the cheapest of its genus.
+
 #### Undiscovered systems {#discovery}
 
 On arrival, the game auto-scans the star you jumped to:
@@ -668,6 +683,10 @@ unbearable over 300. Set it to `0` to silence the progress line while keeping th
 #### Long jump threshold {#long-jump-threshold}
 
 In seconds, counted from entering hyperspace.
+
+#### Biology threshold {#biology-threshold}
+
+In credits, default 10,000,000. The least best case the [high-value biology](#biology) callout says.
 
 #### Home system {#home-system}
 
