@@ -166,6 +166,14 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             // board, which has taken a spelled or dictated value since #51. Settings opens on this surface
             // rather than on the window's, the same as Sourcing above.
             _view.EnableRouting(routing with { OpenSettings = () => _view.Tab = PanelTab.Settings });
+
+            if (routing.Plans is { } plans)
+            {
+                // A plot lands off this surface's own tick — by voice, or from the window's card — so the
+                // frame has to be marked dirty on its own account rather than waiting for TickRouting's next
+                // journal-driven pass, which would leave the headset showing the old plan until a jump (#212).
+                plans.Changed += () => _dirty = true;
+            }
         }
 
         if (adventures is not null)

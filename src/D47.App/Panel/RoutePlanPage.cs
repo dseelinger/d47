@@ -338,6 +338,8 @@ public sealed class RoutePlanPage : UserControl
                 ? "Working it out…"
                 : "Plotting… this is a job the service queues, so it can take a moment.";
 
+            var before = _plans.Last(kind);
+
             try
             {
                 var result = await _registry
@@ -349,6 +351,15 @@ public sealed class RoutePlanPage : UserControl
                 // The book is what the result level draws, and the capability has just written it — so
                 // redrawing the page is what puts "Show the last one" on the card.
                 Refresh();
+
+                // A recorded plan is a new record in the book rather than the old one mutated (#200), so
+                // reference identity says whether this call actually plotted something — ToolResult.IsError
+                // does not: "No route from…", nothing worth mapping and an unseen market all come back as Ok
+                // with nothing recorded (#212). A plot that recorded nothing leaves the surface on the form.
+                if (_plans.Last(kind) is { } after && !ReferenceEquals(before, after))
+                {
+                    _nav.Drill(RoutingPages.ResultCrumb(kind, after.Headline));
+                }
             }
             catch (OperationCanceledException)
             {

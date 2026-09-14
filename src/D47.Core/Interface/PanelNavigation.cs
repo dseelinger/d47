@@ -327,9 +327,24 @@ public sealed class PanelNavigator
     {
         var trail = Mutable();
 
-        if (trail is null || trail[^1].Key == crumb.Key)
+        if (trail is null)
         {
             return false;
+        }
+
+        // The level already on top is this one again — a second plot of the same kind, say (#212). Refusing
+        // outright would leave the breadcrumb reading the plan that was replaced, so the crumb is swapped in
+        // place rather than pushed; an identical crumb is still a no-op.
+        if (trail[^1].Key == crumb.Key)
+        {
+            if (trail[^1] == crumb)
+            {
+                return false;
+            }
+
+            trail[^1] = crumb;
+            Raise();
+            return true;
         }
 
         // A level with alternatives replaces the one of its kind that is already open, and takes whatever was

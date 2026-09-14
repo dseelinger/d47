@@ -17,7 +17,7 @@ public sealed class RoutePlanResultPage : UserControl
     private readonly RoutePlanKind _kind;
     private readonly StackPanel _stack = new() { Spacing = 4 };
 
-    private int? _reachedSeen;
+    private StoredRoutePlan? _planSeen;
 
     public RoutePlanResultPage(StoredRoutePlan plan, Func<string, Task<bool>>? copy = null, RoutePlanBook? plans = null)
     {
@@ -38,12 +38,14 @@ public sealed class RoutePlanResultPage : UserControl
 
     /// <summary>
     /// Redraws from the book rather than the plan passed at construction, because the stored record is
-    /// replaced on arrival, not mutated (#200). Returns whether the reached stop actually moved, so a caller
-    /// can tell whether the redraw is worth serving to the headset.
+    /// replaced on arrival, not mutated (#200), and replaced wholesale by a new plot (#212). Compared by
+    /// reference rather than by <see cref="StoredRoutePlan.Reached"/> alone, so a second plot with nothing
+    /// reached still counts as a change. Returns whether anything actually moved, so a caller can tell
+    /// whether the redraw is worth serving to the headset.
     /// </summary>
     public bool Refresh()
     {
-        if (_plans?.Last(_kind) is not { } plan || plan.Reached == _reachedSeen)
+        if (_plans?.Last(_kind) is not { } plan || ReferenceEquals(plan, _planSeen))
         {
             return false;
         }
@@ -55,7 +57,7 @@ public sealed class RoutePlanResultPage : UserControl
 
     private void Draw(StoredRoutePlan plan)
     {
-        _reachedSeen = plan.Reached;
+        _planSeen = plan;
 
         _stack.Children.Clear();
         _stack.Children.Add(Heading(plan));

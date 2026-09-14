@@ -34,12 +34,15 @@ public class TheRoutingTabIsInTheHeadsetTests
     /// it particular to a surface.
     /// </summary>
     private static RoutingSurface Surface(
-        string folder, CapabilityRegistry registry, D47.Core.Capabilities.Builtin.IClipboard clipboard) =>
+        string folder,
+        CapabilityRegistry registry,
+        D47.Core.Capabilities.Builtin.IClipboard clipboard,
+        RoutePlanBook? plans = null) =>
         new(
             () => new NavRoute { Hops = [Hop("Sol", 0), Hop("Shinrarta Dezhra", 65)] },
             () => "Sol",
             registry,
-            new RoutePlanBook(
+            plans ?? new RoutePlanBook(
                 Path.Combine(folder, "route-plans.json"), NullLogger<RoutePlanBook>.Instance),
             () => true,
             null,
@@ -64,7 +67,7 @@ public class TheRoutingTabIsInTheHeadsetTests
 
     /// <summary>A headset surface with the tab on it, drawn once so everything has a place on the quad.</summary>
     private static (VrPanelSurface Panel, VrPixels Pixels, D47.Core.Capabilities.Builtin.RecordingClipboard Clipboard)
-        Headset()
+        Headset(RoutePlanBook? plans = null)
     {
         var (settings, _, paths) = TestSurface.Create();
 
@@ -83,7 +86,7 @@ public class TheRoutingTabIsInTheHeadsetTests
             settings,
             _ => null,
             checklists: Checklists(paths.Data),
-            routing: Surface(paths.Data, Registry(), clipboard));
+            routing: Surface(paths.Data, Registry(), clipboard, plans));
 
         Dispatcher.UIThread.RunJobs();
 
@@ -303,5 +306,34 @@ public class TheRoutingTabIsInTheHeadsetTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal("34.5", range.Text);
+    }
+
+    /// <summary>
+    /// A plot lands off this surface's own tick — by voice, or from the window's own card — and used to
+    /// leave the headset showing the old plan until the next journal-driven arrival marked a frame dirty.
+    /// The surface has to notice the book changing on its own account (#212).
+    /// </summary>
+    [AvaloniaFact]
+    public void APlanRecordedElsewhereMarksTheHeadsetDirtyWithoutAJourneyChange()
+    {
+        var folder = Path.Combine(Path.GetTempPath(), "d47-vr-routing-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+
+        var plans = new RoutePlanBook(
+            Path.Combine(folder, "route-plans.json"), NullLogger<RoutePlanBook>.Instance);
+
+        var (panel, pixels, _) = Headset(plans);
+
+        Draw(panel, pixels, RoutingPages.PlanRoot);
+        Assert.False(panel.IsDirty);
+
+        plans.Record(
+            new PlottedRoute(
+                "Sol", "Colonia", 22_000, 168,
+                [new RouteWaypoint("PSR J1752-2806", 10, 21_629, true)]),
+            "Sol to Colonia",
+            new DateTimeOffset(2026, 9, 9, 12, 0, 0, TimeSpan.Zero));
+
+        Assert.True(panel.IsDirty);
     }
 }

@@ -959,4 +959,173 @@ public class TheRoutingTabTests
             Directory.Delete(folder, recursive: true);
         }
     }
+
+    /// <summary>A route service that echoes the destination asked for, so two plots are told apart (#212).</summary>
+    private sealed class FakeRoutes : D47.Core.Knowledge.IRouteService
+    {
+        public PlottedRoute? Route { get; set; } =
+            new("Sol", string.Empty, 22_000, 168, [new RouteWaypoint("PSR J1752-2806", 10, 21_629, true)]);
+
+        public Task<PlottedRoute?> PlotAsync(RouteQuery query, CancellationToken cancellationToken) =>
+            Task.FromResult(Route is { } route ? route with { Destination = query.To } : null);
+
+        public Task<RichesRoute?> PlotRichesAsync(RichesQuery query, CancellationToken cancellationToken) =>
+            Task.FromResult<RichesRoute?>(null);
+
+        public Task<ExobiologyRoute?> PlotExobiologyAsync(
+            ExobiologyQuery query,
+            CancellationToken cancellationToken) =>
+            Task.FromResult<ExobiologyRoute?>(null);
+    }
+
+    /// <summary>
+    /// A surface whose Plan card can actually plot, through a fake service rather than a stub tool. The
+    /// commander is standing in Sol, which is what <see cref="D47.Core.Capabilities.Builtin.RouteCapability"/>
+    /// falls back to for "from" — the card's own "where you are now" placeholder is a separate hint drawn
+    /// from the surface's <c>Here</c> function and never fills the argument itself.
+    /// </summary>
+    private static (PanelView Panel, FakeRoutes Routes, RoutePlanBook Plans) Plottable(string folder)
+    {
+        var settings = TestSurface.Settings();
+
+        settings.Apply(
+            D47.Core.Capabilities.Builtin.GalaxyCapability.EnabledKey,
+            "true",
+            D47.Core.Configuration.SettingsCaller.Panel);
+
+        var gameState = new D47.Core.Journal.GameStateStore();
+
+        Assert.True(D47.Core.Journal.JournalEvent.TryParse(
+            """{"timestamp":"2026-09-14T00:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""",
+            NullLogger.Instance,
+            out var commanderEvent));
+        gameState.Apply(commanderEvent!);
+
+        Assert.True(D47.Core.Journal.JournalEvent.TryParse(
+            """{"timestamp":"2026-09-14T00:00:01Z","event":"FSDJump","StarSystem":"Sol"}""",
+            NullLogger.Instance,
+            out var jumpEvent));
+        gameState.Apply(jumpEvent!);
+
+        var routes = new FakeRoutes();
+        var plans = Book(folder);
+
+        var registry = CapabilityRegistry.Build(
+        [
+            D47.Core.Capabilities.Builtin.RouteCapability.Create(
+                routes,
+                trade: null,
+                commander: () => gameState.Active,
+                settings,
+                plans),
+        ]);
+
+        var panel = new PanelView { DataContext = new PanelViewModel() };
+
+        panel.EnableRouting(new RoutingSurface(() => NavRoute.None, () => "Sol", registry, plans, () => true));
+
+        Laid(panel);
+        panel.Tab = PanelTab.Routing;
+        panel.Nav.SelectRoot(RoutingPages.PlanRoot);
+        Dispatcher.UIThread.RunJobs();
+
+        return (panel, routes, plans);
+    }
+
+    private static TextBox DestinationBox(PanelView panel) =>
+        panel.GetVisualDescendants()
+            .OfType<TextBox>()
+            .First(box => Avalonia.Automation.AutomationProperties.GetName(box) == "Destination, required");
+
+    private static Button PlotButton(PanelView panel) =>
+        panel.GetVisualDescendants().OfType<Button>().First(button => button.Content as string == "Plot");
+
+    private static void Plot(PanelView panel, string destination)
+    {
+        DestinationBox(panel).Text = destination;
+        PlotButton(panel).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+    }
+
+    /// <summary>
+    /// Pressing Plot, when it records a plan, leaves the surface on the new plan's result page with the
+    /// new headline in the breadcrumb — the button used to just redraw the form and leave the Commander to
+    /// find "Show the last one" themselves (#212).
+    /// </summary>
+    [AvaloniaFact]
+    public void PressingPlotOpensTheNewPlansResultPage()
+    {
+        var folder = Scratch();
+
+        try
+        {
+            var (panel, _, _) = Plottable(folder);
+
+            Plot(panel, "Colonia");
+
+            Assert.Equal("Sol to Colonia", panel.Nav.Trail[^1].Word);
+            Assert.Contains("PSR J1752-2806", TextOf(panel));
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    /// <summary>
+    /// A second plot while the first plan's result page is still the surface's own trail top used to be
+    /// refused — <see cref="PanelNavigator"/> would not push a crumb whose key was already on top, so the
+    /// breadcrumb kept the first plan's headline (#212).
+    /// </summary>
+    [AvaloniaFact]
+    public void PressingPlotAgainMovesTheBreadcrumbAndThePageToTheNewPlan()
+    {
+        var folder = Scratch();
+
+        try
+        {
+            var (panel, _, _) = Plottable(folder);
+
+            Plot(panel, "Colonia");
+            Assert.Equal("Sol to Colonia", panel.Nav.Trail[^1].Word);
+
+            panel.Nav.SelectRoot(RoutingPages.PlanRoot);
+            Dispatcher.UIThread.RunJobs();
+
+            Plot(panel, "Procyon");
+
+            Assert.Equal("Sol to Procyon", panel.Nav.Trail[^1].Word);
+            Assert.Contains("Sol to Procyon", TextOf(panel));
+            Assert.DoesNotContain("Sol to Colonia", TextOf(panel));
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    /// <summary>
+    /// A plot that records no plan — no route found, refused, switched off — stays on the form rather
+    /// than opening a result page for a plan that was never made (#212).
+    /// </summary>
+    [AvaloniaFact]
+    public void APlotThatRecordsNoPlanStaysOnTheForm()
+    {
+        var folder = Scratch();
+
+        try
+        {
+            var (panel, routes, plans) = Plottable(folder);
+            routes.Route = null;
+
+            Plot(panel, "Colonia");
+
+            Assert.Equal(RoutingPages.PlanRoot, panel.Nav.Trail[^1].Key);
+            Assert.Null(plans.Last(RoutePlanKind.Jump));
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
 }
