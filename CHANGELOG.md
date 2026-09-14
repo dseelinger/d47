@@ -41,6 +41,10 @@ A line spoken within thirty seconds of the last time the Commander was addressed
 voice, ship AI, callout, carrier captain or tower — now drops "Commander" from what is said aloud.
 Captions and the flight recorder still show it; only the audio changes.
 
+A callout, carrier line, canned message or story beat with an in-character rewording is now put to
+the model only half the time by default; the rest of the time it is spoken exactly as written, with
+no model call. Ambient remarks are unaffected and are still reworded every time.
+
 ## 0.128.0 — Settings arranged by area
 
 Fleet › Ships, Routing › Community Goal and Adventures now carry a "Settings for this page" strip of

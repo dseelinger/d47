@@ -511,6 +511,12 @@ public sealed record LlmSettings
     /// <summary>False is "plain answers, no persona".</summary>
     public bool PersonalityEnabled { get; init; } = true;
 
+    /// <summary>
+    /// The chance, 0-100, that a flavour line is put to the model rather than spoken as written.
+    /// Clamped where it is read; ambient remarks ignore it and are always reworded (#214).
+    /// </summary>
+    public int RewordPercent { get; init; } = 50;
+
     /// <summary>The Commander's story, in their own words, kept between sessions.</summary>
     public string? AboutMe { get; init; }
 

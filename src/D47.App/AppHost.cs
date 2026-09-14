@@ -4908,6 +4908,9 @@ public sealed class AppHost : IDisposable
     /// <summary>How long a carrier line may spend being written before the authored one is used instead.</summary>
     private static readonly TimeSpan FlavourBudget = TimeSpan.FromSeconds(3);
 
+    /// <summary>Which lines with a brief actually go to the model (#214).</summary>
+    private readonly Core.Callouts.RewordChance _rewordChance = new();
+
     /// <summary>
     /// The same announcement, said in character, when there is a model to ask and it is one of the
     /// lines the checklist wants varied (Phase 11: "with varied LLM arrival and departure responses").
@@ -4922,11 +4925,19 @@ public sealed class AppHost : IDisposable
             return announcement;
         }
 
-        using var budget = new CancellationTokenSource(FlavourBudget);
-
         // What the ship can prove about itself, read once and used for both the model's line and the authored
         // fallback below (#338).
         var facts = ShipFacts.Of(GameState.Active);
+
+        // The reword-or-not choice is made before any model call, so the as-written side makes none (#214).
+        if (!_rewordChance.ShouldReword(announcement, Settings.Current.Llm.RewordPercent))
+        {
+            return ContradictedClaims.Sayable(announcement.Text, facts, _logger, announcement.Key) is null
+                ? null
+                : announcement;
+        }
+
+        using var budget = new CancellationTokenSource(FlavourBudget);
 
         // Named because #338's retry asks the same question again with the contradiction appended, and only
         // the instruction differs.
