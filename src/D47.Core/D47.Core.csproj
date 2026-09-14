@@ -9,6 +9,7 @@
     <EmbeddedResource Include="..\..\assets\cues\*.wav" LogicalName="D47.Core.Cues.%(Filename)" />
     <EmbeddedResource Include="..\..\assets\alerts\*.wav" LogicalName="D47.Core.Alerts.%(Filename)" />
     <EmbeddedResource Include="..\..\assets\beds\*.wav" LogicalName="D47.Core.Beds.%(Filename)" />
+    <EmbeddedResource Include="..\..\assets\standin\*.wav" LogicalName="D47.Core.StandIn.%(Filename)" />
   </ItemGroup>
 
   <ItemGroup>

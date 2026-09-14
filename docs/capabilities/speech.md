@@ -635,6 +635,22 @@ Short damaged stretches at irregular intervals.
 
 A Schroeder reverb, adding a short tail after the sentence ends.
 
+##### Test {#guardian-voice-test}
+
+Plays a line through whichever of the eight treatments above are switched on, and never bills a
+provider. Which clip it plays depends on what the selected provider offers, checked in this
+order:
+
+1. The provider costs nothing (Edge, Kokoro): a fresh line in the ship AI's own voice.
+2. The provider is paid but offers a free sample of this voice: that sample.
+3. The provider is paid, and the ship AI's voice was already auditioned this session (from the
+   Voice row above, or an earlier press of Test): that clip, at no extra cost.
+4. Nothing free is available — including when no voice provider is selected at all: a bundled
+   stand-in voice, and the row says so.
+
+The clip itself is cached untreated; toggling a treatment and pressing Test again applies the new
+combination to the same clip rather than fetching another one.
+
 They are global settings — one set for every core, not one per persona — because it is your
 choice of how the cockpit sounds rather than a character trait of whichever Guardian is currently
 aboard. Switching one on or off takes effect from the next sentence; nothing needs a restart.

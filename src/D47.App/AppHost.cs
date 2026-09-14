@@ -1470,6 +1470,9 @@ public sealed class AppHost : IDisposable
                         ? host.AuditionPreviewAsync(voiceId, role, token)
                         : Task.CompletedTask,
                     HasPreview = (group, id) => self?.HasPreviewFor(group, id) ?? false,
+                    GuardianTest = token => self is { } host
+                        ? host.GuardianTestAsync(token)
+                        : Task.FromResult<string?>(null),
 
                     // Late-bound like the two above, because the check is a network call made by a host that
                     // does not exist yet at this point in composition.
@@ -4788,6 +4791,100 @@ public sealed class AppHost : IDisposable
             Clip = clip,
             Group = AuditionGroup,
         });
+    }
+
+    /// <summary>What the Test row says when it played the bundled stand-in rather than the ship's own voice.</summary>
+    private const string StandInSaid =
+        "That was a stand-in voice, not the one you have chosen — nothing free was available to test with.";
+
+    /// <summary>
+    /// Plays the Guardian voice treatments currently toggled, on a clip chosen so nothing is ever
+    /// billed (#226). Which clip that is follows <see cref="GuardianVoiceTest.SourceFor"/>, and the
+    /// treatments themselves come from <see cref="GuardianVoice.ColourFor"/> — the same function the
+    /// ship's real speech is coloured through.
+    /// </summary>
+    internal async Task<string?> GuardianTestAsync(CancellationToken cancellationToken)
+    {
+        var speech = Settings.Current.Speech;
+        var voiceId = SpeechCapability.ShipVoiceFor(Settings.Current, Personas.Current.Id) ?? string.Empty;
+        var providerId = VoiceGroups.ProviderFor(speech, VoiceGroup.Aboard);
+        var providerInfo = TtsProviderCatalog.Selected(providerId);
+
+        Audio.DropGroup(AuditionGroup);
+
+        var auditionKey = (providerInfo.Id, $"{VoiceRole.ShipAi}:{voiceId}");
+        var sampleKey = (providerInfo.Id, $"sample:{voiceId}");
+        var hasFreeSample = providerInfo.OffersFreePreviews && HasPreviewFor(VoiceGroup.Aboard, voiceId);
+
+        var source = GuardianVoiceTest.SourceFor(
+            providerInfo, hasFreeSample, _auditions.ContainsKey(auditionKey));
+
+        // Synthesize and FreeSample both need the live client, which Speaker(group) does not have
+        // where the provider needs a key that has not been set. Falling back to the stand-in here
+        // rather than throwing keeps Test doing what it promises: it never fails, only ever plays
+        // something.
+        if (source is GuardianVoiceTest.Source.Synthesize or GuardianVoiceTest.Source.FreeSample
+            && Speaker(VoiceGroup.Aboard) is null)
+        {
+            source = GuardianVoiceTest.Source.StandIn;
+        }
+
+        AudioClip clip;
+        string? said = null;
+
+        switch (source)
+        {
+            case GuardianVoiceTest.Source.Synthesize:
+                if (!_auditions.TryGetValue(auditionKey, out var synthesized))
+                {
+                    synthesized = await Speaker(VoiceGroup.Aboard)!.SynthesizeAsync(
+                        AuditionLine.For(Personas.Current),
+                        new VoiceSelection(voiceId, SpeechCapability.RateFor(Settings.Current, providerId)),
+                        cancellationToken).ConfigureAwait(false);
+
+                    _auditions[auditionKey] = synthesized;
+                }
+
+                clip = synthesized;
+                break;
+
+            case GuardianVoiceTest.Source.FreeSample:
+                if (!_auditions.TryGetValue(sampleKey, out var sampled))
+                {
+                    sampled = await Speaker(VoiceGroup.Aboard)!.PreviewAsync(voiceId, cancellationToken)
+                                  .ConfigureAwait(false)
+                              ?? throw new InvalidOperationException(
+                                  $"{providerInfo.Name} has no free sample of that voice.");
+
+                    _auditions[sampleKey] = sampled;
+                }
+
+                clip = sampled;
+                break;
+
+            case GuardianVoiceTest.Source.CachedAudition:
+                clip = _auditions[auditionKey];
+                break;
+
+            default:
+                clip = StandInVoice.Clip;
+                said = StandInSaid;
+                break;
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var colour = GuardianVoice.ColourFor(speech, Personas.Current.VoiceHint.Gender);
+
+        Audio.Enqueue(new AudioRequest
+        {
+            Channel = AudioChannel.Speech,
+            Clip = colour is null ? clip : colour(clip),
+            Group = AuditionGroup,
+            Caption = clip.Name,
+        });
+
+        return said;
     }
 
     /// <summary>Whether one voice in a slot's list has a free sample.</summary>

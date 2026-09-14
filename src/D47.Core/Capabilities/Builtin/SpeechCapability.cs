@@ -70,6 +70,9 @@ public static class SpeechCapability
     public const string GuardianGlitchKey = "speech.guardianVoice.glitch";
     public const string GuardianReverbKey = "speech.guardianVoice.reverb";
 
+    /// <summary>Plays the currently toggled treatments without billing anything (#226).</summary>
+    public const string GuardianTestKey = "speech.guardianVoice.test";
+
     /// <summary>The secret row key for a voice provider's API key.</summary>
     public static string KeyRowFor(TtsProviderInfo provider) => $"speech.{provider.Id}.apiKey";
 
@@ -236,6 +239,13 @@ public static class SpeechCapability
 
         /// <summary>Plays one voice's free sample from its provider, which bills nothing (#106).</summary>
         public Func<string, VoiceRole, CancellationToken, Task>? Preview { get; init; }
+
+        /// <summary>
+        /// Plays the Guardian voice treatments currently toggled on the ship AI's voice, never billing
+        /// a provider (#226). Returns a sentence for the row when the clip played was the bundled
+        /// stand-in rather than the ship's own voice.
+        /// </summary>
+        public Func<CancellationToken, Task<string?>>? GuardianTest { get; init; }
 
         /// <summary>Whether one voice in a slot's list has a free sample for <see cref="Preview"/>.</summary>
         public Func<VoiceGroup, string, bool>? HasPreview { get; init; }
@@ -985,6 +995,28 @@ public static class SpeechCapability
                     {
                         Speech = s.Speech with { GuardianVoiceReverb = v is not "false" and not null },
                     },
+                },
+            },
+            new SettingRow
+            {
+                Key = GuardianTestKey,
+                Advanced = true,
+                Label = "Test",
+                Help =
+                    "Plays a line in the ship AI's voice through whichever treatments above are "
+                    + "switched on. Never costs money: it plays a free synthesis where the provider "
+                    + "is free, the provider's free sample where it has one, an audition already paid "
+                    + "for this session where there is one, or a bundled stand-in voice.",
+                Kind = SettingKind.Info,
+                Group = "Guardian voice",
+                DocsAnchor = "guardian-voice-test",
+                PressLabel = "Test",
+                PressAsync = surface.GuardianTest is null
+                    ? null
+                    : (_, token) => surface.GuardianTest.Invoke(token),
+                Binding = new SettingBinding
+                {
+                    Read = _ => "Hear the treatments above without paying for them.",
                 },
             },
             new SettingRow

@@ -60,8 +60,8 @@ public static class SettingsLayout
     /// Place ids where <see cref="MostEntriesPerPlace"/> is exceeded today: <c>sounds</c> spells out
     /// Level/Mute/Duck for all five audio channels rather than collapsing them into one family entry (17
     /// entries, all Advanced, so 0 shown); <c>voice</c> spells out the eight Guardian voice toggles
-    /// rather than collapsing them into one family entry (22 entries, all eight Advanced, so 0 shown
-    /// beyond what already applied) (#225).
+    /// rather than collapsing them into one family entry (23 entries with the Test row, all Advanced,
+    /// so 0 shown beyond what already applied) (#225, #226).
     /// </summary>
     public static readonly IReadOnlyList<string> TotalLimitExceptions = ["sounds", "voice"];
 
@@ -185,6 +185,7 @@ public static class SettingsLayout
                                 E("speech.guardianVoice.ringMod"),
                                 E("speech.guardianVoice.glitch"),
                                 E("speech.guardianVoice.reverb"),
+                                E("speech.guardianVoice.test"),
                             ]),
                         G(
                             "What it costs",

@@ -51,6 +51,11 @@ all off by default and global to every core. Turning any on reaches the ship AI'
 own callouts and a persona's introduction or return; the crew, the carrier and every over-the-air
 voice are unchanged.
 
+A Test button under Guardian voice plays a line through whichever of the eight treatments above are
+on, and never bills a provider: it plays free where the provider is free, a free sample where the
+provider has one, an audition already paid for this session where there is one, or a bundled
+stand-in voice.
+
 ## 0.128.0 — Settings arranged by area
 
 Fleet › Ships, Routing › Community Goal and Adventures now carry a "Settings for this page" strip of
