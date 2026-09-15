@@ -1968,6 +1968,13 @@ public sealed class SlotPage : LoadoutPage
             _body.Children.Add(LoadoutPages.Stepped(line, _copy));
         }
 
+        // Whoever can roll it, under its own heading rather than folded into Planned's — a slot with no plan
+        // draws none of these lines (#195).
+        foreach (var line in Mode.Engineers(_item, _slot))
+        {
+            _body.Children.Add(LoadoutPages.Stepped(line, _copy));
+        }
+
         Buttons(Mode.HasPlan(_item, _slot));
     }
 

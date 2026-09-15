@@ -1,5 +1,6 @@
 using System.Globalization;
 using D47.Core.Checklists;
+using D47.Core.Engineers;
 using D47.Core.Interface;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -1129,6 +1130,36 @@ public sealed class ShipsMode(
 
         return lines;
     }
+
+    public IReadOnlyList<LoadoutLine> Engineers(string item, string slot)
+    {
+        if (Resolve(item) is not { } build
+            || build.For(slot) is not { } plan
+            || plan.Blueprint is not { Length: > 0 }
+            || plan.Grade <= 0)
+        {
+            return [];
+        }
+
+        var named = EngineersFor(plan);
+
+        return named.Count == 0
+            ? []
+            : EngineerLines.For(PlanEngineers.For(
+                named, plan.Grade, state()?.Engineers, state()?.Location.StarPos));
+    }
+
+    /// <summary>
+    /// Who the table names at exactly the planned grade — an experimental never narrows this, so it is
+    /// never asked (#195).
+    /// </summary>
+    private static IReadOnlyList<string> EngineersFor(SlotPlan plan) =>
+    [
+        .. BlueprintCatalogue.Named(plan.Blueprint, plan.Module)
+            .Where(recipe => recipe.Kind == BlueprintKind.Modification && recipe.Grade == plan.Grade)
+            .SelectMany(recipe => recipe.Engineers)
+            .Distinct(StringComparer.OrdinalIgnoreCase),
+    ];
 
     /// <summary>
     /// What the Commander wants in this slot: the module, which one of it, the blueprint, the grade,

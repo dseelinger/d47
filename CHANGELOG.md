@@ -6,6 +6,14 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.138.0 — Engineers on the slot page
+
+A ship slot with a plan now lists who can roll it, under the Planned block: Unlocked engineers
+first, then Locked, each ordered nearest first with a copy glyph on the system. An unlocked
+engineer ranked below the planned grade still shows, holding what they hold. On foot, a
+modification slot lists the same way; a grade slot carries no engineer list. Before
+`EngineerProgress` has been read, the list shows once, ungrouped, saying so.
+
 ## 0.137.0 — Neutron jumps give their distance
 
 Each waypoint on a plotted route now says how far the leg to it is, alongside the jump count and

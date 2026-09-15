@@ -641,12 +641,16 @@ public partial class PanelView : UserControl
         // Kept, so the tick has something to invalidate (remediation.md 17, item 7).
         _loadoutMode = shipsMode;
         _loadoutState = state;
+        _loadoutEngineerStamp = D47.Core.Engineers.UnlockPlanner.Stamp(state());
 
         var modes = new List<ILoadoutMode> { shipsMode };
 
         if (onFoot is not null)
         {
-            modes.Add(new OnFootMode(onFoot, state));
+            var onFootMode = new OnFootMode(onFoot, state);
+
+            _onFootMode = onFootMode;
+            modes.Add(onFootMode);
         }
 
         // Recomputed on every draw rather than cached: it is a subtraction over two stores and the live
@@ -828,14 +832,28 @@ public partial class PanelView : UserControl
             changed = true;
         }
 
+        // Neither store above knows about a jump or a rank-up, and the engineers block on a slot page reads
+        // both — the same stamp the Engineers tab already compares itself against (#195).
+        var engineerStamp = D47.Core.Engineers.UnlockPlanner.Stamp(_loadoutState?.Invoke());
+
+        if (!string.Equals(engineerStamp, _loadoutEngineerStamp, StringComparison.Ordinal))
+        {
+            _loadoutEngineerStamp = engineerStamp;
+            mode.Invalidate();
+            _onFootMode?.Invalidate();
+            changed = true;
+        }
+
         return changed;
     }
 
     private ShipsMode? _loadoutMode;
+    private OnFootMode? _onFootMode;
     private Func<D47.Core.Journal.CommanderGameState?>? _loadoutState;
     private D47.Core.Journal.ShipLoadout? _loadoutSeen;
     private D47.Core.Journal.CarrierState? _carrierSeen;
     private D47.Core.Journal.CarrierState? _squadronSeen;
+    private string _loadoutEngineerStamp = string.Empty;
 
     /// <summary>Gives this surface the clocks, timers and alarms (Phase 24, "Utilities").</summary>
     public void EnableUtilities(

@@ -313,6 +313,12 @@ public interface ILoadoutMode
     /// <summary>What the Commander wants, with the journal's verdict and what it costs.</summary>
     IReadOnlyList<LoadoutLine> Planned(string item, string slot);
 
+    /// <summary>
+    /// Who can roll this slot's plan, grouped into Unlocked and Locked and nearest first, or empty for
+    /// a slot with no plan (#195).
+    /// </summary>
+    IReadOnlyList<LoadoutLine> Engineers(string item, string slot);
+
     /// <summary>Whether this slot has a plan, which decides what the buttons say.</summary>
     bool HasPlan(string item, string slot);
 

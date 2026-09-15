@@ -1,5 +1,6 @@
 using System.Globalization;
 using D47.Core.Checklists;
+using D47.Core.Engineers;
 using D47.Core.Interface;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -33,9 +34,23 @@ public sealed class OnFootMode(OnFootPlanService kit, Func<CommanderGameState?> 
 
     public event Action? Changed
     {
-        add => kit.Store.Changed += value;
-        remove => kit.Store.Changed -= value;
+        add
+        {
+            kit.Store.Changed += value;
+            _invalidated += value;
+        }
+
+        remove
+        {
+            kit.Store.Changed -= value;
+            _invalidated -= value;
+        }
     }
+
+    private event Action? _invalidated;
+
+    /// <summary>The journal moved under the page — the Commander jumped, or an engineer ranked up (#195).</summary>
+    public void Invalidate() => _invalidated?.Invoke();
 
     public string EmptyIndex =>
         "I have not seen you on foot yet. Step out of the ship and I will read what you are "
@@ -279,6 +294,34 @@ public sealed class OnFootMode(OnFootPlanService kit, Func<CommanderGameState?> 
 
         return lines;
     }
+
+    public IReadOnlyList<LoadoutLine> Engineers(string item, string slot)
+    {
+        if (IsGrade(slot)
+            || Resolve(item) is not { } build
+            || build.For(slot) is not { IsEmpty: false } plan
+            || plan.Modification is not { Length: > 0 } modification)
+        {
+            return [];
+        }
+
+        var named = ModificationEngineers(modification);
+
+        return named.Count == 0
+            ? []
+            : EngineerLines.For(PlanEngineers.For(
+                named, grade: null, state()?.Engineers, state()?.Location.StarPos));
+    }
+
+    /// <summary>Who the table names for a suit or weapon modification — every one of them (#195).</summary>
+    private static IReadOnlyList<string> ModificationEngineers(string modification) =>
+    [
+        .. BlueprintCatalogue.All
+            .Where(blueprint => blueprint.Kind is BlueprintKind.Suit or BlueprintKind.Weapon)
+            .Where(blueprint => ChecklistKeys.Compact(blueprint.Name) == ChecklistKeys.Compact(modification))
+            .SelectMany(blueprint => blueprint.Engineers)
+            .Distinct(StringComparer.OrdinalIgnoreCase),
+    ];
 
     /// <summary>Asks for the grade, or for a modification.</summary>
     public void Ask(string item, string slot, PanelPrompts prompts, Action done)
