@@ -24,7 +24,7 @@ public static class HowDoI
     };
 
     /// <summary>How many content words a goal must share with a leaf to count as one it means.</summary>
-    private const int MinSharedWords = 2;
+    internal const int MinSharedWords = 2;
 
     /// <summary>
     /// The words after one of the three openers, or null when the utterance, with
@@ -91,7 +91,7 @@ public static class HowDoI
     }
 
     /// <summary>Content words, stopwords out and a trailing plural folded off.</summary>
-    private static HashSet<string> ContentWords(string text) => new(
+    internal static HashSet<string> ContentWords(string text) => new(
         KeywordRouter.Words(text)
             .Select(Fold)
             .Where(word => word.Length > 0 && !Stopwords.Contains(word)),

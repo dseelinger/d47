@@ -6,6 +6,13 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.132.4 — What to say comes from the phrase book, not a guess
+
+Add `find_phrase`, so asked what to say for a goal the model reads the model-free router's own
+phrase book instead of guessing or denying a working phrase exists. Two phrases that reach the
+same thing are named together, and a goal nothing matches gets told so plainly rather than being
+told the goal cannot be done.
+
 ## 0.132.3 — No invented chatter where nobody lives
 
 Fix Passersby and Hail chatter firing in systems with population zero: they invented other people

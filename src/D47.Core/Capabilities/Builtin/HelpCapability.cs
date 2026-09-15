@@ -1,6 +1,7 @@
 using System.Text;
 using D47.Core.Conversation;
 using D47.Core.Help;
+using D47.Core.Input;
 
 namespace D47.Core.Capabilities.Builtin;
 
@@ -11,14 +12,21 @@ public static class HelpCapability
 
     public const string DrillToolName = "drill_capabilities";
 
+    public const string FindPhraseToolName = "find_phrase";
+
     /// <summary>How many phrases a leaf says before it stops, in order of how well they are known.</summary>
     private const int PhrasesPerLeaf = 2;
 
+    /// <summary>How many phrases one match says before it stops.</summary>
+    private const int PhrasesPerMatch = 3;
+
     /// <summary>
     /// Deliberately late-bound: the registry cannot be handed to a descriptor that is being built to go
-    /// into it.
+    /// into it, and the phrase book is assembled from the router that is itself built after the registry
+    /// (#229).
     /// </summary>
-    public static CapabilityDescriptor Create(Func<CapabilityRegistry> registry, OfferWindow offers) => new()
+    public static CapabilityDescriptor Create(
+        Func<CapabilityRegistry> registry, OfferWindow offers, Func<PhraseBook> phraseBook) => new()
     {
         Id = Id,
         Group = "Foundation",
@@ -52,7 +60,8 @@ public static class HelpCapability
                 Description =
                     "List what D47 can do, from its own capability registry. Use this instead of describing "
                     + "D47's abilities from memory — this is the only accurate source, and anything not "
-                    + "listed here does not exist.",
+                    + "listed here does not exist. Asked what to say, use find_phrase instead of this: an "
+                    + "area listing names features, not the phrases that actually route.",
                 AlwaysLoaded = true,
                 Parameters =
                 [
@@ -69,6 +78,29 @@ public static class HelpCapability
                 {
                     arguments.TryGetString("group", out var group);
                     return Task.FromResult(ToolResult.Ok(Describe(registry(), group)));
+                },
+            },
+            new ToolDefinition
+            {
+                Name = FindPhraseToolName,
+                Description =
+                    "Find the phrase or phrases that actually reach a goal, from the model-free router's own "
+                    + "phrase book — never from memory. Use this before telling the Commander there is no set "
+                    + "phrase for something, or that it cannot be done; the phrase book may hold one.",
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "goal",
+                        Type = ToolParameterType.String,
+                        Description = "What the Commander wants to do, in a few plain words.",
+                        Required = true,
+                    },
+                ],
+                Handler = (arguments, _) =>
+                {
+                    arguments.TryGetString("goal", out var goal);
+                    return Task.FromResult(ToolResult.Ok(FindPhrase(phraseBook(), registry(), goal ?? string.Empty)));
                 },
             },
             new ToolDefinition
@@ -159,6 +191,68 @@ public static class HelpCapability
         2 => $"{items[0]} {conjunction} {items[1]}",
         _ => $"{string.Join(", ", items.SkipLast(1))}, {conjunction} {items[^1]}",
     };
+
+    /// <summary>
+    /// Every phrase-book entry whose words reach the goal, grouped by what they reach so two phrases for
+    /// the same thing are said together — matched per phrase rather than per capability, on the same
+    /// content-word rule <see cref="HowDoI"/> matches a "how do I" goal with (#229).
+    /// </summary>
+    internal static string FindPhrase(PhraseBook book, CapabilityRegistry registry, string goal)
+    {
+        var goalWords = HowDoI.ContentWords(goal);
+
+        if (goalWords.Count == 0)
+        {
+            return $"No phrase matched \"{goal}\".";
+        }
+
+        var threshold = Math.Min(goalWords.Count, HowDoI.MinSharedWords);
+
+        var matches = book.Entries
+            .Select(entry => (
+                entry,
+                shared: HowDoI.ContentWords(entry.Phrase).Intersect(goalWords, StringComparer.OrdinalIgnoreCase).Count()))
+            .Where(scored => scored.shared >= threshold)
+            .GroupBy(scored => PhraseBook.Target(scored.entry), StringComparer.Ordinal)
+            .Select(group => (
+                Description: WhatItDoes(group.First().entry, registry),
+                Phrases: group.Select(scored => scored.entry.Phrase)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .Take(PhrasesPerMatch)
+                    .ToArray(),
+                Shared: group.Max(scored => scored.shared)))
+            .OrderByDescending(match => match.Shared)
+            .ToArray();
+
+        return matches.Length == 0
+            ? $"No phrase matched \"{goal}\"."
+            : string.Join(
+                " ",
+                matches.Select(match =>
+                    $"{match.Description} Say {Listed(match.Phrases.Select(phrase => $"'{phrase}'").ToArray(), conjunction: "or")}."));
+    }
+
+    /// <summary>What a matched entry reaches, in plain words — never a tool name or an action id.</summary>
+    private static string WhatItDoes(PhraseEntry entry, CapabilityRegistry registry)
+    {
+        if (entry.Row is { } row)
+        {
+            return entry.Value is { Length: > 0 } value ? $"Sets {row.Label} to {value}." : $"Reports {row.Label}.";
+        }
+
+        if (entry.Arguments.TryGetValue("action", out var actionId)
+            && GameActions.All.FirstOrDefault(action => action.Id == actionId) is { } gameAction)
+        {
+            return $"Reaches {gameAction.Label}.";
+        }
+
+        var tool = entry.ToolName is { } toolName
+            ? registry.Find(entry.CapabilityId)?.Descriptor.Tools
+                .FirstOrDefault(t => string.Equals(t.Name, toolName, StringComparison.Ordinal))
+            : null;
+
+        return tool?.Description ?? registry.Find(entry.CapabilityId)?.Descriptor.Summary ?? "Something D47 can do.";
+    }
 
     /// <summary>The overview, or one area in detail.</summary>
     public static string Describe(CapabilityRegistry registry, string? group = null)

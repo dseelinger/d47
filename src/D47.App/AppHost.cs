@@ -1372,6 +1372,10 @@ public sealed class AppHost : IDisposable
         // in immediately after Build.
         CapabilityRegistry? built = null;
 
+        // Same story, for the phrase book find_phrase reads (#229): the router that builds it is created
+        // after the registry it is registered in.
+        KeywordRouter? builtRouter = null;
+
         // When the Commander was last understood.
         var heardAt = new StrongBox<DateTimeOffset?>(null);
 
@@ -1801,7 +1805,9 @@ public sealed class AppHost : IDisposable
                 // Timers and alarms register only for a run started with the switch (#90).
                 timersAndAlarms: timersAndAlarms is not null,
                 offers: offers,
-                learnedPhrases: learnedPhrases));
+                learnedPhrases: learnedPhrases,
+                phraseBook: () => builtRouter?.Book ?? throw new InvalidOperationException(
+                    "The phrase book was asked for before the router finished building.")));
 
         buildingRegistry.Dispose();
 
@@ -1857,6 +1863,8 @@ public sealed class AppHost : IDisposable
 
         var router = new KeywordRouter(
             capabilities, () => MacroCapability.Phrases(macros).Concat(OtherDynamicCommands()));
+
+        builtRouter = router;
 
         var turns = new TurnLoop(
             capabilities,

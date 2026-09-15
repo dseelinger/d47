@@ -188,7 +188,7 @@ public sealed class PhraseBook
     }
 
     /// <summary>What an entry reaches, so two phrases for the same thing are one candidate.</summary>
-    private static string Target(PhraseEntry entry)
+    internal static string Target(PhraseEntry entry)
     {
         if (entry.Row is { } row)
         {

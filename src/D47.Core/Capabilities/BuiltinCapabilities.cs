@@ -177,9 +177,14 @@ public static class BuiltinCapabilities
 
         // What the flying Commander has taught D47 stands for a declared phrase (#169), listed and
         // forgotten on its own panel page (#171).
-        Conversation.LearnedPhrasesStore? learnedPhrases = null) =>
+        Conversation.LearnedPhrasesStore? learnedPhrases = null,
+
+        // The whole phrase book the model-free router accepts, macros and learned phrases included, so
+        // the model can be told what actually works rather than guess (#229). Null builds one with no
+        // dynamic commands, for a caller — a test — with no router of its own.
+        Func<PhraseBook>? phraseBook = null) =>
     [
-        HelpCapability.Create(registry, offers ?? new OfferWindow()),
+        HelpCapability.Create(registry, offers ?? new OfferWindow(), phraseBook ?? (() => PhraseBook.From(registry(), []))),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage, history, ticking),
         JournalCapability.Create(gameState, () => history?.State ?? Journal.HistoryState.Done, route),
         CrewCapability.Create(() => gameState.Active),

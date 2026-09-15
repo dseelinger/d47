@@ -220,6 +220,26 @@ I have no area called "Navigation". I have: Flying, Trading and goals, Ship and 
 Talking and voices, Seeing what happened, Settings and safety.
 ```
 
+### What to actually say
+
+Asked what can be done, the model reads it here rather than guessing. Asked what to *say* for a
+goal — "how do I choose the next system in the neutron jump route" — it calls a second tool, which
+answers from the same phrase book the router itself matches against, grouping two phrases that
+reach the same thing:
+
+```text
+Plot the next stop on a stored route plan — the Neutron Plotter's waypoints, a Road to Riches
+loop's stops, or a trade run's stops — through the galaxy map. Skips a stop whose system is the
+one the Commander is already in. Say 'plot next neutron jump', 'plot the next neutron jump', or
+'next neutron jump'. Reaches the hyperspace jump. Say 'jump to the next system'. Reaches the next
+system in the route. Say 'next system', 'target the next system', or 'target the next system in
+route'.
+```
+
+Where nothing in the phrase book matches, it says so plainly rather than claiming the goal cannot
+be reached at all — the phrase book not matching is not the same fact as D47 not being able to do
+it.
+
 ### Why it will not make things up
 
 **The model is never asked what Directive 47 can do.** Ask a model to describe its own abilities
@@ -260,6 +280,16 @@ at all, which made "what can you do" match nothing: the one capability whose ent
 being answerable without the model was unreachable without it, purely for offering a refinement
 it does not need. The rule is now "no required parameters", and the router invokes with empty
 arguments.
+
+#### `find_phrase`
+
+Finds the phrase-book entries whose words reach the goal — the model-free router's own vocabulary,
+matched the same way the spoken "how do I" answer above matches a goal, but per phrase rather than
+per leaf. Two phrases that reach the same thing are said together.
+
+```json
+{"type":"object","properties":{"goal":{"type":"string","description":"What the Commander wants to do, in a few plain words."}},"required":["goal"],"additionalProperties":false}
+```
 
 #### `drill_capabilities`
 
