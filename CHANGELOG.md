@@ -6,6 +6,13 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.130.0 — The carrier captain on the line
+
+Ask "carrier report", "carrier status", "how is my carrier", "carrier services" or "carrier fuel"
+for the fleet carrier's fuel, cargo against capacity, balance, jump range, docking access, booked
+jump and every service with who staffs it — apart from "where is my carrier", which still answers
+with the system alone.
+
 ## 0.129.1 — One tool surface for every provider
 
 On Claude Opus 5, Opus 4.8, Opus 4.7, Fable 5, Mythos 5 and Haiku 4.5, through Anthropic's own
