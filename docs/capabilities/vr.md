@@ -230,6 +230,15 @@ It acts on whichever panel is on screen — big or mini — and each keeps its o
 was still riding your head when you asked, Directive 47 puts it down in front of you first and then
 moves it, exactly as picking it up with a controller used to.
 
+**Or look where you want it and say so.** The panel on screen moves to the middle of your view, as
+far from you as it already was, turned to face you:
+
+> "place the panel here" / "put the panel here" / "panel here"
+
+Looking down puts it lower and looking up puts it higher. Directive 47 reads which way the headset
+is pointing, not your eyes, so it is the direction your head faces that counts. The panel becomes
+world-locked and stays there; a panel that was riding your head goes at its **Distance** setting.
+
 No model is needed for any of this. The phrases above are matched by name, so they work with no
 provider configured.
 
@@ -575,6 +584,17 @@ path, and the default lock is world: rows for them would move nothing you could 
 Up and down are the room's vertical, not the panel's own, and nearer and further run along the
 floor rather than along the tilted face — otherwise bringing a panel closer would raise it at the
 same time, which is one gesture doing two things.
+
+#### `place_headset_panel_here`
+
+Writes a new anchor for the panel on screen: centred on the headset's forward line, pitch included,
+with its face turned back at the head and no roll. The distance is from the head to the existing
+anchor's centre for a world-locked panel, and the surface's `Distance` otherwise. The head pose is
+read when the command runs, after transcription.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
 
 #### `zoom_headset_panel`
 

@@ -68,7 +68,13 @@ public static class VrCapability
 
         /// <summary>Puts the panels into resize mode or takes them out of it, and says what happened (#107).</summary>
         public Func<bool, VrResizeOutcome> Resize { get; init; } = _ => VrResizeOutcome.NoHeadset;
+
+        /// <summary>Places whichever panel is on screen along the line the headset is facing (#161).</summary>
+        public Func<VrGazeOutcome> PlaceWhereLooking { get; init; } = () => VrGazeOutcome.NoHeadset;
     }
+
+    private static readonly IReadOnlyDictionary<string, string> Nothing =
+        new Dictionary<string, string>(StringComparer.Ordinal);
 
     /// <summary>The words <c>zoom_headset_panel</c> takes, in order.</summary>
     public static IReadOnlyList<string> ZoomDirections { get; } = ["in", "out", "reset"];
@@ -80,7 +86,12 @@ public static class VrCapability
         Name = "Headset",
         Summary = "Show D47 in the headset as a SteamVR overlay, over Elite, in your own cockpit.",
         Examples = ["is the headset connected", "turn the headset overlay off"],
-        Keywords = ["headset status", "vr status", "is the headset connected"],
+        Keywords =
+        [
+            new CapabilityKeyword("headset status", "get_headset_status"),
+            new CapabilityKeyword("vr status", "get_headset_status"),
+            new CapabilityKeyword("is the headset connected", "get_headset_status"),
+        ],
         Display = new CapabilityDisplay { PanelTitle = "Headset", Order = 45 },
         Tools =
         [
@@ -143,6 +154,28 @@ public static class VrCapability
                 ],
                 Commands = [.. NudgePhrases()],
                 Handler = (arguments, _) => Task.FromResult(Move(headset, arguments)),
+            },
+
+            new ToolDefinition
+            {
+                Name = "place_headset_panel_here",
+                Description =
+                    "Put the headset panel where the Commander is looking: centred on the line the headset "
+                    + "faces, as far away as the panel already is, turned to face them. Acts on whichever "
+                    + "panel is on screen and leaves it world-locked.",
+                Commands =
+                [
+                    new ToolCommandPhrase("place the panel here", Nothing),
+                    new ToolCommandPhrase("put the panel here", Nothing),
+                    new ToolCommandPhrase("place the vr panel here", Nothing),
+                    new ToolCommandPhrase("put the vr panel here", Nothing),
+                    new ToolCommandPhrase("panel here", Nothing),
+                ],
+                Handler = (_, _) => Task.FromResult(ToolResult.Ok(headset.PlaceWhereLooking() switch
+                {
+                    VrGazeOutcome.Placed => "Put it where you are looking.",
+                    _ => VrNudges.Describe(VrNudge.Left, VrNudgeOutcome.NoHeadset),
+                })),
             },
 
             new ToolDefinition

@@ -1551,6 +1551,7 @@ public sealed class AppHost : IDisposable
                     Nudge = (nudge, steps) =>
                         self?.Vr?.Nudge(nudge, steps) ?? Core.Vr.VrNudgeOutcome.NoHeadset,
                     Resize = on => self?.Vr?.Resize(on) ?? Core.Vr.VrResizeOutcome.NoHeadset,
+                    PlaceWhereLooking = () => self?.Vr?.PlaceWhereLooking() ?? Core.Vr.VrGazeOutcome.NoHeadset,
                 },
                 actionSurface = new ActionSurface
                 {

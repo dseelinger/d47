@@ -6,6 +6,13 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.133.0 — The headset panel goes where you look
+
+Add "place the panel here", which moves whichever headset panel is on screen to the middle of the
+direction the headset is facing, as far away as it already was, turned to face you. Looking down
+places it lower and looking up places it higher. The panel is left world-locked, its place survives
+a restart, and no model is needed.
+
 ## 0.132.7 — Kokoro's rows hide unless a voice actually uses it
 
 Fix the "Local voice" and "Local voice model build" rows in Settings, which showed beside every

@@ -45,6 +45,15 @@ public enum VrNudgeOutcome
     NoHeadset,
 }
 
+/// <summary>How placing a surface where the Commander is looking went (#161).</summary>
+public enum VrGazeOutcome
+{
+    Placed,
+
+    /// <summary>There is no head pose to place anything along.</summary>
+    NoHeadset,
+}
+
 /// <summary>The arithmetic of nudging, and the words for it.</summary>
 public static class VrNudges
 {

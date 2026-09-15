@@ -251,6 +251,49 @@ public sealed class VrHost : IDisposable
         return down ? VrNudgeOutcome.Moved : VrNudgeOutcome.PutDown;
     }
 
+    /// <summary>Places the panel that is on screen along the line the headset is facing (#161).</summary>
+    public VrGazeOutcome PlaceWhereLooking()
+    {
+        if (_runtime.Head is not { IsFinite: true } head)
+        {
+            return VrGazeOutcome.NoHeadset;
+        }
+
+        var slot = _panel.Mode == PanelMode.Mini ? VrCapability.MiniSlot : VrCapability.PanelSlot;
+        var placement = _panel.Placement;
+        var down = placement.Lock == SurfaceLock.WorldLocked;
+
+        var distance = down && _anchors.TryGetValue(slot, out var existing)
+            ? Vector3.Distance(head.Position, existing.Placed.ToPose().Position)
+            : placement.DistanceMetres;
+
+        _anchors[slot] = Anchor(VrPlacementMath.Gazed(head, distance), head);
+
+        Remember();
+        _panel.Invalidate();
+
+        if (!down)
+        {
+            var locked = _settings.Apply(VrCapability.LockKey(slot), "world", SettingsCaller.Hotkey);
+
+            if (locked.Status != SettingApplyStatus.Applied)
+            {
+                _logger.LogWarning(
+                    "The panel was placed where the Commander is looking but {Key} would not go to world: {Status} — {Detail}",
+                    VrCapability.LockKey(slot),
+                    locked.Status,
+                    locked.Message);
+            }
+        }
+
+        _logger.LogInformation(
+            "The {Slot} panel was placed {Distance:0.00} m along the headset's forward line",
+            slot,
+            distance);
+
+        return VrGazeOutcome.Placed;
+    }
+
     /// <summary>Puts the panels into resize mode or takes them out of it (#107).</summary>
     public VrResizeOutcome Resize(bool on)
     {

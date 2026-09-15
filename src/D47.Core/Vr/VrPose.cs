@@ -138,6 +138,19 @@ public static class VrPlacementMath
         return new VrPose(centre, Quaternion.CreateFromYawPitchRoll(yaw, pitch, 0f));
     }
 
+    /// <summary>
+    /// A surface centred on the line the head is facing, at this distance, its face turned back at the
+    /// head with no roll (#161).
+    /// </summary>
+    public static VrPose Gazed(VrPose head, float distanceMetres)
+    {
+        var level = Upright(head);
+        var forward = Vector3.Transform(-Vector3.UnitZ, level.Facing);
+
+        // The head's own yaw and pitch, unrolled, turn its -Z along the gaze and so the surface's +Z back at it.
+        return new VrPose(head.Position + (forward * distanceMetres), level.Orientation);
+    }
+
     /// <summary>About where a Commander's knees are, worked out from how high their eyes are.</summary>
     public static float KneeHeight(float eyeHeightMetres) =>
         Math.Clamp((eyeHeightMetres + 0.10f) * 0.285f, 0.25f, 0.75f);
