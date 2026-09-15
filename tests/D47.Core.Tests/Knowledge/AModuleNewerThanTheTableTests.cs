@@ -33,12 +33,17 @@ public class AModuleNewerThanTheTableTests
     [Fact]
     public void AModuleNobodyNamesIsSaidByItsGroup()
     {
-        // The reported one.
-        Assert.Null(EliteSpecifications.Module("int_fighterbaymk2_size5_class1_free"));
+        // The Mk II fighter hangars this was reported against (#228) now have their own row. Every
+        // symbol left in [known-but-unnamed] belongs to a group with more than one name — a cannon's
+        // group also holds the Concord Cannon — so the singular-family branch this test is named for
+        // has no live symbol to assert against; this checks the group-lookup path lands on no claim
+        // rather than an invented one, which is what it can still say honestly.
+        Assert.Null(EliteSpecifications.Module("hpt_cannon_turret_huge"));
 
-        Assert.Equal(
-            "Fighter Hangar (newer than my table)",
-            EliteSpecifications.ModuleName("int_fighterbaymk2_size5_class1_free"));
+        Assert.DoesNotContain(
+            "newer than my table",
+            EliteSpecifications.ModuleName("hpt_cannon_turret_huge") ?? string.Empty,
+            StringComparison.Ordinal);
     }
 
     [Fact]

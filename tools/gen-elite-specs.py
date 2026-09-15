@@ -1109,6 +1109,68 @@ def edsy_modules(database: str, hulls: dict[int, str]) -> dict[str, tuple[str, s
     return built
 
 
+def eddb_only_modules(
+    database: str, types: dict[str, tuple[str, str, str, str]], unique: dict[str, list[str]]
+) -> dict[str, list[str]]:
+    """Mass and power for a `cch` or `ifh` module neither `outfitting.csv` nor coriolis-data
+    measures, off EDSY's own module cell — the same one `edsy_modules` already reads for the
+    type. The cargo hatch, whose `fdid` is null, has no row at all yet and gets a full one,
+    named from EDSY since nothing else names it. The Mk II vessel hangars and the `_free`
+    fighter hangars already have a row and a real name — Frontier shipped them ahead of
+    coriolis-data, and `outfitting.csv` has since caught up — so those keep the name they
+    already carry and take only the figures they are missing.
+
+    A row already measured (`Mass` or `Power` already set) is left alone: measured beats
+    modelled, and this only fills a gap coriolis-data left, never overwrites what it reported.
+    """
+    def field(cell: str, key: str) -> str:
+        found = re.search(r"\b%s\s*:\s*'([^']*)'" % key, cell) or re.search(
+            r"\b%s\s*:\s*(-?[\d.]+)" % key, cell)
+        return found.group(1) if found else ""
+
+    def figure(cell: str, key: str) -> str:
+        value = field(cell, key)
+        return number(float(value)) if value else ""
+
+    facts = {}
+
+    for _, cell in entries(section(database, "module")):
+        symbol = field(cell, "fdname")
+
+        if symbol:
+            facts[symbol.lower()] = cell
+
+    extra = {}
+
+    for symbol, (mtype, _, _, _) in types.items():
+        if mtype not in ("cch", "ifh"):
+            continue
+
+        cell = facts.get(symbol)
+        existing = unique.get(symbol)
+
+        if cell is None or (existing is not None and (existing[5] or existing[6])):
+            continue
+
+        row = list(existing) if existing is not None else [
+            symbol, field(cell, "name"), "", "", mount_of(symbol), "", "", "", "",
+            *([""] * 18)]
+
+        if not row[1]:
+            continue
+
+        row[2] = row[2] or figure(cell, "class")
+        row[3] = row[3] or field(cell, "rating")
+        row[5] = figure(cell, "mass")
+        row[6] = figure(cell, "pwrdraw")
+        row[7] = row[7] or figure(cell, "integ")
+        row[8] = row[8] or figure(cell, "cost")
+
+        extra[symbol] = row
+
+    return extra
+
+
 def build_slots(ships: dict[str, dict]) -> list[list[str]]:
     """Every outfitting slot of every hull, as the journal names it.
 
@@ -1208,7 +1270,6 @@ def main() -> None:
     # One symbol can appear in more than one coriolis file. Last wins would be arbitrary;
     # sorting and de-duplicating on the key keeps the output stable between runs.
     unique = {row[0]: row for row in sorted(generic + bulkheads)}
-    modules = disambiguate(sorted(unique.values()))
 
     database = edsy_database()
     hulls = edsy_ships(database)
@@ -1220,8 +1281,16 @@ def main() -> None:
     types = edsy_modules(database, {ship["id"]: hull for hull, ship in hulls.items()})
     limits = edsy_limits(database)
 
+    # Figures for a cargo hatch or fighter hangar neither id source measures, ahead of
+    # `disambiguate` so a newly-added row takes part in it rather than dodging it — see
+    # `eddb_only_modules`.
+    unique.update(eddb_only_modules(database, types, unique))
+
+    modules = disambiguate(sorted(unique.values()))
+
     # Everything EDSY has a type for that never became a row: no `outfitting.csv` name and no
-    # coriolis-data figures, so `build_modules` never saw it.
+    # coriolis-data figures, so `build_modules` never saw it, and `eddb_only_modules` above
+    # found no full row for it either.
     named = {row[0] for row in modules}
     unnamed_modules = sorted(
         [symbol, edsy[0]] for symbol, edsy in types.items() if symbol not in named and edsy[0])

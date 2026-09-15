@@ -6,6 +6,13 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.132.2 — The Power gauge counts the cargo hatch and the hangars
+
+Fix the Power gauge undercounting a build whenever `ModulesInfo.json` has not been read for that
+ship: the cargo hatch draws power from no slot in the outfitting layout, so it was never visited,
+and the Mk II vessel hangars and free fighter hangars had no figures in the table at all. Both now
+count.
+
 ## 0.132.1 — The Fleet page states the ship's real figures
 
 Fix the Fleet page, `list_ships`, and the `ShipLoadout.MaxJumpRange` doc comment describing the

@@ -120,7 +120,7 @@ public class SlotLayoutTests
             "Shield Generator", EliteSpecifications.ModulesFor(cargo).Select(m => m.Name));
 
         Assert.Contains(
-            "Fighter Hangar", EliteSpecifications.ModulesFor(hangar).Select(m => m.Name));
+            "Vessel Hangar", EliteSpecifications.ModulesFor(hangar).Select(m => m.Name));
     }
 
     [Fact]
@@ -219,7 +219,7 @@ public class SlotLayoutTests
             .Select(module => module.Name)
             .ToHashSet();
 
-        Assert.DoesNotContain("Fighter Hangar", sidewinder);
+        Assert.DoesNotContain("Vessel Hangar", sidewinder);
         Assert.Contains("Cargo Rack", sidewinder);
     }
 

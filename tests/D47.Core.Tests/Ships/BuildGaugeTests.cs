@@ -279,6 +279,29 @@ public class BuildGaugeTests
     }
 
     [Fact]
+    public void ACargoHatchAndAHangarStillCountTowardTheDraw()
+    {
+        // The cargo hatch has no slot of its own in the layout, and the Mk II hangar has no figures
+        // from either naming source Parts otherwise trusts (#228) — both still have to be counted.
+        var loadout = Flown(
+            """
+            {"timestamp":"2026-09-15T00:00:00Z","event":"Loadout","Ship":"panthermkii","ShipID":6,"UnladenMass":900.0,"MaxJumpRange":20.0,"CargoCapacity":0,"Modules":[
+            {"Slot":"PowerPlant","Item":"int_powerplant_size8_class5","On":true,"Priority":1,"Health":1.0},
+            {"Slot":"CargoHatch","Item":"modularcargobaydoor","On":true,"Priority":1,"Health":1.0},
+            {"Slot":"Slot06_Size5","Item":"int_fighterbaymk2_size5_class1_free","On":true,"Priority":1,"Health":1.0}]}
+            """);
+
+        var power = ShipGauges.Read(Build(loadout), loadout).Power;
+
+        Assert.NotNull(power);
+
+        var hatch = EliteSpecifications.Module("modularcargobaydoor")!.Power!.Value;
+        var hangar = EliteSpecifications.Module("int_fighterbaymk2_size5_class1_free")!.Power!.Value;
+
+        Assert.Equal(hatch + hangar, power.Deployed, 3);
+    }
+
+    [Fact]
     public void ABuildWithNoPlantSaysThatRatherThanZero()
     {
         var loadout = Flown(

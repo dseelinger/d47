@@ -124,8 +124,16 @@ public static class ShipGauges
 
         var layout = EliteSpecifications.Slots(build.Hull);
 
+        // The cargo hatch has no slot in the layout — `EliteSpecifications.Slots` deliberately
+        // leaves it out — so a fitted module with no layout slot of its own is still counted
+        // here as long as it has a specification to count.
+        var beyondLayout = fitted
+            .Where(pair => !layout.Any(slot => string.Equals(slot.Name, pair.Key, StringComparison.OrdinalIgnoreCase))
+                           && EliteSpecifications.Module(pair.Value.Item) is not null)
+            .Select(pair => pair.Key);
+
         var names = layout.Count > 0
-            ? layout.Select(slot => slot.Name)
+            ? layout.Select(slot => slot.Name).Concat(beyondLayout)
             : fitted.Keys.Concat(build.Slots.Select(plan => plan.Slot)).Distinct(StringComparer.OrdinalIgnoreCase);
 
         var parts = new List<Part>();

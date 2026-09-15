@@ -133,6 +133,13 @@ public class SpecificationJoinTests
                 "int_corrosionproofcargorack_size1_class2",
                 "int_corrosionproofcargorack_size5_class1",
                 "int_corrosionproofcargorack_size6_class1",
+                "int_fighterbay_size5_class1_free",
+                "int_fighterbay_size6_class1_free",
+                "int_fighterbay_size7_class1_free",
+                "int_fighterbaymk2_size5_class1_free",
+                "int_fighterbaymk2_size6_class1_free",
+                "int_fighterbaymk2_size7_class1_free",
+                "modularcargobaydoor",
             ],
             free);
     }

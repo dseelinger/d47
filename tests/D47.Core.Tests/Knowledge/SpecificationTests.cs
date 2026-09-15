@@ -230,7 +230,9 @@ public class SpecificationTests
             .Order(StringComparer.Ordinal)
             .ToList();
 
-        // **Amended 2026-08-20**, and the amendment is the gate working rather than being weakened.
+        // **Amended 2026-09-15** (#228): rerunning the generator picked up outfitting.csv's Mk II vessel
+        // hangars, free fighter hangars and planetary vehicle hangars, none of which it carried before —
+        // the amendment is the gate working rather than being weakened.
         Assert.Equal(
             [
                 "Basic Discovery Scanner (free)",
@@ -238,8 +240,11 @@ public class SpecificationTests
                 "Frame Shift Drive (SCO)",
                 "Frame Shift Drive (free)",
                 "Fuel Tank (free)",
+                "Large Planetary Vehicle Hangar (free)",
                 "Life Support (free)",
+                "Mk II Large Planetary Vehicle Hangar (free)",
                 "Mk II Supercharge Optimised Frame Shift Drive (SCO)",
+                "Mk II Vessel Hangar (free)",
                 "MkII Business Class Passenger Cabin (size5)",
                 "MkII Business Class Passenger Cabin (size6)",
                 "MkII Economy Class Passenger Cabin (size5)",
@@ -249,6 +254,7 @@ public class SpecificationTests
                 "Sensors (free)",
                 "Shield Generator (free)",
                 "Thrusters (free)",
+                "Vessel Hangar (free)",
             ],
             qualified);
     }
