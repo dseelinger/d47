@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Threading;
 using D47.App.Theming;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -34,8 +35,9 @@ public sealed class RouteMini : UserControl
         Fill();
     }
 
-    /// <summary>Redrawn when the plan, the route file or the current system moves.</summary>
-    public void Refresh() => Fill();
+    /// <summary>Redrawn when the plan, the route file or the current system moves. Dispatched to the
+    /// UI thread, since <see cref="RoutePlanBook.Apply"/> can call it from the tick thread.</summary>
+    public void Refresh() => Dispatcher.UIThread.Post(Fill);
 
     /// <summary>No waypoint marked as next.</summary>
     private const int None = -1;

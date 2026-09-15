@@ -6,6 +6,12 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.132.0 — The route panel no longer takes callouts down with it
+
+Fix a crash on the tick thread when a route was plotted while the Routing tab's mini panel was
+live: it dropped that tick's journal events, including the arrival that ends a long-jump
+countdown, so the long-jump callout fired at the full duration on jumps that landed early.
+
 ## 0.131.0 — Crew on the intercom, not just the line
 
 Address a hired pilot by name and they now keep the line the way the carrier's captain does:
