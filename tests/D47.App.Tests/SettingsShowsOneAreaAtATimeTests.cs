@@ -60,8 +60,8 @@ public sealed class SettingsShowsOneAreaAtATimeTests
         host.View.Reveal(ListeningCapability.Id);
         Jobs();
 
-        Assert.Equal("microphone", host.View.SectionIds[host.View.ActiveSection]);
-        Assert.Contains(Cards(host.View), card => Title(card) == "Microphone");
+        Assert.Equal("voice-input", host.View.SectionIds[host.View.ActiveSection]);
+        Assert.Contains(Cards(host.View), card => Title(card) == "Voice Input");
         Assert.DoesNotContain(Cards(host.View), card => Title(card) == "Overlay");
 
         host.Close();
@@ -110,7 +110,7 @@ public sealed class SettingsShowsOneAreaAtATimeTests
 
         Assert.Equal("turn-fails", host.View.SectionIds[host.View.ActiveSection]);
         Assert.Contains(Cards(host.View), card => Title(card) == "When a turn fails");
-        Assert.DoesNotContain(Cards(host.View), card => Title(card) == "Microphone");
+        Assert.DoesNotContain(Cards(host.View), card => Title(card) == "Voice Input");
 
         host.Close();
     }

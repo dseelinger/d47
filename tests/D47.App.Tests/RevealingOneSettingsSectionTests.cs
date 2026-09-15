@@ -16,7 +16,7 @@ public class RevealingOneSettingsSectionTests
     private static void Jobs() => Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
     /// <summary>The section this is about, by its place's title.</summary>
-    private const string Heading = "Microphone";
+    private const string Heading = "Voice Input";
 
     /// <summary>The card whose heading says this, as the Commander sees it.</summary>
     private static Border Card(SettingsView view) =>
@@ -42,7 +42,7 @@ public class RevealingOneSettingsSectionTests
         var (settings, viewState, paths) = TestSurface.Create();
 
         // How the Commander left it last time.
-        viewState.Save(viewState.Load().With("microphone", expanded: false));
+        viewState.Save(viewState.Load().With("voice-input", expanded: false));
 
         var host = SettingsHost.Open(settings, viewState, paths);
         var card = Card(host.View);
@@ -76,7 +76,7 @@ public class RevealingOneSettingsSectionTests
         host.View.Reveal(ListeningCapability.Id);
         Jobs();
 
-        Assert.Equal("microphone", host.View.SectionIds[host.View.ActiveSection]);
+        Assert.Equal("voice-input", host.View.SectionIds[host.View.ActiveSection]);
 
         host.Close();
     }

@@ -6,6 +6,12 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.132.6 — Microphone and speech recognition settings share one card
+
+Merge the Microphone and Speech recognition settings places into one card, "Voice Input", holding
+both as named groups. Both carried the same help topic already; there is no longer a reason to
+look in two places for one topic.
+
 ## 0.132.5 — Ship names and common words draw no chip
 
 Fix system-name chips drawing on a ship or module name that happens to contain one — "Caspian

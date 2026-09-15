@@ -103,25 +103,31 @@ public static class SettingsLayout
             "How D47 hears you, and how it sounds.",
             [
                 new SettingsPlace(
-                    "microphone",
-                    "Microphone",
-                    "The input device, and how D47 decides you are talking to it.",
+                    "voice-input",
+                    "Voice Input",
+                    "The input device, how D47 decides you are talking to it, and which model turns speech into words.",
                     "listening",
-                    ["mic", "ptt"],
+                    ["mic", "ptt", "stt", "whisper"],
                     false,
                     [
                         G(
-                        [
-                            E("listening.inputDevice"),
-                            E("listening.pushToTalkKey"),
-                            E("listening.cancelHotkey"),
-                            E("listening.mode"),
-                            E("listening.sensitivity"),
-                            E("listening.silence"),
-                            E("listening.echoCancellation"),
-                            E("listening.noiseSuppression"),
-                            E("listening.preRoll"),
-                        ]),
+                            "Microphone",
+                            "The input device, and how D47 decides you are talking to it.",
+                            [
+                                E("listening.inputDevice"),
+                                E("listening.pushToTalkKey"),
+                                E("listening.cancelHotkey"),
+                                E("listening.mode"),
+                                E("listening.sensitivity"),
+                                E("listening.silence"),
+                                E("listening.echoCancellation"),
+                                E("listening.noiseSuppression"),
+                                E("listening.preRoll"),
+                            ]),
+                        G(
+                            "Speech recognition",
+                            "Which model turns speech into words, and where it runs.",
+                            [E("listening.model"), E("listening.useGpu")]),
                     ]),
                 new SettingsPlace(
                     "name",
@@ -139,16 +145,6 @@ public static class SettingsLayout
                             E("listening.wakeWindow"),
                             E("listening.corrections"),
                         ]),
-                    ]),
-                new SettingsPlace(
-                    "speech-recognition",
-                    "Speech recognition",
-                    "Which model turns speech into words, and where it runs.",
-                    "listening",
-                    ["stt", "whisper"],
-                    false,
-                    [
-                        G([E("listening.model"), E("listening.useGpu")]),
                     ]),
                 new SettingsPlace(
                     "voice",

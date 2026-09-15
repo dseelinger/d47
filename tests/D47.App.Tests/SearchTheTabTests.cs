@@ -558,13 +558,13 @@ public class SearchTheTabTests
         var host = SettingsHost.Open(settings, viewState, paths);
         var box = (TextBox)host.Panel.FindControl<Control>("SearchInput")!;
 
-        box.Text = "Speech";
+        box.Text = "Voice Input";
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         // The name is marked in both places it is written — the card's own heading and the nav item — rather
         // than only in whichever rows happen to repeat the word.
-        Assert.Contains(MarkedIn(host.View.FindControl<Control>("Cards")!), run => run.Text == "Speech");
-        Assert.Contains(MarkedIn(host.View.FindControl<Control>("NavItems")!), run => run.Text == "Speech");
+        Assert.Contains(MarkedIn(host.View.FindControl<Control>("Cards")!), run => run.Text == "Voice Input");
+        Assert.Contains(MarkedIn(host.View.FindControl<Control>("NavItems")!), run => run.Text == "Voice Input");
 
         // Whether a mark on a heading reads as an answer or as noise is a question only eyes settle, and this
         // one lands on a card title and a nav item at once.

@@ -187,7 +187,7 @@ public class SettingsLayoutTests
     }
 
     [Theory]
-    [InlineData("microphone", ListeningCapability.PushToTalkKeyKey)]
+    [InlineData("voice-input", ListeningCapability.PushToTalkKeyKey)]
     [InlineData("voice", SpeechCapability.ProviderKey)]
     [InlineData("turn-fails", SpeechCapability.RetryAttemptsKey)]
     [InlineData("may-do", "actions.keyboard")]

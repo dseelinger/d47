@@ -38,7 +38,7 @@ public class ACardsQuestionMarkDrawsHelpTests
         button.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
 
     /// <summary>
-    /// Pressed on Microphone, it draws the Listening band — that card's own subject, not the page about
+    /// Pressed on Voice Input, it draws the Listening band — that card's own subject, not the page about
     /// Settings that the tab's mark opens.
     /// </summary>
     [AvaloniaFact]
@@ -46,7 +46,7 @@ public class ACardsQuestionMarkDrawsHelpTests
     {
         var host = Open();
 
-        Click(Mark(host.View, "Microphone"));
+        Click(Mark(host.View, "Voice Input"));
         Jobs();
 
         Assert.True(host.Panel.Nav.Modal, "help took the panel");
@@ -70,7 +70,7 @@ public class ACardsQuestionMarkDrawsHelpTests
 
         Assert.Equal("Settings", host.Panel.Nav.Trail[^1].Word);
 
-        Click(Mark(host.View, "Microphone"));
+        Click(Mark(host.View, "Voice Input"));
         Jobs();
 
         Assert.Equal("Help", host.Panel.Nav.Trail[^1].Word);
@@ -91,7 +91,7 @@ public class ACardsQuestionMarkDrawsHelpTests
     {
         var host = Open();
 
-        Click(Mark(host.View, "Microphone"));
+        Click(Mark(host.View, "Voice Input"));
         Jobs();
 
         var shown = host.Panel.GetVisualDescendants().OfType<TextBlock>()

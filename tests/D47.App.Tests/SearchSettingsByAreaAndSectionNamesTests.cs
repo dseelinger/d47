@@ -91,7 +91,7 @@ public class SearchSettingsByAreaAndSectionNamesTests
         Jobs();
 
         Assert.Equal(1, Cards(host));
-        Assert.Equal("Microphone", CardTitle(VisibleCards(host).Single()));
+        Assert.Equal("Voice Input", CardTitle(VisibleCards(host).Single()));
 
         // A row whose own words say nothing about "ptt" is still on the card, because the match is on the
         // place's term rather than on any one row.
