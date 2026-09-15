@@ -144,6 +144,25 @@ public static class EngineeringCapability
                 Handler = (arguments, cancellationToken) =>
                     FindTraderAsync(galaxy, commander, clipboard, arguments, cancellationToken),
             },
+            new ToolDefinition
+            {
+                Name = "get_material_farming_route",
+                Description =
+                    "The fastest route through the hand-picked material farming sites: what to collect at "
+                    + "each, in travel order from the Commander's position, and the trades that follow. "
+                    + "Optional type narrows it to Raw, Manufactured or Encoded.",
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "type",
+                        Type = ToolParameterType.String,
+                        Description = "Which kind of material to route for.",
+                        AllowedValues = StationQuery.TraderTypes,
+                    },
+                ],
+                Handler = (arguments, _) => Task.FromResult(FarmingRoute(commander, arguments)),
+            },
         ],
         Display = new CapabilityDisplay { PanelTitle = "Engineering", Order = 52 },
     };
@@ -422,7 +441,8 @@ public static class EngineeringCapability
 
         var found = new Sourced();
 
-        report.Append(await SourceAsync(galaxy, material, near, found, cancellationToken).ConfigureAwait(false));
+        report.Append(await SourceAsync(
+            galaxy, material, near, found, active?.Ship.MaxJumpRange, cancellationToken).ConfigureAwait(false));
         report.Append(Netting(material, active));
 
         // The offer last, under the answer, because it is about what to do next rather than part of what was
@@ -479,36 +499,49 @@ public static class EngineeringCapability
         MaterialEntry material,
         string? near,
         Sourced found,
+        double? jumpRange,
         CancellationToken cancellationToken)
     {
         var report = new StringBuilder();
+
+        // The hand-picked farming sites go ahead of everything else, and ahead of the "galaxy is null"
+        // return below them — none of it needs the network.
+        var (advice, farmingSystem) = FarmingAdvice.For(material, jumpRange);
+        report.Append(advice);
 
         if (material.Origins.Count > 0)
         {
             report.AppendLine("Found at: " + string.Join("; ", material.Origins) + ".");
         }
 
-        if (galaxy is null)
+        if (galaxy is not null)
         {
-            return report.ToString();
+            var isRaw = string.Equals(material.Category, "Raw", StringComparison.OrdinalIgnoreCase);
+
+            try
+            {
+                if (isRaw)
+                {
+                    report.Append(
+                        await BodiesAsync(galaxy, material, near, found, cancellationToken).ConfigureAwait(false));
+                }
+                else if (EmissionRules.Holding(material.Symbol) is { } group)
+                {
+                    report.Append(
+                        await SystemsAsync(galaxy, group, near, found, cancellationToken).ConfigureAwait(false));
+                }
+            }
+            catch (GalaxyUnavailableException failure)
+            {
+                report.AppendLine($"I could not reach the galaxy search: {failure.Message}");
+            }
         }
 
-        var isRaw = string.Equals(material.Category, "Raw", StringComparison.OrdinalIgnoreCase);
-
-        try
+        // The farming site is the better clipboard offer where one exists — it names an exact place to go
+        // rather than the nearest of what a live search happened to return.
+        if (farmingSystem is not null)
         {
-            if (isRaw)
-            {
-                report.Append(await BodiesAsync(galaxy, material, near, found, cancellationToken).ConfigureAwait(false));
-            }
-            else if (EmissionRules.Holding(material.Symbol) is { } group)
-            {
-                report.Append(await SystemsAsync(galaxy, group, near, found, cancellationToken).ConfigureAwait(false));
-            }
-        }
-        catch (GalaxyUnavailableException failure)
-        {
-            report.AppendLine($"I could not reach the galaxy search: {failure.Message}");
+            found.System = farmingSystem;
         }
 
         return report.ToString();
@@ -787,6 +820,86 @@ public static class EngineeringCapability
         {
             return ToolResult.Ok($"I could not reach the galaxy search: {failure.Message}");
         }
+    }
+
+    // ---- The fastest route through the farming sites -------------------------------------------------
+
+    private static ToolResult FarmingRoute(Func<CommanderGameState?> commander, ToolArguments arguments)
+    {
+        arguments.TryGetString("type", out var type);
+
+        var sites = FarmingSites.All.Where(site => !site.IsAlternate).ToList();
+
+        if (!string.IsNullOrWhiteSpace(type))
+        {
+            sites = [.. sites.Where(site =>
+                string.Equals(FarmingSites.CategoryOf(site), type, StringComparison.OrdinalIgnoreCase))];
+
+            if (sites.Count == 0)
+            {
+                return ToolResult.Ok($"No farming site is recorded for {type.Trim()}.");
+            }
+        }
+
+        var active = commander();
+        var from = active?.Location.StarPos;
+        var jumpRange = active?.Ship.MaxJumpRange;
+
+        var ordered = from is { } here
+            ? [.. sites.OrderBy(site => site.Position.DistanceTo(here))]
+            : sites;
+
+        var report = new StringBuilder();
+
+        report.AppendLine(from is not null
+            ? "Fastest route, nearest first:"
+            : "Fastest route, in the table's own order — your position is not known:");
+
+        foreach (var site in ordered)
+        {
+            report.AppendLine("  " + FarmingRouteStep(site, jumpRange));
+        }
+
+        return ToolResult.Ok(report.ToString().TrimEnd());
+    }
+
+    private static string FarmingRouteStep(FarmingSite site, double? jumpRange)
+    {
+        var top = MaterialCatalogue.Find(site.MaterialSymbol);
+        var report = new StringBuilder(
+            $"{site.System} {site.Body} — collect {top?.Name ?? site.MaterialSymbol} ({site.Method}), "
+            + $"{site.Coordinates}");
+
+        report.Append(site.RespawnsOnRelog
+            ? ", a relog respawns it."
+            : ". Does not reliably respawn on a relog — move on to the next cluster or tree.");
+
+        if (top is { Grade: { } topGrade, Line: not null })
+        {
+            var trades = Enumerable.Range(1, topGrade - 1)
+                .Select(grade => EngineeringRules.TradeRate(topGrade, grade, sameLine: true) is { } exchange
+                    ? $"{exchange.Paid} for {exchange.Received} into grade {grade}"
+                    : null)
+                .Where(trade => trade is not null)
+                .ToArray();
+
+            if (trades.Length > 0)
+            {
+                report.Append(" Trades down: ").Append(string.Join(", ", trades)).Append('.');
+            }
+        }
+
+        if (string.Equals(site.TopsGroup, "encoded-encryption-files", StringComparison.Ordinal))
+        {
+            report.Append(" Also trades 6 for 1 across into any other encoded group.");
+        }
+
+        if (site.JumpRangeWarning)
+        {
+            report.Append(' ').Append(FarmingSites.JumpRangeAdvice(jumpRange));
+        }
+
+        return report.ToString();
     }
 
     // ---- How the roll actually went --------------------------------------------------------------

@@ -405,6 +405,46 @@ Matches against both the module's name and its slot, because "frame shift drive"
 {"type":"object","properties":{"near":{"type":"string","description":"Search out from this system. Defaults to the Commander\u0027s own."},"type":{"type":"string","description":"Which kind of trader.","enum":["Raw","Manufactured","Encoded"]}},"required":[],"additionalProperties":false}
 ```
 
+#### `get_material_farming_route`
+
+```json
+{"type":"object","properties":{"type":{"type":"string","description":"Which kind of material to route for.","enum":["Raw","Manufactured","Encoded"]}},"required":[],"additionalProperties":false}
+```
+
+The sites in [the farming table](#hand-picked-farming-sites) below, nearest first from the Commander's
+own position, or in the table's own order where that is not known. Each step says what to collect,
+whether a relog brings it back, and the trades that turn it into the rest of its group:
+
+```text
+Fastest route, nearest first:
+  HIP 36601 C 3 b — collect Tellurium (shards), -17.6769, -55.18. Does not reliably respawn on a relog — move on to the next cluster or tree.
+  Outotz LS-K d8-3 B 5 a — collect Yttrium (shards), -1.9216, -145.7013, a relog respawns it. Trades down: 1 for 3 into grade 3, 1 for 9 into grade 2, 1 for 27 into grade 1.
+```
+
+#### Hand-picked farming sites
+
+`find_material` gains two tiers ahead of the origins text, before the "galaxy is null" answer that
+covers everything below them — neither needs the network. **General** names the methods that yield a
+material's kind at all: crystalline shards or brain trees for a raw material, a High Grade Emission for
+a manufactured one, data points at crash sites for an encoded one. **Fastest** names the one site the
+maintainer's own journals confirmed for the top grade of that material's trade group, and the trade
+that turns it into the grade actually asked about:
+
+```text
+General: crystalline shards or brain trees for grade 4 raws, then trade down.
+Fastest: Outotz LS-K d8-3 B 5 a, shards, -1.9216, -145.7013 — a relog respawns it. Farm Yttrium there and trade 1 for 27 into Carbon.
+```
+
+The table is hand-written, not generated — Frontier defines no such list. Two sites need a longer
+jump range than most ships carry unengineered, so their answer, and the route tool's steps there, name
+the confirmed figures rather than guess at a minimum:
+
+```text
+Your ship's jump range is 30 ly; the confirmed route's longest jump was 45.74 ly. The cheapest ship to start with is the Diamondback Explorer, and it still needs one of: FSD engineering, FSD Injection synthesis, or a Guardian FSD Booster, unlocked at a Guardian tech broker. FSD Injection is +25% at grade 1 (Carbon, Vanadium, Germanium) and +50% at grade 2 (adds Cadmium, Niobium); the +100% grade 3 recipe needs Yttrium and Polonium.
+```
+
+It never says a shorter range cannot make the trip — nothing shorter has actually been tried.
+
 
 #### Where a grade 5 material is found
 

@@ -6,6 +6,15 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.141.0 — Where to farm engineering materials
+
+`find_material` now leads with two farming tiers ahead of the origins text: the general methods
+that yield a material's kind, and the fastest hand-picked site for the top grade of its trade
+group, with the trade that turns it into the grade actually asked about. A new
+`get_material_farming_route` tool lists those sites in travel order from the Commander's own
+position, what to collect at each, and the trades that follow — optionally narrowed to Raw,
+Manufactured or Encoded.
+
 ## 0.140.0 — Ship name and wake words moved to their own capabilities
 
 The settings page no longer mixes Persona and Listening rows under one "Its name" card: ship name
