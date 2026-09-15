@@ -34,6 +34,12 @@ public sealed class SpendWindow : Window
     /// <summary>Where the sections live, so a reset can replace them rather than reopen the window.</summary>
     private readonly StackPanel _body = new() { Margin = new Thickness(24), Spacing = 18 };
 
+    /// <summary>The provider the drill-down is reading, kept across a redraw (#35).</summary>
+    private ProviderPick? _provider;
+
+    /// <summary>One entry in the provider picker: which kind, which id, and what to call it (#35).</summary>
+    private readonly record struct ProviderPick(SpendKind Kind, string ProviderId, string Label);
+
     public SpendWindow(
         TurnCost? turn,
         SpendTracker session,
@@ -95,14 +101,16 @@ public sealed class SpendWindow : Window
             [
                 TurnRow(_turn),
                 SessionRow(_session, _speech, _settings),
-                .. _ledger.Immediate(_zone).Select(WindowRow),
+                .. _ledger.Immediate(_zone).Select(window => WindowRow(window)),
                 .. ColdPrefixRow(_session),
             ]));
 
         // Each calendar window beside its rolling twin: This week, Last 7 days, This month, Last 30 days.
         _body.Children.Add(Section(
             "Running totals",
-            [.. _ledger.Windows(_zone).Select(WindowRow)]));
+            [.. _ledger.Windows(_zone).Select(window => WindowRow(window))]));
+
+        _body.Children.Add(ByProviderSection());
 
         _body.Children.Add(Buttons());
     }
@@ -254,21 +262,25 @@ public sealed class SpendWindow : Window
     /// One window's figure and the models behind it (#226). "nothing yet" sits in the details cell
     /// rather than the money one, so an empty window does not put words in a column of amounts.
     /// </summary>
-    private static Control WindowRow((SpendPeriod Period, SpendTotals Totals) window)
+    /// <param name="cap">
+    /// The most shares to name before folding the rest into "and N more" — null reads every one, which
+    /// is what a drill-down whose entire job is completeness needs (#35).
+    /// </param>
+    private static Control WindowRow((SpendPeriod Period, SpendTotals Totals) window, int? cap = 6)
     {
         var totals = window.Totals;
 
         return totals.Any
-            ? Row(window.Period.Name, Amount(totals), Behind(totals))
+            ? Row(window.Period.Name, Amount(totals), Behind(totals, cap))
             : Row(window.Period.Name, string.Empty, "nothing yet");
     }
 
     /// <summary>Every model and voice provider used in a window, most expensive first (#226).</summary>
-    private static string Behind(SpendTotals totals)
+    private static string Behind(SpendTotals totals, int? cap = 6)
     {
-        const int Most = 6;
+        var most = cap ?? totals.Shares.Count;
 
-        var said = totals.Shares.Take(Most).Select(share =>
+        var said = totals.Shares.Take(most).Select(share =>
         {
             var what = share.Kind == SpendKind.Voice
                 ? $"{share.Name} {share.Characters:N0} chars"
@@ -284,10 +296,112 @@ public sealed class SpendWindow : Window
 
         var line = string.Join(", ", said);
 
-        return totals.Shares.Count > Most
-            ? $"{line}, and {totals.Shares.Count - Most:N0} more"
+        return totals.Shares.Count > most
+            ? $"{line}, and {totals.Shares.Count - most:N0} more"
             : line;
     }
+
+    /// <summary>
+    /// One provider read down every period, uncapped — the question "Now" and "Running totals" read
+    /// the other way round (#35).
+    /// </summary>
+    private Control ByProviderSection()
+    {
+        var stack = new StackPanel { Spacing = 4 };
+
+        var title = new TextBlock
+        {
+            Text = "By provider",
+            FontSize = TypeScale.Body,
+            FontWeight = FontWeight.SemiBold,
+        };
+        Themed(title, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
+        stack.Children.Add(title);
+
+        var picks = Providers();
+
+        if (picks.Count == 0)
+        {
+            var empty = new TextBlock
+            {
+                Text = "nothing charged yet",
+                FontSize = TypeScale.Secondary,
+                TextWrapping = TextWrapping.Wrap,
+            };
+            Themed(empty, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+            stack.Children.Add(empty);
+            return stack;
+        }
+
+        if (_provider is not { } chosen || !picks.Contains(chosen))
+        {
+            _provider = chosen = picks[0];
+        }
+
+        var combo = new ComboBox
+        {
+            Name = "SpendProviderPicker",
+            ItemsSource = picks.Select(pick => pick.Label).ToList(),
+            SelectedItem = chosen.Label,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            MinWidth = 220,
+        };
+
+        combo.SelectionChanged += (_, _) =>
+        {
+            if (combo.SelectedItem is string label
+                && picks.FirstOrDefault(pick => pick.Label == label) is { } picked)
+            {
+                _provider = picked;
+                Draw();
+            }
+        };
+
+        stack.Children.Add(combo);
+
+        foreach (var period in _ledger.Windows(_zone))
+        {
+            var totals = _ledger.Provider(period.Period, chosen.Kind, chosen.ProviderId);
+            stack.Children.Add(WindowRow((period.Period, totals), cap: null));
+        }
+
+        return stack;
+    }
+
+    /// <summary>
+    /// Every provider ever charged, most-recently-added-provider order collapsed into a stable
+    /// alphabetical one, disambiguated where a model provider and a voice provider share a name (#35).
+    /// </summary>
+    private List<ProviderPick> Providers()
+    {
+        var named = _ledger.ProvidersCharged
+            .Select(p => (p.Kind, p.ProviderId, Name: ProviderName(p.Kind, p.ProviderId)))
+            .ToList();
+
+        var collides = named
+            .GroupBy(p => p.Name, StringComparer.OrdinalIgnoreCase)
+            .Where(group => group.Count() > 1)
+            .Select(group => group.Key)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        return
+        [
+            .. named
+                .Select(p => new ProviderPick(
+                    p.Kind,
+                    p.ProviderId,
+                    collides.Contains(p.Name)
+                        ? $"{p.Name} ({(p.Kind == SpendKind.Voice ? "voice" : "model")})"
+                        : p.Name))
+                .OrderBy(pick => pick.Label, StringComparer.OrdinalIgnoreCase),
+        ];
+    }
+
+    /// <summary>What each catalog calls a provider — the model provider's name where it is one.</summary>
+    private static string ProviderName(SpendKind kind, string providerId) =>
+        kind == SpendKind.Voice
+            ? TtsProviderCatalog.Selected(providerId).Name
+            : LlmProviderCatalog.Selected(providerId).Name;
 
     /// <summary>
     /// The one thing in this window that asks the Commander to do something, so it keeps a row of its

@@ -193,4 +193,69 @@ public class SpendLedgerTests : IDisposable
         Assert.Empty(ledger.Entries);
         Assert.Equal(SpendTotals.Nothing, ledger.Total(SpendPeriods.Rolling("d", Noon, 30)));
     }
+
+    /// <summary>Two models under one provider are read as one figure, drilled from that provider (#35).</summary>
+    [Fact]
+    public void AProviderRollsUpEveryModelItAnswersWith()
+    {
+        var clock = new StoppedClock(Noon);
+        var ledger = Ledger(clock);
+
+        ledger.Append(Model(0.20m));
+        ledger.Append(Model(0.05m) with { Model = "claude-haiku-4-5" });
+        ledger.Append(new SpendEntry
+        {
+            Kind = SpendKind.Voice,
+            ProviderId = "elevenlabs",
+            Model = "ElevenLabs",
+            Dollars = 0.05m,
+            Priced = true,
+            Characters = 420,
+        });
+
+        var window = SpendPeriods.Rolling("day", clock.UtcNow.AddDays(1), 2);
+        var anthropic = ledger.Provider(window, SpendKind.Model, "anthropic");
+
+        Assert.Equal(0.25m, anthropic.Dollars);
+        Assert.Equal(2, anthropic.Shares.Count);
+        Assert.Equal(["claude-opus-5", "claude-haiku-4-5"], anthropic.Shares.Select(share => share.Model));
+    }
+
+    /// <summary>A provider with no charge in a window reads as nothing, not an exception (#35).</summary>
+    [Fact]
+    public void AProviderWithNoChargeInAWindowIsNothing()
+    {
+        var clock = new StoppedClock(Noon);
+        var ledger = Ledger(clock);
+
+        ledger.Append(Model(0.20m));
+
+        var window = SpendPeriods.Rolling("day", clock.UtcNow.AddDays(1), 2);
+
+        Assert.Equal(SpendTotals.Nothing, ledger.Provider(window, SpendKind.Voice, "elevenlabs"));
+    }
+
+    /// <summary>Every provider that has ever been charged, model and voice kept apart (#35).</summary>
+    [Fact]
+    public void ProvidersChargedNamesEachKindOnce()
+    {
+        var clock = new StoppedClock(Noon);
+        var ledger = Ledger(clock);
+
+        ledger.Append(Model(0.20m));
+        ledger.Append(Model(0.05m) with { Model = "claude-haiku-4-5" });
+        ledger.Append(new SpendEntry
+        {
+            Kind = SpendKind.Voice,
+            ProviderId = "elevenlabs",
+            Model = "ElevenLabs",
+            Dollars = 0.05m,
+            Priced = true,
+            Characters = 420,
+        });
+
+        Assert.Equal(
+            [(SpendKind.Model, "anthropic"), (SpendKind.Voice, "elevenlabs")],
+            ledger.ProvidersCharged);
+    }
 }

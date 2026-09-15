@@ -211,6 +211,12 @@ number: one sentence has room to say why, and a three-letter suffix does not.
 The file is only ever appended to, so nothing that has already been written can be lost by a
 later crash. Delete it and the running totals start again from empty; nothing else is affected.
 
+**By provider** reads the ledger the other way round: pick a provider — ElevenLabs, say, or
+Anthropic — and its running totals are drawn down the same four windows, models rolled up under
+one figure where a provider answers with more than one. Nothing here is capped: the "and N more"
+that the details cells above use to stay short is dropped, because completeness is the whole point
+of asking about one provider.
+
 #### Starting the figures again {#reset}
 
 **Reset** in that window offers six spans — *this session*, and the same five windows the

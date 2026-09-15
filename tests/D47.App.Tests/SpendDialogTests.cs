@@ -200,10 +200,14 @@ public class SpendDialogTests
         Assert.InRange(blocks.IndexOf("Session"), now, running);
         Assert.InRange(blocks.IndexOf("Today"), now, running);
 
-        // The pairs, in order, and adjacent — which is the ask.
+        // The pairs, in order, and adjacent — which is the ask. Bounded by "By provider", since that
+        // section (#35) reads the same four names again, one at a time, further down.
+        var byProvider = blocks.IndexOf("By provider");
+        Assert.True(byProvider > running);
+
         Assert.Equal(
             ["This week", "Last 7 days", "This month", "Last 30 days"],
-            blocks.Skip(running).Where(text =>
+            blocks.Skip(running).Take(byProvider - running).Where(text =>
                 text is "This week" or "Last 7 days" or "This month" or "Last 30 days"));
 
         window.Close();
@@ -280,6 +284,55 @@ public class SpendDialogTests
         window.CaptureRenderedFrame()!.Save(
             Path.Combine(TestSurface.CaptureDirectory, "turn-line-short.png"),
             new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+
+        window.Close();
+    }
+
+    /// <summary>
+    /// The two providers the fixture charged are both offered, disambiguated only where they collide,
+    /// and the chosen one reads down all four windows uncapped (#35).
+    /// </summary>
+    [AvaloniaFact]
+    public void ByProviderOffersEveryChargedProviderAndReadsItDownEachWindow()
+    {
+        var window = Dialog(out _);
+        window.Show();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        var combo = window.GetVisualDescendants().OfType<ComboBox>()
+            .Single(box => box.Name == "SpendProviderPicker");
+
+        var items = combo.ItemsSource!.Cast<string>().ToList();
+        Assert.Equal(["Anthropic", "ElevenLabs"], items.OrderBy(x => x, StringComparer.Ordinal));
+
+        window.Close();
+    }
+
+    /// <summary>Nothing charged yet says so, rather than offering an empty picker (#35).</summary>
+    [AvaloniaFact]
+    public void ByProviderWithNothingChargedSaysSoInsteadOfAnEmptyPicker()
+    {
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
+            .Apply(TestSurface.Settings().Current.Ui.Theme);
+
+        var root = Path.Combine(TempFolders.Create("d47-spend-dialog-empty"), "spend.jsonl");
+        var ledger = new SpendLedger(root, new StoppedClock(Noon), NullLogger.Instance);
+
+        var window = new SpendWindow(
+            null,
+            new SpendTracker(ledger),
+            new SpeechSpend(),
+            ledger,
+            TestSurface.Settings().Current,
+            TimeZoneInfo.Utc);
+
+        window.Show();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.DoesNotContain(
+            window.GetVisualDescendants().OfType<ComboBox>(),
+            box => box.Name == "SpendProviderPicker");
+        Assert.Contains("nothing charged yet", Words(window), StringComparison.Ordinal);
 
         window.Close();
     }

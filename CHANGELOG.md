@@ -6,6 +6,13 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.139.0 — Cost details by provider
+
+The cost details window can now be asked the other way round: a picker under Running totals reads
+one provider — ElevenLabs, Anthropic, whichever has been charged — down the same four windows,
+models rolled up under that provider's figure and named in full, with no cap on how many are
+listed.
+
 ## 0.138.0 — Engineers on the slot page
 
 A ship slot with a plan now lists who can roll it, under the Planned block: Unlocked engineers

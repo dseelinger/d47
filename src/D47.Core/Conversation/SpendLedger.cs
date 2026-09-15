@@ -265,6 +265,54 @@ public sealed class SpendLedger
         }
     }
 
+    /// <summary>Every provider ever charged, model and voice apart, for a drill-down picker (#35).</summary>
+    public IReadOnlyList<(SpendKind Kind, string ProviderId)> ProvidersCharged
+    {
+        get
+        {
+            lock (_lock)
+            {
+                return
+                [
+                    .. _entries
+                        .Where(entry => !entry.IsReset)
+                        .Select(entry => (entry.Kind, entry.ProviderId))
+                        .Distinct(),
+                ];
+            }
+        }
+    }
+
+    /// <summary>
+    /// One provider's slice of a window, rolled up across every model it answered with (#35). The
+    /// provider is the whole of the grouping: <see cref="SpendShare.Name"/> mixes models and voice
+    /// providers, and this reads one provider at a time instead.
+    /// </summary>
+    public SpendTotals Provider(SpendPeriod window, SpendKind kind, string providerId)
+    {
+        var shares = Total(window).Shares
+            .Where(share => share.Kind == kind
+                && string.Equals(share.Provider, providerId, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        if (shares.Count == 0)
+        {
+            return SpendTotals.Nothing;
+        }
+
+        var dollars = shares.Sum(share => share.Dollars);
+
+        return new SpendTotals(
+            kind == SpendKind.Model ? dollars : 0m,
+            kind == SpendKind.Voice ? dollars : 0m,
+            kind == SpendKind.Model ? shares.Sum(share => share.Charges) : 0,
+            shares.Sum(share => share.Characters),
+            shares.All(share => share.Priced))
+        {
+            Shares = shares,
+        };
+    }
+
     /// <summary>Every window the dialog reports, against the clock this ledger was given.</summary>
     public IReadOnlyList<(SpendPeriod Period, SpendTotals Totals)> Summary(TimeZoneInfo zone) =>
         [.. Immediate(zone), .. Windows(zone)];
