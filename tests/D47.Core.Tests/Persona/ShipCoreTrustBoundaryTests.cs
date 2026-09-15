@@ -49,7 +49,7 @@ public class ShipCoreTrustBoundaryTests
     {
         using var install = new TempInstall();
 
-        var advertised = ToolProfiles.All(Registry(install))
+        var advertised = ToolSurface.All(Registry(install))
             .SelectMany(profile => profile.Tools)
             .Select(tool => tool.Name)
             .ToHashSet(StringComparer.Ordinal);

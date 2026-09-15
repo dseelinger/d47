@@ -36,7 +36,7 @@ public class DebriefWriteFenceTests : IDisposable
         "PersonaCatalog.cs",
         "settings.json",
         "memories.json",
-        "ToolProfiles.cs",
+        "ToolSurface.cs",
         "standing-directions.txt",
         "standing-directions.json.bak",
     ];

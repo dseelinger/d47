@@ -44,5 +44,8 @@ public sealed record ConversationMessage(ConversationRole Role, IReadOnlyList<Co
     public string Text => string.Concat(Content.OfType<ConversationContent.Text>().Select(part => part.Value));
 }
 
-/// <summary>A tool as described to the model — no handler, no delegate.</summary>
-public sealed record ToolAdvertisement(string Name, string Description, string InputSchemaJson);
+/// <summary>
+/// A tool as described to the model — no handler, no delegate. A <paramref name="Deferred"/> tool is loaded
+/// only when the provider's tool search finds it.
+/// </summary>
+public sealed record ToolAdvertisement(string Name, string Description, string InputSchemaJson, bool Deferred = false);

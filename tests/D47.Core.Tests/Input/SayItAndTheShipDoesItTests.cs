@@ -1003,7 +1003,7 @@ public class SayItAndTheShipDoesItTests
 
         Assert.True(tool.Protected);
 
-        foreach (var profile in ToolProfiles.All(registry))
+        foreach (var profile in ToolSurface.All(registry))
         {
             Assert.DoesNotContain(profile.Tools, advert => advert.Name == "ship_command");
         }

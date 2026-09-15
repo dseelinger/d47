@@ -53,6 +53,7 @@ public static class HelpCapability
                     "List what D47 can do, from its own capability registry. Use this instead of describing "
                     + "D47's abilities from memory — this is the only accurate source, and anything not "
                     + "listed here does not exist.",
+                AlwaysLoaded = true,
                 Parameters =
                 [
                     new ToolParameter

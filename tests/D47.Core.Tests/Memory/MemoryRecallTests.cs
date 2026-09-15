@@ -138,7 +138,7 @@ public class MemoryRecallTests
     [Fact]
     public void TheSameStoreAndSituationAlwaysRenderIdentically()
     {
-        // The determinism the whole quantization rests on, asserted the way ToolProfileTests asserts it for
+        // The determinism the whole quantization rests on, asserted the way ToolSurfaceTests asserts it for
         // the tool set.
         MemoryEntry[] entries =
         [

@@ -324,11 +324,8 @@ around those lines, and silently removing them makes the history wrong.
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
 
-**This capability advertises nothing, and the reason is cost as much as safety.** The advertised
-tool surface is re-billed on every turn, and the largest profile — the SRV's, which carries that
-vehicle's controls on top of everything else — measured **39,840 bytes against a 40,000 byte
-ceiling** before this capability existed. `ToolProfiles.ComfortableBytes` says in as many words
-that raising the number a third time is the wrong answer.
+**This capability advertises nothing, and the reason is cost as much as safety.** Every tool a
+mode advertises is sent, and billed, on every turn in that mode, whether or not the model uses it.
 
 So the one route that genuinely needs a model to understand free English is
 [`plan_ship_build`](checklists.md), which already existed and now writes to the build rather than

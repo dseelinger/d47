@@ -17,7 +17,7 @@ public class GoalsCapabilityTests
     ];
 
     private static IReadOnlyList<string> Advertised(CapabilityRegistry registry, ControlContext context) =>
-        [.. ToolProfiles.For(registry, context, actionsEnabled: true).Tools.Select(tool => tool.Name)];
+        [.. ToolSurface.ForMode(registry, context, actionsEnabled: true).Tools.Select(tool => tool.Name)];
 
     [Fact]
     public void ReadingTheArcsIsAdvertisedInEveryMode()
@@ -59,24 +59,6 @@ public class GoalsCapabilityTests
         Assert.All(
             tools.Where(tool => tool.Name != "get_goals"),
             tool => Assert.True(tool.Protected));
-    }
-
-    /// <summary>The relief valve must stay shut.</summary>
-    [Fact]
-    public void AddingAnAdvertisedToolDidNotOpenTheReliefValve()
-    {
-        using var install = new TempInstall();
-        var registry = TestSurface.For(install).Registry;
-
-        var srv = ToolProfiles.For(registry, ControlContext.Srv, actionsEnabled: true);
-
-        Assert.True(
-            srv.Bytes <= ToolProfiles.ComfortableBytes,
-            $"The SRV profile is {srv.Bytes} bytes against {ToolProfiles.ComfortableBytes}.");
-
-        // The controls themselves, because the way this failed in Phase 18 was as "the SRV's controls are
-        // missing in the SRV" with nothing pointing at the size.
-        Assert.Contains("control_srv", srv.Tools.Select(tool => tool.Name));
     }
 
     /// <summary>

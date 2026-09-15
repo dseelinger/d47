@@ -87,6 +87,9 @@ public sealed record ToolDefinition
     /// </summary>
     public bool Protected { get; init; }
 
+    /// <summary>Sent in full when the other tools are deferred behind tool search.</summary>
+    public bool AlwaysLoaded { get; init; }
+
     /// <summary>The handler presses keys, moves the mouse or pastes into Elite.</summary>
     public bool SendsInput { get; init; }
 

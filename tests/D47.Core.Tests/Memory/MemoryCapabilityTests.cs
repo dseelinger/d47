@@ -13,7 +13,7 @@ public class MemoryCapabilityTests
     private static CapabilityRegistry Registry(TempInstall install) => TestSurface.For(install).Registry;
 
     private static IReadOnlyList<string> Advertised(CapabilityRegistry registry, ControlContext context) =>
-        [.. ToolProfiles.For(registry, context, actionsEnabled: true).Tools.Select(tool => tool.Name)];
+        [.. ToolSurface.ForMode(registry, context, actionsEnabled: true).Tools.Select(tool => tool.Name)];
 
     /// <summary>
     /// The write path is the one the headroom was spent on: a store the model cannot write to only ever

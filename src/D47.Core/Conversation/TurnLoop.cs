@@ -826,7 +826,7 @@ public sealed class TurnLoop(
         var providerCapabilities = activeProvider.CapabilitiesFor(chosenModel);
 
         var advertised = providerCapabilities.SupportsToolCalls
-            ? ToolProfiles.For(
+            ? ToolSurface.ForMode(
                 capabilities,
                 ToolContext?.Invoke() ?? Input.ControlContext.None,
                 ActionsEnabled?.Invoke() ?? false).Tools
