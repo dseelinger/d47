@@ -62,7 +62,7 @@ public class NoOpenVrCallOutlivesTheSessionTests
                 runtime.HandsAndHead();
                 runtime.Reposition(VrSurface.PanelFull, where);
                 runtime.AimBeam(where, where, 1f + (frame * 0.01f));
-                runtime.ShowCursor(new Vector3(0f, 0f, frame * 0.02f), where);
+                runtime.ShowCursor(new Vector3(0f, 0f, frame * 0.02f), where, VrCursor.Ring);
 
                 Interlocked.Increment(ref frames);
 

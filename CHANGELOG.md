@@ -6,6 +6,12 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.136.0 — The resize cursor points the way it drags
+
+In resize mode, the ray's cursor turns from a ring into a double-headed arrow over a resize
+handle, pointing the direction that edge or corner drags. Held during a drag even if the ray
+wanders off the handle it started on.
+
 ## 0.135.0 — Zoom and resize the headset panel from the keyboard
 
 Add four system-wide hotkeys for the headset panel — zoom in (`Ctrl+Alt+=`), zoom out

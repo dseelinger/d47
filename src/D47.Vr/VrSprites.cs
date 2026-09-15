@@ -38,10 +38,26 @@ public static class VrSprites
     }
 
     /// <summary>
-    /// The cursor: a ring rather than a filled disc, so it marks where the ray lands without hiding
-    /// whatever it lands on.
+    /// The cursor: a ring off a resize handle, and a double-headed arrow over one, pointing the way that
+    /// handle drags.
     /// </summary>
-    public static byte[] Cursor()
+    public static byte[] Cursor(VrCursor kind) => kind switch
+    {
+        VrCursor.Ring => Ring(),
+        VrCursor.Horizontal => Arrow(0f),
+        VrCursor.Vertical => Arrow(90f),
+        VrCursor.DiagonalDown => Arrow(45f),
+        VrCursor.DiagonalUp => Arrow(-45f),
+        _ => Ring(),
+    };
+
+    public static int CursorSize => 64;
+
+    /// <summary>
+    /// A ring rather than a filled disc, so it marks where the ray lands without hiding whatever it
+    /// lands on.
+    /// </summary>
+    private static byte[] Ring()
     {
         const int Size = 64;
         const float Outer = (Size / 2f) - 1f;
@@ -70,7 +86,46 @@ public static class VrSprites
         return pixels;
     }
 
-    public static int CursorSize => 64;
+    /// <summary>
+    /// A double-headed arrow through the centre, at <paramref name="degrees"/> off the horizontal, feathered
+    /// the same way the ring is.
+    /// </summary>
+    private static byte[] Arrow(float degrees)
+    {
+        const int Size = 64;
+        const float ShaftHalfLength = (Size / 2f) - 8f;
+        const float ShaftHalfWidth = 2f;
+        const float HeadLength = 14f;
+        const float HeadHalfWidth = 7f;
+
+        var pixels = new byte[Size * Size * 4];
+        var centre = (Size - 1) / 2f;
+        var radians = degrees * MathF.PI / 180f;
+        var along = new System.Numerics.Vector2(MathF.Cos(radians), MathF.Sin(radians));
+        var across = new System.Numerics.Vector2(-along.Y, along.X);
+
+        for (var y = 0; y < Size; y++)
+        {
+            for (var x = 0; x < Size; x++)
+            {
+                var offset = new System.Numerics.Vector2(x - centre, y - centre);
+                var u = System.Numerics.Vector2.Dot(offset, along);
+                var v = System.Numerics.Vector2.Dot(offset, across);
+                var absU = MathF.Abs(u);
+
+                var halfWidth = absU >= ShaftHalfLength - HeadLength
+                    ? HeadHalfWidth * Math.Clamp((ShaftHalfLength - absU) / HeadLength, 0f, 1f)
+                    : ShaftHalfWidth;
+
+                var alpha = Math.Clamp(ShaftHalfLength - absU, 0f, 1f)
+                            * Math.Clamp(halfWidth - MathF.Abs(v), 0f, 1f);
+
+                Put(pixels, ((y * Size) + x) * 4, alpha);
+            }
+        }
+
+        return pixels;
+    }
 
     private static void Put(byte[] pixels, int at, float alpha)
     {

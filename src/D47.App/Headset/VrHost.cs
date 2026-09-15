@@ -60,6 +60,9 @@ public sealed class VrHost : IDisposable
     /// <summary>The last hands the aim loop read, for the serve to act on.</summary>
     private IReadOnlyList<VrHand> _aimHands = [];
 
+    /// <summary>The cursor the tick worked out from <c>onHandle</c>, for the aim loop to show (#191).</summary>
+    private volatile VrCursor _cursorKind = VrCursor.Ring;
+
     private Matrix4x4? _carrying;
 
     private uint _carryingHand;
@@ -602,6 +605,7 @@ public sealed class VrHost : IDisposable
                 : VrHandle.None);
 
         _panel.ShowHandles(resizeMode || _resizing is not null, onHandle);
+        _cursorKind = VrCursors.For(onHandle);
 
         // What the ray is resting on, lit so the Commander can see they have found it.
         _panel.Aim(found?.Hit.U, found?.Hit.V);
@@ -814,6 +818,7 @@ public sealed class VrHost : IDisposable
         }
 
         _panel.ShowHandles(false, VrHandle.None);
+        _cursorKind = VrCursor.Ring;
 
         if (_carrying is not null)
         {
@@ -907,7 +912,7 @@ public sealed class VrHost : IDisposable
         }
 
         _runtime.AimBeam(aim, head, length);
-        _runtime.ShowCursor(point, head);
+        _runtime.ShowCursor(point, head, _cursorKind);
     }
 
     /// <summary>The hand with this device, if it is still being tracked.</summary>

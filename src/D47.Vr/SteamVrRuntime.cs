@@ -101,6 +101,8 @@ public sealed class SteamVrRuntime(
 
     private VrOverlay? _cursor;
 
+    private VrCursor _cursorKind = VrCursor.Ring;
+
     private float _beamLength = float.NaN;
 
     private IOpenVrSystem? _system;
@@ -203,6 +205,7 @@ public sealed class SteamVrRuntime(
         _beam = null;
         _cursor = null;
         _beamLength = float.NaN;
+        _cursorKind = VrCursor.Ring;
         _guidesFor = null;
 
         foreach (var overlay in _overlays.Values)
@@ -275,14 +278,21 @@ public sealed class SteamVrRuntime(
         }
     }
 
-    /// <summary>Puts the cursor on a world point, or takes it off screen.</summary>
-    public void ShowCursor(Vector3? at, VrPose head)
+    /// <summary>Puts the cursor on a world point, or takes it off screen. Resubmits the sprite only when
+    /// <paramref name="kind"/> differs from the one last shown.</summary>
+    public void ShowCursor(Vector3? at, VrPose head, VrCursor kind)
     {
         lock (_session)
         {
             if (_cursor is null)
             {
                 return;
+            }
+
+            if (kind != _cursorKind)
+            {
+                _cursorKind = kind;
+                Redraw(_cursor, VrSprites.Cursor(kind), VrSprites.CursorSize, VrSprites.CursorSize);
             }
 
             if (at is not { } point)
@@ -535,6 +545,7 @@ public sealed class SteamVrRuntime(
             _beam = null;
             _cursor = null;
             _beamLength = float.NaN;
+            _cursorKind = VrCursor.Ring;
 
             if (!Pointing)
             {
@@ -545,7 +556,7 @@ public sealed class SteamVrRuntime(
             _beam = Sprite("com.dseelinger.D47.beam", "D47 aim", VrSprites.Beam(),
                 VrAim.BeamPixelsWide, VrAim.BeamPixelsTall, VrAim.BeamWidthFor(1f), sortOrder: 1);
 
-            _cursor = Sprite("com.dseelinger.D47.cursor", "D47 cursor", VrSprites.Cursor(),
+            _cursor = Sprite("com.dseelinger.D47.cursor", "D47 cursor", VrSprites.Cursor(VrCursor.Ring),
                 VrSprites.CursorSize, VrSprites.CursorSize, VrAim.CursorSizeMetres, sortOrder: 2);
         }
     }
@@ -585,6 +596,21 @@ public sealed class SteamVrRuntime(
         overlay.Above(sortOrder);
         overlay.Show(false);
         return overlay;
+    }
+
+    /// <summary>Replaces an overlay's pixels in place, for a sprite that changes after it was first drawn.</summary>
+    private static void Redraw(VrOverlay overlay, byte[] pixels, int width, int height)
+    {
+        var pinned = GCHandle.Alloc(pixels, GCHandleType.Pinned);
+
+        try
+        {
+            overlay.Submit(pinned.AddrOfPinnedObject(), width, height);
+        }
+        finally
+        {
+            pinned.Free();
+        }
     }
 
     /// <summary>Watches for SteamVR going away on purpose.</summary>
