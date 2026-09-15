@@ -84,6 +84,9 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
     /// <summary>The Power controlling this system, or null where nobody does (Phase 15).</summary>
     public string? ControllingPower { get; init; }
 
+    /// <summary>The current system's population, or null where it has not been read this session.</summary>
+    public long? Population { get; init; }
+
     /// <summary>Docked at a fleet carrier, which is a station type rather than a separate place.</summary>
     public bool AtCarrier => StationType is "FleetCarrier";
 
@@ -118,6 +121,7 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
 
             // Assigned rather than coalesced, unlike everything above it.
             ControllingPower = journalEvent.String("ControllingPower"),
+            Population = journalEvent.Long("Population"),
 
             // Neither event carries a star class, and both can move the Commander somewhere new — so a class
             // carried over would describe the system they left.
@@ -145,6 +149,7 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
             Mode = FlightMode.Supercruise,
             FuelMain = journalEvent.Double("FuelLevel") ?? FuelMain,
             ControllingPower = journalEvent.String("ControllingPower"),
+            Population = journalEvent.Long("Population"),
 
             // Not discarded on arrival — moved. StartJump named this system and its class when the jump
             // began, and nothing between the two events overwrites that.

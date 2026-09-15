@@ -1,6 +1,7 @@
 using D47.Core.Audio;
 using D47.Core.Callouts;
 using D47.Core.Journal;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Callouts;
@@ -27,8 +28,23 @@ public class NpcChatterCalloutTests
     private static CalloutContext Context(
         DateTimeOffset now,
         StatusFlags flags = StatusFlags.Docked | StatusFlags.InMainShip,
-        bool priming = false) =>
-        new(now, priming, State: null, In(flags), NavRoute.None, []);
+        bool priming = false,
+        CommanderGameState? state = null) =>
+        new(now, priming, state, In(flags), NavRoute.None, []);
+
+    private static CommanderGameState WithPopulation(long population)
+    {
+        var state = new CommanderGameState(new CommanderIdentity("F1", "Fixture"));
+        state.Apply(Event(
+            $$"""{"timestamp":"2026-08-18T09:00:00Z","event":"FSDJump","StarSystem":"Deciat","StarPos":[0,0,0],"Population":{{population}}}"""));
+        return state;
+    }
+
+    private static JournalEvent Event(string json)
+    {
+        Assert.True(JournalEvent.TryParse(json, NullLogger.Instance, out var parsed));
+        return parsed!;
+    }
 
     [Fact]
     public void TheFirstTickSeedsAndTheIntervalHoldsAfterIt()
@@ -151,6 +167,62 @@ public class NpcChatterCalloutTests
 
         emitted = callout.Examine(Context(
             T0 + TimeSpan.FromMinutes(63), StatusFlags.InMainShip)).ToList();
+
+        Assert.Single(emitted);
+    }
+
+    /// <summary>
+    /// Nobody is around to be Passersby or a Hail where the system population is known and zero (#230)
+    /// — and the tick they are held on does not consume the interval or advance the pick, so ordinary
+    /// timing resumes the moment the Commander reaches somewhere populated.
+    /// </summary>
+    [Fact]
+    public void PassersbyAndHailAreSilentInAKnownUnpopulatedSystem()
+    {
+        var callout = Callout();
+        var empty = WithPopulation(0);
+
+        // Undocked, so KindFor picks Passersby, not Controller.
+        _ = callout.Examine(Context(T0, StatusFlags.InMainShip, state: empty)).ToArray();
+
+        Assert.Empty(callout.Examine(Context(T0 + TimeSpan.FromMinutes(21), StatusFlags.InMainShip, state: empty)));
+        Assert.Empty(callout.Examine(Context(T0 + TimeSpan.FromMinutes(42), StatusFlags.InMainShip, state: empty)));
+
+        // Reaching a populated system resumes on ordinary timing rather than staying quiet for a full
+        // cooldown, because the held tick never advanced the interval or the pick counter.
+        var populated = WithPopulation(1_000);
+
+        var emitted = callout.Examine(
+            Context(T0 + TimeSpan.FromMinutes(63), StatusFlags.InMainShip, state: populated)).ToList();
+
+        Assert.Single(emitted);
+    }
+
+    /// <summary>Population unknown this session behaves exactly as it does today: not suppressed.</summary>
+    [Fact]
+    public void UnknownPopulationIsNotSuppressed()
+    {
+        var callout = Callout();
+
+        Assert.Empty(callout.Examine(Context(T0)));
+
+        var emitted = callout.Examine(Context(T0 + TimeSpan.FromMinutes(21))).ToList();
+
+        Assert.Single(emitted);
+    }
+
+    /// <summary>Controller chatter is untouched by population — it only ever fires docked, where a
+    /// station or the Commander's own carrier already justifies the scene.</summary>
+    [Fact]
+    public void ControllerChatterIgnoresPopulation()
+    {
+        var callout = Callout();
+        var empty = WithPopulation(0);
+
+        // Pick 0, docked, is Controller under KindFor's ladder.
+        _ = callout.Examine(Context(T0, state: empty)).ToArray();
+
+        var emitted = callout.Examine(Context(T0 + TimeSpan.FromMinutes(21), state: empty)).ToList();
 
         Assert.Single(emitted);
     }

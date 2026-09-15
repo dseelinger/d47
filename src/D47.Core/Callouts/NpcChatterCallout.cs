@@ -73,6 +73,14 @@ public sealed class NpcChatterCallout : ICallout
 
         var kind = KindFor(_picks, context.Status.Has(StatusFlags.Docked));
 
+        // Passersby and Hail invent people who are not there where nobody lives (#230); Controller only
+        // fires docked, where a station or the Commander's own carrier already justifies the scene.
+        if (kind is NpcChatterKind.Passersby or NpcChatterKind.Hail
+            && context.State?.Location.Population == 0)
+        {
+            yield break;
+        }
+
         _picks++;
         _lastSpokenAt = context.Now;
 

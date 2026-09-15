@@ -6,6 +6,13 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.132.3 — No invented chatter where nobody lives
+
+Fix Passersby and Hail chatter firing in systems with population zero: they invented other people
+nearby, or someone hailing the Commander, a thousand light years from the bubble with nobody around
+to have said it. Controller chatter is unaffected — it only ever fires docked, where a station or
+the Commander's own carrier already justifies the scene.
+
 ## 0.132.2 — The Power gauge counts the cargo hatch and the hangars
 
 Fix the Power gauge undercounting a build whenever `ModulesInfo.json` has not been read for that
