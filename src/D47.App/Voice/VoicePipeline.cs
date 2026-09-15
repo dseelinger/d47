@@ -120,7 +120,7 @@ public sealed class VoicePipeline(
                         // Created on the first delta rather than up front, so a turn that never speaks never
                         // opens a pipeline — and, more to the point, the bed stops the moment there are words
                         // rather than when the turn ends.
-                        if (speech is null && Tts is { } provider)
+                        if (speech is null && Speaker(VoiceGroups.Of(SpeakingAs)) is { } provider)
                         {
                             _spoke = true;
 
