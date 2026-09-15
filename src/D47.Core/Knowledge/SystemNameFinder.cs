@@ -54,9 +54,27 @@ public static partial class SystemNameFinder
     private const int PatternRank = 2;
 
     /// <summary>
+    /// Table names that read as ordinary English words rather than a star system, checked against
+    /// <c>SystemNames.tsv</c> by <c>EveryWordInTheEverydayListIsARealSystem</c>. A one-word table hit
+    /// on one of these draws no chip; a known name is unaffected.
+    /// </summary>
+    private static readonly HashSet<string> EverydayWords =
+    [
+        "Arm", "Bridge", "Fall", "Grid", "Gun", "Kin", "Long", "Main", "Mill", "Much", "Nut", "Path",
+        "Pole", "Rain", "Ring", "Run", "Union",
+    ];
+
+    private static readonly HashSet<string> CatalogueNames =
+        new(OutfittingCatalogue.Ships.Concat(OutfittingCatalogue.Modules), StringComparer.OrdinalIgnoreCase);
+
+    private static readonly int CatalogueLongestWordCount =
+        CatalogueNames.Max(name => Words(name).Count);
+
+    /// <summary>
     /// The system names in <paramref name="text"/>, in text order and never overlapping. The longest hit
     /// wins; on equal length a known name beats the table, which beats a pattern. A pattern hit that
-    /// contains a known name gives way to it.
+    /// contains a known name gives way to it. A hit that falls inside a ship or module name draws no
+    /// chip, a known name included.
     /// </summary>
     public static IReadOnlyList<SystemNameHit> Find(string text, IReadOnlyCollection<string> known)
     {
@@ -65,11 +83,14 @@ public static partial class SystemNameFinder
             return [];
         }
 
-        var knownHits = Known(text, known);
+        var catalogueSpans = CatalogueSpans(text);
+        var knownHits = Known(text, known).Where(hit => !InsideCatalogue(hit, catalogueSpans)).ToList();
         var candidates = new List<(SystemNameHit Hit, int Rank)>();
 
         candidates.AddRange(knownHits.Select(hit => (hit, KnownRank)));
-        candidates.AddRange(Table(text).Select(hit => (hit, TableRank)));
+        candidates.AddRange(Table(text)
+            .Where(hit => !InsideCatalogue(hit, catalogueSpans))
+            .Select(hit => (hit, TableRank)));
 
         foreach (var regex in new[] { ProceduralInText, CatalogueInText })
         {
@@ -170,9 +191,11 @@ public static partial class SystemNameFinder
                     continue;
                 }
 
-                if (count > 1 || !AtSentenceStart(text, start))
+                var name = text[start..end];
+
+                if ((count > 1 || !AtSentenceStart(text, start)) && !(count == 1 && EverydayWords.Contains(name)))
                 {
-                    hits.Add(new SystemNameHit(start, end - start, text[start..end]));
+                    hits.Add(new SystemNameHit(start, end - start, name));
                 }
 
                 break;
@@ -227,6 +250,34 @@ public static partial class SystemNameFinder
 
         return true;
     }
+
+    /// <summary>The runs of text that spell a ship or module name, on whole words and ignoring case.</summary>
+    private static List<(int Start, int End)> CatalogueSpans(string text)
+    {
+        var spans = new List<(int Start, int End)>();
+        var words = Words(text);
+
+        for (var first = 0; first < words.Count; first++)
+        {
+            var start = words[first].Start;
+
+            for (var count = Math.Min(CatalogueLongestWordCount, words.Count - first); count >= 1; count--)
+            {
+                var end = words[first + count - 1].End;
+
+                if (Bounded(text, start, end) && CatalogueNames.Contains(text[start..end]))
+                {
+                    spans.Add((start, end));
+                    break;
+                }
+            }
+        }
+
+        return spans;
+    }
+
+    private static bool InsideCatalogue(SystemNameHit hit, List<(int Start, int End)> spans) =>
+        spans.Any(span => hit.Start >= span.Start && hit.Start + hit.Length <= span.End);
 
     private static bool Bounded(string text, int start, int end) =>
         (start == 0 || !char.IsLetterOrDigit(text[start - 1]))

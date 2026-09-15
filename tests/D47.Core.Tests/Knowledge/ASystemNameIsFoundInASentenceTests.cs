@@ -7,6 +7,12 @@ public class ASystemNameIsFoundInASentenceTests
 {
     private static readonly string[] Nothing = [];
 
+    private static readonly string[] EverydayWords =
+    [
+        "Arm", "Bridge", "Fall", "Grid", "Gun", "Kin", "Long", "Main", "Mill", "Much", "Nut", "Path",
+        "Pole", "Rain", "Ring", "Run", "Union",
+    ];
+
     private static IReadOnlyList<string> Found(string text, params string[] known) =>
         [.. SystemNameFinder.Find(text, known).Select(hit => hit.Name)];
 
@@ -103,5 +109,42 @@ public class ASystemNameIsFoundInASentenceTests
         var hits = SystemNameFinder.Find("from HIP 12099 to Dryafea PO-X d2-0 via Achenar", Nothing);
 
         Assert.Equal(["HIP 12099", "Dryafea PO-X d2-0", "Achenar"], hits.Select(hit => hit.Name));
+    }
+
+    [Fact]
+    public void AShipNameInTextDrawsNoChip()
+    {
+        Assert.Empty(Found("the Caspian Explorer Mk II Ablative Lightweight Alloys"));
+    }
+
+    [Fact]
+    public void AModuleNameInTextDrawsNoChip()
+    {
+        Assert.Empty(Found("fit a Rail Gun"));
+    }
+
+    [Fact]
+    public void AKnownNameInsideAShipNameDrawsNoChip()
+    {
+        Assert.Empty(Found("the Caspian Explorer is docked", "Caspian"));
+    }
+
+    [Fact]
+    public void AnEverydayWordDrawsNoChipUnlessKnown()
+    {
+        Assert.Empty(Found("we are flying to Union tonight"));
+        Assert.Equal(["Union"], Found("we are flying to Union tonight", "Union"));
+    }
+
+    [Fact]
+    public void ARareGoodNamedAfterItsSystemStillDrawsAChip()
+    {
+        Assert.Equal(["Eranin"], Found("a crate of Eranin Pearl Whisky"));
+    }
+
+    [Fact]
+    public void EveryWordInTheEverydayListIsARealSystem()
+    {
+        Assert.All(EverydayWords, word => Assert.True(SystemNameTable.Contains(word), word));
     }
 }

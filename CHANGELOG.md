@@ -6,6 +6,13 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.132.5 — Ship names and common words draw no chip
+
+Fix system-name chips drawing on a ship or module name that happens to contain one — "Caspian
+Explorer" no longer draws a Caspian chip, and "Rail Gun" no longer draws a Gun chip — and on a
+one-word table hit that is an ordinary English word such as Arm, Long or Union. A Commander
+actually in one of those systems still gets the chip.
+
 ## 0.132.4 — What to say comes from the phrase book, not a guess
 
 Add `find_phrase`, so asked what to say for a goal the model reads the model-free router's own
