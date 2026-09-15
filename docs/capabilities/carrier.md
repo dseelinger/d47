@@ -40,6 +40,17 @@ nav_order: 104
 </svg>
 </section>
 <section>
+<h2><span class="num">3</span> Say "Captain" to talk to the carrier's captain.</h2>
+<svg viewBox="0 0 880 212" role="img" aria-label="A question opened with Captain, answered by the carrier's captain until the line is ended">
+ <rect x="20" y="20" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="53" font-size="17" fill="var(--text)">Captain, how much fuel have we got</text>
+ <text x="836" y="53" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="112" font-size="16" fill="var(--text)">The captain answers, and answers the next question too, until you say "that's all".</text>
+ <text x="20" y="144" font-size="15" fill="var(--text-muted)">"that'll be all", "thank you captain", "dismissed", "carry on" or the ship AI's name also end it.</text>
+ <text x="20" y="182" font-size="15" fill="var(--text-muted)">More than 500 light years away, the ship AI says the carrier is out of range.</text>
+</svg>
+</section>
+<section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="Figures are only as fresh as the last carrier management screen read.">
  <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
@@ -91,6 +102,18 @@ nav_order: 104
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">Not "you have no carrier" — D47 only knows what the journal has shown it.</text>
 </svg>
 </section>
+<section>
+<h2><span class="num">4</span> The captain keeps a separate conversation, and the ship AI overhears it.</h2>
+<svg viewBox="0 0 880 200" role="img" aria-label="The captain answers from their own brief and transcript; the ship AI is told the exchange as overheard">
+ <rect x="20" y="36" width="400" height="100" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="220" y="76" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">Captain</text>
+ <text x="220" y="106" text-anchor="middle" font-size="15" fill="var(--text-muted)">own brief, own transcript</text>
+ <rect x="460" y="36" width="400" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="660" y="76" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">Ship AI</text>
+ <text x="660" y="106" text-anchor="middle" font-size="15" fill="var(--text-muted)">hears each exchange as overheard</text>
+ <text x="440" y="176" text-anchor="middle" font-size="16" fill="var(--text)">The captain never answers as the ship AI, and the ship AI can still refer to what was said.</text>
+</svg>
+</section>
 </div></div>
 </details>
 
@@ -129,6 +152,28 @@ Services:
   Refuel: open, staffed by Rosa Guthrie
   Repair: closed, staffed by Ev Chang
 ```
+
+### Talk to the captain
+
+> "Captain, how much fuel have we got"
+
+A question that opens with "Captain" goes to the carrier's captain instead of the ship AI, and is
+spoken in the captain's voice. The captain answers from `describe_carrier` and the galaxy tools, and
+answers follow-up questions with no name needed until the line is ended by one of these:
+
+```csharp
+public static readonly IReadOnlyList<string> Dismissals =
+    ["that's all", "that'll be all", "thank you captain", "dismissed", "carry on"];
+```
+
+Starting a question with the ship AI's name also ends it. The ship AI is told each exchange as one it
+overheard, so it can refer to it, but the captain's answers are not added to the ship AI's own
+conversation.
+
+With galaxy search on, a carrier more than 500 light years from you is out of range: the ship AI
+says so and gives the distance, and no model is asked. With galaxy search off, or when the distance
+cannot be found, the captain answers. The captain cannot be reached until a carrier you own and its
+system have been seen in the journal.
 
 ### What Directive 47 actually knows about your carrier
 

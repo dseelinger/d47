@@ -892,6 +892,9 @@ public partial class MainWindow : Window
         // Claimed before the turn starts and released in the finally.
         var cancelling = _host.Cancellation.Begin();
 
+        // Set when the turn is answered by someone other than the ship's AI, and undone in the finally.
+        AppHost.AddressedVoice? addressedVoice = null;
+
         try
         {
             // Through the voice pipeline rather than straight off the turn loop, so the panel and the speaker
@@ -902,6 +905,11 @@ public partial class MainWindow : Window
                 {
                     switch (turnEvent)
                     {
+                        case TurnEvent.Addressed addressed:
+                            addressedVoice ??= _host.SpeakAs(addressed);
+                            _model.Append($"[{addressed.Name}] ");
+                            break;
+
                         case TurnEvent.Routed routed:
                             _model.TurnLine = routed.Effort is { } effort
                                 ? $"routed: {routed.Route}, effort {effort}"
@@ -950,6 +958,8 @@ public partial class MainWindow : Window
             // 2026-09-04: every turn after the first logged "a new turn started while one was in flight"
             // against a turn that had finished).
             _host.Cancellation.End(cancelling);
+
+            addressedVoice?.Dispose();
 
             _turnInFlight = false;
             _model.CanAsk = true;

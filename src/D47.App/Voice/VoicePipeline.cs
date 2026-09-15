@@ -76,10 +76,10 @@ public sealed class VoicePipeline(
     public Func<AudioClip, AudioClip>? GuardianColour { get; set; }
 
     /// <summary>
-    /// Whether the reply in progress is spoken by a crew member rather than the ship's AI, so Guardian
-    /// treatment — global to every core, never to Crew — is not applied to it (#225).
+    /// Who speaks the reply in progress. Guardian treatment reaches only <see cref="VoiceRole.ShipAi"/>, and a
+    /// role heard over the air gets a radio link (#225).
     /// </summary>
-    public bool SpeakingAsCrew { get; set; }
+    public VoiceRole SpeakingAs { get; set; } = VoiceRole.ShipAi;
 
     /// <summary>Told what each sentence was rendered by, when something is recording (#164).</summary>
     public Action<SynthesisNote>? Synthesised { get; set; }
@@ -124,7 +124,7 @@ public sealed class VoicePipeline(
                         {
                             _spoke = true;
 
-                            var role = SpeakingAsCrew ? VoiceRole.Crew : VoiceRole.ShipAi;
+                            var role = SpeakingAs;
                             var colour = Colour(role);
 
                             speech = new SpeechPipeline(

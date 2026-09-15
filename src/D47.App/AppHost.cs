@@ -1911,6 +1911,16 @@ public sealed class AppHost : IDisposable
                                     self?.SearchReachesTheWeb ?? true))))))),
         };
 
+        // The carrier's captain, reached by name. The distance is asked of the galaxy service only while galaxy
+        // search is on.
+        turns.Lines.Add(new CaptainLine(
+            () => gameState.Active?.Carrier ?? D47.Core.Journal.CarrierState.None,
+            () => gameState.Active?.Location.StarSystem,
+            () => personas.ShipName,
+            (from, to, cancellationToken) => settings.Current.Knowledge.GalaxySearch
+                ? galaxy.DistanceAsync(from, to, cancellationToken)
+                : Task.FromResult<double?>(null)));
+
         // The catalogue a generated story may draw its stops from (Phase 47).
         var notablePlaces = new D47.Knowledge.GecNotablePlacesService(
             loggerFactory.CreateLogger<D47.Knowledge.GecNotablePlacesService>());
@@ -5309,8 +5319,31 @@ public sealed class AppHost : IDisposable
             host.Turns.Persona = persona;
             host.Voice.Voice = voice;
             host.Voice.CaptionSpeaker = captionSpeaker;
-            host.Voice.SpeakingAsCrew = false;
+            host.Voice.SpeakingAs = VoiceRole.ShipAi;
         }
+    }
+
+    /// <summary>The voice of a turn answered by an addressed speaker. Disposing restores the ship AI's.</summary>
+    public sealed class AddressedVoice(AppHost host, VoiceSelection voice, string? captionSpeaker) : IDisposable
+    {
+        public void Dispose()
+        {
+            host.Voice.Voice = voice;
+            host.Voice.CaptionSpeaker = captionSpeaker;
+            host.Voice.SpeakingAs = VoiceRole.ShipAi;
+        }
+    }
+
+    /// <summary>Speaks the rest of this turn as the speaker it was addressed to, captioned with their name.</summary>
+    public AddressedVoice SpeakAs(TurnEvent.Addressed addressed)
+    {
+        var restore = new AddressedVoice(this, Voice.Voice, Voice.CaptionSpeaker);
+
+        Voice.Voice = Cast.ForSender(addressed.Name, isPlayer: false, addressed.Role);
+        Voice.SpeakingAs = addressed.Role;
+        Voice.CaptionSpeaker = addressed.Name;
+
+        return restore;
     }
 
     /// <summary>
@@ -5334,7 +5367,7 @@ public sealed class AppHost : IDisposable
         // Not a Guardian core.
         Turns.Persona = CrewAddressing.Brief(addressed.Member, GameState.Active?.Ship.Name);
         Voice.Voice = Cast.ForSender(addressed.Member.Name, isPlayer: false, VoiceRole.Crew);
-        Voice.SpeakingAsCrew = true;
+        Voice.SpeakingAs = VoiceRole.Crew;
 
         // And the caption says who is answering (#201).
         Voice.CaptionSpeaker = addressed.Member.Name;

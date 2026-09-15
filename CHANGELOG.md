@@ -13,6 +13,13 @@ for the fleet carrier's fuel, cargo against capacity, balance, jump range, docki
 jump and every service with who staffs it — apart from "where is my carrier", which still answers
 with the system alone.
 
+Start a question with "Captain" and the captain of your fleet carrier answers it, in the captain's
+voice, from the carrier's figures and the galaxy tools. Follow-up questions go to the captain without
+the name until you say "that's all", "that'll be all", "thank you captain", "dismissed" or "carry on",
+or start a question with your ship AI's name. The ship AI hears those exchanges and can refer to them
+afterwards. With galaxy search on, a carrier more than 500 light years away is out of range: the ship
+AI tells you so and gives the distance.
+
 ## 0.129.1 — One tool surface for every provider
 
 On Claude Opus 5, Opus 4.8, Opus 4.7, Fable 5, Mythos 5 and Haiku 4.5, through Anthropic's own

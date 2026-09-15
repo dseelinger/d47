@@ -80,6 +80,11 @@ public static class ScenarioRunner
             WebSearchEnabled = () => false,
         };
 
+        foreach (var line in scenario.Lines?.Invoke(world) ?? [])
+        {
+            loop.Lines.Add(line);
+        }
+
         if (scenario.History.Count > 0)
         {
             loop.UseTranscript([.. scenario.History]);

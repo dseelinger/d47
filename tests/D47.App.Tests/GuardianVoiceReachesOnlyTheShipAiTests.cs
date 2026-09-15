@@ -79,7 +79,7 @@ public class GuardianVoiceReachesOnlyTheShipAiTests
     public async Task ATurnReplySpokenAsCrewIsNot()
     {
         var (voice, played) = Build();
-        voice.SpeakingAsCrew = true;
+        voice.SpeakingAs = VoiceRole.Crew;
 
         await voice.RunAsync(Reply("Scanning."), cancellationToken: TestContext.Current.CancellationToken);
 

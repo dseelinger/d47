@@ -24,6 +24,9 @@ public enum TurnRoute
 
     /// <summary>Nothing could answer it.</summary>
     NoCapability,
+
+    /// <summary>Addressed to the carrier's captain while the carrier is beyond comms range.</summary>
+    CarrierOutOfRange,
 }
 
 public enum TurnOutcome
@@ -48,6 +51,9 @@ public abstract record TurnEvent
     private TurnEvent()
     {
     }
+
+    /// <summary>The turn is answered by someone other than the ship's AI. Emitted before <see cref="Routed"/>.</summary>
+    public sealed record Addressed(D47.Core.Audio.VoiceRole Role, string Name, double Signal) : TurnEvent;
 
     /// <summary>Emitted as soon as routing is decided, before any work.</summary>
     public sealed record Routed(TurnRoute Route, ThinkingEffort? Effort) : TurnEvent;
@@ -118,7 +124,10 @@ public sealed class TurnLoop(
     /// Records something d47 said without being asked, so the next turn knows it said it
     /// (remediation.md 17, item 4).
     /// </summary>
-    public void Said(string line, string? asked = null)
+    public void Said(string line, string? asked = null) => Record(line, asked, speaker: null);
+
+    /// <summary>Records an exchange the Commander had with an addressed speaker, which the ship's AI overheard.</summary>
+    private void Record(string line, string? asked, string? speaker)
     {
         if (string.IsNullOrWhiteSpace(line))
         {
@@ -129,12 +138,13 @@ public sealed class TurnLoop(
         {
             SpokenLine added = new(
                 string.IsNullOrWhiteSpace(asked) ? null : asked.Trim(),
-                line.Trim());
+                line.Trim(),
+                speaker);
 
             _spoken.Add(added);
 
             // A Commander who does not ask anything for an hour is not owed every ambient line of it.
-            bool SameKind(SpokenLine entry) => (entry.Asked is null) == (added.Asked is null);
+            bool SameKind(SpokenLine entry) => entry.Kind == added.Kind;
 
             while (_spoken.Count(SameKind) > SpokenCarried)
             {
@@ -169,7 +179,7 @@ public sealed class TurnLoop(
                 + string.Join('\n', unprompted.Select(entry => $"- {entry.Line}")));
         }
 
-        if (said.Where(entry => entry.Asked is not null).ToList() is { Count: > 0 } exchanges)
+        if (said.Where(entry => entry.Kind == SpokenKind.Exchange).ToList() is { Count: > 0 } exchanges)
         {
             parts.Add(
                 "Since the last exchange the Commander asked for these and one of your own "
@@ -188,14 +198,39 @@ public sealed class TurnLoop(
                 + "are able to do.");
         }
 
+        if (said.Where(entry => entry.Kind == SpokenKind.Overheard).ToList() is { Count: > 0 } overheard)
+        {
+            parts.Add(
+                "Since the last exchange the Commander spoke over comms with someone other than you, and "
+                + "you overheard it. These are exchanges between the Commander and that speaker, not ones "
+                + "you had, and the answers are theirs rather than yours.\n"
+                + string.Join(
+                    '\n',
+                    overheard.Select(entry =>
+                        $"- The Commander said \"{entry.Asked}\", and {entry.Speaker} answered \"{entry.Line}\".")));
+        }
+
         return "<said-aloud>\n" + string.Join('\n', parts) + "\n</said-aloud>\n\n";
     }
 
+    private enum SpokenKind
+    {
+        Unprompted,
+        Exchange,
+        Overheard,
+    }
+
     /// <summary>
-    /// One line d47 spoke, and the Commander's own words that asked for it, or null where nothing did
-    /// (#415).
+    /// One line spoken, the Commander's own words that asked for it or null where nothing did (#415), and
+    /// who answered, or null for d47 itself.
     /// </summary>
-    private sealed record SpokenLine(string? Asked, string Line);
+    private sealed record SpokenLine(string? Asked, string Line, string? Speaker)
+    {
+        public SpokenKind Kind =>
+            Speaker is not null ? SpokenKind.Overheard
+            : Asked is null ? SpokenKind.Unprompted
+            : SpokenKind.Exchange;
+    }
 
     /// <summary>How many lines of each kind are carried into the next turn.</summary>
     private const int SpokenCarried = 8;
@@ -207,32 +242,32 @@ public sealed class TurnLoop(
     /// Trims the transcript to <see cref="TranscriptKept"/>, never leaving a tool call whose result was
     /// dropped with it.
     /// </summary>
-    private void Bound()
+    private static void Bound(List<ConversationMessage> transcript)
     {
-        if (_history.Count <= TranscriptKept)
+        if (transcript.Count <= TranscriptKept)
         {
             return;
         }
 
-        var cut = _history.Count - TranscriptKept;
+        var cut = transcript.Count - TranscriptKept;
 
         // Forward past any message that would leave a dangling half: a tool result whose call is being
         // dropped, the assistant call it belongs to, and a provider block tied to either.
-        while (cut < _history.Count
-               && _history[cut].Content.Any(part => part is ConversationContent.ToolResult
-                                                     or ConversationContent.ToolUse
-                                                     or ConversationContent.Opaque))
+        while (cut < transcript.Count
+               && transcript[cut].Content.Any(part => part is ConversationContent.ToolResult
+                                                      or ConversationContent.ToolUse
+                                                      or ConversationContent.Opaque))
         {
             cut++;
         }
 
         // A transcript that is all one enormous tool conversation would otherwise be emptied.
-        if (cut >= _history.Count)
+        if (cut >= transcript.Count)
         {
             return;
         }
 
-        _history.RemoveRange(0, cut);
+        transcript.RemoveRange(0, cut);
     }
 
     private readonly List<SpokenLine> _spoken = [];
@@ -327,6 +362,15 @@ public sealed class TurnLoop(
     /// <summary>Whether the Commander has allowed the model to search the web.</summary>
     public Func<bool>? WebSearchEnabled { get; set; }
 
+    /// <summary>
+    /// Speakers other than the ship's AI, asked before any other route: an open line first, then each in
+    /// order. At most one is open at a time.
+    /// </summary>
+    public List<Persona.ILine> Lines { get; } = [];
+
+    /// <summary>Who answered the last model turn, or null for the ship's AI.</summary>
+    private string? _lastSpeaker;
+
     public async IAsyncEnumerable<TurnEvent> RunAsync(
         string input,
         InputSource source = InputSource.Typed,
@@ -346,6 +390,28 @@ public sealed class TurnLoop(
 
                 input = corrected;
             }
+        }
+
+        // 0.5. Addressed to someone other than the ship's AI.
+        switch (await AddressedAsync(input, cancellationToken).ConfigureAwait(false))
+        {
+            case Persona.LineDecision.Taken taken:
+                await foreach (var turnEvent in AddressedTurnAsync(input, taken, cancellationToken).ConfigureAwait(false))
+                {
+                    yield return turnEvent;
+                }
+
+                yield break;
+
+            case Persona.LineDecision.Refused refused:
+                yield return new TurnEvent.Routed(refused.Route, Effort: null);
+
+                Said(refused.Line, input);
+
+                yield return new TurnEvent.TextDelta(refused.Line);
+                yield return new TurnEvent.Completed(new TurnResult(
+                    TurnOutcome.Answered, refused.Route, refused.Line, Effort: null, Cost: null));
+                yield break;
         }
 
         if (LearnedPhraseFor?.Invoke(input) is { } taught && InBook(taught))
@@ -576,10 +642,87 @@ public sealed class TurnLoop(
             yield break;
         }
 
-        await foreach (var turnEvent in RunModelTurnAsync(input, activeProvider, cancellationToken)
+        await foreach (var turnEvent in RunModelTurnAsync(input, activeProvider, speaker: null, cancellationToken)
                            .ConfigureAwait(false))
         {
             yield return turnEvent;
+        }
+    }
+
+    /// <summary>The decision of the first line that claims the input; taking a turn closes every other line.</summary>
+    private async Task<Persona.LineDecision> AddressedAsync(string input, CancellationToken cancellationToken)
+    {
+        var open = Lines.FirstOrDefault(line => line.IsOpen);
+
+        List<Persona.ILine> order = open is null ? [.. Lines] : [open, .. Lines.Where(line => line != open)];
+
+        foreach (var line in order)
+        {
+            var decision = await line.RouteAsync(input, cancellationToken).ConfigureAwait(false);
+
+            if (decision is Persona.LineDecision.NotMine)
+            {
+                continue;
+            }
+
+            if (decision is Persona.LineDecision.Taken)
+            {
+                foreach (var other in Lines.Where(other => other != line))
+                {
+                    other.Close();
+                }
+            }
+
+            return decision;
+        }
+
+        return new Persona.LineDecision.NotMine();
+    }
+
+    /// <summary>
+    /// A turn answered by an addressed speaker, from their own brief and transcript. Skips the model-free
+    /// routes, leaves the said-aloud block unread, and records the exchange into it as overheard.
+    /// </summary>
+    private async IAsyncEnumerable<TurnEvent> AddressedTurnAsync(
+        string input,
+        Persona.LineDecision.Taken taken,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        var speaker = taken.Speaker;
+
+        logger.LogInformation("Turn addressed to {Name}", speaker.Name);
+
+        yield return new TurnEvent.Addressed(speaker.Role, speaker.Name, speaker.Signal);
+
+        var activeProvider = Provider;
+
+        if (activeProvider is null || !availability.CanAttemptModelTurn)
+        {
+            var reason = availability.Reason ?? "No language model provider is configured.";
+
+            yield return new TurnEvent.Routed(TurnRoute.NoCapability, Effort: null);
+            yield return new TurnEvent.TextDelta(reason);
+            yield return new TurnEvent.Completed(new TurnResult(
+                TurnOutcome.Unsure, TurnRoute.NoCapability, reason, Effort: null, Cost: null));
+            yield break;
+        }
+
+        TurnResult? result = null;
+
+        await foreach (var turnEvent in RunModelTurnAsync(taken.Question, activeProvider, speaker, cancellationToken)
+                           .ConfigureAwait(false))
+        {
+            if (turnEvent is TurnEvent.Completed completed)
+            {
+                result = completed.Result;
+            }
+
+            yield return turnEvent;
+        }
+
+        if (result is { Outcome: TurnOutcome.Answered })
+        {
+            Record(result.Text, input, speaker.Name);
         }
     }
 
@@ -811,41 +954,56 @@ public sealed class TurnLoop(
     private async IAsyncEnumerable<TurnEvent> RunModelTurnAsync(
         string input,
         ILlmProvider activeProvider,
+        Persona.Speaker? speaker,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var chosenModel = Model ?? activeProvider.DefaultModel;
         // What the Commander asked for, held between what they will pay for (Phase 54).
         var effort = ThinkingEffortRange.Clamp(EffortRouter.ChooseFor(input), EffortFloor, EffortCeiling);
 
-        // A cold prefix is only sanctioned on the first turn and after a model change.
-        var coldPrefixExpected = _lastModelUsed != chosenModel;
+        // A cold prefix is only sanctioned on the first turn and after a change of model or of speaker.
+        var coldPrefixExpected = _lastModelUsed != chosenModel || _lastSpeaker != speaker?.Name;
         _lastModelUsed = chosenModel;
+        _lastSpeaker = speaker?.Name;
+
+        // An addressed speaker's turn reads and writes that speaker's transcript only.
+        var transcript = speaker?.Transcript ?? _history;
 
         // Which tools ship is a choice between pre-declared lists, never between individual tools — a per-turn
         // set would rewrite position 1 and invalidate the whole cached prefix. A provider that searches its
-        // tools is sent every tool, the same in every mode; an out-of-mode call is refused where it runs.
+        // tools is sent every tool, the same in every mode; an out-of-mode call is refused where it runs. An
+        // addressed speaker is sent the mode-free list or nothing.
         var providerCapabilities = activeProvider.CapabilitiesFor(chosenModel);
-        var searchable = providerCapabilities.SupportsToolCalls && providerCapabilities.SupportsToolSearch;
+        var searchable = speaker is null
+                         && providerCapabilities.SupportsToolCalls
+                         && providerCapabilities.SupportsToolSearch;
 
         IReadOnlyList<ToolAdvertisement> ModeTools() => ToolSurface.ForMode(
             capabilities,
             ToolContext?.Invoke() ?? Input.ControlContext.None,
             ActionsEnabled?.Invoke() ?? false).Tools;
 
-        var advertised =
+        IReadOnlyList<ToolAdvertisement> advertised =
             !providerCapabilities.SupportsToolCalls ? []
+            : speaker is not null
+                ? speaker.OffersTools
+                    ? ToolSurface.ForMode(capabilities, Input.ControlContext.None, actionsEnabled: false).Tools
+                    : []
             : searchable ? ToolSurface.Searchable(capabilities).Tools
             : ModeTools();
 
         // Both halves, and the endpoint half is not the Commander's doing: pointing llm.endpoint at a gateway
         // turns this off whatever the setting says, because a server-side tool is the provider's to offer.
-        var webSearch = providerCapabilities.SupportsWebSearch && (WebSearchEnabled?.Invoke() ?? false);
+        var webSearch = speaker is null
+                        && providerCapabilities.SupportsWebSearch
+                        && (WebSearchEnabled?.Invoke() ?? false);
 
         // What this turn says it thought at, which is not always what it asked for (Phase 54).
         var effortReported = providerCapabilities.SupportsThinkingEffort ? effort : (ThinkingEffort?)null;
 
         // What this turn has said so far, tool rounds included.
-        List<ConversationMessage> pending = [new ConversationMessage(ConversationRole.User, Spoken() + input)];
+        List<ConversationMessage> pending =
+            [new ConversationMessage(ConversationRole.User, speaker is null ? Spoken() + input : input)];
 
         yield return new TurnEvent.Routed(TurnRoute.Model, effortReported);
 
@@ -855,7 +1013,7 @@ public sealed class TurnLoop(
 
         // Taken before the model is asked anything, so that a turn which resolves it can be told apart from a
         // turn which merely says it did.
-        var standingBefore = Standing?.Invoke();
+        var standingBefore = speaker is null ? Standing?.Invoke() : null;
 
         // A tool the model already called this turn, keyed by name and exact arguments, so a repeat is
         // answered rather than run again — the second identical call is not tried, and whatever it does the
@@ -895,12 +1053,12 @@ public sealed class TurnLoop(
                 {
                     Tools = lastRound ? [] : advertised,
                     ToolsSearchable = searchable,
-                    Persona = Persona,
+                    Persona = speaker?.Brief ?? Persona,
                     CanBeDirected = CanBeDirected?.Invoke() == true,
                     AboutMe = AboutMe,
-                    Recall = Recall,
-                    Directions = Directions,
-                    History = [.. _history, .. pending],
+                    Recall = speaker is null ? Recall : null,
+                    Directions = speaker is null ? Directions : null,
+                    History = [.. transcript, .. pending],
                     LiveGameState = LiveGameState?.Invoke(),
                 },
             };
@@ -1086,10 +1244,10 @@ public sealed class TurnLoop(
         if (turnOutcome == TurnOutcome.Answered)
         {
             // The tool rounds are committed too, not just the question and the answer.
-            _history.AddRange(pending);
-            _history.Add(Closing(answer, closingContent, standingAdded));
+            transcript.AddRange(pending);
+            transcript.Add(Closing(answer, closingContent, standingAdded));
 
-            Bound();
+            Bound(transcript);
         }
 
         logger.LogInformation(

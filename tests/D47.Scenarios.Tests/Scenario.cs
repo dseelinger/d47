@@ -59,6 +59,10 @@ public sealed record Scenario
     /// <summary>What was already said before this turn, handed to the loop as its transcript.</summary>
     public IReadOnlyList<D47.Core.Conversation.ConversationMessage> History { get; init; } = [];
 
+    /// <summary>Addressed speakers the loop asks before its own routes, built over this run's world.</summary>
+    [JsonIgnore]
+    public Func<ScenarioWorld, IReadOnlyList<D47.Core.Persona.ILine>>? Lines { get; init; }
+
     public IReadOnlyList<ScenarioAssertion> Assertions { get; init; } = [];
 
     /// <summary>

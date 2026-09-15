@@ -36,10 +36,15 @@ public static class CrewAddressing
         return null;
     }
 
-    /// <summary>What is left after the name, or null if the input does not open with it.</summary>
-    private static string? Opens(string input, string name)
+    /// <summary>
+    /// What is left after the name, or null if the input does not open with it at a word boundary. Leading
+    /// whitespace and punctuation are ignored.
+    /// </summary>
+    public static string? Opens(string input, string name)
     {
-        if (!input.StartsWith(name, StringComparison.OrdinalIgnoreCase))
+        input = input.TrimStart(',', ':', '-', ' ', '.', '?', '!', '"', '\'');
+
+        if (name.Length == 0 || !input.StartsWith(name, StringComparison.OrdinalIgnoreCase))
         {
             return null;
         }
