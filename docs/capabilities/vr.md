@@ -634,7 +634,7 @@ read when the command runs, after transcription.
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
 ```
 
-#### `reset_headset_panel`
+#### `restore_headset_panel_position`
 
 Puts the panel on screen back where a fresh install puts it: removes its anchor from view state
 and resets its `lock` and `distance` rows to their defaults, world and the surface's own. It acts

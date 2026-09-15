@@ -50,7 +50,7 @@ public class ResettingThePanelsPositionTests
         var match = fixture.Router.MatchToolCommand(utterance);
 
         Assert.NotNull(match);
-        Assert.Equal("reset_headset_panel", match.ToolName);
+        Assert.Equal("restore_headset_panel_position", match.ToolName);
 
         return await fixture.Registry.InvokeAsync(
             match.ToolName, match.Arguments, TestContext.Current.CancellationToken);

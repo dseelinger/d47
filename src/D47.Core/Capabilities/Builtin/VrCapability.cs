@@ -195,7 +195,7 @@ public static class VrCapability
 
             new ToolDefinition
             {
-                Name = "reset_headset_panel",
+                Name = "restore_headset_panel_position",
                 Description =
                     "Put the headset panel that is on screen back where a fresh install puts it: "
                     + "forgets where it was placed, sets it world-locked at its default distance, "

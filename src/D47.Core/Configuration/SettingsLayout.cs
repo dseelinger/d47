@@ -89,6 +89,12 @@ public static class SettingsLayout
         || key.StartsWith("vr.panel.", StringComparison.Ordinal)
         || key.StartsWith("vr.mini.", StringComparison.Ordinal);
 
+    public static bool IsVrHotkeyFamily(string key) =>
+        key is Capabilities.Builtin.VrCapability.ZoomInHotkeyKey
+            or Capabilities.Builtin.VrCapability.ZoomOutHotkeyKey
+            or Capabilities.Builtin.VrCapability.ResetZoomHotkeyKey
+            or Capabilities.Builtin.VrCapability.ResizeHotkeyKey;
+
     public static bool IsSubsystemLevelFamily(string key) =>
         key.StartsWith("logging.subsystems.", StringComparison.Ordinal);
 
@@ -550,6 +556,7 @@ public static class SettingsLayout
                             E("vr.opacity", under: true),
                             E("vr.controllers", under: true),
                             E("vr.state"),
+                            F(IsVrHotkeyFamily),
                             F(IsVrPlacementFamily),
                         ]),
                         G(
