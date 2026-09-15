@@ -215,7 +215,7 @@ kept, so *"which of my ships with at least 24 tonnes of cargo has the best jump 
 question about figures already on disk:
 
 ```text
-2 ships, each as it was last seen fitted — refit one and it reads as it was until you board it again. Jump range is the maximum on a full tank with an empty hold, as the game reports it, so a laden run is shorter.
+2 ships, each as it was last seen fitted — refit one and it reads as it was until you board it again. Jump range is the maximum with one jump's fuel and an empty hold, as the game reports it, so a full tank or a laden hold is shorter.
   Bold Endeavour, a Anaconda — you are flying it, cargo 8 t, jump 52.31 ly, unladen mass 1122.6 t, fuel 32 t, worth 219,694,497 cr, rebuy 9,694,497 cr, as of 2026-09-05 16:36 UTC
   Mule, a Python — Shinrarta Dezhra, cargo 128 t, jump 21.44 ly, unladen mass 350.6 t, fuel 32 t, worth 61,204,110 cr, rebuy 3,060,205 cr, as of 2026-08-14 19:02 UTC
 No loadout read, so not covered above: Wanderer (Asp Explorer).

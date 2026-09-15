@@ -298,8 +298,8 @@ public sealed class ShipsMode(
         if (loadout.MaxJumpRange is { } range)
         {
             lines.Add(new LoadoutLine(
-                $"{range.ToString("N1", CultureInfo.InvariantCulture)} ly a jump, full tank and "
-                + "empty hold."));
+                $"{range.ToString("N1", CultureInfo.InvariantCulture)} ly a jump with one jump's "
+                + "fuel and an empty hold."));
         }
 
         if (loadout.CargoCapacity is { } cargo)

@@ -93,12 +93,12 @@ public class TheWholeFleetIsAnswerableNotOnlyTheOneYouAreInTests
     }
 
     [Fact]
-    public async Task TheJumpRangeIsNamedAsFullTankAndEmptyHold()
+    public async Task TheJumpRangeIsNamedAsOneJumpsFuelAndAnEmptyHold()
     {
         var result = await Ask(Fleet());
 
         Assert.Contains(
-            "full tank with an empty hold",
+            "one jump's fuel and an empty hold",
             result.Content,
             StringComparison.Ordinal);
     }

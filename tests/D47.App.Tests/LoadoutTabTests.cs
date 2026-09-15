@@ -1386,7 +1386,7 @@ public class LoadoutTabTests
         Assert.Contains("You are flying it.", shown);
         Assert.Contains("As it is fitted", shown);
         // 34.25 formats to 34.2, not 34.3: N1 rounds a midpoint to the even digit.
-        Assert.Contains("34.2 ly a jump, full tank and empty hold.", shown);
+        Assert.Contains("34.2 ly a jump with one jump's fuel and an empty hold.", shown);
         Assert.Contains("128 tonnes of hold.", shown);
         Assert.Contains("Worth 100,000,000 cr, ship and modules together.", shown);
         Assert.Contains("Rebuy is 5,000,000 cr.", shown);

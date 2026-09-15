@@ -175,7 +175,7 @@ public sealed record ShipLoadout
 
     public double? ReserveCapacity { get; init; }
 
-    /// <summary>Light years on a full tank with an empty hold, as Loadout reports it.</summary>
+    /// <summary>Light years with one jump's fuel and an empty hold, as Loadout reports it.</summary>
     public double? MaxJumpRange { get; init; }
 
     public IReadOnlyList<ShipModule> Modules { get; init; } = [];

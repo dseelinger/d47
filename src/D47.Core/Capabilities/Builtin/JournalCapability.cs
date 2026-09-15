@@ -729,8 +729,9 @@ public static class JournalCapability
 
         report.AppendLine(
             $"{wanted.Count} ship{(wanted.Count == 1 ? string.Empty : "s")}, each as it was last seen fitted "
-            + "— refit one and it reads as it was until you board it again. Jump range is the maximum on a "
-            + "full tank with an empty hold, as the game reports it, so a laden run is shorter.");
+            + "— refit one and it reads as it was until you board it again. Jump range is the maximum with "
+            + "one jump's fuel and an empty hold, as the game reports it, so a full tank or a laden hold "
+            + "is shorter.");
 
         foreach (var ship in listed)
         {

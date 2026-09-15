@@ -6,6 +6,13 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.132.1 — The Fleet page states the ship's real figures
+
+Fix the Fleet page, `list_ships`, and the `ShipLoadout.MaxJumpRange` doc comment describing the
+game's `MaxJumpRange` as a full-tank figure. It is not: it is unladen mass plus one jump's fuel,
+the same figure `JumpGauge.Best` already reports. A full tank or a laden hold both jump shorter
+than the number shown.
+
 ## 0.132.0 — The route panel no longer takes callouts down with it
 
 Fix a crash on the tick thread when a route was plotted while the Routing tab's mini panel was
