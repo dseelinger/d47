@@ -303,7 +303,7 @@ public class HelpLibraryTests
         var engineers = HelpLibrary.For("engineers")!;
 
         Assert.Equal("Knowledge", engineers.Group);
-        Assert.Equal(107, engineers.NavOrder);
+        Assert.Equal(108, engineers.NavOrder);
     }
 
     /// <summary>The class is a list, and a second word must not cost a card.</summary>

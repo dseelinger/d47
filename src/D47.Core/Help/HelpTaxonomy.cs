@@ -164,6 +164,10 @@ public static class HelpTaxonomy
                     "Track your fleet, the hulls you intend, and one build per ship.",
                     "ships"),
                 HelpNode.Leaf(
+                    "Carrier",
+                    "Report the fleet carrier's fuel, cargo, balance, jump range, docking access and services.",
+                    "carrier"),
+                HelpNode.Leaf(
                     "The gap",
                     "Say what everything you have planned needs that you are not carrying, ledger by ledger.",
                     "gap"))),
