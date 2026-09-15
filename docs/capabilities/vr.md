@@ -309,6 +309,13 @@ up.
 Resizing needs the motion controllers. With them off, the **Size** and **Resolution** settings
 below change the same two things.
 
+**A ray can enter and leave without speaking, too.** A square glyph beside the help mark opens
+resize mode on the full panel, when the motion controllers are on. Once the handles are showing, a
+bar along the bottom offers zoom out, reset, zoom in and done — the same four things the hotkeys
+and voice already reach, drawn where a ray can put a controller and inset far enough from every
+edge that pressing one is never mistaken for taking hold of a handle. The mini panel carries the
+bar too, but no entry glyph: voice and the hotkey are what open resize mode there.
+
 #### Toggle the headset panel's resize mode {#hotkey-resize}
 
 `Ctrl+Alt+S` out of the box, and it works **anywhere**, including while Elite has the foreground —

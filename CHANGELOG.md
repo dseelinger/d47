@@ -14,6 +14,11 @@ while Elite has the foreground, the same as the overlay's own two keys. Entering
 resize mode is silent; asking for it with the motion controllers off or no headset session is
 spoken aloud, since a Commander in the headset has no transcript to read it from.
 
+Resize mode also opens and closes from a ray. A glyph beside the panel's help mark enters it on
+the full panel, when the motion controllers are on; once the handles are up, a bar along the
+bottom offers zoom out, reset, zoom in and done. The mini panel carries the bar too, with no entry
+glyph — voice and the hotkey are what open resize mode there.
+
 ## 0.134.0 — Reset the headset panel's position by voice
 
 Add "reset the panel", which forgets where the on-screen headset panel was placed and puts it back

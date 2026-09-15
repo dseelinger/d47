@@ -484,6 +484,26 @@
                 StrokeJoin="Round"
                 Data="M 7.4,7.6 A 4.6,4.6 0 1 1 12,12.2 L 12,15.5 M 12,20.2 L 12,20.2" />
         </Button>
+        <!--
+          The headset's own way into resize mode (#190): a ray can reach the hotkey nowhere, so this
+          is what lets the Commander enter it without speaking. Content, tooltip and accessible name
+          are set in code by Glyphs.Mark, the same as HelpButton beside it. Visible only on the
+          headset's full panel with the motion controllers on — see EnableResize and SetControllersOn
+          in the code-behind.
+        -->
+        <Button x:Name="ResizeButton"
+                IsVisible="False"
+                Width="35"
+                Height="35"
+                Padding="0"
+                HorizontalContentAlignment="Center"
+                VerticalContentAlignment="Center"
+                VerticalAlignment="Center"
+                CornerRadius="4"
+                Background="Transparent"
+                BorderThickness="0"
+                ToolTip.Tip="Resize the panel"
+                Click="OnResizeClick" />
         <Border x:Name="PreReleaseBadge"
                 IsVisible="False"
                 VerticalAlignment="Center"

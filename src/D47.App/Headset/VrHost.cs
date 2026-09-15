@@ -164,7 +164,13 @@ public sealed class VrHost : IDisposable
             checklists, timekeeper, alarmStore, ships, gameState, onFoot, unlocks, goals,
             backfillGoals, adventures, viewState, capabilities, sourcingBoard, carrier, routing,
             modulePower, drawings, engineersMemory, clipboard, known,
-            buildSettingsStrip: buildSettingsStrip);
+            buildSettingsStrip: buildSettingsStrip,
+
+            // A ray's own way into and out of resize mode (#190) — the header glyph and the bar the
+            // handles carry.
+            enterResize: () => self?.Resize(true),
+            stepZoom: direction => VrCapability.StepZoom(settings, direction, SettingsCaller.Panel),
+            leaveResize: () => self?.Resize(false));
         var layer = new CaptionLayer { Settings = settings.Current.Vr.Captions };
         var captions = new VrCaptionSurface(layer);
 

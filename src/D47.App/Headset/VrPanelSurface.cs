@@ -33,6 +33,9 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     private bool _handlesShown;
     private VrHandle _handlesLit;
 
+    /// <summary>The zoom-out, reset, zoom-in and done buttons, shown only while the handles are (#190).</summary>
+    private readonly StackPanel? _bar;
+
     /// <summary>The width and pixels a resize drag has reached, until it is written to settings.</summary>
     private (float WidthMetres, (int Width, int Height) Pixels)? _reshaping;
     private readonly string? _dumpTo;
@@ -110,7 +113,13 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
         // Builds one tab's own settings strip by its root key, on the same terms as settingsPage above
         // (#218) — the window's builder, so this surface's copy cannot fall behind it.
-        Func<string, Control?>? buildSettingsStrip = null)
+        Func<string, Control?>? buildSettingsStrip = null,
+
+        // A ray's own way into and out of resize mode (#190) — null leaves the panel exactly as it
+        // behaved before: reachable by voice and the hotkey only.
+        Action? enterResize = null,
+        Action<string>? stepZoom = null,
+        Action? leaveResize = null)
     {
         _dumpTo = dumpTo;
 
@@ -119,6 +128,15 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         _anchor = anchor;
 
         _view = new PanelView { DataContext = model };
+
+        // Read by PanelView's own style and by its resize mark — this copy is the headset's, whichever
+        // mode it is currently drawing (#190).
+        _view.Classes.Add("headset");
+
+        if (enterResize is not null)
+        {
+            _view.EnableResize(enterResize);
+        }
 
         // The Commander's own avatar frames reach the headset copy too.
         _view.Avatar.Library = avatars;
@@ -254,6 +272,14 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             framed.Children.Add(edge);
         }
 
+        if (stepZoom is not null && leaveResize is not null)
+        {
+            // Outside the LayoutTransformControl, so it does not grow or shrink with the panel's own zoom
+            // — a ray needs it at one size, not the Commander's chosen reading size.
+            _bar = BuildBar(stepZoom, leaveResize);
+            framed.Children.Add(_bar);
+        }
+
         _offscreen = new OffscreenSurface(framed, new PixelSize(pixels.Width, pixels.Height));
 
         // Anything the panel shows changing is a reason to redraw, and nothing else is.
@@ -376,6 +402,14 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     {
         lit = shown ? lit : VrHandle.None;
 
+        // Kept outside the early return below: the density behind this inset can move between one call
+        // and the next — a drag in progress, a resolution change — while the handle a ray sits on does
+        // not, and only the second of those trips the guard.
+        if (_bar is { } bar && shown)
+        {
+            bar.Margin = new Thickness(BarMarginPixels());
+        }
+
         if (shown == _handlesShown && lit == _handlesLit)
         {
             return;
@@ -388,6 +422,11 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         Light(_right, lit.HasFlag(VrHandle.Right), across: false);
         Light(_top, lit.HasFlag(VrHandle.Top), across: true);
         Light(_bottom, lit.HasFlag(VrHandle.Bottom), across: true);
+
+        if (_bar is not null)
+        {
+            _bar.IsVisible = shown;
+        }
 
         _dirty = true;
 
@@ -419,6 +458,66 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         IsHitTestVisible = false,
         IsVisible = false,
     };
+
+    /// <summary>Zoom out, reset, zoom in, done — the four things a ray can already reach by hotkey or voice.</summary>
+    private static StackPanel BuildBar(Action<string> stepZoom, Action leaveResize) => new()
+    {
+        Orientation = Avalonia.Layout.Orientation.Horizontal,
+        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+        VerticalAlignment = Avalonia.Layout.VerticalAlignment.Bottom,
+        Spacing = 8,
+        IsVisible = false,
+        Children =
+        {
+            Grip(Controls.Glyphs.Shrink, "Zoom the panel out", () => stepZoom("out")),
+            Grip(Controls.Glyphs.Reset, "Reset the panel's zoom", () => stepZoom("reset")),
+            Grip(Controls.Glyphs.Expand, "Zoom the panel in", () => stepZoom("in")),
+            Grip(Controls.Glyphs.Cross, "Done resizing", leaveResize),
+        },
+    };
+
+    /// <summary>One button of the bar, sized for a ray rather than a mouse.</summary>
+    private static Button Grip(string glyph, string says, Action click)
+    {
+        var button = new Button
+        {
+            Width = 44,
+            Height = 44,
+            Padding = new Thickness(0),
+            HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+            VerticalContentAlignment = Avalonia.Layout.VerticalAlignment.Center,
+            CornerRadius = new CornerRadius(6),
+            BorderThickness = new Thickness(1),
+        };
+
+        button.Bind(
+            Avalonia.Controls.Primitives.TemplatedControl.BackgroundProperty,
+            button.GetResourceObservable(Theming.ThemeManager.SurfaceAltKey));
+        button.Bind(
+            Avalonia.Controls.Primitives.TemplatedControl.BorderBrushProperty,
+            button.GetResourceObservable(Theming.ThemeManager.BorderKey));
+
+        Controls.Glyphs.Mark(button, glyph, Theming.ThemeManager.AccentKey, says, size: 20);
+
+        button.Click += (_, _) => click();
+
+        return button;
+    }
+
+    /// <summary>
+    /// How far the bar sits from every edge of <c>framed</c>: more than the handle band gets at the
+    /// panel's own density, so no point on it ever answers <see cref="VrResize.HandleAt"/> with
+    /// anything but <see cref="VrHandle.None"/>.
+    /// </summary>
+    private double BarMarginPixels()
+    {
+        var (pixelsWide, _) = Size;
+        var widthMetres = Placement.WidthMetres;
+
+        return widthMetres <= 0f
+            ? LitEdgePixels
+            : (VrResize.HandleMetres * pixelsWide / widthMetres) + LitEdgePixels;
+    }
 
     public bool IsDirty => _dirty;
 
@@ -491,6 +590,11 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     /// <summary>Re-reads the settings that change what is drawn rather than where it goes.</summary>
     public void Configure()
     {
+        // Whether the resize mark beside Help can do anything, read fresh every tick because the
+        // Commander can switch the controllers off with no other way to tell this surface (#190). A
+        // no-op once it agrees with what is already shown.
+        _view.SetControllersOn(_settings.Current.Vr.Controllers);
+
         // Two levers, both read here and both only marking dirty when they actually moved: this runs on every
         // tick of a live session, and a surface held dirty for a setting nobody touched re-renders the whole
         // widget tree at frame rate for pixels that did not change.

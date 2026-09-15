@@ -190,7 +190,11 @@ public partial class PanelView : UserControl
 
         // `output-only` is set by the host after construction and toggled at runtime — the headset flips it
         // on every move between the big panel and mini.
-        Classes.CollectionChanged += (_, _) => ShowFollowButton();
+        Classes.CollectionChanged += (_, _) =>
+        {
+            ShowFollowButton();
+            ShowResizeButton();
+        };
 
         // A drag that crosses from one bubble into another keeps both ends: no single SelectableTextBlock
         // sees a pointer that has left its own bounds, so the crossing is tracked here instead (#114).
@@ -210,6 +214,13 @@ public partial class PanelView : UserControl
             Controls.Glyphs.Spend,
             Theming.ThemeManager.AccentKey,
             "Tokens, cost, and what this has come to over time");
+
+        // Outward arrows for the headset's own way into resize mode (#190).
+        Controls.Glyphs.Mark(
+            ResizeButton,
+            Controls.Glyphs.Expand,
+            Theming.ThemeManager.AccentKey,
+            "Resize the panel");
 
         Watch(Transcript);
 
@@ -1351,6 +1362,43 @@ public partial class PanelView : UserControl
             && (_openHelp is not null
                 || HelpPageView.Exists(Nav.Help)
                 || HelpPageView.Exists(HelpLevel.Index));
+
+    /// <summary>How this surface enters resize mode, when a host has given it a way (#190).</summary>
+    private Action? _enterResize;
+
+    /// <summary>Whether the motion controllers a resize drag needs are switched on.</summary>
+    private bool _resizeAvailable;
+
+    /// <summary>Gives this surface a way into resize mode, so the mark beside Help can offer it.</summary>
+    public void EnableResize(Action enter)
+    {
+        _enterResize = enter;
+        ShowResizeButton();
+    }
+
+    /// <summary>Whether resizing by hand is possible right now, read from the headset's own settings.</summary>
+    public void SetControllersOn(bool on)
+    {
+        if (_resizeAvailable == on)
+        {
+            return;
+        }
+
+        _resizeAvailable = on;
+        ShowResizeButton();
+    }
+
+    /// <summary>
+    /// The mark shows only on the headset's full panel, with a way in and the controllers to use it —
+    /// mini carries no buttons at all, and there is nothing for a ray to press without a controller.
+    /// </summary>
+    private void ShowResizeButton() =>
+        ResizeButton.IsVisible = !OutputOnly
+            && Classes.Contains("headset")
+            && _resizeAvailable
+            && _enterResize is not null;
+
+    private void OnResizeClick(object? sender, RoutedEventArgs e) => _enterResize?.Invoke();
 
     /// <summary>Shows the pre-release mark beside the help glyph, or takes it away (#92).</summary>
     public void ShowChannel(D47.Core.Updates.ReleaseChannel channel)
