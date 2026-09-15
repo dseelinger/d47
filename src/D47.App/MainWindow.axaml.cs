@@ -688,7 +688,8 @@ public partial class MainWindow : Window
                 ? (debrief.Book, debrief.Now, (Func<D47.Core.Persona.Persona>)(() => _host.Personas.Current))
                 : null,
 
-            tabPlaceId);
+            tabPlaceId,
+            _host.Vr);
     }
 
     public Control BuildSettingsPage()

@@ -71,6 +71,12 @@ public static class VrCapability
 
         /// <summary>Places whichever panel is on screen along the line the headset is facing (#161).</summary>
         public Func<VrGazeOutcome> PlaceWhereLooking { get; init; } = () => VrGazeOutcome.NoHeadset;
+
+        /// <summary>
+        /// Puts a surface back where a fresh install puts it (#162). Takes <see cref="PanelSlot"/>,
+        /// <see cref="MiniSlot"/> or <see cref="CurrentSlot"/>.
+        /// </summary>
+        public Func<string, VrResetOutcome> ResetPlacement { get; init; } = _ => VrResetOutcome.ResetNoHeadset;
     }
 
     private static readonly IReadOnlyDictionary<string, string> Nothing =
@@ -176,6 +182,24 @@ public static class VrCapability
                     VrGazeOutcome.Placed => "Put it where you are looking.",
                     _ => VrNudges.Describe(VrNudge.Left, VrNudgeOutcome.NoHeadset),
                 })),
+            },
+
+            new ToolDefinition
+            {
+                Name = "reset_headset_panel",
+                Description =
+                    "Put the headset panel that is on screen back where a fresh install puts it: "
+                    + "forgets where it was placed, sets it world-locked at its default distance, "
+                    + "and lets it come to rest in front of the Commander on the next active tick. "
+                    + "Size, curvature, scale and resolution are untouched.",
+                Commands =
+                [
+                    new ToolCommandPhrase("reset the panel", Nothing),
+                    new ToolCommandPhrase("reset the vr panel", Nothing),
+                    new ToolCommandPhrase("reset panel position", Nothing),
+                ],
+                Handler = (_, _) => Task.FromResult(
+                    ToolResult.Ok(DescribeReset(headset.ResetPlacement(CurrentSlot)))),
             },
 
             new ToolDefinition
@@ -779,6 +803,27 @@ public static class VrCapability
 
         return ToolResult.Ok(Describe(settings, headset));
     }
+
+    /// <summary>What the Commander is told after a reset (#162).</summary>
+    private static string DescribeReset(VrResetOutcome outcome) => outcome switch
+    {
+        VrResetOutcome.ResetNoHeadset =>
+            "Done. It will come to rest where a fresh install puts it once the headset attaches.",
+        _ => "The panel is back where a fresh install puts it.",
+    };
+
+    /// <summary>
+    /// Which surface a placement group heading belongs to, from the same "what" text <see
+    /// cref="Placement"/> builds the heading from, or null for a group this capability did not build
+    /// (#162).
+    /// </summary>
+    public static string? SlotForPlacementGroup(string group) => group switch
+    {
+        "Panel you are looking at placement" => CurrentSlot,
+        "Panel placement" => PanelSlot,
+        "Mini panel placement" => MiniSlot,
+        _ => null,
+    };
 
     private static string Describe(SettingsService settings, HeadsetSurface headset)
     {

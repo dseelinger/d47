@@ -102,6 +102,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     private ViewState _viewState = new();
     private AppPaths? _paths;
 
+    /// <summary>Where a placement group's reset glyph reaches to clear the anchor it holds (#162).</summary>
+    private D47.App.Headset.VrHost? _vrHost;
+
     /// <summary>Reopens the guided key setup from About (Phase 16).</summary>
     private Func<Task>? _setUpKeys;
 
@@ -261,7 +264,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         // At the end, by the same rule — the tab this view is limited to, or null for the settings
         // page (#218).
-        string? tabPlaceId = null)
+        string? tabPlaceId = null,
+
+        // At the end, by the same rule — so a placement group's reset glyph can clear the anchor
+        // VrHost holds rather than writing view-state itself (#162).
+        D47.App.Headset.VrHost? vrHost = null)
     {
         _setUpKeys = setUpKeys;
         _downloadModel = downloadModel;
@@ -281,6 +288,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         _logbook = logbook;
         _reserved = reservedPhrases ?? [];
         _tabPlaceId = tabPlaceId;
+        _vrHost = vrHost;
 
         Build();
 
@@ -593,7 +601,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
             if (group.Title is { } groupTitle)
             {
-                var (groupHeading, headingText, helpText) = BuildGroupHeading(groupTitle, group.Help);
+                var resetSlot = VrCapability.SlotForPlacementGroup(groupTitle);
+                var (groupHeading, headingText, helpText) = BuildGroupHeading(groupTitle, group.Help, resetSlot);
 
                 content.Children.Add(groupHeading);
                 groupIndex = _groups.Count;
@@ -783,7 +792,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         return (card, content, heading, Expand, foldButton);
     }
 
-    private (Control Container, TextBlock Heading, TextBlock? Help) BuildGroupHeading(string group, string? help)
+    private (Control Container, TextBlock Heading, TextBlock? Help) BuildGroupHeading(
+        string group, string? help, string? resetSlot = null)
     {
         // Full text colour at the row-label size, not muted at help-text size.
         var heading = new TextBlock
@@ -801,7 +811,18 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         Themed(rule, Border.BackgroundProperty, ThemeManager.BorderKey);
 
         stack.Children.Add(rule);
-        stack.Children.Add(heading);
+
+        if (resetSlot is { } slot)
+        {
+            var headingRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
+            headingRow.Children.Add(heading);
+            headingRow.Children.Add(GroupResetButton(group, slot));
+            stack.Children.Add(headingRow);
+        }
+        else
+        {
+            stack.Children.Add(heading);
+        }
 
         TextBlock? note = null;
 
@@ -813,6 +834,42 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         }
 
         return (stack, heading, note);
+    }
+
+    /// <summary>
+    /// The reset glyph on a placement group heading — puts that surface back where a fresh install
+    /// puts it, through <see cref="_vrHost"/> rather than by writing view-state directly, since VrHost
+    /// is the anchors' only owner and rewrites the file on every change of its own (#162).
+    /// </summary>
+    private Button GroupResetButton(string group, string slot)
+    {
+        var reset = new Button
+        {
+            Content = Glyphs.Draw(Glyphs.Reset, ThemeManager.AccentKey, TypeScale.Small),
+            Padding = new Thickness(6, 2),
+            MinWidth = 0,
+            VerticalAlignment = VerticalAlignment.Center,
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+        };
+
+        Themed(reset, Button.ForegroundProperty, ThemeManager.AccentKey);
+
+        AutomationProperties.SetName(reset, $"Reset {group}");
+        ToolTip.SetTip(
+            reset,
+            "Put this panel back where a fresh install puts it: world-locked, at its default "
+            + "distance, resting in front of you.");
+
+        reset.Click += (_, _) =>
+        {
+            _vrHost?.ResetPlacement(slot);
+            Refresh();
+        };
+
+        reset.PointerPressed += (_, e) => e.Handled = true;
+
+        return reset;
     }
 
     /// <summary>An area's title in the nav; pressing it selects the area (#220).</summary>

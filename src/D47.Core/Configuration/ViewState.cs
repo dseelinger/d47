@@ -196,6 +196,20 @@ public sealed record ViewState
         return this with { VrAnchors = next };
     }
 
+    /// <summary>Forgets where a surface was put down, so it rests again on the next active tick (#162).</summary>
+    public ViewState WithoutAnchor(string slot)
+    {
+        if (!VrAnchors.ContainsKey(slot))
+        {
+            return this;
+        }
+
+        var next = new Dictionary<string, SurfaceAnchor>(VrAnchors, StringComparer.Ordinal);
+        next.Remove(slot);
+
+        return this with { VrAnchors = next };
+    }
+
     /// <summary>Records where the main window was left.</summary>
     public ViewState With(WindowPlacement placement) => this with { MainWindow = placement };
 

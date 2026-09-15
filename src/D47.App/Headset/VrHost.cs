@@ -921,6 +921,9 @@ public sealed class VrHost : IDisposable
         PlacedAgainst = PoseSettings.From(head),
     };
 
+    /// <summary>Every slot a surface can be anchored under, so a reset's removal is written as well as a placement.</summary>
+    private static readonly string[] KnownSlots = [VrCapability.PanelSlot, VrCapability.MiniSlot];
+
     /// <summary>
     /// Read-modify-write against the file rather than against a snapshot, because the settings window
     /// writes card collapse state into the same store while this is running.
@@ -929,11 +932,37 @@ public sealed class VrHost : IDisposable
     {
         var state = _viewState.Load();
 
-        foreach (var (slot, anchor) in _anchors)
+        foreach (var slot in KnownSlots)
         {
-            state = state.With(slot, anchor);
+            state = _anchors.TryGetValue(slot, out var anchor)
+                ? state.With(slot, anchor)
+                : state.WithoutAnchor(slot);
         }
 
         _viewState.Save(state);
+    }
+
+    /// <summary>
+    /// Puts a surface back where a fresh install puts it: forgets its anchor and sets its lock and
+    /// distance back to their defaults. Acts even with no headset session, since none of that needs
+    /// one (#162).
+    /// </summary>
+    public VrResetOutcome ResetPlacement(string slot)
+    {
+        var actual = slot == VrCapability.CurrentSlot
+            ? (_panel.Mode == PanelMode.Mini ? VrCapability.MiniSlot : VrCapability.PanelSlot)
+            : slot;
+
+        _anchors.Remove(actual);
+        Remember();
+
+        _settings.Reset(VrCapability.LockKey(actual), SettingsCaller.Hotkey);
+        _settings.Reset($"vr.{actual}.distance", SettingsCaller.Hotkey);
+
+        _panel.Invalidate();
+
+        _logger.LogInformation("The {Slot} panel's placement was reset to its defaults", actual);
+
+        return _lifecycle.State == VrState.Active ? VrResetOutcome.Reset : VrResetOutcome.ResetNoHeadset;
     }
 }

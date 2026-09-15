@@ -54,6 +54,18 @@ public enum VrGazeOutcome
     NoHeadset,
 }
 
+/// <summary>
+/// How resetting a surface's placement went (#162). Both cases reset the anchor and the settings;
+/// they differ only in whether there is a session up to rest the panel in right away.
+/// </summary>
+public enum VrResetOutcome
+{
+    Reset,
+
+    /// <summary>Reset, with no headset session yet to place it in.</summary>
+    ResetNoHeadset,
+}
+
 /// <summary>The arithmetic of nudging, and the words for it.</summary>
 public static class VrNudges
 {

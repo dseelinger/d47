@@ -6,6 +6,14 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.134.0 — Reset the headset panel's position by voice
+
+Add "reset the panel", which forgets where the on-screen headset panel was placed and puts it back
+where a fresh install puts it: world-locked, at its default distance, resting in front of you on
+the next active tick. Works with no headset session attached and no model configured. Each
+placement heading in Settings — the panel you are looking at, the full panel, the mini panel —
+carries the same reset as a glyph.
+
 ## 0.133.0 — The headset panel goes where you look
 
 Add "place the panel here", which moves whichever headset panel is on screen to the middle of the

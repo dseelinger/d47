@@ -242,6 +242,16 @@ world-locked and stays there; a panel that was riding your head goes at its **Di
 No model is needed for any of this. The phrases above are matched by name, so they work with no
 provider configured.
 
+**Or put it back where it started.** Forgets where the on-screen panel was placed, sets it
+world-locked at its default distance, and lets it come to rest in front of you again:
+
+> "reset the panel" / "reset the vr panel" / "reset panel position"
+
+Size, curvature, scale and resolution are left alone, and so is the other panel. With no headset
+session, the anchor and the two settings are reset all the same — the panel comes to rest the next
+time the headset attaches. Each placement heading on the Settings page carries the same reset as a
+glyph, for the panel that heading names rather than only the one on screen.
+
 **Motion controllers are on by default** — see [below](#controllers) for what turning them off
 costs.
 
@@ -591,6 +601,17 @@ Writes a new anchor for the panel on screen: centred on the headset's forward li
 with its face turned back at the head and no roll. The distance is from the head to the existing
 anchor's centre for a world-locked panel, and the surface's `Distance` otherwise. The head pose is
 read when the command runs, after transcription.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+#### `reset_headset_panel`
+
+Puts the panel on screen back where a fresh install puts it: removes its anchor from view state
+and resets its `lock` and `distance` rows to their defaults, world and the surface's own. It acts
+even with no headset session — a world-locked panel with no anchor rests itself on the next active
+tick, the same as one that has never been placed.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
