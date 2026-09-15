@@ -29,6 +29,9 @@ public sealed class FakeLlmProvider : ILlmProvider
     /// <summary>Whether the model this provider is standing in for takes a thinking effort at all.</summary>
     public bool ThinkingEffort { get; init; } = true;
 
+    /// <summary>Whether this endpoint searches deferred tools.</summary>
+    public bool ToolSearch { get; set; }
+
     public LlmProviderCapabilities CapabilitiesFor(string model) => new()
     {
         SupportsPromptCaching = true,
@@ -37,6 +40,7 @@ public sealed class FakeLlmProvider : ILlmProvider
         MinimumCacheablePrefixTokens = 512,
         SupportsToolCalls = ToolCalls,
         SupportsWebSearch = WebSearch,
+        SupportsToolSearch = ToolSearch,
     };
 
     public async IAsyncEnumerable<LlmStreamEvent> StreamAsync(
@@ -80,6 +84,9 @@ public sealed class RoundScriptedLlmProvider(params IReadOnlyList<LlmStreamEvent
 
     public string DefaultModel => "claude-opus-5";
 
+    /// <summary>Whether this endpoint searches deferred tools.</summary>
+    public bool ToolSearch { get; init; }
+
     public LlmProviderCapabilities CapabilitiesFor(string model) => new()
     {
         SupportsPromptCaching = true,
@@ -87,6 +94,7 @@ public sealed class RoundScriptedLlmProvider(params IReadOnlyList<LlmStreamEvent
         SupportsOperatorSystemMessages = true,
         MinimumCacheablePrefixTokens = 512,
         SupportsToolCalls = true,
+        SupportsToolSearch = ToolSearch,
     };
 
     public async IAsyncEnumerable<LlmStreamEvent> StreamAsync(

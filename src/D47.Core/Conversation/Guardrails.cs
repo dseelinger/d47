@@ -63,4 +63,9 @@ public static class Guardrails
         report only whether it worked: "Course plotted." The figures, the ledger, the
         alternatives and the advice wait until they are asked for.
         """;
+
+    /// <summary>Rendered under <see cref="Text"/> when the tools are searchable rather than all loaded.</summary>
+    public const string SearchFirst =
+        "Most of your tools are not loaded until you search for them. Before you say you have no tool "
+        + "for something, search your tools for it.";
 }

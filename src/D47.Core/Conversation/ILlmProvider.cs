@@ -27,6 +27,12 @@ public sealed record LlmProviderCapabilities
     /// inside the same turn.
     /// </summary>
     public bool SupportsWebSearch { get; init; }
+
+    /// <summary>
+    /// Whether this endpoint can be sent every tool deferred, with a search tool that loads the ones the
+    /// model finds. When false, a turn advertises its mode's tool list.
+    /// </summary>
+    public bool SupportsToolSearch { get; init; }
 }
 
 public sealed record LlmUsage(
@@ -109,6 +115,9 @@ public abstract record LlmStreamEvent
 
     /// <summary>A content block that must go back to this provider unchanged, in its place in the reply.</summary>
     public sealed record Opaque(string Json) : LlmStreamEvent;
+
+    /// <summary>The provider searched the deferred tools, for the log. Its blocks arrive as <see cref="Opaque"/>.</summary>
+    public sealed record ToolSearched(string Query, IReadOnlyList<string> Found) : LlmStreamEvent;
 
     public sealed record Completed(LlmUsage Usage, LlmStopReason StopReason) : LlmStreamEvent;
 

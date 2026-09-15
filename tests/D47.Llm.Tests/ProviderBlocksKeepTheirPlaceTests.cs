@@ -27,7 +27,11 @@ public class ProviderBlocksKeepTheirPlaceTests
                 Model = "claude-opus-5",
                 Effort = ThinkingEffort.Medium,
                 Sampling = LlmSampling.Conversation,
-                Prompt = new PromptAssembly { History = history },
+                Prompt = new PromptAssembly
+                {
+                    History = history,
+                    Tools = [new ToolAdvertisement("plot_route", "Plots a route.", """{"type":"object"}""", Deferred: true)],
+                },
             },
             Token);
 

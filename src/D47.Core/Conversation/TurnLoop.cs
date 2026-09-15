@@ -821,16 +821,21 @@ public sealed class TurnLoop(
         var coldPrefixExpected = _lastModelUsed != chosenModel;
         _lastModelUsed = chosenModel;
 
-        // Which tools ship is a choice between pre-declared profiles, never between individual tools (Phase
-        // 10) — a per-turn set would rewrite position 1 and invalidate the whole cached prefix.
+        // Which tools ship is a choice between pre-declared lists, never between individual tools — a per-turn
+        // set would rewrite position 1 and invalidate the whole cached prefix. A provider that searches its
+        // tools is sent every tool, the same in every mode; an out-of-mode call is refused where it runs.
         var providerCapabilities = activeProvider.CapabilitiesFor(chosenModel);
+        var searchable = providerCapabilities.SupportsToolCalls && providerCapabilities.SupportsToolSearch;
 
-        var advertised = providerCapabilities.SupportsToolCalls
-            ? ToolSurface.ForMode(
-                capabilities,
-                ToolContext?.Invoke() ?? Input.ControlContext.None,
-                ActionsEnabled?.Invoke() ?? false).Tools
-            : [];
+        IReadOnlyList<ToolAdvertisement> ModeTools() => ToolSurface.ForMode(
+            capabilities,
+            ToolContext?.Invoke() ?? Input.ControlContext.None,
+            ActionsEnabled?.Invoke() ?? false).Tools;
+
+        var advertised =
+            !providerCapabilities.SupportsToolCalls ? []
+            : searchable ? ToolSurface.Searchable(capabilities).Tools
+            : ModeTools();
 
         // Both halves, and the endpoint half is not the Commander's doing: pointing llm.endpoint at a gateway
         // turns this off whatever the setting says, because a server-side tool is the provider's to offer.
@@ -889,6 +894,7 @@ public sealed class TurnLoop(
                 Prompt = new PromptAssembly
                 {
                     Tools = lastRound ? [] : advertised,
+                    ToolsSearchable = searchable,
                     Persona = Persona,
                     CanBeDirected = CanBeDirected?.Invoke() == true,
                     AboutMe = AboutMe,
@@ -905,6 +911,19 @@ public sealed class TurnLoop(
                                .ConfigureAwait(false))
             {
                 yield return turnEvent;
+            }
+
+            // The provider withdrew tool search on refusing this request, so the round is asked once more with the
+            // mode's list. Its space, if any, has already been said.
+            if (outcome.Failure is not null && searchable && !activeProvider.CapabilitiesFor(chosenModel).SupportsToolSearch)
+            {
+                logger.LogInformation("Asking round {Round} again with the mode's tool list: {Failure}", round, outcome.Failure);
+
+                searchable = false;
+                advertised = ModeTools();
+                previousRoundSpoke = false;
+                round--;
+                continue;
             }
 
             if (outcome.Failure is not null)
@@ -926,6 +945,15 @@ public sealed class TurnLoop(
             answer = outcome.Reply.ToString().Trim();
             stopReason = outcome.StopReason;
             previousRoundSpoke = answer.Length > 0;
+
+            foreach (var search in outcome.Searches)
+            {
+                logger.LogInformation(
+                    "Model searched its tools in round {Round} for \"{Query}\": found {Tools}",
+                    round,
+                    search.Query,
+                    search.Found.Count == 0 ? "nothing" : string.Join(", ", search.Found));
+            }
 
             if (outcome.ToolUses.Count == 0)
             {
@@ -1113,6 +1141,9 @@ public sealed class TurnLoop(
 
         public List<ConversationContent.ToolUse> ToolUses { get; } = [];
 
+        /// <summary>The tool searches the provider ran, for the log.</summary>
+        public List<LlmStreamEvent.ToolSearched> Searches { get; } = [];
+
         public LlmUsage Usage { get; set; } = LlmUsage.None;
 
         public LlmStopReason StopReason { get; set; } = LlmStopReason.Completed;
@@ -1154,6 +1185,7 @@ public sealed class TurnLoop(
             Reply.Clear();
             Content.Clear();
             ToolUses.Clear();
+            Searches.Clear();
             Usage = LlmUsage.None;
             StopReason = LlmStopReason.Completed;
             Failure = null;
@@ -1245,6 +1277,10 @@ public sealed class TurnLoop(
 
                     case LlmStreamEvent.Opaque opaque:
                         outcome.Add(new ConversationContent.Opaque(activeProvider.Id, opaque.Json));
+                        break;
+
+                    case LlmStreamEvent.ToolSearched searched:
+                        outcome.Searches.Add(searched);
                         break;
 
                     case LlmStreamEvent.Completed completed:

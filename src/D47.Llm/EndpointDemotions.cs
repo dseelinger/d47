@@ -70,4 +70,7 @@ internal enum Demotable
     /// both.
     /// </summary>
     AdaptiveThinking,
+
+    /// <summary>Anthropic's tool search tool and <c>defer_loading</c>, refused for one model.</summary>
+    ToolSearch,
 }

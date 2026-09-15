@@ -18,6 +18,13 @@ public sealed record PromptAssembly
     /// <summary>Position 2, and deliberately not settable.</summary>
     public static string Guardrails => Conversation.Guardrails.Text;
 
+    /// <summary>
+    /// Whether the provider and model search deferred tools, which adds <see
+    /// cref="Conversation.Guardrails.SearchFirst"/> under the guardrails. Fixed for a provider and model, so
+    /// the cached block does not change on a round that ships no tools.
+    /// </summary>
+    public bool ToolsSearchable { get; init; }
+
     /// <summary>Position 3.</summary>
     public string? Persona { get; init; }
 
@@ -74,6 +81,11 @@ public sealed record PromptAssembly
     public string RenderCachedSystemBlock()
     {
         var block = new StringBuilder(Guardrails);
+
+        if (ToolsSearchable)
+        {
+            block.Append("\n\n").Append(Conversation.Guardrails.SearchFirst);
+        }
 
         if (!string.IsNullOrWhiteSpace(Persona))
         {

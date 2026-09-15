@@ -19,6 +19,18 @@ public sealed class AnthropicLlmProvider : ILlmProvider
             "claude-opus-5", "claude-opus-4-8", "claude-fable-5", "claude-mythos-5",
         };
 
+    /// <summary>Models that take the tool search tool and <c>defer_loading</c>.</summary>
+    private static readonly HashSet<string> ToolSearchModels =
+        new(StringComparer.Ordinal)
+        {
+            "claude-opus-5", "claude-opus-4-8", "claude-opus-4-7", "claude-fable-5", "claude-mythos-5",
+            "claude-haiku-4-5",
+        };
+
+    /// <summary>The failure when the endpoint refuses tool search.</summary>
+    internal const string ToolSearchRefused =
+        "Anthropic refused tool search for this model, so it will be sent the mode's tool list.";
+
     /// <summary>Minimum cacheable prefix per model.</summary>
     private static readonly Dictionary<string, int> MinimumCacheablePrefix =
         new(StringComparer.Ordinal)
@@ -99,6 +111,10 @@ public sealed class AnthropicLlmProvider : ILlmProvider
         MinimumCacheablePrefixTokens = MinimumCacheablePrefix.GetValueOrDefault(model, 1024),
         SupportsToolCalls = true,
         SupportsWebSearch = _ownEndpoint,
+        SupportsToolSearch =
+            _ownEndpoint
+            && ToolSearchModels.Contains(model)
+            && EndpointDemotions.Allows(_endpoint, Demotable.ToolSearch, model),
     };
 
     public async IAsyncEnumerable<LlmStreamEvent> StreamAsync(
@@ -111,6 +127,12 @@ public sealed class AnthropicLlmProvider : ILlmProvider
         // A tool call arrives in pieces: content_block_start names it, a run of input_json_delta carries its
         // arguments as JSON fragments, and content_block_stop ends it.
         var building = new Dictionary<long, PendingToolCall>();
+
+        // Tool search arrives the same way: a server_tool_use assembled from its input deltas, then a
+        // tool_search_tool_result whole in its start event. Both go back as they came.
+        var searching = new Dictionary<long, PendingSearch>();
+        var searchResults = new Dictionary<long, IReadOnlyDictionary<string, System.Text.Json.JsonElement>>();
+        var queries = new Dictionary<string, string>(StringComparer.Ordinal);
 
         var stream = _client.Messages.CreateStreaming(BuildParameters(request), cancellationToken)
             .GetAsyncEnumerator(cancellationToken);
@@ -158,8 +180,19 @@ public sealed class AnthropicLlmProvider : ILlmProvider
 
             if (failureMessage is not null)
             {
+                // Not retried here: the provider holds only the deferred list, and the mode's list is TurnLoop's
+                // to build on the next turn.
+                if (refused == Demotable.ToolSearch)
+                {
+                    if (advanced == 0 && request.Prompt.Tools.Any(tool => tool.Deferred))
+                    {
+                        EndpointDemotions.Demote(_endpoint, Demotable.ToolSearch, request.Model);
+                        failureMessage = ToolSearchRefused;
+                    }
+                }
+
                 // Advertise, then demote (Phase 29, ported here by Phase 54).
-                if (advanced == 0 && !demoted && refused is { } rejected
+                else if (advanced == 0 && !demoted && refused is { } rejected
                     && EndpointDemotions.Demote(_endpoint, rejected, request.Model))
                 {
                     demoted = true;
@@ -193,24 +226,64 @@ public sealed class AnthropicLlmProvider : ILlmProvider
                 {
                     yield return new LlmStreamEvent.ThinkingDelta(thinking!.Thinking);
                 }
-                else if (blockDelta.Delta.TryPickInputJson(out var inputJson)
-                         && building.TryGetValue(blockDelta.Index, out var pending))
+                else if (blockDelta.Delta.TryPickInputJson(out var inputJson))
                 {
-                    pending.Input.Append(inputJson!.PartialJson);
+                    if (building.TryGetValue(blockDelta.Index, out var pending))
+                    {
+                        pending.Input.Append(inputJson!.PartialJson);
+                    }
+                    else if (searching.TryGetValue(blockDelta.Index, out var search))
+                    {
+                        search.Input.Append(inputJson!.PartialJson);
+                    }
                 }
             }
-            else if (streamEvent.TryPickContentBlockStart(out var blockStart)
-                     && blockStart!.ContentBlock.TryPickToolUse(out var toolUse))
+            else if (streamEvent.TryPickContentBlockStart(out var blockStart))
             {
-                building[blockStart.Index] = new PendingToolCall(toolUse!.ID, toolUse.Name);
+                if (blockStart!.ContentBlock.TryPickToolUse(out var toolUse))
+                {
+                    building[blockStart.Index] = new PendingToolCall(toolUse!.ID, toolUse.Name);
+                }
+                else if (blockStart.ContentBlock.TryPickServerToolUse(out var serverCall)
+                         && IsToolSearch(serverCall!.RawData))
+                {
+                    searching[blockStart.Index] = new PendingSearch(serverCall.RawData);
+                }
+                else if (blockStart.ContentBlock.TryPickToolSearchToolResult(out var searchResult))
+                {
+                    searchResults[blockStart.Index] = searchResult!.RawData;
+                }
             }
-            else if (streamEvent.TryPickContentBlockStop(out var blockStop)
-                     && building.Remove(blockStop!.Index, out var call))
+            else if (streamEvent.TryPickContentBlockStop(out var blockStop))
             {
-                // Empty input is "{}", not "".
-                var input = call.Input.Length == 0 ? "{}" : call.Input.ToString();
+                if (building.Remove(blockStop!.Index, out var call))
+                {
+                    // Empty input is "{}", not "".
+                    var input = call.Input.Length == 0 ? "{}" : call.Input.ToString();
 
-                yield return new LlmStreamEvent.ToolUse(call.Id, call.Name, input);
+                    yield return new LlmStreamEvent.ToolUse(call.Id, call.Name, input);
+                }
+                else if (searching.Remove(blockStop.Index, out var search))
+                {
+                    var input = search.Input.Length == 0 ? "{}" : search.Input.ToString();
+
+                    if (Text(search.Raw, "id") is { } id)
+                    {
+                        queries[id] = QueryIn(input);
+                    }
+
+                    yield return new LlmStreamEvent.Opaque(Serialize(search.Raw, input));
+                }
+                else if (searchResults.Remove(blockStop.Index, out var found))
+                {
+                    yield return new LlmStreamEvent.Opaque(Serialize(found));
+
+                    var query = Text(found, "tool_use_id") is { } callId
+                        ? queries.GetValueOrDefault(callId, string.Empty)
+                        : string.Empty;
+
+                    yield return new LlmStreamEvent.ToolSearched(query, ToolsFound(found));
+                }
             }
             else if (streamEvent.TryPickStart(out var start))
             {
@@ -232,6 +305,7 @@ public sealed class AnthropicLlmProvider : ILlmProvider
     {
         var prompt = request.Prompt;
         var capabilities = CapabilitiesFor(request.Model);
+        var deferring = prompt.Tools.Any(tool => tool.Deferred);
 
         var messages = new List<MessageParam>();
 
@@ -250,9 +324,10 @@ public sealed class AnthropicLlmProvider : ILlmProvider
         {
             var role = turn.Role == ConversationRole.Assistant ? Role.Assistant : Role.User;
 
-            // Another provider's blocks are not sent.
+            // Another provider's blocks are not sent, and nor are this provider's on a request that defers no
+            // tool: a replayed tool_reference to a tool the request does not declare is a 400.
             var parts = turn.Content
-                .Where(part => part is not ConversationContent.Opaque opaque || opaque.ProviderId == Id)
+                .Where(part => part is not ConversationContent.Opaque opaque || (opaque.ProviderId == Id && deferring))
                 .ToList();
 
             if (parts.Count == 0)
@@ -363,7 +438,13 @@ public sealed class AnthropicLlmProvider : ILlmProvider
             MaxTokens = request.MaxOutputTokens,
 
             // Position 1, serialised before everything else.
-            Tools = [.. prompt.Tools.Select(Translate), .. WebSearchTool(request)],
+            // The search tool first when any tool is deferred, because it is the one that loads them.
+            Tools =
+            [
+                .. deferring ? [new ToolUnion(ToolSearchTool())] : Array.Empty<ToolUnion>(),
+                .. prompt.Tools.Select(Translate),
+                .. WebSearchTool(request),
+            ],
 
             // The cache breakpoint.
             System = new List<TextBlockParam>
@@ -409,13 +490,106 @@ public sealed class AnthropicLlmProvider : ILlmProvider
         public System.Text.StringBuilder Input { get; } = new();
     }
 
-    /// <summary>The advertisement as the API wants it.</summary>
+    /// <summary>The BM25 tool search declaration.</summary>
+    private static ToolSearchToolBm25_20251119 ToolSearchTool() =>
+        ToolSearchToolBm25_20251119.FromRawUnchecked(Parse(
+            """{"type":"tool_search_tool_bm25_20251119","name":"tool_search_tool_bm25"}"""));
+
+    /// <summary>A tool search call being assembled from the stream.</summary>
+    private sealed class PendingSearch(IReadOnlyDictionary<string, System.Text.Json.JsonElement> raw)
+    {
+        public IReadOnlyDictionary<string, System.Text.Json.JsonElement> Raw { get; } = raw;
+
+        public System.Text.StringBuilder Input { get; } = new();
+    }
+
+    /// <summary>The advertisement as the API wants it. A deferred tool carries no <c>cache_control</c>.</summary>
     private static ToolUnion Translate(ToolAdvertisement tool) => new Tool
     {
         Name = tool.Name,
         Description = tool.Description,
         InputSchema = InputSchema.FromRawUnchecked(Parse(tool.InputSchemaJson)),
+        DeferLoading = tool.Deferred ? true : null,
     };
+
+    /// <summary>Whether a server_tool_use is a tool search rather than another server tool.</summary>
+    private static bool IsToolSearch(IReadOnlyDictionary<string, System.Text.Json.JsonElement> raw) =>
+        Text(raw, "name")?.StartsWith("tool_search_tool", StringComparison.Ordinal) == true;
+
+    private static string? Text(IReadOnlyDictionary<string, System.Text.Json.JsonElement> raw, string name) =>
+        raw.TryGetValue(name, out var value) && value.ValueKind == System.Text.Json.JsonValueKind.String
+            ? value.GetString()
+            : null;
+
+    /// <summary>A block as JSON in its original key order, with <paramref name="input"/> in place of its input.</summary>
+    private static string Serialize(
+        IReadOnlyDictionary<string, System.Text.Json.JsonElement> raw,
+        string? input = null)
+    {
+        using var buffer = new MemoryStream();
+
+        using (var writer = new System.Text.Json.Utf8JsonWriter(buffer))
+        {
+            writer.WriteStartObject();
+
+            foreach (var (name, value) in raw)
+            {
+                writer.WritePropertyName(name);
+
+                if (input is not null && name == "input")
+                {
+                    using var parsed = System.Text.Json.JsonDocument.Parse(input);
+                    parsed.RootElement.WriteTo(writer);
+                }
+                else
+                {
+                    value.WriteTo(writer);
+                }
+            }
+
+            writer.WriteEndObject();
+        }
+
+        return System.Text.Encoding.UTF8.GetString(buffer.ToArray());
+    }
+
+    private static string QueryIn(string inputJson)
+    {
+        try
+        {
+            using var document = System.Text.Json.JsonDocument.Parse(inputJson);
+
+            return document.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object
+                   && document.RootElement.TryGetProperty("query", out var query)
+                   && query.ValueKind == System.Text.Json.JsonValueKind.String
+                ? query.GetString() ?? string.Empty
+                : string.Empty;
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return string.Empty;
+        }
+    }
+
+    /// <summary>The tool names a search result references.</summary>
+    private static List<string> ToolsFound(IReadOnlyDictionary<string, System.Text.Json.JsonElement> raw)
+    {
+        if (!raw.TryGetValue("content", out var content)
+            || content.ValueKind != System.Text.Json.JsonValueKind.Object
+            || !content.TryGetProperty("tool_references", out var references)
+            || references.ValueKind != System.Text.Json.JsonValueKind.Array)
+        {
+            return [];
+        }
+
+        return
+        [
+            .. references.EnumerateArray()
+                .Where(reference => reference.ValueKind == System.Text.Json.JsonValueKind.Object)
+                .Select(reference => reference.TryGetProperty("tool_name", out var name) ? name.GetString() : null)
+                .OfType<string>(),
+        ];
+    }
 
     /// <summary>A JSON object as the SDK's raw property bag, preserving the order it was written in.</summary>
     private static Dictionary<string, System.Text.Json.JsonElement> Parse(string json)
@@ -446,6 +620,14 @@ public sealed class AnthropicLlmProvider : ILlmProvider
         }
 
         var said = detail.ToLowerInvariant();
+
+        if (said.Contains("tool_search", StringComparison.Ordinal)
+            || said.Contains("tool search", StringComparison.Ordinal)
+            || said.Contains("defer_loading", StringComparison.Ordinal)
+            || said.Contains("tool_reference", StringComparison.Ordinal))
+        {
+            return Demotable.ToolSearch;
+        }
 
         return said.Contains("output_config", StringComparison.Ordinal)
                || said.Contains("thinking", StringComparison.Ordinal)

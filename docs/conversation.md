@@ -247,6 +247,21 @@ about". **`Xhigh` is reachable only by setting a bound**: the gauge above keeps 
 See [think at least this hard](capabilities/conversation.md#effort-floor) and
 [never think harder than this](capabilities/conversation.md#effort-ceiling).
 
+### Which tools the model is given
+
+On Claude Opus 5, Opus 4.8, Opus 4.7, Fable 5, Mythos 5 and Claude Haiku 4.5, through Anthropic's
+own endpoint, the model is given every tool it may use, deferred, together with a search tool. It
+searches for the tools a request needs, and only those are loaded. The list is the same in every
+mode and with key presses on or off, so a mode change does not re-bill the cached prompt.
+
+Every other model gets the tools for the mode you are in: Claude Sonnet 5, the OpenAI providers,
+and any model behind a custom Anthropic endpoint. With key presses off, that list has no
+key-pressing tools.
+
+Either way, a tool that does nothing in the current mode is refused with the reason when it is
+called. If Anthropic refuses tool search for a model, the request is sent again with the mode's
+list, and later turns on that model use the mode's list for the rest of the session.
+
 ### The rules the model cannot be talked out of
 
 Every model turn carries a fixed block of guardrails: don't invent game data, don't invent your

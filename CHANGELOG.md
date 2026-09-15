@@ -6,6 +6,17 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.129.1 — One tool surface for every provider
+
+On Claude Opus 5, Opus 4.8, Opus 4.7, Fable 5, Mythos 5 and Haiku 4.5, through Anthropic's own
+endpoint, the model is now given every tool it may use and searches them for the ones a request
+needs, instead of receiving only the tools for the mode you are in. The list no longer changes when
+you board the SRV, step out on foot or turn key presses off, so a mode change no longer re-bills the
+cached prompt. A control that does nothing in your current mode is still refused, with the reason,
+when the model calls it. Claude Sonnet 5, the OpenAI providers and custom Anthropic endpoints keep
+the mode's list. If Anthropic refuses tool search for a model, the request is sent again with the
+mode's list, and later turns on that model use the mode's list for the rest of the session.
+
 ## 0.129.0 — Settings one area at a time
 
 Every two-state control in the app is now drawn as a switch — the checklist's Goals and Include
