@@ -25,6 +25,15 @@ public static class VrCapability
     /// <summary>Whether d47 touches the motion controllers at all.</summary>
     public const string ControllersKey = "vr.controllers";
 
+    /// <summary>The four hotkeys that reach zoom and resize with no headset controller (#189).</summary>
+    public const string ZoomInHotkeyKey = "hotkeys.zoomHeadsetIn";
+
+    public const string ZoomOutHotkeyKey = "hotkeys.zoomHeadsetOut";
+
+    public const string ResetZoomHotkeyKey = "hotkeys.resetHeadsetZoom";
+
+    public const string ResizeHotkeyKey = "hotkeys.resizeHeadsetPanel";
+
     /// <summary>The surface a placement row belongs to, as it appears in the key.</summary>
     public const string PanelSlot = "panel";
 
@@ -347,6 +356,36 @@ public static class VrCapability
                     new SettingCommandPhrase("motion controllers off", "false"),
                 ],
             },
+
+            // Reach zoom and resize from the keyboard, since #107 left them reachable by voice only (#189).
+            InterfaceCapability.HotkeyRow(
+                ZoomInHotkeyKey,
+                "Zoom the headset panel in",
+                "hotkey-zoom-in",
+                s => s.Hotkeys.ZoomHeadsetIn,
+                (s, v) => s with { Hotkeys = s.Hotkeys with { ZoomHeadsetIn = v } },
+                systemWide: true),
+            InterfaceCapability.HotkeyRow(
+                ZoomOutHotkeyKey,
+                "Zoom the headset panel out",
+                "hotkey-zoom-out",
+                s => s.Hotkeys.ZoomHeadsetOut,
+                (s, v) => s with { Hotkeys = s.Hotkeys with { ZoomHeadsetOut = v } },
+                systemWide: true),
+            InterfaceCapability.HotkeyRow(
+                ResetZoomHotkeyKey,
+                "Reset the headset panel's zoom",
+                "hotkey-zoom-reset",
+                s => s.Hotkeys.ResetHeadsetZoom,
+                (s, v) => s with { Hotkeys = s.Hotkeys with { ResetHeadsetZoom = v } },
+                systemWide: true),
+            InterfaceCapability.HotkeyRow(
+                ResizeHotkeyKey,
+                "Toggle the headset panel's resize mode",
+                "hotkey-resize",
+                s => s.Hotkeys.ResizeHeadsetPanel,
+                (s, v) => s with { Hotkeys = s.Hotkeys with { ResizeHeadsetPanel = v } },
+                systemWide: true),
 
             // **The one the Commander means** (#21).
             .. Placement(
@@ -707,6 +746,32 @@ public static class VrCapability
         yield return (VrNudge.TiltDown, ["tilt the panel down", "tilt the panel forward"]);
     }
 
+    /// <summary>What one call to <see cref="StepZoom"/> did, and the rung it landed on either way.</summary>
+    public readonly record struct ZoomStep(SettingApplyResult Applied, int Zoom);
+
+    /// <summary>
+    /// Steps the scale of whichever panel is on screen one rung along the zoom ladder, or back to its
+    /// default (#107, #189). <paramref name="direction"/> is one of <see cref="ZoomDirections"/>.
+    /// </summary>
+    public static ZoomStep StepZoom(SettingsService settings, string direction, SettingsCaller caller)
+    {
+        var at = Interface.ZoomLadder.Snap(Facing(settings.Current).Zoom);
+
+        var wanted = direction switch
+        {
+            "in" => Interface.ZoomLadder.In(at),
+            "out" => Interface.ZoomLadder.Out(at),
+            _ => Interface.ZoomLadder.Default,
+        };
+
+        var applied = settings.Apply(
+            $"vr.{CurrentSlot}.scale",
+            wanted.ToString(CultureInfo.InvariantCulture),
+            caller);
+
+        return new ZoomStep(applied, wanted);
+    }
+
     /// <summary>Steps the scale of whichever panel is on screen along the zoom ladder (#107).</summary>
     private static ToolResult Zoom(SettingsService settings, ToolArguments arguments)
     {
@@ -719,29 +784,16 @@ public static class VrCapability
             return ToolResult.Error($"Say which way to zoom the panel: {string.Join(", ", ZoomDirections)}.");
         }
 
-        var at = Interface.ZoomLadder.Snap(Facing(settings.Current).Zoom);
+        var step = StepZoom(settings, said, SettingsCaller.Model);
+        var drawn = Interface.ZoomLadder.Describe(step.Zoom);
 
-        var wanted = said switch
-        {
-            "in" => Interface.ZoomLadder.In(at),
-            "out" => Interface.ZoomLadder.Out(at),
-            _ => Interface.ZoomLadder.Default,
-        };
-
-        var applied = settings.Apply(
-            $"vr.{CurrentSlot}.scale",
-            wanted.ToString(CultureInfo.InvariantCulture),
-            SettingsCaller.Model);
-
-        var drawn = Interface.ZoomLadder.Describe(wanted);
-
-        return applied.Status switch
+        return step.Applied.Status switch
         {
             SettingApplyStatus.Applied => ToolResult.Ok($"The panel is drawn at {drawn}."),
             SettingApplyStatus.Unchanged when said == "in" => ToolResult.Ok($"The panel is already drawn at its largest, {drawn}."),
             SettingApplyStatus.Unchanged when said == "out" => ToolResult.Ok($"The panel is already drawn at its smallest, {drawn}."),
             SettingApplyStatus.Unchanged => ToolResult.Ok($"The panel is already drawn at {drawn}."),
-            _ => ToolResult.Error(applied.Message ?? "The panel's zoom could not be changed."),
+            _ => ToolResult.Error(step.Applied.Message ?? "The panel's zoom could not be changed."),
         };
     }
 

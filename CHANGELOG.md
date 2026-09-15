@@ -6,6 +6,14 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.135.0 — Zoom and resize the headset panel from the keyboard
+
+Add four system-wide hotkeys for the headset panel — zoom in (`Ctrl+Alt+=`), zoom out
+(`Ctrl+Alt+-`), reset zoom (`Ctrl+Alt+D0`) and toggle resize mode (`Ctrl+Alt+S`) — reachable
+while Elite has the foreground, the same as the overlay's own two keys. Entering and leaving
+resize mode is silent; asking for it with the motion controllers off or no headset session is
+spoken aloud, since a Commander in the headset has no transcript to read it from.
+
 ## 0.134.0 — Reset the headset panel's position by voice
 
 Add "reset the panel", which forgets where the on-screen headset panel was placed and puts it back

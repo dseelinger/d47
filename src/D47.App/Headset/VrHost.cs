@@ -294,6 +294,9 @@ public sealed class VrHost : IDisposable
         return VrGazeOutcome.Placed;
     }
 
+    /// <summary>Read by the toggle hotkey, so it can flip resize mode rather than always turning it on (#189).</summary>
+    public bool ResizeMode => _resizeMode;
+
     /// <summary>Puts the panels into resize mode or takes them out of it (#107).</summary>
     public VrResizeOutcome Resize(bool on)
     {

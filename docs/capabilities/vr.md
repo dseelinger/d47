@@ -309,6 +309,14 @@ up.
 Resizing needs the motion controllers. With them off, the **Size** and **Resolution** settings
 below change the same two things.
 
+#### Toggle the headset panel's resize mode {#hotkey-resize}
+
+`Ctrl+Alt+S` out of the box, and it works **anywhere**, including while Elite has the foreground —
+so resize mode is reachable with a controller withdrawn and no model configured. Entering and
+leaving are silent: the handles appearing, or leaving, is the answer. Asking to enter it with the
+motion controllers off, or with no headset session, is spoken instead — from inside a headset there
+is no transcript to read it from.
+
 ### Zooming it
 
 > "zoom the panel in" / "make the panel text bigger"
@@ -318,6 +326,19 @@ below change the same two things.
 Each step moves the panel's **Scale** one rung along the ladder the desktop window zooms with, and
 reset puts it back to 100%. It acts on whichever panel is on screen. The panel's edges do not
 move; the content is laid out again at the new size.
+
+#### Zoom the headset panel in {#hotkey-zoom-in}
+
+`Ctrl+Alt+=` out of the box, and it works **anywhere**, including while Elite has the foreground —
+the same as the overlay's own keys. Steps **Scale** up one rung on whichever panel is on screen.
+
+#### Zoom the headset panel out {#hotkey-zoom-out}
+
+`Ctrl+Alt+-` out of the box, and it works **anywhere**. Steps **Scale** down one rung.
+
+#### Reset the headset panel's zoom {#hotkey-zoom-reset}
+
+`Ctrl+Alt+D0` out of the box, and it works **anywhere**. Puts **Scale** back to 100%.
 
 ### Settings
 

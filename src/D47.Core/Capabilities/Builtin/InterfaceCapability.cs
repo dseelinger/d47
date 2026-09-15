@@ -265,8 +265,8 @@ public static class InterfaceCapability
             ? percent
             : ZoomLadder.Default;
 
-    /// <summary>Every hotkey row is protected.</summary>
-    private static SettingRow HotkeyRow(
+    /// <summary>Every hotkey row is protected. Internal so another capability's hotkeys can share it (#189).</summary>
+    internal static SettingRow HotkeyRow(
         string key,
         string label,
         string anchor,

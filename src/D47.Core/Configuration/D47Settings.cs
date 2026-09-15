@@ -805,6 +805,18 @@ public sealed record HotkeySettings
     /// and gives them back the moment it is done (Phase 48).
     /// </summary>
     public string? MoveOverlay { get; init; } = "Ctrl+Alt+M";
+
+    /// <summary>Steps the headset panel's scale up one rung (#189).</summary>
+    public string? ZoomHeadsetIn { get; init; } = "Ctrl+Alt+OemPlus";
+
+    /// <summary>Steps the headset panel's scale down one rung (#189).</summary>
+    public string? ZoomHeadsetOut { get; init; } = "Ctrl+Alt+OemMinus";
+
+    /// <summary>Puts the headset panel's scale back to 100% (#189).</summary>
+    public string? ResetHeadsetZoom { get; init; } = "Ctrl+Alt+D0";
+
+    /// <summary>Enters or leaves resize mode in the headset (#189).</summary>
+    public string? ResizeHeadsetPanel { get; init; } = "Ctrl+Alt+S";
 }
 
 public sealed record UpdateSettings

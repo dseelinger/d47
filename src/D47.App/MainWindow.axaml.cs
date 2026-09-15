@@ -16,6 +16,7 @@ using D47.Core.Configuration;
 using D47.Core.Interface;
 using D47.Core.Journal;
 using D47.Core.Diagnostics.Donation;
+using D47.Core.Vr;
 using D47.Core.Listening;
 using D47.Core.Audio;
 using D47.Core.Conversation;
@@ -35,6 +36,14 @@ public partial class MainWindow : Window
     private readonly GlobalHotkey _showOverlay;
 
     private readonly GlobalHotkey _moveOverlay;
+
+    /// <summary>The four gestures that reach headset zoom and resize with no motion controller (#189).</summary>
+    private readonly GlobalHotkey _zoomHeadsetIn;
+
+    private readonly GlobalHotkey _zoomHeadsetOut;
+    private readonly GlobalHotkey _resetHeadsetZoom;
+    private readonly GlobalHotkey _resizeHeadsetPanel;
+
     private readonly PanelViewModel _model;
 
     private AvailableUpdate? _availableUpdate;
@@ -75,6 +84,10 @@ public partial class MainWindow : Window
         _shutUp = new GlobalHotkey(hotkeyLogger);
         _showOverlay = new GlobalHotkey(hotkeyLogger);
         _moveOverlay = new GlobalHotkey(hotkeyLogger);
+        _zoomHeadsetIn = new GlobalHotkey(hotkeyLogger);
+        _zoomHeadsetOut = new GlobalHotkey(hotkeyLogger);
+        _resetHeadsetZoom = new GlobalHotkey(hotkeyLogger);
+        _resizeHeadsetPanel = new GlobalHotkey(hotkeyLogger);
 
         InitializeComponent();
 
@@ -406,6 +419,7 @@ public partial class MainWindow : Window
         DescribeHotkeys();
         BindShutUp();
         BindOverlayKeys();
+        BindHeadsetZoomAndResizeKeys();
 
         // Spoken input runs the same turn as typed input, deliberately.
         _host.Heard += text => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
@@ -448,6 +462,14 @@ public partial class MainWindow : Window
                 || change.Key == InterfaceCapability.MoveOverlayHotkeyKey)
             {
                 BindOverlayKeys();
+            }
+
+            if (change.Key == VrCapability.ZoomInHotkeyKey
+                || change.Key == VrCapability.ZoomOutHotkeyKey
+                || change.Key == VrCapability.ResetZoomHotkeyKey
+                || change.Key == VrCapability.ResizeHotkeyKey)
+            {
+                BindHeadsetZoomAndResizeKeys();
             }
         });
 
@@ -988,8 +1010,8 @@ public partial class MainWindow : Window
             return;
         }
 
-        Bind(_showOverlay, _host.Settings.Current.Hotkeys.ShowOverlay, "overlay", ToggleOverlay);
-        Bind(_moveOverlay, _host.Settings.Current.Hotkeys.MoveOverlay, "move-the-overlay",
+        BindHotkey(_showOverlay, _host.Settings.Current.Hotkeys.ShowOverlay, "overlay", ToggleOverlay);
+        BindHotkey(_moveOverlay, _host.Settings.Current.Hotkeys.MoveOverlay, "move-the-overlay",
             () => Avalonia.Threading.Dispatcher.UIThread.Post(() => _host.Overlay?.Place()));
 
         void ToggleOverlay() => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
@@ -997,16 +1019,53 @@ public partial class MainWindow : Window
                 InterfaceCapability.OverlayKey,
                 (!_host.Settings.Current.Ui.Overlay.Enabled).ToString(),
                 SettingsCaller.Hotkey));
+    }
 
-        void Bind(GlobalHotkey key, string? gesture, string named, Action pressed)
+    /// <summary>Registers one system-wide gesture, and reports it if the OS refuses to hand it over.</summary>
+    private void BindHotkey(GlobalHotkey key, string? gesture, string named, Action pressed)
+    {
+        if (!key.Bind(gesture, pressed) && !string.IsNullOrWhiteSpace(gesture))
         {
-            if (!key.Bind(gesture, pressed) && !string.IsNullOrWhiteSpace(gesture))
-            {
-                _model.ErrorText =
-                    $"The {named} hotkey {Gestures.Describe(gesture)} could not be registered " +
-                    "system-wide. Another application is probably holding it — pick another in Settings.";
-            }
+            _model.ErrorText =
+                $"The {named} hotkey {Gestures.Describe(gesture)} could not be registered " +
+                "system-wide. Another application is probably holding it — pick another in Settings.";
         }
+    }
+
+    /// <summary>The four gestures that reach headset zoom and resize with no motion controller (#189).</summary>
+    private void BindHeadsetZoomAndResizeKeys()
+    {
+        if (_host is null)
+        {
+            return;
+        }
+
+        BindHotkey(_zoomHeadsetIn, _host.Settings.Current.Hotkeys.ZoomHeadsetIn, "zoom-headset-in", StepZoom("in"));
+        BindHotkey(_zoomHeadsetOut, _host.Settings.Current.Hotkeys.ZoomHeadsetOut, "zoom-headset-out", StepZoom("out"));
+        BindHotkey(_resetHeadsetZoom, _host.Settings.Current.Hotkeys.ResetHeadsetZoom, "reset-headset-zoom",
+            StepZoom("reset"));
+        BindHotkey(_resizeHeadsetPanel, _host.Settings.Current.Hotkeys.ResizeHeadsetPanel, "resize-headset-panel",
+            ToggleHeadsetResize);
+
+        Action StepZoom(string direction) => () => Avalonia.Threading.Dispatcher.UIThread.Post(
+            () => VrCapability.StepZoom(_host.Settings, direction, SettingsCaller.Hotkey));
+
+        void ToggleHeadsetResize() => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            if (_host.Vr is not { } vr)
+            {
+                return;
+            }
+
+            var outcome = vr.Resize(!vr.ResizeMode);
+
+            // On and off are silent — the handles appearing or leaving is the answer. The other two are
+            // spoken because the Commander is in the headset and cannot see this transcript.
+            if (outcome is VrResizeOutcome.NoControllers or VrResizeOutcome.NoHeadset)
+            {
+                _host.SayAside(VrResize.Describe(outcome));
+            }
+        });
     }
 
     /// <summary>
