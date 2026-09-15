@@ -155,3 +155,20 @@ Say it unprompted as part of finishing, not only when asked. Steps are for what 
 reach — the panel, the overlay, speech, a device, the game itself. Where the automated tests already
 cover the change, say they cover it and name them rather than inventing a manual pass over ground
 the suite walks every run.
+
+## Finishing
+
+The turn where the work lands ends in this order:
+
+1. Commit.
+2. `/code-review` or `/prose`, when the Reviews section calls for one, with its findings amended into
+   the commit.
+3. The spoken done sentence, through `/neural-voice`'s command, unless the voice was turned off. It
+   is the last tool call of the turn.
+4. The written report, then how to test it.
+
+The voice rules were loaded at the start of the session, many tool calls earlier, and writing the
+report ends the turn. A sentence left until after the report is not spoken.
+
+This applies equally when the work lands on a turn started by a background agent's completion
+notice rather than by the maintainer.
