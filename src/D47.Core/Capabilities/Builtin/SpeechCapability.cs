@@ -460,6 +460,10 @@ public static class SpeechCapability
                         surface.DownloadLocalVoice.Invoke() is { } fetch
                             ? fetch(progress, cancellationToken)
                             : Task.FromResult<string?>(null),
+
+                // On screen while any slot speaks through Kokoro, the same rule as a provider's key row.
+                AppliesWhen = s => VoiceGroups.Selected(s.Speech).Values
+                    .Any(id => string.Equals(id, TtsProviderCatalog.KokoroId, StringComparison.OrdinalIgnoreCase)),
                 Binding = new SettingBinding
                 {
                     Read = _ => surface.LocalVoiceState?.Invoke() ?? "Not available.",
@@ -505,9 +509,12 @@ public static class SpeechCapability
                             ? swap(progress, cancellationToken)
                             : Task.FromResult<string?>("The local voice build cannot be changed here."),
 
-                // Absent until the local voice is there at all.
-                AppliesWhen = _ => surface.InstalledLocalVoiceBuild is not null
-                                   && surface.InstalledLocalVoiceBuild.Invoke() is not null,
+                // Absent until the local voice is there at all, and until some slot uses it.
+                AppliesWhen = s => surface.InstalledLocalVoiceBuild is not null
+                                   && surface.InstalledLocalVoiceBuild.Invoke() is not null
+                                   && VoiceGroups.Selected(s.Speech).Values
+                                       .Any(id => string.Equals(
+                                           id, TtsProviderCatalog.KokoroId, StringComparison.OrdinalIgnoreCase)),
                 DocsAnchor = "provider",
                 Binding = new SettingBinding
                 {

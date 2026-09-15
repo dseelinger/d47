@@ -1,4 +1,5 @@
-﻿using D47.Core.Capabilities;
+﻿using D47.Core.Audio;
+using D47.Core.Capabilities;
 using D47.Core.Configuration;
 using D47.Core.Capabilities.Builtin;
 using Xunit;
@@ -89,5 +90,41 @@ public class TheLocalVoiceRowOffersItsButtonTests
         Assert.Null(row.PressAsync);
         Assert.Null(row.PressLabel);
         Assert.NotNull(row.Binding);
+    }
+
+    // ---- When it is there at all --------------------------------------------------------------
+
+    /// <summary>Shows only while some slot names Kokoro, whether it is downloaded or not.</summary>
+    [Fact]
+    public void TheRowIsAbsentWithNoSlotOnKokoro()
+    {
+        var (surface, _, _) = Deferred();
+
+        Assert.False(Row(surface).AppliesWhen!(new D47Settings()));
+    }
+
+    [Fact]
+    public void TheShipOnKokoroAppliesTheRow()
+    {
+        var (surface, _, _) = Deferred();
+        var settings = new D47Settings { Speech = new SpeechSettings { Provider = TtsProviderCatalog.KokoroId } };
+
+        Assert.True(Row(surface).AppliesWhen!(settings));
+    }
+
+    /// <summary>A carrier-only slot on Kokoro is enough — the row is not the ship's alone.</summary>
+    [Fact]
+    public void ACarrierOnlyOnKokoroAppliesTheRow()
+    {
+        var (surface, _, _) = Deferred();
+        var settings = new D47Settings
+        {
+            Speech = new SpeechSettings
+            {
+                GroupProviders = new Dictionary<string, string> { ["carrier"] = TtsProviderCatalog.KokoroId },
+            },
+        };
+
+        Assert.True(Row(surface).AppliesWhen!(settings));
     }
 }

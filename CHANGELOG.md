@@ -6,6 +6,13 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.132.7 — Kokoro's rows hide unless a voice actually uses it
+
+Fix the "Local voice" and "Local voice model build" rows in Settings, which showed beside every
+other provider's rows once Kokoro was downloaded, whatever provider each voice slot actually used.
+They now follow the same rule as a provider's key row: on screen while some slot — the ship's own
+or any other — names Kokoro, and hidden otherwise.
+
 ## 0.132.6 — Microphone and speech recognition settings share one card
 
 Merge the Microphone and Speech recognition settings places into one card, "Voice Input", holding

@@ -1,3 +1,4 @@
+using D47.Core.Audio;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
@@ -115,8 +116,32 @@ public class TheBuildRowOffersAllEightTests
     [Fact]
     public void TheRowIsAbsentUntilTheLocalVoiceIsInstalled()
     {
-        Assert.False(Applies(Row(Surface(null))!));
-        Assert.True(Applies(Row(Surface("fp32"))!));
+        var kokoroSettings = new D47Settings { Speech = new SpeechSettings { Provider = TtsProviderCatalog.KokoroId } };
+
+        Assert.False(Row(Surface(null))!.AppliesWhen!(kokoroSettings));
+        Assert.True(Row(Surface("fp32"))!.AppliesWhen!(kokoroSettings));
+    }
+
+    /// <summary>Installed on disk is not enough on its own — some slot has to actually use it.</summary>
+    [Fact]
+    public void TheRowIsAbsentWithNoSlotOnKokoro()
+    {
+        Assert.False(Applies(Row(Surface("fp32"))!));
+    }
+
+    /// <summary>A non-ship slot on Kokoro is enough — the row is not the ship's alone.</summary>
+    [Fact]
+    public void ACarrierOnlyOnKokoroStillAppliesTheRow()
+    {
+        var settings = new D47Settings
+        {
+            Speech = new SpeechSettings
+            {
+                GroupProviders = new Dictionary<string, string> { ["carrier"] = TtsProviderCatalog.KokoroId },
+            },
+        };
+
+        Assert.True(Row(Surface("fp32"))!.AppliesWhen!(settings));
     }
 
     /// <summary>
