@@ -134,23 +134,14 @@ public static class SettingsLayout
                             "Speech recognition",
                             "Which model turns speech into words, and where it runs.",
                             [E("listening.model"), E("listening.useGpu")]),
-                    ]),
-                new SettingsPlace(
-                    "name",
-                    "Its name",
-                    "What D47 is called, and what it answers to.",
-                    "listening",
-                    [],
-                    false,
-                    [
                         G(
-                        [
-                            E("persona.shipName"),
-                            E("persona.keepShipName"),
-                            E("listening.wakeWords"),
-                            E("listening.wakeWindow"),
-                            E("listening.corrections"),
-                        ]),
+                            "Wake word",
+                            "What D47 answers to, hands free, and how long it keeps listening after.",
+                            [E("listening.wakeWords"), E("listening.wakeWindow")]),
+                        G(
+                            "Corrections",
+                            "Names D47 has learned to hear correctly.",
+                            [E("listening.corrections")]),
                     ]),
                 new SettingsPlace(
                     "voice",
@@ -301,6 +292,10 @@ public static class SettingsLayout
                             E("llm.characterSheet"),
                             E("llm.aboutMe"),
                         ]),
+                        G(
+                            "Ship name",
+                            "What you call your ship's AI, and whether the name follows it across a core switch.",
+                            [E("persona.shipName"), E("persona.keepShipName")]),
                         G(
                             "A core per ship",
                             "Which core answers you, bound per ship.",

@@ -6,6 +6,12 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.140.0 — Ship name and wake words moved to their own capabilities
+
+The settings page no longer mixes Persona and Listening rows under one "Its name" card: ship name
+and Keep Ship AI name now sit in the Persona place, and the wake-word and corrections rows sit in
+the Voice Input place, next to the rest of what Listening owns.
+
 ## 0.139.0 — Cost details by provider
 
 The cost details window can now be asked the other way round: a picker under Running totals reads
