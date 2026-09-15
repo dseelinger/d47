@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using D47.Core.Audio;
 using Xunit;
 
@@ -268,6 +269,49 @@ public class RadioVoiceTests
         var last = (short)(pcm[^2] | (pcm[^1] << 8));
 
         Assert.True(Math.Abs((int)last) < 64, $"the link cut off at {last}, which clicks");
+    }
+
+    [Fact]
+    public void AFullSignalIsTheTreatmentByteForByte()
+    {
+        var line = Tone(800);
+
+        Assert.Equal(RadioVoice.Apply(line).Pcm.ToArray(), RadioVoice.Apply(line, 1).Pcm.ToArray());
+
+        // The output at strength 1, pinned.
+        Assert.Equal(
+            "EF7DCF32B43F23A2DD6A24D7E5DD5C289812A7C76A5948B671948A6D375AE23B",
+            Convert.ToHexString(SHA256.HashData(RadioVoice.Apply(line, 1).Pcm.Span)));
+    }
+
+    [Fact]
+    public void AWeakSignalRaisesTheFloorOnTheOpenCarrier()
+    {
+        var line = Tone(1_000, seconds: 1.0, amplitude: 0.4);
+
+        var clear = Rms(Tail(RadioVoice.Apply(line, 1)));
+        var weak = Rms(Tail(RadioVoice.Apply(line, 0.2)));
+
+        Assert.True(weak > clear, $"the weak carrier is at {weak:F4} RMS against {clear:F4} on a clear one");
+    }
+
+    [Fact]
+    public void AWeakSignalLosesStretchesOfTheVoice()
+    {
+        var line = Tone(1_000, seconds: 2.0, amplitude: 0.4);
+
+        var clear = Rms(UnderTheVoice(RadioVoice.Apply(line, 1)));
+        var weak = Rms(UnderTheVoice(RadioVoice.Apply(line, 0.2)));
+
+        Assert.True(weak < clear * 0.9, $"the weak line kept {weak / clear:P0} of the voice");
+    }
+
+    [Fact]
+    public void AWeakLinkTakesAStereoClipThatEndsMidFrame()
+    {
+        var clip = new AudioClip("ragged", new byte[((48_000 * 2) + 1) * 2], new AudioFormat(48_000, 2));
+
+        Assert.True(RadioVoice.Apply(clip, 0.2).Pcm.Length > clip.Pcm.Length);
     }
 
     [Fact]

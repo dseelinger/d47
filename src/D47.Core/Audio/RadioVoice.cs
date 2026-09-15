@@ -10,14 +10,23 @@ public static class RadioVoice
     public static bool IsOverTheAir(VoiceRole role) => role is not (VoiceRole.ShipAi or VoiceRole.Crew);
 
     /// <summary>The treatment for a role, or null where there is none.</summary>
-    public static Func<AudioClip, AudioClip>? Colours(VoiceRole role) =>
-        IsOverTheAir(role) ? Apply : null;
+    public static Func<AudioClip, AudioClip>? Colours(VoiceRole role) => Colours(role, 1);
+
+    /// <summary>The treatment for a role over a link of <paramref name="strength"/>, 0 to 1, or null where there is none.</summary>
+    public static Func<AudioClip, AudioClip>? Colours(VoiceRole role, double strength) =>
+        IsOverTheAir(role) ? clip => Apply(clip, strength) : null;
 
     /// <summary>The bottom of the passband.</summary>
     private const double LowEdgeHz = 400;
 
     /// <summary>The top.</summary>
     private const double HighEdgeHz = 2_700;
+
+    /// <summary>The bottom of the passband on a link with no signal left.</summary>
+    private const double WeakLowEdgeHz = 600;
+
+    /// <summary>And its top.</summary>
+    private const double WeakHighEdgeHz = 2_000;
 
     /// <summary>
     /// The loudness every transmission is brought to, as an RMS of full scale — the receiver's
@@ -37,6 +46,18 @@ public static class RadioVoice
     /// <summary>And how loud it is once the words stop, on the bare carrier.</summary>
     private const double HissOnTheOpenCarrier = 0.148;
 
+    /// <summary>How loud the bare carrier is on a link with no signal left.</summary>
+    private const double HissOnAWeakCarrier = 0.3;
+
+    /// <summary>How long one stretch of voice lost to a weak link lasts.</summary>
+    private static readonly TimeSpan Dropout = TimeSpan.FromMilliseconds(90);
+
+    /// <summary>How long the voice takes to go and come back around a dropout.</summary>
+    private static readonly TimeSpan DropoutEdge = TimeSpan.FromMilliseconds(6);
+
+    /// <summary>The chance each stretch is lost on a link with no signal left.</summary>
+    private const double DropoutChance = 0.35;
+
     /// <summary>How long the floor takes to come up between the two.</summary>
     private static readonly TimeSpan Swell = TimeSpan.FromMilliseconds(40);
 
@@ -47,8 +68,15 @@ public static class RadioVoice
     private static readonly TimeSpan Cut = TimeSpan.FromMilliseconds(3);
 
     /// <summary>The same speech, over a link.</summary>
-    public static AudioClip Apply(AudioClip clip)
+    public static AudioClip Apply(AudioClip clip) => Apply(clip, 1);
+
+    /// <summary>
+    /// The same speech, over a link of <paramref name="strength"/>, 0 to 1. Below 1 the static rises, the
+    /// passband narrows and stretches of the voice drop out to the carrier.
+    /// </summary>
+    public static AudioClip Apply(AudioClip clip, double strength)
     {
+        var weakness = double.IsNaN(strength) ? 0 : 1 - Math.Clamp(strength, 0, 1);
         var pcm = clip.Pcm.Span;
         var samples = pcm.Length / 2;
 
@@ -60,9 +88,14 @@ public static class RadioVoice
         var channels = Math.Max(1, clip.Format.Channels);
         var rate = clip.Format.SampleRate > 0 ? clip.Format.SampleRate : AudioFormat.Standard.SampleRate;
 
+        var lowEdge = LowEdgeHz + (weakness * (WeakLowEdgeHz - LowEdgeHz));
+        var highEdge = HighEdgeHz + (weakness * (WeakHighEdgeHz - HighEdgeHz));
+        var hissUnderVoice = HissUnderVoice + (weakness * (HissOnTheOpenCarrier - HissUnderVoice));
+        var hissOnTheCarrier = HissOnTheOpenCarrier + (weakness * (HissOnAWeakCarrier - HissOnTheOpenCarrier));
+
         // One filter pair per channel, and a second pair for the static.
-        var voiceBand = Band(channels, rate);
-        var staticBand = Band(channels, rate);
+        var voiceBand = Band(channels, rate, lowEdge, highEdge);
+        var staticBand = Band(channels, rate, lowEdge, highEdge);
 
         var shaped = new double[samples];
 
@@ -82,6 +115,7 @@ public static class RadioVoice
         }
 
         var makeup = Makeup(Math.Sqrt(isSquared / samples), peak);
+        var voiced = Voiced((samples + channels - 1) / channels, rate, weakness);
 
         // The words, then the carrier still open, then the cut.
         var tail = (int)(Tail.TotalSeconds * rate) / channels * channels;
@@ -101,14 +135,16 @@ public static class RadioVoice
 
             // The static goes through a band-pass of its own, so it is the same colour as the voice arriving
             // beside it.
+            var gain = index < samples ? voiced?[index / channels] ?? 1 : 1;
+
             var hiss = index < samples
-                ? HissUnderVoice
-                : HissUnderVoice + ((HissOnTheOpenCarrier - HissUnderVoice)
+                ? hissUnderVoice + ((hissOnTheCarrier - hissUnderVoice) * (1 - gain))
+                : hissUnderVoice + ((hissOnTheCarrier - hissUnderVoice)
                                     * Math.Min(1, (double)(index - samples) / swell));
 
             var floor = staticBand.Low[channel].Next(staticBand.High[channel].Next(white)) * hiss;
 
-            var sample = (index < samples ? shaped[index] * makeup : 0) + floor;
+            var sample = (index < samples ? shaped[index] * makeup * gain : 0) + floor;
 
             if (index >= total - fade)
             {
@@ -124,19 +160,56 @@ public static class RadioVoice
         return clip with { Name = $"{clip.Name} (radio)", Pcm = treated };
     }
 
-    /// <summary>A band-pass per channel, at the edges of the comms band.</summary>
-    private static (Biquad[] High, Biquad[] Low) Band(int channels, int rate)
+    /// <summary>A band-pass per channel, between the two edges.</summary>
+    private static (Biquad[] High, Biquad[] Low) Band(int channels, int rate, double lowEdge, double highEdge)
     {
         var high = new Biquad[channels];
         var low = new Biquad[channels];
 
         for (var channel = 0; channel < channels; channel++)
         {
-            high[channel] = Biquad.HighPass(LowEdgeHz, rate);
-            low[channel] = Biquad.LowPass(HighEdgeHz, rate);
+            high[channel] = Biquad.HighPass(lowEdge, rate);
+            low[channel] = Biquad.LowPass(highEdge, rate);
         }
 
         return (high, low);
+    }
+
+    /// <summary>
+    /// The voice's gain per frame, 0 where a weak link has lost it, ramped at each edge; null when nothing is
+    /// lost. Seeded by a constant, so the same clip loses the same stretches.
+    /// </summary>
+    private static double[]? Voiced(int frames, int rate, double weakness)
+    {
+        var chance = weakness * DropoutChance;
+
+        if (chance <= 0 || frames == 0)
+        {
+            return null;
+        }
+
+        var stretch = Math.Max(1, (int)(Dropout.TotalSeconds * rate));
+        var step = 1.0 / Math.Max(1, (int)(DropoutEdge.TotalSeconds * rate));
+        var gains = new double[frames];
+        var state = 0x2545F491u;
+        var gain = 1.0;
+        var lost = false;
+
+        for (var frame = 0; frame < frames; frame++)
+        {
+            if (frame % stretch == 0)
+            {
+                state ^= state << 13;
+                state ^= state >> 17;
+                state ^= state << 5;
+                lost = state / (double)uint.MaxValue < chance;
+            }
+
+            gain = lost ? Math.Max(0, gain - step) : Math.Min(1, gain + step);
+            gains[frame] = gain;
+        }
+
+        return gains;
     }
 
     /// <summary>The gain that brings the treated line to <see cref="Target"/> — the receiver's AGC.</summary>

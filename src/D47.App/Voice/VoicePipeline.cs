@@ -104,6 +104,7 @@ public sealed class VoicePipeline(
 
         SpeechPipeline? speech = null;
         TurnResult? result = null;
+        var signal = 1.0;
 
         try
         {
@@ -116,6 +117,10 @@ public sealed class VoicePipeline(
 
                 switch (turnEvent)
                 {
+                    case TurnEvent.Addressed addressed:
+                        signal = addressed.Signal;
+                        break;
+
                     case TurnEvent.TextDelta text:
                         // Created on the first delta rather than up front, so a turn that never speaks never
                         // opens a pipeline — and, more to the point, the bed stops the moment there are words
@@ -125,7 +130,7 @@ public sealed class VoicePipeline(
                             _spoke = true;
 
                             var role = SpeakingAs;
-                            var colour = Colour(role);
+                            var colour = Colour(role, signal);
 
                             speech = new SpeechPipeline(
                                 arbiter,
@@ -371,8 +376,8 @@ public sealed class VoicePipeline(
     /// A radio link for an over-the-air role, the ship AI's Guardian treatment where one is switched
     /// on, and no treatment for every other role — Crew included (#225).
     /// </summary>
-    private Func<AudioClip, AudioClip>? Colour(VoiceRole role) =>
-        RadioVoice.Colours(role) ?? (role == VoiceRole.ShipAi ? GuardianColour : null);
+    private Func<AudioClip, AudioClip>? Colour(VoiceRole role, double signal = 1) =>
+        RadioVoice.Colours(role, signal) ?? (role == VoiceRole.ShipAi ? GuardianColour : null);
 
     /// <summary>Whether a resolved colour is the Guardian treatment rather than a radio link, for the log.</summary>
     private static bool IsGuardianTreated(VoiceRole role, Func<AudioClip, AudioClip>? colour) =>

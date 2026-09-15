@@ -709,9 +709,34 @@ public sealed class TurnLoop(
 
         TurnResult? result = null;
 
+        // A weak link loses words before they leave the loop, so the panel, the caption and the voice carry the
+        // same text. The speaker's transcript keeps what the model wrote.
+        var thinner = speaker.Signal < 1 ? Audio.LinkSignal.Thin(speaker.Signal, taken.Question) : null;
+        var heard = new System.Text.StringBuilder();
+
         await foreach (var turnEvent in RunModelTurnAsync(taken.Question, activeProvider, speaker, cancellationToken)
                            .ConfigureAwait(false))
         {
+            if (thinner is not null)
+            {
+                if (turnEvent is TurnEvent.TextDelta delta)
+                {
+                    if (thinner.Push(delta.Text) is { Length: > 0 } released)
+                    {
+                        heard.Append(released);
+                        yield return new TurnEvent.TextDelta(released);
+                    }
+
+                    continue;
+                }
+
+                if (thinner.Flush() is { Length: > 0 } rest)
+                {
+                    heard.Append(rest);
+                    yield return new TurnEvent.TextDelta(rest);
+                }
+            }
+
             if (turnEvent is TurnEvent.Completed completed)
             {
                 result = completed.Result;
@@ -720,9 +745,10 @@ public sealed class TurnLoop(
             yield return turnEvent;
         }
 
+        // The ship AI overhears what came through.
         if (result is { Outcome: TurnOutcome.Answered })
         {
-            Record(result.Text, input, speaker.Name);
+            Record(thinner is null ? result.Text : heard.ToString().Trim(), input, speaker.Name);
         }
     }
 

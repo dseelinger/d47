@@ -15,7 +15,7 @@ public sealed class CaptainLine(
     Func<string, string, CancellationToken, Task<double?>>? distance = null) : ILine
 {
     /// <summary>How far the captain can be heard.</summary>
-    public const double RangeLightYears = 500;
+    public const double RangeLightYears = LinkSignal.LostLightYears;
 
     /// <summary>Said to the captain while the line is open, each ends it.</summary>
     public static readonly IReadOnlyList<string> Dismissals =
@@ -58,7 +58,9 @@ public sealed class CaptainLine(
             return new LineDecision.NotMine();
         }
 
-        if (await DistanceAsync(carrierSystem, cancellationToken).ConfigureAwait(false) is > RangeLightYears and var away)
+        var lightYears = await DistanceAsync(carrierSystem, cancellationToken).ConfigureAwait(false);
+
+        if (lightYears is > RangeLightYears and var away)
         {
             IsOpen = false;
 
@@ -76,7 +78,7 @@ public sealed class CaptainLine(
                 Brief(state),
                 _transcript,
                 OffersTools: true,
-                Signal: 1),
+                Signal: LinkSignal.Strength(lightYears)),
             question.Length == 0 ? "The Commander is trying to get your attention." : question);
     }
 

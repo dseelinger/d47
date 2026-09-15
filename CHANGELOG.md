@@ -18,7 +18,9 @@ voice, from the carrier's figures and the galaxy tools. Follow-up questions go t
 the name until you say "that's all", "that'll be all", "thank you captain", "dismissed" or "carry on",
 or start a question with your ship AI's name. The ship AI hears those exchanges and can refer to them
 afterwards. With galaxy search on, a carrier more than 500 light years away is out of range: the ship
-AI tells you so and gives the distance.
+AI tells you so and gives the distance. Beyond 250 light years the captain's line weakens as the
+distance grows: more static, a narrower voice, short dropouts, and lost words marked with an
+ellipsis in the panel and the caption. The ship AI hears only the words that came through.
 
 ## 0.129.1 — One tool surface for every provider
 

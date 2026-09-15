@@ -175,6 +175,17 @@ says so and gives the distance, and no model is asked. With galaxy search off, o
 cannot be found, the captain answers. The captain cannot be reached until a carrier you own and its
 system have been seen in the journal.
 
+Between 250 and 500 light years the line gets weaker the further away the carrier is. The static
+under the captain's voice rises, the voice sounds narrower, short stretches of it drop out, and
+words are lost, each run of them shown as "…" in the panel and the caption:
+
+```csharp
+public static double Strength(double? lightYears) => lightYears switch
+```
+
+The ship AI overhears only the words that came through. The captain's own conversation keeps the
+full answer.
+
 ### What Directive 47 actually knows about your carrier
 
 Only what `CarrierStats` reports, and only from the last time you opened the carrier management

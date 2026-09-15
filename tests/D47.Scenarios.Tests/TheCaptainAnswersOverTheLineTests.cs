@@ -62,4 +62,54 @@ public class TheCaptainAnswersOverTheLineTests
         Assert.NotEqual(PersonaCatalog.Warden.RenderBlock(), prompt.Persona);
         Assert.Equal(TurnRoute.Model, trace.Result?.Route);
     }
+
+    [Theory]
+    [InlineData(100)]
+    [InlineData(426)]
+    public async Task AFarCarrierLosesWordsOnTheWay(double lightYears)
+    {
+        const string answer =
+            "Seven hundred ninety-two tonnes of tritium in the depot, Commander, and the market is buying at a "
+            + "good price this week, so we can sell some if you like.";
+
+        var scenario = new Scenario
+        {
+            Id = $"carrier-captain/fuel-at-{lightYears}-ly",
+            Note = "#187: the captain's words thin with the carrier's distance",
+            Utterance = "Captain, how much fuel have we got",
+            Journal = Journal,
+            Lines = world =>
+            [
+                new CaptainLine(
+                    () => world.GameState.Active?.Carrier ?? CarrierState.None,
+                    () => world.GameState.Active?.Location.StarSystem,
+                    () => PersonaCatalog.Warden.Name,
+                    (_, _, _) => Task.FromResult<double?>(lightYears)),
+            ],
+        };
+
+        var provider = new FakeLlmProvider(
+            new LlmStreamEvent.TextDelta(answer),
+            new LlmStreamEvent.Completed(LlmUsage.None, LlmStopReason.Completed))
+        {
+            ToolCalls = true,
+            WebSearch = false,
+        };
+
+        var trace = await ScenarioRunner.RunAsync(scenario, provider, PersonaCatalog.Warden, cancellationToken: Token);
+
+        var signal = Assert.Single(trace.Events.OfType<TurnEvent.Addressed>()).Signal;
+        var heard = string.Concat(trace.Events.OfType<TurnEvent.TextDelta>().Select(delta => delta.Text));
+
+        if (signal == 1)
+        {
+            Assert.Equal(answer, heard);
+        }
+        else
+        {
+            Assert.InRange(signal, 0.15, 0.25);
+            Assert.True(heard.Length < answer.Length, $"\"{heard}\" is no shorter than the answer");
+            Assert.Contains(LinkSignal.Lost, heard, StringComparison.Ordinal);
+        }
+    }
 }
