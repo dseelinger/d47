@@ -113,6 +113,11 @@ public sealed class RouteMini : UserControl
         line.Children.Add(Text(waypoint.System, TypeScale.Body, isNext ? ThemeManager.AccentKey : ThemeManager.TextKey));
         line.Children.Add(Muted(waypoint.Jumps == 1 ? "1 jump" : $"{waypoint.Jumps} jumps"));
 
+        if (waypoint.DistanceJumped is { } jumped)
+        {
+            line.Children.Add(Muted($"{jumped:N0} ly"));
+        }
+
         if (waypoint.DistanceLeftToReport is { } left)
         {
             line.Children.Add(Muted($"{left:N0} ly left"));

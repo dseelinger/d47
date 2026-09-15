@@ -145,6 +145,11 @@ public sealed class RoutePlanResultPage : UserControl
         line.Children.Add(Muted(
             waypoint.Jumps == 1 ? "1 jump" : $"{waypoint.Jumps} jumps"));
 
+        if (waypoint.DistanceJumped is { } jumped)
+        {
+            line.Children.Add(Muted($"{jumped:N0} ly"));
+        }
+
         // The destination's own row carried "0 ly left" here for the same reason the spoken line did (#405).
         if (waypoint.DistanceLeftToReport is { } left)
         {

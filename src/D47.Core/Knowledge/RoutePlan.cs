@@ -14,6 +14,9 @@ public sealed record RouteWaypoint(string System, int Jumps, double? DistanceLef
     /// The remaining distance where there is one worth reporting, and null where there is not (#405).
     /// </summary>
     public double? DistanceLeftToReport => DistanceLeft is >= 0.5 ? DistanceLeft : null;
+
+    /// <summary>Light years flown on the leg that reaches this waypoint, or null on a plan saved before #236.</summary>
+    public double? DistanceJumped { get; init; }
 }
 
 /// <summary>A plotted route between two systems.</summary>

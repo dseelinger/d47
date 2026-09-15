@@ -140,8 +140,8 @@ the only part that changes what you do on arrival.
 Sol to Colonia: 22,000 light years, 168 jumps across 131 waypoints.
 
 The first 5:
-  PSR J1752-2806 — 10 jumps; neutron, supercharge here; 21,629 ly left
-  Nova Aquila No 3 — 6 jumps; neutron, supercharge here; 21,350 ly left
+  PSR J1752-2806 — 10 jumps, 371 ly; neutron, supercharge here; 21,629 ly left
+  Nova Aquila No 3 — 6 jumps, 279 ly; neutron, supercharge here; 21,350 ly left
   ...
 
 126 more after that. Ask again from further along and I will plot the rest.

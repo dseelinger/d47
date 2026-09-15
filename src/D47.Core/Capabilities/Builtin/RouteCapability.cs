@@ -359,6 +359,11 @@ public static class RouteCapability
         {
             report.Append($"  {waypoint.System} — {waypoint.Jumps} jump{(waypoint.Jumps == 1 ? "" : "s")}");
 
+            if (waypoint.DistanceJumped is { } jumped)
+            {
+                report.Append($", {jumped.ToString("N0", CultureInfo.InvariantCulture)} ly");
+            }
+
             if (waypoint.IsNeutron)
             {
                 // The only line that changes what the Commander does when they arrive.

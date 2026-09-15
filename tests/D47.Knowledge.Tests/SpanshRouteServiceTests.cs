@@ -72,7 +72,9 @@ public class SpanshRouteServiceTests
                 """
                 {"status":"ok","result":{"source_system":"Sol","destination_system":"Colonia","distance":22000.47,
                  "system_jumps":[{"system":"Sol","jumps":0,"neutron_star":false},
-                                 {"system":"PSR J1752-2806","jumps":10,"neutron_star":true,"distance_left":21629.39}]}}
+                                 {"system":"PSR J1752-2806","jumps":10,"neutron_star":true,"distance_left":21629.39,
+                                  "distance_jumped":370.61},
+                                 {"system":"Colonia","jumps":1,"neutron_star":false,"distance_left":0}]}}
                 """));
 
         using var service = Service(recorder, out var waits);
@@ -81,12 +83,18 @@ public class SpanshRouteServiceTests
 
         Assert.NotNull(route);
         Assert.Equal("Colonia", route.Destination);
-        Assert.Equal(10, route.TotalJumps);
+        Assert.Equal(11, route.TotalJumps);
 
         // The origin waypoint carries zero jumps and is dropped.
-        var waypoint = Assert.Single(route.Waypoints);
+        Assert.Equal(2, route.Waypoints.Count);
+
+        var waypoint = route.Waypoints[0];
         Assert.Equal("PSR J1752-2806", waypoint.System);
         Assert.True(waypoint.IsNeutron);
+        Assert.Equal(370.61, waypoint.DistanceJumped);
+
+        // Spansh does not send the figure on every leg; a waypoint without it reads as null.
+        Assert.Null(route.Waypoints[1].DistanceJumped);
 
         Assert.Equal(["/api/route", "/api/results/JOB-1", "/api/results/JOB-1"], recorder.Paths);
         Assert.Single(waits);

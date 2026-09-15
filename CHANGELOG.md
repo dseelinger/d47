@@ -6,6 +6,12 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.137.0 — Neutron jumps give their distance
+
+Each waypoint on a plotted route now says how far the leg to it is, alongside the jump count and
+the distance left — on the Route tab's plan result, the mini panel, and the spoken answer. A plan
+saved before this change shows no figure until it is plotted again.
+
 ## 0.136.0 — The resize cursor points the way it drags
 
 In resize mode, the ray's cursor turns from a ring into a double-headed arrow over a resize

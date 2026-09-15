@@ -139,7 +139,10 @@ internal static class SpanshResponse
                 String(jump, "system") ?? "an unnamed system",
                 jumps,
                 Number(jump, "distance_left"),
-                Boolean(jump, "neutron_star")));
+                Boolean(jump, "neutron_star"))
+            {
+                DistanceJumped = Number(jump, "distance_jumped"),
+            });
         }
 
         return new PlottedRoute(
