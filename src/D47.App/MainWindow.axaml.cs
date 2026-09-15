@@ -876,19 +876,6 @@ public partial class MainWindow : Window
         _model.AskText = string.Empty;
         _model.Append(input, voice: TranscriptVoice.Commander);
 
-        // Kept before the crew scope rewrites `input` below: the adventure feed files an exchange under the
-        // Commander's own words, not under the question as it reached a crew member.
-        var asked = input;
-
-        // Addressed to somebody in the fighter bay rather than to the ship's AI?
-        using var crew = _host.BeginCrewTurn(input);
-
-        if (crew is not null)
-        {
-            input = crew.Question;
-            _model.Append($"[{crew.Member.Name}] ");
-        }
-
         // Claimed before the turn starts and released in the finally.
         var cancelling = _host.Cancellation.Begin();
 
@@ -929,9 +916,7 @@ public partial class MainWindow : Window
                             _model.TurnLine = DescribeTurn(completed.Result, _host);
 
                             // And onto the story's own feed, if it was about one (asked for 2026-08-22).
-                            // `asked` rather than `input`: a crew turn rewrites the latter, and what the
-                            // Commander said is what the heuristic reads.
-                            _host.NoteTurn(asked, completed.Result.Text);
+                            _host.NoteTurn(input, completed.Result.Text);
                             break;
                     }
                 });

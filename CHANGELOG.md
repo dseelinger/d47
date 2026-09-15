@@ -6,6 +6,14 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.131.0 — Crew on the intercom, not just the line
+
+Address a hired pilot by name and they now keep the line the way the carrier's captain does:
+follow-up questions reach them with no name needed until you say "that's all" and its kin, name
+your ship AI, or name a different pilot. Each pilot keeps their own conversation rather than
+sharing the ship AI's, and the ship AI hears each exchange as one it overheard rather than one it
+had. A pilot is never offered a tool.
+
 ## 0.130.0 — The carrier captain on the line
 
 Ask "carrier report", "carrier status", "how is my carrier", "carrier services" or "carrier fuel"

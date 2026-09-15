@@ -31,13 +31,14 @@ nav_order: 103
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> Address them by name.</h2>
-<svg viewBox="0 0 880 190" role="img" aria-label="A question addressed to a named crew member, answered in that crew member's own voice">
+<h2><span class="num">2</span> Address them by name. They stay on the line until you're done.</h2>
+<svg viewBox="0 0 880 212" role="img" aria-label="A question addressed to a named crew member, answered in that crew member's own voice, and the follow-up needs no name">
  <rect x="20" y="20" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="53" font-size="17" fill="var(--text)">Vasquez, how is the fighter holding up?</text>
  <text x="44" y="116" font-size="15" font-weight="700" fill="var(--accent)">[VASQUEZ]</text>
  <text x="180" y="116" font-size="16" fill="var(--text)">Still flying, Commander. Wing took a knock.</text>
- <text x="20" y="166" font-size="16" fill="var(--text-muted)">Start with the name and the turn goes to them instead of the ship's AI.</text>
+ <text x="20" y="150" font-size="16" fill="var(--text-muted)">Start with the name and the turn goes to them instead of the ship's AI.</text>
+ <text x="20" y="184" font-size="15" fill="var(--text-muted)">The next question reaches them too, no name needed, until you say "that's all" or name somebody else.</text>
 </svg>
 </section>
 <section>
@@ -88,10 +89,20 @@ nav_order: 103
  <text x="660" y="134" text-anchor="middle" font-size="15" fill="var(--text)">no tools, no database</text>
  <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">Asked something they cannot see from where they sit, they say so.</text>
 </svg>
-<p class="body">They speak in their own voice, kept for the session like any other. Unlike the cores, they share the active persona's transcript — the cores cannot know about each other, but the crew and the ship's AI are aboard the same ship and plainly do.</p>
+<p class="body">They speak in their own voice, kept for the session like any other. Each keeps their own conversation, the way the carrier's captain does, and the ship's AI is told each exchange as one it overheard rather than one it had — it can refer to what was said, but the pilot's answers are never added to its own conversation.</p>
 </section>
 <section>
-<h2><span class="num">3</span> The roster is short because Elite's is.</h2>
+<h2><span class="num">3</span> The line stays open until you end it.</h2>
+<svg viewBox="0 0 880 212" role="img" aria-label="A pilot keeps the line for every follow-up until dismissed, the ship AI is named, or somebody else is">
+ <rect x="20" y="36" width="840" height="90" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="70" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">An intercom does not fade</text>
+ <text x="440" y="98" text-anchor="middle" font-size="15" fill="var(--text-muted)">a pilot's line carries as clearly on the last word as the first</text>
+ <text x="440" y="160" text-anchor="middle" font-size="16" fill="var(--text)">Ends on "that's all" and its kin, on your ship AI's name, or on naming another pilot.</text>
+ <text x="440" y="188" text-anchor="middle" font-size="15" fill="var(--text-muted)">The ship AI's own name always wins, even mid-conversation with a pilot.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">4</span> The roster is short because Elite's is.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Elite records a crew member's name, rating and duty state and nothing else — there is no engineer, gunner or navigator">
  <rect x="20" y="36" width="400" height="130" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="72" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">WHAT ELITE WRITES</text>
@@ -160,6 +171,12 @@ a station, not another Guardian core: they are not a million years old, they hav
 database and no way to look anything up, and asked something they cannot see from where they sit
 they will say so.
 
+Once you address a pilot, the line stays open — an intercom does not fade the way the carrier's
+captain does over distance. The next thing you say reaches the same pilot with no name needed,
+until you end it with "that's all" and its kin, name your ship AI, or name a different pilot. The
+ship AI is told each exchange as one it overheard, so it can refer to what was said, but a pilot's
+answers are never added to the ship AI's own conversation.
+
 ### What Directive 47 actually knows about your crew
 
 Only what Elite writes down, which is less than you might expect:
@@ -201,12 +218,13 @@ assigned aboard. Takes no arguments.
 ```
 
 Addressing is resolved before the turn runs, in `CrewAddressing.Match`, against the closed set of
-names the journal supplied — the same shape the keyword router uses. The crew brief replaces the
-persona block for that turn only and is restored in a scope's `Dispose`, so a crew turn cannot
-leak the wrong persona into the next one.
+names the journal supplied — the same shape the keyword router uses. `CrewLine` holds the line
+open the way `CaptainLine` does: once a pilot answers, the same pilot takes every turn until a
+dismissal, the ship AI's name, or another pilot's name closes it, with no tool offered on any of
+those turns.
 
-Crew share the active persona's transcript rather than owning their own. That is the opposite of
-the rule for the Guardian cores, and deliberately: the cores cannot know about each other, but
-the crew and the ship's AI are aboard the same ship and plainly do.
+Each pilot keeps their own transcript, one per `CrewId`, rather than sharing the ship AI's. The
+ship AI is told each exchange as overheard rather than reading it from a shared history, so a
+pilot's words are never mistaken for its own.
 
 </details>

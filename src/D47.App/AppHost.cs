@@ -1921,6 +1921,12 @@ public sealed class AppHost : IDisposable
                 ? galaxy.DistanceAsync(from, to, cancellationToken)
                 : Task.FromResult<double?>(null)));
 
+        // A hired pilot, reached by name (#188).
+        turns.Lines.Add(new CrewLine(
+            () => gameState.Active?.Crew,
+            () => gameState.Active?.Ship.Name,
+            () => personas.ShipName));
+
         // The catalogue a generated story may draw its stops from (Phase 47).
         var notablePlaces = new D47.Knowledge.GecNotablePlacesService(
             loggerFactory.CreateLogger<D47.Knowledge.GecNotablePlacesService>());
@@ -5299,30 +5305,6 @@ public sealed class AppHost : IDisposable
         });
     }
 
-    /// <summary>A turn the Commander addressed to a crew member.</summary>
-    public sealed class CrewTurn(
-        AppHost host,
-        CrewAddressed addressed,
-        string? persona,
-        VoiceSelection voice,
-        string? captionSpeaker)
-        : IDisposable
-    {
-        /// <summary>What to ask, with the name taken off the front.</summary>
-        public string Question { get; } =
-            addressed.Question.Length == 0 ? "The Commander is trying to get your attention." : addressed.Question;
-
-        public CrewMember Member => addressed.Member;
-
-        public void Dispose()
-        {
-            host.Turns.Persona = persona;
-            host.Voice.Voice = voice;
-            host.Voice.CaptionSpeaker = captionSpeaker;
-            host.Voice.SpeakingAs = VoiceRole.ShipAi;
-        }
-    }
-
     /// <summary>The voice of a turn answered by an addressed speaker. Disposing restores the ship AI's.</summary>
     public sealed class AddressedVoice(AppHost host, VoiceSelection voice, string? captionSpeaker) : IDisposable
     {
@@ -5344,35 +5326,6 @@ public sealed class AppHost : IDisposable
         Voice.CaptionSpeaker = addressed.Name;
 
         return restore;
-    }
-
-    /// <summary>
-    /// Whether this input was addressed to somebody in the fighter bay rather than to the ship's AI,
-    /// and if so, everything needed to answer as them (Phase 11, "Ship Crew").
-    /// </summary>
-    public CrewTurn? BeginCrewTurn(string input)
-    {
-        if (GameState.Active?.Crew is not { Any: true } crew
-            || CrewAddressing.Match(input, crew) is not { } addressed)
-        {
-            return null;
-        }
-
-        var persona = Turns.Persona;
-        var voice = Voice.Voice;
-        var captionSpeaker = Voice.CaptionSpeaker;
-
-        _logger.LogInformation("Turn addressed to crew member {Name}", addressed.Member.Name);
-
-        // Not a Guardian core.
-        Turns.Persona = CrewAddressing.Brief(addressed.Member, GameState.Active?.Ship.Name);
-        Voice.Voice = Cast.ForSender(addressed.Member.Name, isPlayer: false, VoiceRole.Crew);
-        Voice.SpeakingAs = VoiceRole.Crew;
-
-        // And the caption says who is answering (#201).
-        Voice.CaptionSpeaker = addressed.Member.Name;
-
-        return new CrewTurn(this, addressed, persona, voice, captionSpeaker);
     }
 
     private string? _voiceScopeSystem;

@@ -82,17 +82,17 @@ public sealed class CaptainLine(
             question.Length == 0 ? "The Commander is trying to get your attention." : question);
     }
 
-    /// <summary>Whether the utterance, less punctuation and the captain's name, is one of <see cref="Dismissals"/>.</summary>
-    public static bool IsDismissal(string input)
+    /// <summary>Whether the utterance, less punctuation and <paramref name="name"/>, is one of <see cref="Dismissals"/>.</summary>
+    public static bool IsDismissal(string input, string name = NpcChatter.CaptainName)
     {
         string[] words = new string([.. input.Replace('’', '\'').Where(c => char.IsLetter(c) || c is ' ' or '\'')])
             .Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
-        bool IsCaptain(string word) => string.Equals(word, NpcChatter.CaptainName, StringComparison.OrdinalIgnoreCase);
+        bool IsNamed(string word) => string.Equals(word, name, StringComparison.OrdinalIgnoreCase);
 
         return Is(words)
-               || (words.Length > 1 && IsCaptain(words[^1]) && Is(words[..^1]))
-               || (words.Length > 1 && IsCaptain(words[0]) && Is(words[1..]));
+               || (words.Length > 1 && IsNamed(words[^1]) && Is(words[..^1]))
+               || (words.Length > 1 && IsNamed(words[0]) && Is(words[1..]));
 
         static bool Is(string[] said) => Dismissals.Any(dismissal =>
             string.Equals(string.Join(' ', said), dismissal, StringComparison.OrdinalIgnoreCase));
