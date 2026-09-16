@@ -1050,7 +1050,7 @@ public class TheRoutingTabTests
     /// <summary>
     /// Pressing Plot, when it records a plan, leaves the surface on the new plan's result page with the
     /// new headline in the breadcrumb — the button used to just redraw the form and leave the Commander to
-    /// find "Show the last one" themselves (#212).
+    /// find "Show most recent" themselves (#212).
     /// </summary>
     [AvaloniaFact]
     public void PressingPlotOpensTheNewPlansResultPage()

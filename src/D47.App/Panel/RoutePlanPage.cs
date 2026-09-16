@@ -306,7 +306,7 @@ public sealed class RoutePlanPage : UserControl
         {
             var show = new Button
             {
-                Content = "Show the last one",
+                Content = "Show most recent",
                 Padding = new Thickness(12, 4),
                 MinHeight = 30,
             };
@@ -350,7 +350,7 @@ public sealed class RoutePlanPage : UserControl
                 status.Text = result.Content;
 
                 // The book is what the result level draws, and the capability has just written it — so
-                // redrawing the page is what puts "Show the last one" on the card.
+                // redrawing the page is what puts "Show most recent" on the card.
                 Refresh();
 
                 // A recorded plan is a new record in the book rather than the old one mutated (#200), so

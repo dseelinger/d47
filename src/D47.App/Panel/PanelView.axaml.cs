@@ -1003,7 +1003,7 @@ public partial class PanelView : UserControl
             [.. roots]);
 
         // A plot made anywhere - this tab's own button, or a spoken tool call - leaves the Plan page one
-        // redraw out of date, because "show the last one" is drawn from the book. Mini reads the same
+        // redraw out of date, because "Show most recent" is drawn from the book. Mini reads the same
         // book, so it moves with the same event.
         if (surface.Plans is { } plans)
         {

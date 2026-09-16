@@ -239,7 +239,7 @@ Persona, Callouts, Privacy and egress, and Diagnostics.
 ## 0.127.0 — Open the new plan after plotting
 
 Plotting the Neutron Plotter, Road to Riches or a trade run now opens that plan's result page rather
-than leaving the Commander to press "Show the last one" themselves. A second plot while its result page
+than leaving the Commander to press "Show most recent" themselves. A second plot while its result page
 is already open — from either surface's card, or by voice — updates the same page and its breadcrumb in
 place with the new plan, rather than showing a stale one under a stale heading. A plot that finds
 nothing to record leaves the surface on the form, as before.
