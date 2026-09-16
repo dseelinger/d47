@@ -22,22 +22,21 @@ nav_order: 4
   the one a Commander lands on.
 -->
 <div class="d47-eli5"><div class="d47-frame">
-<p class="intro">The reading you land on: you and the ship's AI, everything said, in order.</p>
+<p class="intro">The conversations you have with those in your ship.</p>
 <section>
-<h2><span class="num">1</span> This reading is the conversation, drawn as one.</h2>
-<svg viewBox="0 0 880 268" role="img" aria-label="Your question on the right, the answer on the left, and a note about the conversation across the middle">
+<h2><span class="num">1</span> Reads like an SMS thread.</h2>
+<svg viewBox="0 0 880 268" role="img" aria-label="Your words on the right, responses on the left, and a note when the ship's persona changes across the middle">
  <rect x="470" y="24" width="390" height="52" rx="12" fill="var(--accent-muted)" stroke="var(--accent)" stroke-width="2"/>
  <text x="844" y="56" text-anchor="end" font-size="16" fill="var(--text)">Where am I?</text>
  <rect x="20" y="92" width="470" height="52" rx="12" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="40" y="124" font-size="16" fill="var(--text)">We're holding at Jameson Memorial.</text>
  <text x="440" y="182" text-anchor="middle" font-size="15" font-weight="700" fill="var(--accent)">[Switched to Cora]</text>
  <text x="440" y="212" text-anchor="middle" font-size="15" fill="var(--text-muted)">Yours on the right. The ship's on the left. A note about the conversation sits across the middle.</text>
- <text x="440" y="244" text-anchor="middle" font-size="15" fill="var(--text-muted)">A mark like that is the panel speaking, not a voice in the conversation — so it takes no side.</text>
 </svg>
-<p class="body">The other three readings are files on disk, and each has its own help. This one is held in memory and is the only reading that is Directive 47's own.</p>
+<p class="body">Other sub-tabs are from files on your disk, and each has its own help file.</p>
 </section>
 <section>
-<h2><span class="num">2</span> Two ways in, and the microphone always says which.</h2>
+<h2><span class="num">2</span> Two ways to input your requests.</h2>
 <svg viewBox="0 0 880 288" role="img" aria-label="The ask box sends on Enter; the microphone indicator shows one of three states">
  <rect x="20" y="26" width="620" height="52" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="58" font-size="16" fill="var(--text-muted)">Type here, and Enter sends it</text>
@@ -56,57 +55,32 @@ nav_order: 4
  <circle cx="630" cy="176" r="9" fill="var(--accent)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="652" y="182" font-size="17" font-weight="800" fill="var(--accent)">MIC ON</text>
  <text x="725" y="216" text-anchor="middle" font-size="14" fill="var(--text-muted)">your voice is being kept</text>
- <text x="440" y="268" text-anchor="middle" font-size="15" fill="var(--text-muted)">Filled circle, not just a colour — so the state that matters is readable without telling two colours apart.</text>
 </svg>
-<p class="body">The third does not say <em>push-to-talk</em> on purpose. A key you are holding and a gate Directive 47 opened for itself are the same fact about your microphone, and naming the key there would be false half the time.</p>
+<p class="body">Besides <em>push-to-talk (PTT)</em> you can have D47 listen all the time, or on a wake-word, like "Alexa" or "Hey Google."</p>
 </section>
 <section>
-<h2><span class="num">3</span> The controls around it.</h2>
+<h2><span class="num">3</span> Additional controls.</h2>
 <svg viewBox="0 0 880 320" role="img" aria-label="Copy All, Search, the banknote, and Clear what is shown">
  <rect x="20" y="26" width="270" height="126" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="155" y="64" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">COPY ALL</text>
- <text x="155" y="96" text-anchor="middle" font-size="14" fill="var(--text-muted)">the whole conversation,</text>
- <text x="155" y="118" text-anchor="middle" font-size="14" fill="var(--text-muted)">not the selection</text>
+ <text x="155" y="96" text-anchor="middle" font-size="14" fill="var(--text-muted)">copies the whole conversation,</text>
+ <text x="155" y="118" text-anchor="middle" font-size="14" fill="var(--text-muted)">not just selected text</text>
  <text x="155" y="140" text-anchor="middle" font-size="14" fill="var(--text-muted)">— that is Ctrl+C</text>
  <rect x="305" y="26" width="270" height="126" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="64" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">SEARCH</text>
- <text x="440" y="96" text-anchor="middle" font-size="14" fill="var(--text-muted)">counts every match and</text>
+ <text x="440" y="96" text-anchor="middle" font-size="14" fill="var(--text-muted)">finds every match and</text>
  <text x="440" y="118" text-anchor="middle" font-size="14" fill="var(--text-muted)">steps you through them</text>
- <text x="440" y="140" text-anchor="middle" font-size="14" fill="var(--text-muted)">both ways</text>
+ <text x="440" y="140" text-anchor="middle" font-size="14" fill="var(--text-muted)">forward or back.</text>
  <rect x="590" y="26" width="270" height="126" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="725" y="64" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">THE BANKNOTE</text>
- <text x="725" y="96" text-anchor="middle" font-size="14" fill="var(--text-muted)">the receipt for the last</text>
- <text x="725" y="118" text-anchor="middle" font-size="14" fill="var(--text-muted)">response — what it used,</text>
- <text x="725" y="140" text-anchor="middle" font-size="14" fill="var(--text-muted)">and what it cost</text>
+ <text x="725" y="96" text-anchor="middle" font-size="14" fill="var(--text-muted)">tracks how much this and</text>
+ <text x="725" y="118" text-anchor="middle" font-size="14" fill="var(--text-muted)">previous sessions cost,</text>
+ <text x="725" y="140" text-anchor="middle" font-size="14" fill="var(--text-muted)">in detail</text>
  <rect x="20" y="180" width="840" height="76" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="440" y="212" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">Scroll what is shown above the fold — right-click, or Ctrl+L</text>
- <text x="440" y="240" text-anchor="middle" font-size="15" fill="var(--text-muted)">It deletes nothing — scroll back up and it is all still there. On all four readings.</text>
- <text x="440" y="288" text-anchor="middle" font-size="15" fill="var(--text-muted)">Scroll away from the newest line and a ↓ Newest button appears to bring you back.</text>
- <text x="440" y="312" text-anchor="middle" font-size="15" fill="var(--text-muted)">The banknote opens a window, so it is on the desktop only.</text>
-</svg>
-</section>
-<section>
-<h2><span class="num">4</span> Three settings stand behind every answer here.</h2>
-<svg viewBox="0 0 880 262" role="img" aria-label="Your voice is heard by Whisper, answered by the language model, and spoken by a voice — three separate settings">
- <rect x="20" y="34" width="234" height="112" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="137" y="72" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">HEARD</text>
- <text x="137" y="102" text-anchor="middle" font-size="15" fill="var(--text-muted)">Whisper turns your</text>
- <text x="137" y="124" text-anchor="middle" font-size="15" fill="var(--text-muted)">voice into words</text>
- <line x1="266" y1="90" x2="302" y2="90" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
- <polygon points="316,90 300,82 300,98" fill="var(--accent-muted)"/>
- <rect x="323" y="34" width="234" height="112" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="440" y="72" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">ANSWERED</text>
- <text x="440" y="102" text-anchor="middle" font-size="15" fill="var(--text-muted)">the language model,</text>
- <text x="440" y="124" text-anchor="middle" font-size="15" fill="var(--text-muted)">or nothing at all</text>
- <line x1="569" y1="90" x2="605" y2="90" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
- <polygon points="619,90 603,82 603,98" fill="var(--accent-muted)"/>
- <rect x="626" y="34" width="234" height="112" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="743" y="72" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">SPOKEN</text>
- <text x="743" y="102" text-anchor="middle" font-size="15" fill="var(--text-muted)">a voice reads the</text>
- <text x="743" y="124" text-anchor="middle" font-size="15" fill="var(--text-muted)">answer back</text>
- <rect x="20" y="170" width="840" height="52" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="440" y="202" text-anchor="middle" font-size="16" fill="var(--text)">Three separate settings, and a quiet page is one of them switched off rather than all three broken.</text>
- <text x="440" y="246" text-anchor="middle" font-size="15" fill="var(--text-muted)">The three links below go straight to those rows.</text>
+ <text x="440" y="212" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">Ctrl+L clears the page for less cluttered viewing</text>
+ <text x="440" y="240" text-anchor="middle" font-size="15" fill="var(--text-muted)">It deletes nothing — scroll back up and it's all still there for the session.</text>
+ <text x="440" y="288" text-anchor="middle" font-size="15" fill="var(--text-muted)">Scroll up and a "↓ Newest" button appears to bring you back to the latest.</text>
+ <text x="440" y="312" text-anchor="middle" font-size="15" fill="var(--text-muted)">The banknote is on only the desktop.</text>
 </svg>
 </section>
 <div class="next">

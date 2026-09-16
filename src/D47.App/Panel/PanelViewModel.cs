@@ -366,8 +366,8 @@ public sealed class PanelViewModel : INotifyPropertyChanged
 
     /// <summary>What the ask box says when it is empty.</summary>
     public string AskHint => _hasAsked
-        ? "What can I do?"
-        : "What can I do? — try \"where am I\" or \"what's your status\"";
+        ? "What can you do?"
+        : "What can you do? — try \"where am I\" or \"what's your status\"";
 
     /// <summary>Adds to the transcript.</summary>
     public void Append(
