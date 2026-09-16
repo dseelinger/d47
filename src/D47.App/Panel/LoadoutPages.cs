@@ -1306,7 +1306,8 @@ public sealed class IndexPage : LoadoutPage
                 toggle.Set(_switch.IsChecked == true);
 
                 // The cards are rebuilt because the drawing is part of the card, and re-laid because the
-                // height it needs changed with it.
+                // height it needs changed with it, which moves the selected card.
+                _revealed = null;
                 Refresh();
                 Lay(_scroller.Bounds.Width);
             };
@@ -1441,6 +1442,9 @@ public sealed class IndexPage : LoadoutPage
             box.IsVisible = _drawable;
         }
 
+        Control? selected = null;
+        string? selectedKey = null;
+
         foreach (var row in rows)
         {
             // Read off the trail rather than kept as a second piece of state (#110): the last crumb is what
@@ -1451,7 +1455,7 @@ public sealed class IndexPage : LoadoutPage
             var showing = _nav.Trail.Count > 0
                           && string.Equals(_nav.Trail[^1].Key, crumb.Key, StringComparison.Ordinal);
 
-            _cards.Children.Add(LoadoutPages.Card(
+            var card = LoadoutPages.Card(
                 row.Text,
                 row.Aside,
                 row.Marked,
@@ -1459,7 +1463,15 @@ public sealed class IndexPage : LoadoutPage
                 row.Standing,
                 row.Hull,
                 Drawings,
-                showing));
+                showing);
+
+            if (showing)
+            {
+                selected = card;
+                selectedKey = crumb.Key;
+            }
+
+            _cards.Children.Add(card);
         }
 
         _list.Children.Add(_cards);
@@ -1467,6 +1479,31 @@ public sealed class IndexPage : LoadoutPage
         // The scroller has its width already on a redraw; only the first pass through here is ahead of a
         // layout, and its SizeChanged catches that one.
         Lay(_scroller.Bounds.Width);
+
+        Reveal(selected, selectedKey);
+    }
+
+    /// <summary>The card last scrolled into view, so a redraw for the same selection leaves the list where it is.</summary>
+    private string? _revealed;
+
+    /// <summary>Scrolls a newly selected card fully into view, once layout has placed it.</summary>
+    private void Reveal(Control? card, string? key)
+    {
+        if (card is null || key is null)
+        {
+            _revealed = null;
+            return;
+        }
+
+        if (string.Equals(_revealed, key, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _revealed = key;
+
+        // Background runs after the layout pass, which is when the card has a position to scroll to.
+        Dispatcher.UIThread.Post(() => card.BringIntoView(), DispatcherPriority.Background);
     }
 
     private void Intend() => Mode.New(_prompts, Refresh);

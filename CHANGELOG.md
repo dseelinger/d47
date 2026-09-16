@@ -6,6 +6,16 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.145.0 — A tab's own settings fit a narrow column
+
+"Settings for this page" on the Fleet, Routing and Adventures tabs fits the width of its column, so
+it no longer shows a sideways scrollbar when the column is narrow.
+
+## 0.144.0 — The selected ship scrolls into view
+
+Selecting a ship on the Fleet tab scrolls the ship list so its card is fully visible, when the list
+is too long to show every ship at once.
+
 ## 0.143.0 — The Transcript copy button keeps its glyph
 
 Clicking Copy on the Transcript tab and waiting past the "Copied" state now brings back the

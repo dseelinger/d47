@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -74,6 +75,24 @@ public class ATabsOwnSettingsShowOnItTests
         Assert.False(nav.IsVisible);
         Assert.Equal(0, root.ColumnDefinitions[0].Width.Value);
         Assert.Equal(0, root.MinWidth);
+
+        window.Close();
+    }
+
+    /// <summary>An open strip at the narrowest a pane can be fits it, with no sideways scrolling.</summary>
+    [AvaloniaFact]
+    public void AnOpenStripAtTheNarrowestPaneDoesNotScrollSideways()
+    {
+        var (settings, viewState, paths) = TestSurface.Create();
+
+        viewState.Save(viewState.Load().With("fleet-ships", expanded: true));
+
+        var (view, window) = OpenStrip(settings, viewState, paths, "fleet-ships", DrillView.MinimumPaneWidth);
+
+        var scroller = (ScrollViewer)view.GetVisualDescendants().First(c => c.Name == "Scroller");
+
+        Assert.Equal(ScrollBarVisibility.Disabled, scroller.HorizontalScrollBarVisibility);
+        Assert.True(scroller.Extent.Width <= scroller.Viewport.Width);
 
         window.Close();
     }

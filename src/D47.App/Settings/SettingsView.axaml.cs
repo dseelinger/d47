@@ -498,6 +498,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         Root.ColumnDefinitions[0].Width = new GridLength(0);
         Root.MinWidth = 0;
 
+        // Laid out to the column's width, so the rows fit it instead of scrolling sideways.
+        Scroller.HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled;
+        Cards.HorizontalAlignment = HorizontalAlignment.Stretch;
+
         var rows = settings.RowsForPlace(placeId);
 
         var content = new StackPanel { Spacing = 18, Margin = new Thickness(0, 10, 0, 0) };
