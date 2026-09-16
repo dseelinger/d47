@@ -77,6 +77,7 @@ second road: no crash reporter, no analytics, no request log at the endpoint.
 |---|---|---|---|
 | An incident excerpt | `excerpts/<identifier>/` in the store | **30 days** | a lifecycle rule on the bucket |
 | A donated journal history | `corpus/<identifier>/` in the store | **indefinitely** — see below | nothing, deliberately |
+| A copy downloaded to be read | one folder on the holder's own machine | **until the object it came from leaves the store** | the utility that fetched it deletes it at the next listing that does not name it |
 | Which requests were made | nowhere | **not kept** | `observability` is off in `wrangler.toml` |
 | Who donated | nowhere | **not kept** | there is no account, no email and no directory of identifiers — a donation carries a random per-installation token and nothing else |
 

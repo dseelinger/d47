@@ -1,0 +1,41 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="D47.Donations.MainWindow"
+        Title="d47 donations"
+        Width="900" Height="600"
+        WindowStartupLocation="CenterScreen">
+
+  <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" Margin="12">
+
+    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
+      <Button x:Name="RefreshButton" Content="Refresh" />
+      <Button x:Name="OpenFolderButton" Content="Open folder" />
+      <TextBlock x:Name="FolderText" VerticalAlignment="Center" Opacity="0.8" />
+    </StackPanel>
+
+    <TextBlock x:Name="StatusText" Grid.Row="1" Margin="0,12,0,0" TextWrapping="Wrap" />
+
+    <TextBlock x:Name="DeletedText" Grid.Row="2" Margin="0,4,0,0" TextWrapping="Wrap" Opacity="0.8" />
+
+    <!-- The credential is asked for once. It is stored DPAPI-encrypted and never shown again. -->
+    <StackPanel x:Name="SetupPanel" Grid.Row="3" Margin="0,12,0,0" Spacing="8" IsVisible="False">
+      <TextBlock TextWrapping="Wrap"
+                 Text="Create an R2 API token in the Cloudflare dashboard with Object Read on d47-donations, and paste it here." />
+      <TextBox x:Name="AccountIdBox" PlaceholderText="Account ID" />
+      <TextBox x:Name="AccessKeyIdBox" PlaceholderText="Access key ID" />
+      <TextBox x:Name="SecretBox" PlaceholderText="Secret access key" PasswordChar="•" />
+      <Button x:Name="SaveCredentialsButton" Content="Save and connect" HorizontalAlignment="Left" />
+    </StackPanel>
+
+    <ListBox x:Name="DonationList"
+             Grid.Row="3"
+             Margin="0,12,0,0"
+             SelectionMode="Multiple"
+             FontFamily="Consolas,Cascadia Mono,monospace" />
+
+    <StackPanel Grid.Row="4" Orientation="Horizontal" Spacing="8" Margin="0,12,0,0">
+      <Button x:Name="DownloadButton" Content="Download selected" />
+    </StackPanel>
+
+  </Grid>
+</Window>

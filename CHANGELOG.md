@@ -6,6 +6,13 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.142.0 — The privacy notice covers a downloaded copy
+
+The donation privacy notice and the retention policy now state that a donation may be copied to the
+holder's machine to be read, that the copy is one file per donation in one folder, and that it is
+deleted once the object it came from has left the store. Nothing about what d47 sends, or when it
+asks, has changed.
+
 ## 0.141.0 — Where to farm engineering materials
 
 `find_material` now leads with two farming tiers ahead of the origins text: the general methods

@@ -13,10 +13,14 @@
     <Project Path="tests/D47.App.Tests/D47.App.Tests.csproj" />
     <Project Path="tests/D47.Audio.Tests/D47.Audio.Tests.csproj" />
     <Project Path="tests/D47.Core.Tests/D47.Core.Tests.csproj" />
+    <Project Path="tests/D47.Donations.Tests/D47.Donations.Tests.csproj" />
     <Project Path="tests/D47.Knowledge.Tests/D47.Knowledge.Tests.csproj" />
     <Project Path="tests/D47.Llm.Tests/D47.Llm.Tests.csproj" />
     <Project Path="tests/D47.Scenarios.Tests/D47.Scenarios.Tests.csproj" />
     <Project Path="tests/D47.Tts.Tests/D47.Tts.Tests.csproj" />
     <Project Path="tests/D47.Vr.Tests/D47.Vr.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/D47.Donations/D47.Donations.csproj" />
   </Folder>
 </Solution>

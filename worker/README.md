@@ -149,6 +149,26 @@ and against the receipt d47 wrote on the donor's own machine when it sent.
   what and when is the ambient collection this project rules out, arriving at the other end
   of the wire.
 
+## Reading what was donated
+
+**Nothing here reads the bucket, and that is what `/forget` rests on.** The erasure route treats the
+donor token as the only credential, which holds only while nothing can enumerate what is stored —
+so there is no list route and no read route, and `wrangler` can `get`, `put` and `delete` one named
+object but cannot list them.
+
+`tools/D47.Donations` is the custodian's own utility for the read side
+([#213](https://github.com/dseelinger/d47/issues/213)). It reaches the bucket over R2's
+S3-compatible API with an API token carrying Object Read on `d47-donations` and nothing else, so
+the Worker stays the only writer. It ships to nobody: `release.yml` publishes `D47.App` alone.
+
+It downloads one zip per donation into a fixed folder under `%LOCALAPPDATA%`, holding the payload
+decompressed, and refuses to write one whose SHA-256 does not match the object's `sha256` metadata.
+**That copy is deleted at the next successful listing that does not name its object** — so an
+erasure through `/forget`, and an excerpt reaching its thirty days, both reach the downloaded copy
+without anybody remembering to go and delete it. A listing that failed deletes nothing, because an
+unreachable store and an empty one must not be the same decision. A donated corpus is still never
+committed to this repository.
+
 ## Erasure on request — the runbook
 
 [#167](https://github.com/dseelinger/d47/issues/167). **A runbook is exactly the thing that goes

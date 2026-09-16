@@ -41,6 +41,13 @@ you send anything, derived from nothing about you, and stored in `data\donor-tok
 an installation. Nothing anywhere maps it to a person, because nothing anywhere holds a list of
 them — there is no account, no email address and no sign-up.
 
+**A donation may be copied to the holder's machine to be read.** An excerpt is evidence for a
+defect and a history is a replay case, and neither is any use unread. The copy is one file per
+donation, in one folder, made by a utility that holds a read-only credential and can neither write
+to the store nor delete from it. It is not a second store: when the object goes — because you asked
+for it to be deleted, or because an excerpt reached its 30 days — the copy goes with it, the next
+time that utility is opened.
+
 **What is not covered is a copy you carried somewhere yourself.** The review window can also put
 the excerpt on your clipboard or save it to a file, and where it goes after that is where it went.
 If you paste one into a public issue or a Discord channel, that copy is out of this project's
@@ -113,8 +120,9 @@ receipt in `data\donations\` names the exact object and its hash; failing that, 
 from `data\donor-token.txt` is the whole of your prefix in the store. A human deletion has no
 stated turnaround; the press above needs none.
 
-**What deletion reaches, and what it does not.** The data goes — the stored objects, and nothing
-else anywhere holds a copy. What does not go is what was decided because of it — the fix, the
+**What deletion reaches, and what it does not.** The data goes — the stored objects, and the
+holder's downloaded copy with them, at the next opening of the utility that fetched it. What does
+not go is what was decided because of it — the fix, the
 released build, the changelog line, the test that now passes. Those are the product of having read
 the data once; they are not the data, and a published release cannot be recalled in any case.
 Nothing donated has been committed to this repository, a journal history never will be, and the
