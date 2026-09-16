@@ -12,7 +12,7 @@ namespace D47.App.Tests;
 public class InShipHelpCaptureTests
 {
     [AvaloniaFact]
-    public void TheBandDrawsItsFourSectionsAndThreeCards()
+    public void TheBandDrawsItsThreeSectionsAndThreeCards()
     {
         var view = new PanelView { DataContext = new PanelViewModel() };
         view.EnableSettings(() => new TextBlock { Text = "settings" }, _ => { });
@@ -30,13 +30,12 @@ public class InShipHelpCaptureTests
             .Select(text => text.Text ?? string.Empty)
             .ToList();
 
-        // The intro, the four headings and the three cards — which together are the whole claim that this
+        // The intro, the three headings and the three cards — which together are the whole claim that this
         // page is about this reading rather than about the language model.
-        Assert.Contains(shown, text => text.StartsWith("The reading you land on", StringComparison.Ordinal));
-        Assert.Contains("This reading is the conversation, drawn as one.", shown);
-        Assert.Contains("Two ways in, and the microphone always says which.", shown);
-        Assert.Contains("The controls around it.", shown);
-        Assert.Contains("Three settings stand behind every answer here.", shown);
+        Assert.Contains("The conversations you have with those in your ship.", shown);
+        Assert.Contains("Reads like an SMS thread.", shown);
+        Assert.Contains("Two ways to input your requests.", shown);
+        Assert.Contains("Additional controls.", shown);
         Assert.Contains("Listening", shown);
         Assert.Contains("Language model", shown);
         Assert.Contains("Speech", shown);
@@ -45,7 +44,7 @@ public class InShipHelpCaptureTests
         // resources — the failure mode a parse test cannot see.
         var figures = view.GetVisualDescendants().OfType<HelpFigureView>().ToList();
 
-        Assert.Equal(4, figures.Count);
+        Assert.Equal(3, figures.Count);
         Assert.All(figures, figure => Assert.True(
             figure.Bounds.Width > 100 && figure.Bounds.Height > 40,
             $"a figure measured to {figure.Bounds.Width}x{figure.Bounds.Height}"));

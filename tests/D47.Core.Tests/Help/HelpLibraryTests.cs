@@ -366,7 +366,7 @@ public class HelpLibraryTests
 
         Assert.NotNull(article);
         Assert.Equal("In Ship", article.Title);
-        Assert.Equal(4, article.Sections.Count);
+        Assert.Equal(3, article.Sections.Count);
 
         Assert.Equal(
             new[] { "listening", "conversation", "speech" },
