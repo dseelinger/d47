@@ -80,13 +80,6 @@ public partial class PanelView : UserControl
     /// <summary>Whether the search affordance belongs on this surface.</summary>
     private bool _searchable;
 
-    /// <summary>
-    /// What the copy button says when it is not reporting on itself. "All", because the text on this
-    /// page is selectable and Ctrl+C already works on a selection — a button beside it saying "Copy"
-    /// reads as copying that selection (remediation.md 10, item 3).
-    /// </summary>
-    private const string CopyLabel = "Copy All";
-
     /// <summary>How the host shows the turn's figures, when it gave a way.</summary>
     private Action? _showTurnDetails;
 
@@ -3509,7 +3502,11 @@ public partial class PanelView : UserControl
         }
 
         await Task.Delay(TimeSpan.FromSeconds(2));
-        CopyButton.Content = CopyLabel;
+        Controls.Glyphs.Mark(
+            CopyButton,
+            Controls.Glyphs.Copy,
+            Theming.ThemeManager.AccentKey,
+            "Copy this whole page to the clipboard");
     }
 
     /// <summary>Scrolls the tab strip (remediation.md 10, item 1).</summary>

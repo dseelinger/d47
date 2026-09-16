@@ -6,6 +6,11 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.143.0 — The Transcript copy button keeps its glyph
+
+Clicking Copy on the Transcript tab and waiting past the "Copied" state now brings back the
+clipboard glyph, not the words "Copy All".
+
 ## 0.142.0 — The privacy notice covers a downloaded copy
 
 The donation privacy notice and the retention policy now state that a donation may be copied to the
