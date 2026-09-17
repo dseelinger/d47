@@ -61,6 +61,11 @@ public sealed record LoadoutCopy(string Value);
 /// <param name="Label">What it is, for the reading under the bar.</param>
 public readonly record struct LoadoutMark(double At, string Label);
 
+/// <summary>One coloured span of a stacked bar — a priority group's share of the fill (#253).</summary>
+/// <param name="Group">The priority group, 1 to 5.</param>
+/// <param name="Share">This group's width, 0 to 1 of the bar.</param>
+public readonly record struct LoadoutSegment(int Group, double Share);
+
 /// <summary>
 /// One gauge at the head of a ship's slot list — power, or jump range (Phase 38, "A build you can
 /// watch").
@@ -76,6 +81,12 @@ public sealed record LoadoutGauge(string Name, string Reading, double Fill, Load
 {
     /// <summary>The other figures on the same bar.</summary>
     public IReadOnlyList<LoadoutMark> Marks { get; init; } = [];
+
+    /// <summary>
+    /// The fill split into coloured spans, one per priority group — empty for a bar drawn as one fill
+    /// (#253).
+    /// </summary>
+    public IReadOnlyList<LoadoutSegment> Segments { get; init; } = [];
 
     /// <summary>
     /// Figures written under the point on the bar they belong to, rather than joined into a sentence

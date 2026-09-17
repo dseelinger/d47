@@ -49,6 +49,13 @@ public sealed record PowerGauge(
 
     /// <summary>Whether the build fits with its hardpoints out, which is the question.</summary>
     public bool Fits => Capacity is not { } made || Deployed <= made;
+
+    /// <summary>
+    /// Each priority group's cumulative deployed draw, 1 to 5, keyed by group — or null where a
+    /// drawing slot's group could not be told, which happens only for a ship boarded before #253 and
+    /// not boarded since (#253).
+    /// </summary>
+    public IReadOnlyDictionary<int, double>? Groups { get; init; }
 }
 
 /// <summary>A jump range at three masses, because a Commander flies at all three (Phase 38).</summary>
@@ -187,6 +194,8 @@ public static class ShipGauges
         double retracted = 0, deployed = 0;
         double? capacity = null;
         var draws = new Dictionary<string, SlotDraw>(StringComparer.OrdinalIgnoreCase);
+        var groups = new Dictionary<int, double>();
+        var everyGroupKnown = true;
 
         foreach (var part in parts)
         {
@@ -217,12 +226,28 @@ public static class ShipGauges
             if (draw is { } megawatts && megawatts != 0 && !part.IsVague)
             {
                 draws[part.Slot] = new SlotDraw(megawatts, part.IsPlanned ? FigureKind.Modelled : FigureKind.Measured);
+
+                // A planned slot counts in its plan's group; a fitted, unplanned slot counts in the
+                // game's own group (#253).
+                var group = part.IsPlanned ? part.Plan!.Priority : part.Fitted?.Priority;
+
+                if (group is { } known)
+                {
+                    groups[known] = groups.GetValueOrDefault(known) + megawatts;
+                }
+                else
+                {
+                    everyGroupKnown = false;
+                }
             }
         }
 
         return deployed == 0 && capacity is null
             ? null
-            : new PowerGauge(retracted, deployed, capacity, kind, draws);
+            : new PowerGauge(retracted, deployed, capacity, kind, draws)
+            {
+                Groups = everyGroupKnown ? groups : null,
+            };
     }
 
     /// <summary>The three needles.</summary>

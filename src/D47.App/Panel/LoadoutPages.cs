@@ -781,17 +781,52 @@ public static class LoadoutPages
         Grid.SetColumnSpan(background, 2);
         track.Children.Add(background);
 
-        var filled = new Border { CornerRadius = new CornerRadius(2) };
-
-        Themed(
-            filled,
-            Border.BackgroundProperty,
+        var fillKey =
             gauge.Tone == LoadoutTone.Danger ? ThemeManager.DangerKey
             : gauge.Modelled ? ThemeManager.InfoKey
-            : ThemeManager.AccentKey);
+            : ThemeManager.AccentKey;
 
-        Grid.SetColumn(filled, 0);
-        track.Children.Add(filled);
+        if (gauge.Segments.Count > 0)
+        {
+            // A stacked bar, one span per priority group, each in the gauge's own fill colour and
+            // separated by a gap in the track underneath (#253).
+            var at = 0.0;
+
+            foreach (var segment in gauge.Segments)
+            {
+                var start = Math.Clamp(at, 0, 1);
+                var width = Math.Clamp(segment.Share, 0, 1 - start);
+
+                var over = new Grid
+                {
+                    ColumnDefinitions = new ColumnDefinitions
+                    {
+                        new(new GridLength(start, GridUnitType.Star)),
+                        new(new GridLength(width, GridUnitType.Star)),
+                        new(new GridLength(1 - start - width, GridUnitType.Star)),
+                    },
+                };
+
+                var span = new Border { CornerRadius = new CornerRadius(2), Margin = new Thickness(1, 0) };
+
+                Themed(span, Border.BackgroundProperty, fillKey);
+                Grid.SetColumn(span, 1);
+                over.Children.Add(span);
+
+                Grid.SetColumnSpan(over, 2);
+                track.Children.Add(over);
+
+                at += width;
+            }
+        }
+        else
+        {
+            var filled = new Border { CornerRadius = new CornerRadius(2) };
+
+            Themed(filled, Border.BackgroundProperty, fillKey);
+            Grid.SetColumn(filled, 0);
+            track.Children.Add(filled);
+        }
 
         // Each mark, as its own two-column grid over the same track.
         foreach (var mark in gauge.Marks)

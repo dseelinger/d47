@@ -33,6 +33,12 @@ public sealed record SlotPlan(
     /// </summary>
     public string? Variant { get; init; }
 
+    /// <summary>
+    /// The priority group the planned module should sit in, 1 to 5, defaulting to 1 so a build saved
+    /// before this existed reads as group 1 rather than as none (#253).
+    /// </summary>
+    public int Priority { get; init; } = 1;
+
     /// <summary>Whether anything is actually wanted here, or the line is an empty shell.</summary>
     public bool IsEmpty =>
         Blueprint is null && Grade == 0 && Experimental is null && Module is null;

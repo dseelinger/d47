@@ -89,6 +89,13 @@ public sealed record ShipModule(string Slot, string Item, bool Powered, int? Hea
     /// </summary>
     public double? Quality { get; init; }
 
+    /// <summary>
+    /// The priority group, 1 to 5, that decides when the power plant switches this module off — Elite's
+    /// own group number, one more than the zero-based figure <c>Loadout</c> writes. Written for every
+    /// module, including ones that draw no power, where the figure means nothing (#253).
+    /// </summary>
+    public int? Priority { get; init; }
+
     /// <summary>Who rolled it, where Elite names them.</summary>
     public string? Engineer { get; init; }
 
@@ -110,6 +117,8 @@ public sealed record ShipModule(string Slot, string Item, bool Powered, int? Hea
             Health: element.Double("Health") is { } health ? (int)Math.Round(health * 100) : null,
             Value: element.Long("Value"))
         {
+            Priority = element.Int("Priority") is { } group ? group + 1 : null,
+
             // "BlueprintName" is the current spelling. "Blueprint" is what journals written before 3.0 used;
             // there are zero of them in the 912-journal corpus, which starts seven years after that, so this
             // is carried on EDDiscovery's authority rather than on evidence and costs one fallback.

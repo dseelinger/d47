@@ -351,6 +351,84 @@ public class BuildGaugeTests
     }
 
     [Fact]
+    public void AModulesPriorityIsOneMoreThanTheJournalsOwnGroup()
+    {
+        var loadout = Flown(Predestinatio);
+
+        // "Priority":1 in the fixture.
+        Assert.Equal(2, loadout.Modules.First(module => module.Slot == "PowerPlant").Priority);
+
+        // "Priority":0 in the fixture.
+        Assert.Equal(1, loadout.Modules.First(module => module.Slot == "MainEngines").Priority);
+    }
+
+    [Fact]
+    public void EachDrawingSlotIsCountedInItsPriorityGroup()
+    {
+        var loadout = Flown(
+            """
+            {"timestamp":"2026-09-17T00:00:00Z","event":"Loadout","Ship":"cobramkv","ShipID":10,"UnladenMass":190.0,"MaxJumpRange":20.0,"CargoCapacity":0,"Modules":[
+            {"Slot":"PowerPlant","Item":"int_powerplant_size4_class5","On":true,"Priority":0,"Health":1.0},
+            {"Slot":"MainEngines","Item":"int_engine_size4_class5","On":true,"Priority":0,"Health":1.0},
+            {"Slot":"FrameShiftDrive","Item":"int_hyperdrive_overcharge_size4_class5","On":true,"Priority":2,"Health":1.0}]}
+            """);
+
+        var power = ShipGauges.Read(Build(loadout), loadout).Power;
+
+        Assert.NotNull(power);
+        Assert.NotNull(power.Groups);
+
+        var engine = EliteSpecifications.Module("int_engine_size4_class5")!.Power!.Value;
+        var fsd = EliteSpecifications.Module("int_hyperdrive_overcharge_size4_class5")!.Power!.Value;
+
+        // Priority 0 and 2 in the journal are groups 1 and 3.
+        Assert.Equal(2, power.Groups!.Count);
+        Assert.Equal(engine, power.Groups[1], 3);
+        Assert.Equal(fsd, power.Groups[3], 3);
+    }
+
+    [Fact]
+    public void APlannedSlotCountsInThePlansGroupRatherThanTheGamesOwn()
+    {
+        // FrameShiftDrive is Priority 0 — group 1 — as flown.
+        var loadout = Flown(Predestinatio);
+
+        var planned = ShipGauges.Read(
+            Build(loadout, new SlotPlan("FrameShiftDrive", Module: "Hyperdrive")
+            {
+                Variant = "int_hyperdrive_overcharge_size4_class5",
+                Priority = 4,
+            }),
+            loadout).Power;
+
+        Assert.NotNull(planned);
+        Assert.NotNull(planned.Groups);
+
+        var fsd = planned.Draw["FrameShiftDrive"].Megawatts;
+
+        Assert.Equal(fsd, planned.Groups![4], 6);
+        Assert.Equal(planned.Deployed, planned.Groups.Values.Sum(), 6);
+    }
+
+    [Fact]
+    public void ADrawingSlotWithNoRecordedPriorityLeavesTheSplitUnknown()
+    {
+        // No boarding since #253 shipped — the fixture never carries a Priority for MainEngines,
+        // the way a ship remembered from before this landed would not.
+        var loadout = Flown(
+            """
+            {"timestamp":"2026-09-17T00:00:00Z","event":"Loadout","Ship":"cobramkv","ShipID":11,"UnladenMass":190.0,"MaxJumpRange":20.0,"CargoCapacity":0,"Modules":[
+            {"Slot":"PowerPlant","Item":"int_powerplant_size4_class5","On":true,"Priority":0,"Health":1.0},
+            {"Slot":"MainEngines","Item":"int_engine_size4_class5","On":true,"Health":1.0}]}
+            """);
+
+        var power = ShipGauges.Read(Build(loadout), loadout).Power;
+
+        Assert.NotNull(power);
+        Assert.Null(power.Groups);
+    }
+
+    [Fact]
     public void ABuildWithNoPlantSaysThatRatherThanZero()
     {
         var loadout = Flown(

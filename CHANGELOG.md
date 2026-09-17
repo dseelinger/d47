@@ -6,6 +6,15 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.154.0 — Split the power bar by priority group
+
+The Power gauge now splits into one span per priority group — the numbers Elite switches modules
+off in, in order, when the plant cannot meet the draw — instead of one flat fill, with each
+group's cumulative deployed draw labelled underneath. The bar also marks the 20%, 40% and 50% thresholds where a
+damaged or destroyed plant's output falls. A fitted module's group shows read-only in its detail
+pane; a planned module that still needs work gets a stepper for its group, 1 to 5. A ship boarded
+before this shipped shows one flat bar and a note to board it again.
+
 ## 0.153.0 — Show planned megawatts on each slot row
 
 A ship's slot rows now carry a megawatts figure: what the planned module draws with its blueprint

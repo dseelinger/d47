@@ -49,7 +49,7 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
            "ShipName":"Kestrel","ShipIdent":"KE-01","MaxJumpRange":42.5,"HullValue":100,
            "ModulesValue":200,"Rebuy":15,"HullHealth":1.0,"UnladenMass":400.0,"CargoCapacity":64,
            "FuelCapacity":{"Main":32.0,"Reserve":1.07},
-           "Modules":[{"Slot":"MainEngines","Item":"{{{module}}}","On":true,"Health":1.0,"Value":900,
+           "Modules":[{"Slot":"MainEngines","Item":"{{{module}}}","On":true,"Priority":1,"Health":1.0,"Value":900,
                        "Engineering":{"BlueprintName":"Engine_Dirty","Level":5,"Quality":0.92,
                                       "ExperimentalEffect":"special_engine_overloaded",
                                       "Engineer":"Felicity Farseer","EngineerID":300100,
@@ -574,6 +574,9 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
         Assert.Equal("Engine_Dirty", module.Blueprint);
         Assert.Equal("Felicity Farseer", module.Engineer);
         Assert.Equal(52.3, Assert.Single(module.Modifiers).Value);
+
+        // Priority 1 in the journal, group 2 as Elite's outfitting screen numbers it (#253).
+        Assert.Equal(2, module.Priority);
     }
 
     private static string ResetOf(string fid) =>

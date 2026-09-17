@@ -161,6 +161,7 @@ public sealed class ShipBuildStore(string path, ILogger<ShipBuildStore> logger)
                     Experimental = plan.Experimental,
                     Module = plan.Module,
                     Variant = plan.Variant,
+                    Priority = plan.Priority,
                 })],
             })],
         };
@@ -291,6 +292,10 @@ public sealed class ShipBuildStore(string path, ILogger<ShipBuildStore> logger)
                     Blank(slot.Module))
                 {
                     Variant = Blank(slot.Variant),
+
+                    // Absent on a build saved before this existed, which reads as group 1 rather than as
+                    // unplanned (#253).
+                    Priority = slot.Priority ?? 1,
                 });
             }
 
@@ -356,5 +361,7 @@ public sealed class ShipBuildStore(string path, ILogger<ShipBuildStore> logger)
 
         /// <summary>The exact module by symbol, where one was chosen.</summary>
         public string? Variant { get; init; }
+
+        public int? Priority { get; init; }
     }
 }

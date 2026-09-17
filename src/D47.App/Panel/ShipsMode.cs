@@ -22,6 +22,9 @@ public sealed class ShipsMode(
     /// <summary>The chooser key for "keep the module this plan already names".</summary>
     private const string KeepPlanned = "keep:planned";
 
+    /// <summary>Every priority group a stepper offers, highest first (#253).</summary>
+    private static readonly IReadOnlyList<int> PriorityOffered = [5, 4, 3, 2, 1];
+
     public string RootKey => LoadoutPages.FleetRoot;
 
     public string RootWord => "Ships";
@@ -417,7 +420,10 @@ public sealed class ShipsMode(
         return drawn;
     }
 
-    /// <summary>The power bar: filled to the deployed draw, marked where the retracted draw sits.</summary>
+    /// <summary>
+    /// The power bar: split into one span per priority group where every drawing slot's group is
+    /// known, and marked where the damaged-plant thresholds and the retracted draw sit (#253).
+    /// </summary>
     private static LoadoutGauge Gauge(PowerGauge power)
     {
         var modelled = power.Kind == FigureKind.Modelled;
@@ -435,24 +441,68 @@ public sealed class ShipsMode(
         var reading =
             $"{Megawatts(power.Deployed)} of {Megawatts(made)} · {Percent(power.DeployedShare)} deployed";
 
+        // The E:D PvE Combat wiki's Power Priorities page, a community source rather than a Frontier one:
+        // malfunctioning (integrity under 80%, at random) gives 40% output, destroyed (0%) gives 50%, and
+        // both together give 20%.
+        var marks = new List<LoadoutMark>
+        {
+            new(power.Retracted / made, $"{Percent(power.RetractedShare)} retracted"),
+            new(0.2, "both"),
+            new(0.4, "malfunctioning"),
+            new(0.5, "destroyed"),
+        };
+
+        List<LoadoutSegment> segments;
+        List<LoadoutMark> scale;
+        string? note;
+
+        if (power.Groups is { } groups)
+        {
+            segments = [];
+            scale = [];
+
+            var cumulative = 0.0;
+
+            foreach (var group in groups.OrderBy(pair => pair.Key))
+            {
+                var share = group.Value / made;
+
+                segments.Add(new LoadoutSegment(group.Key, share));
+                cumulative += share;
+
+                scale.Add(new LoadoutMark(
+                    cumulative, $"{group.Key.ToString(CultureInfo.InvariantCulture)}: {Megawatts(group.Value)}"));
+            }
+
+            note = power.Overage is { } over ? $"{Megawatts(over)} over with the hardpoints out." : null;
+        }
+        else
+        {
+            segments = [];
+
+            // **Three figures under the points they belong to** (the Commander's instruction, 2026-09-01).
+            scale =
+            [
+                new LoadoutMark(power.Retracted / made, Percent(power.RetractedShare)),
+                new LoadoutMark(1, "100%"),
+                new LoadoutMark(power.Deployed / made, Percent(power.DeployedShare)),
+            ];
+
+            note = power.Overage is { } over
+                ? $"{Megawatts(over)} over with the hardpoints out."
+                : "Board this ship once to read its priority groups.";
+        }
+
         return new LoadoutGauge(
             "Power",
             reading,
             power.Deployed / made,
             power.Fits ? LoadoutTone.Body : LoadoutTone.Danger)
         {
-            Marks = [new LoadoutMark(power.Retracted / made, $"{Percent(power.RetractedShare)} retracted")],
-
-            // **Three figures under the points they belong to** (the Commander's instruction, 2026-09-01).
-            Scale =
-            [
-                new LoadoutMark(power.Retracted / made, Percent(power.RetractedShare)),
-                new LoadoutMark(1, "100%"),
-                new LoadoutMark(power.Deployed / made, Percent(power.DeployedShare)),
-            ],
-            Note = power.Overage is { } over
-                ? $"{Megawatts(over)} over with the hardpoints out."
-                : null,
+            Marks = marks,
+            Scale = scale,
+            Segments = segments,
+            Note = note,
             Modelled = modelled,
         };
     }
@@ -1080,6 +1130,15 @@ public sealed class ShipsMode(
                 LoadoutTone.Danger));
         }
 
+        // The group as the game reports it, read-only, and only for a module the power gauge actually
+        // counts — a group on a module that draws nothing is meaningless (#253).
+        if (module.Priority is { } group
+            && ShipGauges.Read(build, seen.Loadout, LiveDraw(build)).Power?.Draw.ContainsKey(slot) is true)
+        {
+            lines.Add(new LoadoutLine(
+                $"Priority group {group.ToString(CultureInfo.InvariantCulture)}.", LoadoutTone.Body));
+        }
+
         return lines;
     }
 
@@ -1109,6 +1168,21 @@ public sealed class ShipsMode(
             // (remediation.md 17, item 11).
             new(plan.Describe(withGrade: step is null), LoadoutTone.Body) { Step = step },
         };
+
+        // The planned group, steppable, where the slot still has work left and draws power at all (#253).
+        var fitted = Modules(build).FirstOrDefault(candidate =>
+            string.Equals(candidate.Slot, slot, StringComparison.OrdinalIgnoreCase));
+
+        if (Outstanding(plan, fitted)
+            && ShipGauges.Read(build, Picture(build)?.Loadout, LiveDraw(build)).Power?.Draw.ContainsKey(slot) is true)
+        {
+            lines.Add(new LoadoutLine(
+                $"Priority group {plan.Priority.ToString(CultureInfo.InvariantCulture)}", LoadoutTone.Body)
+            {
+                Step = new LoadoutStep(
+                    plan.Priority, PriorityOffered, group => ships.Plan(build.Id, plan with { Priority = group })),
+            });
+        }
 
         // What the engineering does, where something has been chosen.
         var rolled = BlueprintCatalogue.Named(plan.Blueprint, plan.Module)

@@ -202,6 +202,7 @@ public sealed class LoadoutStore(string path, ILogger<LoadoutStore> logger)
     private static ShipModule Rehydrate(ModuleRecord record) =>
         new(record.Slot, record.Item, record.Powered, record.Health, record.Value)
         {
+            Priority = record.Priority,
             Blueprint = record.Blueprint,
             BlueprintLevel = record.BlueprintLevel,
             Experimental = record.Experimental,
@@ -255,6 +256,7 @@ public sealed class LoadoutStore(string path, ILogger<LoadoutStore> logger)
         Powered = module.Powered,
         Health = module.Health,
         Value = module.Value,
+        Priority = module.Priority,
         Blueprint = module.Blueprint,
         BlueprintLevel = module.BlueprintLevel,
         Experimental = module.Experimental,
@@ -338,6 +340,8 @@ public sealed class LoadoutStore(string path, ILogger<LoadoutStore> logger)
         public int? Health { get; set; }
 
         public long? Value { get; set; }
+
+        public int? Priority { get; set; }
 
         public string? Blueprint { get; set; }
 
