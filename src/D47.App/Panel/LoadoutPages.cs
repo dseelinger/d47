@@ -561,6 +561,24 @@ public static class LoadoutPages
         Margin = new Thickness(0, 12, 0, 4),
     };
 
+    /// <summary>
+    /// The name atop a slot detail pane, one rank above <see cref="Heading"/> — no top margin, so the
+    /// pane does not open with a gap (#249).
+    /// </summary>
+    internal static TextBlock SlotName(string text)
+    {
+        var block = new SelectableTextBlock
+        {
+            Text = text,
+            FontSize = TypeScale.Subheading,
+            FontWeight = FontWeight.Bold,
+        };
+
+        Themed(block, TextBlock.ForegroundProperty, ThemeManager.TextKey);
+
+        return block;
+    }
+
     internal static Button Press(string label, Action pressed)
     {
         var button = new Button
@@ -1988,6 +2006,14 @@ public sealed class SlotPage : LoadoutPage
     protected override void Refresh()
     {
         _body.Children.Clear();
+
+        // Resolved from the row rather than the crumb: LoadoutPages.Slot, the crumb a voice or tool route
+        // builds, carries the raw slot symbol as Word, not the name a Commander reads (#249).
+        var name = Mode.Slots(_item)
+            .FirstOrDefault(candidate => string.Equals(candidate.Key, $"{_item}|{_slot}", StringComparison.Ordinal))
+            ?.Word ?? _slot;
+
+        _body.Children.Add(LoadoutPages.SlotName(name));
 
         _body.Children.Add(LoadoutPages.Heading("Fitted"));
 

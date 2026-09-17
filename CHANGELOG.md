@@ -6,6 +6,12 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.150.0 — Name the slot atop its detail pane
+
+The slot detail pane now opens with the slot's own name — "Large Hardpoint 1", "Utility Mount 1",
+"Compartment 3 (size 5)" — above the existing "Fitted" and "Planned" headings, on ships and on
+foot. Previously the pane opened with "Fitted" alone and said nothing about which slot it was.
+
 ## 0.149.0 — Remove fulfilled checklist items when set
 
 A new Checklist setting, off by default, removes a derived item from the list once it is done
