@@ -26,24 +26,6 @@ namespace D47.App.Tests;
 /// </summary>
 public class TheFleetTabIsInTheHeadsetTests
 {
-    /// <summary>The repo's own hull art, so the drawings switch has something to switch off.</summary>
-    private static string Assets
-    {
-        get
-        {
-            var at = new DirectoryInfo(AppContext.BaseDirectory);
-
-            while (at is not null && !Directory.Exists(Path.Combine(at.FullName, "assets", "ships")))
-            {
-                at = at.Parent;
-            }
-
-            return at is null
-                ? throw new DirectoryNotFoundException("assets/ships not found above the test binary")
-                : Path.Combine(at.FullName, "assets", "ships");
-        }
-    }
-
     private static ChecklistService Checklists(string folder, Func<CommanderGameState?> state) =>
         new(
             new ChecklistStore(Path.Combine(folder, "checklist.json"), NullLogger<ChecklistStore>.Instance),
@@ -73,7 +55,7 @@ public class TheFleetTabIsInTheHeadsetTests
     /// <summary>The headset's own copy of the panel, on the Fleet tab, every mode wired.</summary>
     private static (VrPanelSurface Panel, VrPixels Pixels) Headset()
     {
-        var (settings, viewState, paths) = TestSurface.Create();
+        var (settings, _, paths) = TestSurface.Create();
 
         // Full, said out loud: mini carries no buttons and there would be nothing to press.
         settings.Apply(
@@ -107,7 +89,7 @@ public class TheFleetTabIsInTheHeadsetTests
             gameState: state,
             onFoot: onFoot,
             modulePower: () => ModulePower.None,
-            drawings: new ShipsDrawingsMemory(viewState));
+            hullArt: () => settings.Current.Ui.HullArt);
 
         Dispatcher.UIThread.RunJobs();
 
@@ -263,40 +245,6 @@ public class TheFleetTabIsInTheHeadsetTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(2, panel.Nav.Trail.Count);
-    }
-
-    /// <summary>And the mode switch beside the cards: a <see cref="ToggleSwitch"/>, the ray presses it too.</summary>
-    [AvaloniaFact]
-    public void TheFleetSwitchTakesARayPress()
-    {
-        // The switch withdraws itself when the fleet has no captured hull to draw (LoadoutPages.IndexPage.
-        // Refresh) - "python" needs its own art on disk to make the switch worth pressing.
-        ShipArt.Shipped = null;
-        ShipArt.Folder = Assets;
-
-        try
-        {
-            var (panel, pixels) = Headset();
-
-            Draw(panel, pixels, LoadoutPages.FleetRoot);
-
-            // Not just "any ToggleSwitch": PanelView carries its own raw-JSON switch, hidden but still in
-            // the visual tree, and FirstOrDefault would happily land on that one instead.
-            var toggle = Pressable(panel, control => control is ToggleSwitch { Name: "FleetToggle" });
-
-            Assert.NotNull(toggle);
-
-            var before = ((ToggleSwitch)toggle!).IsChecked;
-
-            Assert.True(Press(panel, pixels, toggle!));
-            Dispatcher.UIThread.RunJobs();
-
-            Assert.NotEqual(before, ((ToggleSwitch)toggle!).IsChecked);
-        }
-        finally
-        {
-            ShipArt.Folder = null;
-        }
     }
 
     /// <summary>

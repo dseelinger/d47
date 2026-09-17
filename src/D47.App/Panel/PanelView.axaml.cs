@@ -624,12 +624,12 @@ public partial class PanelView : UserControl
         Func<D47.Core.Journal.CommanderGameState?> state,
         D47.Core.Loadout.OnFootPlanService? onFoot = null,
         Func<D47.Core.Journal.ModulePower>? modulePower = null,
-        ShipsDrawingsMemory? drawings = null,
+        Func<bool>? hullArt = null,
 
         // Ships' own settings, on the tab they only affect (#218).
         Func<Control?>? settingsStrip = null)
     {
-        var shipsMode = new ShipsMode(ships, checklists, state, modulePower, drawings);
+        var shipsMode = new ShipsMode(ships, checklists, state, modulePower, hullArt);
 
         // Kept, so the tick has something to invalidate (remediation.md 17, item 7).
         _loadoutMode = shipsMode;
@@ -839,6 +839,9 @@ public partial class PanelView : UserControl
 
         return changed;
     }
+
+    /// <summary>Redraws an open Ships page after the Hull pictures setting changes (#247).</summary>
+    public void InvalidateLoadout() => _loadoutMode?.Invalidate();
 
     private ShipsMode? _loadoutMode;
     private OnFootMode? _onFootMode;

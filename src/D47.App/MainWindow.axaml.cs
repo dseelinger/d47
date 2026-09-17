@@ -215,7 +215,7 @@ public partial class MainWindow : Window
                 () => host.GameState.Active,
                 host.OnFootPlans,
                 () => host.ModulePower,
-                new ShipsDrawingsMemory(host.ViewState),
+                () => host.Settings.Current.Ui.HullArt,
                 settingsStrip: () => BuildSettingsStrip(LoadoutPages.FleetRoot));
 
             // Where the hull art is read from, in the order it is searched.
@@ -470,6 +470,11 @@ public partial class MainWindow : Window
                 || change.Key == VrCapability.ResizeHotkeyKey)
             {
                 BindHeadsetZoomAndResizeKeys();
+            }
+
+            if (change.Key == ShipsCapability.HullArtKey)
+            {
+                Panel.InvalidateLoadout();
             }
         });
 

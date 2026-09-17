@@ -182,8 +182,8 @@ public static class EgressDisclosure
             : EgressEntry.Silent(
                 HullArt,
                 NameOf(HullArt),
-                "Hull pictures are off, so nothing is fetched and every ship keeps the small drawing that "
-                + "came with the build."),
+                "Hull pictures are off, so nothing is fetched, fleet cards show no drawing, and a ship's "
+                + "own page shows no picture and no turntable, even for a hull already on disk."),
 
         UpdateCheck => settings.Updates.CheckOnStartup
             ? new EgressEntry(

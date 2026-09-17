@@ -14,7 +14,7 @@ public sealed class ShipsMode(
     ChecklistService checklists,
     Func<CommanderGameState?> state,
     Func<ModulePower>? measured = null,
-    ShipsDrawingsMemory? drawings = null) : ILoadoutMode
+    Func<bool>? hullArt = null) : ILoadoutMode
 {
     /// <summary>A row for a ship the journal reports and nothing has planned for yet.</summary>
     private const string Unplanned = "new:";
@@ -138,11 +138,8 @@ public sealed class ShipsMode(
 
     public bool Cards => true;
 
-    /// <summary>The drawings switch, for a fleet that has somewhere to remember it.</summary>
-    public LoadoutToggle? IndexToggle =>
-        drawings is null
-            ? null
-            : new LoadoutToggle("Large cards", drawings.Drawings, drawings.Remember);
+    /// <summary>Whether hull pictures are on, read at draw time from the Hull pictures setting (#247).</summary>
+    public bool Pictures => hullArt?.Invoke() ?? true;
 
     /// <summary>A hull to plan a build for before it is bought.</summary>
     public void New(PanelPrompts prompts, Action done) =>

@@ -16,7 +16,7 @@ namespace D47.App.Tests;
 
 /// <summary>
 /// The Ships index draws each hull's own artwork on its card, the ship's own page draws it large, and
-/// the switch at the head of the index puts the pictures away again.
+/// the Hull pictures setting puts both away again (#247).
 /// </summary>
 public class TheFleetCardsCarryTheirHullTests
 {
@@ -79,7 +79,7 @@ public class TheFleetCardsCarryTheirHullTests
         return Stocked(paths, files.Length == 0 ? ["corsair.png"] : files);
     }
 
-    private static (PanelView Panel, ViewStateStore Store) Fleet(
+    private static (PanelView Panel, Action<bool> SetHullArt) Fleet(
         bool drawings = true, params string[] files)
     {
         var paths = new D47.Core.AppPaths(TempFolders.Create("d47-fleet-card-art-tests"));
@@ -108,16 +108,13 @@ public class TheFleetCardsCarryTheirHullTests
         ships.BuildFor(12, "Corsair", "Reaper");
         ships.BuildFor(13, "Type8", "Cartage");
 
-        var store = new ViewStateStore(paths, NullLogger<ViewStateStore>.Instance);
-
-        if (!drawings)
-        {
-            store.Save(store.Load() with { ShipsDrawingsOff = true });
-        }
+        // Read at draw time, the same way the real Hull pictures setting is (#247) — a plain closure over a
+        // local rather than a settings store, since nothing here cares what else is on the record.
+        var hullArt = drawings;
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
-        panel.EnableLoadout(ships, checklists, () => null, null, null, new ShipsDrawingsMemory(store));
+        panel.EnableLoadout(ships, checklists, () => null, null, null, () => hullArt);
 
         var window = new Window { Content = panel, Width = 1400, Height = 700 };
 
@@ -125,17 +122,18 @@ public class TheFleetCardsCarryTheirHullTests
         panel.Tab = PanelTab.Loadout;
         Dispatcher.UIThread.RunJobs();
 
-        return (panel, store);
+        return (panel, value =>
+        {
+            hullArt = value;
+
+            // The redraw a Commander gets from flipping the Settings toggle, without a restart (#247).
+            panel.InvalidateLoadout();
+            Dispatcher.UIThread.RunJobs();
+        });
     }
 
     private static List<Image> Drawings(PanelView panel) =>
         [.. panel.GetVisualDescendants().OfType<Image>().Where(image => image.Source is Bitmap)];
-
-    /// <summary>The fleet's own switch.</summary>
-    private static ToggleSwitch Switch(PanelView panel) =>
-        panel.GetVisualDescendants()
-            .OfType<ToggleSwitch>()
-            .Single(box => box.Name == "FleetToggle");
 
     /// <summary>Opens the card for a ship, which is what the Commander does to get to its page.</summary>
     private static void Open(PanelView panel, string named)
@@ -175,43 +173,36 @@ public class TheFleetCardsCarryTheirHullTests
     }
 
     [AvaloniaFact]
-    public void TheSwitchPutsThePicturesAway()
+    public void HullPicturesOffPutsThePicturesAway()
     {
         var (panel, _) = Fleet(drawings: false);
 
         Assert.Empty(Drawings(panel));
     }
 
+    /// <summary>There is one switch for hull artwork, and it is the Settings one (#247).</summary>
     [AvaloniaFact]
-    public void TheSwitchIsWhereItWasLeft()
+    public void TheIndexHasNoLargeCardsSwitchOfItsOwn()
     {
-        var (panel, store) = Fleet();
+        var (panel, _) = Fleet();
 
-        var toggle = Switch(panel);
-
-        Assert.True(toggle.IsChecked);
-
-        toggle.IsChecked = false;
-        Dispatcher.UIThread.RunJobs();
-
-        // Remembered as the negative, so an unreadable file leaves the drawings on.
-        Assert.True(store.Load().ShipsDrawingsOff);
-        Assert.Empty(Drawings(panel));
+        Assert.DoesNotContain(
+            panel.GetVisualDescendants().OfType<ToggleSwitch>(), box => box.Name == "FleetToggle");
     }
 
     [AvaloniaFact]
-    public void ThePicturesComeBack()
+    public void ChangingHullPicturesRedrawsTheOpenPageWithoutARestart()
     {
-        var (panel, store) = Fleet(drawings: false);
+        var (panel, setHullArt) = Fleet();
 
-        var toggle = Switch(panel);
+        Assert.Single(Drawings(panel));
 
-        Assert.False(toggle.IsChecked);
+        setHullArt(false);
 
-        toggle.IsChecked = true;
-        Dispatcher.UIThread.RunJobs();
+        Assert.Empty(Drawings(panel));
 
-        Assert.False(store.Load().ShipsDrawingsOff);
+        setHullArt(true);
+
         Assert.Single(Drawings(panel));
     }
 
@@ -349,6 +340,24 @@ public class TheFleetCardsCarryTheirHullTests
         // Built either way, so a fetch that lands later can fill it in — but drawing nothing, which is what
         // "the page as it is today" means.
         Assert.Empty(Large(panel));
+        Assert.Contains(
+            panel.GetVisualDescendants().OfType<TextBlock>(),
+            block => (block.Text ?? string.Empty).Contains("Corsair", StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// Hull pictures off means no picture and no turntable on a ship's own page, even for a hull whose
+    /// files are already on disk (#247).
+    /// </summary>
+    [AvaloniaFact]
+    public void HullPicturesOffLeavesTheShipsOwnPageWithoutAPictureOrATurntable()
+    {
+        var (panel, _) = Fleet(drawings: false, "corsair.png", "corsair.4k.png", "corsair.spin.mp4");
+
+        Open(panel, "Reaper");
+
+        Assert.Empty(panel.GetVisualDescendants().OfType<HullPicture>());
+        Assert.Empty(Turning(panel));
         Assert.Contains(
             panel.GetVisualDescendants().OfType<TextBlock>(),
             block => (block.Text ?? string.Empty).Contains("Corsair", StringComparison.Ordinal));

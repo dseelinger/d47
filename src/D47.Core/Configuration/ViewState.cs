@@ -44,9 +44,6 @@ public sealed record ViewState
     /// <summary>Which way the journal's Raw switch was left (#267): the file's own JSON, or sentences.</summary>
     public bool JournalRaw { get; init; }
 
-    /// <summary>Whether the Ships index draws its hull artwork, or packs the cards down to their names.</summary>
-    public bool ShipsDrawingsOff { get; init; }
-
     /// <summary>Whether the Engineers tab has taken the Colonia eight off its lists (#132).</summary>
     public bool EngineersColoniaHidden { get; init; }
 

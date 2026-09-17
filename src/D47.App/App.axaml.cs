@@ -102,13 +102,13 @@ public partial class App(AppHost? host) : Application
                 // record, so the headset's copy of the tab cannot fall behind it.
                 window?.Routing,
 
-                // And the fleet's own arithmetic (Phase 27) and its hull-art switch (#53), the same store the
-                // window's copy reads so the switch is not left in two places at once.
+                // And the fleet's own arithmetic (Phase 27) and the Hull pictures setting (#53, #247), read the
+                // same way the window's copy reads it.
                 () => host.ModulePower,
-                new Panel.ShipsDrawingsMemory(host.ViewState),
+                () => host.Settings.Current.Ui.HullArt,
 
-                // And the Engineers tab's two checkbox filters (#132), on the same terms as the drawing
-                // switch above.
+                // And the Engineers tab's two checkbox filters (#132), on the same terms as Hull pictures
+                // above.
                 new Panel.EngineerDirectoryMemory(host.ViewState),
 
                 // And the clipboard, on the same terms as the window's copy (#157).

@@ -194,8 +194,9 @@ public static class ShipsCapability
                 + "carried. D47 fetches the two files for a hull the first time you open one of "
                 + "those ships, from the same GitHub release the app updates itself from, and "
                 + "keeps them in data\\ships.\n\n"
-                + "Off, nothing is fetched and every ship keeps the small drawing it came with. "
-                + "Files you have already got stay and are still shown.",
+                + "Off, fleet cards show no drawing and a ship's own page shows no picture and no "
+                + "turntable, even for a hull already fetched. Nothing is downloaded, and files "
+                + "already on disk are kept, only hidden.",
             Kind = SettingKind.Toggle,
             DocsAnchor = "hull-art",
             EgressId = EgressDisclosure.HullArt,

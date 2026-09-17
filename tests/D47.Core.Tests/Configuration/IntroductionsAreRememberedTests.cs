@@ -80,4 +80,21 @@ public class IntroductionsAreRememberedTests : IDisposable
         Assert.Equal(["listening"], after.CollapsedCards);
         Assert.Equal(["cora"], after.IntroducedCores);
     }
+
+    /// <summary>
+    /// A saved <c>shipsDrawingsOff</c> from before Large cards was merged into Hull pictures must not fail
+    /// deserialisation or carry over and hide art for a Commander whose Hull pictures is on (#247).
+    /// </summary>
+    [Fact]
+    public void ARetiredFieldInViewStateIsIgnoredRatherThanFailingToLoad()
+    {
+        var paths = new AppPaths(_root);
+        paths.EnsureCreated();
+
+        File.WriteAllText(paths.ViewStateFile, """{"shipsDrawingsOff": true}""");
+
+        var loaded = Store().Load();
+
+        Assert.False(loaded.StartMenuOffered);
+    }
 }

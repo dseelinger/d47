@@ -6,6 +6,15 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.155.0 — Merge Large cards into Hull pictures
+
+Fleet › Ships had two switches for hull artwork and neither did what its name said. There is now
+one: **Hull pictures**. On, cards carry their drawing, a ship's page shows the large picture and
+plays the turntable, and missing files are downloaded. Off, fleet cards are text only, a ship's
+page shows no picture and plays no turntable — even for a hull whose files are already on disk —
+and nothing is fetched. Files already downloaded stay on disk; the setting only stops them being
+shown. Flipping it redraws an open Ships page without a restart.
+
 ## 0.154.0 — Split the power bar by priority group
 
 The Power gauge now splits into one span per priority group — the numbers Elite switches modules

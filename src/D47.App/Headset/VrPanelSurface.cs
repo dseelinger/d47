@@ -98,7 +98,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         // The fleet and its builds, what the Commander is wearing and the gap between them (Phases 26-27), in
         // the headset from 2026-09-09 (#53).
         Func<D47.Core.Journal.ModulePower>? modulePower = null,
-        ShipsDrawingsMemory? drawings = null,
+        Func<bool>? hullArt = null,
         EngineerDirectoryMemory? engineersMemory = null,
 
         // The clipboard, on the same terms as the window's copy (#157).
@@ -225,7 +225,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
                 gameState,
                 onFoot,
                 modulePower,
-                drawings,
+                hullArt,
                 settingsStrip: buildSettingsStrip is null
                     ? null
                     : () => buildSettingsStrip(LoadoutPages.FleetRoot));
@@ -313,6 +313,13 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
     /// <summary>Redraws the Fleet tab when the journal says the ship changed, from the headset's own tick.</summary>
     public void TickLoadout() => _dirty |= _view.TickLoadout();
+
+    /// <summary>Redraws an open Ships page after the Hull pictures setting changes (#247).</summary>
+    public void InvalidateLoadout()
+    {
+        _view.InvalidateLoadout();
+        _dirty = true;
+    }
 
     /// <summary>One frame of the d47 is composing animation (asked for 2026-08-22).</summary>
     public void TickAdventures() => _dirty |= _view.TickAdventures();

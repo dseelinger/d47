@@ -1346,12 +1346,6 @@ public sealed class IndexPage : LoadoutPage
 
     private readonly ScrollViewer _scroller;
 
-    /// <summary>The index's own switch, kept so it can be withdrawn when it has nothing to do.</summary>
-    private readonly ToggleSwitch? _switch;
-
-    /// <summary>The box the switch and its label share, withdrawn along with the switch.</summary>
-    private readonly StackPanel? _switchBox;
-
     public IndexPage(ILoadoutMode mode, PanelNavigator nav, PanelPrompts prompts, Control? settingsStrip = null)
         : base(mode)
     {
@@ -1370,57 +1364,6 @@ public sealed class IndexPage : LoadoutPage
         var say = LoadoutPages.SayLine(mode.SayAtIndex);
 
         _scroller = LoadoutPages.Scrolling(_list);
-
-        // After the scroller exists, because the switch re-lays the grid and would otherwise be capturing a
-        // field the constructor has not filled in yet.
-        if (mode.IndexToggle is { } toggle)
-        {
-            // A ToggleSwitch, the same control the raw-journal switch uses — a Commander asked for that one
-            // by name, and two switches in one app that look different are two controls. The label sits
-            // beside it rather than inside it: a ToggleSwitch stacks its Content above the knob, which
-            // wraps one word onto two lines in a bar this short.
-            _switch = new ToggleSwitch
-            {
-                Name = "FleetToggle",
-                IsChecked = toggle.On,
-                OnContent = null,
-                OffContent = null,
-                FontSize = TypeScale.Secondary,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-
-            _switch.IsCheckedChanged += (_, _) =>
-            {
-                toggle.Set(_switch.IsChecked == true);
-
-                // The cards are rebuilt because the drawing is part of the card, and re-laid because the
-                // height it needs changed with it, which moves the selected card.
-                _revealed = null;
-                Refresh();
-                Lay(_scroller.Bounds.Width);
-            };
-
-            _switchBox = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                HorizontalAlignment = HorizontalAlignment.Right,
-                VerticalAlignment = VerticalAlignment.Center,
-                Spacing = 6,
-                Children =
-                {
-                    new TextBlock
-                    {
-                        Text = toggle.Label,
-                        FontSize = TypeScale.Secondary,
-                        VerticalAlignment = VerticalAlignment.Center,
-                    },
-                    _switch,
-                },
-            };
-
-            DockPanel.SetDock(_switchBox, Dock.Right);
-            head.Children.Add(_switchBox);
-        }
 
         if (settingsStrip is not null)
         {
@@ -1477,7 +1420,7 @@ public sealed class IndexPage : LoadoutPage
     }
 
     /// <summary>Whether the index is drawing its artwork.</summary>
-    private bool Drawings => (Mode.IndexToggle?.On ?? false) && _drawable;
+    private bool Drawings => Mode.Pictures && _drawable;
 
     /// <summary>Whether any row in the index has artwork behind it.</summary>
     private bool _drawable;
@@ -1521,14 +1464,8 @@ public sealed class IndexPage : LoadoutPage
 
         _cards.Children.Clear();
 
-        // Asked before the cards are built, because the height they get depends on the answer and the switch
-        // has nothing to offer a fleet with no captured hull in it.
+        // Asked before the cards are built, because the height they get depends on the answer.
         _drawable = rows.Any(row => ShipArt.For(row.Hull) is not null);
-
-        if (_switch is { } box)
-        {
-            box.IsVisible = _drawable;
-        }
 
         Control? selected = null;
         string? selectedKey = null;
@@ -1799,7 +1736,7 @@ public sealed class ItemPage : LoadoutPage
             facts.Children.Add(LoadoutPages.Gauge(gauge));
         }
 
-        _list.Children.Add(roomy && Mode.HullOf(_item) is { Length: > 0 } hull
+        _list.Children.Add(roomy && Mode.Pictures && Mode.HullOf(_item) is { Length: > 0 } hull
             ? HullPicture.For(hull, facts)
             : facts);
 

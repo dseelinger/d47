@@ -156,12 +156,6 @@ public enum LoadoutStanding
     Wanted,
 }
 
-/// <summary>A switch at the head of an index, with somewhere to remember itself.</summary>
-/// <param name="Label">What the switch says.</param>
-/// <param name="On">Where it is now.</param>
-/// <param name="Set">Where to put it, and where to remember it.</param>
-public sealed record LoadoutToggle(string Label, bool On, Action<bool> Set);
-
 /// <summary>
 /// One side of a slot row: what is in the slot, or what the plan asks for
 /// (docs/plans/change-requests.md 38).
@@ -291,8 +285,8 @@ public interface ILoadoutMode
     /// <summary>Whether the index is a grid of cards rather than a list of rows (asked for 2026-09-03).</summary>
     bool Cards => false;
 
-    /// <summary>A switch for the index itself, or null for a mode with nothing to switch.</summary>
-    LoadoutToggle? IndexToggle => null;
+    /// <summary>Whether this mode's cards and item page carry their hull pictures (#247).</summary>
+    bool Pictures => false;
 
     /// <summary>A question waiting on the Commander, or null when nothing is (Phase 38).</summary>
     LoadoutNotice? Notice() => null;

@@ -26,7 +26,6 @@ nav_order: 112
  <rect x="20" y="16" width="840" height="264" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <rect x="20" y="16" width="840" height="42" rx="8" fill="var(--surface)"/>
  <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Ships</text>
- <text x="836" y="44" text-anchor="end" font-size="14" fill="var(--text-muted)">Large cards</text>
 
  <rect x="44" y="78" width="256" height="152" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="3"/>
  <path d="M78 130 L214 120 L266 148 L214 166 L112 168 Z" fill="var(--text-muted)"/>
@@ -272,7 +271,7 @@ question rather than a guess.
 
 Every card carries a drawing of the hull, and it is a render of Elite's own geometry rather than
 artwork somebody drew: the shipyard preview, captured, posed in the game's camera and drawn as
-orange lines over a dark hull. **Large cards** at the top of the fleet puts them away.
+orange lines over a dark hull.
 
 **The small one came with Directive 47.** All forty-seven fit in eleven megabytes, so a fresh
 installation has a fleet with pictures on it before anything is downloaded.
@@ -288,10 +287,11 @@ files for that hull, from the same GitHub release it updates itself from, and ke
 The hull symbol is all that is sent. Not your Commander name, not which ships you own, not where
 you are, nothing from your journal.
 
-**Turn it off and nothing breaks.** Fleet › Ships' own settings strip has **Hull pictures**; off,
-nothing is fetched and every ship keeps the small drawing it came with. Files already on disk stay
-and are still shown. Offline is the same thing without the setting: the small drawing stays, and
-the log says why the large one did not arrive.
+**One switch, and turning it off puts every picture away.** Fleet › Ships' own settings strip has
+**Hull pictures**; off, fleet cards are text only, a ship's own page shows no picture and plays no
+turntable, and nothing is fetched — even for a hull whose files are already in `data/ships`. The
+files themselves stay on disk; the setting only stops them being shown. Offline behaves the same
+way without the setting: nothing new arrives, and the log says why.
 
 **Three sizes, above the picture.** Half the pane with the ship's own figures beside it, which is
 where it opens; the width of the pane, with the figures under it; and the whole window. The size

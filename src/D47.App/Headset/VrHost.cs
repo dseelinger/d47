@@ -151,7 +151,7 @@ public sealed class VrHost : IDisposable
         D47.Core.Knowledge.CarrierManifest? carrier = null,
         Panel.RoutingSurface? routing = null,
         Func<D47.Core.Journal.ModulePower>? modulePower = null,
-        Panel.ShipsDrawingsMemory? drawings = null,
+        Func<bool>? hullArt = null,
         Panel.EngineerDirectoryMemory? engineersMemory = null,
         D47.Core.Capabilities.Builtin.IClipboard? clipboard = null,
         D47.Core.Knowledge.SystemsInPlay? known = null,
@@ -166,7 +166,7 @@ public sealed class VrHost : IDisposable
             model, settings, slot => self?.AnchorFor(slot), avatars, dumpTo, settingsPage,
             checklists, timekeeper, alarmStore, ships, gameState, onFoot, unlocks, goals,
             backfillGoals, adventures, viewState, capabilities, sourcingBoard, carrier, routing,
-            modulePower, drawings, engineersMemory, clipboard, known,
+            modulePower, hullArt, engineersMemory, clipboard, known,
             buildSettingsStrip: buildSettingsStrip,
 
             // A ray's own way into and out of resize mode (#190) — the header glyph and the bar the
@@ -188,7 +188,15 @@ public sealed class VrHost : IDisposable
             loggers.CreateLogger<VrHost>());
 
         host.Configure();
-        settings.Changed += _ => Dispatcher.UIThread.Post(host.Configure);
+        settings.Changed += change => Dispatcher.UIThread.Post(() =>
+        {
+            host.Configure();
+
+            if (change.Key == ShipsCapability.HullArtKey)
+            {
+                panel.InvalidateLoadout();
+            }
+        });
 
         // Captions are driven by what is audible rather than by what was generated, which is what keeps them
         // in step with a reply that got interrupted, superseded or dropped: the arbiter is the one place that
