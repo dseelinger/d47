@@ -6,6 +6,13 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.159.0 — Add engineer prerequisites to the checklist
+
+An engineer's Unlock Prerequisites now carry an **Add to checklist** control, on the detail page
+and beside each engineer on the Route page, absent once every line is met. One press adds every
+unmet line as a checklist item that tracks itself from the journal — a referral, the invitation
+and the tribute alike — and never adds a line twice.
+
 ## 0.158.0 — Decide Hero Ferrari's meeting test from low conflict zone wins
 
 Hero Ferrari's "Complete 10 surface conflict zones" requirement now reads as a floor on

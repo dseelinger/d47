@@ -116,6 +116,12 @@ public sealed class EngineerPlanService(
         return $"{said} {candidate.Summary()}";
     }
 
+    /// <summary>
+    /// Adds one engineer's unmet unlock prerequisites to the checklist, in one press — the detail page
+    /// and the Route page both call this rather than building the lines themselves (#257).
+    /// </summary>
+    public string AddPrerequisites(Engineer engineer) => checklists.AddPrerequisites(engineer).Report;
+
     private static bool Matches(UnlockCandidate candidate, string named) =>
         EngineerDirectory.ByName(named) is { } engineer && engineer.Id == candidate.Engineer.Id;
 }

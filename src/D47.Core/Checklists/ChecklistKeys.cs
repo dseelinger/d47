@@ -89,6 +89,7 @@ public static class ChecklistKeys
         ChecklistIntentKind.Experimental => "xp",
         ChecklistIntentKind.Module => "mod",
         ChecklistIntentKind.EngineerAccess => "eng",
+        ChecklistIntentKind.EngineerPrerequisite => "erq",
         ChecklistIntentKind.Facility => "fac",
         ChecklistIntentKind.Commodity => "com",
         ChecklistIntentKind.Grade => "grd",

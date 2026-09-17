@@ -1,4 +1,5 @@
 using System.Globalization;
+using D47.Core.Checklists;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 
@@ -229,6 +230,84 @@ public sealed record EngineerEntry
 /// <summary>Where each engineer stands with this Commander, and what the way in costs (Phase 28).</summary>
 public static class EngineerAccess
 {
+    /// <summary>
+    /// The role a <see cref="ChecklistIntentKind.EngineerPrerequisite"/> item keys on, rather than the
+    /// criterion's wording — so a table change to the prose does not orphan the item (#257).
+    /// </summary>
+    public const string InvitationRole = "invitation";
+
+    /// <summary>The tribute's role, on the same footing as <see cref="InvitationRole"/> (#257).</summary>
+    public const string TributeRole = "tribute";
+
+    /// <summary>
+    /// One checklist item for every unmet line of <see cref="CriteriaFor"/> — a referral as the existing
+    /// <see cref="ChecklistIntentKind.EngineerAccess"/> intent, and the invitation or tribute as <see
+    /// cref="ChecklistIntentKind.EngineerPrerequisite"/> (#257).
+    /// </summary>
+    public static IReadOnlyList<ChecklistItem> UnmetPrerequisites(Engineer engineer, UnlockEvidence evidence)
+    {
+        var criteria = CriteriaFor(engineer, evidence);
+        var wanted = engineer.ReferralGrade ?? EngineeringRules.ReferralGrade;
+        var items = new List<ChecklistItem>();
+
+        for (var index = 0; index < criteria.Count; index++)
+        {
+            if (criteria[index].Met == true)
+            {
+                continue;
+            }
+
+            items.Add(index < engineer.ReferredBy.Count
+                ? ReferralItem(engineer.ReferredBy[index], wanted)
+                : PrerequisiteItem(engineer, Role(engineer, index), criteria[index]));
+        }
+
+        return items;
+    }
+
+    /// <summary>Whether the criterion at this index is the invitation or the tribute (#257).</summary>
+    private static string Role(Engineer engineer, int index) =>
+        index == engineer.ReferredBy.Count && engineer.Meeting is { Length: > 0 }
+            ? InvitationRole
+            : TributeRole;
+
+    private static ChecklistItem ReferralItem(string referrerName, int grade)
+    {
+        var referrer = EngineerDirectory.ByName(referrerName);
+        var intent = new ChecklistIntent(ChecklistIntentKind.EngineerAccess, referrerName) { Grade = grade };
+
+        return new ChecklistItem
+        {
+            Key = ChecklistKeys.For(intent),
+            Scope = ChecklistScope.Universal,
+            Kind = ChecklistItemKind.Derived,
+            Source = ChecklistSource.EngineerPrerequisite,
+            Text = grade > 1
+                ? $"Rank {grade.ToString(CultureInfo.InvariantCulture)} with {referrerName}"
+                : referrer is { Where: { Length: > 0 } where }
+                    ? $"Unlock {referrerName} at {where}"
+                    : $"Unlock {referrerName}",
+            Intent = intent,
+            Provenance = ChecklistProvenance.Asserted,
+        };
+    }
+
+    private static ChecklistItem PrerequisiteItem(Engineer engineer, string role, UnlockCriterion criterion)
+    {
+        var intent = new ChecklistIntent(ChecklistIntentKind.EngineerPrerequisite, engineer.Name) { Detail = role };
+
+        return new ChecklistItem
+        {
+            Key = ChecklistKeys.For(intent),
+            Scope = ChecklistScope.Universal,
+            Kind = ChecklistItemKind.Derived,
+            Source = ChecklistSource.EngineerPrerequisite,
+            Text = criterion.Text,
+            Intent = intent,
+            Provenance = ChecklistProvenance.Asserted,
+        };
+    }
+
     /// <summary>
     /// The prerequisites for reaching one engineer, with the parts already done marked (remediation.md
     /// 13, item 12), read where the game states a test for one and folded from the shipped prose

@@ -734,7 +734,8 @@ public partial class PanelView : UserControl
         var source = new EngineerSource(
             unlocks.Report,
             checklists is null ? null : checklists.IsPinned,
-            checklists is null ? null : checklists.Pin);
+            checklists is null ? null : checklists.Pin,
+            unlocks.AddPrerequisites);
 
         // A plan moving changes who is worth flying to, and neither store knows about this page.
         ships.Store.Changed += source.Invalidate;

@@ -90,6 +90,9 @@ public enum ChecklistSource
     EngineeringPlan,
     ColonisationPlan,
     OnFootPlan,
+
+    /// <summary>An engineer's unlock prerequisites, added from their own page or the Route (#257).</summary>
+    EngineerPrerequisite,
 }
 
 /// <summary>Where an item stands.</summary>
@@ -191,6 +194,13 @@ public enum ChecklistIntentKind
 
     /// <summary>An on-foot modification on a suit or a hand weapon.</summary>
     Modification,
+
+    /// <summary>
+    /// An engineer's invitation or tribute — the two prerequisite lines <see
+    /// cref="Engineers.EngineerAccess.CriteriaFor"/> has no <see cref="ChecklistIntentKind.EngineerAccess"/>
+    /// intent for (#257).
+    /// </summary>
+    EngineerPrerequisite,
 }
 
 /// <summary>A structured intent, which is half of an item's identity.</summary>

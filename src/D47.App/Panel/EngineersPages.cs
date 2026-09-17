@@ -90,6 +90,47 @@ public static class EngineersPages
         many == 0 ? string.Empty : EngineerSay.Count(many, "module", "modules");
 
     /// <summary>
+    /// The control that adds every unmet line of an engineer's prerequisites to the checklist in one
+    /// press, or null where every line is already met — there is no per-line control (#257).
+    /// </summary>
+    internal static Button? AddPrerequisitesControl(
+        Engineer engineer, IReadOnlyList<UnlockCriterion> criteria, EngineerSource source, Action refresh)
+    {
+        if (criteria.Count == 0 || criteria.All(criterion => criterion.Met == true))
+        {
+            return null;
+        }
+
+        return LoadoutPages.Press("Add to checklist", () =>
+        {
+            source.AddPrerequisites(engineer);
+            refresh();
+        });
+    }
+
+    /// <summary>
+    /// The "Unlock Prerequisites" heading, with the add control on the same row where there is one to
+    /// add (#257).
+    /// </summary>
+    internal static Control PrerequisitesHeader(
+        Engineer engineer, IReadOnlyList<UnlockCriterion> criteria, EngineerSource source, Action refresh)
+    {
+        var heading = LoadoutPages.Heading("Unlock Prerequisites");
+
+        if (AddPrerequisitesControl(engineer, criteria, source, refresh) is not { } button)
+        {
+            return heading;
+        }
+
+        var row = new DockPanel();
+        DockPanel.SetDock(button, Dock.Right);
+        row.Children.Add(button);
+        row.Children.Add(heading);
+
+        return row;
+    }
+
+    /// <summary>
     /// One prerequisite, a drawn box in front of it rather than a character — the same box wherever a
     /// criterion is shown (#126).
     /// </summary>
@@ -459,7 +500,7 @@ public sealed class EngineerPage : EngineerPageBase
         // Unlock Prerequisites, with what is already done marked (remediation.md 13, item 12).
         if (entry.Criteria.Count > 0)
         {
-            _body.Children.Add(LoadoutPages.Heading("Unlock Prerequisites"));
+            _body.Children.Add(EngineersPages.PrerequisitesHeader(engineer, entry.Criteria, Source, Refresh));
 
             foreach (var criterion in entry.Criteria)
             {
@@ -615,6 +656,12 @@ public sealed class EngineerRoutePage : EngineerPageBase
                 FontSize = TypeScale.Body,
                 TextWrapping = TextWrapping.Wrap,
             });
+
+            if (EngineersPages.AddPrerequisitesControl(candidate.Engineer, candidate.Criteria, Source, Refresh)
+                is { } button)
+            {
+                _body.Children.Add(button);
+            }
 
             foreach (var criterion in candidate.Criteria)
             {

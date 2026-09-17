@@ -1,4 +1,5 @@
 using System.Globalization;
+using D47.Core.Engineers;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 
@@ -39,6 +40,7 @@ public static class ChecklistEvaluator
             ChecklistIntentKind.Experimental => Ship(item, intent, state),
             ChecklistIntentKind.Module => Ship(item, intent, state),
             ChecklistIntentKind.EngineerAccess => Access(intent, state),
+            ChecklistIntentKind.EngineerPrerequisite => Prerequisite(intent, state),
             ChecklistIntentKind.Facility => Facility(item, intent, state),
             ChecklistIntentKind.Commodity => Commodity(item, intent, state),
             ChecklistIntentKind.Grade => OnFootGrade(item, intent, state),
@@ -311,6 +313,40 @@ public static class ChecklistEvaluator
         }
 
         return new ChecklistVerdict(ChecklistState.Open, $"{engineer.Name} is at rank {rank} of {wanted}.");
+    }
+
+    /// <summary>
+    /// An engineer's invitation or tribute, read from <see cref="EngineerAccess.CriteriaFor"/> by role
+    /// rather than by re-deriving the test — the same overrides for an untested line reaching
+    /// <c>Invited</c> or <c>Unlocked</c> apply here because they live in <c>CriteriaFor</c> itself
+    /// (#257).
+    /// </summary>
+    private static ChecklistVerdict? Prerequisite(ChecklistIntent intent, CommanderGameState state)
+    {
+        if (EngineerDirectory.ByName(intent.Subject) is not { } engineer)
+        {
+            return null;
+        }
+
+        var criteria = EngineerAccess.CriteriaFor(engineer, D47.Core.Engineers.UnlockEvidence.From(state));
+
+        var wanted = intent.Detail == EngineerAccess.InvitationRole
+            ? criteria.FirstOrDefault(criterion => criterion.Text == engineer.Meeting)
+            : criteria.FirstOrDefault(criterion => criterion.Text == engineer.Unlock);
+
+        if (wanted is not { } criterion)
+        {
+            return null;
+        }
+
+        return criterion.Met switch
+        {
+            true => new ChecklistVerdict(ChecklistState.Done, "Done."),
+            false => new ChecklistVerdict(ChecklistState.Open, criterion.Reading ?? criterion.Text),
+            null => new ChecklistVerdict(
+                ChecklistState.Open,
+                criterion.Reading ?? "Nothing in the journal has reported this yet."),
+        };
     }
 
     // ----------------------------------------------------------- colonising

@@ -1,4 +1,5 @@
 using D47.Core.Engineers;
+using D47.Core.Knowledge;
 
 namespace D47.App.Panel;
 
@@ -6,7 +7,8 @@ namespace D47.App.Panel;
 public sealed class EngineerSource(
     Func<EngineerReport> report,
     Func<int, bool>? isPinned = null,
-    Action<int, bool>? pin = null)
+    Action<int, bool>? pin = null,
+    Func<Engineer, string>? addPrerequisites = null)
 {
     /// <summary>Raised when something underneath changed.</summary>
     public event Action? Changed;
@@ -19,6 +21,10 @@ public sealed class EngineerSource(
 
     /// <summary>Records or clears a pin, where this surface offers one (#113).</summary>
     public void Pin(int engineerId, bool pinned) => pin?.Invoke(engineerId, pinned);
+
+    /// <summary>Adds one engineer's unmet unlock prerequisites to the checklist (#257).</summary>
+    public string AddPrerequisites(Engineer engineer) =>
+        addPrerequisites?.Invoke(engineer) ?? "There is nowhere to add this to.";
 
     public void Invalidate() => Changed?.Invoke();
 }

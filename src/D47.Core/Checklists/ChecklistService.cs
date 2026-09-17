@@ -1,6 +1,7 @@
 using System.Globalization;
 
 using System.Text;
+using D47.Core.Engineers;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 
@@ -879,6 +880,7 @@ public sealed class ChecklistService(
         ChecklistSource.EngineeringPlan => "A ship's build",
         ChecklistSource.ColonisationPlan => "A construction site",
         ChecklistSource.OnFootPlan => "A suit or weapon build",
+        ChecklistSource.EngineerPrerequisite => "An engineer's prerequisites",
         _ => "You",
     };
 
@@ -961,6 +963,38 @@ public sealed class ChecklistService(
         {
             Select(null);
         }
+    }
+
+    /// <summary>
+    /// Adds one item for every unmet prerequisite line of one engineer, in one write — a line already on
+    /// the list is not added again, and pressing this with nothing outstanding adds nothing (#257).
+    /// </summary>
+    public ChecklistChange AddPrerequisites(Engineer engineer)
+    {
+        ArgumentNullException.ThrowIfNull(engineer);
+
+        var wanted = EngineerAccess.UnmetPrerequisites(engineer, D47.Core.Engineers.UnlockEvidence.From(State));
+
+        if (wanted.Count == 0)
+        {
+            return ChecklistChange.Refused(Document, $"Nothing is outstanding for {engineer.Name}.");
+        }
+
+        return list.Apply(Fid, Name, document =>
+        {
+            var before = document.Items.Count;
+            var updated = wanted.Aggregate(document, (current, item) => current.Adopt(item));
+            var added = updated.Items.Count - before;
+
+            return added == 0
+                ? new ChecklistChange(updated, Changed: false, $"Already on your checklist for {engineer.Name}.")
+                : new ChecklistChange(
+                    updated,
+                    Changed: true,
+                    added == 1
+                        ? $"Added 1 line for {engineer.Name} to your checklist."
+                        : $"Added {added} lines for {engineer.Name} to your checklist.");
+        });
     }
 
     public ChecklistChange Delete(ChecklistItemId id)
