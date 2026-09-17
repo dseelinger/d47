@@ -128,7 +128,7 @@ public static class EngineersHere
     {
         // Open, derived, and about engineering.
         var open = items
-            .Where(item => item.IsLive && !item.IsComplete)
+            .Where(item => !item.IsComplete)
             .Where(item => item.Intent?.Kind is ChecklistIntentKind.Blueprint or ChecklistIntentKind.Experimental)
 
             // And there has to be something in the slot to roll (GitHub issue 41).

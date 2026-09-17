@@ -23,8 +23,8 @@ public enum ChecklistMove
 }
 
 /// <summary>
-/// One Commander's whole checklist — universal, per ship and per system, authored and derived, live and
-/// tombstoned (Phase 17).
+/// One Commander's whole checklist — universal, per ship and per system, authored and derived (Phase
+/// 17).
 /// </summary>
 public sealed record ChecklistDocument
 {
@@ -44,9 +44,9 @@ public sealed record ChecklistDocument
     public static ChecklistDocument For(string fid, string? name = null) =>
         new() { CommanderFid = fid, CommanderName = name };
 
-    /// <summary>Everything still live in a scope, tombstones excluded, in the order it was added.</summary>
+    /// <summary>Everything in a scope, in the order it was added.</summary>
     public IReadOnlyList<ChecklistItem> In(ChecklistScope scope) =>
-        [.. Items.Where(item => item.IsLive && item.Scope.Same(scope))];
+        [.. Items.Where(item => item.Scope.Same(scope))];
 
     /// <summary>Every scope that has anything in it, live or not.</summary>
     public IReadOnlyList<ChecklistScope> Scopes =>
@@ -56,7 +56,7 @@ public sealed record ChecklistDocument
         Items.FirstOrDefault(item => item.Id.Same(id));
 
     /// <summary>
-    /// The one live item whose wording or key a Commander's phrase names, or null when that is nought
+    /// The one item whose wording or key a Commander's phrase names, or null when that is nought
     /// or several.
     /// </summary>
     public ChecklistItem? Match(string phrase, ChecklistScope? within = null)
@@ -69,7 +69,7 @@ public sealed record ChecklistDocument
         }
 
         var candidates = Items
-            .Where(item => item.IsLive && (within is null || item.Scope.Same(within)))
+            .Where(item => within is null || item.Scope.Same(within))
             .ToList();
 
         var exact = candidates
@@ -248,9 +248,7 @@ public sealed record ChecklistDocument
         if (item.Kind == ChecklistItemKind.Derived)
         {
             return ChecklistChange.Refused(
-                this,
-                $"\"{item.Text}\" came from a plan, so revising the plan is what drops it. "
-                + "That leaves a note saying it was dropped, which deleting would not.");
+                this, $"\"{item.Text}\" came from a plan, so revising the plan is what drops it.");
         }
 
         return new ChecklistChange(
@@ -259,10 +257,7 @@ public sealed record ChecklistDocument
             $"Removed \"{item.Text}\".");
     }
 
-    /// <summary>
-    /// Removes the derived items in one list that <paramref name="which"/> selects, tombstones included,
-    /// leaving nothing for a revision to revive.
-    /// </summary>
+    /// <summary>Removes the derived items in one list that <paramref name="which"/> selects.</summary>
     public ChecklistChange Forget(ChecklistScope scope, Func<ChecklistItem, bool> which)
     {
         var kept = Items
@@ -288,22 +283,14 @@ public sealed record ChecklistDocument
             return ChecklistChange.Refused(this, "There is no such item on your checklist.");
         }
 
-        if (!item.IsLive)
-        {
-            return ChecklistChange.Refused(
-                this,
-                $"\"{item.Text}\" was dropped by a later version of a plan, so it is a record rather "
-                + "than something to work on.");
-        }
-
         if (by == 0)
         {
             return ChecklistChange.Refused(this, $"\"{item.Text}\" is already where it is.");
         }
 
-        var live = Items.Where(other => other.IsLive).ToList();
-        var from = live.FindIndex(other => other.Id.Same(id));
-        var to = Math.Clamp(from + by, 0, live.Count - 1);
+        var items = Items.ToList();
+        var from = items.FindIndex(other => other.Id.Same(id));
+        var to = Math.Clamp(from + by, 0, items.Count - 1);
 
         if (to == from)
         {
@@ -314,21 +301,11 @@ public sealed record ChecklistDocument
                     : $"\"{item.Text}\" is already at the bottom.");
         }
 
-        live.RemoveAt(from);
-        live.Insert(to, item);
-
-        // Rebuilt by walking the original list and drawing a live item from the reordered sequence each time
-        // one is reached.
-        var reordered = new List<ChecklistItem>(Items.Count);
-        var next = 0;
-
-        foreach (var existing in Items)
-        {
-            reordered.Add(existing.IsLive ? live[next++] : existing);
-        }
+        items.RemoveAt(from);
+        items.Insert(to, item);
 
         return new ChecklistChange(
-            this with { Items = reordered },
+            this with { Items = items },
             Changed: true,
             by < 0 ? $"Moved \"{item.Text}\" up." : $"Moved \"{item.Text}\" down.")
         {
@@ -348,14 +325,14 @@ public sealed record ChecklistDocument
             return Move(id, move is ChecklistMove.Up ? -1 : 1);
         }
 
-        var live = Items.Where(other => other.IsLive).ToList();
-        var from = live.FindIndex(other => other.Id.Same(id));
+        var items = Items.ToList();
+        var from = items.FindIndex(other => other.Id.Same(id));
         var toTop = move is ChecklistMove.Top;
 
         // A step that would be nought — including the item not being here at all, where `from` is -1 and
         // there is nothing to compute — falls back to one, so the refusals below are the ones Move already
         // writes rather than a second set saying the same things differently.
-        var by = from < 0 ? 0 : toTop ? -from : live.Count - 1 - from;
+        var by = from < 0 ? 0 : toTop ? -from : items.Count - 1 - from;
         var change = Move(id, by == 0 ? (toTop ? -1 : 1) : by);
 
         return change.Changed && Find(id) is { } item
@@ -394,7 +371,6 @@ public sealed record ChecklistDocument
 
         var kept = new List<ChecklistItem>();
         var opened = new List<ChecklistItem>();
-        var revived = new List<ChecklistItem>();
 
         foreach (var item in wanted)
         {
@@ -405,53 +381,28 @@ public sealed record ChecklistDocument
             }
 
             // The wording is refreshed and nothing else is.
-            var carried = existing with { Text = item.Text, Intent = item.Intent, Hull = item.Hull };
-
-            if (existing.IsLive)
-            {
-                kept.Add(carried);
-            }
-            else
-            {
-                revived.Add(carried with { Tombstone = ChecklistTombstone.None });
-            }
+            kept.Add(existing with { Text = item.Text, Intent = item.Intent, Hull = item.Hull });
         }
 
-        var wantedKeys = wanted.Select(item => item.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        var dropped = mine.Values
-            .Where(item => item.IsLive && !wantedKeys.Contains(item.Key))
-            .Select(item => item with
-            {
-                Tombstone = item.IsComplete ? ChecklistTombstone.Superseded : ChecklistTombstone.Abandoned,
-            })
-            .ToList();
+        var dropped = mine.Count - kept.Count;
 
         var untouched = Items
             .Where(item => !(item.Scope.Same(scope) && item.Source == source))
             .ToList();
 
-        var alreadyGone = mine.Values
-            .Where(item => !item.IsLive && !wantedKeys.Contains(item.Key))
-            .ToList();
-
         var document = this with
         {
-            Items = [.. untouched, .. kept, .. revived, .. opened, .. dropped, .. alreadyGone],
+            Items = [.. untouched, .. kept, .. opened],
         };
 
-        var moved = opened.Count + revived.Count + dropped.Count;
+        var moved = opened.Count + dropped;
 
-        return new ChecklistChange(document, moved > 0, Report(kept.Count, opened, revived, dropped));
+        return new ChecklistChange(document, moved > 0, Report(kept.Count, opened.Count, dropped));
     }
 
-    private static string Report(
-        int kept,
-        IReadOnlyList<ChecklistItem> opened,
-        IReadOnlyList<ChecklistItem> revived,
-        IReadOnlyList<ChecklistItem> dropped)
+    private static string Report(int kept, int opened, int dropped)
     {
-        if (opened.Count == 0 && revived.Count == 0 && dropped.Count == 0)
+        if (opened == 0 && dropped == 0)
         {
             return kept == 0
                 ? "That plan is empty, so nothing changed."
@@ -460,14 +411,9 @@ public sealed record ChecklistDocument
 
         var parts = new List<string>();
 
-        if (opened.Count > 0)
+        if (opened > 0)
         {
-            parts.Add($"{opened.Count} new");
-        }
-
-        if (revived.Count > 0)
-        {
-            parts.Add($"{revived.Count} brought back");
+            parts.Add($"{opened} new");
         }
 
         if (kept > 0)
@@ -475,20 +421,9 @@ public sealed record ChecklistDocument
             parts.Add($"{kept} kept with what they had done");
         }
 
-        // Named rather than counted, and the two reasons kept apart. "Done, then superseded" is the case that
-        // decides whether the history tells the truth.
-        var superseded = dropped.Where(item => item.Tombstone == ChecklistTombstone.Superseded).ToList();
-        var abandoned = dropped.Where(item => item.Tombstone == ChecklistTombstone.Abandoned).ToList();
-
-        if (abandoned.Count > 0)
+        if (dropped > 0)
         {
-            parts.Add($"{abandoned.Count} dropped");
-        }
-
-        if (superseded.Count > 0)
-        {
-            parts.Add(
-                $"{superseded.Count} done and then designed out ({string.Join("; ", superseded.Select(item => item.Text))})");
+            parts.Add($"{dropped} dropped");
         }
 
         return "Plan revised: " + string.Join(", ", parts) + ".";

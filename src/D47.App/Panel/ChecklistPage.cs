@@ -453,15 +453,6 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             }
         }
 
-        var tombstoned = document.Items.Count(item => !item.IsLive);
-
-        if (tombstoned > 0)
-        {
-            _list.Children.Add(Muted(
-                $"{tombstoned} item{(tombstoned == 1 ? string.Empty : "s")} dropped by a later version of a "
-                + "plan, kept so you can see what changed."));
-        }
-
         ShowProblems();
     }
 

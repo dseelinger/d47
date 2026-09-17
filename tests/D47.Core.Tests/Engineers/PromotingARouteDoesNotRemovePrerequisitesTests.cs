@@ -62,6 +62,5 @@ public class PromotingARouteDoesNotRemovePrerequisitesTests
             .ToList();
 
         Assert.Equal(2, stillThere.Count);
-        Assert.All(stillThere, item => Assert.True(item.IsLive));
     }
 }

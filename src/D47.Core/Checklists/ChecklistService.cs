@@ -196,7 +196,7 @@ public sealed class ChecklistService(
     /// <summary>Points the selection at a line, or clears it.</summary>
     public void Select(ChecklistItemId? id)
     {
-        var wanted = id is { } named && Document.Find(named) is { IsLive: true } ? id : null;
+        var wanted = id is { } named && Document.Find(named) is not null ? id : null;
 
         if (Nullable.Equals(wanted, Selected))
         {
@@ -414,8 +414,7 @@ public sealed class ChecklistService(
 
                 foreach (var item in removed)
                 {
-                    // Forget rather than Delete: Delete refuses a Derived item and Revise would leave it as a
-                    // Superseded tombstone that a later promotion would only have to clean up again.
+                    // Forget rather than Delete: Delete refuses a Derived item.
                     updated = updated.Forget(item.Scope, candidate => candidate.Id.Same(item.Id)).Document;
                 }
 
@@ -543,15 +542,6 @@ public sealed class ChecklistService(
             {
                 report.AppendLine("  " + Line(item, naming: true));
             }
-        }
-
-        var tombstoned = document.Items.Count(item => !item.IsLive);
-
-        if (tombstoned > 0)
-        {
-            report.AppendLine();
-            report.AppendLine(
-                $"{tombstoned} dropped from earlier versions of a plan, kept so you can see what changed.");
         }
 
         foreach (var problem in list.Problems)
@@ -782,7 +772,7 @@ public sealed class ChecklistService(
     public bool HasPartialWorkHere() => Here().Any(engineer => engineer.Partial.Count > 0);
 
     private IReadOnlyList<EngineerAtHand> Here() =>
-        EngineersHere.For(Document.Items.Where(live => live.IsLive).ToList(), State);
+        EngineersHere.For(Document.Items, State);
 
     /// <summary>The key for the pinned-blueprint axis (#113).</summary>
     public const string PinnedKey = "pinned";
@@ -796,7 +786,7 @@ public sealed class ChecklistService(
         Pinned().Any(engineer => engineer.Ready.Any(ready => ready.Id.Same(item.Id)));
 
     private IReadOnlyList<EngineerAtHand> Pinned() =>
-        EngineersPinned.For(Document.Items.Where(live => live.IsLive).ToList(), State, PinnedEngineers);
+        EngineersPinned.For(Document.Items, State, PinnedEngineers);
 
     /// <summary>The engineers a blueprint is pinned with, named and alphabetical.</summary>
     private IReadOnlyList<Engineer> PinnedNamed() =>
@@ -854,7 +844,7 @@ public sealed class ChecklistService(
     private void ResetEngineerFilterIfEmptied()
     {
         if (EngineerIdFor(Filter) is not { } engineerId
-            || Document.Items.Any(item => item.IsLive && OfferedEngineer(item, engineerId)))
+            || Document.Items.Any(item => OfferedEngineer(item, engineerId)))
         {
             return;
         }
@@ -864,7 +854,7 @@ public sealed class ChecklistService(
 
     public IReadOnlyList<ChecklistFilter> FilterAxes()
     {
-        var live = Document.Items.Where(item => item.IsLive).ToList();
+        var live = Document.Items;
 
         IEnumerable<ChecklistFilter> Axis<T>(
             string heading, IEnumerable<T> values, Func<T, string> key, Func<T, string> word) =>
@@ -1174,8 +1164,8 @@ public sealed class ChecklistService(
         list.Apply(Fid, Name, document => document.Reword(id, text));
 
     /// <summary>
-    /// This Commander's whole checklist as JSON — every line, derived ones and tombstones included,
-    /// with their provenance (remediation.md 10, item 15).
+    /// This Commander's whole checklist as JSON — every line, derived ones included, with their
+    /// provenance (remediation.md 10, item 15).
     /// </summary>
     public string Export() =>
         System.Text.Json.JsonSerializer.Serialize(Document, ChecklistStore.Json);
@@ -1615,7 +1605,7 @@ public sealed class ChecklistService(
         var touched = replacing.Select(ChecklistKeys.Compact).ToHashSet(StringComparer.Ordinal);
 
         var standing = Document.Items
-            .Where(item => item.IsLive && item.Scope.Same(scope) && item.Source == source)
+            .Where(item => item.Scope.Same(scope) && item.Source == source)
             .Concat(proposals.PendingFor(Fid)
                 .Where(proposal => proposal.Kind == ProposalKind.Plan
                                    && proposal.Scope.Same(scope)

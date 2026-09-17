@@ -217,11 +217,11 @@ moving underneath a plan that did not change:
 
 - **World changed, plan did not** — the item un-completes and you hear about it *once*. A computed
   tick going backwards is information, not a glitch to hide.
-- **Plan changed** — items in both versions keep everything they had earned, dropped ones are kept
-  as history, added ones open.
+- **Plan changed** — items in both versions keep everything they had earned, dropped ones are
+  removed, added ones open.
 
-An item you **finished and then designed out** is kept as *done, then superseded* rather than
-vanishing. You really did spend that fortnight.
+A line a later revision wants again comes back as a new open line — Directive 47 does not remember
+what it had earned before.
 
 This works because an item knows what it is independently of where it sits in a list: **slot plus
 intent** for a ship, **body or orbital slot plus facility** for a system. Talking about one

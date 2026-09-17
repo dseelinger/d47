@@ -180,7 +180,7 @@ public static class EngineeringPlan
 
         foreach (var item in items)
         {
-            if (!item.IsLive || item.IsComplete || item.Intent is not { } intent)
+            if (item.IsComplete || item.Intent is not { } intent)
             {
                 continue;
             }

@@ -161,13 +161,21 @@ public sealed class ChecklistStore(string path, ILogger<ChecklistStore> logger)
     private void Reload(DateTime written)
     {
         ChecklistFile? file;
+        HashSet<(int Document, int Item)> tombstoned;
 
         try
         {
-            using var stream = new FileStream(
-                path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            string text;
 
-            file = JsonSerializer.Deserialize<ChecklistFile>(stream, Json);
+            using (var stream = new FileStream(
+                path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+            using (var reader = new StreamReader(stream))
+            {
+                text = reader.ReadToEnd();
+            }
+
+            file = JsonSerializer.Deserialize<ChecklistFile>(text, Json);
+            tombstoned = TombstonedItems(text);
         }
         catch (Exception ex) when (ex is IOException or JsonException)
         {
@@ -187,12 +195,14 @@ public sealed class ChecklistStore(string path, ILogger<ChecklistStore> logger)
         var accepted = new List<ChecklistDocument>();
         var problems = new List<ChecklistProblem>();
         var commanders = new HashSet<string>(StringComparer.Ordinal);
+        var documentIndex = 0;
 
         foreach (var document in file?.Commanders ?? [])
         {
             // An empty id is a real state rather than a bad one: d47 can be running before Elite is, and the
             // Frontier id only exists once a journal has been read.
             var fid = document.CommanderFid?.Trim() ?? string.Empty;
+            var thisDocument = documentIndex++;
 
             if (!commanders.Add(fid))
             {
@@ -204,9 +214,19 @@ public sealed class ChecklistStore(string path, ILogger<ChecklistStore> logger)
 
             var items = new List<ChecklistItem>();
             var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var itemIndex = 0;
 
             foreach (var item in document.Items ?? [])
             {
+                var thisItem = itemIndex++;
+
+                // A file written before tombstones were removed (#258) holds lines System.Text.Json would
+                // otherwise load as live, its "tombstone" member being one it no longer recognises.
+                if (tombstoned.Contains((thisDocument, thisItem)))
+                {
+                    continue;
+                }
+
                 if (ChecklistValidation.Problem(item) is { } reason)
                 {
                     problems.Add(new ChecklistProblem(Describe(item), reason));
@@ -244,6 +264,52 @@ public sealed class ChecklistStore(string path, ILogger<ChecklistStore> logger)
 
     private static string Describe(ChecklistItem? item) =>
         item is null ? "an item" : $"\"{item.Text}\"";
+
+    /// <summary>
+    /// Which (document, item) positions in the raw file hold a "tombstone" member other than "none" — a
+    /// property <see cref="ChecklistItem"/> no longer declares, so the normal deserialize would otherwise
+    /// load these lines as live (#258).
+    /// </summary>
+    private static HashSet<(int Document, int Item)> TombstonedItems(string json)
+    {
+        var found = new HashSet<(int Document, int Item)>();
+
+        using var raw = JsonDocument.Parse(json);
+
+        if (!raw.RootElement.TryGetProperty("commanders", out var commanders)
+            || commanders.ValueKind != JsonValueKind.Array)
+        {
+            return found;
+        }
+
+        var documentIndex = 0;
+
+        foreach (var document in commanders.EnumerateArray())
+        {
+            var thisDocument = documentIndex++;
+
+            if (!document.TryGetProperty("items", out var items) || items.ValueKind != JsonValueKind.Array)
+            {
+                continue;
+            }
+
+            var itemIndex = 0;
+
+            foreach (var item in items.EnumerateArray())
+            {
+                var thisItem = itemIndex++;
+
+                if (item.TryGetProperty("tombstone", out var tombstone)
+                    && tombstone.ValueKind == JsonValueKind.String
+                    && !string.Equals(tombstone.GetString(), "none", StringComparison.OrdinalIgnoreCase))
+                {
+                    found.Add((thisDocument, thisItem));
+                }
+            }
+        }
+
+        return found;
+    }
 
     private sealed class ChecklistFile
     {

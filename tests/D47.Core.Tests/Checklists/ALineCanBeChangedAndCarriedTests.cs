@@ -121,9 +121,9 @@ public class ALineCanBeChangedAndCarriedTests
             Assert.Single(elsewhere.Document.In(ChecklistScope.System("Sol"))).Text);
     }
 
-    /// <summary>A tombstone is part of "everything".</summary>
+    /// <summary>A line a revision drops is gone, not something export carries along.</summary>
     [Fact]
-    public void WhatWasFinishedWithTravelsToo()
+    public void ADroppedLineDoesNotTravel()
     {
         using var install = new TempInstall();
         var checklists = TestSurface.Checklists(install.Paths);
@@ -144,19 +144,17 @@ public class ALineCanBeChangedAndCarriedTests
                 },
             ]);
 
-        // Revised to say nothing about that slot, which tombstones the line rather than losing it.
+        // Revised to say nothing about that slot, which drops the line rather than keeping it as a record.
         checklists.Revise(ChecklistScope.Ship(12), ChecklistSource.EngineeringPlan, []);
 
-        var before = checklists.Document.Items.Count;
-
-        Assert.True(before > 0);
+        Assert.Empty(checklists.Document.Items);
 
         using var second = new TempInstall();
         var elsewhere = TestSurface.Checklists(second.Paths);
 
         elsewhere.Import(checklists.Export());
 
-        Assert.Equal(before, elsewhere.Document.Items.Count);
+        Assert.Empty(elsewhere.Document.Items);
     }
 
     /// <summary>One bad line refuses the lot.</summary>

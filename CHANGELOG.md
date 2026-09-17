@@ -6,6 +6,12 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.162.0 — Remove checklist tombstones
+
+A plan revision that drops a line now deletes it outright, rather than leaving it on the list as
+a muted "dropped by a later version of a plan" record. A line a later revision wants again comes
+back as a new open line rather than one that remembers what it had earned.
+
 ## 0.161.0 — Focus the checklist on one engineer
 
 The checklist filter now offers an entry for each engineer with unlock prerequisites on the

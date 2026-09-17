@@ -37,7 +37,7 @@ public class OrderingIsReachableWithoutTheModelTests
     }
 
     private static IReadOnlyList<string> Order(ChecklistService checklists) =>
-        [.. checklists.Document.Items.Where(item => item.IsLive).Select(item => item.Text)];
+        [.. checklists.Document.Items.Select(item => item.Text)];
 
     // ------------------------------------------------------------- the selection
 
@@ -138,10 +138,7 @@ public class OrderingIsReachableWithoutTheModelTests
         Assert.Equal("\"two\" is already at the bottom.", checklists.Move(checklists.Selected!.Value, ChecklistMove.Bottom).Report);
     }
 
-    /// <summary>
-    /// Tombstones stay exactly where they are through an end move, for the same reason they do through
-    /// a step: this reorders the Commander's work, never their history.
-    /// </summary>
+    /// <summary>An end move reorders the Commander's remaining lines and nothing else.</summary>
     [Fact]
     public void AnEndMoveLeavesTheHistoryWhereItWas()
     {
@@ -151,7 +148,7 @@ public class OrderingIsReachableWithoutTheModelTests
         Assert.True(checklists.Delete(dropped).Changed);
 
         var before = checklists.Document.Items.Count;
-        var last = checklists.Document.Items.Last(item => item.IsLive).Id;
+        var last = checklists.Document.Items[^1].Id;
 
         Assert.True(checklists.Move(last, ChecklistMove.Top).Changed);
 

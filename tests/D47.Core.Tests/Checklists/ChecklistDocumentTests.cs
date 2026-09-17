@@ -99,12 +99,11 @@ public class ChecklistDocumentTests
 
         Assert.NotNull(kept);
         Assert.True(kept.IsComplete);
-        Assert.True(kept.IsLive);
     }
 
     /// <summary>Designed out means the slot left the plan, since Phase 26.</summary>
     [Fact]
-    public void AnItemDoneAndThenDesignedOutTombstonesAsSuperseded()
+    public void AnItemDoneAndThenDesignedOutIsGone()
     {
         var scope = ChecklistScope.Ship(12);
         var cannon = Derived("Hardpoint1", "Overcharged", 5, scope);
@@ -117,14 +116,8 @@ public class ChecklistDocumentTests
             ChecklistSource.EngineeringPlan,
             [Derived("MainEngines", "Dirty Drive Tuning", 5, scope)]);
 
-        var gone = revised.Document.Find(cannon.Id);
-
-        Assert.NotNull(gone);
-        Assert.False(gone.IsLive);
-
-        // Not merely abandoned.
-        Assert.Equal(ChecklistTombstone.Superseded, gone.Tombstone);
-        Assert.Contains("done and then designed out", revised.Report, StringComparison.Ordinal);
+        Assert.Null(revised.Document.Find(cannon.Id));
+        Assert.Contains("1 dropped", revised.Report, StringComparison.Ordinal);
     }
 
     /// <summary>Changing a slot from one blueprint to another is the same item changing its mind.</summary>
@@ -141,15 +134,14 @@ public class ChecklistDocumentTests
             ChecklistSource.EngineeringPlan,
             [Derived("Hardpoint1", "Overcharged", 3, scope)]);
 
-        // One item, still live, still the same identity — and nothing tombstoned beside it.
+        // One item, the same identity, and nothing else beside it.
         var item = Assert.Single(revised.Document.Items);
 
-        Assert.True(item.IsLive);
         Assert.True(item.Id.Same(pulse.Id));
     }
 
     [Fact]
-    public void AnOpenItemDroppedByARevisionIsAbandonedRatherThanSuperseded()
+    public void AnOpenItemDroppedByARevisionIsGone()
     {
         var scope = ChecklistScope.Ship(12);
         var engines = Derived("MainEngines", "Dirty Drive Tuning", 5, scope);
@@ -157,7 +149,7 @@ public class ChecklistDocumentTests
         var revised = (Empty with { Items = [engines] })
             .Revise(scope, ChecklistSource.EngineeringPlan, [Derived("PowerPlant", "Armoured", 5, scope)]);
 
-        Assert.Equal(ChecklistTombstone.Abandoned, revised.Document.Find(engines.Id)!.Tombstone);
+        Assert.Null(revised.Document.Find(engines.Id));
     }
 
     [Fact]
@@ -174,7 +166,6 @@ public class ChecklistDocumentTests
         var back = document.Revise(scope, ChecklistSource.EngineeringPlan, [cannon]).Document.Find(cannon.Id);
 
         Assert.NotNull(back);
-        Assert.True(back.IsLive);
         Assert.True(back.IsComplete);
     }
 
@@ -203,7 +194,6 @@ public class ChecklistDocumentTests
 
         // The Commander's own note survives a plan being emptied.
         Assert.NotNull(revised.Document.Find(note.Id));
-        Assert.True(revised.Document.Find(note.Id)!.IsLive);
     }
 
     [Fact]

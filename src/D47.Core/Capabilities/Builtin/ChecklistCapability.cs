@@ -590,7 +590,7 @@ public static class ChecklistCapability
     public static string? Live(ChecklistService checklists)
     {
         var document = checklists.Document;
-        var open = document.Items.Count(item => item.IsLive && !item.IsComplete);
+        var open = document.Items.Count(item => !item.IsComplete);
         var waiting = checklists.Proposals.PendingFor(document.CommanderFid).Count;
 
         if (open == 0 && waiting == 0)
@@ -809,11 +809,10 @@ public static class ChecklistCapability
     private static string Summarise(ChecklistService checklists)
     {
         var document = checklists.Document;
-        var live = document.Items.Where(item => item.IsLive).ToList();
-        var open = live.Count(item => !item.IsComplete);
-        var done = live.Count - open;
+        var open = document.Items.Count(item => !item.IsComplete);
+        var done = document.Items.Count - open;
 
-        var line = live.Count == 0
+        var line = document.Items.Count == 0
             ? "Nothing on your checklist yet."
             : $"{open} open, {done} done.";
 

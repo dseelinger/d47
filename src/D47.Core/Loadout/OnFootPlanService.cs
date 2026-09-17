@@ -270,8 +270,7 @@ public sealed class OnFootPlanService(
         }
 
         var promoted = checklists.Document.Items
-            .Any(item => item.IsLive
-                         && item.Scope.Same(scope)
+            .Any(item => item.Scope.Same(scope)
                          && item.Source == ChecklistSource.OnFootPlan);
 
         if (!promoted)

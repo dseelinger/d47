@@ -140,18 +140,6 @@ public static class ChecklistNextAction
         state is ChecklistState.Stale or ChecklistState.Unverified;
 }
 
-/// <summary>Why an item is no longer live.</summary>
-public enum ChecklistTombstone
-{
-    None,
-
-    /// <summary>A revision dropped it while it was still open.</summary>
-    Abandoned,
-
-    /// <summary>It was done and then designed out.</summary>
-    Superseded,
-}
-
 /// <summary>
 /// Where the wording came from, which survives into how d47 says it (Phase 17, "LLM Ship AI may propose
 /// that a checklist item is done").
@@ -261,8 +249,6 @@ public sealed record ChecklistItem
 
     public ChecklistState State { get; init; } = ChecklistState.Open;
 
-    public ChecklistTombstone Tombstone { get; init; } = ChecklistTombstone.None;
-
     public ChecklistProvenance Provenance { get; init; } = ChecklistProvenance.Attributed;
 
     /// <summary>The hull the ship reported when a ship-scoped item was written.</summary>
@@ -283,8 +269,6 @@ public sealed record ChecklistItem
     public ChecklistItemId Id => new(Scope, Key);
 
     public bool IsComplete => State == ChecklistState.Done;
-
-    public bool IsLive => Tombstone == ChecklistTombstone.None;
 
     /// <summary>Whether a person is allowed to tick this.</summary>
     public bool TicksByHand => Kind == ChecklistItemKind.Authored;

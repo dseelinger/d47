@@ -171,7 +171,7 @@ public class TheChecklistAndTheBuildDriftApartTests
         bench.Ships.Promote(bench.BuildId);
 
         static IReadOnlyList<string> Order(ChecklistService checklists) =>
-            [.. checklists.Document.Items.Where(item => item.IsLive).Select(item => item.Key)];
+            [.. checklists.Document.Items.Select(item => item.Key)];
 
         var promoted = Order(bench.Checklists);
 
@@ -203,7 +203,7 @@ public class TheChecklistAndTheBuildDriftApartTests
 
         Assert.Contains(
             bench.Checklists.Document.Items,
-            item => item.IsLive && item.Text.Contains("Armoured", StringComparison.OrdinalIgnoreCase));
+            item => item.Text.Contains("Armoured", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]

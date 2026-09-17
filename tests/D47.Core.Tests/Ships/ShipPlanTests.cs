@@ -374,14 +374,14 @@ public class ShipPlanTests
         ships.Promote(build.Id);
         checklists.Accept();
 
-        var before = checklists.Document.Items.Count(item => item.IsLive);
+        var before = checklists.Document.Items.Count;
 
         Assert.True(before > 0);
 
         var said = ships.Delete(build.Id);
 
         Assert.Empty(store.Builds);
-        Assert.Equal(before, checklists.Document.Items.Count(item => item.IsLive));
+        Assert.Equal(before, checklists.Document.Items.Count);
         Assert.Contains("still there", said, StringComparison.Ordinal);
     }
 
@@ -413,10 +413,9 @@ public class ShipPlanTests
             .Where(item => item.Intent?.Kind == ChecklistIntentKind.Blueprint)
             .ToList();
 
-        // One item, still live, still the same identity.
+        // One item, still the same identity.
         var only = Assert.Single(after);
 
-        Assert.True(only.IsLive);
         Assert.True(only.Id.Same(first.Id));
     }
 

@@ -90,22 +90,19 @@ public class ChecklistIdentityTests
     }
 
     [Fact]
-    public void AnAuthoredKeyIsTheLowestUnusedNumberAndSkipsTombstones()
+    public void AnAuthoredKeyIsTheLowestUnusedNumber()
     {
         var scope = ChecklistScope.Universal;
 
-        ChecklistItem Note(string key, ChecklistTombstone tombstone = ChecklistTombstone.None) => new()
+        ChecklistItem Note(string key) => new()
         {
             Key = key,
             Scope = scope,
             Kind = ChecklistItemKind.Authored,
             Text = key,
-            Tombstone = tombstone,
         };
 
-        // note-2 is gone but its key is not free: reusing it would graft the old item's history onto a new
-        // one.
-        Assert.Equal("note-3", ChecklistKeys.Note([Note("note-1"), Note("note-2", ChecklistTombstone.Abandoned)]));
+        Assert.Equal("note-2", ChecklistKeys.Note([Note("note-1")]));
     }
 
     [Fact]

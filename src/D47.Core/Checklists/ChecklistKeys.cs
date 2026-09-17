@@ -13,8 +13,7 @@ public static class ChecklistKeys
     public const string NotePrefix = "note-";
 
     /// <summary>
-    /// The next authored key in a scope: the lowest positive integer nothing there is already using,
-    /// counting tombstones.
+    /// The next authored key in a scope: the lowest positive integer nothing there is already using.
     /// </summary>
     public static string Note(IEnumerable<ChecklistItem> existing)
     {

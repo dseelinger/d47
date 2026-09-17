@@ -28,7 +28,7 @@ public static class ChecklistEvaluator
     /// <summary>Where an item stands now, or null when nothing can be said.</summary>
     public static ChecklistVerdict? Evaluate(ChecklistItem item, CommanderGameState? state)
     {
-        if (item.Kind != ChecklistItemKind.Derived || item.Intent is not { } intent || !item.IsLive)
+        if (item.Kind != ChecklistItemKind.Derived || item.Intent is not { } intent)
         {
             return null;
         }

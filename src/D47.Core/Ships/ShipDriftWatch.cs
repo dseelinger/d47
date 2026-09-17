@@ -148,8 +148,7 @@ public sealed class ShipDriftWatch(ShipPlanService ships, ChecklistService check
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var standing = checklists.Document.Items
-            .Where(item => item.IsLive
-                           && item.Scope.Same(scope)
+            .Where(item => item.Scope.Same(scope)
                            && item.Source == ChecklistSource.EngineeringPlan)
             .Select(item => item.Key)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);

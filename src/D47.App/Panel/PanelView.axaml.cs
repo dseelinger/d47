@@ -585,7 +585,7 @@ public partial class PanelView : UserControl
         // works is a number they learn to ignore.
         void Count()
         {
-            var open = checklists.Document.Items.Count(item => item.IsLive && !item.IsComplete);
+            var open = checklists.Document.Items.Count(item => !item.IsComplete);
 
             // The number is gone from the tab (#234).
             _ = open;

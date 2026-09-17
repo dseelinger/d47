@@ -18,7 +18,7 @@ public class ChecklistOrderTests
     }
 
     private static IEnumerable<string> Order(ChecklistDocument document) =>
-        document.Items.Where(item => item.IsLive).Select(item => item.Text);
+        document.Items.Select(item => item.Text);
 
     [Fact]
     public void MovingUpCrossesScopes()
@@ -69,44 +69,6 @@ public class ChecklistOrderTests
 
         Assert.True(change.Changed);
         Assert.Equal(["fit a fuel scoop", "sell the cargo", "buy limpets"], Order(change.Document));
-    }
-
-    /// <summary>Tombstones stay exactly where they are.</summary>
-    [Fact]
-    public void TombstonesDoNotMoveAndAreNotSteppedOnto()
-    {
-        var document = Three();
-
-        // A tombstone in the middle, as a revision leaves one.
-        var items = document.Items.ToList();
-        items.Insert(1, items[1] with { Tombstone = ChecklistTombstone.Abandoned, Key = "gone" });
-        document = document with { Items = items };
-
-        var before = document.Items.Select(item => item.Tombstone).ToList();
-
-        var change = document.Move(document.Items[0].Id, 1);
-
-        Assert.True(change.Changed);
-
-        // The live items swapped; the tombstone is still the second entry.
-        Assert.Equal(["fit a fuel scoop", "buy limpets", "sell the cargo"], Order(change.Document));
-        Assert.Equal(before, change.Document.Items.Select(item => item.Tombstone));
-    }
-
-    /// <summary>A record of what a plan dropped is not something to work on, and says why.</summary>
-    [Fact]
-    public void ATombstoneCannotBeMoved()
-    {
-        var document = Three();
-
-        var items = document.Items.ToList();
-        items[0] = items[0] with { Tombstone = ChecklistTombstone.Abandoned };
-        document = document with { Items = items };
-
-        var change = document.Move(document.Items[0].Id, 1);
-
-        Assert.False(change.Changed);
-        Assert.Contains("dropped by a later version", change.Report, StringComparison.Ordinal);
     }
 
     [Fact]

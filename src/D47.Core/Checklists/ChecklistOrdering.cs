@@ -72,7 +72,7 @@ public static class ChecklistOrdering
 
         var seen = new List<ChecklistProject>();
 
-        foreach (var item in document.Items.Where(item => item.IsLive))
+        foreach (var item in document.Items)
         {
             var key = Key(item.Scope);
 
@@ -113,7 +113,7 @@ public static class ChecklistOrdering
             .Select((project, position) => (project.Key, position))
             .ToDictionary(entry => entry.Key, entry => entry.position, StringComparer.Ordinal);
 
-        var live = document.Items.Where(item => item.IsLive).ToList();
+        var live = document.Items.ToList();
 
         // Where each line sits in the file, which used to be implicit in OrderBy's stability and has to be
         // explicit now that an effect can borrow its upgrade's place.

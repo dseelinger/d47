@@ -66,7 +66,7 @@ public class FilteringToWhatAPinnedBlueprintCanFinishTests
             [Booster("TinyHardpoint5", grade: 3)],
             ["TinyHardpoint5"]);
 
-        var item = Assert.Single(checklists.Document.Items, entry => entry.IsLive);
+        var item = Assert.Single(checklists.Document.Items);
 
         // Nowhere near Lei Cheung, and "here" says so — the row a pin is not.
         Assert.False(checklists.OfferedHere(item));
@@ -90,7 +90,7 @@ public class FilteringToWhatAPinnedBlueprintCanFinishTests
             [Booster("TinyHardpoint5", grade: 3)],
             ["TinyHardpoint5"]);
 
-        var item = Assert.Single(checklists.Document.Items, entry => entry.IsLive);
+        var item = Assert.Single(checklists.Document.Items);
 
         checklists.Pin(LeiCheung, pinned: true);
 

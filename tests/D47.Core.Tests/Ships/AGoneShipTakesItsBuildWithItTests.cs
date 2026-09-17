@@ -100,20 +100,17 @@ public class AGoneShipTakesItsBuildWithItTests
         Assert.NotNull(ships.ForShip(Kept));
     }
 
-    /// <summary>Revision revives a tombstone whose key comes back, so none may be left in the file.</summary>
+    /// <summary>A revision drops a line outright, so nothing is left for the sale to clean up.</summary>
     [Fact]
     public void NothingDerivedFromTheBuildIsLeftInTheFile()
     {
         using var install = new TempInstall();
         var (_, checklists, ships) = Set(install);
 
-        // A revision that drops a line leaves a tombstone behind.
-        checklists.Revise(
-            ChecklistScope.Ship(Gone),
-            ChecklistSource.EngineeringPlan,
-            [.. Derived(checklists.Document, Gone).Take(1)]);
+        // A revision that drops the line entirely.
+        checklists.Revise(ChecklistScope.Ship(Gone), ChecklistSource.EngineeringPlan, []);
 
-        Assert.Contains(checklists.Document.Items, item => !item.IsLive && item.Scope.Same(ChecklistScope.Ship(Gone)));
+        Assert.Empty(Derived(checklists.Document, Gone));
 
         ships.DropGone([Sell(Gone)]);
 

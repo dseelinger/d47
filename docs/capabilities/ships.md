@@ -241,9 +241,7 @@ yourself on that ship's list are left where they are.
 
 **Changing your mind about a slot is an edit, not a delete and an add.** Swapping a long-range
 pulse laser for an overcharged multi-cannon leaves you with the same third hardpoint on the same
-hull — with whatever history it had. Before this, the first time you changed your mind about a
-slot, everything that slot had been through was tombstoned and an identical-looking new item
-opened beside the corpse.
+hull — with whatever history it had.
 
 ### The fleet, and the fleet you intend
 

@@ -69,7 +69,7 @@ public class FocusingTheChecklistOnOneEngineerTests
         var (checklists, marco, hera) = Built();
 
         var kept = checklists.Document.Items
-            .Where(item => item.IsLive && checklists.OfferedEngineer(item, marco.Id))
+            .Where(item => checklists.OfferedEngineer(item, marco.Id))
             .ToList();
 
         Assert.Equal(3, kept.Count);
@@ -93,7 +93,7 @@ public class FocusingTheChecklistOnOneEngineerTests
 
         // And Hera Tani's filter is the mirror image — none of Marco's lines are hers.
         var herKept = checklists.Document.Items
-            .Where(item => item.IsLive && checklists.OfferedEngineer(item, hera.Id))
+            .Where(item => checklists.OfferedEngineer(item, hera.Id))
             .ToList();
 
         Assert.DoesNotContain(herKept, item => item.Intent!.Subject is "Marco Qwent" or "Elvira Martuuk");
@@ -151,7 +151,7 @@ public class FocusingTheChecklistOnOneEngineerTests
 
         checklists.Poll();
 
-        Assert.DoesNotContain(checklists.Document.Items, item => item.IsLive);
+        Assert.Empty(checklists.Document.Items);
         Assert.Equal(ChecklistService.Everything, checklists.Filter);
     }
 

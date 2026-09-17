@@ -61,6 +61,36 @@ public class ChecklistStoreTests
         Assert.Equal(ChecklistState.Stale, store.For("F1").Items.Single().State);
     }
 
+    /// <summary>A file written before tombstones were removed (#258) holds lines this shape no longer knows.</summary>
+    [Fact]
+    public void ATombstonedLineWrittenByAnOlderVersionIsGoneOnLoad()
+    {
+        using var install = new TempInstall();
+        var store = Store(install);
+
+        File.WriteAllText(
+            store.Path,
+            """
+            {
+              "commanders": [
+                { "commanderFid": "F1", "items": [
+                  { "key": "note-1", "scope": { "group": "universal" },
+                    "kind": "authored", "text": "buy limpets" },
+                  { "key": "note-2", "scope": { "group": "universal" },
+                    "kind": "authored", "text": "sell the cargo", "tombstone": "abandoned" },
+                  { "key": "note-3", "scope": { "group": "universal" },
+                    "kind": "authored", "text": "fit a fuel scoop", "tombstone": "superseded" } ] } ]
+            }
+            """);
+
+        Assert.True(store.Poll());
+        Assert.Equal("buy limpets", Assert.Single(store.For("F1").Items).Text);
+
+        store.Save(store.Documents);
+
+        Assert.DoesNotContain("tombstone", File.ReadAllText(store.Path), StringComparison.Ordinal);
+    }
+
     [Fact]
     public void ABadLineIsReportedAndTheRestOfTheFileStillLoads()
     {

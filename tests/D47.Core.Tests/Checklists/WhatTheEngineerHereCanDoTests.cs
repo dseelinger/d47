@@ -303,7 +303,7 @@ public class WhatTheEngineerHereCanDoTests
             [Booster("TinyHardpoint5", grade: 3), Effect("TinyHardpoint5", "Force Block")],
             ["TinyHardpoint5"]);
 
-        var items = checklists.Document.Items.Where(item => item.IsLive).ToList();
+        var items = checklists.Document.Items.ToList();
 
         var blueprint = Assert.Single(items, item => item.Intent?.Kind == ChecklistIntentKind.Blueprint);
         var effect = Assert.Single(items, item => item.Intent?.Kind == ChecklistIntentKind.Experimental);
