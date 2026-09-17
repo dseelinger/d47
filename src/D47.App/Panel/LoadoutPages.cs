@@ -290,7 +290,7 @@ public static class LoadoutPages
         // **"Flying now" as a badge, not as a highlighted card** (#289, reported 2026-09-04).
         if (standing == LoadoutStanding.Active)
         {
-            var badge = Pill("FLYING NOW");
+            var badge = Pill("CURRENT SHIP");
 
             Grid.SetRow(badge, 0);
             body.Children.Add(badge);

@@ -94,10 +94,9 @@ public sealed class ShipsMode(
                     entry.Name ?? entry.HullName,
                     entry.Name is { Length: > 0 } name ? $"{name} ({entry.HullName})" : entry.HullName,
 
-                    // Where it is, and how its plans stand.
-                    planned > 0
-                        ? $"{entry.Where()} · {planned.ToString(CultureInfo.InvariantCulture)} planned"
-                        : entry.Where(),
+                    // Where it is, and how its plans stand. The active ship's badge already says it is
+                    // flying, so its aside is the system alone rather than Where()'s "you are flying it".
+                    entry.IsActive ? ActiveAside(entry, planned) : Aside(entry, planned),
                     planned > 0)
                 {
                     Standing = entry.IsActive
@@ -109,6 +108,30 @@ public sealed class ShipsMode(
                 };
             }),
     ];
+
+    /// <summary>A parked or intended ship's aside: where it is, and how its plans stand.</summary>
+    private static string Aside(FleetEntry entry, int planned) =>
+        planned > 0
+            ? $"{entry.Where()} · {planned.ToString(CultureInfo.InvariantCulture)} planned"
+            : entry.Where();
+
+    /// <summary>
+    /// The active ship's aside: the badge already says it is flying, so this names the system instead,
+    /// or nothing when the system is not known and nothing is planned (#251).
+    /// </summary>
+    private static string ActiveAside(FleetEntry entry, int planned)
+    {
+        var system = entry.Stored is { HasSystem: true } stored ? stored.StarSystem : null;
+
+        if (system is not null)
+        {
+            return planned > 0
+                ? $"{system} · {planned.ToString(CultureInfo.InvariantCulture)} planned"
+                : system;
+        }
+
+        return planned > 0 ? $"{planned.ToString(CultureInfo.InvariantCulture)} planned" : string.Empty;
+    }
 
     public bool Cards => true;
 

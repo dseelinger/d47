@@ -32,7 +32,7 @@ nav_order: 112
  <path d="M78 130 L214 120 L266 148 L214 166 L112 168 Z" fill="var(--text-muted)"/>
  <path d="M112 168 L214 166 L196 186 L128 184 Z" fill="var(--border)"/>
  <text x="60" y="206" font-size="15" fill="var(--text)">Ptarmigan (Anaconda)</text>
- <text x="60" y="224" font-size="13" fill="var(--text-muted)">flying now</text>
+ <text x="60" y="224" font-size="13" fill="var(--text-muted)">Solati</text>
 
  <rect x="312" y="78" width="256" height="152" rx="6" fill="var(--surface)"/>
  <path d="M346 134 L462 122 L512 146 L462 164 L378 168 Z" fill="var(--text-muted)"/>
@@ -309,7 +309,7 @@ and nothing you could only do to a mesh.
 
 **The ship you are flying wears a badge.** It used to be an outlined card, which is what every list
 everywhere uses for *the row you have selected* — so the fleet opened looking as though Directive
-47 had already picked a ship for you. **FLYING NOW** on the drawing says the one thing it means.
+47 had already picked a ship for you. **CURRENT SHIP** on the drawing says the one thing it means.
 
 ### Owned is derived. Intended is authored.
 

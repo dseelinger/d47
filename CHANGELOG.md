@@ -6,6 +6,12 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.152.0 — Rename the active ship's badge, drop its redundant line
+
+The active ship's card badge now reads "CURRENT SHIP" instead of "FLYING NOW". The line under its
+name no longer repeats that it is being flown; it now shows the system alone, or the system with
+its planned slot count, matching every other ship's card.
+
 ## 0.151.0 — Outline the slot the detail pane shows
 
 The left-hand list on a ship's page now outlines the slot row whose detail is open in the right

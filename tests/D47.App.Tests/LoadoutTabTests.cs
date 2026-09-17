@@ -207,7 +207,8 @@ public class LoadoutTabTests
         var shown = Text(surface.Panel);
 
         Assert.Contains("Bad Idea (Python)", shown);
-        Assert.Contains(shown, line => line.Contains("flying", StringComparison.Ordinal));
+        Assert.Contains("CURRENT SHIP", shown);
+        Assert.DoesNotContain(shown, line => line.Contains("flying", StringComparison.Ordinal));
 
         surface.Window.Close();
     }
