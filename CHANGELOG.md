@@ -6,6 +6,13 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.151.0 — Outline the slot the detail pane shows
+
+The left-hand list on a ship's page now outlines the slot row whose detail is open in the right
+pane, the same accent-coloured outline the fleet cards and the Engineers list already carry.
+Pressing a different slot moves the outline to it; the on-foot item page outlines its open row the
+same way.
+
 ## 0.150.0 — Name the slot atop its detail pane
 
 The slot detail pane now opens with the slot's own name — "Large Hardpoint 1", "Utility Mount 1",

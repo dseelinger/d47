@@ -1439,4 +1439,42 @@ public class LoadoutTabTests
 
         surface.Window.Close();
     }
+
+    private static IReadOnlyList<Button> Outlined(PanelView panel) =>
+        [.. panel.GetVisualDescendants().OfType<Button>().Where(button => button.Classes.Contains("showing"))];
+
+    /// <summary>The slot the right pane is drawing is outlined, and moving to another slot moves it (#248).</summary>
+    [AvaloniaFact]
+    public void TheOpenSlotIsTheOutlinedRow()
+    {
+        var surface = Open();
+
+        Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Empty(Outlined(surface.Panel));
+
+        Row(surface.Panel, "Main Engines").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var outlined = Outlined(surface.Panel);
+
+        Assert.Single(outlined);
+        Assert.Equal("Main Engines", AutomationProperties.GetName(outlined[0]));
+
+        Row(surface.Panel, "Large Hardpoint 1").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var moved = Outlined(surface.Panel);
+
+        Assert.Single(moved);
+        Assert.Equal("Large Hardpoint 1", AutomationProperties.GetName(moved[0]));
+
+        surface.Panel.Nav.Back();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Empty(Outlined(surface.Panel));
+
+        surface.Window.Close();
+    }
 }

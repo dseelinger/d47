@@ -880,7 +880,7 @@ public static class LoadoutPages
     /// A slot row: what the slot is, what is in it, and what the plan asks for
     /// (docs/plans/change-requests.md 38).
     /// </summary>
-    internal static Control SlotRow(LoadoutRow row, Action pressed)
+    internal static Control SlotRow(LoadoutRow row, Action pressed, bool showing = false)
     {
         var parts = row.Parts!;
 
@@ -941,6 +941,13 @@ public static class LoadoutPages
         // the column is the short form.
         AutomationProperties.SetName(button, row.Word);
         ToolTip.SetTip(slot, row.Word);
+
+        if (showing)
+        {
+            button.Classes.Add("showing");
+            button.BorderThickness = new Thickness(2);
+            Themed(button, Button.BorderBrushProperty, ThemeManager.AccentKey);
+        }
 
         button.Click += (_, _) => pressed();
 
@@ -1763,15 +1770,24 @@ public sealed class ItemPage : LoadoutPage
                 _list.Children.Add(LoadoutPages.Heading(heading));
             }
 
+            // Read off the trail rather than kept as a second piece of state (#110): the last crumb is what
+            // the right pane is drawing, and the row builds the same crumb it would drill to anyway — so the
+            // outline follows that pane however it got there, pressed here, reached by voice, or arrived at
+            // by the back gesture.
+            var crumb = LoadoutPages.SlotCrumb(Mode, row);
+            var showing = _nav.Trail.Count > 0
+                          && string.Equals(_nav.Trail[^1].Key, crumb.Key, StringComparison.Ordinal);
+
             // A slot row draws as the loadout; anything else is still a line with a note.
             var control = row.Parts is not null
-                ? LoadoutPages.SlotRow(row, () => _nav.Drill(LoadoutPages.SlotCrumb(Mode, row)))
+                ? LoadoutPages.SlotRow(row, () => _nav.Drill(crumb), showing)
                 : LoadoutPages.Row(
                     row.Text,
                     row.Aside,
                     row.Marked,
-                    () => _nav.Drill(LoadoutPages.SlotCrumb(Mode, row)),
-                    row.Engineered);
+                    () => _nav.Drill(crumb),
+                    row.Engineered,
+                    showing);
 
             Draggable(control, row);
 
