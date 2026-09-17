@@ -257,6 +257,20 @@ public sealed record ChecklistDocument
             $"Removed \"{item.Text}\".");
     }
 
+    /// <summary>Removes every Done line, whatever its kind, source or scope (#259).</summary>
+    public ChecklistChange DeleteCompleted()
+    {
+        var kept = Items.Where(item => !item.IsComplete).ToList();
+        var removed = Items.Count - kept.Count;
+
+        return removed == 0
+            ? new ChecklistChange(this, Changed: false, "Nothing on your checklist is done.")
+            : new ChecklistChange(
+                this with { Items = kept },
+                Changed: true,
+                removed == 1 ? "Removed 1 completed item." : $"Removed {removed} completed items.");
+    }
+
     /// <summary>Removes the derived items in one list that <paramref name="which"/> selects.</summary>
     public ChecklistChange Forget(ChecklistScope scope, Func<ChecklistItem, bool> which)
     {

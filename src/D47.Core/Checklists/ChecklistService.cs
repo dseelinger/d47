@@ -1071,6 +1071,50 @@ public sealed class ChecklistService(
         return change;
     }
 
+    /// <summary>Whether the whole checklist has any Done line, for a bulk-delete control to enable itself.</summary>
+    public bool HasCompleted => Document.Items.Any(item => item.IsComplete);
+
+    /// <summary>
+    /// Removes every Done line from the whole checklist, ignoring the current filter and search
+    /// (#259).
+    /// </summary>
+    public ChecklistChange DeleteCompleted()
+    {
+        var change = list.Apply(Fid, Name, document => document.DeleteCompleted());
+
+        if (!change.Changed)
+        {
+            return change;
+        }
+
+        if (Selected is { } held && change.Document.Find(held) is null)
+        {
+            Select(null);
+        }
+
+        // A waiting plan proposal carries a copy of every standing line, so it loses the same lines or a
+        // later accept would put them back (Wanted() copies standing items straight from the document).
+        var affected = proposals.Pending
+            .Where(proposal => string.Equals(proposal.CommanderFid, Fid, StringComparison.Ordinal)
+                                && proposal.Kind == ProposalKind.Plan
+                                && proposal.Items.Any(item => item.IsComplete))
+            .Select(proposal => proposal.Id)
+            .ToHashSet(StringComparer.Ordinal);
+
+        if (affected.Count > 0)
+        {
+            proposals.Write(
+            [
+                .. proposals.Pending.Select(proposal =>
+                    affected.Contains(proposal.Id)
+                        ? proposal with { Items = [.. proposal.Items.Where(item => !item.IsComplete)] }
+                        : proposal),
+            ]);
+        }
+
+        return change;
+    }
+
     /// <summary>Points the selection at whatever a change was about, where it did anything.</summary>
     private ChecklistChange Selecting(ChecklistChange change)
     {

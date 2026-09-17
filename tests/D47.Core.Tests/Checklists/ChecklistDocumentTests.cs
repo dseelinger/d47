@@ -204,6 +204,45 @@ public class ChecklistDocumentTests
         Assert.False(change.Changed);
     }
 
+    [Fact]
+    public void DeletingCompletedRemovesEveryDoneLineWhateverItsKindOrSource()
+    {
+        var scope = ChecklistScope.Ship(12);
+
+        var withNotes = Empty.AddNote(ChecklistScope.Universal, "buy limpets").Document;
+        withNotes = withNotes.AddNote(ChecklistScope.Universal, "sell cargo").Document;
+
+        var openNote = withNotes.Items[0];
+        var doneNote = withNotes.Items[1] with { State = ChecklistState.Done };
+
+        var openPlan = Derived("MainEngines", "Dirty Drive Tuning", 5, scope);
+        var donePlan = Derived("Slot01", "Heavy Duty", 5, scope) with { State = ChecklistState.Done };
+
+        var document = withNotes with { Items = [openNote, doneNote, openPlan, donePlan] };
+
+        var change = document.DeleteCompleted();
+
+        Assert.True(change.Changed);
+        Assert.Equal(2, change.Document.Items.Count);
+        Assert.All(change.Document.Items, item => Assert.False(item.IsComplete));
+        Assert.Contains(openNote.Id, change.Document.Items.Select(item => item.Id));
+        Assert.Contains(openPlan.Id, change.Document.Items.Select(item => item.Id));
+    }
+
+    [Fact]
+    public void APlanRevisedForARemovedLinesSlotReportsItAsNew()
+    {
+        var scope = ChecklistScope.Ship(12);
+        var donePlan = Derived("Slot01", "Heavy Duty", 5, scope) with { State = ChecklistState.Done };
+
+        var document = (Empty with { Items = [donePlan] }).DeleteCompleted().Document;
+
+        var revised = document.Revise(
+            scope, ChecklistSource.EngineeringPlan, [Derived("Slot01", "Heavy Duty", 5, scope)]);
+
+        Assert.Contains("1 new", revised.Report, StringComparison.Ordinal);
+    }
+
     [Theory]
     [InlineData(ChecklistItemKind.Derived, false, "says nothing about what to look for")]
     [InlineData(ChecklistItemKind.Authored, true, "tick nobody checked")]

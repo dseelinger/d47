@@ -104,6 +104,14 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         MinHeight = TouchTarget,
     };
 
+    /// <summary>Bulk-removes every Done line on the whole checklist (#259).</summary>
+    private readonly Button _deleteCompleted = new()
+    {
+        Content = "Delete completed items",
+        Padding = new Thickness(12, 4),
+        MinHeight = TouchTarget,
+    };
+
     /// <summary>The filter and the search text.</summary>
     private string Chosen => _checklists.Filter;
 
@@ -189,6 +197,8 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         // Import and export (remediation.md 10, item 15).
         _transfer.Click += (_, _) => ChooseTransfer();
 
+        _deleteCompleted.Click += (_, _) => DeleteCompletedItems();
+
         // A WrapPanel, because this bar overlapped itself below about 700 pixels. It was a DockPanel
         // with one group docked right and one filling, and a filling StackPanel does not shrink — so the two
         // groups drew over each other, which the strip's 512 made obvious and a narrow desktop window has
@@ -209,6 +219,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         _controls.Children.Add(_orderButton);
         _controls.Children.Add(_arcsToggle);
         _controls.Children.Add(_transfer);
+        _controls.Children.Add(_deleteCompleted);
 
         // The filter group first, so a bar that wraps drops "Add a line" to the second row rather than the
         // thing the page is filtered by.
@@ -397,6 +408,8 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         {
             _controls.Children.Remove(_partial);
         }
+
+        _deleteCompleted.IsEnabled = _checklists.HasCompleted;
 
         RebuildArcs();
 
@@ -962,6 +975,49 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
                 }
 
                 var change = _checklists.Delete(item.Id);
+
+                if (!change.Changed)
+                {
+                    Say(change.Report);
+                    return;
+                }
+
+                Rebuild();
+            });
+    }
+
+    /// <summary>
+    /// Removes every Done line from the whole checklist in one press, ignoring the current filter and
+    /// search (#259).
+    /// </summary>
+    private void DeleteCompletedItems()
+    {
+        var count = _checklists.Document.Items.Count(item => item.IsComplete);
+
+        if (count == 0)
+        {
+            return;
+        }
+
+        _prompts.Choose(
+            new ChoiceRequest(
+                "checklist.delete-completed",
+                "Delete completed",
+                "Delete completed items",
+                (count == 1 ? "1 completed line" : $"{count} completed lines")
+                + " would come off your whole checklist, including anything hidden by the current filter "
+                + "or search. There is no way back from this one.",
+                [new ChoiceOption("keep", "Keep them"), new ChoiceOption("delete", "Delete them")],
+                "keep",
+                ChoiceSurface.Layer),
+            option =>
+            {
+                if (option.Key != "delete")
+                {
+                    return;
+                }
+
+                var change = _checklists.DeleteCompleted();
 
                 if (!change.Changed)
                 {

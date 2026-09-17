@@ -210,6 +210,12 @@ six still open.
 **Deleting is changing your mind.** A different act, and it can happen whether or not the item was
 ever finished.
 
+**"Delete completed items"**, on the Checklist tab's control bar, does that in bulk: every Done
+line, whatever list it is in or where it came from, gone in one confirmed press. It looks at the
+whole checklist rather than what the current filter or search is showing, and is greyed out when
+nothing is Done. A plan proposal still waiting to be accepted loses the same lines from what it
+would add, so accepting it afterwards does not put them back.
+
 ### Changing a plan is a diff, not a rebuild
 
 Burst lasers instead of multi-cannons is a revision, and Directive 47 tells it apart from the world

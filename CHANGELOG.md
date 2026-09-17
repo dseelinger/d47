@@ -6,6 +6,12 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.163.0 — Delete completed checklist items in bulk
+
+The Checklist tab's control bar now has a "Delete completed items" button, beside Import/Export.
+It removes every Done line from the whole checklist — the Commander's own and every plan's — in
+one confirmed press, ignoring the current filter and search. It is disabled when nothing is Done.
+
 ## 0.162.0 — Remove checklist tombstones
 
 A plan revision that drops a line now deletes it outright, rather than leaving it on the list as
