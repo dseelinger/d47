@@ -417,7 +417,7 @@ public sealed class ChecklistService(
 
         foreach (var item in unowned.Items)
         {
-            mine = mine.AddNote(item.Scope, item.Text).Document;
+            mine = mine.Adopt(item);
         }
 
         list.Save(

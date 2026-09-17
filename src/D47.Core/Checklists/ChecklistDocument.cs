@@ -141,6 +141,26 @@ public sealed record ChecklistDocument
         };
     }
 
+    /// <summary>
+    /// Inserts an item exactly as given — <see cref="ChecklistService.Adopt"/> uses this so a derived
+    /// item stays derived rather than arriving as a note. A derived item already held under the same
+    /// <see cref="ChecklistItemId"/> is not duplicated; an authored note whose key collides gets a
+    /// fresh one, since a note key is allocated per document rather than carried with the note.
+    /// </summary>
+    public ChecklistDocument Adopt(ChecklistItem item)
+    {
+        if (item.Kind != ChecklistItemKind.Authored)
+        {
+            return Find(item.Id) is null ? this with { Items = [.. Items, item] } : this;
+        }
+
+        var scoped = Items.Where(existing => existing.Scope.Same(item.Scope));
+        var taken = scoped.Any(existing => string.Equals(existing.Key, item.Key, StringComparison.OrdinalIgnoreCase));
+        var incoming = taken ? item with { Key = ChecklistKeys.Note(scoped) } : item;
+
+        return this with { Items = [.. Items, incoming] };
+    }
+
     /// <summary>Ticks an item.</summary>
     public ChecklistChange Complete(ChecklistItemId id) => SetTicked(id, ticked: true);
 

@@ -6,6 +6,13 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.148.0 — Adopt keeps derived checklist items derived
+
+A checklist line written before a commander was known — before the first journal, or while
+Elite was not running — now keeps its kind, key, source and hull when it is handed to the
+commander who appears. Previously every such line arrived as an authored note, so d47 stopped
+checking it against the journal and drew a switch beside it instead of a live verdict.
+
 ## 0.147.0 — The rescan sentence counts this commander's ships
 
 "Rescan my journals" now says how many ships it found for the commander currently flying, matching
