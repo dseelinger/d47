@@ -6,6 +6,12 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.146.0 — A commander reset forgets the ships that came before it
+
+Resetting a commander now clears the ships d47 remembers for that Frontier ID, both while it is
+running and after a rescan. Previously a reset left every ship the commander had ever flown in the
+"What is fitted, remembered" count and the Fleet tab, including ships from before the reset.
+
 ## 0.145.0 — A tab's own settings fit a narrow column
 
 "Settings for this page" on the Fleet, Routing and Adventures tabs fits the width of its column, so

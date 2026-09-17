@@ -135,6 +135,16 @@ public static class LoadoutBackfill
                         commander = fid;
                     }
 
+                    // Comes before the Commander/LoadGame of the session that follows it, so the FID it
+                    // names is read from the event, not from the variable above.
+                    if (journalEvent.Kind == "NewCommander"
+                        && journalEvent.String("FID") is { Length: > 0 } resetFid)
+                    {
+                        remembered.Remove(resetFid);
+                        flying.Remove(resetFid);
+                        continue;
+                    }
+
                     if (commander.Length == 0)
                     {
                         continue;

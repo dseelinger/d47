@@ -79,7 +79,7 @@ public sealed record ShipLoadouts
     public static bool MayChange(JournalEvent journalEvent) =>
         journalEvent is not null && journalEvent.Kind
             is "Loadout" or "SetUserShipName" or "EngineerCraft"
-            or "ShipyardSell" or "ShipyardBuy" or "ShipyardNew";
+            or "ShipyardSell" or "ShipyardBuy" or "ShipyardNew" or "NewCommander";
 
     /// <summary>Forgetting a ship, which a durable file keeps forever unless this removes it (#128).</summary>
     public ShipLoadouts Apply(JournalEvent journalEvent)

@@ -575,4 +575,60 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
         Assert.Equal("Felicity Farseer", module.Engineer);
         Assert.Equal(52.3, Assert.Single(module.Modifiers).Value);
     }
+
+    private static string ResetOf(string fid) =>
+        $$"""{"timestamp":"2026-08-21T09:00:00Z","event":"NewCommander","FID":"{{fid}}","Name":"Jameson","Package":"Default3"}""";
+
+    /// <summary>A reset clears what came before it, in the history walk (#245).</summary>
+    [Fact]
+    public void ANewCommanderForgetsShipsFromBeforeTheResetInHistory()
+    {
+        var journal = Journal("2026-08-20T100000",
+            """{"timestamp":"2026-08-20T10:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+            Boarding("2026-08-20T10:05:00Z", "type9_military", 42, "int_engine_size7_class5"),
+            ResetOf("F1"),
+            """{"timestamp":"2026-08-21T09:05:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+            Boarding("2026-08-21T09:10:00Z", "sidewinder", 1, "int_engine_size2_class1"));
+
+        var found = LoadoutBackfill.FromHistory(
+            [journal], NullLogger.Instance, cancellation: TestContext.Current.CancellationToken);
+
+        Assert.Null(found["F1"].For(42));
+        Assert.NotNull(found["F1"].For(1));
+    }
+
+    /// <summary>The same sequence, folded live, gives the same answer (#245).</summary>
+    [Fact]
+    public void ANewCommanderForgetsShipsFromBeforeTheResetFoldedLive()
+    {
+        var state = State(
+            store: null,
+            Boarding("2026-08-20T10:05:00Z", "type9_military", 42, "int_engine_size7_class5"),
+            ResetOf("F1"),
+            Boarding("2026-08-21T09:10:00Z", "sidewinder", 1, "int_engine_size2_class1"));
+
+        Assert.Null(state.Loadouts.For(42));
+        Assert.NotNull(state.Loadouts.For(1));
+
+        Assert.True(ShipLoadouts.MayChange(Event(ResetOf("F1"))));
+    }
+
+    /// <summary>A reset for one Commander leaves another Commander's fleet alone (#245).</summary>
+    [Fact]
+    public void ANewCommanderLeavesAnotherCommandersShipsAlone()
+    {
+        var journal = Journal("2026-08-20T100000",
+            """{"timestamp":"2026-08-20T10:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+            Boarding("2026-08-20T10:05:00Z", "type9_military", 42, "int_engine_size7_class5"),
+            """{"timestamp":"2026-08-20T11:00:00Z","event":"Commander","FID":"F2","Name":"Braben"}""",
+            Boarding("2026-08-20T11:05:00Z", "anaconda", 51, "int_engine_size7_class2"),
+            ResetOf("F1"));
+
+        var found = LoadoutBackfill.FromHistory(
+            [journal], NullLogger.Instance, cancellation: TestContext.Current.CancellationToken);
+
+        // Fully forgotten, so it no longer has a known fleet at all.
+        Assert.False(found.ContainsKey("F1"));
+        Assert.NotNull(found["F2"].For(51));
+    }
 }

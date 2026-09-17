@@ -98,6 +98,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         {
             Reputation = Reputation.WithoutFactions();
             Contributions = EngineerContributions.Empty;
+            Loadouts = ShipLoadouts.Empty;
             return;
         }
 
