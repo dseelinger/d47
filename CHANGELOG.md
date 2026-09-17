@@ -6,6 +6,12 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.157.0 — Correct three Odyssey bartender sale counts
+
+Kit Fowler, Yarden Bond and Wellington Beck's engineer prerequisites named the pre-4.0.18.08
+sale counts. They now read 5 Opinion Polls, 5 Smear Campaign Plans and a total of 15
+entertainment items, on the engineer detail page and the Route page alike.
+
 ## 0.156.0 — Drop route promotion, copy way-in systems
 
 Every stop under an engineer's "The way in" now carries a copy glyph beside its system name, the

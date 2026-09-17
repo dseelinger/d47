@@ -570,6 +570,17 @@ SPLIT_REFERRERS = re.compile(r",\s*|\s+and\s+", re.IGNORECASE)
 # silently patched: the sources agree on the other 37 of 38.
 BILL_TURNER = ("Bill Turner", ["Selene Jean"], 3)
 
+# Frontier's update 4.0.18.08 cut three Odyssey bartender sale counts; EDDiscovery's `meeting`
+# prose still states the pre-patch numbers. Stated here rather than parsed, the same as
+# BILL_TURNER above — TRIBUTE_NOTES documents the same cut for the `tribute` column.
+MEETING_OVERRIDES = {
+    "kitfowler": "Sell 5 Opinion polls to bartenders.",
+    "yardenbond": "Sell 5 Smear campaign plans to bartenders.",
+    "wellingtonbeck":
+        "Sell a total of 15 Multimedia Entertainment, Classic Entertainment and Cat media to "
+        "bartenders.",
+}
+
 
 def resolve(who: str, graph: dict[str, dict]) -> str:
     """A referrer's name as the directory spells it.
@@ -608,6 +619,9 @@ def chain() -> dict[str, dict]:
         if relax(name) == relax(BILL_TURNER[0]):
             _who, referrers, level = BILL_TURNER
             grade = str(level)
+
+        if relax(name) in MEETING_OVERRIDES:
+            meeting = MEETING_OVERRIDES[relax(name)]
 
         graph[relax(name)] = {
             "name": name,
