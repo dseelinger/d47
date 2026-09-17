@@ -139,6 +139,7 @@ from a model that will produce a plausible one.
 > "what ships do I own"
 > "what materials am I carrying"
 > "how have I done this session"
+> "what are my career statistics"
 
 **Every one of those reaches the thing it names.** This capability has six answers and used to be
 reached as a whole, with the first of the six taken by default — which is *where you are*. So
@@ -279,6 +280,31 @@ Balance at session start: 1,000,000 cr.
 Every figure is a sum of amounts Elite reported. Nothing comes from a price table or a market
 lookup, so the numbers are the ones you would recognise.
 
+**Your career statistics**, from the journal's `Statistics` event — every section Elite writes, or
+one section named, with each figure under a readable name and in its unit — credits, light years,
+or hours and minutes:
+
+```text
+Career statistics, as of 2026-09-05 16:36 UTC:
+
+Exploration:
+  Total Hyperspace Distance: 4557.72 ly
+  Time Played: 54 minutes
+```
+
+Name one section and only that one comes back — *"what have I earned from exobiology"*:
+
+```text
+Exobiology, as of 2026-09-05 16:36 UTC:
+  Organic Data Profits: 4,204,000 cr
+```
+
+`Statistics` is written about 30 seconds after `LoadGame`, once per session:
+
+```text
+The game has not reported your career statistics this session.
+```
+
 ### When it does not know
 
 It says which event it is waiting for rather than shrugging — "Directive 47 started after Elite"
@@ -391,6 +417,12 @@ in the tool so the model is comparing figures rather than deriving them:
 
 ```json
 {"type":"object","properties":{"module":{"type":"string","description":"Narrow the list to stored modules whose name contains this \u2014 for example \u0022shield\u0022 or \u0022Frame Shift Drive\u0022. Leave it out for the whole store."}},"required":[],"additionalProperties":false}
+```
+
+`get_commander_statistics` takes an optional section, one of the sixteen `Statistics` writes:
+
+```json
+{"type":"object","properties":{"section":{"type":"string","description":"One section of the career statistics to report. Omit to report every section.","enum":["Bank_Account","Combat","Crime","Smuggling","Trading","Mining","Exploration","Passengers","Search_And_Rescue","Squadron","Crafting","Crew","Multicrew","Material_Trader_Stats","FLEETCARRIER","Exobiology"]}},"required":[],"additionalProperties":false}
 ```
 
 `StoredModules`, like `StoredShips`, is a complete snapshot rather than a delta, so the store is

@@ -411,4 +411,43 @@ public class JournalCapabilityTests
     /// <summary>What a phrase asking for the ships carries, and nothing else does.</summary>
     private static readonly ToolArguments AskedForShips =
         new(new Dictionary<string, string> { ["ships"] = "true" });
+
+    [Fact]
+    public async Task WithNoStatisticsEventTheAnswerSaysSoRatherThanGuessing()
+    {
+        var gameState = new GameStateStore();
+        Apply(gameState, """{"timestamp":"2026-01-01T00:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""");
+
+        var result = await CapabilityRegistry.Build([JournalCapability.Create(gameState)]).InvokeAsync(
+            "get_commander_statistics", ToolArguments.Empty, TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsError);
+        Assert.Contains("has not reported your career statistics", result.Content, StringComparison.Ordinal);
+    }
+
+    /// <summary>A section's figures, each under a readable name and in its unit (#263).</summary>
+    [Fact]
+    public async Task ASectionIsReportedByReadableNameAndUnit()
+    {
+        var gameState = new GameStateStore();
+        Apply(gameState, """{"timestamp":"2026-01-01T00:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""");
+        Apply(
+            gameState,
+            """
+            {"timestamp":"2026-01-01T14:48:00Z","event":"Statistics",
+             "Bank_Account":{"Current_Wealth":1234567,"Current_Debt":0},
+             "Exploration":{"Total_Hyperspace_Distance":4557.7227735854,"Time_Played":3240}}
+            """);
+
+        var result = await CapabilityRegistry.Build([JournalCapability.Create(gameState)]).InvokeAsync(
+            "get_commander_statistics",
+            ToolArguments.FromJson("""{"section":"Exploration"}"""),
+            TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsError);
+        Assert.Contains("as of 2026-01-01 14:48 UTC", result.Content, StringComparison.Ordinal);
+        Assert.Contains("Total Hyperspace Distance: 4557.72 ly", result.Content, StringComparison.Ordinal);
+        Assert.Contains("Time Played: 54 minutes", result.Content, StringComparison.Ordinal);
+        Assert.DoesNotContain("Bank Account", result.Content, StringComparison.Ordinal);
+    }
 }

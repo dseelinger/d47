@@ -26,6 +26,42 @@ public sealed record CareerStatistics
             : null;
     }
 
+    /// <summary>The section names the last event carried, in the order Elite wrote them.</summary>
+    public IReadOnlyList<string> Sections =>
+        Raw is { } raw
+            ? [.. raw.EnumerateObject().Where(property => property.Value.ValueKind == JsonValueKind.Object)
+                .Select(property => property.Name)]
+            : [];
+
+    /// <summary>
+    /// Every numeric figure in one section, keyed by its journal name, matched against
+    /// <see cref="Sections"/> without regard to case. Empty where the event has no such section.
+    /// </summary>
+    public IReadOnlyList<(string Key, double Value)> Section(string name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+
+        if (Raw is not { } raw)
+        {
+            return [];
+        }
+
+        foreach (var property in raw.EnumerateObject())
+        {
+            if (property.Value.ValueKind != JsonValueKind.Object ||
+                !string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            return [.. property.Value.EnumerateObject()
+                .Where(figure => figure.Value.ValueKind == JsonValueKind.Number)
+                .Select(figure => (figure.Name, figure.Value.GetDouble()))];
+        }
+
+        return [];
+    }
+
     public CareerStatistics Apply(JournalEvent journalEvent)
     {
         ArgumentNullException.ThrowIfNull(journalEvent);

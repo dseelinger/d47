@@ -6,6 +6,13 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.164.0 — Answer questions from the commander's career statistics
+
+D47 can now answer from the journal's `Statistics` event — bank balance, combat, exploration,
+mining, trading, crafting, exobiology and the rest of the sixteen sections. Ask for one section by
+name, or for all of them, and each figure comes back under a readable name and in its unit —
+credits, light years, or hours and minutes — dated to when the game last reported them.
+
 ## 0.163.0 — Delete completed checklist items in bulk
 
 The Checklist tab's control bar now has a "Delete completed items" button, beside Import/Export.

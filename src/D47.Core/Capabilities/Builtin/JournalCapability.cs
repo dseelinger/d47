@@ -41,6 +41,7 @@ public static class JournalCapability
                 "what ships do I own",
                 "what materials am I carrying",
                 "how have I done this session",
+                "what are my career statistics",
             ],
 
             // Phrases, not words. "where" and "system" on their own match "Where is Iran?" and "what's your
@@ -84,6 +85,9 @@ public static class JournalCapability
                 new("session summary", "get_session_summary"),
                 new("how have i done", "get_session_summary"),
                 new("this session", "get_session_summary"),
+                new("my career statistics", "get_commander_statistics"),
+                new("my career stats", "get_commander_statistics"),
+                new("commander statistics", "get_commander_statistics"),
             ],
             Display = new CapabilityDisplay { PanelTitle = "Location", Order = 20 },
             Tools =
@@ -204,9 +208,38 @@ public static class JournalCapability
                     Commands = Asking(Done),
                     Handler = (_, _) => Task.FromResult(ToolResult.Ok(DescribeSession(gameState))),
                 },
+                new ToolDefinition
+                {
+                    Name = "get_commander_statistics",
+                    Description =
+                        "Report the Commander's career statistics from the journal's Statistics event — bank "
+                        + "balance, combat, crime, smuggling, trading, mining, exploration, passengers, search "
+                        + "and rescue, squadron, crafting, crew, multicrew, material trading, fleet carrier and "
+                        + "exobiology. Set section to one group; omit it to report every section.",
+                    Parameters =
+                    [
+                        new ToolParameter
+                        {
+                            Name = "section",
+                            Type = ToolParameterType.String,
+                            Description =
+                                "One section of the career statistics to report. Omit to report every section.",
+                            AllowedValues = StatisticsSections,
+                        },
+                    ],
+                    Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(DescribeStatistics(gameState, arguments))),
+                },
             ],
         };
     }
+
+    /// <summary>The section names a <c>Statistics</c> event carries (#263).</summary>
+    private static readonly string[] StatisticsSections =
+    [
+        "Bank_Account", "Combat", "Crime", "Smuggling", "Trading", "Mining", "Exploration", "Passengers",
+        "Search_And_Rescue", "Squadron", "Crafting", "Crew", "Multicrew", "Material_Trader_Stats",
+        "FLEETCARRIER", "Exobiology",
+    ];
 
     /// <summary>The whole question, against the tool that answers it (reported 2026-08-21).</summary>
     private static IReadOnlyList<ToolCommandPhrase> Asking(IReadOnlyList<string> phrases) =>
@@ -1038,6 +1071,124 @@ public static class JournalCapability
                 into.Add($"{amount:N0} {label}");
             }
         }
+    }
+
+    private static string DescribeStatistics(GameStateStore gameState, ToolArguments arguments)
+    {
+        if (!TryActive(gameState, out var active, out var reason))
+        {
+            return reason;
+        }
+
+        var statistics = active.Statistics;
+
+        if (!statistics.IsKnown)
+        {
+            return "The game has not reported your career statistics this session.";
+        }
+
+        var asOf = AsOf(statistics.TakenAt!.Value);
+        var wanted = arguments.TryGetString("section", out var named) && !string.IsNullOrWhiteSpace(named)
+            ? named.Trim()
+            : null;
+
+        var report = new StringBuilder();
+
+        if (wanted is not null)
+        {
+            var figures = statistics.Section(wanted);
+
+            if (figures.Count == 0)
+            {
+                return $"No {ReadableStatistic(wanted)} figures in your career statistics{asOf}.";
+            }
+
+            report.AppendLine($"{ReadableStatistic(wanted)}{asOf}:");
+            AppendStatistics(report, figures);
+            return report.ToString().TrimEnd();
+        }
+
+        report.AppendLine($"Career statistics{asOf}:");
+
+        foreach (var section in statistics.Sections)
+        {
+            var figures = statistics.Section(section);
+
+            if (figures.Count == 0)
+            {
+                continue;
+            }
+
+            report.AppendLine();
+            report.AppendLine($"{ReadableStatistic(section)}:");
+            AppendStatistics(report, figures);
+        }
+
+        return report.ToString().TrimEnd();
+    }
+
+    private static void AppendStatistics(StringBuilder report, IReadOnlyList<(string Key, double Value)> figures)
+    {
+        foreach (var (key, value) in figures)
+        {
+            report.AppendLine($"  {ReadableStatistic(key)}: {FormatStatistic(key, value)}");
+        }
+    }
+
+    private static readonly IReadOnlyDictionary<string, string> ReadableStatisticNames =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["FLEETCARRIER"] = "Fleet carrier",
+        };
+
+    /// <summary>
+    /// A section or figure name in words — the table above where a key reads badly split on its
+    /// underscores, the split itself otherwise, so a key Frontier adds later is still reported (#263).
+    /// </summary>
+    private static string ReadableStatistic(string key) =>
+        ReadableStatisticNames.TryGetValue(key, out var name)
+            ? name
+            : string.Join(
+                ' ',
+                key.Split('_', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(word => char.ToUpperInvariant(word[0]) + word[1..].ToLowerInvariant()));
+
+    /// <summary>
+    /// A figure in its unit, guessed from what the key names: credits for a profit, a spend or a
+    /// wealth figure; light years for a distance; hours and minutes for a time (#263).
+    /// </summary>
+    private static string FormatStatistic(string key, double value)
+    {
+        if (key.Contains("Distance", StringComparison.OrdinalIgnoreCase))
+        {
+            return $"{value:0.##} ly";
+        }
+
+        if (key.Contains("Time", StringComparison.OrdinalIgnoreCase))
+        {
+            return FormatStatisticDuration(value);
+        }
+
+        if (key.Contains("Profit", StringComparison.OrdinalIgnoreCase)
+            || key.Contains("Wealth", StringComparison.OrdinalIgnoreCase)
+            || key.Contains("Debt", StringComparison.OrdinalIgnoreCase)
+            || key.Contains("Spent", StringComparison.OrdinalIgnoreCase))
+        {
+            return $"{value:N0} cr";
+        }
+
+        return value == Math.Floor(value) ? value.ToString("N0") : value.ToString("0.##");
+    }
+
+    private static string FormatStatisticDuration(double totalSeconds)
+    {
+        var span = TimeSpan.FromSeconds(totalSeconds);
+        var hours = (int)span.TotalHours;
+        var minutes = span.Minutes;
+
+        return hours > 0
+            ? $"{hours}h {minutes}m"
+            : $"{minutes} minute{(minutes == 1 ? "" : "s")}";
     }
 
     private static string Speak(FlightMode mode) => mode switch
