@@ -6,6 +6,13 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.147.0 — The rescan sentence counts this commander's ships
+
+"Rescan my journals" now says how many ships it found for the commander currently flying, matching
+the "What is fitted, remembered" row above it. Previously it summed every commander the journal
+folder had ever seen. Where the folder holds more than one commander, a second clause says how many
+others there are and how many ships they have.
+
 ## 0.146.0 — A commander reset forgets the ships that came before it
 
 Resetting a commander now clears the ships d47 remembers for that Frontier ID, both while it is

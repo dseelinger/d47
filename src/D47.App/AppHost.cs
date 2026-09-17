@@ -3220,7 +3220,7 @@ public sealed class AppHost : IDisposable
 
             return found.Ships == 0
                 ? $"Read {found.Files} journals and found no ships in them. Nothing is remembered now."
-                : $"Read {found.Files} journals. {found.Ships} ship(s) remembered.";
+                : RescanSentence(found, GameState.Active?.Identity.FrontierId);
         }
         catch (OperationCanceledException)
         {
@@ -3235,6 +3235,31 @@ public sealed class AppHost : IDisposable
         {
             _ = Interlocked.Exchange(ref _rescanning, 0);
         }
+    }
+
+    // Splits a rescan's total by commander, so the sentence matches "What is fitted, remembered"
+    // above it rather than summing every FID in the journal folder (#246).
+    internal static string RescanSentence(LoadoutRescan found, string? activeFid)
+    {
+        if (activeFid is not { Length: > 0 })
+        {
+            return $"Read {found.Files} journals. {found.Ships} {Noun("ship", found.Ships)} remembered.";
+        }
+
+        var mine = found.ByCommander.TryGetValue(activeFid, out var loadouts) ? loadouts.Ships.Count : 0;
+        var others = found.ByCommander.Where(pair => pair.Key != activeFid).ToList();
+
+        if (others.Count == 0)
+        {
+            return $"Read {found.Files} journals. {mine} {Noun("ship", mine)} remembered.";
+        }
+
+        var otherShips = others.Sum(pair => pair.Value.Ships.Count);
+
+        return $"Read {found.Files} journals. {mine} {Noun("ship", mine)} remembered for this commander, "
+               + $"and {otherShips} for {others.Count} {Noun("other commander", others.Count)} on this machine.";
+
+        static string Noun(string singular, int count) => count == 1 ? singular : singular + "s";
     }
 
     private async Task<string?> DownloadLocalVoice(
