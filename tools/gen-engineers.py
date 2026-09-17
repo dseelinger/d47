@@ -182,6 +182,8 @@ STATISTIC_PATTERNS = [
      "Mining.Quantity_Mined", lambda n: n),
     (re.compile(r"earn more than ([\d,]+) bounty vouchers", re.IGNORECASE),
      "Combat.Bounties_Claimed", lambda n: n + 1),
+    (re.compile(r"complete ([\d,]+) surface conflict zones", re.IGNORECASE),
+     "Combat.ConflictZone_Low_Wins", lambda n: n),
 ]
 
 # "Provide 50 units of Bromellite." and "Mine 10 units of Osmium." — a delivery or a mined
@@ -214,7 +216,6 @@ MEETING_TEST_REASONS = {
     "melbrandon": "an invitation, which EngineerProgress already decides",
     "zacariahnemo": "an invitation, which EngineerProgress already decides",
     "eleanorbresa": "Settlements_Visited is not limited to Colonia",
-    "heroferrari": "whether ConflictZone_Total counts surface zones is not established",
     "judenavarro": "no matching counter",
     "kitfowler": "no matching counter",
     "odengeiger": "no matching counter",

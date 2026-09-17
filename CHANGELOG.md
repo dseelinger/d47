@@ -6,6 +6,11 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.158.0 — Decide Hero Ferrari's meeting test from low conflict zone wins
+
+Hero Ferrari's "Complete 10 surface conflict zones" requirement now reads as a floor on
+`Combat.ConflictZone_Low_Wins`, the on-foot ground fight count, rather than standing undecided.
+
 ## 0.157.0 — Correct three Odyssey bartender sale counts
 
 Kit Fowler, Yarden Bond and Wellington Beck's engineer prerequisites named the pre-4.0.18.08

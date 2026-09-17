@@ -10,9 +10,9 @@ namespace D47.Core.Tests.Knowledge;
 public class StructuredUnlockTestsTests
 {
     [Fact]
-    public void TwentyFiveEngineersCarryAMeetingTest()
+    public void TwentySixEngineersCarryAMeetingTest()
     {
-        Assert.Equal(25, EngineerDirectory.All.Count(engineer => engineer.MeetingTest is not null));
+        Assert.Equal(26, EngineerDirectory.All.Count(engineer => engineer.MeetingTest is not null));
     }
 
     [Fact]
@@ -57,6 +57,15 @@ public class StructuredUnlockTestsTests
 
         Assert.NotNull(juri);
         Assert.Equal(new UnlockTest.Statistic("Combat.Combat_Bonds", 51), juri.MeetingTest);
+    }
+
+    [Fact]
+    public void HeroFerrarisMeetingIsASurfaceConflictZoneFloor()
+    {
+        var hero = EngineerDirectory.ByName("Hero Ferrari");
+
+        Assert.NotNull(hero);
+        Assert.Equal(new UnlockTest.Statistic("Combat.ConflictZone_Low_Wins", 10), hero.MeetingTest);
     }
 
     [Fact]
