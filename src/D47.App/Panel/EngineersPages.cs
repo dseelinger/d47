@@ -344,13 +344,6 @@ public sealed class EngineerPage : EngineerPageBase
     private readonly PanelNavigator _nav;
     private readonly Func<string, Task<bool>>? _copy;
     private readonly StackPanel _body = new() { Spacing = 2 };
-    private readonly TextBlock _said = new()
-    {
-        FontSize = TypeScale.Secondary,
-        TextWrapping = TextWrapping.Wrap,
-        IsVisible = false,
-        Margin = new Thickness(0, 8, 0, 0),
-    };
 
     public EngineerPage(EngineerSource source, string id, PanelNavigator nav, Func<string, Task<bool>>? copy = null)
         : base(source)
@@ -363,15 +356,11 @@ public sealed class EngineerPage : EngineerPageBase
         var say = LoadoutPages.SayLine("where is Felicity Farseer");
 
         DockPanel.SetDock(say, Dock.Bottom);
-        DockPanel.SetDock(_said, Dock.Bottom);
 
         root.Children.Add(say);
-        root.Children.Add(_said);
         root.Children.Add(LoadoutPages.Scrolling(_body));
 
         Content = root;
-
-        LoadoutPages.Themed(_said, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
 
         Refresh();
     }
@@ -491,21 +480,42 @@ public sealed class EngineerPage : EngineerPageBase
             {
                 // The name opens that engineer, and the rest of the stop stays beside it (remediation.md 12,
                 // item 7).
-                _body.Children.Add(new StackPanel
+                var row = new StackPanel { Orientation = Orientation.Horizontal };
+
+                row.Children.Add(EngineersPages.Name(step.Engineer, _nav, TypeScale.Body));
+
+                if (step.SystemSplit() is { } split && _copy is { } stopCopy)
                 {
-                    Orientation = Orientation.Horizontal,
-                    Children =
+                    row.Children.Add(new SelectableTextBlock
                     {
-                        EngineersPages.Name(step.Engineer, _nav, TypeScale.Body),
-                        new SelectableTextBlock
-                        {
-                            Text = step.Rest(),
-                            FontSize = TypeScale.Body,
-                            TextWrapping = TextWrapping.Wrap,
-                            VerticalAlignment = VerticalAlignment.Center,
-                        },
-                    },
-                });
+                        Text = split.Before + split.System,
+                        FontSize = TypeScale.Body,
+                        TextWrapping = TextWrapping.Wrap,
+                        VerticalAlignment = VerticalAlignment.Center,
+                    });
+
+                    row.Children.Add(CopyGlyph.For(split.System, stopCopy));
+
+                    row.Children.Add(new SelectableTextBlock
+                    {
+                        Text = split.After,
+                        FontSize = TypeScale.Body,
+                        TextWrapping = TextWrapping.Wrap,
+                        VerticalAlignment = VerticalAlignment.Center,
+                    });
+                }
+                else
+                {
+                    row.Children.Add(new SelectableTextBlock
+                    {
+                        Text = step.Rest(),
+                        FontSize = TypeScale.Body,
+                        TextWrapping = TextWrapping.Wrap,
+                        VerticalAlignment = VerticalAlignment.Center,
+                    });
+                }
+
+                _body.Children.Add(row);
 
                 if (step.Meeting is { Length: > 0 } meeting)
                 {
@@ -517,14 +527,6 @@ public sealed class EngineerPage : EngineerPageBase
                     _body.Children.Add(LoadoutPages.Muted($"    hand over: {tribute}"));
                 }
             }
-
-            var promote = LoadoutPages.Press(
-                "Put the route on my checklist",
-                () => Say(Source.Promote(engineer.Name)));
-
-            promote.Margin = new Thickness(0, 10, 0, 0);
-
-            _body.Children.Add(promote);
         }
 
         // The prose the table carries, last, because it is the part a Commander reads once.
@@ -541,12 +543,6 @@ public sealed class EngineerPage : EngineerPageBase
             }
         }
     }
-
-    private void Say(string message)
-    {
-        _said.IsVisible = true;
-        _said.Text = message;
-    }
 }
 
 /// <summary>The solver (Phase 28, "The fastest way in").</summary>
@@ -558,13 +554,6 @@ public sealed class EngineerRoutePage : EngineerPageBase
     private readonly EngineerDirectoryMemory? _memory;
 
     private readonly StackPanel _body = new() { Spacing = 2 };
-    private readonly TextBlock _said = new()
-    {
-        FontSize = TypeScale.Secondary,
-        TextWrapping = TextWrapping.Wrap,
-        IsVisible = false,
-        Margin = new Thickness(0, 8, 0, 0),
-    };
 
     public EngineerRoutePage(EngineerSource source, PanelNavigator nav, EngineerDirectoryMemory? memory = null)
         : base(source)
@@ -575,15 +564,11 @@ public sealed class EngineerRoutePage : EngineerPageBase
         var say = LoadoutPages.SayLine("who should I unlock next");
 
         DockPanel.SetDock(say, Dock.Bottom);
-        DockPanel.SetDock(_said, Dock.Bottom);
 
         root.Children.Add(say);
-        root.Children.Add(_said);
         root.Children.Add(LoadoutPages.Scrolling(_body));
 
         Content = root;
-
-        LoadoutPages.Themed(_said, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
 
         Refresh();
     }
@@ -640,14 +625,6 @@ public sealed class EngineerRoutePage : EngineerPageBase
             {
                 _body.Children.Add(LoadoutPages.Muted(line));
             }
-
-            var promote = LoadoutPages.Press(
-                "Put this route on my checklist",
-                () => Say(Source.Promote(candidate.Engineer.Name)));
-
-            promote.Margin = new Thickness(0, 6, 0, 0);
-
-            _body.Children.Add(promote);
         }
 
         if (route.Count > Shown)
@@ -669,11 +646,5 @@ public sealed class EngineerRoutePage : EngineerPageBase
         return report.JumpRange is { } range
             ? $"Measured from {here}, at {range.ToString("N1", CultureInfo.InvariantCulture)} ly a jump."
             : $"Measured from {here}. No jump range reported, so distances are in light years only.";
-    }
-
-    private void Say(string message)
-    {
-        _said.IsVisible = true;
-        _said.Text = message;
     }
 }

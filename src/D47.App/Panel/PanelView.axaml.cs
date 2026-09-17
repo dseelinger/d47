@@ -733,7 +733,6 @@ public partial class PanelView : UserControl
     {
         var source = new EngineerSource(
             unlocks.Report,
-            engineer => unlocks.Promote(engineer),
             checklists is null ? null : checklists.IsPinned,
             checklists is null ? null : checklists.Pin);
 

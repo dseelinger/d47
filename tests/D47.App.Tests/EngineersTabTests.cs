@@ -213,9 +213,11 @@ public class EngineersTabTests
         Press(surface.Panel, "Felicity Farseer").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
+        // Felicity needs no referral, so her own way-in stop names her own system too — two glyphs
+        // that copy the same thing (#256).
         var glyph = surface.Panel.GetVisualDescendants()
             .OfType<Button>()
-            .Single(button => Avalonia.Automation.AutomationProperties.GetName(button) == "Copy Deciat");
+            .First(button => Avalonia.Automation.AutomationProperties.GetName(button) == "Copy Deciat");
 
         glyph.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
@@ -245,30 +247,35 @@ public class EngineersTabTests
     }
 
     /// <summary>
-    /// Promotion offers the whole chain, and offers it — the checklist gains nothing until the
-    /// Commander accepts, which is the same path every other plan takes.
+    /// A way-in stop whose engineer has a system carries a copy glyph beside it, wired to the
+    /// surface's clipboard — the same control the engineer's own header shows (#256).
     /// </summary>
     [AvaloniaFact]
-    public void PromotingOffersTheChain()
+    public void AWayInStopCarriesACopyGlyphOnItsSystem()
     {
-        var surface = Open();
+        var clipboard = new D47.Core.Capabilities.Builtin.RecordingClipboard();
+        var surface = Open(clipboard: clipboard);
 
-        surface.Panel.Nav.SelectRoot(EngineersPages.RouteRoot);
+        // Somebody behind a referral, so their chain has a stop naming another engineer's system.
+        var behind = EngineerDirectory.All.First(engineer => engineer.Name == "Broo Tarquin");
+
+        surface.Panel.Nav.Drill(EngineersPages.Crumb(behind));
         Dispatcher.UIThread.RunJobs();
 
-        Press(surface.Panel, "Put this route on my checklist")
-            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        var stop = EngineerDirectory.All.First(engineer => engineer.Name == "Hera Tani");
 
+        Assert.NotNull(stop.System);
+        var system = stop.System;
+
+        var glyph = surface.Panel.GetVisualDescendants()
+            .OfType<Button>()
+            .Single(button => Avalonia.Automation.AutomationProperties.GetName(button)
+                == $"Copy {system}");
+
+        glyph.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
-        var proposal = Assert.Single(surface.Checklists.Proposals.Pending);
-
-        Assert.Equal(ProposalKind.Plan, proposal.Kind);
-        Assert.All(proposal.Items, item =>
-            Assert.Equal(ChecklistIntentKind.EngineerAccess, item.Intent!.Kind));
-
-        // Nothing on the list itself until it is accepted.
-        Assert.Empty(surface.Checklists.Document.Items);
+        Assert.Equal([system], clipboard.Written);
 
         surface.Window.Close();
     }

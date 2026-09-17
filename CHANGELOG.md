@@ -6,6 +6,14 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.156.0 — Drop route promotion, copy way-in systems
+
+Every stop under an engineer's "The way in" now carries a copy glyph beside its system name, the
+same control the engineer's own header shows. The "Put the route on my checklist" and "Put this
+route on my checklist" buttons are gone from the Engineers tab, and the underlying tool no longer
+answers "put that route on my checklist" or "promote this unlock". Adding individual unlock
+prerequisites to the checklist replaces it.
+
 ## 0.155.0 — Merge Large cards into Hull pictures
 
 Fleet › Ships had two switches for hull artwork and neither did what its name said. There is now

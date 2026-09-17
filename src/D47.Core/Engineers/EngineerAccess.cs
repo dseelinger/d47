@@ -70,12 +70,33 @@ public sealed record UnlockStep(
     /// </summary>
     public string Rest()
     {
+        if (SystemSplit() is { } split)
+        {
+            return split.Before + split.System + split.After;
+        }
+
         var standing = Held > 0
             ? $", grade {Held.ToString(CultureInfo.InvariantCulture)} of "
               + Grade.ToString(CultureInfo.InvariantCulture)
             : $" at {Engineer.Where}";
 
         return standing + EngineerSay.Trip(LightYears, Jumps);
+    }
+
+    /// <summary>
+    /// <see cref="Rest"/> split around the system name, so a surface can draw a copy control beside it —
+    /// null on a grade line, or where the engineer's system is not on record (#256).
+    /// </summary>
+    public (string Before, string System, string After)? SystemSplit()
+    {
+        if (Held > 0 || Engineer.System is not { Length: > 0 } system)
+        {
+            return null;
+        }
+
+        var before = Engineer.Station is { Length: > 0 } station ? $" at {station} in " : " at ";
+
+        return (before, system, EngineerSay.Trip(LightYears, Jumps));
     }
 }
 

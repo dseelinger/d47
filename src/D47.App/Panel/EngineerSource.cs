@@ -5,7 +5,6 @@ namespace D47.App.Panel;
 /// <summary>Where the Engineers tab gets its answer, and how it knows to ask again (Phase 28).</summary>
 public sealed class EngineerSource(
     Func<EngineerReport> report,
-    Func<string?, string> promote,
     Func<int, bool>? isPinned = null,
     Action<int, bool>? pin = null)
 {
@@ -14,9 +13,6 @@ public sealed class EngineerSource(
 
     /// <summary>Where everybody stands and which one to go and get next, computed fresh.</summary>
     public EngineerReport Read() => report();
-
-    /// <summary>Offers one way in to the checklist, and says what happened.</summary>
-    public string Promote(string? engineer) => promote(engineer);
 
     /// <summary>Whether the Commander has told d47 a blueprint is pinned with this engineer (#113).</summary>
     public bool IsPinned(int engineerId) => isPinned?.Invoke(engineerId) ?? false;

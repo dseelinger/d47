@@ -372,21 +372,6 @@ Distance stays the primary key deliberately. Making "you can just go and do it" 
 would put an already-invited Colonia engineer ahead of one in the Bubble, and undo the thing Colonia
 needed no rule for.
 
-#### The route reaches the checklist as a chain
-
-Pressing **Put this route on my checklist** proposes one item per stop, in flying order, each
-carrying the grade that stop actually needs:
-
-```text
-Rank 3 with Liz Ryder
-Rank 3 with Hera Tani
-Rank 5 with Broo Tarquin
-```
-
-A single line reading "unlock Broo Tarquin" hides two engineers and two rank climbs behind a tick you
-can never make progress on. It is a proposal, like every other plan promotion: accepting it is your
-own act.
-
 ### Distance is arithmetic, and that is deliberate
 
 The coordinates ship in `Engineers.tsv`, generated rather than hand-written. `get_distance` computes
@@ -403,11 +388,11 @@ engineer nobody can place to the top of a list whose entire subject is who is ne
 
 ### Tools
 
-`get_engineer_route` and `promote_engineer_route` are `Protected`: reachable from the panel and from
-a phrase, never from the model. Cost rather than safety is the reason — the advertised tool surface
-is re-billed on every turn and the largest profile sat at 39,639 bytes against a 40,000 ceiling.
-Nothing is lost by it: "who should I unlock next" is a fixed question with no free-text argument in
-it, which is exactly the shape the keyword router handles with no round trip at all.
+`get_engineer_route` is `Protected`: reachable from the panel and from a phrase, never from the
+model. Cost rather than safety is the reason — the advertised tool surface is re-billed on every
+turn and the largest profile sat at 39,639 bytes against a 40,000 ceiling. Nothing is lost by it:
+"who should I unlock next" is a fixed question with no free-text argument in it, which is exactly
+the shape the keyword router handles with no round trip at all.
 
 #### `get_engineer_progress`
 
@@ -430,14 +415,6 @@ Say *"who should I unlock next"*, *"what is the fastest way in"* or *"which engi
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
-```
-
-#### `promote_engineer_route`
-
-Say *"put that route on my checklist"* or *"promote this unlock"*.
-
-```json
-{"type":"object","properties":{"engineer":{"type":"string","description":"Which engineer, by name. Omit for the best next unlock."}},"required":[],"additionalProperties":false}
 ```
 
 ### Notes for anyone reading the code

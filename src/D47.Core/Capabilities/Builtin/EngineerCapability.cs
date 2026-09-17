@@ -120,37 +120,6 @@ public static class EngineerCapability
                 Handler = (_, _) => Task.FromResult(ToolResult.Ok(
                     unlocks?.Describe() ?? "No engineer plans are loaded.")),
             },
-
-            new ToolDefinition
-            {
-                Protected = true,
-                Name = "promote_engineer_route",
-                Description =
-                    "Offer the way in to an engineer to the checklist, as a chain rather than a line — "
-                    + "one item per stop, each carrying the grade that stop needs. A proposal: the "
-                    + "Commander accepts it.",
-                Parameters =
-                [
-                    new ToolParameter
-                    {
-                        Name = "engineer",
-                        Type = ToolParameterType.String,
-                        Description = "Which engineer, by name. Omit for the best next unlock.",
-                    },
-                ],
-                Commands =
-                [
-                    new ToolCommandPhrase("put that route on my checklist", Nothing),
-                    new ToolCommandPhrase("promote this unlock", Nothing),
-                ],
-                Handler = (arguments, _) =>
-                {
-                    arguments.TryGetString("engineer", out var named);
-
-                    return Task.FromResult(ToolResult.Ok(
-                        unlocks?.Promote(named) ?? "No engineer plans are loaded."));
-                },
-            },
         ],
         Display = new CapabilityDisplay { PanelTitle = "Engineers", Order = 50 },
     };
