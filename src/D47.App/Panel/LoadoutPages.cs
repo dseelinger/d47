@@ -760,6 +760,40 @@ public static class LoadoutPages
         return row;
     }
 
+    /// <summary>
+    /// A bar with nothing but a track and a fill — the gauge roles this file already uses (Accent fill,
+    /// SurfaceAlt track), for a criterion that carries only a fraction rather than a full gauge (#17).
+    /// </summary>
+    internal static Control MeasureBar(double fill)
+    {
+        var clamped = Math.Clamp(double.IsFinite(fill) ? fill : 0, 0, 1);
+
+        var track = new Grid
+        {
+            Height = 6,
+            Margin = new Thickness(0, 2, 0, 0),
+            ColumnDefinitions = new ColumnDefinitions
+            {
+                new(new GridLength(clamped, GridUnitType.Star)),
+                new(new GridLength(1 - clamped, GridUnitType.Star)),
+            },
+        };
+
+        var background = new Border { CornerRadius = new CornerRadius(2) };
+
+        Themed(background, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
+        Grid.SetColumnSpan(background, 2);
+        track.Children.Add(background);
+
+        var filled = new Border { CornerRadius = new CornerRadius(2) };
+
+        Themed(filled, Border.BackgroundProperty, ThemeManager.AccentKey);
+        Grid.SetColumn(filled, 0);
+        track.Children.Add(filled);
+
+        return track;
+    }
+
     /// <summary>The bar itself: a track, a fill, and a hairline per mark.</summary>
     private static Control Bar(LoadoutGauge gauge)
     {

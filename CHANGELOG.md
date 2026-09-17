@@ -6,6 +6,14 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.160.0 — Draw progress bars on engineer prerequisites
+
+Each unlock prerequisite with a number behind it — a contribution total, a reputation reading, a
+statistic, a rank — now draws a progress bar under its text, on the engineer detail page, the
+Route page and the checklist item alike. A ceiling test (Uma Laszlo's reputation cap) fills fuller
+the further under the ceiling the reading sits; a met line draws full; a line with no number draws
+no bar.
+
 ## 0.159.0 — Add engineer prerequisites to the checklist
 
 An engineer's Unlock Prerequisites now carry an **Add to checklist** control, on the detail page

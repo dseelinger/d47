@@ -9,7 +9,11 @@ namespace D47.Core.Checklists;
 /// <param name="Reason">
 /// What is true of this line: the module, the slot, the grade it is at and the grade it wants.
 /// </param>
-public readonly record struct ChecklistVerdict(ChecklistState State, string Reason)
+/// <param name="Measure">
+/// The number and target behind the line, where the intent is one that has them — an engineer
+/// prerequisite read through <see cref="EngineerAccess.CriteriaFor"/> (#17).
+/// </param>
+public readonly record struct ChecklistVerdict(ChecklistState State, string Reason, UnlockMeasure? Measure = null)
 {
     /// <summary>The whole verdict as one sentence, which is what every surface has always drawn.</summary>
     public string Says => Reason;
@@ -341,11 +345,12 @@ public static class ChecklistEvaluator
 
         return criterion.Met switch
         {
-            true => new ChecklistVerdict(ChecklistState.Done, "Done."),
-            false => new ChecklistVerdict(ChecklistState.Open, criterion.Reading ?? criterion.Text),
+            true => new ChecklistVerdict(ChecklistState.Done, "Done.", criterion.Measure),
+            false => new ChecklistVerdict(ChecklistState.Open, criterion.Reading ?? criterion.Text, criterion.Measure),
             null => new ChecklistVerdict(
                 ChecklistState.Open,
-                criterion.Reading ?? "Nothing in the journal has reported this yet."),
+                criterion.Reading ?? "Nothing in the journal has reported this yet.",
+                criterion.Measure),
         };
     }
 

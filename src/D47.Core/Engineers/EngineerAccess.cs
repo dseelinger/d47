@@ -147,6 +147,29 @@ public sealed record UnlockCriterion(string Text, bool? Met)
 {
     /// <summary>d47's own words about the reading behind <see cref="Met"/>, kept apart from Frontier's prose.</summary>
     public string? Reading { get; init; }
+
+    /// <summary>The number and target behind this criterion, where the test is one that has them (#17).</summary>
+    public UnlockMeasure? Measure { get; init; }
+}
+
+/// <summary>
+/// The current figure and target behind a graded criterion, so a bar can draw under it (#17).
+/// </summary>
+/// <param name="Current">The figure read from the journal or the save.</param>
+/// <param name="Target">The threshold the test asks for — <see cref="EngineerAccess.FloorFor"/> or
+/// <see cref="EngineerAccess.CeilingFor"/> for a reputation test, <c>AtLeast</c> otherwise.</param>
+/// <param name="IsCeiling">Whether staying under <see cref="Target"/> is what is wanted, rather than
+/// reaching it.</param>
+public sealed record UnlockMeasure(double Current, double Target, bool IsCeiling)
+{
+    /// <summary>
+    /// How full the bar reads, 0 to 1. A ceiling test's current and target both come off the same signed
+    /// reputation scale, so the plain ratio already runs the right way — fuller the lower <see
+    /// cref="Current"/> sits under a negative <see cref="Target"/>.
+    /// </summary>
+    public double Fill => Target == 0 || !double.IsFinite(Current / Target)
+        ? 0
+        : Math.Clamp(Current / Target, 0, 1);
 }
 
 /// <summary>
@@ -339,89 +362,101 @@ public static class EngineerAccess
 
         if (engineer.Meeting is { Length: > 0 } meeting)
         {
-            // Their invitation task, in Frontier's words.
-            var (met, reading) = unlocked || standing?.IsInvited == true
-                ? (Met: (bool?)true, Reading: null)
-                : Evaluate(engineer.MeetingTest, engineer, evidence);
+            // Their invitation task, in Frontier's words. Evaluated even once already invited or unlocked, so
+            // a criterion that has a measure still carries one and draws a full bar (#17).
+            var (evalMet, reading, measure) = Evaluate(engineer.MeetingTest, engineer, evidence);
+            var met = unlocked || standing?.IsInvited == true ? (bool?)true : evalMet;
 
-            criteria.Add(new UnlockCriterion(meeting, met) { Reading = reading });
+            criteria.Add(new UnlockCriterion(meeting, met) { Reading = met == true ? null : reading, Measure = measure });
         }
 
         if (engineer.Unlock is { Length: > 0 } tribute)
         {
-            var (met, reading) = unlocked
-                ? (Met: (bool?)true, Reading: null)
-                : Evaluate(engineer.UnlockTest, engineer, evidence);
+            var (evalMet, reading, measure) = Evaluate(engineer.UnlockTest, engineer, evidence);
+            var met = unlocked ? (bool?)true : evalMet;
 
-            criteria.Add(new UnlockCriterion(tribute, met) { Reading = reading });
+            criteria.Add(new UnlockCriterion(tribute, met) { Reading = met == true ? null : reading, Measure = measure });
         }
 
         return criteria;
     }
 
     /// <summary>One structured test read against the evidence, and d47's own words about the reading.</summary>
-    private static (bool? Met, string? Reading) Evaluate(
+    private static (bool? Met, string? Reading, UnlockMeasure? Measure) Evaluate(
         UnlockTest? test, Engineer engineer, UnlockEvidence evidence) => test switch
     {
         UnlockTest.Rank rank => RankResult(rank, evidence),
         UnlockTest.Reputation reputation => ReputationResult(reputation, evidence),
         UnlockTest.Statistic statistic => StatisticResult(statistic, evidence),
         UnlockTest.Contribution contribution => ContributionResult(contribution, engineer, evidence),
-        _ => (null, null),
+        _ => (null, null, null),
     };
 
-    private static (bool? Met, string? Reading) RankResult(UnlockTest.Rank test, UnlockEvidence evidence)
+    private static (bool? Met, string? Reading, UnlockMeasure? Measure) RankResult(
+        UnlockTest.Rank test, UnlockEvidence evidence)
     {
         var standing = evidence.Ranks?.For(test.Career);
 
-        return standing is null ? (null, null) : (standing.Rank >= test.AtLeast, null);
+        return standing is null
+            ? (null, null, null)
+            : (standing.Rank >= test.AtLeast, null, new UnlockMeasure(standing.Rank, test.AtLeast, false));
     }
 
     /// <summary>Whatever reading exists, however old, with its date shown once it predates the session.</summary>
-    private static (bool? Met, string? Reading) ReputationResult(
+    private static (bool? Met, string? Reading, UnlockMeasure? Measure) ReputationResult(
         UnlockTest.Reputation test, UnlockEvidence evidence)
     {
         var reading = evidence.Reputation?.Reading(test.Faction);
 
         if (reading is null)
         {
-            return (null, null);
+            return (null, null, null);
         }
 
-        var met = test.AtMost
-            ? reading.MyReputation < CeilingFor(test.Band)
-            : reading.MyReputation >= FloorFor(test.Band);
+        var target = test.AtMost ? CeilingFor(test.Band) : FloorFor(test.Band);
+        var met = test.AtMost ? reading.MyReputation < target : reading.MyReputation >= target;
 
         var stale = evidence.SessionStart is { } start && reading.SeenAt < start;
 
-        return (met, stale ? $"as of {reading.SeenAt.ToString("d MMM yyyy", CultureInfo.InvariantCulture)}" : null);
+        return (
+            met,
+            stale ? $"as of {reading.SeenAt.ToString("d MMM yyyy", CultureInfo.InvariantCulture)}" : null,
+            new UnlockMeasure(reading.MyReputation, target, test.AtMost));
     }
 
     /// <summary>Only ever a floor: a Statistics reading below it says nothing the game did not also let pass.</summary>
-    private static (bool? Met, string? Reading) StatisticResult(
+    private static (bool? Met, string? Reading, UnlockMeasure? Measure) StatisticResult(
         UnlockTest.Statistic test, UnlockEvidence evidence)
     {
         var value = evidence.Statistics?.Read(test.Path);
 
         return value switch
         {
-            null => (null, null),
-            var reached when reached >= test.AtLeast => (true, null),
-            var short_ => (null, $"Last reported {short_.Value.ToString("N0", CultureInfo.InvariantCulture)}"),
+            null => (null, null, null),
+            var reached when reached >= test.AtLeast =>
+                (true, null, new UnlockMeasure(reached.Value, test.AtLeast, false)),
+            var short_ => (
+                null,
+                $"Last reported {short_.Value.ToString("N0", CultureInfo.InvariantCulture)}",
+                new UnlockMeasure(short_.Value, test.AtLeast, false)),
         };
     }
 
-    private static (bool? Met, string? Reading) ContributionResult(
+    private static (bool? Met, string? Reading, UnlockMeasure? Measure) ContributionResult(
         UnlockTest.Contribution test, Engineer engineer, UnlockEvidence evidence)
     {
         var total = evidence.Contributions?.Total(engineer.Id, test.Type, test.Symbol);
 
         return total switch
         {
-            null => (null, null),
-            var reached when reached >= test.Quantity => (true, null),
-            var short_ => (false, $"{short_.Value.ToString(CultureInfo.InvariantCulture)} of "
-                                   + $"{test.Quantity.ToString(CultureInfo.InvariantCulture)} handed over"),
+            null => (null, null, null),
+            var reached when reached >= test.Quantity =>
+                (true, null, new UnlockMeasure(reached.Value, test.Quantity, false)),
+            var short_ => (
+                false,
+                $"{short_.Value.ToString(CultureInfo.InvariantCulture)} of "
+                + $"{test.Quantity.ToString(CultureInfo.InvariantCulture)} handed over",
+                new UnlockMeasure(short_.Value, test.Quantity, false)),
         };
     }
 

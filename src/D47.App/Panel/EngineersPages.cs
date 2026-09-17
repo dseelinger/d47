@@ -163,17 +163,33 @@ public static class EngineersPages
             },
         };
 
-        if (criterion.Reading is not { Length: > 0 } reading)
+        var extra = new List<Control>();
+
+        // A met line draws full even where the reading behind it fell short of the target — the journal
+        // may have settled it some other way (#17).
+        if (criterion.Measure is { } measure)
+        {
+            extra.Add(LoadoutPages.MeasureBar(criterion.Met == true ? 1 : measure.Fill));
+        }
+
+        if (criterion.Reading is { Length: > 0 } reading)
+        {
+            extra.Add(LoadoutPages.Muted(reading));
+        }
+
+        if (extra.Count == 0)
         {
             return row;
         }
 
-        return new StackPanel
+        var stack = new StackPanel { Orientation = Orientation.Vertical, Spacing = 2, Children = { row } };
+
+        foreach (var child in extra)
         {
-            Orientation = Orientation.Vertical,
-            Spacing = 2,
-            Children = { row, LoadoutPages.Muted(reading) },
-        };
+            stack.Children.Add(child);
+        }
+
+        return stack;
     }
 }
 

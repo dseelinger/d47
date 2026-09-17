@@ -798,13 +798,16 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             aside.Add(standing);
         }
 
+        ChecklistVerdict? verdict = null;
+
         if (ChecklistNextAction.For(item.State) is { } next)
         {
             aside.Add(next);
         }
-        else if (!item.TicksByHand && _checklists.Verdict(item) is { } verdict)
+        else if (!item.TicksByHand && _checklists.Verdict(item) is { } read)
         {
-            aside.Add(verdict.Says);
+            verdict = read;
+            aside.Add(read.Says);
         }
 
         var caption = Muted(string.Join(" · ", aside));
@@ -816,6 +819,12 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         }
 
         body.Children.Add(caption);
+
+        // The same measure CriteriaFor reads for the Engineers pages, so the two cannot disagree (#17).
+        if (verdict?.Measure is { } measure)
+        {
+            body.Children.Add(LoadoutPages.MeasureBar(item.IsComplete ? 1 : measure.Fill));
+        }
 
         var row = new DockPanel();
 
