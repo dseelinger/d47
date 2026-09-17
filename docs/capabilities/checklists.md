@@ -324,6 +324,19 @@ have done today. A Grade 5 roll they offer is on the page whether you are grade 
 grade 1, and the line says which — *"Hera Tani rolls this at grade 5, and you are grade 4 with
 them"*. There is no switch for it, because you came to the workshop to find out what is there.
 
+##### Focusing on one engineer's unlock
+
+Once "Add to checklist" on an engineer's own page has put their prerequisites on the list, an
+entry for them appears under its own heading, **Unlocking an engineer**. Choosing it shows only
+that engineer's own invitation and tribute lines, and any referral line for whoever recommends
+them — nothing else on the list. The entry is worded with their name and keyed on their id, so a
+Commander unlocking three engineers at once sees three separate rows rather than one they have to
+narrow further with the search box.
+
+A finished line stays under **Done**, the same as under any other filter. If the last of an
+engineer's lines does leave the list — ticked off and forgotten rather than kept — the filter
+falls back to **Everything** on its own, rather than sitting on a row with nothing left to show.
+
 ##### Include Partial Grades {#partial-grades}
 
 Beside the engineer filter, and only there, is a switch. It decides which of two questions the

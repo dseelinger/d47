@@ -6,6 +6,13 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.161.0 — Focus the checklist on one engineer
+
+The checklist filter now offers an entry for each engineer with unlock prerequisites on the
+list, under its own "Unlocking an engineer" heading. Choosing one shows only that engineer's
+invitation, tribute and referral lines — the same set "Add to checklist" put there — and the
+filter falls back to Everything once the last of them is gone.
+
 ## 0.160.0 — Draw progress bars on engineer prerequisites
 
 Each unlock prerequisite with a number behind it — a contribution total, a reputation reading, a

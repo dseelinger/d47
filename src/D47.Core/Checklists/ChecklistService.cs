@@ -422,6 +422,11 @@ public sealed class ChecklistService(
                 return new ChecklistChange(updated, Changed: true, "Recomputed.");
             });
 
+        if (removed.Count > 0)
+        {
+            ResetEngineerFilterIfEmptied();
+        }
+
         return news;
     }
 
@@ -800,6 +805,63 @@ public sealed class ChecklistService(
             .OfType<Engineer>()
             .OrderBy(engineer => engineer.Name, StringComparer.Ordinal)];
 
+    /// <summary>What a filter key names, before the engineer's id (#265).</summary>
+    private const string EngineerFilterPrefix = "engineer:";
+
+    /// <summary>The filter key for one engineer's unlock prerequisites, keyed on their id rather than
+    /// their name so a table rename does not orphan a filter the Commander has chosen (#265).</summary>
+    public static string EngineerFilterKey(int engineerId) =>
+        EngineerFilterPrefix + engineerId.ToString(CultureInfo.InvariantCulture);
+
+    /// <summary>The engineer a filter key names, or null where the key names something else.</summary>
+    public static int? EngineerIdFor(string key) =>
+        key.StartsWith(EngineerFilterPrefix, StringComparison.Ordinal)
+        && int.TryParse(
+            key.AsSpan(EngineerFilterPrefix.Length), NumberStyles.Integer, CultureInfo.InvariantCulture, out var id)
+            ? id
+            : null;
+
+    /// <summary>
+    /// Whether a line belongs to one engineer's unlock — their own invitation or tribute, or a referral
+    /// line for one of the engineers who recommends them (#265).
+    /// </summary>
+    public bool OfferedEngineer(ChecklistItem item, int engineerId)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+
+        if (item.Source != ChecklistSource.EngineerPrerequisite
+            || item.Intent is not { } intent
+            || EngineerDirectory.ById(engineerId) is not { } engineer)
+        {
+            return false;
+        }
+
+        return intent.Kind switch
+        {
+            ChecklistIntentKind.EngineerPrerequisite =>
+                string.Equals(intent.Subject, engineer.Name, StringComparison.OrdinalIgnoreCase),
+            ChecklistIntentKind.EngineerAccess =>
+                engineer.ReferredBy.Any(name => string.Equals(name, intent.Subject, StringComparison.OrdinalIgnoreCase)),
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Falls back to <see cref="Everything"/> once the engineer the list was focused on has nothing left
+    /// on it — the only way a Derived prerequisite line leaves the list, since nobody ticks one by hand
+    /// (#265).
+    /// </summary>
+    private void ResetEngineerFilterIfEmptied()
+    {
+        if (EngineerIdFor(Filter) is not { } engineerId
+            || Document.Items.Any(item => item.IsLive && OfferedEngineer(item, engineerId)))
+        {
+            return;
+        }
+
+        Choose(Everything);
+    }
+
     public IReadOnlyList<ChecklistFilter> FilterAxes()
     {
         var live = Document.Items.Where(item => item.IsLive).ToList();
@@ -861,6 +923,14 @@ public sealed class ChecklistService(
                         : "What a pinned blueprint can finish, wherever you are",
                     "What you can finish anywhere")]
                 : Array.Empty<ChecklistFilter>(),
+
+            // **One engineer's own unlock**, one row per engineer with at least one prerequisite line on
+            // the list — offered only where AddPrerequisites has actually put something there (#265).
+            .. EngineerDirectory.All
+                .Where(engineer => live.Any(item => OfferedEngineer(item, engineer.Id)))
+                .OrderBy(engineer => engineer.Name, StringComparer.Ordinal)
+                .Select(engineer => new ChecklistFilter(
+                    EngineerFilterKey(engineer.Id), engineer.Name, "Unlocking an engineer")),
         ];
     }
 

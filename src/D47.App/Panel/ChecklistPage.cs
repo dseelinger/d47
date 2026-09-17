@@ -708,6 +708,12 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             return _checklists.OfferedPinned(item);
         }
 
+        // One engineer's own unlock, named by id in the key rather than by a spelling of its own (#265).
+        if (ChecklistService.EngineerIdFor(Chosen) is { } engineerId)
+        {
+            return _checklists.OfferedEngineer(item, engineerId);
+        }
+
         return Chosen.Equals(item.Kind.ToString(), StringComparison.OrdinalIgnoreCase)
                || Chosen.Equals(item.Source.ToString(), StringComparison.OrdinalIgnoreCase)
                || Chosen.Equals(ChecklistScope.Word(item.Scope.Group), StringComparison.OrdinalIgnoreCase)
