@@ -35,8 +35,12 @@ public sealed class ChecklistService(
     ChecklistStore list,
     ChecklistProposalStore proposals,
     Func<CommanderGameState?> commander,
-    Action<ChecklistView>? remember = null)
+    Action<ChecklistView>? remember = null,
+    Func<bool>? removeFulfilled = null)
 {
+    /// <summary>Whether a fulfilled derived item removes itself rather than staying ticked (#255).</summary>
+    private bool RemoveFulfilled => removeFulfilled?.Invoke() ?? false;
+
     public ChecklistStore List => list;
 
     public ChecklistProposalStore Proposals => proposals;
@@ -319,6 +323,7 @@ public sealed class ChecklistService(
         var document = list.For(state.Identity.FrontierId, state.Identity.Name);
         var news = new List<ChecklistNews>();
         var moved = new List<ChecklistItem>();
+        var removed = new List<ChecklistItem>();
 
         foreach (var item in document.Items)
         {
@@ -334,7 +339,16 @@ public sealed class ChecklistService(
                 continue;
             }
 
-            moved.Add(item with { State = verdict.State, Noted = noted });
+            // A derived item that has just finished is removed outright rather than kept ticked — the
+            // Commander's own lines are never touched, because they are never Derived (#255).
+            if (RemoveFulfilled && item.Kind == ChecklistItemKind.Derived && verdict.State == ChecklistState.Done)
+            {
+                removed.Add(item);
+            }
+            else
+            {
+                moved.Add(item with { State = verdict.State, Noted = noted });
+            }
 
             if (verdict.State == item.State)
             {
@@ -377,7 +391,7 @@ public sealed class ChecklistService(
             }
         }
 
-        if (moved.Count == 0)
+        if (moved.Count == 0 && removed.Count == 0)
         {
             return news;
         }
@@ -395,6 +409,13 @@ public sealed class ChecklistService(
                     {
                         updated = updated.WithState(item);
                     }
+                }
+
+                foreach (var item in removed)
+                {
+                    // Forget rather than Delete: Delete refuses a Derived item and Revise would leave it as a
+                    // Superseded tombstone that a later promotion would only have to clean up again.
+                    updated = updated.Forget(item.Scope, candidate => candidate.Id.Same(item.Id)).Document;
                 }
 
                 return new ChecklistChange(updated, Changed: true, "Recomputed.");

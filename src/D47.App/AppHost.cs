@@ -854,7 +854,8 @@ public sealed class AppHost : IDisposable
                 ChecklistFilter = view.Filter,
                 ChecklistPartialGrades = view.IncludePartialGrades,
                 PinnedEngineers = view.PinnedEngineers ?? [],
-            }));
+            }),
+            () => settings.Current.Checklists.RemoveFulfilled);
 
         // The engineer filter is a question about where the ship is, so the list is re-read when it moves
         // (#93).
@@ -2295,6 +2296,11 @@ public sealed class AppHost : IDisposable
 
             // Before adoption, so a sale and a purchase reusing its id in one batch are taken in that order.
             shipPlans.DropGone(context.IsFirst ? [] : arrived);
+
+            if (settings.Current.Checklists.RemoveFulfilled)
+            {
+                shipPlans.DropMetSlots();
+            }
 
             // Both halves of the same offer.
             foreach (var adopted in shipPlans.Observe(arrived).Concat(onFootPlans.Observe(arrived)))

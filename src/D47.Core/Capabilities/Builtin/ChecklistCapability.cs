@@ -9,6 +9,8 @@ public static class ChecklistCapability
 
     public const string SummaryKey = "checklists.summary";
 
+    public const string RemoveFulfilledKey = "checklists.removeFulfilled";
+
     // The Commander's words rather than the enum's (remediation.md 10, item 16).
     private static readonly string[] Groups = ["custom", "ship", "system", "suit", "weapon"];
 
@@ -43,7 +45,7 @@ public static class ChecklistCapability
             new("what am i building", "get_checklist"),
         ],
         Display = new CapabilityDisplay { PanelTitle = "Checklists", Order = 63 },
-        Settings = [SummaryRow(checklists)],
+        Settings = [SummaryRow(checklists), RemoveFulfilledRow],
         Tools =
         [
             // Argument-free and first, so "what am I working on" reaches it through the keyword router with
@@ -782,6 +784,26 @@ public static class ChecklistCapability
         Kind = SettingKind.Info,
         DocsAnchor = "the-checklist-tab",
         Binding = new SettingBinding { Read = _ => Summarise(checklists) },
+    };
+
+    /// <summary>Off by default: a derived item removes itself once it is done, and a met slot's plan
+    /// with it (#255).</summary>
+    private static readonly SettingRow RemoveFulfilledRow = new()
+    {
+        Key = RemoveFulfilledKey,
+        Advanced = true,
+        Label = "Remove fulfilled items",
+        Help = "Off leaves a done derived item ticked on the list. On, it is removed instead once it is "
+               + "done — and a ship slot whose plan is met loses its plan, so the tick and the plan "
+               + "column both disappear. Your own lines are never affected either way.",
+        Kind = SettingKind.Toggle,
+        DefaultDisplay = "off",
+        DocsAnchor = "the-checklist-tab",
+        Binding = new SettingBinding
+        {
+            Read = s => s.Checklists.RemoveFulfilled ? "true" : "false",
+            Write = (s, v) => s with { Checklists = s.Checklists with { RemoveFulfilled = v == "true" } },
+        },
     };
 
     private static string Summarise(ChecklistService checklists)

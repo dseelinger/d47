@@ -46,6 +46,9 @@ public sealed record D47Settings
 
     public KnowledgeSettings Knowledge { get; init; } = new();
 
+    /// <summary>The checklist's own settings (#255).</summary>
+    public ChecklistSettings Checklists { get; init; } = new();
+
     /// <summary>What d47 keeps about the Commander, and for how long (Phase 31).</summary>
     public MemorySettings Memory { get; init; } = new();
 
@@ -147,6 +150,18 @@ public sealed record KnowledgeSettings
     /// 47).
     /// </summary>
     public bool NotablePlaces { get; init; }
+}
+
+/// <summary>The checklist's own settings (#255).</summary>
+public sealed record ChecklistSettings
+{
+    /// <inheritdoc cref="D47Settings.Extra"/>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? Extra { get; init; }
+
+    /// <summary>Whether a fulfilled derived item, and a ship slot whose plan is met, are removed rather
+    /// than left ticked.</summary>
+    public bool RemoveFulfilled { get; init; }
 }
 
 /// <summary>Which companion character is aboard (Phase 11).</summary>

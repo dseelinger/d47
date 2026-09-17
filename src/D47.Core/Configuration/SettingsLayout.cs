@@ -647,7 +647,9 @@ public static class SettingsLayout
                 E("callouts.weekBoundaryHourUtc", under: true),
             ]),
         new SettingsTabPlace("adventures", "adventures", true, "Adventures", [E("knowledge.notablePlaces")]),
-        new SettingsTabPlace("checklist", "checklist", false, "Checklist", [E("checklists.summary")]),
+        new SettingsTabPlace(
+            "checklist", "checklist", false, "Checklist",
+            [E("checklists.summary"), E("checklists.removeFulfilled")]),
     ];
 
     /// <summary>

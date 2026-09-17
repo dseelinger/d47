@@ -363,6 +363,123 @@ public sealed class ShipPlanService(
     }
 
     /// <summary>
+    /// Deletes each slot's plan that nothing is still owed against what is fitted there — matched live
+    /// where the Commander is aboard the ship, remembered otherwise. Silent, like <see cref="DropGone"/>
+    /// (#255).
+    /// </summary>
+    public void DropMetSlots()
+    {
+        foreach (var build in Mine)
+        {
+            if (build.ShipId is not { } shipId)
+            {
+                continue;
+            }
+
+            var fitted = FittedModules(shipId);
+
+            foreach (var slot in build.Slots)
+            {
+                if (slot.IsEmpty)
+                {
+                    continue;
+                }
+
+                var module = fitted.FirstOrDefault(candidate =>
+                    string.Equals(candidate.Slot, slot.Slot, StringComparison.OrdinalIgnoreCase));
+
+                if (!Outstanding(slot, module))
+                {
+                    Clear(build.Id, slot.Slot);
+                }
+            }
+        }
+    }
+
+    /// <summary>What is fitted on a ship right now, live where it is the one the Commander is aboard and
+    /// remembered otherwise.</summary>
+    private IReadOnlyList<ShipModule> FittedModules(int shipId)
+    {
+        var live = state();
+
+        if (live?.Ship is { IsKnown: true } loadout && loadout.ShipId == shipId)
+        {
+            return loadout.Modules;
+        }
+
+        return live?.Loadouts.For(shipId)?.Loadout.Modules ?? [];
+    }
+
+    /// <summary>Whether a slot's plan still has work outstanding against what is fitted there (#255).</summary>
+    public static bool Outstanding(SlotPlan? plan, ShipModule? module)
+    {
+        if (plan is null || plan.IsEmpty)
+        {
+            return false;
+        }
+
+        // Nothing there yet, so everything the plan asks for is still to do.
+        if (module is null)
+        {
+            return true;
+        }
+
+        if (!IsWhatWasWanted(plan, module))
+        {
+            // Something else is in the slot.
+            return true;
+        }
+
+        if (plan.Blueprint is not { Length: > 0 })
+        {
+            // The plan wanted a module and not a roll, and the module is here.
+            return false;
+        }
+
+        // Both spellings, because a plan and the journal do not use the same one.
+        if (!string.Equals(plan.Blueprint, module.Blueprint, StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(plan.Blueprint, Readable(module.Blueprint), StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (plan.Grade > 0 && module.BlueprintLevel < plan.Grade)
+        {
+            return true;
+        }
+
+        // An experimental the plan asks for and the roll has not got.
+        return plan.Experimental is { Length: > 0 } wanted
+               && !string.Equals(wanted, module.Experimental, StringComparison.OrdinalIgnoreCase)
+               && !string.Equals(wanted, Readable(module.Experimental), StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>Whether the fitted module is the one the plan asked for.</summary>
+    private static bool IsWhatWasWanted(SlotPlan plan, ShipModule module)
+    {
+        if (plan.Variant is { Length: > 0 } variant)
+        {
+            return string.Equals(variant, module.Item, StringComparison.OrdinalIgnoreCase);
+        }
+
+        if (plan.Module is not { Length: > 0 } wanted)
+        {
+            // A plan asking only for a roll is about whatever is in the slot.
+            return true;
+        }
+
+        var here = EliteSpecifications.Module(module.Item)?.Name;
+
+        return here is { Length: > 0 } && string.Equals(here, wanted, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>The blueprint in the Commander's words rather than the journal's.</summary>
+    private static string? Readable(string? blueprint) =>
+        blueprint is not { Length: > 0 }
+            ? null
+            : BlueprintCatalogue.NameOf(blueprint) ?? blueprint;
+
+    /// <summary>
     /// Offers a build to the checklist (Phase 26, "A plan reaches the checklist when you say so").
     /// </summary>
     public string Promote(string buildId)

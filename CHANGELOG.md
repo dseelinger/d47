@@ -6,6 +6,14 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.149.0 — Remove fulfilled checklist items when set
+
+A new Checklist setting, off by default, removes a derived item from the list once it is done
+instead of leaving it ticked, and deletes a ship slot's plan once it is fully met — the tick and
+the plan column both disappear, and the slot's page offers "Plan this slot" again. The "is done"
+callout still speaks once before the item goes. Lines a commander writes by hand are never
+affected, on or off.
+
 ## 0.148.0 — Adopt keeps derived checklist items derived
 
 A checklist line written before a commander was known — before the first journal, or while
