@@ -842,7 +842,7 @@ public static class LoadoutPages
     /// <summary>
     /// The columns every slot row and the header above them share (docs/plans/change-requests.md 38).
     /// </summary>
-    private static ColumnDefinitions Columns() => new("22,0.75*,1.45*,1.15*");
+    private static ColumnDefinitions Columns() => new("22,0.75*,1.45*,1.15*,54");
 
     /// <summary>
     /// The one header above a ship's slot list, because two columns that are not labelled are two
@@ -858,7 +858,7 @@ public static class LoadoutPages
 
         var at = 1;
 
-        foreach (var word in new[] { "SLOT", "CURRENT", "PLAN" })
+        foreach (var word in new[] { "SLOT", "CURRENT", "PLAN", "MW" })
         {
             var said = new TextBlock
             {
@@ -866,6 +866,7 @@ public static class LoadoutPages
                 FontSize = TypeScale.Secondary,
                 FontWeight = FontWeight.Bold,
                 VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = word == "MW" ? HorizontalAlignment.Right : HorizontalAlignment.Left,
             };
 
             Themed(said, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
@@ -928,6 +929,11 @@ public static class LoadoutPages
         Grid.SetColumn(plan, 3);
         line.Children.Add(plan);
 
+        var draw = DrawCell(parts.Draw);
+
+        Grid.SetColumn(draw, 4);
+        line.Children.Add(draw);
+
         var button = new Button
         {
             Content = line,
@@ -989,6 +995,28 @@ public static class LoadoutPages
             string.Empty,
             gear: false,
             bold: false);
+    }
+
+    /// <summary>
+    /// What this slot draws, right-aligned, in the Info tone and <c>~</c> prefix the Power gauge uses for
+    /// a modelled reading — or a blank cell for a slot with no figure (#252).
+    /// </summary>
+    private static Control DrawCell(LoadoutDraw? draw)
+    {
+        var cell = new TextBlock
+        {
+            Text = draw is null ? string.Empty : draw.Modelled ? $"~ {draw.Reading}" : draw.Reading,
+            FontSize = TypeScale.Secondary,
+            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Right,
+        };
+
+        Themed(
+            cell,
+            TextBlock.ForegroundProperty,
+            draw is { Modelled: true } ? ThemeManager.InfoKey : ThemeManager.TextMutedKey);
+
+        return cell;
     }
 
     /// <summary>

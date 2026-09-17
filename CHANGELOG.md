@@ -6,6 +6,14 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.153.0 — Show planned megawatts on each slot row
+
+A ship's slot rows now carry a megawatts figure: what the planned module draws with its blueprint
+and experimental applied, or what is fitted where nothing is planned. A modelled figure — one d47
+worked out rather than read off the game — carries the same `~` prefix and muted hue as the Power
+gauge's own modelled reading. A slot too vague to cost, or a module that draws nothing, shows no
+figure.
+
 ## 0.152.0 — Rename the active ship's badge, drop its redundant line
 
 The active ship's card badge now reads "CURRENT SHIP" instead of "FLYING NOW". The line under its

@@ -302,6 +302,55 @@ public class BuildGaugeTests
     }
 
     [Fact]
+    public void EveryDrawnSlotSumsToTheGaugeItFeeds()
+    {
+        // The whole point of exposing the map: a slot row and the gauge above it are reading the same
+        // arithmetic, not two arithmetics that happen to agree (#252).
+        var loadout = Flown(Predestinatio);
+        var power = ShipGauges.Read(Build(loadout), loadout).Power;
+
+        Assert.NotNull(power);
+        Assert.Equal(power.Deployed, power.Draw.Values.Sum(draw => draw.Megawatts), 6);
+
+        // The plant makes power; it does not draw any, so it carries no entry of its own.
+        Assert.False(power.Draw.ContainsKey("PowerPlant"));
+
+        // Armour has no `Power` figure in the table at all.
+        Assert.False(power.Draw.ContainsKey("Armour"));
+    }
+
+    [Fact]
+    public void APlanTooVagueToCostShowsNoFigureOnItsRow()
+    {
+        var loadout = Flown(Predestinatio);
+
+        var gauges = ShipGauges.Read(
+            Build(loadout, new SlotPlan("PowerDistributor", Module: "Power Distributor")),
+            loadout);
+
+        Assert.NotNull(gauges.Power);
+        Assert.False(gauges.Power.Draw.ContainsKey("PowerDistributor"));
+    }
+
+    [Fact]
+    public void APlannedSlotsRowIsModelledAndAFittedOneIsMeasured()
+    {
+        var loadout = Flown(Predestinatio);
+
+        var measured = ShipGauges.Read(Build(loadout), loadout).Power;
+
+        var planned = ShipGauges.Read(
+            Build(loadout, new SlotPlan("FrameShiftDrive", "Increased FSD Range", 5)),
+            loadout).Power;
+
+        Assert.NotNull(measured);
+        Assert.NotNull(planned);
+
+        Assert.Equal(FigureKind.Measured, measured.Draw["FrameShiftDrive"].Kind);
+        Assert.Equal(FigureKind.Modelled, planned.Draw["FrameShiftDrive"].Kind);
+    }
+
+    [Fact]
     public void ABuildWithNoPlantSaysThatRatherThanZero()
     {
         var loadout = Flown(

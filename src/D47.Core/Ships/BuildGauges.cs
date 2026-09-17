@@ -16,6 +16,9 @@ public enum FigureKind
     Modelled,
 }
 
+/// <summary>What one slot draws, and whether that figure was read off the game or worked out (#252).</summary>
+public sealed record SlotDraw(double Megawatts, FigureKind Kind);
+
 /// <summary>What a build draws against what its plant makes, retracted and deployed (Phase 38).</summary>
 /// <param name="Retracted">Megawatts drawn with the hardpoints in.</param>
 /// <param name="Deployed">
@@ -25,7 +28,13 @@ public enum FigureKind
 /// What the plant makes, or null for a build with no plant d47 can see.
 /// </param>
 /// <param name="Kind">Measured or modelled.</param>
-public sealed record PowerGauge(double Retracted, double Deployed, double? Capacity, FigureKind Kind)
+/// <param name="Draw">
+/// What each slot that draws power contributes, keyed by the journal's slot name — the same figures
+/// summed into <see cref="Deployed"/>, so a slot row and this gauge cannot disagree (#252). Carries no
+/// entry for a power plant, a slot too vague to cost, or a module that draws nothing.
+/// </param>
+public sealed record PowerGauge(
+    double Retracted, double Deployed, double? Capacity, FigureKind Kind, IReadOnlyDictionary<string, SlotDraw> Draw)
 {
     /// <summary>The retracted draw as a fraction of capacity, or null with no plant.</summary>
     public double? RetractedShare => Capacity is > 0 ? Retracted / Capacity : null;
@@ -177,6 +186,7 @@ public static class ShipGauges
     {
         double retracted = 0, deployed = 0;
         double? capacity = null;
+        var draws = new Dictionary<string, SlotDraw>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var part in parts)
         {
@@ -190,21 +200,29 @@ public static class ShipGauges
 
             // Elite's own figure for this slot wins where it has one — it is computed by the game with the
             // engineering already in it.
-            var draw = part.IsPlanned || measured is null || !measured.TryGetValue(part.Slot, out var live)
-                ? part.Figure("PowerDraw", "Power Draw", part.Spec.Power) ?? 0
-                : live;
+            var live = !part.IsPlanned && measured is not null && measured.TryGetValue(part.Slot, out var reported)
+                ? reported
+                : (double?)null;
 
-            deployed += draw;
+            var draw = live ?? part.Figure("PowerDraw", "Power Draw", part.Spec.Power);
+
+            deployed += draw ?? 0;
 
             if (part.Spec.Type is not { Length: > 0 } type || char.ToLowerInvariant(type[0]) != 'h')
             {
-                retracted += draw;
+                retracted += draw ?? 0;
+            }
+
+            // No figure for a plan too vague to cost, or a module that draws nothing at all.
+            if (draw is { } megawatts && megawatts != 0 && !part.IsVague)
+            {
+                draws[part.Slot] = new SlotDraw(megawatts, part.IsPlanned ? FigureKind.Modelled : FigureKind.Measured);
             }
         }
 
         return deployed == 0 && capacity is null
             ? null
-            : new PowerGauge(retracted, deployed, capacity, kind);
+            : new PowerGauge(retracted, deployed, capacity, kind, draws);
     }
 
     /// <summary>The three needles.</summary>

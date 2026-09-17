@@ -218,7 +218,15 @@ public sealed record LoadoutParts(
     /// and stops.
     /// </summary>
     public bool Met { get; init; }
+
+    /// <summary>What this slot draws in its planned configuration, or null where nothing is drawn (#252).</summary>
+    public LoadoutDraw? Draw { get; init; }
 }
+
+/// <summary>A slot row's power figure, read off <see cref="D47.Core.Ships.PowerGauge.Draw"/> (#252).</summary>
+/// <param name="Reading">The draw, formatted in megawatts to two decimal places.</param>
+/// <param name="Modelled">Whether this figure was worked out rather than read off the game.</param>
+public sealed record LoadoutDraw(string Reading, bool Modelled);
 
 /// <summary>
 /// One mode of the Loadout tab — Ships, or Suits and weapons (Phase 27, "The same page, on foot").

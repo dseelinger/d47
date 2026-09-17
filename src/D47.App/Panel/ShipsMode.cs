@@ -395,15 +395,7 @@ public sealed class ShipsMode(
             return [];
         }
 
-        var seen = Picture(build);
-
-        // Only the ship being flown, and only where the file describes *this* one.
-        var live = measured?.Invoke();
-        var draw = live is not null && seen is { IsLive: true } && live.Describes(seen.Loadout)
-            ? live.Draw
-            : null;
-
-        var gauges = ShipGauges.Read(build, seen?.Loadout, draw);
+        var gauges = ShipGauges.Read(build, Picture(build)?.Loadout, LiveDraw(build));
 
         if (gauges.Silent is { Length: > 0 } why)
         {
@@ -522,6 +514,10 @@ public sealed class ShipsMode(
             ? [.. layout.Select(slot => (slot.Name, slot.Kind, Word: slot.Describe(), Brief: slot.Short(), slot.Size))]
             : Unlaid(build, fitted);
 
+        // Read once, off the same arithmetic the Power gauge sums, so a slot row and the gauge cannot
+        // disagree (#252).
+        var draw = ShipGauges.Read(build, Picture(build)?.Loadout, LiveDraw(build)).Power?.Draw;
+
         return
         [
             .. slots.Select(slot =>
@@ -548,7 +544,7 @@ public sealed class ShipsMode(
                     // do, and the gear says a roll has already been done.
                     Engineered = module?.Blueprint is { Length: > 0 },
 
-                    Parts = Parted(slot, plan, module, build, fitted),
+                    Parts = Parted(slot, plan, module, build, fitted, draw),
                 };
             }),
         ];
@@ -563,7 +559,8 @@ public sealed class ShipsMode(
         SlotPlan? plan,
         ShipModule? module,
         ShipBuild build,
-        IReadOnlyList<ShipModule> fitted)
+        IReadOnlyList<ShipModule> fitted,
+        IReadOnlyDictionary<string, SlotDraw>? draw)
     {
         var planned = plan is { IsEmpty: false } ? plan : null;
 
@@ -607,6 +604,10 @@ public sealed class ShipsMode(
         {
             // The plan is carried out, so the second column has nothing left to say.
             Met = planned is not null && !Outstanding(planned, module),
+
+            Draw = draw is not null && draw.TryGetValue(slot.Name, out var figure)
+                ? new LoadoutDraw(Megawatts(figure.Megawatts), figure.Kind == FigureKind.Modelled)
+                : null,
         };
     }
 
@@ -1974,6 +1975,19 @@ public sealed class ShipsMode(
     private sealed record Seen(ShipLoadout Loadout, DateTimeOffset? SeenAt)
     {
         public bool IsLive => SeenAt is null;
+    }
+
+    /// <summary>
+    /// Elite's own per-slot power figures for this build, where the file is fresh and describes it —
+    /// only the ship being flown, and only where the file describes *this* one.
+    /// </summary>
+    private IReadOnlyDictionary<string, double>? LiveDraw(ShipBuild build)
+    {
+        var live = measured?.Invoke();
+
+        return live is not null && Picture(build) is { IsLive: true } seen && live.Describes(seen.Loadout)
+            ? live.Draw
+            : null;
     }
 
     private Seen? Picture(ShipBuild build)
