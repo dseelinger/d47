@@ -128,7 +128,7 @@ public class MiniCarriesNoPageChromeTests
 
     /// <summary>The words on the Checklist bar, which is the page's own chrome.</summary>
     private static readonly string[] Bar =
-        ["Showing everything", "Order", "Goals (9 running)", "Import/Export"];
+        ["Showing everything", "Goals (9 running)", "Delete completed items"];
 
     [AvaloniaFact]
     public void MiniCarriesNoneOfThePagesOwnChrome()
@@ -178,12 +178,12 @@ public class MiniCarriesNoPageChromeTests
         var (panel, view, _) = Headset("mini");
         using var _disposable = panel;
 
-        Assert.DoesNotContain("Order", DrawnWords(view));
+        Assert.DoesNotContain("Showing everything", DrawnWords(view));
 
         view.Classes.Remove("output-only");
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Contains("Order", DrawnWords(view));
+        Assert.Contains("Showing everything", DrawnWords(view));
     }
 
     [AvaloniaFact]
@@ -192,12 +192,12 @@ public class MiniCarriesNoPageChromeTests
         var (panel, view, checklists) = Headset("mini");
         using var _disposable = panel;
 
-        Assert.DoesNotContain("Order", DrawnWords(view));
+        Assert.DoesNotContain("Showing everything", DrawnWords(view));
 
         checklists.AddNote(ChecklistScope.Universal, "sell the cargo");
         Serve(panel);
 
-        Assert.DoesNotContain("Order", DrawnWords(view));
+        Assert.DoesNotContain("Showing everything", DrawnWords(view));
 
         // And the line that was just added is drawn, so this is a rebuild that happened rather than a page
         // that stopped redrawing.

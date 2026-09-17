@@ -35,12 +35,6 @@ public sealed record ChecklistDocument
 
     public IReadOnlyList<ChecklistItem> Items { get; init; } = [];
 
-    /// <summary>
-    /// The Commander's order between projects (Phase 42), as project keys — see <see
-    /// cref="ChecklistOrdering.Key"/>.
-    /// </summary>
-    public IReadOnlyList<string> ProjectOrder { get; init; } = [];
-
     public static ChecklistDocument For(string fid, string? name = null) =>
         new() { CommanderFid = fid, CommanderName = name };
 

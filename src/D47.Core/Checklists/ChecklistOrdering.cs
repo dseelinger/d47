@@ -4,20 +4,18 @@ using D47.Core.Journal;
 namespace D47.Core.Checklists;
 
 /// <summary>
-/// One project as the ordering and the panel's chooser see it: which list it is, the key the stored
-/// rank holds it by, and the word a Commander knows it by — "Flamebrand (Anaconda)", "Sol", "custom".
+/// One project as the ordering sees it: which list it is, its key, and the word a Commander knows it
+/// by — "Flamebrand (Anaconda)", "Sol", "custom".
 /// </summary>
 public sealed record ChecklistProject(ChecklistScope Scope, string Key, string Word);
 
-/// <summary>The checklist in the order the Commander cares about (Phase 42).</summary>
+/// <summary>The checklist in the order the Commander cares about.</summary>
 public static class ChecklistOrdering
 {
     /// <summary>How many lines are "the next few things" when the list is said out loud.</summary>
     public const int Spoken = 3;
 
-    /// <summary>
-    /// The key the stored rank holds a project by — <c>ship:51</c>, <c>system:sol</c>, <c>custom</c>.
-    /// </summary>
+    /// <summary>A project's key — <c>ship:51</c>, <c>system:sol</c>, <c>custom</c>.</summary>
     public static string Key(ChecklistScope scope)
     {
         ArgumentNullException.ThrowIfNull(scope);
@@ -61,9 +59,8 @@ public static class ChecklistOrdering
     }
 
     /// <summary>
-    /// Every project with a live item, in the order the list reads: ranked ones first in the
-    /// Commander's order, then the unranked — here-and-now first, then as they first appear in the
-    /// file.
+    /// Every project with a live item, in the order the list reads: here-and-now first, then as they
+    /// first appear in the file.
     /// </summary>
     public static IReadOnlyList<ChecklistProject> Projects(
         ChecklistDocument document, CommanderGameState? state)
@@ -85,15 +82,11 @@ public static class ChecklistOrdering
                 item.Scope, key, ChecklistWording.Where(item.Scope, item.Hull, state)));
         }
 
-        var ranked = Ranked(document);
-
         return
         [
             .. seen
                 .Select((project, appeared) => (project, appeared))
-                .OrderBy(entry => ranked.TryGetValue(entry.project.Key, out var at) ? 0 : 1)
-                .ThenBy(entry => ranked.TryGetValue(entry.project.Key, out var at) ? at : 0)
-                .ThenBy(entry => IsHere(entry.project.Scope, state) ? 0 : 1)
+                .OrderBy(entry => IsHere(entry.project.Scope, state) ? 0 : 1)
                 .ThenBy(entry => entry.appeared)
                 .Select(entry => entry.project),
         ];
@@ -152,80 +145,4 @@ public static class ChecklistOrdering
         ChecklistState.Stale => 4,
         _ => 5,
     };
-
-    /// <summary>
-    /// Moves one project in the Commander's order (Phase 42, "Projects are ordered by the Commander,
-    /// and that order is stored").
-    /// </summary>
-    public static ChecklistChange Rank(
-        ChecklistDocument document,
-        CommanderGameState? state,
-        ChecklistScope scope,
-        ChecklistMove move)
-    {
-        ArgumentNullException.ThrowIfNull(document);
-        ArgumentNullException.ThrowIfNull(scope);
-
-        var projects = Projects(document, state).ToList();
-        var wanted = Key(scope);
-        var from = projects.FindIndex(project => string.Equals(project.Key, wanted, StringComparison.Ordinal));
-
-        if (from < 0)
-        {
-            return ChecklistChange.Refused(document, "There is no such project on your checklist.");
-        }
-
-        var word = projects[from].Word;
-
-        if (projects.Count == 1)
-        {
-            return ChecklistChange.Refused(
-                document, $"The {word} list is the only project, so there is nothing to order it against.");
-        }
-
-        var to = move switch
-        {
-            ChecklistMove.Top => 0,
-            ChecklistMove.Bottom => projects.Count - 1,
-            ChecklistMove.Up => Math.Max(0, from - 1),
-            _ => Math.Min(projects.Count - 1, from + 1),
-        };
-
-        if (to == from)
-        {
-            return ChecklistChange.Refused(
-                document,
-                to == 0
-                    ? $"The {word} list is already at the top."
-                    : $"The {word} list is already at the bottom.");
-        }
-
-        var moved = projects[from];
-        projects.RemoveAt(from);
-        projects.Insert(to, moved);
-
-        return new ChecklistChange(
-            document with { ProjectOrder = [.. projects.Select(project => project.Key)] },
-            Changed: true,
-            move switch
-            {
-                ChecklistMove.Top => $"Moved the {word} list to the top.",
-                ChecklistMove.Bottom => $"Moved the {word} list to the bottom.",
-                ChecklistMove.Up => $"Moved the {word} list up.",
-                _ => $"Moved the {word} list down.",
-            });
-    }
-
-    /// <summary>Each ranked key against its position, first spelling wins on a hand-edited duplicate.</summary>
-    private static Dictionary<string, int> Ranked(ChecklistDocument document)
-    {
-        var ranked = new Dictionary<string, int>(StringComparer.Ordinal);
-
-        foreach (var key in document.ProjectOrder)
-        {
-            ranked.TryAdd(key.Trim().ToLowerInvariant(), ranked.Count);
-        }
-
-        return ranked;
-    }
 }

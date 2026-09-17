@@ -91,6 +91,29 @@ public class ChecklistStoreTests
         Assert.DoesNotContain("tombstone", File.ReadAllText(store.Path), StringComparison.Ordinal);
     }
 
+    /// <summary>A file written before project ordering was removed (#270) holds a field this shape no longer knows.</summary>
+    [Fact]
+    public void AFileWithAStaleProjectOrderStillLoads()
+    {
+        using var install = new TempInstall();
+        var store = Store(install);
+
+        File.WriteAllText(
+            store.Path,
+            """
+            {
+              "commanders": [
+                { "commanderFid": "F1", "projectOrder": ["system:lave"], "items": [
+                  { "key": "note-1", "scope": { "group": "universal" },
+                    "kind": "authored", "text": "buy limpets" } ] } ]
+            }
+            """);
+
+        Assert.True(store.Poll());
+        Assert.Empty(store.Problems);
+        Assert.Equal("buy limpets", Assert.Single(store.For("F1").Items).Text);
+    }
+
     [Fact]
     public void ABadLineIsReportedAndTheRestOfTheFileStillLoads()
     {

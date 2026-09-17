@@ -6,6 +6,13 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.165.0 — Remove project ordering and checklist import/export
+
+The Checklist tab's control bar no longer offers Order or Import/Export. Projects now sort
+here-and-now first, then in the order they first appear on the list, with no way to set an order
+of your own between them. A checklist can no longer be moved to another machine by file. An older
+checklist file with a stored project order still opens; the field is ignored.
+
 ## 0.164.0 — Answer questions from the commander's career statistics
 
 D47 can now answer from the journal's `Statistics` event — bank balance, combat, exploration,

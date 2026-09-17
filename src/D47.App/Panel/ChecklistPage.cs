@@ -81,27 +81,11 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     /// </summary>
     private readonly StackPanel _controls = new() { Orientation = Orientation.Horizontal, Spacing = 8 };
 
-    /// <summary>The way into the project order (Phase 42).</summary>
-    private readonly Button _orderButton = new()
-    {
-        Content = "Order",
-        Padding = new Thickness(12, 4),
-        MinHeight = TouchTarget,
-    };
-
     private readonly Button _suggestions = new()
     {
         Padding = new Thickness(12, 4),
         MinHeight = TouchTarget,
         IsVisible = false,
-    };
-
-    /// <summary>Import and export, behind one button (remediation.md 10, item 15).</summary>
-    private readonly Button _transfer = new()
-    {
-        Content = "Import/Export",
-        Padding = new Thickness(12, 4),
-        MinHeight = TouchTarget,
     };
 
     /// <summary>Bulk-removes every Done line on the whole checklist (#259).</summary>
@@ -172,7 +156,6 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         // Through the service, like the filter beside it: shared across surfaces and remembered.
         _partialSwitch.IsCheckedChanged += (_, _) => _checklists.IncludePartial(_partialSwitch.IsChecked == true);
-        _orderButton.Click += (_, _) => ChooseProject();
 
         _suggestions.Click += (_, _) =>
             _nav.Drill(new NavCrumb(SuggestionsKey, "Suggestions"));
@@ -194,9 +177,6 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         add.Click += (_, _) => AddLine();
 
-        // Import and export (remediation.md 10, item 15).
-        _transfer.Click += (_, _) => ChooseTransfer();
-
         _deleteCompleted.Click += (_, _) => DeleteCompletedItems();
 
         // A WrapPanel, because this bar overlapped itself below about 700 pixels. It was a DockPanel
@@ -216,9 +196,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         // The arcs live beside the scope filter rather than above the whole page: they are another way of
         // reading the same list, which is what the bar is for.
         _controls.Children.Add(_scopeButton);
-        _controls.Children.Add(_orderButton);
         _controls.Children.Add(_arcsToggle);
-        _controls.Children.Add(_transfer);
         _controls.Children.Add(_deleteCompleted);
 
         // The filter group first, so a bar that wraps drops "Add a line" to the second row rather than the
@@ -413,8 +391,8 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         RebuildArcs();
 
-        // In the order the Commander cares about (Phase 42): their project order, then what can be done now,
-        // where they are standing — with their own hand-moves as the tiebreak.
+        // In the order the Commander cares about: what can be done now, where they are standing —
+        // with their own hand-moves as the tiebreak.
         var live = _checklists.Arranged().Where(Matches).ToList();
 
         var open = live.Where(item => !item.IsComplete).ToList();
@@ -1124,232 +1102,6 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             },
             option => _checklists.Choose(option.Key));
     }
-
-    /// <summary>The project order, as two choosers: which project, then where it goes (Phase 42).</summary>
-    private void ChooseProject()
-    {
-        var projects = _checklists.Projects();
-
-        if (projects.Count == 0)
-        {
-            Say("Nothing here yet, so there is no project order to set.");
-            return;
-        }
-
-        _prompts.Choose(
-            new ChoiceRequest(
-                "checklist.project",
-                "Order",
-                "Order your projects",
-                "Between projects the order is yours and it keeps. Within one, what you can do "
-                + "now — in this ship, where you are standing — floats to the top by itself.",
-                [.. projects.Select(project => new ChoiceOption(project.Key, project.Word))],
-                projects[0].Key,
-                ChoiceSurface.Layer),
-            option =>
-            {
-                if (projects.FirstOrDefault(project => project.Key == option.Key) is { } chosen)
-                {
-                    ChooseProjectMove(chosen);
-                }
-            });
-    }
-
-    /// <summary>The second step: where the chosen project goes.</summary>
-    private void ChooseProjectMove(ChecklistProject project)
-    {
-        _prompts.Choose(
-            new ChoiceRequest(
-                "checklist.project.move",
-                "Order",
-                $"Move the {project.Word} list",
-                "The order is stored, so it is still yours after a restart.",
-                [
-                    new ChoiceOption("top", "To the top"),
-                    new ChoiceOption("up", "Up one"),
-                    new ChoiceOption("down", "Down one"),
-                    new ChoiceOption("bottom", "To the bottom"),
-                ],
-                "top",
-                ChoiceSurface.Layer),
-            option =>
-            {
-                var move = option.Key switch
-                {
-                    "up" => ChecklistMove.Up,
-                    "down" => ChecklistMove.Down,
-                    "bottom" => ChecklistMove.Bottom,
-                    _ => ChecklistMove.Top,
-                };
-
-                var change = _checklists.Rank(project.Scope, move);
-
-                if (!change.Changed)
-                {
-                    Say(change.Report);
-                    return;
-                }
-
-                Rebuild();
-            });
-    }
-
-    /// <summary>Import or export, asked as a chooser (remediation.md 10, item 15).</summary>
-    private void ChooseTransfer()
-    {
-        _prompts.Choose(
-            new ChoiceRequest(
-                "checklist.transfer",
-                "Import/Export",
-                "Import or export",
-                "The whole list, as JSON — every line, what it came from, and the ones you have "
-                + "finished with. For moving to another machine.",
-                [new ChoiceOption("export", "Export to a file"), new ChoiceOption("import", "Import from a file")],
-                "export",
-                ChoiceSurface.Layer),
-            option =>
-            {
-                if (option.Key == "export")
-                {
-                    _ = ExportAsync();
-                }
-                else
-                {
-                    _ = ImportAsync();
-                }
-            });
-    }
-
-    /// <summary>Writes the list out.</summary>
-    private async Task ExportAsync()
-    {
-        var json = _checklists.Export();
-        var suggested = $"d47-checklist-{_now():yyyy-MM-dd}.json";
-
-        try
-        {
-            if (TopLevel.GetTopLevel(this)?.StorageProvider is { CanSave: true } storage)
-            {
-                var file = await storage.SaveFilePickerAsync(new Avalonia.Platform.Storage.FilePickerSaveOptions
-                {
-                    Title = "Export the checklist",
-                    SuggestedFileName = suggested,
-                    DefaultExtension = "json",
-                    FileTypeChoices = [ChecklistFiles],
-                });
-
-                if (file is null)
-                {
-                    return;
-                }
-
-                await using var stream = await file.OpenWriteAsync();
-                await using var writer = new StreamWriter(stream);
-                await writer.WriteAsync(json);
-
-                Say($"Exported to {file.Name}.");
-                return;
-            }
-
-            var path = Path.Combine(
-                Path.GetDirectoryName(_checklists.List.Path) ?? ".",
-                suggested);
-
-            await File.WriteAllTextAsync(path, json);
-            Say($"Exported to {path}.");
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            // Said rather than thrown.
-            Say($"Could not write the file: {ex.Message}");
-        }
-    }
-
-    /// <summary>Reads one back, replacing this Commander's list.</summary>
-    private async Task ImportAsync()
-    {
-        string json;
-        string what;
-
-        try
-        {
-            if (TopLevel.GetTopLevel(this)?.StorageProvider is { CanOpen: true } storage)
-            {
-                var picked = await storage.OpenFilePickerAsync(new Avalonia.Platform.Storage.FilePickerOpenOptions
-                {
-                    Title = "Import a checklist",
-                    AllowMultiple = false,
-                    FileTypeFilter = [ChecklistFiles],
-                });
-
-                if (picked is not [{ } file])
-                {
-                    return;
-                }
-
-                await using var stream = await file.OpenReadAsync();
-                using var reader = new StreamReader(stream);
-
-                json = await reader.ReadToEndAsync();
-                what = file.Name;
-            }
-            else
-            {
-                var path = Path.Combine(
-                    Path.GetDirectoryName(_checklists.List.Path) ?? ".",
-                    "checklist-import.json");
-
-                if (!File.Exists(path))
-                {
-                    Say($"Put the file at {path} and ask again. There is no file picker on this surface.");
-                    return;
-                }
-
-                json = await File.ReadAllTextAsync(path);
-                what = "checklist-import.json";
-            }
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            Say($"Could not read the file: {ex.Message}");
-            return;
-        }
-
-        _prompts.Choose(
-            new ChoiceRequest(
-                "checklist.import.confirm",
-                "Import",
-                "Replace your checklist?",
-                $"Everything on your list would be replaced by what is in {what}. There is no way "
-                + "back from this one.",
-                [new ChoiceOption("keep", "Keep what I have"), new ChoiceOption("replace", "Replace it")],
-                "keep",
-                ChoiceSurface.Layer),
-            option =>
-            {
-                if (option.Key != "replace")
-                {
-                    return;
-                }
-
-                var change = _checklists.Import(json);
-
-                Say(change.Report);
-
-                if (change.Changed)
-                {
-                    // A whole list has been replaced, so whatever was selected is not in it.
-                    _checklists.Select(null);
-                    Rebuild();
-                }
-            });
-    }
-
-    /// <summary>What both pickers filter on.</summary>
-    private static readonly Avalonia.Platform.Storage.FilePickerFileType ChecklistFiles = new("Checklist")
-    {
-        Patterns = ["*.json"],
-    };
 
     /// <summary>The Commander's own line, said or typed.</summary>
     private void AddLine()

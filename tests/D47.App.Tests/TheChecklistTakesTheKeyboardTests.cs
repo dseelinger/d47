@@ -165,18 +165,4 @@ public class TheChecklistTakesTheKeyboardTests
 
         Assert.Empty(checklists.Document.In(ChecklistScope.Universal));
     }
-
-    /// <summary>
-    /// Import and export are one button, because they are the same rare errand in two directions and
-    /// two permanent controls on a working bar is two things to read past every session.
-    /// </summary>
-    [AvaloniaFact]
-    public void TheBarOffersTheTransfer()
-    {
-        var (panel, _) = Page("buy limpets");
-
- // "Import/Export" rather than "Transfer": transfer is what Elite calls
-        // moving a ship between stations, which is not this.
-        Assert.NotNull(Named(panel, "Import/Export"));
-    }
 }
