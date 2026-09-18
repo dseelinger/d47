@@ -75,7 +75,7 @@ nav_order: 137
  <text x="660" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">A NEW SEQUENCE</text>
  <text x="660" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">does not, and never can</text>
  <text x="660" y="134" text-anchor="middle" font-size="15" fill="var(--text-muted)">so you author it instead</text>
- <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">Settings → Macros → Edit macros: a drop-down of actions, one of on/off, and a pause.</text>
+ <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">Settings → Macros → Edit macros: a stepper of actions, on / off / toggle, and a pause.</text>
  <text x="440" y="224" text-anchor="middle" font-size="15" fill="var(--text-muted)">Or the file. Both write the same one, re-read while it runs — a saved macro is sayable a moment later.</text>
 </svg>
 </section>
@@ -157,8 +157,8 @@ Macros are the one thing here you cannot set up by voice, and that is deliberate
 Directive 47 does has a fixed list of words behind it; composing a *new* sequence does not, and it
 never can. So authoring happens in the panel or in the file.
 
-**In the panel:** Settings → Macros → **Edit macros**. Each step is a drop-down of actions, a
-drop-down of on / off / toggle, and a pause in milliseconds. There is nothing to type but the
+**In the panel:** Settings → Macros → **Edit macros**. Each step is a stepper of actions, a
+row of on / off / toggle, and a pause in milliseconds. There is nothing to type but the
 name, so nothing you build there can be rejected.
 
 **In the file:** `data/macros.json`, beside the executable like everything else Directive 47

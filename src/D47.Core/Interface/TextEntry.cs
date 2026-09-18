@@ -47,6 +47,10 @@ public sealed record EntryVerdict(bool Accepted, string? Complaint = null)
 /// Every value the caller would accept, when there are few enough of them to name — the closed list, in
 /// the order it should be read.
 /// </param>
+/// <param name="CommitLabel">
+/// What the button that takes the highlighted suggestion says it will do — "Plan this hull". Read only
+/// with <paramref name="Suggestions"/>.
+/// </param>
 public sealed record EntryRequest(
     string Key,
     string Word,
@@ -55,7 +59,8 @@ public sealed record EntryRequest(
     string Initial,
     EntrySurface Surface,
     Func<string, EntryVerdict>? Validate = null,
-    IReadOnlyList<string>? Suggestions = null);
+    IReadOnlyList<string>? Suggestions = null,
+    string? CommitLabel = null);
 
 /// <summary>What d47 heard, and how sure it was (Phase 25).</summary>
 /// <param name="Text">The transcription.</param>

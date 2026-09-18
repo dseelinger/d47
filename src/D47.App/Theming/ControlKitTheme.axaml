@@ -101,11 +101,61 @@
     </ControlTheme>
 
     <!--
-      Not consumed by any list today — d47 has no ListBox yet. Published so the page issues that
-      add one (#274 onward) draw the same selected row rather than each inventing its own.
+      2 to 4 fixed choices, adjacent in one row (#274). The chosen segment is a solid Accent block
+      with Background-colour ink; the rest are Accent ink on no fill. App-wide rather than scoped
+      to the panel, since a desktop-only window (SwitchWindow, MacroWindow, and the rest) needs the
+      same look and carries no merge of PanelTabs.axaml.
+
+      Built on RadioButton for the mutual exclusion, arrow-key movement and accessibility role that
+      come with it, the same reason D47.Tab is.
+    -->
+    <ControlTheme x:Key="D47.Segment" TargetType="RadioButton">
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="FontFamily" Value="avares://d47/Assets/Fonts/SairaSemiCondensed-Regular.ttf#Saira Semi Condensed" />
+      <Setter Property="FontSize" Value="{StaticResource D47.Type.Body}" />
+      <Setter Property="Foreground" Value="{DynamicResource D47.Accent}" />
+      <Setter Property="Padding" Value="14,6" />
+      <Setter Property="BorderBrush" Value="{DynamicResource D47.Rule}" />
+      <Setter Property="BorderThickness" Value="1" />
+
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border x:Name="Shape"
+                  Background="Transparent"
+                  BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}">
+            <ContentPresenter x:Name="PART_ContentPresenter"
+                              Content="{TemplateBinding Content}"
+                              Padding="{TemplateBinding Padding}"
+                              Foreground="{TemplateBinding Foreground}"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center" />
+          </Border>
+        </ControlTemplate>
+      </Setter>
+
+      <Style Selector="^:pointerover /template/ Border#Shape">
+        <Setter Property="Background" Value="{DynamicResource D47.FillLow}" />
+      </Style>
+
+      <Style Selector="^:checked">
+        <Setter Property="Foreground" Value="{DynamicResource D47.Background}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Style Selector="^ /template/ Border#Shape">
+          <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
+        </Style>
+      </Style>
+    </ControlTheme>
+
+    <!--
+      The highlighted row of a list: a bar at the left edge and a fill. A highlight is not a choice,
+      so nothing here reads as committed (#274). 40 tall, so a ray at a metre lands on it.
     -->
     <ControlTheme x:Key="{x:Type ListBoxItem}" TargetType="ListBoxItem">
       <Setter Property="Padding" Value="10,7" />
+      <Setter Property="MinHeight" Value="40" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+      <Setter Property="Cursor" Value="Hand" />
       <Setter Property="Template">
         <ControlTemplate>
           <Grid ColumnDefinitions="3,*">
@@ -116,6 +166,7 @@
                               ContentTemplate="{TemplateBinding ContentTemplate}"
                               Padding="{TemplateBinding Padding}"
                               Foreground="{TemplateBinding Foreground}"
+                              VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
                               Background="Transparent" />
           </Grid>
         </ControlTemplate>

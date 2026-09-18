@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
@@ -785,88 +786,187 @@ public sealed class PanelPrompts : IHearsText
         }
     }
 
-    /// <summary>One value picked from every value there is (#282).</summary>
+    /// <summary>
+    /// One value picked from a list that stays open (#282): a press or an arrow key moves the highlight,
+    /// and only the commit button, Enter or saying the value takes it (#274).
+    /// </summary>
     private sealed class PickPage : UserControl
     {
         private readonly PanelPrompts _host;
         private readonly EntryRequest _request;
         private readonly Action<string> _done;
 
-        private readonly ComboBox _pick;
+        private readonly IReadOnlyList<string> _suggestions;
+        private readonly TextBox _filter;
+        private readonly ListBox _list;
+        private readonly TextBlock _empty;
+        private readonly Button _commit;
         private readonly TextBlock _state;
-
-        /// <summary>Whether the selection is being set rather than made.</summary>
-        private bool _settling;
 
         public PickPage(PanelPrompts host, EntryRequest request, Action<string> done)
         {
             _host = host;
             _request = request;
             _done = done;
+            _suggestions = request.Suggestions!;
 
-            _pick = new ComboBox
+            _filter = new TextBox
             {
-                ItemsSource = request.Suggestions,
-                PlaceholderText = "Pick one, or say it",
+                PlaceholderText = "Type to narrow",
                 FontSize = TypeScale.Body,
-                HorizontalAlignment = HorizontalAlignment.Left,
+                Padding = new Thickness(10, 8),
+                Margin = new Thickness(0, 0, 0, 8),
+            };
 
-                // A floor, and a generous one.
+            AutomationProperties.SetName(_filter, "Filter");
+
+            _list = new ListBox
+            {
+                ItemsSource = _suggestions,
+                SelectionMode = SelectionMode.Single,
+                FontSize = TypeScale.Body,
                 MinWidth = 300,
+
+                // Not virtualized: the VR surface lays out a window that is never shown, so a virtualizing
+                // panel is never told its viewport and realizes no rows there.
+                ItemsPanel = new Avalonia.Controls.Templates.FuncTemplate<Avalonia.Controls.Panel?>(() => new StackPanel()),
+
+                // Opens on what was already said or typed, and on nothing otherwise.
+                SelectedItem = _suggestions.FirstOrDefault(value =>
+                    string.Equals(value, request.Initial, StringComparison.OrdinalIgnoreCase)),
             };
 
-            _settling = true;
+            AutomationProperties.SetName(_list, request.Word);
 
-            if (request.Initial is { Length: > 0 } initial
-                && request.Suggestions!.FirstOrDefault(value =>
-                    string.Equals(value, initial, StringComparison.OrdinalIgnoreCase)) is { } already)
+            _empty = Muted("Nothing matches that. Clear the filter, or say it.");
+            _empty.IsVisible = false;
+            _empty.Margin = new Thickness(12, 6);
+
+            _commit = new Button
             {
-                _pick.SelectedItem = already;
-            }
-
-            _settling = false;
-
-            _pick.SelectionChanged += (_, _) =>
-            {
-                if (!_settling && _pick.SelectedItem is string picked)
-                {
-                    Commit(picked);
-                }
-            };
-
-            _state = new TextBlock
-            {
-                Text = string.Empty,
-                FontSize = TypeScale.Secondary,
-                TextWrapping = TextWrapping.Wrap,
-                VerticalAlignment = VerticalAlignment.Center,
+                Content = request.CommitLabel ?? "Use this",
+                MinHeight = 40,
+                Padding = new Thickness(18, 0),
+                VerticalContentAlignment = VerticalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Bottom,
                 Margin = new Thickness(14, 0, 0, 0),
             };
 
-            _state.Bind(
-                TextBlock.ForegroundProperty,
-                App.Current!.GetResourceObservable(ThemeManager.TextMutedKey));
+            _commit.Classes.Add("primary");
+            _commit.Click += (_, _) => CommitHighlighted();
 
-            var row = new StackPanel
+            _state = Muted(string.Empty);
+
+            _list.SelectionChanged += (_, _) => Sync();
+            _list.KeyDown += (_, e) =>
             {
-                Orientation = Orientation.Horizontal,
-                VerticalAlignment = VerticalAlignment.Top,
-                Children = { _pick, _state },
+                if (e.Key == Avalonia.Input.Key.Enter)
+                {
+                    CommitHighlighted();
+                    e.Handled = true;
+                }
             };
+
+            _filter.TextChanged += (_, _) => Narrow();
+            _filter.KeyDown += (_, e) =>
+            {
+                switch (e.Key)
+                {
+                    case Avalonia.Input.Key.Enter:
+                        CommitHighlighted();
+                        e.Handled = true;
+                        break;
+
+                    case Avalonia.Input.Key.Down when _list.ItemCount > 0:
+                        _list.SelectedIndex = Math.Max(_list.SelectedIndex, 0);
+                        _list.ContainerFromIndex(_list.SelectedIndex)?.Focus();
+                        e.Handled = true;
+                        break;
+                }
+            };
+
+            var footer = new DockPanel { Margin = new Thickness(0, 10, 0, 0) };
+
+            DockPanel.SetDock(_commit, Dock.Right);
+
+            footer.Children.Add(_commit);
+            footer.Children.Add(new StackPanel
+            {
+                Spacing = 2,
+                VerticalAlignment = VerticalAlignment.Center,
+                Children = { Muted("Moving the highlight changes nothing."), _state },
+            });
+
+            var body = new DockPanel { LastChildFill = true };
+
+            DockPanel.SetDock(_filter, Dock.Top);
+            DockPanel.SetDock(footer, Dock.Bottom);
+
+            body.Children.Add(_filter);
+            body.Children.Add(footer);
+            body.Children.Add(new Avalonia.Controls.Panel { Children = { _list, _empty } });
 
             Content = Frame(
                 request.Title,
                 request.Context,
-                row,
+                body,
                 () => _host.Dismiss(request.Key, ChoiceSurface.Page));
 
             _host.Attend(OnHeard);
+            Sync();
 
             // Focused once it is in a tree, and posted for the reason the searchable chooser's box already
             // is: focusing during the attach event runs before the page under it has finished building, and
             // whatever settles focus last wins.
             AttachedToVisualTree += (_, _) =>
-                Dispatcher.UIThread.Post(() => _pick.Focus(), DispatcherPriority.Input);
+                Dispatcher.UIThread.Post(() => _filter.Focus(), DispatcherPriority.Input);
+        }
+
+        private static TextBlock Muted(string text)
+        {
+            var block = new TextBlock
+            {
+                Text = text,
+                FontSize = TypeScale.Secondary,
+                TextWrapping = TextWrapping.Wrap,
+            };
+
+            block.Bind(
+                TextBlock.ForegroundProperty,
+                App.Current!.GetResourceObservable(ThemeManager.TextMutedKey));
+
+            return block;
+        }
+
+        /// <summary>Shows only the suggestions holding the filter's text, keeping the highlight where it is still shown.</summary>
+        private void Narrow()
+        {
+            var query = _filter.Text?.Trim() ?? string.Empty;
+            var kept = _list.SelectedItem as string;
+
+            var shown = query.Length == 0
+                ? _suggestions
+                : _suggestions.Where(value => value.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            _list.ItemsSource = shown;
+
+            // When one suggestion is left, Enter takes it.
+            _list.SelectedItem = kept is not null && shown.Contains(kept)
+                ? kept
+                : shown.Count == 1 ? shown[0] : null;
+
+            _empty.IsVisible = shown.Count == 0;
+            Sync();
+        }
+
+        private void Sync() => _commit.IsEnabled = _list.SelectedItem is string;
+
+        private void CommitHighlighted()
+        {
+            if (_list.SelectedItem is string picked)
+            {
+                Commit(picked);
+            }
         }
 
         private void OnHeard(Heard heard)

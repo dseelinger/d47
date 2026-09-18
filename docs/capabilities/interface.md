@@ -552,9 +552,9 @@ keyboard you never have to use.
 
 ### The transcript {#transcript}
 
-The transcript tab has four **readings**, three of them on a drop-down at the right of the tab
+The transcript tab has four **readings**, three of them on a stepper at the right of the tab
 bar and the fourth on a switch beside it. They are readings of one session rather than four
-destinations, which is why they are a drop-down and not four tabs of their own.
+destinations, which is why they are a stepper and not four tabs of their own.
 
 **In Ship** is you and the ship's AI, and nothing else. It is what a fresh installation opens on,
 and what you come back to unless you left the tab on another reading — see *the panel* above.
@@ -576,12 +576,12 @@ nobody is looking at is not worth a file read per tick, and one you *are* lookin
 because something already went wrong. Switch away and back to re-read it.
 
 **Journal File** is Elite's own journal read as sentences, with the chosen line's fields beside
-the list; **Raw**, the switch next to the drop-down, is the same events as the JSON the game
+the list; **Raw**, the switch next to the stepper, is the same events as the JSON the game
 wrote. Both are newest-first, which is the file's own order and the opposite of the two above.
 
 One asymmetry is kept rather than smoothed over: In Ship is held in memory and the other three
 are **read off disk** — which is why the log carries a working indicator, and why this is a
-drop-down rather than a single toggle.
+stepper rather than a single toggle.
 
 Which mode you are on belongs to the surface you are looking at, not to the transcript. The
 desktop window can sit on the log while the headset panel shows the conversation — same

@@ -2134,7 +2134,7 @@ public partial class PanelView : UserControl
         DrawTranscript();
     }
 
-    /// <summary>The segmented control, rebuilt from the current tab's roots.</summary>
+    /// <summary>The mode stepper, rebuilt from the current tab's roots.</summary>
     private void DrawModes()
     {
         // Raw Journal is a root the navigator knows and the picker does not list (#231).
@@ -2161,7 +2161,7 @@ public partial class PanelView : UserControl
         // Rebuilt only when the readings themselves changed, not on every navigation.
         var words = roots.Select(root => root.Word).ToList();
 
-        if (ModeBox.ItemsSource is not IReadOnlyList<string> shown || !shown.SequenceEqual(words))
+        if (!ModeBox.ItemsSource.SequenceEqual(words))
         {
             _settingMode = true;
 
@@ -2195,13 +2195,13 @@ public partial class PanelView : UserControl
 
     /// <summary>
     /// Gives the picker room for its widest reading rather than for the one that happens to be showing
-    /// (#273).
+    /// (#273, #274).
     /// </summary>
     private void WidenModeBoxToItsWidestReading()
     {
-        if (ModeBox.ItemsSource is not IReadOnlyList<string> words
-            || words.Count == 0
-            || ModeBox.SelectedItem is not string showing)
+        var words = ModeBox.ItemsSource;
+
+        if (words.Count == 0 || ModeBox.SelectedItem is not { } showing)
         {
             return;
         }
@@ -2281,13 +2281,13 @@ public partial class PanelView : UserControl
     private bool _settingMode;
 
     /// <summary>
-    /// What the mode box costs beyond the word it is showing — its padding, its border and the column
-    /// its chevron sits in.
+    /// What the mode box costs beyond the word it is showing — its padding, its border and the two
+    /// arrows either side of the value.
     /// </summary>
     private double? _modeBoxChrome;
 
-    /// <summary>The Commander picked a reading from the drop-down.</summary>
-    private void OnModeChanged(object? sender, SelectionChangedEventArgs e)
+    /// <summary>The Commander stepped to a reading.</summary>
+    private void OnModeChanged(object? sender, EventArgs e)
     {
         if (_settingMode)
         {

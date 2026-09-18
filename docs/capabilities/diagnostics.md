@@ -21,8 +21,8 @@ nav_order: 101
 <div class="d47-howto"><div class="d47-frame">
 <p class="intro">Two steps to the page that still answers when nothing else does.</p>
 <section>
-<h2><span class="num">1</span> On the Transcript page, pick Log File from the drop-down.</h2>
-<svg viewBox="0 0 880 246" role="img" aria-label="The Transcript readings drop-down with Log File chosen, and the log below it">
+<h2><span class="num">1</span> On the Transcript page, step the readings to Log File.</h2>
+<svg viewBox="0 0 880 246" role="img" aria-label="The Transcript readings stepper showing Log File, and the log below it">
  <rect x="20" y="16" width="840" height="210" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <rect x="20" y="16" width="840" height="46" rx="8" fill="var(--surface)"/>
  <rect x="32" y="24" width="176" height="30" rx="6" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2"/>

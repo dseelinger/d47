@@ -53,7 +53,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     private StackPanel? _areaHeader;
 
     /// <summary>The area picker shown once the nav has collapsed (#220).</summary>
-    private ComboBox? _areaDropdown;
+    private Stepper? _areaDropdown;
 
     /// <summary>True while <see cref="SelectArea"/> is writing <see cref="_areaDropdown"/>, so its own
     /// selection change does not loop back into another select.</summary>
@@ -996,9 +996,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     }
 
     /// <summary>The area picker shown once the nav has collapsed (#220).</summary>
-    private ComboBox BuildAreaDropdown()
+    private Stepper BuildAreaDropdown()
     {
-        var combo = new ComboBox
+        var combo = new Stepper
         {
             Name = "AreaDropdown",
             HorizontalAlignment = HorizontalAlignment.Stretch,
@@ -1006,6 +1006,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             IsVisible = false,
         };
         DressAsAChoice(combo);
+        AutomationProperties.SetName(combo, "Area");
 
         combo.SelectionChanged += (_, _) =>
         {
@@ -2643,13 +2644,15 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             case SettingKind.Toggle:
                 return BuildToggle(row, message);
 
-            case SettingKind.Choice when row.AllowsFreeText || row.IsOpenVocabulary:
-                // Long or open vocabulary: the searchable picker, which stays usable when the list is empty
-                // because the value can be typed (Phase 4).
+            case SettingKind.Choice when row.AllowsFreeText:
+                // Free text: the searchable picker, which stays usable when the list is empty because the
+                // value can be typed (Phase 4).
                 return BuildPickerButton(row, message);
 
             case SettingKind.Choice:
-                return BuildComboBox(row, message);
+                // Segment or stepper, by option count — always a stepper when the list comes from
+                // ChoiceSource, since a run-time list can grow past a segment row's four (#274).
+                return BuildChoice(row, message);
 
             case SettingKind.Number:
                 return BuildNumber(row, message);
@@ -3249,17 +3252,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         return (toggle, () => toggle.IsChecked = _settings!.Read(row.Key) is "true", true);
     }
 
-    private (Control, Action, bool) BuildComboBox(SettingRow row, TextBlock message)
+    private (Control, Action, bool) BuildChoice(SettingRow row, TextBlock message)
     {
-        var combo = new ComboBox { MinWidth = StandardControlWidth, HorizontalAlignment = HorizontalAlignment.Right };
-        DressAsAChoice(combo);
-
-        // The closed box shows what fits in a fifth of the row, and some of these labels carry the part that
-        // matters on the end of them: a speech model not on disk reads as "Small (English only) - more accu",
-        // which is indistinguishable from one already installed.
-        combo.SelectionChanged += (_, _) =>
-            ToolTip.SetTip(combo, combo.SelectedItem as string);
-
         // Through ChoicesFor, not the bare list.
         var choices = row.ChoicesFor(_settings!.Current);
 
@@ -3276,7 +3270,20 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         // the others beside it — the model rows mark the cheapest of what is offered — and that is a property
         // of the list, not of the line (#152).
         items.AddRange(choices.Select(row.DescriberFor(_settings!.Current)));
-        combo.ItemsSource = items;
+
+        // A row whose list comes from ChoiceSource can grow past a segment row's four between one Refresh
+        // and the next, so it is always a stepper (#274).
+        var (view, combo) = Choice.Build(items, selectedIndex: -1, alwaysStepper: row.ChoiceSource is not null);
+
+        view.HorizontalAlignment = HorizontalAlignment.Right;
+        view.MinWidth = StandardControlWidth;
+        DressAsAChoice(view);
+        AutomationProperties.SetName(view, row.Label);
+
+        // What fits in a fifth of the row, and some of these labels carry the part that matters on the
+        // end of them: a speech model not on disk reads as "Small (English only) - more accu", which is
+        // indistinguishable from one already installed.
+        combo.SelectionChanged += (_, _) => ToolTip.SetTip(view, combo.SelectedItem);
 
         var offset = clearable ? 1 : 0;
 
@@ -3293,6 +3300,57 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Margin = new Thickness(0, 6, 0, 0),
         };
 
+        // A row whose change costs something stages the pressed choice, and only this button applies it,
+        // so stepping past a value never fetches it (#274).
+        var confirm = new Button
+        {
+            IsVisible = false,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            MinHeight = 36,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(0, 6, 0, 0),
+        };
+
+        confirm.Classes.Add("primary");
+
+        var stagedNote = new TextBlock
+        {
+            Text = "Staged. What is in use keeps running until you press this.",
+            FontSize = TypeScale.Small,
+            TextWrapping = TextWrapping.Wrap,
+            TextAlignment = TextAlignment.Right,
+            IsVisible = false,
+            Margin = new Thickness(0, 6, 0, 0),
+        };
+
+        Themed(stagedNote, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+
+        string? staged = null;
+
+        void Unstage()
+        {
+            confirm.IsVisible = false;
+            stagedNote.IsVisible = false;
+        }
+
+        void Take(string? chosen)
+        {
+            // One handler with a branch rather than two handlers.
+            if (downloads)
+            {
+                _ = FetchModelAsync(row, chosen, view, combo, bar, message);
+                return;
+            }
+
+            Apply(row, chosen, message);
+        }
+
+        confirm.Click += (_, _) =>
+        {
+            Unstage();
+            Take(staged);
+        };
+
         combo.SelectionChanged += (_, _) =>
         {
             if (_refreshing || combo.SelectedIndex < 0)
@@ -3304,22 +3362,33 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 ? null
                 : choices[combo.SelectedIndex - offset];
 
-            // One handler with a branch rather than two handlers.
-            if (downloads)
+            if (row.ConfirmLabel is not { } confirmLabel)
             {
-                _ = FetchModelAsync(row, chosen, combo, bar, message);
+                Take(chosen);
                 return;
             }
 
-            Apply(row, chosen, message);
+            // Stepping back to what is in use has nothing left to apply.
+            if (string.Equals(chosen, _settings!.Read(row.Key), StringComparison.OrdinalIgnoreCase))
+            {
+                Unstage();
+                return;
+            }
+
+            staged = chosen;
+            confirm.Content = chosen is null ? "Use the default" : confirmLabel(chosen);
+            confirm.IsVisible = true;
+            stagedNote.IsVisible = true;
         };
 
-        Control control = downloads
-            ? new StackPanel { Children = { combo, bar } }
-            : combo;
+        Control control = downloads || row.ConfirmLabel is not null
+            ? new StackPanel { Children = { view, stagedNote, confirm, bar } }
+            : view;
 
         return (control, () =>
         {
+            Unstage();
+
             var value = _settings!.Read(row.Key);
             var found = value is null
                 ? -1
@@ -3333,7 +3402,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             // The column is bounded, so a label written as a sentence - the speech models state their size
             // and speed - is clipped at the closed control.
             ToolTip.SetTip(
-                combo,
+                view,
                 combo.SelectedIndex >= 0 && combo.SelectedIndex < items.Count
                     ? items[combo.SelectedIndex]
                     : null);
@@ -3344,7 +3413,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     private async Task FetchModelAsync(
         SettingRow row,
         string? chosen,
-        ComboBox combo,
+        TemplatedControl view,
+        IChoiceControl combo,
         ProgressBar bar,
         TextBlock message)
     {
@@ -3356,7 +3426,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         // A row that carries its own fetch (#139).
         if (row.FetchChoiceAsync is { } fetch)
         {
-            await FetchChoiceAsync(row, chosen, combo, bar, message, fetch);
+            await FetchChoiceAsync(row, chosen, view, combo, bar, message, fetch);
             return;
         }
 
@@ -3372,7 +3442,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         _downloadingModel = true;
 
         // Shut while it runs.
-        combo.IsEnabled = false;
+        view.IsEnabled = false;
 
         bar.Value = 0;
         bar.IsVisible = true;
@@ -3408,7 +3478,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         finally
         {
             _downloadingModel = false;
-            combo.IsEnabled = true;
+            view.IsEnabled = true;
             bar.IsVisible = false;
         }
     }
@@ -3417,13 +3487,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     private async Task FetchChoiceAsync(
         SettingRow row,
         string? chosen,
-        ComboBox combo,
+        TemplatedControl view,
+        IChoiceControl combo,
         ProgressBar bar,
         TextBlock message,
         Func<string?, IProgress<double>, CancellationToken, Task<string?>> fetch)
     {
         _downloadingModel = true;
-        combo.IsEnabled = false;
+        view.IsEnabled = false;
 
         bar.Value = 0;
         bar.IsVisible = true;
@@ -3457,7 +3528,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         finally
         {
             _downloadingModel = false;
-            combo.IsEnabled = true;
+            view.IsEnabled = true;
             bar.IsVisible = false;
         }
     }

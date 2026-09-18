@@ -58,9 +58,9 @@
                    VerticalAlignment="Center"
                    FontSize="{StaticResource D47.Type.Secondary}"
                    Foreground="{DynamicResource D47.TextMuted}" />
-        <ComboBox x:Name="FacetBox"
-                  MinWidth="150"
-                  SelectionChanged="OnFacetChanged" />
+        <controls:Segment x:Name="FacetBox"
+                           VerticalAlignment="Center"
+                           SelectionChanged="OnFacetChanged" />
       </StackPanel>
 
       <!-- The fail-soft contract, stated rather than implied: with nothing to offer, the box

@@ -23,24 +23,19 @@ public class TheVrPanelIsClickableTests
     private static Control Tab(PanelView view, string name) =>
         view.GetVisualDescendants().OfType<RadioButton>().First(tab => (tab.Content as string) == name);
 
-    /// <summary>The control carrying a word, whatever kind of control it is.</summary>
-    private static Control Saying(PanelView view, string word) =>
- // From the visual root rather than from the panel.
-        (view.GetVisualAncestors().OfType<Visual>().LastOrDefault() ?? view)
-            .GetVisualDescendants()
-            .OfType<Control>()
-            .Last(control => control is Button or RadioButton
-                             && control.GetVisualDescendants()
-                                 .OfType<TextBlock>()
-                                 .Any(text => text.Text == word));
-
     /// <summary>
-    /// Opens the readings of this page the way a ray does: a press on the control that offers them.
+    /// Steps the mode stepper the way a ray does: a press on the arrow named <paramref name="name"/>
+    /// ("Next" or "Previous").
     /// </summary>
-    private static void OpenModes(PanelView view, OffscreenSurface surface)
+    private static void PressModeArrow(PanelView view, OffscreenSurface surface, string name)
     {
         surface.Render();
-        Assert.True(surface.Click(Centre(view, view.GetControl<ComboBox>("ModeBox"))), "the press landed on something");
+
+        var arrow = view.GetVisualDescendants()
+            .OfType<Button>()
+            .First(button => Avalonia.Automation.AutomationProperties.GetName(button) == name);
+
+        Assert.True(surface.Click(Centre(view, arrow)), "the press landed on something");
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
         surface.Render();
     }
@@ -56,17 +51,11 @@ public class TheVrPanelIsClickableTests
 
         Assert.Equal(TranscriptPage.Conversation, view.Page);
 
-        OpenModes(view, surface);
-
-        Assert.True(surface.Click(Centre(view, Saying(view, "Log File"))), "the press landed on something");
-        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        PressModeArrow(view, surface, "Next");
 
         Assert.Equal(TranscriptPage.Log, view.Page);
 
-        OpenModes(view, surface);
-
-        surface.Click(Centre(view, Saying(view, "In Ship")));
-        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        PressModeArrow(view, surface, "Previous");
 
         Assert.Equal(TranscriptPage.Conversation, view.Page);
     }
@@ -88,10 +77,7 @@ public class TheVrPanelIsClickableTests
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
         var before = Frame(surface);
 
-        OpenModes(view, surface);
-
-        surface.Click(Centre(view, Saying(view, "Log File")));
-        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        PressModeArrow(view, surface, "Next");
 
         Assert.NotEqual(before, Frame(surface));
     }
@@ -183,82 +169,93 @@ public class PressingAControlThatOpensSomethingTests
 {
     private static readonly PixelSize Quad = new(1024, 640);
 
-    private static (Window Window, OffscreenSurface Surface, ComboBox Combo) WithACombo()
+    private static (OffscreenSurface Surface, D47.App.Controls.Stepper Stepper) WithAStepper()
     {
-        var combo = new ComboBox
+        var stepper = new D47.App.Controls.Stepper
         {
-            ItemsSource = new[] { "full", "mini", "off" },
+            ItemsSource = ["full", "mini", "off"],
             SelectedIndex = 0,
             Width = 200,
             Height = 32,
         };
 
-        var host = new Border { Child = combo, Width = Quad.Width, Height = Quad.Height };
+        var host = new Border { Child = stepper, Width = Quad.Width, Height = Quad.Height };
         var surface = new OffscreenSurface(host, Quad);
 
         surface.Render();
 
-        return (null!, surface, combo);
+        return (surface, stepper);
     }
 
+    /// <summary>
+    /// A stepper press changes the value directly and draws nothing over the panel (#274).
+    /// </summary>
     [AvaloniaFact]
-    public void PressingAComboBoxOffersItsListOnThePanel()
+    public void PressingAStepperArrowChangesItDirectly()
     {
-        var (_, surface, combo) = WithACombo();
+        var (surface, stepper) = WithAStepper();
         using var _surface = surface;
 
-        var at = combo.TranslatePoint(new Point(combo.Bounds.Width / 2, combo.Bounds.Height / 2), surface.View);
+        var next = surface.Root.GetVisualDescendants()
+            .OfType<Button>()
+            .First(button => Avalonia.Automation.AutomationProperties.GetName(button) == "Next");
+
+        var at = next.TranslatePoint(new Point(next.Bounds.Width / 2, next.Bounds.Height / 2), surface.View);
         Assert.NotNull(at);
 
-        Assert.True(surface.Click(at.Value), "the press landed on the box");
+        Assert.True(surface.Click(at.Value), "the press landed on the arrow");
 
-        Assert.True(surface.IsChoosing, "the list is on the panel");
-        Assert.False(combo.IsDropDownOpen, "and the control's own popup was never opened");
-
-        surface.Render();
-
-        // The rows are real controls in the real tree, which is what lets the same ray press them.
-        var rows = surface.Root.GetVisualDescendants()
-            .OfType<Button>()
-            .Where(button => button.Content is "full" or "mini" or "off")
-            .ToList();
-
-        Assert.Equal(3, rows.Count);
-
-        var row = rows[1];
-        var onRow = row.TranslatePoint(new Point(row.Bounds.Width / 2, row.Bounds.Height / 2), surface.View);
-        Assert.NotNull(onRow);
-
-        Assert.True(surface.Click(onRow.Value), "the press landed on a row");
-
-        Assert.Equal(1, combo.SelectedIndex);
-        Assert.False(surface.IsChoosing, "and it put itself away");
+        Assert.Equal(1, stepper.SelectedIndex);
+        Assert.False(surface.IsChoosing, "no overlay is drawn for a stepper press");
     }
 
-    /// <summary>Cancel closes it and changes nothing, which is the other half of a chooser.</summary>
+    /// <summary>
+    /// On the VR surface a pick page draws its rows, a ray on one only highlights it, and the commit
+    /// button is what answers (#274).
+    /// </summary>
     [AvaloniaFact]
-    public void TheChooserCanBeLeftWithoutChoosing()
+    public void APickPageInTheHeadsetHighlightsOnARayAndCommitsOnItsButton()
     {
-        var (_, surface, combo) = WithACombo();
-        using var _surface = surface;
+        var panel = new PanelView { DataContext = new PanelViewModel() };
+        using var surface = new OffscreenSurface(panel, Quad);
 
-        var at = combo.TranslatePoint(new Point(combo.Bounds.Width / 2, combo.Bounds.Height / 2), surface.View);
-        Assert.NotNull(at);
+        string? answered = null;
 
-        surface.Click(at.Value);
+        panel.Prompts.Enter(
+            new D47.Core.Interface.EntryRequest(
+                "test.pick",
+                "Ship",
+                "Which ship?",
+                null,
+                string.Empty,
+                D47.Core.Interface.EntrySurface.Voice,
+                Suggestions: ["Adder", "Anaconda", "Asp Explorer"],
+                CommitLabel: "Plan this hull"),
+            value => answered = value);
+
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
         surface.Render();
 
-        var cancel = surface.Root.GetVisualDescendants()
-            .OfType<Button>()
-            .First(button => button.Content is "Cancel");
+        var row = surface.Root.GetVisualDescendants().OfType<ListBoxItem>().Single(item => (item.Content as string) == "Anaconda");
 
-        var onCancel = cancel.TranslatePoint(new Point(cancel.Bounds.Width / 2, cancel.Bounds.Height / 2), surface.View);
-        Assert.NotNull(onCancel);
+        Assert.True(surface.Click(Centre(row, surface)), "the press landed on the row");
+        surface.Render();
 
-        surface.Click(onCancel.Value);
+        Assert.True(row.IsSelected);
+        Assert.Null(answered);
 
-        Assert.False(surface.IsChoosing);
-        Assert.Equal(0, combo.SelectedIndex);
+        var commit = surface.Root.GetVisualDescendants().OfType<Button>().Single(button => (button.Content as string) == "Plan this hull");
+
+        Assert.True(surface.Click(Centre(commit, surface)), "the press landed on the commit button");
+
+        Assert.Equal("Anaconda", answered);
+    }
+
+    private static Point Centre(Control control, OffscreenSurface surface)
+    {
+        var at = control.TranslatePoint(new Point(control.Bounds.Width / 2, control.Bounds.Height / 2), surface.View);
+        Assert.NotNull(at);
+        return at.Value;
     }
 
     /// <summary>

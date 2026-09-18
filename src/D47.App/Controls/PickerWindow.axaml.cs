@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -230,6 +231,7 @@ public partial class PickerWindow : Window
         {
             FacetLabel.Text = facet.Label;
             FacetBox.ItemsSource = facet.Options.Select(option => option.Label).ToArray();
+            AutomationProperties.SetName(FacetBox, facet.Label);
 
             // The first option is the one that hides nothing, which is where a picker has to open: a list
             // that arrives pre-narrowed looks like a list with things missing.
@@ -324,8 +326,8 @@ public partial class PickerWindow : Window
             ? _request.WhyEmpty
               ?? "There is nothing to offer here — D47 does not know this endpoint's vocabulary. Type the value you want, or keep the current one."
             : facet is not null && filter.Length == 0
-                ? $"No {FacetBox.SelectionBoxItem} choices here. Choose {_request.Facet!.Options[0].Label} to see everything."
-                : $"Nothing matches \"{filter}\"{(facet is null ? string.Empty : $" under {FacetBox.SelectionBoxItem}")}. {(_request.AllowsFreeText ? "Use it anyway, or clear the box to see everything." : "Clear the box to see everything.")}";
+                ? $"No {FacetBox.SelectedItem} choices here. Choose {_request.Facet!.Options[0].Label} to see everything."
+                : $"Nothing matches \"{filter}\"{(facet is null ? string.Empty : $" under {FacetBox.SelectedItem}")}. {(_request.AllowsFreeText ? "Use it anyway, or clear the box to see everything." : "Clear the box to see everything.")}";
 
         ShowWhetherAnythingCanBeTaken();
     }
@@ -362,7 +364,7 @@ public partial class PickerWindow : Window
     }
 
     /// <summary>Choosing a facet re-filters and puts the highlight back on something visible.</summary>
-    private void OnFacetChanged(object? sender, SelectionChangedEventArgs e)
+    private void OnFacetChanged(object? sender, EventArgs e)
     {
         ApplyFilter();
         HighlightSomethingVisible();

@@ -451,27 +451,26 @@ public sealed class SwitchWindow : Window
             FontSize = TypeScale.Body,
         };
 
-        var action = new ComboBox
-        {
-            ItemsSource = Assignable,
-            SelectedItem = position.Action.Length == 0 ? Assignable[0] : position.Action,
-            Width = 200,
-        };
+        var actionIndex = position.Action.Length == 0 ? 0 : Array.IndexOf(Assignable, position.Action);
+        var (actionView, action) = Choice.Build(Assignable, actionIndex < 0 ? 0 : actionIndex);
+        actionView.Width = 200;
 
-        var state = new ComboBox { ItemsSource = States, SelectedItem = position.State, Width = 90 };
+        var (stateView, state) = Choice.Build(States, Array.IndexOf(States, position.State));
+        stateView.Width = 90;
 
         // Or a page of D47's own panel (Phase 46).
         var pageIndex = Math.Max(0, _pageKeys.IndexOf(position.Destination));
-        var page = new ComboBox { ItemsSource = _pageWords, SelectedIndex = pageIndex, Width = 200 };
+        var (pageView, page) = Choice.Build(_pageWords, pageIndex);
+        pageView.Width = 200;
 
         // A position that means nothing has no state to mean, and offering one would suggest it does.
-        state.IsEnabled = position.Action.Length > 0;
+        stateView.IsEnabled = position.Action.Length > 0;
 
         action.SelectionChanged += (_, _) =>
         {
-            var chosen = action.SelectedItem as string ?? Assignable[0];
+            var chosen = action.SelectedItem ?? Assignable[0];
             position.Action = chosen == Assignable[0] ? string.Empty : chosen;
-            state.IsEnabled = position.Action.Length > 0;
+            stateView.IsEnabled = position.Action.Length > 0;
 
             if (position.Action.Length > 0)
             {
@@ -487,18 +486,18 @@ public sealed class SwitchWindow : Window
             if (position.Destination.Length > 0)
             {
                 position.Action = string.Empty;
-                action.SelectedItem = Assignable[0];
-                state.IsEnabled = false;
+                action.SelectedIndex = 0;
+                stateView.IsEnabled = false;
             }
         };
 
-        state.SelectionChanged += (_, _) => position.State = state.SelectedItem as string ?? position.State;
+        state.SelectionChanged += (_, _) => position.State = state.SelectedItem ?? position.State;
 
         return new StackPanel
         {
             Orientation = Orientation.Horizontal,
             Spacing = 6,
-            Children = { label, action, state, page },
+            Children = { label, actionView, stateView, pageView },
         };
     }
 

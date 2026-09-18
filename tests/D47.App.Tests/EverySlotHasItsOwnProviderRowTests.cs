@@ -99,9 +99,9 @@ public class EverySlotHasItsOwnProviderRowTests
 
         Assert.NotNull(control);
 
-        if (control is ComboBox { SelectedItem: { } selected })
+        if (control is D47.App.Controls.IChoiceControl { SelectedItem: { } selected })
         {
-            return selected.ToString() ?? string.Empty;
+            return selected;
         }
 
         return string.Join(

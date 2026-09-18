@@ -24,13 +24,13 @@ public sealed class TheReadingsAreNamedForTheCommanderTests
         return (panel, window);
     }
 
-    /// <summary>The three readings, as the drop-down offers them.</summary>
+    /// <summary>The three readings, as the stepper offers them.</summary>
     [AvaloniaFact]
     public void ThePickerReadsInShipLogFileAndJournalFile()
     {
         var (panel, window) = Shown();
 
-        var offered = panel.GetControl<ComboBox>("ModeBox").ItemsSource as IReadOnlyList<string> ?? [];
+        var offered = panel.GetControl<D47.App.Controls.Stepper>("ModeBox").ItemsSource;
 
         Assert.Equal(["In Ship", "Log File", "Journal File"], offered);
 

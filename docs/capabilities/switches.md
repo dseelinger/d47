@@ -89,7 +89,7 @@ nav_order: 138
  <text x="502" y="239" font-size="15" fill="var(--text-muted)">(nothing)</text>
  <text x="702" y="239" text-anchor="end" font-size="13" fill="var(--text-muted)">▾</text>
  <text x="44" y="286" font-size="15" fill="var(--text-muted)">The state is greyed out until an action is chosen. Leave the middle of a three-position switch as (nothing).</text>
- <text x="44" y="312" font-size="15" fill="var(--text-muted)">The fourth dropdown sends that position to a page of Directive 47's own panel instead.</text>
+ <text x="44" y="312" font-size="15" fill="var(--text-muted)">The fourth control sends that position to a page of Directive 47's own panel instead.</text>
 </svg>
 </section>
 <section>

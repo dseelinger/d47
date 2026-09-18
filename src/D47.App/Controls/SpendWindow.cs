@@ -338,18 +338,17 @@ public sealed class SpendWindow : Window
             _provider = chosen = picks[0];
         }
 
-        var combo = new ComboBox
-        {
-            Name = "SpendProviderPicker",
-            ItemsSource = picks.Select(pick => pick.Label).ToList(),
-            SelectedItem = chosen.Label,
-            HorizontalAlignment = HorizontalAlignment.Left,
-            MinWidth = 220,
-        };
+        var labels = picks.Select(pick => pick.Label).ToList();
+
+        // Every provider ever charged, which only grows — always a stepper (#274).
+        var (comboView, combo) = Choice.Build(labels, labels.IndexOf(chosen.Label), alwaysStepper: true);
+        comboView.Name = "SpendProviderPicker";
+        comboView.HorizontalAlignment = HorizontalAlignment.Left;
+        comboView.MinWidth = 220;
 
         combo.SelectionChanged += (_, _) =>
         {
-            if (combo.SelectedItem is string label
+            if (combo.SelectedItem is { } label
                 && picks.FirstOrDefault(pick => pick.Label == label) is { } picked)
             {
                 _provider = picked;
@@ -357,7 +356,7 @@ public sealed class SpendWindow : Window
             }
         };
 
-        stack.Children.Add(combo);
+        stack.Children.Add(comboView);
 
         foreach (var period in _ledger.Windows(_zone))
         {

@@ -15,7 +15,7 @@ namespace D47.App.Controls;
 public sealed class LogbookWindow : Window
 {
     private readonly LogbookBook _book;
-    private readonly ComboBox _span;
+    private readonly Segment _span;
     private readonly DatePicker _from;
     private readonly DatePicker _to;
     private readonly StackPanel _exact;
@@ -44,10 +44,10 @@ public sealed class LogbookWindow : Window
 
         Themed(this, BackgroundProperty, ThemeManager.BackgroundKey);
 
-        _span = new ComboBox
+        _span = new Segment
         {
             Name = "LogSpan",
-            ItemsSource = LogRanges.Ids.Select(LogRanges.LabelOf).ToList(),
+            ItemsSource = [.. LogRanges.Ids.Select(LogRanges.LabelOf)],
             SelectedIndex = 0,
             MinWidth = 220,
         };

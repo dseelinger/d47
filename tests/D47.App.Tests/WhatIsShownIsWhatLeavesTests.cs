@@ -59,9 +59,10 @@ public class WhatIsShownIsWhatLeavesTests
 
         Assert.Equal("10 back, speech True", window.Text);
 
- // A named span rather than a minute stepper.
-        Control<ComboBox>(window, "Span").SelectedItem =
-            ExcerptSpan.All.Single(span => span.Name == "The last 12 hours");
+ // A named span rather than a minute stepper (#274: a segment, so the choice is a real radio press).
+        Control<Segment>(window, "Span").GetVisualDescendants().OfType<RadioButton>()
+            .Single(button => (button.Content as string) == "The last 12 hours")
+            .IsChecked = true;
 
         Dispatcher.UIThread.RunJobs();
 

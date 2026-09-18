@@ -1,8 +1,11 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
 using Avalonia.VisualTree;
+using D47.App.Controls;
 using D47.App.Settings;
 using D47.App.Theming;
 using D47.Core.Capabilities.Builtin;
@@ -46,6 +49,32 @@ public class ModelSelectionFollowsTheDiskTests
 
         Assert.Equal(["small.en"], asked);
         Assert.Equal("small.en", settings.Current.Listening.Model);
+
+        host.Close();
+    }
+
+    /// <summary>
+    /// Stepping onto a model stages it: nothing is fetched and the setting stays put until the button
+    /// that names the cost is pressed (#274).
+    /// </summary>
+    [AvaloniaFact]
+    public void SteppingOntoAModelFetchesNothingUntilItIsConfirmed()
+    {
+        var asked = new List<string>();
+
+        var (host, settings) = Open((model, _) =>
+        {
+            asked.Add(model.Id);
+            return Task.FromResult(new ModelInstallResult(ModelInstall.Installed, null));
+        });
+
+        var before = settings.Current.Listening.Model;
+
+        StepTo(host, "small.en");
+
+        Assert.Empty(asked);
+        Assert.Equal(before, settings.Current.Listening.Model);
+        Assert.Equal("Download 466 MB and use it", Confirm(host).Content);
 
         host.Close();
     }
@@ -151,8 +180,8 @@ public class ModelSelectionFollowsTheDiskTests
         host.Close();
     }
 
-    private static ComboBox Combo(SettingsHost host) =>
-        Row(host).GetVisualDescendants().OfType<ComboBox>().First();
+    private static Stepper Combo(SettingsHost host) =>
+        Row(host).GetVisualDescendants().OfType<Stepper>().First();
 
     private static (SettingsHost Host, SettingsService Settings) Open(
         Func<WhisperModel, IProgress<ModelProgress>, Task<ModelInstallResult>> download)
@@ -165,20 +194,39 @@ public class ModelSelectionFollowsTheDiskTests
         return (SettingsHost.Open(settings, viewState, paths, downloadModel: download), settings);
     }
 
+    /// <summary>The button a staged choice waits on.</summary>
+    private static Button Confirm(SettingsHost host) =>
+        Row(host).GetVisualDescendants().OfType<Button>().Single(button => button.Classes.Contains("primary") && button.IsVisible);
+
+    /// <summary>Steps to the model and presses the button that applies it.</summary>
     private static void Choose(SettingsHost host, string modelId)
     {
-        var combo = Row(host).GetVisualDescendants().OfType<ComboBox>().First();
+        StepTo(host, modelId);
+
+        Confirm(host).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+    }
+
+    private static void StepTo(SettingsHost host, string modelId)
+    {
+        var combo = Combo(host);
 
         // By label rather than by index: the list carries a clear item above the choices when the row is
         // clearable, so an index into the choices is not an index into the box.
-        var wanted = combo.Items
-            .Select((item, i) => (Text: item as string ?? string.Empty, Index: i))
+        var wanted = combo.ItemsSource
+            .Select((item, i) => (Text: item, Index: i))
             .First(pair => pair.Text.StartsWith(WhisperModels.LabelOf(modelId), StringComparison.Ordinal))
             .Index;
 
-        combo.SelectedIndex = wanted;
+        var next = combo.GetVisualDescendants().OfType<Button>()
+            .First(button => AutomationProperties.GetName(button) == "Next");
 
-        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        // Counted from wherever the row already stood: it opens on the shipped default, and the arrows wrap.
+        for (var tries = combo.ItemsSource.Count; tries > 0 && combo.SelectedIndex != wanted; tries--)
+        {
+            next.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        }
     }
 
     /// <summary>

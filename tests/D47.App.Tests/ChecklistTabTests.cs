@@ -469,11 +469,22 @@ public class ChecklistTabTests
         window.Close();
     }
 
-    /// <summary>Picks a scope from the checklist bar's dropdown, then lets the UI settle (#269).</summary>
+    /// <summary>Picks a scope from the checklist bar's stepper, then lets the UI settle (#269, #274).</summary>
     private static void SelectScope(PanelView panel, string word)
     {
-        var combo = panel.GetVisualDescendants().OfType<ComboBox>().Single(c => c.Name == "ChecklistScope");
-        combo.SelectedItem = word;
+        var stepper = panel.GetVisualDescendants().OfType<D47.App.Controls.Stepper>().Single(c => c.Name == "ChecklistScope");
+
+        var next = stepper.GetVisualDescendants()
+            .OfType<Button>()
+            .First(button => AutomationProperties.GetName(button) == "Next");
+
+        // A press at a time, the way the Commander does it, so the choice reaches the store through the
+        // stepper's own event rather than by setting its value directly.
+        for (var tries = 0; stepper.SelectedItem != word && tries < stepper.ItemsSource.Count; tries++)
+        {
+            next.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        }
+
         Dispatcher.UIThread.RunJobs();
     }
 

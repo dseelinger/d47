@@ -162,8 +162,8 @@ public sealed record SettingRow
     public string? AlsoBinds { get; init; }
 
     /// <summary>
-    /// This row is real, writable and reachable, and nothing draws it — another row's control holds it,
-    /// through <see cref="AlsoBinds"/>.
+    /// This row is real, writable and reachable, and the Settings page draws no control for it — another
+    /// row's control holds it through <see cref="AlsoBinds"/>, or it waits for a control of its own.
     /// </summary>
     public bool DrawnElsewhere { get; init; }
 
@@ -261,6 +261,13 @@ public sealed record SettingRow
         get;
         init;
     }
+
+    /// <summary>
+    /// What the button that applies a staged choice says it will do — "Download 466 MB and use it".
+    /// Set on a <see cref="SettingKind.Choice"/> row whose change costs something: pressing a choice
+    /// then stages it, and only this button applies it (#274).
+    /// </summary>
+    public Func<string?, string>? ConfirmLabel { get; init; }
 
     /// <summary>
     /// Whether an <see cref="SettingKind.Info"/> row's value belongs on a tooltip rather than on the

@@ -55,20 +55,20 @@ public sealed class HelpImproveWindow : Window
     private readonly ToggleSwitch _includeHistorySwitch;
 
     /// <summary>How far back an excerpt reaches, in spans a person can name (#173).</summary>
-    private readonly ComboBox _span = new()
+    private readonly Segment _span = new()
     {
         Name = "Span",
-        ItemsSource = ExcerptSpan.All,
+        ItemsSource = [.. ExcerptSpan.All.Select(span => span.Name)],
         SelectedIndex = 0,
         MinWidth = 190,
         VerticalAlignment = VerticalAlignment.Center,
     };
 
     /// <summary>How much history goes, gentlest first (#241).</summary>
-    private readonly ComboBox _scope = new()
+    private readonly Segment _scope = new()
     {
         Name = "Scope",
-        ItemsSource = CorpusScope.All,
+        ItemsSource = [.. CorpusScope.All.Select(scope => scope.Name)],
         SelectedIndex = 0,
         MinWidth = 190,
         VerticalAlignment = VerticalAlignment.Center,
@@ -487,7 +487,7 @@ public sealed class HelpImproveWindow : Window
             return;
         }
 
-        var span = _span.SelectedItem as ExcerptSpan ?? ExcerptSpan.Default;
+        var span = _span.SelectedIndex >= 0 ? ExcerptSpan.All[_span.SelectedIndex] : ExcerptSpan.Default;
 
         _text = _build(span.Around(_markedAt, _mySpeechSwitch.IsChecked == true));
         _preview.Text = _text;
@@ -549,7 +549,7 @@ public sealed class HelpImproveWindow : Window
             return;
         }
 
-        var scope = _scope.SelectedItem as CorpusScope ?? CorpusScope.Default;
+        var scope = _scope.SelectedIndex >= 0 ? CorpusScope.All[_scope.SelectedIndex] : CorpusScope.Default;
 
         _running?.Cancel();
         _running = new CancellationTokenSource();

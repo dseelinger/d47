@@ -2,6 +2,7 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.VisualTree;
+using D47.App.Controls;
 using D47.App.Settings;
 using D47.App.Theming;
 using D47.Core.Audio;
@@ -70,7 +71,7 @@ public class VoiceRowFitsItsColumnTests
             var column = row.ColumnDefinitions[2].ActualWidth;
 
             foreach (var control in row.GetVisualDescendants().OfType<Control>()
-                .Where(child => child is Button or ComboBox or TextBox or NumericUpDown))
+                .Where(child => child is Button or Segment or Stepper or TextBox or NumericUpDown))
             {
                 Assert.True(
                     control.Bounds.Width <= column + Rounding,

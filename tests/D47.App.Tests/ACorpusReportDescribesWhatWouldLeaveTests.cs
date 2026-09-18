@@ -42,6 +42,12 @@ public class ACorpusReportDescribesWhatWouldLeaveTests
     private static HelpImproveWindow.CorpusReading Reading(string report) =>
         new(new CorpusSurvey(null, null, 0, 0, new CorpusTally(0, 0, 0, 0, 0, 0), []), report);
 
+    /// <summary>Picks a scope segment by index, the way a press does — never by writing SelectedIndex,
+    /// which a segment does not fire its event for (#274).</summary>
+    private static void ChooseScope(HelpImproveWindow window, int index) =>
+        Control<Segment>(window, "Scope")
+            .GetVisualDescendants().OfType<RadioButton>().ElementAt(index).IsChecked = true;
+
     private static async Task PressAsync(HelpImproveWindow window, string button)
     {
         Control<Button>(window, button).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
@@ -81,7 +87,7 @@ public class ACorpusReportDescribesWhatWouldLeaveTests
         await PressAsync(window, "ReadJournals");
         Assert.True(Control<Button>(window, "SaveCorpus").IsEnabled);
 
-        Control<ComboBox>(window, "Scope").SelectedIndex = 1;
+        ChooseScope(window, 1);
         Dispatcher.UIThread.RunJobs();
 
         Assert.False(Control<Button>(window, "SaveCorpus").IsEnabled);
@@ -100,7 +106,7 @@ public class ACorpusReportDescribesWhatWouldLeaveTests
             return Task.FromResult(Reading("read"));
         });
 
-        Control<ComboBox>(window, "Scope").SelectedIndex = 2;
+        ChooseScope(window, 2);
         Dispatcher.UIThread.RunJobs();
 
         await PressAsync(window, "ReadJournals");

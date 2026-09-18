@@ -1,6 +1,8 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using D47.App.Settings;
 using D47.Core.Capabilities.Builtin;
@@ -126,13 +128,24 @@ public sealed class SettingsShowsOneAreaAtATimeTests
         var nav = view.FindControl<Control>("Nav")!;
 
         // Built in code rather than declared in the view's XAML, so it is not in its name scope.
-        var dropdown = view.GetVisualDescendants().OfType<ComboBox>().Single(combo => combo.Name == "AreaDropdown");
+        var dropdown = view.GetVisualDescendants().OfType<D47.App.Controls.Stepper>()
+            .Single(combo => combo.Name == "AreaDropdown");
 
         Assert.False(nav.IsVisible, "the nav is expected to collapse at this width");
         Assert.True(dropdown.IsVisible, "the area dropdown is expected to take its place");
 
         var index = SettingsLayout.Areas.ToList().FindIndex(a => a.Title == "The ship's AI");
-        dropdown.SelectedIndex = index;
+
+        var next = dropdown.GetVisualDescendants().OfType<Button>()
+            .First(button => AutomationProperties.GetName(button) == "Next");
+
+        // A press at a time, so the choice reaches the page through the stepper's own event rather than
+        // by setting its value directly (#274).
+        for (var tries = 0; dropdown.SelectedIndex != index && tries < dropdown.ItemsSource.Count; tries++)
+        {
+            next.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        }
+
         Jobs();
 
         Assert.Equal(

@@ -197,15 +197,9 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
             return false;
         }
 
-        // Decided before a single pointer event is raised, because for two kinds of control the gesture
+        // Decided before a single pointer event is raised, because for one kind of control the gesture
         // itself is the problem rather than what it activates.
         var actionable = target.GetSelfAndVisualAncestors().OfType<Control>().FirstOrDefault(Actionable);
-
-        // A combo box would open a popup, which is the crash.
-        if (actionable is ComboBox combo)
-        {
-            return Choose(combo);
-        }
 
         // A text box has nothing to type into it here: there is no keyboard in a cockpit and no focus to give
         // it.
@@ -267,29 +261,7 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
 
     /// <summary>Whether this is a control a press means something to.</summary>
     private static bool Actionable(Control control) =>
-        control is ComboBox or TextBox or ToggleButton or Button || control.Classes.Contains(DesktopOnly);
-
-    /// <summary>Puts a combo box's list on the panel, as a chooser the ray can press.</summary>
-    private bool Choose(ComboBox combo)
-    {
-        if (combo.ItemCount == 0)
-        {
-            return false;
-        }
-
-        // Never the control's own.
-        combo.IsDropDownOpen = false;
-
-        var items = new List<string>(combo.ItemCount);
-
-        foreach (var item in combo.Items)
-        {
-            items.Add(item?.ToString() ?? string.Empty);
-        }
-
-        Offer(items, combo.SelectedIndex, chosen => combo.SelectedIndex = chosen);
-        return true;
-    }
+        control is TextBox or ToggleButton or Button || control.Classes.Contains(DesktopOnly);
 
     /// <summary>What the panel's own overlays are drawn in.</summary>
     private static T Painted<T>(T control, AvaloniaProperty property, string key)
@@ -323,55 +295,6 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
             marked ? Theming.ThemeManager.AccentMutedKey : Theming.ThemeManager.SurfaceAltKey);
 
         return button;
-    }
-
-    /// <summary>Draws a list over the panel and calls back with what was pressed.</summary>
-    public void Offer(IReadOnlyList<string> items, int selected, Action<int> pick)
-    {
-        var rows = new StackPanel { Spacing = 2 };
-
-        for (var index = 0; index < items.Count; index++)
-        {
-            var at = index;
-
-            var row = Pressable(items[index], marked: index == selected);
-
-            row.HorizontalAlignment = HorizontalAlignment.Stretch;
-            row.HorizontalContentAlignment = HorizontalAlignment.Left;
-            row.Padding = new Thickness(16, 12);
-            row.MinHeight = 48;
-            row.FontWeight = index == selected ? FontWeight.SemiBold : FontWeight.Normal;
-
-            row.Click += (_, _) =>
-            {
-                Dismiss();
-                pick(at);
-            };
-
-            rows.Children.Add(row);
-        }
-
-        var cancel = Pressable("Cancel");
-        cancel.HorizontalAlignment = HorizontalAlignment.Right;
-        cancel.Padding = new Thickness(18, 10);
-        cancel.Margin = new Thickness(0, 12, 0, 0);
-        cancel.Click += (_, _) => Dismiss();
-
-        var body = new DockPanel { LastChildFill = true };
-        DockPanel.SetDock(cancel, Dock.Bottom);
-        body.Children.Add(cancel);
-        body.Children.Add(new ScrollViewer
-        {
-            Content = rows,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-        });
-
-        var card = Card(body);
-        card.MinWidth = Math.Min(460, _size.Width - 120);
-        card.MaxWidth = Math.Min(560, _size.Width - 80);
-
-        Overlay(card);
     }
 
     /// <summary>
@@ -650,6 +573,11 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
             {
                 case RadioButton radio:
                     radio.IsChecked = true;
+                    return;
+
+                // A row of a list moves its highlight; the list's own commit button is a separate press.
+                case ListBoxItem row:
+                    row.IsSelected = true;
                     return;
 
                 case ToggleButton toggle:

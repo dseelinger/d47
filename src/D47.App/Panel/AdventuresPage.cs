@@ -1,5 +1,6 @@
 using System.Globalization;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
@@ -443,19 +444,21 @@ public sealed class AdventuresPage : UserControl
             "The ship's AI writes a story for you to fly and waits for your yes. Three choices with "
             + "defaults, and a brief if you want one — pressing Go on an untouched form is a complete ask."));
 
-        var reachCombo = new ComboBox
+        var reachCombo = new Segment
         {
             MinHeight = TouchTarget,
-            ItemsSource = new[] { "Reach: near here", "Reach: a session's flying", "Reach: anywhere" },
+            ItemsSource = ["Reach: near here", "Reach: a session's flying", "Reach: anywhere"],
             SelectedIndex = 0,
         };
+        AutomationProperties.SetName(reachCombo, "Reach");
 
-        var lengthCombo = new ComboBox
+        var lengthCombo = new Segment
         {
             MinHeight = TouchTarget,
-            ItemsSource = new[] { "Length: short", "Length: an evening", "Length: long" },
+            ItemsSource = ["Length: short", "Length: an evening", "Length: long"],
             SelectedIndex = 1,
         };
+        AutomationProperties.SetName(lengthCombo, "Length");
 
         var (usingBox, _, usingSwitch) = LabeledSwitch.Build("This ship only");
         var briefButton = new Button { Padding = new Thickness(12, 4), MinHeight = TouchTarget };

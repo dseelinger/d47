@@ -480,8 +480,8 @@ public static class SpeechCapability
                     + "as large as the full one. Each choice states what it costs on disk and how long "
                     + "you wait before it starts speaking — for a typical spoken reply, timed on this "
                     + "machine, so treat the gap between them as the real figure rather than the "
-                    + "seconds themselves. Choosing a different one downloads it, "
-                    + "checks it, and replaces the one you have; a failed download leaves the build "
+                    + "seconds themselves. Choosing a different one stages it; the button under it "
+                    + "downloads it, checks it, and replaces the one you have. A failed download leaves the build "
                     + "you were using in place. How they SOUND has not been ranked — fp32 is the "
                     + "reference and the default.",
                 Kind = SettingKind.Choice,
@@ -501,7 +501,14 @@ public static class SpeechCapability
                 },
                 DefaultDisplay = KokoroAssets.DefaultBuildId,
 
-                // The choice is the go-ahead: it stated its size and its speed in the list it was made from.
+                ConfirmLabel = id =>
+                {
+                    var build = KokoroAssets.BuildFor(id);
+
+                    return string.Equals(surface.InstalledLocalVoiceBuild?.Invoke(), build.Id, StringComparison.OrdinalIgnoreCase)
+                        ? $"Use {build.Id}"
+                        : $"Download {build.Asset.Megabytes:0} MB and use it";
+                },
                 FetchChoiceAsync = surface.SwitchLocalVoiceBuild is null
                     ? null
                     : (chosen, progress, cancellationToken) =>

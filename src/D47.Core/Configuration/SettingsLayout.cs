@@ -95,9 +95,6 @@ public static class SettingsLayout
             or Capabilities.Builtin.VrCapability.ResetZoomHotkeyKey
             or Capabilities.Builtin.VrCapability.ResizeHotkeyKey;
 
-    public static bool IsSubsystemLevelFamily(string key) =>
-        key.StartsWith("logging.subsystems.", StringComparison.Ordinal);
-
     public static bool IsEgressFamily(string key) =>
         key.StartsWith("egress.", StringComparison.Ordinal);
 
@@ -627,7 +624,6 @@ public static class SettingsLayout
                             E("diagnostics.paused"),
                             E("diagnostics.coverage"),
                         ]),
-                        G("Per-subsystem levels", "Overrides the default above for one subsystem.", [F(IsSubsystemLevelFamily)]),
                     ]),
             ]),
     ];

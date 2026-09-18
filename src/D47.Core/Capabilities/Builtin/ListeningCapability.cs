@@ -577,6 +577,11 @@ public static class ListeningCapability
                         ? $"{label} — installed"
                         : $"{label} — about {size} MB to download";
                 },
+                ConfirmLabel = id => WhisperModels.Find(id) is not { } model
+                    ? "Stop transcribing"
+                    : surface.InstalledModels().Contains(model.Id)
+                        ? $"Use {model.Id}"
+                        : $"Download {model.ApproximateMegabytes} MB and use it",
                 DefaultDisplay = WhisperModels.DefaultId,
                 DocsAnchor = "model",
                 Binding = new SettingBinding

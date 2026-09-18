@@ -140,8 +140,12 @@ public class SpendDialogTests
         window.Show();
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
+        // Grid.Column is an attached property, not scoped to Row()'s grid: a segment or a stepper has its
+        // own internal column 1 for its own reasons (the value between the arrows, here), so their
+        // descendants are excluded rather than mistaken for a stray figure.
         var amounts = window.GetVisualDescendants().OfType<TextBlock>()
             .Where(block => Grid.GetColumn(block) == 1 && block.TextWrapping == TextWrapping.NoWrap)
+            .Where(block => block.GetVisualAncestors().OfType<IChoiceControl>().Any() == false)
             .Select(block => block.Text ?? string.Empty)
             .Where(text => text.Length > 0)
             .ToList();
@@ -299,11 +303,10 @@ public class SpendDialogTests
         window.Show();
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        var combo = window.GetVisualDescendants().OfType<ComboBox>()
+        var combo = window.GetVisualDescendants().OfType<D47.App.Controls.Stepper>()
             .Single(box => box.Name == "SpendProviderPicker");
 
-        var items = combo.ItemsSource!.Cast<string>().ToList();
-        Assert.Equal(["Anthropic", "ElevenLabs"], items.OrderBy(x => x, StringComparer.Ordinal));
+        Assert.Equal(["Anthropic", "ElevenLabs"], combo.ItemsSource.OrderBy(x => x, StringComparer.Ordinal));
 
         window.Close();
     }
@@ -330,7 +333,7 @@ public class SpendDialogTests
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         Assert.DoesNotContain(
-            window.GetVisualDescendants().OfType<ComboBox>(),
+            window.GetVisualDescendants().OfType<D47.App.Controls.Stepper>(),
             box => box.Name == "SpendProviderPicker");
         Assert.Contains("nothing charged yet", Words(window), StringComparison.Ordinal);
 

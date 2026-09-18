@@ -204,11 +204,13 @@ public sealed class MacroWindow : Window
 
     private Control BuildStep(MutableMacro macro, MutableStep step)
     {
-        var action = new ComboBox { ItemsSource = Allowed, SelectedItem = step.Action, Width = 200 };
-        action.SelectionChanged += (_, _) => step.Action = action.SelectedItem as string ?? step.Action;
+        var (actionView, action) = Choice.Build(Allowed, Array.IndexOf(Allowed, step.Action));
+        actionView.Width = 200;
+        action.SelectionChanged += (_, _) => step.Action = action.SelectedItem ?? step.Action;
 
-        var state = new ComboBox { ItemsSource = States, SelectedItem = step.State, Width = 100 };
-        state.SelectionChanged += (_, _) => step.State = state.SelectedItem as string ?? step.State;
+        var (stateView, state) = Choice.Build(States, Array.IndexOf(States, step.State));
+        stateView.Width = 100;
+        state.SelectionChanged += (_, _) => step.State = state.SelectedItem ?? step.State;
 
         var pause = new NumericUpDown
         {
@@ -237,7 +239,7 @@ public sealed class MacroWindow : Window
         {
             Orientation = Orientation.Horizontal,
             Spacing = 6,
-            Children = { action, state, pause, up, down, drop },
+            Children = { actionView, stateView, pause, up, down, drop },
         };
     }
 

@@ -175,10 +175,10 @@ public class TheFilterIsTheSameOnBothSurfacesTests
         Dispatcher.UIThread.RunJobs();
 
         var scope = panel.GetVisualDescendants()
-            .OfType<ComboBox>()
-            .Single(combo => combo.Name == "ChecklistScope");
+            .OfType<D47.App.Controls.Stepper>()
+            .Single(stepper => stepper.Name == "ChecklistScope");
 
-        Assert.Equal("Still open", scope.SelectedItem as string);
+        Assert.Equal("Still open", scope.SelectedItem);
 
         window.Close();
     }

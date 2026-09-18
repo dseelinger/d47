@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.VisualTree;
 using D47.App.Controls;
 using D47.Core.Capabilities;
 using Xunit;
@@ -82,7 +83,10 @@ public class TypingMaleDoesNotListEveryWomanTests
 
     private static void Choose(PickerWindow picker, int option)
     {
-        picker.GetControl<ComboBox>("FacetBox").SelectedIndex = option;
+        // A press, not a write: a segment fires its event only on one (#274).
+        picker.GetControl<Segment>("FacetBox")
+            .GetVisualDescendants().OfType<RadioButton>().ElementAt(option).IsChecked = true;
+
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
     }
 
@@ -183,7 +187,7 @@ public class TypingMaleDoesNotListEveryWomanTests
     {
         var picker = Shown();
 
-        Assert.Equal(0, picker.GetControl<ComboBox>("FacetBox").SelectedIndex);
+        Assert.Equal(0, picker.GetControl<Segment>("FacetBox").SelectedIndex);
         Assert.Equal(4, Listed(picker).Count);
     }
 

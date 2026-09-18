@@ -31,9 +31,9 @@ public class TheModelRowIsDrawnAndTakesTheRateWithItTests
     public void TheRowIsDrawnWithBothModelsOnIt()
     {
         var host = OnElevenLabs(out _);
-        var combo = Row(host, ModelLabel).GetVisualDescendants().OfType<ComboBox>().First();
+        var segment = Row(host, ModelLabel).GetVisualDescendants().OfType<D47.App.Controls.Segment>().First();
 
-        Assert.Equal(2, combo.ItemCount);
+        Assert.Equal(2, segment.ItemsSource.Count);
     }
 
     /// <summary>

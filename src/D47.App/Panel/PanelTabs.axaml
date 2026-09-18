@@ -51,57 +51,6 @@
   </ControlTheme>
 
   <!--
-    A mode of the tab that is showing - Conversation, Technical, Log file; later Ships, Suits
-    and weapons, Gap analysis (list.md Phase 25).
-
-    Deliberately not a tab. "The mode control is not a second tab strip under the first; two
-    stacked strips read worse than the eight flat tabs this avoids" - so this borrows nothing
-    from the tab idiom above: no join to the page, no notch, no top marker. It is a segmented
-    pill, which is the control every phone settings screen already taught, and it rides in the
-    tab strip's own row rather than in a row of its own. Two strips is the thing being avoided,
-    and a strip in the same row as the tabs is one strip.
-
-    Shown at the root and nowhere else. Drilling hides it, because a mode switch three levels
-    into a ship is a question about which stack you are in rather than about what you are
-    looking at, and the breadcrumb is already answering the second one.
-  -->
-  <ControlTheme x:Key="D47.Segment" TargetType="RadioButton">
-    <Setter Property="Cursor" Value="Hand" />
-    <Setter Property="FontFamily" Value="Cascadia Mono,Consolas,monospace" />
-    <Setter Property="FontSize" Value="{StaticResource D47.Type.Secondary}" />
-    <Setter Property="Foreground" Value="{DynamicResource D47.TextMuted}" />
-    <Setter Property="Padding" Value="10,4" />
-    <Setter Property="Margin" Value="0" />
-
-    <Setter Property="Template">
-      <ControlTemplate>
-        <Border x:Name="Shape"
-                Background="Transparent">
-          <ContentPresenter x:Name="PART_ContentPresenter"
-                            Content="{TemplateBinding Content}"
-                            Padding="{TemplateBinding Padding}"
-                            Foreground="{TemplateBinding Foreground}"
-                            VerticalAlignment="Center" />
-        </Border>
-      </ControlTemplate>
-    </Setter>
-
-    <Style Selector="^:pointerover">
-      <Setter Property="Foreground" Value="{DynamicResource D47.Text}" />
-    </Style>
-
-    <!-- Filled rather than underlined. The segment that is on has to be findable at a metre,
-         and a fill is the one difference a glance reads before it reads anything else. -->
-    <Style Selector="^:checked">
-      <Setter Property="Foreground" Value="{DynamicResource D47.Background}" />
-      <Setter Property="FontWeight" Value="SemiBold" />
-      <Style Selector="^ /template/ Border#Shape">
-        <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
-      </Style>
-    </Style>
-  </ControlTheme>
-
-  <!--
     One crumb of the breadcrumb (list.md Phase 25, "Drill in, and find your way back").
 
     It is both the back affordance and the you-are-here, because a headset has no title bar to

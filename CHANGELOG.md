@@ -6,6 +6,19 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.169.0 — No more drop-downs
+
+Every drop-down is gone. A choice of two to four is a row of segments; a longer list, or one that
+can grow, is a stepper with an arrow either side. Nothing opens a list that can close under a VR
+pointer, so every choice now works on the headset panel directly.
+
+Moving through a choice no longer does anything costly. Picking a ship to plan opens a list you can
+narrow by typing; pressing a row or an arrow key only highlights it, and nothing is planned until
+you press Plan this hull or Enter, or say the name. The speech model and the local voice build now
+stage the one you step to, and the one in use keeps running until you press the button that names
+the cost, such as "Download 466 MB and use it". The eight per-subsystem log levels leave the
+Settings page for now; voice and the log-level tool still set them.
+
 ## 0.168.0 — Controls take the HUD dress
 
 Buttons, toggle switches and the transcript tabs now draw d47's own look rather than the

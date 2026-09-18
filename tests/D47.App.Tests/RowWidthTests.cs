@@ -86,12 +86,12 @@ public class RowWidthTests
 
         var combo = CompactRowFor(host, "Speech model")
             .GetVisualDescendants()
-            .OfType<ComboBox>()
+            .OfType<D47.App.Controls.Stepper>()
             .First();
 
         var tip = ToolTip.GetTip(combo) as string;
 
-        Assert.False(string.IsNullOrWhiteSpace(tip), "The combo box carries no tooltip.");
+        Assert.False(string.IsNullOrWhiteSpace(tip), "The stepper carries no tooltip.");
         Assert.Contains("to download", tip, StringComparison.Ordinal);
 
         host.Close();

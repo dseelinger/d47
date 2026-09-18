@@ -98,6 +98,12 @@ public class ACorpusIsSentByTheSameWriterThatSavesItTests : IDisposable
     private static HelpImproveWindow.CorpusReading Reading(string report) =>
         new(new CorpusSurvey(null, null, 0, 0, new CorpusTally(0, 0, 0, 0, 0, 0), []), report);
 
+    /// <summary>Picks a scope segment by index, the way a press does — never by writing SelectedIndex,
+    /// which a segment does not fire its event for (#274).</summary>
+    private static void ChooseScope(Window window, int index) =>
+        Control<Segment>(window, "Scope")
+            .GetVisualDescendants().OfType<RadioButton>().ElementAt(index).IsChecked = true;
+
     private static HelpImproveWindow Shown(
         string report = "### Journal history\nwhat you are agreeing to\n",
         Func<string, IProgress<DonationStep>, CancellationToken, Task<DonationSent>>? send = null,
@@ -424,7 +430,7 @@ public class ACorpusIsSentByTheSameWriterThatSavesItTests : IDisposable
 
         Assert.Equal("Sent", Control<Button>(window, "SendCorpus").Content);
 
-        Control<ComboBox>(window, "Scope").SelectedIndex = 1;
+        ChooseScope(window, 1);
         Dispatcher.UIThread.RunJobs();
 
         var send = Control<Button>(window, "SendCorpus");

@@ -231,6 +231,10 @@ public static class DiagnosticsCapability
             Kind = SettingKind.Choice,
             Choices = LogLevelNames,
             DocsAnchor = "the-parts-you-can-turn-up",
+
+            // Not drawn on the Settings page; these wait for the verbosity track (#283). Voice and the
+            // set_log_verbosity tool still set them.
+            DrawnElsewhere = true,
             Binding = new SettingBinding
             {
                 // Absent from the dictionary is the "no override" state, which is what the placeholder

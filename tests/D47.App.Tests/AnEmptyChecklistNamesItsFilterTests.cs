@@ -64,12 +64,12 @@ public class AnEmptyChecklistNamesItsFilterTests
             .OfType<Button>()
             .Select(button => button.Content?.ToString() ?? string.Empty)];
 
-    /// <summary>The word the scope dropdown is currently showing (#269).</summary>
+    /// <summary>The word the scope stepper is currently showing (#269, #274).</summary>
     private static string ScopeWord(Avalonia.Visual panel) =>
         panel.GetVisualDescendants()
-            .OfType<ComboBox>()
-            .Single(combo => combo.Name == "ChecklistScope")
-            .SelectedItem as string ?? string.Empty;
+            .OfType<D47.App.Controls.Stepper>()
+            .Single(stepper => stepper.Name == "ChecklistScope")
+            .SelectedItem ?? string.Empty;
 
     [AvaloniaFact]
     public void AnUnfilteredEmptyListStillReadsNothingHereYet()

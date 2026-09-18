@@ -154,7 +154,8 @@ public sealed class ShipsMode(
                 value => EliteSpecifications.Ship(value) is null
                     ? EntryVerdict.No($"I do not know a ship called “{value}”.")
                     : EntryVerdict.Ok,
-                Hulls),
+                Hulls,
+                "Plan this hull"),
             hull =>
             {
                 ships.Intend(hull);

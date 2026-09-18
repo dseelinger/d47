@@ -389,7 +389,7 @@ that is the one headset surface where a controller can genuinely press it.
 that file held — the default only reaches a fresh one.
 
 **What you lose with them off.** Nothing on the panel can be pressed in the headset: no buttons,
-no toggles, no checklist ticks, no combo boxes, no on-panel keyboard, no scrollbar dragging, no
+no toggles, no checklist ticks, no steppers or segments, no on-panel keyboard, no scrollbar dragging, no
 grip-to-go-back, and no Settings tab. You cannot grab the panel and carry it.
 
 **What still works.** Everything by voice: moving between tabs, going back, scrolling, answering a

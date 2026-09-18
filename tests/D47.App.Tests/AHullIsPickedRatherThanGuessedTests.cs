@@ -1,5 +1,7 @@
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Panel;
@@ -47,7 +49,7 @@ public class AHullIsPickedRatherThanGuessedTests
     }
 
     /// <summary>Opens the question the way a Commander does: by pressing the button that asks it.</summary>
-    private static (PanelView Panel, ShipPlanService Ships, ComboBox Pick) Asking()
+    private static (PanelView Panel, ShipPlanService Ships, ListBox Pick) Asking()
     {
         var (panel, ships) = Fleet();
 
@@ -55,17 +57,24 @@ public class AHullIsPickedRatherThanGuessedTests
             .OfType<Button>()
             .First(button => (button.Content as string) == "Plan a ship you do not own");
 
-        intend.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        intend.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
-        // The picker's own box rather than the panel's mode box, which is still in the tree.
         return (
             panel,
             ships,
             panel.GetVisualDescendants()
-                .OfType<ComboBox>()
-                .Single(box => box.PlaceholderText == "Pick one, or say it"));
+                .OfType<ListBox>()
+                .Single(box => AutomationProperties.GetName(box) == "Ship"));
     }
+
+    private static List<string> Offered(ListBox pick) => pick.ItemsSource!.Cast<string>().ToList();
+
+    private static Button Commit(PanelView panel) =>
+        panel.GetVisualDescendants().OfType<Button>().Single(button => (button.Content as string) == "Plan this hull");
+
+    private static TextBox Filter(PanelView panel) =>
+        panel.GetVisualDescendants().OfType<TextBox>().Single(box => AutomationProperties.GetName(box) == "Filter");
 
     /// <summary>Every hull is offered, and the list is exactly what the validation accepts.</summary>
     [AvaloniaFact]
@@ -73,7 +82,7 @@ public class AHullIsPickedRatherThanGuessedTests
     {
         var (_, _, pick) = Asking();
 
-        var offered = pick.ItemsSource!.Cast<string>().ToList();
+        var offered = Offered(pick);
 
         Assert.Contains("Anaconda", offered);
         Assert.Contains("Sidewinder", offered);
@@ -93,13 +102,34 @@ public class AHullIsPickedRatherThanGuessedTests
         Assert.Empty(ships.Store.Builds);
     }
 
-    /// <summary>Picking a hull is the answer — there is no Done to press after it.</summary>
+    /// <summary>Walking the highlight down the list passes every hull on the way, and plans none of them.</summary>
     [AvaloniaFact]
-    public void PickingAHullPlansIt()
+    public void MovingTheHighlightPlansNothing()
     {
         var (panel, ships, pick) = Asking();
 
+        foreach (var hull in Offered(pick).Take(10))
+        {
+            pick.SelectedItem = hull;
+            Dispatcher.UIThread.RunJobs();
+        }
+
+        Assert.Empty(ships.Store.Builds);
+        Assert.True(panel.Nav.Modal);
+    }
+
+    /// <summary>The button that says what it will do is the one thing that plans the highlighted hull.</summary>
+    [AvaloniaFact]
+    public void PressingPlanThisHullPlansTheHighlightedOne()
+    {
+        var (panel, ships, pick) = Asking();
+
+        Assert.False(Commit(panel).IsEnabled, "There is nothing highlighted to plan yet.");
+
         pick.SelectedItem = "Anaconda";
+        Dispatcher.UIThread.RunJobs();
+
+        Commit(panel).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
         var planned = ships.Store.Builds.Single();
@@ -109,6 +139,26 @@ public class AHullIsPickedRatherThanGuessedTests
 
         // And the question is gone: answering it is what closed it.
         Assert.False(panel.Nav.Modal);
+    }
+
+    /// <summary>Typing narrows the list rather than replacing it, and when one hull is left, Enter takes it.</summary>
+    [AvaloniaFact]
+    public void TypingNarrowsTheList()
+    {
+        var (panel, ships, pick) = Asking();
+
+        Filter(panel).Text = "anac";
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(["Anaconda"], Offered(pick));
+        Assert.Equal("Anaconda", pick.SelectedItem);
+        Assert.Empty(ships.Store.Builds);
+
+        Filter(panel).Text = string.Empty;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(Offered(pick).Count > 20, "Clearing the filter brings every hull back.");
+        Assert.Equal("Anaconda", pick.SelectedItem);
     }
 
     /// <summary>The two controls a free-text prompt needs and a picker does not.</summary>

@@ -62,7 +62,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         IsVisible = false,
     };
 
-    private readonly ComboBox _scopeCombo = new()
+    private readonly Stepper _scopeCombo = new()
     {
         Name = "ChecklistScope",
         MinHeight = TouchTarget,
@@ -154,6 +154,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         Themed(_problems, TextBlock.ForegroundProperty, ThemeManager.DangerKey);
 
+        AutomationProperties.SetName(_scopeCombo, "Checklist scope");
         _scopeCombo.SelectionChanged += (_, _) => OnScopeChanged();
 
         // Through the service, like the filter beside it: shared across surfaces and remembered.
@@ -367,8 +368,8 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         _suggestions.IsVisible = pending.Count > 0;
         _suggestions.Content = $"Suggestions ({waiting.ToString(CultureInfo.InvariantCulture)})";
 
-        // Flat: FilterAxes' headings group the choices by the question they answer, but no other
-        // dropdown here draws a heading between its own items.
+        // Flat: FilterAxes' headings group the choices by the question they answer, but the stepper
+        // draws no heading between its own items.
         var keys = new List<string> { Everything };
         var words = new List<string> { "Everything" };
 
@@ -379,7 +380,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         }
 
         // A chosen filter can drop out of FilterAxes() while it is still selected — every Done line
-        // under it deleted, say — and the dropdown still has to show something for it rather than
+        // under it deleted, say — and the stepper still has to show something for it rather than
         // going blank.
         if (!keys.Contains(Chosen))
         {
@@ -394,7 +395,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         try
         {
-            if (_scopeCombo.ItemsSource is not IReadOnlyList<string> shown || !shown.SequenceEqual(words))
+            if (!_scopeCombo.ItemsSource.SequenceEqual(words))
             {
                 _scopeCombo.ItemsSource = words;
             }
@@ -1126,7 +1127,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         Rebuild();
     }
 
-    /// <summary>The Commander picked a scope from the dropdown.</summary>
+    /// <summary>The Commander stepped to a scope.</summary>
     private void OnScopeChanged()
     {
         if (_settlingScope)

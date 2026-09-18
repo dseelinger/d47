@@ -4,6 +4,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using Avalonia.VisualTree;
+using D47.App.Controls;
 using D47.App.Settings;
 using D47.App.Theming;
 using D47.Core.Audio;
@@ -12,25 +13,25 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>Two implementations, one look.</summary>
+/// <summary>Three implementations — segment, stepper, picker button (#274) — one look.</summary>
 public class ChoiceControlsLookAlikeTests
 {
     [AvaloniaFact]
-    public void TheComboBoxAndThePickerButtonAreDressedTheSame()
+    public void TheSegmentAndThePickerButtonAreDressedTheSame()
     {
         var host = Open();
 
-        var combo = Row(host, "Provider").GetVisualDescendants().OfType<ComboBox>().First();
+        var segment = Row(host, "Provider").GetVisualDescendants().OfType<Segment>().First();
         var button = PickerButtons(Row(host, "Model")).First();
 
-        foreach (var difference in Differences(combo, button))
+        foreach (var difference in Differences(segment, button))
         {
-            Assert.Fail($"the Provider combo box and the Model picker button differ: {difference}");
+            Assert.Fail($"the Provider segment and the Model picker button differ: {difference}");
         }
     }
 
     /// <summary>
-    /// Every one of them, so the next row added cannot reintroduce this by being dressed in a third
+    /// Every one of them, so the next row added cannot reintroduce this by being dressed in a fourth
     /// place.
     /// </summary>
     [AvaloniaFact]
@@ -38,17 +39,21 @@ public class ChoiceControlsLookAlikeTests
     {
         var host = Open();
 
-        var combos = host.View.GetVisualDescendants().OfType<ComboBox>()
-            .Where(control => control.Bounds.Height > 0).ToList();
+        var segments = host.View.GetVisualDescendants().OfType<Segment>()
+            .Where(control => control.Bounds.Height > 0).Cast<TemplatedControl>();
 
-        var buttons = PickerButtons(host.View).Where(control => control.Bounds.Height > 0).ToList();
+        var steppers = host.View.GetVisualDescendants().OfType<Stepper>()
+            .Where(control => control.Bounds.Height > 0).Cast<TemplatedControl>();
 
-        Assert.NotEmpty(combos);
-        Assert.NotEmpty(buttons);
+        var buttons = PickerButtons(host.View).Where(control => control.Bounds.Height > 0);
 
-        var reference = combos[0];
+        var all = segments.Concat(steppers).Concat(buttons).ToList();
 
-        foreach (var control in combos.Skip(1).Cast<TemplatedControl>().Concat(buttons))
+        Assert.NotEmpty(all);
+
+        var reference = all[0];
+
+        foreach (var control in all.Skip(1))
         {
             foreach (var difference in Differences(reference, control))
             {

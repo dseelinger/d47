@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
@@ -9,8 +10,8 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>The Transcript's file picker is drawn whole — word and chevron — on every reading.</summary>
-public sealed class ThePickerShowsItsOwnChevronTests
+/// <summary>The Transcript's mode stepper is drawn whole — value and both arrows — on every reading (#274).</summary>
+public sealed class TheStepperKeepsBothArrowsInsideItsBoxTests
 {
     private static (PanelView Panel, Window Window) Showing(string root, double width = 1180)
     {
@@ -32,14 +33,14 @@ public sealed class ThePickerShowsItsOwnChevronTests
         return (panel, window);
     }
 
-    /// <summary>Where the chevron's right-hand edge falls inside the box that draws it.</summary>
-    private static double ChevronRightIn(ComboBox box)
+    /// <summary>Where an arrow's far edge falls inside the box that draws it.</summary>
+    private static double ArrowRightIn(D47.App.Controls.Stepper box, string arrowName)
     {
-        var glyph = box.GetVisualDescendants()
+        var arrow = box.GetVisualDescendants()
             .OfType<Control>()
-            .Single(control => control.Name == "DropDownGlyph");
+            .Single(control => AutomationProperties.GetName(control) == arrowName);
 
-        var at = glyph.TranslatePoint(new Point(glyph.Bounds.Width, 0), box);
+        var at = arrow.TranslatePoint(new Point(arrow.Bounds.Width, 0), box);
 
         Assert.NotNull(at);
 
@@ -47,22 +48,22 @@ public sealed class ThePickerShowsItsOwnChevronTests
     }
 
     /// <summary>
-    /// Every reading draws its chevron inside the box, at every width the panel can be dragged to.
+    /// Every reading draws both arrows inside the box, at every width the panel can be dragged to.
     /// </summary>
     [AvaloniaTheory]
     [InlineData(PanelView.ConversationRoot)]
     [InlineData(PanelView.LogRoot)]
     [InlineData(PanelView.JournalRoot)]
-    public void EveryReadingDrawsItsChevronInsideTheBox(string root)
+    public void EveryReadingDrawsBothArrowsInsideTheBox(string root)
     {
         foreach (var width in new double[] { 320, 620, 1180 })
         {
             var (panel, window) = Showing(root, width);
-            var box = panel.GetControl<ComboBox>("ModeBox");
+            var box = panel.GetControl<D47.App.Controls.Stepper>("ModeBox");
 
             Assert.True(
-                ChevronRightIn(box) <= box.Bounds.Width,
-                $"{root} at {width}: the chevron ends {ChevronRightIn(box) - box.Bounds.Width} "
+                ArrowRightIn(box, "Next") <= box.Bounds.Width,
+                $"{root} at {width}: the next arrow ends {ArrowRightIn(box, "Next") - box.Bounds.Width} "
                 + $"pixels past the box's own right edge");
 
             window.Close();
@@ -71,7 +72,7 @@ public sealed class ThePickerShowsItsOwnChevronTests
 
     /// <summary>
     /// And the box is sized by the longest reading rather than by the one showing, so it neither
-    /// resizes under the pointer as the reading changes nor leaves the chevron whatever the shortest
+    /// resizes under the pointer as the reading changes nor leaves the arrows whatever the shortest
     /// word happens to spare. "Journal File" is the longest of the three.
     /// </summary>
     [AvaloniaFact]
@@ -81,7 +82,7 @@ public sealed class ThePickerShowsItsOwnChevronTests
             .Select(root =>
             {
                 var (panel, window) = Showing(root);
-                var width = panel.GetControl<ComboBox>("ModeBox").Bounds.Width;
+                var width = panel.GetControl<D47.App.Controls.Stepper>("ModeBox").Bounds.Width;
 
                 window.Close();
 

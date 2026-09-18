@@ -50,7 +50,7 @@ public class TheLogPageSaysItIsWorkingTests
         Assert.True(
             await Eventually(() => glyph.IsVisible),
             "nothing said the log was being read");
-        Assert.False(view.GetControl<ComboBox>("ModeBox").IsEnabled, "the control was still pressable");
+        Assert.False(view.GetControl<Stepper>("ModeBox").IsEnabled, "the control was still pressable");
 
         release.TrySetResult();
     }
@@ -109,11 +109,11 @@ public class TheLogPageSaysItIsWorkingTests
             .Single();
 
         Assert.True(
-            await Eventually(() => !glyph.IsVisible && view.GetControl<ComboBox>("ModeBox").IsEnabled),
+            await Eventually(() => !glyph.IsVisible && view.GetControl<Stepper>("ModeBox").IsEnabled),
             "the glyph was left spinning after the read failed");
 
         Assert.False(glyph.IsVisible);
-        Assert.True(view.GetControl<ComboBox>("ModeBox").IsEnabled, "a page that failed once can never be opened again");
+        Assert.True(view.GetControl<Stepper>("ModeBox").IsEnabled, "a page that failed once can never be opened again");
     }
 
     /// <summary>Pumps the dispatcher until a condition holds, or gives up.</summary>

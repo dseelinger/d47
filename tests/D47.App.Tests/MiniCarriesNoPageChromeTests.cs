@@ -110,12 +110,12 @@ public class MiniCarriesNoPageChromeTests
             .Where(toggle => Drawn(toggle, view))
             .Select(SwitchLabel);
 
-        // A combo box shows its selected item rather than a Content (#269).
+        // A stepper shows its selected item rather than a Content (#269, #274).
         var comboWords = page.GetSelfAndVisualDescendants()
-            .OfType<ComboBox>()
-            .Where(combo => !combo.GetSelfAndVisualAncestors().OfType<ScrollBar>().Any())
-            .Where(combo => Drawn(combo, view))
-            .Select(combo => combo.SelectedItem as string ?? string.Empty);
+            .OfType<D47.App.Controls.Stepper>()
+            .Where(stepper => !stepper.GetSelfAndVisualAncestors().OfType<ScrollBar>().Any())
+            .Where(stepper => Drawn(stepper, view))
+            .Select(stepper => stepper.SelectedItem ?? string.Empty);
 
         // The custom line's checkbox carries "completed" as its own Content (picked up by controlWords
         // above), but the word worth asserting on is the line it sits beside (#271).
