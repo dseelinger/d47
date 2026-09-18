@@ -40,11 +40,39 @@ public class EveryWindowDrawsItsOwnCaptionStripTests
         window.Show();
 
         var title = window.GetVisualDescendants().OfType<TextBlock>()
-            .Single(t => t.Text == "Before");
+            .Single(t => t.Text == "BEFORE");
 
         window.Title = "After";
 
-        Assert.Equal("After", title.Text);
+        Assert.Equal("AFTER", title.Text);
+    }
+
+    [AvaloniaFact]
+    public void TheVersionAfterTheDashIsSetApartFromTheName()
+    {
+        var window = new Window { Content = new TextBlock(), Title = "Directive 47 — 0.1.0" };
+        CaptionStrip.Apply(window);
+        window.Show();
+
+        var texts = window.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
+
+        Assert.Contains("DIRECTIVE 47", texts);
+        Assert.Contains("0.1.0", texts);
+    }
+
+    /// <summary>Avalonia 12 draws its own title and caption buttons into an extended client area on
+    /// Windows; left in, the title shows twice, one over the other.</summary>
+    [AvaloniaFact]
+    public void AvaloniaDrawsNoTitlebarOfItsOwnUnderTheStrip()
+    {
+        var window = new Window { Content = new TextBlock() };
+        CaptionStrip.Apply(window);
+
+        var template = Assert.Single(window.WindowDecorationsTheme!.Setters.OfType<Avalonia.Styling.Setter>(),
+            s => s.Property == Avalonia.Controls.Chrome.WindowDrawnDecorations.TemplateProperty);
+        var content = Assert.IsAssignableFrom<Avalonia.Controls.Chrome.IWindowDrawnDecorationsTemplate>(template.Value).Build().Result;
+        Assert.Null(content.Overlay);
+        Assert.Null(content.Underlay);
     }
 
     [AvaloniaFact]

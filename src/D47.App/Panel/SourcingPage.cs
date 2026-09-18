@@ -578,18 +578,17 @@ public sealed class SourcingPage : UserControl
         var card = new Border
         {
             Padding = new Thickness(14),
-            CornerRadius = new CornerRadius(4),
             BorderThickness = new Thickness(1),
             Child = new StackPanel { Spacing = 10, Children = { heading, body } },
         };
 
         card.Bind(
             Border.BackgroundProperty,
-            Application.Current!.Resources.GetResourceObservable(ThemeManager.SurfaceAltKey));
+            Application.Current!.Resources.GetResourceObservable(ThemeManager.CardFillKey));
 
         card.Bind(
             Border.BorderBrushProperty,
-            Application.Current!.Resources.GetResourceObservable(ThemeManager.BorderKey));
+            Application.Current!.Resources.GetResourceObservable(ThemeManager.RuleKey));
 
         return card;
     }

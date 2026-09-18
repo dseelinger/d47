@@ -375,8 +375,8 @@ public partial class MainWindow : Window
         }
 
         // Last, so it wraps whatever ZoomHost left behind rather than being zoomed along with the panel
-        // (#286).
-        CaptionStrip.Apply(this);
+        // (#286). No rule: the panel's own top edge sits directly under the strip.
+        CaptionStrip.Apply(this, drawRule: false);
     }
 
     /// <summary>What the panel is showing.</summary>

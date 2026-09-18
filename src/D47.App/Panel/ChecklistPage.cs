@@ -579,17 +579,16 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         var card = new Border
         {
             Padding = new Thickness(12, 8),
-            CornerRadius = new CornerRadius(4),
             BorderThickness = new Thickness(1),
             Child = body,
             MinHeight = 34,
         };
 
-        Themed(card, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
+        Themed(card, Border.BackgroundProperty, open ? ThemeManager.CardFillSelectedKey : ThemeManager.CardFillKey);
         Themed(
             card,
             Border.BorderBrushProperty,
-            open ? ThemeManager.AccentKey : ThemeManager.SurfaceAltKey);
+            open ? ThemeManager.AccentKey : ThemeManager.RuleKey);
 
         AutomationProperties.SetName(card, standing.Arc.Name);
 
@@ -880,7 +879,6 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         var card = new Border
         {
             Padding = new Thickness(12, 8),
-            CornerRadius = new CornerRadius(4),
             BorderThickness = new Thickness(1),
             Child = row,
 
@@ -888,11 +886,11 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             MinHeight = 34,
         };
 
-        Themed(card, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
+        Themed(card, Border.BackgroundProperty, selected ? ThemeManager.CardFillSelectedKey : ThemeManager.CardFillKey);
         Themed(
             card,
             Border.BorderBrushProperty,
-            selected ? ThemeManager.AccentKey : ThemeManager.SurfaceAltKey);
+            selected ? ThemeManager.AccentKey : ThemeManager.RuleKey);
 
         // Selecting is what grows the movers, so the whole card takes the press rather than a handle
         // somewhere on it.
@@ -1200,12 +1198,11 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         var card = new Border
         {
             Padding = new Thickness(12),
-            CornerRadius = new CornerRadius(4),
             BorderThickness = new Thickness(1),
             Child = body,
         };
 
-        Themed(card, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
+        Themed(card, Border.BackgroundProperty, ThemeManager.CardFillSelectedKey);
         Themed(card, Border.BorderBrushProperty, ThemeManager.AccentKey);
 
         return card;

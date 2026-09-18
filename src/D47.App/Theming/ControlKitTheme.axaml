@@ -94,14 +94,15 @@
         </ControlTemplate>
       </Setter>
 
+      <!-- On: the solid Accent knob moves to the right, so the switch reads by position, not only by brightness. -->
       <Style Selector="^:checked /template/ Border#Track">
-        <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
-        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Background" Value="{DynamicResource D47.FillLow}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource D47.Accent}" />
       </Style>
       <Style Selector="^:checked /template/ Border#Knob">
         <Setter Property="HorizontalAlignment" Value="Right" />
-        <Setter Property="Background" Value="{DynamicResource D47.Background}" />
         <Setter Property="Opacity" Value="1" />
+        <Setter Property="Effect" Value="{DynamicResource D47.Bloom.Fill}" />
       </Style>
     </ControlTheme>
 
