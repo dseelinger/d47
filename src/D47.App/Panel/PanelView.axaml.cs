@@ -92,6 +92,9 @@ public partial class PanelView : UserControl
     /// <summary>Which page was last drawn, as tab and root together.</summary>
     private PanelTab _showingTab = PanelTab.Transcript;
 
+    /// <summary>Where a thread proposal card checks whether it is still waiting, and settles it (#277).</summary>
+    private D47.Core.Checklists.ChecklistService? _checklists;
+
     private string _showingRoot = ConversationRoot;
 
     /// <summary>
@@ -548,6 +551,10 @@ public partial class PanelView : UserControl
         Action? backfill = null,
         Func<SourcingPage>? sourcing = null)
     {
+        // Held for the thread's own proposal cards: whether one is still pending is looked up here rather
+        // than trusted from what drew it last (#277).
+        _checklists = checklists;
+
         ChecklistPage? page = null;
         SourcingPage? shopping = null;
 
@@ -2884,6 +2891,10 @@ public partial class PanelView : UserControl
             && shape.Length > 0
             && shape.Length == _bubbles.Count
             && shape.Length == _shape.Count
+
+            // A proposal card's buttons live on the bubble this fast path never rebuilds — settling the
+            // newest one has to go through the full redraw below to lose them (#277).
+            && turns[^1].Kind != TranscriptRunKind.Proposal
             && shape.Take(shape.Length - 1).SequenceEqual(_shape.Take(_shape.Count - 1)))
         {
             Fill(_bubbles[^1].Block, turns[^1], _bubbles[^1].Start);
@@ -3003,6 +3014,16 @@ public partial class PanelView : UserControl
                 : Theming.ThemeManager.AccentInkKey));
 
         var content = new StackPanel { Spacing = 6, Children = { Head(turn), block } };
+
+        // The buttons only while the proposal is still waiting — looked up live rather than trusted from
+        // whatever this run's own tag last said, so a settlement this surface missed still takes them away
+        // (#277).
+        if (turn.Kind == TranscriptRunKind.Proposal
+            && turn.ProposalId is { Length: > 0 } proposalId
+            && IsProposalPending(proposalId))
+        {
+            content.Children.Add(ProposalButtons(proposalId));
+        }
 
         if (strip is not null)
         {
@@ -3144,6 +3165,22 @@ public partial class PanelView : UserControl
         return tag;
     }
 
+    /// <summary>Whether a proposal is still waiting on the Commander, read from the store rather than a run's own say-so (#277).</summary>
+    private bool IsProposalPending(string proposalId) =>
+        _checklists?.Proposals.Pending.Any(
+            proposal => string.Equals(proposal.Id, proposalId, StringComparison.OrdinalIgnoreCase)) ?? false;
+
+    /// <summary>
+    /// The thread's own Accept and Decline, reaching the same <see cref="D47.Core.Checklists.ChecklistService"/>
+    /// the Checklist page's card does — settling either settles both, through
+    /// <see cref="D47.Core.Checklists.ChecklistService.ProposalSettled"/> (#277).
+    /// </summary>
+    private Control ProposalButtons(string proposalId) =>
+        ProposalActions.Build(
+            () => { _checklists?.Accept(proposalId); },
+            () => { _checklists?.Decline(proposalId); },
+            "or say \"accept the proposal\"");
+
     /// <summary>
     /// The Fluent theme's expanded (hovered/dragged) overlay scroll bar width, in DIPs — the thin idle
     /// bar is 8px, but one fixed clearance that covers the wider state clears both without having to
@@ -3283,12 +3320,12 @@ public partial class PanelView : UserControl
         page is TranscriptPage.Log or TranscriptPage.RawJournal
             ? [.. segments.Select(segment => new DrawnSegment(
                 segment.Text, segment.Marker, segment.Voice, MarkupStyle.None,
-                segment.Speaker ?? "D47", segment.SourceKey, segment.Time))]
+                segment.Speaker ?? "D47", segment.SourceKey, segment.Time, segment.Kind, segment.ProposalId))]
             : [.. segments.SelectMany(segment => TranscriptMarkup
                 .Parse(segment.Text)
                 .Select(span => new DrawnSegment(
                     span.Text, segment.Marker, segment.Voice, span.Style,
-                    segment.Speaker ?? "D47", segment.SourceKey, segment.Time)))];
+                    segment.Speaker ?? "D47", segment.SourceKey, segment.Time, segment.Kind, segment.ProposalId)))];
 
     /// <summary>
     /// The page's segments gathered into turns: consecutive stretches from one side, with the blank
@@ -3299,7 +3336,7 @@ public partial class PanelView : UserControl
     {
         var gathered = new List<(
             TranscriptVoice Voice, bool Marker, string Speaker, string? SourceKey, DateTimeOffset Time,
-            List<DrawnSegment> Segments)>();
+            TranscriptRunKind Kind, string? ProposalId, List<DrawnSegment> Segments)>();
 
         foreach (var segment in segments)
         {
@@ -3307,20 +3344,25 @@ public partial class PanelView : UserControl
                 && last.Voice == segment.Voice
                 && last.Marker == segment.Marker
                 && last.Speaker == segment.Speaker
-                && last.SourceKey == segment.SourceKey)
+                && last.SourceKey == segment.SourceKey
+                && last.Kind == segment.Kind
+                && last.ProposalId == segment.ProposalId)
             {
                 last.Segments.Add(segment);
                 continue;
             }
 
-            gathered.Add((segment.Voice, segment.Marker, segment.Speaker, segment.SourceKey, segment.Time, [segment]));
+            gathered.Add((
+                segment.Voice, segment.Marker, segment.Speaker, segment.SourceKey, segment.Time,
+                segment.Kind, segment.ProposalId, [segment]));
         }
 
         return
         [
             .. gathered
                 .Select(turn => new DrawnTurn(
-                    turn.Voice, turn.Marker, Trimmed(turn.Segments), turn.Speaker, turn.SourceKey, turn.Time))
+                    turn.Voice, turn.Marker, Trimmed(turn.Segments), turn.Speaker, turn.SourceKey, turn.Time,
+                    turn.Kind, turn.ProposalId))
                 .Where(turn => turn.Segments.Count > 0)
         ];
     }
@@ -3872,7 +3914,9 @@ internal readonly record struct DrawnSegment(
     MarkupStyle Style,
     string Speaker,
     string? SourceKey,
-    DateTimeOffset Time);
+    DateTimeOffset Time,
+    TranscriptRunKind Kind = TranscriptRunKind.Text,
+    string? ProposalId = null);
 
 /// <summary>One side's uninterrupted stretch of the conversation — a bubble's worth.</summary>
 internal sealed record DrawnTurn(
@@ -3881,4 +3925,6 @@ internal sealed record DrawnTurn(
     IReadOnlyList<DrawnSegment> Segments,
     string Speaker,
     string? SourceKey,
-    DateTimeOffset Time);
+    DateTimeOffset Time,
+    TranscriptRunKind Kind = TranscriptRunKind.Text,
+    string? ProposalId = null);

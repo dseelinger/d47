@@ -1174,21 +1174,18 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     /// <summary>One proposal, with what it would do to the list.</summary>
     private Control Proposal(ChecklistProposal proposal, Action refresh)
     {
-        var accept = new Button { Content = "Accept", Padding = new Thickness(14, 4), MinHeight = TouchTarget };
-
-        accept.Click += (_, _) =>
-        {
-            Say(_checklists.Accept(proposal.Id));
-            refresh();
-        };
-
-        var decline = new Button { Content = "Decline", Padding = new Thickness(14, 4), MinHeight = TouchTarget };
-
-        decline.Click += (_, _) =>
-        {
-            Say(_checklists.Decline(proposal.Id));
-            refresh();
-        };
+        var actions = ProposalActions.Build(
+            accept: () =>
+            {
+                Say(_checklists.Accept(proposal.Id));
+                refresh();
+            },
+            decline: () =>
+            {
+                Say(_checklists.Decline(proposal.Id));
+                refresh();
+            },
+            footer: "D47 proposed this and cannot accept it itself.");
 
         var body = new StackPanel
         {
@@ -1196,13 +1193,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             Children =
             {
                 new TextBlock { Text = proposal.Summary, TextWrapping = TextWrapping.Wrap },
-                Muted("D47 proposed this and cannot accept it itself."),
-                new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    Spacing = 8,
-                    Children = { accept, decline },
-                },
+                actions,
             },
         };
 

@@ -46,6 +46,12 @@ public sealed class ChecklistService(
 
     public ChecklistProposalStore Proposals => proposals;
 
+    /// <summary>
+    /// A proposal was accepted or declined, with the sentence that says what happened — the transcript's
+    /// cue to settle its card, whichever surface or voice command did it (#277).
+    /// </summary>
+    public event Action<string, bool, string>? ProposalSettled;
+
     private CommanderGameState? State => commander();
 
     private string Fid => State?.Identity.FrontierId ?? string.Empty;
@@ -1188,7 +1194,9 @@ public sealed class ChecklistService(
 
         foreach (var proposal in taken)
         {
-            said.Add(Apply(proposal).Report);
+            var report = Apply(proposal).Report;
+            said.Add(report);
+            ProposalSettled?.Invoke(proposal.Id, true, report);
         }
 
         return Once(said);
@@ -1275,9 +1283,19 @@ public sealed class ChecklistService(
     {
         var taken = TakeOne(id);
 
-        return taken.Count == 0
-            ? "There is nothing waiting for you to decline."
-            : $"Dropped {taken.Count} proposal{(taken.Count == 1 ? string.Empty : "s")}.";
+        if (taken.Count == 0)
+        {
+            return "There is nothing waiting for you to decline.";
+        }
+
+        var dropped = $"Dropped {taken.Count} proposal{(taken.Count == 1 ? string.Empty : "s")}.";
+
+        foreach (var proposal in taken)
+        {
+            ProposalSettled?.Invoke(proposal.Id, false, dropped);
+        }
+
+        return dropped;
     }
 
     /// <summary>The named proposal, or every one waiting.</summary>

@@ -63,6 +63,10 @@ public sealed class ChecklistProposalStore(string path, ILogger<ChecklistProposa
 
     public event Action? Changed;
 
+    /// <summary>A proposal was recorded, with the id it was assigned — the transcript's cue to show a card
+    /// for it, whichever tool or arc raised it (#277).</summary>
+    public event Action<ChecklistProposal>? Added;
+
     public IReadOnlyList<ChecklistProposal> Pending
     {
         get
@@ -151,8 +155,11 @@ public sealed class ChecklistProposalStore(string path, ILogger<ChecklistProposa
         }
 
         var id = "p-" + Next(pending).ToString(CultureInfo.InvariantCulture);
+        var recorded = proposal with { Id = id };
 
-        Write([.. pending, proposal with { Id = id }]);
+        Write([.. pending, recorded]);
+
+        Added?.Invoke(recorded);
 
         return null;
     }

@@ -2065,6 +2065,11 @@ public sealed class AppHost : IDisposable
         host.Macros = macros;
         host.OwnPersonas = ownPersonas;
         host.Checklists = checklists;
+
+        // The conversation's own record of a proposal, independent of whoever raised or settled it — a
+        // tool call, an arc's own tick, the Checklist page's card, or a spoken "accept" (#277).
+        checklists.Proposals.Added += proposal => host.Panel.AppendProposal(proposal.Id, proposal.Summary);
+        checklists.ProposalSettled += (id, accepted, outcome) => host.Panel.SettleProposal(id, accepted, outcome);
         host.Timekeeper = timersAndAlarms?.Timekeeper;
         host.Ships = shipPlans;
         host.ShipBuilds = shipBuilds;

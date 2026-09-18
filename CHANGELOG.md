@@ -46,6 +46,12 @@ from, and the time. Callouts spoken to you now join the conversation the same wa
 invented chatter and a message you only overheard stay off it. The bracketed name in front of a
 persona's reply is gone now that the chip carries it.
 
+A checklist proposal now shows as a card in the Conversation, tagged proposal, with its summary
+and its own Accept and Decline. Settling it — from the card, from the Checklist page, or by
+saying "accept the proposal" — takes the buttons away and settles both: the card reads what
+happened and its tag changes to proposal · accepted or proposal · declined, and the proposal
+leaves the Checklist page's own list the same moment.
+
 ## 0.168.0 — Controls take the HUD dress
 
 Buttons, toggle switches and the transcript tabs now draw d47's own look rather than the

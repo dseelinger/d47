@@ -49,16 +49,29 @@ public enum TranscriptVoice
     Commander,
 }
 
+/// <summary>What a run is, beyond ordinary spoken or typed text (#277).</summary>
+public enum TranscriptRunKind
+{
+    Text,
+
+    /// <summary>A checklist proposal, drawn as a card rather than as a bubble's plain words.</summary>
+    Proposal,
+}
+
 /// <summary>A stretch of transcript drawn one way.</summary>
 /// <param name="Speaker">Who said it, or null on the flat Log and Raw Journal blocks, which carry no chip.</param>
 /// <param name="SourceKey">The callout key this run came from, or null for one that did not.</param>
+/// <param name="Kind">Whether this is a proposal card rather than plain text (#277).</param>
+/// <param name="ProposalId">Which proposal a <see cref="TranscriptRunKind.Proposal"/> run is about.</param>
 public sealed record TranscriptSegment(
     string Text,
     bool Marker,
     TranscriptVoice Voice,
     string? Speaker = null,
     string? SourceKey = null,
-    DateTimeOffset Time = default);
+    DateTimeOffset Time = default,
+    TranscriptRunKind Kind = TranscriptRunKind.Text,
+    string? ProposalId = null);
 
 /// <summary>What the panel shows, independent of where it is being shown.</summary>
 public sealed class PanelViewModel : INotifyPropertyChanged
@@ -73,7 +86,14 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         string Speaker,
         string? SourceKey,
         DateTimeOffset Time,
-        StringBuilder Text);
+        StringBuilder Text)
+    {
+        /// <summary>Whether this is a proposal card rather than plain text (#277).</summary>
+        public TranscriptRunKind Kind { get; init; } = TranscriptRunKind.Text;
+
+        /// <summary>Which proposal a <see cref="TranscriptRunKind.Proposal"/> run is about.</summary>
+        public string? ProposalId { get; init; }
+    }
 
     /// <summary>Guards <see cref="_runs"/> and the strings derived from it.</summary>
     private readonly Lock _appendLock = new();
@@ -409,12 +429,14 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         lock (_appendLock)
         {
             // A run merges only into one from the same speaker and the same source: two callouts spoken
-            // back to back stay two bubbles even when both are the ship's own voice.
+            // back to back stay two bubbles even when both are the ship's own voice. A proposal card never
+            // merges with plain text either way (#277).
             if (_runs.Count == 0
                 || _runs[^1].Marker != marker
                 || _runs[^1].Voice != voice
                 || _runs[^1].Speaker != named
-                || _runs[^1].SourceKey != sourceKey)
+                || _runs[^1].SourceKey != sourceKey
+                || _runs[^1].Kind != TranscriptRunKind.Text)
             {
                 _runs.Add(new Run(marker, voice, named, sourceKey, at, new StringBuilder()));
             }
@@ -425,6 +447,63 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         }
 
         // Outside the lock.
+        TranscriptText = transcript;
+
+        TranscriptAppended?.Invoke();
+    }
+
+    /// <summary>
+    /// Puts a proposal's card in the conversation: the summary, with Accept and Decline while it waits
+    /// (#277). Always a run of its own — see <see cref="Append"/>'s merge guard.
+    /// </summary>
+    public void AppendProposal(string proposalId, string summary)
+    {
+        string transcript;
+
+        lock (_appendLock)
+        {
+            _runs.Add(new Run(Marker: false, TranscriptVoice.Ship, "D47", "proposal", DateTimeOffset.Now, new StringBuilder(summary))
+            {
+                Kind = TranscriptRunKind.Proposal,
+                ProposalId = proposalId,
+            });
+
+            transcript = string.Concat(_runs.Select(Flatten));
+        }
+
+        TranscriptText = transcript;
+
+        TranscriptAppended?.Invoke();
+    }
+
+    /// <summary>
+    /// Settles a proposal's card, from whichever surface or voice command answered it: the buttons go,
+    /// the tag says what happened, and the text becomes the outcome (#277).
+    /// </summary>
+    public void SettleProposal(string proposalId, bool accepted, string outcome)
+    {
+        string transcript;
+
+        lock (_appendLock)
+        {
+            var index = _runs.FindLastIndex(run =>
+                run.Kind == TranscriptRunKind.Proposal
+                && string.Equals(run.ProposalId, proposalId, StringComparison.Ordinal));
+
+            if (index < 0)
+            {
+                return;
+            }
+
+            var run = _runs[index];
+            run.Text.Clear();
+            run.Text.Append(outcome);
+
+            _runs[index] = run with { SourceKey = accepted ? "proposal · accepted" : "proposal · declined" };
+
+            transcript = string.Concat(_runs.Select(Flatten));
+        }
+
         TranscriptText = transcript;
 
         TranscriptAppended?.Invoke();
@@ -466,7 +545,9 @@ public sealed class PanelViewModel : INotifyPropertyChanged
             _ =>
             [
                 .. _runs.Select(run =>
-                    new TranscriptSegment(Text(run), run.Marker, run.Voice, run.Speaker, run.SourceKey, run.Time))
+                    new TranscriptSegment(
+                        Text(run), run.Marker, run.Voice, run.Speaker, run.SourceKey, run.Time,
+                        run.Kind, run.ProposalId))
             ],
         };
     }
