@@ -768,7 +768,14 @@ public sealed class SteamVrRuntime(
 
         if (readback.Write)
         {
-            logger.LogInformation("{Surface}: {State}", source.Surface, described);
+            if (readback.Changed)
+            {
+                logger.LogInformation("{Surface}: {State}", source.Surface, described);
+            }
+            else
+            {
+                logger.LogDebug("{Surface}: {State}", source.Surface, described);
+            }
         }
 
         // Once per surface per session. "The overlays are up" says the quads were created, not that anything

@@ -18,6 +18,7 @@ public class TheReadbackSaysWhenItChangesTests
         var plan = RuntimeReadback.Plan(held: null, Visible, Start);
 
         Assert.True(plan.Write);
+        Assert.True(plan.Changed);
         Assert.Equal(Visible, plan.Held.Text);
         Assert.Equal(Start, plan.Held.When);
     }
@@ -40,7 +41,10 @@ public class TheReadbackSaysWhenItChangesTests
         var held = new SurfaceReport(Visible, Start);
 
         Assert.False(RuntimeReadback.Plan(held, Visible, Start + RuntimeReadback.Every - TimeSpan.FromSeconds(1)).Write);
-        Assert.True(RuntimeReadback.Plan(held, Visible, Start + RuntimeReadback.Every).Write);
+
+        var heartbeat = RuntimeReadback.Plan(held, Visible, Start + RuntimeReadback.Every);
+        Assert.True(heartbeat.Write);
+        Assert.False(heartbeat.Changed);
     }
 
     [Fact]
@@ -49,7 +53,10 @@ public class TheReadbackSaysWhenItChangesTests
         var held = new SurfaceReport(Visible, Start);
 
         Assert.False(RuntimeReadback.Plan(held, Hidden, Start.AddMilliseconds(900)).Write);
-        Assert.True(RuntimeReadback.Plan(held, Hidden, Start + RuntimeReadback.AtMost).Write);
+
+        var change = RuntimeReadback.Plan(held, Hidden, Start + RuntimeReadback.AtMost);
+        Assert.True(change.Write);
+        Assert.True(change.Changed);
     }
 
     /// <summary>A change suppressed by the floor is not lost.</summary>

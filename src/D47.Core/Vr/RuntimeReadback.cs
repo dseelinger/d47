@@ -9,6 +9,9 @@ public sealed record ReadbackPlan
 {
     public required bool Write { get; init; }
 
+    /// <summary>Whether this write is the first sighting or a changed description, rather than the heartbeat.</summary>
+    public required bool Changed { get; init; }
+
     /// <summary>The state to keep.</summary>
     public required SurfaceReport Held { get; init; }
 }
@@ -33,7 +36,7 @@ public static class RuntimeReadback
     {
         if (held is not { } last)
         {
-            return Writing(described, now);
+            return Writing(described, now, changed: true);
         }
 
         // Ordinal, because this is one machine's own string compared against itself a tenth of a second
@@ -43,14 +46,14 @@ public static class RuntimeReadback
         // The floor is the whole design in one line: a change is news and waits a second, and sameness is a
         // heartbeat and waits five minutes.
         return now - last.When >= (changed ? AtMost : Every)
-            ? Writing(described, now)
-            : new ReadbackPlan { Write = false, Held = last };
+            ? Writing(described, now, changed)
+            : new ReadbackPlan { Write = false, Changed = changed, Held = last };
     }
 
     /// <summary>
     /// The held state advances only when something is written, which is what makes a change survive
     /// being suppressed.
     /// </summary>
-    private static ReadbackPlan Writing(string described, DateTimeOffset now) =>
-        new() { Write = true, Held = new SurfaceReport(described, now) };
+    private static ReadbackPlan Writing(string described, DateTimeOffset now, bool changed) =>
+        new() { Write = true, Changed = changed, Held = new SurfaceReport(described, now) };
 }

@@ -57,6 +57,10 @@ Trace, a readout, and a reset. A row with its own level draws in Accent; a row w
 the default, shown as a hollow marker that moves when the default does. The Diagnostics card on
 the Settings page now carries only what is paused and hand-testing coverage.
 
+SteamVR's own account of a panel's position and visibility now writes at Information only on the
+first sighting and on a real change; the five-minute heartbeat that repeats an unchanged
+description now writes at Debug, so a still panel no longer pushes real log lines off the page.
+
 ## 0.168.0 — Controls take the HUD dress
 
 Buttons, toggle switches and the transcript tabs now draw d47's own look rather than the
