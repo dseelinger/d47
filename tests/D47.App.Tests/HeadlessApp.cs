@@ -29,6 +29,13 @@ public class HeadlessApp : Application
     {
         Styles.Add(new FluentTheme());
 
+        // The same scrollbar template App.axaml adds after FluentTheme.
+        Styles.Add(
+            new Avalonia.Markup.Xaml.Styling.StyleInclude((Uri?)null)
+            {
+                Source = new Uri("avares://d47/Theming/ScrollViewerTheme.axaml"),
+            });
+
         // The same scale App.axaml merges.
         Resources.MergedDictionaries.Add(
             new Avalonia.Markup.Xaml.Styling.ResourceInclude((Uri?)null)

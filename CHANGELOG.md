@@ -6,6 +6,13 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.167.1 — Give the vertical scrollbar its own column
+
+Every scrollbar in the desktop window, its dialogs and the VR panel drew over the right edge of
+the content it scrolled, wider still once the pointer moved onto it. The content now stops at its
+own column, and the bar shows at its full width whenever it is there — never wider, never
+overlapping.
+
 ## 0.167.0 — Ask which engineers want a thing
 
 One tool now answers across every engineer at once: who refers them, what earns the invitation,
