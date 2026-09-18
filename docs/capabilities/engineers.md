@@ -409,6 +409,16 @@ about the Commander's own system without naming it.
 {"type":"object","properties":{"engineer":{"type":"string","description":"An engineer by name \u2014 for example \u0022Farseer\u0022 or \u0022Hera Tani\u0022."},"grades":{"type":"string","description":"A kind of module to find engineers for \u2014 for example \u0022Frame Shift Drive\u0022, \u0022Thrusters\u0022 or \u0022Shield Generator\u0022."},"system":{"type":"string","description":"A system to find the engineer based there, by name \u2014 the Commander\u0027s current system when left out."}},"required":[],"additionalProperties":false}
 ```
 
+#### `get_engineer_prerequisites`
+
+Say *"what is left for Liz Ryder"*, *"what's left for Liz Ryder"* or *"what does Liz Ryder still
+need"* — one set of phrases per engineer, generated at startup so every name in the directory
+routes without the model. An unlocked engineer answers that nothing is left.
+
+```json
+{"type":"object","properties":{"engineer":{"type":"string","description":"An engineer by name \u2014 for example \u0022Farseer\u0022 or \u0022Hera Tani\u0022."}},"required":["engineer"],"additionalProperties":false}
+```
+
 #### `get_engineer_route`
 
 Say *"who should I unlock next"*, *"what is the fastest way in"* or *"which engineer next"*.

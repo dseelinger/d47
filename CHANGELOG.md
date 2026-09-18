@@ -6,6 +6,13 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.166.0 — Say what is left for an engineer
+
+Asking "what is left for" an engineer, by name, now answers aloud with the prerequisites that are
+not yet met — a referral, an invitation task, a tribute — each with d47's reading of it, such as
+"120 of 200 handed over". Routed with no model turn, for every engineer in the directory. An
+already-unlocked engineer says so.
+
 ## 0.165.2 — Custom checklist lines get an aligned checkbox
 
 A custom line's tick is now a checkbox labelled "completed" instead of a switch, and sits beside

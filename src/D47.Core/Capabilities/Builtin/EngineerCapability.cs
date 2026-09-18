@@ -41,6 +41,7 @@ public static class EngineerCapability
             "who grades frame shift drives",
             "where is Felicity Farseer",
             "who should I unlock next",
+            "what is left for Liz Ryder",
         ],
         // Each names its tool (#161): four tools here take no required argument.
         Keywords =
@@ -99,6 +100,26 @@ public static class EngineerCapability
                     },
                 ],
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(Find(commander, arguments))),
+            },
+
+            new ToolDefinition
+            {
+                Name = "get_engineer_prerequisites",
+                Description =
+                    "What is still standing between the Commander and one engineer: the prerequisites from "
+                    + "their unlock chain that are not yet met, each with d47's reading of it.",
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "engineer",
+                        Type = ToolParameterType.String,
+                        Description = "An engineer by name — for example \"Farseer\" or \"Hera Tani\".",
+                        Required = true,
+                    },
+                ],
+                Commands = [.. EngineerDirectory.All.SelectMany(PrerequisitePhrases)],
+                Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(Prerequisites(commander, arguments))),
             },
 
             // Protected, and cost is the reason rather than safety: it reads and writes nothing.
@@ -196,6 +217,60 @@ public static class EngineerCapability
             report.AppendLine();
             report.AppendLine(
                 $"Not met at all: {string.Join(", ", unmet.Select(engineer => engineer.Name))}.");
+        }
+
+        return report.ToString().TrimEnd();
+    }
+
+    /// <summary>
+    /// "What is left for X" as a fixed phrase, one set per engineer, since a command phrase's
+    /// arguments cannot be read out of the utterance (#266).
+    /// </summary>
+    private static IEnumerable<ToolCommandPhrase> PrerequisitePhrases(Engineer engineer)
+    {
+        var arguments = new Dictionary<string, string>(StringComparer.Ordinal) { ["engineer"] = engineer.Name };
+
+        yield return new ToolCommandPhrase($"what is left for {engineer.Name}", arguments);
+        yield return new ToolCommandPhrase($"what's left for {engineer.Name}", arguments);
+        yield return new ToolCommandPhrase($"what does {engineer.Name} still need", arguments);
+    }
+
+    private static string Prerequisites(Func<CommanderGameState?> commander, ToolArguments arguments)
+    {
+        arguments.TryGetString("engineer", out var name);
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return "Name an engineer.";
+        }
+
+        if (EngineerDirectory.ByName(name) is not { } engineer)
+        {
+            return Catalogue.Unknown("engineer", name.Trim(), EngineerDirectory.Near(name));
+        }
+
+        var evidence = Engineers.UnlockEvidence.From(commander());
+
+        if (evidence.Progress?.For(engineer.Id)?.IsUnlocked == true)
+        {
+            return $"{engineer.Name} is unlocked. Nothing is left.";
+        }
+
+        var unmet = EngineerAccess.CriteriaFor(engineer, evidence).Where(criterion => criterion.Met != true).ToArray();
+
+        if (unmet.Length == 0)
+        {
+            return $"Every prerequisite for {engineer.Name} is met, but they have not unlocked yet.";
+        }
+
+        var report = new StringBuilder();
+        report.AppendLine($"Still needed for {engineer.Name}:");
+
+        foreach (var criterion in unmet)
+        {
+            report.AppendLine(criterion.Reading is { Length: > 0 } reading
+                ? $"  {criterion.Text.TrimEnd('.')}: {reading}."
+                : $"  {criterion.Text}");
         }
 
         return report.ToString().TrimEnd();
