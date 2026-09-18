@@ -195,7 +195,7 @@ public class SettingsLayoutTests
     [InlineData("headset", VrCapability.EnabledKey)]
     [InlineData("privacy", "egress.llm")]
     [InlineData("updates", AboutCapability.VersionKey)]
-    [InlineData("diagnostics", "logging.default")]
+    [InlineData("diagnostics", DiagnosticsCapability.PausedKey)]
     [InlineData("exploring", "callouts.surveyedBiology")]
     public void NamedRowsLandInTheirStatedPlaceTests(string placeId, string key)
     {

@@ -68,13 +68,18 @@ public sealed class EverySettingSitsWhereTheLayoutPutsItTests
         var host = Open(out _);
         var area = SettingsLayout.Areas.Single(a => a.Title == areaTitle);
 
+        // Diagnostics holds only diagnostics.paused and diagnostics.coverage, and a fresh test
+        // surface has neither a paused subscriber nor coverage recording — so the card that fold
+        // takes off the page entirely never draws here (#283).
+        var expected = area.Places.Where(place => place.Id != "diagnostics").Select(place => place.Title);
+
         host.View.SelectArea(AreaIndex(areaTitle));
         Jobs();
 
         var listed = Nav(host.View, SettingsView.NavPlaceClass).Where(item => item.IsVisible).ToList();
 
-        Assert.Equal(area.Places.Select(place => place.Title), listed.Select(Words));
-        Assert.Equal(area.Places.Select(place => place.Title), Cards(host.View).Select(Title));
+        Assert.Equal(expected, listed.Select(Words));
+        Assert.Equal(expected, Cards(host.View).Select(Title));
 
         host.Close();
     }

@@ -291,7 +291,11 @@ public class ATabsOwnSettingsShowOnItTests
     [AvaloniaFact]
     public void EveryTabPlaceRootKeyIsARootThisAppFurnishes()
     {
-        var known = new[] { LoadoutPages.FleetRoot, RoutingPages.CommunityGoalRoot, AdventuresPage.RootKey, "checklist" };
+        var known = new[]
+        {
+            LoadoutPages.FleetRoot, RoutingPages.CommunityGoalRoot, AdventuresPage.RootKey, "checklist",
+            PanelView.LogRoot,
+        };
 
         foreach (var tab in SettingsLayout.Tabs)
         {

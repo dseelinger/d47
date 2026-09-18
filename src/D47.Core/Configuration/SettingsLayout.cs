@@ -98,6 +98,9 @@ public static class SettingsLayout
     public static bool IsEgressFamily(string key) =>
         key.StartsWith("egress.", StringComparison.Ordinal);
 
+    public static bool IsSubsystemLevelFamily(string key) =>
+        key.StartsWith("logging.subsystems.", StringComparison.Ordinal);
+
     public static readonly IReadOnlyList<SettingsArea> Areas =
     [
         new SettingsArea(
@@ -613,14 +616,13 @@ public static class SettingsLayout
                 new SettingsPlace(
                     "diagnostics",
                     "Diagnostics",
-                    "Log levels, what is paused, and hand-testing coverage.",
+                    "What is paused, and hand-testing coverage.",
                     "diagnostics",
                     [],
                     true,
                     [
                         G(
                         [
-                            E("logging.default"),
                             E("diagnostics.paused"),
                             E("diagnostics.coverage"),
                         ]),
@@ -646,6 +648,9 @@ public static class SettingsLayout
         new SettingsTabPlace(
             "checklist", "checklist", false, "Checklist",
             [E("checklists.summary"), E("checklists.removeFulfilled")]),
+        new SettingsTabPlace(
+            "log-levels", "transcript.log", true, "Transcript › Log File",
+            [E(Capabilities.Builtin.DiagnosticsCapability.DefaultLevelKey), F(IsSubsystemLevelFamily)]),
     ];
 
     /// <summary>

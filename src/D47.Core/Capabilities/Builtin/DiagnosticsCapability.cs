@@ -193,13 +193,16 @@ public static class DiagnosticsCapability
     /// <summary>The row that names the tick subscribers repeated failure has paused (#58).</summary>
     public const string PausedKey = "diagnostics.paused";
 
+    /// <summary>The row a subsystem with no override of its own inherits.</summary>
+    public const string DefaultLevelKey = "logging.default";
+
     private static IReadOnlyList<SettingRow> BuildSettingRows(Func<string>? coverage, Ticking.TickLoop? ticking)
     {
         var rows = new List<SettingRow>
         {
             new()
             {
-                Key = "logging.default",
+                Key = DefaultLevelKey,
                 Advanced = true,
                 Label = "Default log level",
                 Help = "Applies to any subsystem without its own level below.",
@@ -232,9 +235,6 @@ public static class DiagnosticsCapability
             Choices = LogLevelNames,
             DocsAnchor = "the-parts-you-can-turn-up",
 
-            // Not drawn on the Settings page; these wait for the verbosity track (#283). Voice and the
-            // set_log_verbosity tool still set them.
-            DrawnElsewhere = true,
             Binding = new SettingBinding
             {
                 // Absent from the dictionary is the "no override" state, which is what the placeholder

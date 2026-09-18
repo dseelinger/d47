@@ -1214,6 +1214,15 @@ public partial class PanelView : UserControl
         ApplyChrome();
     }
 
+    private Func<Control?>? _logSettingsStrip;
+
+    /// <summary>The Log file page's own settings — log levels — on the tab they only affect (#283).</summary>
+    public void EnableLog(Func<Control?>? settingsStrip)
+    {
+        _logSettingsStrip = settingsStrip;
+        ShowLogSettingsStrip();
+    }
+
     /// <summary>Adds the Raw Journal reading (#51), on a surface that has somewhere useful to put it.</summary>
     public void EnableRawJournal()
     {
@@ -2154,6 +2163,7 @@ public partial class PanelView : UserControl
         ModePicker.IsVisible = !OutputOnly && roots.Count > 1 && Nav.AtRoot;
 
         ShowPageBar();
+        ShowLogSettingsStrip();
 
         // Ahead of the early return below, which answers only the picker: Fleet's Ships root has one reading
         // and never shows the picker, but a Commander parked on Raw Journal must not see its toggle survive
@@ -3820,12 +3830,26 @@ public partial class PanelView : UserControl
         ScrollPastReadingItem.IsEnabled = transcript;
 
         ShowPageBar();
+        ShowLogSettingsStrip();
     }
 
     private void ShowPageBar() =>
         PageBar.IsVisible = Mode == PanelMode.Full
                             && ModalPane.Child is null
                             && (ModePicker.IsVisible || SearchRow.IsVisible || RawToggleBox.IsVisible);
+
+    /// <summary>Built lazily the first time it would show, and never rebuilt after (#283).</summary>
+    private void ShowLogSettingsStrip()
+    {
+        var show = Tab == PanelTab.Transcript && Page == TranscriptPage.Log && Mode == PanelMode.Full;
+
+        if (show && LogSettingsStrip.Content is null)
+        {
+            LogSettingsStrip.Content = _logSettingsStrip?.Invoke();
+        }
+
+        LogSettingsStrip.IsVisible = show && LogSettingsStrip.Content is not null;
+    }
 
     /// <summary>Opens the sharing window (#160, #238).</summary>
     private void OnDonateClick(object? sender, RoutedEventArgs e) => _donate?.Invoke();

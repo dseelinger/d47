@@ -16,8 +16,7 @@ Moving through a choice no longer does anything costly. Picking a ship to plan o
 narrow by typing; pressing a row or an arrow key only highlights it, and nothing is planned until
 you press Plan this hull or Enter, or say the name. The speech model and the local voice build now
 stage the one you step to, and the one in use keeps running until you press the button that names
-the cost, such as "Download 466 MB and use it". The eight per-subsystem log levels leave the
-Settings page for now; voice and the log-level tool still set them.
+the cost, such as "Download 466 MB and use it".
 
 The conversation bubbles take the HUD dress too: Saira prose instead of the monospace font, a faint
 tinted fill and a chamfered corner on the tail side — Accent for the ship, Info for the Commander —
@@ -51,6 +50,12 @@ and its own Accept and Decline. Settling it — from the card, from the Checklis
 saying "accept the proposal" — takes the buttons away and settles both: the card reads what
 happened and its tag changes to proposal · accepted or proposal · declined, and the proposal
 leaves the Checklist page's own list the same moment.
+
+The eight per-subsystem log levels move to the Log file page, as that page's own settings strip:
+the default level, and a track below it with one row per subsystem — seven stops from None to
+Trace, a readout, and a reset. A row with its own level draws in Accent; a row with none follows
+the default, shown as a hollow marker that moves when the default does. The Diagnostics card on
+the Settings page now carries only what is paused and hand-testing coverage.
 
 ## 0.168.0 — Controls take the HUD dress
 

@@ -182,6 +182,10 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         // The journal's raw reading, in the headset (#231).
         _view.EnableRawJournal();
 
+        // The Log file page's own settings — log levels — in the headset (#283).
+        _view.EnableLog(
+            buildSettingsStrip is null ? null : () => buildSettingsStrip(PanelView.LogRoot));
+
         if (routing is not null)
         {
             // Every root, Plan included (#52): a form's boxes are plain text boxes and so reach the offscreen

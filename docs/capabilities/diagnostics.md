@@ -238,13 +238,15 @@ part threw, and the line at shutdown says whether it was still paused when D47 c
 
 ### Settings
 
+The log levels are not on this page. They are on the Log file reading of the Transcript page, as
+that page's own settings strip: the default level, and the per-subsystem track underneath it.
+Searching this page for "log level" finds them under "On other tabs".
+
 | Row | What it does |
 |---|---|
-| Default log level | Applies to any part without its own level |
-| *&lt;Part&gt;* log level | One row per part, offering the same levels |
 | Paused after repeated failures | Present only while a part of the loop has stopped; names it |
 
-Asking out loud and changing the row do the same thing, and both survive a restart. There is no
+Asking out loud and changing a level do the same thing, and both survive a restart. There is no
 second, temporary kind of change to keep track of.
 
 <details markdown="1">

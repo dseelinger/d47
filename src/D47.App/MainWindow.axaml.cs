@@ -298,6 +298,9 @@ public partial class MainWindow : Window
             // And the same window is the one with a keyboard, so it is the one that gets a search box.
             Panel.EnableSearch();
 
+            // The Log file page's own settings — log levels — on the tab they only affect (#283).
+            Panel.EnableLog(() => BuildSettingsStrip(PanelView.LogRoot));
+
             // And the same window is the one with a mouse, which is the only thing the ask lets drag a pane
             // (Phase 55).
             Panel.EnableDraggablePanes(new PaneWidthMemory(host.ViewState));

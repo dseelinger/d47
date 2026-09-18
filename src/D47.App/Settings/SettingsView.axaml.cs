@@ -512,6 +512,25 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         for (var i = 0; i < rows.Count; i++)
         {
             var row = rows[i];
+
+            if (SettingsLayout.IsSubsystemLevelFamily(row.Key))
+            {
+                // Drawn as one track at the first of the family, and skipped after (#283).
+                if (i > 0 && SettingsLayout.IsSubsystemLevelFamily(rows[i - 1].Key))
+                {
+                    continue;
+                }
+
+                var family = rows.Skip(i).TakeWhile(r => SettingsLayout.IsSubsystemLevelFamily(r.Key)).ToList();
+                var defaultRow = rows.FirstOrDefault(r => r.Key == DiagnosticsCapability.DefaultLevelKey) ?? row;
+                var track = new SubsystemLevelTrack(settings, defaultRow, family);
+                var trackView = new RowView(row with { DrawnElsewhere = false }, track, track.Refresh);
+
+                _rows.Add(trackView);
+                content.Children.Add(track);
+                continue;
+            }
+
             var view = BuildRow(SectionOwning(settings, row), row, shaded: i % 2 == 1);
             _rows.Add(view);
             content.Children.Add(view.Container);
