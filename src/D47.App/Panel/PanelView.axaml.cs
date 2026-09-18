@@ -165,6 +165,10 @@ public partial class PanelView : UserControl
         // (#273).
         ModeBox.LayoutUpdated += (_, _) => WidenModeBoxToItsWidestReading();
 
+        // The bar's width decides whether the readings are segments or a stepper, and so does what the search
+        // row is showing beside them — a drag changes the one, a search or a page change the other.
+        PageBar.LayoutUpdated += (_, _) => ShowModeControl();
+
         // The strip's own first measurement, so a window that opens too narrow for the words is decided
         // before it is shown rather than only on the first drag (#95).
         TabsScroller.LayoutUpdated += (_, _) => ShowTabSteppers();
@@ -219,6 +223,10 @@ public partial class PanelView : UserControl
             "Resize the panel");
 
         Watch(Transcript);
+
+        // Whether this theme has scanlines at all; the brush itself is built for this surface's scaling.
+        this.GetResourceObservable(Theming.ThemeManager.ScanlinesKey)
+            .Subscribe(new Avalonia.Reactive.AnonymousObserver<object?>(_ => DrawScanlines()));
 
         // Built once, checking `_copy` at render time rather than caching it, so a page opened before
         // `EnableCopy` runs still draws the glyph once it does (#158).
@@ -1520,6 +1528,10 @@ public partial class PanelView : UserControl
 
         var scroller = Scroller;
 
+        // The thread's own height rather than the viewport's, since the mark is where the reading ends and
+        // new bubbles have to grow the extent past it. AnchorThread leaves it off while the fold holds.
+        TranscriptContent.MinHeight = 0;
+
         // Laid out first, for the reason Follow gives: the mark is the height of the content as it is now,
         // and a run appended a moment ago is not in the extent until this returns.
         scroller.UpdateLayout();
@@ -1718,6 +1730,22 @@ public partial class PanelView : UserControl
         if (PadOn(pad) > 0)
         {
             pad.Margin = default;
+        }
+
+        AnchorThread();
+    }
+
+    /// <summary>
+    /// Holds the conversation's content at least as tall as the view, so its bubbles, aligned to the
+    /// bottom, sit beside the ask box — except while a fold holds, which measures the thread's own height.
+    /// </summary>
+    private void AnchorThread()
+    {
+        var height = Bubbles.IsVisible && _fold is null ? TranscriptScroller.Viewport.Height : 0;
+
+        if (TranscriptContent.MinHeight != height)
+        {
+            TranscriptContent.MinHeight = height;
         }
     }
 
@@ -1992,7 +2020,7 @@ public partial class PanelView : UserControl
         ContentPane.Bind(
             Border.BackgroundProperty,
             this.GetResourceObservable(transcript
-                ? Theming.ThemeManager.SurfaceKey
+                ? Theming.ThemeManager.PaneFillKey
                 : Theming.ThemeManager.BackgroundKey));
 
         // The page's own bar.
@@ -2185,12 +2213,15 @@ public partial class PanelView : UserControl
             try
             {
                 ModeBox.ItemsSource = words;
+                ModeSegments.ItemsSource = words;
             }
             finally
             {
                 _settingMode = false;
             }
         }
+
+        ShowModeControl();
 
         var index = roots.FindIndex(root => root.Key == showing);
 
@@ -2201,6 +2232,7 @@ public partial class PanelView : UserControl
         try
         {
             ModeBox.SelectedIndex = index < 0 ? 0 : index;
+            ModeSegments.SelectedIndex = ModeBox.SelectedIndex;
         }
         finally
         {
@@ -2303,8 +2335,103 @@ public partial class PanelView : UserControl
     /// </summary>
     private double? _modeBoxChrome;
 
+    /// <summary>The most readings the page bar shows as segments rather than stepping through (#274).</summary>
+    private const int MostSegments = 4;
+
+    /// <summary>
+    /// Segments while every reading fits on screen at once beside the search row, the stepper otherwise —
+    /// past four readings, or on a pane too narrow for the row (#274).
+    /// </summary>
+    private void ShowModeControl()
+    {
+        var words = ModeBox.ItemsSource;
+        var segmented = words.Count > 1 && words.Count <= MostSegments && SegmentsFit(words);
+
+        if (ModeSegments.IsVisible != segmented || ModeBox.IsVisible == segmented)
+        {
+            ModeSegments.IsVisible = segmented;
+            ModeBox.IsVisible = !segmented;
+        }
+    }
+
+    /// <summary>
+    /// Whether the segments for <paramref name="words"/> leave the search row its minimum. Worked out from the
+    /// words rather than from the segments' own layout, which a hidden control does not have.
+    /// </summary>
+    private bool SegmentsFit(IReadOnlyList<string> words)
+    {
+        // Not laid out yet: assume they fit, and the first measurement settles it.
+        if (PageBar.Bounds.Width <= 0)
+        {
+            return true;
+        }
+
+        var segments = SegmentsWidth(words);
+
+        // Whatever else the picker is carrying — the busy glyph, the journal's Raw toggle.
+        var beside = ModePicker.Children
+            .Where(child => child != ModeBox && child != ModeSegments && child.IsVisible)
+            .Sum(child => child.Bounds.Width + ModePicker.Spacing);
+
+        var needed = segments + beside + ModePicker.Margin.Left + ModePicker.Margin.Right + SearchRowMinimum();
+
+        return needed <= PageBar.Bounds.Width;
+    }
+
+    /// <summary>How wide the segments for <paramref name="words"/> draw, worked out once per set of readings.</summary>
+    private double SegmentsWidth(IReadOnlyList<string> words)
+    {
+        if (_segmentsWidth is { } known && known.Words.SequenceEqual(words))
+        {
+            return known.Width;
+        }
+
+        var theme = Application.Current?.FindResource("D47.Segment") as Avalonia.Styling.ControlTheme;
+        var padding = theme?.Setters.OfType<Avalonia.Styling.Setter>()
+            .FirstOrDefault(setter => setter.Property == PaddingProperty)?.Value as Thickness? ?? new Thickness(14, 6);
+
+        var typeface = new Typeface(Theming.Fonts.LabelFamily);
+
+        // Each segment is its word, its padding and a 1px left edge; the last one closes the row with a right edge.
+        var width = words.Sum(word => new FormattedText(
+            word,
+            CultureInfo.CurrentCulture,
+            FlowDirection.LeftToRight,
+            typeface,
+            Theming.TypeScale.Body,
+            Brushes.Black).Width + padding.Left + padding.Right + 1) + 1;
+
+        _segmentsWidth = ([.. words], width);
+
+        return width;
+    }
+
+    /// <summary>The last answer <see cref="SegmentsWidth"/> gave, and the readings it was for.</summary>
+    private (IReadOnlyList<string> Words, double Width)? _segmentsWidth;
+
+    /// <summary>The narrowest the search row goes: its buttons as they are, and the box at its MinWidth.</summary>
+    private double SearchRowMinimum()
+    {
+        if (!SearchRow.IsVisible)
+        {
+            return 0;
+        }
+
+        return SearchRow.Margin.Left + SearchRow.Margin.Right
+            + SearchInput.MinWidth + SearchInput.Margin.Left + SearchInput.Margin.Right
+            + SearchRow.Children
+                .Where(child => child != SearchInput && child.IsVisible)
+                .Sum(child => child.Bounds.Width + child.Margin.Left + child.Margin.Right);
+    }
+
+    /// <summary>The Commander pressed a reading's segment.</summary>
+    private void OnModeSegmentChanged(object? sender, EventArgs e) => ChooseReading(ModeSegments.SelectedIndex);
+
     /// <summary>The Commander stepped to a reading.</summary>
-    private void OnModeChanged(object? sender, EventArgs e)
+    private void OnModeChanged(object? sender, EventArgs e) => ChooseReading(ModeBox.SelectedIndex);
+
+    /// <summary>Goes to the reading at <paramref name="index"/>, unless the picker is being written rather than pressed.</summary>
+    private void ChooseReading(int index)
     {
         if (_settingMode)
         {
@@ -2312,7 +2439,6 @@ public partial class PanelView : UserControl
         }
 
         var roots = Nav.Roots(Nav.Tab);
-        var index = ModeBox.SelectedIndex;
 
         if (index < 0 || index >= roots.Count)
         {
@@ -2830,6 +2956,7 @@ public partial class PanelView : UserControl
 
         Transcript.IsVisible = !bubbled;
         Bubbles.IsVisible = bubbled;
+        AnchorThread();
 
         if (_bound is null)
         {
@@ -3100,6 +3227,7 @@ public partial class PanelView : UserControl
         var time = new TextBlock
         {
             Text = turn.Time.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture),
+            FontFamily = MonospaceFamily,
             FontSize = Theming.TypeScale.Small,
             VerticalAlignment = VerticalAlignment.Center,
         };
@@ -3150,30 +3278,27 @@ public partial class PanelView : UserControl
         return chip;
     }
 
-    /// <summary>A callout's key, tagged the same way a Settings row's inline tag is (#279).</summary>
+    /// <summary>
+    /// A callout's key, as plain monospace text rather than a boxed tag: it says where a line came from, which
+    /// is read after the line itself, so it sits below the prose in weight rather than beside the speaker.
+    /// </summary>
     private Control SourceTag(string sourceKey)
     {
         var label = new TextBlock
         {
             Text = sourceKey,
+            FontFamily = MonospaceFamily,
             FontSize = Theming.TypeScale.Small,
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.AccentKey));
+        label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.TagInkKey));
 
-        var tag = new Border
-        {
-            Padding = new Thickness(6, 1),
-            BorderThickness = new Thickness(1),
-            VerticalAlignment = VerticalAlignment.Center,
-            Child = label,
-        };
-
-        tag.Bind(Border.BorderBrushProperty, this.GetResourceObservable(Theming.ThemeManager.TagBorderKey));
-
-        return tag;
+        return label;
     }
+
+    /// <summary>The face for times and keys — readouts, which is all monospace is kept for.</summary>
+    private static readonly FontFamily MonospaceFamily = new("Cascadia Mono,Consolas,monospace");
 
     /// <summary>Whether a proposal is still waiting on the Commander, read from the store rather than a run's own say-so (#277).</summary>
     private bool IsProposalPending(string proposalId) =>
@@ -3462,7 +3587,33 @@ public partial class PanelView : UserControl
         _root = e.RootVisual as Interactive;
         _root?.AddHandler(KeyDownEvent, OnSurfaceKeyDown, RoutingStrategies.Tunnel);
 
+        _topLevel = TopLevel.GetTopLevel(this);
+
+        if (_topLevel is not null)
+        {
+            _topLevel.ScalingChanged += OnScalingChanged;
+        }
+
+        DrawScanlines();
         ApplyNavigation();
+    }
+
+    /// <summary>The window or overlay host this view is drawn in, held for its render scaling.</summary>
+    private TopLevel? _topLevel;
+
+    private void OnScalingChanged(object? sender, EventArgs e) => DrawScanlines();
+
+    /// <summary>
+    /// The scanline layer, as a tile of device pixels at this surface's scaling — or nothing, on a theme
+    /// whose resource says it has none (#281).
+    /// </summary>
+    private void DrawScanlines()
+    {
+        var wanted = this.TryFindResource(Theming.ThemeManager.ScanlinesKey, out var brush) && brush is not null;
+
+        Scanlines.Background = wanted
+            ? Theming.ThemeManager.Scanlines(_topLevel?.RenderScaling ?? 1)
+            : null;
     }
 
     /// <summary>
@@ -3482,6 +3633,12 @@ public partial class PanelView : UserControl
 
         _root?.RemoveHandler(KeyDownEvent, OnSurfaceKeyDown);
         _root = null;
+
+        if (_topLevel is not null)
+        {
+            _topLevel.ScalingChanged -= OnScalingChanged;
+            _topLevel = null;
+        }
 
         base.OnDetachedFromVisualTree(e);
     }
@@ -3632,6 +3789,11 @@ public partial class PanelView : UserControl
         if (e.ExtentDelta.Y != 0 || e.ViewportDelta.Y != 0)
         {
             ApplyFold(reassert: false);
+        }
+
+        if (e.ViewportDelta.Y != 0)
+        {
+            AnchorThread();
         }
 
         // Only when the offset actually moved, and deliberately not when the viewport or the extent did.

@@ -71,6 +71,18 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     /// <summary>A tiled 1px-at-3.5%-white line brush over the whole window — dark themes only, null in Light (#281).</summary>
     public const string ScanlinesKey = "D47.Scanlines";
 
+    /// <summary>
+    /// The transcript pane's fill: Accent from 5% at the top to 1.5% at the bottom on dark themes,
+    /// <see cref="SurfaceKey"/>'s colour in Light.
+    /// </summary>
+    public const string PaneFillKey = "D47.PaneFill";
+
+    /// <summary>A 1px rule, 30% of <see cref="AccentKey"/> — the transcript pane's border.</summary>
+    public const string PaneBorderKey = "D47.PaneBorder";
+
+    /// <summary>Accent at 85% — a bubble's event tag, set as plain text rather than boxed.</summary>
+    public const string TagInkKey = "D47.TagInk";
+
     /// <summary>Every role a theme defines.</summary>
     public static IReadOnlyList<string> Roles { get; } =
     [
@@ -80,6 +92,7 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         AccentBorderKey, AccentInkKey, InfoFillKey, InfoBorderKey, InfoInkKey,
         CardFillKey, CardFillSelectedKey, RowFillKey, TagBorderKey,
         BloomKey, ScanlinesKey,
+        PaneFillKey, PaneBorderKey, TagInkKey,
     ];
 
     /// <summary>Applies the theme named in settings, and re-applies it whenever that setting changes.</summary>
@@ -142,7 +155,12 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         // The conversation bubbles' own roles (#275): each side's border at 35% of its colour, and an ink
         // blended toward Text so it stays legible on both light and dark themes.
         resources[AccentBorderKey] = new SolidColorBrush(palette.Accent, 0.35);
-        resources[AccentInkKey] = new SolidColorBrush(Mix(palette.Text, palette.Accent, 0.35));
+
+        // On a dark theme the ship's ink is Accent lifted toward white — #FFB066 from Elite's #F5850F, 8.4:1 on
+        // the bubble. Blending toward Text instead pulled it most of the way to Text's own warm grey.
+        resources[AccentInkKey] = new SolidColorBrush(palette.IsDark
+            ? Mix(Colors.White, palette.Accent, 0.65)
+            : Mix(palette.Text, palette.Accent, 0.35));
         resources[InfoFillKey] = new SolidColorBrush(palette.Info, 0.09);
         resources[InfoBorderKey] = new SolidColorBrush(palette.Info, 0.35);
         resources[InfoInkKey] = new SolidColorBrush(Mix(palette.Text, palette.Info, 0.35));
@@ -158,7 +176,12 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         // Bloom and scanlines (#281): dark themes only, so both resolve to null rather than a brush or
         // effect in Light — which is what turns them off, since an unset Effect or Background paints nothing.
         resources[BloomKey] = palette.IsDark ? Bloom(palette.Accent) : null;
-        resources[ScanlinesKey] = palette.IsDark ? Scanlines() : null;
+        resources[ScanlinesKey] = palette.IsDark ? Scanlines(1) : null;
+
+        // The tint is the pane's, not the page's: the ground behind the pane stays Background.
+        resources[PaneFillKey] = palette.IsDark ? PaneFill(palette.Accent) : new SolidColorBrush(palette.Surface);
+        resources[PaneBorderKey] = new SolidColorBrush(palette.Accent, 0.30);
+        resources[TagInkKey] = new SolidColorBrush(palette.Accent, 0.85);
 
         // The framework's own controls — text boxes, buttons, scrollbars — follow the variant rather than the
         // palette, so a light theme has to say so or its combo boxes stay dark.
@@ -188,19 +211,41 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         Opacity = 0.4,
     };
 
-    /// <summary>A tiled brush of a 1px line at 3.5% white every 3px, for the overlay in #281.</summary>
-    private static ImageBrush Scanlines()
+    /// <summary>Accent from 5% at the top to 1.5% at the bottom, top to bottom of whatever it fills.</summary>
+    private static LinearGradientBrush PaneFill(Color accent) => new()
     {
-        var size = new PixelSize(1, 3);
-        var bitmap = new WriteableBitmap(size, new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Premul);
+        StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
+        EndPoint = new RelativePoint(0, 1, RelativeUnit.Relative),
+        GradientStops =
+        {
+            new GradientStop(Color.FromArgb(13, accent.R, accent.G, accent.B), 0),
+            new GradientStop(Color.FromArgb(4, accent.R, accent.G, accent.B), 1),
+        },
+    };
+
+    /// <summary>
+    /// A tiled brush of a 1px line at 3.5% white every 3px, for the overlay in #281. The pixels are layout
+    /// pixels at <paramref name="renderScaling"/>, each rounded to whole screen pixels, so the tile is drawn
+    /// one bitmap pixel to one screen pixel.
+    /// </summary>
+    /// <remarks>
+    /// A 1px line every 3 screen pixels is too fine to see at 150% or 200%; a tile laid out in unrounded
+    /// layout pixels is resampled into a grey smear at 125% and 150%.
+    /// </remarks>
+    public static ImageBrush Scanlines(double renderScaling)
+    {
+        var line = Math.Max(1, (int)Math.Round(renderScaling));
+        var size = new PixelSize(1, Math.Max(line + 1, (int)Math.Round(3 * renderScaling)));
+        var dpi = 96 * renderScaling;
+        var bitmap = new WriteableBitmap(size, new Vector(dpi, dpi), PixelFormat.Bgra8888, AlphaFormat.Premul);
 
         using (var buffer = bitmap.Lock())
         {
-            var line = (byte)Math.Round(255 * 0.035);
+            var ink = (byte)Math.Round(255 * 0.035);
 
             for (var y = 0; y < size.Height; y++)
             {
-                var value = y == 0 ? line : (byte)0;
+                var value = y < line ? ink : (byte)0;
                 var row = buffer.Address + (y * buffer.RowBytes);
 
                 for (var channel = 0; channel < 4; channel++)
@@ -213,9 +258,10 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         return new ImageBrush(bitmap)
         {
             TileMode = TileMode.Tile,
-            Stretch = Stretch.None,
-            SourceRect = new RelativeRect(0, 0, 1, 3, RelativeUnit.Absolute),
-            DestinationRect = new RelativeRect(0, 0, 1, 3, RelativeUnit.Absolute),
+            Stretch = Stretch.Fill,
+            SourceRect = new RelativeRect(0, 0, 1, 1, RelativeUnit.Relative),
+            DestinationRect = new RelativeRect(
+                0, 0, size.Width / renderScaling, size.Height / renderScaling, RelativeUnit.Absolute),
         };
     }
 }

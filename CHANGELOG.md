@@ -71,6 +71,14 @@ unselected label, the selected tab's own fill, the selected list row's leading b
 button's fill each carry a soft Accent glow, and a faint repeating line sits over the whole
 window, on the desktop and in the headset alike.
 
+The Elite theme's ground is now black, and the Conversation's pane is black with a faint Accent
+tint, where it was grey. The ship's prose is a lighter amber, and a callout's key is plain
+monospace text instead of a boxed tag. The time is monospace too. A short conversation now sits at
+the bottom of the pane, beside the ask box, instead of at the top. In Ship, Log File and Journal
+File are three segments rather than a stepper, and go back to the stepper on a pane too narrow for
+all three. The line saying which path answered is no longer monospace. The scanlines keep their spacing at every
+display scaling, so they stay visible at 150% and 200% and stay sharp at 125%.
+
 ## 0.168.0 — Controls take the HUD dress
 
 Buttons, toggle switches and the transcript tabs now draw d47's own look rather than the

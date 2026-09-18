@@ -24,18 +24,19 @@ public class TheVrPanelIsClickableTests
         view.GetVisualDescendants().OfType<RadioButton>().First(tab => (tab.Content as string) == name);
 
     /// <summary>
-    /// Steps the mode stepper the way a ray does: a press on the arrow named <paramref name="name"/>
-    /// ("Next" or "Previous").
+    /// Picks a reading the way a ray does: a press on the page bar's segment that says
+    /// <paramref name="word"/>.
     /// </summary>
-    private static void PressModeArrow(PanelView view, OffscreenSurface surface, string name)
+    private static void PressReading(PanelView view, OffscreenSurface surface, string word)
     {
         surface.Render();
 
-        var arrow = view.GetVisualDescendants()
-            .OfType<Button>()
-            .First(button => Avalonia.Automation.AutomationProperties.GetName(button) == name);
+        var segment = view.GetControl<D47.App.Controls.Segment>("ModeSegments")
+            .GetVisualDescendants()
+            .OfType<RadioButton>()
+            .First(button => (button.Content as string) == word);
 
-        Assert.True(surface.Click(Centre(view, arrow)), "the press landed on something");
+        Assert.True(surface.Click(Centre(view, segment)), "the press landed on something");
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
         surface.Render();
     }
@@ -51,11 +52,11 @@ public class TheVrPanelIsClickableTests
 
         Assert.Equal(TranscriptPage.Conversation, view.Page);
 
-        PressModeArrow(view, surface, "Next");
+        PressReading(view, surface, "Log File");
 
         Assert.Equal(TranscriptPage.Log, view.Page);
 
-        PressModeArrow(view, surface, "Previous");
+        PressReading(view, surface, "In Ship");
 
         Assert.Equal(TranscriptPage.Conversation, view.Page);
     }
@@ -77,7 +78,7 @@ public class TheVrPanelIsClickableTests
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
         var before = Frame(surface);
 
-        PressModeArrow(view, surface, "Next");
+        PressReading(view, surface, "Log File");
 
         Assert.NotEqual(before, Frame(surface));
     }

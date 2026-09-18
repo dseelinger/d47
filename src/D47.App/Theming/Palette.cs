@@ -52,11 +52,14 @@ public sealed record Palette
 /// <summary>The shipped palettes, one per <see cref="ThemeCatalog"/> id.</summary>
 public static class Palettes
 {
-    /// <summary>Amber on near-black.</summary>
+    /// <summary>Amber on black.</summary>
     public static Palette Elite { get; } = new()
     {
         IsDark = true,
-        Background = Color.Parse("#0B0B0D"),
+
+        // Black rather than near-black: the Accent tint on a bubble or a pane only reads as a lit panel
+        // against a ground with nothing in it, and the scanlines only show on black.
+        Background = Color.Parse("#000000"),
         Surface = Color.Parse("#15151A"),
         SurfaceAlt = Color.Parse("#1E1E24"),
         Border = Color.Parse("#2E2E36"),

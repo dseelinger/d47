@@ -95,10 +95,10 @@ public class TheSearchRowSitsTogetherTests
 
         Assert.True(Where(panel, "SearchInput").Width <= 120);
 
-        // The mode button keeps its own size rather than being squeezed to a sliver.
+        // The readings keep their own size rather than being squeezed to a sliver.
         Assert.True(
-            panel.GetControl<D47.App.Controls.Stepper>("ModeBox").Bounds.Width > 60,
-            "the mode button was squeezed instead");
+            panel.GetControl<D47.App.Controls.Segment>("ModeSegments").Bounds.Width > 60,
+            "the readings were squeezed instead");
     }
 
     /// <summary>

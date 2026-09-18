@@ -374,10 +374,12 @@
               FontSize="{StaticResource D47.Type.Secondary}"
               Foreground="{DynamicResource D47.Accent}"
               Click="OnTurnDetailsClick" />
+      <!-- A label, not a readout: the label face, not monospace, which is kept for times. -->
       <TextBlock x:Name="TurnLine"
                  Text="{Binding TurnLine}"
                  VerticalAlignment="Center"
-                 FontFamily="Cascadia Mono,Consolas,monospace"
+                 FontFamily="avares://d47/Assets/Fonts/SairaSemiCondensed-Regular.ttf#Saira Semi Condensed"
+                 LetterSpacing="1"
                  FontSize="{StaticResource D47.Type.Secondary}"
                  Foreground="{DynamicResource D47.TextMuted}"
                  TextWrapping="Wrap" />
@@ -707,7 +709,7 @@
       visible notch between the first tab and the panel it belongs to.
     -->
     <Border x:Name="ContentPane"
-            BorderBrush="{DynamicResource D47.Border}"
+            BorderBrush="{DynamicResource D47.PaneBorder}"
             BorderThickness="1"
             CornerRadius="0,4,4,4">
       <DockPanel>
@@ -732,11 +734,13 @@
           navigator: a tab declares its own, and a tab with one root shows no control at all.
           Hidden below the root, where the breadcrumb is already answering which stack you are in.
 
-          Three readings or six, so this steps rather than sits in a row of segments (#274). The
-          busy glyph sits beside it rather than inside it, because a stepper's content is its
-          current reading and a spinner is not one of them. OffscreenSurface presses it in the
-          headset the same way it presses any other button, through the arrows either side of the
-          value — no popup to intercept.
+          Up to four readings sit in a row of segments, where every one is on screen; more than that
+          steps (#274). Changing reading is free and undone by changing back, which is what lets a
+          segment commit on the press. Only one of the two is shown, and both always carry the
+          readings, so the stepper stays the one control that says what is showing. The busy glyph
+          sits beside them rather than inside, because a control's content is its current reading
+          and a spinner is not one of them. OffscreenSurface presses either in the headset the same
+          way it presses any other button — no popup to intercept.
         -->
         <StackPanel x:Name="ModePicker"
                     DockPanel.Dock="Left"
@@ -750,6 +754,12 @@
                              VerticalAlignment="Center"
                              FontSize="{StaticResource D47.Type.Secondary}"
                              SelectionChanged="OnModeChanged" />
+          <!-- Disabled with the stepper, which is what Busy.While turns off while a reading loads. -->
+          <controls:Segment x:Name="ModeSegments"
+                            IsVisible="False"
+                            VerticalAlignment="Center"
+                            IsEnabled="{Binding #ModeBox.IsEnabled}"
+                            SelectionChanged="OnModeSegmentChanged" />
 
           <!--
             The journal's two readings, as one reading seen two ways (#231). They used to be two
@@ -1047,7 +1057,12 @@
               Empty and hidden until the page asks for it, so a surface reading the log file
               pays nothing for a conversation it is not showing.
             -->
-            <StackPanel x:Name="Bubbles" IsVisible="False" />
+            <!--
+              Anchored to the bottom, so a short conversation sits beside the ask box rather than
+              leaving the top of the pane full and the rest empty. TranscriptContent is held at least
+              the viewport's height for this to have room to act in.
+            -->
+            <StackPanel x:Name="Bubbles" IsVisible="False" VerticalAlignment="Bottom" />
             </Panel>
           </ScrollViewer>
 
@@ -1203,6 +1218,10 @@
     brush itself is null in Light (#281). Never hit-testable: a Commander's press or a headset's
     ray must land on the panel underneath, not on this.
   -->
-  <Border x:Name="Scanlines" IsHitTestVisible="False" Background="{DynamicResource D47.Scanlines}" />
+  <!--
+    The brush is built in code for this surface's render scaling, not taken from the resource, which only
+    says whether the theme has scanlines at all. No bitmap smoothing, so a 1px line stays 1px.
+  -->
+  <Border x:Name="Scanlines" IsHitTestVisible="False" RenderOptions.BitmapInterpolationMode="None" />
   </Panel>
 </UserControl>
