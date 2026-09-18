@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Media;
 using Serilog;
 
 namespace D47.App;
@@ -74,5 +75,6 @@ internal static class Program
         AppBuilder.Configure(() => new App(host))
             .UsePlatformDetect()
             .WithInterFont()
+            .With(new FontManagerOptions { DefaultFamilyName = Theming.Fonts.BodyFamily })
             .LogToTrace();
 }

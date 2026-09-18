@@ -143,6 +143,16 @@ public class TheTabStripFitsAnyWidthTests
         }
     }
 
+    /// <summary>The tab takes the label type, not the data type (#273).</summary>
+    [AvaloniaFact]
+    public void TheTabIsNotMonospace()
+    {
+        var wide = Furnished(2000);
+        var tab = wide.GetControl<RadioButton>("TranscriptTab");
+
+        Assert.DoesNotContain("Cascadia", tab.FontFamily.Name, StringComparison.OrdinalIgnoreCase);
+    }
+
  /// <summary>A wide tab carries its mark and its word, mark on the left.</summary>
     private static void AssertMarkAndWord(RadioButton tab, string word)
     {
@@ -152,7 +162,7 @@ public class TheTabStripFitsAnyWidthTests
         Assert.Equal(2, content.Children.Count);
 
         Assert.IsType<Avalonia.Controls.Shapes.Path>(content.Children[0]);
-        Assert.Equal(word, Assert.IsType<TextBlock>(content.Children[1]).Text);
+        Assert.Equal(word.ToUpperInvariant(), Assert.IsType<TextBlock>(content.Children[1]).Text);
 
         // Said once.
         Assert.Equal(word, Avalonia.Automation.AutomationProperties.GetName(tab));

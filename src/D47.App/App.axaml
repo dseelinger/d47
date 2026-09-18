@@ -15,5 +15,6 @@
   <Application.Styles>
     <FluentTheme />
     <StyleInclude Source="avares://d47/Theming/ScrollViewerTheme.axaml" />
+    <StyleInclude Source="avares://d47/Theming/ControlKitTheme.axaml" />
   </Application.Styles>
 </Application>

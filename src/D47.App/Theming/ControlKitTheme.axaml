@@ -1,0 +1,133 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!--
+    The HUD dress for the three controls that appear everywhere and had no d47 look of their
+    own: Button, ToggleSwitch and ListBoxItem's selected row. Squared corners throughout — the
+    dress carries no rounded shape (#273).
+  -->
+  <Styles.Resources>
+
+    <!--
+      Secondary by default: Accent ink on a faint Accent fill, with the rule as a border. A
+      button that wants the bolder primary treatment opts in with Classes="primary".
+    -->
+    <ControlTheme x:Key="{x:Type Button}" TargetType="Button">
+      <Setter Property="FontSize" Value="{StaticResource D47.Type.Body}" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Padding" Value="14,7" />
+      <Setter Property="Foreground" Value="{DynamicResource D47.Accent}" />
+      <Setter Property="Background" Value="{DynamicResource D47.FillLow}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource D47.Rule}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border x:Name="Shape"
+                  Background="{TemplateBinding Background}"
+                  BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}">
+            <ContentPresenter x:Name="PART_ContentPresenter"
+                              Content="{TemplateBinding Content}"
+                              ContentTemplate="{TemplateBinding ContentTemplate}"
+                              Padding="{TemplateBinding Padding}"
+                              Foreground="{TemplateBinding Foreground}"
+                              HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                              VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+          </Border>
+        </ControlTemplate>
+      </Setter>
+
+      <Style Selector="^:pointerover /template/ Border#Shape">
+        <Setter Property="Background" Value="{DynamicResource D47.FillHigh}" />
+      </Style>
+
+      <Style Selector="^:disabled">
+        <Setter Property="Foreground" Value="{DynamicResource D47.TextMuted}" />
+        <Setter Property="Background" Value="Transparent" />
+      </Style>
+
+      <!-- Primary: solid Accent, ink the colour of the background it sits on. -->
+      <Style Selector="^.primary">
+        <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.Background}" />
+        <Setter Property="BorderThickness" Value="0" />
+
+        <Style Selector="^:pointerover /template/ Border#Shape">
+          <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
+        </Style>
+        <Style Selector="^:disabled">
+          <Setter Property="Background" Value="Transparent" />
+          <Setter Property="Foreground" Value="{DynamicResource D47.TextMuted}" />
+        </Style>
+      </Style>
+    </ControlTheme>
+
+    <!-- Square track, square knob — no thumb animation, since every switch in the app toggles on a tap. -->
+    <ControlTheme x:Key="{x:Type ToggleSwitch}" TargetType="ToggleSwitch">
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border x:Name="Track"
+                  Width="62"
+                  Height="32"
+                  Background="{DynamicResource D47.Background}"
+                  BorderBrush="{DynamicResource D47.Rule}"
+                  BorderThickness="1">
+            <Panel>
+              <!-- Required by ToggleSwitch itself but not otherwise used — this template
+                   toggles on a tap, not a drag, so the knob below carries the whole visual. -->
+              <Panel x:Name="PART_MovingKnobs" Width="0" Height="0" IsHitTestVisible="False" />
+              <Border x:Name="Knob"
+                      Width="24"
+                      Height="24"
+                      Margin="4"
+                      HorizontalAlignment="Left"
+                      Background="{DynamicResource D47.Accent}"
+                      Opacity="0.55" />
+            </Panel>
+          </Border>
+        </ControlTemplate>
+      </Setter>
+
+      <Style Selector="^:checked /template/ Border#Track">
+        <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
+        <Setter Property="BorderThickness" Value="0" />
+      </Style>
+      <Style Selector="^:checked /template/ Border#Knob">
+        <Setter Property="HorizontalAlignment" Value="Right" />
+        <Setter Property="Background" Value="{DynamicResource D47.Background}" />
+        <Setter Property="Opacity" Value="1" />
+      </Style>
+    </ControlTheme>
+
+    <!--
+      Not consumed by any list today — d47 has no ListBox yet. Published so the page issues that
+      add one (#274 onward) draw the same selected row rather than each inventing its own.
+    -->
+    <ControlTheme x:Key="{x:Type ListBoxItem}" TargetType="ListBoxItem">
+      <Setter Property="Padding" Value="10,7" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Grid ColumnDefinitions="3,*">
+            <Border x:Name="Bar" Grid.Column="0" Background="Transparent" />
+            <ContentPresenter x:Name="PART_ContentPresenter"
+                              Grid.Column="1"
+                              Content="{TemplateBinding Content}"
+                              ContentTemplate="{TemplateBinding ContentTemplate}"
+                              Padding="{TemplateBinding Padding}"
+                              Foreground="{TemplateBinding Foreground}"
+                              Background="Transparent" />
+          </Grid>
+        </ControlTemplate>
+      </Setter>
+
+      <Style Selector="^:selected /template/ Border#Bar">
+        <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
+      </Style>
+      <Style Selector="^:selected /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource D47.FillHigh}" />
+      </Style>
+    </ControlTheme>
+
+  </Styles.Resources>
+</Styles>

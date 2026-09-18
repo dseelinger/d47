@@ -284,7 +284,7 @@ public class TheFleetTabIsInTheHeadsetTests
         // grid, at its own fixed height.
         var slot = Pressable(
             panel,
-            control => control is Button { Bounds.Width: 430, Bounds.Height: 34 } button &&
+            control => control is Button { Bounds.Width: 414, Bounds.Height: 34 } button &&
                 !string.IsNullOrEmpty(AutomationProperties.GetName(button)));
 
         Assert.NotNull(slot);

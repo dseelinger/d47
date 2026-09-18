@@ -23,11 +23,21 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     public const string DangerKey = "D47.Danger";
     public const string InfoKey = "D47.Info";
 
+    /// <summary>A 1px rule, 42% of <see cref="AccentKey"/>.</summary>
+    public const string RuleKey = "D47.Rule";
+
+    /// <summary>A fill, 10% of <see cref="AccentKey"/> — the unselected tab and secondary button.</summary>
+    public const string FillLowKey = "D47.FillLow";
+
+    /// <summary>A fill, 18% of <see cref="AccentKey"/> — the selected list row.</summary>
+    public const string FillHighKey = "D47.FillHigh";
+
     /// <summary>Every role a theme defines.</summary>
     public static IReadOnlyList<string> Roles { get; } =
     [
         BackgroundKey, SurfaceKey, SurfaceAltKey, BorderKey, TextKey,
         TextMutedKey, AccentKey, AccentMutedKey, DangerKey, InfoKey,
+        RuleKey, FillLowKey, FillHighKey,
     ];
 
     /// <summary>Applies the theme named in settings, and re-applies it whenever that setting changes.</summary>
@@ -80,6 +90,12 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         resources[AccentMutedKey] = new SolidColorBrush(palette.AccentMuted);
         resources[DangerKey] = new SolidColorBrush(palette.Danger);
         resources[InfoKey] = new SolidColorBrush(palette.Info);
+
+        // Derived from the (possibly recoloured) Accent rather than stored on Palette, so they follow the
+        // HUD matrix the same way Accent itself does.
+        resources[RuleKey] = new SolidColorBrush(palette.Accent, 0.42);
+        resources[FillLowKey] = new SolidColorBrush(palette.Accent, 0.10);
+        resources[FillHighKey] = new SolidColorBrush(palette.Accent, 0.18);
 
         // The framework's own controls — text boxes, buttons, scrollbars — follow the variant rather than the
         // palette, so a light theme has to say so or its combo boxes stay dark.

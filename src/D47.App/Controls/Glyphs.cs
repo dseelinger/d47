@@ -1,5 +1,6 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Shapes;
 using Avalonia.Media;
 
@@ -233,5 +234,65 @@ public static class Glyphs
 
         ToolTip.SetTip(button, null);
         Avalonia.Automation.AutomationProperties.SetName(button, says);
+    }
+
+    /// <summary>
+    /// A mark tinted to match <paramref name="inkSource"/>'s own <c>Foreground</c> rather than a fixed
+    /// theme key, so it tracks a tab between its selected and unselected ink without knowing which one
+    /// it currently is (#273).
+    /// </summary>
+    public static Path Draw(
+        string data, AvaloniaObject inkSource, double size = 14, bool filled = false, double strokeThickness = 2)
+    {
+        var glyph = Made(data, size, strokeThickness);
+
+        if (filled)
+        {
+            glyph.StrokeThickness = 0;
+            glyph.Bind(Shape.FillProperty, inkSource.GetObservable(TemplatedControl.ForegroundProperty));
+        }
+        else
+        {
+            glyph.Bind(Shape.StrokeProperty, inkSource.GetObservable(TemplatedControl.ForegroundProperty));
+        }
+
+        return glyph;
+    }
+
+    /// <summary>The mark alone, on a tab collapsed to marks.</summary>
+    public static void Mark(
+        RadioButton tab, string data, string says, double size = 14, bool filled = false,
+        double strokeThickness = 2)
+    {
+        tab.Content = Draw(data, tab, size, filled, strokeThickness);
+
+        ToolTip.SetTip(tab, says);
+        Avalonia.Automation.AutomationProperties.SetName(tab, says);
+    }
+
+    /// <summary>The mark and the word, on a tab — the word upper case, per the tab's own type (#273).</summary>
+    public static void MarkAndWord(RadioButton tab, string data, string says, double size = 14)
+    {
+        var glyph = Draw(data, tab, size, IsFilled(data));
+
+        Avalonia.Automation.AutomationProperties.SetAccessibilityView(
+            glyph, Avalonia.Automation.AccessibilityView.Raw);
+
+        var word = new TextBlock
+        {
+            Text = says.ToUpperInvariant(),
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+        };
+
+        tab.Content = new StackPanel
+        {
+            Orientation = Avalonia.Layout.Orientation.Horizontal,
+            Spacing = 7,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+            Children = { glyph, word },
+        };
+
+        ToolTip.SetTip(tab, null);
+        Avalonia.Automation.AutomationProperties.SetName(tab, says);
     }
 }

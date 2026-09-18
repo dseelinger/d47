@@ -6,6 +6,16 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.168.0 — Controls take the HUD dress
+
+Buttons, toggle switches and the transcript tabs now draw d47's own look rather than the
+Fluent default: a square rule border, an amber fill, and a squared, skewed tab rather than a
+rounded one. The panel itself now carries a 1px rule frame with two corners cut on the
+diagonal, on the desktop window and in the headset alike. Labels and tabs render in Saira Semi
+Condensed and prose in Saira, both embedded rather than drawn from whatever font Windows
+happens to have installed; the Elite theme's accent moves to a slightly lighter orange and its
+info colour to a brighter cyan.
+
 ## 0.167.1 — Give the vertical scrollbar its own column
 
 Every scrollbar in the desktop window, its dialogs and the VR panel drew over the right edge of

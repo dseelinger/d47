@@ -78,6 +78,14 @@
     </ResourceDictionary>
   </UserControl.Resources>
 
+  <!--
+    The panel's own frame: a 1px rule, chamfered top-right and bottom-left, no corner radius, no
+    drop shadow (#273). The same visual on the desktop window and the VR overlay, because both
+    render this one PanelView.
+  -->
+  <controls:ChamferedBorder BorderBrush="{DynamicResource D47.Rule}"
+                             BorderThickness="1"
+                             Chamfer="0,14,0,14">
   <DockPanel Margin="24,16,24,24">
 
     <!--
@@ -646,7 +654,7 @@
           remembered about (list.md Phase 12).
         -->
         <RadioButton x:Name="SettingsTab"
-                     Theme="{StaticResource D47.Tab.Settings}"
+                     Theme="{StaticResource D47.Tab}"
                      IsVisible="False"
                      Content="Settings"
                      Tapped="OnTabTapped"
@@ -1196,4 +1204,5 @@
     </Border>
 
   </DockPanel>
+  </controls:ChamferedBorder>
 </UserControl>

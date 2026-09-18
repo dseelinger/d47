@@ -3611,20 +3611,14 @@ public partial class PanelView : UserControl
             if (_tabsCollapsed == true)
             {
                 Controls.Glyphs.Mark(
-                    tab,
-                    glyph,
-                    Theming.ThemeManager.TextKey,
-                    word,
-                    size: 17,
-                    filled: Controls.Glyphs.IsFilled(glyph));
+                    tab, glyph, word, size: 17, filled: Controls.Glyphs.IsFilled(glyph));
 
                 continue;
             }
 
             // Smaller than the collapsed mark on purpose: at 17 it is the tab, and beside a word it is a mark
             // next to a word.
-            Controls.Glyphs.MarkAndWord(
-                tab, glyph, Theming.ThemeManager.TextKey, word, size: 15);
+            Controls.Glyphs.MarkAndWord(tab, glyph, word, size: 15);
         }
     }
 

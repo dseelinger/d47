@@ -62,10 +62,10 @@ public static class Palettes
         Border = Color.Parse("#2E2E36"),
         Text = Color.Parse("#E8E2D8"),
         TextMuted = Color.Parse("#9A9288"),
-        Accent = Color.Parse("#FF7100"),
+        Accent = Color.Parse("#F5850F"),
         AccentMuted = Color.Parse("#A64A00"),
         Danger = Color.Parse("#FF5555"),
-        Info = Color.Parse("#2288FF"),
+        Info = Color.Parse("#2BB6E8"),
     };
 
     public static Palette Dark { get; } = new()

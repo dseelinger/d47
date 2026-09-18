@@ -138,5 +138,12 @@ Other third-party components
     spike/OverlaySpike/vendor/openvr_api.cs   Valve's official binding, BSD-3-Clause,
                                               vendored from ValveSoftware/openvr.
 
+    Saira, Saira Semi Condensed               SIL Open Font License 1.1, by The Saira Project
+                                              Authors (github.com/Omnibus-Type/Saira), from
+                                              Google Fonts. Embedded in the build as
+                                              assets/fonts/*.ttf; the licence text ships beside
+                                              them as assets/fonts/OFL-Saira.txt and
+                                              assets/fonts/OFL-SairaSemiCondensed.txt.
+
 Package dependencies are declared in the project files and are permissively licensed;
 see the licence invariant in CLAUDE.md.
