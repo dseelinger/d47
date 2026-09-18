@@ -373,6 +373,10 @@ public partial class MainWindow : Window
             // One zoom host, on the one window.
             ZoomHost.Attach(this, host.Settings);
         }
+
+        // Last, so it wraps whatever ZoomHost left behind rather than being zoomed along with the panel
+        // (#286).
+        CaptionStrip.Apply(this);
     }
 
     /// <summary>What the panel is showing.</summary>

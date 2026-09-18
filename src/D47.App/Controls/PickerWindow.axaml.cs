@@ -198,7 +198,8 @@ public partial class PickerWindow : Window
             picker.Opened += (_, _) => onListed();
         }
 
-        return await picker.Over<PickerResult?>(owner);
+        // Not ShowInTaskbar, so a minimised picker would have no way back (#286).
+        return await picker.Over<PickerResult?>(owner, showMinimize: false);
     }
 
     /// <summary>A bound picker that has not been shown.</summary>

@@ -82,6 +82,19 @@ public static class Glyphs
     /// <summary>A prerequisite not met: an empty box (#126).</summary>
     public const string BoxEmpty = "M 5,5 L 19,5 L 19,19 L 5,19 Z";
 
+    /// <summary>Minimise a window: the same filled bar as <see cref="CollapseAll"/> (#286).</summary>
+    public const string Minimize = CollapseAll;
+
+    /// <summary>Maximise a window: the same empty box as <see cref="BoxEmpty"/> (#286).</summary>
+    public const string Maximize = BoxEmpty;
+
+    /// <summary>
+    /// Restore a maximised window: two overlapping boxes, the back one open where the front one
+    /// covers it (#286).
+    /// </summary>
+    public const string Restore =
+        "M 5,9 L 16,9 L 16,20 L 5,20 Z  M 9,7 L 9,4 L 20,4 L 20,15 L 17,15";
+
     /// <summary>A prerequisite met: the same box with a check inside it (#126).</summary>
     public const string BoxChecked =
         "M 5,5 L 19,5 L 19,19 L 5,19 Z  M 8,12.5 L 11,15.5 L 16.5,8.5";

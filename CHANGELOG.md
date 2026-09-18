@@ -84,6 +84,13 @@ glow only shows where the area around it is dark. The primary button's fill, the
 the selected list row's leading bar now glow stronger in the headset than on the desktop window. A
 new rule sits under the tab strip with its own glow, and the panel's outer edge now glows too.
 
+Every window but the VR overlay now draws its own titlebar instead of the Windows one: the app
+icon and title on the left, minimise, maximise and close on the right, in d47's own type and
+colour. Dragging the strip moves the window, double-clicking it maximises or restores, and Aero
+Snap, edge and corner resizing, and Alt+Space still all work as before. A window that cannot be
+resized shows no maximise button, and the picker window — which has no taskbar entry to bring it
+back from — shows no minimise button either.
+
 ## 0.168.0 — Controls take the HUD dress
 
 Buttons, toggle switches and the transcript tabs now draw d47's own look rather than the
