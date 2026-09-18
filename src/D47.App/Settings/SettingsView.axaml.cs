@@ -453,7 +453,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         {
             var first = _sections.Count;
             var areaIndex = _navAreas.Count;
-            var (areaHeading, areaHeadingText) = BuildNavArea(area.Title, areaIndex);
+            var (areaHeading, areaHeadingText, areaHeadingBar) = BuildNavArea(area.Title, areaIndex);
 
             NavItems.Children.Add(areaHeading);
 
@@ -476,7 +476,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             }
 
             _navAreas.Add(
-                new AreaView(area.Id, area.Title, area.Sentence, areaHeading, areaHeadingText, filterHeading, first, _sections.Count - first));
+                new AreaView(
+                    area.Id, area.Title, area.Sentence, areaHeading, areaHeadingText, areaHeadingBar,
+                    filterHeading, first, _sections.Count - first));
         }
 
         if (_sections.Count > 0)
@@ -507,9 +509,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         var content = new StackPanel { Spacing = 18, Margin = new Thickness(0, 10, 0, 0) };
 
-        foreach (var row in rows)
+        for (var i = 0; i < rows.Count; i++)
         {
-            var view = BuildRow(SectionOwning(settings, row), row);
+            var row = rows[i];
+            var view = BuildRow(SectionOwning(settings, row), row, shaded: i % 2 == 1);
             _rows.Add(view);
             content.Children.Add(view.Container);
         }
@@ -655,7 +658,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             {
                 foreach (var row in settings.RowsForEntry(entry))
                 {
-                    var view = BuildRow(owners[row.Key], row) with { Section = index, GroupIndex = groupIndex };
+                    // Alternates on every row this card draws, so the stripe holds regardless of how
+                    // groups and folds arrange the rows (#279).
+                    var view = BuildRow(owners[row.Key], row, shaded: rows.Count % 2 == 1)
+                        with
+                    { Section = index, GroupIndex = groupIndex };
 
                     if (entry.Under)
                     {
@@ -914,30 +921,48 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         return reset;
     }
 
-    /// <summary>An area's title in the nav; pressing it selects the area (#220).</summary>
-    private (Border Item, TextBlock Text) BuildNavArea(string title, int areaIndex)
+    /// <summary>
+    /// An area's title in the nav; pressing it selects the area. Upper case and tracked, the top-level
+    /// node's own mark (#279).
+    /// </summary>
+    private (Border Item, TextBlock Text, Border Bar) BuildNavArea(string title, int areaIndex)
     {
         var text = new TextBlock
         {
-            Text = title,
+            Text = title.ToUpperInvariant(),
             FontSize = TypeScale.Secondary,
             FontWeight = FontWeight.Medium,
+            LetterSpacing = 1,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
         Themed(text, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+
+        // The selected tree node's own mark (#279), shared in shape with a place's below.
+        var bar = new Border
+        {
+            Width = 3,
+            Margin = new Thickness(0, 2, 8, 2),
+            Opacity = 0,
+        };
+        Themed(bar, Border.BackgroundProperty, ThemeManager.AccentKey);
+
+        var layout = new DockPanel();
+        DockPanel.SetDock(bar, Dock.Left);
+        layout.Children.Add(bar);
+        layout.Children.Add(text);
 
         var item = new Border
         {
             Padding = new Thickness(8, 12, 8, 4),
             Background = Brushes.Transparent,
             Cursor = new Cursor(StandardCursorType.Hand),
-            Child = text,
+            Child = layout,
         };
 
         item.Classes.Add(NavAreaClass);
         item.PointerPressed += (_, _) => SelectArea(areaIndex);
 
-        return (item, text);
+        return (item, text, bar);
     }
 
     /// <summary>The area's title, drawn once above its group of cards while a query is active (#220).</summary>
@@ -1171,12 +1196,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             TextBlock.ForegroundProperty,
             active ? ThemeManager.TextKey : ThemeManager.TextMutedKey);
 
+        area.HeadingBar.Opacity = active ? 1 : 0;
+
         area.Fill?.Dispose();
         area.Fill = null;
 
         if (active)
         {
-            area.Fill = Themed(area.Heading, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
+            area.Fill = Themed(area.Heading, Border.BackgroundProperty, ThemeManager.FillHighKey);
         }
         else
         {
@@ -1186,10 +1213,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
     private (Border Item, Border Bar, TextBlock Text) BuildNavItem(int index, string title)
     {
+        // The selected tree node's own mark: a 3px Accent bar (#279).
         var bar = new Border
         {
-            Width = 2.5,
-            CornerRadius = new CornerRadius(1),
+            Width = 3,
             Margin = new Thickness(0, 2),
             Opacity = 0,
         };
@@ -1198,11 +1225,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         var text = new TextBlock
         {
             Text = title,
+            FontFamily = Fonts.LabelFamily,
             FontSize = TypeScale.Body,
             Margin = new Thickness(8, 0, 0, 0),
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
+        Themed(text, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
 
         var layout = new DockPanel();
         DockPanel.SetDock(bar, Dock.Left);
@@ -1212,8 +1241,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         var item = new Border
         {
             Padding = new Thickness(8, 7),
-            Margin = new Thickness(8, 0, 0, 0),
-            CornerRadius = new CornerRadius(4),
+
+            // Indented under its area (#279).
+            Margin = new Thickness(18, 0, 0, 0),
             Background = Brushes.Transparent,
             Cursor = new Cursor(StandardCursorType.Hand),
             Child = layout,
@@ -1378,8 +1408,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     }
 
     /// <summary>
-    /// The two colours that say which section is being read: the item's fill, and the ink its name is
-    /// written in.
+    /// The selected node's own fill — its ink stays Accent whether selected or not (#279).
     /// </summary>
     private void PaintNav(SectionView section, bool active)
     {
@@ -1390,18 +1419,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         section.PaintedActive = active;
 
-        section.NavInk?.Dispose();
-        section.NavInk = Themed(
-            section.NavText,
-            TextBlock.ForegroundProperty,
-            active ? ThemeManager.TextKey : ThemeManager.TextMutedKey);
-
         section.NavFill?.Dispose();
         section.NavFill = null;
 
         if (active)
         {
-            section.NavFill = Themed(section.NavItem, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
+            section.NavFill = Themed(section.NavItem, Border.BackgroundProperty, ThemeManager.FillHighKey);
         }
         else
         {
@@ -2231,13 +2254,32 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// <summary>One download at a time, and the row that is showing it.</summary>
     private bool _downloadingModel;
 
-    private RowView BuildRow(CapabilityDescriptor capability, SettingRow row)
+    /// <summary>A row's inline tag — a 1px Accent border at 60%, Accent ink, no fill, no rounded corners (#279).</summary>
+    private Control RowTag(string said)
+    {
+        var text = new TextBlock { Text = said, FontSize = TypeScale.Small, VerticalAlignment = VerticalAlignment.Center };
+        Themed(text, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
+
+        var tag = new Border
+        {
+            Padding = new Thickness(6, 1),
+            BorderThickness = new Thickness(1),
+            VerticalAlignment = VerticalAlignment.Center,
+            Child = text,
+        };
+        Themed(tag, Border.BorderBrushProperty, ThemeManager.TagBorderKey);
+
+        return tag;
+    }
+
+    private RowView BuildRow(CapabilityDescriptor capability, SettingRow row, bool shaded = false)
     {
         var header = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
 
         var label = new TextBlock
         {
             Text = row.Label,
+            FontFamily = Fonts.LabelFamily,
             FontSize = TypeScale.Body,
             VerticalAlignment = VerticalAlignment.Center,
         };
@@ -2248,41 +2290,15 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         {
             // Said on the row rather than only in the docs: a Commander who asks d47 to change this and gets
             // refused should already know why.
-            var tag = new TextBlock { Text = "protected", FontSize = TypeScale.Small, VerticalAlignment = VerticalAlignment.Center };
-            Themed(tag, TextBlock.ForegroundProperty, ThemeManager.AccentMutedKey);
-
-            var pill = new Border
-            {
-                Padding = new Thickness(6, 1),
-                CornerRadius = new CornerRadius(8),
-                BorderThickness = new Thickness(1),
-                VerticalAlignment = VerticalAlignment.Center,
-                Child = tag,
-            };
-            Themed(pill, Border.BorderBrushProperty, ThemeManager.AccentMutedKey);
-
-            header.Children.Add(pill);
+            header.Children.Add(RowTag("protected"));
         }
 
         if (row.Scope == SettingScope.Commander)
         {
-            // The same pill for the other declaration a row can make (Phase 44): this value is the
+            // The same tag for the other declaration a row can make (Phase 44): this value is the
             // Commander's who is flying, and a second Commander on this machine will see their own here
             // rather than this one.
-            var tag = new TextBlock { Text = "per Commander", FontSize = TypeScale.Small, VerticalAlignment = VerticalAlignment.Center };
-            Themed(tag, TextBlock.ForegroundProperty, ThemeManager.AccentMutedKey);
-
-            var pill = new Border
-            {
-                Padding = new Thickness(6, 1),
-                CornerRadius = new CornerRadius(8),
-                BorderThickness = new Thickness(1),
-                VerticalAlignment = VerticalAlignment.Center,
-                Child = tag,
-            };
-            Themed(pill, Border.BorderBrushProperty, ThemeManager.AccentMutedKey);
-
-            header.Children.Add(pill);
+            header.Children.Add(RowTag("per Commander"));
         }
 
         // **The help is behind a glyph now** (asked for 2026-09-01 — *"That is WAY too much text"*).
@@ -2333,6 +2349,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             header.Children.Add(Explains(capability, row, spoken));
         }
 
+        // A square glyph button at the end of the row rather than beside the label, so it stays put
+        // however wide the caption or the control run (#279).
+        Button? resetButton = null;
+
         if (row is { Kind: not SettingKind.Secret, Binding.Write: not null })
         {
             var back = new Button
@@ -2343,16 +2363,16 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 // A stroked Path rather than U+21BA (#69).
                 Content = Glyphs.Draw(Glyphs.Reset, ThemeManager.AccentKey, TypeScale.Secondary),
 
-                // The same room the card-level one above needs, and for the same reason.
-                Padding = new Thickness(4, 2),
-                MinWidth = 0,
+                Width = 40,
+                Height = 40,
+                Padding = new Thickness(0),
+                HorizontalContentAlignment = HorizontalAlignment.Center,
+                VerticalContentAlignment = VerticalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
-                Background = Brushes.Transparent,
-                BorderThickness = new Thickness(0),
+                Margin = new Thickness(10, 0, 0, 0),
                 IsVisible = false,
             };
 
-            Themed(back, Button.ForegroundProperty, ThemeManager.AccentKey);
             ToolTip.SetTip(back, $"Put {row.Label} back to its default");
 
             // The character used to be this button's accessible name by being its content; a Path has no
@@ -2371,7 +2391,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 Refresh();
             };
 
-            header.Children.Add(back);
+            resetButton = back;
 
             // Folded into the row's refresh rather than set once, because whether this row has been changed
             // is exactly what a reset — or any other write — moves.
@@ -2461,8 +2481,34 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             body = stack;
         }
 
+        // The reset glyph sits at the end of the row, right of the caption and the control alike (#279).
+        Control line = body;
+
+        if (resetButton is not null)
+        {
+            var dock = new DockPanel { LastChildFill = true };
+            DockPanel.SetDock(resetButton, Dock.Right);
+            dock.Children.Add(resetButton);
+            dock.Children.Add(body);
+            line = dock;
+        }
+
+        // At least 60px tall, on the 5% fill every other row — the page-top strip is a separate case
+        // and keeps its own rules (#279).
+        if (!row.PageTop)
+        {
+            var rowShape = new Border { MinHeight = 60, Child = line };
+
+            if (shaded)
+            {
+                Themed(rowShape, Border.BackgroundProperty, ThemeManager.RowFillKey);
+            }
+
+            line = rowShape;
+        }
+
         var container = new StackPanel();
-        container.Children.Add(body);
+        container.Children.Add(line);
         container.Children.Add(message);
 
         return new RowView(row, container, refresh)
@@ -3756,6 +3802,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     private (Control, Action, bool) BuildBind(SettingRow row, TextBlock message)
     {
         var button = new Button { MinWidth = 150, HorizontalContentAlignment = HorizontalAlignment.Center };
+        var proseFont = button.FontFamily;
         var clear = new Button { Content = "Unbind" };
 
         button.Click += async (_, _) => await CaptureBindAsync(row, button, message);
@@ -3779,7 +3826,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         return (panel, () =>
         {
-            button.Content = BoundAs(row) ?? "Press to bind";
+            var bound = BoundAs(row);
+
+            // The keys themselves in monospace; "Press to bind" and "No controllers" are prose, not data
+            // (#279).
+            button.FontFamily = bound is null ? proseFont : new FontFamily("Cascadia Mono,Consolas,monospace");
+            button.Content = bound ?? "Press to bind";
 
             // A row that can only be filled from a controller is dead without one, and saying so beats a
             // button that does nothing.
@@ -4141,9 +4193,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         /// </summary>
         public bool? PaintedActive { get; set; }
 
-        /// <summary>The nav item's live brush subscriptions, held so the next state can drop them.</summary>
-        public IDisposable? NavInk { get; set; }
-
+        /// <summary>The nav item's live fill subscription, held so the next state can drop it.</summary>
         public IDisposable? NavFill { get; set; }
     }
 
@@ -4154,6 +4204,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         string Sentence,
         Border Heading,
         TextBlock HeadingText,
+
+        /// <summary>The 3px bar that marks the selected tree node, shared with a place's own (#279).</summary>
+        Border HeadingBar,
 
         /// <summary>Drawn above this area's cards while a query is narrowing every area at once.</summary>
         TextBlock FilterHeading,

@@ -32,6 +32,13 @@ by border — 14% of Accent and a solid edge, against 5% and a rule for the rest
 page" is now a chamfered strip with a chip counting its rows, on the Fleet, Routing and Adventures
 tabs alike.
 
+The Settings page takes the dress too. The section tree's selected node carries a 3px Accent bar
+and an 18% fill; the top-level areas draw upper case and tracked, the places under them in Saira
+Semi Condensed, indented and inked in Accent. Rows are at least 60px tall and alternate on a 5%
+Accent fill, and the reset glyph moves off the label and onto a square 40x40 button at the end of
+the row. The protected and per-Commander tags carry a 60% Accent border and no fill, and a bound
+key now reads in monospace. No row or tree node draws a rounded corner.
+
 ## 0.168.0 — Controls take the HUD dress
 
 Buttons, toggle switches and the transcript tabs now draw d47's own look rather than the

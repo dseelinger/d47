@@ -92,21 +92,22 @@ public class SettingsNavTests
             .ToList();
         var scroller = (ScrollViewer)view.FindControl<Control>("Scroller")!;
 
-        Assert.NotEqual(Colour(labels[0].Foreground), Colour(labels[1].Foreground));
+        // Ink is Accent on every place, selected or not (#279) — the fill is the only thing that marks
+        // the active one.
+        Assert.True(labels.Count > 1);
+        Assert.All(labels, label => Assert.Equal(Colour(labels[0].Foreground), Colour(label.Foreground)));
         Assert.NotEqual(Colour(((Border)items[0]).Background), Colour(((Border)items[1]).Background));
 
-        var wasInk = Colour(labels[0].Foreground);
         var wasFill = Colour(((Border)items[0]).Background);
 
         scroller.Offset = new Vector(0, scroller.Extent.Height);
         Jobs();
 
         // The last section is the one being read now, and it wears what the first one wore.
-        Assert.Equal(wasInk, Colour(labels[^1].Foreground));
         Assert.Equal(wasFill, Colour(((Border)items[^1]).Background));
 
-        // The one it left goes back to the muted ink the rest of the column is drawn in.
-        Assert.Equal(Colour(labels[1].Foreground), Colour(labels[0].Foreground));
+        // The one it left goes back to no fill at all.
+        Assert.Equal(Colour(((Border)items[1]).Background), Colour(((Border)items[0]).Background));
 
         window.Close();
     }
@@ -157,7 +158,7 @@ public class SettingsNavTests
 
         Assert.NotEqual(before, Colour(labels[0].Foreground));
         Assert.Equal(
-            Colour(Application.Current!.FindResource(ThemeManager.TextKey) as IBrush),
+            Colour(Application.Current!.FindResource(ThemeManager.AccentKey) as IBrush),
             Colour(labels[0].Foreground));
 
         window.Close();

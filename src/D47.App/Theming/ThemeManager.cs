@@ -53,6 +53,12 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     /// <summary>A fill, 14% of <see cref="AccentKey"/> — the selected Fleet card (#278).</summary>
     public const string CardFillSelectedKey = "D47.CardFillSelected";
 
+    /// <summary>A fill, 5% of <see cref="AccentKey"/> — every other settings row (#279).</summary>
+    public const string RowFillKey = "D47.RowFill";
+
+    /// <summary>A 1px rule, 60% of <see cref="AccentKey"/> — a row's inline tag border (#279).</summary>
+    public const string TagBorderKey = "D47.TagBorder";
+
     /// <summary>Every role a theme defines.</summary>
     public static IReadOnlyList<string> Roles { get; } =
     [
@@ -60,7 +66,7 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         TextMutedKey, AccentKey, AccentMutedKey, DangerKey, InfoKey,
         RuleKey, FillLowKey, FillHighKey,
         AccentBorderKey, AccentInkKey, InfoFillKey, InfoBorderKey, InfoInkKey,
-        CardFillKey, CardFillSelectedKey,
+        CardFillKey, CardFillSelectedKey, RowFillKey, TagBorderKey,
     ];
 
     /// <summary>Applies the theme named in settings, and re-applies it whenever that setting changes.</summary>
@@ -131,6 +137,10 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         // The Fleet card's own fills (#278): unselected at 5% of Accent, selected at 14%.
         resources[CardFillKey] = new SolidColorBrush(palette.Accent, 0.05);
         resources[CardFillSelectedKey] = new SolidColorBrush(palette.Accent, 0.14);
+
+        // The Settings page's own roles (#279): alternating rows at 5% of Accent, a tag's border at 60%.
+        resources[RowFillKey] = new SolidColorBrush(palette.Accent, 0.05);
+        resources[TagBorderKey] = new SolidColorBrush(palette.Accent, 0.60);
 
         // The framework's own controls — text boxes, buttons, scrollbars — follow the variant rather than the
         // palette, so a light theme has to say so or its combo boxes stay dark.
