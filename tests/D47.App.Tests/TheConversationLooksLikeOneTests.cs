@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Layout;
 using Avalonia.Media;
+using D47.App.Controls;
 using D47.App.Panel;
 using D47.App.Theming;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -31,8 +32,8 @@ public class TheConversationLooksLikeOneTests
         [.. panel.GetControl<StackPanel>("Bubbles").Children];
 
     /// <summary>The bubble inside a turn's row, or null for a turn that is drawn without one.</summary>
-    private static Border? Bubble(Control turn) =>
-        turn is Grid row ? row.Children.OfType<Border>().Single() : null;
+    private static ChamferedBorder? Bubble(Control turn) =>
+        turn is Grid row ? row.Children.OfType<ChamferedBorder>().Single() : null;
 
     private static Color? Colour(IBrush? brush) => (brush as ISolidColorBrush)?.Color;
 
@@ -81,8 +82,8 @@ public class TheConversationLooksLikeOneTests
             .Select(bubble => Colour(bubble!.Background))
             .ToArray();
 
-        Assert.Equal(Colour((IBrush?)window.FindResource(ThemeManager.SurfaceAltKey)), fills[0]);
-        Assert.Equal(Colour((IBrush?)window.FindResource(ThemeManager.AccentMutedKey)), fills[1]);
+        Assert.Equal(Colour((IBrush?)window.FindResource(ThemeManager.FillLowKey)), fills[0]);
+        Assert.Equal(Colour((IBrush?)window.FindResource(ThemeManager.InfoFillKey)), fills[1]);
         Assert.Equal(fills[0], fills[2]);
     }
 
@@ -145,9 +146,12 @@ public class TheConversationLooksLikeOneTests
         var wide = Bubble(Turns(full)[0])!;
         var tight = Bubble(Turns(mini)[0])!;
 
+        var widePad = wide.Child!.Margin;
+        var tightPad = tight.Child!.Margin;
+
         Assert.True(
-            tight.Padding.Left < wide.Padding.Left,
-            $"mini padded the bubble {tight.Padding} against the window's {wide.Padding}");
+            tightPad.Left < widePad.Left,
+            $"mini padded the bubble {tightPad} against the window's {widePad}");
 
         Assert.True(
             tight.Margin.Top < wide.Margin.Top,

@@ -2899,7 +2899,7 @@ public partial class PanelView : UserControl
         {
             var block = new SelectableTextBlock
             {
-                FontFamily = Transcript.FontFamily,
+                FontFamily = Theming.Fonts.BodyFamily,
                 FontSize = Transcript.FontSize,
                 TextWrapping = TextWrapping.Wrap,
 
@@ -2954,16 +2954,28 @@ public partial class PanelView : UserControl
 
         foreach (var name in names)
         {
-            strip.Children.Add(new StackPanel
+            var label = new TextBlock { Text = name, VerticalAlignment = VerticalAlignment.Center };
+
+            label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.AccentKey));
+
+            // The secondary button's own dress (#273): Accent ink on a faint Accent fill, with the rule as a
+            // border — applied here rather than a real Button, because only the glyph inside is clickable.
+            var chip = new Border
             {
-                Orientation = Orientation.Horizontal,
-                Spacing = 4,
-                Children =
+                Padding = new Thickness(8, 3),
+                BorderThickness = new Thickness(1),
+                Child = new StackPanel
                 {
-                    new TextBlock { Text = name, VerticalAlignment = VerticalAlignment.Center },
-                    Controls.CopyGlyph.For(name, copy),
+                    Orientation = Orientation.Horizontal,
+                    Spacing = 4,
+                    Children = { label, Controls.CopyGlyph.For(name, copy) },
                 },
-            });
+            };
+
+            chip.Bind(Border.BackgroundProperty, this.GetResourceObservable(Theming.ThemeManager.FillLowKey));
+            chip.Bind(Border.BorderBrushProperty, this.GetResourceObservable(Theming.ThemeManager.RuleKey));
+
+            strip.Children.Add(chip);
         }
 
         strip.IsVisible = strip.Children.Count > 0;
@@ -2982,13 +2994,24 @@ public partial class PanelView : UserControl
 
         var commander = turn.Voice == TranscriptVoice.Commander;
 
-        var bubble = new Border
+        block.Bind(
+            TextBlock.ForegroundProperty,
+            this.GetResourceObservable(commander
+                ? Theming.ThemeManager.InfoInkKey
+                : Theming.ThemeManager.AccentInkKey));
+
+        var content = strip is null ? (Control)block : new StackPanel { Spacing = 6, Children = { block, strip } };
+
+        content.Margin = mini ? new Thickness(7, 4) : new Thickness(11, 8);
+
+        // Chamfered rather than rounded (#275): 13px cut from the corner nearest the tail of that side's
+        // messaging convention — bottom-left for the ship, bottom-right for the Commander.
+        var bubble = new Controls.ChamferedBorder
         {
-            Child = strip is null ? block : new StackPanel { Children = { block, strip } },
-            CornerRadius = new CornerRadius(mini ? 6 : 10),
-            Padding = mini ? new Thickness(7, 4) : new Thickness(11, 8),
+            Child = content,
+            Chamfer = commander ? new CornerRadius(0, 0, 13, 0) : new CornerRadius(0, 0, 0, 13),
             Margin = new Thickness(0, mini ? 2 : 4),
-            BorderThickness = new Thickness(1),
+            BorderThickness = 1,
             HorizontalAlignment = commander
                 ? Avalonia.Layout.HorizontalAlignment.Right
                 : Avalonia.Layout.HorizontalAlignment.Left,
@@ -2997,18 +3020,20 @@ public partial class PanelView : UserControl
         // The two sides, by colour as well as by side, which is the convention every messaging app on the
         // Commander's phone already taught them.
         bubble.Bind(
-            Border.BackgroundProperty,
+            Controls.ChamferedBorder.BackgroundProperty,
             this.GetResourceObservable(commander
-                ? Theming.ThemeManager.AccentMutedKey
-                : Theming.ThemeManager.SurfaceAltKey));
+                ? Theming.ThemeManager.InfoFillKey
+                : Theming.ThemeManager.FillLowKey));
 
         bubble.Bind(
-            Border.BorderBrushProperty,
+            Controls.ChamferedBorder.BorderBrushProperty,
             this.GetResourceObservable(commander
-                ? Theming.ThemeManager.AccentKey
-                : Theming.ThemeManager.BorderKey));
+                ? Theming.ThemeManager.InfoBorderKey
+                : Theming.ThemeManager.AccentBorderKey));
 
-        var gutter = mini ? "12*,*" : "3*,*";
+        // Each side keeps to its own share of the pane, the ship a little more than the Commander (#275) —
+        // as Grid star columns so the split holds at any width without measuring the pane itself.
+        var gutter = mini ? "12*,*" : commander ? "58*,42*" : "72*,28*";
 
         var row = new Grid
         {

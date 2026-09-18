@@ -19,6 +19,11 @@ stage the one you step to, and the one in use keeps running until you press the 
 the cost, such as "Download 466 MB and use it". The eight per-subsystem log levels leave the
 Settings page for now; voice and the log-level tool still set them.
 
+The conversation bubbles take the HUD dress too: Saira prose instead of the monospace font, a faint
+tinted fill and a chamfered corner on the tail side — Accent for the ship, Info for the Commander —
+in place of the rounded corners and flat Accent fill they drew before. The Log File and Journal File
+readings still draw monospace.
+
 ## 0.168.0 — Controls take the HUD dress
 
 Buttons, toggle switches and the transcript tabs now draw d47's own look rather than the

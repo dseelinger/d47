@@ -32,12 +32,28 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     /// <summary>A fill, 18% of <see cref="AccentKey"/> — the selected list row.</summary>
     public const string FillHighKey = "D47.FillHigh";
 
+    /// <summary>A 1px rule, 35% of <see cref="AccentKey"/> — the ship conversation bubble's border.</summary>
+    public const string AccentBorderKey = "D47.AccentBorder";
+
+    /// <summary>Accent blended into <see cref="TextKey"/> — the ship conversation bubble's ink.</summary>
+    public const string AccentInkKey = "D47.AccentInk";
+
+    /// <summary>A fill, 9% of <see cref="InfoKey"/> — the Commander conversation bubble's fill.</summary>
+    public const string InfoFillKey = "D47.InfoFill";
+
+    /// <summary>A 1px rule, 35% of <see cref="InfoKey"/> — the Commander conversation bubble's border.</summary>
+    public const string InfoBorderKey = "D47.InfoBorder";
+
+    /// <summary>Info blended into <see cref="TextKey"/> — the Commander conversation bubble's ink.</summary>
+    public const string InfoInkKey = "D47.InfoInk";
+
     /// <summary>Every role a theme defines.</summary>
     public static IReadOnlyList<string> Roles { get; } =
     [
         BackgroundKey, SurfaceKey, SurfaceAltKey, BorderKey, TextKey,
         TextMutedKey, AccentKey, AccentMutedKey, DangerKey, InfoKey,
         RuleKey, FillLowKey, FillHighKey,
+        AccentBorderKey, AccentInkKey, InfoFillKey, InfoBorderKey, InfoInkKey,
     ];
 
     /// <summary>Applies the theme named in settings, and re-applies it whenever that setting changes.</summary>
@@ -97,10 +113,29 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         resources[FillLowKey] = new SolidColorBrush(palette.Accent, 0.10);
         resources[FillHighKey] = new SolidColorBrush(palette.Accent, 0.18);
 
+        // The conversation bubbles' own roles (#275): each side's border at 35% of its colour, and an ink
+        // blended toward Text so it stays legible on both light and dark themes.
+        resources[AccentBorderKey] = new SolidColorBrush(palette.Accent, 0.35);
+        resources[AccentInkKey] = new SolidColorBrush(Mix(palette.Text, palette.Accent, 0.35));
+        resources[InfoFillKey] = new SolidColorBrush(palette.Info, 0.09);
+        resources[InfoBorderKey] = new SolidColorBrush(palette.Info, 0.35);
+        resources[InfoInkKey] = new SolidColorBrush(Mix(palette.Text, palette.Info, 0.35));
+
         // The framework's own controls — text boxes, buttons, scrollbars — follow the variant rather than the
         // palette, so a light theme has to say so or its combo boxes stay dark.
         application.RequestedThemeVariant = palette.IsDark ? ThemeVariant.Dark : ThemeVariant.Light;
 
         logger.LogInformation("Theme is now {Theme}", theme.Name);
+    }
+
+    /// <summary>Blends <paramref name="tint"/> toward <paramref name="text"/> by <paramref name="weight"/>.</summary>
+    private static Color Mix(Color text, Color tint, double weight)
+    {
+        byte Blend(byte from, byte to) => (byte)Math.Round(from + ((to - from) * weight));
+
+        return Color.FromRgb(
+            Blend(text.R, tint.R),
+            Blend(text.G, tint.G),
+            Blend(text.B, tint.B));
     }
 }
