@@ -38,12 +38,8 @@
       <Setter Property="Background" Value="{DynamicResource D47.FillHigh}" />
     </Style>
 
-    <!-- Unselected: Accent ink on the faint fill, glowing behind the label the way #281 asks for.
-         Not set on the checked state, where the ink turns Background-coloured and the glow moves
-         to the fill below. -->
-    <Style Selector="^:not(:checked) /template/ ContentPresenter#PART_ContentPresenter">
-      <Setter Property="Effect" Value="{DynamicResource D47.Bloom}" />
-    </Style>
+    <!-- Unselected: Accent ink on the faint fill. No glow (#285) — the label sits on D47.FillLow,
+         an Accent tint, and a glow shows only where the area around it is dark. -->
 
     <!-- The current tab: a solid fill rather than a muted one, findable at a glance from a
          metre away, which is the whole job of a selected tab in a headset. -->
@@ -52,7 +48,7 @@
       <Setter Property="FontWeight" Value="SemiBold" />
       <Style Selector="^ /template/ controls|ChamferedBorder#Shape">
         <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
-        <Setter Property="Effect" Value="{DynamicResource D47.Bloom}" />
+        <Setter Property="Effect" Value="{DynamicResource D47.Bloom.Fill}" />
       </Style>
     </Style>
 

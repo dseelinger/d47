@@ -68,6 +68,35 @@
     <Style Selector="panel|PanelView.output-only :is(Control).page-chrome">
       <Setter Property="IsVisible" Value="False" />
     </Style>
+
+    <!--
+      The tab-strip rule's and the panel edge's own glows (#285), set at Style priority rather
+      than as a local XAML attribute so the headset overrides below — also Style priority — can
+      win for the headset's copy. A local value sits above Style in binding priority and a later
+      Style could never beat it (see the comment on the output-only style above).
+    -->
+    <Style Selector="Border#TabStripRule">
+      <Setter Property="Effect" Value="{DynamicResource D47.Bloom.Rule}" />
+    </Style>
+    <Style Selector="controls|ChamferedBorder#EdgeGlow">
+      <Setter Property="Effect" Value="{DynamicResource D47.Bloom.Edge}" />
+    </Style>
+
+    <!--
+      The headset's stronger reading of the tab and edge glows (#285): a glow shows only where
+      the area around it is dark, and the headset is read from further away than the desktop
+      window is. Declared after the desktop-wide styles above, so it wins for the elements it
+      matches.
+    -->
+    <Style Selector="panel|PanelView.headset RadioButton:checked /template/ controls|ChamferedBorder#Shape">
+      <Setter Property="Effect" Value="{DynamicResource D47.Bloom.Fill.Headset}" />
+    </Style>
+    <Style Selector="panel|PanelView.headset Border#TabStripRule">
+      <Setter Property="Effect" Value="{DynamicResource D47.Bloom.Rule.Headset}" />
+    </Style>
+    <Style Selector="panel|PanelView.headset controls|ChamferedBorder#EdgeGlow">
+      <Setter Property="Effect" Value="{DynamicResource D47.Bloom.Edge.Headset}" />
+    </Style>
   </UserControl.Styles>
 
   <UserControl.Resources>
@@ -79,6 +108,17 @@
   </UserControl.Resources>
 
   <Panel>
+  <!--
+    The panel's outer edge glow (#285): an empty sibling with the same chamfer geometry as the
+    frame below, behind it in paint order. An Effect on a container renders its whole subtree
+    into the shadow, so the glow could not sit on the frame itself without every line of text in
+    the panel glowing with it — this sibling carries only the geometry the glow needs.
+  -->
+  <controls:ChamferedBorder x:Name="EdgeGlow"
+                             BorderBrush="{DynamicResource D47.Rule}"
+                             BorderThickness="1"
+                             Chamfer="0,14,0,14"
+                             IsHitTestVisible="False" />
   <!--
     The panel's own frame: a 1px rule, chamfered top-right and bottom-left, no corner radius, no
     drop shadow (#273). The same visual on the desktop window and the VR overlay, because both
@@ -667,6 +707,12 @@
       </ScrollViewer>
 
     </DockPanel>
+
+    <!-- The rule under the tab strip (#285): 2px, full width, with its own glow. -->
+    <Border x:Name="TabStripRule"
+            DockPanel.Dock="Top"
+            Height="2"
+            Background="{DynamicResource D47.TabStripRule}" />
 
     <!--
       Where the Commander is, once they are below a root (list.md Phase 25, "Drill in, and find

@@ -79,6 +79,11 @@ File are three segments rather than a stepper, and go back to the stepper on a p
 all three. The line saying which path answered is no longer monospace. The scanlines keep their spacing at every
 display scaling, so they stay visible at 150% and 200% and stay sharp at 125%.
 
+Bloom is recalibrated. The unselected tab's label no longer glows — it sits on a tinted fill, and a
+glow only shows where the area around it is dark. The primary button's fill, the selected tab and
+the selected list row's leading bar now glow stronger in the headset than on the desktop window. A
+new rule sits under the tab strip with its own glow, and the panel's outer edge now glows too.
+
 ## 0.168.0 — Controls take the HUD dress
 
 Buttons, toggle switches and the transcript tabs now draw d47's own look rather than the

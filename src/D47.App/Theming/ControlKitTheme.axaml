@@ -1,5 +1,6 @@
 <Styles xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:panel="clr-namespace:D47.App.Panel">
 
   <!--
     The HUD dress for the three controls that appear everywhere and had no d47 look of their
@@ -52,9 +53,9 @@
         <Setter Property="Foreground" Value="{DynamicResource D47.Background}" />
         <Setter Property="BorderThickness" Value="0" />
 
-        <!-- The solid fill's own glow (#281), off the disabled state along with the fill itself. -->
+        <!-- The solid fill's own glow (#281, recalibrated #285), off the disabled state along with the fill itself. -->
         <Style Selector="^:not(:disabled) /template/ Border#Shape">
-          <Setter Property="Effect" Value="{DynamicResource D47.Bloom}" />
+          <Setter Property="Effect" Value="{DynamicResource D47.Bloom.Fill}" />
         </Style>
         <Style Selector="^:pointerover /template/ Border#Shape">
           <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
@@ -176,10 +177,10 @@
         </ControlTemplate>
       </Setter>
 
-      <!-- The selected row's own glow (#281), behind the leading bar rather than the fill beside it. -->
+      <!-- The selected row's own glow (#281, recalibrated #285), behind the leading bar rather than the fill beside it. -->
       <Style Selector="^:selected /template/ Border#Bar">
         <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
-        <Setter Property="Effect" Value="{DynamicResource D47.Bloom}" />
+        <Setter Property="Effect" Value="{DynamicResource D47.Bloom.Fill}" />
       </Style>
       <Style Selector="^:selected /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource D47.FillHigh}" />
@@ -187,4 +188,16 @@
     </ControlTheme>
 
   </Styles.Resources>
+
+  <!--
+    The headset's stronger reading of the solid-fill glow (#285): a glow shows only where the
+    area around it is dark, and the headset is read from further away than the desktop window
+    is. Declared after the base styles above, so it wins for the elements it matches.
+  -->
+  <Style Selector="panel|PanelView.headset Button.primary:not(:disabled) /template/ Border#Shape">
+    <Setter Property="Effect" Value="{DynamicResource D47.Bloom.Fill.Headset}" />
+  </Style>
+  <Style Selector="panel|PanelView.headset ListBoxItem:selected /template/ Border#Bar">
+    <Setter Property="Effect" Value="{DynamicResource D47.Bloom.Fill.Headset}" />
+  </Style>
 </Styles>

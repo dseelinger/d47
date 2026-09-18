@@ -62,11 +62,26 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     /// <summary>A 1px rule, 60% of <see cref="AccentKey"/> — a row's inline tag border (#279).</summary>
     public const string TagBorderKey = "D47.TagBorder";
 
-    /// <summary>
-    /// An 8px glow of <see cref="AccentKey"/> at 40%, behind Accent ink and solid Accent fills — dark
-    /// themes only, null in Light (#281).
-    /// </summary>
-    public const string BloomKey = "D47.Bloom";
+    /// <summary>A 2px rule, 70% of <see cref="AccentKey"/> — under the tab strip, in every theme (#285).</summary>
+    public const string TabStripRuleKey = "D47.TabStripRule";
+
+    /// <summary>An 18px glow of <see cref="AccentKey"/> at 38%, behind a solid Accent fill — dark themes only, null in Light (#285).</summary>
+    public const string BloomFillKey = "D47.Bloom.Fill";
+
+    /// <summary>The headset's stronger reading of <see cref="BloomFillKey"/>: 34px at 60% (#285).</summary>
+    public const string BloomFillHeadsetKey = "D47.Bloom.Fill.Headset";
+
+    /// <summary>A 16px glow of <see cref="AccentKey"/> at 22%, offset 2px down, behind the tab-strip rule — dark themes only, null in Light (#285).</summary>
+    public const string BloomRuleKey = "D47.Bloom.Rule";
+
+    /// <summary>The headset's stronger reading of <see cref="BloomRuleKey"/>: 28px at 45% (#285).</summary>
+    public const string BloomRuleHeadsetKey = "D47.Bloom.Rule.Headset";
+
+    /// <summary>A 22px glow of <see cref="AccentKey"/> at 12%, behind the panel's outer edge — dark themes only, null in Light (#285).</summary>
+    public const string BloomEdgeKey = "D47.Bloom.Edge";
+
+    /// <summary>The headset's stronger reading of <see cref="BloomEdgeKey"/>: 44px at 30% (#285).</summary>
+    public const string BloomEdgeHeadsetKey = "D47.Bloom.Edge.Headset";
 
     /// <summary>A tiled 1px-at-3.5%-white line brush over the whole window — dark themes only, null in Light (#281).</summary>
     public const string ScanlinesKey = "D47.Scanlines";
@@ -90,8 +105,9 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         TextMutedKey, AccentKey, AccentMutedKey, DangerKey, InfoKey,
         RuleKey, FillLowKey, FillHighKey,
         AccentBorderKey, AccentInkKey, InfoFillKey, InfoBorderKey, InfoInkKey,
-        CardFillKey, CardFillSelectedKey, RowFillKey, TagBorderKey,
-        BloomKey, ScanlinesKey,
+        CardFillKey, CardFillSelectedKey, RowFillKey, TagBorderKey, TabStripRuleKey,
+        BloomFillKey, BloomFillHeadsetKey, BloomRuleKey, BloomRuleHeadsetKey, BloomEdgeKey, BloomEdgeHeadsetKey,
+        ScanlinesKey,
         PaneFillKey, PaneBorderKey, TagInkKey,
     ];
 
@@ -173,9 +189,19 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         resources[RowFillKey] = new SolidColorBrush(palette.Accent, 0.05);
         resources[TagBorderKey] = new SolidColorBrush(palette.Accent, 0.60);
 
-        // Bloom and scanlines (#281): dark themes only, so both resolve to null rather than a brush or
-        // effect in Light — which is what turns them off, since an unset Effect or Background paints nothing.
-        resources[BloomKey] = palette.IsDark ? Bloom(palette.Accent) : null;
+        // The tab-strip rule (#285): drawn in every theme, unlike bloom, which only glows around it.
+        resources[TabStripRuleKey] = new SolidColorBrush(palette.Accent, 0.70);
+
+        // Bloom and scanlines (#281, recalibrated #285): dark themes only, so both resolve to null
+        // rather than a brush or effect in Light — which is what turns them off, since an unset Effect
+        // or Background paints nothing. A glow shows only where the area around it is dark, so the
+        // headset's copy runs stronger values than the desktop's rather than the same ones (#285).
+        resources[BloomFillKey] = palette.IsDark ? Bloom(palette.Accent, 18, 0.38) : null;
+        resources[BloomFillHeadsetKey] = palette.IsDark ? Bloom(palette.Accent, 34, 0.60) : null;
+        resources[BloomRuleKey] = palette.IsDark ? Bloom(palette.Accent, 16, 0.22, offsetY: 2) : null;
+        resources[BloomRuleHeadsetKey] = palette.IsDark ? Bloom(palette.Accent, 28, 0.45, offsetY: 2) : null;
+        resources[BloomEdgeKey] = palette.IsDark ? Bloom(palette.Accent, 22, 0.12) : null;
+        resources[BloomEdgeHeadsetKey] = palette.IsDark ? Bloom(palette.Accent, 44, 0.30) : null;
         resources[ScanlinesKey] = palette.IsDark ? Scanlines(1) : null;
 
         // The tint is the pane's, not the page's: the ground behind the pane stays Background.
@@ -201,14 +227,14 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
             Blend(text.B, tint.B));
     }
 
-    /// <summary>An 8px glow of <paramref name="accent"/> at 40%, for the elements named in #281.</summary>
-    private static DropShadowEffect Bloom(Color accent) => new()
+    /// <summary>A glow of <paramref name="accent"/>, for the elements named in #285.</summary>
+    private static DropShadowEffect Bloom(Color accent, double blurRadius, double opacity, double offsetY = 0) => new()
     {
         Color = accent,
         OffsetX = 0,
-        OffsetY = 0,
-        BlurRadius = 8,
-        Opacity = 0.4,
+        OffsetY = offsetY,
+        BlurRadius = blurRadius,
+        Opacity = opacity,
     };
 
     /// <summary>Accent from 5% at the top to 1.5% at the bottom, top to bottom of whatever it fills.</summary>
