@@ -72,7 +72,7 @@ public class TheChecklistTakesTheKeyboardTests
         var card = panel.GetVisualDescendants()
             .OfType<Border>()
             .Last(border => border.GetVisualDescendants()
-                .OfType<ToggleSwitch>()
+                .OfType<CheckBox>()
                 .Any(tick => Ticks.Label(tick) == text));
 
         card.RaiseEvent(new Avalonia.Input.PointerPressedEventArgs(

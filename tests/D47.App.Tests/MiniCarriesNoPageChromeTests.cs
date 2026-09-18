@@ -117,7 +117,19 @@ public class MiniCarriesNoPageChromeTests
             .Where(combo => Drawn(combo, view))
             .Select(combo => combo.SelectedItem as string ?? string.Empty);
 
-        return [.. controlWords.Concat(switchWords).Concat(comboWords).Where(word => word.Length > 0)];
+        // The custom line's checkbox carries "completed" as its own Content (picked up by controlWords
+        // above), but the word worth asserting on is the line it sits beside (#271).
+        var checkboxWords = page.GetSelfAndVisualDescendants()
+            .OfType<CheckBox>()
+            .Where(box => !box.GetSelfAndVisualAncestors().OfType<ScrollBar>().Any())
+            .Where(box => Drawn(box, view))
+            .Select(Ticks.Label);
+
+        return
+        [
+            .. controlWords.Concat(switchWords).Concat(comboWords).Concat(checkboxWords)
+                .Where(word => word.Length > 0),
+        ];
     }
 
     /// <summary>The label beside a switch, wherever it sits among the switch's siblings.</summary>

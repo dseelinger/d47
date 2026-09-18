@@ -6,6 +6,12 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.165.2 — Custom checklist lines get an aligned checkbox
+
+A custom line's tick is now a checkbox labelled "completed" instead of a switch, and sits beside
+the reorder, Edit and Delete controls rather than above them. All five now share one vertical
+centre on the card, whether or not the line is selected.
+
 ## 0.165.1 — Panel controls become dropdowns
 
 The Checklist bar's scope button and the Ask for an adventure form's Reach and Length buttons are

@@ -211,7 +211,7 @@ public class ChecklistTabTests
 
         // The innermost border that holds the line, which is the card.
         var second = panel.GetVisualDescendants().OfType<Border>()
-            .Last(border => border.GetVisualDescendants().OfType<ToggleSwitch>()
+            .Last(border => border.GetVisualDescendants().OfType<CheckBox>()
                 .Any(tick => Ticks.Label(tick) == "fit a fuel scoop"));
 
         second.RaiseEvent(new Avalonia.Input.PointerPressedEventArgs(
@@ -316,7 +316,7 @@ public class ChecklistTabTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Contains(
-            panel.GetVisualDescendants().OfType<ToggleSwitch>(),
+            panel.GetVisualDescendants().OfType<CheckBox>(),
             tick => Ticks.Label(tick) == "buy limpets");
 
         window.Close();

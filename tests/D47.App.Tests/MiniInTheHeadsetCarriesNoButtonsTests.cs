@@ -80,9 +80,9 @@ public class MiniInTheHeadsetCarriesNoButtonsTests
     }
 
     /// <summary>
-    /// A <c>ToggleSwitch</c> is not a button and must survive, which is the distinction
-    /// <c>PanelView</c>'s selector is written for: a checklist line's tick shows whether it is done,
-    /// so removing it would take away the data rather than make room for it.
+    /// A <c>ToggleSwitch</c> or a <c>CheckBox</c> is not a button and must survive, which is the
+    /// distinction <c>PanelView</c>'s selector is written for: a checklist line's tick shows whether
+    /// it is done, so removing it would take away the data rather than make room for it.
     /// </summary>
     [AvaloniaFact]
     public void WhatIsNotAButtonIsUntouched()
@@ -91,6 +91,10 @@ public class MiniInTheHeadsetCarriesNoButtonsTests
 
         Assert.All(
             view.GetVisualDescendants().OfType<ToggleSwitch>(),
+            box => Assert.NotEqual(typeof(Button), box.GetType()));
+
+        Assert.All(
+            view.GetVisualDescendants().OfType<CheckBox>(),
             box => Assert.NotEqual(typeof(Button), box.GetType()));
     }
 }

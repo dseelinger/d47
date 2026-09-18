@@ -751,22 +751,26 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         // sitting in it, so "Slot01_Size7" reads as "7A Shield Generator".
         var said = _checklists.Said(item);
 
+        CheckBox? checkbox = null;
+
         if (item.TicksByHand)
         {
-            // A line spans the list, so it reads label first with the switch after it — and the switch is
-            // docked right rather than merely trailing, so every line's switch lands in one column (#223).
-            var label = new TextBlock { Text = said, VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap };
-            var toggle = new ToggleSwitch
+            body.Children.Add(new TextBlock { Text = said, TextWrapping = TextWrapping.Wrap });
+
+            // A checkbox rather than a switch, on the Commander's own instruction (#271, narrowing #223):
+            // the leftmost control of the right-hand group, so it shares the group's centre on the card
+            // instead of the first line of the text.
+            checkbox = new CheckBox
             {
-                OnContent = null,
-                OffContent = null,
+                Content = "completed",
                 IsChecked = item.IsComplete,
+                MinHeight = TouchTarget,
                 VerticalAlignment = VerticalAlignment.Center,
             };
 
-            toggle.Click += (_, _) =>
+            checkbox.Click += (_, _) =>
             {
-                var change = toggle.IsChecked == true
+                var change = checkbox.IsChecked == true
                     ? _checklists.Complete(item.Id)
                     : _checklists.Uncomplete(item.Id);
 
@@ -775,13 +779,6 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
                     Say(change.Report);
                 }
             };
-
-            var tick = new DockPanel();
-            DockPanel.SetDock(toggle, Dock.Right);
-            tick.Children.Add(toggle);
-            tick.Children.Add(label);
-
-            body.Children.Add(tick);
         }
         else
         {
@@ -851,9 +848,30 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         var row = new DockPanel();
 
-        if (selected)
+        // The checkbox and the movers share one group so they share one vertical centre on the card
+        // (#271) — unlike the switch it replaces, which centred on the first line of body instead.
+        if (checkbox is not null || selected)
         {
-            row.Children.Add(Movers(item));
+            var group = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 4,
+                Margin = new Thickness(10, 0, 0, 0),
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+            if (checkbox is not null)
+            {
+                group.Children.Add(checkbox);
+            }
+
+            if (selected)
+            {
+                group.Children.Add(Movers(item));
+            }
+
+            DockPanel.SetDock(group, Dock.Right);
+            row.Children.Add(group);
         }
 
         row.Children.Add(body);
@@ -898,7 +916,6 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         {
             Orientation = Orientation.Horizontal,
             Spacing = 4,
-            Margin = new Thickness(10, 0, 0, 0),
             VerticalAlignment = VerticalAlignment.Center,
             Children = { top, up, down, bottom },
         };
@@ -936,7 +953,6 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             movers.Children.Add(drop);
         }
 
-        DockPanel.SetDock(movers, Dock.Right);
         return movers;
     }
 

@@ -12,21 +12,35 @@ namespace D47.App.Tests;
 internal static class Ticks
 {
     /// <summary>Every line tick on this tree that is not sitting on a page's chrome bar.</summary>
-    public static IReadOnlyList<ToggleSwitch> On(Visual root) =>
+    public static IReadOnlyList<CheckBox> On(Visual root) =>
     [
         .. root.GetVisualDescendants()
-            .OfType<ToggleSwitch>()
-            .Where(toggle => toggle.GetVisualParent() is DockPanel && !IsChrome(toggle)),
+            .OfType<CheckBox>()
+            .Where(box => box.GetVisualParent() is StackPanel group
+                          && group.GetVisualParent() is DockPanel
+                          && !IsChrome(box)),
     ];
 
     /// <summary>The words on those ticks, in the order they are drawn.</summary>
     public static IReadOnlyList<string> Words(Visual root) =>
         [.. On(root).Select(Label)];
 
-    public static string Label(ToggleSwitch tick) =>
-        (tick.GetVisualParent() as DockPanel)?
-            .GetVisualDescendants().OfType<TextBlock>().FirstOrDefault()?.Text
-        ?? string.Empty;
+    /// <summary>The line's own text — the checkbox carries "completed" as its own Content, not this.</summary>
+    public static string Label(CheckBox tick)
+    {
+        var row = tick.GetVisualAncestors().OfType<DockPanel>().FirstOrDefault();
+
+        if (row is null)
+        {
+            return string.Empty;
+        }
+
+        var body = row.GetVisualChildren()
+            .OfType<Control>()
+            .FirstOrDefault(child => !ReferenceEquals(child, tick) && !child.GetVisualDescendants().Contains(tick));
+
+        return body?.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault()?.Text ?? string.Empty;
+    }
 
     /// <summary>Whether anything above this control is marked as chrome.</summary>
     private static bool IsChrome(Control control) =>
