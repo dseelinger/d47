@@ -66,6 +66,11 @@ one caution line — an Accent bar, a CAUTION label, and a sentence naming every
 such as "An adventure needs a key, a name, and at least one beat before it can be saved." A beat
 whose place is not yet resolved carries the same Accent ink rather than red.
 
+Elite, Dark and Guardian now carry a bloom and scanlines; Light carries neither. The tab strip's
+unselected label, the selected tab's own fill, the selected list row's leading bar, and a primary
+button's fill each carry a soft Accent glow, and a faint repeating line sits over the whole
+window, on the desktop and in the headset alike.
+
 ## 0.168.0 — Controls take the HUD dress
 
 Buttons, toggle switches and the transcript tabs now draw d47's own look rather than the

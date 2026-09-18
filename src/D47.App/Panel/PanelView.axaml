@@ -78,6 +78,7 @@
     </ResourceDictionary>
   </UserControl.Resources>
 
+  <Panel>
   <!--
     The panel's own frame: a 1px rule, chamfered top-right and bottom-left, no corner radius, no
     drop shadow (#273). The same visual on the desktop window and the VR overlay, because both
@@ -1196,4 +1197,12 @@
 
   </DockPanel>
   </controls:ChamferedBorder>
+
+  <!--
+    Scanlines, over the whole window and on top of everything else — dark themes only, since the
+    brush itself is null in Light (#281). Never hit-testable: a Commander's press or a headset's
+    ray must land on the panel underneath, not on this.
+  -->
+  <Border x:Name="Scanlines" IsHitTestVisible="False" Background="{DynamicResource D47.Scanlines}" />
+  </Panel>
 </UserControl>

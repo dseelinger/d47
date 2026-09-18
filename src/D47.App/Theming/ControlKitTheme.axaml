@@ -52,6 +52,10 @@
         <Setter Property="Foreground" Value="{DynamicResource D47.Background}" />
         <Setter Property="BorderThickness" Value="0" />
 
+        <!-- The solid fill's own glow (#281), off the disabled state along with the fill itself. -->
+        <Style Selector="^:not(:disabled) /template/ Border#Shape">
+          <Setter Property="Effect" Value="{DynamicResource D47.Bloom}" />
+        </Style>
         <Style Selector="^:pointerover /template/ Border#Shape">
           <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
         </Style>
@@ -172,8 +176,10 @@
         </ControlTemplate>
       </Setter>
 
+      <!-- The selected row's own glow (#281), behind the leading bar rather than the fill beside it. -->
       <Style Selector="^:selected /template/ Border#Bar">
         <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
+        <Setter Property="Effect" Value="{DynamicResource D47.Bloom}" />
       </Style>
       <Style Selector="^:selected /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource D47.FillHigh}" />
