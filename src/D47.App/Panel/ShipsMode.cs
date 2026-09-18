@@ -97,8 +97,9 @@ public sealed class ShipsMode(
                     entry.Name ?? entry.HullName,
                     entry.Name is { Length: > 0 } name ? $"{name} ({entry.HullName})" : entry.HullName,
 
-                    // Where it is, and how its plans stand. The active ship's badge already says it is
-                    // flying, so its aside is the system alone rather than Where()'s "you are flying it".
+                    // The hull, where it is, and how its plans stand, each its own line under the name — the
+                    // active ship's badge already says it is flying, so its line is the system alone rather
+                    // than Where()'s "you are flying it".
                     entry.IsActive ? ActiveAside(entry, planned) : Aside(entry, planned),
                     planned > 0)
                 {
@@ -112,29 +113,35 @@ public sealed class ShipsMode(
             }),
     ];
 
-    /// <summary>A parked or intended ship's aside: where it is, and how its plans stand.</summary>
+    /// <summary>
+    /// A parked or intended ship's card lines: the hull where the name does not already say it, where the
+    /// ship is, and how its plans stand — each its own line (#278).
+    /// </summary>
     private static string Aside(FleetEntry entry, int planned) =>
-        planned > 0
-            ? $"{entry.Where()} · {planned.ToString(CultureInfo.InvariantCulture)} planned"
-            : entry.Where();
+        Lines(HullLine(entry), entry.Where(), PlannedLine(planned));
 
     /// <summary>
-    /// The active ship's aside: the badge already says it is flying, so this names the system instead,
-    /// or nothing when the system is not known and nothing is planned (#251).
+    /// The active ship's card lines: the badge already says it is flying, so this names the system instead
+    /// of Where()'s "you are flying it", or carries nothing beyond the hull and the plan count when the
+    /// system is not known (#251, #278).
     /// </summary>
     private static string ActiveAside(FleetEntry entry, int planned)
     {
         var system = entry.Stored is { HasSystem: true } stored ? stored.StarSystem : null;
 
-        if (system is not null)
-        {
-            return planned > 0
-                ? $"{system} · {planned.ToString(CultureInfo.InvariantCulture)} planned"
-                : system;
-        }
-
-        return planned > 0 ? $"{planned.ToString(CultureInfo.InvariantCulture)} planned" : string.Empty;
+        return Lines(HullLine(entry), system, PlannedLine(planned));
     }
+
+    /// <summary>The hull, where the name on the card does not already carry it — a build with no name of
+    /// its own reads as its hull already, and a second line naming it again would say nothing new.</summary>
+    private static string? HullLine(FleetEntry entry) => entry.Name is { Length: > 0 } ? entry.HullName : null;
+
+    private static string? PlannedLine(int planned) =>
+        planned > 0 ? $"{planned.ToString(CultureInfo.InvariantCulture)} planned" : null;
+
+    /// <summary>Every non-empty line, joined for <see cref="LoadoutPages.Card"/> to draw one apiece.</summary>
+    private static string Lines(params string?[] lines) =>
+        string.Join('\n', lines.Where(line => line is { Length: > 0 }));
 
     public bool Cards => true;
 

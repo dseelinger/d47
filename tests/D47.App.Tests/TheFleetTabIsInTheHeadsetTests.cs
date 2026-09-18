@@ -234,11 +234,12 @@ public class TheFleetTabIsInTheHeadsetTests
 
         Draw(panel, pixels, LoadoutPages.FleetRoot);
 
+        // Case-insensitive: the card's own name is drawn upper case (#278).
         var card = Pressable(
             panel,
             control => control is Button
                 && control.GetVisualDescendants().OfType<TextBlock>()
-                    .Any(text => (text.Text ?? string.Empty).Contains("Bad Idea", StringComparison.Ordinal)));
+                    .Any(text => (text.Text ?? string.Empty).Contains("Bad Idea", StringComparison.OrdinalIgnoreCase)));
 
         Assert.NotNull(card);
         Assert.True(Press(panel, pixels, card!));
@@ -259,10 +260,11 @@ public class TheFleetTabIsInTheHeadsetTests
 
         Draw(panel, pixels, LoadoutPages.FleetRoot);
 
+        // Case-insensitive: the card's own name is drawn upper case (#278).
         var card = Pressable(
             panel,
             control => control is Button
-                && control.GetVisualDescendants().OfType<TextBlock>().Any(text => (text.Text ?? string.Empty).Contains("Bad Idea", StringComparison.Ordinal)));
+                && control.GetVisualDescendants().OfType<TextBlock>().Any(text => (text.Text ?? string.Empty).Contains("Bad Idea", StringComparison.OrdinalIgnoreCase)));
 
         Assert.NotNull(card);
         Assert.True(Press(panel, pixels, card!));

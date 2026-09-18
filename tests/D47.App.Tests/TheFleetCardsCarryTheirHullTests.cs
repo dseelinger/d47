@@ -138,11 +138,12 @@ public class TheFleetCardsCarryTheirHullTests
     /// <summary>Opens the card for a ship, which is what the Commander does to get to its page.</summary>
     private static void Open(PanelView panel, string named)
     {
+        // Case-insensitive: the card's own name is drawn upper case (#278).
         var card = panel.GetVisualDescendants()
             .OfType<Button>()
             .First(button => button.GetVisualDescendants()
                 .OfType<TextBlock>()
-                .Any(block => (block.Text ?? string.Empty).Contains(named, StringComparison.Ordinal)));
+                .Any(block => (block.Text ?? string.Empty).Contains(named, StringComparison.OrdinalIgnoreCase)));
 
         card.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
@@ -168,8 +169,9 @@ public class TheFleetCardsCarryTheirHullTests
             .Select(block => block.Text ?? string.Empty)
             .ToList();
 
-        Assert.Contains(names, text => text.Contains("Cartage", StringComparison.Ordinal));
-        Assert.Contains(names, text => text.Contains("Reaper", StringComparison.Ordinal));
+        // Case-insensitive: the card's own name is drawn upper case (#278).
+        Assert.Contains(names, text => text.Contains("Cartage", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(names, text => text.Contains("Reaper", StringComparison.OrdinalIgnoreCase));
     }
 
     [AvaloniaFact]
@@ -508,7 +510,7 @@ public class TheFleetCardsCarryTheirHullTests
 
         Assert.Contains(
             card.GetVisualDescendants().OfType<TextBlock>(),
-            block => (block.Text ?? string.Empty).Contains("Reaper", StringComparison.Ordinal));
+            block => (block.Text ?? string.Empty).Contains("Reaper", StringComparison.OrdinalIgnoreCase));
     }
 
     private static List<Button> Outlined(PanelView panel) =>

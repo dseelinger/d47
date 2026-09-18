@@ -235,9 +235,24 @@ public static class LoadoutPages
         return button;
     }
 
+    /// <summary>75% black, behind the current-ship badge wherever the hull picture sits under it.</summary>
+    private static readonly IBrush BadgeBacking = new SolidColorBrush(Colors.Black, 0.75);
+
     /// <summary>
     /// One thing in the index, as a card in a grid rather than a bar in a list (asked for 2026-09-03).
+    /// Restyled for the HUD redesign: a black hull cell, the name in Saira Semi Condensed upper case, and
+    /// a fill and border that say whether this is the card the other pane is drawing (#278).
     /// </summary>
+    /// <param name="text">
+    /// The name in full — with the hull in parentheses where the Commander has named the ship — read as
+    /// this card's accessible name, so a lookup that cannot see the upper-case headline still finds it by
+    /// the name it has always had.
+    /// </param>
+    /// <param name="aside">
+    /// The lines under the name — hull, where it is, what is planned — each its own line rather than one
+    /// wrapped note.
+    /// </param>
+    /// <param name="headline">The name alone, drawn upper case — the hull now has its own line below.</param>
     internal static Control Card(
         string text,
         string? aside,
@@ -246,11 +261,11 @@ public static class LoadoutPages
         LoadoutStanding standing,
         string? hull = null,
         bool drawings = false,
-        bool showing = false)
+        bool showing = false,
+        string? headline = null)
     {
-        var stroke = standing == LoadoutStanding.Wanted
-            ? ThemeManager.TextMutedKey
-            : ThemeManager.TextKey;
+        headline ??= text;
+
 
         var body = new Grid
         {
@@ -269,6 +284,15 @@ public static class LoadoutPages
         {
             resting = picture;
 
+            var cell = new Border
+            {
+                // Pure black in every theme — the picture is framed against nothing else (#278).
+                Background = Brushes.Black,
+                BorderThickness = new Thickness(0, 0, 0, 1),
+            };
+
+            Themed(cell, Border.BorderBrushProperty, ThemeManager.RuleKey);
+
             // Uniform, so a hull keeps its proportions whatever share of the width the column count left the
             // card; and centred in the row rather than stretched to it, because a Sidewinder and a Type-10
             // are framed to fill the same box already and letting the control stretch would undo that.
@@ -278,19 +302,29 @@ public static class LoadoutPages
                 Stretch = Stretch.Uniform,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0, 0, 0, 2),
             };
 
-            Grid.SetRow(drawing, 0);
-            body.Children.Add(drawing);
+            cell.Child = drawing;
+
+            Grid.SetRow(cell, 0);
+            body.Children.Add(cell);
 
             spinning = drawing;
-        }
 
-        // **"Flying now" as a badge, not as a highlighted card** (#289, reported 2026-09-04).
-        if (standing == LoadoutStanding.Active)
+            // **"Flying now" as a badge on the cell, not as a highlighted card** (#289, reported 2026-09-04),
+            // in the corner and backed so it reads over any hull's own colours (#278).
+            if (standing == LoadoutStanding.Active)
+            {
+                var badge = Pill("CURRENT SHIP", BadgeBacking);
+
+                Grid.SetRow(badge, 0);
+                body.Children.Add(badge);
+            }
+        }
+        else if (standing == LoadoutStanding.Active)
         {
-            var badge = Pill("CURRENT SHIP");
+            // No hull cell to carry it, so the badge sits on the card itself instead.
+            var badge = Pill("CURRENT SHIP", BadgeBacking);
 
             Grid.SetRow(badge, 0);
             body.Children.Add(badge);
@@ -298,7 +332,8 @@ public static class LoadoutPages
 
         var label = new TextBlock
         {
-            Text = text,
+            Text = headline.ToUpperInvariant(),
+            FontFamily = Fonts.LabelFamily,
             FontSize = TypeScale.Body,
             TextWrapping = TextWrapping.Wrap,
             MaxLines = 2,
@@ -312,7 +347,7 @@ public static class LoadoutPages
             // different things.
             label.Inlines =
             [
-                new Run(text),
+                new Run(headline.ToUpperInvariant()),
                 Dot(),
             ];
         }
@@ -322,17 +357,24 @@ public static class LoadoutPages
 
         if (aside is { Length: > 0 })
         {
-            var note = new TextBlock
-            {
-                Text = aside,
-                FontSize = TypeScale.Secondary,
-                TextTrimming = TextTrimming.CharacterEllipsis,
-                Margin = new Thickness(0, 1, 0, 0),
-            };
+            // Hull, where it is, and what is planned — each on its own line beneath the name (#278).
+            var lines = new StackPanel { Margin = new Thickness(0, 1, 0, 0) };
 
-            Themed(note, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
-            Grid.SetRow(note, 2);
-            body.Children.Add(note);
+            foreach (var line in aside.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+            {
+                var note = new TextBlock
+                {
+                    Text = line,
+                    FontSize = TypeScale.Secondary,
+                    TextTrimming = TextTrimming.CharacterEllipsis,
+                };
+
+                Themed(note, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+                lines.Children.Add(note);
+            }
+
+            Grid.SetRow(lines, 2);
+            body.Children.Add(lines);
         }
 
         var button = new Button
@@ -345,19 +387,8 @@ public static class LoadoutPages
             Padding = new Thickness(10, 6),
         };
 
-        if (standing == LoadoutStanding.Wanted)
-        {
-            // Thickness as well as colour, because a border that differs only in hue is no border at all to a
-            // Commander who cannot separate the hues — the same rule the plan dot and the gear already answer
-            // to.
-            button.BorderThickness = new Thickness(1);
-            Themed(button, Button.BorderBrushProperty, stroke);
-
-            // **Faded, because a muted one-pixel edge was not a signal.** Drawn and looked at: an unbought
-            // hull was all but indistinguishable from an owned one, which is the exact complaint this work
-            // started from.
-            button.Opacity = 0.55;
-        }
+        // The name in full, for anything that cannot see the upper-case headline (#278).
+        AutomationProperties.SetName(button, text);
 
         if (showing)
         {
@@ -365,6 +396,13 @@ public static class LoadoutPages
             // same reason: an index that stays on screen beside what it opened has to say which one that is.
             button.BorderThickness = new Thickness(2);
             Themed(button, Button.BorderBrushProperty, ThemeManager.AccentKey);
+            Themed(button, Button.BackgroundProperty, ThemeManager.CardFillSelectedKey);
+        }
+        else
+        {
+            button.BorderThickness = new Thickness(1);
+            Themed(button, Button.BorderBrushProperty, ThemeManager.RuleKey);
+            Themed(button, Button.BackgroundProperty, ThemeManager.CardFillKey);
         }
 
         if (spinning is { } turning && resting is { } still)
@@ -396,8 +434,12 @@ public static class LoadoutPages
         return button;
     }
 
-    /// <summary>A small bordered label, the shape the build badge and the issue chips already use.</summary>
-    private static Control Pill(string said)
+    /// <summary>
+    /// A small bordered label, the shape the build badge and the issue chips already use — with
+    /// <paramref name="backing"/> in place of the themed background where a badge sits over artwork rather
+    /// than over the panel itself (#278).
+    /// </summary>
+    private static Control Pill(string said, IBrush? backing = null)
     {
         var text = new TextBlock
         {
@@ -418,7 +460,15 @@ public static class LoadoutPages
 
         Themed(text, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
         Themed(pill, Border.BorderBrushProperty, ThemeManager.AccentKey);
-        Themed(pill, Border.BackgroundProperty, ThemeManager.BackgroundKey);
+
+        if (backing is null)
+        {
+            Themed(pill, Border.BackgroundProperty, ThemeManager.BackgroundKey);
+        }
+        else
+        {
+            pill.Background = backing;
+        }
 
         return pill;
     }
@@ -1522,7 +1572,8 @@ public sealed class IndexPage : LoadoutPage
                 row.Standing,
                 row.Hull,
                 Drawings,
-                showing);
+                showing,
+                headline: row.Word);
 
             if (showing)
             {

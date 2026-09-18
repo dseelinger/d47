@@ -121,8 +121,9 @@ public class OneCopyGlyphIsTheOnlyClipboardMechanismTests
 
     private static Button Row(PanelView panel, string label) =>
         panel.GetVisualDescendants().OfType<Button>()
-            .First(button => button.GetVisualDescendants().OfType<TextBlock>()
-                .Any(text => text.Text == label));
+            .First(button => AutomationProperties.GetName(button) == label
+                             || button.GetVisualDescendants().OfType<TextBlock>()
+                                 .Any(text => text.Text == label));
 
     /// <summary>A surface with no <c>EnableCopy</c> draws no glyph and no page throws.</summary>
     [AvaloniaFact]

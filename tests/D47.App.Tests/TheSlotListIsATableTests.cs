@@ -81,9 +81,10 @@ public class TheSlotListIsATableTests
 
     private static void Board(Surface surface)
     {
+        // Case-insensitive: the card's own name is drawn upper case (#278).
         var ship = surface.Panel.GetVisualDescendants().OfType<Button>()
             .First(button => button.GetVisualDescendants().OfType<TextBlock>()
-                .Any(text => text.Text is { } said && said.Contains("Bad Idea", StringComparison.Ordinal)));
+                .Any(text => text.Text is { } said && said.Contains("Bad Idea", StringComparison.OrdinalIgnoreCase)));
 
         ship.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();

@@ -206,7 +206,9 @@ public class LoadoutTabTests
 
         var shown = Text(surface.Panel);
 
-        Assert.Contains("Bad Idea (Python)", shown);
+        // The name upper case on its own line, and the hull on its own line beneath it (#278).
+        Assert.Contains("BAD IDEA", shown);
+        Assert.Contains("Python", shown);
         Assert.Contains("CURRENT SHIP", shown);
         Assert.DoesNotContain(shown, line => line.Contains("flying", StringComparison.Ordinal));
 
@@ -238,7 +240,8 @@ public class LoadoutTabTests
     {
         var surface = Open(checklist: true);
 
-        Assert.Contains("Bad Idea (Python)", Text(surface.Panel));
+        // The name upper case, and the hull on its own line beneath it (#278).
+        Assert.Contains("BAD IDEA", Text(surface.Panel));
 
         surface.Panel.Tab = PanelTab.Checklist;
         Dispatcher.UIThread.RunJobs();

@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Globalization;
 using D47.Core.Listening;
 using Avalonia;
 using Avalonia.Automation;
@@ -529,24 +530,34 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         var heading = new TextBlock
         {
-            Text = $"Settings for this page ({rows.Count})",
+            Text = "Settings for this page",
             FontSize = TypeScale.Subheading,
             FontWeight = FontWeight.Medium,
             VerticalAlignment = VerticalAlignment.Center,
         };
         Themed(heading, TextBlock.ForegroundProperty, ThemeManager.TextKey);
 
-        var headerRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+        var headerRow = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 6,
+            Margin = new Thickness(10, 6),
+        };
         headerRow.Children.Add(chevron);
         headerRow.Children.Add(heading);
+        headerRow.Children.Add(Chip(rows.Count.ToString(CultureInfo.InvariantCulture)));
 
-        var header = new Border
+        // Chamfered rather than rounded, in the HUD redesign's own shape (#273, #278).
+        var header = new ChamferedBorder
         {
-            Padding = new Thickness(0, 6),
-            Background = Brushes.Transparent,
+            Chamfer = new CornerRadius(0, 10, 0, 10),
+            BorderThickness = 1,
             Cursor = new Cursor(StandardCursorType.Hand),
             Child = headerRow,
         };
+
+        Themed(header, ChamferedBorder.BackgroundProperty, ThemeManager.FillLowKey);
+        Themed(header, ChamferedBorder.BorderBrushProperty, ThemeManager.RuleKey);
 
         header.PointerPressed += (_, _) =>
         {
@@ -563,6 +574,33 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         Cards.Children.Add(strip);
 
         Refresh();
+    }
+
+    /// <summary>A small bordered count, the shape the build badge and the issue chips already use (#278).</summary>
+    private Border Chip(string said)
+    {
+        var text = new TextBlock
+        {
+            Text = said,
+            FontSize = TypeScale.Small,
+            FontWeight = FontWeight.Bold,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        var chip = new Border
+        {
+            Padding = new Thickness(6, 1),
+            CornerRadius = new CornerRadius(8),
+            BorderThickness = new Thickness(1),
+            VerticalAlignment = VerticalAlignment.Center,
+            Child = text,
+        };
+
+        Themed(text, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
+        Themed(chip, Border.BorderBrushProperty, ThemeManager.AccentKey);
+        Themed(chip, Border.BackgroundProperty, ThemeManager.FillLowKey);
+
+        return chip;
     }
 
     /// <summary>Marks the strip a tab place draws, for a test to find it by name (#218).</summary>

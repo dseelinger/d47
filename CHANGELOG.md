@@ -24,6 +24,14 @@ tinted fill and a chamfered corner on the tail side — Accent for the ship, Inf
 in place of the rounded corners and flat Accent fill they drew before. The Log File and Journal File
 readings still draw monospace.
 
+The Fleet cards do too. A ship's hull picture now sits in a pure black cell with a rule beneath it
+in every theme, the current ship carries its badge in the corner rather than a highlighted card, and
+the name is drawn upper case in Saira Semi Condensed with the hull, where it is and what is planned
+each on their own line beneath it. The card the other pane is drawing now reads by fill as well as
+by border — 14% of Accent and a solid edge, against 5% and a rule for the rest. "Settings for this
+page" is now a chamfered strip with a chip counting its rows, on the Fleet, Routing and Adventures
+tabs alike.
+
 ## 0.168.0 — Controls take the HUD dress
 
 Buttons, toggle switches and the transcript tabs now draw d47's own look rather than the

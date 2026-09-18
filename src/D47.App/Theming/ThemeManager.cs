@@ -47,6 +47,12 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     /// <summary>Info blended into <see cref="TextKey"/> — the Commander conversation bubble's ink.</summary>
     public const string InfoInkKey = "D47.InfoInk";
 
+    /// <summary>A fill, 5% of <see cref="AccentKey"/> — an unselected Fleet card (#278).</summary>
+    public const string CardFillKey = "D47.CardFill";
+
+    /// <summary>A fill, 14% of <see cref="AccentKey"/> — the selected Fleet card (#278).</summary>
+    public const string CardFillSelectedKey = "D47.CardFillSelected";
+
     /// <summary>Every role a theme defines.</summary>
     public static IReadOnlyList<string> Roles { get; } =
     [
@@ -54,6 +60,7 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         TextMutedKey, AccentKey, AccentMutedKey, DangerKey, InfoKey,
         RuleKey, FillLowKey, FillHighKey,
         AccentBorderKey, AccentInkKey, InfoFillKey, InfoBorderKey, InfoInkKey,
+        CardFillKey, CardFillSelectedKey,
     ];
 
     /// <summary>Applies the theme named in settings, and re-applies it whenever that setting changes.</summary>
@@ -120,6 +127,10 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         resources[InfoFillKey] = new SolidColorBrush(palette.Info, 0.09);
         resources[InfoBorderKey] = new SolidColorBrush(palette.Info, 0.35);
         resources[InfoInkKey] = new SolidColorBrush(Mix(palette.Text, palette.Info, 0.35));
+
+        // The Fleet card's own fills (#278): unselected at 5% of Accent, selected at 14%.
+        resources[CardFillKey] = new SolidColorBrush(palette.Accent, 0.05);
+        resources[CardFillSelectedKey] = new SolidColorBrush(palette.Accent, 0.14);
 
         // The framework's own controls — text boxes, buttons, scrollbars — follow the variant rather than the
         // palette, so a light theme has to say so or its combo boxes stay dark.

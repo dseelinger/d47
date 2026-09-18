@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using D47.App.Controls;
 using D47.App.Panel;
 using D47.App.Settings;
 using D47.Core;
@@ -129,7 +130,7 @@ public class ATabsOwnSettingsShowOnItTests
 
         var strip = (StackPanel)view.GetVisualDescendants().First(c => c.Name == SettingsView.TabStripName);
         var content = (StackPanel)strip.Children[1];
-        var header = (Border)strip.Children[0];
+        var header = (ChamferedBorder)strip.Children[0];
 
         Assert.False(content.IsVisible);
 
