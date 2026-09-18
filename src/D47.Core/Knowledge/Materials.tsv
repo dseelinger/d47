@@ -9,7 +9,7 @@
 # AcquisitionMethod, plus SurfaceMining for the 4.4.1.0 surface-mined commodities, which
 # EDEngineer gives no origin at all. Game data is Frontier's, used under their media
 # usage rules — see NOTICE.
-# Rows: 748 (material 140, ship-locker 196, cargo 270, rare-cargo 142). Trader lines: 23. Built: 2026-09-13.
+# Rows: 748 (material 140, ship-locker 196, cargo 270, rare-cargo 142). Trader lines: 23. Built: 2026-09-17.
 symbol	name	ledger	category	grade	line	origins	settlements	buildings	containers	barter	methods
 advancedcatalysers	Advanced Catalysers	cargo	Technology								
 advancedmedicines	Advanced Medicines	cargo	Medicines								
@@ -50,7 +50,7 @@ bioreducinglichen	Bioreducing Lichen	cargo	Technology
 biowaste	Biowaste	cargo	Waste								
 bismuth	Bismuth	cargo	Metals								
 bootlegliquor	Bootleg Liquor	cargo	Legal Drugs								
-bromellite	Bromellite	cargo	Minerals			Mining; Needed for Bill Turner (50)					RingMining
+bromellite	Bromellite	cargo	Minerals			Mining					RingMining
 buildingfabricators	Building Fabricators	cargo	Machinery								
 ceramiccomposites	Ceramic Composites	cargo	Industrial Materials								
 chemicalwaste	Chemical Waste	cargo	Waste								
@@ -94,7 +94,7 @@ gallium	Gallium	cargo	Metals
 genebank	Gene Bank	cargo	Salvage								
 geologicalequipment	Geological Equipment	cargo	Machinery								
 geologicalsamples	Geological Samples	cargo	Salvage								
-gold	Gold	cargo	Metals			Markets (Extraction/Refinery); Mining (Metallic rings); Needed for Lei Cheung (200)					Market; RingMining
+gold	Gold	cargo	Metals			Markets (Extraction/Refinery); Mining (Metallic rings)					Market; RingMining
 goslarite	Goslarite	cargo	Minerals								
 grain	Grain	cargo	Foods								
 grandidierite	Grandidierite	cargo	Minerals								
@@ -116,7 +116,7 @@ insulatingmembrane	Insulating Membrane	cargo	Industrial Materials
 iondistributor	Ion Distributor	cargo	Machinery			Markets near 70 Tauri (Industrial/Extraction)					Market
 iridium	Iridium	cargo	Metals								SurfaceMining
 jadeite	Jadeite	cargo	Minerals								
-landmines	Landmines	cargo	Weapons			Markets (Military); Needed for Liz Ryder (200)					Market
+landmines	Landmines	cargo	Weapons			Markets (Military)					Market
 lanthanum	Lanthanum	cargo	Metals								
 largeexplorationdatacash	Large Survey Data Cache	cargo	Salvage								
 leather	Leather	cargo	Textiles								
@@ -136,7 +136,7 @@ magnesite	Magnesite	cargo	Minerals								SurfaceMining
 magneticemittercoil	Magnetic Emitter Coil	cargo	Machinery			Markets near Leesti (Industrial/Refinery)					Market
 marinesupplies	Marine Equipment	cargo	Machinery								
 medicaldiagnosticequipment	Medical Diagnostic Equipment	cargo	Technology								
-metaalloys	Meta-Alloys	cargo	Industrial Materials			Markets (Maia, Darnielle's progress); Needed for Felicity Farseer (1)					Market
+metaalloys	Meta-Alloys	cargo	Industrial Materials			Markets (Maia, Darnielle's progress)					Market
 methaneclathrate	Methane Clathrate	cargo	Minerals								
 methanolmonohydratecrystals	Methanol Monohydrate Crystals	cargo	Minerals								
 microcontrollers	Micro Controllers	cargo	Technology			Markets					Market
@@ -144,7 +144,7 @@ militarygradefabrics	Military Grade Fabrics	cargo	Textiles
 militaryintelligence	Military Intelligence	cargo	Salvage								
 mineralextractors	Mineral Extractors	cargo	Machinery								
 mineraloil	Mineral Oil	cargo	Chemicals								
-modularterminals	Modular Terminals	cargo	Machinery			Mission reward; Needed for Marco Qwent (25)					MissionReward
+modularterminals	Modular Terminals	cargo	Machinery			Mission reward					MissionReward
 moissanite	Moissanite	cargo	Minerals								
 monazite	Monazite	cargo	Minerals								
 musgravite	Musgravite	cargo	Minerals								
@@ -155,13 +155,13 @@ naturalfabrics	Natural Fabrics	cargo	Textiles
 neofabricinsulation	Neofabric Insulation	cargo	Industrial Materials			Mission reward					MissionReward
 nerveagents	Nerve Agents	cargo	Chemicals								
 nonlethalweapons	Non-Lethal Weapons	cargo	Weapons								
-occupiedcryopod	Occupied Escape Pod	cargo	Salvage			Needed for Etienne Dorn (25); Degraded Emissions Signal Sources; Distress Call POI in Luchtaine					Salvage
+occupiedcryopod	Occupied Escape Pod	cargo	Salvage			Degraded Emissions Signal Sources; Distress Call POI in Luchtaine					Salvage
 olivine	Olivine	cargo	Minerals								SurfaceMining
 onionheadc	Onionhead Gamma Strain	cargo	Legal Drugs								
 opal	Void Opal	cargo	Minerals								
-osmium	Osmium	cargo	Metals			Mining (Metallic rings); Needed for Marsha Hicks (10)					RingMining
+osmium	Osmium	cargo	Metals			Mining (Metallic rings)					RingMining
 p_particulatesample	Anomaly Particles	cargo	Salvage								
-painite	Painite	cargo	Minerals			Mining (Metallic rings); Needed for Selene Jean (10)					RingMining
+painite	Painite	cargo	Minerals			Mining (Metallic rings)					RingMining
 palladium	Palladium	cargo	Metals								
 performanceenhancers	Performance Enhancers	cargo	Medicines								
 periclasedunite	Periclase Dunite	cargo	Minerals								SurfaceMining
@@ -177,7 +177,7 @@ powergridassembly	Energy Grid Assembly	cargo	Machinery			Markets near Stafkarl (
 powertransferconduits	Power Transfer Bus	cargo	Machinery			Markets near Cilbien Zu (Industrial/Extraction)					Market
 praseodymium	Praseodymium	cargo	Metals								
 preciousgems	Precious Gems	cargo	Salvage								
-progenitorcells	Progenitor Cells	cargo	Medicines			Markets (High Tech); Needed for Petra Olmanova (200)					Market
+progenitorcells	Progenitor Cells	cargo	Medicines			Markets (High Tech)					Market
 prohibitedresearchmaterials	Prohibited Research Materials	cargo	Salvage								
 pyrophyllite	Pyrophyllite	cargo	Minerals								
 quartzpyroxenite	Quartz Pyroxenite	cargo	Minerals								SurfaceMining
@@ -312,7 +312,7 @@ configurablecomponents	Configurable Components	material	Manufactured	4	manufactu
 consumerfirmware	Modified Consumer Firmware	material	Encoded	2	encoded-firmware	Mission reward; Signal source; Surface data point					MissionReward; Salvage; Scanning
 crystalshards	Crystal Shards	material	Manufactured	1	manufactured-crystals	Ship salvage (combat ships); Surface POI					Salvage
 dataminedwake	Datamined Wake Exceptions	material	Encoded	5	encoded-wake-scans	High wake scanning; Mission reward					Scanning; MissionReward
-decodedemissiondata	Decoded Emission Data	material	Encoded	4	encoded-emission-data	Ship scanning (combat ships); Mission reward; Needed for Tiana Fortune (50)					Scanning; MissionReward
+decodedemissiondata	Decoded Emission Data	material	Encoded	4	encoded-emission-data	Ship scanning (combat ships); Mission reward					Scanning; MissionReward
 disruptedwakeechoes	Atypical Disrupted Wake Echoes	material	Encoded	1	encoded-wake-scans	High wake scanning; Mission reward					Scanning; MissionReward
 electrochemicalarrays	Electrochemical Arrays	material	Manufactured	3	manufactured-capacitors	Ship salvage (military & authority ships); Signal source (anarchy)					Salvage
 embeddedfirmware	Modified Embedded Firmware	material	Encoded	5	encoded-firmware	Surface data point; Mission reward					Scanning; MissionReward
@@ -376,7 +376,7 @@ rhenium	Rhenium	material	Raw	1	raw-6	Surface prospecting; Mining; Mining (ice ri
 ruthenium	Ruthenium	material	Raw	4	raw-3	Surface prospecting					SurfaceProspecting
 salvagedalloys	Salvaged Alloys	material	Manufactured	1	manufactured-alloys	Ship salvage (combat ships); Signal source					Salvage
 scanarchives	Unidentified Scan Archives	material	Encoded	2	encoded-data-archives	Ship scanning (transport ships)					Scanning
-scandatabanks	Classified Scan Databanks	material	Encoded	3	encoded-data-archives	Ship scanning (transport ships); Surface POI; Needed for Ram Tah (50)					Scanning; Salvage
+scandatabanks	Classified Scan Databanks	material	Encoded	3	encoded-data-archives	Ship scanning (transport ships); Surface POI					Scanning; Salvage
 scrambledemissiondata	Exceptional Scrambled Emission Data	material	Encoded	1	encoded-emission-data	Ship scanning; Signal source; Mission reward					Scanning; Salvage; MissionReward
 securityfirmware	Security Firmware Patch	material	Encoded	4	encoded-firmware	Surface data point; Mission reward					Scanning; MissionReward
 selenium	Selenium	material	Raw	4	raw-4	Surface prospecting; Mission reward					SurfaceProspecting; MissionReward
@@ -385,7 +385,7 @@ shielddensityreports	Untypical Shield Scans	material	Encoded	3	encoded-shield-da
 shieldemitters	Shield Emitters	material	Manufactured	2	manufactured-shielding	Ship salvage (combat ships); Signal source					Salvage
 shieldfrequencydata	Peculiar Shield Frequency Data	material	Encoded	5	encoded-shield-data	Ship scanning; Mission reward					Scanning; MissionReward
 shieldingsensors	Shielding Sensors	material	Manufactured	3	manufactured-shielding	Ship salvage (combat ships); Signal source (high security); Mission reward					Salvage; MissionReward
-shieldpatternanalysis	Aberrant Shield Pattern Analysis	material	Encoded	4	encoded-shield-data	Ship scanning (combat ships); Mission reward; Needed for The Sarge (50)					Scanning; MissionReward
+shieldpatternanalysis	Aberrant Shield Pattern Analysis	material	Encoded	4	encoded-shield-data	Ship scanning (combat ships); Mission reward					Scanning; MissionReward
 shieldsoakanalysis	Inconsistent Shield Soak Analysis	material	Encoded	2	encoded-shield-data	Ship scanning (transport ships); Mission reward					Scanning; MissionReward
 sulphur	Sulphur	material	Raw	1	raw-3	Surface prospecting; Mining; Mining (ice rings)					SurfaceProspecting; RingMining
 symmetrickeys	Open Symmetric Keys	material	Encoded	3	encoded-encryption-files	Surface data point; Signal source; Mission reward					Scanning; Salvage; MissionReward
@@ -410,7 +410,7 @@ uncutfocuscrystals	Flawed Focus Crystals	material	Manufactured	2	manufactured-cr
 unknowncarapace	Thargoid Carapace	material	Manufactured	2		Thargoid scavengers					Salvage
 unknowncorechip	Tactical Core Chip	material	Manufactured	5							
 unknownenergycell	Thargoid Energy Cell	material	Manufactured	3		Thargoid scavengers					Salvage
-unknownenergysource	Sensor Fragment	material	Manufactured	5		Thargoid Scavengers, Destroyed Thargoid Sensor; Needed for Professor Palin (25)					Salvage
+unknownenergysource	Sensor Fragment	material	Manufactured	5		Thargoid Scavengers, Destroyed Thargoid Sensor					Salvage
 unknownorganiccircuitry	Thargoid Organic Circuitry	material	Manufactured	5		Thargoid scavengers					Salvage
 unknownshipsignature	Thargoid Ship Signature	material	Encoded	3		Ship scanning (Thargoid interceptors)					Scanning
 unknowntechnologycomponents	Thargoid Technological Components	material	Manufactured	4		Thargoid scavengers					Salvage
@@ -466,7 +466,7 @@ eraninpearlwhisky	Eranin Pearl Whisky	rare-cargo	Legal Drugs
 eshuumbrellas	Eshu Umbrellas	rare-cargo	Consumer Items								
 esusekucaviar	Esuseku Caviar	rare-cargo	Foods								
 ethgrezeteabuds	Ethgreze Tea Buds	rare-cargo	Foods								
-fujintea	Fujin Tea	rare-cargo	Foods			Markets (Fujin, Futen Spaceport); Needed for Broo Tarquin (50)					Market
+fujintea	Fujin Tea	rare-cargo	Foods			Markets (Fujin, Futen Spaceport)					Market
 galactictravelguide	Galactic Travel Guide	rare-cargo	Salvage								
 geawendancedust	Geawen Dance Dust	rare-cargo	Legal Drugs								
 gerasiangueuzebeer	Gerasian Gueuze Beer	rare-cargo	Legal Drugs								
@@ -491,14 +491,14 @@ jaradharrepuzzlebox	Jaradharre Puzzle Box	rare-cargo	Consumer Items
 jarouarice	Jaroua Rice	rare-cargo	Foods								
 jotunmookah	Jotun Mookah	rare-cargo	Textiles								
 kachiriginleaches	Kachirigin Filter Leeches	rare-cargo	Medicines								
-kamitracigars	Kamitra Cigars	rare-cargo	Legal Drugs			Markets (Kamitra, Hammel Terminal); Needed for Hera Tani (50)					Market
+kamitracigars	Kamitra Cigars	rare-cargo	Legal Drugs			Markets (Kamitra, Hammel Terminal)					Market
 kamorinhistoricweapons	Kamorin Historic Weapons	rare-cargo	Weapons								
 karetiicouture	Karetii Couture	rare-cargo	Consumer Items								
 karsukilocusts	Karsuki Locusts	rare-cargo	Foods								
 kinagoinstruments	Kinago Violins	rare-cargo	Consumer Items								
-konggaale	Kongga Ale	rare-cargo	Legal Drugs			Markets (Kongga, Laplace Ring); Needed for Lori Jameson (25)					Market
+konggaale	Kongga Ale	rare-cargo	Legal Drugs			Markets (Kongga, Laplace Ring)					Market
 korrokungpellets	Koro Kung Pellets	rare-cargo	Chemicals								
-lavianbrandy	Lavian Brandy	rare-cargo	Legal Drugs			Markets (Lave, Lave Station); Needed for Didi Vatermann (25)					Market
+lavianbrandy	Lavian Brandy	rare-cargo	Legal Drugs			Markets (Lave, Lave Station)					Market
 leestianeviljuice	Leestian Evil Juice	rare-cargo	Legal Drugs								
 lftvoidextractcoffee	Void Extract Coffee	rare-cargo	Foods								
 livehecateseaworms	Live Hecate Sea Worms	rare-cargo	Foods								
@@ -534,7 +534,7 @@ rusanioldsmokey	Rusani Old Smokey	rare-cargo	Legal Drugs
 sanumameat	Sanuma Decorative Meat	rare-cargo	Foods								
 saxonwine	Saxon Wine	rare-cargo	Legal Drugs								
 shanscharisorchid	Shan's Charis Orchid	rare-cargo	Consumer Items								
-soontillrelics	Soontill Relics	rare-cargo	Consumer Items			Markets (Ngurii, Cheranovsky City); Needed for Elvira Martuuk (3)					Market
+soontillrelics	Soontill Relics	rare-cargo	Consumer Items			Markets (Ngurii, Cheranovsky City)					Market
 sothiscrystallinegold	Sothis Crystalline Gold	rare-cargo	Metals								
 tanmarktranquiltea	Tanmark Tranquil Tea	rare-cargo	Foods								
 tarachtorspice	Tarach Spice	rare-cargo	Legal Drugs								
@@ -560,7 +560,7 @@ witchhaulkobebeef	Witchhaul Kobe Beef	rare-cargo	Foods
 wolf1301fesh	Wolf Fesh	rare-cargo	Legal Drugs								
 wulpahyperboresystems	Wulpa Hyperbore Systems	rare-cargo	Machinery								
 wuthielokufroth	Wuthielo Ku Froth	rare-cargo	Legal Drugs								
-xihecompanions	Xihe Biomorphic Companions	rare-cargo	Technology			Markets (Xihe, Zhen Dock); Needed for Zacariah Nemo (25)					Market
+xihecompanions	Xihe Biomorphic Companions	rare-cargo	Technology			Markets (Xihe, Zhen Dock)					Market
 yasokondileaf	Yaso Kondi Leaf	rare-cargo	Legal Drugs								
 zeesszeantglue	Zeessze Ant Grub Glue	rare-cargo	Consumer Items								
 accidentlogs	Accident Logs	ship-locker	Data			Planetary Settlement	Tourist	LAB; PROC; PWR; AGRI; IND; RES; HAB; EXT	Agricultural Data Port; Data Port; Industrial Data Port; Laboratory Data Port; Power Data Port		Settlement

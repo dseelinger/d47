@@ -400,6 +400,34 @@ the shape the keyword router handles with no round trip at all.
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
 ```
 
+#### `get_engineer_unlock_requirements`
+
+Every engineer's chain in one call, for a question that spans them — who wants a given material,
+who asks for a rank, who is closest to unlocked. `find_engineer` and `get_engineer_prerequisites`
+each answer for one engineer; this is the one that reads all 39 at once.
+
+```text
+39 engineers.
+
+Chloe Sedesi — known
+  Referred by: Marco Qwent. — not met
+  Meeting: Attain a maximum distance from your career start location of at least 5,000 light years. — undetermined
+  Unlock: Provide 25 units of Sensor Fragments. — undetermined
+
+Professor Palin — known
+  Referred by: Marco Qwent. — not met
+  Meeting: Attain a maximum distance from your career start location of at least 5,000 light years. — undetermined
+  Unlock: Provide 25 units of Sensor Fragments. — undetermined
+```
+
+Both want Sensor Fragments, and both name the quantity — 25 — in the unlock line, whether or not
+the test behind it parsed cleanly. With no journal loaded every criterion reads undetermined
+rather than the tool refusing to answer.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
 #### `find_engineer`
 
 Say *"engineer in this system"*, *"who's the engineer here"* or *"which engineer is here"* to ask

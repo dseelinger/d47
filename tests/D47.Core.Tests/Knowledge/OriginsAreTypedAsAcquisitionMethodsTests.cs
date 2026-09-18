@@ -42,13 +42,9 @@ public class OriginsAreTypedAsAcquisitionMethodsTests
     [Fact]
     public void EveryRealOriginTypesAtLeastOneMethod()
     {
-        // "Needed for…" is an engineer's unlock cost rather than a source and types nothing.
         Assert.All(MaterialCatalogue.All, entry =>
         {
-            var hasSource = entry.Origins.Any(origin =>
-                !origin.StartsWith("Needed for", StringComparison.Ordinal));
-
-            if (hasSource)
+            if (entry.Origins.Count > 0)
             {
                 Assert.True(entry.Methods.Count > 0, $"{entry.Name} has an origin but no method");
             }

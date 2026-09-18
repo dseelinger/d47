@@ -6,6 +6,15 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.167.0 — Ask which engineers want a thing
+
+One tool now answers across every engineer at once: who refers them, what earns the invitation,
+what it asks for, and whether each of those is met. Asking "which engineers want sensor
+fragments" now names both Chloe Sedesi and Professor Palin, rather than whichever one a single
+lookup happened to find. Material lookups ("found at", "found in") no longer mix an engineer's
+tribute into where a material is actually sourced — that question now belongs to the engineer
+tool alone.
+
 ## 0.166.0 — Say what is left for an engineer
 
 Asking "what is left for" an engineer, by name, now answers aloud with the prerequisites that are

@@ -122,6 +122,20 @@ public static class EngineerCapability
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(Prerequisites(commander, arguments))),
             },
 
+            new ToolDefinition
+            {
+                Name = "get_engineer_unlock_requirements",
+                Description =
+                    "Every engineer's unlock chain in one call, with the Commander's standing against "
+                    + "each step: who refers them, what earns the invitation, what it asks for, and "
+                    + "whether each of those is met. Covers all engineers at once, so it is the tool for "
+                    + "a question across them — which engineers want a given material, commodity or "
+                    + "on-foot item, which ask for a rank or reputation, or which need nothing but a "
+                    + "trip. get_engineer_prerequisites answers for one engineer; this answers for all "
+                    + "of them.",
+                Handler = (_, _) => Task.FromResult(ToolResult.Ok(DescribeUnlockRequirements(commander))),
+            },
+
             // Protected, and cost is the reason rather than safety: it reads and writes nothing.
             new ToolDefinition
             {
@@ -220,6 +234,109 @@ public static class EngineerCapability
         }
 
         return report.ToString().TrimEnd();
+    }
+
+    /// <summary>
+    /// Every engineer's unlock chain and the Commander's standing against each step, one block per
+    /// engineer (#272). With no journal, every criterion reads undetermined rather than refusing.
+    /// </summary>
+    private static string DescribeUnlockRequirements(Func<CommanderGameState?> commander)
+    {
+        var active = commander();
+        var progress = active?.Engineers;
+        var evidence = Engineers.UnlockEvidence.From(active);
+
+        var report = new StringBuilder();
+        report.AppendLine($"{EngineerDirectory.All.Count} engineers.");
+
+        foreach (var engineer in EngineerDirectory.All.OrderBy(engineer => engineer.Name, StringComparer.Ordinal))
+        {
+            var criteria = EngineerAccess.CriteriaFor(engineer, evidence);
+            var index = 0;
+
+            report.AppendLine();
+            report.Append(engineer.Name);
+
+            if (StatusFor(progress, engineer.Id) is { } status)
+            {
+                report.Append(" — ").Append(status);
+            }
+
+            report.AppendLine();
+
+            if (engineer.NeedsReferral)
+            {
+                var referrals = criteria.Take(engineer.ReferredBy.Count).ToArray();
+                index += referrals.Length;
+
+                report.AppendLine(
+                    $"  Referred by: {Join(engineer.ReferredBy)}. — {ReferralVerdict(referrals)}");
+            }
+            else
+            {
+                report.AppendLine("  Referred by: nobody.");
+            }
+
+            if (engineer.Meeting is { } meeting)
+            {
+                report.AppendLine($"  Meeting: {meeting} — {Verdict(criteria[index])}");
+                index++;
+            }
+
+            if (engineer.Unlock is { } unlock)
+            {
+                report.AppendLine($"  Unlock: {unlock} — {Verdict(criteria[index])}");
+            }
+        }
+
+        return report.ToString().TrimEnd();
+    }
+
+    /// <summary>The Commander's standing with one engineer, or null where there is no journal to read it from.</summary>
+    private static string? StatusFor(EngineerProgressState? progress, int id)
+    {
+        if (progress is not { IsKnown: true })
+        {
+            return null;
+        }
+
+        var standing = progress.For(id);
+
+        if (standing is null)
+        {
+            return "not in the journal";
+        }
+
+        if (standing.IsUnlocked)
+        {
+            return $"unlocked at grade {standing.Rank?.ToString(CultureInfo.InvariantCulture) ?? "unknown"}";
+        }
+
+        return standing.IsInvited ? "invited" : "known";
+    }
+
+    /// <summary>One word for a criterion, with d47's own reading of it where there is one.</summary>
+    private static string Verdict(UnlockCriterion criterion)
+    {
+        var word = criterion.Met switch
+        {
+            true => "met",
+            false => "not met",
+            null => "undetermined",
+        };
+
+        return criterion.Reading is { Length: > 0 } reading ? $"{word} ({reading})" : word;
+    }
+
+    /// <summary>Any one of several referrals is enough, so the group is met if any single one is.</summary>
+    private static string ReferralVerdict(IReadOnlyList<UnlockCriterion> referrals)
+    {
+        if (referrals.Any(criterion => criterion.Met == true))
+        {
+            return "met";
+        }
+
+        return referrals.Any(criterion => criterion.Met is null) ? "undetermined" : "not met";
     }
 
     /// <summary>

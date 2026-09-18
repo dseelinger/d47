@@ -122,9 +122,10 @@ COLUMNS = ["symbol", "name", "ledger", "category", "grade", "line", "origins",
            "settlements", "buildings", "containers", "barter", "methods"]
 
 # Each EDEngineer origin string, matched on its leading words (case-insensitive: EDEngineer
-# spells "Thargoid scavengers" both ways), to the AcquisitionMethod it names. "Needed for…" is
-# an engineer's unlock cost rather than a source and names no method. Order matters only in
-# that every prefix here is checked in turn; none is a prefix of another.
+# spells "Thargoid scavengers" both ways), to the AcquisitionMethod it names. "Needed for…"
+# entries are an engineer's unlock cost rather than a source and are dropped before this table
+# is ever consulted — see `origins()`. Order matters only in that every prefix here is checked
+# in turn; none is a prefix of another.
 ORIGIN_METHODS = [
     ("Markets", "Market"),
     ("Mining", "RingMining"),
@@ -146,7 +147,6 @@ ORIGIN_METHODS = [
     ("Surface data point", "Scanning"),
     ("Deep space data beacon", "Scanning"),
     ("Ancient/Guardian ruins", "GuardianSite"),
-    ("Needed for", None),
 ]
 
 # The 13 FDevIDs symbols the 4.4.1.0 update notes name under "Surface Mining gameplay added",
@@ -342,7 +342,13 @@ def origins() -> tuple[dict[tuple[str, str], str], dict[tuple[str, str], list[st
 
     for entry in entries:
         name = (entry.get("Name") or "").strip()
-        origin_list = entry.get("OriginDetails") or []
+
+        # "Needed for…" names an engineer's unlock cost, not a place to find the material — that
+        # question belongs to the engineer table, not this one (#272).
+        origin_list = [
+            origin for origin in (entry.get("OriginDetails") or [])
+            if not origin.casefold().startswith("needed for")
+        ]
         detail = "; ".join(origin_list)
 
         if not name:
