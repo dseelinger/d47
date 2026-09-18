@@ -61,6 +61,11 @@ SteamVR's own account of a panel's position and visibility now writes at Informa
 first sighting and on a real change; the five-minute heartbeat that repeats an unchanged
 description now writes at Debug, so a still panel no longer pushes real log lines off the page.
 
+The adventure editor no longer draws an unfinished draft in Danger. What is missing now reads as
+one caution line — an Accent bar, a CAUTION label, and a sentence naming everything still needed,
+such as "An adventure needs a key, a name, and at least one beat before it can be saved." A beat
+whose place is not yet resolved carries the same Accent ink rather than red.
+
 ## 0.168.0 — Controls take the HUD dress
 
 Buttons, toggle switches and the transcript tabs now draw d47's own look rather than the

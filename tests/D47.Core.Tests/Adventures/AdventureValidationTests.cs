@@ -111,6 +111,32 @@ public class AdventureValidationTests
     }
 
     [Fact]
+    public void ACautionNamesEveryMissingPartInOneSentence()
+    {
+        var empty = new Adventure { Key = string.Empty, Name = string.Empty, Beats = [] };
+
+        Assert.Equal(
+            "An adventure needs a key, a name, and at least one beat before it can be saved.",
+            AdventureValidation.Caution(empty));
+
+        var namedOnly = LanternRoute() with { Name = string.Empty };
+
+        Assert.Equal("An adventure needs a name before it can be saved.", AdventureValidation.Caution(namedOnly));
+
+        var keyAndName = LanternRoute() with { Key = string.Empty, Name = string.Empty };
+
+        Assert.Equal(
+            "An adventure needs a key and a name before it can be saved.",
+            AdventureValidation.Caution(keyAndName));
+    }
+
+    [Fact]
+    public void ACautionIsNullWhenThereIsNothingToCautionAbout()
+    {
+        Assert.Null(AdventureValidation.Caution(LanternRoute()));
+    }
+
+    [Fact]
     public void LimitsAreStatedInCharacters()
     {
         var adventure = LanternRoute() with

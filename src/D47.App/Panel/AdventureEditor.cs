@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
+using Avalonia.Media;
 using Avalonia.Threading;
 using D47.App.Theming;
 using D47.Core.Adventures;
@@ -103,13 +104,18 @@ public sealed class AdventureEditor : UserControl
         add.Click += (_, _) => AddBeat();
         _page.Children.Add(add);
 
-        // The reasons, printed, never a silently grey button.
+        // The reasons, printed, never a silently grey button. An unfinished adventure is not a fault,
+        // so this is Accent, never Danger (#280).
         var problems = AdventureValidation.Problems(_draft);
         var notReady = problems.Count == 0 ? AdventureValidation.NotReady(_draft) : [];
 
-        if (problems.Count > 0 || notReady.Count > 0)
+        if (problems.Count > 0)
         {
-            var reasons = AdventuresPage.Text(string.Join("\n", problems.Concat(notReady)), TypeScale.Secondary, ThemeManager.DangerKey);
+            _page.Children.Add(Caution(AdventureValidation.Caution(_draft)!));
+        }
+        else if (notReady.Count > 0)
+        {
+            var reasons = AdventuresPage.Text(string.Join("\n", notReady), TypeScale.Secondary, ThemeManager.AccentKey);
             reasons.Margin = new Thickness(0, 8, 0, 0);
             _page.Children.Add(reasons);
         }
@@ -134,6 +140,31 @@ public sealed class AdventureEditor : UserControl
         _page.Children.Add(bar);
     }
 
+    /// <summary>The caution banner: an Accent bar on the leading edge, a CAUTION label, then the sentence.</summary>
+    private static Control Caution(string sentence)
+    {
+        var bar = new Border { Width = 3 };
+        AdventuresPage.Themed(bar, Border.BackgroundProperty, ThemeManager.AccentKey);
+
+        var label = new TextBlock
+        {
+            Text = "CAUTION",
+            FontFamily = Fonts.LabelFamily,
+            FontSize = TypeScale.Small,
+            FontWeight = FontWeight.SemiBold,
+        };
+        AdventuresPage.Themed(label, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
+
+        var content = new StackPanel { Spacing = 2, Margin = new Thickness(8, 0, 0, 0) };
+        content.Children.Add(label);
+        content.Children.Add(AdventuresPage.Text(sentence, TypeScale.Secondary, ThemeManager.AccentKey));
+
+        var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 8, 0, 0) };
+        row.Children.Add(bar);
+        row.Children.Add(content);
+        return row;
+    }
+
     private static string? Blank(string value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     private Control BeatRow(int index)
@@ -146,7 +177,7 @@ public sealed class AdventureEditor : UserControl
 
         if (!beat.Trigger.IsResolved)
         {
-            heading.Children.Add(AdventuresPage.Text("not yet a real place", TypeScale.Small, ThemeManager.DangerKey));
+            heading.Children.Add(AdventuresPage.Text("not yet a real place", TypeScale.Small, ThemeManager.AccentKey));
         }
 
         row.Children.Add(heading);

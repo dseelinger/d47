@@ -206,6 +206,58 @@ public static class AdventureValidation
         return problems;
     }
 
+    /// <summary>One caution sentence naming everything <see cref="Problems"/> found, or null when there is nothing to caution about.</summary>
+    public static string? Caution(Adventure adventure)
+    {
+        var problems = Problems(adventure);
+
+        if (problems.Count == 0)
+        {
+            return null;
+        }
+
+        var needs = new List<string>();
+
+        if (string.IsNullOrWhiteSpace(adventure.Key))
+        {
+            needs.Add("a key");
+        }
+
+        if (string.IsNullOrWhiteSpace(adventure.Name))
+        {
+            needs.Add("a name");
+        }
+
+        if (adventure.Beats.Count == 0)
+        {
+            needs.Add("at least one beat");
+        }
+
+        var named = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "An adventure needs a key.", "An adventure needs a name.", "An adventure needs at least one beat.",
+        };
+
+        var sentences = new List<string>();
+
+        if (needs.Count > 0)
+        {
+            sentences.Add($"An adventure needs {Listed(needs)} before it can be saved.");
+        }
+
+        sentences.AddRange(problems.Where(problem => !named.Contains(problem)));
+
+        return string.Join(" ", sentences);
+    }
+
+    /// <summary>Oxford-comma joins two or more items; a single item is returned as is.</summary>
+    private static string Listed(IReadOnlyList<string> items) => items.Count switch
+    {
+        1 => items[0],
+        2 => $"{items[0]} and {items[1]}",
+        _ => $"{string.Join(", ", items.Take(items.Count - 1))}, and {items[^1]}",
+    };
+
     /// <summary>
     /// Why Begin is shut, once <see cref="Problems"/> is empty: every beat whose place has a name and
     /// no id yet.
