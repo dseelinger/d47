@@ -62,11 +62,17 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         IsVisible = false,
     };
 
-    private readonly Button _scopeButton = new()
+    private readonly ComboBox _scopeCombo = new()
     {
-        Padding = new Thickness(12, 4),
+        Name = "ChecklistScope",
         MinHeight = TouchTarget,
     };
+
+    /// <summary>The filter key behind each item in <see cref="_scopeCombo"/>, by index.</summary>
+    private List<string> _scopeKeys = [Everything];
+
+    /// <summary>Whether <see cref="_scopeCombo"/>'s selection is being written rather than chosen.</summary>
+    private bool _settlingScope;
 
     /// <summary>
     /// Include Partial Grades (change-requests.md 35): also show work an engineer here can start and
@@ -148,11 +154,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         Themed(_problems, TextBlock.ForegroundProperty, ThemeManager.DangerKey);
 
-        // A chooser rather than a combo box, and declared as a layer rather than as a page: the scopes on a
-        // working list are a handful, and taking the whole panel to answer a question the Commander did not
-        // think of as one is a level of navigation for nothing (Phase 25, "Page or layer is declared per call
-        // site").
-        _scopeButton.Click += (_, _) => ChooseScope();
+        _scopeCombo.SelectionChanged += (_, _) => OnScopeChanged();
 
         // Through the service, like the filter beside it: shared across surfaces and remembered.
         _partialSwitch.IsCheckedChanged += (_, _) => _checklists.IncludePartial(_partialSwitch.IsChecked == true);
@@ -195,7 +197,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         // The arcs live beside the scope filter rather than above the whole page: they are another way of
         // reading the same list, which is what the bar is for.
-        _controls.Children.Add(_scopeButton);
+        _controls.Children.Add(_scopeCombo);
         _controls.Children.Add(_arcsToggle);
         _controls.Children.Add(_deleteCompleted);
 
@@ -365,11 +367,44 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         _suggestions.IsVisible = pending.Count > 0;
         _suggestions.Content = $"Suggestions ({waiting.ToString(CultureInfo.InvariantCulture)})";
 
-        // The filter's own word rather than its key, so the button reads "Showing A ship's build" and not
-        // "Showing engineeringplan".
-        _scopeButton.Content = Chosen == Everything
-            ? "Showing everything"
-            : $"Showing {_checklists.FilterAxes().FirstOrDefault(filter => filter.Key == Chosen)?.Word ?? Chosen}";
+        // Flat: FilterAxes' headings group the choices by the question they answer, but no other
+        // dropdown here draws a heading between its own items.
+        var keys = new List<string> { Everything };
+        var words = new List<string> { "Everything" };
+
+        foreach (var filter in _checklists.FilterAxes())
+        {
+            keys.Add(filter.Key);
+            words.Add(filter.Word);
+        }
+
+        // A chosen filter can drop out of FilterAxes() while it is still selected — every Done line
+        // under it deleted, say — and the dropdown still has to show something for it rather than
+        // going blank.
+        if (!keys.Contains(Chosen))
+        {
+            keys.Add(Chosen);
+            words.Add(Chosen);
+        }
+
+        _scopeKeys = keys;
+
+        // Guarded, or setting the selection below would read as a choice and call back into Choose.
+        _settlingScope = true;
+
+        try
+        {
+            if (_scopeCombo.ItemsSource is not IReadOnlyList<string> shown || !shown.SequenceEqual(words))
+            {
+                _scopeCombo.ItemsSource = words;
+            }
+
+            _scopeCombo.SelectedIndex = keys.IndexOf(Chosen);
+        }
+        finally
+        {
+            _settlingScope = false;
+        }
 
         // Beside the engineer filter and nowhere else, and only where there is such work to include — a
         // control that can only ever change nothing is a control that reads as broken.
@@ -1075,32 +1110,20 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         Rebuild();
     }
 
-    /// <summary>The scope filter, as a chooser drawn into the panel's layer rather than as a dropdown.</summary>
-    private void ChooseScope()
+    /// <summary>The Commander picked a scope from the dropdown.</summary>
+    private void OnScopeChanged()
     {
-        var options = new List<ChoiceOption>
+        if (_settlingScope)
         {
-            new(Everything, "Everything"),
-        };
+            return;
+        }
 
-        // Each under the question it answers.
-        options.AddRange(_checklists.FilterAxes()
-            .Select(filter => new ChoiceOption(filter.Key, filter.Word) { Group = filter.Heading }));
+        var index = _scopeCombo.SelectedIndex;
 
-        _prompts.Choose(
-            new ChoiceRequest(
-                "checklist.scope",
-                "Show",
-                "Show",
-                "Scope is a label and a filter, never a partition — your order is one order across "
-                + "all of them.",
-                options,
-                Chosen,
-                ChoiceSurface.Layer)
-            {
-                CurrentWord = "showing now",
-            },
-            option => _checklists.Choose(option.Key));
+        if (index >= 0 && index < _scopeKeys.Count)
+        {
+            _checklists.Choose(_scopeKeys[index]);
+        }
     }
 
     /// <summary>The Commander's own line, said or typed.</summary>

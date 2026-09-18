@@ -64,6 +64,13 @@ public class AnEmptyChecklistNamesItsFilterTests
             .OfType<Button>()
             .Select(button => button.Content?.ToString() ?? string.Empty)];
 
+    /// <summary>The word the scope dropdown is currently showing (#269).</summary>
+    private static string ScopeWord(Avalonia.Visual panel) =>
+        panel.GetVisualDescendants()
+            .OfType<ComboBox>()
+            .Single(combo => combo.Name == "ChecklistScope")
+            .SelectedItem as string ?? string.Empty;
+
     [AvaloniaFact]
     public void AnUnfilteredEmptyListStillReadsNothingHereYet()
     {
@@ -103,8 +110,7 @@ public class AnEmptyChecklistNamesItsFilterTests
         checklists.Choose("complete");
         Dispatcher.UIThread.RunJobs();
 
-        var scopeWord = Buttons(panel).Single(text => text.StartsWith("Showing ", StringComparison.Ordinal))
-            ["Showing ".Length..];
+        var scopeWord = ScopeWord(panel);
 
         Assert.Contains(Lines(panel), text => text == $"Nothing on your list is in {scopeWord}.");
 
@@ -124,8 +130,7 @@ public class AnEmptyChecklistNamesItsFilterTests
         checklists.Search("limpets");
         Dispatcher.UIThread.RunJobs();
 
-        var scopeWord = Buttons(panel).Single(text => text.StartsWith("Showing ", StringComparison.Ordinal))
-            ["Showing ".Length..];
+        var scopeWord = ScopeWord(panel);
 
         Assert.Contains(Lines(panel), text => text == $"Nothing in {scopeWord} matches 'limpets'.");
 
@@ -150,8 +155,7 @@ public class AnEmptyChecklistNamesItsFilterTests
         panel.Mode = PanelMode.Mini;
         Dispatcher.UIThread.RunJobs();
 
-        var scopeWord = Buttons(panel).Single(text => text.StartsWith("Showing ", StringComparison.Ordinal))
-            ["Showing ".Length..];
+        var scopeWord = ScopeWord(panel);
 
         Assert.Contains(Lines(panel), text => text == $"Nothing in {scopeWord} matches 'limpets'.");
 

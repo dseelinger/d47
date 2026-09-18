@@ -459,8 +459,7 @@ public class ChecklistTabTests
         var word = checklists.FilterAxes()
             .Single(filter => filter.Key == ChecklistService.HereKey).Word;
 
-        Press(panel, content => content.StartsWith("Showing", StringComparison.Ordinal));
-        Press(panel, content => content == word);
+        SelectScope(panel, word);
 
         drawn = Lines(panel);
 
@@ -470,19 +469,11 @@ public class ChecklistTabTests
         window.Close();
     }
 
-    /// <summary>Presses the first button whose text content matches, then lets the UI settle.</summary>
-    private static void Press(PanelView panel, Func<string, bool> matching)
+    /// <summary>Picks a scope from the checklist bar's dropdown, then lets the UI settle (#269).</summary>
+    private static void SelectScope(PanelView panel, string word)
     {
-        // Matched on the text a Commander can see, not on Content: a chooser's rows are Buttons wrapping a
-        // StackPanel, so only the plain toolbar buttons carry a string.
-        var button = panel.GetVisualDescendants().OfType<Button>()
-            .FirstOrDefault(b =>
-                (b.Content is string text && matching(text))
-                || b.GetVisualDescendants().OfType<TextBlock>()
-                    .Any(block => block.Text is { Length: > 0 } shown && matching(shown)));
-
-        Assert.NotNull(button);
-        button!.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        var combo = panel.GetVisualDescendants().OfType<ComboBox>().Single(c => c.Name == "ChecklistScope");
+        combo.SelectedItem = word;
         Dispatcher.UIThread.RunJobs();
     }
 
@@ -605,8 +596,7 @@ public class ChecklistTabTests
         var word = checklists.FilterAxes()
             .Single(filter => filter.Key == ChecklistService.HereKey).Word;
 
-        Press(panel, content => content.StartsWith("Showing", StringComparison.Ordinal));
-        Press(panel, content => content == word);
+        SelectScope(panel, word);
 
         // Unchecked stays exactly what shipped.
         Assert.DoesNotContain(Lines(panel), line => line.Contains("Grade 5", StringComparison.Ordinal));

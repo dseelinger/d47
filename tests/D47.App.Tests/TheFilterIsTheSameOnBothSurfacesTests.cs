@@ -174,12 +174,11 @@ public class TheFilterIsTheSameOnBothSurfacesTests
         checklists.Choose("open");
         Dispatcher.UIThread.RunJobs();
 
-        var buttons = panel.GetVisualDescendants()
-            .OfType<Button>()
-            .Select(button => button.Content?.ToString() ?? string.Empty)
-            .ToList();
+        var scope = panel.GetVisualDescendants()
+            .OfType<ComboBox>()
+            .Single(combo => combo.Name == "ChecklistScope");
 
-        Assert.Contains(buttons, text => text.StartsWith("Showing ", StringComparison.Ordinal));
+        Assert.Equal("Still open", scope.SelectedItem as string);
 
         window.Close();
     }

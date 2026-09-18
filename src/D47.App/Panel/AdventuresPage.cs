@@ -443,8 +443,20 @@ public sealed class AdventuresPage : UserControl
             "The ship's AI writes a story for you to fly and waits for your yes. Three choices with "
             + "defaults, and a brief if you want one — pressing Go on an untouched form is a complete ask."));
 
-        var reachButton = new Button { Padding = new Thickness(12, 4), MinHeight = TouchTarget };
-        var lengthButton = new Button { Padding = new Thickness(12, 4), MinHeight = TouchTarget };
+        var reachCombo = new ComboBox
+        {
+            MinHeight = TouchTarget,
+            ItemsSource = new[] { "Reach: near here", "Reach: a session's flying", "Reach: anywhere" },
+            SelectedIndex = 0,
+        };
+
+        var lengthCombo = new ComboBox
+        {
+            MinHeight = TouchTarget,
+            ItemsSource = new[] { "Length: short", "Length: an evening", "Length: long" },
+            SelectedIndex = 1,
+        };
+
         var (usingBox, _, usingSwitch) = LabeledSwitch.Build("This ship only");
         var briefButton = new Button { Padding = new Thickness(12, 4), MinHeight = TouchTarget };
         var status = Muted(string.Empty);
@@ -452,60 +464,22 @@ public sealed class AdventuresPage : UserControl
 
         void Label()
         {
-            reachButton.Content = "Reach: " + reach switch
-            {
-                AdventureReach.NearHere => "near here",
-                AdventureReach.Session => "a session's flying",
-                _ => "anywhere",
-            };
-
-            lengthButton.Content = "Length: " + length switch
-            {
-                AdventureLength.Short => "short",
-                AdventureLength.Long => "long",
-                _ => "an evening",
-            };
-
             briefButton.Content = string.IsNullOrWhiteSpace(brief) ? "Brief: none" : $"Brief: \"{brief}\"";
         }
 
-        reachButton.Click += (_, _) => _prompts.Choose(
-            new ChoiceRequest(
-                "adventure.reach",
-                "Reach",
-                "How far may the story go?",
-                "Measured from where you are, by what you can move.",
-                [
-                    new ChoiceOption("near", "Near here"),
-                    new ChoiceOption("session", "A session's flying"),
-                    new ChoiceOption("anywhere", "Anywhere"),
-                ],
-                reach switch { AdventureReach.NearHere => "near", AdventureReach.Session => "session", _ => "anywhere" },
-                ChoiceSurface.Layer),
-            option =>
-            {
-                reach = option.Key switch { "session" => AdventureReach.Session, "anywhere" => AdventureReach.Anywhere, _ => AdventureReach.NearHere };
-                Label();
-            });
+        reachCombo.SelectionChanged += (_, _) => reach = reachCombo.SelectedIndex switch
+        {
+            1 => AdventureReach.Session,
+            2 => AdventureReach.Anywhere,
+            _ => AdventureReach.NearHere,
+        };
 
-        lengthButton.Click += (_, _) => _prompts.Choose(
-            new ChoiceRequest(
-                "adventure.length",
-                "Length",
-                "How long a story?",
-                "Short is three beats; an evening is five; long spends the whole sheet.",
-                [
-                    new ChoiceOption("short", "Short"),
-                    new ChoiceOption("evening", "An evening"),
-                    new ChoiceOption("long", "Long"),
-                ],
-                length switch { AdventureLength.Short => "short", AdventureLength.Long => "long", _ => "evening" },
-                ChoiceSurface.Layer),
-            option =>
-            {
-                length = option.Key switch { "short" => AdventureLength.Short, "long" => AdventureLength.Long, _ => AdventureLength.Evening };
-                Label();
-            });
+        lengthCombo.SelectionChanged += (_, _) => length = lengthCombo.SelectedIndex switch
+        {
+            0 => AdventureLength.Short,
+            2 => AdventureLength.Long,
+            _ => AdventureLength.Evening,
+        };
 
         ToolTip.SetTip(
             usingBox,
@@ -555,8 +529,8 @@ public sealed class AdventuresPage : UserControl
 
         Label();
 
-        page.Children.Add(reachButton);
-        page.Children.Add(lengthButton);
+        page.Children.Add(reachCombo);
+        page.Children.Add(lengthCombo);
 
         // Left out rather than hidden when there is nothing to choose between (#202).
         if (hasChoice)

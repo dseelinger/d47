@@ -110,7 +110,14 @@ public class MiniCarriesNoPageChromeTests
             .Where(toggle => Drawn(toggle, view))
             .Select(SwitchLabel);
 
-        return [.. controlWords.Concat(switchWords).Where(word => word.Length > 0)];
+        // A combo box shows its selected item rather than a Content (#269).
+        var comboWords = page.GetSelfAndVisualDescendants()
+            .OfType<ComboBox>()
+            .Where(combo => !combo.GetSelfAndVisualAncestors().OfType<ScrollBar>().Any())
+            .Where(combo => Drawn(combo, view))
+            .Select(combo => combo.SelectedItem as string ?? string.Empty);
+
+        return [.. controlWords.Concat(switchWords).Concat(comboWords).Where(word => word.Length > 0)];
     }
 
     /// <summary>The label beside a switch, wherever it sits among the switch's siblings.</summary>
@@ -128,7 +135,7 @@ public class MiniCarriesNoPageChromeTests
 
     /// <summary>The words on the Checklist bar, which is the page's own chrome.</summary>
     private static readonly string[] Bar =
-        ["Showing everything", "Goals (9 running)", "Delete completed items"];
+        ["Everything", "Goals (9 running)", "Delete completed items"];
 
     [AvaloniaFact]
     public void MiniCarriesNoneOfThePagesOwnChrome()
@@ -178,12 +185,12 @@ public class MiniCarriesNoPageChromeTests
         var (panel, view, _) = Headset("mini");
         using var _disposable = panel;
 
-        Assert.DoesNotContain("Showing everything", DrawnWords(view));
+        Assert.DoesNotContain("Everything", DrawnWords(view));
 
         view.Classes.Remove("output-only");
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Contains("Showing everything", DrawnWords(view));
+        Assert.Contains("Everything", DrawnWords(view));
     }
 
     [AvaloniaFact]
@@ -192,12 +199,12 @@ public class MiniCarriesNoPageChromeTests
         var (panel, view, checklists) = Headset("mini");
         using var _disposable = panel;
 
-        Assert.DoesNotContain("Showing everything", DrawnWords(view));
+        Assert.DoesNotContain("Everything", DrawnWords(view));
 
         checklists.AddNote(ChecklistScope.Universal, "sell the cargo");
         Serve(panel);
 
-        Assert.DoesNotContain("Showing everything", DrawnWords(view));
+        Assert.DoesNotContain("Everything", DrawnWords(view));
 
         // And the line that was just added is drawn, so this is a rebuild that happened rather than a page
         // that stopped redrawing.

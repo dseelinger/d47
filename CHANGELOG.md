@@ -6,6 +6,11 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 0.165.1 — Panel controls become dropdowns
+
+The Checklist bar's scope button and the Ask for an adventure form's Reach and Length buttons are
+now dropdowns. Picking a value no longer opens a chooser that takes the whole panel.
+
 ## 0.165.0 — Remove project ordering and checklist import/export
 
 The Checklist tab's control bar no longer offers Order or Import/Export. Projects now sort
