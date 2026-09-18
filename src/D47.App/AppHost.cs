@@ -505,6 +505,13 @@ public sealed class AppHost : IDisposable
     public event Action<string>? Said;
 
     /// <summary>
+    /// Raised with a spoken callout that joins the Conversation page (#276): its text as spoken, who
+    /// said it, and the callout key, once <see cref="VaryAsync"/> and the contradiction check have
+    /// settled what was actually said.
+    /// </summary>
+    public event Action<string, string, string>? CalloutSaid;
+
+    /// <summary>
     /// Raised with something that happened to the conversation rather than something said in it — the
     /// core changing under it being the case this exists for.
     /// </summary>
@@ -5040,21 +5047,16 @@ public sealed class AppHost : IDisposable
 
         // Written before it is spoken, and whether or not the speaking works: a message that could not be
         // synthesised is still a message that arrived. **Into the log, on the Commander's instruction**
-        // (#264): "In-game comms should appear in the Log File - voice related stuff." It was an event onto
-        // the Technical reading until #260 deleted that page, and putting it in the conversation was tried
-        // and drew badly - that page is bubbles, so a station's line arrived in d47's own voice and merged
-        // into whatever it had just said.
+        // (#264): "In-game comms should appear in the Log File - voice related stuff."
         if (announcement.Transcript is { Length: > 0 } line)
         {
             Comms.LogInformation("{Message}", line.TrimEnd());
         }
         else if (announcement.ConversationLine is { Length: > 0 } spoken)
         {
-            // The ship's AI, saying something no turn produced — which is exactly what Said is for, and what
-            // callouts were never routed through.
-            Said?.Invoke(spoken);
-
-            // **And into the conversation, not only onto the page** (remediation.md 17, item 4).
+            // Onto the story's own feed, so "why did you say that" can answer about a callout too
+            // (remediation.md 17, item 4). The Conversation page itself is joined from the drain loop,
+            // attributed to whoever actually said it (#276).
             Turns.Said(spoken);
         }
 
@@ -5474,6 +5476,21 @@ public sealed class AppHost : IDisposable
         Turns.Said(line);
     }
 
+    /// <summary>
+    /// Whether a spoken callout is heard closely enough to join the Conversation page — everything but
+    /// invented chatter and a relay the Commander only overheard (#276).
+    /// </summary>
+    internal static bool JoinsConversation(Announcement announcement) =>
+        !announcement.Key.StartsWith(NpcChatter.KeyPrefix, StringComparison.Ordinal)
+        && (announcement.CommsChannel == "player"
+            || (!announcement.Key.StartsWith("message.", StringComparison.Ordinal)
+                && announcement.Key != IncomingMessages.CarrierCannedKey
+                && announcement.Key != IncomingMessages.AuthorityCannedKey));
+
+    /// <summary>The chip the Conversation page names this speaker with.</summary>
+    internal static string ConversationSpeaker(Announcement announcement) =>
+        announcement.Speaker is { Length: > 0 } speaker ? speaker : VoiceRoles.Called(announcement.Voice) ?? "D47";
+
     private void SpeakPendingCallouts()
     {
         var pending = Callouts.Drain();
@@ -5560,6 +5577,11 @@ public sealed class AppHost : IDisposable
                     }
 
                     await SayAsync(announcement).ConfigureAwait(false);
+
+                    if (JoinsConversation(announcement))
+                    {
+                        CalloutSaid?.Invoke(announcement.Text, ConversationSpeaker(announcement), announcement.Key);
+                    }
 
                     // What the Commander actually heard about a story, kept (asked for 2026-08-22).
                     RecordAdventure(announcement);

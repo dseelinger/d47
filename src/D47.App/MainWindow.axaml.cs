@@ -442,6 +442,11 @@ public partial class MainWindow : Window
         _host.Said += text => Avalonia.Threading.Dispatcher.UIThread.Post(
             () => _model.Append($"\n{text}\n"));
 
+        // A callout spoken to the Commander joins the conversation too, attributed to whoever said it
+        // (#276).
+        _host.CalloutSaid += (text, speaker, sourceKey) => Avalonia.Threading.Dispatcher.UIThread.Post(
+            () => _model.Append($"\n{text}\n", speaker: speaker, sourceKey: sourceKey));
+
         // And what happened to the conversation rather than in it - the core changing under it.
         _host.Noted += text => Avalonia.Threading.Dispatcher.UIThread.Post(() => _model.Mark(text));
 
@@ -910,6 +915,10 @@ public partial class MainWindow : Window
         // Set when the turn is answered by someone other than the ship's AI, and undone in the finally.
         AppHost.AddressedVoice? addressedVoice = null;
 
+        // The chip this reply's bubble carries — null until Addressed names someone else, and D47 by
+        // Append's own default until then.
+        string? addressedName = null;
+
         try
         {
             // Through the voice pipeline rather than straight off the turn loop, so the panel and the speaker
@@ -922,7 +931,7 @@ public partial class MainWindow : Window
                     {
                         case TurnEvent.Addressed addressed:
                             addressedVoice ??= _host.SpeakAs(addressed);
-                            _model.Append($"[{addressed.Name}] ");
+                            addressedName = addressed.Name;
                             break;
 
                         case TurnEvent.Routed routed:
@@ -932,7 +941,7 @@ public partial class MainWindow : Window
                             break;
 
                         case TurnEvent.TextDelta text:
-                            _model.Append(text.Text);
+                            _model.Append(text.Text, speaker: addressedName);
                             break;
 
                         case TurnEvent.Retrying retry:

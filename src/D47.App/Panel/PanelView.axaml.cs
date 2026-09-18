@@ -2829,7 +2829,9 @@ public partial class PanelView : UserControl
         // colour instead.
         var messages = bubbled
             ? Turns(Drawn(_bound.Segments(Page, framed: false), Page))
-            : [new DrawnTurn(TranscriptVoice.Ship, Marker: false, Drawn(_bound.Segments(Page), Page))];
+            : [new DrawnTurn(
+                TranscriptVoice.Ship, Marker: false, Drawn(_bound.Segments(Page), Page),
+                Speaker: "D47", SourceKey: null, Time: default)];
 
         // Matched against the page's text rather than against the controls, so the hits are the same set
         // whether the page has been drawn yet or not — and so the current one can be re-resolved from its
@@ -3000,7 +3002,12 @@ public partial class PanelView : UserControl
                 ? Theming.ThemeManager.InfoInkKey
                 : Theming.ThemeManager.AccentInkKey));
 
-        var content = strip is null ? (Control)block : new StackPanel { Spacing = 6, Children = { block, strip } };
+        var content = new StackPanel { Spacing = 6, Children = { Head(turn), block } };
+
+        if (strip is not null)
+        {
+            content.Children.Add(strip);
+        }
 
         content.Margin = mini ? new Thickness(7, 4) : new Thickness(11, 8);
 
@@ -3045,6 +3052,96 @@ public partial class PanelView : UserControl
         row.Children.Add(bubble);
 
         return row;
+    }
+
+    /// <summary>Who spoke, what it was about, and when — atop every bubble but the panel's own note (#276).</summary>
+    private Control Head(DrawnTurn turn)
+    {
+        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+
+        row.Children.Add(SpeakerChip(turn));
+
+        if (turn.SourceKey is { Length: > 0 } key)
+        {
+            row.Children.Add(SourceTag(key));
+        }
+
+        var time = new TextBlock
+        {
+            Text = turn.Time.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture),
+            FontSize = Theming.TypeScale.Small,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        time.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.TextMutedKey));
+
+        row.Children.Add(time);
+
+        return row;
+    }
+
+    /// <summary>
+    /// The chip a bubble's head names its speaker with: the Commander in Info, D47 solid Accent, and
+    /// everyone else — a persona, Tower, Carrier, Crew, Comms — Accent ink on a rule border (#276).
+    /// </summary>
+    private Control SpeakerChip(DrawnTurn turn)
+    {
+        var label = new TextBlock
+        {
+            Text = turn.Speaker,
+            FontSize = Theming.TypeScale.Small,
+            FontWeight = FontWeight.SemiBold,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        var chip = new Border { Padding = new Thickness(7, 2), Child = label };
+
+        if (turn.Voice == TranscriptVoice.Commander)
+        {
+            chip.BorderThickness = new Thickness(1);
+            chip.Bind(Border.BackgroundProperty, this.GetResourceObservable(Theming.ThemeManager.InfoFillKey));
+            chip.Bind(Border.BorderBrushProperty, this.GetResourceObservable(Theming.ThemeManager.InfoBorderKey));
+            label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.InfoInkKey));
+        }
+        else if (turn.Speaker == "D47")
+        {
+            chip.Bind(Border.BackgroundProperty, this.GetResourceObservable(Theming.ThemeManager.AccentKey));
+            label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.BackgroundKey));
+        }
+        else
+        {
+            chip.BorderThickness = new Thickness(1);
+            chip.Bind(Border.BackgroundProperty, this.GetResourceObservable(Theming.ThemeManager.FillLowKey));
+            chip.Bind(Border.BorderBrushProperty, this.GetResourceObservable(Theming.ThemeManager.RuleKey));
+            label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.AccentKey));
+        }
+
+        return chip;
+    }
+
+    /// <summary>A callout's key, tagged the same way a Settings row's inline tag is (#279).</summary>
+    private Control SourceTag(string sourceKey)
+    {
+        var label = new TextBlock
+        {
+            Text = sourceKey,
+            FontSize = Theming.TypeScale.Small,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.AccentKey));
+
+        var tag = new Border
+        {
+            Padding = new Thickness(6, 1),
+            BorderThickness = new Thickness(1),
+            VerticalAlignment = VerticalAlignment.Center,
+            Child = label,
+        };
+
+        tag.Bind(Border.BorderBrushProperty, this.GetResourceObservable(Theming.ThemeManager.TagBorderKey));
+
+        return tag;
     }
 
     /// <summary>
@@ -3184,35 +3281,46 @@ public partial class PanelView : UserControl
         // Raw Journal joins the log here, and it is the more important of the two: a journal carries other
         // players' text verbatim, and JSON is full of asterisks and underscores.
         page is TranscriptPage.Log or TranscriptPage.RawJournal
-            ? [.. segments.Select(segment =>
-                new DrawnSegment(segment.Text, segment.Marker, segment.Voice, MarkupStyle.None))]
+            ? [.. segments.Select(segment => new DrawnSegment(
+                segment.Text, segment.Marker, segment.Voice, MarkupStyle.None,
+                segment.Speaker ?? "D47", segment.SourceKey, segment.Time))]
             : [.. segments.SelectMany(segment => TranscriptMarkup
                 .Parse(segment.Text)
-                .Select(span => new DrawnSegment(span.Text, segment.Marker, segment.Voice, span.Style)))];
+                .Select(span => new DrawnSegment(
+                    span.Text, segment.Marker, segment.Voice, span.Style,
+                    segment.Speaker ?? "D47", segment.SourceKey, segment.Time)))];
 
     /// <summary>
     /// The page's segments gathered into turns: consecutive stretches from one side, with the blank
-    /// lines between them taken off.
+    /// lines between them taken off. A turn also breaks on a new speaker or source, so two callouts
+    /// spoken back to back stay two bubbles even when both are the ship's own voice.
     /// </summary>
     private static IReadOnlyList<DrawnTurn> Turns(IReadOnlyList<DrawnSegment> segments)
     {
-        var gathered = new List<(TranscriptVoice Voice, bool Marker, List<DrawnSegment> Segments)>();
+        var gathered = new List<(
+            TranscriptVoice Voice, bool Marker, string Speaker, string? SourceKey, DateTimeOffset Time,
+            List<DrawnSegment> Segments)>();
 
         foreach (var segment in segments)
         {
-            if (gathered is [.., var last] && last.Voice == segment.Voice && last.Marker == segment.Marker)
+            if (gathered is [.., var last]
+                && last.Voice == segment.Voice
+                && last.Marker == segment.Marker
+                && last.Speaker == segment.Speaker
+                && last.SourceKey == segment.SourceKey)
             {
                 last.Segments.Add(segment);
                 continue;
             }
 
-            gathered.Add((segment.Voice, segment.Marker, [segment]));
+            gathered.Add((segment.Voice, segment.Marker, segment.Speaker, segment.SourceKey, segment.Time, [segment]));
         }
 
         return
         [
             .. gathered
-                .Select(turn => new DrawnTurn(turn.Voice, turn.Marker, Trimmed(turn.Segments)))
+                .Select(turn => new DrawnTurn(
+                    turn.Voice, turn.Marker, Trimmed(turn.Segments), turn.Speaker, turn.SourceKey, turn.Time))
                 .Where(turn => turn.Segments.Count > 0)
         ];
     }
@@ -3761,10 +3869,16 @@ internal readonly record struct DrawnSegment(
     string Text,
     bool Marker,
     TranscriptVoice Voice,
-    MarkupStyle Style);
+    MarkupStyle Style,
+    string Speaker,
+    string? SourceKey,
+    DateTimeOffset Time);
 
 /// <summary>One side's uninterrupted stretch of the conversation — a bubble's worth.</summary>
 internal sealed record DrawnTurn(
     TranscriptVoice Voice,
     bool Marker,
-    IReadOnlyList<DrawnSegment> Segments);
+    IReadOnlyList<DrawnSegment> Segments,
+    string Speaker,
+    string? SourceKey,
+    DateTimeOffset Time);

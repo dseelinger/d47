@@ -18,7 +18,10 @@ public enum PanelMode
 /// </summary>
 public enum TranscriptPage
 {
-    /// <summary>The Commander and the ship's AI, and nothing else.</summary>
+    /// <summary>
+    /// The Commander, the ship's AI, and the callouts spoken to the Commander — everything but
+    /// invented chatter and an overheard relay.
+    /// </summary>
     Conversation,
 
     /// <summary>
@@ -47,13 +50,30 @@ public enum TranscriptVoice
 }
 
 /// <summary>A stretch of transcript drawn one way.</summary>
-public sealed record TranscriptSegment(string Text, bool Marker, TranscriptVoice Voice);
+/// <param name="Speaker">Who said it, or null on the flat Log and Raw Journal blocks, which carry no chip.</param>
+/// <param name="SourceKey">The callout key this run came from, or null for one that did not.</param>
+public sealed record TranscriptSegment(
+    string Text,
+    bool Marker,
+    TranscriptVoice Voice,
+    string? Speaker = null,
+    string? SourceKey = null,
+    DateTimeOffset Time = default);
 
 /// <summary>What the panel shows, independent of where it is being shown.</summary>
 public sealed class PanelViewModel : INotifyPropertyChanged
 {
     /// <summary>The transcript in order, split into runs that are drawn the same way.</summary>
-    private readonly List<(bool Marker, TranscriptVoice Voice, StringBuilder Text)> _runs = [];
+    private readonly List<Run> _runs = [];
+
+    /// <summary>One drawn run: who said it, when, and from which callout, alongside its text.</summary>
+    private sealed record Run(
+        bool Marker,
+        TranscriptVoice Voice,
+        string Speaker,
+        string? SourceKey,
+        DateTimeOffset Time,
+        StringBuilder Text);
 
     /// <summary>Guards <see cref="_runs"/> and the strings derived from it.</summary>
     private readonly Lock _appendLock = new();
@@ -369,22 +389,34 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         ? "What can you do?"
         : "What can you do? — try \"where am I\" or \"what's your status\"";
 
-    /// <summary>Adds to the transcript.</summary>
+    /// <summary>
+    /// Adds to the transcript. <paramref name="speaker"/> falls back to CMDR or D47 by
+    /// <paramref name="voice"/> — everything that does not name its own speaker is one of those two.
+    /// </summary>
     public void Append(
         string text,
         bool marker = false,
-        TranscriptVoice voice = TranscriptVoice.Ship)
+        TranscriptVoice voice = TranscriptVoice.Ship,
+        string? speaker = null,
+        string? sourceKey = null,
+        DateTimeOffset? time = null)
     {
+        var named = speaker ?? (voice == TranscriptVoice.Commander ? "CMDR" : "D47");
+        var at = time ?? DateTimeOffset.Now;
         string transcript;
 
         // Locked, because there is more than one writer.
         lock (_appendLock)
         {
+            // A run merges only into one from the same speaker and the same source: two callouts spoken
+            // back to back stay two bubbles even when both are the ship's own voice.
             if (_runs.Count == 0
                 || _runs[^1].Marker != marker
-                || _runs[^1].Voice != voice)
+                || _runs[^1].Voice != voice
+                || _runs[^1].Speaker != named
+                || _runs[^1].SourceKey != sourceKey)
             {
-                _runs.Add((marker, voice, new StringBuilder()));
+                _runs.Add(new Run(marker, voice, named, sourceKey, at, new StringBuilder()));
             }
 
             _runs[^1].Text.Append(text);
@@ -422,8 +454,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     /// <summary>A page's content, in order, split where its emphasis changes.</summary>
     public IReadOnlyList<TranscriptSegment> Segments(TranscriptPage page, bool framed = true)
     {
-        string Text((bool Marker, TranscriptVoice Voice, StringBuilder Text) run) =>
-            framed ? Flatten(run) : run.Text.ToString();
+        string Text(Run run) => framed ? Flatten(run) : run.Text.ToString();
 
         return page switch
         {
@@ -434,13 +465,14 @@ public sealed class PanelViewModel : INotifyPropertyChanged
                 [new TranscriptSegment(JournalRawText, Marker: false, TranscriptVoice.Ship)],
             _ =>
             [
-                .. _runs.Select(run => new TranscriptSegment(Text(run), run.Marker, run.Voice))
+                .. _runs.Select(run =>
+                    new TranscriptSegment(Text(run), run.Marker, run.Voice, run.Speaker, run.SourceKey, run.Time))
             ],
         };
     }
 
     /// <summary>One run as a flat page draws it.</summary>
-    private static string Flatten((bool Marker, TranscriptVoice Voice, StringBuilder Text) run) =>
+    private static string Flatten(Run run) =>
         run.Voice == TranscriptVoice.Commander
             ? $"\n\n> {run.Text}\n"
             : run.Text.ToString();

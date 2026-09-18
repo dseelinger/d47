@@ -39,6 +39,13 @@ Accent fill, and the reset glyph moves off the label and onto a square 40x40 but
 the row. The protected and per-Commander tags carry a 60% Accent border and no fill, and a bound
 key now reads in monospace. No row or tree node draws a rounded corner.
 
+The Conversation page now says who is speaking. Every bubble but the panel's own note carries a
+head: a chip naming the speaker — CMDR, D47, a persona's own name, or a role such as Tower or
+Carrier for a callout with nobody specific behind it — a small tag naming the callout it came
+from, and the time. Callouts spoken to you now join the conversation the same way a reply does;
+invented chatter and a message you only overheard stay off it. The bracketed name in front of a
+persona's reply is gone now that the chip carries it.
+
 ## 0.168.0 — Controls take the HUD dress
 
 Buttons, toggle switches and the transcript tabs now draw d47's own look rather than the

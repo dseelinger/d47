@@ -556,13 +556,19 @@ The transcript tab has four **readings**, three of them on a stepper at the righ
 bar and the fourth on a switch beside it. They are readings of one session rather than four
 destinations, which is why they are a stepper and not four tabs of their own.
 
-**In Ship** is you and the ship's AI, and nothing else. It is what a fresh installation opens on,
-and what you come back to unless you left the tab on another reading — see *the panel* above.
+**In Ship** is the conversation: you, the ship's AI, and the callouts spoken to you — everything
+but invented chatter and a message you only overheard rather than were sent. It is what a fresh
+installation opens on, and what you come back to unless you left the tab on another reading — see
+*the panel* above.
 
 It is drawn as a conversation, the way the messaging app on your phone draws one: a turn to a
-bubble, **yours on the right in the theme's own colour** and **the ship's on the left**. When D47
+bubble, **yours on the right in the theme's own colour** and everyone else's on the left. When D47
 notes something *about* the conversation rather than saying something in it — the core changing
 under you — that sits across the middle in the accent, with no bubble, because it is not a side.
+
+Every bubble but that note carries a head: a chip naming who spoke — `CMDR`, `D47`, a persona's
+own name, or a role like `Tower` or `Carrier` for a callout with nobody specific behind it — the
+callout's own key as a small tag when the line came from one, and the time.
 
 The headset's big panel does the same. The mini panel does too and spends less on it: the same
 sides and the same colours, with the gutter and most of the padding given back, because a surface
