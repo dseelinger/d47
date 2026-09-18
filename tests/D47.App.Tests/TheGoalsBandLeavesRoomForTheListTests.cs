@@ -83,7 +83,7 @@ public class TheGoalsBandLeavesRoomForTheListTests
         panel.GetVisualDescendants()
             .OfType<ScrollViewer>()
             .First(scroller => scroller.Content is StackPanel stack
-                               && stack.GetVisualDescendants().OfType<ToggleSwitch>().Any());
+                               && stack.GetVisualDescendants().OfType<CheckBox>().Any());
 
     /// <summary>The report itself: open the band and the list is still there to work in.</summary>
     [AvaloniaFact]
