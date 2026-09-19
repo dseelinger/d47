@@ -70,10 +70,12 @@ public class CarrierCalloutTests
         Assert.Contains("Captain,", said[0].Text, StringComparison.Ordinal);
         Assert.Contains("inbound", said[0].Text, StringComparison.Ordinal);
 
+        // The captain answers the tower and names the owner — not every welcome line says "Welcome
+        // home", so those are the invariants rather than the exact sentence.
         Assert.Equal(CarrierCallout.WelcomeKey, said[1].Key);
         Assert.Equal(VoiceRole.CarrierCaptain, said[1].Voice);
         Assert.Contains("Tower Control", said[1].Text, StringComparison.Ordinal);
-        Assert.Contains("Welcome home, Commander Fixture", said[1].Text, StringComparison.Ordinal);
+        Assert.Contains("Commander Fixture", said[1].Text, StringComparison.Ordinal);
     }
 
     /// <summary>Somebody else's carrier gets nothing.</summary>
@@ -331,6 +333,128 @@ public class CarrierCalloutTests
             Assert.Contains("Commander DeParagon", line.Text, StringComparison.Ordinal);
             Assert.DoesNotContain("John", line.Text, StringComparison.Ordinal);
         });
+    }
+
+    /// <summary>
+    /// The tower and the captain say different things on different visits (#291): each of the six keys
+    /// draws from a pool rather than one fixed sentence, and two consecutive fires of a key never say the
+    /// same words.
+    /// </summary>
+    [Fact]
+    public void TheSixKeysVaryAndNeverRepeatConsecutively()
+    {
+        var callout = new CarrierCallout();
+        var state = WithCarrier();
+
+        var secured = new List<string>();
+        var home = new List<string>();
+        var departure = new List<string>();
+
+        for (var i = 0; i < 7; i++)
+        {
+            var docked = Event("Docked", ("StationName", CallSign));
+            var arrival = callout.Examine(Context(state, priming: false, docked)).ToArray();
+            secured.Add(arrival[0].Text);
+            home.Add(arrival[1].Text);
+
+            var undocked = Event("Undocked", ("StationName", CallSign));
+            var leaving = callout.Examine(Context(state, priming: false, undocked)).ToArray();
+            departure.Add(leaving[0].Text);
+        }
+
+        AssertVariesAndNeverRepeatsConsecutively(secured);
+        AssertVariesAndNeverRepeatsConsecutively(home);
+        AssertVariesAndNeverRepeatsConsecutively(departure);
+
+        var inbound = new List<string>();
+        var welcome = new List<string>();
+
+        for (var i = 0; i < 7; i++)
+        {
+            var spoken = callout
+                .Examine(Context(
+                    state,
+                    priming: false,
+                    Event("SupercruiseDestinationDrop", ("Type", $"Long Way Home {CallSign}"), ("Threat", 0))))
+                .ToArray();
+
+            inbound.Add(spoken[0].Text);
+            welcome.Add(spoken[1].Text);
+        }
+
+        AssertVariesAndNeverRepeatsConsecutively(inbound);
+        AssertVariesAndNeverRepeatsConsecutively(welcome);
+
+        var jump = new List<string>();
+
+        for (var i = 0; i < 7; i++)
+        {
+            var plotted = Assert.Single(callout.Examine(
+                Context(state, priming: false, Event("CarrierJumpRequest", ("SystemName", "Colonia")))));
+            jump.Add(plotted.Text);
+        }
+
+        AssertVariesAndNeverRepeatsConsecutively(jump);
+    }
+
+    private static void AssertVariesAndNeverRepeatsConsecutively(IReadOnlyList<string> said)
+    {
+        Assert.True(
+            said.Distinct(StringComparer.Ordinal).Count() >= 5,
+            $"expected at least five distinct lines, saw: {string.Join(" | ", said.Distinct())}");
+
+        for (var i = 1; i < said.Count; i++)
+        {
+            Assert.NotEqual(said[i - 1], said[i]);
+        }
+    }
+
+    /// <summary>Every line of every pool keeps what its key's line has always carried (#291).</summary>
+    [Fact]
+    public void EveryPoolLineKeepsItsKeysInvariants()
+    {
+        var callout = new CarrierCallout();
+        var state = WithCarrier();
+
+        for (var i = 0; i < 7; i++)
+        {
+            var docked = Event("Docked", ("StationName", CallSign));
+            var arrival = callout.Examine(Context(state, priming: false, docked)).ToArray();
+
+            var secured = arrival[0];
+            Assert.Contains("secured", secured.Text, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("Long Way Home", secured.Text, StringComparison.Ordinal);
+            Assert.Contains("Commander Fixture", secured.Text, StringComparison.Ordinal);
+            Assert.DoesNotContain("docking granted", secured.Text, StringComparison.OrdinalIgnoreCase);
+
+            var home = arrival[1];
+            Assert.Contains("Commander Fixture", home.Text, StringComparison.Ordinal);
+
+            var undocked = Event("Undocked", ("StationName", CallSign));
+            var departure = Assert.Single(callout.Examine(Context(state, priming: false, undocked)));
+            Assert.Contains("Long Way Home", departure.Text, StringComparison.Ordinal);
+            Assert.Contains("Commander Fixture", departure.Text, StringComparison.Ordinal);
+
+            var dropped = callout
+                .Examine(Context(
+                    state,
+                    priming: false,
+                    Event("SupercruiseDestinationDrop", ("Type", $"Long Way Home {CallSign}"), ("Threat", 0))))
+                .ToArray();
+
+            var inbound = dropped[0];
+            Assert.Contains("Captain,", inbound.Text, StringComparison.Ordinal);
+            Assert.Contains("inbound", inbound.Text, StringComparison.Ordinal);
+
+            var welcome = dropped[1];
+            Assert.Contains("Tower Control", welcome.Text, StringComparison.Ordinal);
+            Assert.Contains("Commander Fixture", welcome.Text, StringComparison.Ordinal);
+
+            var plotted = Assert.Single(callout.Examine(
+                Context(state, priming: false, Event("CarrierJumpRequest", ("SystemName", "Colonia")))));
+            Assert.Contains("Colonia", plotted.Text, StringComparison.Ordinal);
+            Assert.Contains("Commander Fixture", plotted.Text, StringComparison.Ordinal);
+        }
     }
 
     /// <summary>And with no name to use it is the bare rank rather than an invented one.</summary>

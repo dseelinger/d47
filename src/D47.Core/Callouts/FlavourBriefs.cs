@@ -270,6 +270,82 @@ public static class FlavourBriefs
                 };
             }
 
+            // The rest of the docked-and-arrival exchange (#291): each names its own situation and treats
+            // the authored line as a register sample, the same as SecuredKey and HomeKey above.
+            if (announcement.Key == CarrierCallout.DepartureKey)
+            {
+                return new FlavourBrief
+                {
+                    Speaker = speaker,
+                    Instruction =
+                        "The owner of this carrier has just cleared the deck aboard their ship. "
+                        + "Acknowledge it in one short sentence: name the carrier and wish them "
+                        + "safe flying. Invent no facts: no crew names, no deck reports, no "
+                        + "events. Address the owner exactly as this authored line does, and "
+                        + "treat it as a register sample rather than a script: "
+                        + $"\"{announcement.Text}\"",
+                    NeedsPersona = false,
+                    NeedsGameState = false,
+                    NeedsAboutMe = false,
+                };
+            }
+
+            if (announcement.Key == CarrierCallout.InboundKey)
+            {
+                return new FlavourBrief
+                {
+                    Speaker = speaker,
+                    Instruction =
+                        "The tower has just watched the Commander drop out of supercruise at "
+                        + "their own carrier, and tells the captain before the captain says "
+                        + "anything to the Commander. Say one short thing to the captain in your "
+                        + "own words — the moment is the Commander inbound, nothing more. Invent "
+                        + "no facts: no ETA, no pad number, no traffic. Address the captain "
+                        + "exactly as this authored line does, and treat it as a register sample "
+                        + $"rather than a script: \"{announcement.Text}\"",
+                    NeedsPersona = false,
+                    NeedsGameState = false,
+                    NeedsAboutMe = false,
+                };
+            }
+
+            if (announcement.Key == CarrierCallout.WelcomeKey)
+            {
+                return new FlavourBrief
+                {
+                    Speaker = speaker,
+                    Instruction =
+                        "The tower has just told you the Commander is inbound, and this is you "
+                        + "answering the tower before welcoming the owner home. Say one short "
+                        + "thing acknowledging the tower, then welcome the owner. Invent no "
+                        + "facts: no crew names, no events, no reports. Address the owner exactly "
+                        + "as this authored line does, and treat it as a register sample rather "
+                        + $"than a script: \"{announcement.Text}\"",
+                    NeedsPersona = false,
+                    NeedsGameState = false,
+                    NeedsAboutMe = false,
+                };
+            }
+
+            if (announcement.Key == CarrierCallout.JumpKey)
+            {
+                return new FlavourBrief
+                {
+                    Speaker = speaker,
+                    Instruction =
+                        "The owner of this carrier has just plotted a jump for it. Say one short "
+                        + "thing acknowledging the jump is plotted and the crew stand ready on "
+                        + "the owner's order. Keep the destination system name exactly as given, "
+                        + "and do not invent a departure time. Invent no other facts: no crew "
+                        + "names, no fuel figures, no events. Address the owner exactly as this "
+                        + "authored line does, and treat it as a register sample rather than a "
+                        + $"script: \"{announcement.Text}\"",
+                    NeedsPersona = false,
+                    NeedsGameState = false,
+                    NeedsAboutMe = false,
+                };
+            }
+
             // A canned line Elite sent from the Commander's own carrier (#248): Frontier's string, allowed
             // near a model precisely because no player wrote it — see IncomingMessages, where the $-key is
             // what proves that.

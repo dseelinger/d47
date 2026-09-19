@@ -557,4 +557,33 @@ public class NpcChatterScriptTests
         Assert.True(topics.Count > 1, "Twelve exchanges never picked a second topic.");
         Assert.True(openings.Count > 1, "Twelve exchanges never picked a second opening beat.");
     }
+
+    /// <summary>
+    /// "Clearances, pad assignments, a telling-off" was one scene at the tower every visit (#291): the
+    /// controller scene now rotates its subject and its opening off the exchange index too, at the
+    /// Commander's own carrier and at any other station.
+    /// </summary>
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ControllerChatterRotatesTheSceneRatherThanRepeatingOne(bool present)
+    {
+        var carrier = present
+            ? NpcChatterCarrier.Of(
+                Mine,
+                At("Shinrarta Dezhra", docked: true, station: "K7Q-B4Z", stationType: "FleetCarrier",
+                    mode: FlightMode.Docked, marketId: 3_700_123_456))
+            : NpcChatterCarrier.None;
+
+        Assert.Equal(present, carrier.Present);
+
+        var scenes = new HashSet<string>();
+
+        for (var index = 0; index < 10; index++)
+        {
+            scenes.Add(NpcChatter.Instruction(NpcChatterKind.Controller, carrier, docked: true, exchangeIndex: index));
+        }
+
+        Assert.True(scenes.Count >= 3, $"Ten exchanges only ever picked {scenes.Count} scene(s).");
+    }
 }

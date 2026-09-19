@@ -30,6 +30,15 @@ the model fails, times out or returns something unusable, d47 says its own line 
 example "Welcome back, Commander Seelinger." The log now records at Information level whenever a
 line was spoken as written, and why.
 
+The carrier's tower and captain no longer say the same sentence every visit. Each of the six lines
+they speak as written — the ship secured, the captain's welcome, clearing the deck, the tower
+telling the captain the Commander is inbound, the captain's answer, and a jump plotted — now draws
+from a pool of six, cycling so two visits running never repeat one. When personality is on, the
+model is asked to compose in the same situation rather than reword a fixed sentence, the same way
+the docked welcome already did. Overheard tower traffic at a station or at your own carrier now
+varies its subject and its opening beat too, instead of always being "clearances, pad assignments,
+a telling-off".
+
 The Fleet cards do too. A ship's hull picture now sits in a pure black cell with a rule beneath it
 in every theme, the current ship carries its badge in the corner rather than a highlighted card, and
 the name is drawn upper case in Saira Semi Condensed with the hull, where it is and what is planned

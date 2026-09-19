@@ -237,14 +237,14 @@ public static class NpcChatter
             // rather than left for the model to guess at.
             NpcChatterKind.Controller when carrier.Present =>
                 "An invented pilot and the tower controller aboard the Commander's own fleet carrier "
-                + $"{Called(carrier)}exchange 2 to 4 short lines of routine traffic — clearances, pad "
-                + "assignments, a telling-off. Procedure with a human edge. The Commander is not "
+                + $"{Called(carrier)}exchange 2 to 4 short lines of routine traffic — "
+                + $"{ControllerScene(exchangeIndex)} Procedure with a human edge. The Commander is not "
                 + "part of it. ",
 
             NpcChatterKind.Controller =>
                 "An invented pilot and the controller of the station or carrier where the Commander "
-                + "is docked exchange 2 to 4 short lines of routine traffic — clearances, pad "
-                + "assignments, a telling-off. Procedure with a human edge. The Commander is not "
+                + "is docked exchange 2 to 4 short lines of routine traffic — "
+                + $"{ControllerScene(exchangeIndex)} Procedure with a human edge. The Commander is not "
                 + "part of it. ",
 
             NpcChatterKind.Hail when !docked =>
@@ -287,6 +287,47 @@ public static class NpcChatter
             + noticed
             + PassersbyBans;
     }
+
+    /// <summary>
+    /// The controller scene's subject and opening, rotated off <paramref name="exchangeIndex"/> the way
+    /// <see cref="PassersbyScene"/> rotates cast, topic and opening (#291): a fixed "clearances, pad
+    /// assignments, a telling-off" was the same line spoken at every visit.
+    /// </summary>
+    private static string ControllerScene(int exchangeIndex)
+    {
+        var subject = Pick(exchangeIndex, ControllerSubjectOffset, ControllerSubjects);
+        var opening = Pick(exchangeIndex, ControllerOpeningOffset, ControllerOpenings);
+
+        return $"{subject}, opening on {opening}.";
+    }
+
+    /// <summary>
+    /// What the traffic is about — routine business only, never a jump (#291's own carrier drops any
+    /// exchange that mentions one while none is scheduled, so a rotated subject must not risk it).
+    /// </summary>
+    private static readonly string[] ControllerSubjects =
+    [
+        "clearances and pad assignments",
+        "a delayed pad assignment and a docking request",
+        "a customs check and a paperwork snag",
+        "a fuel allocation and a queue dispute",
+        "a maintenance hold and a curt correction",
+        "a beacon check and a slot swap",
+        "a telling-off over a sloppy approach",
+    ];
+
+    private static readonly string[] ControllerOpenings =
+    [
+        "a queue backing up",
+        "a pad running late",
+        "a manifest flagged for review",
+        "a beacon out of sync",
+        "a slot mix-up",
+        "a hold nobody wants",
+    ];
+
+    private const int ControllerSubjectOffset = 23;
+    private const int ControllerOpeningOffset = 29;
 
     /// <summary>Cast pairs for a scene with a station around it.</summary>
     private static readonly string[] DockedCasts =
