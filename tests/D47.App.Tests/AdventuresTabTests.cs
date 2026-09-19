@@ -165,7 +165,7 @@ public class AdventuresTabTests
 
         var drawn = Drawn(panel);
 
-        Assert.Contains(drawn, text => text.Contains("The Lantern Route"));
+        Assert.Contains(drawn, text => text.Contains("THE LANTERN ROUTE"));
         Assert.Contains(drawn, text => text.Contains("yours") && text.Contains("The Lantern"));
         Assert.Contains(drawn, text => text.Contains("written by Archivist") && text.Contains("waiting for your yes"));
         Assert.Contains(drawn, text => text.Contains("Step 1 of 2"));
@@ -216,7 +216,7 @@ public class AdventuresTabTests
 
         var drawn = Drawn(panel);
 
-        Assert.Contains(drawn, text => text.Contains("Write an adventure"));
+        Assert.Contains(drawn, text => text.Contains("WRITE AN ADVENTURE"));
         Assert.Contains(drawn, text => text.Contains("An adventure needs a name."));
         Assert.Contains(drawn, text => text.Contains("at least one beat"));
 
@@ -234,7 +234,7 @@ public class AdventuresTabTests
 
         var drawn = Drawn(panel);
 
-        Assert.Contains(drawn, text => text.Contains("Ask for an adventure"));
+        Assert.Contains(drawn, text => text.Contains("ASK FOR AN ADVENTURE"));
         Assert.Contains(drawn, text => text.Contains("needs a language model"));
 
         var go = panel.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "Go"));
@@ -480,7 +480,7 @@ public class AdventuresTabTests
 
         var drawn = Visible(panel);
 
-        Assert.Contains(drawn, text => text.Contains("The Lantern Route"));
+        Assert.Contains(drawn, text => text.Contains("THE LANTERN ROUTE"));
         Assert.Contains(drawn, text => text.Contains("Step 2 of 2"));
         Assert.Contains(drawn, text => text.Contains("An outpost abandoned in 3302"));
         Assert.Contains(drawn, text => text.Contains("Done: Arrive at Ossen's Lantern."));

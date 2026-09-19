@@ -850,13 +850,13 @@ public sealed class AdventuresPage : UserControl
     {
         var block = new TextBlock
         {
-            Text = text,
-            FontSize = size,
             FontWeight = FontWeight.SemiBold,
             TextWrapping = TextWrapping.Wrap,
         };
 
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.TextKey);
+        TitleText.Style(block, size);
+        TitleText.Show(block, text);
+
         return block;
     }
 

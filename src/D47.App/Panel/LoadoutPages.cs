@@ -603,13 +603,19 @@ public static class LoadoutPages
     }
 
     /// <summary>A detail pane's heading, selectable for the same reason its prose is.</summary>
-    internal static TextBlock Heading(string text) => new SelectableTextBlock
+    internal static TextBlock Heading(string text)
     {
-        Text = text,
-        FontSize = TypeScale.Body,
-        FontWeight = FontWeight.SemiBold,
-        Margin = new Thickness(0, 12, 0, 4),
-    };
+        var block = new SelectableTextBlock
+        {
+            FontWeight = FontWeight.SemiBold,
+            Margin = new Thickness(0, 12, 0, 4),
+        };
+
+        TitleText.Style(block, TypeScale.Body);
+        TitleText.Show(block, text);
+
+        return block;
+    }
 
     /// <summary>
     /// The name atop a slot detail pane, one rank above <see cref="Heading"/> — no top margin, so the

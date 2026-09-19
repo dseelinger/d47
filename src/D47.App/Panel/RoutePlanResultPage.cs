@@ -75,22 +75,30 @@ public sealed class RoutePlanResultPage : UserControl
         {
             { Jump: { } jump } =>
                 $"{jump.Origin} → {jump.Destination}: {jump.TotalDistance:N0} ly, "
-                + $"{jump.TotalJumps} jumps across {jump.Waypoints.Count} waypoints.",
+                + $"{Count(jump.TotalJumps, "jump")} across {Count(jump.Waypoints.Count, "waypoint")}.",
             { Riches: { } riches } =>
-                $"{riches.Stops.Count} stops, {riches.TotalJumps} jumps, "
+                $"{Count(riches.Stops.Count, "stop")}, {Count(riches.TotalJumps, "jump")}, "
                 + $"{riches.TotalValue:N0} credits of mapping.",
             { Trade: { } trade } =>
-                $"{trade.Stops.Count} stops, {trade.TotalProfit:N0} credits on {trade.Capital:N0} "
+                $"{Count(trade.Stops.Count, "stop")}, {trade.TotalProfit:N0} credits on {trade.Capital:N0} "
                 + $"over {trade.TotalDistance:N0} ly.",
             _ => plan.Headline,
         };
 
-        var block = Text(text, TypeScale.Subheading, ThemeManager.TextKey, wrap: true);
-        block.FontWeight = FontWeight.SemiBold;
-        block.Margin = new Thickness(0, 0, 0, 2);
+        var block = new TextBlock
+        {
+            FontWeight = FontWeight.SemiBold,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 0, 0, 2),
+        };
+
+        TitleText.Style(block, TypeScale.Subheading, sentence: true);
+        TitleText.Show(block, text, sentence: true);
 
         return block;
     }
+
+    private static string Count(int n, string noun) => n == 1 ? $"1 {noun}" : $"{n} {noun}s";
 
     /// <summary>When it was worked out, and what the plan itself does not claim.</summary>
     private static string Provenance(StoredRoutePlan plan)

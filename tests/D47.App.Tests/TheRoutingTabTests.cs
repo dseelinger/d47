@@ -281,9 +281,9 @@ public class TheRoutingTabTests
 
             var drawn = TextOf(panel).ToArray();
 
-            Assert.Contains("Neutron Plotter", drawn);
-            Assert.Contains("Road to Riches", drawn);
-            Assert.Contains("Trade run", drawn);
+            Assert.Contains("NEUTRON PLOTTER", drawn);
+            Assert.Contains("ROAD TO RICHES", drawn);
+            Assert.Contains("TRADE RUN", drawn);
 
             // The one figure that is about the Commander rather than their ship.
             Assert.Contains(drawn, text => text.Contains("never read from the journal", StringComparison.Ordinal));
@@ -662,7 +662,7 @@ public class TheRoutingTabTests
             panel.Mode = PanelMode.Full;
             Dispatcher.UIThread.RunJobs();
 
-            Assert.Contains("Neutron Plotter", TextOf(panel));
+            Assert.Contains("NEUTRON PLOTTER", TextOf(panel));
         }
         finally
         {
@@ -700,12 +700,12 @@ public class TheRoutingTabTests
         }
     }
 
-    /// <summary>The mark inside the card whose heading says this.</summary>
+    /// <summary>The mark inside the card whose heading says this — upper case and tracked (#289).</summary>
     private static Button PlannerMark(Control page, string heading)
     {
         // Up from the heading rather than down from a card.
         var title = page.GetVisualDescendants().OfType<TextBlock>()
-            .First(text => text.Text == heading);
+            .First(text => text.Text == heading.ToUpperInvariant());
 
         return ((StackPanel)title.Parent!).Children
             .OfType<Button>()

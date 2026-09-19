@@ -188,6 +188,240 @@
       </Style>
     </ControlTheme>
 
+    <!--
+      Text entry: square corners, no fill, a 1px Rule border that turns Accent while focused
+      (#289). The template keeps Fluent's own parts — PART_TextPresenter, the two placeholder
+      TextBlocks, PART_ScrollViewer — so the caret, selection and the floating placeholder still
+      work; only the brushes and the corner radius are d47's.
+    -->
+    <ControlTheme x:Key="{x:Type TextBox}" TargetType="TextBox">
+      <Setter Property="Foreground" Value="{DynamicResource D47.Text}" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="CaretBrush" Value="{DynamicResource D47.Text}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource D47.Rule}" />
+      <Setter Property="SelectionBrush" Value="{DynamicResource D47.AccentMuted}" />
+      <Setter Property="PlaceholderForeground" Value="{DynamicResource D47.TextMuted}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="MinHeight" Value="32" />
+      <Setter Property="Padding" Value="10,6" />
+      <Setter Property="FocusAdorner" Value="{x:Null}" />
+      <Setter Property="ScrollViewer.IsScrollChainingEnabled" Value="True" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <DataValidationErrors>
+            <Panel>
+              <Border Name="PART_BorderElement"
+                      Background="{TemplateBinding Background}"
+                      BorderBrush="{TemplateBinding BorderBrush}"
+                      BorderThickness="{TemplateBinding BorderThickness}"
+                      MinWidth="{TemplateBinding MinWidth}"
+                      MinHeight="{TemplateBinding MinHeight}" />
+
+              <Border Margin="{TemplateBinding BorderThickness}">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                  <ContentPresenter Grid.Column="0"
+                                    VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                    Content="{TemplateBinding InnerLeftContent}" />
+                  <DockPanel x:Name="PART_InnerDockPanel" Grid.Column="1" Margin="{TemplateBinding Padding}">
+                    <TextBlock Name="PART_FloatingPlaceholder"
+                               Foreground="{TemplateBinding PlaceholderForeground}"
+                               IsVisible="False"
+                               Text="{TemplateBinding PlaceholderText}"
+                               DockPanel.Dock="Top" />
+
+                    <ScrollViewer Name="PART_ScrollViewer"
+                                  HorizontalScrollBarVisibility="{TemplateBinding (ScrollViewer.HorizontalScrollBarVisibility)}"
+                                  VerticalScrollBarVisibility="{TemplateBinding (ScrollViewer.VerticalScrollBarVisibility)}"
+                                  IsScrollChainingEnabled="{TemplateBinding (ScrollViewer.IsScrollChainingEnabled)}"
+                                  AllowAutoHide="{TemplateBinding (ScrollViewer.AllowAutoHide)}"
+                                  BringIntoViewOnFocusChange="{TemplateBinding (ScrollViewer.BringIntoViewOnFocusChange)}">
+                      <Panel>
+                        <TextBlock Name="PART_Placeholder"
+                                   Foreground="{TemplateBinding PlaceholderForeground}"
+                                   Text="{TemplateBinding PlaceholderText}"
+                                   TextAlignment="{TemplateBinding TextAlignment}"
+                                   TextWrapping="{TemplateBinding TextWrapping}"
+                                   HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                   VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
+                          <TextBlock.IsVisible>
+                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                              <Binding ElementName="PART_TextPresenter" Path="PreeditText" Converter="{x:Static StringConverters.IsNullOrEmpty}"/>
+                              <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="Text" Converter="{x:Static StringConverters.IsNullOrEmpty}"/>
+                            </MultiBinding>
+                          </TextBlock.IsVisible>
+                        </TextBlock>
+
+                        <TextPresenter Name="PART_TextPresenter"
+                                       Text="{TemplateBinding Text, Mode=TwoWay}"
+                                       CaretBlinkInterval="{TemplateBinding CaretBlinkInterval}"
+                                       CaretIndex="{TemplateBinding CaretIndex}"
+                                       SelectionStart="{TemplateBinding SelectionStart}"
+                                       SelectionEnd="{TemplateBinding SelectionEnd}"
+                                       TextAlignment="{TemplateBinding TextAlignment}"
+                                       TextWrapping="{TemplateBinding TextWrapping}"
+                                       LineHeight="{TemplateBinding LineHeight}"
+                                       LetterSpacing="{TemplateBinding LetterSpacing}"
+                                       PasswordChar="{TemplateBinding PasswordChar}"
+                                       RevealPassword="{TemplateBinding RevealPassword}"
+                                       SelectionBrush="{TemplateBinding SelectionBrush}"
+                                       SelectionForegroundBrush="{TemplateBinding SelectionForegroundBrush}"
+                                       CaretBrush="{TemplateBinding CaretBrush}"
+                                       HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                       VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                      </Panel>
+                      <ScrollViewer.Styles>
+                        <Style Selector="ScrollContentPresenter#PART_ContentPresenter">
+                          <Setter Property="Cursor" Value="IBeam" />
+                        </Style>
+                      </ScrollViewer.Styles>
+                    </ScrollViewer>
+                  </DockPanel>
+                  <ContentPresenter Grid.Column="2"
+                                    VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                    Content="{TemplateBinding InnerRightContent}" />
+                </Grid>
+              </Border>
+            </Panel>
+          </DataValidationErrors>
+        </ControlTemplate>
+      </Setter>
+
+      <Style Selector="^:disabled">
+        <Setter Property="Foreground" Value="{DynamicResource D47.TextMuted}" />
+      </Style>
+
+      <Style Selector="^:focus /template/ Border#PART_BorderElement">
+        <Setter Property="BorderBrush" Value="{DynamicResource D47.Accent}" />
+      </Style>
+
+      <Style Selector="^[UseFloatingPlaceholder=true]:not(:empty) /template/ TextBlock#PART_FloatingPlaceholder">
+        <Setter Property="IsVisible" Value="True" />
+      </Style>
+    </ControlTheme>
+
+    <!--
+      The border and stepper buttons a NumericUpDown wraps its field in — kept as its own theme
+      because NumericUpDown composes an actual ButtonSpinner rather than drawing the spinner
+      itself (#289). Square, no fill; the increase/decrease glyphs read as controls rather than
+      as the field's own value, so they draw in Accent.
+    -->
+    <ControlTheme x:Key="D47.NumberSpinner" TargetType="ButtonSpinner">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+      <Setter Property="Focusable" Value="False" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Background="{TemplateBinding Background}"
+                  BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}">
+            <DockPanel>
+              <StackPanel Name="PART_SpinnerPanel"
+                          DockPanel.Dock="Right"
+                          Orientation="Horizontal"
+                          IsVisible="{TemplateBinding ShowButtonSpinner}">
+                <RepeatButton Name="PART_IncreaseButton"
+                              IsTabStop="{TemplateBinding IsTabStop}"
+                              Content="▲"
+                              FontSize="{StaticResource D47.Type.Small}"
+                              Foreground="{DynamicResource D47.Accent}"
+                              Background="Transparent"
+                              BorderBrush="{TemplateBinding BorderBrush}"
+                              BorderThickness="1,0,0,0"
+                              CornerRadius="0"
+                              Padding="8,0"
+                              MinWidth="0"
+                              VerticalAlignment="Stretch"
+                              VerticalContentAlignment="Center"
+                              HorizontalContentAlignment="Center" />
+                <RepeatButton Name="PART_DecreaseButton"
+                              IsTabStop="{TemplateBinding IsTabStop}"
+                              Content="▼"
+                              FontSize="{StaticResource D47.Type.Small}"
+                              Foreground="{DynamicResource D47.Accent}"
+                              Background="Transparent"
+                              BorderBrush="{TemplateBinding BorderBrush}"
+                              BorderThickness="1,0,0,0"
+                              CornerRadius="0"
+                              Padding="8,0"
+                              MinWidth="0"
+                              VerticalAlignment="Stretch"
+                              VerticalContentAlignment="Center"
+                              HorizontalContentAlignment="Center" />
+              </StackPanel>
+
+              <ContentPresenter Name="PART_ContentPresenter"
+                                Content="{TemplateBinding Content}"
+                                HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                Padding="{TemplateBinding Padding}" />
+            </DockPanel>
+          </Border>
+        </ControlTemplate>
+      </Setter>
+
+      <Style Selector="^:left">
+        <Style Selector="^ /template/ StackPanel#PART_SpinnerPanel">
+          <Setter Property="DockPanel.Dock" Value="Left" />
+        </Style>
+        <Style Selector="^ /template/ RepeatButton">
+          <Setter Property="BorderThickness" Value="0,0,1,0" />
+        </Style>
+      </Style>
+    </ControlTheme>
+
+    <!--
+      A number field: the same border and no-fill as TextBox, wrapped around the spinner above.
+    -->
+    <ControlTheme x:Key="{x:Type NumericUpDown}" TargetType="NumericUpDown">
+      <Setter Property="Foreground" Value="{DynamicResource D47.Text}" />
+      <Setter Property="PlaceholderForeground" Value="{DynamicResource D47.TextMuted}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource D47.Rule}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="MinHeight" Value="32" />
+      <Setter Property="Padding" Value="10,6" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <DataValidationErrors>
+            <ButtonSpinner Name="PART_Spinner"
+                           Theme="{StaticResource D47.NumberSpinner}"
+                           BorderBrush="{TemplateBinding BorderBrush}"
+                           BorderThickness="{TemplateBinding BorderThickness}"
+                           IsTabStop="False"
+                           Padding="0"
+                           MinWidth="0"
+                           HorizontalContentAlignment="Stretch"
+                           VerticalContentAlignment="Stretch"
+                           AllowSpin="{TemplateBinding AllowSpin}"
+                           ShowButtonSpinner="{TemplateBinding ShowButtonSpinner}"
+                           ButtonSpinnerLocation="{TemplateBinding ButtonSpinnerLocation}">
+              <TextBox Name="PART_TextBox"
+                       Background="Transparent"
+                       BorderThickness="0"
+                       Padding="{TemplateBinding Padding}"
+                       MinWidth="0"
+                       Foreground="{TemplateBinding Foreground}"
+                       PlaceholderText="{TemplateBinding PlaceholderText}"
+                       PlaceholderForeground="{TemplateBinding PlaceholderForeground}"
+                       IsReadOnly="{TemplateBinding IsReadOnly}"
+                       VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                       HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                       Text="{TemplateBinding Text}"
+                       TextAlignment="{TemplateBinding TextAlignment}"
+                       AcceptsReturn="False"
+                       TextWrapping="NoWrap"
+                       InnerLeftContent="{Binding InnerLeftContent, RelativeSource={RelativeSource TemplatedParent}}"
+                       InnerRightContent="{Binding InnerRightContent, RelativeSource={RelativeSource TemplatedParent}}"/>
+            </ButtonSpinner>
+          </DataValidationErrors>
+        </ControlTemplate>
+      </Setter>
+
+      <Style Selector="^:focus-within /template/ ButtonSpinner#PART_Spinner">
+        <Setter Property="BorderBrush" Value="{DynamicResource D47.Accent}" />
+      </Style>
+    </ControlTheme>
+
   </Styles.Resources>
 
   <!--

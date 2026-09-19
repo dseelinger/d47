@@ -67,7 +67,7 @@
   -->
   <ControlTheme x:Key="D47.Crumb" TargetType="Button">
     <Setter Property="Cursor" Value="Hand" />
-    <Setter Property="FontFamily" Value="Cascadia Mono,Consolas,monospace" />
+    <Setter Property="FontFamily" Value="avares://d47/Assets/Fonts/SairaSemiCondensed-Regular.ttf#Saira Semi Condensed" />
     <Setter Property="FontSize" Value="{StaticResource D47.Type.Body}" />
     <Setter Property="Foreground" Value="{DynamicResource D47.Accent}" />
     <Setter Property="Background" Value="Transparent" />

@@ -51,6 +51,13 @@ saying "accept the proposal" — takes the buttons away and settles both: the ca
 happened and its tag changes to proposal · accepted or proposal · declined, and the proposal
 leaves the Checklist page's own list the same moment.
 
+Every text box and number field takes the dress too: square corners, no fill, and a border that
+turns Accent on focus in place of the rounded grey box Fluent draws by default. Page and card
+titles — the Fleet, Engineers, Checklist and Adventures headings, the route plan cards, and the
+Settings page and its section titles — now draw upper case and tracked in Saira Semi Condensed;
+a line that reads as a sentence, such as a route summary or a prompt's question, keeps its own
+case and takes only the typeface. The breadcrumb row now draws in Saira Semi Condensed as well.
+
 The eight per-subsystem log levels move to the Log file page, as that page's own settings strip:
 the default level, and a track below it with one row per subsystem — seven stops from None to
 Trace, a readout, and a reset. A row with its own level draws in Accent; a row with none follows

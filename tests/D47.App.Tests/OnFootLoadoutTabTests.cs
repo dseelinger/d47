@@ -194,15 +194,15 @@ public class OnFootLoadoutTabTests
 
         var shown = Text(surface.Panel);
 
-        Assert.Contains("Fitted", shown);
-        Assert.Contains("Planned", shown);
+        Assert.Contains("FITTED", shown);
+        Assert.Contains("PLANNED", shown);
 
         // What it is now, and what is wanted, each on its own.
         Assert.Contains("Grade 3", shown);
         Assert.Contains(shown, line => line.Contains("grade 5", StringComparison.Ordinal));
 
         // And what the two upgrade steps cost, exactly - nothing on foot is rolled.
-        Assert.Contains("What it costs", shown);
+        Assert.Contains("WHAT IT COSTS", shown);
 
         // No tick: a derived item's progress is a diff against live state.
         Assert.Empty(Ticks.On(surface.Panel));
@@ -264,8 +264,8 @@ public class OnFootLoadoutTabTests
         Assert.Contains(shown, line => line.Contains("units still to find", StringComparison.Ordinal));
 
         // Two ledgers, never added together.
-        Assert.Contains(shown, line => line.StartsWith("Materials —", StringComparison.Ordinal));
-        Assert.Contains(shown, line => line.StartsWith("Ship locker —", StringComparison.Ordinal));
+        Assert.Contains(shown, line => line.StartsWith("MATERIALS —", StringComparison.Ordinal));
+        Assert.Contains(shown, line => line.StartsWith("SHIP LOCKER —", StringComparison.Ordinal));
 
         // And they are not added together: the headline counts units to find, which is a shopping list rather
         // than a balance.

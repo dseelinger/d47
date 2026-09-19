@@ -465,8 +465,9 @@ public sealed class RoutePlanPage : UserControl
     /// </param>
     private Control Card(string title, Control body, string? help = null)
     {
-        var heading = Text(title, TypeScale.Subheading, ThemeManager.TextKey);
-        heading.FontWeight = FontWeight.SemiBold;
+        var heading = new TextBlock { FontWeight = FontWeight.SemiBold };
+        TitleText.Style(heading, TypeScale.Subheading);
+        TitleText.Show(heading, title);
 
         var headingRow = new StackPanel
         {

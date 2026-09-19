@@ -2,7 +2,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
-using Avalonia.Media;
 using Avalonia.VisualTree;
 using D47.App.Controls;
 using D47.App.Settings;
@@ -62,7 +61,11 @@ public class ChoiceControlsLookAlikeTests
         }
     }
 
-    /// <summary>What the two have to agree about: everything a Commander sees at rest.</summary>
+    /// <summary>
+    /// What the two have to agree about: shape and size at rest. Not fill, border colour or
+    /// corner radius — each keeps its own theme's for those, rather than DressAsAChoice forcing
+    /// one across all three (#289).
+    /// </summary>
     private static IEnumerable<string> Differences(TemplatedControl a, TemplatedControl b)
     {
         if (a.Bounds.Height != b.Bounds.Height)
@@ -85,28 +88,11 @@ public class ChoiceControlsLookAlikeTests
             yield return $"border thickness {a.BorderThickness} against {b.BorderThickness}";
         }
 
-        if (a.CornerRadius != b.CornerRadius)
-        {
-            yield return $"corner radius {a.CornerRadius} against {b.CornerRadius}";
-        }
-
-        if (Colour(a.Background) != Colour(b.Background))
-        {
-            yield return $"fill {Colour(a.Background)} against {Colour(b.Background)}";
-        }
-
-        if (Colour(a.BorderBrush) != Colour(b.BorderBrush))
-        {
-            yield return $"border {Colour(a.BorderBrush)} against {Colour(b.BorderBrush)}";
-        }
-
         if (a.MinWidth != b.MinWidth)
         {
             yield return $"minimum width {a.MinWidth:0.#} against {b.MinWidth:0.#}";
         }
     }
-
-    private static Color? Colour(IBrush? brush) => (brush as ISolidColorBrush)?.Color;
 
     /// <summary>
     /// The buttons that open the picker, told from the ordinary ones — Store, Clear, Unbind — by the

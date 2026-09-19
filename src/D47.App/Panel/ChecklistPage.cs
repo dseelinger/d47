@@ -1224,12 +1224,19 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         _problems.Text = message;
     }
 
-    private static TextBlock Heading(string text) => new()
+    private static TextBlock Heading(string text)
     {
-        Text = text,
-        FontWeight = FontWeight.SemiBold,
-        Margin = new Thickness(0, 12, 0, 2),
-    };
+        var block = new TextBlock
+        {
+            FontWeight = FontWeight.SemiBold,
+            Margin = new Thickness(0, 12, 0, 2),
+        };
+
+        TitleText.Style(block, TypeScale.Body);
+        TitleText.Show(block, text);
+
+        return block;
+    }
 
     /// <summary>
     /// The second line of a row: its scope, the arc it serves, and — on a derived item — the sentence

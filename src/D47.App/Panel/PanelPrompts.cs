@@ -156,13 +156,12 @@ public sealed class PanelPrompts : IHearsText
     {
         var heading = new TextBlock
         {
-            Text = title,
-            FontSize = TypeScale.Heading,
             FontWeight = FontWeight.SemiBold,
             TextWrapping = TextWrapping.Wrap,
         };
 
-        heading.Bind(TextBlock.ForegroundProperty, App.Current!.GetResourceObservable(ThemeManager.TextKey));
+        TitleText.Style(heading, TypeScale.Heading, sentence: true);
+        TitleText.Show(heading, title, sentence: true);
 
         var header = new StackPanel { Spacing = 3, Children = { heading } };
 

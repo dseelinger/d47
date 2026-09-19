@@ -734,14 +734,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         };
         Themed(chevron, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
 
-        var heading = new TextBlock
-        {
-            Text = title,
-            FontSize = TypeScale.Subheading,
-            FontWeight = FontWeight.Medium,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-        Themed(heading, TextBlock.ForegroundProperty, ThemeManager.TextKey);
+        var heading = new TextBlock { FontWeight = FontWeight.Medium, VerticalAlignment = VerticalAlignment.Center };
+        TitleText.Style(heading, TypeScale.Subheading);
+        TitleText.Show(heading, title);
 
         var headerRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
         headerRow.Children.Add(chevron);
@@ -1064,8 +1059,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// <summary>The selected area's own title and sentence, drawn above its cards (#220).</summary>
     private StackPanel BuildAreaHeader(out TextBlock title, out TextBlock sentence)
     {
-        title = new TextBlock { FontSize = TypeScale.Heading, FontWeight = FontWeight.Medium };
-        Themed(title, TextBlock.ForegroundProperty, ThemeManager.TextKey);
+        title = new TextBlock { FontWeight = FontWeight.Medium };
+        TitleText.Style(title, TypeScale.Heading);
 
         sentence = new TextBlock { FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 3, 0, 0) };
         Themed(sentence, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
@@ -2211,7 +2206,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         var selected = _navAreas[_activeArea];
 
-        _areaHeaderTitle!.Text = selected.Title;
+        TitleText.Show(_areaHeaderTitle!, selected.Title);
         _areaHeaderSentence!.Text = selected.Sentence;
 
         if (_areaHeader is { } header)
@@ -2260,11 +2255,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         control.Height = ChoiceHeight;
         control.Padding = ChoicePadding;
         control.BorderThickness = new Thickness(1);
-        control.CornerRadius = new CornerRadius(3);
         control.FontSize = TypeScale.Body;
-
-        Themed(control, TemplatedControl.BackgroundProperty, ThemeManager.SurfaceAltKey);
-        Themed(control, TemplatedControl.BorderBrushProperty, ThemeManager.BorderKey);
     }
 
     /// <summary>Fetches a speech model, reporting progress.</summary>
