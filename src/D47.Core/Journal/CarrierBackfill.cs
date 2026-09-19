@@ -92,13 +92,11 @@ public static class CarrierBackfill
                 continue;
             }
 
-            carriers[fid] = new CarrierState
+            carriers[fid] = carrier with
             {
-                CallSign = carrier.CallSign,
-                Name = carrier.Name,
-                CarrierId = carrier.CarrierId,
-                StarSystem = carrier.StarSystem,
-                SeenAt = carrier.SeenAt,
+                DestinationSystem = null,
+                DepartureTime = null,
+                DestinationBody = null,
             };
 
             logger.LogInformation(

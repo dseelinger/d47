@@ -8,6 +8,11 @@
 
 ## 0.169.0 — No more drop-downs
 
+The Carrier tab now survives a restart: fuel, cargo, capacity, free space, jump range, balance,
+docking access, decommission status and crewed services are folded from history the same way
+location and identity always were, dated by the same "Figures as of …" line. Only a jump already
+under way is still forgotten, since the tank drain since the last figure is not tracked either.
+
 Every drop-down is gone. A choice of two to four is a row of segments; a longer list, or one that
 can grow, is a stepper with an arrow either side. Nothing opens a list that can close under a VR
 pointer, so every choice now works on the headset panel directly.

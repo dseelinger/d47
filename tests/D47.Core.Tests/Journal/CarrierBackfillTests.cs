@@ -103,19 +103,62 @@ public class CarrierBackfillTests
         Assert.Equal("Deciat", carriers["F7654321"].StarSystem);
     }
 
-    /// <summary>Location and identity only.</summary>
+    /// <summary>The reported fault: a restart lost every figure the Stats panel had reported (#304).</summary>
     [Fact]
-    public void FiguresFromTheStatsPanelAreNotRestored()
+    public void TheCarriersFiguresSurviveARestartTests()
     {
         using var install = new TempInstall();
-        Write(install, "Journal.2026-09-05T100000.01.log", LoadGame, Stats, Location("Meene"));
+        Write(install, "Journal.2026-09-18T100000.01.log", LoadGame, StatsFull, Location("Meene"));
+
+        Assert.True(JournalEvent.TryParse(StatsFull, NullLogger.Instance, out var parsed));
+        var expected = CarrierState.None.Apply(parsed!);
 
         var carrier = Carriers(install)[Fid];
 
-        Assert.Null(carrier.FuelLevel);
-        Assert.Null(carrier.Balance);
-        Assert.Null(carrier.DockingAccess);
-        Assert.Empty(carrier.Services);
+        Assert.Equal(expected.FuelLevel, carrier.FuelLevel);
+        Assert.Equal(expected.CargoTonnes, carrier.CargoTonnes);
+        Assert.Equal(expected.Capacity, carrier.Capacity);
+        Assert.Equal(expected.FreeSpace, carrier.FreeSpace);
+        Assert.Equal(expected.JumpRange, carrier.JumpRange);
+        Assert.Equal(expected.Balance, carrier.Balance);
+        Assert.Equal(expected.DockingAccess, carrier.DockingAccess);
+        Assert.Equal(expected.PendingDecommission, carrier.PendingDecommission);
+        Assert.Equal(expected.Services, carrier.Services);
+        Assert.Equal(expected.StatsSeenAt, carrier.StatsSeenAt);
+    }
+
+    /// <summary>A deposit after the Stats panel still lands on the deposit's own total (#304).</summary>
+    [Fact]
+    public void ADepositAfterTheStatsLeavesFuelAtTheDepositsTotal()
+    {
+        using var install = new TempInstall();
+        Write(
+            install,
+            "Journal.2026-09-18T100000.01.log",
+            LoadGame,
+            StatsFull,
+            """{ "timestamp":"2026-09-18T17:00:00Z", "event":"CarrierDepositFuel", "Amount":18, "Total":1000 }""");
+
+        Assert.Equal(1000, Carriers(install)[Fid].FuelLevel);
+    }
+
+    /// <summary>A jump scheduled before the restart is not one still in flight after it (#304).</summary>
+    [Fact]
+    public void APendingJumpDoesNotSurviveARestart()
+    {
+        using var install = new TempInstall();
+        Write(
+            install,
+            "Journal.2026-09-18T100000.01.log",
+            LoadGame,
+            Stats,
+            """{ "timestamp":"2026-09-18T17:00:00Z", "event":"CarrierJumpRequest", "CarrierID":3715429376, "SystemName":"Colonia", "DepartureTime":"2026-09-18T18:00:00Z", "Body":"Colonia 1" }""");
+
+        var carrier = Carriers(install)[Fid];
+
+        Assert.Null(carrier.DestinationSystem);
+        Assert.Null(carrier.DepartureTime);
+        Assert.Null(carrier.DestinationBody);
     }
 
     /// <summary>
@@ -143,6 +186,9 @@ public class CarrierBackfillTests
 
     private const string Stats =
         """{ "timestamp":"2026-09-05T16:00:00Z", "event":"CarrierStats", "CarrierID":3715429376, "Callsign":"BNH-T2F", "Name":"Sacred Fire", "DockingAccess":"all", "FuelLevel":900, "Finance":{"CarrierBalance":12345}, "SpaceUsage":{"TotalCapacity":25000,"Cargo":10,"FreeSpace":24990} }""";
+
+    private const string StatsFull =
+        """{ "timestamp":"2026-09-18T16:00:00Z", "event":"CarrierStats", "CarrierID":3715429376, "Callsign":"BNH-T2F", "Name":"Sacred Fire", "DockingAccess":"all", "FuelLevel":982, "JumpRangeCurr":500.5, "PendingDecommission":false, "Finance":{"CarrierBalance":12345}, "SpaceUsage":{"TotalCapacity":25000,"Cargo":10,"FreeSpace":24990}, "Crew":[{"CrewRole":"Captain","Activated":true,"Enabled":true,"CrewName":"BARTENDER"}] }""";
 
     private const string Stored =
         """{ "timestamp":"2026-09-06T10:10:00Z", "event":"StoredShips", "StarSystem":"Meene", "StationName":"BNH-T2F", "ShipsHere":[{"ShipID":1,"ShipType":"Sidewinder","Value":1}], "ShipsRemote":[] }""";
