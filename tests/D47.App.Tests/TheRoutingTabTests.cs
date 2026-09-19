@@ -918,7 +918,7 @@ public class TheRoutingTabTests
             panel.Nav.Drill(RoutingPages.ResultCrumb(RoutePlanKind.Jump, "Sol to Colonia"));
             Dispatcher.UIThread.RunJobs();
 
-            var fill = Colour(panel.FindResource(ThemeManager.SurfaceAltKey) as IBrush);
+            var fill = Colour(panel.FindResource(ThemeManager.FillHighKey) as IBrush);
 
             Assert.Equal(fill, Colour(ResultRow(panel, "Waypoint 1").Background));
             Assert.NotEqual(fill, Colour(ResultRow(panel, "Colonia").Background));

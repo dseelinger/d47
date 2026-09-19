@@ -35,10 +35,13 @@ public static class CardChrome
         var bar = new Border { Width = 3 };
         Themed(bar, Border.BackgroundProperty, ThemeManager.AccentKey);
 
+        var child = row.Child!;
+        row.Child = null;
+
         var layout = new DockPanel();
         DockPanel.SetDock(bar, Dock.Left);
         layout.Children.Add(bar);
-        layout.Children.Add(row.Child!);
+        layout.Children.Add(child);
         row.Child = layout;
     }
 

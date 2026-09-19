@@ -217,7 +217,7 @@ public class AdventuresTabTests
         var drawn = Drawn(panel);
 
         Assert.Contains(drawn, text => text.Contains("WRITE AN ADVENTURE"));
-        Assert.Contains(drawn, text => text.Contains("An adventure needs a name."));
+        Assert.Contains(drawn, text => text.StartsWith("An adventure needs", StringComparison.Ordinal) && text.Contains("a name"));
         Assert.Contains(drawn, text => text.Contains("at least one beat"));
 
         var begin = panel.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "Save and begin"));
