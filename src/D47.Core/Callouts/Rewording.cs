@@ -27,6 +27,9 @@ public sealed class Rewording(RewordChance chance, ILogger? logger)
         ArgumentNullException.ThrowIfNull(facts);
         ArgumentNullException.ThrowIfNull(ask);
 
+        // Read at most once, so the ship cannot change between a line, its retry and its fallback (#338).
+        var ship = new Lazy<ShipFacts>(facts);
+
         if (FlavourBriefs.For(announcement, personalityEnabled: true) is null)
         {
             return announcement;
@@ -34,19 +37,21 @@ public sealed class Rewording(RewordChance chance, ILogger? logger)
 
         if (!hasModel)
         {
-            return AsWritten(announcement, "no model", facts, commanderName, checkFacts: false);
+            return AsWritten(announcement, "no model", ship, commanderName, checkFacts: false);
         }
 
         if (FlavourBriefs.For(announcement, personalityEnabled) is not { } brief)
         {
-            return AsWritten(announcement, "personality off", facts, commanderName, checkFacts: false);
+            return AsWritten(announcement, "personality off", ship, commanderName, checkFacts: false);
         }
 
         // Decided before any model call, so the as-written side makes none (#214).
         if (!chance.ShouldReword(announcement, rewordPercent))
         {
-            return AsWritten(announcement, "roll", facts, commanderName, checkFacts: true);
+            return AsWritten(announcement, "roll", ship, commanderName, checkFacts: true);
         }
+
+        var snapshot = ship.Value;
 
         using var budget = new CancellationTokenSource(Budget);
 
@@ -54,7 +59,7 @@ public sealed class Rewording(RewordChance chance, ILogger? logger)
 
         var said = await ContradictedClaims.SayableAsync(
             reply.Line,
-            facts(),
+            snapshot,
             async contradiction =>
                 (await ask(brief, $"{brief.Instruction} {contradiction.Correction}", budget.Token)
                     .ConfigureAwait(false)).Line,
@@ -74,7 +79,7 @@ public sealed class Rewording(RewordChance chance, ILogger? logger)
             _ => reply.Message is { Length: > 0 } message ? $"failed: {message}" : "failed",
         };
 
-        return AsWritten(announcement, reason, facts, commanderName, checkFacts: true);
+        return AsWritten(announcement, reason, ship, commanderName, checkFacts: true);
     }
 
     /// <summary>
@@ -84,14 +89,14 @@ public sealed class Rewording(RewordChance chance, ILogger? logger)
     private Announcement? AsWritten(
         Announcement announcement,
         string reason,
-        Func<ShipFacts> facts,
+        Lazy<ShipFacts> ship,
         string? commanderName,
         bool checkFacts)
     {
         var written = CarrierOwnerLines.AsWritten(announcement, commanderName);
 
         if ((checkFacts || !ReferenceEquals(written, announcement))
-            && ContradictedClaims.Sayable(written.Text, facts(), logger, announcement.Key) is null)
+            && ContradictedClaims.Sayable(written.Text, ship.Value, logger, announcement.Key) is null)
         {
             return null;
         }

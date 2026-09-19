@@ -154,6 +154,43 @@ public class YourOwnCarrierSpeaksToItsOwnerTests
         Assert.Equal($"Welcome home, {Owner}.", spoken?.Text);
     }
 
+    /// <summary>
+    /// The ship is read once, before the model is asked, and that one snapshot checks the rewrite, its
+    /// retry and the authored fallback (#338).
+    /// </summary>
+    [Fact]
+    public async Task TheShipIsReadOnceBeforeTheModelIsAsked()
+    {
+        var reads = 0;
+        var readsBeforeFirstAsk = -1;
+        var ask = From(Replying("I don't have that capability."));
+
+        var spoken = await new Rewording(new RewordChance(new Random(1)), null).VaryAsync(
+            CarrierLine(),
+            hasModel: true,
+            personalityEnabled: true,
+            rewordPercent: 100,
+            () =>
+            {
+                reads++;
+                return ShipFacts.Unknown;
+            },
+            Commander,
+            (brief, instruction, token) =>
+            {
+                if (readsBeforeFirstAsk < 0)
+                {
+                    readsBeforeFirstAsk = reads;
+                }
+
+                return ask(brief, instruction, token);
+            });
+
+        Assert.Equal($"Welcome back, {Owner}.", spoken?.Text);
+        Assert.Equal(1, readsBeforeFirstAsk);
+        Assert.Equal(1, reads);
+    }
+
     [Fact]
     public async Task ACarrierKeyWithNoAuthoredLineIsSpokenAsFrontierWroteIt()
     {

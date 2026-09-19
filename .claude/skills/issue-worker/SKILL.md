@@ -52,6 +52,16 @@ dotnet test tests/D47.Core.Tests --filter FullyQualifiedName~<Area>
 The full suite is a release gate and runs on the runner. Running it here to check one fix is
 minutes you do not need to spend.
 
+One exception: when the diff touches anything under `src/D47.App/`, run the whole of
+`D47.App.Tests` before committing (about 90 seconds):
+
+```bash
+dotnet test tests/D47.App.Tests -c Release
+```
+
+Several of its tests read `AppHost.cs` as text and count call sites, so moving code out of the app
+breaks them even though the area filter passes. Nothing else runs them before `release.ps1` does.
+
 ## The rules that bite an implementer
 
 CLAUDE.md has the full set. These are the ones a change trips over:

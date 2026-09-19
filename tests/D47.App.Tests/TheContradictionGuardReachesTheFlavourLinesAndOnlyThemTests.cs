@@ -3,7 +3,8 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The guard between composition and speech runs on the four flavour paths and on nothing else.
+/// The guard between composition and speech runs on the four flavour paths and on nothing else. Three
+/// are in <c>AppHost.cs</c>; the announcement rewrite is in Core's <c>Rewording.cs</c>.
 /// </summary>
 public class TheContradictionGuardReachesTheFlavourLinesAndOnlyThemTests
 {
@@ -25,15 +26,15 @@ public class TheContradictionGuardReachesTheFlavourLinesAndOnlyThemTests
     /// <summary>
     /// Three of the four have an authored line behind the model's, and all three of those are checked
     /// as well: an authored line asserting cargo that was not aboard is the incident this guard was
-    /// reported for. The announcement path checks its authored line twice: once as the fallback, and
-    /// once when the reword chance keeps the line as written (#214).
+    /// reported for. The announcement path checks its fallback and its as-written line (#214) at one
+    /// call site.
     /// </summary>
     [Fact]
     public void EveryAuthoredFallbackBehindAFlavourLineIsCheckedToo()
     {
         var checkedFallbacks = CodeLinesContaining("ContradictedClaims.Sayable(");
 
-        Assert.Equal(FlavourCallSites - 1 + 1, checkedFallbacks.Count);
+        Assert.Equal(FlavourCallSites - 1, checkedFallbacks.Count);
     }
 
     /// <summary>And nowhere else in the app.</summary>
@@ -51,7 +52,7 @@ public class TheContradictionGuardReachesTheFlavourLinesAndOnlyThemTests
             .Order()
             .ToList();
 
-        Assert.Equal(["AppHost.cs", "ContradictedClaims.cs"], reaching);
+        Assert.Equal(["AppHost.cs", "ContradictedClaims.cs", "Rewording.cs"], reaching);
     }
 
     /// <summary>
@@ -65,19 +66,36 @@ public class TheContradictionGuardReachesTheFlavourLinesAndOnlyThemTests
 
         // Three, not four: the two persona paths are branches of one switch and share a snapshot.
         Assert.Equal(FlavourCallSites - 1, read.Count);
-        Assert.All(read, line => Assert.Equal("var facts = ShipFacts.Of(GameState.Active);", line));
+        Assert.All(read, line => Assert.Contains(
+            line,
+            new[] { "var facts = ShipFacts.Of(GameState.Active);", "() => ShipFacts.Of(GameState.Active)," }));
+
+        // The announcement path hands Rewording a reader; Rewording reads it through one Lazy. That it is
+        // read once, and before the model is asked, is tested in Core.
+        var rewording = CodeLines(Rewording);
+        Assert.Contains("var ship = new Lazy<ShipFacts>(facts);", rewording);
+        Assert.DoesNotContain(rewording, line => line.Contains("facts()", StringComparison.Ordinal));
     }
 
+    private static readonly string[] AppHost = ["src", "D47.App", "AppHost.cs"];
+
+    private static readonly string[] Rewording = ["src", "D47.Core", "Callouts", "Rewording.cs"];
+
     /// <summary>
-    /// Every line of <c>AppHost.cs</c> containing <paramref name="fragment"/>, trimmed, with comments
-    /// left out — the comments discuss the guard by name at length, and a gate that counted those would
-    /// be counting its own explanation.
+    /// Every code line of <c>AppHost.cs</c> and <c>Rewording.cs</c> containing <paramref name="fragment"/>.
     /// </summary>
     private static List<string> CodeLinesContaining(string fragment) =>
-        [.. File.ReadAllLines(Path.Combine(RepositoryRoot(), "src", "D47.App", "AppHost.cs"))
-            .Select(line => line.Trim())
-            .Where(line => !line.StartsWith("//", StringComparison.Ordinal))
+        [.. CodeLines(AppHost).Concat(CodeLines(Rewording))
             .Where(line => line.Contains(fragment, StringComparison.Ordinal))];
+
+    /// <summary>
+    /// The file's lines, trimmed, with comments left out — the comments discuss the guard by name at
+    /// length, and a gate that counted those would be counting its own explanation.
+    /// </summary>
+    private static List<string> CodeLines(string[] path) =>
+        [.. File.ReadAllLines(Path.Combine([RepositoryRoot(), .. path]))
+            .Select(line => line.Trim())
+            .Where(line => !line.StartsWith("//", StringComparison.Ordinal))];
 
     private static string RepositoryRoot()
     {
