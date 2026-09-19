@@ -475,18 +475,10 @@ public sealed class RouteMarketPage : UserControl
         var card = new Border
         {
             Padding = new Thickness(14),
-            CornerRadius = new CornerRadius(4),
-            BorderThickness = new Thickness(1),
             Child = new StackPanel { Spacing = 10, Children = { heading, body } },
         };
 
-        card.Bind(
-            Border.BackgroundProperty,
-            Application.Current!.Resources.GetResourceObservable(ThemeManager.SurfaceAltKey));
-
-        card.Bind(
-            Border.BorderBrushProperty,
-            Application.Current!.Resources.GetResourceObservable(ThemeManager.BorderKey));
+        CardChrome.Card(card);
 
         return card;
     }

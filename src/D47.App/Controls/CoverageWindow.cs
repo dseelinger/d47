@@ -171,7 +171,6 @@ public sealed class CoverageWindow : Window
         var row = new Border
         {
             Padding = new Thickness(10, 5),
-            CornerRadius = new CornerRadius(3),
             Child = new DockPanel
             {
                 Children =
@@ -188,7 +187,7 @@ public sealed class CoverageWindow : Window
             },
         };
 
-        Themed(row, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
+        CardChrome.Card(row);
 
         return row;
     }

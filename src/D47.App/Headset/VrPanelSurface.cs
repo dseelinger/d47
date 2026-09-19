@@ -497,16 +497,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             Padding = new Thickness(0),
             HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Center,
             VerticalContentAlignment = Avalonia.Layout.VerticalAlignment.Center,
-            CornerRadius = new CornerRadius(6),
-            BorderThickness = new Thickness(1),
         };
-
-        button.Bind(
-            Avalonia.Controls.Primitives.TemplatedControl.BackgroundProperty,
-            button.GetResourceObservable(Theming.ThemeManager.SurfaceAltKey));
-        button.Bind(
-            Avalonia.Controls.Primitives.TemplatedControl.BorderBrushProperty,
-            button.GetResourceObservable(Theming.ThemeManager.BorderKey));
 
         Controls.Glyphs.Mark(button, glyph, Theming.ThemeManager.AccentKey, says, size: 20);
 

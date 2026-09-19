@@ -278,21 +278,16 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
         var button = new Button
         {
             Content = label,
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(4),
             FontSize = Theming.TypeScale.Heading,
             HorizontalContentAlignment = HorizontalAlignment.Center,
             VerticalContentAlignment = VerticalAlignment.Center,
         };
 
-        Painted(button, TemplatedControl.ForegroundProperty, Theming.ThemeManager.TextKey);
-        Painted(button, TemplatedControl.BorderBrushProperty, Theming.ThemeManager.BorderKey);
-
-        // The marked row takes the accent rather than a blue of its own.
-        Painted(
-            button,
-            TemplatedControl.BackgroundProperty,
-            marked ? Theming.ThemeManager.AccentMutedKey : Theming.ThemeManager.SurfaceAltKey);
+        // The marked row keeps an accent fill; every other row draws as the kit button.
+        if (marked)
+        {
+            Painted(button, TemplatedControl.BackgroundProperty, Theming.ThemeManager.AccentMutedKey);
+        }
 
         return button;
     }
@@ -528,8 +523,6 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
         {
             Child = body,
             Padding = new Thickness(18),
-            CornerRadius = new CornerRadius(8),
-            BorderThickness = new Thickness(1),
 
             // Short of the panel, so it reads as something over the page rather than a new page.
             MaxHeight = Math.Max(180, _size.Height - 60),
@@ -537,8 +530,7 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        Painted(card, Border.BackgroundProperty, Theming.ThemeManager.SurfaceKey);
-        Painted(card, Border.BorderBrushProperty, Theming.ThemeManager.BorderKey);
+        Theming.CardChrome.Card(card);
 
         return card;
     }

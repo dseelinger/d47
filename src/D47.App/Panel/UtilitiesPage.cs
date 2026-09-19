@@ -234,12 +234,11 @@ public sealed class UtilitiesPage : UserControl
         var card = new Border
         {
             Padding = new Thickness(12, 8),
-            CornerRadius = new CornerRadius(4),
             Child = row,
             MinHeight = 34,
         };
 
-        Themed(card, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
+        CardChrome.Card(card);
 
         return card;
     }
@@ -352,12 +351,11 @@ public sealed class UtilitiesPage : UserControl
         var card = new Border
         {
             Padding = new Thickness(14, 10),
-            CornerRadius = new CornerRadius(4),
             MinWidth = 180,
             Child = new StackPanel { Spacing = 2, Children = { label, time, date } },
         };
 
-        Themed(card, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
+        CardChrome.Card(card);
 
         return card;
     }

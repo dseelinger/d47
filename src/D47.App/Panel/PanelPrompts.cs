@@ -203,15 +203,9 @@ public sealed class PanelPrompts : IHearsText
         frame.Children.Add(back);
         frame.Children.Add(body);
 
-        var card = new Border
-        {
-            Child = frame,
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(4),
-        };
+        var card = new Border { Child = frame };
 
-        card.Bind(Border.BackgroundProperty, App.Current!.GetResourceObservable(ThemeManager.SurfaceKey));
-        card.Bind(Border.BorderBrushProperty, App.Current!.GetResourceObservable(ThemeManager.BorderKey));
+        CardChrome.Card(card);
 
         return card;
     }

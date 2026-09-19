@@ -191,13 +191,12 @@ public sealed class RouteProgressPage : UserControl
         var row = new Border
         {
             Padding = new Thickness(8, 5),
-            CornerRadius = new CornerRadius(3),
             Child = line,
         };
 
         if (current)
         {
-            Themed(row, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
+            CardChrome.CurrentRow(row);
         }
 
         if (_copy is { } copy)

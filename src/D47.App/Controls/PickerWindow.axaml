@@ -7,7 +7,7 @@
         ShowInTaskbar="False"
         WindowDecorations="BorderOnly"
         WindowStartupLocation="CenterOwner"
-        Background="{DynamicResource D47.Surface}"
+        Background="{DynamicResource D47.Background}"
         Foreground="{DynamicResource D47.Text}">
 
   <Border BorderBrush="{DynamicResource D47.Border}" BorderThickness="1" Padding="14">

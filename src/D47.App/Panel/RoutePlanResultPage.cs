@@ -278,15 +278,12 @@ public sealed class RoutePlanResultPage : UserControl
         var row = new Border
         {
             Padding = new Thickness(8, 5),
-            CornerRadius = new CornerRadius(3),
             Child = body,
         };
 
         if (state.Next)
         {
-            row.Bind(
-                Border.BackgroundProperty,
-                Application.Current!.Resources.GetResourceObservable(ThemeManager.SurfaceAltKey));
+            CardChrome.CurrentRow(row);
         }
 
         if (_copy is { } tap)

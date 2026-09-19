@@ -38,6 +38,16 @@ Accent fill, and the reset glyph moves off the label and onto a square 40x40 but
 the row. The protected and per-Commander tags carry a 60% Accent border and no fill, and a bound
 key now reads in monospace. No row or tree node draws a rounded corner.
 
+Every other hand-built card takes the dress as well — Utilities, Adventures, Learned Phrases,
+Community Goal, Market, Route Plan, the Loadout notice and drag ghost, the macro, persona, switch,
+coverage, debrief, logbook, lore, memory and audio-recorder windows, the entry-prompt card, and the
+headset's own overlay card. Each draws square with a 5% Accent fill and a Rule border, or 14% Accent
+and an Accent border when selected or open. The current row on Route progress and the next jump on
+the plan result now carry the same 3px Accent bar the Settings tree uses. The macro, persona,
+switch and picker windows no longer paint their whole background Surface; they take Background,
+like every other dialog. The headset's zoom glyphs and the offscreen page's row buttons draw as
+the kit button now, dropping the overrides that used to sit on top of it.
+
 The Conversation page now says who is speaking. Every bubble but the panel's own note carries a
 head: a chip naming the speaker — CMDR, D47, a persona's own name, or a role such as Tower or
 Carrier for a callout with nobody specific behind it — a small tag naming the callout it came

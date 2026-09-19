@@ -285,8 +285,8 @@ public sealed class LogbookWindow : Window
             },
         };
 
-        var inset = new Border { Padding = new Thickness(12, 8), CornerRadius = new CornerRadius(4), Child = stack };
-        Themed(inset, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
+        var inset = new Border { Padding = new Thickness(12, 8), Child = stack };
+        CardChrome.Card(inset);
 
         return inset;
     }

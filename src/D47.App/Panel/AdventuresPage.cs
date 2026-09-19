@@ -733,14 +733,11 @@ public sealed class AdventuresPage : UserControl
         var border = new Border
         {
             Padding = new Thickness(12, 8),
-            CornerRadius = new CornerRadius(4),
             Child = new StackPanel { Spacing = 4 },
             Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand),
         };
 
-        Themed(border, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
-        Themed(border, Border.BorderBrushProperty, ThemeManager.BorderKey);
-        border.BorderThickness = new Thickness(1);
+        CardChrome.Card(border);
         return border;
     }
 

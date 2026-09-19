@@ -112,7 +112,6 @@ public sealed class SwitchWindow : Window
         _walkCard = new Border
         {
             Padding = new Thickness(12),
-            CornerRadius = new CornerRadius(4),
             IsVisible = false,
             Margin = new Thickness(0, 12, 0, 0),
             Child = new StackPanel
@@ -131,7 +130,7 @@ public sealed class SwitchWindow : Window
             },
         };
 
-        Themed(_walkCard, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
+        CardChrome.Card(_walkCard);
         Themed(_problems, TextBlock.ForegroundProperty, ThemeManager.DangerKey);
 
         var header = new TextBlock
@@ -165,7 +164,7 @@ public sealed class SwitchWindow : Window
         root.Children.Add(new ScrollViewer { Content = _list, Margin = new Thickness(0, 12, 0, 0) });
 
         Content = root;
-        Themed(this, BackgroundProperty, ThemeManager.SurfaceKey);
+        Themed(this, BackgroundProperty, ThemeManager.BackgroundKey);
 
         _timer = new DispatcherTimer { Interval = Period };
         _timer.Tick += (_, _) => Sample();
@@ -394,7 +393,6 @@ public sealed class SwitchWindow : Window
         var card = new Border
         {
             Padding = new Thickness(12),
-            CornerRadius = new CornerRadius(4),
             Child = new StackPanel
             {
                 Spacing = 4,
@@ -413,7 +411,7 @@ public sealed class SwitchWindow : Window
             },
         };
 
-        Themed(card, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
+        CardChrome.Card(card);
 
         // Refreshed on every sample, so a device that has just gone away — a 4x32 mode change, an unplugged
         // throttle — says so on this card while the window is still open.

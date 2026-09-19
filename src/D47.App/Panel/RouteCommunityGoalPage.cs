@@ -559,21 +559,10 @@ public sealed class RouteCommunityGoalPage : UserControl
         var card = new Border
         {
             Padding = new Thickness(14),
-            CornerRadius = new CornerRadius(4),
-            BorderThickness = new Thickness(1),
             Child = new StackPanel { Spacing = 10, Children = { heading, body } },
         };
 
-        var background = card.Bind(
-            Border.BackgroundProperty,
-            Application.Current!.Resources.GetResourceObservable(ThemeManager.SurfaceAltKey));
-
-        var borderBrush = card.Bind(
-            Border.BorderBrushProperty,
-            Application.Current!.Resources.GetResourceObservable(ThemeManager.BorderKey));
-
-        track?.Add(background);
-        track?.Add(borderBrush);
+        CardChrome.Card(card, selected: false, track);
 
         return card;
     }

@@ -178,8 +178,8 @@ public sealed class MemoryWindow : Window
             stack.Children.Add(forget);
         }
 
-        var inset = new Border { Padding = new Thickness(12, 10), CornerRadius = new CornerRadius(4), Child = stack };
-        Themed(inset, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
+        var inset = new Border { Padding = new Thickness(12, 10), Child = stack };
+        CardChrome.Card(inset);
 
         return inset;
     }

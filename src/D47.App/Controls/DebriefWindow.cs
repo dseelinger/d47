@@ -64,8 +64,8 @@ public sealed class DebriefWindow : Window
             FontSize = TypeScale.Secondary,
         };
 
-        var promptBox = new Border { Padding = new Thickness(12, 10), CornerRadius = new CornerRadius(4), Child = _prompt };
-        Themed(promptBox, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
+        var promptBox = new Border { Padding = new Thickness(12, 10), Child = _prompt };
+        CardChrome.Card(promptBox);
 
         var body = new StackPanel
         {
@@ -243,8 +243,8 @@ public sealed class DebriefWindow : Window
             Children = { take, takeForCore, discard },
         });
 
-        var inset = new Border { Padding = new Thickness(12, 10), CornerRadius = new CornerRadius(4), Child = stack };
-        Themed(inset, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
+        var inset = new Border { Padding = new Thickness(12, 10), Child = stack };
+        CardChrome.Card(inset);
 
         return inset;
     }
@@ -291,8 +291,8 @@ public sealed class DebriefWindow : Window
             },
         };
 
-        var inset = new Border { Padding = new Thickness(12, 10), CornerRadius = new CornerRadius(4), Child = stack };
-        Themed(inset, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
+        var inset = new Border { Padding = new Thickness(12, 10), Child = stack };
+        CardChrome.Card(inset);
 
         return inset;
     }

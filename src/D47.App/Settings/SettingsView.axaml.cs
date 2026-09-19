@@ -612,7 +612,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         var chip = new Border
         {
             Padding = new Thickness(6, 1),
-            CornerRadius = new CornerRadius(8),
             BorderThickness = new Thickness(1),
             VerticalAlignment = VerticalAlignment.Center,
             Child = text,
@@ -835,22 +834,16 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         header.PointerPressed += (_, _) => Expand(!content.IsVisible);
 
-        header.PointerEntered += (_, _) => header.Background = Res(ThemeManager.SurfaceAltKey);
+        header.PointerEntered += (_, _) => header.Background = Res(ThemeManager.FillLowKey);
         header.PointerExited += (_, _) => header.Background = Brushes.Transparent;
 
         var body = new StackPanel();
         body.Children.Add(header);
         body.Children.Add(content);
 
-        var card = new Border
-        {
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(6),
-            Child = body,
-        };
+        var card = new Border { Child = body };
 
-        Themed(card, Border.BackgroundProperty, ThemeManager.SurfaceKey);
-        Themed(card, Border.BorderBrushProperty, ThemeManager.BorderKey);
+        CardChrome.Card(card);
 
         return (card, content, heading, Expand, foldButton);
     }
@@ -1269,7 +1262,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         {
             if (index != _activeSection)
             {
-                item.Background = Res(ThemeManager.SurfaceKey);
+                item.Background = Res(ThemeManager.FillLowKey);
             }
         };
         item.PointerExited += (_, _) =>
@@ -2775,10 +2768,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         var inset = new Border
         {
             Padding = new Thickness(10, 8),
-            CornerRadius = new CornerRadius(4),
             Child = text,
         };
-        Themed(inset, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
+        CardChrome.Card(inset);
 
         return row.Binding?.Read is { } read
             ? (inset, () => text.Text = read(_settings!.Current), false)

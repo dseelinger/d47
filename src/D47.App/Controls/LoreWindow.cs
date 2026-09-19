@@ -197,8 +197,8 @@ public sealed class LoreWindow : Window
 
         var stack = new StackPanel { Spacing = 6, Children = { heading, note, forget } };
 
-        var inset = new Border { Padding = new Thickness(12, 10), CornerRadius = new CornerRadius(4), Child = stack };
-        Themed(inset, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
+        var inset = new Border { Padding = new Thickness(12, 10), Child = stack };
+        CardChrome.Card(inset);
 
         return inset;
     }

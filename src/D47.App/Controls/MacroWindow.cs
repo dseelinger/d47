@@ -81,7 +81,7 @@ public sealed class MacroWindow : Window
         root.Children.Add(new ScrollViewer { Content = _list, Margin = new Thickness(0, 12, 0, 0) });
 
         Content = root;
-        Themed(this, BackgroundProperty, ThemeManager.SurfaceKey);
+        Themed(this, BackgroundProperty, ThemeManager.BackgroundKey);
 
         Rebuild();
         ShowProblems();
@@ -194,10 +194,9 @@ public sealed class MacroWindow : Window
         var card = new Border
         {
             Padding = new Thickness(12),
-            CornerRadius = new CornerRadius(4),
             Child = body,
         };
-        Themed(card, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
+        CardChrome.Card(card);
 
         return card;
     }

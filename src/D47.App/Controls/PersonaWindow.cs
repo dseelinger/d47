@@ -93,7 +93,7 @@ public sealed class PersonaWindow : Window
 
         Content = root;
 
-        Themed(this, BackgroundProperty, ThemeManager.SurfaceKey);
+        Themed(this, BackgroundProperty, ThemeManager.BackgroundKey);
 
         Rebuild();
         ShowProblems();
@@ -208,8 +208,6 @@ public sealed class PersonaWindow : Window
         var card = new Border
         {
             Padding = new Thickness(12),
-            CornerRadius = new CornerRadius(4),
-            BorderThickness = new Thickness(1),
             Child = new StackPanel
             {
                 Spacing = 8,
@@ -230,8 +228,7 @@ public sealed class PersonaWindow : Window
             },
         };
 
-        Themed(card, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
-        Themed(card, Border.BorderBrushProperty, ThemeManager.BorderKey);
+        CardChrome.Card(card);
 
         return card;
     }

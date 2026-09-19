@@ -57,6 +57,16 @@ public sealed class AudioRecorderWindow : Window
         var close = new Button { Name = "RecordingClose", Content = "Close", MinWidth = 110 };
         close.Click += (_, _) => Close();
 
+        var detailBox = new Border
+        {
+            [DockPanel.DockProperty] = Dock.Bottom,
+            Margin = new Thickness(0, 16, 0, 0),
+            Padding = new Thickness(14, 12),
+            Child = _detail,
+        };
+
+        CardChrome.Card(detailBox);
+
         Content = new DockPanel
         {
             Margin = new Thickness(24),
@@ -78,15 +88,7 @@ public sealed class AudioRecorderWindow : Window
                     Margin = new Thickness(0, 16, 0, 0),
                     Children = { folder, close },
                 },
-                new Border
-                {
-                    [DockPanel.DockProperty] = Dock.Bottom,
-                    Margin = new Thickness(0, 16, 0, 0),
-                    Padding = new Thickness(14, 12),
-                    CornerRadius = new CornerRadius(3),
-                    Child = _detail,
-                    [!BackgroundProperty] = new DynamicResourceExtension(ThemeManager.SurfaceAltKey),
-                },
+                detailBox,
                 new ScrollViewer
                 {
                     Name = "RecordingScroller",

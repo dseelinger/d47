@@ -695,15 +695,12 @@ public static class LoadoutPages
 
         var border = new Border
         {
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(3),
             Padding = new Thickness(12, 10),
             Margin = new Thickness(0, 0, 0, 10),
             Child = new StackPanel { Children = { text, buttons } },
         };
 
-        Themed(border, Border.BorderBrushProperty, ThemeManager.AccentKey);
-        Themed(border, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
+        CardChrome.Card(border, selected: true);
 
         return border;
     }
@@ -1986,15 +1983,12 @@ public sealed class ItemPage : LoadoutPage
             _ghost = new Border
             {
                 Padding = new Thickness(8, 4),
-                CornerRadius = new CornerRadius(4),
-                BorderThickness = new Thickness(1),
                 Opacity = 0.85,
                 IsHitTestVisible = false,
                 Child = new TextBlock { FontSize = TypeScale.Secondary },
             };
 
-            LoadoutPages.Themed(_ghost, Border.BackgroundProperty, ThemeManager.SurfaceKey);
-            LoadoutPages.Themed(_ghost, Border.BorderBrushProperty, ThemeManager.AccentKey);
+            CardChrome.Card(_ghost, selected: true);
 
             _overlay.Children.Add(_ghost);
         }
