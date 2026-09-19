@@ -55,6 +55,21 @@ public sealed record CarrierState
     /// <summary>Tritium in the carrier's own tank, from CarrierStats.</summary>
     public int? FuelLevel { get; init; }
 
+    /// <summary>Tonnes of tritium in the hold, counted from cargo movements — null until one is seen.</summary>
+    public int? TritiumInHold { get; init; }
+
+    /// <summary>
+    /// Whether <see cref="TritiumInHold"/> might be wrong: an open trade order lets other Commanders
+    /// move tritium the journal never reports.
+    /// </summary>
+    public bool TritiumInHoldUncertain { get; init; }
+
+    /// <summary>
+    /// Whether the Commander is docked at their own carrier — CargoTransfer carries no carrier id of
+    /// its own, so it is attributed to this carrier only while this is true.
+    /// </summary>
+    public bool DockedAtOwnCarrier { get; init; }
+
     /// <summary>"all", "squadron", "squadronfriends", "friends", "none" — as Elite words it.</summary>
     public string? DockingAccess { get; init; }
 
@@ -184,11 +199,22 @@ public sealed record CarrierState
         // cref="Owned"/> is the callsign being known, and until now only <c>CarrierStats</c> could supply
         // one: over the 925-journal corpus, 1,035 CarrierStats carry a Callsign and not one of 1,134
         // CarrierLocation events does — the read below is a hope, not a source.
-        "Docked" or "Undocked" or "Location" or "DockingRequested" or "DockingGranted"
-            when SaysMyCallsign(journalEvent) => this with
-            {
-                CallSign = journalEvent.String("StationName") ?? CallSign,
-            },
+        "Docked" when SaysMyCallsign(journalEvent) => this with
+        {
+            CallSign = journalEvent.String("StationName") ?? CallSign,
+            DockedAtOwnCarrier = true,
+        },
+
+        "Undocked" when SaysMyCallsign(journalEvent) => this with
+        {
+            CallSign = journalEvent.String("StationName") ?? CallSign,
+            DockedAtOwnCarrier = false,
+        },
+
+        "Location" or "DockingRequested" or "DockingGranted" when SaysMyCallsign(journalEvent) => this with
+        {
+            CallSign = journalEvent.String("StationName") ?? CallSign,
+        },
 
         // The name, learned from a string that carries it decorated (#130).
         "SupercruiseDestinationDrop" when journalEvent.Long("MarketID") == CarrierId => this with
@@ -282,11 +308,55 @@ public sealed record CarrierState
             DestinationBody = null,
         },
 
-        // Tritium in, tritium out.
+        // Tritium in, tritium out — from the ship's own hold into the tank, not the carrier's hold.
         "CarrierDepositFuel" => this with { FuelLevel = journalEvent.Int("Total") ?? FuelLevel },
+
+        // CargoTransfer carries no carrier id of its own, so it counts only while docked here.
+        "CargoTransfer" when DockedAtOwnCarrier
+            && journalEvent.Items("Transfers").Any(transfer => NamesTritium(transfer.String("Type")))
+            => Moved(TritiumTransferDelta(journalEvent)),
+
+        "MarketSell" when journalEvent.Long("MarketID") == CarrierId
+            && NamesTritium(journalEvent.String("Type")) => Moved(journalEvent.Int("Count") ?? 0),
+
+        "MarketBuy" when journalEvent.Long("MarketID") == CarrierId
+            && NamesTritium(journalEvent.String("Type")) => Moved(-(journalEvent.Int("Count") ?? 0)),
+
+        // Another Commander can fill the order and the journal never says by how much.
+        "CarrierTradeOrder" when journalEvent.Long("CarrierID") == CarrierId
+            && NamesTritium(journalEvent.String("Commodity"))
+            && !journalEvent.Bool("CancelTrade") => this with { TritiumInHoldUncertain = true },
 
         _ => this,
     };
+
+    /// <summary>Whether a commodity symbol, cased however Elite wrote it, names tritium.</summary>
+    private static bool NamesTritium(string? symbol) =>
+        string.Equals(symbol, "tritium", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>The net tritium a CargoTransfer moved into (positive) or out of (negative) the hold.</summary>
+    private static int TritiumTransferDelta(JournalEvent journalEvent) =>
+        journalEvent.Items("Transfers")
+            .Where(transfer => NamesTritium(transfer.String("Type")))
+            .Sum(transfer => transfer.String("Direction") switch
+            {
+                "tocarrier" => transfer.Int("Count") ?? 0,
+                "toship" => -(transfer.Int("Count") ?? 0),
+                _ => 0,
+            });
+
+    /// <summary>
+    /// <see cref="TritiumInHold"/> moved by <paramref name="delta"/>, held at zero and marked
+    /// uncertain rather than going negative.
+    /// </summary>
+    private CarrierState Moved(int delta)
+    {
+        var next = (TritiumInHold ?? 0) + delta;
+
+        return next < 0
+            ? this with { TritiumInHold = 0, TritiumInHoldUncertain = true }
+            : this with { TritiumInHold = next };
+    }
 
     /// <summary>The event's own instant, but only where the event actually named a system (#406).</summary>
     private DateTimeOffset? Stamped(JournalEvent journalEvent, string? system) =>

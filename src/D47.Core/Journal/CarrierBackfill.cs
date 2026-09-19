@@ -46,11 +46,16 @@ public static class CarrierBackfill
 
             foreach (var line in Lines(file, logger))
             {
-                // The text test, before any JSON is touched: three event names out of the hundreds a journal
-                // holds, so the cost is a read of the folder rather than a replay of it.
+                // The text test, before any JSON is touched: a handful of event names out of the hundreds a
+                // journal holds, so the cost is a read of the folder rather than a replay of it.
                 if (!line.Contains("\"event\":\"Carrier", StringComparison.Ordinal)
                     && !line.Contains("\"event\":\"Commander\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"LoadGame\"", StringComparison.Ordinal))
+                    && !line.Contains("\"event\":\"LoadGame\"", StringComparison.Ordinal)
+                    && !line.Contains("\"event\":\"Docked\"", StringComparison.Ordinal)
+                    && !line.Contains("\"event\":\"Undocked\"", StringComparison.Ordinal)
+                    && !line.Contains("\"event\":\"CargoTransfer\"", StringComparison.Ordinal)
+                    && !line.Contains("\"event\":\"MarketBuy\"", StringComparison.Ordinal)
+                    && !line.Contains("\"event\":\"MarketSell\"", StringComparison.Ordinal))
                 {
                     continue;
                 }

@@ -142,6 +142,28 @@ public class CarrierBackfillTests
         Assert.Equal(1000, Carriers(install)[Fid].FuelLevel);
     }
 
+    /// <summary>The reported fixture: tritium in the hold is counted across the whole history (#306).</summary>
+    [Fact]
+    public void TritiumInTheHoldSurvivesARestart()
+    {
+        using var install = new TempInstall();
+        Write(
+            install,
+            "Journal.2026-09-13T100000.01.log",
+            LoadGame,
+            Stats,
+            Docked,
+            Transfer(540, "tocarrier"),
+            Transfer(540, "toship"),
+            """{ "timestamp":"2026-09-13T17:00:00Z", "event":"CarrierDepositFuel", "CarrierID":3715429376, "Amount":382, "Total":1000 }""",
+            Transfer(158, "tocarrier"));
+
+        var carrier = Carriers(install)[Fid];
+
+        Assert.Equal(158, carrier.TritiumInHold);
+        Assert.False(carrier.TritiumInHoldUncertain);
+    }
+
     /// <summary>A jump scheduled before the restart is not one still in flight after it (#304).</summary>
     [Fact]
     public void APendingJumpDoesNotSurviveARestart()
@@ -195,6 +217,12 @@ public class CarrierBackfillTests
 
     private static string Location(string system) =>
         $$"""{ "timestamp":"2026-09-05T16:36:00Z", "event":"CarrierLocation", "CarrierID":3715429376, "CarrierType":"FleetCarrier", "StarSystem":"{{system}}" }""";
+
+    private const string Docked =
+        """{ "timestamp":"2026-09-13T16:30:00Z", "event":"Docked", "StationName":"BNH-T2F", "StationType":"FleetCarrier", "MarketID":3715429376 }""";
+
+    private static string Transfer(int count, string direction) =>
+        $$"""{ "timestamp":"2026-09-13T16:35:00Z", "event":"CargoTransfer", "Transfers":[ { "Type":"tritium", "Count":{{count}}, "Direction":"{{direction}}" } ] }""";
 
     /// <summary>The instant a fixture line carries, read the way the parser reads it.</summary>
     private static DateTimeOffset At(string timestamp) =>
