@@ -48,11 +48,45 @@ public static class FlavourTurn
         int? maxOutputTokens = null,
         ThinkingEffort effort = ThinkingEffort.Low,
         LlmSampling? sampling = null,
+        bool canBeDirected = false) =>
+        (await AskForAsync(
+            provider,
+            model,
+            persona,
+            aboutMe,
+            instruction,
+            gameState,
+            spend,
+            prices,
+            logger,
+            cancellationToken,
+            webSearch,
+            maxOutputTokens,
+            effort,
+            sampling,
+            canBeDirected).ConfigureAwait(false)).Line;
+
+    /// <summary>As <see cref="AskAsync"/>, saying why when no line came back.</summary>
+    public static async Task<FlavourReply> AskForAsync(
+        ILlmProvider? provider,
+        string? model,
+        string? persona,
+        string? aboutMe,
+        string instruction,
+        string? gameState,
+        SpendTracker? spend,
+        PriceTable? prices,
+        ILogger? logger,
+        CancellationToken cancellationToken = default,
+        bool webSearch = false,
+        int? maxOutputTokens = null,
+        ThinkingEffort effort = ThinkingEffort.Low,
+        LlmSampling? sampling = null,
         bool canBeDirected = false)
     {
         if (provider is null)
         {
-            return null;
+            return new FlavourReply(null, FlavourMiss.NoModel);
         }
 
         var chosenModel = model ?? provider.DefaultModel;
@@ -110,19 +144,19 @@ public static class FlavourTurn
 
                     case LlmStreamEvent.Failed failed:
                         logger?.LogDebug("A flavour line was not generated: {Message}", failed.Message);
-                        return null;
+                        return new FlavourReply(null, FlavourMiss.Failed, failed.Message);
                 }
             }
         }
         catch (OperationCanceledException)
         {
-            return null;
+            return new FlavourReply(null, FlavourMiss.Cancelled);
         }
         catch (Exception ex)
         {
             // A provider throwing where it should have reported is still just a line that did not happen.
             logger?.LogDebug(ex, "A flavour line was not generated");
-            return null;
+            return new FlavourReply(null, FlavourMiss.Failed, ex.Message);
         }
 
         if (spend is not null)
@@ -152,6 +186,30 @@ public static class FlavourTurn
                 line.Length);
         }
 
-        return stopReason == LlmStopReason.Refusal || line.Length == 0 ? null : line;
+        return stopReason == LlmStopReason.Refusal
+            ? new FlavourReply(null, FlavourMiss.Failed, "the model refused")
+            : line.Length == 0
+                ? new FlavourReply(null, FlavourMiss.Failed, "the reply was empty")
+                : new FlavourReply(line);
     }
 }
+
+/// <summary>Why <see cref="FlavourTurn.AskForAsync"/> returned no line.</summary>
+public enum FlavourMiss
+{
+    /// <summary>A line came back.</summary>
+    None,
+
+    /// <summary>There was no provider to ask.</summary>
+    NoModel,
+
+    /// <summary>The provider reported a failure, threw, refused or returned nothing.</summary>
+    Failed,
+
+    /// <summary>The caller's token was cancelled first; for a budgeted line, it timed out.</summary>
+    Cancelled,
+}
+
+/// <summary>One flavour line, or why there is none.</summary>
+/// <param name="Message">The provider's own message for a <see cref="FlavourMiss.Failed"/> reply.</param>
+public sealed record FlavourReply(string? Line, FlavourMiss Miss = FlavourMiss.None, string? Message = null);

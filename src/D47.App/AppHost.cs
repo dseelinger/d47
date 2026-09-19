@@ -90,6 +90,7 @@ public sealed class AppHost : IDisposable
         Cancellation = cancellation;
         _loggerFactory = loggerFactory;
         _logger = loggerFactory.CreateLogger<AppHost>();
+        _rewording = new Core.Callouts.Rewording(new Core.Callouts.RewordChance(), _logger);
         Verbosity = verbosity;
         Settings = settings;
         Secrets = secrets;
@@ -5071,77 +5072,36 @@ public sealed class AppHost : IDisposable
         await Voice.AnnounceAsync(announcement, voice).ConfigureAwait(false);
     }
 
-    /// <summary>How long a carrier line may spend being written before the authored one is used instead.</summary>
-    private static readonly TimeSpan FlavourBudget = TimeSpan.FromSeconds(3);
-
-    /// <summary>Which lines with a brief actually go to the model (#214).</summary>
-    private readonly Core.Callouts.RewordChance _rewordChance = new();
+    /// <summary>Which lines with a brief actually go to the model, and what is said when none comes back.</summary>
+    private readonly Core.Callouts.Rewording _rewording;
 
     /// <summary>
     /// The same announcement, said in character, when there is a model to ask and it is one of the
     /// lines the checklist wants varied (Phase 11: "with varied LLM arrival and departure responses").
     /// </summary>
-    private async Task<Announcement?> VaryAsync(Announcement announcement)
+    private Task<Announcement?> VaryAsync(Announcement announcement)
     {
-        // Which lines are eligible and what each is asked lives in Core, where the one property that matters
-        // — that a danger callout is never rewritten — can be asserted.
-        if (Turns.Provider is null
-            || FlavourBriefs.For(announcement, Settings.Current.Llm.PersonalityEnabled) is not { } brief)
-        {
-            return announcement;
-        }
+        return _rewording.VaryAsync(
+            announcement,
+            hasModel: Turns.Provider is not null,
+            Settings.Current.Llm.PersonalityEnabled,
+            Settings.Current.Llm.RewordPercent,
+            () => ShipFacts.Of(GameState.Active),
+            GameState.Active?.Identity.Name,
+            (brief, ask, token) => FlavourTurn.AskForAsync(
+                Turns.Provider,
+                Turns.BackgroundModel,
+                brief.NeedsPersona ? Personas.RenderBlock(personalityEnabled: true) : brief.Speaker,
+                StoryFor(brief),
+                ask,
+                brief.NeedsGameState ? Turns.LiveGameState?.Invoke() : null,
+                Spend,
+                PriceTable.Default,
+                _logger,
+                token,
 
-        // What the ship can prove about itself, read once and used for both the model's line and the authored
-        // fallback below (#338).
-        var facts = ShipFacts.Of(GameState.Active);
-
-        // The reword-or-not choice is made before any model call, so the as-written side makes none (#214).
-        if (!_rewordChance.ShouldReword(announcement, Settings.Current.Llm.RewordPercent))
-        {
-            return ContradictedClaims.Sayable(announcement.Text, facts, _logger, announcement.Key) is null
-                ? null
-                : announcement;
-        }
-
-        using var budget = new CancellationTokenSource(FlavourBudget);
-
-        // Named because #338's retry asks the same question again with the contradiction appended, and only
-        // the instruction differs.
-        Task<string?> AskAsync(string ask) => FlavourTurn.AskAsync(
-            Turns.Provider,
-            Turns.BackgroundModel,
-            brief.NeedsPersona ? Personas.RenderBlock(personalityEnabled: true) : brief.Speaker,
-            StoryFor(brief),
-            ask,
-            brief.NeedsGameState ? Turns.LiveGameState?.Invoke() : null,
-            Spend,
-            PriceTable.Default,
-            _logger,
-            budget.Token,
-
-            // Against the slot this line will be spoken in, not the ship's.
-            canBeDirected: DirectableIn(VoiceGroups.Of(announcement.Voice, announcement.CommsChannel)));
-
-        var line = await AskAsync(brief.Instruction).ConfigureAwait(false);
-
-        // The authored line stands unless the rewrite is one that may be spoken.
-        var said = await ContradictedClaims.SayableAsync(
-            line,
-            facts,
-            contradiction => AskAsync($"{brief.Instruction} {contradiction.Correction}"),
-            _logger,
-            announcement.Key).ConfigureAwait(false);
-
-        if (said is not null)
-        {
-            return announcement with { Text = said };
-        }
-
-        // The authored line is the fallback and is checked too, because an authored line that contradicts the
-        // ship is the incident this guard was reported for.
-        return ContradictedClaims.Sayable(announcement.Text, facts, _logger, announcement.Key) is null
-            ? null
-            : announcement;
+                // Against the slot this line will be spoken in, not the ship's.
+                canBeDirected: DirectableIn(VoiceGroups.Of(announcement.Voice, announcement.CommsChannel))));
     }
 
     /// <summary>How long an exchange may spend being written.</summary>

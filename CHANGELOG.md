@@ -23,6 +23,13 @@ tinted fill and a chamfered corner on the tail side — Accent for the ship, Inf
 in place of the rounded corners and flat Accent fill they drew before. The Log File and Journal File
 readings still draw monospace.
 
+Your own carrier's routine traffic is now always addressed to you as its owner. Lines Frontier wrote
+for a visitor, such as "Ensure to observe starport protocol during your visit, pilot.", are always
+reworded, whatever the reword percentage is set to. When no model is set up, Personality is off, or
+the model fails, times out or returns something unusable, d47 says its own line instead, for
+example "Welcome back, Commander Seelinger." The log now records at Information level whenever a
+line was spoken as written, and why.
+
 The Fleet cards do too. A ship's hull picture now sits in a pure black cell with a rule beneath it
 in every theme, the current ship carries its badge in the corner rather than a highlighted card, and
 the name is drawn upper case in Saira Semi Condensed with the hull, where it is and what is planned

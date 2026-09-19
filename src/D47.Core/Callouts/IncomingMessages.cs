@@ -187,6 +187,7 @@ public sealed partial class IncomingMessages : ICallout
                 CommsChannel = channel,
                 Transcript = $"{sender}: {text}\n",
                 Cooldown = TimeSpan.Zero,
+                MessageKey = journalEvent.String("Message"),
             };
         }
 

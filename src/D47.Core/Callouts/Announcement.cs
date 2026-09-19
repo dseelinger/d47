@@ -89,6 +89,9 @@ public sealed record Announcement(string Key, string Text, CalloutUrgency Urgenc
     /// </summary>
     public string? Transcript { get; init; }
 
+    /// <summary>The raw <c>$</c>-key of a Frontier-canned message from the Commander's own carrier, or null.</summary>
+    public string? MessageKey { get; init; }
+
     /// <summary>The line the conversation page should carry, or null when this belongs on another page.</summary>
     public string? ConversationLine =>
         Transcript is null && Voice == Audio.VoiceRole.ShipAi ? Text : null;
