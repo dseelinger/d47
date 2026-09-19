@@ -266,11 +266,7 @@
                 DockPanel.Dock="Right"
                 Margin="8,0,0,0"
                 Padding="11,7"
-                CornerRadius="4"
                 IsEnabled="{Binding CanAsk}"
-                Background="{DynamicResource D47.SurfaceAlt}"
-                BorderBrush="{DynamicResource D47.Border}"
-                BorderThickness="1"
                 ToolTip.Tip="Send (Enter)"
                 Click="OnAskClick">
           <Path x:Name="AskGlyph"
@@ -283,67 +279,64 @@
              binding on this particular control is the wrong tool. -->
         <TextBox x:Name="AskBox"
                  Text="{Binding AskText, Mode=TwoWay}"
-                 KeyDown="OnAskBoxKeyDown" />
+                 KeyDown="OnAskBoxKeyDown">
+          <!-- The kit TextBox theme carries the typed text; the placeholder alone reads as a HUD
+               field label (#287). -->
+          <TextBox.Styles>
+            <Style Selector="TextBox#AskBox /template/ TextBlock#PART_Placeholder,
+                             TextBox#AskBox /template/ TextBlock#PART_FloatingPlaceholder">
+              <Setter Property="FontFamily" Value="avares://d47/Assets/Fonts/SairaSemiCondensed-Regular.ttf#Saira Semi Condensed" />
+              <Setter Property="FontSize" Value="{StaticResource D47.Type.Heading}" />
+              <Setter Property="LetterSpacing" Value="1" />
+            </Style>
+          </TextBox.Styles>
+        </TextBox>
       </DockPanel>
     </Border>
 
     <!--
-      The provenance line, and beside it the one thing on this panel that is about right now
-      rather than about the last turn: whether the microphone is open (list.md Phase 13).
+      Whether the microphone is open (list.md Phase 13), directly above the ask box and drawn
+      whenever the transcript tab is, so it does not go with the ask row when mini or the headset
+      take that away. "Continuous capture with no visible state is the thing a user is right to
+      distrust" does not become less true at a metre — so the indicator lives in the one region
+      both surfaces show in both modes.
+    -->
+    <Border x:Name="MicrophoneRow"
+            DockPanel.Dock="Bottom"
+            Margin="0,10,0,0"
+            Padding="8,5"
+            Background="{DynamicResource D47.FillLow}"
+            BorderThickness="1">
+      <StackPanel Orientation="Horizontal" Spacing="7">
+        <!--
+          A round dot rather than a microphone glyph, as in the design: filled or hollow is the
+          state, not just the colour, because a Commander glancing at this in a headset is
+          reading a shape before they read a hue - and because a colour difference alone is not a
+          difference for everybody.
+        -->
+        <Ellipse x:Name="MicrophoneGlyph"
+                 Width="8" Height="8"
+                 VerticalAlignment="Center"
+                 StrokeThickness="1.5" />
+        <TextBlock x:Name="MicrophoneLabel"
+                   VerticalAlignment="Center"
+                   FontFamily="avares://d47/Assets/Fonts/SairaSemiCondensed-Regular.ttf#Saira Semi Condensed"
+                   LetterSpacing="1"
+                   FontSize="{StaticResource D47.Type.Small}" />
+      </StackPanel>
+    </Border>
 
-      It sits in this row rather than in the header because the header is what mini takes away,
-      and mini is the headset's normal state. "Continuous capture with no visible state is the
-      thing a user is right to distrust" does not become less true at a metre — so the indicator
-      lives in the one region both surfaces show in both modes.
-
-      Docked left of the turn line rather than under it: the two are read at different moments
-      and neither should push the other around as it changes length.
+    <!--
+      The provenance line, docked left of the turn line rather than under it: the two are read at
+      different moments and neither should push the other around as it changes length.
     -->
     <DockPanel x:Name="StatusRow" DockPanel.Dock="Bottom" Margin="0,10,0,0">
-
-      <Border x:Name="MicrophoneRow"
-              DockPanel.Dock="Left"
-              IsVisible="{Binding MicrophoneVisible}"
-              Margin="0,0,10,0"
-              Padding="7,2"
-              CornerRadius="3"
-              VerticalAlignment="Center"
-              Background="{DynamicResource D47.SurfaceAlt}"
-              BorderThickness="1">
-        <StackPanel Orientation="Horizontal" Spacing="6">
-          <!--
-            A microphone, drawn rather than typed, for the reason the help mark already is: a
-            glyph taken from a font is whatever weight that font happens to have, and it hangs
-            off a baseline instead of sitting in the middle of its box. A 24-unit coordinate
-            space scaled into a 13-pixel box lines up with the text beside it by construction.
-
-            Filled or hollow is the state, not just the colour, because a Commander glancing at
-            this in a headset is reading a shape before they read a hue - and because a colour
-            difference alone is not a difference for everybody.
-          -->
-          <Path x:Name="MicrophoneGlyph"
-                Width="13" Height="13"
-                VerticalAlignment="Center"
-                Stretch="Uniform"
-                StrokeThickness="2"
-                StrokeLineCap="Round"
-                StrokeJoin="Round"
-                Data="M 12,3 A 3,3 0 0 1 15,6 L 15,11 A 3,3 0 0 1 9,11 L 9,6 A 3,3 0 0 1 12,3 Z
-                      M 5.5,10.5 A 6.5,6.5 0 0 0 18.5,10.5 M 12,17 L 12,21" />
-          <TextBlock x:Name="MicrophoneLabel"
-                     VerticalAlignment="Center"
-                     FontSize="{StaticResource D47.Type.Small}" />
-        </StackPanel>
-      </Border>
 
       <!--
         Which assigned HOTAS switches currently sit against the game's state (list.md Phase 21).
         In this row rather than in the banners, and the difference is the reason for it: mini hides
         the banners and mini is the headset's normal state, so a switch annunciator up there
         would be invisible exactly where a Commander cannot see their own switches either.
-
-        Docked right, so it never pushes the microphone indicator around — the two change on
-        completely different clocks.
       -->
       <Border x:Name="StartupRow"
               DockPanel.Dock="Right"

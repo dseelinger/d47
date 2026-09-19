@@ -14,13 +14,13 @@ namespace D47.App.Tests;
 /// <summary>"Show that the microphone is open".</summary>
 public class MicrophoneIsVisibleTests
 {
-    /// <summary>Off is the only state that draws nothing.</summary>
+    /// <summary>Always drawn on the transcript tab, including Off.</summary>
     [AvaloniaTheory]
-    [InlineData(MicrophoneState.Off, false)]
+    [InlineData(MicrophoneState.Off, true)]
     [InlineData(MicrophoneState.Idle, true)]
     [InlineData(MicrophoneState.Armed, true)]
     [InlineData(MicrophoneState.Open, true)]
-    public void TheIndicatorIsDrawnWheneverADeviceIsOpen(MicrophoneState state, bool shown)
+    public void TheIndicatorIsAlwaysDrawnOnTheTranscriptTab(MicrophoneState state, bool shown)
     {
         var model = new PanelViewModel { Microphone = state };
         var view = Bind(model);
@@ -31,8 +31,9 @@ public class MicrophoneIsVisibleTests
     }
 
     [AvaloniaTheory]
-    [InlineData(MicrophoneState.Idle, "PTT Ready")]
-    [InlineData(MicrophoneState.Armed, "Listening...")]
+    [InlineData(MicrophoneState.Off, "MIC OFF")]
+    [InlineData(MicrophoneState.Idle, "PTT READY")]
+    [InlineData(MicrophoneState.Armed, "LISTENING")]
     [InlineData(MicrophoneState.Open, "MIC ON")]
     public void EachStateSaysWhichOneItIs(MicrophoneState state, string expected)
     {
@@ -52,8 +53,8 @@ public class MicrophoneIsVisibleTests
     /// is already open and what is being said will be held for it (#147).
     /// </summary>
     [AvaloniaTheory]
-    [InlineData(MicrophoneState.Idle, "Loading model...")]
-    [InlineData(MicrophoneState.Armed, "Loading model...")]
+    [InlineData(MicrophoneState.Idle, "LOADING MODEL")]
+    [InlineData(MicrophoneState.Armed, "LOADING MODEL")]
     [InlineData(MicrophoneState.Open, "MIC ON")]
     public void ALoadingModelSaysSoInsteadOfReady(MicrophoneState state, string expected)
     {
@@ -65,18 +66,18 @@ public class MicrophoneIsVisibleTests
         Assert.Equal(expected, ((TextBlock)Named(view, "MicrophoneLabel")).Text);
     }
 
-    /// <summary>The shape, not just the colour.</summary>
+    /// <summary>The shape, not just the colour — hollow for Off, filled once a device is open.</summary>
     [AvaloniaFact]
-    public void OnlyTheOpenStateIsFilledIn()
+    public void OnlyAnOpenDeviceIsFilledIn()
     {
-        var model = new PanelViewModel { Microphone = MicrophoneState.Armed };
+        var model = new PanelViewModel { Microphone = MicrophoneState.Off };
         var view = Bind(model);
 
         // One surface across both renders.
         using var surface = new OffscreenSurface(view, new PixelSize(1024, 640));
         surface.Render();
 
-        var glyph = (Avalonia.Controls.Shapes.Path)Named(view, "MicrophoneGlyph");
+        var glyph = (Avalonia.Controls.Shapes.Ellipse)Named(view, "MicrophoneGlyph");
         Assert.Null(glyph.Fill);
 
         model.Microphone = MicrophoneState.Open;
@@ -164,8 +165,9 @@ public class MicrophoneIsVisibleTests
 
         Render(view, 1024, 640);
 
-        // The row that carries both, which is what ApplyChrome hides.
+        // Two rows, both hidden by ApplyChrome off the transcript tab.
         Assert.False(Named(view, "StatusRow").IsVisible);
+        Assert.False(Named(view, "MicrophoneRow").IsVisible);
     }
 
     private static Control Named(Control view, string name) =>

@@ -422,7 +422,7 @@ public partial class PanelView : UserControl
     {
         if (_bound is not null)
         {
-            AskBox.PlaceholderText = _bound.AskHint;
+            AskBox.PlaceholderText = _bound.AskHint.ToUpperInvariant();
         }
     }
 
@@ -436,36 +436,46 @@ public partial class PanelView : UserControl
 
         var state = _bound.Microphone;
         var detail = _bound.MicrophoneDetail;
+        var loading = _bound.ModelLoading && state != D47.Core.Listening.MicrophoneState.Open;
 
-        var (key, label) = state switch
+        var (key, label, filled) = state switch
         {
-            D47.Core.Listening.MicrophoneState.Open => (Theming.ThemeManager.AccentKey, "MIC ON"),
-            D47.Core.Listening.MicrophoneState.Armed => ("D47.Info", "Listening..."),
-            _ => ("D47.TextMuted", "PTT Ready"),
+            D47.Core.Listening.MicrophoneState.Open => (Theming.ThemeManager.AccentKey, "MIC ON", true),
+            D47.Core.Listening.MicrophoneState.Armed => ("D47.Info", "LISTENING", true),
+            D47.Core.Listening.MicrophoneState.Idle => (Theming.ThemeManager.AccentKey, "PTT READY", true),
+            _ => ("D47.TextMuted", "MIC OFF", false),
         };
 
         // An open gate is open whatever the model is doing. Every other state would otherwise report that
         // the microphone is ready while the model is still loading (#147).
-        if (_bound.ModelLoading && state != D47.Core.Listening.MicrophoneState.Open)
+        if (loading)
         {
-            (key, label) = ("D47.Info", "Loading model...");
+            (key, label, filled) = ("D47.Info", "LOADING MODEL", false);
         }
 
         MicrophoneGlyph.Bind(Avalonia.Controls.Shapes.Shape.StrokeProperty, this.GetResourceObservable(key));
         MicrophoneLabel.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(key));
 
-        // Filled only while it is open.
-        if (state == D47.Core.Listening.MicrophoneState.Open)
+        if (filled)
         {
-            MicrophoneGlyph.Bind(
-                Avalonia.Controls.Shapes.Shape.FillProperty, this.GetResourceObservable(key));
-
-            MicrophoneRow.Bind(Border.BorderBrushProperty, this.GetResourceObservable(key));
+            MicrophoneGlyph.Bind(Avalonia.Controls.Shapes.Shape.FillProperty, this.GetResourceObservable(key));
         }
         else
         {
             MicrophoneGlyph.Fill = null;
-            MicrophoneRow.BorderBrush = null;
+        }
+
+        // The border stays the box's own faint Accent rule except while the gate is open, when it turns
+        // solid to match the glow.
+        if (state == D47.Core.Listening.MicrophoneState.Open)
+        {
+            MicrophoneRow.Bind(Border.BorderBrushProperty, this.GetResourceObservable(key));
+            MicrophoneRow.Bind(Border.EffectProperty, this.GetResourceObservable(Theming.ThemeManager.BloomFillKey));
+        }
+        else
+        {
+            MicrophoneRow.Bind(Border.BorderBrushProperty, this.GetResourceObservable(Theming.ThemeManager.RuleKey));
+            MicrophoneRow.Effect = null;
         }
 
         MicrophoneLabel.Text = label;
@@ -1985,9 +1995,13 @@ public partial class PanelView : UserControl
         // saying nothing about a page with no turns on it.
         AskRow.IsVisible = full && transcript;
 
-        // The provenance line and the microphone indicator together, because both are about the transcript
-        // and no other tab has turns on it.
+        // The provenance line, because it is about the transcript and no other tab has turns on it.
         StatusRow.IsVisible = transcript;
+
+        // The microphone indicator shares that rule but not the ask row's: mini and the headset take the
+        // ask box away and keep this, since continuous capture with no visible state is the thing a
+        // Commander is right to distrust.
+        MicrophoneRow.IsVisible = transcript;
 
         // Mini is "the transcript's tail and the provenance line" and nothing else, so the tabs, the mode
         // control, the breadcrumb and the search box go with the rest of the chrome.

@@ -257,13 +257,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     public D47.Core.Listening.MicrophoneState Microphone
     {
         get => _microphone;
-        set
-        {
-            if (Set(ref _microphone, value))
-            {
-                Raise(nameof(MicrophoneVisible));
-            }
-        }
+        set => Set(ref _microphone, value);
     }
 
     /// <summary>
@@ -289,9 +283,6 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         get => _listeningPrompt;
         set => Set(ref _listeningPrompt, value);
     }
-
-    /// <summary>Whether the indicator is drawn at all.</summary>
-    public bool MicrophoneVisible => _microphone != D47.Core.Listening.MicrophoneState.Off;
 
     /// <summary>
     /// Which assigned switches currently sit against the game's state (Phase 21, "Show which switches

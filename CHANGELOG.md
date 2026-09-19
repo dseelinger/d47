@@ -68,6 +68,14 @@ SteamVR's own account of a panel's position and visibility now writes at Informa
 first sighting and on a real change; the five-minute heartbeat that repeats an unchanged
 description now writes at Debug, so a still panel no longer pushes real log lines off the page.
 
+The microphone indicator moves to its own box above the ask line, styled to match the HUD kit —
+a faint Accent fill, a rule that turns solid Accent while the gate is open with a glow behind it,
+and a round dot in place of the microphone glyph. It stays on screen with the microphone off,
+reading MIC OFF rather than disappearing, and it survives mini mode and the headset even though the
+ask box does not. The ask button loses its own fill and rounded corners for the kit Button style,
+and the ask box's placeholder now draws upper case and tracked, in Saira Semi Condensed, at heading
+size; what you type keeps its own case.
+
 The adventure editor no longer draws an unfinished draft in Danger. What is missing now reads as
 one caution line — an Accent bar, a CAUTION label, and a sentence naming everything still needed,
 such as "An adventure needs a key, a name, and at least one beat before it can be saved." A beat
