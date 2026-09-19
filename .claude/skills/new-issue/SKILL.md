@@ -107,10 +107,16 @@ the settled ones again.
 
 ## Size it before filing
 
-Once the questions are answered, ask what the work actually spans. A change that stays inside one
-page is one issue. A change that needs new journal state, a new column in a generated table, or a
-new seam in Core is a different size of job, and stapling it to a drawing change is exactly what an
-issue worker balks at.
+Once the questions are answered, ask what the work actually spans. Any of these makes it a larger
+job than the change it came with:
+
+- new journal state
+- a new column in a generated table
+- a new seam in Core
+- a second subsystem
+
+This list is shared with `/issue-worker`, which stops on the same items. An issue that bundles one
+of them with a smaller change is one the issue worker will hand back.
 
 Split only when the honest answer is that it is two jobs. When it is:
 

@@ -150,9 +150,17 @@ Otherwise the build and the filtered tests are the check.
 
 ## When it is bigger than it looked
 
-Stop and say so rather than pushing on. Name what it actually is: two issues, a design question for
-the Architect, or the same issue at a higher effort. An issue that grew a second subsystem is not
-the issue that was ranked.
+Stop and say so rather than pushing on when the fix turns out to need something the issue did not
+name from this list:
+
+- new journal state
+- a new column in a generated table
+- a new seam in Core
+- a second subsystem
+
+This list is shared with `/new-issue`, which splits issues on the same items. Name what the issue
+actually is: two issues, a design question for the Architect, or the same issue at a higher effort.
+An issue that grew one of these is not the issue that was ranked.
 
 ## Saying how to test it
 
