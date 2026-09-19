@@ -95,25 +95,18 @@ label, it means: show it, wait, then do it.
 A settled design ends with its issues in the tracker, not in a transcript the maintainer has to copy
 them out of. A design you are not settling files nothing at all.
 
-`gh issue create` authenticates as `dseelinger`, so what you file cannot be told apart from what the
-maintainer filed — and that is the eligibility test `/triage` applies: "Either `dseelinger` opened
-it, or it carries `ready`." Everything you file is eligible for autonomous work the moment it exists.
-File nothing you would not be content to see an issue worker start on unread.
+File each build issue through `/new-issue`. It holds the issue form, the label list, the checks
+against the tree and the journals, and the sizing list, and the acknowledgement rule above applies
+to it unchanged. The settled design is its input: the decisions are made, so it asks the maintainer
+only what the design left open.
 
-Each one takes the repository's form:
+Add two things to each body that `/new-issue` does not know about:
 
-- **Title**: seven words or fewer. Count them before showing the text. The cause or mechanism goes
-  in the body, not after a colon.
-- **A grounding paragraph** naming the code the design rests on, with paths and symbols you have
-  actually read. This is what stops the issue coming back to you.
-- **`## What changes`** — one bullet per decision, in the order they stand up.
-- **`## Accepted when`** — statements a test can assert, not intentions.
-- **A closing line** sizing it: what kind of change it is, and roughly how much of one.
-- **One label that already exists**: `bug`, `change-request`, `enhancement`, `documentation`,
-  `accessibility`, `data-accuracy`. Do not invent one.
+- **The design issue**, by number, and which of the other build issues have to land first.
+- **The decision and the alternative rejected**, in a paragraph of its own. This is the rationale
+  the Output section says belongs in the issue.
 
-Name the design issue in every body, and say there which of the others have to land first. Then
-comment on the design issue with the numbers you filed, and leave it open — closing it is the
+Then comment on the design issue with the numbers you filed, and leave it open. Closing it is the
 maintainer's.
 
 Report the numbers in your answer, so they can be read without going to look for them.
