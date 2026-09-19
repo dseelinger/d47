@@ -16,6 +16,9 @@ public sealed record D47Settings
 
     public int SchemaVersion { get; init; } = 1;
 
+    /// <summary>The published version that last loaded this file, or null if none has.</summary>
+    public string? LastVersion { get; init; }
+
     public LoggingSettings Logging { get; init; } = new();
 
     public LlmSettings Llm { get; init; } = new();

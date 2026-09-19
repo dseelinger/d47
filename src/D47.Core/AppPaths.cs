@@ -42,7 +42,12 @@ public sealed class AppPaths
 
     /// <summary>Where this build writes.</summary>
     public static AppPaths ForRunningBuild() =>
-        new(DevInstallRoot() ?? AppContext.BaseDirectory, AppContext.BaseDirectory);
+        DevInstallRoot() is { } root
+            ? new(root, AppContext.BaseDirectory) { IsTestDrive = true }
+            : new(AppContext.BaseDirectory, AppContext.BaseDirectory);
+
+    /// <summary>Whether this is a Debug build writing to the dev-install folder rather than an install.</summary>
+    public bool IsTestDrive { get; init; }
 
     /// <summary>The Debug-only redirect, or null.</summary>
     private static string? DevInstallRoot() =>

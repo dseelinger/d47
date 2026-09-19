@@ -116,6 +116,11 @@ Snap, edge and corner resizing, and Alt+Space still all work as before. A window
 resized shows no maximise button, and the picker window — which has no taskbar entry to bring it
 back from — shows no minimise button either.
 
+An upgrade no longer reports settings it does not know. When a newer release first starts, it copies
+`settings.json` to `settings.json.<old version>.bak` beside it and deletes any key the new build does
+not use, without a startup message. A key typed by hand after that, or one left by a newer build on
+a downgrade, is still kept and named.
+
 ## 0.168.0 — Controls take the HUD dress
 
 Buttons, toggle switches and the transcript tabs now draw d47's own look rather than the

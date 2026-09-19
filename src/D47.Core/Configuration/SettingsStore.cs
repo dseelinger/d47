@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using D47.Core.Diagnostics;
 using D47.Core.Storage;
+using D47.Core.Updates;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Configuration;
@@ -29,8 +30,12 @@ public sealed class SettingsStore(AppPaths paths, ILogger<SettingsStore> logger)
     /// </summary>
     public IReadOnlyList<string> UnknownKeys { get; private set; } = [];
 
-    /// <summary>A missing file yields defaults — that is a first run, not a failure.</summary>
-    public D47Settings Load()
+    /// <summary>
+    /// A missing file yields defaults — that is a first run, not a failure. <paramref name="published"/>
+    /// is the running version for an installed build and null for a test drive; when it is newer than the
+    /// version that last loaded the file, the file is backed up and its unknown keys are deleted.
+    /// </summary>
+    public D47Settings Load(ReleaseVersion? published = null)
     {
         UnknownKeys = [];
 
@@ -67,7 +72,48 @@ public sealed class SettingsStore(AppPaths paths, ILogger<SettingsStore> logger)
 
         // Named, not refused (#368).
         var kept = new List<string>();
-        Collect(settings, string.Empty, kept);
+        var bags = new List<IDictionary<string, JsonElement>>();
+        Collect(settings, string.Empty, kept, bags);
+
+        var stamp = false;
+
+        if (published is { } running && settings.LastVersion != running.ToString())
+        {
+            var upgraded = !ReleaseVersion.TryParse(settings.LastVersion, out var last)
+                || running.IsNewerThan(last);
+
+            if (upgraded && kept.Count > 0)
+            {
+                var backup = $"{paths.SettingsFile}.{settings.LastVersion ?? "unversioned"}.bak";
+
+                try
+                {
+                    File.Copy(paths.SettingsFile, backup, overwrite: true);
+                }
+                catch (IOException ex)
+                {
+                    throw new SettingsLoadException(paths.SettingsFile, $"the backup to '{backup}' failed", ex);
+                }
+
+                foreach (var bag in bags)
+                {
+                    bag.Clear();
+                }
+
+                logger.LogInformation(
+                    "Upgraded to {Version}: deleted {Keys} from {Path}, backed up to {Backup}",
+                    running,
+                    string.Join(", ", kept),
+                    paths.SettingsFile,
+                    backup);
+
+                kept.Clear();
+            }
+
+            settings = settings with { LastVersion = running.ToString() };
+            stamp = true;
+        }
+
         UnknownKeys = kept;
 
         foreach (var key in kept)
@@ -160,6 +206,11 @@ public sealed class SettingsStore(AppPaths paths, ILogger<SettingsStore> logger)
                 shared);
         }
 
+        if (stamp)
+        {
+            Save(settings);
+        }
+
         logger.LogInformation("Loaded settings from {Path}", paths.SettingsFile);
         return settings;
     }
@@ -204,7 +255,8 @@ public sealed class SettingsStore(AppPaths paths, ILogger<SettingsStore> logger)
     /// Every key the document carried that no property claimed, by its path through the document
     /// (#368).
     /// </summary>
-    private static void Collect(object node, string path, List<string> found)
+    private static void Collect(
+        object node, string path, List<string> found, List<IDictionary<string, JsonElement>> bags)
     {
         foreach (var property in node.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
@@ -220,16 +272,17 @@ public sealed class SettingsStore(AppPaths paths, ILogger<SettingsStore> logger)
 
             if (property.IsDefined(typeof(JsonExtensionDataAttribute), inherit: true))
             {
-                if (value is IDictionary<string, JsonElement> bag)
+                if (value is IDictionary<string, JsonElement> { Count: > 0 } bag)
                 {
                     found.AddRange(bag.Keys.Select(key => path.Length == 0 ? key : $"{path}.{key}"));
+                    bags.Add(bag);
                 }
 
                 continue;
             }
 
             var name = JsonNamingPolicy.CamelCase.ConvertName(property.Name);
-            Descend(value, path.Length == 0 ? name : $"{path}.{name}", found);
+            Descend(value, path.Length == 0 ? name : $"{path}.{name}", found, bags);
         }
     }
 
@@ -237,13 +290,14 @@ public sealed class SettingsStore(AppPaths paths, ILogger<SettingsStore> logger)
     /// One value: a settings record is walked, a list of them is walked by index, a dictionary of them
     /// by key, and anything else — a number, a string, an enum — holds no bag and is left alone.
     /// </summary>
-    private static void Descend(object value, string path, List<string> found)
+    private static void Descend(
+        object value, string path, List<string> found, List<IDictionary<string, JsonElement>> bags)
     {
         var type = value.GetType();
 
         if (type.Assembly == typeof(D47Settings).Assembly && !type.IsEnum)
         {
-            Collect(value, path, found);
+            Collect(value, path, found, bags);
             return;
         }
 
@@ -255,7 +309,7 @@ public sealed class SettingsStore(AppPaths paths, ILogger<SettingsStore> logger)
             {
                 if (entry.Value is { } held)
                 {
-                    Descend(held, $"{path}.{entry.Key}", found);
+                    Descend(held, $"{path}.{entry.Key}", found, bags);
                 }
             }
 
@@ -273,7 +327,7 @@ public sealed class SettingsStore(AppPaths paths, ILogger<SettingsStore> logger)
         {
             if (item is not null)
             {
-                Descend(item, $"{path}[{index}]", found);
+                Descend(item, $"{path}[{index}]", found, bags);
             }
 
             index++;

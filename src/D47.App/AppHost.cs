@@ -652,7 +652,10 @@ public sealed class AppHost : IDisposable
         var settingsRefused = false;
         try
         {
-            loaded = store.Load();
+            loaded = store.Load(
+                !paths.IsTestDrive && D47.Core.Updates.ReleaseVersion.TryParse(version, out var published)
+                    ? published
+                    : null);
         }
         catch (SettingsLoadException ex)
         {
