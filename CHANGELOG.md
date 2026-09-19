@@ -8,6 +8,13 @@
 
 ## 0.169.0 — No more drop-downs
 
+The Carrier tab's single Tritium row is now five: in the tank, in the carrier's own hold (marked
+"counted", or "may be off" while a tritium trade order is open), in your own ship's hold, a total,
+and a rough range — the tritium spent to jump follows the carrier-jump formula, based on a spansh
+plot of Sol to Colonia, and ignores the carrier growing lighter as it burns fuel, which is why it
+is called rough. The page now redraws when your ship's hold changes, not only when the
+carrier's own figures do.
+
 The Carrier tab now survives a restart: fuel, cargo, capacity, free space, jump range, balance,
 docking access, decommission status and crewed services are folded from history the same way
 location and identity always were, dated by the same "Figures as of …" line. Only a jump already

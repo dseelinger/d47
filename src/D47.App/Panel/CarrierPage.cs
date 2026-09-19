@@ -7,9 +7,9 @@ using D47.Core.Journal;
 namespace D47.App.Panel;
 
 /// <summary>Where the Commander gets their carrier from, and a nudge when it changes.</summary>
-public sealed class CarrierSource(Func<CarrierState> own, Func<CarrierState> squadron)
+public sealed class CarrierSource(Func<CarrierState> own, Func<CarrierState> squadron, Func<int> shipTritium)
 {
-    /// <summary>Raised when the journal moved either carrier on.</summary>
+    /// <summary>Raised when the journal moved either carrier, or the ship's hold, on.</summary>
     public event Action? Changed;
 
     /// <summary>The Commander's own.</summary>
@@ -17,6 +17,9 @@ public sealed class CarrierSource(Func<CarrierState> own, Func<CarrierState> squ
 
     /// <summary>Their squadron's, if they are in a squadron that has one.</summary>
     public CarrierState Squadron => squadron();
+
+    /// <summary>Tritium in the flown ship's hold, zero when the hold is the SRV's or is empty.</summary>
+    public int ShipTritium => shipTritium();
 
     public void Invalidate() => Changed?.Invoke();
 }
@@ -91,7 +94,7 @@ public sealed class CarrierPage : UserControl
         }
 
         _body.Children.Add(Where(carrier));
-        _body.Children.Add(Row("Tritium", carrier.FuelLevel is { } fuel ? $"{fuel:N0} t" : "not seen"));
+        Tritium(carrier);
 
         if (carrier.JumpRange is { } range)
         {
@@ -201,6 +204,54 @@ public sealed class CarrierPage : UserControl
                 ? $"{parking} — leaves in {Left(left)}"
                 : $"{parking} — leaving now",
             destination);
+    }
+
+    /// <summary>In the tank, in the carrier's hold, in the ship's hold, a total, and a rough range (#307).</summary>
+    private void Tritium(CarrierState carrier)
+    {
+        _body.Children.Add(LoadoutPages.Heading("Tritium"));
+        _body.Children.Add(Row("In the tank", carrier.FuelLevel is { } fuel ? $"{fuel:N0} t" : "not seen"));
+
+        if (carrier.TritiumInHold is { } hold)
+        {
+            var note = carrier.TritiumInHoldUncertain
+                ? "counted, may be off: a tritium order was open"
+                : "counted";
+
+            _body.Children.Add(Row("Carrier's hold", $"{hold:N0} t ({note})"));
+        }
+
+        var shipTritium = _carrier.ShipTritium;
+
+        if (shipTritium > 0)
+        {
+            _body.Children.Add(Row("Your ship's hold", $"{shipTritium:N0} t"));
+        }
+
+        var total = (carrier.FuelLevel ?? 0) + (carrier.TritiumInHold ?? 0) + shipTritium;
+
+        _body.Children.Add(Row("Total", $"{total:N0} t"));
+
+        var usedSpace = carrier.Capacity is { } capacity && carrier.FreeSpace is { } free ? capacity - free : 0;
+        var (rangeLy, jumps) = CarrierFuel.RoughRange(total, usedSpace, carrier.JumpRange);
+        var distance = carrier.JumpRange ?? 500;
+
+        _body.Children.Add(Row(
+            "Range, roughly",
+            $"about {RoundToTwoSigFigs(rangeLy):N0} ly — {jumps} jump{(jumps == 1 ? "" : "s")} at {distance:0.#} ly"));
+    }
+
+    /// <summary>Two significant figures, the precision this estimate is worth.</summary>
+    private static double RoundToTwoSigFigs(double value)
+    {
+        if (value <= 0)
+        {
+            return 0;
+        }
+
+        var magnitude = Math.Pow(10, Math.Floor(Math.Log10(value)) - 1);
+
+        return Math.Round(value / magnitude) * magnitude;
     }
 
     private void Services(CarrierState carrier)

@@ -714,7 +714,8 @@ public partial class PanelView : UserControl
         // The carrier, on the tab that took its name (#230).
         _carrier = new CarrierSource(
             () => state()?.Carrier ?? D47.Core.Journal.CarrierState.None,
-            () => state()?.SquadronCarrier ?? D47.Core.Journal.CarrierState.NoSquadron);
+            () => state()?.SquadronCarrier ?? D47.Core.Journal.CarrierState.NoSquadron,
+            () => state()?.Hold is { IsShip: true } hold ? hold.Of("tritium") : 0);
 
         // No help declared: no capability page covers the carrier yet, and a root whose page has no band
         // simply shows no mark.
@@ -832,11 +833,15 @@ public partial class PanelView : UserControl
         // the hull they are sitting in.
         var carrier = _loadoutState?.Invoke()?.Carrier;
         var squadron = _loadoutState?.Invoke()?.SquadronCarrier;
+        var hold = _loadoutState?.Invoke()?.Hold;
 
-        if (!ReferenceEquals(carrier, _carrierSeen) || !ReferenceEquals(squadron, _squadronSeen))
+        if (!ReferenceEquals(carrier, _carrierSeen)
+            || !ReferenceEquals(squadron, _squadronSeen)
+            || !ReferenceEquals(hold, _holdSeen))
         {
             _carrierSeen = carrier;
             _squadronSeen = squadron;
+            _holdSeen = hold;
             _carrier?.Invalidate();
             changed = true;
         }
@@ -874,6 +879,7 @@ public partial class PanelView : UserControl
     private D47.Core.Journal.ShipLoadout? _loadoutSeen;
     private D47.Core.Journal.CarrierState? _carrierSeen;
     private D47.Core.Journal.CarrierState? _squadronSeen;
+    private D47.Core.Journal.CargoHold? _holdSeen;
     private string _loadoutEngineerStamp = string.Empty;
 
     /// <summary>Gives this surface the clocks, timers and alarms (Phase 24, "Utilities").</summary>
