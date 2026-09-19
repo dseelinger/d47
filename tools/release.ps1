@@ -5,11 +5,11 @@
 
 .DESCRIPTION
     Everything that matters happens in `.github/workflows/release.yml` — this decides the number,
-    runs D47.App.Tests, and dispatches. The other seven projects run there, before the tag exists,
-    so a red run leaves nothing tagged and nothing published.
+    runs the whole suite, and dispatches. The workflow runs every project except D47.App.Tests
+    again, before the tag exists, so a red run leaves nothing tagged and nothing published.
 
-    D47.App.Tests runs here because it costs 2m52s on a four-vCPU runner and 76s on this machine,
-    and it is the only project where that gap is worth anything.
+    The whole suite runs here, not only D47.App.Tests: the projects run in parallel, so it takes
+    no longer, and a failure is found before dispatch instead of four minutes into the run.
 
 .EXAMPLE
     tools\release.ps1 -Patch
@@ -63,9 +63,9 @@ $next = if ($Major) { '{0}.0.0' -f ($parts[0] + 1) }
 
 Write-Host "$latest -> v$next"
 
-Write-Host 'Running D47.App.Tests...'
-dotnet test tests/D47.App.Tests -c Release --nologo
-if ($LASTEXITCODE -ne 0) { throw 'D47.App.Tests failed. Nothing dispatched.' }
+Write-Host 'Running the suite...'
+dotnet test d47.slnx -c Release --nologo
+if ($LASTEXITCODE -ne 0) { throw 'The suite failed. Nothing dispatched.' }
 
 # `gh workflow run` names no run, so the newest id before dispatch is what the watcher waits past.
 $before = gh run list --workflow release.yml --limit 1 --json databaseId --jq '.[0].databaseId'

@@ -52,6 +52,14 @@ dotnet test tests/D47.Core.Tests --filter FullyQualifiedName~<Area>
 The full suite is a release gate and runs on the runner. Running it here to check one fix is
 minutes you do not need to spend.
 
+Before committing, also run the gate tests. They check the whole tree against a list or a rule — a
+journal event dispatched on must be in `HandledEvents.ActedOn`, a capability must have a docs page
+— so a change can break one without matching the area filter (it takes a few seconds):
+
+```bash
+dotnet test tests/D47.Core.Tests --filter FullyQualifiedName~Gate
+```
+
 One exception: when the diff touches anything under `src/D47.App/`, run the whole of
 `D47.App.Tests` before committing (about 90 seconds):
 
