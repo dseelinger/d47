@@ -185,11 +185,11 @@ public class PlanGapTests
     }
 
     /// <summary>
-    /// A rank gate is not a shortfall: it is stated rather than costed, because listing materials under
-    /// a gate nobody can pass is listing work nobody can start.
+    /// A rank gate does not stop the total: it is still counted, at the most rolls a grade takes, and the
+    /// gate line says why it is a worst case rather than an exact figure.
     /// </summary>
     [Fact]
-    public void ARankGateIsStatedRatherThanCosted()
+    public void ARankGateIsCostedAtTheWorstCaseAndNamed()
     {
         var store = new GameStateStore();
 
@@ -206,7 +206,7 @@ public class PlanGapTests
         var report = PlanGap.Of([Ship()], [], store.Active);
 
         Assert.NotEmpty(report.Gates);
-        Assert.True(report.IsEmpty);
+        Assert.False(report.IsEmpty);
     }
 
     /// <summary>A wildcard grade is a real intent and an uncostable one.</summary>

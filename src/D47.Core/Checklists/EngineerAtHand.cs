@@ -132,7 +132,7 @@ public static class EngineersHere
             .Where(item => item.Intent?.Kind is ChecklistIntentKind.Blueprint or ChecklistIntentKind.Experimental)
 
             // And there has to be something in the slot to roll (GitHub issue 41).
-            .Where(item => IsFitted(item, state))
+            .Where(item => FittedModule.IsFitted(item, state))
             .ToList();
 
         return
@@ -215,7 +215,7 @@ public static class EngineersHere
         // Narrowed to the module actually in the slot where d47 can see it, because a blueprint name belongs
         // to several module kinds and they do not share an engineer list — Heavy Duty on a Shield Booster is
         // Lei Cheung's and on a Hull Reinforcement Package it is not.
-        return BlueprintCatalogue.Named(intent.Detail ?? intent.Subject, ModuleOf(item, state))
+        return BlueprintCatalogue.Named(intent.Detail ?? intent.Subject, FittedModule.Of(item, state))
             .Where(recipe => recipe.Kind == wanted)
 
             // At the grade the line actually asks for, reported 2026-08-23.
@@ -235,61 +235,4 @@ public static class EngineersHere
 
     /// <summary>Not this engineer's blueprint at all, which is a different answer from grade 0.</summary>
     private const int NotTheirs = -1;
-
-    /// <summary>
-    /// What is fitted in the slot this item is about, or null where d47 has never seen the ship.
-    /// </summary>
-    private static ModuleSpecification? ModuleOf(ChecklistItem item, CommanderGameState state)
-    {
-        if (Fitted(item, state) is not { } fitted)
-        {
-            return null;
-        }
-
-        // The specification rather than its name: see the comment in Offers above.
-        return EliteSpecifications.Module(fitted.Item);
-    }
-
-    /// <summary>The module in this item's slot, or null where the slot is empty or the ship unseen.</summary>
-    private static ShipModule? Fitted(ChecklistItem item, CommanderGameState state)
-    {
-        if (item.Intent?.Subject is not { Length: > 0 } slot)
-        {
-            return null;
-        }
-
-        return LoadoutFor(item, state) is not { } loadout
-            ? null
-            : loadout.Modules.FirstOrDefault(module =>
-                string.Equals(module.Slot, slot, StringComparison.OrdinalIgnoreCase));
-    }
-
-    /// <summary>
-    /// Whether there is anything in this item's slot for an engineer to work on (GitHub issue 41).
-    /// </summary>
-    private static bool IsFitted(ChecklistItem item, CommanderGameState state) =>
-        LoadoutFor(item, state) is null || Fitted(item, state) is not null;
-
-    /// <summary>
-    /// Which loadout this item's modules are read from: the live one for the ship being flown, and for
-    /// a line that is not about a ship in particular because there is nothing better to offer it; the
-    /// remembered one for any other ship.
-    /// </summary>
-    private static ShipLoadout? LoadoutFor(ChecklistItem item, CommanderGameState state)
-    {
-        if (item.Scope.Group != ChecklistGroup.Ship)
-        {
-            return state.Ship;
-        }
-
-        return ChecklistEvaluator.IsActive(item.Scope, state.Ship)
-            ? state.Ship
-            : int.TryParse(
-                item.Scope.Key,
-                global::System.Globalization.NumberStyles.Integer,
-                global::System.Globalization.CultureInfo.InvariantCulture,
-                out var shipId)
-                ? state.Loadouts.For(shipId)?.Loadout
-                : null;
-    }
 }

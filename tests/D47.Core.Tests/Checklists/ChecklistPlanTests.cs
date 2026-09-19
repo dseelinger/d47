@@ -89,7 +89,7 @@ public class ChecklistPlanTests
     }
 
     [Fact]
-    public void ARankThatCannotReachTheGradeIsAGateRatherThanAShortfall()
+    public void ARankThatCannotReachTheGradeIsCostedAtTheWorstCase()
     {
         const string rankThree =
             """
@@ -102,11 +102,12 @@ public class ChecklistPlanTests
 
         var costing = EngineeringPlan.Cost(items, State(rankThree));
 
-        // No materials are listed at all for a grade nobody can roll — listing them would be listing work
-        // nobody can start.
+        // Counted at the most rolls a grade 5 takes, rather than left out because rank 3 cannot reach it.
+        var cadmium = costing.Ingredients.Single(i => i.Material.Symbol == "cadmium");
+
+        Assert.Equal(5, cadmium.Needed);
         Assert.NotEmpty(costing.Gates);
-        Assert.Empty(costing.Ingredients);
-        Assert.Contains("compounds", string.Join(" ", costing.Gates), StringComparison.Ordinal);
+        Assert.Contains("grade 5", string.Join(" ", costing.Gates), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -120,6 +121,89 @@ public class ChecklistPlanTests
         // A macro refuses an unknown action because it presses keys and would half-configure a ship.
         Assert.Single(items, item => item.Intent?.Kind == ChecklistIntentKind.Blueprint);
         Assert.NotEmpty(costing.Uncovered);
+    }
+
+    private const string ShieldBoosterFitted =
+        """
+        { "timestamp":"2026-08-16T09:00:00Z", "event":"Loadout", "Ship":"krait_mkii", "ShipID":12,
+          "ShipName":"Bad Idea", "ShipIdent":"BI-01",
+          "Modules":[ {"Slot":"TinyHardpoint5","Item":"hpt_shieldbooster_size0_class5","On":true,
+                       "Priority":0,"Health":1.0} ] }
+        """;
+
+    private const string ArmourFitted =
+        """
+        { "timestamp":"2026-08-16T09:00:00Z", "event":"Loadout", "Ship":"krait_mkii", "ShipID":12,
+          "ShipName":"Bad Idea", "ShipIdent":"BI-01",
+          "Modules":[ {"Slot":"Armour","Item":"krait_mkii_armour_grade1","On":true,
+                       "Priority":0,"Health":1.0} ] }
+        """;
+
+    [Fact]
+    public void HeavyDutyIsCostedByWhatIsFittedInTheSlot()
+    {
+        // Heavy Duty exists on both a Shield Booster and Armour, with different recipes, and the plan
+        // names neither — only what the journal says is actually in the slot.
+        const string didiVatermann =
+            """
+            { "timestamp":"2026-08-16T09:00:00Z", "event":"EngineerProgress",
+              "Engineers":[ {"Engineer":"Didi Vatermann","EngineerID":300000,"Progress":"Unlocked","Rank":5} ] }
+            """;
+
+        var items = EngineeringPlan.Items(Krait, "krait_mkii", [new BuildRequest("TinyHardpoint5", "Heavy Duty", 5)]);
+
+        var costing = EngineeringPlan.Cost(items, State(ShieldBoosterFitted, didiVatermann));
+
+        Assert.Equal(5, costing.Ingredients.Single(i => i.Material.Symbol == "antimony").Needed);
+        Assert.Equal(5, costing.Ingredients.Single(i => i.Material.Symbol == "polymercapacitors").Needed);
+        Assert.Equal(5, costing.Ingredients.Single(i => i.Material.Symbol == "shielddensityreports").Needed);
+        Assert.Empty(costing.Gates);
+    }
+
+    [Fact]
+    public void TheSameBlueprintOnArmourCostsArmoursOwnRecipe()
+    {
+        const string seleneJean =
+            """
+            { "timestamp":"2026-08-16T09:00:00Z", "event":"EngineerProgress",
+              "Engineers":[ {"Engineer":"Selene Jean","EngineerID":300210,"Progress":"Unlocked","Rank":5} ] }
+            """;
+
+        var items = EngineeringPlan.Items(Krait, "krait_mkii", [new BuildRequest("Armour", "Heavy Duty", 5)]);
+
+        var costing = EngineeringPlan.Cost(items, State(ArmourFitted, seleneJean));
+
+        Assert.Equal(5, costing.Ingredients.Single(i => i.Material.Symbol == "compoundshielding").Needed);
+        Assert.Equal(5, costing.Ingredients.Single(i => i.Material.Symbol == "fedcorecomposites").Needed);
+        Assert.Equal(5, costing.Ingredients.Single(i => i.Material.Symbol == "tungsten").Needed);
+        Assert.Empty(costing.Gates);
+    }
+
+    [Fact]
+    public void NoHeavyDutyEngineerStillCostsTheWorstCaseAndGatesIt()
+    {
+        var items = EngineeringPlan.Items(Krait, "krait_mkii", [new BuildRequest("Armour", "Heavy Duty", 5)]);
+
+        var costing = EngineeringPlan.Cost(items, State(ArmourFitted));
+
+        Assert.Equal(5, costing.Ingredients.Single(i => i.Material.Symbol == "compoundshielding").Needed);
+        Assert.NotEmpty(costing.Gates);
+
+        // Nobody unlocked reaches the grade yet, so the total is a worst-case figure rather than an exact one.
+        Assert.DoesNotContain(costing.Gates, gate => gate.Contains("I do not know your rank", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void AnUnresolvableModuleWithTwoOwnersIsUncoveredRatherThanGuessed()
+    {
+        // No slot is fitted and the plan names no module, and Heavy Duty grade 5 belongs to both a Shield
+        // Booster and Armour — so nothing is costed rather than one being picked arbitrarily.
+        var items = EngineeringPlan.Items(Krait, "krait_mkii", [new BuildRequest("TinyHardpoint5", "Heavy Duty", 5)]);
+
+        var costing = EngineeringPlan.Cost(items, State());
+
+        Assert.Empty(costing.Ingredients);
+        Assert.Contains(costing.Uncovered, line => line.Contains("I don't know which module is in that slot", StringComparison.Ordinal));
     }
 
     [Fact]

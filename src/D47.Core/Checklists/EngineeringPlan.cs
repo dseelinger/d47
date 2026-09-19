@@ -190,9 +190,9 @@ public static class EngineeringPlan
                 continue;
             }
 
-            var blueprints = BlueprintCatalogue.Named(intent.Detail);
+            var named = BlueprintCatalogue.Named(intent.Detail);
 
-            if (blueprints.Count == 0)
+            if (named.Count == 0)
             {
                 // Kept and marked, never refused.
                 if (intent.Detail is { Length: > 0 } unknown)
@@ -203,17 +203,9 @@ public static class EngineeringPlan
                 continue;
             }
 
-            var rank = RankFor(intent, state);
+            var grade = intent.Kind == ChecklistIntentKind.Blueprint ? intent.Grade : null;
 
-            if (intent.Kind == ChecklistIntentKind.Experimental)
-            {
-                Add(needed, blueprints.FirstOrDefault(b => b.Kind == BlueprintKind.Experimental)?.Ingredients);
-                continue;
-            }
-
-            var grade = intent.Grade;
-
-            if (grade is null)
+            if (intent.Kind == ChecklistIntentKind.Blueprint && grade is null)
             {
                 // A wildcard grade is a real intent and an uncostable one: which grade decides the
                 // multiplication, and the Commander has not said.
@@ -221,30 +213,68 @@ public static class EngineeringPlan
                 continue;
             }
 
-            var recipe = blueprints.FirstOrDefault(b => b.Kind == BlueprintKind.Modification && b.Grade == grade);
+            var wanted = intent.Kind == ChecklistIntentKind.Experimental
+                ? BlueprintKind.Experimental
+                : BlueprintKind.Modification;
+
+            // The recipe belongs to a module kind, and the same blueprint name can belong to several — Heavy
+            // Duty on a Shield Booster is not Heavy Duty on Armour. Resolve by what the plan itself says goes
+            // there, else by what is actually fitted (EngineerAtHand.Ceiling narrows the same way).
+            var moduleName = Blank(intent.Module);
+            var fitted = moduleName is null ? FittedModule.Of(item, state) : null;
+
+            IEnumerable<Blueprint> options = moduleName is { Length: > 0 }
+                ? BlueprintCatalogue.Named(intent.Detail, moduleName)
+                : fitted is not null
+                    ? BlueprintCatalogue.Named(intent.Detail, fitted)
+                    : named;
+
+            options = options.Where(recipe => recipe.Kind == wanted);
+
+            if (grade is { } wantedGrade)
+            {
+                options = options.Where(recipe => recipe.Grade == wantedGrade);
+            }
+
+            var candidates = options.ToList();
+
+            if (moduleName is not { Length: > 0 } && fitted is null
+                && candidates.Select(recipe => recipe.Module).Distinct(StringComparer.Ordinal).Count() > 1)
+            {
+                uncovered.Add($"{item.Text} — I don't know which module is in that slot.");
+                continue;
+            }
+
+            var recipe = candidates.FirstOrDefault();
 
             if (recipe is null)
             {
-                uncovered.Add($"{item.Text} — my table has no grade {grade} for that blueprint.");
+                if (intent.Kind == ChecklistIntentKind.Blueprint)
+                {
+                    uncovered.Add($"{item.Text} — my table has no grade {grade} for that blueprint.");
+                }
+
                 continue;
             }
 
-            if (rank is not { } known)
+            if (intent.Kind == ChecklistIntentKind.Experimental)
             {
-                // The roll count is a function of rank, and rank is the Commander's own.
-                uncovered.Add(
-                    $"{item.Text} — I do not know your rank with the engineer who would craft it, "
-                    + "so I cannot state a total.");
+                Add(needed, recipe.Ingredients);
                 continue;
             }
 
-            if (recipe.TotalFor(known) is not { } total)
+            var rank = RankFor(recipe, intent, state);
+
+            if (rank is { } known && recipe.TotalFor(known) is { } total)
             {
-                gates.Add(Gate(item.Text, grade.Value, known, intent.Engineer));
+                Add(needed, total);
                 continue;
             }
 
-            Add(needed, total);
+            // Nobody unlocked can reach it yet: counted at the worst case rather than left uncosted, and the
+            // gate line says why.
+            Add(needed, recipe.TotalFor(grade!.Value));
+            gates.Add(Gate(item.Text, grade.Value));
         }
 
         var ingredients = needed
@@ -260,19 +290,45 @@ public static class EngineeringPlan
         return new PlanCosting { Ingredients = ingredients, Gates = gates, Uncovered = uncovered };
     }
 
-    private static string Gate(string what, int grade, int rank, string? engineer)
+    private static string Gate(string what, int grade) =>
+        $"{what} — no engineer you have unlocked offers grade "
+        + $"{grade.ToString(CultureInfo.InvariantCulture)} yet; counted at the most rolls it can take.";
+
+    /// <summary>
+    /// The highest rank among the engineers who could craft this, unlocked ones only — the recipe's own
+    /// list, or just the one the plan named where it named one.
+    /// </summary>
+    private static int? RankFor(Blueprint recipe, ChecklistIntent intent, CommanderGameState? state)
     {
-        var who = engineer is { Length: > 0 } named ? $" with {named}" : string.Empty;
+        if (state is null)
+        {
+            return null;
+        }
 
-        var price = $" {EngineeringRules.RankRises}";
+        IReadOnlyList<string> candidates = Blank(intent.Engineer) is { } named ? [named] : recipe.Engineers;
 
-        return $"{what}: grade {grade} cannot be crafted at rank {rank}{who} at all.{price}";
+        int? best = null;
+
+        foreach (var candidate in candidates)
+        {
+            if (EngineerDirectory.ByName(candidate) is not { } engineer)
+            {
+                continue;
+            }
+
+            if (state.Engineers.For(engineer.Id) is not { IsUnlocked: true, Rank: { } rank })
+            {
+                continue;
+            }
+
+            if (best is null || rank > best)
+            {
+                best = rank;
+            }
+        }
+
+        return best;
     }
-
-    private static int? RankFor(ChecklistIntent intent, CommanderGameState? state) =>
-        EngineerDirectory.ByName(intent.Engineer) is { } engineer
-            ? state?.Engineers.For(engineer.Id)?.Rank
-            : null;
 
     private static void Add(Dictionary<string, int> into, IEnumerable<BlueprintIngredient>? ingredients)
     {

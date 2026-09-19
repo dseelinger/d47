@@ -142,6 +142,14 @@ An upgrade no longer reports settings it does not know. When a newer release fir
 not use, without a startup message. A key typed by hand after that, or one left by a newer build on
 a downgrade, is still kept and named.
 
+A planned engineering slot no longer reads "I do not know your rank" for every entry on the Gap
+page. The recipe is now resolved by the module actually in the slot — the plan's own module, or
+what is fitted, when a blueprint name such as Heavy Duty belongs to more than one module type — so
+a Shield Booster and Armour cost their own ingredients rather than whichever the table lists first.
+Where a module cannot be told apart, the slot is left uncosted with a note saying so. The total now
+uses the highest rank among the engineers who could actually craft it, and where nobody unlocked
+reaches the grade yet, it is counted at the most rolls the grade can take, with a line saying why.
+
 ## 0.168.0 — Controls take the HUD dress
 
 Buttons, toggle switches and the transcript tabs now draw d47's own look rather than the
