@@ -32,7 +32,13 @@ public sealed class CarrierPage : UserControl
     private readonly Func<string, Task<bool>>? _copy;
     private readonly StackPanel _body = new() { Spacing = 4 };
 
-    public CarrierPage(CarrierSource carrier, Func<DateTimeOffset>? now = null, Func<string, Task<bool>>? copy = null)
+    public CarrierPage(
+        CarrierSource carrier,
+        Func<DateTimeOffset>? now = null,
+        Func<string, Task<bool>>? copy = null,
+
+        // The captain and tower's own settings, on the tab they only affect (#218, #305).
+        Control? settingsStrip = null)
     {
         _carrier = carrier;
         _now = now ?? (() => DateTimeOffset.UtcNow);
@@ -42,6 +48,12 @@ public sealed class CarrierPage : UserControl
 
         var root = new DockPanel { Margin = new Thickness(14) };
         var say = LoadoutPages.SayLine("where is my carrier");
+
+        if (settingsStrip is not null)
+        {
+            DockPanel.SetDock(settingsStrip, Dock.Top);
+            root.Children.Add(settingsStrip);
+        }
 
         DockPanel.SetDock(say, Dock.Bottom);
 

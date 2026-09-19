@@ -61,6 +61,25 @@ public class ATabsOwnSettingsShowOnItTests
         window.Close();
     }
 
+    /// <summary>The captain and tower's names and voices are on Fleet › Carrier, not the settings window (#305).</summary>
+    [AvaloniaFact]
+    public void TheFleetCarrierStripDrawsTheNamesAndVoices()
+    {
+        var (settings, viewState, paths) = TestSurface.Create();
+        var (view, window) = OpenStrip(settings, viewState, paths, "fleet-carrier");
+
+        var texts = view.GetVisualDescendants().OfType<TextBlock>()
+            .Select(block => block.Text)
+            .ToList();
+
+        Assert.Contains("Captain name", texts);
+        Assert.Contains("Carrier captain voice", texts);
+        Assert.Contains("Tower name", texts);
+        Assert.Contains("Carrier tower voice", texts);
+
+        window.Close();
+    }
+
     /// <summary>No nav, no page-top strip, no card header, no width floor — at any width.</summary>
     [AvaloniaTheory]
     [InlineData(300)]
@@ -293,8 +312,8 @@ public class ATabsOwnSettingsShowOnItTests
     {
         var known = new[]
         {
-            LoadoutPages.FleetRoot, RoutingPages.CommunityGoalRoot, AdventuresPage.RootKey, "checklist",
-            PanelView.LogRoot,
+            LoadoutPages.FleetRoot, LoadoutPages.CarrierRoot, RoutingPages.CommunityGoalRoot, AdventuresPage.RootKey,
+            "checklist", PanelView.LogRoot,
         };
 
         foreach (var tab in SettingsLayout.Tabs)

@@ -650,6 +650,15 @@ public sealed record SpeechSettings
     public string? TowerVoice { get; init; }
 
     /// <summary>
+    /// The Commander's own name for the carrier captain, spoken in place of "Captain" alone. Empty
+    /// leaves the line as it reads today (#305).
+    /// </summary>
+    public string? CarrierCaptainName { get; init; }
+
+    /// <summary>And for the tower, spoken in place of "Tower Control".</summary>
+    public string? TowerName { get; init; }
+
+    /// <summary>
     /// Whether in-game messages are spoken aloud, re-voiced (Phase 11, "Speak incoming messages in
     /// another voice").
     /// </summary>

@@ -143,8 +143,9 @@ A section is about one job rather than one part of Directive 47, so it can hold 
 section's rows, and its **?** opens the page for the part of Directive 47 it is mostly about.
 
 A few rows are on the tab they concern instead, under **Settings for this page**: Rescan my
-journals and Hull pictures on Fleet › Ships, the Inara API key and the week's turn on Routing ›
-Community Goal, and Notable places for adventures on Adventures.
+journals and Hull pictures on Fleet › Ships, the captain and tower's names and voices on Fleet ›
+Carrier, the Inara API key and the week's turn on Routing › Community Goal, and Notable places for
+adventures on Adventures.
 
 ### Ask for it
 

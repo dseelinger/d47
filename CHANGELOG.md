@@ -8,6 +8,11 @@
 
 ## 0.169.0 — No more drop-downs
 
+The carrier's captain and tower can now be given their own names. Set them on the Fleet › Carrier
+tab, where their voices moved to as well — the settings window's Carrier voices place is gone. A
+named captain is addressed as "Captain {name}"; a named tower replaces "Tower Control" with the
+name given. Leave either empty and the line reads exactly as it always has.
+
 The Carrier tab's single Tritium row is now five: in the tank, in the carrier's own hold (marked
 "counted", or "may be off" while a tritium trade order is open), in your own ship's hold, a total,
 and a rough range — the tritium spent to jump follows the carrier-jump formula, based on a spansh

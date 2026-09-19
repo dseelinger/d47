@@ -32,6 +32,8 @@ public static class SpeechCapability
     public const string EgressKey = "speech.egress";
     public const string CarrierCaptainVoiceKey = "speech.carrierCaptainVoice";
     public const string TowerVoiceKey = "speech.towerVoice";
+    public const string CarrierCaptainNameKey = "speech.carrierCaptainName";
+    public const string TowerNameKey = "speech.towerName";
     public const string SpeakIncomingKey = "speech.speakIncomingMessages";
     public const string CharacterPriceKey = "speech.characterPrice";
 
@@ -639,6 +641,26 @@ public static class SpeechCapability
             },
             new SettingRow
             {
+                Key = CarrierCaptainNameKey,
+                Advanced = true,
+                Label = "Captain name",
+                Help = "What you call your carrier's captain. Empty leaves the line as \"Captain\" alone.",
+                Kind = SettingKind.Text,
+                DefaultDisplay = "(none)",
+                AppliesWhen = s => s.Speech.Provider != NoneId,
+                Group = "Other voices",
+                DocsAnchor = "carrier-voices",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Speech.CarrierCaptainName,
+                    Write = (s, v) => s with
+                    {
+                        Speech = s.Speech with { CarrierCaptainName = string.IsNullOrWhiteSpace(v) ? null : v.Trim() },
+                    },
+                },
+            },
+            new SettingRow
+            {
                 Key = CarrierCaptainVoiceKey,
                 Advanced = true,
                 Label = "Carrier captain voice",
@@ -660,6 +682,26 @@ public static class SpeechCapability
                 {
                     Read = s => s.Speech.CarrierCaptainVoice,
                     Write = (s, v) => s with { Speech = s.Speech with { CarrierCaptainVoice = v } },
+                },
+            },
+            new SettingRow
+            {
+                Key = TowerNameKey,
+                Advanced = true,
+                Label = "Tower name",
+                Help = "What you call the tower. Empty leaves the line as \"Tower Control\".",
+                Kind = SettingKind.Text,
+                DefaultDisplay = "(none)",
+                AppliesWhen = s => s.Speech.Provider != NoneId,
+                Group = "Other voices",
+                DocsAnchor = "carrier-voices",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Speech.TowerName,
+                    Write = (s, v) => s with
+                    {
+                        Speech = s.Speech with { TowerName = string.IsNullOrWhiteSpace(v) ? null : v.Trim() },
+                    },
                 },
             },
             new SettingRow

@@ -2603,6 +2603,11 @@ public sealed class AppHost : IDisposable
                     arrival.HomeSystem = callouts.HomeSystem;
                     break;
 
+                case CarrierCallout carrier:
+                    carrier.CaptainName = () => settings.Current.Speech.CarrierCaptainName;
+                    carrier.TowerName = () => settings.Current.Speech.TowerName;
+                    break;
+
                 case BiologyCallout biology:
                     biology.Threshold = () => settings.Current.Callouts.BiologyThreshold;
                     break;

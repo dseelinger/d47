@@ -457,6 +457,70 @@ public class CarrierCalloutTests
         }
     }
 
+    /// <summary>A named captain is addressed by name in every InboundLines entry (#305).</summary>
+    [Fact]
+    public void ANamedCaptainIsAddressedByNameOnEveryInboundLine()
+    {
+        var callout = new CarrierCallout { CaptainName = () => "Reyes" };
+        var state = WithCarrier();
+
+        for (var i = 0; i < InboundLinesCount; i++)
+        {
+            var inbound = callout
+                .Examine(Context(
+                    state,
+                    priming: false,
+                    Event("SupercruiseDestinationDrop", ("Type", $"Long Way Home {CallSign}"), ("Threat", 0))))
+                .First();
+
+            Assert.Contains("Captain Reyes,", inbound.Text, StringComparison.Ordinal);
+        }
+    }
+
+    /// <summary>A named tower replaces "Tower Control" in every WelcomeLines entry (#305).</summary>
+    [Fact]
+    public void ANamedTowerReplacesTowerControlOnEveryWelcomeLine()
+    {
+        var callout = new CarrierCallout { TowerName = () => "Mira" };
+        var state = WithCarrier();
+
+        for (var i = 0; i < InboundLinesCount; i++)
+        {
+            var welcome = callout
+                .Examine(Context(
+                    state,
+                    priming: false,
+                    Event("SupercruiseDestinationDrop", ("Type", $"Long Way Home {CallSign}"), ("Threat", 0))))
+                .ElementAt(1);
+
+            Assert.Contains("Mira.", welcome.Text, StringComparison.Ordinal);
+            Assert.DoesNotContain("Tower Control", welcome.Text, StringComparison.Ordinal);
+        }
+    }
+
+    /// <summary>With both names empty, every line of the exchange reads exactly as it does today (#305).</summary>
+    [Fact]
+    public void WithBothNamesEmptyTheExchangeIsUnchanged()
+    {
+        var callout = new CarrierCallout();
+        var state = WithCarrier();
+
+        for (var i = 0; i < InboundLinesCount; i++)
+        {
+            var spoken = callout
+                .Examine(Context(
+                    state,
+                    priming: false,
+                    Event("SupercruiseDestinationDrop", ("Type", $"Long Way Home {CallSign}"), ("Threat", 0))))
+                .ToArray();
+
+            Assert.Contains("Captain,", spoken[0].Text, StringComparison.Ordinal);
+            Assert.Contains("Tower Control", spoken[1].Text, StringComparison.Ordinal);
+        }
+    }
+
+    private const int InboundLinesCount = 6;
+
     /// <summary>And with no name to use it is the bare rank rather than an invented one.</summary>
     [Fact]
     public void WithNoNameItIsStillTheRank()

@@ -55,11 +55,14 @@ public static class LoadoutPages
 
         // Ships' own settings (#218), drawn only on FleetRoot — Suits and the other modes share
         // IndexPage but not this strip.
-        Func<Control?>? settingsStrip = null)
+        Func<Control?>? settingsStrip = null,
+
+        // The captain and tower's own settings (#218, #305), drawn only on CarrierRoot.
+        Func<Control?>? carrierSettingsStrip = null)
     {
         if (crumb.Key == CarrierRoot && carrier is not null)
         {
-            return new CarrierPage(carrier, copy: copy);
+            return new CarrierPage(carrier, copy: copy, settingsStrip: carrierSettingsStrip?.Invoke());
         }
 
         foreach (var mode in modes)

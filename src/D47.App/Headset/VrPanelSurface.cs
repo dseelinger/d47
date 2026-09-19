@@ -232,7 +232,10 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
                 hullArt,
                 settingsStrip: buildSettingsStrip is null
                     ? null
-                    : () => buildSettingsStrip(LoadoutPages.FleetRoot));
+                    : () => buildSettingsStrip(LoadoutPages.FleetRoot),
+                carrierSettingsStrip: buildSettingsStrip is null
+                    ? null
+                    : () => buildSettingsStrip(LoadoutPages.CarrierRoot));
         }
 
         // `ships`, `gameState` and `onFoot` are read again below - Engineers needs all three too.

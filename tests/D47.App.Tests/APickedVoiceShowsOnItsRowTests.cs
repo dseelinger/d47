@@ -1,4 +1,4 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
@@ -27,10 +27,10 @@ public class APickedVoiceShowsOnItsRowTests
     [AvaloniaFact]
     public void TheRowShowsTheVoiceEvenAfterThePageHasBeenDetachedOnce()
     {
-        var (settings, host) = Open();
+        var (settings, view, window) = OpenCarrierStrip();
 
         // Whatever ends a session's subscription — the page leaving the visual tree and coming back.
-        DetachAndReattach(host);
+        DetachAndReattach(view);
 
         settings.Apply(
             SpeechCapability.CarrierCaptainVoiceKey, "U5UjeJMsOvyhYhXfZdvZ", SettingsCaller.Panel);
@@ -38,10 +38,10 @@ public class APickedVoiceShowsOnItsRowTests
 
         Assert.Contains(
             "Adam - Classic Scottish Storyteller",
-            DrawnValue(host, "Carrier captain voice"),
+            DrawnValue(view, "Carrier captain voice"),
             StringComparison.Ordinal);
 
-        host.Close();
+        window.Close();
     }
 
     /// <summary>
@@ -51,17 +51,17 @@ public class APickedVoiceShowsOnItsRowTests
     [AvaloniaFact]
     public void AndSoDoesTheTowerRow()
     {
-        var (settings, host) = Open();
+        var (settings, view, window) = OpenCarrierStrip();
 
         settings.Apply(SpeechCapability.TowerVoiceKey, "mZ8K1MPRiT5wDQaasg3i", SettingsCaller.Panel);
         Dispatcher.UIThread.RunJobs();
 
         Assert.Contains(
             "Alexander Kensington - Studio Quality",
-            DrawnValue(host, "Carrier tower voice"),
+            DrawnValue(view, "Carrier tower voice"),
             StringComparison.Ordinal);
 
-        host.Close();
+        window.Close();
     }
 
     /// <summary>
@@ -71,11 +71,11 @@ public class APickedVoiceShowsOnItsRowTests
     [AvaloniaFact]
     public void ThePageIsListeningExactlyOnceAfterAnyNumberOfDetaches()
     {
-        var (settings, host) = Open();
+        var (settings, view, window) = OpenCarrierStrip();
 
         for (var i = 0; i < 3; i++)
         {
-            DetachAndReattach(host);
+            DetachAndReattach(view);
         }
 
         var redraws = 0;
@@ -92,10 +92,10 @@ public class APickedVoiceShowsOnItsRowTests
 
         Assert.Contains(
             "Alexander Kensington - Studio Quality",
-            DrawnValue(host, "Carrier tower voice"),
+            DrawnValue(view, "Carrier tower voice"),
             StringComparison.Ordinal);
 
-        host.Close();
+        window.Close();
     }
 
     /// <summary>
@@ -105,7 +105,10 @@ public class APickedVoiceShowsOnItsRowTests
     [AvaloniaFact]
     public void ApplyingThroughThePageRedrawsItWithoutTheSubscription()
     {
-        var (settings, host) = Open();
+        // The full settings page, not the carrier strip: push-to-talk lives there.
+        var (settings, viewState, paths) = TestSurface.Create(voices: Voices());
+        var host = SettingsHost.Open(settings, viewState, paths);
+        Dispatcher.UIThread.RunJobs();
 
         var row = host.View.GetVisualDescendants().OfType<Grid>()
             .Where(grid => grid.ColumnDefinitions.Count == 3)
@@ -152,42 +155,21 @@ public class APickedVoiceShowsOnItsRowTests
         Dispatcher.UIThread.RunJobs();
     }
 
-    /// <summary>Takes the page out of the visual tree and puts it back — whatever holds it.</summary>
-    private static void DetachAndReattach(SettingsHost host)
+    /// <summary>Takes the strip out of the visual tree and puts it back.</summary>
+    private static void DetachAndReattach(SettingsView view)
     {
-        switch (host.View.GetVisualParent())
-        {
-            case Border border:
-                border.Child = null;
-                Dispatcher.UIThread.RunJobs();
-                border.Child = host.View;
-                break;
+        var border = (Border)view.GetVisualParent()!;
 
-            case Avalonia.Controls.Panel panel:
-                panel.Children.Remove(host.View);
-                Dispatcher.UIThread.RunJobs();
-                panel.Children.Add(host.View);
-                break;
-
-            case ContentControl content:
-                content.Content = null;
-                Dispatcher.UIThread.RunJobs();
-                content.Content = host.View;
-                break;
-
-            case var other:
-                Assert.Fail($"the page is held by a {other?.GetType().Name ?? "nothing"}, "
-                            + "which this helper cannot detach");
-                break;
-        }
-
+        border.Child = null;
+        Dispatcher.UIThread.RunJobs();
+        border.Child = view;
         Dispatcher.UIThread.RunJobs();
     }
 
     /// <summary>Everything the named row draws in its control column, joined.</summary>
-    private static string DrawnValue(SettingsHost host, string label)
+    private static string DrawnValue(SettingsView view, string label)
     {
-        var row = host.View.GetVisualDescendants().OfType<Grid>()
+        var row = view.GetVisualDescendants().OfType<Grid>()
             .Where(grid => grid.ColumnDefinitions.Count == 3)
             .FirstOrDefault(grid => grid.GetVisualDescendants().OfType<TextBlock>()
                 .Any(text => text.Text == label));
@@ -201,7 +183,12 @@ public class APickedVoiceShowsOnItsRowTests
                 .Where(text => !string.IsNullOrWhiteSpace(text)));
     }
 
-    private static (SettingsService Settings, SettingsHost Host) Open()
+    /// <summary>
+    /// Both carrier voice rows are on Fleet › Carrier now, not the settings page (#305) — drawn as a
+    /// standalone strip the way <c>MainWindow.BuildSettingsStrip</c> actually builds one, not through the
+    /// full settings page.
+    /// </summary>
+    private static (SettingsService Settings, SettingsView View, Window Window) OpenCarrierStrip()
     {
         var (settings, viewState, paths) = TestSurface.Create(voices: Voices());
 
@@ -215,9 +202,20 @@ public class APickedVoiceShowsOnItsRowTests
             TtsProviderCatalog.ElevenLabsId,
             SettingsCaller.Panel);
 
-        var host = SettingsHost.Open(settings, viewState, paths);
+        // Expanded, so the picker buttons' own value labels are actually realized — a collapsed strip
+        // never lays out what it is hiding, and a headless test never triggers the layout pass a click
+        // would.
+        viewState.Save(viewState.Load().With("fleet-carrier", expanded: true));
+
+        var view = new SettingsView();
+        view.Attach(settings, viewState, paths, tabPlaceId: "fleet-carrier");
+
+        var border = new Border { Child = view };
+        var window = new Window { Content = border, Width = 900, Height = 700 };
+        window.Show();
+
         Dispatcher.UIThread.RunJobs();
 
-        return (settings, host);
+        return (settings, view, window);
     }
 }

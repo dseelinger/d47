@@ -28,6 +28,15 @@ public sealed class CarrierCallout : ICallout
 
     public const string WelcomeKey = "carrier.welcome";
 
+    /// <summary>
+    /// The Commander's own name for the captain, read fresh at every line so a rename applies to the
+    /// next one (#305).
+    /// </summary>
+    public Func<string?> CaptainName { get; set; } = () => null;
+
+    /// <summary>And for the tower, separately.</summary>
+    public Func<string?> TowerName { get; set; } = () => null;
+
     private string? _lastDockedAt;
 
     /// <summary>Which line of each key's pool is due next, so a replayed journal says the same lines.</summary>
@@ -78,26 +87,32 @@ public sealed class CarrierCallout : ICallout
         "Clear of {0}'s deck, {1}. Fly safe.",
     ];
 
-    /// <summary>Tower, addressed to the captain: the Commander dropping in from supercruise.</summary>
+    /// <summary>
+    /// Tower, addressed to the captain: the Commander dropping in from supercruise. {0} is the
+    /// captain's name, with its own leading space, or empty for the bare rank.
+    /// </summary>
     private static readonly string[] InboundLines =
     [
-        "Captain, our Commander is inbound. Just thought you'd like to know.",
-        "Captain, the Commander is inbound now.",
-        "Captain, heads up — the Commander is inbound.",
-        "Captain, inbound traffic: it's the Commander.",
-        "Captain, the Commander's dropping in, inbound.",
-        "Captain, inbound at range. It's the Commander.",
+        "Captain{0}, our Commander is inbound. Just thought you'd like to know.",
+        "Captain{0}, the Commander is inbound now.",
+        "Captain{0}, heads up — the Commander is inbound.",
+        "Captain{0}, inbound traffic: it's the Commander.",
+        "Captain{0}, the Commander's dropping in, inbound.",
+        "Captain{0}, inbound at range. It's the Commander.",
     ];
 
-    /// <summary>Captain, answering the tower: the Commander welcomed home. Names the owner.</summary>
+    /// <summary>
+    /// Captain, answering the tower: the Commander welcomed home. {0} names the owner, {1} the tower —
+    /// "Tower Control" where the Commander has given it no name.
+    /// </summary>
     private static readonly string[] WelcomeLines =
     [
-        "Priority routing, Tower Control. Welcome home, {0}.",
-        "Copy that, Tower Control. Good to have you back, {0}.",
-        "Acknowledged, Tower Control. Meet you on the deck, {0}.",
-        "Understood, Tower Control. Coming down to greet you, {0}.",
-        "Copy, Tower Control. On my way down to meet you, {0}.",
-        "Received, Tower Control. Glad you're back, {0}.",
+        "Priority routing, {1}. Welcome home, {0}.",
+        "Copy that, {1}. Good to have you back, {0}.",
+        "Acknowledged, {1}. Meet you on the deck, {0}.",
+        "Understood, {1}. Coming down to greet you, {0}.",
+        "Copy, {1}. On my way down to meet you, {0}.",
+        "Received, {1}. Glad you're back, {0}.",
     ];
 
     /// <summary>Captain: a jump plotted. Names the destination and the owner.</summary>
@@ -161,11 +176,11 @@ public sealed class CarrierCallout : ICallout
                                                            state.Carrier):
                     yield return Tower(
                         InboundKey,
-                        Pick(InboundKey, InboundLines));
+                        string.Format(Pick(InboundKey, InboundLines), CaptainSuffix()));
 
                     yield return Captain(
                         WelcomeKey,
-                        string.Format(Pick(WelcomeKey, WelcomeLines), Owner(state)));
+                        string.Format(Pick(WelcomeKey, WelcomeLines), Owner(state), TowerAddress()));
 
                     break;
 
@@ -212,6 +227,12 @@ public sealed class CarrierCallout : ICallout
     /// <summary>What to call it out loud: the name the Commander gave it, falling back to the callsign.</summary>
     private static string Called(CarrierState carrier) =>
         carrier.Name is { Length: > 0 } name ? name : carrier.CallSign ?? "Carrier";
+
+    /// <summary>" {name}" where the Commander has named the captain, or nothing for the bare rank.</summary>
+    private string CaptainSuffix() => CaptainName() is { Length: > 0 } name ? $" {name}" : string.Empty;
+
+    /// <summary>The Commander's name for the tower, or "Tower Control" where they have not given it one.</summary>
+    private string TowerAddress() => TowerName() is { Length: > 0 } name ? name : "Tower Control";
 
     private static Announcement Tower(string key, string text) => new(key, text)
     {

@@ -161,6 +161,7 @@ public static class SettingsLayout
                             E("speech.localVoiceBuild"),
                             F(IsSpeechProviderKeyFamily),
                             E("speech.elevenlabs.model"),
+                            E("speech.resetVoices"),
                         ]),
                         G(
                             "Where each voice comes from",
@@ -190,21 +191,6 @@ public static class SettingsLayout
                                 E("speech.spentBySlot"),
                                 E("speech.egress"),
                             ]),
-                    ]),
-                new SettingsPlace(
-                    "carrier-voices",
-                    "Carrier voices",
-                    "Who answers for your fleet carrier.",
-                    "speech",
-                    [],
-                    false,
-                    [
-                        G(
-                        [
-                            E("speech.carrierCaptainVoice"),
-                            E("speech.towerVoice"),
-                            E("speech.resetVoices"),
-                        ]),
                     ]),
                 new SettingsPlace(
                     "sounds",
@@ -645,6 +631,17 @@ public static class SettingsLayout
                 E("callouts.weekBoundaryHourUtc", under: true),
             ]),
         new SettingsTabPlace("adventures", "adventures", true, "Adventures", [E("knowledge.notablePlaces")]),
+        new SettingsTabPlace(
+            "fleet-carrier",
+            "loadout.carrier",
+            true,
+            "Fleet › Carrier",
+            [
+                E("speech.carrierCaptainName"),
+                E("speech.carrierCaptainVoice"),
+                E("speech.towerName"),
+                E("speech.towerVoice"),
+            ]),
         new SettingsTabPlace(
             "checklist", "checklist", false, "Checklist",
             [E("checklists.summary"), E("checklists.removeFulfilled")]),

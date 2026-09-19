@@ -100,7 +100,7 @@ public class NavFollowsTheScrollTests
         var scroller = (ScrollViewer)view.FindControl<Control>("Scroller")!;
         var cards = Cards(view);
 
-        Assert.True(cards.Count > 3, "there are sections to walk");
+        Assert.True(cards.Count > 1, "there are sections to walk");
 
         for (var i = 0; i < cards.Count; i++)
         {

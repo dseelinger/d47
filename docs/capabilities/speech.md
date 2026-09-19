@@ -726,21 +726,24 @@ drift apart.
 
 #### Other voices {#carrier-voices}
 
-Directive 47 speaks as more than one person from Phase 11 onwards. Each of these is a different
-voice from your ship's AI, and leaving one empty means it borrows the ship AI's rather than
-falling silent.
+Directive 47 speaks as more than one person from Phase 11 onwards. These four rows live on Fleet ›
+Carrier itself rather than in this settings window (#305), at the top of the page they affect.
 
 | Row | Who it is |
 |---|---|
-| Carrier captain voice | Your fleet carrier, answering as its captain |
-| Carrier tower voice | The same carrier's tower, handling arrivals and departures |
+| Captain name | What you call the captain, spoken in place of "Captain" alone. Empty leaves the line as it reads today. |
+| Carrier captain voice | Your fleet carrier, answering as its captain. Empty borrows the ship AI's rather than falling silent. |
+| Tower name | What you call the tower, spoken in place of "Tower Control". Empty leaves the line as it reads today. |
+| Carrier tower voice | The same carrier's tower, handling arrivals and departures. Empty borrows the ship AI's. |
 
-They are two rows rather than one because they are two people. A carrier whose captain and tower
-sound identical is a carrier with one person on it.
+A name and a voice are different things: the name is what the crew is called, the voice is who
+speaks. Each pair is two rows rather than one because the captain and the tower are two people — a
+carrier whose captain and tower sound identical, or answer to the same name, is a carrier with one
+person on it.
 
-Both offer the same play glyphs as the voice row, and both audition as themselves rather than
-reciting the ship AI's opening — a tower saying "You're cleared for landing pad seven" is what you
-are actually listening for when you cast one.
+The two voice rows offer the same play glyphs as the voice row, and both audition as themselves
+rather than reciting the ship AI's opening — a tower saying "You're cleared for landing pad seven"
+is what you are actually listening for when you cast one.
 
 #### Reset every voice to its pairing {#reset-voices}
 

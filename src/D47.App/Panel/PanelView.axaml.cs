@@ -652,7 +652,10 @@ public partial class PanelView : UserControl
         Func<bool>? hullArt = null,
 
         // Ships' own settings, on the tab they only affect (#218).
-        Func<Control?>? settingsStrip = null)
+        Func<Control?>? settingsStrip = null,
+
+        // The captain and tower's own settings, on the tab they only affect (#218, #305).
+        Func<Control?>? carrierSettingsStrip = null)
     {
         var shipsMode = new ShipsMode(ships, checklists, state, modulePower, hullArt);
 
@@ -723,7 +726,8 @@ public partial class PanelView : UserControl
 
         Furnish(
             PanelTab.Loadout,
-            crumb => LoadoutPages.Build(crumb, modes, gap, _carrier, Nav, Prompts, _copy, settingsStrip),
+            crumb => LoadoutPages.Build(
+                crumb, modes, gap, _carrier, Nav, Prompts, _copy, settingsStrip, carrierSettingsStrip),
             [.. roots]);
     }
 
