@@ -51,6 +51,12 @@ public sealed class GameStateStore
     public Func<string, ShipLoadouts?>? RestoreLoadouts { get; init; }
 
     /// <summary>
+    /// Every suit and hand weapon this Commander owns, as it was last saved, on the same terms as
+    /// <see cref="RestoreLoadouts"/> (#293).
+    /// </summary>
+    public Func<string, OwnedKit?>? RestoreKit { get; init; }
+
+    /// <summary>
     /// Where this Commander's fleet carrier was when their journals last said, on the same terms as
     /// <see cref="RestoreFleet"/> (#406).
     /// </summary>
@@ -115,6 +121,11 @@ public sealed class GameStateStore
             if (RestoreLoadouts?.Invoke(fid) is { IsKnown: true } loadouts)
             {
                 state.Loadouts = loadouts.With(state.Loadouts);
+            }
+
+            if (RestoreKit?.Invoke(fid) is { IsKnown: true } kit)
+            {
+                state.Kit = kit.With(state.Kit);
             }
 
             if (RestoreNames?.Invoke(fid) is { IsKnown: true } names)
@@ -211,6 +222,11 @@ public sealed class GameStateStore
         if (RestoreLoadouts?.Invoke(identity.FrontierId) is { IsKnown: true } loadouts)
         {
             state.Loadouts = loadouts;
+        }
+
+        if (RestoreKit?.Invoke(identity.FrontierId) is { IsKnown: true } kit)
+        {
+            state.Kit = kit;
         }
 
         // Applied only where the recovered state actually knows something, so a Commander with no

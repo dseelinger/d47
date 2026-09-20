@@ -86,7 +86,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     public OnFootLoadout OnFoot { get; private set; } = OnFootLoadout.Unknown;
 
     /// <summary>Every suit and hand weapon they own, not only the one being worn (#292).</summary>
-    public OwnedKit Kit { get; private set; } = OwnedKit.Empty;
+    public OwnedKit Kit { get; internal set; } = OwnedKit.Empty;
 
     /// <summary>What is in the cargo hold (Phase 18).</summary>
     public CargoHold Hold { get; internal set; } = CargoHold.Empty;

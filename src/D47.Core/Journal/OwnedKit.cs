@@ -32,6 +32,44 @@ public sealed record OwnedKit
 
     public IReadOnlyDictionary<long, OwnedWeapon> Weapons { get; init; } = new Dictionary<long, OwnedWeapon>();
 
+    public bool IsKnown => Suits.Count > 0 || Weapons.Count > 0;
+
+    /// <summary>
+    /// The event kinds that can change what is owned, so a caller deciding whether to write the file
+    /// asks this rather than keeping a second copy of the list (#293).
+    /// </summary>
+    public static bool MayChange(JournalEvent journalEvent) =>
+        journalEvent is not null && journalEvent.Kind
+            is "BuySuit" or "BuyWeapon" or "SellSuit" or "SellWeapon" or "UpgradeSuit" or "UpgradeWeapon"
+            or "SuitLoadout" or "SwitchSuitLoadout" or "CreateSuitLoadout" or "LoadoutEquipModule" or "NewCommander";
+
+    /// <summary>These suits and weapons with <paramref name="newer"/>'s written over them, matched on id.</summary>
+    public OwnedKit With(OwnedKit newer)
+    {
+        ArgumentNullException.ThrowIfNull(newer);
+
+        if (newer.Suits.Count == 0 && newer.Weapons.Count == 0)
+        {
+            return this;
+        }
+
+        var suits = new Dictionary<long, OwnedSuit>(Suits);
+
+        foreach (var (id, suit) in newer.Suits)
+        {
+            suits[id] = suit;
+        }
+
+        var weapons = new Dictionary<long, OwnedWeapon>(Weapons);
+
+        foreach (var (id, weapon) in newer.Weapons)
+        {
+            weapons[id] = weapon;
+        }
+
+        return this with { Suits = suits, Weapons = weapons };
+    }
+
     public OwnedKit Apply(JournalEvent journalEvent) => journalEvent.Kind switch
     {
         "BuySuit" => Bought(journalEvent),

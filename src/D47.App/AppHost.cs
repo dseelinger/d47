@@ -726,6 +726,13 @@ public sealed class AppHost : IDisposable
 
         loadouts.Load();
 
+        // Every suit and hand weapon the Commander owns, kept between sessions the same way (#293).
+        var kit = new KitStore(
+            Path.Combine(paths.Data, "kit.json"),
+            loggerFactory.CreateLogger<KitStore>());
+
+        kit.Load();
+
         // Every place this Commander has met, and what their transcriber gets wrong about them (#134).
         var heardNames = new HeardNamesStore(
             Path.Combine(paths.Data, "heard-names.json"),
@@ -767,6 +774,10 @@ public sealed class AppHost : IDisposable
             // And Loadout describes one ship, so without this every parked ship's slots read as never seen
             // the moment the Commander swapped out of it.
             RestoreLoadouts = fid => history.Loadouts?.GetValueOrDefault(fid),
+
+            // Read straight off the store rather than through the history walk: #294 covers finding this
+            // in older journals, and until then the file is everything there is to restore from.
+            RestoreKit = kit.For,
 
             // And where the carrier was parked, so "where is my carrier" survives a restart.
             RestoreCarrier = fid => history.Carriers?.GetValueOrDefault(fid),
@@ -1092,6 +1103,12 @@ public sealed class AppHost : IDisposable
                 // catch-up walks back to means what it says even when this tick is replaying a backlog from
                 // yesterday.
                 loadouts.Save(gameState.All, changed.Timestamp);
+            }
+
+            // The same cadence and the same reasoning for the suits and weapons (#293).
+            if (events.LastOrDefault(OwnedKit.MayChange) is { } kitChanged)
+            {
+                kit.Save(gameState.All, kitChanged.Timestamp);
             }
 
             // The Commander's lore notes are hand-editable, so they are polled like the checklist is; the
