@@ -299,7 +299,7 @@ Say **get clear and jump** and Directive 47 goes to full throttle, boosts until 
 breaks, and jumps the moment it does. Any pairing works — *get clear*, *get us clear*, *separate* or
 *boost*, ending in *jump*, *engage* or *hyperspace* — because the one word you happen to reach for
 should not be the difference between the manoeuvre and a jump key pressed against a mass lock.
-**Separate and supercruise** is the same thing ending in supercruise.
+**Separate and supercruise** is the same thing ending in *supercruise*, *warp* or *cruise* instead.
 
 Both answer before the first key goes in — *"Acknowledged. Preparing for hyperspace jump."*, or
 supercruise — for the reason *take us out* does: the loop below can run for a minute, and silence

@@ -70,9 +70,7 @@ public static class ShipCommands
 
             .. SeparatePhrases(),
 
-            new ToolCommandPhrase(
-                "separate and supercruise",
-                new Dictionary<string, string>(StringComparer.Ordinal) { ["command"] = SeparateAndSupercruise }),
+            .. SupercruisePhrases(),
 
             new ToolCommandPhrase(
                 "set a course and take us out",
@@ -89,15 +87,32 @@ public static class ShipCommands
     /// </summary>
     private static IEnumerable<ToolCommandPhrase> SeparatePhrases()
     {
-        string[] openings = ["get clear", "get us clear", "separate", "boost"];
         string[] finishers = ["jump", "engage", "hyperspace"];
+
+        return CompoundPhrases(finishers, SeparateAndEngage);
+    }
+
+    /// <summary>
+    /// Every way of saying separate and supercruise: the same openings as <see cref="SeparatePhrases"/>,
+    /// followed by <c>supercruise | warp | cruise</c> (#315).
+    /// </summary>
+    private static IEnumerable<ToolCommandPhrase> SupercruisePhrases()
+    {
+        string[] finishers = ["supercruise", "warp", "cruise"];
+
+        return CompoundPhrases(finishers, SeparateAndSupercruise);
+    }
+
+    private static IEnumerable<ToolCommandPhrase> CompoundPhrases(string[] finishers, string command)
+    {
+        string[] openings = ["get clear", "get us clear", "separate", "boost"];
 
         return
             from opening in openings
             from finisher in finishers
             select new ToolCommandPhrase(
                 $"{opening} and {finisher}",
-                new Dictionary<string, string>(StringComparer.Ordinal) { ["command"] = SeparateAndEngage });
+                new Dictionary<string, string>(StringComparer.Ordinal) { ["command"] = command });
     }
 
     /// <summary>

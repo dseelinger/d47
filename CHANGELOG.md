@@ -8,6 +8,9 @@
 
 ## 0.169.0 — No more drop-downs
 
+"Get clear and supercruise", "boost and warp" and the rest of that pattern now route to separate
+and supercruise, the same way their jump equivalents already routed to separate and engage.
+
 Invented background chatter no longer mentions a mail slot at a station without one — a fleet
 carrier, an outpost, a surface port or a settlement, among others. Only Coriolis, Orbis, Ocellus,
 Dodec and asteroid bases actually have one.

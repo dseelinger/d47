@@ -976,6 +976,19 @@ public class SayItAndTheShipDoesItTests
     [InlineData("boost and jump", ShipCommands.SeparateAndEngage)]
     [InlineData("boost and engage", ShipCommands.SeparateAndEngage)]
     [InlineData("boost and hyperspace", ShipCommands.SeparateAndEngage)]
+
+    // The same pattern, ending in supercruise instead of a jump (#315).
+    [InlineData("get clear and supercruise", ShipCommands.SeparateAndSupercruise)]
+    [InlineData("get clear and warp", ShipCommands.SeparateAndSupercruise)]
+    [InlineData("get clear and cruise", ShipCommands.SeparateAndSupercruise)]
+    [InlineData("get us clear and supercruise", ShipCommands.SeparateAndSupercruise)]
+    [InlineData("get us clear and warp", ShipCommands.SeparateAndSupercruise)]
+    [InlineData("get us clear and cruise", ShipCommands.SeparateAndSupercruise)]
+    [InlineData("separate and warp", ShipCommands.SeparateAndSupercruise)]
+    [InlineData("separate and cruise", ShipCommands.SeparateAndSupercruise)]
+    [InlineData("boost and supercruise", ShipCommands.SeparateAndSupercruise)]
+    [InlineData("boost and warp", ShipCommands.SeparateAndSupercruise)]
+    [InlineData("boost and cruise", ShipCommands.SeparateAndSupercruise)]
     public void EachCompoundCommandHasAModelFreeRouteIn(string utterance, string command)
     {
         var registry = Commands(new RecordingGameInput(), Docked());
