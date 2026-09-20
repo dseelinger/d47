@@ -28,6 +28,9 @@ public sealed record MaterialRow(MaterialEntry Material, int Held, int Needed)
         Material.Ledger == MaterialLedger.Material && Material.Grade is { } grade
             ? MaterialGrades.CapacityOfGrade(grade)
             : null;
+
+    /// <summary>Whether this alone forces more than one trip.</summary>
+    public bool ExceedsCapacity => Capacity is { } capacity && Needed > capacity;
 }
 
 /// <summary>One group of rows on a material tracker page — a ship grade band, Guardian, Thargoid, or an on-foot kind.</summary>

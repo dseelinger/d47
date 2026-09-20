@@ -119,7 +119,6 @@ nav_order: 113
  <text x="440" y="190" text-anchor="middle" font-size="16" fill="var(--text)">A figure you cannot trace is a figure you cannot act on.</text>
  <text x="440" y="220" text-anchor="middle" font-size="15" fill="var(--text-muted)">The trade is a second line beside the shortfall, never instead of it — the headline stays the raw number.</text>
 </svg>
-<p class="body">Whether hulls and suits you have not bought yet are counted is a switch on the page, not a decision taken once on your behalf. Counting them accounts for the whole ambition; excluding them answers what can be finished tonight. Both are real questions, and which one you are asking changes through the evening.</p>
 </section>
 </div></div>
 </details>
@@ -191,13 +190,6 @@ commonest trade there is at a sixth of what it costs.
 So a trade appears as a second line beside the shortfall and never instead of it. The headline stays
 the raw number, and only a trade you can actually make out of a genuine surplus is offered —
 one that leaves you short of what you traded away has moved the problem rather than solved it.
-
-### Counting what you do not own yet is a filter
-
-Whether hulls and suits you have not bought are included is a switch on the page, not a decision
-taken once on your behalf. Counting them accounts for the whole ambition; excluding them answers
-what can be finished now. **Both are real questions**, and which one you are asking changes through
-the evening.
 
 ### Asking about one material names the blueprint
 

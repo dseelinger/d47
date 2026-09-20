@@ -13,6 +13,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Avalonia.Reactive;
 using Avalonia.VisualTree;
+using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Interface;
 using D47.Core.Loadout;
@@ -2173,14 +2174,26 @@ public sealed class SlotPage : LoadoutPage
     }
 }
 
-/// <summary>The gap between every plan and what the Commander is carrying (Phase 27, "Gap analysis").</summary>
+/// <summary>
+/// Every catalogue material, held and needed, grouped into cards (Phase 27, "Gap analysis"; #302
+/// replaces the shortfall-only reading with the full tracker from #301).
+/// </summary>
 public sealed class GapPage : UserControl
 {
-    private readonly GapSource _gap;
-    private readonly StackPanel _body = new() { Spacing = 4 };
-    private readonly Button _filter;
+    /// <summary>Fixed, so a card scrolls inside itself rather than growing the grid to fit its longest one.</summary>
+    private const double CardHeight = 260;
 
-    private bool _includeIntended = true;
+    private const double SmallestCard = 220;
+
+    private readonly GapSource _gap;
+    private readonly Segment _switch;
+    private readonly StackPanel _notes = new() { Spacing = 4, Margin = new Thickness(0, 0, 0, 8) };
+    private readonly WrapPanel _cards = new();
+    private readonly StackPanel _body = new() { Spacing = 4 };
+    private readonly ScrollViewer _scroller;
+    private readonly Avalonia.Controls.Panel _detailLayer = new() { IsVisible = false };
+
+    private bool _onFoot;
 
     public GapPage(GapSource gap)
     {
@@ -2188,93 +2201,97 @@ public sealed class GapPage : UserControl
 
         gap.Changed += OnChanged;
 
-        _filter = LoadoutPages.Press(string.Empty, () =>
+        _switch = new Segment { ItemsSource = ["Ship", "On foot"], SelectedIndex = 0 };
+        _switch.SelectionChanged += (_, _) =>
         {
-            _includeIntended = !_includeIntended;
+            _onFoot = _switch.SelectedIndex == 1;
             Refresh();
-        });
+        };
 
-        _filter.Margin = new Thickness(0, 0, 0, 10);
+        var head = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Margin = new Thickness(0, 0, 0, 10),
+            Children = { _switch },
+        };
 
         var root = new DockPanel { Margin = new Thickness(14) };
-        var say = LoadoutPages.SayLine("what do my plans still need");
 
-        DockPanel.SetDock(_filter, Dock.Top);
-        DockPanel.SetDock(say, Dock.Bottom);
+        DockPanel.SetDock(head, Dock.Top);
+        root.Children.Add(head);
 
-        root.Children.Add(_filter);
-        root.Children.Add(say);
-        root.Children.Add(LoadoutPages.Scrolling(_body));
+        _body.Children.Add(_notes);
+        _body.Children.Add(_cards);
 
-        Content = root;
+        _scroller = LoadoutPages.Scrolling(_body);
+        _scroller.SizeChanged += (_, size) => Lay(size.NewSize.Width);
+
+        root.Children.Add(_scroller);
+
+        // The page's own visual tree, above the cards — never a Flyout or a Popup, which the headset never
+        // sees (#302).
+        _detailLayer.HorizontalAlignment = HorizontalAlignment.Stretch;
+        _detailLayer.VerticalAlignment = VerticalAlignment.Stretch;
+
+        Content = new Avalonia.Controls.Panel { Children = { root, _detailLayer } };
 
         Refresh();
     }
 
-    /// <summary>Redraws against the live plans.</summary>
+    /// <summary>How many cards fit across the width the page actually has.</summary>
+    private void Lay(double available)
+    {
+        if (available <= 0)
+        {
+            return;
+        }
+
+        var columns = Math.Max(1, (int)Math.Floor(available / SmallestCard));
+        var width = Math.Floor(available / columns) - 1;
+
+        _cards.ItemWidth = width;
+        _cards.ItemHeight = CardHeight;
+    }
+
+    /// <summary>Redraws against the live plans and the live inventory.</summary>
     public void Refresh()
     {
-        _body.Children.Clear();
+        _notes.Children.Clear();
+        _cards.Children.Clear();
+        CloseDetail();
 
-        var report = _gap.Of(_includeIntended);
+        var full = _gap.Full();
+        var report = full.Gap;
+        var cards = _onFoot ? full.Materials.OnFoot : full.Materials.Ship;
 
-        // The filter, and it says which question it is answering rather than merely which state it is in:
-        // counting hulls nobody owns accounts for the whole ambition, and excluding them answers what can
-        // be finished now.
-        _filter.Content = _includeIntended
-            ? "Counting what you do not own yet — show only what you can finish now"
-            : "Only what you own — count the ones you intend to buy too";
-
-        if (report.Plans == 0)
+        if (report.Gates.Count > 0)
         {
-            _body.Children.Add(LoadoutPages.Muted(
-                "Nothing is planned yet. Plan a slot on a ship, or a grade on a suit, and what it "
-                + "needs shows up here."));
+            var n = report.Gates.Count;
 
-            return;
+            _notes.Children.Add(NoteLine(
+                $"{n.ToString(CultureInfo.InvariantCulture)} planned grade{(n == 1 ? string.Empty : "s")} "
+                + (n == 1 ? "is" : "are") + " beyond your engineers' ranks",
+                "Beyond your engineers' ranks",
+                report.Gates));
         }
 
-        if (report.IsEmpty)
+        if (report.Uncovered.Count > 0)
         {
-            _body.Children.Add(LoadoutPages.Muted(
-                "You are carrying everything your plans need. Nothing to go and find."));
+            var n = report.Uncovered.Count;
 
-            return;
+            _notes.Children.Add(NoteLine(
+                $"{n.ToString(CultureInfo.InvariantCulture)} planned slot{(n == 1 ? string.Empty : "s")} "
+                + "can't be costed",
+                "Can't be costed",
+                report.Uncovered));
         }
 
-        _body.Children.Add(new TextBlock
+        foreach (var card in cards)
         {
-            Text = $"{report.UnitsToFind.ToString(CultureInfo.InvariantCulture)} units still to find, "
-                   + $"across {report.Plans.ToString(CultureInfo.InvariantCulture)} plan"
-                   + (report.Plans == 1 ? string.Empty : "s") + ".",
-            FontSize = TypeScale.Body,
-            TextWrapping = TextWrapping.Wrap,
-        });
-
-        _body.Children.Add(LoadoutPages.Muted(
-            "A count of things to go and get, never a balance — the ledgers below have separate "
-            + "caps and no exchange between them, so they are never added up."));
-
-        foreach (var gate in report.Gates)
-        {
-            _body.Children.Add(LoadoutPages.Toned(gate, ThemeManager.DangerKey));
+            _cards.Children.Add(Card(card));
         }
 
-        foreach (var ledger in report.Ledgers)
-        {
-            _body.Children.Add(LoadoutPages.Heading(
-                $"{ledger.Name} — {ledger.UnitsToFind.ToString(CultureInfo.InvariantCulture)} to find"));
-
-            foreach (var line in ledger.Lines)
-            {
-                Draw(line);
-            }
-        }
-
-        foreach (var unknown in report.Uncovered)
-        {
-            _body.Children.Add(LoadoutPages.Muted(unknown));
-        }
+        Lay(_scroller.Bounds.Width);
     }
 
     /// <summary>
@@ -2295,37 +2312,261 @@ public sealed class GapPage : UserControl
 
     private void OnChanged() => Dispatcher.UIThread.Post(Refresh);
 
-    private void Draw(GapLine line)
+    /// <summary>A gates-or-uncovered summary line, toned danger, opening the full list.</summary>
+    private Control NoteLine(string text, string title, IReadOnlyList<string> lines)
     {
-        _body.Children.Add(new TextBlock
+        var button = LoadoutPages.Press(text, () => OpenList(title, lines));
+
+        LoadoutPages.Themed(button, Button.ForegroundProperty, ThemeManager.DangerKey);
+
+        return button;
+    }
+
+    private Control Card(MaterialCard card)
+    {
+        var header = new Grid
         {
-            Text = $"{line.Material.Name}: {line.Short.ToString(CultureInfo.InvariantCulture)} short "
-                   + $"({line.Held.ToString(CultureInfo.InvariantCulture)} of "
-                   + $"{line.Needed.ToString(CultureInfo.InvariantCulture)})",
+            ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto)],
+            Margin = new Thickness(0, 0, 0, 6),
+        };
+
+        var title = card.UnitsShort > 0
+            ? $"{card.Name} — {card.UnitsShort.ToString(CultureInfo.InvariantCulture)} short"
+            : card.Name;
+
+        var name = new TextBlock
+        {
+            Text = title,
+            FontWeight = FontWeight.Bold,
             FontSize = TypeScale.Body,
             TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(0, 6, 0, 0),
-        });
+            VerticalAlignment = VerticalAlignment.Center,
+        };
 
-        if (line.ExceedsCapacity)
+        Grid.SetColumn(name, 0);
+        header.Children.Add(name);
+
+        var info = new Button
         {
-            _body.Children.Add(LoadoutPages.Toned(
-                $"You can only hold {line.Capacity?.ToString(CultureInfo.InvariantCulture)}. That is "
-                + "at least two trips whatever happens.",
-                ThemeManager.DangerKey));
+            Content = "ⓘ",
+            Padding = new Thickness(7, 1),
+            VerticalAlignment = VerticalAlignment.Center,
+            [ToolTip.TipProperty] = "Where this card's materials come from",
+        };
+
+        info.Click += (_, _) => OpenSources(card);
+        Grid.SetColumn(info, 1);
+        header.Children.Add(info);
+
+        var rows = new StackPanel { Spacing = 2 };
+
+        foreach (var row in card.Rows)
+        {
+            rows.Children.Add(Row(row));
+        }
+
+        var scroller = LoadoutPages.Scrolling(rows);
+        scroller.MaxHeight = CardHeight - 44;
+
+        var body = new DockPanel();
+
+        DockPanel.SetDock(header, Dock.Top);
+        body.Children.Add(header);
+        body.Children.Add(scroller);
+
+        var border = new Border { Padding = new Thickness(10), Margin = new Thickness(2) };
+
+        CardChrome.Card(border);
+        border.Child = body;
+
+        return border;
+    }
+
+    private Control Row(MaterialRow row)
+    {
+        var grid = new Grid
+        {
+            ColumnDefinitions =
+            [
+                new ColumnDefinition(GridLength.Star) { MinWidth = 80 },
+                new ColumnDefinition(GridLength.Auto),
+                new ColumnDefinition(GridLength.Auto),
+            ],
+        };
+
+        var name = new TextBlock
+        {
+            Text = row.Material.Name,
+            FontSize = TypeScale.Secondary,
+            VerticalAlignment = VerticalAlignment.Center,
+            TextWrapping = TextWrapping.Wrap,
+        };
+
+        Grid.SetColumn(name, 0);
+        grid.Children.Add(name);
+
+        var held = new TextBlock
+        {
+            Text = row.Needed > 0
+                ? $"{row.Held.ToString(CultureInfo.InvariantCulture)} / "
+                  + $"{row.Needed.ToString(CultureInfo.InvariantCulture)}"
+                : row.Held.ToString(CultureInfo.InvariantCulture),
+            FontSize = TypeScale.Secondary,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(8, 0, 0, 0),
+        };
+
+        LoadoutPages.Themed(held, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Grid.SetColumn(held, 1);
+        grid.Children.Add(held);
+
+        if (row.Short > 0)
+        {
+            var shortfall = new TextBlock
+            {
+                Text = $"{row.Short.ToString(CultureInfo.InvariantCulture)} short",
+                FontSize = TypeScale.Secondary,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(8, 0, 0, 0),
+            };
+
+            LoadoutPages.Themed(shortfall, TextBlock.ForegroundProperty, ThemeManager.DangerKey);
+            Grid.SetColumn(shortfall, 2);
+            grid.Children.Add(shortfall);
+        }
+
+        var button = new Button
+        {
+            Content = grid,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            Padding = new Thickness(4, 3),
+            MinHeight = 26,
+        };
+
+        button.Click += (_, _) => OpenRow(row);
+
+        return button;
+    }
+
+    private void OpenRow(MaterialRow row)
+    {
+        var body = new List<Control>
+        {
+            LoadoutPages.Toned(
+                row.Needed > 0
+                    ? $"Held {row.Held.ToString(CultureInfo.InvariantCulture)} of "
+                      + $"{row.Needed.ToString(CultureInfo.InvariantCulture)}."
+                    : $"Held {row.Held.ToString(CultureInfo.InvariantCulture)}. Nothing planned wants it.",
+                ThemeManager.TextMutedKey),
+        };
+
+        if (row.Wanted.Count > 0)
+        {
+            body.Add(LoadoutPages.Heading("Wanted by"));
+
+            foreach (var demand in row.Wanted)
+            {
+                body.Add(LoadoutPages.Muted(
+                    $"{demand.Fully()} — {demand.Units.ToString(CultureInfo.InvariantCulture)}"));
+            }
+        }
+
+        if (row.Material.Origins.Count > 0)
+        {
+            body.Add(LoadoutPages.Heading("Origins"));
+            body.Add(LoadoutPages.Muted(string.Join(", ", row.Material.Origins)));
+        }
+
+        if (row.TradeDown is { } down)
+        {
+            body.Add(LoadoutPages.Heading("Trade down"));
+            body.Add(LoadoutPages.Muted(
+                $"{down.Rate.Paid.ToString(CultureInfo.InvariantCulture)} {down.From.Name} trades down for "
+                + $"{down.Rate.Received.ToString(CultureInfo.InvariantCulture)} {row.Material.Name}."));
         }
 
         // Trade second and never instead: the headline stays the raw shortfall.
-        if (line.Trade is { } trade)
+        if (row.Trade is { } trade)
         {
-            _body.Children.Add(LoadoutPages.Muted(trade.Describe()));
+            body.Add(LoadoutPages.Heading("Closing the shortfall"));
+            body.Add(LoadoutPages.Muted(trade.Describe()));
         }
 
-        // What wants it.
-        if (line.Wanted.Count > 0)
+        if (row.ExceedsCapacity)
         {
-            _body.Children.Add(LoadoutPages.Muted(
-                "Wanted by: " + string.Join(", ", line.Wanted.Select(demand => demand.Describe()))));
+            body.Add(LoadoutPages.Toned(
+                $"You can only hold {row.Capacity?.ToString(CultureInfo.InvariantCulture)}. That is at "
+                + "least two trips whatever happens.",
+                ThemeManager.DangerKey));
         }
+
+        OpenDetail(row.Material.Name, body);
     }
+
+    private void OpenSources(MaterialCard card)
+    {
+        var body = card.Sources.Count == 0
+            ? [LoadoutPages.Muted("Nothing in this card names where it comes from.")]
+            : card.Sources
+                .Select(source => (Control)LoadoutPages.Muted(
+                    $"{source.Origin} — {source.Rows.ToString(CultureInfo.InvariantCulture)}"))
+                .ToList();
+
+        OpenDetail($"{card.Name} sources", body);
+    }
+
+    private void OpenList(string title, IReadOnlyList<string> lines) =>
+        OpenDetail(title, lines.Select(line => (Control)LoadoutPages.Muted(line)).ToList());
+
+    /// <summary>Opens the detail panel, replacing whatever was open — one is open at a time.</summary>
+    private void OpenDetail(string title, IReadOnlyList<Control> body)
+    {
+        var content = new StackPanel { Spacing = 4, MaxWidth = 440 };
+
+        content.Children.Add(LoadoutPages.SlotName(title));
+
+        foreach (var line in body)
+        {
+            content.Children.Add(line);
+        }
+
+        content.Children.Add(LoadoutPages.Press("Close", CloseDetail));
+
+        var panel = new Border
+        {
+            Padding = new Thickness(16),
+            MaxWidth = 480,
+            MaxHeight = 420,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            Child = LoadoutPages.Scrolling(content),
+        };
+
+        CardChrome.Card(panel, selected: true);
+
+        var backdrop = new Border { Name = DetailBackdropName, Background = DetailBackdrop };
+
+        backdrop.PointerPressed += (_, e) =>
+        {
+            e.Handled = true;
+            CloseDetail();
+        };
+
+        _detailLayer.Children.Clear();
+        _detailLayer.Children.Add(backdrop);
+        _detailLayer.Children.Add(panel);
+        _detailLayer.IsVisible = true;
+    }
+
+    private void CloseDetail()
+    {
+        _detailLayer.IsVisible = false;
+        _detailLayer.Children.Clear();
+    }
+
+    private static readonly IBrush DetailBackdrop = new SolidColorBrush(Colors.Black, 0.55);
+
+    /// <summary>Names the click-outside layer, for a test to press without aiming at the card itself.</summary>
+    internal const string DetailBackdropName = "GapDetailBackdrop";
 }

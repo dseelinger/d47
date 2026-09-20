@@ -680,12 +680,14 @@ public partial class PanelView : UserControl
 
         if (onFoot is not null)
         {
-            gap = new GapSource(intended => D47.Core.Loadout.PlanGap.Of(
-                ships.Store.Builds,
-                onFoot.Store.Builds,
-                state(),
-                intended,
-                checklists.SlotFor));
+            gap = new GapSource(
+                () => D47.Core.Loadout.PlanGap.Of(
+                    ships.Store.Builds,
+                    onFoot.Store.Builds,
+                    state(),
+                    includeIntended: true,
+                    checklists.SlotFor),
+                state);
 
             // Either store moving changes the subtraction, and neither knows about the other.
             ships.Store.Changed += gap.Invalidate;
@@ -708,7 +710,7 @@ public partial class PanelView : UserControl
                 Help = D47.Core.Capabilities.Builtin.OnFootCapability.Id,
             });
 
-            roots.Add(new NavCrumb(LoadoutPages.GapRoot, "Gap")
+            roots.Add(new NavCrumb(LoadoutPages.GapRoot, "Materials")
             {
                 Help = D47.Core.Capabilities.Builtin.GapCapability.Id,
             });

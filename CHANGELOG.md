@@ -195,6 +195,12 @@ Where a module cannot be told apart, the slot is left uncosted with a note sayin
 uses the highest rank among the engineers who could actually craft it, and where nobody unlocked
 reaches the grade yet, it is counted at the most rolls the grade can take, with a line saying why.
 
+The Fleet tab's Gap page is now Materials: a two-position switch for Ship and On foot, then every
+catalogue material as a card — held and needed, not only what is short. A card's ⓘ names where its
+materials come from, and clicking a row opens its detail in the page itself, never a pop-up window,
+so the headset can open it too. The filter for hulls and suits not yet bought is gone; the page
+always counts everything planned.
+
 ## 0.168.0 — Controls take the HUD dress
 
 Buttons, toggle switches and the transcript tabs now draw d47's own look rather than the

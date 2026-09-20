@@ -1,16 +1,27 @@
-﻿using D47.Core.Loadout;
+﻿using D47.Core.Journal;
+using D47.Core.Loadout;
 
 namespace D47.App.Panel;
 
+/// <summary>The gap report and the material tracker built from the same read of the state (#302).</summary>
+public sealed record GapAndMaterials(GapReport Gap, MaterialTrackerReport Materials);
+
 /// <summary>
-/// Where the gap page gets its arithmetic, and how it knows to redo it (Phase 27, "Gap analysis").
+/// Where the Materials page gets its arithmetic, and how it knows to redo it (Phase 27, "Gap
+/// analysis"; #302).
 /// </summary>
-public sealed class GapSource(Func<bool, GapReport> report)
+public sealed class GapSource(Func<GapReport> report, Func<CommanderGameState?> state)
 {
     /// <summary>Raised when either store changed.</summary>
     public event Action? Changed;
 
-    public GapReport Of(bool includeIntended) => report(includeIntended);
+    /// <summary>The gap, and every catalogue material grouped into tracker cards, off the same read.</summary>
+    public GapAndMaterials Full()
+    {
+        var gap = report();
+
+        return new GapAndMaterials(gap, MaterialTracker.Of(state(), gap));
+    }
 
     public void Invalidate() => Changed?.Invoke();
 }

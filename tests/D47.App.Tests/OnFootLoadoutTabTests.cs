@@ -2,6 +2,7 @@ using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -96,6 +97,21 @@ public class OnFootLoadoutTabTests
                              || button.GetVisualDescendants().OfType<TextBlock>()
                                  .Any(text => text.Text == label));
 
+    /// <summary>The Ship / On foot segment, which is built of radio buttons rather than plain buttons.</summary>
+    private static RadioButton Segment(PanelView panel, string label) =>
+        panel.GetVisualDescendants().OfType<RadioButton>().First(button => (button.Content as string) == label);
+
+    /// <summary>
+    /// The Materials page itself, and its own text only — the surface around it says things like "Raw
+    /// materials" too, in an unrelated bubble, and a page-scoped search is the one that means what it says.
+    /// </summary>
+    private static (GapPage Page, IReadOnlyList<string> Text) MaterialsPage(PanelView panel)
+    {
+        var page = panel.GetVisualDescendants().OfType<GapPage>().First();
+
+        return (page, [.. page.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? string.Empty)]);
+    }
+
     /// <summary>
     /// Three roots of one tab rather than three tabs: the game separates ship and on-foot hard and so
     /// does its vocabulary, but nothing about the layout is redrawn.
@@ -105,9 +121,9 @@ public class OnFootLoadoutTabTests
     {
         var surface = Open();
 
-        // Carrier joined them in #230, on the tab that took its name.
+        // Carrier joined them in #230, on the tab that took its name. Gap became Materials in #302.
         Assert.Equal(
-            ["Ships", "Suits", "Gap", "Carrier"],
+            ["Ships", "Suits", "Materials", "Carrier"],
             surface.Panel.Nav.Roots(PanelTab.Loadout).Select(root => root.Word));
 
         surface.Window.Close();
@@ -242,77 +258,74 @@ public class OnFootLoadoutTabTests
     }
 
     /// <summary>
-    /// The gap reads across both the other modes, keeps the ledgers apart, and says what each shortfall
-    /// is for.
+    /// The Materials page shows every catalogue card, in the tracker's own order, for both halves of the
+    /// switch, and never shows the filter button #301's tracker replaced (#302).
     /// </summary>
     [AvaloniaFact]
-    public void TheGapReadsAcrossBothAndNamesWhatWantsIt()
+    public void TheMaterialsPageShowsShipAndOnFootCardsInOrder()
     {
         var surface = Open();
-
-        var ship = surface.Ships.Intend("Python")!;
-
-        surface.Ships.Plan(
-            ship.Id, new SlotPlan("MainEngines", "Dirty Drive Tuning", 3, "Felicity Farseer"));
-
-        var suit = surface.Kit.BuildFor(OnFootKind.Suit, 7, "Maverick Suit");
-
-        surface.Kit.Plan(suit.Id, new KitPlan(OnFootBuild.GradeSlot, 4));
 
         Assert.True(surface.Panel.Nav.SelectRoot(LoadoutPages.GapRoot));
         Dispatcher.UIThread.RunJobs();
 
-        var shown = Text(surface.Panel);
+        var shipHeaders = new[] { "Raw", "Manufactured", "Encoded", "Guardian", "Thargoid" };
+        var shownOnShip = MaterialsPage(surface.Panel).Text;
 
-        Assert.Contains(shown, line => line.Contains("units still to find", StringComparison.Ordinal));
+        Assert.Equal(shipHeaders, shownOnShip.Where(line => shipHeaders.Contains(line)));
+        Assert.DoesNotContain(
+            shownOnShip,
+            line => line.Contains("Counting what you do not own yet", StringComparison.Ordinal));
 
-        // Two ledgers, never added together.
-        Assert.Contains(shown, line => line.StartsWith("MATERIALS —", StringComparison.Ordinal));
-        Assert.Contains(shown, line => line.StartsWith("SHIP LOCKER —", StringComparison.Ordinal));
+        // A radio button checks itself from the pointer handling behind OnClick, not from the routed Click
+        // event a plain button fires — so the test drives the property the same way a press would land it.
+        Segment(surface.Panel, "On foot").IsChecked = true;
+        Dispatcher.UIThread.RunJobs();
 
-        // And they are not added together: the headline counts units to find, which is a shopping list rather
-        // than a balance.
-        Assert.Contains(
-            shown,
-            line => line.Contains("never a balance", StringComparison.Ordinal));
+        var onFootHeaders = new[] { "Items", "Components", "Consumables", "Data" };
+        var shownOnFoot = MaterialsPage(surface.Panel).Text;
 
-        // And every shortfall reads back to what asked for it.
-        Assert.Contains(shown, line => line.StartsWith("Wanted by:", StringComparison.Ordinal));
+        Assert.Equal(onFootHeaders, shownOnFoot.Where(line => onFootHeaders.Contains(line)));
 
         surface.Window.Close();
     }
 
     /// <summary>
-    /// Whether hulls the Commander does not own count is a filter they flip, not a decision taken once
-    /// on their behalf — so the button says which question it would ask next.
+    /// Clicking a card row opens its detail in the page's own visual tree — never a <c>Flyout</c>, which
+    /// the headset never sees — and a click outside it closes it (#302).
     /// </summary>
     [AvaloniaFact]
-    public void TheGapCanBeToldToCountOnlyWhatYouOwn()
+    public void ClickingAMaterialRowOpensItsDetailAndOutsideClosesIt()
     {
         var surface = Open();
 
-        var ship = surface.Ships.Intend("Python")!;
+        Assert.True(surface.Panel.Nav.SelectRoot(LoadoutPages.GapRoot));
+        Dispatcher.UIThread.RunJobs();
 
-        surface.Ships.Plan(
-            ship.Id, new SlotPlan("MainEngines", "Dirty Drive Tuning", 3, "Felicity Farseer"));
-
-        surface.Panel.Nav.SelectRoot(LoadoutPages.GapRoot);
+        Row(surface.Panel, "Iron").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
         Assert.Contains(
             Text(surface.Panel),
-            line => line.Contains("units still to find", StringComparison.Ordinal));
+            line => line.Contains("Held 20", StringComparison.Ordinal));
 
-        Row(surface.Panel, "Counting what you do not own yet — show only what you can finish now")
-            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        var backdrop = surface.Panel.GetVisualDescendants().OfType<Border>()
+            .First(border => border.Name == GapPage.DetailBackdropName);
+
+        backdrop.RaiseEvent(new PointerPressedEventArgs(
+            backdrop,
+            new Pointer(1, PointerType.Mouse, isPrimary: true),
+            surface.Panel,
+            new Avalonia.Point(1, 1),
+            0,
+            new PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed),
+            KeyModifiers.None));
 
         Dispatcher.UIThread.RunJobs();
 
-        // The only plan was for a hull nobody owns, so excluding it leaves nothing planned at all — which is
-        // a different answer from "you have everything", and says so.
-        Assert.Contains(
+        Assert.DoesNotContain(
             Text(surface.Panel),
-            line => line.Contains("Nothing is planned yet", StringComparison.Ordinal));
+            line => line.Contains("Held 20", StringComparison.Ordinal));
 
         surface.Window.Close();
     }
