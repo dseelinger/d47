@@ -408,6 +408,41 @@ public class OnFootPlanTests
         Assert.Equal(OnFootKind.Weapon, carried[1].Kind);
     }
 
+    /// <summary>
+    /// Elite reports one loadout and a second suit in the locker is invisible to it, so the index has to
+    /// come from the ledger rather than from what is currently worn (#295).
+    /// </summary>
+    [Fact]
+    public void AnOwnedSuitNotWornShowsItsLedgerGradeAndLastSeenDate()
+    {
+        using var install = new TempInstall();
+        var store = new GameStateStore();
+
+        foreach (var line in new[]
+                 {
+                     """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+                     """{"timestamp":"2026-08-18T09:00:00Z","event":"SuitLoadout","SuitID":1837009111675068,"SuitName":"utilitysuit_class3","LoadoutName":"Ground","SuitMods":[],"Modules":[{"SlotName":"PrimaryWeapon1","SuitModuleID":1845784622401778,"ModuleName":"wpn_m_assaultrifle_laser_fauto","Class":2,"WeaponMods":[]}]}""",
+                     """{"timestamp":"2026-08-19T10:00:00Z","event":"BuySuit","Name":"ExplorationSuit_Class1","Name_Localised":"Maverick Suit","Price":150000,"SuitID":1111111111111111,"SuitMods":[]}""",
+                 })
+        {
+            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
+            store.Apply(parsed!);
+        }
+
+        var state = store.Active!;
+        var kit = Service(install, Store(install), state);
+
+        var carried = kit.Kit();
+
+        Assert.Equal(3, carried.Count);
+
+        var stored = Assert.Single(carried, entry => entry.Kind == OnFootKind.Suit && !entry.IsCarried);
+
+        Assert.True(stored.IsOwned);
+        Assert.Equal(1, stored.Grade);
+        Assert.Equal("grade 1, last seen 19 Aug 2026", stored.Where());
+    }
+
     [Fact]
     public void NothingNamedMeansTheOneThingThereIsOneOf()
     {

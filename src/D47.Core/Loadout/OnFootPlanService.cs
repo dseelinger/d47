@@ -13,13 +13,15 @@ namespace D47.Core.Loadout;
 /// <param name="Equipment">What it is called.</param>
 /// <param name="Grade">The grade it is at now, where that is known.</param>
 /// <param name="IsCarried">Whether the Commander is wearing or carrying it.</param>
+/// <param name="SeenAt">When the ledger last saw this item, for something owned but not carried.</param>
 public sealed record KitEntry(
     OnFootBuild? Build,
     OnFootKind Kind,
     string Equipment,
     long? ItemId,
     int? Grade,
-    bool IsCarried)
+    bool IsCarried,
+    DateTimeOffset? SeenAt = null)
 {
     /// <summary>
     /// Owned is derived and intended is authored, the same rule the fleet page draws and the checklist
@@ -40,14 +42,22 @@ public sealed record KitEntry(
             return "not bought yet";
         }
 
-        if (!IsCarried)
+        if (IsCarried)
+        {
+            return Grade is { } grade
+                ? $"on you, grade {grade.ToString(CultureInfo.InvariantCulture)}"
+                : "on you";
+        }
+
+        if (Grade is not { } known)
         {
             return "not on you now";
         }
 
-        return Grade is { } grade
-            ? $"on you, grade {grade.ToString(CultureInfo.InvariantCulture)}"
-            : "on you";
+        return SeenAt is { } seen
+            ? $"grade {known.ToString(CultureInfo.InvariantCulture)}, last seen "
+              + $"{seen.UtcDateTime.ToString("d MMM yyyy", CultureInfo.InvariantCulture)}"
+            : $"grade {known.ToString(CultureInfo.InvariantCulture)}";
     }
 
     /// <summary>The line as the index shows it and as d47 says it.</summary>
@@ -66,65 +76,70 @@ public sealed class OnFootPlanService(
     public OnFootBuildStore Store => store;
 
     /// <summary>
-    /// The suit and weapons as the page shows them: what the Commander has on, then everything else
-    /// they have planned.
+    /// The suit and weapons as the page shows them: everything the ledger says the Commander owns, the
+    /// one being worn marked carried, then everything else planned that is not owned yet.
     /// </summary>
     public IReadOnlyList<KitEntry> Kit()
     {
         var loadout = state()?.OnFoot;
+        var owned = state()?.Kit ?? OwnedKit.Empty;
         var builds = store.Builds;
         var entries = new List<KitEntry>();
         var claimed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        if (loadout is { IsKnown: true })
+        foreach (var (suitId, suit) in owned.Suits)
         {
-            if (loadout.SuitId is { } suitId)
+            var build = builds.FirstOrDefault(candidate =>
+                candidate.Kind == OnFootKind.Suit && candidate.ItemId == suitId);
+
+            var carried = loadout is { IsKnown: true } && loadout.SuitId == suitId;
+
+            entries.Add(new KitEntry(
+                build,
+                OnFootKind.Suit,
+                carried
+                    ? loadout!.Suit?.Name ?? ModuleNames.Readable(loadout.SuitSymbol)
+                    : OnFootCatalogue.Find(suit.Symbol)?.Name ?? ModuleNames.Readable(suit.Symbol),
+                suitId,
+                carried ? loadout!.Grade : suit.Grade,
+                IsCarried: carried,
+                SeenAt: suit.SeenAt));
+
+            if (build is not null)
             {
-                var build = builds.FirstOrDefault(candidate =>
-                    candidate.Kind == OnFootKind.Suit && candidate.ItemId == suitId);
-
-                entries.Add(new KitEntry(
-                    build,
-                    OnFootKind.Suit,
-                    loadout.Suit?.Name ?? ModuleNames.Readable(loadout.SuitSymbol),
-                    suitId,
-                    loadout.Grade,
-                    IsCarried: true));
-
-                if (build is not null)
-                {
-                    claimed.Add(build.Id);
-                }
-            }
-
-            foreach (var weapon in loadout.Weapons)
-            {
-                if (weapon.ModuleId is not { } moduleId)
-                {
-                    continue;
-                }
-
-                var build = builds.FirstOrDefault(candidate =>
-                    candidate.Kind == OnFootKind.Weapon && candidate.ItemId == moduleId);
-
-                entries.Add(new KitEntry(
-                    build,
-                    OnFootKind.Weapon,
-                    weapon.Entry?.Name ?? ModuleNames.Readable(weapon.Symbol),
-                    moduleId,
-                    weapon.Grade,
-                    IsCarried: true));
-
-                if (build is not null)
-                {
-                    claimed.Add(build.Id);
-                }
+                claimed.Add(build.Id);
             }
         }
 
-        // Everything else the Commander has planned, including a build bound to an id they are not currently
-        // carrying — which on foot is the ordinary case rather than the odd one, since Elite reports one
-        // loadout and a second suit in the locker is invisible.
+        foreach (var (moduleId, weapon) in owned.Weapons)
+        {
+            var build = builds.FirstOrDefault(candidate =>
+                candidate.Kind == OnFootKind.Weapon && candidate.ItemId == moduleId);
+
+            var carried = loadout is { IsKnown: true }
+                ? loadout.Weapons.FirstOrDefault(entry => entry.ModuleId == moduleId)
+                : null;
+
+            entries.Add(new KitEntry(
+                build,
+                OnFootKind.Weapon,
+                carried?.Entry?.Name
+                    ?? (carried is not null ? ModuleNames.Readable(carried.Symbol) : null)
+                    ?? OnFootCatalogue.Find(weapon.Symbol)?.Name
+                    ?? ModuleNames.Readable(weapon.Symbol),
+                moduleId,
+                carried?.Grade ?? weapon.Grade,
+                IsCarried: carried is not null,
+                SeenAt: weapon.SeenAt));
+
+            if (build is not null)
+            {
+                claimed.Add(build.Id);
+            }
+        }
+
+        // Everything else the Commander has planned but does not own yet — the ledger already accounts for
+        // every owned item, so a build left unclaimed here is an intended one waiting to be bought.
         foreach (var build in builds)
         {
             if (!claimed.Contains(build.Id))

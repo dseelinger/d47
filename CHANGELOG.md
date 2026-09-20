@@ -14,6 +14,10 @@ under whatever the current session has already seen. A suit or weapon bought and
 now found by walking older journals as far back as the stored file needs, rather than only the
 most recent ones.
 
+The Suits page now lists every suit and weapon you own, not only the one Elite currently reports
+you wearing or carrying. An owned but unworn item shows its recorded grade and when it was last
+seen, and opening its Fitted section says the same rather than "I cannot say".
+
 "Get clear and supercruise", "boost and warp" and the rest of that pattern now route to separate
 and supercruise, the same way their jump equivalents already routed to separate and engage.
 

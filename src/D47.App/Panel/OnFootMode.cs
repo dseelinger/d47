@@ -207,13 +207,18 @@ public sealed class OnFootMode(OnFootPlanService kit, Func<CommanderGameState?> 
 
         if (IsGrade(slot))
         {
+            var text = worn.Grade is { } grade
+                ? $"Grade {grade.ToString(CultureInfo.InvariantCulture)}"
+                : "No grade — the flight suit carries none and cannot be upgraded.";
+
+            if (worn.SeenAt is { } seenGrade)
+            {
+                text += $" As last seen, {Seen(seenGrade)}.";
+            }
+
             return
             [
-                new LoadoutLine(
-                    worn.Grade is { } grade
-                        ? $"Grade {grade.ToString(CultureInfo.InvariantCulture)}"
-                        : "No grade — the flight suit carries none and cannot be upgraded.",
-                    LoadoutTone.Body),
+                new LoadoutLine(text, LoadoutTone.Body),
 
                 new LoadoutLine(worn.Grade is { } known
                     ? $"{OnFootRules.SlotsAt(known).ToString(CultureInfo.InvariantCulture)} "
@@ -223,14 +228,16 @@ public sealed class OnFootMode(OnFootPlanService kit, Func<CommanderGameState?> 
         }
 
         // Every modification on the item, on every mod slot's page, and the reason said outright.
-        var lines = new List<LoadoutLine>
+        var modifications = worn.Modifications.Count == 0
+            ? "Nothing."
+            : string.Join(", ", worn.Modifications.Select(modification => modification.Speak()));
+
+        if (worn.SeenAt is { } seenMods)
         {
-            new(
-                worn.Modifications.Count == 0
-                    ? "Nothing."
-                    : string.Join(", ", worn.Modifications.Select(modification => modification.Speak())),
-                LoadoutTone.Body),
-        };
+            modifications += $" As last seen, {Seen(seenMods)}.";
+        }
+
+        var lines = new List<LoadoutLine> { new(modifications, LoadoutTone.Body) };
 
         if (worn.Modifications.Count > 0)
         {
@@ -241,6 +248,10 @@ public sealed class OnFootMode(OnFootPlanService kit, Func<CommanderGameState?> 
 
         return lines;
     }
+
+    /// <summary>When the ledger last saw an item, in the wording <c>ChecklistEvaluator</c> uses for parked ships.</summary>
+    private static string Seen(DateTimeOffset seenAt) =>
+        seenAt.UtcDateTime.ToString("d MMM yyyy", CultureInfo.InvariantCulture);
 
     public IReadOnlyList<LoadoutLine> Planned(string item, string slot)
     {
@@ -456,26 +467,44 @@ public sealed class OnFootMode(OnFootPlanService kit, Func<CommanderGameState?> 
     private int? Current(OnFootBuild build) => Worn(build)?.Grade;
 
     /// <summary>
-    /// The item as it stands right now, or null when it is not the one the Commander is in — which is a
-    /// "nothing can be said" rather than a "not done".
+    /// The item as it stands right now, from the loadout Elite last reported when the Commander is in
+    /// it, or from the ledger when they are not — which for something owned and unworn is the ordinary
+    /// case on foot rather than a "nothing can be said".
     /// </summary>
     private Carried? Worn(OnFootBuild build)
     {
-        if (state()?.OnFoot is not { IsKnown: true } loadout || build.ItemId is not { } id)
+        if (build.ItemId is not { } id)
         {
             return null;
         }
 
-        if (!build.IsWeapon)
+        if (state()?.OnFoot is { IsKnown: true } loadout)
         {
-            return loadout.SuitId == id
-                ? new Carried(loadout.Grade, loadout.SuitModifications)
-                : null;
+            if (!build.IsWeapon && loadout.SuitId == id)
+            {
+                return new Carried(loadout.Grade, loadout.SuitModifications);
+            }
+
+            if (build.IsWeapon
+                && loadout.Weapons.FirstOrDefault(carried => carried.ModuleId == id) is { } weapon)
+            {
+                return new Carried(weapon.Grade, weapon.Modifications);
+            }
         }
 
-        var weapon = loadout.Weapons.FirstOrDefault(carried => carried.ModuleId == id);
+        var owned = state()?.Kit;
 
-        return weapon is null ? null : new Carried(weapon.Grade, weapon.Modifications);
+        if (!build.IsWeapon && owned?.Suits.GetValueOrDefault(id) is { } suit)
+        {
+            return new Carried(suit.Grade, suit.Modifications, suit.SeenAt);
+        }
+
+        if (build.IsWeapon && owned?.Weapons.GetValueOrDefault(id) is { } ownedWeapon)
+        {
+            return new Carried(ownedWeapon.Grade, ownedWeapon.Modifications, ownedWeapon.SeenAt);
+        }
+
+        return null;
     }
 
     private static string Key(KitEntry entry) =>
@@ -507,6 +536,13 @@ public sealed class OnFootMode(OnFootPlanService kit, Func<CommanderGameState?> 
         return carried is null ? null : kit.BuildFor(carried.Kind, itemId, carried.Equipment);
     }
 
-    /// <summary>A suit and a hand weapon answer the same two questions, so they share a shape.</summary>
-    private readonly record struct Carried(int? Grade, IReadOnlyList<FittedModification> Modifications);
+    /// <summary>
+    /// A suit and a hand weapon answer the same two questions, so they share a shape. <see
+    /// cref="SeenAt"/> is null for what the Commander is in right now, and set for what the ledger
+    /// last saw of something they are not.
+    /// </summary>
+    private readonly record struct Carried(
+        int? Grade,
+        IReadOnlyList<FittedModification> Modifications,
+        DateTimeOffset? SeenAt = null);
 }
