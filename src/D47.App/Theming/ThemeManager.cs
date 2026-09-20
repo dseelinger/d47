@@ -21,48 +21,62 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     public const string BorderKey = "D47.Border";
     public const string TextKey = "D47.Text";
     public const string TextMutedKey = "D47.TextMuted";
+
+    /// <summary>Accent at 42% mixed onto Background — captions, unit labels, off-state words (#329).</summary>
+    public const string TextFaintKey = "D47.TextFaint";
+
     public const string AccentKey = "D47.Accent";
     public const string AccentMutedKey = "D47.AccentMuted";
     public const string DangerKey = "D47.Danger";
+
+    /// <summary>Danger's hue at 82 degrees, Accent's lightness and chroma (#329).</summary>
+    public const string WarnKey = "D47.Warn";
+
+    /// <summary>Danger's hue at 146 degrees, Accent's lightness and chroma (#329).</summary>
+    public const string GoodKey = "D47.Good";
+
     public const string InfoKey = "D47.Info";
 
-    /// <summary>A 1px rule, 42% of <see cref="AccentKey"/>.</summary>
+    /// <summary>A 1px rule, 50% of Accent mixed onto Background.</summary>
     public const string RuleKey = "D47.Rule";
 
-    /// <summary>A fill, 10% of <see cref="AccentKey"/> — the unselected tab and secondary button.</summary>
+    /// <summary>A fill, 9% of Accent mixed onto Background — the unselected tab and secondary button.</summary>
     public const string FillLowKey = "D47.FillLow";
 
-    /// <summary>A fill, 18% of <see cref="AccentKey"/> — the selected list row.</summary>
+    /// <summary>A fill, 16% of Accent mixed onto Background — the selected list row.</summary>
     public const string FillHighKey = "D47.FillHigh";
 
-    /// <summary>A 1px rule, 35% of <see cref="AccentKey"/> — the ship conversation bubble's border.</summary>
+    /// <summary>A fill, 27% of Accent mixed onto Background — a stepper's value cell, a binding chip (#329).</summary>
+    public const string FillHigherKey = "D47.FillHigher";
+
+    /// <summary>A 1px rule, 35% of Accent mixed onto Background — the ship conversation bubble's border.</summary>
     public const string AccentBorderKey = "D47.AccentBorder";
 
-    /// <summary>Accent blended into <see cref="TextKey"/> — the ship conversation bubble's ink.</summary>
+    /// <summary>Accent blended toward white or near-black — the ship conversation bubble's ink (#329).</summary>
     public const string AccentInkKey = "D47.AccentInk";
 
-    /// <summary>A fill, 9% of <see cref="InfoKey"/> — the Commander conversation bubble's fill.</summary>
+    /// <summary>A fill, 9% of <see cref="InfoKey"/> mixed onto Background — the Commander conversation bubble's fill.</summary>
     public const string InfoFillKey = "D47.InfoFill";
 
-    /// <summary>A 1px rule, 35% of <see cref="InfoKey"/> — the Commander conversation bubble's border.</summary>
+    /// <summary>A 1px rule, 35% of <see cref="InfoKey"/> mixed onto Background — the Commander conversation bubble's border.</summary>
     public const string InfoBorderKey = "D47.InfoBorder";
 
     /// <summary>Info blended into <see cref="TextKey"/> — the Commander conversation bubble's ink.</summary>
     public const string InfoInkKey = "D47.InfoInk";
 
-    /// <summary>A fill, 5% of <see cref="AccentKey"/> — an unselected Fleet card (#278).</summary>
+    /// <summary>A fill, 5% of Accent mixed onto Background — an unselected Fleet card (#278).</summary>
     public const string CardFillKey = "D47.CardFill";
 
-    /// <summary>A fill, 14% of <see cref="AccentKey"/> — the selected Fleet card (#278).</summary>
+    /// <summary>A fill, 14% of Accent mixed onto Background — the selected Fleet card (#278).</summary>
     public const string CardFillSelectedKey = "D47.CardFillSelected";
 
-    /// <summary>A fill, 5% of <see cref="AccentKey"/> — every other settings row (#279).</summary>
+    /// <summary>A fill, 5% of Accent mixed onto Background — every other settings row (#279).</summary>
     public const string RowFillKey = "D47.RowFill";
 
-    /// <summary>A 1px rule, 60% of <see cref="AccentKey"/> — a row's inline tag border (#279).</summary>
+    /// <summary>A 1px rule, 60% of Accent mixed onto Background — a row's inline tag border (#279).</summary>
     public const string TagBorderKey = "D47.TagBorder";
 
-    /// <summary>A 2px rule, 70% of <see cref="AccentKey"/> — under the tab strip, in every theme (#285).</summary>
+    /// <summary>A 2px rule, 70% of Accent mixed onto Background — under the tab strip, in every theme (#285).</summary>
     public const string TabStripRuleKey = "D47.TabStripRule";
 
     /// <summary>An 18px glow of <see cref="AccentKey"/> at 38%, behind a solid Accent fill — dark themes only, null in Light (#285).</summary>
@@ -92,18 +106,18 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     /// </summary>
     public const string PaneFillKey = "D47.PaneFill";
 
-    /// <summary>A 1px rule, 30% of <see cref="AccentKey"/> — the transcript pane's border.</summary>
+    /// <summary>A 1px rule, 30% of Accent mixed onto Background — the transcript pane's border.</summary>
     public const string PaneBorderKey = "D47.PaneBorder";
 
-    /// <summary>Accent at 85% — a bubble's event tag, set as plain text rather than boxed.</summary>
+    /// <summary>Accent at 85% mixed onto Background — a bubble's event tag, set as plain text rather than boxed.</summary>
     public const string TagInkKey = "D47.TagInk";
 
     /// <summary>Every role a theme defines.</summary>
     public static IReadOnlyList<string> Roles { get; } =
     [
         BackgroundKey, SurfaceKey, SurfaceAltKey, BorderKey, TextKey,
-        TextMutedKey, AccentKey, AccentMutedKey, DangerKey, InfoKey,
-        RuleKey, FillLowKey, FillHighKey,
+        TextMutedKey, TextFaintKey, AccentKey, AccentMutedKey, DangerKey, WarnKey, GoodKey, InfoKey,
+        RuleKey, FillLowKey, FillHighKey, FillHigherKey,
         AccentBorderKey, AccentInkKey, InfoFillKey, InfoBorderKey, InfoInkKey,
         CardFillKey, CardFillSelectedKey, RowFillKey, TagBorderKey, TabStripRuleKey,
         BloomFillKey, BloomFillHeadsetKey, BloomRuleKey, BloomRuleHeadsetKey, BloomEdgeKey, BloomEdgeHeadsetKey,
@@ -149,48 +163,48 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
             }
         }
 
+        // Every role that mixes or hue-swaps Accent and Background, computed off the (possibly
+        // recoloured) Accent so they follow the HUD matrix the same way Accent itself does (#329).
+        var derived = DerivedPalette.From(palette);
         var resources = application.Resources;
 
         resources[BackgroundKey] = new SolidColorBrush(palette.Background);
-        resources[SurfaceKey] = new SolidColorBrush(palette.Surface);
-        resources[SurfaceAltKey] = new SolidColorBrush(palette.SurfaceAlt);
-        resources[BorderKey] = new SolidColorBrush(palette.Border);
-        resources[TextKey] = new SolidColorBrush(palette.Text);
-        resources[TextMutedKey] = new SolidColorBrush(palette.TextMuted);
+        resources[SurfaceKey] = new SolidColorBrush(derived.Surface);
+        resources[SurfaceAltKey] = new SolidColorBrush(derived.SurfaceAlt);
+        resources[BorderKey] = new SolidColorBrush(derived.Border);
+        resources[TextKey] = new SolidColorBrush(derived.Text);
+        resources[TextMutedKey] = new SolidColorBrush(derived.TextMuted);
+        resources[TextFaintKey] = new SolidColorBrush(derived.TextFaint);
         resources[AccentKey] = new SolidColorBrush(palette.Accent);
         resources[AccentMutedKey] = new SolidColorBrush(palette.AccentMuted);
-        resources[DangerKey] = new SolidColorBrush(palette.Danger);
-        resources[InfoKey] = new SolidColorBrush(palette.Info);
+        resources[DangerKey] = new SolidColorBrush(derived.Danger);
+        resources[WarnKey] = new SolidColorBrush(derived.Warn);
+        resources[GoodKey] = new SolidColorBrush(derived.Good);
+        resources[InfoKey] = new SolidColorBrush(derived.Info);
 
-        // Derived from the (possibly recoloured) Accent rather than stored on Palette, so they follow the
-        // HUD matrix the same way Accent itself does.
-        resources[RuleKey] = new SolidColorBrush(palette.Accent, 0.42);
-        resources[FillLowKey] = new SolidColorBrush(palette.Accent, 0.10);
-        resources[FillHighKey] = new SolidColorBrush(palette.Accent, 0.18);
+        resources[RuleKey] = new SolidColorBrush(derived.Rule);
+        resources[FillLowKey] = new SolidColorBrush(derived.FillLow);
+        resources[FillHighKey] = new SolidColorBrush(derived.FillHigh);
+        resources[FillHigherKey] = new SolidColorBrush(derived.FillHigher);
 
         // The conversation bubbles' own roles (#275): each side's border at 35% of its colour, and an ink
-        // blended toward Text so it stays legible on both light and dark themes.
-        resources[AccentBorderKey] = new SolidColorBrush(palette.Accent, 0.35);
-
-        // On a dark theme the ship's ink is Accent lifted toward white — #FFB066 from Elite's #F5850F, 8.4:1 on
-        // the bubble. Blending toward Text instead pulled it most of the way to Text's own warm grey.
-        resources[AccentInkKey] = new SolidColorBrush(palette.IsDark
-            ? Mix(Colors.White, palette.Accent, 0.65)
-            : Mix(palette.Text, palette.Accent, 0.35));
-        resources[InfoFillKey] = new SolidColorBrush(palette.Info, 0.09);
-        resources[InfoBorderKey] = new SolidColorBrush(palette.Info, 0.35);
-        resources[InfoInkKey] = new SolidColorBrush(Mix(palette.Text, palette.Info, 0.35));
+        // blended toward white or near-black so it stays legible on both light and dark themes.
+        resources[AccentBorderKey] = new SolidColorBrush(derived.AccentBorder);
+        resources[AccentInkKey] = new SolidColorBrush(derived.AccentInk);
+        resources[InfoFillKey] = new SolidColorBrush(derived.InfoFill);
+        resources[InfoBorderKey] = new SolidColorBrush(derived.InfoBorder);
+        resources[InfoInkKey] = new SolidColorBrush(derived.InfoInk);
 
         // The Fleet card's own fills (#278): unselected at 5% of Accent, selected at 14%.
-        resources[CardFillKey] = new SolidColorBrush(palette.Accent, 0.05);
-        resources[CardFillSelectedKey] = new SolidColorBrush(palette.Accent, 0.14);
+        resources[CardFillKey] = new SolidColorBrush(derived.CardFill);
+        resources[CardFillSelectedKey] = new SolidColorBrush(derived.CardFillSelected);
 
         // The Settings page's own roles (#279): alternating rows at 5% of Accent, a tag's border at 60%.
-        resources[RowFillKey] = new SolidColorBrush(palette.Accent, 0.05);
-        resources[TagBorderKey] = new SolidColorBrush(palette.Accent, 0.60);
+        resources[RowFillKey] = new SolidColorBrush(derived.RowFill);
+        resources[TagBorderKey] = new SolidColorBrush(derived.TagBorder);
 
         // The tab-strip rule (#285): drawn in every theme, unlike bloom, which only glows around it.
-        resources[TabStripRuleKey] = new SolidColorBrush(palette.Accent, 0.70);
+        resources[TabStripRuleKey] = new SolidColorBrush(derived.TabStripRule);
 
         // Bloom and scanlines (#281, recalibrated #285): dark themes only, so both resolve to null
         // rather than a brush or effect in Light — which is what turns them off, since an unset Effect
@@ -205,26 +219,15 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         resources[ScanlinesKey] = palette.IsDark ? Scanlines(1) : null;
 
         // The tint is the pane's, not the page's: the ground behind the pane stays Background.
-        resources[PaneFillKey] = palette.IsDark ? PaneFill(palette.Accent) : new SolidColorBrush(palette.Surface);
-        resources[PaneBorderKey] = new SolidColorBrush(palette.Accent, 0.30);
-        resources[TagInkKey] = new SolidColorBrush(palette.Accent, 0.85);
+        resources[PaneFillKey] = palette.IsDark ? PaneFill(palette.Accent) : new SolidColorBrush(derived.Surface);
+        resources[PaneBorderKey] = new SolidColorBrush(derived.PaneBorder);
+        resources[TagInkKey] = new SolidColorBrush(derived.TagInk);
 
         // The framework's own controls — text boxes, buttons, scrollbars — follow the variant rather than the
         // palette, so a light theme has to say so or its combo boxes stay dark.
         application.RequestedThemeVariant = palette.IsDark ? ThemeVariant.Dark : ThemeVariant.Light;
 
         logger.LogInformation("Theme is now {Theme}", theme.Name);
-    }
-
-    /// <summary>Blends <paramref name="tint"/> toward <paramref name="text"/> by <paramref name="weight"/>.</summary>
-    private static Color Mix(Color text, Color tint, double weight)
-    {
-        byte Blend(byte from, byte to) => (byte)Math.Round(from + ((to - from) * weight));
-
-        return Color.FromRgb(
-            Blend(text.R, tint.R),
-            Blend(text.G, tint.G),
-            Blend(text.B, tint.B));
     }
 
     /// <summary>A glow of <paramref name="accent"/>, for the elements named in #285.</summary>

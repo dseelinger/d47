@@ -38,6 +38,12 @@ public enum LoadoutTone
     /// <summary>Something that is wrong, or a gate nothing will get past.</summary>
     Danger,
 
+    /// <summary>Something worth a second look, short of Danger (#329).</summary>
+    Warn,
+
+    /// <summary>Something that checks out (#329).</summary>
+    Good,
+
     /// <summary>The head of a block — "Fitted", "Planned", "What it costs".</summary>
     Heading,
 

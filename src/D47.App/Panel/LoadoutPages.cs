@@ -745,6 +745,8 @@ public static class LoadoutPages
             reading,
             TextBlock.ForegroundProperty,
             gauge.Tone == LoadoutTone.Danger ? ThemeManager.DangerKey
+            : gauge.Tone == LoadoutTone.Warn ? ThemeManager.WarnKey
+            : gauge.Tone == LoadoutTone.Good ? ThemeManager.GoodKey
             : gauge.Modelled ? ThemeManager.InfoKey
             : ThemeManager.TextKey);
 
@@ -874,6 +876,8 @@ public static class LoadoutPages
 
         var fillKey =
             gauge.Tone == LoadoutTone.Danger ? ThemeManager.DangerKey
+            : gauge.Tone == LoadoutTone.Warn ? ThemeManager.WarnKey
+            : gauge.Tone == LoadoutTone.Good ? ThemeManager.GoodKey
             : gauge.Modelled ? ThemeManager.InfoKey
             : ThemeManager.AccentKey;
 

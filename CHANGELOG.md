@@ -262,6 +262,13 @@ on to Elite V, the ceiling the game itself added, and reports each of those five
 The Adventures tab's two buttons keep their own height now instead of stretching to match the
 description text beside them, which grew taller as panes opened and the description wrapped.
 
+Every theme now computes its colours from that theme's accent and background, rather than storing
+borders, fills and status colours as separate fixed colours or drawing accent tints at partial
+transparency. On Elite and Guardian, body text is now the same colour as the theme's accent; Dark
+and Light keep their existing neutral text colour. Every border, fill, rule and surface colour is
+fully opaque, so a fill drawn inside a bordered card no longer comes out lighter than the same fill
+drawn on its own.
+
 ## 0.168.0 — Controls take the HUD dress
 
 Buttons, toggle switches and the transcript tabs now draw d47's own look rather than the

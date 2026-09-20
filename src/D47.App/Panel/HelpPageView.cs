@@ -199,19 +199,20 @@ public sealed class HelpFigureView : Control
     private static Color Fallback(HelpColour role)
     {
         var palette = Palettes.Elite;
+        var derived = DerivedPalette.From(palette);
 
         return role switch
         {
             HelpColour.Background => palette.Background,
-            HelpColour.Surface => palette.Surface,
-            HelpColour.SurfaceAlt => palette.SurfaceAlt,
-            HelpColour.Border => palette.Border,
-            HelpColour.Text => palette.Text,
-            HelpColour.TextMuted => palette.TextMuted,
+            HelpColour.Surface => derived.Surface,
+            HelpColour.SurfaceAlt => derived.SurfaceAlt,
+            HelpColour.Border => derived.Border,
+            HelpColour.Text => derived.Text,
+            HelpColour.TextMuted => derived.TextMuted,
             HelpColour.Accent => palette.Accent,
             HelpColour.AccentMuted => palette.AccentMuted,
-            HelpColour.Danger => palette.Danger,
-            _ => palette.Info,
+            HelpColour.Danger => derived.Danger,
+            _ => derived.Info,
         };
     }
 }
