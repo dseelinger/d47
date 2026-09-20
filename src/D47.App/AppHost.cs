@@ -5144,7 +5144,7 @@ public sealed class AppHost : IDisposable
             Turns.BackgroundModel,
             NpcChatter.Speaker,
             null,
-            NpcChatter.Instruction(kind, carrier, docked, spotlight, marker.Variant ?? 0),
+            NpcChatter.Instruction(kind, carrier, docked, spotlight, marker.Variant ?? 0, location?.StationType),
             Turns.LiveGameState?.Invoke(),
             Spend,
             PriceTable.Default,

@@ -206,28 +206,49 @@ public static class NpcChatter
     /// that picks its kind — used to rotate the passers-by cast, topic and opening beat so a replayed
     /// session picks the same script every time (#45).
     /// </param>
+    /// <param name="stationType">
+    /// The journal's <c>StationType</c> for the dock, or null when it is not known — used to say
+    /// whether the station has a mail slot (#314) rather than leave the model to guess at one.
+    /// </param>
     public static string Instruction(
         NpcChatterKind kind,
         NpcChatterCarrier? carrier = null,
         bool docked = false,
         bool spotlight = false,
-        int exchangeIndex = 0)
+        int exchangeIndex = 0,
+        string? stationType = null)
     {
         var about = carrier ?? NpcChatterCarrier.None;
 
-        return Situation(docked)
+        return Situation(docked, stationType)
             + Scene(kind, about, docked, exchangeIndex)
             + Contract
             + Carrier(about, spotlight);
     }
 
+    /// <summary>The journal's <c>StationType</c> values for a dock with a mail slot.</summary>
+    private static readonly HashSet<string> StationsWithAMailSlot = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Coriolis", "Orbis", "Ocellus", "Dodec", "AsteroidBase",
+    };
+
     /// <summary>
     /// The one sentence of live state the model cannot misread (#43): said in words, because a prompt
     /// handed dock vocabulary invents a dock even where the scene never asked for one.
     /// </summary>
-    private static string Situation(bool docked) => docked
-        ? "The Commander's ship is docked at a station. "
+    private static string Situation(bool docked, string? stationType) => docked
+        ? "The Commander's ship is docked at a station. " + MailSlot(stationType)
         : "The Commander's ship is in normal space, under its own power, with no station nearby. ";
+
+    /// <summary>
+    /// Whether the dock has a mail slot, said in words (#314): a fleet carrier, an outpost, a surface
+    /// port and a settlement have none, and the model invented one anyway when left to guess.
+    /// </summary>
+    private static string MailSlot(string? stationType) =>
+        stationType is { } type && StationsWithAMailSlot.Contains(type)
+            ? string.Empty
+            : "This station has no mail slot. Nobody mentions a mail slot, a letterbox or a docking "
+                + "slot. ";
 
     private static string Scene(NpcChatterKind kind, NpcChatterCarrier carrier, bool docked, int exchangeIndex) =>
         kind switch
@@ -312,7 +333,7 @@ public static class NpcChatter
         "a customs check and a paperwork snag",
         "a fuel allocation and a queue dispute",
         "a maintenance hold and a curt correction",
-        "a beacon check and a slot swap",
+        "a beacon check and a pad swap",
         "a telling-off over a sloppy approach",
     ];
 
@@ -322,7 +343,7 @@ public static class NpcChatter
         "a pad running late",
         "a manifest flagged for review",
         "a beacon out of sync",
-        "a slot mix-up",
+        "a pad mix-up",
         "a hold nobody wants",
     ];
 

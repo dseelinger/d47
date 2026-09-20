@@ -517,6 +517,57 @@ public class NpcChatterScriptTests
     }
 
     /// <summary>
+    /// A station type with no mail slot gets told so in words (#314), the way #43 did for no station at
+    /// all — a fleet carrier, an outpost, a surface port and a settlement all have none.
+    /// </summary>
+    [Theory]
+    [InlineData("FleetCarrier")]
+    [InlineData("Outpost")]
+    [InlineData("CraterPort")]
+    [InlineData("SurfaceStation")]
+    public void NoMailSlotStationForbidsOne(string stationType)
+    {
+        var instruction = NpcChatter.Instruction(
+            NpcChatterKind.Passersby, NpcChatterCarrier.None, docked: true, stationType: stationType);
+
+        Assert.Contains("no mail slot", instruction, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>A station type known to have a mail slot is not told it has none (#314).</summary>
+    [Theory]
+    [InlineData("Coriolis")]
+    [InlineData("Orbis")]
+    public void MailSlotStationDoesNotForbidOne(string stationType)
+    {
+        var instruction = NpcChatter.Instruction(
+            NpcChatterKind.Passersby, NpcChatterCarrier.None, docked: true, stationType: stationType);
+
+        Assert.DoesNotContain("no mail slot", instruction, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>An unknown station type forbids a mail slot rather than risking one being invented (#314).</summary>
+    [Fact]
+    public void UnknownStationTypeForbidsAMailSlot()
+    {
+        var instruction = NpcChatter.Instruction(NpcChatterKind.Passersby, NpcChatterCarrier.None, docked: true);
+
+        Assert.Contains("no mail slot", instruction, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>Every kind reads the station type, not only the passers-by scene (#314).</summary>
+    [Theory]
+    [InlineData(NpcChatterKind.Passersby)]
+    [InlineData(NpcChatterKind.Controller)]
+    [InlineData(NpcChatterKind.Hail)]
+    public void EveryChatterKindForbidsAMailSlotAtAStationWithoutOne(NpcChatterKind kind)
+    {
+        var instruction = NpcChatter.Instruction(
+            kind, NpcChatterCarrier.None, docked: true, stationType: "FleetCarrier");
+
+        Assert.Contains("no mail slot", instruction, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
     /// The dock hand and the courier saying "not my problem" was one script wearing different names
     /// (#45). The cast, the topic and the opening beat now rotate off the exchange index the same way
     /// as everything else this callout paces, and the worn lines the logs measured are named off

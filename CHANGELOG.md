@@ -8,6 +8,10 @@
 
 ## 0.169.0 — No more drop-downs
 
+Invented background chatter no longer mentions a mail slot at a station without one — a fleet
+carrier, an outpost, a surface port or a settlement, among others. Only Coriolis, Orbis, Ocellus,
+Dodec and asteroid bases actually have one.
+
 The carrier's captain and tower can now be given their own names. Set them on the Fleet › Carrier
 tab, where their voices moved to as well — the settings window's Carrier voices place is gone. A
 named captain is addressed as "Captain {name}"; a named tower replaces "Tower Control" with the
