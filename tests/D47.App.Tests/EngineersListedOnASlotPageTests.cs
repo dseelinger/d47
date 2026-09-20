@@ -164,7 +164,7 @@ public class EngineersListedOnASlotPageTests
 
         kit.Plan(build.Id, new KitPlan("Mod 1", Modification: "Added melee damage"));
 
-        return (new OnFootMode(kit, () => live), kit, build.Id);
+        return (new OnFootMode(kit, checklists, () => live), kit, build.Id);
     }
 
     [Fact]

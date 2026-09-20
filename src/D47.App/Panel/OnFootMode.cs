@@ -9,7 +9,10 @@ using D47.Core.Loadout;
 namespace D47.App.Panel;
 
 /// <summary>The Loadout tab's Suits and weapons mode (Phase 27, "The same page, on foot").</summary>
-public sealed class OnFootMode(OnFootPlanService kit, Func<CommanderGameState?> state) : ILoadoutMode
+public sealed class OnFootMode(
+    OnFootPlanService kit,
+    ChecklistService checklists,
+    Func<CommanderGameState?> state) : ILoadoutMode
 {
     /// <summary>The Loadout tab's Suits root.</summary>
     public const string Root = "loadout.onfoot";
@@ -37,12 +40,14 @@ public sealed class OnFootMode(OnFootPlanService kit, Func<CommanderGameState?> 
         add
         {
             kit.Store.Changed += value;
+            checklists.Proposals.Changed += value;
             _invalidated += value;
         }
 
         remove
         {
             kit.Store.Changed -= value;
+            checklists.Proposals.Changed -= value;
             _invalidated -= value;
         }
     }
@@ -220,6 +225,29 @@ public sealed class OnFootMode(OnFootPlanService kit, Func<CommanderGameState?> 
 
     public string Promote(string item) =>
         Resolve(item) is { } build ? kit.Promote(build.Id) : "That plan is not there any more.";
+
+    /// <summary>The question left on the tab when Promote proposed a plan and it was not answered (#299),
+    /// the same shape as the fleet's (Phase 38, "Ask before the plan and the checklist drift apart").</summary>
+    public LoadoutNotice? Notice()
+    {
+        var waiting = checklists.Proposals
+            .PendingFor(checklists.Document.CommanderFid)
+            .FirstOrDefault(proposal => proposal.Kind == ProposalKind.Plan
+                                        && proposal.Source == ChecklistSource.OnFootPlan
+                                        && proposal.Scope.Group is ChecklistGroup.Suit or ChecklistGroup.Weapon);
+
+        if (waiting is null)
+        {
+            return null;
+        }
+
+        var id = waiting.Id;
+
+        return new LoadoutNotice(
+            $"{waiting.Summary.TrimEnd('.')}?",
+            () => checklists.Accept(id),
+            () => checklists.Decline(id));
+    }
 
     /// <summary>The same rule as the fleet's: what was authored can be dropped, what is worn cannot.</summary>
     public string? DropLabel(string item) =>

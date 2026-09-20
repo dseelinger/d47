@@ -668,7 +668,7 @@ public partial class PanelView : UserControl
 
         if (onFoot is not null)
         {
-            var onFootMode = new OnFootMode(onFoot, state);
+            var onFootMode = new OnFootMode(onFoot, checklists, state);
 
             _onFootMode = onFootMode;
             modes.Add(onFootMode);

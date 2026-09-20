@@ -28,6 +28,10 @@ saying nothing at all.
 "Get clear and supercruise", "boost and warp" and the rest of that pattern now route to separate
 and supercruise, the same way their jump equivalents already routed to separate and engage.
 
+Putting a suit or weapon plan on your checklist now leaves a question on the Suits page itself,
+the same way it already did on the Ships page, instead of only being answerable from the
+Checklist tab.
+
 Planning a suit or weapon you do not own, and planning a modification on one you do, now offer a
 list to pick from instead of asking you to type or say it blind. The suit and weapon list excludes
 the flight suit, and a modification list excludes anything already planned on another slot of the
