@@ -22,6 +22,10 @@ The exploration goals — systems visited and distance flown — are gone from t
 the Checklist tab. Both counted a milestone this repository picked rather than anything Elite
 states.
 
+Two more arcs are in the Goals section: Imperial Navy and Federal Navy, running to King and
+Admiral rather than to Elite. Each reads its rank's name — Serf, Cadet, and on up each ladder —
+the same way a career arc already does.
+
 The Suits page now draws cards, like the fleet page: kind and grade, where it is, and how many
 slots are planned, each its own line, with a badge for the one you are wearing.
 

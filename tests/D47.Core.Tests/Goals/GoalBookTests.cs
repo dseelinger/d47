@@ -29,7 +29,7 @@ public class GoalBookTests : IDisposable
         using var install = new TempInstall();
         var book = Book(install);
 
-        Assert.Equal(7, book.Standings.Count);
+        Assert.Equal(9, book.Standings.Count);
         Assert.DoesNotContain(book.Standings, standing => standing.Arc.Key.Contains("cqc", StringComparison.OrdinalIgnoreCase));
     }
 
@@ -45,14 +45,14 @@ public class GoalBookTests : IDisposable
 
         book.SetAside("rank.soldier", aside: true);
 
-        Assert.Equal(6, book.Standings.Count);
+        Assert.Equal(8, book.Standings.Count);
         Assert.DoesNotContain(book.Standings, standing => standing.Arc.Key == "rank.soldier");
 
         // Still reachable, which is what lets the panel offer bringing it back.
-        Assert.Equal(7, book.Everything().Count);
+        Assert.Equal(9, book.Everything().Count);
 
         book.SetAside("rank.soldier", aside: false);
-        Assert.Equal(7, book.Standings.Count);
+        Assert.Equal(9, book.Standings.Count);
     }
 
     /// <summary>The assertion item 3 is about.</summary>
@@ -151,7 +151,7 @@ public class GoalBookTests : IDisposable
         var book = Book(install);
 
         Assert.Contains("set aside rather than deleted", book.Forget(GoalCatalogue.Ships), StringComparison.Ordinal);
-        Assert.Equal(7, book.Standings.Count);
+        Assert.Equal(9, book.Standings.Count);
     }
 
     [Fact]

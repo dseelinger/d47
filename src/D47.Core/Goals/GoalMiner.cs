@@ -163,7 +163,7 @@ public sealed class GoalMiner(ILogger<GoalMiner> logger)
             switch (journalEvent.Kind)
             {
                 case "Rank" or "Promotion":
-                    foreach (var career in RankState.Careers)
+                    foreach (var career in RankState.Careers.Concat(GoalCatalogue.NavyCareers))
                     {
                         if (journalEvent.Raw.Int(career) is not { } rank)
                         {
@@ -244,7 +244,7 @@ public sealed class GoalMiner(ILogger<GoalMiner> logger)
         {
             var marks = new List<GoalMark>();
 
-            foreach (var career in RankState.Careers)
+            foreach (var career in RankState.Careers.Concat(GoalCatalogue.NavyCareers))
             {
                 var key = GoalCatalogue.RankPrefix + career.ToLowerInvariant();
 

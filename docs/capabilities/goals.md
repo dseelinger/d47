@@ -169,7 +169,7 @@ Where the journal cannot say, d47 says so rather than guessing:
   anything about your rank this session, the figure from your journals stands with its date on it.
   It never resets to nothing on the absence of evidence.
 
-### The seven that ship
+### The nine that ship
 
 | Arc | Done when | Where the figure comes from |
 |---|---|---|
@@ -178,11 +178,16 @@ Where the journal cannot say, d47 says so rather than guessing:
 | Elite in Exploration | Explore rank 13 — Elite V | Live journal state |
 | Elite as a Mercenary | Soldier rank 13 — Elite V | Live journal state |
 | Elite in Exobiology | Exobiologist rank 13 — Elite V | Live journal state |
+| Imperial Navy | Empire rank 13 — King | Live journal state |
+| Federal Navy | Federation rank 13 — Admiral | Live journal state |
 | Every engineer unlocked | Every engineer in the directory | Live journal state |
 | The ship collection | One of every hull, owned at once | Your fleet, plus what you are flying |
 
 **Each rank says its name**, from Harmless up through Elite V — so d47 says *Trailblazer, 12% into
-it* rather than *rank 5 of 8, 12% into it*. A career arc is done at Elite V, not at Elite.
+it* rather than *rank 5 of 8, 12% into it*. A career arc is done at Elite V, not at Elite. The two
+navy arcs read the same way — *Master, 8% into it* rather than *rank 3* — but each runs to the top
+of its own ladder, King for the Empire and Admiral for the Federation, because neither has an
+Elite.
 
 **There is no CQC arc**, because almost nobody plays it and an arc permanently at nothing is a line
 of the page spent telling you about a thing you are not doing. If any of the others is not yours
@@ -203,6 +208,8 @@ Elite in Trade: Tycoon, 40% into it. Running 13 months.
 Elite in Exploration: Pathfinder, 12% into it. Running 13 months.
 Elite as a Mercenary: Defenceless.
 Elite in Exobiology: Directionless.
+Imperial Navy: Serf, 4% into it. Running 8 months.
+Federal Navy: Cadet, 61% into it. Running 8 months.
 Every engineer unlocked: 19 of 53 unlocked, 2 invited. Running 12 months.
 The ship collection: 11 of 45 hulls owned. Running 13 months.
 Ages come from 914 journals on this disk, the oldest from 4 Jul 2025.

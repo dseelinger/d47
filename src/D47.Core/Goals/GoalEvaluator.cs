@@ -28,6 +28,7 @@ public static class GoalEvaluator
         return arc.Key switch
         {
             _ when GoalCatalogue.CareerOf(arc.Key) is { } career => Rank(arc, career, state, mark),
+            _ when GoalCatalogue.NavyOf(arc.Key) is { } navy => NavyRank(arc, navy, state, mark),
             GoalCatalogue.Engineers => Engineers(arc, state, mark),
             GoalCatalogue.Ships => Ships(arc, state, mark),
             _ => new GoalStanding { Arc = arc, Source = GoalSource.Unknown, Started = mark?.Started },
@@ -68,6 +69,40 @@ public static class GoalEvaluator
                 Started = mark.Started,
                 Note = new RankStanding(career, (int)mined).Describe(),
                 IsDone = mined >= RankStanding.EliteTop,
+            }
+            : new GoalStanding { Arc = arc, Source = GoalSource.Unknown, Started = mark?.Started };
+    }
+
+    /// <summary>A navy ladder, which runs to the top of its own ladder rather than to Elite.</summary>
+    private static GoalStanding NavyRank(GoalArc arc, string career, CommanderGameState? state, GoalMark? mark)
+    {
+        if (state?.Ranks.For(career) is { } live && state.Ranks.IsKnown)
+        {
+            return new GoalStanding
+            {
+                Arc = arc,
+                Have = live.Rank,
+                Need = GoalCatalogue.NavyTop,
+                Source = GoalSource.Live,
+                AsOf = state.Ranks.TakenAt,
+                Started = mark?.Started,
+                Note = live.Describe(),
+                IsDone = live.Rank >= GoalCatalogue.NavyTop,
+            };
+        }
+
+        // The game has not said this session.
+        return mark?.Have is { } mined
+            ? new GoalStanding
+            {
+                Arc = arc,
+                Have = mined,
+                Need = GoalCatalogue.NavyTop,
+                Source = GoalSource.Mined,
+                AsOf = mark.AsOf,
+                Started = mark.Started,
+                Note = new RankStanding(career, (int)mined).Describe(),
+                IsDone = mined >= GoalCatalogue.NavyTop,
             }
             : new GoalStanding { Arc = arc, Source = GoalSource.Unknown, Started = mark?.Started };
     }

@@ -1,4 +1,5 @@
 using System.Globalization;
+using D47.Core.Knowledge;
 
 namespace D47.Core.Journal;
 
@@ -26,7 +27,9 @@ public sealed record RankStanding(string Career, int Rank)
 
     /// <summary>How a Commander hears it.</summary>
     public string Describe() => !IsCareer
-        ? Percent is { } navyPercent ? $"rank {Rank}, {navyPercent}% into it" : $"rank {Rank}"
+        ? NavyName() is { } navyNamed
+            ? Percent is { } navyPercent ? $"{navyNamed}, {navyPercent}% into it" : navyNamed
+            : Percent is { } numberedNavyPercent ? $"rank {Rank}, {numberedNavyPercent}% into it" : $"rank {Rank}"
         : IsElite
         ? EliteName(Rank)
         : CareerRankNames.Name(Career, Rank) is { } named
@@ -34,6 +37,14 @@ public sealed record RankStanding(string Career, int Rank)
             : Percent is { } numberedPercent
                 ? $"rank {Rank} of {Elite}, {numberedPercent}% into it"
                 : $"rank {Rank} of {Elite}";
+
+    /// <summary>The named rung of a navy ladder — <see cref="NavalRanks"/> is 1-based, the journal 0-based.</summary>
+    private string? NavyName() => Career switch
+    {
+        _ when string.Equals(Career, "Empire", StringComparison.OrdinalIgnoreCase) => NavalRanks.EmpireName(Rank + 1),
+        _ when string.Equals(Career, "Federation", StringComparison.OrdinalIgnoreCase) => NavalRanks.FederationName(Rank + 1),
+        _ => null,
+    };
 
     private static string EliteName(int rank) => rank == Elite ? "Elite" : $"Elite {Grade(rank - Elite)}";
 
