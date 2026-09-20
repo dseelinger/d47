@@ -145,12 +145,24 @@ public sealed class OnFootMode(OnFootPlanService kit, Func<CommanderGameState?> 
                 EntrySurface.Voice,
                 value => OnFootCatalogue.Named(value) is null
                     ? EntryVerdict.No($"I do not know a suit or weapon called “{value}”.")
-                    : EntryVerdict.Ok),
+                    : EntryVerdict.Ok,
+                Equipment,
+                "Plan this"),
             equipment =>
             {
                 kit.Intend(equipment);
                 done();
             });
+
+    /// <summary>
+    /// Every suit and weapon a build could name, alphabetical and each once — the flight suit left off
+    /// because it is never bought (#298).
+    /// </summary>
+    private static IReadOnlyList<string> Equipment { get; } =
+    [
+        .. OnFootCatalogue.Equipment
+            .Where(name => !string.Equals(name, "Flight Suit", StringComparison.OrdinalIgnoreCase)),
+    ];
 
     public string? Summary(string item)
     {
@@ -419,12 +431,39 @@ public sealed class OnFootMode(OnFootPlanService kit, Func<CommanderGameState?> 
                 EntrySurface.Voice,
                 value => IsModification(value)
                     ? EntryVerdict.Ok
-                    : EntryVerdict.No($"I have no on-foot modification called “{value}”.")),
+                    : EntryVerdict.No($"I have no on-foot modification called “{value}”."),
+                ModificationsFor(build, slot),
+                "Plan this"),
             modification =>
             {
                 kit.Plan(build.Id, new KitPlan(slot, Modification: modification.Trim()));
                 done();
             });
+    }
+
+    /// <summary>
+    /// The modifications this build's kind takes, minus anything already planned on another slot of
+    /// the same build (#298).
+    /// </summary>
+    private static IReadOnlyList<string> ModificationsFor(OnFootBuild build, string slot)
+    {
+        var kind = build.IsWeapon ? OnFootKind.WeaponModification : OnFootKind.SuitModification;
+
+        var takenElsewhere = build.Slots
+            .Where(plan => !string.Equals(plan.Slot, slot, StringComparison.OrdinalIgnoreCase))
+            .Where(plan => plan.Modification is { Length: > 0 })
+            .Select(plan => plan.Modification!)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        return
+        [
+            .. OnFootCatalogue.All
+                .Where(entry => entry.Kind == kind)
+                .Select(entry => entry.Name)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Where(name => !takenElsewhere.Contains(name))
+                .Order(StringComparer.OrdinalIgnoreCase),
+        ];
     }
 
     /// <summary>What this plan costs.</summary>
