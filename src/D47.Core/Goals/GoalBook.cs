@@ -322,7 +322,7 @@ public sealed class GoalBook(
     /// <summary>A career.</summary>
     private static GoalStep Career(GoalStanding standing)
     {
-        var remaining = standing.Have is { } have ? RankStanding.Elite - have : (long?)null;
+        var remaining = standing.Have is { } have ? RankStanding.EliteTop - have : (long?)null;
 
         var say = new StringBuilder();
 

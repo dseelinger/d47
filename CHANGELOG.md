@@ -238,6 +238,10 @@ about any system: what to buy at the station you are docked at to sell there. It
 you are docked at, uses the same saved trade filters and cargo default, and speaks the same
 sentence Trading Mode does.
 
+A career goal now names your rank — Harmless, Mostly Penniless, Trailblazer and the rest — rather
+than reading it as a number out of eight. Reaching Elite no longer finishes the goal: it now runs
+on to Elite V, the ceiling the game itself added, and reports each of those five grades by name.
+
 ## 0.168.0 — Controls take the HUD dress
 
 Buttons, toggle switches and the transcript tabs now draw d47's own look rather than the

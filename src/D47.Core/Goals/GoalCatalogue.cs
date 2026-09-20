@@ -41,7 +41,7 @@ public static class GoalCatalogue
         {
             Key = RankPrefix + career.Career.ToLowerInvariant(),
             Name = career.Name,
-            Done = $"{career.Career} rank {Journal.RankStanding.Elite} — Elite.",
+            Done = $"{career.Career} rank {Journal.RankStanding.EliteTop} — Elite V.",
             Helper = career.Helper,
         }),
 

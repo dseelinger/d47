@@ -1,12 +1,17 @@
+using System.Globalization;
+
 namespace D47.Core.Journal;
 
 /// <summary>One career's ladder, as the journal states it (Phase 34, "Goals that outlive a checklist").</summary>
 /// <param name="Career">The journal's own key — <c>Combat</c>, <c>Trade</c>, <c>Explore</c>.</param>
-/// <param name="Rank">0 through 8, and past 8 for the Elite grades Odyssey added.</param>
+/// <param name="Rank">0 through 13 — 8 is Elite, and 9 through 13 are Elite I through Elite V.</param>
 public sealed record RankStanding(string Career, int Rank)
 {
-    /// <summary>The rank at which a career ladder is finished, and the only one with a name.</summary>
+    /// <summary>The rank at which a career ladder reaches Elite.</summary>
     public const int Elite = 8;
+
+    /// <summary>The rank at which a career ladder is finished — Elite V.</summary>
+    public const int EliteTop = 13;
 
     /// <summary>Percent into the current rank, from the <c>Progress</c> event.</summary>
     public int? Percent { get; init; }
@@ -16,16 +21,31 @@ public sealed record RankStanding(string Career, int Rank)
 
     public bool IsElite => IsCareer && Rank >= Elite;
 
+    /// <summary>Whether a career ladder has run all the way to Elite V.</summary>
+    public bool IsMaxRank => IsCareer && Rank >= EliteTop;
+
     /// <summary>How a Commander hears it.</summary>
     public string Describe() => !IsCareer
         ? Percent is { } navyPercent ? $"rank {Rank}, {navyPercent}% into it" : $"rank {Rank}"
         : IsElite
-        ? Rank == Elite
-            ? "Elite"
-            : $"Elite, {Rank - Elite} grade{(Rank - Elite == 1 ? string.Empty : "s")} past it"
-        : Percent is { } percent
-            ? $"rank {Rank} of {Elite}, {percent}% into it"
-            : $"rank {Rank} of {Elite}";
+        ? EliteName(Rank)
+        : CareerRankNames.Name(Career, Rank) is { } named
+            ? Percent is { } namedPercent ? $"{named}, {namedPercent}% into it" : named
+            : Percent is { } numberedPercent
+                ? $"rank {Rank} of {Elite}, {numberedPercent}% into it"
+                : $"rank {Rank} of {Elite}";
+
+    private static string EliteName(int rank) => rank == Elite ? "Elite" : $"Elite {Grade(rank - Elite)}";
+
+    private static string Grade(int grade) => grade switch
+    {
+        1 => "I",
+        2 => "II",
+        3 => "III",
+        4 => "IV",
+        5 => "V",
+        _ => grade.ToString(CultureInfo.InvariantCulture),
+    };
 }
 
 /// <summary>

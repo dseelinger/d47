@@ -58,7 +58,7 @@ public class RankStateTests
 
         Assert.Equal(1, state.For("Combat")?.Rank);
         Assert.Equal(39, state.For("Combat")?.Percent);
-        Assert.Equal("rank 1 of 8, 39% into it", state.For("Combat")?.Describe());
+        Assert.Equal("Mostly Harmless, 39% into it", state.For("Combat")?.Describe());
     }
 
     /// <summary>A second snapshot must not blank the percents.</summary>
@@ -101,15 +101,39 @@ public class RankStateTests
     }
 
     [Theory]
-    [InlineData(7, false, "rank 7 of 8")]
+    [InlineData(0, false, "Harmless")]
+    [InlineData(7, false, "Deadly")]
     [InlineData(8, true, "Elite")]
-    [InlineData(10, true, "Elite, 2 grades past it")]
-    public void OnlyEliteIsNamed(int rank, bool isElite, string said)
+    [InlineData(9, true, "Elite I")]
+    [InlineData(10, true, "Elite II")]
+    [InlineData(13, true, "Elite V")]
+    public void EachRankHasItsOwnName(int rank, bool isElite, string said)
     {
         var standing = new RankStanding("Combat", rank);
 
         Assert.Equal(isElite, standing.IsElite);
         Assert.Equal(said, standing.Describe());
+    }
+
+    [Fact]
+    public void ACareerRunsToEliteVRatherThanStoppingAtElite()
+    {
+        var atElite = new RankStanding("Trade", RankStanding.Elite);
+        var atEliteTop = new RankStanding("Trade", RankStanding.EliteTop);
+
+        Assert.False(atElite.IsMaxRank);
+        Assert.True(atEliteTop.IsMaxRank);
+    }
+
+    [Theory]
+    [InlineData("Trade", 12, "Elite IV")]
+    [InlineData("Explore", 4, "Trailblazer")]
+    [InlineData("Soldier", 0, "Defenceless")]
+    [InlineData("Exobiologist", 2, "Compiler")]
+    [InlineData("CQC", 5, "Champion")]
+    public void EveryCareerHasItsOwnNames(string career, int rank, string said)
+    {
+        Assert.Equal(said, new RankStanding(career, rank).Describe());
     }
 
     [Fact]

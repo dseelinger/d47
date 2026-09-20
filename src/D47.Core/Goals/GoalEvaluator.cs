@@ -49,12 +49,12 @@ public static class GoalEvaluator
             {
                 Arc = arc,
                 Have = live.Rank,
-                Need = RankStanding.Elite,
+                Need = RankStanding.EliteTop,
                 Source = GoalSource.Live,
                 AsOf = state.Ranks.TakenAt,
                 Started = mark?.Started,
                 Note = live.Describe(),
-                IsDone = live.IsElite,
+                IsDone = live.IsMaxRank,
             };
         }
 
@@ -64,12 +64,12 @@ public static class GoalEvaluator
             {
                 Arc = arc,
                 Have = mined,
-                Need = RankStanding.Elite,
+                Need = RankStanding.EliteTop,
                 Source = GoalSource.Mined,
                 AsOf = mark.AsOf,
                 Started = mark.Started,
                 Note = new RankStanding(career, (int)mined).Describe(),
-                IsDone = mined >= RankStanding.Elite,
+                IsDone = mined >= RankStanding.EliteTop,
             }
             : new GoalStanding { Arc = arc, Source = GoalSource.Unknown, Started = mark?.Started };
     }

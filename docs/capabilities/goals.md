@@ -41,7 +41,7 @@ nav_order: 143
  <text x="44" y="130" font-size="16" fill="var(--text)">Unlock every engineer</text>
  <text x="836" y="130" text-anchor="end" font-size="16" fill="var(--text-muted)">21 of 38</text>
  <text x="44" y="168" font-size="16" fill="var(--text)">Elite in exploration</text>
- <text x="836" y="168" text-anchor="end" font-size="16" fill="var(--text-muted)">rank 4</text>
+ <text x="836" y="168" text-anchor="end" font-size="16" fill="var(--text-muted)">Trailblazer</text>
  <text x="44" y="222" font-size="15" fill="var(--text-muted)">D47 works the progress out of your journal. Nothing to tick.</text>
 </svg>
 </section>
@@ -124,14 +124,14 @@ nav_order: 143
 <svg viewBox="0 0 880 236" role="img" aria-label="A career arc reports its rank but proposes no step, because rank is earned by doing the career">
  <rect x="20" y="36" width="400" height="112" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="76" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">ELITE IN COMBAT</text>
- <text x="220" y="108" text-anchor="middle" font-size="16" fill="var(--text)">rank 5 of 8, 12% into it</text>
+ <text x="220" y="108" text-anchor="middle" font-size="16" fill="var(--text)">Master, 12% into it</text>
  <text x="220" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">proposes nothing</text>
  <rect x="460" y="36" width="400" height="112" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="660" y="76" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">AND SAYS WHY</text>
  <text x="660" y="108" text-anchor="middle" font-size="16" fill="var(--text)">rank is earned by doing the career</text>
  <text x="660" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">there is no route anyone can plot</text>
  <text x="440" y="192" text-anchor="middle" font-size="16" fill="var(--text)">Where a tool genuinely helps — a trade route, an exobiology route — it names that instead.</text>
- <text x="440" y="222" text-anchor="middle" font-size="15" fill="var(--text-muted)">Ranks are counted, not named: Elite writes a number, so Directive 47 says rank 5 of 8.</text>
+ <text x="440" y="222" text-anchor="middle" font-size="15" fill="var(--text-muted)">Each rank says its name: Directive 47 says Master rather than rank 5 of 8.</text>
 </svg>
 </section>
 </div></div>
@@ -173,19 +173,18 @@ Where the journal cannot say, d47 says so rather than guessing:
 
 | Arc | Done when | Where the figure comes from |
 |---|---|---|
-| Elite in Combat | Combat rank 8 | Live journal state |
-| Elite in Trade | Trade rank 8 | Live journal state |
-| Elite in Exploration | Explore rank 8 | Live journal state |
-| Elite as a Mercenary | Soldier rank 8 | Live journal state |
-| Elite in Exobiology | Exobiologist rank 8 | Live journal state |
+| Elite in Combat | Combat rank 13 — Elite V | Live journal state |
+| Elite in Trade | Trade rank 13 — Elite V | Live journal state |
+| Elite in Exploration | Explore rank 13 — Elite V | Live journal state |
+| Elite as a Mercenary | Soldier rank 13 — Elite V | Live journal state |
+| Elite in Exobiology | Exobiologist rank 13 — Elite V | Live journal state |
 | Every engineer unlocked | Every engineer in the directory | Live journal state |
 | The ship collection | One of every hull, owned at once | Your fleet, plus what you are flying |
 | Systems visited | The next milestone, up to fifty thousand | Your journals |
 | Distance flown | The next milestone, up to a million light years | Your journals |
 
-**Ranks are counted, not named.** Elite writes a number for your rank and never a word, so d47 says
-*rank 5 of 8, 12% into it* and names only Elite. Shipping the rank ladders would mean hand-writing a
-table of Frontier's own words, which is exactly what this repository does not do with game data.
+**Each rank says its name**, from Harmless up through Elite V — so d47 says *Trailblazer, 12% into
+it* rather than *rank 5 of 8, 12% into it*. A career arc is done at Elite V, not at Elite.
 
 **There is no CQC arc**, because almost nobody plays it and an arc permanently at nothing is a line
 of the page spent telling you about a thing you are not doing. If any of the others is not yours
@@ -202,11 +201,11 @@ sent to a model.**
 A read looks like this:
 
 ```
-Elite in Combat: rank 1 of 8, 39% into it. Running 11 months.
-Elite in Trade: rank 7 of 8, 40% into it. Running 13 months.
-Elite in Exploration: rank 5 of 8, 12% into it. Running 13 months.
-Elite as a Mercenary: rank 0 of 8.
-Elite in Exobiology: rank 0 of 8.
+Elite in Combat: Mostly Harmless, 39% into it. Running 11 months.
+Elite in Trade: Tycoon, 40% into it. Running 13 months.
+Elite in Exploration: Pathfinder, 12% into it. Running 13 months.
+Elite as a Mercenary: Defenceless.
+Elite in Exobiology: Directionless.
 Every engineer unlocked: 19 of 53 unlocked, 2 invited. Running 12 months.
 The ship collection: 11 of 45 hulls owned. Running 13 months.
 Systems visited: 4,182 of 5,000 systems, next milestone. That is as of 17 Aug 2026, from your

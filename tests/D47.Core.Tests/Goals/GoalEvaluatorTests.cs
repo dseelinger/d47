@@ -55,12 +55,21 @@ public class GoalEvaluatorTests
     }
 
     [Fact]
-    public void EliteIsTheDefinitionOfDoneAndIsTheOnlyRankNamed()
+    public void EliteIsNamedButNotYetDone()
     {
         var standing = Evaluate("rank.trade", State(Event("Rank", "\"Trade\":8")), null);
 
-        Assert.True(standing.IsDone);
+        Assert.False(standing.IsDone);
         Assert.Contains("Elite", standing.Describe(Now), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ACareerGoalIsDoneAtEliteVRatherThanElite()
+    {
+        var standing = Evaluate("rank.trade", State(Event("Rank", "\"Trade\":13")), null);
+
+        Assert.True(standing.IsDone);
+        Assert.Contains("Elite V", standing.Note, StringComparison.Ordinal);
     }
 
     [Fact]
