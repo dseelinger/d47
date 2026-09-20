@@ -325,7 +325,9 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
 
         // Unfiltered, and unchanged by #156: trade planning ranks every commodity at every market against
         // every other, so there is nothing to filter by.
-        var fetched = (await SweepAsync(query.System, radius, cancellationToken).ConfigureAwait(false)).Markets;
+        var fetched = (await SweepAsync(
+                query.System, radius, cancellationToken, surfaceStations: query.Planetary)
+            .ConfigureAwait(false)).Markets;
 
         var oldest = _now() - TimeSpan.FromHours(query.MaxPriceAge);
         var merged = new List<MarketSnapshot>(fetched.Count);

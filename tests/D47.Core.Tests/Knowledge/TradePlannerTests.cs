@@ -37,7 +37,8 @@ public class TradePlannerTests
         int hold = 100,
         bool loop = false,
         double hopDistance = 15,
-        int maxJumps = 1)
+        int maxJumps = 1,
+        bool planetary = false)
     {
         Assert.True(TradeQuery.TryParse(
             "Origin System",
@@ -51,6 +52,7 @@ public class TradePlannerTests
             false,
             720,
             loop,
+            planetary,
             out var query,
             out _));
 
@@ -86,6 +88,26 @@ public class TradePlannerTests
         // Priced at what this station would have paid, so the Commander can see what flying past it is worth
         // rather than being told to fly past it.
         Assert.Equal(1_200, held.UnitPrice);
+    }
+
+    [Fact]
+    public void ASurfaceMarketIsLeftOutUnlessAskedForByName()
+    {
+        var markets = new[]
+        {
+            Market("Origin", 0, ("Gold", 1_000, 0, 1_000, 0)),
+            Market("Outpost", 10, ("Gold", 0, 5_000, 0, 1_000)) with { Type = "Planetary Outpost" },
+        };
+
+        var groundless = TradePlanner.Plan(Query(hops: 1), markets);
+
+        Assert.NotNull(groundless);
+        Assert.DoesNotContain(groundless.Stops, stop => stop.Station == "Outpost");
+
+        var withGround = TradePlanner.Plan(Query(hops: 1, planetary: true), markets);
+
+        Assert.NotNull(withGround);
+        Assert.Contains(withGround.Stops, stop => stop.Station == "Outpost");
     }
 
     [Fact]
@@ -198,7 +220,8 @@ public class TradePlannerTests
         };
 
         Assert.True(TradeQuery.TryParse(
-            "Origin System", "Origin", 1_000_000, 100, 1, 1, 15, 1_000, true, 720, false, out var query, out _));
+            "Origin System", "Origin", 1_000_000, 100, 1, 1, 15, 1_000, true, 720, false, false,
+            out var query, out _));
 
         var route = TradePlanner.Plan(query, markets);
 

@@ -60,10 +60,11 @@ public class SpanshTradePlanServiceTests
         ]}
         """;
 
-    private static TradeQuery Query(long capital = 50_000_000, int hold = 384)
+    private static TradeQuery Query(long capital = 50_000_000, int hold = 384, bool planetary = false)
     {
         Assert.True(TradeQuery.TryParse(
-            "Sol", "Abraham Lincoln", capital, hold, 1, 2, 20, 1_000, false, 720, false, out var query, out _));
+            "Sol", "Abraham Lincoln", capital, hold, 1, 2, 20, 1_000, false, 720, false, planetary,
+            out var query, out _));
 
         return query;
     }
@@ -86,6 +87,17 @@ public class SpanshTradePlanServiceTests
         // A short page is the last page.
         Assert.Single(recorder.Requests);
         Assert.Contains("\"reference_system\":\"Sol\"", recorder.Requests[0], StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task PlanetaryAsksTheIndexToIncludeSurfaceStations()
+    {
+        var recorder = new Recorder((HttpStatusCode.OK, TwoMarkets));
+        using var service = Service(recorder);
+
+        await service.PlanAsync(Query(planetary: true), TestContext.Current.CancellationToken);
+
+        Assert.Contains("\"Planetary Outpost\"", recorder.Requests[0], StringComparison.Ordinal);
     }
 
     [Fact]

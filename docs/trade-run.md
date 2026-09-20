@@ -143,6 +143,13 @@ commodity search spells it — and it is the same idea the rest of the market an
 A carrier's market is player-set and can be a joke, and the carrier itself may be a hundred light
 years away by the time you arrive. Treat any leg that names one with more suspicion than the rest.
 
+### Limpets and planetary ports
+
+The hold Directive 47 plans with is your cargo capacity minus any limpets already aboard — a trade
+route never sells them, so they never count as freight. `planetary` brings surface stations —
+planetary ports, outposts and settlements — into the search; it is off by default, because landing
+is a different approach than docking and nobody should be routed into one without asking for it.
+
 The tool schema and the service it calls are on
 [Route planning](capabilities/routes.html) — one page for all three planners, because that part
 really is shared.

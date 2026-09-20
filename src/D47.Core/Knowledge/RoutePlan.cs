@@ -378,6 +378,9 @@ public sealed record TradeQuery
     /// <summary>How stale a reported price may be, in hours.</summary>
     public int MaxPriceAge { get; init; } = 720;
 
+    /// <summary>Whether the sweep includes surface stations — planetary ports, outposts, settlements (#310).</summary>
+    public bool Planetary { get; init; }
+
     public static bool TryParse(
         string? system,
         string? station,
@@ -390,6 +393,7 @@ public sealed record TradeQuery
         bool largePadOnly,
         int? maxPriceAge,
         bool? loop,
+        bool? planetary,
         out TradeQuery query,
         out string failure)
     {
@@ -440,6 +444,7 @@ public sealed record TradeQuery
             LargePadOnly = largePadOnly,
             MaxPriceAge = Math.Clamp(maxPriceAge ?? 720, 1, 8_760),
             Loop = loop ?? false,
+            Planetary = planetary ?? false,
         };
 
         return true;

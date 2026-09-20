@@ -595,7 +595,7 @@ public class ArdentCommodityRequestTests
 
         Assert.True(
             TradeQuery.TryParse(
-                "Ega", "Fisher Terminal", 50_000_000, 384, 1, 2, 20, 1_000, false, 720, false,
+                "Ega", "Fisher Terminal", 50_000_000, 384, 1, 2, 20, 1_000, false, 720, false, false,
                 out var trade, out var why),
             why);
 

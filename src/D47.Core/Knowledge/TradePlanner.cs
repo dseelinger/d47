@@ -62,6 +62,11 @@ public static class TradePlanner
                 continue;
             }
 
+            if (!query.Planetary && market.IsSurface)
+            {
+                continue;
+            }
+
             if (market.DistanceToArrival is { } arrival && arrival > query.MaxSystemDistance)
             {
                 continue;

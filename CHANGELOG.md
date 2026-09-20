@@ -211,6 +211,12 @@ where the laden jump range is not given and cannot be worked out from the flown 
 for it instead of guessing. Each stop after the first now says how many jumps it took, and the
 "Longest leg (ly)" box on the Trade run card is now "Most jumps per leg".
 
+`plot_trade_route`'s default hold is now the ship's cargo capacity minus any limpets already
+aboard, since a trade run never sells them. A new `planetary` switch, off by default, brings
+surface stations into the search; the reply now always says the hold the route was planned with.
+An `avoid_permit_systems` switch was planned alongside it, but the station index carries no permit
+flag for a market or its system, so it was left out.
+
 ## 0.168.0 — Controls take the HUD dress
 
 Buttons, toggle switches and the transcript tabs now draw d47's own look rather than the

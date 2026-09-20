@@ -320,7 +320,7 @@ A chain of buy-and-sell runs starting from the station you are docked at — **w
 over markets d47 fetched, rather than handed to somebody else's planner.
 
 ```json
-{"type":"object","properties":{"capital":{"type":"integer","description":"How many credits to trade with. Required; never inferred."},"cargo_capacity":{"type":"integer","description":"The hold\u0027s size in tonnes. Defaults to this ship\u0027s, from the journal."},"hops":{"type":"integer","description":"How many legs to plan, 1 to 10. Defaults to 5."},"jump_range":{"type":"number","description":"This ship\u0027s laden jump range in light years \u2014 full tank, full hold. Defaults to this ship\u0027s, worked out from the journal."},"large_pad":{"type":"boolean","description":"Only stations with a large landing pad."},"loop":{"type":"boolean","description":"End back where it started. Defaults to false."},"max_jumps":{"type":"integer","description":"The most jumps a single leg may take, 1 to 10. Defaults to 2."},"max_price_age_hours":{"type":"integer","description":"How stale a reported price may be, in hours. Defaults to 720, one month."},"max_station_distance":{"type":"number","description":"How far in-system a station may sit, in light seconds. Defaults to 1,000."}},"required":["capital"],"additionalProperties":false}
+{"type":"object","properties":{"capital":{"type":"integer","description":"How many credits to trade with. Required; never inferred."},"cargo_capacity":{"type":"integer","description":"The hold\u0027s size in tonnes. Defaults to this ship\u0027s, from the journal."},"hops":{"type":"integer","description":"How many legs to plan, 1 to 10. Defaults to 5."},"jump_range":{"type":"number","description":"This ship\u0027s laden jump range in light years \u2014 full tank, full hold. Defaults to this ship\u0027s, worked out from the journal."},"large_pad":{"type":"boolean","description":"Only stations with a large landing pad."},"loop":{"type":"boolean","description":"End back where it started. Defaults to false."},"max_jumps":{"type":"integer","description":"The most jumps a single leg may take, 1 to 10. Defaults to 2."},"max_price_age_hours":{"type":"integer","description":"How stale a reported price may be, in hours. Defaults to 720, one month."},"max_station_distance":{"type":"number","description":"How far in-system a station may sit, in light seconds. Defaults to 1,000."},"planetary":{"type":"boolean","description":"Also consider planetary ports, outposts and settlements, not just orbital stations. Defaults to false."}},"required":["capital"],"additionalProperties":false}
 ```
 
 It cannot be planned from supercruise. The whole plan is anchored on the market you are standing
@@ -344,8 +344,8 @@ That is why the plan reads as a sequence of **stops** rather than of legs — se
 buy that, go:
 
 ```text
-3 hops from Abraham Lincoln, 412,800 credits on 50,000,000 over 44 light years, up to 2 jumps a
-leg at 60 light years.
+3 hops from Abraham Lincoln, 412,800 credits on 50,000,000 in a 384 tonne hold, over 44 light
+years, up to 2 jumps a leg at 60 light years.
 
 Abraham Lincoln in Sol
   buy 384 × Gold at 9,400 — 3,609,600 cr
@@ -360,11 +360,27 @@ A `keep` line always says what declining to sell here is worth. A Commander who 
 they are flying past a buyer will sell there, and then the plan they were given stops being the
 plan.
 
+The hold it planned with is always in that opening line, because the figure it planned with and the
+figure on the ship do not always match — see limpets, below.
+
 ##### Round trips
 
 `loop` ends the route back at the station it started from, so an evening's trading finishes at your
 own base rather than four systems away. A shorter loop that pays better than the long one you asked
 for is a better answer, not a shortfall, so it is taken.
+
+##### Limpets never sell here
+
+`cargo_capacity` defaults to the hold's size minus the limpets aboard, read from `Cargo.json`. A
+trade route never sells limpets, so counting them as freight would plan for tonnage that is never
+for sale. Say `cargo_capacity` yourself and it is taken exactly as given, limpets or no.
+
+##### Planetary ports
+
+`planetary` also considers surface stations — planetary ports, outposts and settlements — rather
+than orbital stations alone. Off by default, because a leg that lands is a leg with a different
+approach than a leg that docks, and a Commander who did not ask for that should not be routed
+through it.
 
 ##### What it will not promise
 

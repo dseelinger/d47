@@ -351,6 +351,49 @@ public class RouteCapabilityTests
         Assert.Equal("Abraham Lincoln", trade.LastTrade?.Station);
     }
 
+    /// <summary>A trade route never sells limpets, so they come off the default hold with no switch (#310).</summary>
+    [Fact]
+    public async Task TheDefaultHoldLeavesRoomForTheLimpetsAlreadyAboard()
+    {
+        using var install = new TempInstall();
+
+        File.WriteAllLines(
+            Path.Combine(install.Root, "Journal.2026-09-20T000000.01.log"),
+            [
+                """{"timestamp":"2026-09-20T00:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""",
+                """{"timestamp":"2026-09-20T00:00:01Z","event":"Loadout","Ship":"anaconda","MaxJumpRange":52.31,"CargoCapacity":256}""",
+                """{"timestamp":"2026-09-20T00:00:02Z","event":"Docked","StarSystem":"Sol","StationName":"Abraham Lincoln"}""",
+            ]);
+
+        File.WriteAllText(
+            Path.Combine(install.Root, D47.Core.Journal.CargoManifestReader.ManifestFile),
+            """{ "timestamp":"2026-09-20T00:00:03Z", "event":"Cargo", "Vessel":"Ship", "Count":8, "Inventory":[ { "Name":"drones", "Name_Localised":"Limpet", "Count":8, "Stolen":0 } ] }""");
+
+        var gameState = new GameStateStore();
+        new JournalSpine(install.Root, gameState, NullLoggerFactory.Instance).Poll();
+
+        var routes = new FakeRoutes();
+        var trade = new FakeTrade();
+        var settings = TestSurface.For(install).Settings;
+        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
+
+        var registry = CapabilityRegistry.Build(
+        [
+            RouteCapability.Create(routes, trade, () => gameState.Active, settings),
+        ]);
+
+        var result = await registry.InvokeAsync(
+            "plot_trade_route",
+            Args(("capital", "50000000"), ("jump_range", "30")),
+            TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsError);
+
+        // 256 tonnes of racks, 8 limpets aboard: 248 tonnes to trade with.
+        Assert.Equal(248, trade.LastTrade?.CargoCapacity);
+        Assert.Contains("248 tonne hold", result.Content, StringComparison.Ordinal);
+    }
+
     [Fact]
     public async Task ATradeRouteWithNoKnownJumpRangeAsksForOneRatherThanSendingAnything()
     {

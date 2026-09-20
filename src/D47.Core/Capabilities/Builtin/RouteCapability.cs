@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using D47.Core.Callouts;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Ships;
@@ -224,6 +225,14 @@ public static class RouteCapability
                         Type = ToolParameterType.Integer,
                         Description =
                             "How stale a reported price may be, in hours. Defaults to 720, one month.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "planetary",
+                        Type = ToolParameterType.Boolean,
+                        Description =
+                            "Also consider planetary ports, outposts and settlements, not just orbital "
+                            + "stations. Defaults to false.",
                     },
                 ],
                 Handler = (arguments, cancellationToken) =>
@@ -544,6 +553,11 @@ public static class RouteCapability
         var ladenRange = Number(arguments, "jump_range")
                           ?? ShipGauges.LadenRange(active?.Ship ?? ShipLoadout.Unknown);
 
+        // Limpets never sell on a trade route, so they come off the hold with no switch — read from
+        // Cargo.json rather than counted as freight.
+        var limpets = active?.Hold.Of(LimpetCallout.Limpet) ?? 0;
+        var defaultCargo = active?.Ship.CargoCapacity is { } shipCapacity ? shipCapacity - limpets : (int?)null;
+
         if (!TradeQuery.TryParse(
                 active?.Location.StarSystem,
                 active?.Location is { Docked: true, StationName: { } station } ? station : null,
@@ -551,7 +565,7 @@ public static class RouteCapability
 
                 // The hold is the ship's, not the Commander's, and the plot means nothing without it — so it
                 // comes from the journal where the balance deliberately does not.
-                arguments.TryGetInt32("cargo_capacity", out var cargo) ? cargo : active?.Ship.CargoCapacity,
+                arguments.TryGetInt32("cargo_capacity", out var cargo) ? cargo : defaultCargo,
                 arguments.TryGetInt32("hops", out var hops) ? hops : null,
                 arguments.TryGetInt32("max_jumps", out var maxJumps) ? maxJumps : null,
                 ladenRange,
@@ -559,6 +573,7 @@ public static class RouteCapability
                 arguments.TryGetBoolean("large_pad", out var largePad) && largePad,
                 arguments.TryGetInt32("max_price_age_hours", out var age) ? age : null,
                 Flag(arguments, "loop"),
+                Flag(arguments, "planetary"),
                 out var query,
                 out var failure))
         {
@@ -612,7 +627,8 @@ public static class RouteCapability
             $"{legs} hop{(legs == 1 ? "" : "s")} from {query.Station}"
             + $"{(route.Loop ? " and back" : "")}, "
             + $"{route.TotalProfit.ToString("N0", CultureInfo.InvariantCulture)} credits on "
-            + $"{query.Capital.ToString("N0", CultureInfo.InvariantCulture)} over "
+            + $"{query.Capital.ToString("N0", CultureInfo.InvariantCulture)} in a "
+            + $"{query.CargoCapacity} tonne hold, over "
             + $"{route.TotalDistance.ToString("N0", CultureInfo.InvariantCulture)} light years, "
             + $"up to {query.MaxJumps} jump{(query.MaxJumps == 1 ? "" : "s")} a leg at "
             + $"{query.MaxHopDistance.ToString("N0", CultureInfo.InvariantCulture)} light years.");
