@@ -18,6 +18,9 @@ The Suits page now lists every suit and weapon you own, not only the one Elite c
 you wearing or carrying. An owned but unworn item shows its recorded grade and when it was last
 seen, and opening its Fitted section says the same rather than "I cannot say".
 
+The Suits page now draws cards, like the fleet page: kind and grade, where it is, and how many
+slots are planned, each its own line, with a badge for the one you are wearing.
+
 Checklist grade and modification lines now read the same way: a step on a suit or weapon you own
 but are not wearing now reads Open with the recorded grade and when it was last seen, instead of
 saying nothing at all.

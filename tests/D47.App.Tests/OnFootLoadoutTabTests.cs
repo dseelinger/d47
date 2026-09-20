@@ -1,3 +1,4 @@
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -91,8 +92,9 @@ public class OnFootLoadoutTabTests
 
     private static Button Row(PanelView panel, string label) =>
         panel.GetVisualDescendants().OfType<Button>()
-            .First(button => button.GetVisualDescendants().OfType<TextBlock>()
-                .Any(text => text.Text == label));
+            .First(button => AutomationProperties.GetName(button) == label
+                             || button.GetVisualDescendants().OfType<TextBlock>()
+                                 .Any(text => text.Text == label));
 
     /// <summary>
     /// Three roots of one tab rather than three tabs: the game separates ship and on-foot hard and so
@@ -125,8 +127,9 @@ public class OnFootLoadoutTabTests
 
         var shown = Text(surface.Panel);
 
-        Assert.Contains("Maverick Suit", shown);
-        Assert.Contains(shown, line => line.Contains("on you, grade 3", StringComparison.Ordinal));
+        Assert.Contains("MAVERICK SUIT", shown);
+        Assert.Contains(shown, line => line.Contains("Suit, grade 3", StringComparison.Ordinal));
+        Assert.Contains("on you", shown);
 
         // And the say-line, on this level as on every other.
         Assert.Contains(shown, line => line.StartsWith("Say:", StringComparison.Ordinal));

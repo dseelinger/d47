@@ -78,22 +78,60 @@ public sealed class OnFootMode(OnFootPlanService kit, Func<CommanderGameState?> 
             ? "take my Maverick to grade 5"
             : "plan night vision on my suit";
 
+    public bool Cards => true;
+
     public IReadOnlyList<LoadoutRow> Items() =>
     [
-        .. kit.Kit().Select(entry =>
+        .. kit.Kit().Select(entry => new LoadoutRow(
+            Key(entry),
+            entry.Equipment,
+            entry.Equipment,
+            Aside(entry),
+            entry.Planned > 0)
         {
-            var planned = entry.Planned;
-
-            return new LoadoutRow(
-                Key(entry),
-                entry.Equipment,
-                entry.Equipment,
-                planned > 0
-                    ? $"{entry.Where()} · {planned.ToString(CultureInfo.InvariantCulture)} planned"
-                    : entry.Where(),
-                planned > 0);
+            Standing = entry.IsCarried
+                ? LoadoutStanding.Active
+                : entry.IsOwned
+                    ? LoadoutStanding.Owned
+                    : LoadoutStanding.Wanted,
         }),
     ];
+
+    /// <summary>A suit or weapon's card lines: kind and grade, where it is, and how its plans stand —
+    /// each its own line, as the fleet's cards are (#297).</summary>
+    private static string Aside(KitEntry entry) =>
+        Lines(KindLine(entry), WhereLine(entry), PlannedLine(entry.Planned));
+
+    private static string KindLine(KitEntry entry) =>
+        entry.Grade is { } grade
+            ? $"{Kind(entry)}, grade {grade.ToString(CultureInfo.InvariantCulture)}"
+            : Kind(entry);
+
+    private static string Kind(KitEntry entry) => entry.IsWeapon ? "Weapon" : "Suit";
+
+    private static string WhereLine(KitEntry entry)
+    {
+        if (!entry.IsOwned)
+        {
+            return "not bought yet";
+        }
+
+        if (entry.IsCarried)
+        {
+            return "on you";
+        }
+
+        return entry.SeenAt is { } seen
+            ? $"last seen {seen.UtcDateTime.ToString("d MMM yyyy", CultureInfo.InvariantCulture)}"
+            : "not on you now";
+    }
+
+    private static string? PlannedLine(int planned) =>
+        planned > 0 ? $"{planned.ToString(CultureInfo.InvariantCulture)} planned" : null;
+
+    /// <summary>Every non-empty line, joined for <see cref="LoadoutPages.Card"/> to draw one apiece.</summary>
+    private static string Lines(params string?[] lines) =>
+        string.Join('\n', lines.Where(line => line is { Length: > 0 }));
 
     /// <summary>Something the Commander does not own.</summary>
     public void New(PanelPrompts prompts, Action done) =>
