@@ -1,3 +1,5 @@
+using D47.Core.Journal;
+
 namespace D47.Core.Knowledge;
 
 /// <summary>One commodity worth buying, and the station at the destination that pays for it.</summary>
@@ -52,6 +54,31 @@ public static class BestCargo
                 .ThenBy(pick => pick.Commodity, StringComparer.Ordinal)
                 .Take(Picks),
         ];
+    }
+
+    /// <summary>
+    /// The picks as prose, shared by Trading Mode (#312) and <c>best_commodities_for</c> (#313) so the
+    /// same result reads the same sentence either way.
+    /// </summary>
+    public static string Describe(string destination, BestCargoAnswer answer)
+    {
+        if (answer.Picks.Count == 0)
+        {
+            return $"Nothing here sells at a profit in {destination}.";
+        }
+
+        var named = answer.Picks.Select(pick =>
+            $"{pick.Commodity} to {pick.Station}, {Credits(pick.ProfitPerTonne)} a tonne, "
+            + $"{Credits(pick.Total)} for {pick.Tonnes} tonnes");
+
+        return $"Best cargo for {destination}: {string.Join("; then ", named)}.";
+    }
+
+    private static string Credits(long amount)
+    {
+        var banded = SpokenCredits.Band(amount);
+
+        return amount < 1_000_000 ? banded + " Cr" : banded;
     }
 
     private static CargoPick? Best(MarketQuote offer, IReadOnlyList<MarketSnapshot> destination, int hold)

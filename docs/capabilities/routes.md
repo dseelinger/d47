@@ -471,6 +471,25 @@ minute apart.
 
 For scale: the planner this replaced took **forty-eight seconds** to answer four hops.
 
+#### `best_commodities_for`
+
+"Best commodities to buy for Sol" says what to buy at the station you are docked at to sell in
+Sol — the same answer [Trading Mode](callouts.md#trading-mode) gives on its own once a route is
+plotted, asked about any system.
+
+```json
+{"type":"object","properties":{"system":{"type":"string","description":"The system to sell in."}},"required":["system"],"additionalProperties":false}
+```
+
+It needs the market you are docked at, so it answers nothing from supercruise. The hold it plans
+with is the cargo capacity minus the limpets aboard, the same default a trade route uses, and it
+reads the same saved trade filters (#311) — the price age, the pad size, planetary ports, station
+distance. Where nothing at the destination pays more than you bought for, it says so:
+
+```text
+Nothing here sells at a profit in Sothis.
+```
+
 ### Notes for anyone reading the code
 
 The route endpoints have a property the search endpoints do not: **they echo back the parameters

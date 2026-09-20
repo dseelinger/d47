@@ -118,9 +118,17 @@ public class RouteCapabilityTests
             string commodity,
             CancellationToken cancellationToken) => Task.FromResult<StationQuote?>(null);
 
+        public BestCargoSearch? LastBestCargo { get; private set; }
+
+        public BestCargoAnswer? BestCargo { get; set; }
+
         public Task<BestCargoAnswer?> BestCargoAsync(
             BestCargoSearch search,
-            CancellationToken cancellationToken) => Task.FromResult<BestCargoAnswer?>(null);
+            CancellationToken cancellationToken)
+        {
+            LastBestCargo = search;
+            return Task.FromResult(BestCargo);
+        }
     }
 
     private static void Apply(GameStateStore gameState, string json)
@@ -527,6 +535,64 @@ public class RouteCapabilityTests
         // that can be asked in flight.
         Assert.True(result.IsError);
         Assert.Contains("not docked", result.Content, StringComparison.Ordinal);
+    }
+
+    /// <summary>Asking the same question Trading Mode answers on its own, about any system (#313).</summary>
+    [Fact]
+    public async Task BestCommoditiesForSaysWhatToBuyHereForTheNamedSystem()
+    {
+        using var install = new TempInstall();
+        var (registry, _, trade, _) = Build(install);
+
+        trade.BestCargo = new BestCargoAnswer([new CargoPick("Gold", "Newholm Station", 8_204, 280)], 384);
+
+        var result = await registry.InvokeAsync(
+            "best_commodities_for",
+            Args(("system", "Sothis")),
+            TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsError);
+        Assert.Equal(
+            "Best cargo for Sothis: Gold to Newholm Station, 8,204 Cr a tonne, 2.3 million for 280 tonnes.",
+            result.Content);
+
+        Assert.Equal("Sol", trade.LastBestCargo?.System);
+        Assert.Equal("Abraham Lincoln", trade.LastBestCargo?.Station);
+        Assert.Equal("Sothis", trade.LastBestCargo?.Destination);
+        Assert.Equal(384, trade.LastBestCargo?.Hold);
+    }
+
+    [Fact]
+    public async Task BestCommoditiesForNeedsTheMarketYouAreDockedAt()
+    {
+        using var install = new TempInstall();
+        var (registry, _, trade, _) = Build(install, docked: false);
+
+        var result = await registry.InvokeAsync(
+            "best_commodities_for",
+            Args(("system", "Sothis")),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsError);
+        Assert.Contains("docked", result.Content, StringComparison.Ordinal);
+        Assert.Null(trade.LastBestCargo);
+    }
+
+    [Fact]
+    public async Task BestCommoditiesForSaysWhenNothingPays()
+    {
+        using var install = new TempInstall();
+        var (registry, _, trade, _) = Build(install);
+
+        trade.BestCargo = new BestCargoAnswer([], 384);
+
+        var result = await registry.InvokeAsync(
+            "best_commodities_for",
+            Args(("system", "Sothis")),
+            TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsError);
+        Assert.Equal("Nothing here sells at a profit in Sothis.", result.Content);
         Assert.Null(trade.LastTrade);
     }
 

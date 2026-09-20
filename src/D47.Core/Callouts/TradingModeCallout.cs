@@ -161,31 +161,11 @@ public sealed class TradingModeCallout(ILogger<TradingModeCallout> logger) : ICa
         _found.Enqueue(new Found(search, answer));
     }
 
-    private static Announcement Announce(string destination, BestCargoAnswer answer)
-    {
-        var key = $"trading-mode.{destination}";
-
-        if (answer.Picks.Count == 0)
-        {
-            return new Announcement(key, $"Nothing here sells at a profit in {destination}.");
-        }
-
-        var named = answer.Picks.Select(pick =>
-            $"{pick.Commodity} to {pick.Station}, {Credits(pick.ProfitPerTonne)} a tonne, "
-            + $"{Credits(pick.Total)} for {pick.Tonnes} tonnes");
-
-        return new Announcement(key, $"Best cargo for {destination}: {string.Join("; then ", named)}.");
-    }
+    private static Announcement Announce(string destination, BestCargoAnswer answer) =>
+        new($"trading-mode.{destination}", BestCargo.Describe(destination, answer));
 
     private static (string Station, string Destination) Pair(BestCargoSearch search) =>
         (search.Station, search.Destination);
-
-    private static string Credits(long amount)
-    {
-        var banded = SpokenCredits.Band(amount);
-
-        return amount < 1_000_000 ? banded + " Cr" : banded;
-    }
 
     /// <summary>A finished lookup. A null <paramref name="Answer"/> is one that could not be answered.</summary>
     private readonly record struct Found(BestCargoSearch Search, BestCargoAnswer? Answer);

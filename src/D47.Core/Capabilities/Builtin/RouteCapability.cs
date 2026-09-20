@@ -247,6 +247,26 @@ public static class RouteCapability
             },
             new ToolDefinition
             {
+                Name = "best_commodities_for",
+                Description =
+                    "What to buy at the station the Commander is docked at to sell in another system — "
+                    + "the same answer Trading Mode gives automatically once a route is plotted, asked "
+                    + "about any system.",
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "system",
+                        Type = ToolParameterType.String,
+                        Description = "The system to sell in.",
+                        Required = true,
+                    },
+                ],
+                Handler = (arguments, cancellationToken) =>
+                    BestCommoditiesForAsync(trade, commander, settings, arguments, cancellationToken),
+            },
+            new ToolDefinition
+            {
                 Name = "plot_next_stop",
                 Description =
                     "Plot the next stop on a stored route plan — the Neutron Plotter's waypoints, a "
@@ -622,6 +642,65 @@ public static class RouteCapability
                 query.System);
 
             return ToolResult.Ok(Describe(route, query));
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            return ToolResult.Error(ex.Message);
+        }
+    }
+
+    private static async Task<ToolResult> BestCommoditiesForAsync(
+        ITradePlanService? trade,
+        Func<CommanderGameState?> commander,
+        Configuration.SettingsService settings,
+        ToolArguments arguments,
+        CancellationToken cancellationToken)
+    {
+        if (trade is null || !settings.Current.Knowledge.GalaxySearch)
+        {
+            return ToolResult.Error(Unavailable);
+        }
+
+        var active = commander();
+
+        if (active?.Location is not
+            { Docked: true, StarSystem: { Length: > 0 } system, StationName: { Length: > 0 } station })
+        {
+            return ToolResult.Error(
+                "This needs the market the Commander is docked at, and they are not docked anywhere "
+                + "right now.");
+        }
+
+        arguments.TryGetString("system", out var destination);
+
+        // The saved trade filters (#311), the same ones a trade route falls back on.
+        var saved = settings.Current.Trade;
+
+        var search = new BestCargoSearch
+        {
+            System = system,
+            Station = station,
+            Destination = destination!.Trim(),
+
+            // Limpets never sell, so they come off the hold with no switch, as a trade route's own default
+            // does (#310).
+            Hold = Math.Max(0, (active.Ship.CargoCapacity ?? 0) - active.Hold.Of(LimpetCallout.Limpet)),
+            MaxPriceAge = saved.MaxPriceAgeHours,
+            LargePadOnly = saved.LargePadOnly,
+            Planetary = saved.Planetary,
+            MaxStationDistance = saved.MaxStationDistance,
+        };
+
+        try
+        {
+            var answer = await trade.BestCargoAsync(search, cancellationToken).ConfigureAwait(false);
+
+            return answer is null
+                ? ToolResult.Ok(
+                    $"I can't see the commodity market at {station}. Nobody has reported its prices, and "
+                    + "the Commander has not opened it while I was watching — dock and open the commodity "
+                    + "board once and I will have it.")
+                : ToolResult.Ok(BestCargo.Describe(search.Destination, answer));
         }
         catch (GalaxyUnavailableException ex)
         {

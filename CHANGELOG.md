@@ -233,6 +233,11 @@ profit. It uses the filters saved on the Trade route page, stays quiet below a h
 tonnes, and speaks once for each pair of station and destination. Your credit balance is still
 never read, so the ranking is what you could carry rather than what you could afford.
 
+"Best commodities to buy for Sol" now asks the same question Trading Mode answers on its own,
+about any system: what to buy at the station you are docked at to sell there. It needs the market
+you are docked at, uses the same saved trade filters and cargo default, and speaks the same
+sentence Trading Mode does.
+
 ## 0.168.0 — Controls take the HUD dress
 
 Buttons, toggle switches and the transcript tabs now draw d47's own look rather than the
