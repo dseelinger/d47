@@ -88,12 +88,22 @@ behind it.
 |---|---|---|
 | **Credits to trade with** | Your working capital | **Required** — never inferred |
 | **Hops** | How many buy-and-sell legs | 5 |
-| **Longest leg (ly)** | The furthest one hop may reach | 40 |
+| **Most jumps per leg** | The furthest one hop may reach, in jumps | 2 |
 | **End where it started** | Whether the circuit closes | Off |
 | **Large pads only** | Skip stations your ship cannot land at | Off |
 
 It plans **from the station you are docked at**. There is no origin box, because a trade run that
 starts somewhere you are not is a trade run that starts with an empty leg.
+
+### Legs are measured in jumps, not light years
+
+A leg's reach is **most jumps per leg** times your ship's laden jump range — full tank, full hold
+— worked out from the journal. Ask for a longer leg and you are asking for more jumps, not more
+light years; the light years it comes to are said back in the answer, because a Commander thinks in
+jumps and the plan still has to say what that means on the galaxy map.
+
+Where d47 cannot work out the laden range — no ship boarded yet, most often — it asks for it rather
+than guessing.
 
 ### Why the balance is typed every time
 

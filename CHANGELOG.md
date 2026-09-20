@@ -205,6 +205,12 @@ always counts everything planned.
 suits you've planned." instead of naming only the units and the plan count, so the answer says what
 it is counting.
 
+A trade run's leg limit is now a number of jumps rather than a light-year figure. `plot_trade_route`
+takes `max_jumps` (1 to 10, default 2) and an optional `jump_range` in place of `max_hop_distance`;
+where the laden jump range is not given and cannot be worked out from the flown ship, the tool asks
+for it instead of guessing. Each stop after the first now says how many jumps it took, and the
+"Longest leg (ly)" box on the Trade run card is now "Most jumps per leg".
+
 ## 0.168.0 — Controls take the HUD dress
 
 Buttons, toggle switches and the transcript tabs now draw d47's own look rather than the

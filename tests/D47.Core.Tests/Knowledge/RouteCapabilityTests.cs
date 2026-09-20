@@ -343,12 +343,30 @@ public class RouteCapabilityTests
 
         await registry.InvokeAsync(
             "plot_trade_route",
-            Args(("capital", "50000000")),
+            Args(("capital", "50000000"), ("jump_range", "30")),
             TestContext.Current.CancellationToken);
 
         // A property of the hull, and the plot means nothing without it.
         Assert.Equal(384, trade.LastTrade?.CargoCapacity);
         Assert.Equal("Abraham Lincoln", trade.LastTrade?.Station);
+    }
+
+    [Fact]
+    public async Task ATradeRouteWithNoKnownJumpRangeAsksForOneRatherThanSendingAnything()
+    {
+        // The fixture's ship carries no modules, so d47 cannot work out a laden range for it, and none is
+        // given here either.
+        using var install = new TempInstall();
+        var (registry, routes, trade, _) = Build(install);
+
+        var result = await registry.InvokeAsync(
+            "plot_trade_route",
+            Args(("capital", "50000000")),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsError);
+        Assert.Contains("laden jump range", result.Content, StringComparison.Ordinal);
+        Assert.Null(trade.LastTrade);
     }
 
     /// <summary>The staleness bound is spelled `max_price_age_hours` here as well as on the commodity search,
@@ -362,7 +380,7 @@ public class RouteCapabilityTests
 
         await registry.InvokeAsync(
             "plot_trade_route",
-            Args(("capital", "50000000"), ("max_price_age_hours", "48")),
+            Args(("capital", "50000000"), ("jump_range", "30"), ("max_price_age_hours", "48")),
             TestContext.Current.CancellationToken);
 
         Assert.Equal(48, trade.LastTrade?.MaxPriceAge);

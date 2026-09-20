@@ -156,6 +156,9 @@ public sealed record TradeStop(string System, string Station)
     /// <summary>Light years flown to get here from the previous stop.</summary>
     public double? Distance { get; init; }
 
+    /// <summary>Jumps to get here from the previous stop, 0 for the first.</summary>
+    public int Jumps { get; init; }
+
     /// <summary>Light seconds from this system's entry point to the pad.</summary>
     public double? DistanceToArrival { get; init; }
 
@@ -352,7 +355,14 @@ public sealed record TradeQuery
     /// <summary>How many stations to visit.</summary>
     public int MaxHops { get; init; } = 5;
 
-    public double MaxHopDistance { get; init; } = 40;
+    /// <summary>The most jumps a single leg may take, 1 to 10.</summary>
+    public int MaxJumps { get; init; } = 2;
+
+    /// <summary>The laden jump range a leg is measured against, in light years.</summary>
+    public double LadenRange { get; init; }
+
+    /// <summary>The sweep radius and the ceiling on one leg: <see cref="MaxJumps"/> times <see cref="LadenRange"/>.</summary>
+    public double MaxHopDistance => MaxJumps * LadenRange;
 
     /// <summary>
     /// Whether the route comes back to the station it started from, so an evening's trading ends at the
@@ -374,7 +384,8 @@ public sealed record TradeQuery
         long? capital,
         int? cargoCapacity,
         int? maxHops,
-        double? maxHopDistance,
+        int? maxJumps,
+        double? ladenRange,
         double? maxSystemDistance,
         bool largePadOnly,
         int? maxPriceAge,
@@ -409,6 +420,13 @@ public sealed record TradeQuery
             return false;
         }
 
+        if (ladenRange is not > 0)
+        {
+            failure = "I don't know this ship's laden jump range, so I can't tell how far a leg can reach. "
+                      + "Tell me the laden jump range in light years, full tank and full hold.";
+            return false;
+        }
+
         query = new TradeQuery
         {
             System = system.Trim(),
@@ -416,7 +434,8 @@ public sealed record TradeQuery
             Capital = Math.Clamp(capital.Value, 1, 1_000_000_000_000),
             CargoCapacity = Math.Clamp(cargoCapacity.Value, 1, 100_000),
             MaxHops = Math.Clamp(maxHops ?? 5, 1, 10),
-            MaxHopDistance = Math.Clamp(maxHopDistance ?? 40, 1, 500),
+            MaxJumps = Math.Clamp(maxJumps ?? 2, 1, 10),
+            LadenRange = ladenRange.Value,
             MaxSystemDistance = Math.Clamp(maxSystemDistance ?? 1_000, 1, 1_000_000),
             LargePadOnly = largePadOnly,
             MaxPriceAge = Math.Clamp(maxPriceAge ?? 720, 1, 8_760),

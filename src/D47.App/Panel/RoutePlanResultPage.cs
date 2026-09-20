@@ -203,6 +203,7 @@ public sealed class RoutePlanResultPage : UserControl
         if (stop.Distance is { } distance)
         {
             line.Children.Add(Muted($"{distance:N1} ly"));
+            line.Children.Add(Muted(stop.Jumps == 1 ? "1 jump" : $"{stop.Jumps} jumps"));
         }
 
         if (stop.DistanceToArrival is { } arrival)

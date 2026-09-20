@@ -131,6 +131,21 @@ public static class ShipGauges
             null);
     }
 
+    /// <summary>
+    /// The flown ship's laden jump range — full tank, full hold — or null where no drive can be found.
+    /// </summary>
+    public static double? LadenRange(ShipLoadout loadout)
+    {
+        if (!loadout.IsKnown)
+        {
+            return null;
+        }
+
+        var build = new ShipBuild(string.Empty, string.Empty, loadout.Type!);
+
+        return Read(build, loadout).Jump?.Worst;
+    }
+
     /// <summary>Every slot that has something in it or planned for it, as one list.</summary>
     private static List<Part> Parts(ShipBuild build, ShipLoadout? seen)
     {

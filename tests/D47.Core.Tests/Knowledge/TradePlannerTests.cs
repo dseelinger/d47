@@ -36,7 +36,8 @@ public class TradePlannerTests
         long capital = 1_000_000,
         int hold = 100,
         bool loop = false,
-        double hopDistance = 15)
+        double hopDistance = 15,
+        int maxJumps = 1)
     {
         Assert.True(TradeQuery.TryParse(
             "Origin System",
@@ -44,6 +45,7 @@ public class TradePlannerTests
             capital,
             hold,
             hops,
+            maxJumps,
             hopDistance,
             1_000,
             false,
@@ -196,12 +198,34 @@ public class TradePlannerTests
         };
 
         Assert.True(TradeQuery.TryParse(
-            "Origin System", "Origin", 1_000_000, 100, 1, 15, 1_000, true, 720, false, out var query, out _));
+            "Origin System", "Origin", 1_000_000, 100, 1, 1, 15, 1_000, true, 720, false, out var query, out _));
 
         var route = TradePlanner.Plan(query, markets);
 
         Assert.NotNull(route);
         Assert.Equal(400_000, route.TotalProfit);
+    }
+
+    [Fact]
+    public void ALegIsRefusedOrAcceptedByHowManyJumpsItTakes()
+    {
+        // Ten light years laden: a 25 ly leg is three jumps, never two.
+        var markets = new[]
+        {
+            Market("Origin", 0, ("Gold", 1_000, 0, 1_000, 0)),
+            Market("Far", 25, ("Gold", 0, 5_000, 0, 1_000)),
+        };
+
+        var tooFew = TradePlanner.Plan(Query(hops: 1, hopDistance: 10, maxJumps: 2), markets);
+
+        Assert.NotNull(tooFew);
+        Assert.Empty(tooFew.Stops);
+
+        var route = TradePlanner.Plan(Query(hops: 1, hopDistance: 10, maxJumps: 3), markets);
+
+        Assert.NotNull(route);
+        Assert.Equal(2, route.Stops.Count);
+        Assert.Equal(3, route.Stops[1].Jumps);
     }
 
     [Fact]

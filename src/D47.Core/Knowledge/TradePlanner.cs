@@ -255,6 +255,9 @@ public static class TradePlanner
         /// <summary>Light years flown to get here.</summary>
         public double Distance { get; init; }
 
+        /// <summary>Jumps to get here, <c>ceil(Distance / LadenRange)</c>.</summary>
+        public int Jumps { get; init; }
+
         /// <summary>Whether a lot leaving the previous station was cut short by demand.</summary>
         public bool Capped { get; init; }
 
@@ -451,6 +454,7 @@ public static class TradePlanner
             Held = [.. held],
             Bought = [.. bought],
             Distance = distance,
+            Jumps = (int)Math.Ceiling(distance / query.LadenRange),
             Capped = capped,
             Score = credits + Liquidation(board, destination, arrived),
         };
@@ -639,6 +643,7 @@ public static class TradePlanner
             stops.Add(new TradeStop(market.System, market.Station)
             {
                 Distance = index == 0 ? null : node.Distance,
+                Jumps = index == 0 ? 0 : node.Jumps,
                 DistanceToArrival = market.DistanceToArrival,
                 Sell = departure is null ? Final(board, node) : Name(board, departure.Sold),
                 Hold = departure is null

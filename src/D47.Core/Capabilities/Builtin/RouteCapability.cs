@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
+using D47.Core.Ships;
 
 namespace D47.Core.Capabilities.Builtin;
 
@@ -190,9 +191,17 @@ public static class RouteCapability
                     },
                     new ToolParameter
                     {
-                        Name = "max_hop_distance",
+                        Name = "max_jumps",
+                        Type = ToolParameterType.Integer,
+                        Description = "The most jumps a single leg may take, 1 to 10. Defaults to 2.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "jump_range",
                         Type = ToolParameterType.Number,
-                        Description = "The longest single leg, in light years. Defaults to 40.",
+                        Description =
+                            "This ship's laden jump range in light years — full tank, full hold. Defaults "
+                            + "to this ship's, worked out from the journal.",
                     },
                     new ToolParameter
                     {
@@ -532,6 +541,9 @@ public static class RouteCapability
 
         var active = commander();
 
+        var ladenRange = Number(arguments, "jump_range")
+                          ?? ShipGauges.LadenRange(active?.Ship ?? ShipLoadout.Unknown);
+
         if (!TradeQuery.TryParse(
                 active?.Location.StarSystem,
                 active?.Location is { Docked: true, StationName: { } station } ? station : null,
@@ -541,7 +553,8 @@ public static class RouteCapability
                 // comes from the journal where the balance deliberately does not.
                 arguments.TryGetInt32("cargo_capacity", out var cargo) ? cargo : active?.Ship.CargoCapacity,
                 arguments.TryGetInt32("hops", out var hops) ? hops : null,
-                Number(arguments, "max_hop_distance"),
+                arguments.TryGetInt32("max_jumps", out var maxJumps) ? maxJumps : null,
+                ladenRange,
                 Number(arguments, "max_station_distance"),
                 arguments.TryGetBoolean("large_pad", out var largePad) && largePad,
                 arguments.TryGetInt32("max_price_age_hours", out var age) ? age : null,
@@ -570,7 +583,8 @@ public static class RouteCapability
                 return ToolResult.Ok(
                     $"No trade run out of {query.Station} pays with {query.Capital:N0} credits and "
                     + $"{query.CargoCapacity} tonnes, across {route.MarketsConsidered} markets within "
-                    + $"{query.MaxHopDistance:N0} light years. More capital, a longer hop distance or a "
+                    + $"{query.MaxJumps} jump{(query.MaxJumps == 1 ? "" : "s")} a leg, "
+                    + $"{query.MaxHopDistance:N0} light years. More capital, more jumps a leg or a "
                     + "wider price age will find something.");
             }
 
@@ -599,7 +613,9 @@ public static class RouteCapability
             + $"{(route.Loop ? " and back" : "")}, "
             + $"{route.TotalProfit.ToString("N0", CultureInfo.InvariantCulture)} credits on "
             + $"{query.Capital.ToString("N0", CultureInfo.InvariantCulture)} over "
-            + $"{route.TotalDistance.ToString("N0", CultureInfo.InvariantCulture)} light years.");
+            + $"{route.TotalDistance.ToString("N0", CultureInfo.InvariantCulture)} light years, "
+            + $"up to {query.MaxJumps} jump{(query.MaxJumps == 1 ? "" : "s")} a leg at "
+            + $"{query.MaxHopDistance.ToString("N0", CultureInfo.InvariantCulture)} light years.");
 
         var capped = false;
 
@@ -610,7 +626,9 @@ public static class RouteCapability
 
             if (stop.Distance is { } distance)
             {
-                report.Append($" — {distance.ToString("N1", CultureInfo.InvariantCulture)} ly");
+                report.Append(
+                    $" — {distance.ToString("N1", CultureInfo.InvariantCulture)} ly, "
+                    + $"{stop.Jumps} jump{(stop.Jumps == 1 ? "" : "s")}");
             }
 
             if (stop.DistanceToArrival is { } arrival)

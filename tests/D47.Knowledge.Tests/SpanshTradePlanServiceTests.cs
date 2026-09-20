@@ -63,7 +63,7 @@ public class SpanshTradePlanServiceTests
     private static TradeQuery Query(long capital = 50_000_000, int hold = 384)
     {
         Assert.True(TradeQuery.TryParse(
-            "Sol", "Abraham Lincoln", capital, hold, 1, 40, 1_000, false, 720, false, out var query, out _));
+            "Sol", "Abraham Lincoln", capital, hold, 1, 2, 20, 1_000, false, 720, false, out var query, out _));
 
         return query;
     }

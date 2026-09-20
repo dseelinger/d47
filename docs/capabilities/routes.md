@@ -320,12 +320,19 @@ A chain of buy-and-sell runs starting from the station you are docked at — **w
 over markets d47 fetched, rather than handed to somebody else's planner.
 
 ```json
-{"type":"object","properties":{"capital":{"type":"integer","description":"How many credits to trade with. Required; never inferred."},"cargo_capacity":{"type":"integer","description":"The hold\u0027s size in tonnes. Defaults to this ship\u0027s, from the journal."},"hops":{"type":"integer","description":"How many legs to plan, 1 to 10. Defaults to 5."},"large_pad":{"type":"boolean","description":"Only stations with a large landing pad."},"loop":{"type":"boolean","description":"End back where it started. Defaults to false."},"max_hop_distance":{"type":"number","description":"The longest single leg, in light years. Defaults to 40."},"max_price_age_hours":{"type":"integer","description":"How stale a reported price may be, in hours. Defaults to 720, one month."},"max_station_distance":{"type":"number","description":"How far in-system a station may sit, in light seconds. Defaults to 1,000."}},"required":["capital"],"additionalProperties":false}
+{"type":"object","properties":{"capital":{"type":"integer","description":"How many credits to trade with. Required; never inferred."},"cargo_capacity":{"type":"integer","description":"The hold\u0027s size in tonnes. Defaults to this ship\u0027s, from the journal."},"hops":{"type":"integer","description":"How many legs to plan, 1 to 10. Defaults to 5."},"jump_range":{"type":"number","description":"This ship\u0027s laden jump range in light years \u2014 full tank, full hold. Defaults to this ship\u0027s, worked out from the journal."},"large_pad":{"type":"boolean","description":"Only stations with a large landing pad."},"loop":{"type":"boolean","description":"End back where it started. Defaults to false."},"max_jumps":{"type":"integer","description":"The most jumps a single leg may take, 1 to 10. Defaults to 2."},"max_price_age_hours":{"type":"integer","description":"How stale a reported price may be, in hours. Defaults to 720, one month."},"max_station_distance":{"type":"number","description":"How far in-system a station may sit, in light seconds. Defaults to 1,000."}},"required":["capital"],"additionalProperties":false}
 ```
 
 It cannot be planned from supercruise. The whole plan is anchored on the market you are standing
 in, so there is no version of this question that can be asked in flight — and d47 says that rather
 than making a request it knows is pointless.
+
+##### How far one leg reaches
+
+A leg is limited by jumps, not light years: `max_jumps` times the laden jump range — full tank,
+full hold — is the ceiling on any one hop and the radius the sweep searches out to. The laden range comes
+from the ship you are flying unless `jump_range` says otherwise, and where neither is known d47 asks
+for it rather than sending a request it cannot size.
 
 ##### The hold does not have to be emptied
 
@@ -337,13 +344,14 @@ That is why the plan reads as a sequence of **stops** rather than of legs — se
 buy that, go:
 
 ```text
-3 hops from Abraham Lincoln, 412,800 credits on 50,000,000 over 44 light years.
+3 hops from Abraham Lincoln, 412,800 credits on 50,000,000 over 44 light years, up to 2 jumps a
+leg at 60 light years.
 
 Abraham Lincoln in Sol
   buy 384 × Gold at 9,400 — 3,609,600 cr
   your own prices, read 2026-08-19
 
-Diaz Chemical Holdings in RR Caeli — 20.9 ly, 120 ls in
+Diaz Chemical Holdings in RR Caeli — 20.9 ly, 1 jump, 120 ls in
   keep 384 × Gold — this station only pays 11,200
   prices reported 2026-08-18
 ```

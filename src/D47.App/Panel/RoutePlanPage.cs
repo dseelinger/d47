@@ -219,7 +219,7 @@ public sealed class RoutePlanPage : UserControl
         // which is when it still needs to be true.
         var capital = Field("Credits to trade with", "how much", FieldNeed.Required);
         var hops = Field("Hops", "5");
-        var maxHop = Field("Longest leg (ly)", "40");
+        var maxJumps = Field("Most jumps per leg", "2");
         var (loopRow, _, loop) = LabeledSwitch.Build("End where it started");
         var (largePadRow, _, largePad) = LabeledSwitch.Build("Large pads only");
 
@@ -229,7 +229,7 @@ public sealed class RoutePlanPage : UserControl
             Children =
             {
                 Row(capital, hops),
-                Row(maxHop, null),
+                Row(maxJumps, null),
                 loopRow,
                 largePadRow,
 
@@ -253,7 +253,7 @@ public sealed class RoutePlanPage : UserControl
             () => Arguments(
                 ("capital", capital.Text),
                 ("hops", hops.Text),
-                ("max_hop_distance", maxHop.Text),
+                ("max_jumps", maxJumps.Text),
                 ("loop", loop.IsChecked == true ? "true" : "false"),
                 ("large_pad", largePad.IsChecked == true ? "true" : "false")),
             () => string.IsNullOrWhiteSpace(capital.Text)
