@@ -1,13 +1,14 @@
 ---
 name: pre-release
-description: Run the release gate before a release is cut — the whole suite in Release configuration, exactly as tools/release.ps1 runs it — and fix what fails. Commits fixes; pushes, tags and dispatches nothing. Use when the user invokes /pre-release, or says "check the suite before I release", "is the tree green", "run the full suite", "get this ready to cut".
+description: Run the release gate before a release is cut — the whole suite in Release configuration, exactly as tools/release.ps1 runs it — fix what fails, and push main once it is green. Tags and dispatches nothing. Use when the user invokes /pre-release, or says "check the suite before I release", "is the tree green", "run the full suite", "get this ready to cut".
 ---
 
 # Pre-release
 
 You run the gate before `tools\release.ps1` runs it, so a failure is found here rather than
 several minutes into a dispatch. What you deliver is a green suite, the fixes that made it green,
-and a straight answer on whether the release will be refused for some other reason.
+`origin/main` carrying them, and a straight answer on whether the release will be refused for some
+other reason.
 
 `/pre-release` carries no argument. Start the run in the turn it arrives in.
 
@@ -86,17 +87,37 @@ closes one, and the `Co-Authored-By` trailer. A fix that changes what a user see
 gets a `CHANGELOG.md` entry in the same commit, folded into the current unreleased heading; a
 test-only or tooling fix gets none.
 
-Do not push. `main` is fixed forward and the push is the maintainer's.
+## Push once, at the end
+
+The workflow builds `origin/main`, so a commit still sitting locally is a fix that does not ship.
+Once the solution run is green and every fix is committed, push:
+
+```bash
+git push origin main
+```
+
+The order is not negotiable: green first, then push. A push before the final run puts an untested
+commit on the branch the release builds. If the suite is not green, push nothing and say what is
+holding it.
+
+Push `main` and nothing else — no tags, no other branch. The push is also what closes any issue
+whose commit carries a `Fixes` trailer, so list what went by subject, including commits this
+session did not write; they are going out under the same version.
+
+An `issue-worker` commit is deliberately left local so a review can amend it. If the log shows one
+whose review has not run, name it and ask before pushing rather than deciding for him.
 
 ## What else refuses the release
 
-`tools\release.ps1` throws before it builds anything when any of these is false. They cost
-seconds, so check them and report the ones that fail:
+`tools\release.ps1` throws before it builds anything when any of these is false. Check them after
+the push, and report only the ones that still fail:
 
-- The working tree is clean.
+- The working tree is clean. `git status --porcelain` lists untracked files too, so a stray
+  directory beside the source refuses the release exactly as an uncommitted edit does. Name it;
+  do not commit it to make the check pass, and do not add it to `.gitignore` uninvited.
 - The branch is `main`.
-- `HEAD` matches `origin/main`. Fetch rather than assume. Fixes you just committed make this false
-  by design — say how many commits are unpushed instead of reporting it as a problem.
+- `HEAD` matches `origin/main`. Fetch rather than assume. After the push this holds; when it does
+  not, say what is behind and why.
 - A `v*` tag exists and is `vX.Y.Z`.
 
 ```bash
@@ -123,9 +144,10 @@ Short, and in this order:
 1. One line: green or not, and how long the suite took.
 2. A failures table, only when there were failures — project, test, the cause in a clause, and
    what you did about it. Anything you could not fix is a row too, and says so.
-3. The preconditions that are false, one line each. Nothing when they all hold, except the count
-   of unpushed commits when there is one.
-4. The release line, when the suite is green:
+3. What was pushed: the commit subjects, or one line saying the branch was already current. Say
+   plainly when nothing was pushed because the suite was red.
+4. The preconditions that are still false, one line each. Nothing when they all hold.
+5. The release line, when the suite is green:
 
    ```
    tools\release.ps1 -Patch
@@ -139,6 +161,6 @@ No preamble and no description of what the suite is. He ran this to find out whe
 
 ## What this does not do
 
-It dispatches nothing, tags nothing, pushes nothing, renumbers no changelog heading and chooses no
-version. It runs the gate, fixes what it can, and says where the tree stands. Cutting the release
-is `tools\release.ps1`, and it is the maintainer's.
+It dispatches nothing, tags nothing, renumbers no changelog heading and chooses no version. It
+runs the gate, fixes what it can, pushes `main` when the suite is green, and says where the tree
+stands. Cutting the release is `tools\release.ps1`, and it is the maintainer's.
