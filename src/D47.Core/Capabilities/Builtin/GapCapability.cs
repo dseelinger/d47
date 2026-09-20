@@ -127,10 +127,11 @@ public static class GapCapability
 
         var said = new StringBuilder();
 
-        said.AppendLine(
-            $"{report.UnitsToFind.ToString(CultureInfo.InvariantCulture)} units still to find, "
-            + $"across {report.Plans.ToString(CultureInfo.InvariantCulture)} plan"
-            + (report.Plans == 1 ? string.Empty : "s") + ".");
+        var plans = report.Plans == 1 ? "ship or suit you've planned." : "ships and suits you've planned.";
+        said.AppendLine(string.Create(
+            CultureInfo.InvariantCulture,
+            $"You're short {report.UnitsToFind} unit{(report.UnitsToFind == 1 ? "" : "s")} of "
+            + $"{report.Materials} material{(report.Materials == 1 ? "" : "s")}, for {report.Plans} {plans}"));
 
         if (!intended && report.Intended > 0)
         {

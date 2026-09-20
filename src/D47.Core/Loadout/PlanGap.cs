@@ -87,6 +87,9 @@ public sealed record GapReport
     /// <summary>The one figure that spans everything: units still to find, across every ledger.</summary>
     public int UnitsToFind => Ledgers.Sum(ledger => ledger.UnitsToFind);
 
+    /// <summary>How many distinct materials are short, across every ledger.</summary>
+    public int Materials => Ledgers.Sum(ledger => ledger.Lines.Count);
+
     public bool IsEmpty => Ledgers.Count == 0;
 }
 

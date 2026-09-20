@@ -159,7 +159,7 @@ and Opinion Polls ×40 are ship locker. Adding those up produces a feasibility v
 nonsense delivered confidently, so d47 does not:
 
 ```text
-14 units still to find, across 3 plans.
+You're short 14 units of 3 materials, for 3 ships and suits you've planned.
 
 Materials — 12 to find:
   Zirconium: 8 short (2 of 10) — for Bad Idea (Python) · MainEngines. A material trader would take 24 Iron for 8.
@@ -171,7 +171,8 @@ Ship locker — 2 to find:
 
 **The one figure that spans everything counts units still to find**, and that is a shopping list
 rather than a balance — a count of things to go and get is the same shape whatever ledger they are
-in, where a sum of them is not a number about anything.
+in, where a sum of them is not a number about anything. The opening sentence says how many units,
+how many materials, and how many plans, in that order.
 
 ### A shortfall reads back to what wants it
 

@@ -201,6 +201,10 @@ materials come from, and clicking a row opens its detail in the page itself, nev
 so the headset can open it too. The filter for hulls and suits not yet bought is gone; the page
 always counts everything planned.
 
+"What do my plans still need" now opens "You're short 85 units of 4 materials, for 12 ships and
+suits you've planned." instead of naming only the units and the plan count, so the answer says what
+it is counting.
+
 ## 0.168.0 — Controls take the HUD dress
 
 Buttons, toggle switches and the transcript tabs now draw d47's own look rather than the

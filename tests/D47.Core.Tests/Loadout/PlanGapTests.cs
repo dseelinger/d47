@@ -63,6 +63,9 @@ public class PlanGapTests
         // The one figure that spans everything is a count of units to find, and it is the sum of the
         // per-ledger counts rather than a total of anything held.
         Assert.Equal(report.Ledgers.Sum(ledger => ledger.UnitsToFind), report.UnitsToFind);
+
+        // Materials counts distinct GapLines across every ledger, not units.
+        Assert.Equal(report.Ledgers.Sum(ledger => ledger.Lines.Count), report.Materials);
     }
 
     /// <summary>A shortfall reads back to what wants it — the ships and slots that asked.</summary>
