@@ -226,6 +226,13 @@ per leg, max distance from the star, max price age and every switch are now save
 restart; a voice plot given only the credits runs with whatever the page last saved. Credits to
 trade with still asks every time and is never written to disk.
 
+A new Trading Mode callout, off by default, says what to buy where you are standing for the system
+at the end of your plotted route. It names up to two commodities, the station at the destination
+that pays, the profit a tonne and the total for the hold, or says that nothing there sells at a
+profit. It uses the filters saved on the Trade route page, stays quiet below a hold you set in
+tonnes, and speaks once for each pair of station and destination. Your credit balance is still
+never read, so the ranking is what you could carry rather than what you could afford.
+
 ## 0.168.0 — Controls take the HUD dress
 
 Buttons, toggle switches and the transcript tabs now draw d47's own look rather than the

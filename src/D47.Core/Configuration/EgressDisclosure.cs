@@ -127,6 +127,10 @@ public static class EgressDisclosure
                     ? "Arriving in a system sends that system's address to spansh.co.uk, to ask what biology "
                     + "has been surveyed there; switching off the surveyed biology callout stops it. "
                     : string.Empty)
+                + (settings.Callouts is { Enabled: true, TradingMode: true }
+                    ? "With Trading Mode on, plotting a route while docked sends the destination system's "
+                    + "name to spansh.co.uk; switching Trading Mode off stops it. "
+                    : string.Empty)
                 + "No key, no identifier, and nothing else from your journal.",
                 Active: true)
             : EgressEntry.Silent(

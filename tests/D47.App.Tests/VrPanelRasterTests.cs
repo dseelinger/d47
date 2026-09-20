@@ -215,6 +215,10 @@ public class VrPanelRasterTests
         public Task<D47.Core.Knowledge.StationQuote?> QuoteAsync(
             long marketId, string commodity, CancellationToken cancellationToken) =>
             Task.FromResult<D47.Core.Knowledge.StationQuote?>(null);
+
+        public Task<D47.Core.Knowledge.BestCargoAnswer?> BestCargoAsync(
+            D47.Core.Knowledge.BestCargoSearch search, CancellationToken cancellationToken) =>
+            Task.FromResult<D47.Core.Knowledge.BestCargoAnswer?>(null);
     }
 
     /// <summary>The root reaches the headset the same way it reaches the window (#54).</summary>

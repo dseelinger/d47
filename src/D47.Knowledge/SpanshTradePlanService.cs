@@ -314,6 +314,56 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
     }
 
     /// <summary>
+    /// What to buy where the Commander is docked for the system at the end of their route (#312). The
+    /// sweep is the destination system alone: radius 0 answers with the stations in it and no others.
+    /// </summary>
+    public async Task<BestCargoAnswer?> BestCargoAsync(
+        BestCargoSearch search,
+        CancellationToken cancellationToken)
+    {
+        if (_book is null || search.Hold <= 0)
+        {
+            return null;
+        }
+
+        var fetched = (await SweepAsync(
+                search.Destination,
+                radius: 0,
+                cancellationToken,
+                surfaceStations: search.Planetary,
+                maxStationDistance: search.MaxStationDistance,
+                largePad: search.LargePadOnly)
+            .ConfigureAwait(false)).Markets;
+
+        // Read after the sweep, not before: docking writes Market.json and the journal's Market event
+        // separately, and the round trip is the slack that lets the file's reader get there first.
+        if (_book.At(search.System, search.Station) is not { } here)
+        {
+            return null;
+        }
+
+        var oldest = _now() - TimeSpan.FromHours(search.MaxPriceAge);
+
+        var destination = new List<MarketSnapshot>(fetched.Count);
+
+        foreach (var market in fetched)
+        {
+            if (market.IsCarrier
+                || market.IsSamePlaceAs(here.Station, here.System)
+                || (market.UpdatedAt is { } when && when < oldest))
+            {
+                continue;
+            }
+
+            var seen = _book.At(market.System, market.Station);
+
+            destination.Add(seen is not null && seen.UpdatedAt > market.UpdatedAt ? seen : market);
+        }
+
+        return new BestCargoAnswer(BestCargo.Rank(here, destination, search.Hold), search.Hold);
+    }
+
+    /// <summary>
     /// Everything worth planning over: the sweep, the Commander's own markets folded in, and anything
     /// too old to trust dropped.
     /// </summary>

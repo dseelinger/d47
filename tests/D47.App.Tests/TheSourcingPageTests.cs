@@ -45,6 +45,10 @@ public class TheSourcingPageTests
             long marketId,
             string commodity,
             CancellationToken cancellationToken) => Task.FromResult<StationQuote?>(null);
+
+        public Task<BestCargoAnswer?> BestCargoAsync(
+            BestCargoSearch search,
+            CancellationToken cancellationToken) => Task.FromResult<BestCargoAnswer?>(null);
     }
 
     /// <summary>Secrets are not this page's business; the settings service simply wants one.</summary>

@@ -117,6 +117,10 @@ public class RouteCapabilityTests
             long marketId,
             string commodity,
             CancellationToken cancellationToken) => Task.FromResult<StationQuote?>(null);
+
+        public Task<BestCargoAnswer?> BestCargoAsync(
+            BestCargoSearch search,
+            CancellationToken cancellationToken) => Task.FromResult<BestCargoAnswer?>(null);
     }
 
     private static void Apply(GameStateStore gameState, string json)

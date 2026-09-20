@@ -48,6 +48,10 @@ public class ARaresCeilingIsTheStationsOfferTests
 
             return Task.FromResult(quote);
         }
+
+        public Task<BestCargoAnswer?> BestCargoAsync(
+            BestCargoSearch search,
+            CancellationToken cancellationToken) => Task.FromResult<BestCargoAnswer?>(null);
     }
 
     /// <summary>The index refusing the call, which leaves the station and system still answerable.</summary>
@@ -68,6 +72,11 @@ public class ARaresCeilingIsTheStationsOfferTests
         public Task<StationQuote?> QuoteAsync(
             long marketId,
             string commodity,
+            CancellationToken cancellationToken) =>
+            throw new GalaxyUnavailableException("The market search took too long to answer.");
+
+        public Task<BestCargoAnswer?> BestCargoAsync(
+            BestCargoSearch search,
             CancellationToken cancellationToken) =>
             throw new GalaxyUnavailableException("The market search took too long to answer.");
     }

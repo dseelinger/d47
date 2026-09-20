@@ -35,6 +35,8 @@ public static class CalloutCapability
     public const string BiologyKey = "callouts.biologyValue";
     public const string SurveyedBiologyKey = "callouts.surveyedBiology";
     public const string BiologyThresholdKey = "callouts.biologyThreshold";
+    public const string TradingModeKey = "callouts.tradingMode";
+    public const string TradingModeMinHoldKey = "callouts.tradingModeMinHold";
     public const string AnnouncedAttackKey = "callouts.announcedAttack";
     public const string RivalTerritoryKey = "callouts.rivalTerritory";
     public const string ChecklistKey = "callouts.checklist";
@@ -272,6 +274,18 @@ public static class CalloutCapability
                 "surveyed biology",
                 s => s.Callouts.SurveyedBiology,
                 (s, v) => s with { Callouts = s.Callouts with { SurveyedBiology = v } },
+                appliesWhen: s => s.Knowledge.GalaxySearch),
+
+            Toggle(
+                TradingModeKey,
+                "Trading Mode",
+                "Docked with a route plotted, the best cargo to buy here for the system at the end of it. "
+                + "Needs galaxy search, and uses the filters saved on the Trade route page.",
+                "trading-mode",
+                "trading mode",
+                s => s.Callouts.TradingMode,
+                (s, v) => s with { Callouts = s.Callouts with { TradingMode = v } },
+                defaultOn: false,
                 appliesWhen: s => s.Knowledge.GalaxySearch),
 
             Toggle(
@@ -592,6 +606,33 @@ public static class CalloutCapability
                             && credits >= 0
                                 ? credits
                                 : s.Callouts.BiologyThreshold,
+                    },
+                },
+            },
+        });
+
+        rows.Add(new SettingRow
+        {
+            Key = TradingModeMinHoldKey,
+            Advanced = true,
+            Label = "Trading Mode needs a hold of",
+            Help = "In tonnes, 1 to 50: cargo capacity less the limpets aboard. Below this, Trading Mode says nothing.",
+            Kind = SettingKind.Number,
+            DefaultDisplay = "25",
+            DocsAnchor = "trading-mode-min-hold",
+            AppliesWhen = s => s.Callouts is { Enabled: true, TradingMode: true } && s.Knowledge.GalaxySearch,
+            Binding = new SettingBinding
+            {
+                Read = s => s.Callouts.TradingModeMinHold.ToString(CultureInfo.InvariantCulture),
+                Write = (s, v) => s with
+                {
+                    Callouts = s.Callouts with
+                    {
+                        TradingModeMinHold =
+                            int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out var tonnes)
+                            && tonnes is >= TradingModeCallout.LeastMinHold and <= TradingModeCallout.MostMinHold
+                                ? tonnes
+                                : s.Callouts.TradingModeMinHold,
                     },
                 },
             },

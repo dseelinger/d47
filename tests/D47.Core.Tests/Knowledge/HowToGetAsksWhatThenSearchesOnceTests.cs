@@ -67,6 +67,9 @@ public class HowToGetAsksWhatThenSearchesOnceTests
 
         public Task<StationQuote?> QuoteAsync(long marketId, string commodity, CancellationToken cancellationToken) =>
             Task.FromResult<StationQuote?>(null);
+
+        public Task<BestCargoAnswer?> BestCargoAsync(BestCargoSearch search, CancellationToken cancellationToken) =>
+            Task.FromResult<BestCargoAnswer?>(null);
     }
 
     private static (CapabilityRegistry Registry, FakeGalaxy Galaxy) Build(

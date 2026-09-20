@@ -596,6 +596,33 @@ scan it, and a body that callout has already named is left out here.
 The lookup sends the system's address to spansh.co.uk on every jump while this callout is on. The
 **Privacy and egress** section of the panel lists it under galaxy search.
 
+#### Trading Mode {#trading-mode}
+
+When you are docked with a route plotted and [galaxy search](galaxy.md) is on:
+
+```text
+Best cargo for Sothis: Gold to Sothis Mining Post, 8,204 Cr a tonne, 2.3 million for 280 tonnes; then Silver to Newholm Station, 5,110 Cr a tonne, 1.4 million for 280 tonnes.
+```
+
+Directive 47 asks Spansh for the markets in the last system on your route — not the next jump — and
+ranks what the market you are standing in sells against what they pay for it. It names the two
+commodities that earn the most, the station at the destination that pays, the profit a tonne, and the
+total for the hold. The tonnage is what you could actually move: the free hold, the supply here, or
+the demand there, whichever is least. When nothing there pays more than it costs here, it says so:
+
+```text
+Nothing here sells at a profit in Sothis.
+```
+
+The free hold is your cargo capacity less the limpets aboard, and the callout stays silent below the
+[hold it needs](#trading-mode-min-hold). It speaks once for each pair of station and destination, so
+plotting the same route again from the same pad says nothing, and it uses the price age, large pad,
+planetary and star distance filters saved on the Trade route page. Your credit balance is not read
+anywhere in Directive 47, so the ranking never considers what you can afford.
+
+The lookup sends the destination system's name to spansh.co.uk while this callout is on. The
+**Privacy and egress** section of the panel lists it under galaxy search.
+
 #### Undiscovered systems {#discovery}
 
 On arrival, the game auto-scans the star you jumped to:
@@ -705,6 +732,11 @@ In seconds, counted from entering hyperspace.
 
 In credits, default 10,000,000. The least best case the [high-value biology](#biology) callout says,
 and the least surveyed value the [surveyed biology](#surveyed-biology) callout says.
+
+#### Trading Mode hold {#trading-mode-min-hold}
+
+In tonnes, 1 to 50, default 25. [Trading Mode](#trading-mode) says nothing when your cargo capacity
+less the limpets aboard is under this, which keeps it quiet in a ship you are not trading in.
 
 #### Home system {#home-system}
 

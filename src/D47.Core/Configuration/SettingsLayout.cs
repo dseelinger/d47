@@ -404,7 +404,7 @@ public static class SettingsLayout
                 new SettingsPlace(
                     "plans-and-stories",
                     "Plans and stories",
-                    "Checklist changes, continuity, adventures and community goal sales.",
+                    "Checklist changes, continuity, adventures, community goal sales and what to buy.",
                     "callouts",
                     [],
                     false,
@@ -415,6 +415,8 @@ public static class SettingsLayout
                             E("callouts.continuity"),
                             E("callouts.adventure"),
                             E("callouts.communityGoalSales"),
+                            E("callouts.tradingMode"),
+                            E("callouts.tradingModeMinHold", under: true),
                         ]),
                     ]),
                 new SettingsPlace(

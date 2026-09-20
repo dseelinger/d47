@@ -487,7 +487,45 @@ public interface ITradePlanService
     /// <see cref="GalaxyUnavailableException"/> rather than reading as an absent report (#116).
     /// </summary>
     Task<StationQuote?> QuoteAsync(long marketId, string commodity, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// What to buy where the Commander is docked for the system they are headed to, or null where the
+    /// prices of the market they are standing in are not known (#312).
+    /// </summary>
+    Task<BestCargoAnswer?> BestCargoAsync(BestCargoSearch search, CancellationToken cancellationToken);
 }
+
+/// <summary>What to buy here for the end of a plotted route (#312).</summary>
+public sealed record BestCargoSearch
+{
+    /// <summary>Where the Commander is docked.</summary>
+    public required string System { get; init; }
+
+    public required string Station { get; init; }
+
+    /// <summary>The last system on the plotted route.</summary>
+    public required string Destination { get; init; }
+
+    /// <summary>Tonnes to fill, which is the cargo capacity less the limpets aboard.</summary>
+    public int Hold { get; init; }
+
+    /// <summary>How stale a reported price may be, in hours.</summary>
+    public int MaxPriceAge { get; init; } = 720;
+
+    public bool LargePadOnly { get; init; }
+
+    /// <summary>Whether surface stations at the destination are considered.</summary>
+    public bool Planetary { get; init; }
+
+    /// <summary>Light seconds from the entry point that a station at the destination may sit at.</summary>
+    public double MaxStationDistance { get; init; } = 1_000;
+}
+
+/// <summary>
+/// The answer to one <see cref="BestCargoSearch"/>. An empty <see cref="Picks"/> means the destination
+/// was searched and nothing there pays, which is itself worth saying.
+/// </summary>
+public sealed record BestCargoAnswer(IReadOnlyList<CargoPick> Picks, int Hold);
 
 /// <summary>
 /// What one station last reported about one commodity (#116). A rare good is sold at one station and

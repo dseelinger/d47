@@ -33,6 +33,10 @@ public class TheCommoditySearchsKnobsAreTheModelsTests
             long marketId,
             string commodity,
             CancellationToken cancellationToken) => Task.FromResult<StationQuote?>(null);
+
+        public Task<BestCargoAnswer?> BestCargoAsync(
+            BestCargoSearch search,
+            CancellationToken cancellationToken) => Task.FromResult<BestCargoAnswer?>(null);
     }
 
     /// <summary>Nothing this file is about — the commodity fork happens above every one of these.</summary>

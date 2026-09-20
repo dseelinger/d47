@@ -468,6 +468,16 @@ public sealed record CalloutSettings
     /// <summary>The least value, in credits, the two biology callouts say.</summary>
     public long BiologyThreshold { get; init; } = 10_000_000;
 
+    /// <summary>
+    /// Docked with a route plotted: what to buy here for the system at the end of it. Needs
+    /// <see cref="KnowledgeSettings.GalaxySearch"/>, and uses the filters saved in
+    /// <see cref="TradeSettings"/>.
+    /// </summary>
+    public bool TradingMode { get; init; }
+
+    /// <summary>The least free hold, in tonnes, that <see cref="TradingMode"/> speaks for, 1 to 50.</summary>
+    public int TradingModeMinHold { get; init; } = 25;
+
     /// <summary>How often route progress is reported, in jumps. 0 silences the progress line.</summary>
     public int RouteEveryNJumps { get; init; } = 3;
 

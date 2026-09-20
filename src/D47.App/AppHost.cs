@@ -1438,6 +1438,11 @@ public sealed class AppHost : IDisposable
             commodities,
             marketBook);
 
+        foreach (var trading in callouts.Callouts.OfType<TradingModeCallout>())
+        {
+            trading.Trade = () => settings.Current.Knowledge.GalaxySearch ? tradePlanner : null;
+        }
+
         // The key is read on every call rather than captured here, so pasting one in or clearing it takes
         // effect without a restart — the same rule the galaxy service's setting follows.
         var communityGoals = new D47.Knowledge.InaraCommunityGoalService(
@@ -2460,6 +2465,7 @@ public sealed class AppHost : IDisposable
         GameStateStore gameState)
     {
         var surveyedBiology = new SurveyedBiologyCallout(loggers.CreateLogger<SurveyedBiologyCallout>());
+        var tradingMode = new TradingModeCallout(loggers.CreateLogger<TradingModeCallout>());
         var biology = new BiologyCallout { AlreadySaid = surveyedBiology.Reported };
         surveyedBiology.AlreadySaid = biology.Named;
 
@@ -2497,6 +2503,7 @@ public sealed class AppHost : IDisposable
             .Add(new FootfallCallout())
             .Add(surveyedBiology)
             .Add(biology)
+            .Add(tradingMode)
             .Add(new ProspectorCallout())
             .Add(new CoreAsteroidCallout())
             .Add(new ChecklistCallout(checklists))
@@ -2596,6 +2603,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("discovery", callouts.Discovery, now);
         engine.SetEnabled("biology", callouts.Biology, now);
         engine.SetEnabled("surveyed-biology", callouts.SurveyedBiology, now);
+        engine.SetEnabled("trading-mode", callouts.TradingMode, now);
         engine.SetEnabled("prospector", callouts.Prospector, now);
         engine.SetEnabled("core-asteroid", callouts.CoreAsteroid, now);
         engine.SetEnabled("checklist", callouts.Checklist, now);
@@ -2631,6 +2639,17 @@ public sealed class AppHost : IDisposable
 
                 case SurveyedBiologyCallout surveyed:
                     surveyed.Threshold = () => settings.Current.Callouts.BiologyThreshold;
+                    break;
+
+                case TradingModeCallout trading:
+                    trading.MinHold = () => settings.Current.Callouts.TradingModeMinHold;
+                    trading.Filters = search => search with
+                    {
+                        MaxPriceAge = settings.Current.Trade.MaxPriceAgeHours,
+                        LargePadOnly = settings.Current.Trade.LargePadOnly,
+                        Planetary = settings.Current.Trade.Planetary,
+                        MaxStationDistance = settings.Current.Trade.MaxStationDistance,
+                    };
                     break;
 
                 case LimpetCallout limpets:

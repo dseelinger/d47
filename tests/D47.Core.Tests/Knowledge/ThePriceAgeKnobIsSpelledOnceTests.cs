@@ -75,6 +75,10 @@ public class ThePriceAgeKnobIsSpelledOnceTests
             long marketId,
             string commodity,
             CancellationToken cancellationToken) => Task.FromResult<StationQuote?>(null);
+
+        public Task<BestCargoAnswer?> BestCargoAsync(
+            BestCargoSearch search,
+            CancellationToken cancellationToken) => Task.FromResult<BestCargoAnswer?>(null);
     }
 
     /// <summary>The same, for the galaxy half.</summary>

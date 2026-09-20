@@ -66,6 +66,10 @@ public class TheStationSearchsLimitIsSaidOutLoudTests
             long marketId,
             string commodity,
             CancellationToken cancellationToken) => Task.FromResult<StationQuote?>(null);
+
+        public Task<BestCargoAnswer?> BestCargoAsync(
+            BestCargoSearch search,
+            CancellationToken cancellationToken) => Task.FromResult<BestCargoAnswer?>(null);
     }
 
     /// <summary>The module-and-ship half — a module name, so the commodity fork is not taken.</summary>
