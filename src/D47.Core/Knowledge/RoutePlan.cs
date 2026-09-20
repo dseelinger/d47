@@ -381,6 +381,12 @@ public sealed record TradeQuery
     /// <summary>Whether the sweep includes surface stations — planetary ports, outposts, settlements (#310).</summary>
     public bool Planetary { get; init; }
 
+    /// <summary>
+    /// Whether markets in permit-locked systems are dropped, on by default (#310). Answered from
+    /// <see cref="PermitSystemTable"/>, because the station index carries no permit field.
+    /// </summary>
+    public bool AvoidPermitSystems { get; init; } = true;
+
     public static bool TryParse(
         string? system,
         string? station,
@@ -394,6 +400,7 @@ public sealed record TradeQuery
         int? maxPriceAge,
         bool? loop,
         bool? planetary,
+        bool? avoidPermitSystems,
         out TradeQuery query,
         out string failure)
     {
@@ -445,6 +452,7 @@ public sealed record TradeQuery
             MaxPriceAge = Math.Clamp(maxPriceAge ?? 720, 1, 8_760),
             Loop = loop ?? false,
             Planetary = planetary ?? false,
+            AvoidPermitSystems = avoidPermitSystems ?? true,
         };
 
         return true;

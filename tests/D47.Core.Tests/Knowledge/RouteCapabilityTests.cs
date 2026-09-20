@@ -394,6 +394,31 @@ public class RouteCapabilityTests
         Assert.Contains("248 tonne hold", result.Content, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// A stop behind a permit is one the Commander cannot fly to, so the switch is on unless they
+    /// turn it off (#310).
+    /// </summary>
+    [Fact]
+    public async Task PermitSystemsAreAvoidedUnlessTheCommanderSaysOtherwise()
+    {
+        using var install = new TempInstall();
+        var (registry, _, trade, _) = Build(install);
+
+        await registry.InvokeAsync(
+            "plot_trade_route",
+            Args(("capital", "50000000"), ("jump_range", "30")),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(trade.LastTrade?.AvoidPermitSystems);
+
+        await registry.InvokeAsync(
+            "plot_trade_route",
+            Args(("capital", "50000000"), ("jump_range", "30"), ("avoid_permit_systems", "false")),
+            TestContext.Current.CancellationToken);
+
+        Assert.False(trade.LastTrade?.AvoidPermitSystems);
+    }
+
     [Fact]
     public async Task ATradeRouteWithNoKnownJumpRangeAsksForOneRatherThanSendingAnything()
     {

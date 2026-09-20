@@ -234,6 +234,13 @@ public static class RouteCapability
                             "Also consider planetary ports, outposts and settlements, not just orbital "
                             + "stations. Defaults to false.",
                     },
+                    new ToolParameter
+                    {
+                        Name = "avoid_permit_systems",
+                        Type = ToolParameterType.Boolean,
+                        Description =
+                            "Leave out markets in systems that need a permit to enter. Defaults to true.",
+                    },
                 ],
                 Handler = (arguments, cancellationToken) =>
                     PlanTradeAsync(trade, commander, settings, plans, now, arguments, cancellationToken),
@@ -574,6 +581,7 @@ public static class RouteCapability
                 arguments.TryGetInt32("max_price_age_hours", out var age) ? age : null,
                 Flag(arguments, "loop"),
                 Flag(arguments, "planetary"),
+                Flag(arguments, "avoid_permit_systems"),
                 out var query,
                 out var failure))
         {

@@ -67,6 +67,11 @@ public static class TradePlanner
                 continue;
             }
 
+            if (query.AvoidPermitSystems && PermitSystemTable.Locked(market.System))
+            {
+                continue;
+            }
+
             if (market.DistanceToArrival is { } arrival && arrival > query.MaxSystemDistance)
             {
                 continue;

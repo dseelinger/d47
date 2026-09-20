@@ -320,7 +320,7 @@ A chain of buy-and-sell runs starting from the station you are docked at — **w
 over markets d47 fetched, rather than handed to somebody else's planner.
 
 ```json
-{"type":"object","properties":{"capital":{"type":"integer","description":"How many credits to trade with. Required; never inferred."},"cargo_capacity":{"type":"integer","description":"The hold\u0027s size in tonnes. Defaults to this ship\u0027s, from the journal."},"hops":{"type":"integer","description":"How many legs to plan, 1 to 10. Defaults to 5."},"jump_range":{"type":"number","description":"This ship\u0027s laden jump range in light years \u2014 full tank, full hold. Defaults to this ship\u0027s, worked out from the journal."},"large_pad":{"type":"boolean","description":"Only stations with a large landing pad."},"loop":{"type":"boolean","description":"End back where it started. Defaults to false."},"max_jumps":{"type":"integer","description":"The most jumps a single leg may take, 1 to 10. Defaults to 2."},"max_price_age_hours":{"type":"integer","description":"How stale a reported price may be, in hours. Defaults to 720, one month."},"max_station_distance":{"type":"number","description":"How far in-system a station may sit, in light seconds. Defaults to 1,000."},"planetary":{"type":"boolean","description":"Also consider planetary ports, outposts and settlements, not just orbital stations. Defaults to false."}},"required":["capital"],"additionalProperties":false}
+{"type":"object","properties":{"avoid_permit_systems":{"type":"boolean","description":"Leave out markets in systems that need a permit to enter. Defaults to true."},"capital":{"type":"integer","description":"How many credits to trade with. Required; never inferred."},"cargo_capacity":{"type":"integer","description":"The hold\u0027s size in tonnes. Defaults to this ship\u0027s, from the journal."},"hops":{"type":"integer","description":"How many legs to plan, 1 to 10. Defaults to 5."},"jump_range":{"type":"number","description":"This ship\u0027s laden jump range in light years \u2014 full tank, full hold. Defaults to this ship\u0027s, worked out from the journal."},"large_pad":{"type":"boolean","description":"Only stations with a large landing pad."},"loop":{"type":"boolean","description":"End back where it started. Defaults to false."},"max_jumps":{"type":"integer","description":"The most jumps a single leg may take, 1 to 10. Defaults to 2."},"max_price_age_hours":{"type":"integer","description":"How stale a reported price may be, in hours. Defaults to 720, one month."},"max_station_distance":{"type":"number","description":"How far in-system a station may sit, in light seconds. Defaults to 1,000."},"planetary":{"type":"boolean","description":"Also consider planetary ports, outposts and settlements, not just orbital stations. Defaults to false."}},"required":["capital"],"additionalProperties":false}
 ```
 
 It cannot be planned from supercruise. The whole plan is anchored on the market you are standing
@@ -381,6 +381,31 @@ for sale. Say `cargo_capacity` yourself and it is taken exactly as given, limpet
 than orbital stations alone. Off by default, because a leg that lands is a leg with a different
 approach than a leg that docks, and a Commander who did not ask for that should not be routed
 through it.
+
+##### Permit systems
+
+`avoid_permit_systems` drops markets in systems that need a permit to enter. **On by default**: a
+stop you cannot fly to is not a stop, and the plan gives no warning at the point of plotting.
+
+This one is answered from a shipped table rather than from the search, because the station index
+has no permit field to ask about. Measured on 2026-09-20 against a station search anchored on
+Alioth, which is permit-locked: no `needs_permit` on any result, and `permit`, `system_permit`,
+`requires_permit` and `permit_name` all answer `field_values` with a 500. The flag lives on the
+*system* index, where it is both a result field and a working filter — so `tools/gen-permits.py`
+reads it from there and writes `src/D47.Core/Knowledge/PermitSystems.tsv`, 2,702 systems as of that
+date.
+
+A table rather than a second request, for two reasons. The rule has to apply to the markets you
+have stood in yourself, which are merged in from `data/markets.json` and were never returned by any
+search. And a permit list fetched per plan can fail, which would leave the plan either silently
+unfiltered or refused outright; a shipped table always answers, with no network at all.
+
+**The station you are docked at always survives it.** Sol and Shinrarta Dezhra both need permits,
+and both are among the busiest markets in the game — refusing to plan from where you are already
+standing would be the rule breaking the feature. The filter applies to every other stop.
+
+Re-run the generator when Frontier locks or unlocks a system. A stale table routes you to a stop
+you cannot reach and says nothing about why, which is the one way this switch can be wrong.
 
 ##### What it will not promise
 

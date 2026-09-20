@@ -150,6 +150,18 @@ route never sells them, so they never count as freight. `planetary` brings surfa
 planetary ports, outposts and settlements — into the search; it is off by default, because landing
 is a different approach than docking and nobody should be routed into one without asking for it.
 
+### Systems you need a permit for
+
+`avoid_permit_systems` is on out of the box, so no stop is a system you cannot enter. The
+station you are docked at is always exempt — Sol and Shinrarta Dezhra both need permits and both
+are busy trading hubs, and a planner that refused to start from them would be useless.
+
+Directive 47 answers this from a table it ships rather than by asking, because the station index
+carries no permit field at all. That means it can be out of date: if Frontier locks a system after
+your copy was built, a plan can still route you there. Everything about how the table is made, and
+how to rebuild it, is on
+[Route planning](capabilities/routes.html#permit-systems).
+
 The tool schema and the service it calls are on
 [Route planning](capabilities/routes.html) — one page for all three planners, because that part
 really is shared.

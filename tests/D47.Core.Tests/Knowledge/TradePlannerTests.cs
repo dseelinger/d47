@@ -38,7 +38,8 @@ public class TradePlannerTests
         bool loop = false,
         double hopDistance = 15,
         int maxJumps = 1,
-        bool planetary = false)
+        bool planetary = false,
+        bool avoidPermits = true)
     {
         Assert.True(TradeQuery.TryParse(
             "Origin System",
@@ -53,6 +54,7 @@ public class TradePlannerTests
             720,
             loop,
             planetary,
+            avoidPermits,
             out var query,
             out _));
 
@@ -108,6 +110,60 @@ public class TradePlannerTests
 
         Assert.NotNull(withGround);
         Assert.Contains(withGround.Stops, stop => stop.Station == "Outpost");
+    }
+
+    /// <summary>
+    /// The station index carries no permit field, so this rule is answered from the shipped table
+    /// rather than from anything the sweep returned (#310).
+    /// </summary>
+    [Fact]
+    public void AMarketBehindAPermitIsLeftOutUnlessTheSwitchIsTurnedOff()
+    {
+        var locked = Market("Jameson Memorial", 10, ("Gold", 0, 5_000, 0, 1_000)) with
+        {
+            System = "Shinrarta Dezhra",
+        };
+
+        var markets = new[]
+        {
+            Market("Origin", 0, ("Gold", 1_000, 0, 1_000, 0)),
+            locked,
+        };
+
+        var avoided = TradePlanner.Plan(Query(hops: 1), markets);
+
+        Assert.NotNull(avoided);
+        Assert.DoesNotContain(avoided.Stops, stop => stop.Station == "Jameson Memorial");
+
+        var allowed = TradePlanner.Plan(Query(hops: 1, avoidPermits: false), markets);
+
+        Assert.NotNull(allowed);
+        Assert.Contains(allowed.Stops, stop => stop.Station == "Jameson Memorial");
+    }
+
+    /// <summary>
+    /// Sol needs a permit and is one of the busiest markets in the game. Refusing to plan from where
+    /// the Commander is already docked would be the rule breaking the feature.
+    /// </summary>
+    [Fact]
+    public void TheOriginIsPlannedFromEvenWhenItIsItselfBehindAPermit()
+    {
+        var markets = new[]
+        {
+            Market("Abraham Lincoln", 0, ("Gold", 1_000, 0, 1_000, 0)) with { System = "Sol" },
+            Market("Middle", 10, ("Gold", 0, 5_000, 0, 1_000)),
+        };
+
+        Assert.True(TradeQuery.TryParse(
+            "Sol", "Abraham Lincoln", 1_000_000, 100, 1, 1, 15, 1_000, false, 720, false, false, true,
+            out var query,
+            out _));
+
+        var route = TradePlanner.Plan(query, markets);
+
+        Assert.NotNull(route);
+        Assert.Equal(400_000, route.TotalProfit);
+        Assert.Equal("Abraham Lincoln", route.Stops[0].Station);
     }
 
     [Fact]
@@ -220,7 +276,7 @@ public class TradePlannerTests
         };
 
         Assert.True(TradeQuery.TryParse(
-            "Origin System", "Origin", 1_000_000, 100, 1, 1, 15, 1_000, true, 720, false, false,
+            "Origin System", "Origin", 1_000_000, 100, 1, 1, 15, 1_000, true, 720, false, false, true,
             out var query, out _));
 
         var route = TradePlanner.Plan(query, markets);

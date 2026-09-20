@@ -23,6 +23,7 @@
     <EmbeddedResource Include="Knowledge\SystemNames.tsv" LogicalName="D47.Core.SystemNames" />
     <EmbeddedResource Include="Knowledge\Exobiology.tsv" LogicalName="D47.Core.Exobiology" />
     <EmbeddedResource Include="Knowledge\Regions.tsv" LogicalName="D47.Core.Regions" />
+    <EmbeddedResource Include="Knowledge\PermitSystems.tsv" LogicalName="D47.Core.PermitSystems" />
   </ItemGroup>
 
   <ItemGroup>
