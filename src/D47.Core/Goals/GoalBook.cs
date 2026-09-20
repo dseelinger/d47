@@ -115,14 +115,13 @@ public sealed class GoalBook(
         if (Mine is null)
         {
             text.AppendLine(
-                "I have not read back through your journals yet, so nothing here has an age and the "
-                + "milestones have no figures. The goals panel has the button.");
+                "I have not read back through your journals yet, so nothing here has an age. The "
+                + "goals panel has the button.");
         }
         else if (Mine is { From: { } from, Journals: var journals })
         {
             text.AppendLine(
-                $"Ages and milestones come from {journals} journals on this disk, the oldest from "
-                + $"{from:d MMM yyyy}.");
+                $"Ages come from {journals} journals on this disk, the oldest from {from:d MMM yyyy}.");
         }
 
         return text.ToString().TrimEnd();
@@ -170,7 +169,6 @@ public sealed class GoalBook(
             _ when GoalCatalogue.CareerOf(standing.Arc.Key) is not null => Career(standing),
             GoalCatalogue.Engineers => Engineers(standing),
             GoalCatalogue.Ships => Ships(standing),
-            GoalCatalogue.Systems or GoalCatalogue.Distance => Milestone(standing),
             _ => null,
         };
     }
@@ -408,25 +406,6 @@ public sealed class GoalBook(
             $"{standing.Arc.Name}: {standing.Note ?? "I cannot say"}. The cheapest hull you do not have "
             + $"is the {next.Name}, at {cost} credits.",
             [$"Buy a {next.Name} — {cost} cr, the cheapest hull you do not own"]);
-    }
-
-    /// <summary>A ladder.</summary>
-    private static GoalStep Milestone(GoalStanding standing)
-    {
-        if (standing.Have is not { } have || standing.Need is not { } need)
-        {
-            return new GoalStep(
-                $"{standing.Arc.Name}: I have not counted these yet. Read my journals from the goals "
-                + "panel and I will have a figure.",
-                []);
-        }
-
-        var gap = need - have;
-        var unit = standing.Arc.Unit ?? string.Empty;
-
-        return new GoalStep(
-            $"{standing.Arc.Name}: {have:N0} of {need:N0} {unit}. {gap:N0} {unit} to the next milestone.",
-            [$"{gap:N0} more {unit} to reach {need:N0}"]);
     }
 
     private static string Ran(GoalStanding standing, DateTimeOffset now) =>

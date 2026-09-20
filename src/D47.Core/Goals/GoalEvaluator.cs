@@ -30,8 +30,6 @@ public static class GoalEvaluator
             _ when GoalCatalogue.CareerOf(arc.Key) is { } career => Rank(arc, career, state, mark),
             GoalCatalogue.Engineers => Engineers(arc, state, mark),
             GoalCatalogue.Ships => Ships(arc, state, mark),
-            GoalCatalogue.Systems => Milestone(arc, GoalCatalogue.SystemMilestones, mark),
-            GoalCatalogue.Distance => Milestone(arc, GoalCatalogue.DistanceMilestones, mark),
             _ => new GoalStanding { Arc = arc, Source = GoalSource.Unknown, Started = mark?.Started },
         };
     }
@@ -153,30 +151,5 @@ public static class GoalEvaluator
                 IsDone = false,
             }
             : new GoalStanding { Arc = arc, Need = total, Source = GoalSource.Unknown, Started = mark?.Started };
-    }
-
-    /// <summary>A ladder arc.</summary>
-    private static GoalStanding Milestone(GoalArc arc, IReadOnlyList<long> ladder, GoalMark? mark)
-    {
-        if (mark?.Have is not { } have)
-        {
-            return new GoalStanding { Arc = arc, Source = GoalSource.Unknown, Started = mark?.Started };
-        }
-
-        var next = GoalCatalogue.NextMilestone(ladder, have);
-
-        return new GoalStanding
-        {
-            Arc = arc,
-            Have = have,
-            Need = next,
-            Source = GoalSource.Mined,
-            AsOf = mark.AsOf,
-            Started = mark.Started,
-            Note = next is { } target
-                ? $"{have:N0} of {target:N0} {arc.Unit}, next milestone"
-                : $"{have:N0} {arc.Unit}, past every milestone",
-            IsDone = next is null,
-        };
     }
 }

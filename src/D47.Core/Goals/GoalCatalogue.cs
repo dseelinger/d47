@@ -10,20 +10,6 @@ public static class GoalCatalogue
 
     public const string Ships = "ships";
 
-    public const string Systems = "exploration.systems";
-
-    public const string Distance = "exploration.distance";
-
-    /// <summary>
-    /// The milestone ladders, which is what an arc with no ceiling has instead of a definition of done:
-    /// the next rung is the target, and passing the last one is finishing.
-    /// </summary>
-    public static readonly IReadOnlyList<long> SystemMilestones =
-        [100, 500, 1_000, 5_000, 10_000, 25_000, 50_000];
-
-    public static readonly IReadOnlyList<long> DistanceMilestones =
-        [5_000, 25_000, 100_000, 500_000, 1_000_000];
-
     /// <summary>One career arc per ladder that ends in Elite, in the order the journal writes them.</summary>
     private static readonly (string Career, string Name, string? Helper)[] Careers =
     [
@@ -62,24 +48,6 @@ public static class GoalCatalogue
             Unit = "hulls",
             Helper = "get_ship_specification",
         },
-
-        new GoalArc
-        {
-            Key = Systems,
-            Name = "Systems visited",
-            Done = "The next milestone on the way to fifty thousand.",
-            Unit = "systems",
-            Helper = "plot_exploration_route",
-        },
-
-        new GoalArc
-        {
-            Key = Distance,
-            Name = "Distance flown",
-            Done = "The next milestone on the way to a million light years.",
-            Unit = "ly",
-            Helper = "plot_exploration_route",
-        },
     ];
 
     public static GoalArc? Find(string? key) =>
@@ -93,20 +61,4 @@ public static class GoalCatalogue
             ? Journal.RankState.Careers.FirstOrDefault(career =>
                 string.Equals(RankPrefix + career.ToLowerInvariant(), key, StringComparison.OrdinalIgnoreCase))
             : null;
-
-    /// <summary>The next rung above a figure, or null once the top one is past.</summary>
-    public static long? NextMilestone(IReadOnlyList<long> ladder, long have)
-    {
-        ArgumentNullException.ThrowIfNull(ladder);
-
-        foreach (var rung in ladder)
-        {
-            if (have < rung)
-            {
-                return rung;
-            }
-        }
-
-        return null;
-    }
 }

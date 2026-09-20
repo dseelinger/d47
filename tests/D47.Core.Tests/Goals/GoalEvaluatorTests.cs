@@ -102,36 +102,12 @@ public class GoalEvaluatorTests
     }
 
     [Fact]
-    public void AMilestoneArcTargetsTheNextRung()
-    {
-        var standing = Evaluate(
-            GoalCatalogue.Systems,
-            null,
-            Mine(new GoalMark { Key = GoalCatalogue.Systems, Have = 4_182, AsOf = Now, Started = Long }));
-
-        Assert.Equal(5_000, standing.Need);
-        Assert.False(standing.IsDone);
-    }
-
-    [Fact]
-    public void PastTheTopRungAMilestoneArcIsFinished()
-    {
-        var standing = Evaluate(
-            GoalCatalogue.Distance,
-            null,
-            Mine(new GoalMark { Key = GoalCatalogue.Distance, Have = 2_000_000, AsOf = Now, Started = Long }));
-
-        Assert.True(standing.IsDone);
-        Assert.Null(standing.Need);
-    }
-
-    [Fact]
     public void AgeIsMeasuredFromTheStartAndReadsInTheUnitThatFits()
     {
         var standing = Evaluate(
-            GoalCatalogue.Systems,
+            "rank.combat",
             null,
-            Mine(new GoalMark { Key = GoalCatalogue.Systems, Have = 12, AsOf = Now, Started = Now.AddDays(-45) }));
+            Mine(new GoalMark { Key = "rank.combat", Have = 2, AsOf = Now, Started = Now.AddDays(-45) }));
 
         Assert.Equal(45, standing.Age(Now)?.Days);
         Assert.Contains("6 weeks", standing.Describe(Now), StringComparison.Ordinal);

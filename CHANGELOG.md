@@ -18,6 +18,10 @@ The Suits page now lists every suit and weapon you own, not only the one Elite c
 you wearing or carrying. An owned but unworn item shows its recorded grade and when it was last
 seen, and opening its Fitted section says the same rather than "I cannot say".
 
+The exploration goals — systems visited and distance flown — are gone from the Goals section of
+the Checklist tab. Both counted a milestone this repository picked rather than anything Elite
+states.
+
 The Suits page now draws cards, like the fleet page: kind and grade, where it is, and how many
 slots are planned, each its own line, with a badge for the one you are wearing.
 

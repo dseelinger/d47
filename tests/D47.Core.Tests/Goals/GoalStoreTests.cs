@@ -46,12 +46,12 @@ public class GoalStoreTests : IDisposable
 
         store.Record(
         [
-            Mine("F1", new GoalMark { Key = GoalCatalogue.Systems, Have = 10 }),
-            Mine("F2", new GoalMark { Key = GoalCatalogue.Systems, Have = 4_000 }),
+            Mine("F1", new GoalMark { Key = "rank.trade", Have = 10 }),
+            Mine("F2", new GoalMark { Key = "rank.trade", Have = 4_000 }),
         ]);
 
-        Assert.Equal(10, store.MineFor("F1")?.For(GoalCatalogue.Systems)?.Have);
-        Assert.Equal(4_000, store.MineFor("F2")?.For(GoalCatalogue.Systems)?.Have);
+        Assert.Equal(10, store.MineFor("F1")?.For("rank.trade")?.Have);
+        Assert.Equal(4_000, store.MineFor("F2")?.For("rank.trade")?.Have);
     }
 
     /// <summary>The decision that has to outlive a recomputation.</summary>
@@ -87,7 +87,7 @@ public class GoalStoreTests : IDisposable
         var store = Store();
 
         Assert.Null(store.Author("F1", Authored("mine.see-the-galaxy", "See the galaxy")));
-        store.Record([Mine("F1", new GoalMark { Key = GoalCatalogue.Systems, Have = 3 })]);
+        store.Record([Mine("F1", new GoalMark { Key = "rank.trade", Have = 3 })]);
 
         var reread = Store();
         reread.Poll();

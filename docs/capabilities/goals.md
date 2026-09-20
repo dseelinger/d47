@@ -152,9 +152,9 @@ nav_order: 143
 
 Your checklist holds what you are doing this week. Goals hold what you are doing this year.
 
-Elite in each career. Every engineer unlocked. The ship collection. The exploration milestones that
-take months. Directive 47 calls each of these an **arc**: a named ambition with a definition of
-done, a progress figure nobody typed, and an age.
+Elite in each career. Every engineer unlocked. The ship collection. Directive 47 calls each of
+these an **arc**: a named ambition with a definition of done, a progress figure nobody typed, and
+an age.
 
 ### Progress is worked out, never typed
 
@@ -169,7 +169,7 @@ Where the journal cannot say, d47 says so rather than guessing:
   anything about your rank this session, the figure from your journals stands with its date on it.
   It never resets to nothing on the absence of evidence.
 
-### The nine that ship
+### The seven that ship
 
 | Arc | Done when | Where the figure comes from |
 |---|---|---|
@@ -180,8 +180,6 @@ Where the journal cannot say, d47 says so rather than guessing:
 | Elite in Exobiology | Exobiologist rank 13 — Elite V | Live journal state |
 | Every engineer unlocked | Every engineer in the directory | Live journal state |
 | The ship collection | One of every hull, owned at once | Your fleet, plus what you are flying |
-| Systems visited | The next milestone, up to fifty thousand | Your journals |
-| Distance flown | The next milestone, up to a million light years | Your journals |
 
 **Each rank says its name**, from Harmless up through Elite V — so d47 says *Trailblazer, 12% into
 it* rather than *rank 5 of 8, 12% into it*. A career arc is done at Elite V, not at Elite.
@@ -194,9 +192,8 @@ either, set it aside — it goes off the page and stays off until you ask for it
 
 Nothing happens until you ask. Turn on **Goals** on the Checklist bar — it says how many arcs are
 running, and goes on saying so once the band is open — and press **Read my journals**. One pass
-over the journals already on your disk gives every arc its start date and counts the two milestone
-arcs. It is arithmetic over events on your own machine — **nothing leaves it, and no journal is ever
-sent to a model.**
+over the journals already on your disk gives every arc its start date. It is arithmetic over
+events on your own machine — **nothing leaves it, and no journal is ever sent to a model.**
 
 A read looks like this:
 
@@ -208,11 +205,7 @@ Elite as a Mercenary: Defenceless.
 Elite in Exobiology: Directionless.
 Every engineer unlocked: 19 of 53 unlocked, 2 invited. Running 12 months.
 The ship collection: 11 of 45 hulls owned. Running 13 months.
-Systems visited: 4,182 of 5,000 systems, next milestone. That is as of 17 Aug 2026, from your
-journals. Running 13 months.
-Distance flown: 214,908 of 500,000 ly, next milestone. That is as of 17 Aug 2026, from your
-journals. Running 13 months.
-Ages and milestones come from 914 journals on this disk, the oldest from 4 Jul 2025.
+Ages come from 914 journals on this disk, the oldest from 4 Jul 2025.
 ```
 
 ### The checklist points at the arc
@@ -232,7 +225,6 @@ What each arc offers:
   properly — ranked by fastest unlock and distance together, and the chain it promotes carries an
   access step beside each modification.
 - **The ship collection** names the cheapest hull you do not own, off the shipyard table.
-- **The milestone arcs** name the gap to the next rung.
 - **The career arcs propose nothing, and say why.** Rank is earned by doing the career; there is no
   route to it anyone can plot. Where d47 has a tool that helps — `plot_trade_route`,
   `plot_exploration_route`, `plot_exobiology_route` — it names that instead of inventing a plan.

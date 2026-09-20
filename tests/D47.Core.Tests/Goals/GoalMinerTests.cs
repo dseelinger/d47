@@ -28,30 +28,16 @@ public class GoalMinerTests : IDisposable
         }
     }
 
-    [Fact]
-    public void JumpsAreCountedAsDistinctSystemsAndSummedLightYears()
-    {
-        Journal(
-            Jump(Start, "Sol", 8.6)
-            + Jump(Start.AddHours(1), "Alpha Centauri", 4.4)
-            + Jump(Start.AddHours(2), "Sol", 4.4));
-
-        var mine = Assert.Single(Mine());
-
-        Assert.Equal(2, mine.For(GoalCatalogue.Systems)?.Have);
-        Assert.Equal(17, mine.For(GoalCatalogue.Distance)?.Have);
-    }
-
     /// <summary>The one figure the whole phase turns on: how long it has been running.</summary>
     [Fact]
     public void AnArcStartsAtTheFirstEvidenceRatherThanAtTheFirstJournal()
     {
         Journal(Idle(Start));
-        Journal(Jump(Start.AddDays(30), "Sol", 8.6));
+        Journal(Rank(Start.AddDays(30), 4));
 
         var mine = Assert.Single(Mine());
 
-        Assert.Equal(Start.AddDays(30), mine.For(GoalCatalogue.Systems)?.Started);
+        Assert.Equal(Start.AddDays(30), mine.For("rank.trade")?.Started);
     }
 
     /// <summary>
@@ -153,14 +139,14 @@ public class GoalMinerTests : IDisposable
     [Fact]
     public void TwoCommandersAreMinedApart()
     {
-        Journal(Jump(Start, "Sol", 8.6), "F1111111");
-        Journal(Jump(Start, "Sol", 8.6) + Jump(Start.AddHours(1), "Lave", 40.2), "F2222222");
+        Journal(Rank(Start, 3), "F1111111");
+        Journal(Rank(Start, 7), "F2222222");
 
         var mines = Mine();
 
         Assert.Equal(2, mines.Count);
-        Assert.Equal(1, mines.Single(mine => mine.FrontierId == "F1111111").For(GoalCatalogue.Systems)?.Have);
-        Assert.Equal(2, mines.Single(mine => mine.FrontierId == "F2222222").For(GoalCatalogue.Systems)?.Have);
+        Assert.Equal(3, mines.Single(mine => mine.FrontierId == "F1111111").For("rank.trade")?.Have);
+        Assert.Equal(7, mines.Single(mine => mine.FrontierId == "F2222222").For("rank.trade")?.Have);
     }
 
     [Fact]
@@ -193,13 +179,6 @@ public class GoalMinerTests : IDisposable
 
     private static string Rank(DateTimeOffset at, int trade) =>
         Line(at, "Rank", $"\"Trade\":{trade.ToString(CultureInfo.InvariantCulture)}") + "\n";
-
-    private static string Jump(DateTimeOffset at, string system, double distance) =>
-        Line(
-            at,
-            "FSDJump",
-            $"\"StarSystem\":\"{system}\",\"JumpDist\":{distance.ToString("0.00", CultureInfo.InvariantCulture)}")
-        + "\n";
 
     private static string Engineers(DateTimeOffset at, int unlocked)
     {

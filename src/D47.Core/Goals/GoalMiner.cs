@@ -129,17 +129,13 @@ public sealed class GoalMiner(ILogger<GoalMiner> logger)
     {
         private readonly Dictionary<string, (int Rank, DateTimeOffset At)> _ranks = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, DateTimeOffset> _rankStarted = new(StringComparer.OrdinalIgnoreCase);
-        private readonly HashSet<string> _systems = new(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> _hulls = new(StringComparer.OrdinalIgnoreCase);
 
-        private double _lightYears;
         private int _engineers;
         private DateTimeOffset? _engineersAt;
         private DateTimeOffset? _engineersStarted;
         private DateTimeOffset? _hullsStarted;
         private DateTimeOffset? _hullsAt;
-        private DateTimeOffset? _flyingStarted;
-        private DateTimeOffset? _flyingAt;
 
         public int Journals { get; set; }
 
@@ -217,22 +213,6 @@ public sealed class GoalMiner(ILogger<GoalMiner> logger)
 
                     break;
 
-                case "FSDJump":
-                    _flyingStarted ??= stamp;
-                    _flyingAt = stamp;
-
-                    if (journalEvent.Raw.String("StarSystem") is { Length: > 0 } system)
-                    {
-                        _systems.Add(system);
-                    }
-
-                    if (journalEvent.Raw.Double("JumpDist") is { } distance and > 0)
-                    {
-                        _lightYears += distance;
-                    }
-
-                    break;
-
                 case "Loadout" or "ShipyardBuy" or "ShipyardNew" or "ShipyardSwap":
                     // ShipyardBuy writes ShipType; Loadout writes Ship.
                     if (journalEvent.Raw.String("Ship") is { Length: > 0 } flown)
@@ -301,22 +281,6 @@ public sealed class GoalMiner(ILogger<GoalMiner> logger)
                 Started = _hullsStarted,
                 Have = _hulls.Count > 0 ? _hulls.Count : null,
                 AsOf = _hullsAt,
-            });
-
-            marks.Add(new GoalMark
-            {
-                Key = GoalCatalogue.Systems,
-                Started = _flyingStarted,
-                Have = _systems.Count > 0 ? _systems.Count : null,
-                AsOf = _flyingAt,
-            });
-
-            marks.Add(new GoalMark
-            {
-                Key = GoalCatalogue.Distance,
-                Started = _flyingStarted,
-                Have = _lightYears > 0 ? (long)Math.Round(_lightYears) : null,
-                AsOf = _flyingAt,
             });
 
             return new GoalMine
