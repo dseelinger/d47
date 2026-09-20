@@ -10,7 +10,9 @@
 
 Owned suits and weapons now survive a restart, the same way the fleet already did: bought,
 upgraded, sold and equipped items are kept in a per-commander file and restored on load, merged
-under whatever the current session has already seen.
+under whatever the current session has already seen. A suit or weapon bought and not worn since is
+now found by walking older journals as far back as the stored file needs, rather than only the
+most recent ones.
 
 "Get clear and supercruise", "boost and warp" and the rest of that pattern now route to separate
 and supercruise, the same way their jump equivalents already routed to separate and engage.

@@ -755,6 +755,7 @@ public sealed class AppHost : IDisposable
             Directory = journalDirectory,
             Loggers = loggerFactory,
             LoadoutFile = loadouts,
+            KitFile = kit,
             NameFile = heardNames,
             Step = StartupTimer.Step,
         };
@@ -775,9 +776,8 @@ public sealed class AppHost : IDisposable
             // the moment the Commander swapped out of it.
             RestoreLoadouts = fid => history.Loadouts?.GetValueOrDefault(fid),
 
-            // Read straight off the store rather than through the history walk: #294 covers finding this
-            // in older journals, and until then the file is everything there is to restore from.
-            RestoreKit = kit.For,
+            // A suit bought and not worn since may be found only by the walk, not the file alone (#294).
+            RestoreKit = fid => history.Kits?.GetValueOrDefault(fid),
 
             // And where the carrier was parked, so "where is my carrier" survives a restart.
             RestoreCarrier = fid => history.Carriers?.GetValueOrDefault(fid),

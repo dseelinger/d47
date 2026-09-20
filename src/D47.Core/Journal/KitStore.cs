@@ -44,6 +44,18 @@ public sealed class KitStore(string path, ILogger<KitStore> logger)
         }
     }
 
+    /// <summary>Everything the file held, for <see cref="KitBackfill"/> to start from rather than rebuild over.</summary>
+    public IReadOnlyDictionary<string, OwnedKit> All
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return new Dictionary<string, OwnedKit>(_byCommander, StringComparer.Ordinal);
+            }
+        }
+    }
+
     /// <summary>Reads the file.</summary>
     public void Load()
     {
