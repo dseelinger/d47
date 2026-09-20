@@ -9,6 +9,7 @@ using D47.App.Panel;
 using D47.App.Theming;
 using D47.Core.Interface;
 using D47.Core.Capabilities;
+using D47.Core.Configuration;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -182,7 +183,8 @@ public class TheRoutingTabTests
         bool lookups = true,
         Action? openSettings = null,
         D47.Core.Capabilities.Builtin.IClipboard? clipboard = null,
-        string? here = null)
+        string? here = null,
+        D47.Core.Configuration.SettingsService? settings = null)
     {
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
@@ -193,7 +195,8 @@ public class TheRoutingTabTests
             plans,
             () => lookups,
             openSettings,
-            Clipboard: clipboard));
+            Clipboard: clipboard,
+            Settings: settings));
 
         return Laid(panel);
     }
@@ -267,7 +270,7 @@ public class TheRoutingTabTests
     }
 
     [AvaloniaFact]
-    public void PlanOffersTheThreePlannersWhenLookupsAreOn()
+    public void PlanOffersTheTwoPlannersWhenLookupsAreOn()
     {
         var folder = Scratch();
 
@@ -283,10 +286,139 @@ public class TheRoutingTabTests
 
             Assert.Contains("NEUTRON PLOTTER", drawn);
             Assert.Contains("ROAD TO RICHES", drawn);
-            Assert.Contains("TRADE RUN", drawn);
 
-            // The one figure that is about the Commander rather than their ship.
+            // Trade run moved to its own page (#311).
+            Assert.DoesNotContain("TRADE RUN", drawn);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    /// <summary>Absent a surface with settings to save into, the root simply is not there (#311).</summary>
+    [AvaloniaFact]
+    public void TheTradeRootIsAbsentWithNoSettingsToSaveInto()
+    {
+        var folder = Scratch();
+
+        try
+        {
+            var panel = FullyFurnished(NavRoute.None, Book(folder));
+
+            Assert.DoesNotContain(
+                panel.Nav.Roots(PanelTab.Routing),
+                root => root.Key == RoutingPages.TradeRoot);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    [AvaloniaFact]
+    public void TheTradeRootCarriesTheCardTheTradeRunCardUsedToBeOnPlan()
+    {
+        var folder = Scratch();
+
+        try
+        {
+            var panel = FullyFurnished(NavRoute.None, Book(folder), settings: TestSurface.Settings());
+
+            panel.Tab = PanelTab.Routing;
+            panel.Nav.SelectRoot(RoutingPages.TradeRoot);
+            Dispatcher.UIThread.RunJobs();
+
+            var drawn = TextOf(panel).ToArray();
+
+            Assert.Contains("TRADE ROUTE", panel.Nav.Roots(PanelTab.Routing).Select(r => r.Word.ToUpperInvariant()));
+            Assert.Contains("TRADE RUN", drawn);
             Assert.Contains(drawn, text => text.Contains("never read from the journal", StringComparison.Ordinal));
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    private static TextBox FieldNamed(PanelView panel, string label) =>
+        panel.GetVisualDescendants()
+            .OfType<TextBox>()
+            .First(box => AutomationProperties.GetName(box) == label);
+
+    private static ToggleSwitch SwitchNamed(PanelView panel, string label) =>
+        (ToggleSwitch)((StackPanel)panel.GetVisualDescendants()
+            .OfType<TextBlock>()
+            .First(text => text.Text == label)
+            .Parent!)
+            .Children
+            .OfType<ToggleSwitch>()
+            .Single();
+
+    /// <summary>Everything but the credits box is saved, and it survives a restart (#311).</summary>
+    [AvaloniaFact]
+    public void TheTradePagesSavedValuesSurviveARestart()
+    {
+        var folder = Scratch();
+
+        try
+        {
+            var (settings, _, paths) = TestSurface.Create();
+            var panel = FullyFurnished(NavRoute.None, Book(folder), settings: settings);
+
+            panel.Tab = PanelTab.Routing;
+            panel.Nav.SelectRoot(RoutingPages.TradeRoot);
+            Dispatcher.UIThread.RunJobs();
+
+            FieldNamed(panel, "Hops").Text = "8";
+            FieldNamed(panel, "Most jumps per leg").Text = "4";
+            SwitchNamed(panel, "Large pads only").IsChecked = true;
+            Dispatcher.UIThread.RunJobs();
+
+            Assert.Equal(8, settings.Current.Trade.Hops);
+            Assert.Equal(4, settings.Current.Trade.MaxJumps);
+            Assert.True(settings.Current.Trade.LargePadOnly);
+
+            // A fresh store over the same file, the way a restart reads it.
+            var reloaded = new SettingsStore(paths, NullLogger<SettingsStore>.Instance).Load();
+
+            Assert.Equal(8, reloaded.Trade.Hops);
+            Assert.Equal(4, reloaded.Trade.MaxJumps);
+            Assert.True(reloaded.Trade.LargePadOnly);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    /// <summary>The one figure this page never writes to disk (#311).</summary>
+    [AvaloniaFact]
+    public void TheCreditsFigureNeverReachesSettingsJson()
+    {
+        var folder = Scratch();
+
+        try
+        {
+            var (settings, _, paths) = TestSurface.Create();
+            var panel = FullyFurnished(NavRoute.None, Book(folder), settings: settings);
+
+            panel.Tab = PanelTab.Routing;
+            panel.Nav.SelectRoot(RoutingPages.TradeRoot);
+            Dispatcher.UIThread.RunJobs();
+
+            FieldNamed(panel, "Credits to trade with, required").Text = "123456789";
+
+            // Something else has to change for a save to happen at all — the credits box is wired to
+            // nothing, so typing into it alone writes nothing.
+            FieldNamed(panel, "Hops").Text = "7";
+            Dispatcher.UIThread.RunJobs();
+
+            var raw = File.ReadAllText(paths.SettingsFile);
+
+            Assert.DoesNotContain("123456789", raw, StringComparison.Ordinal);
+            Assert.DoesNotContain("capital", raw, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("credit", raw, StringComparison.OrdinalIgnoreCase);
         }
         finally
         {
@@ -720,7 +852,7 @@ public class TheRoutingTabTests
         {
             (RoutePlanPage.NeutronPlotterHelp, "Neutron Plotter"),
             (RoutePlanPage.RichesHelp, "Road to Riches"),
-            (RoutePlanPage.TradeHelp, "Trade run"),
+            (RouteTradePage.TradeHelp, "Trade run"),
         };
 
         foreach (var (id, title) in pages)
@@ -745,7 +877,6 @@ public class TheRoutingTabTests
     [AvaloniaTheory]
     [InlineData("Neutron Plotter", "general-neutron-plotter")]
     [InlineData("Road to Riches", "general-road-to-riches")]
-    [InlineData("Trade run", "general-trade-run")]
     public void EachPlannersMarkOpensThatPlannersPage(string heading, string page)
     {
         var folder = Scratch();
@@ -781,7 +912,6 @@ public class TheRoutingTabTests
     [AvaloniaTheory]
     [InlineData("Neutron Plotter", "general-neutron-plotter")]
     [InlineData("Road to Riches", "general-road-to-riches")]
-    [InlineData("Trade run", "general-trade-run")]
     public void EachPlannersMarkShowsThatPlannersHelpOnHover(string heading, string page)
     {
         var folder = Scratch();
@@ -809,6 +939,68 @@ public class TheRoutingTabTests
         }
     }
 
+    /// <summary>Trade run's own page, off the Plan page since #311, carries the same mark.</summary>
+    [AvaloniaFact]
+    public void TheTradePagesMarkOpensThatPlannersPage()
+    {
+        var folder = Scratch();
+
+        try
+        {
+            var panel = FullyFurnished(NavRoute.None, Book(folder), settings: TestSurface.Settings());
+
+            panel.Tab = PanelTab.Routing;
+            panel.Nav.SelectRoot(RoutingPages.TradeRoot);
+            Dispatcher.UIThread.RunJobs();
+
+            PlannerMark(panel, "Trade run").RaiseEvent(
+                new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+            Dispatcher.UIThread.RunJobs();
+
+            Assert.True(panel.Nav.Modal, "help took the panel");
+            Assert.Equal(D47.Core.Help.HelpLevel.Prefix + "general-trade-run", panel.Nav.Trail[^1].Key);
+
+            Assert.True(panel.GoBack());
+            Dispatcher.UIThread.RunJobs();
+
+            Assert.False(panel.Nav.Modal);
+            Assert.Equal(RoutingPages.TradeRoot, panel.Nav.RootKeyOf(PanelTab.Routing));
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    /// <summary>And its hover shows the same words as the click, the same as the other two.</summary>
+    [AvaloniaFact]
+    public void TheTradePagesMarkShowsThatPlannersHelpOnHover()
+    {
+        var folder = Scratch();
+
+        try
+        {
+            var panel = FullyFurnished(NavRoute.None, Book(folder), settings: TestSurface.Settings());
+
+            panel.Tab = PanelTab.Routing;
+            panel.Nav.SelectRoot(RoutingPages.TradeRoot);
+            Dispatcher.UIThread.RunJobs();
+
+            var mark = PlannerMark(panel, "Trade run");
+
+            Assert.Equal("About Trade run", AutomationProperties.GetName(mark));
+
+            var intro = D47.Core.Help.HelpLibrary.For("general-trade-run")!.Intro;
+            var tip = Assert.IsType<TextBlock>(ToolTip.GetTip(mark));
+
+            Assert.Equal(intro, tip.Text);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
     /// <summary>
     /// No planner card's mark echoes an invented click description — the sweep #341 asks for, done here
     /// rather than by a build-time grep so it runs where the marks are actually drawn.
@@ -820,21 +1012,27 @@ public class TheRoutingTabTests
 
         try
         {
-            var panel = FullyFurnished(NavRoute.None, Book(folder));
+            var panel = FullyFurnished(NavRoute.None, Book(folder), settings: TestSurface.Settings());
+
+            static Button[] Offenders(PanelView panel) =>
+                panel.GetVisualDescendants()
+                    .OfType<Button>()
+                    .Where(button => button.Content as string == "?")
+                    .Where(mark => ToolTip.GetTip(mark) is string tip
+                                   && System.Text.RegularExpressions.Regex.IsMatch(
+                                       tip, @"^What .+ does$"))
+                    .ToArray();
 
             panel.Tab = PanelTab.Routing;
             panel.Nav.SelectRoot(RoutingPages.PlanRoot);
             Dispatcher.UIThread.RunJobs();
 
-            var offenders = panel.GetVisualDescendants()
-                .OfType<Button>()
-                .Where(button => button.Content as string == "?")
-                .Where(mark => ToolTip.GetTip(mark) is string tip
-                               && System.Text.RegularExpressions.Regex.IsMatch(
-                                   tip, @"^What .+ does$"))
-                .ToArray();
+            Assert.Empty(Offenders(panel));
 
-            Assert.Empty(offenders);
+            panel.Nav.SelectRoot(RoutingPages.TradeRoot);
+            Dispatcher.UIThread.RunJobs();
+
+            Assert.Empty(Offenders(panel));
         }
         finally
         {

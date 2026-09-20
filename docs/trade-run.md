@@ -79,18 +79,26 @@ nav_order: 203
 
 ## The details
 
-The card called **Trade run** on the Routing tab's Plan page, and the `plot_trade_route` tool
-behind it.
+**Trade route**, its own page on the Routing tab, and the `plot_trade_route` tool behind it. The
+card on it is still called Trade run, the same name the tool's answer and this page go by.
 
 ### What you fill in
 
-| Box | What it means | Out of the box |
-|---|---|---|
-| **Credits to trade with** | Your working capital | **Required** — never inferred |
-| **Hops** | How many buy-and-sell legs | 5 |
-| **Most jumps per leg** | The furthest one hop may reach, in jumps | 2 |
-| **End where it started** | Whether the circuit closes | Off |
-| **Large pads only** | Skip stations your ship cannot land at | Off |
+| Box | What it means | Out of the box | Saved? |
+|---|---|---|---|
+| **Credits to trade with** | Your working capital | **Required** — never inferred | Never |
+| **Hops** | How many buy-and-sell legs | 5 | Yes |
+| **Most jumps per leg** | The furthest one hop may reach, in jumps | 2 | Yes |
+| **Max distance from star (ls)** | How far in-system a station may sit | 1,000 | Yes |
+| **Max price age (hours)** | How stale a reported price may be | 720 | Yes |
+| **End where it started** | Whether the circuit closes | Off | Yes |
+| **Large pads only** | Skip stations your ship cannot land at | Off | Yes |
+| **Planetary ports** | Also search surface stations | Off | Yes |
+| **Avoid permit systems** | Leave out markets you need a permit to enter | On | Yes |
+
+Everything here is saved and survives a restart, except the credits figure — see below. A voice
+plot that names only a credit figure runs with whatever this page last saved for the rest;
+`plot_trade_route` reads its own saved values for any argument it isn't given.
 
 It plans **from the station you are docked at**. There is no origin box, because a trade run that
 starts somewhere you are not is a trade run that starts with an empty leg.

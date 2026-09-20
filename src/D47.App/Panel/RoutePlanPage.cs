@@ -81,7 +81,6 @@ public sealed class RoutePlanPage : UserControl
 
         _cards.Children.Add(JumpCard());
         _cards.Children.Add(RichesCard());
-        _cards.Children.Add(TradeCard());
     }
 
     /// <summary>Redraws — after a plot, or after the setting behind the whole page moved.</summary>
@@ -181,9 +180,6 @@ public sealed class RoutePlanPage : UserControl
     /// <inheritdoc cref="NeutronPlotterHelp"/>
     public const string RichesHelp = D47.Core.Help.HelpLibrary.GeneralPrefix + "road-to-riches";
 
-    /// <inheritdoc cref="NeutronPlotterHelp"/>
-    public const string TradeHelp = D47.Core.Help.HelpLibrary.GeneralPrefix + "trade-run";
-
     private Control RichesCard()
     {
         var stops = Field("Stops", "10");
@@ -210,57 +206,6 @@ public sealed class RoutePlanPage : UserControl
                 ("loop", loop.IsChecked == true ? "true" : "false")),
             () => null,
             RichesHelp);
-    }
-
-    private Control TradeCard()
-    {
-        // The tell that started #253: somebody hit exactly this problem, had nowhere to put the answer, and
-        // put the word "required" in the placeholder — where it vanishes the moment the Commander types,
-        // which is when it still needs to be true.
-        var capital = Field("Credits to trade with", "how much", FieldNeed.Required);
-        var hops = Field("Hops", "5");
-        var maxJumps = Field("Most jumps per leg", "2");
-        var (loopRow, _, loop) = LabeledSwitch.Build("End where it started");
-        var (largePadRow, _, largePad) = LabeledSwitch.Build("Large pads only");
-
-        var form = new StackPanel
-        {
-            Spacing = 8,
-            Children =
-            {
-                Row(capital, hops),
-                Row(maxJumps, null),
-                loopRow,
-                largePadRow,
-
-                // The one figure on this page that is about the Commander rather than their ship, and the
-                // reason it is typed every time rather than remembered: what they are worth is nobody's
-                // business but theirs.
-                Text(
-                    "Your balance is never read from the journal and never saved — say what you "
-                    + "want to trade with. It plans from the station you are docked at.",
-                    TypeScale.Small,
-                    ThemeManager.TextMutedKey,
-                    wrap: true),
-            },
-        };
-
-        return Plottable(
-            "Trade run",
-            form,
-            RoutePlanKind.Trade,
-            "plot_trade_route",
-            () => Arguments(
-                ("capital", capital.Text),
-                ("hops", hops.Text),
-                ("max_jumps", maxJumps.Text),
-                ("loop", loop.IsChecked == true ? "true" : "false"),
-                ("large_pad", largePad.IsChecked == true ? "true" : "false")),
-            () => string.IsNullOrWhiteSpace(capital.Text)
-                ? "Say how many credits to trade with. It is never inferred."
-                : null,
-            TradeHelp,
-            FormField.Legend(required: true));
     }
 
     /// <summary>
@@ -335,9 +280,7 @@ public sealed class RoutePlanPage : UserControl
 
             // A plot is a submitted job rather than a request and a reply, so the surface has to say it is
             // waiting.
-            status.Text = kind == RoutePlanKind.Trade
-                ? "Working it out…"
-                : "Plotting… this is a job the service queues, so it can take a moment.";
+            status.Text = "Plotting… this is a job the service queues, so it can take a moment.";
 
             var before = _plans.Last(kind);
 

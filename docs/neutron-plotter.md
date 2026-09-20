@@ -87,7 +87,7 @@ nav_order: 201
 <div class="next-title">Where to go next</div>
 <div class="cards">
 <a class="card" href="road-to-riches.html"><span class="ct">Road to Riches →</span><span class="cd">The other reason to fly a long way: a loop of bodies worth scanning.</span></a>
-<a class="card" href="trade-run.html"><span class="ct">Trade run →</span><span class="cd">The third card on that page, and the one that is not a plot at all.</span></a>
+<a class="card" href="trade-run.html"><span class="ct">Trade run →</span><span class="cd">Its own Routing page, and the one that is not a plot at all.</span></a>
 <a class="card" href="capabilities/routes.html"><span class="ct">Route planning →</span><span class="cd">What all three share: the service, the waiting, and what a plan is.</span></a>
 </div>
 </div>

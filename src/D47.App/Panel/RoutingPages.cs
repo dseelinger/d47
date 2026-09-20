@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using D47.Core.Capabilities;
+using D47.Core.Configuration;
 using D47.Core.Interface;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -37,7 +38,10 @@ public sealed record RoutingSurface(
     // The Community Goal page's own needs (#296): the saved search, the ledger, and who and when to ask them
     // about.
     CommunityGoalSurface? CommunityGoal = null,
-    D47.Core.Capabilities.Builtin.IClipboard? Clipboard = null);
+    D47.Core.Capabilities.Builtin.IClipboard? Clipboard = null,
+
+    // The Trade route page's own saved values, read and written through this (#311).
+    SettingsService? Settings = null);
 
 /// <summary>What the Community Goal page reads and drives (#296).</summary>
 /// <param name="Search">The saved query — its commodity is the one field the page edits.</param>
@@ -76,6 +80,9 @@ public static class RoutingPages
     /// <summary>The Community Goal supply search and its ledger (#296).</summary>
     public const string CommunityGoalRoot = "routing.communityGoal";
 
+    /// <summary>The Trade route page: the plotter's saved hops, jumps and switches (#311).</summary>
+    public const string TradeRoot = "routing.trade";
+
     /// <summary>How a plan that was made is keyed when it is opened as a level.</summary>
     public const string ResultPrefix = "routing.result:";
 
@@ -98,6 +105,7 @@ public static class RoutingPages
             CourseRoot => Course(surface),
             MarketRoot => Market(surface),
             CommunityGoalRoot => CommunityGoal(surface, settingsStrip),
+            TradeRoot => Trade(surface, nav),
 
             // Progress is the fallback rather than Plan, because it is the mode that works with nothing
             // switched on and nothing typed.
@@ -133,6 +141,17 @@ public static class RoutingPages
                 surface.OpenSettings,
                 Copy(surface))
             : Missing("Market lookups are not available on this surface.");
+
+    private static Control Trade(RoutingSurface surface, PanelNavigator nav) =>
+        surface is { Registry: { } registry, Plans: { } plans, Settings: { } settings }
+            ? new RouteTradePage(
+                registry,
+                plans,
+                nav,
+                surface.LookupsEnabled ?? (() => false),
+                settings,
+                surface.OpenSettings)
+            : Missing("The Trade route page is not available on this surface.");
 
     private static Control CommunityGoal(RoutingSurface surface, Func<Control?>? settingsStrip) =>
         surface is { Registry: { } registry, Commodities: { } board, CommunityGoal: { } goal }

@@ -264,7 +264,10 @@ public partial class MainWindow : Window
                         at,
                         host.Settings.Current.Callouts.WeekBoundaryDay,
                         host.Settings.Current.Callouts.WeekBoundaryHourUtc)),
-                Clipboard: host.Clipboard);
+                Clipboard: host.Clipboard,
+
+                // The Trade route page's own saved values (#311).
+                Settings: host.Settings);
 
             Panel.EnableRouting(
                 Routing, settingsStrip: () => BuildSettingsStrip(RoutingPages.CommunityGoalRoot));

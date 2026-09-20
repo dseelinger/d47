@@ -52,6 +52,9 @@ public sealed record D47Settings
     /// <summary>The checklist's own settings (#255).</summary>
     public ChecklistSettings Checklists { get; init; } = new();
 
+    /// <summary>The Trade route page's own saved values (#311), edited only from that page.</summary>
+    public TradeSettings Trade { get; init; } = new();
+
     /// <summary>What d47 keeps about the Commander, and for how long (Phase 31).</summary>
     public MemorySettings Memory { get; init; } = new();
 
@@ -165,6 +168,40 @@ public sealed record ChecklistSettings
     /// <summary>Whether a fulfilled derived item, and a ship slot whose plan is met, are removed rather
     /// than left ticked.</summary>
     public bool RemoveFulfilled { get; init; }
+}
+
+/// <summary>
+/// The Trade route page's own saved values (#311). Credits to trade with is never in this record —
+/// it is asked for every time and never written to disk.
+/// </summary>
+public sealed record TradeSettings
+{
+    /// <inheritdoc cref="D47Settings.Extra"/>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? Extra { get; init; }
+
+    /// <summary>How many legs to plan, 1 to 10.</summary>
+    public int Hops { get; init; } = 5;
+
+    /// <summary>The most jumps a single leg may take, 1 to 10.</summary>
+    public int MaxJumps { get; init; } = 2;
+
+    /// <summary>Light seconds from the entry point that a station may sit at.</summary>
+    public double MaxStationDistance { get; init; } = 1_000;
+
+    /// <summary>How stale a reported price may be, in hours.</summary>
+    public int MaxPriceAgeHours { get; init; } = 720;
+
+    /// <summary>End back where the route started.</summary>
+    public bool Loop { get; init; }
+
+    public bool LargePadOnly { get; init; }
+
+    /// <summary>Whether the sweep includes surface stations — planetary ports, outposts, settlements.</summary>
+    public bool Planetary { get; init; }
+
+    /// <summary>Whether markets in permit-locked systems are dropped.</summary>
+    public bool AvoidPermitSystems { get; init; } = true;
 }
 
 /// <summary>Which companion character is aboard (Phase 11).</summary>

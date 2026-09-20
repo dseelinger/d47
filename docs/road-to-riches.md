@@ -79,7 +79,7 @@ nav_order: 202
 <div class="next-title">Where to go next</div>
 <div class="cards">
 <a class="card" href="neutron-plotter.html"><span class="ct">Neutron Plotter →</span><span class="cd">Getting somewhere far away, rather than touring what is near.</span></a>
-<a class="card" href="trade-run.html"><span class="ct">Trade run →</span><span class="cd">The third card on that page, and the one that is not a plot at all.</span></a>
+<a class="card" href="trade-run.html"><span class="ct">Trade run →</span><span class="cd">Its own Routing page, and the one that is not a plot at all.</span></a>
 <a class="card" href="capabilities/routes.html"><span class="ct">Route planning →</span><span class="cd">What all three share: the service, the waiting, and what a plan is.</span></a>
 </div>
 </div>

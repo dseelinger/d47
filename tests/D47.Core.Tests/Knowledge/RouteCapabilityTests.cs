@@ -130,7 +130,10 @@ public class RouteCapabilityTests
         bool enabled = true,
         bool docked = true,
         RoutePlanBook? plans = null,
-        NavigationSurface? navigation = null)
+        NavigationSurface? navigation = null,
+
+        // The Trade route page's own saved values (#311), seeded before the registry reads them.
+        Action<SettingsService>? configureSettings = null)
     {
         var gameState = new GameStateStore();
         Apply(gameState, """{"timestamp":"2026-01-01T00:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""");
@@ -149,6 +152,7 @@ public class RouteCapabilityTests
         var settings = TestSurface.For(install).Settings;
 
         settings.Apply(GalaxyCapability.EnabledKey, enabled ? "true" : "false", SettingsCaller.Panel);
+        configureSettings?.Invoke(settings);
 
         return (
             CapabilityRegistry.Build(
@@ -417,6 +421,56 @@ public class RouteCapabilityTests
             TestContext.Current.CancellationToken);
 
         Assert.False(trade.LastTrade?.AvoidPermitSystems);
+    }
+
+    /// <summary>
+    /// The Trade route page's own saved values (#311) fill in anything a call doesn't give — a voice
+    /// plot that names only the credits runs with whatever the page last saved.
+    /// </summary>
+    [Fact]
+    public async Task ATradeRouteUsesTheSavedSettingsForAnythingNotGiven()
+    {
+        using var install = new TempInstall();
+        var (registry, _, trade, _) = Build(
+            install,
+            configureSettings: settings => settings.Replace(
+                "test",
+                s => s with
+                {
+                    Trade = s.Trade with
+                    {
+                        Hops = 8,
+                        MaxJumps = 4,
+                        MaxStationDistance = 500,
+                        MaxPriceAgeHours = 24,
+                        Loop = true,
+                        LargePadOnly = true,
+                        Planetary = true,
+                        AvoidPermitSystems = false,
+                    },
+                }));
+
+        await registry.InvokeAsync(
+            "plot_trade_route",
+            Args(("capital", "50000000"), ("jump_range", "30")),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(8, trade.LastTrade?.MaxHops);
+        Assert.Equal(4, trade.LastTrade?.MaxJumps);
+        Assert.Equal(500, trade.LastTrade?.MaxSystemDistance);
+        Assert.Equal(24, trade.LastTrade?.MaxPriceAge);
+        Assert.True(trade.LastTrade?.Loop);
+        Assert.True(trade.LastTrade?.LargePadOnly);
+        Assert.True(trade.LastTrade?.Planetary);
+        Assert.False(trade.LastTrade?.AvoidPermitSystems);
+
+        // An argument that is given still overrides the saved value.
+        await registry.InvokeAsync(
+            "plot_trade_route",
+            Args(("capital", "50000000"), ("jump_range", "30"), ("hops", "3")),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(3, trade.LastTrade?.MaxHops);
     }
 
     [Fact]

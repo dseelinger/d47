@@ -565,6 +565,10 @@ public static class RouteCapability
         var limpets = active?.Hold.Of(LimpetCallout.Limpet) ?? 0;
         var defaultCargo = active?.Ship.CargoCapacity is { } shipCapacity ? shipCapacity - limpets : (int?)null;
 
+        // The Trade route page's own saved values (#311), used for any argument this call doesn't give —
+        // a voice plot with only a credit figure runs with whatever the page last saved.
+        var saved = settings.Current.Trade;
+
         if (!TradeQuery.TryParse(
                 active?.Location.StarSystem,
                 active?.Location is { Docked: true, StationName: { } station } ? station : null,
@@ -573,15 +577,15 @@ public static class RouteCapability
                 // The hold is the ship's, not the Commander's, and the plot means nothing without it — so it
                 // comes from the journal where the balance deliberately does not.
                 arguments.TryGetInt32("cargo_capacity", out var cargo) ? cargo : defaultCargo,
-                arguments.TryGetInt32("hops", out var hops) ? hops : null,
-                arguments.TryGetInt32("max_jumps", out var maxJumps) ? maxJumps : null,
+                arguments.TryGetInt32("hops", out var hops) ? hops : saved.Hops,
+                arguments.TryGetInt32("max_jumps", out var maxJumps) ? maxJumps : saved.MaxJumps,
                 ladenRange,
-                Number(arguments, "max_station_distance"),
-                arguments.TryGetBoolean("large_pad", out var largePad) && largePad,
-                arguments.TryGetInt32("max_price_age_hours", out var age) ? age : null,
-                Flag(arguments, "loop"),
-                Flag(arguments, "planetary"),
-                Flag(arguments, "avoid_permit_systems"),
+                Number(arguments, "max_station_distance") ?? saved.MaxStationDistance,
+                Flag(arguments, "large_pad") ?? saved.LargePadOnly,
+                arguments.TryGetInt32("max_price_age_hours", out var age) ? age : saved.MaxPriceAgeHours,
+                Flag(arguments, "loop") ?? saved.Loop,
+                Flag(arguments, "planetary") ?? saved.Planetary,
+                Flag(arguments, "avoid_permit_systems") ?? saved.AvoidPermitSystems,
                 out var query,
                 out var failure))
         {

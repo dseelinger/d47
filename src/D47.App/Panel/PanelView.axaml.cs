@@ -948,6 +948,7 @@ public partial class PanelView : UserControl
         bool course = true,
         bool market = true,
         bool communityGoal = true,
+        bool trade = true,
 
         // Community Goal's own settings, on the tab they only affect (#218).
         Func<Control?>? settingsStrip = null)
@@ -1004,6 +1005,16 @@ public partial class PanelView : UserControl
             goal.Ledger.Changed += () => _routeCommunityGoal?.Refresh();
         }
 
+        // After Community Goal, because it is the newest of the five (#311): its own saved hops, jumps and
+        // switches, split out of the Plan page's Trade run card.
+        if (trade && surface.Plans is not null && surface.Settings is not null)
+        {
+            roots.Add(new NavCrumb(RoutingPages.TradeRoot, "Trade route")
+            {
+                Help = D47.Core.Capabilities.Builtin.RouteCapability.Id,
+            });
+        }
+
         if (roots.Count == 0)
         {
             return;
@@ -1028,6 +1039,7 @@ public partial class PanelView : UserControl
                 // Held onto so the tick can redraw Progress and a plot made elsewhere can redraw Plan.
                 _routeProgress = page as RouteProgressPage ?? _routeProgress;
                 _routePlan = page as RoutePlanPage ?? _routePlan;
+                _routeTrade = page as RouteTradePage ?? _routeTrade;
                 _routeCommunityGoal = page as RouteCommunityGoalPage ?? _routeCommunityGoal;
                 _routeResult = page as RoutePlanResultPage ?? _routeResult;
 
@@ -1043,6 +1055,7 @@ public partial class PanelView : UserControl
             plans.Changed += () =>
             {
                 _routePlan?.Refresh();
+                _routeTrade?.Refresh();
                 _routeMini?.Refresh();
                 _routeResult?.Refresh();
             };
@@ -1097,6 +1110,7 @@ public partial class PanelView : UserControl
 
     private RouteProgressPage? _routeProgress;
     private RoutePlanPage? _routePlan;
+    private RouteTradePage? _routeTrade;
     private RouteCommunityGoalPage? _routeCommunityGoal;
     private RoutePlanResultPage? _routeResult;
     private AdventureMini? _adventureMini;
