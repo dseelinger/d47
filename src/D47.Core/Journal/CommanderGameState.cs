@@ -85,6 +85,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>What they are wearing and carrying on foot (Phase 20).</summary>
     public OnFootLoadout OnFoot { get; private set; } = OnFootLoadout.Unknown;
 
+    /// <summary>Every suit and hand weapon they own, not only the one being worn (#292).</summary>
+    public OwnedKit Kit { get; private set; } = OwnedKit.Empty;
+
     /// <summary>What is in the cargo hold (Phase 18).</summary>
     public CargoHold Hold { get; internal set; } = CargoHold.Empty;
 
@@ -99,6 +102,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
             Reputation = Reputation.WithoutFactions();
             Contributions = EngineerContributions.Empty;
             Loadouts = ShipLoadouts.Empty;
+            Kit = OwnedKit.Empty;
             return;
         }
 
@@ -114,6 +118,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         // line — the Loadout, the rename, and the EngineerCraft that Elite writes no Loadout for.
         Loadouts = Loadouts.Remember(Ship, journalEvent.Timestamp).Apply(journalEvent);
         OnFoot = OnFoot.Apply(journalEvent);
+        Kit = Kit.Apply(journalEvent);
         Carrier = Carrier.Apply(journalEvent);
         SquadronCarrier = SquadronCarrier.Apply(journalEvent);
         // After Location, for the reason Colonisation below is: storing a ship happens wherever the Commander
