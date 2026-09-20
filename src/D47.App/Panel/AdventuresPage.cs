@@ -74,7 +74,11 @@ public sealed class AdventuresPage : UserControl
         _ask.Click += (_, _) => _nav.Drill(new NavCrumb(AskKey, "Ask"));
 
         var bar = new DockPanel { Margin = new Thickness(0, 0, 0, 10) };
-        var right = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { _ask, write } };
+        var right = new StackPanel
+        {
+            Orientation = Orientation.Horizontal, Spacing = 8, VerticalAlignment = VerticalAlignment.Center,
+            Children = { _ask, write },
+        };
         DockPanel.SetDock(right, Dock.Right);
         bar.Children.Add(right);
         bar.Children.Add(Muted("Stories you fly, told by the ship's AI. Progress comes from your own journal."));

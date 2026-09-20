@@ -259,6 +259,9 @@ A career goal now names your rank — Harmless, Mostly Penniless, Trailblazer an
 than reading it as a number out of eight. Reaching Elite no longer finishes the goal: it now runs
 on to Elite V, the ceiling the game itself added, and reports each of those five grades by name.
 
+The Adventures tab's two buttons keep their own height now instead of stretching to match the
+description text beside them, which grew taller as panes opened and the description wrapped.
+
 ## 0.168.0 — Controls take the HUD dress
 
 Buttons, toggle switches and the transcript tabs now draw d47's own look rather than the
