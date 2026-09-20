@@ -993,7 +993,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
                 "Delete this line",
                 $"\"{item.Text}\" would come off the list. There is no way back from this one.",
                 [new ChoiceOption("keep", "Keep it"), new ChoiceOption("delete", "Delete it")],
-                "keep",
+                null,
                 ChoiceSurface.Layer),
             option =>
             {
@@ -1036,7 +1036,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
                 + " would come off your whole checklist, including anything hidden by the current filter "
                 + "or search. There is no way back from this one.",
                 [new ChoiceOption("keep", "Keep them"), new ChoiceOption("delete", "Delete them")],
-                "keep",
+                null,
                 ChoiceSurface.Layer),
             option =>
             {

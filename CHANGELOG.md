@@ -28,6 +28,9 @@ The exploration goals — systems visited and distance flown — are gone from t
 the Checklist tab. Both counted a milestone this repository picked rather than anything Elite
 states.
 
+The keep-or-delete, keep-or-abandon and keep-or-remove confirmations no longer mark either option
+"fitted now" or "chosen now" in bold. Neither answer is current until the Commander picks one.
+
 Two more arcs are in the Goals section: Imperial Navy and Federal Navy, running to King and
 Admiral rather than to Elite. Each reads its rank's name — Serf, Cadet, and on up each ladder —
 the same way a career arc already does.

@@ -629,7 +629,7 @@ public sealed class AdventuresPage : UserControl
             $"Abandon {adventure.Name}?",
             "The story stops here. It stays on file under Set aside, and Begin again starts it from the opening.",
             [new ChoiceOption("keep", "Keep going"), new ChoiceOption("abandon", "Abandon it")],
-            "keep",
+            null,
             ChoiceSurface.Layer),
         option =>
         {
@@ -662,7 +662,7 @@ public sealed class AdventuresPage : UserControl
                 $"Remove {adventure.Name}?",
                 "It comes off the file, with everything it reached. There is no way back from this one.",
                 [new ChoiceOption("keep", "Keep it"), new ChoiceOption("remove", "Remove it")],
-                "keep",
+                null,
                 ChoiceSurface.Layer),
             option =>
             {

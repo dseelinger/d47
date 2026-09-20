@@ -1744,11 +1744,8 @@ public sealed class ItemPage : LoadoutPage
                     ? $"{what}. There is no way back from this one."
                     : "There is no way back from this one.",
                 [new ChoiceOption("keep", "Keep it"), new ChoiceOption("drop", "Drop it")],
-                "keep",
-                ChoiceSurface.Layer)
-            {
-                CurrentWord = "chosen now",
-            },
+                null,
+                ChoiceSurface.Layer),
             option =>
             {
                 if (option.Key == "drop")
