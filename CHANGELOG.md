@@ -8,6 +8,10 @@
 
 ## 0.169.0 — No more drop-downs
 
+Machine text — the live log, the journal list and detail, the Help Improve payload and excerpt
+preview, and time and key readouts — now draws in an embedded JetBrains Mono rather than
+whatever monospace font the machine happens to have installed.
+
 A layer chooser — the module, keybind and setting pickers that open over the current page rather
 than taking the panel — now dims the page behind it instead of letting it show through or covering
 it edge to edge. The card sits centred and capped in width over that dimming, the search box and

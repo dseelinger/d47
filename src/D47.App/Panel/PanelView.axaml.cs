@@ -3322,7 +3322,7 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>The face for times and keys — readouts, which is all monospace is kept for.</summary>
-    private static readonly FontFamily MonospaceFamily = new("Cascadia Mono,Consolas,monospace");
+    private static readonly FontFamily MonospaceFamily = new(Theming.Fonts.MonoFamily);
 
     /// <summary>Whether a proposal is still waiting on the Commander, read from the store rather than a run's own say-so (#277).</summary>
     private bool IsProposalPending(string proposalId) =>

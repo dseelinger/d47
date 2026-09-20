@@ -60,7 +60,7 @@ public sealed class DebriefWindow : Window
         _prompt = new SelectableTextBlock
         {
             TextWrapping = TextWrapping.Wrap,
-            FontFamily = new FontFamily("Consolas, Cascadia Mono, monospace"),
+            FontFamily = new FontFamily(Fonts.MonoFamily),
             FontSize = TypeScale.Secondary,
         };
 

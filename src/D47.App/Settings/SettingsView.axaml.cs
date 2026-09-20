@@ -3832,7 +3832,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
             // The keys themselves in monospace; "Press to bind" and "No controllers" are prose, not data
             // (#279).
-            button.FontFamily = bound is null ? proseFont : new FontFamily("Cascadia Mono,Consolas,monospace");
+            button.FontFamily = bound is null ? proseFont : new FontFamily(Fonts.MonoFamily);
             button.Content = bound ?? "Press to bind";
 
             // A row that can only be filled from a controller is dead without one, and saying so beats a

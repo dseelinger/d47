@@ -84,7 +84,7 @@ public sealed class HelpImproveWindow : Window
     private readonly SelectableTextBlock _preview = new()
     {
         Name = "Excerpt",
-        FontFamily = new FontFamily("Cascadia Mono,Consolas,monospace"),
+        FontFamily = new FontFamily(Fonts.MonoFamily),
         FontSize = TypeScale.Small,
 
         // **Wrapped, though a payload reads better as the lines it is.** The paragraphs above the payload —
@@ -96,7 +96,7 @@ public sealed class HelpImproveWindow : Window
     private readonly SelectableTextBlock _corpusPreview = new()
     {
         Name = "CorpusReport",
-        FontFamily = new FontFamily("Cascadia Mono,Consolas,monospace"),
+        FontFamily = new FontFamily(Fonts.MonoFamily),
         FontSize = TypeScale.Small,
         TextWrapping = TextWrapping.Wrap,
     };

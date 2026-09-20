@@ -479,7 +479,7 @@ public sealed class SpendWindow : Window
         {
             Text = money,
             FontSize = TypeScale.Secondary,
-            FontFamily = new FontFamily("Cascadia Mono,Consolas,monospace"),
+            FontFamily = new FontFamily(Fonts.MonoFamily),
             HorizontalAlignment = HorizontalAlignment.Right,
             TextWrapping = TextWrapping.NoWrap,
             Margin = new Thickness(0, 0, 8, 0),
@@ -490,7 +490,7 @@ public sealed class SpendWindow : Window
         {
             Text = detail,
             FontSize = TypeScale.Secondary,
-            FontFamily = new FontFamily("Cascadia Mono,Consolas,monospace"),
+            FontFamily = new FontFamily(Fonts.MonoFamily),
             TextWrapping = TextWrapping.Wrap,
         };
         Themed(behind, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);

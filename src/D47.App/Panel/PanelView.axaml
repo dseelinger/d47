@@ -1053,7 +1053,7 @@
                  then don't invent a workflow that's unneeded". SelectableTextBlockTests asserts
                  it stays that way. -->
             <SelectableTextBlock x:Name="Transcript"
-                                 FontFamily="Cascadia Mono,Consolas,monospace"
+                                 FontFamily="avares://d47/Assets/Fonts/JetBrainsMono-Regular.ttf#JetBrains Mono"
                                  FontSize="{StaticResource D47.Type.Body}"
                                  TextWrapping="Wrap">
               <!--
@@ -1130,7 +1130,7 @@
               <ListBox x:Name="JournalList"
                        Background="Transparent"
                        BorderThickness="0"
-                       FontFamily="Cascadia Mono,Consolas,monospace"
+                       FontFamily="avares://d47/Assets/Fonts/JetBrainsMono-Regular.ttf#JetBrains Mono"
                        FontSize="{StaticResource D47.Type.Secondary}"
                        SelectionChanged="OnJournalSelected" />
             </ScrollViewer>
@@ -1160,7 +1160,7 @@
                 into a bug report. Same control and the same free copy the live log gets.
               -->
               <SelectableTextBlock x:Name="JournalDetail"
-                                   FontFamily="Cascadia Mono,Consolas,monospace"
+                                   FontFamily="avares://d47/Assets/Fonts/JetBrainsMono-Regular.ttf#JetBrains Mono"
                                    FontSize="{StaticResource D47.Type.Secondary}"
                                    TextWrapping="NoWrap" />
             </ScrollViewer>

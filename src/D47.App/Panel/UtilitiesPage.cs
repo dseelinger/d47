@@ -195,7 +195,7 @@ public sealed class UtilitiesPage : UserControl
         {
             Text = reminder.Describe(now, zone),
             FontSize = TypeScale.Body,
-            FontFamily = new FontFamily("Cascadia Mono,Consolas,monospace"),
+            FontFamily = new FontFamily(Fonts.MonoFamily),
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(12, 0, 0, 0),
         };

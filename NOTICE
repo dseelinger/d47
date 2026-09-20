@@ -145,5 +145,11 @@ Other third-party components
                                               them as assets/fonts/OFL-Saira.txt and
                                               assets/fonts/OFL-SairaSemiCondensed.txt.
 
+    JetBrains Mono                            SIL Open Font License 1.1, by JetBrains
+                                              (github.com/JetBrains/JetBrainsMono). Embedded in
+                                              the build as assets/fonts/JetBrainsMono-Regular.ttf;
+                                              the licence text ships beside it as
+                                              assets/fonts/OFL-JetBrainsMono.txt.
+
 Package dependencies are declared in the project files and are permissively licensed;
 see the licence invariant in CLAUDE.md.
