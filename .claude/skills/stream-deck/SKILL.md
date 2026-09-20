@@ -169,16 +169,16 @@ session, green runs a script, blue runs the app, amber is release.
 Deck Mobile (`VSD2/WiFi`) `C7D36E8A-DF76-45A6-A064-C66CC4D38BB2`. `apply_profile.py` writes every
 profile with that name and picks the layout by device model. Mobile is the free six-key tier,
 stored as columns 0-2 and rows 0-1, with its own layout in `MOBILE_PAGE_1`: a plain Opus session,
-Desktop, Push, Patch, Minor.
+Desktop, Push, Pre-release, Patch, Minor.
 
-One page, 12 keys. Row 0 opens a session, row 1 types into the session that has focus, row 2 runs
+One page, 13 keys. Row 0 opens a session, row 1 types into the session that has focus, row 2 runs
 the app and cuts releases.
 
 | | 0 | 1 | 2 | 3 | 4 |
 | --- | --- | --- | --- | --- | --- |
 | **0** | Triage | Coord | Architect | Issue | Review |
 | **1** | Desktop | Push | Wrap up | | |
-| **2** | Test drive | Restart | | Patch | Minor |
+| **2** | Test drive | Restart | Pre-release | Patch | Minor |
 
 The launchers open `claude` in the repo with a name, model, effort and an opening slash command.
 **Issue** is the one that asks a question first: it reads an issue number from the terminal and
@@ -189,6 +189,9 @@ session making the call — so the launcher is the only place this can be set.
 **Desktop** types `/desktop` into the focused terminal to hand that session to the desktop app, so
 work starts on a keypress and continues by clicking. **Review** reviews against `origin/main`: the
 issue worker commits and does not push, so the working diff is empty by the time anyone reviews.
+**Pre-release** sits in the release row but is violet, because it opens a session rather than
+running a script to the end: it runs the suite, fixes what fails and pushes `main`, and Patch or
+Minor comes after it.
 The release keys ask Y/N in the terminal first, and `release.ps1` follows the run to the end on its
 own — a separate watch key duplicates it. **Major is deliberately not on the deck**: cut one with
 `tools\release.ps1 -Major`.

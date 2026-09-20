@@ -83,6 +83,8 @@ PAGE_1 = {
 
     '0,2': run('test-drive.cmd', 'testdrive'),
     '1,2': run('restart-test-drive.cmd', 'restart'),
+    # Violet in a row of scripts because it opens a session rather than running one to the end.
+    '2,2': run('pre-release.cmd', 'prerelease'),
     '3,2': run('release-patch.cmd', 'patch'),
     '4,2': run('release-minor.cmd', 'minor'),
 }
@@ -98,6 +100,7 @@ MOBILE_PAGE_1 = {
     '0,1': send('/desktop', 'desktop'),
 
     '1,0': send('push', 'push'),
+    '1,1': run('pre-release.cmd', 'prerelease'),
 
     '2,0': run('release-patch.cmd', 'patch'),
     '2,1': run('release-minor.cmd', 'minor'),

@@ -174,6 +174,15 @@ def g_semver(d, cx, cy, r, col, lit):
                             radius=r * 0.08, fill=c)
 
 
+def g_gate(d, cx, cy, r, col):
+    """A checked box: the suite passed."""
+    w = max(2, int(r * 0.15))
+    d.rounded_rectangle([cx - r * 0.88, cy - r * 0.88, cx + r * 0.88, cy + r * 0.88],
+                        radius=r * 0.22, outline=col, width=w)
+    d.line([cx - r * 0.46, cy + r * 0.02, cx - r * 0.12, cy + r * 0.40, cx + r * 0.50, cy - r * 0.44],
+           fill=col, width=int(w * 1.4), joint='curve')
+
+
 def g_flag(d, cx, cy, r, col):
     """Wrap up."""
     w = max(2, int(r * 0.14))
@@ -222,6 +231,7 @@ KEYS = {
     'architect':  (g_compass, VIOLET, 'Architect'),
     'issue':      (g_issue, VIOLET, 'Issue'),
     'review':     (g_magnifier, VIOLET, 'Review'),
+    'prerelease': (g_gate, VIOLET, 'Pre-release'),
 
     'desktop':    (g_handoff, CYAN, 'Desktop'),
     'push':       (g_push, CYAN, 'Push'),
