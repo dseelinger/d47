@@ -210,4 +210,65 @@ public class OnFootPlanTests
 
         Assert.Null(ChecklistEvaluator.Evaluate(item, Wearing("utilitysuit_class3")));
     }
+
+    private const long SecondSuitId = 1845880282772981;
+
+    /// <summary>Switches to a second suit, leaving the first owned but not worn.</summary>
+    private static CommanderGameState WithASecondSuitWorn()
+    {
+        var store = new GameStateStore();
+
+        store.Apply(Event(
+            """{"timestamp":"3311-01-01T00:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}"""));
+
+        store.Apply(Event(
+            """
+            {"timestamp":"3311-01-01T00:01:00Z","event":"SuitLoadout","SuitID":1845879835891144,
+             "SuitName":"utilitysuit_class3","SuitMods":[],"LoadoutID":4293000001,
+             "LoadoutName":"Sneaky-Snipy","Modules":[]}
+            """));
+
+        store.Apply(Event(
+            $$"""
+            {"timestamp":"3311-01-02T00:00:00Z","event":"SuitLoadout","SuitID":{{SecondSuitId}},
+             "SuitName":"utilitysuit_class5","SuitMods":[],"LoadoutID":4293000002,
+             "LoadoutName":"Second","Modules":[]}
+            """));
+
+        return store.Active!;
+    }
+
+    [Fact]
+    public void AnUnwornSuitInTheLedgerReadsOpenWithTheLastSeenDate()
+    {
+        var item = Assert.Single(OnFootPlan.Items(Suit, new OnFootRequest("Maverick", 5)));
+
+        var verdict = ChecklistEvaluator.Evaluate(item, WithASecondSuitWorn());
+
+        Assert.Equal(ChecklistState.Open, verdict?.State);
+        Assert.Contains("Maverick Suit is at grade 3 of 5", verdict?.Reason ?? string.Empty, StringComparison.Ordinal);
+        Assert.Contains("As last seen, 1 Jan 3311.", verdict?.Reason ?? string.Empty, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheSuitBeingWornReadsWithNoLastSeenSuffix()
+    {
+        var item = Assert.Single(
+            OnFootPlan.Items(ChecklistScope.Suit(SecondSuitId), new OnFootRequest("Maverick", 5)));
+
+        var verdict = ChecklistEvaluator.Evaluate(item, WithASecondSuitWorn());
+
+        Assert.Equal(ChecklistState.Done, verdict?.State);
+        Assert.DoesNotContain("As last seen", verdict?.Reason ?? string.Empty, StringComparison.Ordinal);
+    }
+
+    /// <summary>A suit id in neither the current loadout nor the ledger still answers nothing.</summary>
+    [Fact]
+    public void ASuitNeitherWornNorOwnedAnswersNothingAtAll()
+    {
+        var item = Assert.Single(
+            OnFootPlan.Items(ChecklistScope.Suit(999), new OnFootRequest("Maverick", 4)));
+
+        Assert.Null(ChecklistEvaluator.Evaluate(item, WithASecondSuitWorn()));
+    }
 }

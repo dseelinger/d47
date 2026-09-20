@@ -89,8 +89,10 @@ public static class ChecklistEvaluator
             : null;
 
     /// <summary>When the snapshot was taken, off the journal event that carried it.</summary>
-    private static string Seen(RememberedShip ship) =>
-        ship.SeenAt.UtcDateTime.ToString("d MMM yyyy", CultureInfo.InvariantCulture);
+    private static string Seen(RememberedShip ship) => Seen(ship.SeenAt);
+
+    private static string Seen(DateTimeOffset seenAt) =>
+        seenAt.UtcDateTime.ToString("d MMM yyyy", CultureInfo.InvariantCulture);
 
     private static ChecklistVerdict? Ship(
         ChecklistItem item,
@@ -433,16 +435,16 @@ public static class ChecklistEvaluator
     private static ChecklistVerdict? OnFootGrade(
         ChecklistItem item, ChecklistIntent intent, CommanderGameState state)
     {
-        if (Worn(item, state) is not { } current)
+        if (Worn(item, state) is not { } current || intent.Grade is not { } wanted)
         {
             return null;
         }
 
-        if (intent.Grade is not { } wanted)
-        {
-            return null;
-        }
+        return AsLastSeen(OnFootGrade(current, wanted), current);
+    }
 
+    private static ChecklistVerdict OnFootGrade(OnFootSubject current, int wanted)
+    {
         if (current.Grade is not { } grade)
         {
             // The flight suit, which has no class at all and cannot be upgraded.
@@ -468,6 +470,11 @@ public static class ChecklistEvaluator
             return null;
         }
 
+        return AsLastSeen(OnFootModification(current, intent), current);
+    }
+
+    private static ChecklistVerdict OnFootModification(OnFootSubject current, ChecklistIntent intent)
+    {
         var fitted = current.Modifications;
 
         if (fitted.Any(modification =>
@@ -515,22 +522,32 @@ public static class ChecklistEvaluator
     }
 
     /// <summary>
-    /// The suit or weapon an item is about, as it stands right now, or null when it is not the one the
-    /// Commander is in — which is a "nothing can be said" rather than a "not done".
+    /// The suit or weapon an item is about: what Elite says the Commander is wearing right now, or what
+    /// the ledger last saw of it when they are not — null for an id in neither.
     /// </summary>
     private static OnFootSubject? Worn(ChecklistItem item, CommanderGameState state)
     {
-        var loadout = state.OnFoot;
-
-        if (!loadout.IsKnown || item.Scope.Key is not { Length: > 0 } key)
+        if (item.Scope.Key is not { Length: > 0 } key)
         {
             return null;
         }
 
+        var loadout = state.OnFoot;
+
         if (item.Scope.Group == ChecklistGroup.Suit)
         {
-            return loadout.SuitId?.ToString(CultureInfo.InvariantCulture) == key
-                ? new OnFootSubject(loadout.Speak(), loadout.Grade, loadout.SuitModifications)
+            if (loadout.IsKnown && loadout.SuitId?.ToString(CultureInfo.InvariantCulture) == key)
+            {
+                return new OnFootSubject(loadout.Speak(), loadout.Grade, loadout.SuitModifications);
+            }
+
+            return long.TryParse(key, NumberStyles.Integer, CultureInfo.InvariantCulture, out var suitId)
+                && state.Kit.Suits.TryGetValue(suitId, out var suit)
+                ? new OnFootSubject(
+                    OnFootCatalogue.Find(suit.Symbol)?.Name ?? ModuleNames.Readable(suit.Symbol),
+                    suit.Grade,
+                    suit.Modifications,
+                    suit.SeenAt)
                 : null;
         }
 
@@ -539,17 +556,42 @@ public static class ChecklistEvaluator
             return null;
         }
 
-        var weapon = loadout.Weapons.FirstOrDefault(carried =>
-            carried.ModuleId?.ToString(CultureInfo.InvariantCulture) == key);
+        var worn = loadout.IsKnown
+            ? loadout.Weapons.FirstOrDefault(
+                carried => carried.ModuleId?.ToString(CultureInfo.InvariantCulture) == key)
+            : null;
 
-        return weapon is null
-            ? null
-            : new OnFootSubject(weapon.Speak(), weapon.Grade, weapon.Modifications);
+        if (worn is not null)
+        {
+            return new OnFootSubject(worn.Speak(), worn.Grade, worn.Modifications);
+        }
+
+        return long.TryParse(key, NumberStyles.Integer, CultureInfo.InvariantCulture, out var moduleId)
+            && state.Kit.Weapons.TryGetValue(moduleId, out var weapon)
+            ? new OnFootSubject(
+                OnFootCatalogue.Find(weapon.Symbol)?.Name ?? ModuleNames.Readable(weapon.Symbol),
+                weapon.Grade,
+                weapon.Modifications,
+                weapon.SeenAt)
+            : null;
     }
 
-    /// <summary>A suit and a hand weapon answer the same three questions, so they share a shape.</summary>
+    /// <summary>The verdict's reason with the ledger's date appended, for something not currently worn.</summary>
+    private static ChecklistVerdict AsLastSeen(ChecklistVerdict verdict, OnFootSubject current) =>
+        current.SeenAt is not { } seen
+            ? verdict
+            : verdict with { Reason = $"{verdict.Reason} As last seen, {Seen(seen)}." };
+
+    /// <summary>
+    /// A suit and a hand weapon answer the same questions, so they share a shape. <see cref="SeenAt"/> is
+    /// null for what the Commander is wearing right now, and set for what the ledger last saw of
+    /// something they are not.
+    /// </summary>
     private readonly record struct OnFootSubject(
-        string Name, int? Grade, IReadOnlyList<FittedModification> Modifications);
+        string Name,
+        int? Grade,
+        IReadOnlyList<FittedModification> Modifications,
+        DateTimeOffset? SeenAt = null);
 
     /// <summary>Whether two hull spellings name the same ship.</summary>
     internal static bool SameHull(string planned, string flying) =>

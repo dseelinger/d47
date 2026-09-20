@@ -18,6 +18,10 @@ The Suits page now lists every suit and weapon you own, not only the one Elite c
 you wearing or carrying. An owned but unworn item shows its recorded grade and when it was last
 seen, and opening its Fitted section says the same rather than "I cannot say".
 
+Checklist grade and modification lines now read the same way: a step on a suit or weapon you own
+but are not wearing now reads Open with the recorded grade and when it was last seen, instead of
+saying nothing at all.
+
 "Get clear and supercruise", "boost and warp" and the rest of that pattern now route to separate
 and supercruise, the same way their jump equivalents already routed to separate and engage.
 
