@@ -112,6 +112,9 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     /// <summary>Accent at 85% mixed onto Background — a bubble's event tag, set as plain text rather than boxed.</summary>
     public const string TagInkKey = "D47.TagInk";
 
+    /// <summary>Black at 50% opacity — a layer chooser's dimming behind its card, in every theme (#325).</summary>
+    public const string ScrimKey = "D47.Scrim";
+
     /// <summary>Every role a theme defines.</summary>
     public static IReadOnlyList<string> Roles { get; } =
     [
@@ -122,7 +125,7 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         CardFillKey, CardFillSelectedKey, RowFillKey, TagBorderKey, TabStripRuleKey,
         BloomFillKey, BloomFillHeadsetKey, BloomRuleKey, BloomRuleHeadsetKey, BloomEdgeKey, BloomEdgeHeadsetKey,
         ScanlinesKey,
-        PaneFillKey, PaneBorderKey, TagInkKey,
+        PaneFillKey, PaneBorderKey, TagInkKey, ScrimKey,
     ];
 
     /// <summary>Applies the theme named in settings, and re-applies it whenever that setting changes.</summary>
@@ -169,6 +172,7 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         var resources = application.Resources;
 
         resources[BackgroundKey] = new SolidColorBrush(palette.Background);
+        resources[ScrimKey] = new SolidColorBrush(Colors.Black, 0.5);
         resources[SurfaceKey] = new SolidColorBrush(derived.Surface);
         resources[SurfaceAltKey] = new SolidColorBrush(derived.SurfaceAlt);
         resources[BorderKey] = new SolidColorBrush(derived.Border);

@@ -292,6 +292,76 @@ public class ThePanelIsAPlaceTests
         Assert.True(panel.GetControl<Border>("PagePane").IsVisible);
     }
 
+    /// <summary>The page bar goes away while a layer chooser covers the page, and returns once the
+    /// Commander picks (#325).</summary>
+    [AvaloniaFact]
+    public void ALayerChooserHidesThePageBarUntilItIsPicked()
+    {
+        var panel = Furnished();
+
+        panel.Tab = PanelTab.Loadout;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(panel.GetControl<DockPanel>("PageBar").IsVisible);
+
+        ChoiceOption? picked = null;
+
+        panel.Prompts.Choose(
+            new ChoiceRequest(
+                "choose:theme",
+                "Theme",
+                "Theme",
+                null,
+                [new ChoiceOption("elite", "Elite"), new ChoiceOption("dark", "Dark")],
+                "elite",
+                ChoiceSurface.Layer),
+            option => picked = option);
+
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.False(panel.GetControl<DockPanel>("PageBar").IsVisible);
+
+        var dark = panel.GetVisualDescendants().OfType<Button>()
+            .First(button => button.GetVisualDescendants().OfType<TextBlock>()
+                .Any(text => text.Text == "Dark"));
+
+        dark.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal("dark", picked?.Key);
+        Assert.True(panel.GetControl<DockPanel>("PageBar").IsVisible);
+    }
+
+    /// <summary>The chooser's card sits centred and capped in width over the dimmed page, rather than
+    /// spanning the whole content region the way a page chooser's frame does (#325).</summary>
+    [AvaloniaFact]
+    public void TheLayerChoosersCardIsCentredAndCapped()
+    {
+        var panel = Furnished();
+
+        panel.Tab = PanelTab.Loadout;
+        Dispatcher.UIThread.RunJobs();
+
+        panel.Prompts.Choose(
+            new ChoiceRequest(
+                "choose:theme",
+                "Theme",
+                "Theme",
+                null,
+                [new ChoiceOption("elite", "Elite")],
+                "elite",
+                ChoiceSurface.Layer),
+            _ => { });
+
+        Dispatcher.UIThread.RunJobs();
+
+        var layer = panel.GetControl<Avalonia.Controls.Panel>("Layer");
+        var card = Assert.IsType<Border>(layer.Children.Single());
+
+        Assert.Equal(Avalonia.Layout.HorizontalAlignment.Center, card.HorizontalAlignment);
+        Assert.True(card.MaxWidth < panel.Bounds.Width, "the card was not capped narrower than the panel");
+    }
+
     /// <summary>
     /// Mini is the transcript's tail and the provenance line and nothing else, so the bar, the mode
     /// control and the breadcrumb all go with the rest of the chrome.

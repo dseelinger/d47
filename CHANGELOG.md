@@ -8,6 +8,12 @@
 
 ## 0.169.0 — No more drop-downs
 
+A layer chooser — the module, keybind and setting pickers that open over the current page rather
+than taking the panel — now dims the page behind it instead of letting it show through or covering
+it edge to edge. The card sits centred and capped in width over that dimming, the search box and
+page bar hide while it is open and come back once it is dismissed or abandoned, and a list longer
+than the card scrolls inside it.
+
 Owned suits and weapons now survive a restart, the same way the fleet already did: bought,
 upgraded, sold and equipped items are kept in a per-commander file and restored on load, merged
 under whatever the current session has already seen. A suit or weapon bought and not worn since is

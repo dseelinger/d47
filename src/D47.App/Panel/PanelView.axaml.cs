@@ -277,6 +277,10 @@ public partial class PanelView : UserControl
             Waiting = () => Model?.ListeningPrompt,
         };
 
+        // A layer chooser hides the page bar the same way a page chooser does, but nothing else notices
+        // it opening or closing (#325).
+        Prompts.LayerChanged += ShowSearch;
+
         _tabs[PanelTab.Transcript] = TranscriptTab;
         _tabs[PanelTab.Loadout] = LoadoutTab;
         _tabs[PanelTab.Engineers] = EngineersTab;
@@ -4006,6 +4010,7 @@ public partial class PanelView : UserControl
         SearchRow.IsVisible = _searchable
                               && Mode == PanelMode.Full
                               && ModalPane.Child is null
+                              && !Layer.IsVisible
                               && (transcript || (PagePane.Child as IFilterablePage)?.Filters == true);
 
         // On all four readings now (#413).
@@ -4018,6 +4023,7 @@ public partial class PanelView : UserControl
     private void ShowPageBar() =>
         PageBar.IsVisible = Mode == PanelMode.Full
                             && ModalPane.Child is null
+                            && !Layer.IsVisible
                             && (ModePicker.IsVisible || SearchRow.IsVisible || RawToggleBox.IsVisible);
 
     /// <summary>Built lazily the first time it would show, and never rebuilt after (#283).</summary>

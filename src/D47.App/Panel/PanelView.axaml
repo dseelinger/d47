@@ -1242,8 +1242,12 @@
 
         Still not a popup. It is a panel in this tree, so the geometric hit test the headset uses
         finds it exactly as it finds everything else.
+
+        The scrim dims the page underneath the chooser's card rather than covering it or letting it
+        draw through (#325), and gives the layer a hit-test surface of its own so a press outside the
+        card lands here rather than on whatever is behind it.
       -->
-      <Panel x:Name="Layer" IsVisible="False" />
+      <Panel x:Name="Layer" IsVisible="False" Background="{DynamicResource D47.Scrim}" />
       </Panel>
 
       </DockPanel>

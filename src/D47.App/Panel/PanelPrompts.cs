@@ -41,6 +41,10 @@ public sealed class PanelPrompts : IHearsText
     /// <summary>The prompt currently taking speech, if any.</summary>
     private Action<Heard>? _listening;
 
+    /// <summary>Raised whenever the in-tree layer opens or closes, so the host can hide its own page
+    /// bar while the layer covers it (#325).</summary>
+    public event Action? LayerChanged;
+
     public PanelPrompts(PanelNavigator nav, Avalonia.Controls.Panel layer)
     {
         _nav = nav;
@@ -58,7 +62,8 @@ public sealed class PanelPrompts : IHearsText
                 Dismiss(request.Key, request.Surface);
                 chosen(option);
             }),
-            () => Dismiss(request.Key, request.Surface));
+            () => Dismiss(request.Key, request.Surface),
+            request.Surface);
 
         Open(request.Key, request.Word, request.Surface == ChoiceSurface.Page, Build, request.Help);
     }
@@ -92,6 +97,7 @@ public sealed class PanelPrompts : IHearsText
 
         _layer.Children.Clear();
         _layer.IsVisible = false;
+        LayerChanged?.Invoke();
 
         // Every prompt level, not only the top one: a chooser can open a chooser, and a tab press means the
         // Commander is done with the whole stack of them.
@@ -124,6 +130,7 @@ public sealed class PanelPrompts : IHearsText
         _layer.Children.Clear();
         _layer.Children.Add(build());
         _layer.IsVisible = true;
+        LayerChanged?.Invoke();
     }
 
     private void Dismiss(string key, ChoiceSurface surface)
@@ -134,6 +141,7 @@ public sealed class PanelPrompts : IHearsText
         {
             _layer.Children.Clear();
             _layer.IsVisible = false;
+            LayerChanged?.Invoke();
             return;
         }
 
@@ -149,10 +157,18 @@ public sealed class PanelPrompts : IHearsText
     /// <summary>Points what is heard next at one prompt, or at none.</summary>
     private void Attend(Action<Heard>? heard) => _listening = heard;
 
+    /// <summary>The card's width on the layer, where it sits over the dimmed page rather than filling
+    /// the content region (#325).</summary>
+    private const double LayerCardMaxWidth = 420;
+
     /// <summary>
     /// The shape both prompts share: a header saying what this is for, the body, and one way out.
+    /// A page chooser already sits inside <c>ModalPane</c>, which is opaque and sized, so only the
+    /// layer needs its card centred and capped (#325).
     /// </summary>
-    private static Control Frame(string title, string? context, Control body, Action dismissed)
+    private static Control Frame(
+        string title, string? context, Control body, Action dismissed,
+        ChoiceSurface surface = ChoiceSurface.Page)
     {
         var heading = new TextBlock
         {
@@ -206,6 +222,12 @@ public sealed class PanelPrompts : IHearsText
         var card = new Border { Child = frame };
 
         CardChrome.Card(card);
+
+        if (surface == ChoiceSurface.Layer)
+        {
+            card.HorizontalAlignment = HorizontalAlignment.Center;
+            card.MaxWidth = LayerCardMaxWidth;
+        }
 
         return card;
     }

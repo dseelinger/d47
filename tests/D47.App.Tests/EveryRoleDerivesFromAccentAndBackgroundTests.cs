@@ -30,7 +30,9 @@ public class EveryRoleDerivesFromAccentAndBackgroundTests
     }
 
     /// <summary>Every non-gradient, non-effect role is fully opaque — a translucent fill inside a
-    /// translucent border no longer stacks (.design-sync/NOTES.md).</summary>
+    /// translucent border no longer stacks (.design-sync/NOTES.md) — except the scrim, which is a
+    /// dimming overlay over the whole layer rather than a fill inside a card, and is translucent on
+    /// purpose (#325).</summary>
     [AvaloniaTheory]
     [InlineData(ThemeCatalog.Elite)]
     [InlineData(ThemeCatalog.Dark)]
@@ -42,7 +44,7 @@ public class EveryRoleDerivesFromAccentAndBackgroundTests
 
         var resources = Application.Current!.Resources;
 
-        foreach (var role in ThemeManager.Roles)
+        foreach (var role in ThemeManager.Roles.Where(role => role != ThemeManager.ScrimKey))
         {
             if (resources[role] is SolidColorBrush brush)
             {
