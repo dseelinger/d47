@@ -75,7 +75,7 @@ nav_order: 143
  <rect x="460" y="36" width="400" height="120" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="660" y="76" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">GOALS</text>
  <text x="660" y="110" text-anchor="middle" font-size="17" fill="var(--text)">what you are doing this year</text>
- <text x="660" y="138" text-anchor="middle" font-size="14" fill="var(--text-muted)">nine of them ship, and you can set any aside</text>
+ <text x="660" y="138" text-anchor="middle" font-size="14" fill="var(--text-muted)">ten of them ship, and you can set any aside</text>
  <text x="440" y="192" text-anchor="middle" font-size="16" fill="var(--text-muted)">An arc is a named ambition, a definition of done, and a progress figure nobody typed.</text>
 </svg>
 </section>
@@ -169,7 +169,7 @@ Where the journal cannot say, d47 says so rather than guessing:
   anything about your rank this session, the figure from your journals stands with its date on it.
   It never resets to nothing on the absence of evidence.
 
-### The nine that ship
+### The ten that ship
 
 | Arc | Done when | Where the figure comes from |
 |---|---|---|
@@ -180,6 +180,7 @@ Where the journal cannot say, d47 says so rather than guessing:
 | Elite in Exobiology | Exobiologist rank 13 — Elite V | Live journal state |
 | Imperial Navy | Empire rank 13 — King | Live journal state |
 | Federal Navy | Federation rank 13 — Admiral | Live journal state |
+| Powerplay rank | Powerplay rank 100 | Your live pledge |
 | Every engineer unlocked | Every engineer in the directory | Live journal state |
 | The ship collection | One of every hull, owned at once | Your fleet, plus what you are flying |
 
@@ -188,6 +189,11 @@ it* rather than *rank 5 of 8, 12% into it*. A career arc is done at Elite V, not
 navy arcs read the same way — *Master, 8% into it* rather than *rank 3* — but each runs to the top
 of its own ladder, King for the Empire and Admiral for the Federation, because neither has an
 Elite.
+
+**The Powerplay arc is only on the page while you are pledged.** Pledge to a Power and it
+appears, reporting the rank you hold against 100; leave, and it goes again without a restart.
+Rank 0 of 100 for nobody is not a goal you hold. Its rank is read off your live pledge rather than
+off a journal read, so a promotion moves the figure the moment the game writes it.
 
 **There is no CQC arc**, because almost nobody plays it and an arc permanently at nothing is a line
 of the page spent telling you about a thing you are not doing. If any of the others is not yours
@@ -210,6 +216,7 @@ Elite as a Mercenary: Defenceless.
 Elite in Exobiology: Directionless.
 Imperial Navy: Serf, 4% into it. Running 8 months.
 Federal Navy: Cadet, 61% into it. Running 8 months.
+Powerplay rank: rank 8 of 100 with Li Yong-Rui. Running 8 months.
 Every engineer unlocked: 19 of 53 unlocked, 2 invited. Running 12 months.
 The ship collection: 11 of 45 hulls owned. Running 13 months.
 Ages come from 914 journals on this disk, the oldest from 4 Jul 2025.

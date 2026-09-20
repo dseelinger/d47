@@ -31,13 +31,14 @@ public static class GoalEvaluator
             _ when GoalCatalogue.NavyOf(arc.Key) is { } navy => NavyRank(arc, navy, state, mark),
             GoalCatalogue.Engineers => Engineers(arc, state, mark),
             GoalCatalogue.Ships => Ships(arc, state, mark),
+            GoalCatalogue.Powerplay => Powerplay(arc, state, mark),
             _ => new GoalStanding { Arc = arc, Source = GoalSource.Unknown, Started = mark?.Started },
         };
     }
 
-    /// <summary>Every built-in arc at once, in catalogue order.</summary>
+    /// <summary>Every built-in arc this state offers, in catalogue order.</summary>
     public static IReadOnlyList<GoalStanding> All(CommanderGameState? state, GoalMine? mine) =>
-        [.. GoalCatalogue.All.Select(arc => Evaluate(arc, state, mine))];
+        [.. GoalCatalogue.All(state).Select(arc => Evaluate(arc, state, mine))];
 
     /// <summary>A career ladder.</summary>
     private static GoalStanding Rank(GoalArc arc, string career, CommanderGameState? state, GoalMark? mark)
@@ -105,6 +106,35 @@ public static class GoalEvaluator
                 IsDone = mined >= GoalCatalogue.NavyTop,
             }
             : new GoalStanding { Arc = arc, Source = GoalSource.Unknown, Started = mark?.Started };
+    }
+
+    /// <summary>
+    /// The Powerplay ladder. There is no mined figure to fall back on: the arc is only on the page while
+    /// the pledge is live, and a live pledge always carries its rank.
+    /// </summary>
+    private static GoalStanding Powerplay(GoalArc arc, CommanderGameState? state, GoalMark? mark)
+    {
+        if (state?.Pledge is not { IsPledged: true } pledge)
+        {
+            return new GoalStanding
+            {
+                Arc = arc,
+                Need = GoalCatalogue.PowerplayTop,
+                Source = GoalSource.Unknown,
+                Started = mark?.Started,
+            };
+        }
+
+        return new GoalStanding
+        {
+            Arc = arc,
+            Have = pledge.Rank,
+            Need = GoalCatalogue.PowerplayTop,
+            Source = GoalSource.Live,
+            Started = mark?.Started,
+            Note = $"rank {pledge.Rank} of {GoalCatalogue.PowerplayTop} with {pledge.Power}",
+            IsDone = pledge.Rank >= GoalCatalogue.PowerplayTop,
+        };
     }
 
     private static GoalStanding Engineers(GoalArc arc, CommanderGameState? state, GoalMark? mark)

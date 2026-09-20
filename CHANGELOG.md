@@ -26,6 +26,10 @@ Two more arcs are in the Goals section: Imperial Navy and Federal Navy, running 
 Admiral rather than to Elite. Each reads its rank's name — Serf, Cadet, and on up each ladder —
 the same way a career arc already does.
 
+A Powerplay rank arc joins them, but only while you are pledged: it reports the rank you hold
+against 100, appears when you pledge and goes again when you leave. A promotion moves the figure
+straight away rather than at the next startup.
+
 The Suits page now draws cards, like the fleet page: kind and grade, where it is, and how many
 slots are planned, each its own line, with a badge for the one you are wearing.
 

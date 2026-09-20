@@ -1,5 +1,7 @@
+using System.Text.Json;
 using D47.Core.Checklists;
 using D47.Core.Goals;
+using D47.Core.Journal;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -165,7 +167,62 @@ public class GoalBookTests : IDisposable
         Assert.DoesNotContain("Running", said, StringComparison.Ordinal);
     }
 
-    private GoalBook Book(TempInstall install, ChecklistService? checklists = null)
+    /// <summary>
+    /// Why the catalogue takes a state rather than being a constant: an arc for a Power the Commander
+    /// does not fly for is a line of the page spent on something they are not doing.
+    /// </summary>
+    [Fact]
+    public void ThePowerplayArcIsOnThePageOnlyWhilePledged()
+    {
+        using var install = new TempInstall();
+
+        var state = new CommanderGameState(new CommanderIdentity("F1", "Jameson"));
+        var book = Book(install, state: () => state);
+
+        Assert.DoesNotContain(book.Standings, standing => standing.Arc.Key == GoalCatalogue.Powerplay);
+        Assert.DoesNotContain(book.Everything(), standing => standing.Arc.Key == GoalCatalogue.Powerplay);
+        Assert.DoesNotContain("Powerplay", book.Describe(Now), StringComparison.Ordinal);
+
+        state.Apply(Event("Powerplay", "\"Power\":\"Li Yong-Rui\",\"Rank\":8,\"Merits\":45263"));
+
+        Assert.Contains(book.Standings, standing => standing.Arc.Key == GoalCatalogue.Powerplay);
+        Assert.Contains(
+            "Powerplay rank: rank 8 of 100 with Li Yong-Rui.",
+            book.Describe(Now),
+            StringComparison.Ordinal);
+
+        state.Apply(Event("PowerplayLeave", "\"Power\":\"Li Yong-Rui\""));
+
+        Assert.DoesNotContain(book.Standings, standing => standing.Arc.Key == GoalCatalogue.Powerplay);
+    }
+
+    [Fact]
+    public void ThePowerplayArcOffersNoLineAndSaysWhereItsRankComesFrom()
+    {
+        using var install = new TempInstall();
+
+        var state = new CommanderGameState(new CommanderIdentity("F1", "Jameson"));
+        state.Apply(Event("Powerplay", "\"Power\":\"Li Yong-Rui\",\"Rank\":8"));
+
+        var step = Book(install, state: () => state).Next(GoalCatalogue.Powerplay);
+
+        Assert.NotNull(step);
+        Assert.False(step.CanPropose);
+        Assert.Contains("merits", step.Say, StringComparison.Ordinal);
+        Assert.Contains("92 ranks to go.", step.Say, StringComparison.Ordinal);
+    }
+
+    private static JournalEvent Event(string kind, string fields)
+    {
+        var text = $"{{ \"timestamp\":\"{Now.UtcDateTime:yyyy-MM-ddTHH:mm:ssZ}\", \"event\":\"{kind}\", {fields} }}";
+
+        return new JournalEvent(Now, kind, JsonDocument.Parse(text).RootElement);
+    }
+
+    private GoalBook Book(
+        TempInstall install,
+        ChecklistService? checklists = null,
+        Func<CommanderGameState?>? state = null)
     {
         var store = new GoalStore(
             Path.Combine(install.Paths.Data, "goals.json"),
@@ -173,6 +230,6 @@ public class GoalBookTests : IDisposable
 
         store.Poll();
 
-        return new GoalBook(store, () => "F1", () => null, checklists);
+        return new GoalBook(store, () => "F1", state ?? (() => null), checklists);
     }
 }

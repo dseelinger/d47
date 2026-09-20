@@ -58,7 +58,7 @@ public sealed class GoalBook(
 
             return
             [
-                .. GoalCatalogue.All
+                .. GoalCatalogue.All(live)
                     .Concat(store.AuthoredBy(commander()))
                     .Where(arc => !aside.Contains(arc.Key, StringComparer.OrdinalIgnoreCase))
                     .Select(arc => GoalEvaluator.Evaluate(arc, live, mine)),
@@ -74,7 +74,7 @@ public sealed class GoalBook(
 
         return
         [
-            .. GoalCatalogue.All
+            .. GoalCatalogue.All(live)
                 .Concat(store.AuthoredBy(commander()))
                 .Select(arc => GoalEvaluator.Evaluate(arc, live, mine)),
         ];
@@ -167,6 +167,7 @@ public sealed class GoalBook(
         return standing.Arc.Key switch
         {
             _ when GoalCatalogue.CareerOf(standing.Arc.Key) is not null => Career(standing),
+            GoalCatalogue.Powerplay => Powerplay(standing),
             GoalCatalogue.Engineers => Engineers(standing),
             GoalCatalogue.Ships => Ships(standing),
             _ => null,
@@ -334,6 +335,26 @@ public sealed class GoalBook(
         }
 
         say.Append('.');
+
+        if (remaining is > 0)
+        {
+            say.Append(' ').Append(remaining.Value).Append(remaining == 1 ? " rank to go." : " ranks to go.");
+        }
+
+        return new GoalStep(say.ToString(), []);
+    }
+
+    /// <summary>The Powerplay ladder, which proposes nothing for the reason a career arc does not.</summary>
+    private static GoalStep Powerplay(GoalStanding standing)
+    {
+        var remaining = standing.Have is { } have ? GoalCatalogue.PowerplayTop - have : (long?)null;
+
+        var say = new StringBuilder();
+
+        say.Append(standing.Arc.Name).Append(": ");
+        say.Append(standing.Note ?? "I cannot say where you stand yet");
+        say.Append(". Rank comes from the merits you earn for your Power rather than from anything I can ");
+        say.Append("put on a list.");
 
         if (remaining is > 0)
         {

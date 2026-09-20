@@ -113,6 +113,38 @@ public class GoalEvaluatorTests
         Assert.Contains("6 weeks", standing.Describe(Now), StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// PowerplayRank is why the arc is worth having live: it is the only event between two startup
+    /// snapshots that says the ladder moved.
+    /// </summary>
+    [Fact]
+    public void APowerplayPromotionMovesTheFigureWithoutAFreshSnapshot()
+    {
+        var state = State(
+            Event("Powerplay", "\"Power\":\"Li Yong-Rui\",\"Rank\":8,\"Merits\":45263"),
+            Event("PowerplayRank", "\"Power\":\"Li Yong-Rui\",\"Rank\":9"));
+
+        var standing = Evaluate(GoalCatalogue.Powerplay, state, null);
+
+        Assert.Equal(9, standing.Have);
+        Assert.Equal(GoalCatalogue.PowerplayTop, standing.Need);
+        Assert.Equal(GoalSource.Live, standing.Source);
+        Assert.Contains("Li Yong-Rui", standing.Note, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void DefectingStartsThePowerplayLadderAgainUnderTheNewPower()
+    {
+        var state = State(
+            Event("Powerplay", "\"Power\":\"Li Yong-Rui\",\"Rank\":8"),
+            Event("PowerplayDefect", "\"FromPower\":\"Li Yong-Rui\",\"ToPower\":\"Denton Patreus\""));
+
+        var standing = Evaluate(GoalCatalogue.Powerplay, state, null);
+
+        Assert.Equal(0, standing.Have);
+        Assert.Contains("Denton Patreus", standing.Note, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void AnAuthoredArcIsThePersonsToCallDone()
     {

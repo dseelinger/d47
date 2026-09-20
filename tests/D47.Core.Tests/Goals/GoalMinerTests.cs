@@ -156,6 +156,23 @@ public class GoalMinerTests : IDisposable
             .Mine(Path.Combine(_folder, "nowhere"), Start));
     }
 
+    /// <summary>
+    /// The Powerplay arc is mined for its age and nothing else, and leaving throws the age away because
+    /// the ladder the Commander is on afterwards is a different one.
+    /// </summary>
+    [Fact]
+    public void ThePowerplayAgeRunsFromTheJoinAndEndsAtTheLeave()
+    {
+        Journal(Line(Start, "PowerplayJoin", "\"Power\":\"Li Yong-Rui\"") + "\n");
+        Journal(Line(Start.AddDays(30), "Powerplay", "\"Power\":\"Li Yong-Rui\",\"Rank\":8") + "\n");
+
+        Assert.Equal(Start, Assert.Single(Mine()).For(GoalCatalogue.Powerplay)?.Started);
+
+        Journal(Line(Start.AddDays(60), "PowerplayLeave", "\"Power\":\"Li Yong-Rui\"") + "\n");
+
+        Assert.Null(Assert.Single(Mine()).For(GoalCatalogue.Powerplay));
+    }
+
     private IReadOnlyList<GoalMine> Mine() =>
         new GoalMiner(NullLogger<GoalMiner>.Instance).Mine(Files(), Start.AddYears(1));
 

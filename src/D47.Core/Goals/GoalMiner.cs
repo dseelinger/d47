@@ -131,6 +131,8 @@ public sealed class GoalMiner(ILogger<GoalMiner> logger)
         private readonly Dictionary<string, DateTimeOffset> _rankStarted = new(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> _hulls = new(StringComparer.OrdinalIgnoreCase);
 
+        private DateTimeOffset? _pledgedStarted;
+
         private int _engineers;
         private DateTimeOffset? _engineersAt;
         private DateTimeOffset? _engineersStarted;
@@ -190,6 +192,21 @@ public sealed class GoalMiner(ILogger<GoalMiner> logger)
                         }
                     }
 
+                    break;
+
+                // Only the start, because the Powerplay arc reads its rank off the live pledge and is off
+                // the page entirely when there is not one. Defecting starts the ladder again, so it starts
+                // the age again with it.
+                case "Powerplay":
+                    _pledgedStarted ??= stamp;
+                    break;
+
+                case "PowerplayJoin" or "PowerplayDefect":
+                    _pledgedStarted = stamp;
+                    break;
+
+                case "PowerplayLeave":
+                    _pledgedStarted = null;
                     break;
 
                 case "EngineerProgress":
@@ -262,6 +279,11 @@ public sealed class GoalMiner(ILogger<GoalMiner> logger)
                     Have = _ranks.ContainsKey(career) ? standing.Rank : null,
                     AsOf = _ranks.ContainsKey(career) ? standing.At : null,
                 });
+            }
+
+            if (_pledgedStarted is { } pledged)
+            {
+                marks.Add(new GoalMark { Key = GoalCatalogue.Powerplay, Started = pledged });
             }
 
             marks.Add(new GoalMark
