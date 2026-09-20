@@ -491,9 +491,6 @@ public sealed class AppHost : IDisposable
     /// </summary>
     public D47.Core.Knowledge.SourcingBoard Sourcing { get; private set; } = new();
 
-    /// <summary>What the Commander has told d47 is on their fleet carrier.</summary>
-    public D47.Core.Knowledge.CarrierManifest? Carrier { get; private set; }
-
     /// <summary>Speech models on disk, and the way to fetch one.</summary>
     public IModelStore Models { get; }
 
@@ -843,12 +840,6 @@ public sealed class AppHost : IDisposable
             journalDirectory,
             DateTimeOffset.Now - D47.Core.Journal.CommodityLedger.Lookback,
             loggerFactory.CreateLogger<D47.Core.Journal.CommodityLedger>());
-
-        // On disk, unlike the two boards: a carrier figure is the Commander's own statement rather than a
-        // price, and it is dated wherever it is used (Phase 50).
-        var carrierManifest = new D47.Core.Knowledge.CarrierManifest(
-            Path.Combine(paths.Data, "carrier.json"),
-            loggerFactory.CreateLogger<D47.Core.Knowledge.CarrierManifest>());
 
         var markets = new D47.Core.Knowledge.MarketReader(
             journalDirectory,
@@ -1741,9 +1732,7 @@ public sealed class AppHost : IDisposable
                 // was just said rather than asking again.
                 commodityBoard,
 
-                // What the Commander says is aboard their carrier, and where a build's shopping list is
-                // posted on its way out (Phase 50).
-                carrierManifest,
+                // Where a build's shopping list is posted on its way out (Phase 50).
                 sourcingBoard,
 
                 // What this build is, for the About area (#50).
@@ -2218,7 +2207,6 @@ public sealed class AppHost : IDisposable
         host.CommunityGoalSearch = communityGoalSearch;
         host.CommodityLedger = commodityLedger;
         host.Sourcing = sourcingBoard;
-        host.Carrier = carrierManifest;
 
         host.ReservedPhrases = PhrasesAlreadyTaken(capabilities, OtherDynamicCommands());
 

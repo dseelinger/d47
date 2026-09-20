@@ -92,11 +92,8 @@ public partial class App(AppHost? host) : Application
                 // And the stories (Phase 47), from 2026-08-22.
                 window?.Adventures,
 
-                // And where to buy what a build still needs (Phase 50), on the same terms as the window's copy
-                // (#54).
+                // And the registry the settings page's learned phrases level reads (#171).
                 host.Capabilities,
-                host.Sourcing,
-                host.Carrier,
 
                 // And where the Commander is going (Phase 37), from 2026-09-09 (#52): the window's own
                 // record, so the headset's copy of the tab cannot fall behind it.

@@ -30,6 +30,11 @@ A Powerplay rank arc joins them, but only while you are pledged: it reports the 
 against 100, appears when you pledge and goes again when you leave. A promotion moves the figure
 straight away rather than at the next startup.
 
+The Checklist tab's Sourcing page is gone and the tab has one root again. Asking what a
+construction site still needs, and where to buy it, works as before — it is a voice answer either
+way — but a figure you typed for what is already on your carrier is no longer taken off the
+shopping list, and there is nowhere left to type one. Colonisation sourcing is being redesigned.
+
 The Suits page now draws cards, like the fleet page: kind and grade, where it is, and how many
 slots are planned, each its own line, with a badge for the one you are wearing.
 

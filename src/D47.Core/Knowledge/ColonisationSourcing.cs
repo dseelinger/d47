@@ -242,7 +242,7 @@ public static class ColonisationSourcing
     private readonly record struct Want(string Symbol, string Name, int Tonnes);
 }
 
-/// <summary>The last sourcing answer, so the spoken one and the drawn one are one answer (Phase 50).</summary>
+/// <summary>The last sourcing answer, so a surface draws what was said rather than searching again.</summary>
 public sealed class SourcingBoard
 {
     private readonly Lock _gate = new();
@@ -275,22 +275,13 @@ public sealed class SourcingBoard
     public void Announce() => Posted?.Invoke();
 }
 
-/// <summary>
-/// <param name="Site">Which site it was about, in the words the Commander would use for it.</param>
-/// <param name="Answer">What came back.</param> <param name="Near">The system it was measured
-/// from.</param> <param name="Carrier"> What the Commander said was already on their carrier and was
-/// therefore taken off the shopping list.
-/// </summary>
+/// <summary>The last sourcing answer, as it was given.</summary>
 /// <param name="Site">Which site it was about, in the words the Commander would use for it.</param>
 /// <param name="Answer">What came back.</param>
 /// <param name="Near">The system it was measured from.</param>
-/// <param name="Carrier">
-/// What the Commander said was already on their carrier and was therefore taken off the shopping list.
-/// </param>
 /// <param name="AskedAt">When.</param>
 public sealed record SourcingPosting(
     string Site,
     SourcingAnswer Answer,
     string Near,
-    IReadOnlyList<CarrierStock> Carrier,
     DateTimeOffset AskedAt);

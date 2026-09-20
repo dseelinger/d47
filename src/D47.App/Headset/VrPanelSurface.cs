@@ -85,11 +85,8 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         // it, which leaves this surface exactly as it always behaved.
         ViewStateStore? viewState = null,
 
-        // The Sourcing root (Phase 50), null unless the caller supplies both the registry and the board — a
-        // carrier figure is one number, and a number is what the drawn keyboard is for (#54).
+        // The registry the settings page's learned phrases level reads (#171).
         D47.Core.Capabilities.CapabilityRegistry? capabilities = null,
-        D47.Core.Knowledge.SourcingBoard? sourcingBoard = null,
-        D47.Core.Knowledge.CarrierManifest? carrier = null,
 
         // Where the Commander is going (Phase 37), in the headset from 2026-09-09 (#52) — the same record the
         // window built, so neither surface has a list of this tab's needs the other has not got.
@@ -162,21 +159,8 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
         if (checklists is not null)
         {
-            // Sourcing's boxes are a name and a tonnage — the drawn keyboard reaches them the same way it
-            // reaches the checklist's own edit box, so there is no reason left to withhold the root (#54).
-            Func<Panel.SourcingPage>? sourcing = capabilities is not null && sourcingBoard is not null
-                ? () => new Panel.SourcingPage(
-                    capabilities,
-                    sourcingBoard,
-                    carrier,
-                    gameState ?? (() => null),
-                    () => settings.Current.Knowledge.GalaxySearch,
-                    () => _view.Tab = PanelTab.Settings,
-                    clipboard is { } sourcingClipboard ? text => sourcingClipboard.SetTextAsync(text) : null)
-                : null;
-
             // What the Commander is working on, back in the headset (Phase 39).
-            _view.EnableChecklist(checklists, goals, backfillGoals, sourcing);
+            _view.EnableChecklist(checklists, goals, backfillGoals);
         }
 
         // The journal's raw reading, in the headset (#231).

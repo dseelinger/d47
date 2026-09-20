@@ -165,18 +165,7 @@ public partial class MainWindow : Window
 
             // The checklist, on the other hand, goes to both surfaces — which is the whole headline of the
             // item that moved it out of a Window.
-            Panel.EnableChecklist(
-                host.Checklists,
-                host.Goals?.Book,
-                host.Goals?.Backfill,
-                () => new SourcingPage(
-                    host.Capabilities,
-                    host.Sourcing,
-                    host.Carrier,
-                    () => host.GameState.Active,
-                    () => host.Settings.Current.Knowledge.GalaxySearch,
-                    OpenSettings,
-                    host.Clipboard is { } clip ? text => clip.SetTextAsync(text) : null));
+            Panel.EnableChecklist(host.Checklists, host.Goals?.Book, host.Goals?.Backfill);
 
             // The stories the Commander flies (Phase 47). **Both surfaces from 2026-08-22**, on the
             // Commander's instruction: the tab was desktop-only on the reasoning that the editor and the ask

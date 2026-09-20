@@ -102,19 +102,8 @@ public class WhereToBuyTheWholeBuildTests
             NullLogger<SettingsService>.Instance);
     }
 
-    private static CarrierManifest Manifest()
-    {
-        var root = Path.Combine(Path.GetTempPath(), "d47-where-to-buy", Guid.NewGuid().ToString("N"));
-
-        Directory.CreateDirectory(root);
-
-        return new CarrierManifest(
-            Path.Combine(root, "carrier.json"), NullLogger<CarrierManifest>.Instance);
-    }
-
     private static async Task<(string Said, FakeTrade Trade, SourcingBoard Board)> AskAsync(
         TempInstall install,
-        CarrierManifest? carrier = null,
         bool lookups = true,
         SourcingAnswer? answer = null)
     {
@@ -135,7 +124,6 @@ public class WhereToBuyTheWholeBuildTests
                 null,
                 settings,
                 trade,
-                carrier,
                 board,
                 () => new DateTimeOffset(2026, 8, 25, 12, 0, 0, TimeSpan.Zero)),
         ]);
@@ -209,49 +197,22 @@ public class WhereToBuyTheWholeBuildTests
     }
 
     /// <summary>
-    /// The Commander's own carrier figure comes off the shopping list, is named, and is dated — because
-    /// it is the one number in the answer d47 has no way of checking.
+    /// The search is asked for the depot's own outstanding figure and nothing else. The depot event is a
+    /// snapshot rather than a delta, so what a site owes is never recomputed.
     /// </summary>
     [Fact]
-    public async Task WhatTheCommanderSaysIsOnTheCarrierComesOffTheList()
+    public async Task TheSearchIsAskedForWhatTheDepotSaysIsOutstanding()
     {
         using var install = new TempInstall();
 
-        var carrier = Manifest();
+        var (said, trade, _) = await AskAsync(install);
 
-        carrier.Set("F1", "Steel", 100, new DateTimeOffset(2026, 8, 25, 8, 0, 0, TimeSpan.Zero));
-
-        var (said, trade, _) = await AskAsync(install, carrier);
-
-        Assert.Contains("on the carrier", said, StringComparison.Ordinal);
-        Assert.Contains("100 tonnes Steel", said, StringComparison.Ordinal);
-
-        // And the search was asked for what is left after it, not for the depot's own figure.
         Assert.NotNull(trade.Last);
-        Assert.Equal(200, trade.Last.Outstanding.Single(row => row.Name == "Steel").Remaining);
+        Assert.Equal(400, trade.Last.Outstanding.Single(row => row.Name == "Aluminium").Remaining);
+        Assert.Equal(300, trade.Last.Outstanding.Single(row => row.Name == "Steel").Remaining);
 
-        // The site's own outstanding list is untouched by it: the depot event is a snapshot rather than a
-        // delta, and recomputing what a site owes is the mistake that caught two other folds.
         Assert.Contains("400 tonnes left", said, StringComparison.Ordinal);
         Assert.Contains("300 tonnes left", said, StringComparison.Ordinal);
-    }
-
-    /// <summary>A carrier that covers the whole list means there is nothing to go and buy.</summary>
-    [Fact]
-    public async Task ACarrierThatCoversItAllIsSaidAndNothingIsSearched()
-    {
-        using var install = new TempInstall();
-
-        var carrier = Manifest();
-        var when = new DateTimeOffset(2026, 8, 25, 8, 0, 0, TimeSpan.Zero);
-
-        carrier.Set("F1", "Aluminium", 400, when);
-        carrier.Set("F1", "Steel", 300, when);
-
-        var (said, trade, _) = await AskAsync(install, carrier);
-
-        Assert.Contains("The carrier covers the whole of it", said, StringComparison.Ordinal);
-        Assert.Null(trade.Last);
     }
 
     /// <summary>

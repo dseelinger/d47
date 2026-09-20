@@ -406,12 +406,10 @@ That half is a covering problem rather than the trade planner: the cargo is deci
 Commander leaves, the objective is trips rather than credits, and the binding constraint is supply
 where you buy. It fetches nothing new — the sweep and the cache are the trade planner's own.
 
-Two things it will not do. It **never recomputes what the site owes**: the depot event is a snapshot
+One thing it will not do. It **never recomputes what the site owes**: the depot event is a snapshot
 rather than a delta, measured over 6,330 events, so the outstanding list is a fact off the
-Commander's own disk. And it **never derives what is on the fleet carrier** — reconciling
-`CargoTransfer` against `CarrierStats` came out wrong 679 times against right 347 — so a carrier
-figure is one the Commander typed on the Checklist tab's Sourcing page, taken off the shopping list,
-and dated wherever it is used.
+Commander's own disk. The shopping list is worked out from that figure alone, and nothing on the
+fleet carrier is taken off it.
 
 ```json
 {"type":"object","properties":{"site":{"type":"string","description":"The station or system name of the site. Leave out when only one is under construction."},"where_to_buy":{"type":"boolean","description":"Also work out which nearby stations between them stock the whole list."}},"required":[],"additionalProperties":false}

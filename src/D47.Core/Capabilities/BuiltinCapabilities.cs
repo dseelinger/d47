@@ -131,8 +131,7 @@ public static class BuiltinCapabilities
         // was told rather than searching again.
         Knowledge.CommodityBoard? commodities = null,
 
-        // What the Commander says is on their carrier, and where the last shopping list is posted (Phase 50).
-        Knowledge.CarrierManifest? carrier = null,
+        // Where the last shopping list is posted (Phase 50).
         Knowledge.SourcingBoard? sourcing = null,
 
         // What this build is, for the About area (#50).
@@ -228,7 +227,6 @@ public static class BuiltinCapabilities
             // The same sweep and the same cache the commodity search uses, so a build's shopping list and
             // "where do I buy tritium" cost one pull between them (Phase 50).
             trade,
-            carrier,
             sourcing,
             now),
 

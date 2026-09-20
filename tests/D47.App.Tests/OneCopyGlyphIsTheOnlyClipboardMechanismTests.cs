@@ -53,7 +53,6 @@ public class OneCopyGlyphIsTheOnlyClipboardMechanismTests
                      "RoutePlanResultPage.cs",
                      "RouteProgressPage.cs",
                      "RouteMarketPage.cs",
-                     "SourcingPage.cs",
                      "CarrierPage.cs",
                      "EngineersPages.cs",
                      "RoutingPages.cs",

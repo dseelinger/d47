@@ -147,8 +147,6 @@ public sealed class VrHost : IDisposable
         Action? backfillGoals = null,
         Panel.AdventureSurface? adventures = null,
         D47.Core.Capabilities.CapabilityRegistry? capabilities = null,
-        D47.Core.Knowledge.SourcingBoard? sourcingBoard = null,
-        D47.Core.Knowledge.CarrierManifest? carrier = null,
         Panel.RoutingSurface? routing = null,
         Func<D47.Core.Journal.ModulePower>? modulePower = null,
         Func<bool>? hullArt = null,
@@ -165,7 +163,7 @@ public sealed class VrHost : IDisposable
         var panel = new VrPanelSurface(
             model, settings, slot => self?.AnchorFor(slot), avatars, dumpTo, settingsPage,
             checklists, timekeeper, alarmStore, ships, gameState, onFoot, unlocks, goals,
-            backfillGoals, adventures, viewState, capabilities, sourcingBoard, carrier, routing,
+            backfillGoals, adventures, viewState, capabilities, routing,
             modulePower, hullArt, engineersMemory, clipboard, known,
             buildSettingsStrip: buildSettingsStrip,
 

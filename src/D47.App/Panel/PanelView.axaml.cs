@@ -559,51 +559,31 @@ public partial class PanelView : UserControl
     /// <summary>Gives this surface the checklist (Phase 25, "The checklist leaves its window").</summary>
     /// <param name="goals">The Commander's long arcs (Phase 34).</param>
     /// <param name="backfill">What "read my journals" does.</param>
-    /// <param name="sourcing">
-    /// Where to buy everything a construction site still needs (Phase 50), as a second root on this tab
-    /// — or null for a surface that does not get one.
-    /// </param>
     public void EnableChecklist(
         D47.Core.Checklists.ChecklistService checklists,
         D47.Core.Goals.GoalBook? goals = null,
-        Action? backfill = null,
-        Func<SourcingPage>? sourcing = null)
+        Action? backfill = null)
     {
         // Held for the thread's own proposal cards: whether one is still pending is looked up here rather
         // than trusted from what drew it last (#277).
         _checklists = checklists;
 
         ChecklistPage? page = null;
-        SourcingPage? shopping = null;
-
-        var roots = new List<NavCrumb>
-        {
-            new("checklist", "Checklist")
-            {
-                // The suggestions level drilled from here inherits it: a proposal is still the checklist's
-                // subject.
-                Help = D47.Core.Capabilities.Builtin.ChecklistCapability.Id,
-            },
-        };
-
-        if (sourcing is not null)
-        {
-            roots.Add(new NavCrumb(SourcingPage.RootKey, "Sourcing")
-            {
-                Help = D47.Core.Capabilities.Builtin.ColonisationCapability.Id,
-            });
-        }
 
         Furnish(
             PanelTab.Checklist,
             crumb => crumb.Key switch
             {
-                SourcingPage.RootKey when sourcing is not null => shopping ??= sourcing(),
                 ChecklistPage.SuggestionsKey => page?.BuildSuggestions()
                                                 ?? new TextBlock { Text = "Nothing waiting." },
                 _ => page = new ChecklistPage(checklists, Nav, Prompts, goals, backfill),
             },
-            [.. roots]);
+            new NavCrumb("checklist", "Checklist")
+            {
+                // The suggestions level drilled from here inherits it: a proposal is still the checklist's
+                // subject.
+                Help = D47.Core.Capabilities.Builtin.ChecklistCapability.Id,
+            });
 
         // How many are still open, on the tab itself (asked for 2026-08-20). **Open rather than every line**:
         // a checklist's whole question is how much is left, and a count that never falls as the Commander

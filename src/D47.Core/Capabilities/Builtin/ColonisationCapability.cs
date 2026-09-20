@@ -22,19 +22,12 @@ public static class ColonisationCapability
     /// about it.
     /// </param>
     /// <param name="trade">Where the shopping list comes from (Phase 50).</param>
-    /// <param name="carrier">
-    /// What the Commander has told d47 is on their fleet carrier, which is taken off the shopping list.
-    /// </param>
-    /// <param name="sourcing">
-    /// Where the last shopping list is posted, so the Checklist tab draws the answer the Commander was
-    /// just given rather than searching again.
-    /// </param>
+    /// <param name="sourcing">Where the last shopping list is kept, for a surface to draw.</param>
     public static CapabilityDescriptor Create(
         Func<CommanderGameState?> commander,
         IGalaxyService? galaxy = null,
         Configuration.SettingsService? settings = null,
         ITradePlanService? trade = null,
-        CarrierManifest? carrier = null,
         SourcingBoard? sourcing = null,
         Func<DateTimeOffset>? now = null) => new()
     {
@@ -117,7 +110,7 @@ public static class ColonisationCapability
                 ],
                 Handler = (arguments, cancellationToken) =>
                     NeedsAsync(
-                        commander(), settings, trade, carrier, sourcing, now, arguments, cancellationToken),
+                        commander(), settings, trade, sourcing, now, arguments, cancellationToken),
             },
             new ToolDefinition
             {
@@ -249,7 +242,6 @@ public static class ColonisationCapability
         CommanderGameState? state,
         Configuration.SettingsService? settings,
         ITradePlanService? trade,
-        CarrierManifest? carrier,
         SourcingBoard? board,
         Func<DateTimeOffset>? now,
         ToolArguments arguments,
@@ -329,7 +321,7 @@ public static class ColonisationCapability
         {
             report.AppendLine();
             report.AppendLine(await SourceAsync(
-                    state, settings, trade, carrier, board, now, site, cancellationToken)
+                    state, settings, trade, board, now, site, cancellationToken)
                 .ConfigureAwait(false));
         }
 
@@ -344,7 +336,6 @@ public static class ColonisationCapability
         CommanderGameState state,
         Configuration.SettingsService? settings,
         ITradePlanService? trade,
-        CarrierManifest? carrier,
         SourcingBoard? board,
         Func<DateTimeOffset>? now,
         ConstructionSite site,
@@ -360,32 +351,13 @@ public static class ColonisationCapability
             return "I don't know where the Commander is right now, so I have nowhere to search out from.";
         }
 
-        var (outstanding, counted) = CarrierManifest.Deduct(
-            site.Outstanding, carrier?.For(state.Identity.FrontierId) ?? []);
-
-        var said = new StringBuilder();
-
-        if (counted.Count > 0)
-        {
-            said.AppendLine(
-                $"Taking off what you told me is on the carrier — {Listed(counted)} — "
-                + $"as of {Said(counted.Max(stock => stock.SaidAt))}.");
-        }
-
-        if (outstanding.Count == 0)
-        {
-            said.Append("The carrier covers the whole of it. Nothing to buy.");
-
-            return said.ToString().TrimEnd();
-        }
-
         SourcingAnswer answer;
 
         try
         {
             answer = await trade
                 .SourceConstructionAsync(
-                    new SourcingSearch(near, state.Location.StationName, outstanding), cancellationToken)
+                    new SourcingSearch(near, state.Location.StationName, site.Outstanding), cancellationToken)
                 .ConfigureAwait(false);
         }
         catch (GalaxyUnavailableException error)
@@ -393,20 +365,18 @@ public static class ColonisationCapability
             return error.Message;
         }
 
-        // Posted on the way out, so the Checklist tab draws the answer the Commander was just told rather
-        // than running a second search that could disagree with it (the arrangement CommodityBoard already
-        // makes for one commodity, and RoutePlanBook for routes).
+        // Posted on the way out, so a surface draws the answer the Commander was just told rather than
+        // running a second search that could disagree with it (the arrangement CommodityBoard already makes
+        // for one commodity, and RoutePlanBook for routes).
         if (board is not null)
         {
             board.Post(new SourcingPosting(
-                site.Where, answer, near, counted, now?.Invoke() ?? DateTimeOffset.UtcNow));
+                site.Where, answer, near, now?.Invoke() ?? DateTimeOffset.UtcNow));
 
             board.Announce();
         }
 
-        said.Append(Describe(answer, near));
-
-        return said.ToString().TrimEnd();
+        return Describe(answer, near).TrimEnd();
     }
 
     /// <summary>The shopping list in words.</summary>
@@ -462,9 +432,6 @@ public static class ColonisationCapability
 
         return said.ToString();
     }
-
-    private static string Listed(IReadOnlyList<CarrierStock> counted) =>
-        string.Join(", ", counted.Select(stock => $"{Tonnes(stock.Tonnes)} {stock.Commodity}"));
 
     // Tool result the model reads back, not speech (#336): exact digits on purpose, not SpokenCredits.Band.
     private static string Credits(long value) =>
@@ -927,10 +894,6 @@ public static class ColonisationCapability
         when is { } at
             ? at.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture) + " game time"
             : "at a time I did not record";
-
-    /// <summary>When the Commander said something.</summary>
-    private static string Said(DateTimeOffset when) =>
-        when.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
 
     private static string Percent(double fraction) =>
         (fraction * 100).ToString("0.#", CultureInfo.InvariantCulture) + "%";
