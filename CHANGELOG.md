@@ -82,6 +82,10 @@ underlines the value instead of lighting the whole frame.
 A text field now pads 13px left and right instead of top and bottom, its placeholder reads in the
 faint text colour, and its caret draws as a 9x21 Accent block instead of a thin line.
 
+A bind row with two bindings now shows one chip per key instead of joining them into a single
+button's text, each in mono on a filled ground with a rule border, wrapping onto a second line
+rather than overlapping. Unbind is now a quiet-weight CLEAR beside the chips.
+
 A protected settings row now carries a left bar instead of a bordered "protected" chip, with one
 legend line under the screen title on any screen that has one. A row's help now shows on hovering
 or focusing its own label rather than behind a separate info glyph.

@@ -117,12 +117,13 @@ public class APickedVoiceShowsOnItsRowTests
 
         Assert.True(row is not null, "the push-to-talk row is not on the page");
 
-        var bind = row!.GetVisualDescendants().OfType<Button>()
+        Button Bind() => row!.GetVisualDescendants().OfType<Button>()
             .First(button => !SettingsView.IsRowChrome(button)
-                             && button.Content as string != "Unbind");
+                             && button.IsEffectivelyVisible
+                             && button.Content as string != "CLEAR");
 
-        var unbind = row.GetVisualDescendants().OfType<Button>()
-            .First(button => button.Content as string == "Unbind");
+        Button Unbind() => row!.GetVisualDescendants().OfType<Button>()
+            .First(button => button.Content as string == "CLEAR" && button.IsEffectivelyVisible);
 
         // Bound, so that clearing it has something visible to undo.
         var key = ListeningCapability.PushToTalkKeyKey;
@@ -130,16 +131,16 @@ public class APickedVoiceShowsOnItsRowTests
         settings.Apply(key, "Ctrl+Shift+D", SettingsCaller.Panel);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.NotEqual("Press to bind", bind.Content as string);
+        Assert.NotEqual("Press to bind", Bind().Content as string);
 
         // The app's own unsubscribe.
         DetachOnly(host);
 
-        unbind.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Unbind().RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
         Assert.Null(settings.Read(key));
-        Assert.Equal("Press to bind", bind.Content as string);
+        Assert.Equal("Press to bind", Bind().Content as string);
 
         host.Close();
     }

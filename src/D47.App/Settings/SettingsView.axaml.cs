@@ -3904,14 +3904,29 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         return (editor, editor.Refresh, false);
     }
 
-    /// <summary>The one bind control (#217).</summary>
+    /// <summary>
+    /// The one bind control (#217): a chip per bound key and a quiet CLEAR, in a row that wraps
+    /// (#354). One persistent slot per <see cref="SettingRow.BoundKeys"/> entry plus the empty-state
+    /// button, shown or hidden rather than rebuilt, so a capture in progress keeps its own control.
+    /// </summary>
     private (Control, Action, bool) BuildBind(SettingRow row, TextBlock message)
     {
-        var button = new Button { MinWidth = 150, HorizontalContentAlignment = HorizontalAlignment.Center };
-        var proseFont = button.FontFamily;
-        var clear = new Button { Content = "Unbind" };
+        var empty = new Button { MinWidth = 150, HorizontalContentAlignment = HorizontalAlignment.Center };
+        var proseFont = empty.FontFamily;
 
-        button.Click += async (_, _) => await CaptureBindAsync(row, button, message);
+        empty.Click += async (_, _) => await CaptureBindAsync(row, empty, message);
+
+        var chips = row.BoundKeys.Select(_ =>
+        {
+            var chip = new Button { FontFamily = new FontFamily(Fonts.MonoFamily), FontSize = TypeScale.Secondary, Padding = new Thickness(14, 10) };
+            Themed(chip, Button.BackgroundProperty, ThemeManager.FillHigherKey);
+            Themed(chip, Button.ForegroundProperty, ThemeManager.AccentInkKey);
+            chip.Click += async (_, _) => await CaptureBindAsync(row, chip, message);
+            return chip;
+        }).ToList();
+
+        var clear = new Button { Content = "CLEAR" };
+        clear.Classes.Add("quiet");
 
         clear.Click += (_, _) =>
         {
@@ -3921,59 +3936,58 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             }
         };
 
-        var panel = new StackPanel
+        var wrap = new WrapPanel { ItemSpacing = 8, LineSpacing = 8, HorizontalAlignment = HorizontalAlignment.Right };
+        wrap.Children.Add(empty);
+        foreach (var chip in chips)
         {
-            Orientation = Orientation.Horizontal,
-            Spacing = 8,
-            HorizontalAlignment = HorizontalAlignment.Right,
-        };
-        panel.Children.Add(button);
-        panel.Children.Add(clear);
+            wrap.Children.Add(chip);
+        }
+        wrap.Children.Add(clear);
 
-        return (panel, () =>
+        return (wrap, () =>
         {
-            var bound = BoundAs(row);
+            var said = BoundAs(row);
+            var bound = said.Any(text => text is not null);
 
-            // The keys themselves in monospace; "Press to bind" and "No controllers" are prose, not data
-            // (#279).
-            button.FontFamily = bound is null ? proseFont : new FontFamily(Fonts.MonoFamily);
-            button.Content = bound ?? "Press to bind";
+            // "Press to bind" and "No controllers" are prose, not data, so the empty-state control keeps
+            // the chrome font rather than the chips' monospace (#279).
+            empty.FontFamily = proseFont;
+            empty.IsVisible = !bound;
 
             // A row that can only be filled from a controller is dead without one, and saying so beats a
             // button that does nothing.
-            button.IsEnabled = row.Kind != SettingKind.HotasButton || _switches is not null;
+            empty.IsEnabled = row.Kind != SettingKind.HotasButton || _switches is not null;
+            empty.Content = row.Kind == SettingKind.HotasButton && _switches is null
+                ? "No controllers"
+                : "Press to bind";
 
-            if (row.Kind == SettingKind.HotasButton && _switches is null)
+            for (var i = 0; i < chips.Count; i++)
             {
-                button.Content = "No controllers";
+                chips[i].IsVisible = said[i] is not null;
+                chips[i].Content = said[i];
             }
+
+            clear.IsVisible = bound;
         }, true);
     }
 
     /// <summary>
-    /// What a bind row is bound to, in the Commander's words — both halves when it holds two, in the
-    /// order they are pressed for rather than the order they are stored in.
+    /// What each of a bind row's <see cref="SettingRow.BoundKeys"/> is bound to, in the Commander's
+    /// words, aligned by index — null where that slot holds nothing.
     /// </summary>
-    private string? BoundAs(SettingRow row)
+    private IReadOnlyList<string?> BoundAs(SettingRow row) => row.BoundKeys.Select(key =>
     {
-        var said = new List<string>();
+        var stored = _settings!.Read(key);
 
-        foreach (var key in row.BoundKeys)
+        if (string.IsNullOrWhiteSpace(stored))
         {
-            var stored = _settings!.Read(key);
-
-            if (string.IsNullOrWhiteSpace(stored))
-            {
-                continue;
-            }
-
-            said.Add(KindOf(key) == SettingKind.HotasButton
-                ? D47.Core.Hotas.HotasButton.Parse(stored)?.Describe() ?? stored
-                : Gestures.Describe(stored));
+            return null;
         }
 
-        return said.Count == 0 ? null : string.Join(", ", said);
-    }
+        return KindOf(key) == SettingKind.HotasButton
+            ? D47.Core.Hotas.HotasButton.Parse(stored)?.Describe() ?? stored
+            : Gestures.Describe(stored);
+    }).ToList();
 
     private SettingKind KindOf(string key) => _settings?.Find(key)?.Kind ?? SettingKind.Hotkey;
 

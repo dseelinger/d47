@@ -95,7 +95,7 @@ public class ChoiceControlsLookAlikeTests
     }
 
     /// <summary>
-    /// The buttons that open the picker, told from the ordinary ones — Store, Clear, Unbind — by the
+    /// The buttons that open the picker, told from the ordinary ones — Store, Clear, CLEAR — by the
     /// chevron they carry, which is the same thing that tells the Commander.
     /// </summary>
     private static IEnumerable<Button> PickerButtons(Visual within) =>
