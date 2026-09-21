@@ -44,7 +44,7 @@
     <!-- The current tab: a solid fill rather than a muted one, findable at a glance from a
          metre away, which is the whole job of a selected tab in a headset. -->
     <Style Selector="^:checked">
-      <Setter Property="Foreground" Value="{DynamicResource D47.Background}" />
+      <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
       <Setter Property="FontWeight" Value="SemiBold" />
       <Style Selector="^ /template/ controls|ChamferedBorder#Shape">
         <Setter Property="Background" Value="{DynamicResource D47.Accent}" />

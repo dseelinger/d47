@@ -64,7 +64,7 @@
       <!-- Primary: solid Accent, ink the colour of the background it sits on, one per surface. -->
       <Style Selector="^.primary">
         <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
-        <Setter Property="Foreground" Value="{DynamicResource D47.Background}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
         <Setter Property="BorderThickness" Value="0" />
 
         <Style Selector="^ /template/ controls|ChamferedBorder#Shape">
@@ -163,7 +163,7 @@
         <Setter Property="Effect" Value="{DynamicResource D47.Bloom.Fill}" />
       </Style>
       <Style Selector="^:checked /template/ ContentPresenter#OnText">
-        <Setter Property="Foreground" Value="{DynamicResource D47.Background}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
       </Style>
 
       <!-- Off: the right half fills Border instead, muted ink on it; the left half stays faint. -->
@@ -214,7 +214,7 @@
       </Style>
 
       <Style Selector="^:checked">
-        <Setter Property="Foreground" Value="{DynamicResource D47.Background}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Style Selector="^ /template/ Border#Shape">
           <Setter Property="Background" Value="{DynamicResource D47.Accent}" />

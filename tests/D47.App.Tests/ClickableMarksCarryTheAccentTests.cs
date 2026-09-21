@@ -74,7 +74,7 @@ public class ClickableMarksCarryTheAccentTests
 
             Assert.Equal(Resolved(window, ThemeManager.AccentKey), now);
 
-            // **And it genuinely moved.** Light is #0A64C8 and dark is #4C8DFF against Elite's #FF7100, so a
+            // **And it genuinely moved.** Light is #9A3B00 and dark is #4C8DFF against Elite's #FF7A1A, so a
             // mark that had been painted once and left would fail here rather than passing because nothing
             // was ever different.
             Assert.NotEqual(elite, now);

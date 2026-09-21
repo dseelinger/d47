@@ -46,12 +46,12 @@ public static class Palettes
         IsDark = true,
         InkIsAccent = true,
 
-        // Black rather than near-black: the Accent tint on a bubble or a pane only reads as a lit panel
-        // against a ground with nothing in it, and the scanlines only show on black.
-        Background = Color.Parse("#000000"),
+        // Near-black rather than pure black: the Accent tint on a bubble or a pane still reads as a
+        // lit panel against a ground with nothing in it.
+        Background = Color.Parse("#08070A"),
         Text = Color.Parse("#E8E2D8"),
-        Accent = Color.Parse("#F5850F"),
-        AccentMuted = Color.Parse("#A64A00"),
+        Accent = Color.Parse("#FF7A1A"),
+        AccentMuted = Color.Parse("#773D1E"),
     };
 
     public static Palette Dark { get; } = new()
@@ -68,20 +68,20 @@ public static class Palettes
     {
         IsDark = false,
         InkIsAccent = false,
-        Background = Color.Parse("#F4F4F2"),
+        Background = Color.Parse("#EAE6DE"),
         Text = Color.Parse("#1A1A1A"),
-        Accent = Color.Parse("#0A64C8"),
-        AccentMuted = Color.Parse("#5C8FCB"),
+        Accent = Color.Parse("#9A3B00"),
+        AccentMuted = Color.Parse("#C69178"),
     };
 
     public static Palette Guardian { get; } = new()
     {
         IsDark = true,
         InkIsAccent = true,
-        Background = Color.Parse("#06100F"),
+        Background = Color.Parse("#040705"),
         Text = Color.Parse("#DCEFEA"),
-        Accent = Color.Parse("#2FD3B5"),
-        AccentMuted = Color.Parse("#12796A"),
+        Accent = Color.Parse("#3BE377"),
+        AccentMuted = Color.Parse("#226A39"),
     };
 
     /// <summary>The palette for a theme id, before any HUD matrix is applied.</summary>

@@ -38,6 +38,11 @@ delete. The primary weight's fill now clips its top-right corner.
 A toggle switch now carries its own words — "On" and "Off" by default — on two halves that fill
 and dim as the switch changes, instead of a knob whose only signal was position and brightness.
 
+The Elite, Guardian and Light themes now use the handoff's own accent and background colours
+(`dark` is unchanged). Text and glyphs sitting on a solid accent fill — the primary button, a
+switch's On half, a checked segment, a checked tab — now use their own colour instead of borrowing
+the theme's background colour, so Light reads correctly there instead of showing dark-theme ink.
+
 A protected settings row now carries a left bar instead of a bordered "protected" chip, with one
 legend line under the screen title on any screen that has one. A row's help now shows on hovering
 or focusing its own label rather than behind a separate info glyph.
