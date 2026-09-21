@@ -230,14 +230,14 @@ public class ModelSelectionFollowsTheDiskTests
     }
 
     /// <summary>
-    /// The compact row itself, which is the three-column grid - not the first grid in the tree that
-    /// happens to contain the words, which is the whole surface.
+    /// The compact row itself, by the class the view marks it with - not the first grid in the tree
+    /// that happens to contain the words, which is the whole surface.
     /// </summary>
     private static Grid Row(SettingsHost host) =>
         host.View
             .GetVisualDescendants()
             .OfType<Grid>()
-            .Where(grid => grid.ColumnDefinitions.Count == 3)
+            .Where(grid => grid.Classes.Contains(SettingsView.CompactRowClass))
             .First(grid => grid.GetVisualDescendants()
                 .OfType<TextBlock>()
                 .Any(text => text.Text == "Speech model"));

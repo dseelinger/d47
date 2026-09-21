@@ -32,7 +32,7 @@ public class OneRowForPushToTalkTests
     /// <summary>A visible row by its label, as a Commander would pick it out.</summary>
     private static Grid? Row(SettingsHost host, string label) =>
         host.View.GetVisualDescendants().OfType<Grid>()
-            .Where(grid => grid.ColumnDefinitions.Count == 3 && grid.IsEffectivelyVisible)
+            .Where(grid => grid.Classes.Contains(SettingsView.CompactRowClass) && grid.IsEffectivelyVisible)
             .FirstOrDefault(grid => grid.GetVisualDescendants().OfType<TextBlock>()
                 .Any(text => text.Text == label));
 

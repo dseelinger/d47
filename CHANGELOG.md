@@ -8,6 +8,11 @@
 
 ## 0.169.0 — No more drop-downs
 
+A settings row now puts its control immediately beside its label instead of at the far right of
+the row, and reserves the same width for the reset button whether or not that row draws one, so a
+card's rows no longer go ragged down the page. The row's minimum height, padding and every margin
+in the settings view now come from one spacing scale.
+
 The settings panel's text now reads at seven sizes instead of five, grown for the headset — body
 text moves from 14 to 16. The reset and info buttons on a settings row, the stepper's arrows and
 the number field's arrows now offer at least a 44x44 target for a VR ray to land on.

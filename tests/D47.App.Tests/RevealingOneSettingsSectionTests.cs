@@ -28,7 +28,7 @@ public class RevealingOneSettingsSectionTests
     /// <summary>The rows under the heading, which are what collapsing hides.</summary>
     private static StackPanel Body(Border card) =>
         card.GetVisualDescendants().OfType<StackPanel>()
-            .First(stack => stack.Margin == new Thickness(18, 4, 18, 18));
+            .First(stack => stack.Margin == new Thickness(16, 4, 16, 16));
 
     /// <summary>The chevron beside the heading, which has to agree with the rows.</summary>
     private static TextBlock Chevron(Border card) =>

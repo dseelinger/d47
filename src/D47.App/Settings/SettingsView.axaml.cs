@@ -227,7 +227,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         {
             Name = BulkName,
             Orientation = Orientation.Horizontal,
-            Spacing = 2,
+            Spacing = 4,
             VerticalAlignment = VerticalAlignment.Center,
             HorizontalAlignment = HorizontalAlignment.Left,
             Margin = new Thickness(0, 0, 12, 0),
@@ -387,7 +387,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         if (pageRows.Count > 0)
         {
             // Flush with the cards rather than inset from them.
-            var strip = new StackPanel { Spacing = 12, Margin = new Thickness(0, 0, 0, 6) };
+            var strip = new StackPanel { Spacing = 12, Margin = new Thickness(0, 0, 0, 4) };
 
             var first = true;
 
@@ -431,7 +431,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             // own line rather than disappearing.
             var alone = BulkControls();
 
-            alone.Margin = new Thickness(18, 0, 18, 6);
+            alone.Margin = new Thickness(16, 0, 16, 4);
             Cards.Children.Add(alone);
             _topStrip = alone;
         }
@@ -507,7 +507,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         var rows = settings.RowsForPlace(placeId);
 
-        var content = new StackPanel { Spacing = 18, Margin = new Thickness(0, 10, 0, 0) };
+        var content = new StackPanel { Spacing = 16, Margin = new Thickness(0, 8, 0, 0) };
 
         for (var i = 0; i < rows.Count; i++)
         {
@@ -562,8 +562,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         var headerRow = new StackPanel
         {
             Orientation = Orientation.Horizontal,
-            Spacing = 6,
-            Margin = new Thickness(10, 6),
+            Spacing = 4,
+            Margin = new Thickness(8, 4),
         };
         headerRow.Children.Add(chevron);
         headerRow.Children.Add(heading);
@@ -589,7 +589,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             SaveViewState(state => state.With(placeId, open));
         };
 
-        var strip = new StackPanel { Name = TabStripName, Spacing = 10 };
+        var strip = new StackPanel { Name = TabStripName, Spacing = 8 };
         strip.Children.Add(header);
         strip.Children.Add(content);
 
@@ -611,7 +611,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         var chip = new Border
         {
-            Padding = new Thickness(6, 1),
+            Padding = new Thickness(4, 4),
             BorderThickness = new Thickness(1),
             VerticalAlignment = VerticalAlignment.Center,
             Child = text,
@@ -642,8 +642,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         var content = new StackPanel
         {
-            Spacing = 18,
-            Margin = new Thickness(18, 4, 18, 18),
+            Spacing = 16,
+            Margin = new Thickness(16, 4, 16, 16),
             // Applied while building, not after painting: a card that flashes open and then collapses is
             // worse than one that never remembered (Phase 4).
             IsVisible = _viewState.IsExpanded(place.Id, place.StartCollapsed),
@@ -702,7 +702,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             FontSize = TypeScale.Secondary,
             Padding = new Thickness(0),
             MinWidth = 0,
-            Margin = new Thickness(0, -6, 0, 0),
+            Margin = new Thickness(0, -4, 0, 0),
             HorizontalAlignment = HorizontalAlignment.Left,
             Background = Brushes.Transparent,
             BorderThickness = new Thickness(0),
@@ -737,7 +737,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         TitleText.Style(heading, TypeScale.Subheading);
         TitleText.Show(heading, title);
 
-        var headerRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+        var headerRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
         headerRow.Children.Add(chevron);
         headerRow.Children.Add(heading);
 
@@ -746,7 +746,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         {
             Content = "?",
             FontSize = TypeScale.Secondary,
-            Padding = new Thickness(5, 0),
+            Padding = new Thickness(4, 0),
             MinWidth = 0,
             VerticalAlignment = VerticalAlignment.Center,
             Background = Brushes.Transparent,
@@ -771,7 +771,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Content = Glyphs.Draw(Glyphs.Reset, ThemeManager.AccentKey, TypeScale.Small),
 
             // Room for the stroke, which Made puts half of outside the box — see the note on Glyphs.Reset.
-            Padding = new Thickness(6, 2),
+            Padding = new Thickness(4, 4),
             MinWidth = 0,
             VerticalAlignment = VerticalAlignment.Center,
             Background = Brushes.Transparent,
@@ -806,7 +806,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         var header = new Border
         {
-            Padding = new Thickness(14, 11),
+            Padding = new Thickness(12, 12),
             Background = Brushes.Transparent,
             Cursor = new Cursor(StandardCursorType.Hand),
             Child = headerRow,
@@ -860,10 +860,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         };
         Themed(heading, TextBlock.ForegroundProperty, ThemeManager.TextKey);
 
-        var stack = new StackPanel { Spacing = 2, Margin = new Thickness(0, 18, 0, 4) };
+        var stack = new StackPanel { Spacing = 4, Margin = new Thickness(0, 16, 0, 4) };
 
         // The rule goes above the heading.
-        var rule = new Border { Height = 1, Margin = new Thickness(0, 0, 0, 10) };
+        var rule = new Border { Height = 1, Margin = new Thickness(0, 0, 0, 8) };
         Themed(rule, Border.BackgroundProperty, ThemeManager.BorderKey);
 
         stack.Children.Add(rule);
@@ -902,7 +902,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         var reset = new Button
         {
             Content = Glyphs.Draw(Glyphs.Reset, ThemeManager.AccentKey, TypeScale.Small),
-            Padding = new Thickness(6, 2),
+            Padding = new Thickness(4, 4),
             MinWidth = 0,
             VerticalAlignment = VerticalAlignment.Center,
             Background = Brushes.Transparent,
@@ -948,7 +948,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         var bar = new Border
         {
             Width = 3,
-            Margin = new Thickness(0, 2, 8, 2),
+            Margin = new Thickness(0, 4, 8, 4),
             Opacity = 0,
         };
         Themed(bar, Border.BackgroundProperty, ThemeManager.AccentKey);
@@ -980,7 +980,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Text = title,
             FontSize = TypeScale.Subheading,
             FontWeight = FontWeight.Medium,
-            Margin = new Thickness(18, 18, 18, 4),
+            Margin = new Thickness(16, 16, 16, 4),
         };
         Themed(heading, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
 
@@ -1004,11 +1004,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Text = "On other tabs",
             FontSize = TypeScale.Subheading,
             FontWeight = FontWeight.Medium,
-            Margin = new Thickness(18, 18, 18, 4),
+            Margin = new Thickness(16, 16, 16, 4),
         };
         Themed(heading, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
 
-        list = new StackPanel { Spacing = 6, Margin = new Thickness(18, 0, 18, 12) };
+        list = new StackPanel { Spacing = 4, Margin = new Thickness(16, 0, 16, 12) };
 
         return new StackPanel
         {
@@ -1034,7 +1034,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         {
             Content = tab.Strip ? $"Open {tab.Title}" : $"Open the {tab.Title} tab",
             FontSize = TypeScale.Secondary,
-            Padding = new Thickness(8, 2),
+            Padding = new Thickness(8, 4),
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(12, 0, 0, 0),
         };
@@ -1055,12 +1055,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         title = new TextBlock { FontWeight = FontWeight.Medium };
         TitleText.Style(title, TypeScale.Heading);
 
-        sentence = new TextBlock { FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 3, 0, 0) };
+        sentence = new TextBlock { FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) };
         Themed(sentence, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
 
         return new StackPanel
         {
-            Margin = new Thickness(18, 4, 18, 10),
+            Margin = new Thickness(16, 4, 16, 8),
             Children = { title, sentence },
         };
     }
@@ -1072,7 +1072,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         {
             Name = "AreaDropdown",
             HorizontalAlignment = HorizontalAlignment.Stretch,
-            Margin = new Thickness(18, 0, 18, 10),
+            Margin = new Thickness(16, 0, 16, 8),
             IsVisible = false,
         };
         DressAsAChoice(combo);
@@ -1224,7 +1224,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         var bar = new Border
         {
             Width = 3,
-            Margin = new Thickness(0, 2),
+            Margin = new Thickness(0, 4),
             Opacity = 0,
         };
         Themed(bar, Border.BackgroundProperty, ThemeManager.AccentKey);
@@ -1247,10 +1247,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         var item = new Border
         {
-            Padding = new Thickness(8, 7),
+            Padding = new Thickness(8, 8),
 
             // Indented under its area (#279).
-            Margin = new Thickness(18, 0, 0, 0),
+            Margin = new Thickness(16, 0, 0, 0),
             Background = Brushes.Transparent,
             Cursor = new Cursor(StandardCursorType.Hand),
             Child = layout,
@@ -2223,6 +2223,18 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// <summary>The width a compact row's control is built to.</summary>
     private const double StandardControlWidth = 190;
 
+    /// <summary>The label column's maximum width — past it the control takes the rest of the row (#332).</summary>
+    private const double LabelColumnMaxWidth = 300;
+
+    /// <summary>The reset gutter's width, reserved on every compact row whether or not it draws one (#332).</summary>
+    private const double ResetGutterWidth = 44;
+
+    /// <summary>A compact row's minimum height — enough for its label at the current type scale (#332).</summary>
+    private const double RowMinHeight = 52;
+
+    /// <summary>A compact row's own top and bottom padding (#332).</summary>
+    private const double RowVerticalPadding = 8;
+
     /// <summary>
     /// Marks a caption-and-control row, so a test can find the rows this view builds rather than every
     /// three-column grid that happens to be in the tree.
@@ -2232,7 +2244,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// <summary>The height every control that opens a list stands at, and the padding inside it.</summary>
     private const double ChoiceHeight = 32;
 
-    private static readonly Thickness ChoicePadding = new(11, 6);
+    private static readonly Thickness ChoicePadding = new(12, 4);
 
     /// <summary>One look for the two controls that open a list.</summary>
     private bool ShowingEverything =>
@@ -2265,7 +2277,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         var tag = new Border
         {
-            Padding = new Thickness(6, 1),
+            Padding = new Thickness(4, 4),
             BorderThickness = new Thickness(1),
             VerticalAlignment = VerticalAlignment.Center,
             Child = text,
@@ -2277,7 +2289,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
     private RowView BuildRow(CapabilityDescriptor capability, SettingRow row, bool shaded = false)
     {
-        var header = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+        var header = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
 
         var label = new TextBlock
         {
@@ -2309,7 +2321,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         {
             Text = row.Help,
             FontSize = TypeScale.Secondary,
-            Margin = new Thickness(0, 2, 0, 0),
+            Margin = new Thickness(0, 4, 0, 0),
             TextWrapping = TextWrapping.Wrap,
             IsVisible = false,
         };
@@ -2330,7 +2342,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         var keyLine = new TextBlock
         {
             FontSize = TypeScale.Small,
-            Margin = new Thickness(0, 2, 0, 0),
+            Margin = new Thickness(0, 4, 0, 0),
             TextWrapping = TextWrapping.Wrap,
             IsVisible = false,
         };
@@ -2372,7 +2384,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 HorizontalContentAlignment = HorizontalAlignment.Center,
                 VerticalContentAlignment = VerticalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(10, 0, 0, 0),
+                Margin = new Thickness(8, 0, 0, 0),
                 IsVisible = false,
             };
 
@@ -2433,8 +2445,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         Control body;
         if (compact)
         {
-            // Label and help on the left, the control on the right — the layout every settings surface a
-            // Commander already knows uses for one-glance rows.
+            // The label sits at its own content width, capped rather than proportional, so the control
+            // starts immediately after it instead of at the far edge of a share it does not fill (#332).
+            // The reset gutter is its own column, held at the same width whether or not this row draws
+            // one, so the control column does not go ragged down a card that mixes both kinds of row.
             var grid = new Grid
             {
                 ColumnDefinitions = row.PageTop
@@ -2446,19 +2460,18 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                     ]
                     :
                     [
-                        new ColumnDefinition(3, GridUnitType.Star),
+                        new ColumnDefinition(GridLength.Auto) { MaxWidth = LabelColumnMaxWidth },
                         new ColumnDefinition(16, GridUnitType.Pixel),
-
-                        // The floor is the width the controls are already built to; below it the caption
-                        // yields instead, which is the lesser of the two bad narrow cases.
-                        new ColumnDefinition(2, GridUnitType.Star) { MinWidth = StandardControlWidth },
+                        new ColumnDefinition(1, GridUnitType.Star),
+                        new ColumnDefinition(16, GridUnitType.Pixel),
+                        new ColumnDefinition(ResetGutterWidth, GridUnitType.Pixel),
                     ],
 
                 HorizontalAlignment = row.PageTop ? HorizontalAlignment.Right : HorizontalAlignment.Stretch,
             };
 
-            // Not a styling hook: RowWidthTests asserts the caption keeps the larger share of every
-            // compact row, and it needs a way to say which grids those are.
+            // Not a styling hook: tests find the rows this view builds by the class rather than by
+            // shape, since a three-column grid is also what Avalonia builds a TextBox out of.
             if (!row.PageTop)
             {
                 grid.Classes.Add(CompactRowClass);
@@ -2471,9 +2484,21 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             // vertically"*).
             caption.VerticalAlignment = VerticalAlignment.Center;
             control.VerticalAlignment = VerticalAlignment.Center;
-            control.HorizontalAlignment = HorizontalAlignment.Right;
+            control.HorizontalAlignment = row.PageTop ? HorizontalAlignment.Right : HorizontalAlignment.Left;
             grid.Children.Add(caption);
             grid.Children.Add(control);
+
+            // Placed in the row's own gutter column rather than docked outside it, so the column stays
+            // 44 wide whether or not this particular row can be reset.
+            if (!row.PageTop && resetButton is not null)
+            {
+                Grid.SetColumn(resetButton, 4);
+                resetButton.HorizontalAlignment = HorizontalAlignment.Center;
+                resetButton.Margin = new Thickness(0);
+                grid.Children.Add(resetButton);
+                resetButton = null;
+            }
+
             body = grid;
         }
         else
@@ -2484,7 +2509,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             body = stack;
         }
 
-        // The reset glyph sits at the end of the row, right of the caption and the control alike (#279).
+        // The reset glyph sits at the end of the row, right of the caption and the control alike (#279)
+        // — the page-top row and the stacked (non-compact) rows are not part of the reserved gutter above,
+        // so they still dock it outside the body rather than into a grid column.
         Control line = body;
 
         if (resetButton is not null)
@@ -2496,11 +2523,17 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             line = dock;
         }
 
-        // At least 60px tall, on the 5% fill every other row — the page-top strip is a separate case
-        // and keeps its own rules (#279).
+        // The page-top strip is a separate case and keeps its own rules (#279).
         if (!row.PageTop)
         {
-            var rowShape = new Border { MinHeight = 60, Child = line };
+            var rowShape = new Border
+            {
+                MinHeight = RowMinHeight,
+                Padding = new Thickness(0, RowVerticalPadding),
+                BorderThickness = new Thickness(0, 1, 0, 0),
+                Child = line,
+            };
+            Themed(rowShape, Border.BorderBrushProperty, ThemeManager.BorderKey);
 
             if (shaded)
             {
@@ -2533,7 +2566,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     {
         var inside = new StackPanel
         {
-            Spacing = 10,
+            Spacing = 8,
             Children = { spoken, ExplainsLink(capability, row) },
         };
 
@@ -2544,7 +2577,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Content = Glyphs.Draw(Glyphs.Info, ThemeManager.AccentMutedKey, TypeScale.Secondary),
 
             // Room above and below for the stroke.
-            Padding = new Thickness(4, 2),
+            Padding = new Thickness(4, 4),
             MinWidth = TypeScale.MinimumTarget,
             MinHeight = TypeScale.MinimumTarget,
             Background = Brushes.Transparent,
@@ -2590,7 +2623,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Padding = new Thickness(4),
             Child = new StackPanel
             {
-                Spacing = 10,
+                Spacing = 8,
                 Children = { spoken, ExplainsLink(capability, row) },
             },
         };
@@ -2769,7 +2802,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         var inset = new Border
         {
-            Padding = new Thickness(10, 8),
+            Padding = new Thickness(8, 8),
             Child = text,
         };
         CardChrome.Card(inset);
@@ -2789,7 +2822,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Name = "OpenMemories",
             Content = "Open what D47 remembers",
             FontSize = TypeScale.Body,
-            Padding = new Thickness(10, 4),
+            Padding = new Thickness(8, 4),
             HorizontalAlignment = HorizontalAlignment.Left,
         };
 
@@ -2824,7 +2857,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Name = "OpenDebrief",
             Content = "Open what D47 has drafted",
             FontSize = TypeScale.Body,
-            Padding = new Thickness(10, 4),
+            Padding = new Thickness(8, 4),
             HorizontalAlignment = HorizontalAlignment.Left,
         };
 
@@ -2858,7 +2891,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Name = "OpenLore",
             Content = "Open your notes",
             FontSize = TypeScale.Body,
-            Padding = new Thickness(10, 4),
+            Padding = new Thickness(8, 4),
             HorizontalAlignment = HorizontalAlignment.Left,
         };
 
@@ -2893,7 +2926,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Name = "OpenLogbook",
             Content = "Write up a session",
             FontSize = TypeScale.Body,
-            Padding = new Thickness(10, 4),
+            Padding = new Thickness(8, 4),
             HorizontalAlignment = HorizontalAlignment.Left,
         };
 
@@ -2933,7 +2966,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Name = "OpenAudioRecorder",
             Content = "Review the recording",
             FontSize = TypeScale.Body,
-            Padding = new Thickness(10, 4),
+            Padding = new Thickness(8, 4),
             HorizontalAlignment = HorizontalAlignment.Left,
         };
 
@@ -2958,7 +2991,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Name = $"Press_{row.Key.Replace('.', '_')}",
             Content = row.PressLabel,
             FontSize = TypeScale.Body,
-            Padding = new Thickness(10, 4),
+            Padding = new Thickness(8, 4),
             HorizontalAlignment = HorizontalAlignment.Left,
         };
 
@@ -2982,7 +3015,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Name = $"Press_{row.Key.Replace('.', '_')}",
             Content = row.PressLabelFor?.Invoke() ?? row.PressLabel,
             FontSize = TypeScale.Body,
-            Padding = new Thickness(10, 4),
+            Padding = new Thickness(8, 4),
             HorizontalAlignment = HorizontalAlignment.Left,
         };
 
@@ -3156,7 +3189,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Name = "OpenCoverage",
             Content = "Show the list",
             FontSize = TypeScale.Body,
-            Padding = new Thickness(10, 4),
+            Padding = new Thickness(8, 4),
             HorizontalAlignment = HorizontalAlignment.Left,
         };
 
@@ -3185,7 +3218,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Name = "OpenOwnPersonas",
             Content = "Write a core",
             FontSize = TypeScale.Body,
-            Padding = new Thickness(10, 4),
+            Padding = new Thickness(8, 4),
             HorizontalAlignment = HorizontalAlignment.Left,
         };
 
@@ -3218,7 +3251,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Name = "OpenMacros",
             Content = "Edit macros",
             FontSize = TypeScale.Body,
-            Padding = new Thickness(10, 4),
+            Padding = new Thickness(8, 4),
             HorizontalAlignment = HorizontalAlignment.Left,
         };
 
@@ -3255,7 +3288,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Name = "OpenChecklist",
             Content = "Open the checklist",
             FontSize = TypeScale.Body,
-            Padding = new Thickness(10, 4),
+            Padding = new Thickness(8, 4),
             HorizontalAlignment = HorizontalAlignment.Left,
         };
 
@@ -3287,7 +3320,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Name = "OpenSwitches",
             Content = "Assign switches",
             FontSize = TypeScale.Body,
-            Padding = new Thickness(10, 4),
+            Padding = new Thickness(8, 4),
             HorizontalAlignment = HorizontalAlignment.Left,
         };
 
@@ -3398,7 +3431,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Minimum = 0,
             Maximum = 1,
             IsVisible = false,
-            Margin = new Thickness(0, 6, 0, 0),
+            Margin = new Thickness(0, 4, 0, 0),
         };
 
         // A row whose change costs something stages the pressed choice, and only this button applies it,
@@ -3409,7 +3442,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             HorizontalAlignment = HorizontalAlignment.Right,
             MinHeight = 36,
             VerticalContentAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(0, 6, 0, 0),
+            Margin = new Thickness(0, 4, 0, 0),
         };
 
         confirm.Classes.Add("primary");
@@ -3421,7 +3454,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             TextWrapping = TextWrapping.Wrap,
             TextAlignment = TextAlignment.Right,
             IsVisible = false,
-            Margin = new Thickness(0, 6, 0, 0),
+            Margin = new Thickness(0, 4, 0, 0),
         };
 
         Themed(stagedNote, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);

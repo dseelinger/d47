@@ -247,12 +247,16 @@ public class SettingsIsATabTests
 
         Assert.NotEmpty(rows);
 
+        // The label column's own maximum width (SettingsView.LabelColumnMaxWidth, #332): past it the
+        // control takes the rest, which on a narrow page is most of the row.
+        const double labelColumnMaxWidth = 300;
+
         foreach (var row in rows)
         {
             Assert.True(
-                row.ColumnDefinitions[0].ActualWidth >= row.ColumnDefinitions[2].ActualWidth,
-                $"a row gave {row.ColumnDefinitions[2].ActualWidth:0} to its control and only "
-                + $"{row.ColumnDefinitions[0].ActualWidth:0} to its caption");
+                row.ColumnDefinitions[0].ActualWidth <= labelColumnMaxWidth + 1,
+                $"a row gave its caption {row.ColumnDefinitions[0].ActualWidth:0}, "
+                + $"past the {labelColumnMaxWidth:0} maximum");
         }
 
         host.Close();
@@ -301,7 +305,7 @@ public class SettingsIsATabTests
         // The push-to-talk row itself, which is the row this is about: F9 is the key it already holds, and F9
         // is the key the suppressor above is swallowing.
         var row = view.GetVisualDescendants().OfType<Grid>()
-            .First(grid => grid.ColumnDefinitions.Count == 3
+            .First(grid => grid.Classes.Contains(D47.App.Settings.SettingsView.CompactRowClass)
                 && grid.GetVisualDescendants().OfType<TextBlock>()
                     .Any(text => text.Text == "Push-to-talk"));
 

@@ -111,7 +111,7 @@ public class APickedVoiceShowsOnItsRowTests
         Dispatcher.UIThread.RunJobs();
 
         var row = host.View.GetVisualDescendants().OfType<Grid>()
-            .Where(grid => grid.ColumnDefinitions.Count == 3)
+            .Where(grid => grid.Classes.Contains(SettingsView.CompactRowClass))
             .FirstOrDefault(grid => grid.GetVisualDescendants().OfType<TextBlock>()
                 .Any(text => text.Text == "Push-to-talk"));
 
@@ -170,7 +170,7 @@ public class APickedVoiceShowsOnItsRowTests
     private static string DrawnValue(SettingsView view, string label)
     {
         var row = view.GetVisualDescendants().OfType<Grid>()
-            .Where(grid => grid.ColumnDefinitions.Count == 3)
+            .Where(grid => grid.Classes.Contains(SettingsView.CompactRowClass))
             .FirstOrDefault(grid => grid.GetVisualDescendants().OfType<TextBlock>()
                 .Any(text => text.Text == label));
 

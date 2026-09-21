@@ -60,6 +60,28 @@ public class VoiceRowFitsItsColumnTests
     {
         var host = Open();
 
+        AssertNoRowClipsItsControl(host);
+
+        host.Close();
+    }
+
+    /// <summary>
+    /// The narrowest real width the panel is rendered at in VR (<c>PanelResolution.Steps[0]</c>) —
+    /// narrow enough that the nav column has already collapsed, which is where the reserved reset
+    /// gutter and the removed control-column minimum both matter (#332).
+    /// </summary>
+    [AvaloniaFact]
+    public void NoCompactRowLetsItsControlRunPastItsColumnAtTheNarrowVrSize()
+    {
+        var host = Open(width: 800);
+
+        AssertNoRowClipsItsControl(host);
+
+        host.Close();
+    }
+
+    private static void AssertNoRowClipsItsControl(SettingsHost host)
+    {
         var laidOut = host.View.GetVisualDescendants().OfType<Grid>()
             .Where(grid => IsCompactRow(grid) && grid.Bounds.Width > 0)
             .ToList();
@@ -79,8 +101,6 @@ public class VoiceRowFitsItsColumnTests
                     + $"in a column of {column:0}");
             }
         }
-
-        host.Close();
     }
 
     /// <summary>
@@ -102,14 +122,16 @@ public class VoiceRowFitsItsColumnTests
         host.Close();
     }
 
-    private static SettingsHost Open()
+    private static SettingsHost Open(double? width = null)
     {
         var (settings, viewState, paths) = TestSurface.Create(voices: Voices());
 
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
 
-        var host = SettingsHost.Open(settings, viewState, paths);
+        var host = width is { } w
+            ? SettingsHost.Open(settings, viewState, paths, width: w)
+            : SettingsHost.Open(settings, viewState, paths);
 
         settings.Apply(SpeechCapability.VoiceKey, "bill", SettingsCaller.Panel);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
@@ -125,10 +147,9 @@ public class VoiceRowFitsItsColumnTests
             .Where(IsCompactRow)
             .First(grid => grid.GetVisualDescendants().OfType<TextBlock>().Any(text => text.Text == label));
 
-    /// <summary>A compact settings row: words, a fixed gap, control.</summary>
-    private static bool IsCompactRow(Grid grid) =>
-        grid.ColumnDefinitions.Count == 3
-        && grid.ColumnDefinitions[0].Width.IsStar
-        && grid.ColumnDefinitions[1].Width.IsAbsolute
-        && grid.ColumnDefinitions[2].Width.IsStar;
+    /// <summary>
+    /// A compact settings row, by the class the view marks it with rather than by its column shape —
+    /// which is also what Avalonia builds a TextBox out of (#332).
+    /// </summary>
+    private static bool IsCompactRow(Grid grid) => grid.Classes.Contains(SettingsView.CompactRowClass);
 }

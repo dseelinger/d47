@@ -17,30 +17,37 @@ public class RowWidthTests
     /// <summary>The longest choice label on the surface, and the one that broke the row.</summary>
     private const string LongestLabel = "small.en";
 
+    /// <summary>The label column's maximum width (<c>SettingsView.LabelColumnMaxWidth</c>, #332).</summary>
+    private const double LabelColumnMaxWidth = 300;
+
+    /// <summary>What layout rounding is allowed to add.</summary>
+    private const double Rounding = 1.0;
+
     [AvaloniaFact]
     public void ALongChoiceLabelDoesNotSqueezeOutTheCaption()
     {
         var host = OpenWith(LongestLabel);
 
         var row = CompactRowFor(host, "Speech model");
+        var label = row.GetVisualDescendants().OfType<TextBlock>().First(text => text.Text == "Speech model");
 
         var caption = row.ColumnDefinitions[0].ActualWidth;
-        var control = row.ColumnDefinitions[2].ActualWidth;
 
-        // The words get the larger share.
+        // The caption is sized to what the label actually needs, not squeezed to whatever the control
+        // left behind (#332).
         Assert.True(
-            caption > control,
-            $"the caption keeps the larger share of the row, but got {caption:0} against {control:0}");
+            caption >= label.Bounds.Width - Rounding,
+            $"the caption is {caption:0} wide but the label itself measured {label.Bounds.Width:0}");
 
         host.Close();
     }
 
     /// <summary>
-    /// The same bound applies to every compact row, so no future label can reintroduce this by being
-    /// verbose.
+    /// The same maximum applies to every compact row, so no future label can reintroduce raggedness by
+    /// being verbose (#332).
     /// </summary>
     [AvaloniaFact]
-    public void NoCompactRowLetsItsControlTakeTheLargerShare()
+    public void NoCompactRowLetsItsCaptionColumnPastTheCeiling()
     {
         var host = OpenWith(LongestLabel);
 
@@ -51,9 +58,9 @@ public class RowWidthTests
         foreach (var row in laidOut)
         {
             Assert.True(
-                row.ColumnDefinitions[0].ActualWidth >= row.ColumnDefinitions[2].ActualWidth,
-                $"a row gave {row.ColumnDefinitions[2].ActualWidth:0} to its control and only "
-                + $"{row.ColumnDefinitions[0].ActualWidth:0} to its caption");
+                row.ColumnDefinitions[0].ActualWidth <= LabelColumnMaxWidth + Rounding,
+                $"a row gave its caption {row.ColumnDefinitions[0].ActualWidth:0}, "
+                + $"past the {LabelColumnMaxWidth:0} maximum");
         }
 
         host.Close();
@@ -74,6 +81,28 @@ public class RowWidthTests
         host.Window.CaptureRenderedFrame()!.Save(
             Path.Combine(TestSurface.CaptureDirectory, "settings-speech-model.png"),
             new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+
+        host.Close();
+    }
+
+    /// <summary>
+    /// The reset gutter is a column of the row's own grid, reserved whether or not this row draws a
+    /// reset — so it holds the same width on a row that draws one and a row that does not (#332).
+    /// </summary>
+    [AvaloniaFact]
+    public void TheResetGutterIsTheSameWidthWithOrWithoutAReset()
+    {
+        var host = OpenWith(LongestLabel);
+
+        var laidOut = CompactRows(host).Where(row => row.Bounds.Width > 0).ToList();
+
+        Assert.NotEmpty(laidOut);
+
+        var gutters = laidOut.Select(row => row.ColumnDefinitions[^1].ActualWidth).Distinct().ToList();
+
+        Assert.True(
+            gutters.Count == 1,
+            $"the reset gutter varies across rows: {string.Join(", ", gutters.Select(w => w.ToString("0")))}");
 
         host.Close();
     }

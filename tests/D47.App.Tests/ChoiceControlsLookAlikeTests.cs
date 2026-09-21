@@ -122,6 +122,6 @@ public class ChoiceControlsLookAlikeTests
 
     private static Grid Row(SettingsHost host, string label) =>
         host.View.GetVisualDescendants().OfType<Grid>()
-            .Where(grid => grid.ColumnDefinitions.Count == 3 && grid.ColumnDefinitions[1].Width.IsAbsolute)
+            .Where(grid => grid.Classes.Contains(SettingsView.CompactRowClass))
             .First(grid => grid.GetVisualDescendants().OfType<TextBlock>().Any(text => text.Text == label));
 }

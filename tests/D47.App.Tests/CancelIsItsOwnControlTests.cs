@@ -31,7 +31,7 @@ public class CancelIsItsOwnControlTests
 
     private static Grid? Row(SettingsHost host, string label) =>
         host.View.GetVisualDescendants().OfType<Grid>()
-            .Where(grid => grid.ColumnDefinitions.Count == 3 && grid.IsEffectivelyVisible)
+            .Where(grid => grid.Classes.Contains(SettingsView.CompactRowClass) && grid.IsEffectivelyVisible)
             .FirstOrDefault(grid => grid.GetVisualDescendants().OfType<TextBlock>()
                 .Any(text => text.Text == label));
 
