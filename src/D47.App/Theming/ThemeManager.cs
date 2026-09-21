@@ -83,6 +83,9 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     /// <summary>A 10px glow of <see cref="AccentKey"/> at 34%, behind the marked elements — dark themes only, null in Light (#345).</summary>
     public const string BloomKey = "D47.Bloom";
 
+    /// <summary>A 12px glow of <see cref="AccentKey"/> at 85%, behind a screen title's letters — dark themes only, null in Light.</summary>
+    public const string TitleBloomKey = "D47.TitleBloom";
+
     /// <summary>A tiled 1px-at-34%-black line brush over the whole window — dark themes only, null in Light (#345).</summary>
     public const string ScanlinesKey = "D47.Scanlines";
 
@@ -109,7 +112,7 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         RuleKey, FillLowKey, FillHighKey, FillHigherKey,
         AccentBorderKey, AccentInkKey, InfoFillKey, InfoBorderKey, InfoInkKey,
         CardFillKey, CardFillSelectedKey, RowFillKey, TagBorderKey,
-        BloomKey, ScanlinesKey,
+        BloomKey, TitleBloomKey, ScanlinesKey,
         PaneFillKey, PaneBorderKey, TagInkKey, ScrimKey,
     ];
 
@@ -201,6 +204,7 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         // or effect in Light — which is what turns them off, since an unset Effect or Background
         // paints nothing.
         resources[BloomKey] = palette.IsDark ? Bloom(palette.Accent, 10, 0.34) : null;
+        resources[TitleBloomKey] = palette.IsDark ? Bloom(palette.Accent, 12, 0.85) : null;
         resources[ScanlinesKey] = palette.IsDark ? Scanlines(1) : null;
 
         // The tint is the pane's, not the page's: the ground behind the pane stays Background.

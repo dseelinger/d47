@@ -85,7 +85,7 @@ public static class TitleText
 
         if (rank == TitleRank.Screen)
         {
-            block.Bind(Visual.EffectProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.BloomKey));
+            block.Bind(Visual.EffectProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.TitleBloomKey));
         }
 
         return block;
