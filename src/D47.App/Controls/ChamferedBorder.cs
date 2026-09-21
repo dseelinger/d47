@@ -17,8 +17,8 @@ public sealed class ChamferedBorder : Decorator
     public static readonly StyledProperty<IBrush?> BorderBrushProperty =
         AvaloniaProperty.Register<ChamferedBorder, IBrush?>(nameof(BorderBrush));
 
-    public static readonly StyledProperty<double> BorderThicknessProperty =
-        AvaloniaProperty.Register<ChamferedBorder, double>(nameof(BorderThickness));
+    public static readonly StyledProperty<Thickness> BorderThicknessProperty =
+        AvaloniaProperty.Register<ChamferedBorder, Thickness>(nameof(BorderThickness));
 
     /// <summary>Pixels cut from each corner, ordered top-left, top-right, bottom-right, bottom-left.</summary>
     public static readonly StyledProperty<CornerRadius> ChamferProperty =
@@ -46,7 +46,8 @@ public sealed class ChamferedBorder : Decorator
         set => SetValue(BorderBrushProperty, value);
     }
 
-    public double BorderThickness
+    /// <summary>Uniform on all sides; only <see cref="Thickness.Left"/> is read.</summary>
+    public Thickness BorderThickness
     {
         get => GetValue(BorderThicknessProperty);
         set => SetValue(BorderThicknessProperty, value);
@@ -66,7 +67,7 @@ public sealed class ChamferedBorder : Decorator
 
     public override void Render(DrawingContext context)
     {
-        var thickness = BorderThickness;
+        var thickness = BorderThickness.Left;
         var rect = new Rect(Bounds.Size);
 
         if (thickness > 0)

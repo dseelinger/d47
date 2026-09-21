@@ -567,7 +567,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         var header = new ChamferedBorder
         {
             Chamfer = new CornerRadius(0, 10, 0, 10),
-            BorderThickness = 1,
+            BorderThickness = new Thickness(1),
             Cursor = new Cursor(StandardCursorType.Hand),
             Child = headerRow,
         };

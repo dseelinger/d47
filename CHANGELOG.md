@@ -8,6 +8,10 @@
 
 ## 0.169.0 — No more drop-downs
 
+Normal and Destructive buttons draw their 1px border again. The Button template bound
+`BorderThickness` into `ChamferedBorder`, whose own property was a `double` where a Button's is a
+`Thickness`; the binding failed silently and no button anywhere in the app drew an outline.
+
 A Debug-only Control Kit window (Ctrl+Shift+K) shows every control theme and resource key
 against the derived colour ramp, the heading ranks, and the five app themes, drawn from the real
 controls rather than copies. Its Accent entry recolours the app through the same HUD-matrix path a

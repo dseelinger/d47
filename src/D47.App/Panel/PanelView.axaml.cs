@@ -3062,7 +3062,7 @@ public partial class PanelView : UserControl
             Child = content,
             Chamfer = commander ? new CornerRadius(0, 0, 13, 0) : new CornerRadius(0, 0, 0, 13),
             Margin = new Thickness(0, mini ? 2 : 4),
-            BorderThickness = 1,
+            BorderThickness = new Thickness(1),
             HorizontalAlignment = commander
                 ? Avalonia.Layout.HorizontalAlignment.Right
                 : Avalonia.Layout.HorizontalAlignment.Left,
