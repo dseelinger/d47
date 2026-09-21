@@ -35,12 +35,12 @@ public class TheLogPageSaysItIsWorkingTests
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        var glyph = view.GetControl<StackPanel>("ModePicker")
+        var glyph = view.GetControl<DockPanel>("ModePicker")
             .Children
             .OfType<BusyGlyph>()
             .Single();
 
-        Assert.True(view.GetControl<StackPanel>("ModePicker").IsVisible, "there was no control to announce on");
+        Assert.True(view.GetControl<DockPanel>("ModePicker").IsVisible, "there was no control to announce on");
 
         view.Page = TranscriptPage.Log;
 
@@ -50,7 +50,7 @@ public class TheLogPageSaysItIsWorkingTests
         Assert.True(
             await Eventually(() => glyph.IsVisible),
             "nothing said the log was being read");
-        Assert.False(view.GetControl<Stepper>("ModeBox").IsEnabled, "the control was still pressable");
+        Assert.False(view.GetControl<TextChoice>("ModeReadings").IsEnabled, "the control was still pressable");
 
         release.TrySetResult();
     }
@@ -103,17 +103,17 @@ public class TheLogPageSaysItIsWorkingTests
 
         view.Page = TranscriptPage.Log;
 
-        var glyph = view.GetControl<StackPanel>("ModePicker")
+        var glyph = view.GetControl<DockPanel>("ModePicker")
             .Children
             .OfType<BusyGlyph>()
             .Single();
 
         Assert.True(
-            await Eventually(() => !glyph.IsVisible && view.GetControl<Stepper>("ModeBox").IsEnabled),
+            await Eventually(() => !glyph.IsVisible && view.GetControl<TextChoice>("ModeReadings").IsEnabled),
             "the glyph was left spinning after the read failed");
 
         Assert.False(glyph.IsVisible);
-        Assert.True(view.GetControl<Stepper>("ModeBox").IsEnabled, "a page that failed once can never be opened again");
+        Assert.True(view.GetControl<TextChoice>("ModeReadings").IsEnabled, "a page that failed once can never be opened again");
     }
 
     /// <summary>Pumps the dispatcher until a condition holds, or gives up.</summary>

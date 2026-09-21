@@ -89,7 +89,7 @@ public sealed class TheJournalIsAReadingTests
         panel.Page = TranscriptPage.Journal;
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        var offered = panel.GetControl<D47.App.Controls.Stepper>("ModeBox").ItemsSource;
+        var offered = panel.GetControl<D47.App.Controls.TextChoice>("ModeReadings").ItemsSource;
 
         Assert.Contains("Journal File", offered);
         Assert.DoesNotContain("Raw Journal", offered);

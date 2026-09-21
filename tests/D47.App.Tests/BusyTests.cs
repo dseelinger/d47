@@ -114,7 +114,7 @@ public class BusyTests
 
             // Through the logical tree rather than the visual one, because this view has never been shown and
             // the claim is about a panel the headset rasterises offscreen.
-            var glyph = view.GetControl<StackPanel>("ModePicker")
+            var glyph = view.GetControl<DockPanel>("ModePicker")
                 ?.Children
                 .OfType<BusyGlyph>()
                 .SingleOrDefault();

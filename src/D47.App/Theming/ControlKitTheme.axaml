@@ -241,6 +241,41 @@
     </ControlTheme>
 
     <!--
+      A plain text row of choices — no frame, no box, no ground (#356). The chosen item is hot
+      text with a 3px Accent underline; the rest sit at D47.TextFaint with no underline. Built
+      on RadioButton for the same reasons D47.Segment is.
+    -->
+    <ControlTheme x:Key="D47.TextChoice" TargetType="RadioButton">
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="FontFamily" Value="{StaticResource D47.Font.Chrome}" />
+      <Setter Property="FontSize" Value="{StaticResource D47.Type.Secondary}" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="LetterSpacing" Value="2.4" />
+      <Setter Property="Foreground" Value="{DynamicResource D47.TextFaint}" />
+      <Setter Property="Padding" Value="0,2,0,0" />
+      <Setter Property="FocusAdorner" Value="{StaticResource D47.FocusAdorner}" />
+
+      <Setter Property="Template">
+        <ControlTemplate>
+          <StackPanel Spacing="3">
+            <ContentPresenter x:Name="PART_ContentPresenter"
+                              Content="{TemplateBinding Content}"
+                              Foreground="{TemplateBinding Foreground}"
+                              HorizontalAlignment="Center" />
+            <Border x:Name="Underline" Height="3" Background="Transparent" />
+          </StackPanel>
+        </ControlTemplate>
+      </Setter>
+
+      <Style Selector="^:checked">
+        <Setter Property="Foreground" Value="{DynamicResource D47.AccentInk}" />
+        <Style Selector="^ /template/ Border#Underline">
+          <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
+        </Style>
+      </Style>
+    </ControlTheme>
+
+    <!--
       The highlighted row of a list: a bar at the left edge and a fill. A highlight is not a choice,
       so nothing here reads as committed (#274). 40 tall, so a ray at a metre lands on it.
     -->

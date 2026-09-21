@@ -689,32 +689,26 @@
           navigator: a tab declares its own, and a tab with one root shows no control at all.
           Hidden below the root, where the breadcrumb is already answering which stack you are in.
 
-          Up to four readings sit in a row of segments, where every one is on screen; more than that
-          steps (#274). Changing reading is free and undone by changing back, which is what lets a
-          segment commit on the press. Only one of the two is shown, and both always carry the
-          readings, so the stepper stays the one control that says what is showing. The busy glyph
-          sits beside them rather than inside, because a control's content is its current reading
-          and a spinner is not one of them. OffscreenSurface presses either in the headset the same
-          way it presses any other button — no popup to intercept.
+          A plain text row — no frame, no boxes, no ground — rather than a control built for
+          setting a value (#356). Every reading is always on screen; a row that does not fit
+          wraps onto a second line rather than stepping through the readings one at a time. The
+          busy glyph sits beside it rather than inside, because a control's content is its
+          current reading and a spinner is not one of them. OffscreenSurface presses it in the
+          headset the same way it presses any other button — no popup to intercept.
+
+          A DockPanel rather than a horizontal StackPanel: a StackPanel measures a horizontal
+          child with unbounded width, so a WrapPanel inside it gets no width to wrap against.
+          Docked left, the row is measured against the space the bar actually has, which is what
+          lets it wrap.
         -->
-        <StackPanel x:Name="ModePicker"
-                    DockPanel.Dock="Left"
-                    Orientation="Horizontal"
-                    Spacing="7"
-                    Margin="0,0,12,0"
-                    VerticalAlignment="Center"
-                    IsVisible="False">
-          <controls:Stepper x:Name="ModeBox"
-                             MinHeight="28"
-                             VerticalAlignment="Center"
-                             FontSize="{StaticResource D47.Type.Secondary}"
-                             SelectionChanged="OnModeChanged" />
-          <!-- Disabled with the stepper, which is what Busy.While turns off while a reading loads. -->
-          <controls:Segment x:Name="ModeSegments"
-                            IsVisible="False"
-                            VerticalAlignment="Center"
-                            IsEnabled="{Binding #ModeBox.IsEnabled}"
-                            SelectionChanged="OnModeSegmentChanged" />
+        <DockPanel x:Name="ModePicker"
+                   DockPanel.Dock="Left"
+                   Margin="0,0,12,0"
+                   VerticalAlignment="Center"
+                   IsVisible="False">
+          <controls:TextChoice x:Name="ModeReadings"
+                                VerticalAlignment="Center"
+                                SelectionChanged="OnModeChanged" />
 
           <!--
             The journal's two readings, as one reading seen two ways (#231). They used to be two
@@ -741,7 +735,7 @@
           <StackPanel x:Name="RawToggleBox"
                       Orientation="Horizontal"
                       VerticalAlignment="Center"
-                      Margin="6,0,0,0"
+                      Margin="13,0,0,0"
                       IsVisible="False"
                       ToolTip.Tip="Show the file's own JSON instead of sentences">
             <TextBlock Text="Raw"
@@ -754,7 +748,7 @@
                           OffContent="{x:Null}"
                           IsCheckedChanged="OnRawToggled" />
           </StackPanel>
-        </StackPanel>
+        </DockPanel>
         <!--
           One search affordance for the surface, on the tab that is selected — not four features
           bolted to four pages (list.md Phase 12). What a match does differs by page and that

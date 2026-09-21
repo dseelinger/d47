@@ -21,6 +21,11 @@ Every reported bar on the Loadout pages now draws as the hatched Gauge: 14 tall,
 with muted end caps and a hatched fill in the reading's own colour, instead of a rounded solid
 bar.
 
+A page's readings — In Ship, Log File and Journal File on Transcript, and the rest that switch a
+page's own view — now draw as a plain text row instead of a segmented pill or a stepper. The
+current reading is hot text with a 3px Accent underline; the rest are faint with none. A row too
+narrow for every reading wraps onto a second line instead of stepping through them one at a time.
+
 A page's own "Settings for this page" strip now sits at the bottom of the page instead of the
 top, on Fleet › Ships, Fleet › Carrier, Adventures, Routing › Community Goal and Transcript › Log
 File, on the desktop window and in the headset. An open strip never takes more than half the

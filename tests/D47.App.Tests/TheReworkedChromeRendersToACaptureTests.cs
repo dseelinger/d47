@@ -143,7 +143,7 @@ public class TheReworkedChromeRendersToACaptureTests
 
  // The box as it sits, not opened.
         Assert.True(
-            panel.GetControl<StackPanel>("ModePicker").IsVisible,
+            panel.GetControl<DockPanel>("ModePicker").IsVisible,
             "there was no mode control to photograph");
 
         Save(window, "chrome-modes.png");

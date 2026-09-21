@@ -75,7 +75,7 @@ public partial class PanelView : UserControl
     private readonly Dictionary<PanelTab, RadioButton> _tabs = [];
 
     /// <summary>The glyph the log mode carries while it reads the file (Phase 12).</summary>
-    private readonly Controls.BusyGlyph _logBusy = new() { IsVisible = false };
+    private readonly Controls.BusyGlyph _logBusy = new() { IsVisible = false, Margin = new Thickness(7, 0, 0, 0) };
 
     /// <summary>Whether the search affordance belongs on this surface.</summary>
     private bool _searchable;
@@ -160,14 +160,6 @@ public partial class PanelView : UserControl
     public PanelView()
     {
         InitializeComponent();
-
-        // The box's own first measurement, which is the only thing that can say what it costs beyond its word
-        // (#273).
-        ModeBox.LayoutUpdated += (_, _) => WidenModeBoxToItsWidestReading();
-
-        // The bar's width decides whether the readings are segments or a stepper, and so does what the search
-        // row is showing beside them — a drag changes the one, a search or a page change the other.
-        PageBar.LayoutUpdated += (_, _) => ShowModeControl();
 
         // Set in code rather than bound, because what mini hides is three named regions and a binding for
         // each would be three expressions no test can reach.
@@ -2211,7 +2203,7 @@ public partial class PanelView : UserControl
         DrawTranscript();
     }
 
-    /// <summary>The mode stepper, rebuilt from the current tab's roots.</summary>
+    /// <summary>The readings row, rebuilt from the current tab's roots.</summary>
     private void DrawModes()
     {
         // Raw Journal is a root the navigator knows and the picker does not list (#231).
@@ -2239,22 +2231,19 @@ public partial class PanelView : UserControl
         // Rebuilt only when the readings themselves changed, not on every navigation.
         var words = roots.Select(root => root.Word).ToList();
 
-        if (!ModeBox.ItemsSource.SequenceEqual(words))
+        if (!ModeReadings.ItemsSource.SequenceEqual(words))
         {
             _settingMode = true;
 
             try
             {
-                ModeBox.ItemsSource = words;
-                ModeSegments.ItemsSource = words;
+                ModeReadings.ItemsSource = words;
             }
             finally
             {
                 _settingMode = false;
             }
         }
-
-        ShowModeControl();
 
         var index = roots.FindIndex(root => root.Key == showing);
 
@@ -2264,51 +2253,13 @@ public partial class PanelView : UserControl
 
         try
         {
-            ModeBox.SelectedIndex = index < 0 ? 0 : index;
-            ModeSegments.SelectedIndex = ModeBox.SelectedIndex;
+            ModeReadings.SelectedIndex = index < 0 ? 0 : index;
         }
         finally
         {
             _settingMode = false;
         }
-
-        WidenModeBoxToItsWidestReading();
     }
-
-    /// <summary>
-    /// Gives the picker room for its widest reading rather than for the one that happens to be showing
-    /// (#273, #274).
-    /// </summary>
-    private void WidenModeBoxToItsWidestReading()
-    {
-        var words = ModeBox.ItemsSource;
-
-        if (words.Count == 0 || ModeBox.SelectedItem is not { } showing)
-        {
-            return;
-        }
-
-        if (_modeBoxChrome is null)
-        {
-            if (ModeBox.MinWidth > 0 || ModeBox.Bounds.Width <= 0)
-            {
-                return;
-            }
-
-            _modeBoxChrome = ModeBox.Bounds.Width - Wide(showing);
-        }
-
-        ModeBox.MinWidth = Math.Ceiling(_modeBoxChrome.Value + words.Max(Wide));
-    }
-
-    /// <summary>How wide one reading's word is, drawn the way the box will draw it.</summary>
-    private double Wide(string word) => new FormattedText(
-        word,
-        CultureInfo.CurrentCulture,
-        FlowDirection.LeftToRight,
-        new Typeface(ModeBox.FontFamily, ModeBox.FontStyle, ModeBox.FontWeight),
-        ModeBox.FontSize,
-        Brushes.Black).Width;
 
     /// <summary>
     /// The journal's Raw toggle: shown on the journal reading, on a surface that was handed the raw one
@@ -2362,106 +2313,8 @@ public partial class PanelView : UserControl
     /// </summary>
     private bool _settingMode;
 
-    /// <summary>
-    /// What the mode box costs beyond the word it is showing — its padding, its border and the two
-    /// arrows either side of the value.
-    /// </summary>
-    private double? _modeBoxChrome;
-
-    /// <summary>The most readings the page bar shows as segments rather than stepping through (#274).</summary>
-    private const int MostSegments = 4;
-
-    /// <summary>
-    /// Segments while every reading fits on screen at once beside the search row, the stepper otherwise —
-    /// past four readings, or on a pane too narrow for the row (#274).
-    /// </summary>
-    private void ShowModeControl()
-    {
-        var words = ModeBox.ItemsSource;
-        var segmented = words.Count > 1 && words.Count <= MostSegments && SegmentsFit(words);
-
-        if (ModeSegments.IsVisible != segmented || ModeBox.IsVisible == segmented)
-        {
-            ModeSegments.IsVisible = segmented;
-            ModeBox.IsVisible = !segmented;
-        }
-    }
-
-    /// <summary>
-    /// Whether the segments for <paramref name="words"/> leave the search row its minimum. Worked out from the
-    /// words rather than from the segments' own layout, which a hidden control does not have.
-    /// </summary>
-    private bool SegmentsFit(IReadOnlyList<string> words)
-    {
-        // Not laid out yet: assume they fit, and the first measurement settles it.
-        if (PageBar.Bounds.Width <= 0)
-        {
-            return true;
-        }
-
-        var segments = SegmentsWidth(words);
-
-        // Whatever else the picker is carrying — the busy glyph, the journal's Raw toggle.
-        var beside = ModePicker.Children
-            .Where(child => child != ModeBox && child != ModeSegments && child.IsVisible)
-            .Sum(child => child.Bounds.Width + ModePicker.Spacing);
-
-        var needed = segments + beside + ModePicker.Margin.Left + ModePicker.Margin.Right + SearchRowMinimum();
-
-        return needed <= PageBar.Bounds.Width;
-    }
-
-    /// <summary>How wide the segments for <paramref name="words"/> draw, worked out once per set of readings.</summary>
-    private double SegmentsWidth(IReadOnlyList<string> words)
-    {
-        if (_segmentsWidth is { } known && known.Words.SequenceEqual(words))
-        {
-            return known.Width;
-        }
-
-        var theme = Application.Current?.FindResource("D47.Segment") as Avalonia.Styling.ControlTheme;
-        var padding = theme?.Setters.OfType<Avalonia.Styling.Setter>()
-            .FirstOrDefault(setter => setter.Property == PaddingProperty)?.Value as Thickness? ?? new Thickness(14, 6);
-
-        var typeface = new Typeface(Theming.Fonts.ChromeFamily);
-
-        // Each segment is its word, its padding and a 1px left edge; the last one closes the row with a right edge.
-        var width = words.Sum(word => new FormattedText(
-            word,
-            CultureInfo.CurrentCulture,
-            FlowDirection.LeftToRight,
-            typeface,
-            Theming.TypeScale.Body,
-            Brushes.Black).Width + padding.Left + padding.Right + 1) + 1;
-
-        _segmentsWidth = ([.. words], width);
-
-        return width;
-    }
-
-    /// <summary>The last answer <see cref="SegmentsWidth"/> gave, and the readings it was for.</summary>
-    private (IReadOnlyList<string> Words, double Width)? _segmentsWidth;
-
-    /// <summary>The narrowest the search row goes: its buttons as they are, and the box at its MinWidth.</summary>
-    private double SearchRowMinimum()
-    {
-        if (!SearchRow.IsVisible)
-        {
-            return 0;
-        }
-
-        return SearchRow.Margin.Left + SearchRow.Margin.Right
-            + SearchInput.MinWidth + SearchInput.Margin.Left + SearchInput.Margin.Right
-            + SearchRow.Children
-                .Where(child => child != SearchInput && child.IsVisible)
-                .Sum(child => child.Bounds.Width + child.Margin.Left + child.Margin.Right);
-    }
-
-    /// <summary>The Commander pressed a reading's segment.</summary>
-    private void OnModeSegmentChanged(object? sender, EventArgs e) => ChooseReading(ModeSegments.SelectedIndex);
-
-    /// <summary>The Commander stepped to a reading.</summary>
-    private void OnModeChanged(object? sender, EventArgs e) => ChooseReading(ModeBox.SelectedIndex);
+    /// <summary>The Commander pressed a reading.</summary>
+    private void OnModeChanged(object? sender, EventArgs e) => ChooseReading(ModeReadings.SelectedIndex);
 
     /// <summary>Goes to the reading at <paramref name="index"/>, unless the picker is being written rather than pressed.</summary>
     private void ChooseReading(int index)
@@ -2622,7 +2475,7 @@ public partial class PanelView : UserControl
         }
 
         // Both halves inside the busy window (remediation.md 10, item 5).
-        await Controls.Busy.While(ModeBox, _logBusy, async () =>
+        await Controls.Busy.While(ModeReadings, _logBusy, async () =>
         {
             // The same split as above: the file work on a worker, the property set here.
             if (_bound is { } bound)

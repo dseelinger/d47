@@ -97,7 +97,7 @@ public class TheSearchRowSitsTogetherTests
 
         // The readings keep their own size rather than being squeezed to a sliver.
         Assert.True(
-            panel.GetControl<D47.App.Controls.Segment>("ModeSegments").Bounds.Width > 60,
+            panel.GetControl<D47.App.Controls.TextChoice>("ModeReadings").Bounds.Width > 60,
             "the readings were squeezed instead");
     }
 

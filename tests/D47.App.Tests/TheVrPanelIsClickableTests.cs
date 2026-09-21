@@ -24,19 +24,19 @@ public class TheVrPanelIsClickableTests
         view.GetVisualDescendants().OfType<RadioButton>().First(tab => (tab.Content as string) == name);
 
     /// <summary>
-    /// Picks a reading the way a ray does: a press on the page bar's segment that says
+    /// Picks a reading the way a ray does: a press on the page bar's word that says
     /// <paramref name="word"/>.
     /// </summary>
     private static void PressReading(PanelView view, OffscreenSurface surface, string word)
     {
         surface.Render();
 
-        var segment = view.GetControl<D47.App.Controls.Segment>("ModeSegments")
+        var reading = view.GetControl<D47.App.Controls.TextChoice>("ModeReadings")
             .GetVisualDescendants()
             .OfType<RadioButton>()
             .First(button => (button.Content as string) == word);
 
-        Assert.True(surface.Click(Centre(view, segment)), "the press landed on something");
+        Assert.True(surface.Click(Centre(view, reading)), "the press landed on something");
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
         surface.Render();
     }
