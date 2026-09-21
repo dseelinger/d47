@@ -299,6 +299,9 @@ public partial class PanelView : UserControl
         // there is nothing left to close.
         AddHandler(KeyDownEvent, OnSurfaceKeyDown, RoutingStrategies.Tunnel);
 
+        // The mouse Back button, ahead of a list row or a bubble taking the press (#342).
+        AddHandler(PointerPressedEvent, OnSurfacePointerPressed, RoutingStrategies.Tunnel);
+
         // Scroll position belongs to a rendered surface rather than to the text, so each instance answers
         // this for itself: the window and the overlay can be scrolled to different places and still be
         // showing the same transcript.
@@ -1849,6 +1852,16 @@ public partial class PanelView : UserControl
         }
 
         if (e.Key == Key.Escape && ClearSearch())
+        {
+            e.Handled = true;
+        }
+    }
+
+    /// <summary>The mouse's Back button goes back, the same as the breadcrumb (#342). Forward does nothing —
+    /// there is no forward level to go to.</summary>
+    private void OnSurfacePointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (e.GetCurrentPoint(this).Properties.PointerUpdateKind == PointerUpdateKind.XButton1Pressed && GoBack())
         {
             e.Handled = true;
         }
@@ -3610,6 +3623,7 @@ public partial class PanelView : UserControl
 
         _root = e.RootVisual as Interactive;
         _root?.AddHandler(KeyDownEvent, OnSurfaceKeyDown, RoutingStrategies.Tunnel);
+        _root?.AddHandler(PointerPressedEvent, OnSurfacePointerPressed, RoutingStrategies.Tunnel);
 
         _topLevel = TopLevel.GetTopLevel(this);
 
@@ -3656,6 +3670,7 @@ public partial class PanelView : UserControl
         FollowLogFile(false);
 
         _root?.RemoveHandler(KeyDownEvent, OnSurfaceKeyDown);
+        _root?.RemoveHandler(PointerPressedEvent, OnSurfacePointerPressed);
         _root = null;
 
         if (_topLevel is not null)

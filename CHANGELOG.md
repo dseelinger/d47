@@ -8,6 +8,9 @@
 
 ## 0.169.0 — No more drop-downs
 
+The mouse's Back button now navigates the panel back, on the desktop window and the SteamVR
+overlay, wherever the pointer sits over the panel. The Forward button does nothing.
+
 The Engineers tab and the Fleet build page now name the Radar and Main Engines slots the way the
 outfitting screen does: Sensors and Thrusters. Armour is unchanged.
 
