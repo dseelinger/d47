@@ -1,12 +1,15 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Layout;
+using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Styling;
+using D47.App.Theming;
 
 namespace D47.App.Controls;
 
 /// <summary>
-/// 2 to 4 fixed choices in one row of adjacent segments (#274). Built on <see cref="RadioButton"/>, themed <c>D47.Segment</c>, for the mutual exclusion,
+/// 2 to 4 fixed choices in one framed, wrapping group (#348). Built on <see cref="RadioButton"/>, themed <c>D47.Segment</c>, for the mutual exclusion,
 /// arrow-key movement and accessibility role that come with it for free, the same reason
 /// <c>D47.Tab</c> is.
 /// </summary>
@@ -34,6 +37,8 @@ public sealed class Segment : ContentControl, IChoiceControl
 
         GotFocus += (_, _) =>
             (_buttons.FirstOrDefault(button => button.IsChecked == true) ?? _buttons.FirstOrDefault())?.Focus();
+
+        KeyDown += OnKeyDown;
     }
 
     public IReadOnlyList<string> ItemsSource
@@ -68,7 +73,7 @@ public sealed class Segment : ContentControl, IChoiceControl
     private void Rebuild()
     {
         var theme = Application.Current?.FindResource("D47.Segment") as ControlTheme;
-        var row = new StackPanel { Orientation = Orientation.Horizontal };
+        var row = new WrapPanel();
 
         _buttons.Clear();
 
@@ -81,12 +86,7 @@ public sealed class Segment : ContentControl, IChoiceControl
                 Theme = theme,
                 GroupName = _group,
                 Content = ItemsSource[i],
-
-                // The rightmost segment closes the block; every other one leaves its right edge to
-                // the neighbour that draws it as a left edge, so the row reads as one bordered shape.
-                BorderThickness = index == ItemsSource.Count - 1
-                    ? new Thickness(1)
-                    : new Thickness(1, 1, 0, 1),
+                Margin = new Thickness(0, 0, 3, 3),
             };
 
             button.IsCheckedChanged += (_, _) =>
@@ -104,8 +104,50 @@ public sealed class Segment : ContentControl, IChoiceControl
             row.Children.Add(button);
         }
 
-        Content = row;
+        var frame = new Border
+        {
+            BorderThickness = new Thickness(1),
+            Padding = new Thickness(3),
+            Child = row,
+        };
+
+        frame[!Border.BorderBrushProperty] = new DynamicResourceExtension(ThemeManager.RuleKey);
+        frame[!Border.BackgroundProperty] = new DynamicResourceExtension(ThemeManager.FillLowKey);
+
+        Content = frame;
         SyncChecked();
+    }
+
+    private void OnKeyDown(object? sender, KeyEventArgs e)
+    {
+        switch (e.Key)
+        {
+            case Key.Left:
+                Move(-1);
+                e.Handled = true;
+                break;
+
+            case Key.Right:
+                Move(1);
+                e.Handled = true;
+                break;
+        }
+    }
+
+    private void Move(int delta)
+    {
+        if (_buttons.Count == 0)
+        {
+            return;
+        }
+
+        // From nothing chosen, the first press reveals an end rather than skipping past it.
+        SelectedIndex = SelectedIndex < 0
+            ? (delta > 0 ? 0 : _buttons.Count - 1)
+            : ((SelectedIndex + delta) % _buttons.Count + _buttons.Count) % _buttons.Count;
+
+        SelectionChanged?.Invoke(this, EventArgs.Empty);
+        _buttons[SelectedIndex].Focus();
     }
 
     private void SyncChecked()

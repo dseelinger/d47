@@ -62,6 +62,12 @@ switches its ink to the plain text colour; destructive and primary keep their ow
 A disabled button now dims to 35% opacity instead of recolouring. Every button also carries a 2px
 accent focus ring, 2px clear of its edge, on keyboard focus.
 
+A segmented choice now draws as one framed group on its own ground, 3px padding and 3px between
+segments, wrapping onto a second row rather than clipping or overflowing when it runs out of
+width. Segments carry no border of their own; the unselected ink is the faint text colour, and the
+selected segment still carries the accent fill, the knock ink and the bloom. Arrow keys now move
+the selection.
+
 A protected settings row now carries a left bar instead of a bordered "protected" chip, with one
 legend line under the screen title on any screen that has one. A row's help now shows on hovering
 or focusing its own label rather than behind a separate info glyph.

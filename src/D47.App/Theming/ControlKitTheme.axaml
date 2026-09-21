@@ -196,10 +196,11 @@
     </ControlTheme>
 
     <!--
-      2 to 4 fixed choices, adjacent in one row (#274). The chosen segment is a solid Accent block
-      with Background-colour ink; the rest are Accent ink on no fill. App-wide rather than scoped
-      to the panel, since a desktop-only window (SwitchWindow, MacroWindow, and the rest) needs the
-      same look and carries no merge of PanelTabs.axaml.
+      2 to 4 fixed choices, framed as one group and wrapping rather than clipping past its width
+      (#348). The chosen segment is a solid Accent block with Knock ink and the bloom; the rest
+      carry no fill and no border of their own. App-wide rather than scoped to the panel, since a
+      desktop-only window (SwitchWindow, MacroWindow, and the rest) needs the same look and
+      carries no merge of PanelTabs.axaml.
 
       Built on RadioButton for the mutual exclusion, arrow-key movement and accessibility role that
       come with it, the same reason D47.Tab is.
@@ -207,18 +208,15 @@
     <ControlTheme x:Key="D47.Segment" TargetType="RadioButton">
       <Setter Property="Cursor" Value="Hand" />
       <Setter Property="FontFamily" Value="{StaticResource D47.Font.Chrome}" />
-      <Setter Property="FontSize" Value="{StaticResource D47.Type.Body}" />
-      <Setter Property="Foreground" Value="{DynamicResource D47.Accent}" />
-      <Setter Property="Padding" Value="14,6" />
-      <Setter Property="BorderBrush" Value="{DynamicResource D47.Rule}" />
-      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="FontSize" Value="14" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="LetterSpacing" Value="1.68" />
+      <Setter Property="Foreground" Value="{DynamicResource D47.TextFaint}" />
+      <Setter Property="Padding" Value="15,9" />
 
       <Setter Property="Template">
         <ControlTemplate>
-          <Border x:Name="Shape"
-                  Background="Transparent"
-                  BorderBrush="{TemplateBinding BorderBrush}"
-                  BorderThickness="{TemplateBinding BorderThickness}">
+          <Border x:Name="Shape" Background="Transparent">
             <ContentPresenter x:Name="PART_ContentPresenter"
                               Content="{TemplateBinding Content}"
                               Padding="{TemplateBinding Padding}"
@@ -230,12 +228,11 @@
       </Setter>
 
       <Style Selector="^:pointerover /template/ Border#Shape">
-        <Setter Property="Background" Value="{DynamicResource D47.FillLow}" />
+        <Setter Property="Background" Value="{DynamicResource D47.FillHigh}" />
       </Style>
 
       <Style Selector="^:checked">
         <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
-        <Setter Property="FontWeight" Value="SemiBold" />
         <Style Selector="^ /template/ Border#Shape">
           <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
           <Setter Property="Effect" Value="{DynamicResource D47.Bloom}" />
