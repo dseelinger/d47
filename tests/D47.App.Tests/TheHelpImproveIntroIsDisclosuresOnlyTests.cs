@@ -11,38 +11,38 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>The intro carries the disclosures and the <c>ⓘ</c> carries the reasoning.</summary>
+/// <summary>
+/// The one-sentence lede and the three consent lines carry the disclosures; the ⓘ carries the
+/// reasoning (#338).
+/// </summary>
 public sealed class TheHelpImproveIntroIsDisclosuresOnlyTests
 {
     private const string Destination = "https://donations.example/store";
 
-    // The intro reads the destination and nothing else, so a send delegate would only add a button none of
+    // The consent reads the destination and nothing else, so a send delegate would only add a button none of
     // these assertions is about.
     private static HelpImproveWindow Excerpt(string? destination = Destination) =>
         new(new DateTimeOffset(2026, 9, 2, 12, 0, 0, TimeSpan.Zero),
-            _ => "an excerpt",
+            TestSurface.Excerpt("an excerpt"),
             destination: destination);
 
- /// <summary>The history half of the same window, which carries the same list bar one line.</summary>
+    /// <summary>The history half of the same window, which carries the same consent lines.</summary>
     private static HelpImproveWindow History(string? destination = Destination) =>
         new(new DateTimeOffset(2026, 9, 2, 12, 0, 0, TimeSpan.Zero),
-            _ => "an excerpt",
+            TestSurface.Excerpt("an excerpt"),
             destination: destination,
             read: (_, _, _) => throw new NotSupportedException("No reading is asked for here."),
             write: (_, _, _) => Task.CompletedTask);
 
-    private static TextBlock Intro(Window window) =>
-        window.GetVisualDescendants()
-            .OfType<TextBlock>()
-            .First(block => block.Text is not null && block.Text.StartsWith("Nothing is saved", StringComparison.Ordinal));
-
-    private static string IntroOf(HelpImproveWindow window)
+    /// <summary>Every TextBlock on screen, once the window (and the history toggle, where it exists) has
+    /// settled — the disclosures are split across several lines now, not one paragraph (#338).</summary>
+    private static IReadOnlyList<string> TextsOf(HelpImproveWindow window)
     {
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
         // Only the history construction puts the toggle on screen, and that construction is here to read the
-        // history intro — so ticking it where it exists is what makes this the history page rather than a
+        // history consent — so ticking it where it exists is what makes this the history page rather than a
         // second reading of the excerpt one.
         var toggle = window.GetVisualDescendants()
             .OfType<ToggleSwitch>()
@@ -54,71 +54,71 @@ public sealed class TheHelpImproveIntroIsDisclosuresOnlyTests
             Dispatcher.UIThread.RunJobs();
         }
 
-        var text = Intro(window).Text!;
+        var texts = window.GetVisualDescendants()
+            .OfType<TextBlock>()
+            .Select(block => block.Text ?? string.Empty)
+            .ToList();
 
         window.Close();
 
-        return text;
+        return texts;
     }
 
-    /// <summary>Every term of the consent is on the surface.</summary>
-    [AvaloniaFact]
-    public void TheLedeStillCarriesEveryDisclosure()
-    {
-        var intro = IntroOf(Excerpt());
+    private static bool Has(IReadOnlyList<string> texts, string substring) =>
+        texts.Any(text => text.Contains(substring, StringComparison.Ordinal));
 
-        Assert.Contains("Nothing is saved or sent until you press Send it", intro, StringComparison.Ordinal);
-        Assert.Contains("no standing consent", intro, StringComparison.Ordinal);
-        Assert.Contains("Your name and IDs are replaced", intro, StringComparison.Ordinal);
-        Assert.Contains("other people's words removed before anything is sent or saved", intro, StringComparison.Ordinal);
-        Assert.Contains("Only the text below is sent or saved", intro, StringComparison.Ordinal);
-        Assert.Contains("Sent, it goes to Directive 47", intro, StringComparison.Ordinal);
-        Assert.Contains("It is deleted after 30 days, or sooner when you press Forget", intro, StringComparison.Ordinal);
+    /// <summary>Every term of the consent is on the surface, somewhere.</summary>
+    [AvaloniaFact]
+    public void EveryDisclosureIsOnTheSurface()
+    {
+        var texts = TextsOf(Excerpt());
+
+        Assert.True(Has(texts, "Send the developer a slice of what just happened"));
+        Assert.True(Has(texts, "Nothing is saved or sent until you press Send it"));
+        Assert.True(Has(texts, "no standing consent"));
+        Assert.True(Has(texts, "Names and IDs are replaced with stand-ins"));
+        Assert.True(Has(texts, "other people's words are stripped"));
+        Assert.True(Has(texts, "Sent, it goes to Directive 47"));
+        Assert.True(Has(texts, "It is deleted after 30 days, or sooner when you press Forget"));
     }
 
- /// <summary>And none of the machinery.</summary>
+    /// <summary>And none of the machinery.</summary>
     [AvaloniaFact]
-    public void TheLedeNamesNoAddressNoPathAndNoHash()
+    public void NothingNamesNoAddressNoPathAndNoHash()
     {
-        foreach (var intro in new[] { IntroOf(Excerpt()), IntroOf(History()) })
+        foreach (var texts in new[] { TextsOf(Excerpt()), TextsOf(History()) })
         {
-            Assert.DoesNotContain(Destination, intro, StringComparison.Ordinal);
-            Assert.DoesNotContain("http", intro, StringComparison.OrdinalIgnoreCase);
-            Assert.DoesNotContain("data\\", intro, StringComparison.Ordinal);
-            Assert.DoesNotContain("hash", intro, StringComparison.OrdinalIgnoreCase);
-            Assert.DoesNotContain("donor-token", intro, StringComparison.Ordinal);
+            Assert.False(Has(texts, Destination));
+            Assert.False(Has(texts, "http"));
+            Assert.False(Has(texts, "data\\"));
+            Assert.False(Has(texts, "hash"));
+            Assert.False(Has(texts, "donor-token"));
         }
     }
 
- /// <summary>One list, two pages.</summary>
+    /// <summary>One set of consent lines, two pages — differing only on the retention clause.</summary>
     [AvaloniaFact]
-    public void WithAnAddressTheTwoPagesDifferOnlyOnTheRetentionLine()
+    public void WithAnAddressTheTwoPagesDifferOnlyOnRetention()
     {
-        var excerpt = IntroOf(Excerpt()).Split('\n');
-        var history = IntroOf(History()).Split('\n');
+        var excerpt = TextsOf(Excerpt()).Single(text => text.Contains("Sent, it goes to Directive 47", StringComparison.Ordinal));
+        var history = TextsOf(History()).Single(text => text.Contains("Sent, it goes to Directive 47", StringComparison.Ordinal));
 
-        Assert.Equal(excerpt.Length, history.Length);
-
-        var differing = Enumerable.Range(0, excerpt.Length)
-            .Where(line => excerpt[line] != history[line])
-            .ToList();
-
-        Assert.Equal([excerpt.Length - 1], differing);
-
-        Assert.Equal("  •  It is deleted after 30 days, or sooner when you press Forget.", excerpt[^1]);
-        Assert.Equal("  •  It is kept until you press Forget.", history[^1]);
+        Assert.Equal(
+            "Sent, it goes to Directive 47. It is deleted after 30 days, or sooner when you press Forget.",
+            excerpt);
+        Assert.Equal("Sent, it goes to Directive 47. It is kept until you press Forget.", history);
     }
 
     /// <summary>And none of the arguments for pressing.</summary>
     [AvaloniaFact]
-    public void TheLedeCarriesNoneOfTheReasoning()
+    public void NothingCarriesTheReasoning()
     {
-        var intro = IntroOf(Excerpt());
+        var texts = TextsOf(Excerpt());
 
-        Assert.DoesNotContain("most useful thing", intro, StringComparison.Ordinal);
-        Assert.DoesNotContain("how defects get found", intro, StringComparison.Ordinal);
-        Assert.DoesNotContain("hundreds of megabytes", intro, StringComparison.Ordinal);
-        Assert.DoesNotContain("replay", intro, StringComparison.OrdinalIgnoreCase);
+        Assert.False(Has(texts, "most useful thing"));
+        Assert.False(Has(texts, "how defects get found"));
+        Assert.False(Has(texts, "hundreds of megabytes"));
+        Assert.DoesNotContain(texts, text => text.Contains("replay", StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>
@@ -211,18 +211,18 @@ public sealed class TheHelpImproveIntroIsDisclosuresOnlyTests
     }
 
     /// <summary>
-    /// With no address there is nothing to name a destination for, and the intro says so rather than
-    /// leaving the bullet out — the warning about a file posted publicly is a fact about where it can
-    /// end up, so it stays on the surface too.
+    /// With no address there is nothing to name a destination for, and the consent line says so rather
+    /// than leaving it out — the warning about a file posted publicly is a fact about where it can end
+    /// up, so it stays on the surface too.
     /// </summary>
     [AvaloniaFact]
-    public void WithNoAddressTheLedeSaysSoAndKeepsTheWarning()
+    public void WithNoAddressTheConsentSaysSoAndKeepsTheWarning()
     {
-        var intro = IntroOf(Excerpt(destination: null));
+        var texts = TextsOf(Excerpt(destination: null));
 
-        Assert.Contains("No send address is set", intro, StringComparison.Ordinal);
-        Assert.Contains("archived beyond anyone's reach", intro, StringComparison.Ordinal);
-        Assert.DoesNotContain("donor-token", intro, StringComparison.Ordinal);
+        Assert.True(Has(texts, "No send address is set"));
+        Assert.True(Has(texts, "archived beyond anyone's reach"));
+        Assert.False(Has(texts, "donor-token"));
     }
 
     /// <summary>
@@ -238,7 +238,7 @@ public sealed class TheHelpImproveIntroIsDisclosuresOnlyTests
 
         var window = new HelpImproveWindow(
             new DateTimeOffset(2026, 9, 2, 12, 0, 0, TimeSpan.Zero),
-            _ => "an excerpt",
+            TestSurface.Excerpt("an excerpt"),
             destination: Destination,
             read: history ? (_, _, _) => throw new NotSupportedException() : null,
             write: history ? (_, _, _) => Task.CompletedTask : null,

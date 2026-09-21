@@ -19,7 +19,7 @@ public class ACorpusReportDescribesWhatWouldLeaveTests
     {
         var window = new HelpImproveWindow(
             new DateTimeOffset(2026, 8, 31, 14, 0, 0, TimeSpan.Zero),
-            _ => string.Empty,
+            TestSurface.Excerpt(string.Empty),
             read: read,
             write: write ?? ((_, _, _) => Task.CompletedTask));
 

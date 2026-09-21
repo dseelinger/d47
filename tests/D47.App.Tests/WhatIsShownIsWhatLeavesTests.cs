@@ -17,7 +17,7 @@ public class WhatIsShownIsWhatLeavesTests
 
     private static HelpImproveWindow Shown(Func<ExcerptRequest, string> build)
     {
-        var window = new HelpImproveWindow(Noon, build);
+        var window = new HelpImproveWindow(Noon, TestSurface.Excerpt(build));
 
         window.Show();
         Dispatcher.UIThread.RunJobs();

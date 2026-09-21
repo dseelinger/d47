@@ -8,6 +8,13 @@
 
 ## 0.169.0 — No more drop-downs
 
+Help improve D47 now leads with one sentence and one primary button, Send it, instead of eight
+buttons of equal weight under five paragraphs. Three consent lines replace the old bullet list;
+what will leave is shown as four figures — log entries, journal events, names replaced,
+characters — that update as the switches change, with no press. The exact text stays collapsed
+behind a disclosure until pressed, and a quiet link goes to the full privacy note on the site.
+Save and copy are quiet, Cancel is faint, and Forget is destructive.
+
 A button now has two weights below primary: quiet, with no border and muted ink under a dotted
 underline, for an alternate or an exit; and destructive, with a Danger border and ink, for a
 delete. The primary weight's fill now clips its top-right corner.

@@ -1153,21 +1153,22 @@ public partial class MainWindow : Window
         var dispatch = DonationDispatchFor(host);
 
         // **Read from disk, per window, on a worker** (#173): the span is the thing being chosen, so it
-        // happens per render rather than once.
-        Func<ExcerptRequest, string> build = request =>
+        // happens per render rather than once. The tally travels with the rendered text so the window's own
+        // figures (#338) do not have to re-derive it from the prose.
+        Func<ExcerptRequest, (string Text, ExcerptTally Tally)> build = request =>
         {
             var journal = IncidentSources.Journals(folder, request.From, request.To, _host?.Loggers.CreateLogger("Excerpt"));
             var log = IncidentSources.Logs(host.Paths.Logs, request.From, request.To, TimeZoneInfo.Local);
 
-            return ExcerptReport.Render(
-                IncidentExcerpt.Take(
-                    journal,
-                    log,
-                    request,
-                    machine,
-                    host.GameState.Active?.Identity,
-                    host.GameState.Active?.Carrier),
-                paperwork);
+            var excerpt = IncidentExcerpt.Take(
+                journal,
+                log,
+                request,
+                machine,
+                host.GameState.Active?.Identity,
+                host.GameState.Active?.Carrier);
+
+            return (ExcerptReport.Render(excerpt, paperwork), excerpt.Tally);
         };
 
         var logger = _host?.Loggers.CreateLogger("Corpus");

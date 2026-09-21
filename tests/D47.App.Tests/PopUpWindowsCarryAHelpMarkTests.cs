@@ -24,7 +24,7 @@ public sealed class PopUpWindowsCarryAHelpMarkTests
     {
         var window = new HelpImproveWindow(
             new DateTimeOffset(2026, 9, 1, 21, 0, 0, TimeSpan.Zero),
-            _ => "an excerpt");
+            TestSurface.Excerpt("an excerpt"));
 
         window.Show();
         Dispatcher.UIThread.RunJobs();

@@ -128,7 +128,7 @@ public class DialogsMatchTheWindowsZoomTests
 
         var dialog = new Controls.HelpImproveWindow(
             new DateTimeOffset(2026, 9, 1, 21, 0, 0, TimeSpan.Zero),
-            _ => "a line",
+            TestSurface.Excerpt("a line"),
             destination: "donations.example");
 
         ZoomHost.Match(dialog, owner);
@@ -163,7 +163,7 @@ public class DialogsMatchTheWindowsZoomTests
 
         var dialog = new Controls.HelpImproveWindow(
             new DateTimeOffset(2026, 9, 1, 21, 0, 0, TimeSpan.Zero),
-            _ => "a line",
+            TestSurface.Excerpt("a line"),
             destination: "donations.example");
 
         ZoomHost.Match(dialog, owner);

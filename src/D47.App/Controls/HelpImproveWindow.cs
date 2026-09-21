@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -18,8 +18,10 @@ namespace D47.App.Controls;
 /// </summary>
 public sealed class HelpImproveWindow : Window
 {
-    private const string CopyLabel = "Copy it for the report";
+    private const string CopyLabel = "Copy for a bug report";
     private const string SendLabel = "Send it";
+
+    private const string PrivacyUrl = "https://dseelinger.github.io/d47/donation-privacy.html";
 
     /// <summary>
     /// The point past which the excerpt consent wears thin, because the consent it asks for is read
@@ -30,7 +32,8 @@ public sealed class HelpImproveWindow : Window
     /// <summary>What a history reading produced: the document to show, and its own account of itself.</summary>
     public sealed record CorpusReading(CorpusSurvey Survey, string Report);
 
-    private readonly Func<ExcerptRequest, string> _build;
+    /// <summary>Renders the excerpt and reports what it did, so the figures can show it live (#338).</summary>
+    private readonly Func<ExcerptRequest, (string Text, ExcerptTally Tally)> _build;
 
     /// <summary>The sends, or null where nothing composed one.</summary>
     private readonly Func<string, CancellationToken, Task<DonationSent>>? _send;
@@ -101,12 +104,56 @@ public sealed class HelpImproveWindow : Window
         TextWrapping = TextWrapping.Wrap,
     };
 
+    /// <summary>The one sentence a Commander reads before deciding anything else (#338).</summary>
     private readonly TextBlock _intro = new()
     {
         TextWrapping = TextWrapping.Wrap,
         FontSize = TypeScale.Secondary,
         Margin = new Thickness(0, 0, 0, 12),
     };
+
+    /// <summary>Where a send goes and how long it is kept — the one consent line that changes with the
+    /// mode and the destination (#338).</summary>
+    private readonly TextBlock _consentDestination;
+
+    /// <summary>The way to the full legal text, which lives on the site rather than in the app (#338).</summary>
+    private readonly Button _privacyLink = new()
+    {
+        Name = "DonationPrivacyLink",
+        Content = "Read the full privacy note",
+        HorizontalAlignment = HorizontalAlignment.Left,
+        Classes = { "quiet" },
+    };
+
+    /// <summary>What leaves, in four figures a Commander can read at a glance (#338).</summary>
+    private readonly TextBlock _figureEvents;
+    private readonly TextBlock _figureNames;
+    private readonly TextBlock _figureChars;
+
+    /// <summary>The fourth figure, whose caption changes with the mode: log entries for an excerpt,
+    /// journal files for a history — a corpus has no log half to count.</summary>
+    private readonly TextBlock _figureFourthValue;
+    private readonly TextBlock _figureFourthCaption;
+
+    /// <summary>Collapsed until pressed, so the window opens on the consent rather than the payload.</summary>
+    private readonly Button _disclosureToggle = new()
+    {
+        Name = "DisclosureToggle",
+        Content = "Show the exact text",
+        HorizontalAlignment = HorizontalAlignment.Left,
+        Margin = new Thickness(0, 0, 0, 6),
+        Classes = { "quiet" },
+    };
+
+    /// <summary>What the disclosure toggle shows and hides.</summary>
+    private readonly Border _disclosurePane;
+
+    /// <summary>
+    /// Collapsed through <c>Height</c> rather than <c>IsVisible</c>: a hidden control never applies its
+    /// template, so <see cref="_preview"/> and <see cref="_corpusPreview"/> — inside the scroller inside
+    /// this border — would never join the visual tree at all while collapsed.
+    /// </summary>
+    private bool _disclosureExpanded;
 
     // Wrapped, because these carry whole sentences — the no-address explanation clipped mid-word under the
     // Cancel button before this said so (seen 2026-08-31).
@@ -138,27 +185,44 @@ public sealed class HelpImproveWindow : Window
         Margin = new Thickness(0, 4, 16, 0),
     };
 
-    private readonly Button _copy = new() { Name = "CopyExcerpt", Content = CopyLabel, MinWidth = 190 };
-    private readonly Button _saveExcerpt = new() { Content = "Save a file instead…", MinWidth = 160 };
+    private readonly Button _copy = new()
+    {
+        Name = "CopyExcerpt", Content = CopyLabel, MinWidth = 190, Classes = { "quiet" },
+    };
+
+    private readonly Button _saveExcerpt = new()
+    {
+        Content = "Save a file instead…", MinWidth = 160, Classes = { "quiet" },
+    };
+
     private readonly Button _stop = new() { Name = "StopCorpus", Content = "Cancel", MinWidth = 110 };
-    private readonly Button _saveCorpus = new() { Name = "SaveCorpus", Content = "Save it instead…", MinWidth = 160, IsEnabled = false };
+
+    private readonly Button _saveCorpus = new()
+    {
+        Name = "SaveCorpus", Content = "Save it instead…", MinWidth = 160, IsEnabled = false, Classes = { "quiet" },
+    };
 
     // Named, like the controls above, because a test drives these to assert that what is sent is the artefact
     // that was on screen.
     /// <summary>The way back out, on the page that sent it (#295).</summary>
-    private readonly Button _forgetButton = new() { Name = "ForgetDonations", Content = "Forget", MinWidth = 110 };
+    private readonly Button _forgetButton = new()
+    {
+        Name = "ForgetDonations", Content = "Forget", MinWidth = 110, Classes = { "destructive" },
+    };
 
     private readonly Button _sendButton = new() { Name = "SendExcerpt", Content = SendLabel, MinWidth = 190 };
-    private readonly Button _sendCorpusButton = new() { Name = "SendCorpus", Content = SendLabel, MinWidth = 150, IsEnabled = false };
+    private readonly Button _sendCorpusButton = new()
+    {
+        Name = "SendCorpus", Content = SendLabel, MinWidth = 150, IsEnabled = false,
+    };
 
     private string _text = string.Empty;
     private IDisposable? _sizeColour;
     private CancellationTokenSource? _running;
     private CorpusReading? _reading;
 
-    /// <summary><param name="markedAt"> The bookmark — when the Commander said this was the moment.</summary>
     /// <param name="markedAt">The bookmark — when the Commander said this was the moment.</param>
-    /// <param name="build">Cuts an excerpt window and renders it.</param>
+    /// <param name="build">Cuts an excerpt window, renders it, and reports what it did.</param>
     /// <param name="send">
     /// Sends the rendered excerpt — the text that is on screen, never a rebuild — or null where there
     /// is nowhere to send.
@@ -181,7 +245,7 @@ public sealed class HelpImproveWindow : Window
     /// </param>
     public HelpImproveWindow(
         DateTimeOffset markedAt,
-        Func<ExcerptRequest, string> build,
+        Func<ExcerptRequest, (string Text, ExcerptTally Tally)> build,
         Func<string, CancellationToken, Task<DonationSent>>? send = null,
         string? destination = null,
         Func<CorpusScope, IProgress<int>, CancellationToken, Task<CorpusReading>>? read = null,
@@ -220,6 +284,10 @@ public sealed class HelpImproveWindow : Window
         Themed(_size, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
         Themed(_status, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
 
+        // Cancel carries no weight class of its own — the same bordered shape as an unclassed button, just
+        // fainter ink.
+        Themed(_stop, Button.ForegroundProperty, ThemeManager.TextFaintKey);
+
         // The history half exists where both of its delegates do — which is every reading the button appears
         // on, since the page it was pressed on stopped deciding that.
         _includeHistory.IsVisible = HistoryOffered;
@@ -232,7 +300,30 @@ public sealed class HelpImproveWindow : Window
         var root = new DockPanel { Margin = new Thickness(20) };
 
         var options = Options();
+
+        var (consent, consentDestination) = Consent();
+        _consentDestination = consentDestination;
+
+        var (figures, figureEvents, figureNames, figureChars, figureFourthValue, figureFourthCaption) = Figures();
+        _figureEvents = figureEvents;
+        _figureNames = figureNames;
+        _figureChars = figureChars;
+        _figureFourthValue = figureFourthValue;
+        _figureFourthCaption = figureFourthCaption;
+
         var footer = Footer();
+
+        var disclosureSection = new DockPanel();
+        DockPanel.SetDock(_disclosureToggle, Dock.Top);
+        disclosureSection.Children.Add(_disclosureToggle);
+        disclosureSection.Children.Add(DisclosurePane(out _disclosurePane));
+
+        _disclosureToggle.Click += (_, _) =>
+        {
+            _disclosureExpanded = !_disclosureExpanded;
+            _disclosurePane.Height = _disclosureExpanded ? double.NaN : 0;
+            _disclosureToggle.Content = _disclosureExpanded ? "Hide the exact text" : "Show the exact text";
+        };
 
         // The two glyphs, above everything and on the right — ⓘ then ?, which is the order they deepen in
         // (#269).
@@ -253,31 +344,17 @@ public sealed class HelpImproveWindow : Window
         DockPanel.SetDock(marked, Dock.Top);
         DockPanel.SetDock(_intro, Dock.Top);
         DockPanel.SetDock(options, Dock.Top);
+        DockPanel.SetDock(consent, Dock.Top);
+        DockPanel.SetDock(figures, Dock.Top);
         DockPanel.SetDock(footer, Dock.Bottom);
-
-        // Vertical only, for the reason recorded on SpendWindow (#87): a ScrollViewer that may scroll
-        // horizontally measures its content with unconstrained width, which makes the wrapping above a no-op.
-        var pane = new Border
-        {
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(4),
-            Padding = new Thickness(10),
-            Child = new ScrollViewer
-            {
-                Name = "ExcerptScroller",
-                Content = new StackPanel { Children = { _preview, _corpusPreview } },
-                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-            },
-        };
-
-        Themed(pane, Border.BorderBrushProperty, ThemeManager.BorderKey);
 
         root.Children.Add(marked);
         root.Children.Add(_intro);
         root.Children.Add(options);
+        root.Children.Add(consent);
+        root.Children.Add(figures);
         root.Children.Add(footer);
-        root.Children.Add(pane);
+        root.Children.Add(disclosureSection);
 
         Content = root;
 
@@ -293,6 +370,7 @@ public sealed class HelpImproveWindow : Window
         _sendCorpusButton.Click += async (_, _) => await SendCorpusAsync();
         _forgetButton.Click += async (_, _) => await ForgetAsync();
         _stop.Click += (_, _) => Stop();
+        _privacyLink.Click += (_, _) => SiteHelpMark.Open(PrivacyUrl);
 
         // A send in flight is a request against a daily ceiling and a payload half written at the store.
         Closed += (_, _) =>
@@ -335,11 +413,21 @@ public sealed class HelpImproveWindow : Window
         _copy.IsVisible = !history;
         _saveExcerpt.IsVisible = !history;
         _sendButton.IsVisible = !history && _send is not null;
+        _sendButton.Classes.Set("primary", !history && _send is not null);
 
         _saveCorpus.IsVisible = history;
         _sendCorpusButton.IsVisible = history && _sendCorpus is not null;
+        _sendCorpusButton.Classes.Set("primary", history && _sendCorpus is not null);
 
-        _intro.Text = IntroText(history);
+        _intro.Text = Sentence(history);
+        _consentDestination.Text = DestinationText(history);
+        _figureFourthCaption.Text = history ? "journal files" : "log entries";
+
+        // Collapsed again on every fresh entry to a mode, the same rule the send buttons follow: a payload
+        // shown open under one mode is not consent given under the other.
+        _disclosureExpanded = false;
+        _disclosurePane.Height = 0;
+        _disclosureToggle.Content = "Show the exact text";
 
         if (history)
         {
@@ -355,45 +443,25 @@ public sealed class HelpImproveWindow : Window
     /// <summary>The page the mark opens (#252).</summary>
     public const string HelpPage = D47.Core.Help.HelpLibrary.GeneralPrefix + "help-improve";
 
-    /// <summary>The disclosures, and nothing else (#269).</summary>
-    private string IntroText(bool history)
-    {
-        // Voluntariness is the frame rather than a bullet: it governs every line under it, and as a bullet it
-        // read as one disclosure among five instead of the condition on all of them.
-        const string opening =
-            "Nothing is saved or sent until you press " + SendLabel + " — every time, with no "
-            + "standing consent and nothing remembered.\n";
+    /// <summary>The one sentence a Commander reads before anything else (#338).</summary>
+    private static string Sentence(bool history) =>
+        history
+            ? "Send the developer your whole journal history, so a fix can be proved against it."
+            : "Send the developer a slice of what just happened, so a fix can be proved against it.";
 
-        // What the scrub does *before anything leaves*, which is the fact being consented to.
-        const string scrubbed =
-            "  •  Your name and IDs are replaced and other people's words removed before anything "
-            + "is sent or saved.\n";
-
-        const string below = "  •  Only the text below is sent or saved.\n";
-
-        // No address on the page (#295).
-        const string sent = "  •  Sent, it goes to Directive 47.\n";
-
-        // **The one line the two pages differ on, and both are true.** An excerpt expires under a thirty-day
-        // rule; a donated history is kept as a regression case until it is asked back (#168, #175).
-        var retention = history
-            ? "  •  It is kept until you press Forget."
-            : "  •  It is deleted after 30 days, or sooner when you press Forget.";
-
-        // "goes to a network" verbatim: #181 made this sentence conditional rather than deleting it, and a
-        // test guards the wording it settled on.
-        var nowhere = history
-            ? "  •  No send address is set, so nothing here goes to a network. Save it, and where "
-              + "the file goes afterwards is yours."
-            : "  •  No send address is set, so nothing can be sent from here. Copy or save it, and "
-              + "where it goes afterwards is yours — anything posted publicly can be archived "
-              + "beyond anyone's reach.";
-
-        return opening
-               + scrubbed
-               + below
-               + (_destination is not null ? sent + retention : nowhere);
-    }
+    /// <summary>Where a send goes and how long it is kept, or the fact that nothing can be sent (#269, #338).</summary>
+    private string DestinationText(bool history) =>
+        _destination is not null
+            ? "Sent, it goes to Directive 47. "
+              + (history
+                  ? "It is kept until you press Forget."
+                  : "It is deleted after 30 days, or sooner when you press Forget.")
+            : history
+                ? "No send address is set, so nothing here goes to a network. Save it, and where the "
+                  + "file goes afterwards is yours."
+                : "No send address is set, so nothing can be sent from here. Copy or save it, and "
+                  + "where it goes afterwards is yours — anything posted publicly can be archived "
+                  + "beyond anyone's reach.";
 
     /// <summary>What the <c>ⓘ</c> holds (#269): the arguments for pressing.</summary>
     internal const string Reasoning =
@@ -437,40 +505,182 @@ public sealed class HelpImproveWindow : Window
         return row;
     }
 
-    private Control Footer()
+    /// <summary>Three consent lines in the report treatment (#335), and the way to the full legal text.</summary>
+    private (Control Block, TextBlock Destination) Consent()
     {
-        // Send last, where the default action sits, and the copy or save beside it rather than instead of it:
-        // the upload became the default action, not the only one.
-        var buttons = new StackPanel
+        var (scrubRow, scrubText) = ConsentLine();
+        scrubText.Text =
+            "Names and IDs are replaced with stand-ins, and other people's words are stripped, "
+            + "before anything leaves this machine.";
+
+        var (destinationRow, destinationText) = ConsentLine();
+
+        var (standingRow, standingText) = ConsentLine();
+        standingText.Text =
+            "Nothing is saved or sent until you press " + SendLabel + " — every time, with no "
+            + "standing consent and nothing remembered.";
+
+        var block = new StackPanel
+        {
+            Margin = new Thickness(0, 0, 0, 12),
+            Children = { scrubRow, destinationRow, standingRow, _privacyLink },
+        };
+
+        return (block, destinationText);
+    }
+
+    /// <summary>One line, drawn with no box — a rule on the left edge, the same treatment a read-only
+    /// settings row draws (#335) — rather than the bordered rectangle a field draws.</summary>
+    private (Border Row, TextBlock Text) ConsentLine()
+    {
+        var row = ConsentLine(out var text);
+        return (row, text);
+    }
+
+    private Border ConsentLine(out TextBlock text)
+    {
+        var block = new TextBlock { FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap };
+        Themed(block, TextBlock.ForegroundProperty, ThemeManager.TextKey);
+
+        var row = new Border
+        {
+            BorderThickness = new Thickness(2, 0, 0, 0),
+            Padding = new Thickness(14, 8),
+            Margin = new Thickness(0, 0, 0, 6),
+            Child = block,
+        };
+
+        Themed(row, Border.BorderBrushProperty, ThemeManager.BorderKey);
+
+        text = block;
+        return row;
+    }
+
+    /// <summary>
+    /// What will leave, in four figures over captions, each a mono number on a <c>D47.FillHigh</c>
+    /// block (#338). <see cref="Render"/>, <see cref="Discard"/> and <see cref="ReadAsync"/> keep them
+    /// current; nothing here computes a count itself.
+    /// </summary>
+    private (Control Block, TextBlock Events, TextBlock Names, TextBlock Chars, TextBlock FourthValue, TextBlock FourthCaption) Figures()
+    {
+        var fourth = Figure("log entries", out var fourthValue, out var fourthCaption);
+        var events = Figure("journal events", out var eventsValue);
+        var names = Figure("names replaced", out var namesValue);
+        var chars = Figure("characters", out var charsValue);
+
+        var block = new WrapPanel
         {
             Orientation = Orientation.Horizontal,
-            Spacing = 8,
-            HorizontalAlignment = HorizontalAlignment.Right,
-            Children = { _stop, _saveExcerpt, _copy, _saveCorpus },
+            Margin = new Thickness(0, 0, 0, 12),
+            Children = { fourth, events, names, chars },
         };
+
+        return (block, eventsValue, namesValue, charsValue, fourthValue, fourthCaption);
+    }
+
+    private Border Figure(string caption, out TextBlock value) => Figure(caption, out value, out _);
+
+    private Border Figure(string caption, out TextBlock value, out TextBlock captionBlock)
+    {
+        var valueBlock = new TextBlock
+        {
+            Text = "—",
+            FontFamily = new FontFamily(Fonts.MonoFamily),
+            FontSize = TypeScale.Heading,
+            HorizontalAlignment = HorizontalAlignment.Center,
+        };
+
+        var label = new TextBlock
+        {
+            Text = caption,
+            FontSize = TypeScale.Caption,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            TextAlignment = TextAlignment.Center,
+            TextWrapping = TextWrapping.Wrap,
+        };
+
+        Themed(valueBlock, TextBlock.ForegroundProperty, ThemeManager.TextKey);
+        Themed(label, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+
+        var block = new Border
+        {
+            Padding = new Thickness(12, 10),
+            Margin = new Thickness(0, 0, 8, 8),
+            MinWidth = 110,
+            Child = new StackPanel { Spacing = 2, Children = { valueBlock, label } },
+        };
+
+        Themed(block, Border.BackgroundProperty, ThemeManager.FillHighKey);
+
+        value = valueBlock;
+        captionBlock = label;
+        return block;
+    }
+
+    /// <summary>The exact text, collapsed until <see cref="_disclosureToggle"/> is pressed (#338).</summary>
+    private Control DisclosurePane(out Border pane)
+    {
+        // Vertical only, for the reason recorded on SpendWindow (#87): a ScrollViewer that may scroll
+        // horizontally measures its content with unconstrained width, which makes the wrapping above a no-op.
+        pane = new Border
+        {
+            Name = "DisclosurePane",
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(4),
+            Padding = new Thickness(10),
+            Height = 0,
+            Child = new ScrollViewer
+            {
+                Name = "ExcerptScroller",
+                Content = new StackPanel { Children = { _preview, _corpusPreview } },
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            },
+        };
+
+        Themed(pane, Border.BorderBrushProperty, ThemeManager.BorderKey);
+
+        return pane;
+    }
+
+    private Control Footer()
+    {
+        var primary = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+
+        // Send leads the primary cluster, with the alternates beside it rather than instead of it — the
+        // upload is the default action, not the only one.
+        if (_send is not null)
+        {
+            primary.Children.Add(_sendButton);
+        }
+
+        primary.Children.Add(_saveExcerpt);
+        primary.Children.Add(_copy);
+        primary.Children.Add(_saveCorpus);
+
+        if (_sendCorpus is not null)
+        {
+            primary.Children.Add(_sendCorpusButton);
+        }
+
+        // A fixed gap rather than a star column: the bar sits inside a DockPanel that measures a
+        // docked-right child with unconstrained width, where a "*" column has nothing to divide (#87).
+        primary.Children.Add(new Border { Width = 24 });
+
+        primary.Children.Add(_stop);
 
         // Beside Send, on whichever page is showing (#295): the retention line above names this button, and a
         // Commander who reads it there should not have to go looking for it.
         if (_forget is not null)
         {
-            buttons.Children.Add(_forgetButton);
-        }
-
-        if (_send is not null)
-        {
-            buttons.Children.Add(_sendButton);
-        }
-
-        if (_sendCorpus is not null)
-        {
-            buttons.Children.Add(_sendCorpusButton);
+            primary.Children.Add(_forgetButton);
         }
 
         var footer = new DockPanel { Margin = new Thickness(0, 12, 0, 0) };
 
-        DockPanel.SetDock(buttons, Dock.Right);
+        DockPanel.SetDock(primary, Dock.Right);
 
-        footer.Children.Add(buttons);
+        footer.Children.Add(primary);
 
         // The bar under the sentence rather than in place of it (#212): "Nothing else is being sent, and
         // nothing is being kept anywhere else" is doing work about scope that a percentage cannot do.
@@ -479,7 +689,7 @@ public sealed class HelpImproveWindow : Window
         return footer;
     }
 
-    /// <summary>Rebuilds the excerpt and shows it.</summary>
+    /// <summary>Rebuilds the excerpt, shows it and refreshes the figures.</summary>
     private void Render()
     {
         if (History)
@@ -489,8 +699,15 @@ public sealed class HelpImproveWindow : Window
 
         var span = _span.SelectedIndex >= 0 ? ExcerptSpan.All[_span.SelectedIndex] : ExcerptSpan.Default;
 
-        _text = _build(span.Around(_markedAt, _mySpeechSwitch.IsChecked == true));
+        var (text, tally) = _build(span.Around(_markedAt, _mySpeechSwitch.IsChecked == true));
+
+        _text = text;
         _preview.Text = _text;
+
+        _figureEvents.Text = Number(tally.JournalEvents);
+        _figureNames.Text = Number(tally.NamesReplaced);
+        _figureFourthValue.Text = Number(tally.LogEntries);
+        _figureChars.Text = Number(_text.Length);
 
         // **A changed payload is a fresh decision.** The same rule the history flow enforces by throwing its
         // report away: a button reading "Sent" above an excerpt that is no longer the one that was sent is
@@ -515,7 +732,7 @@ public sealed class HelpImproveWindow : Window
             long_ ? ThemeManager.DangerKey : ThemeManager.TextMutedKey);
     }
 
-    /// <summary>Throws away a history reading.</summary>
+    /// <summary>Throws away a history reading, and resets the figures to unknown.</summary>
     private void Discard()
     {
         if (!History)
@@ -529,6 +746,11 @@ public sealed class HelpImproveWindow : Window
         // **A changed scope is a fresh decision about the send too**, and the button says so.
         _sendCorpusButton.IsEnabled = false;
         _sendCorpusButton.Content = SendLabel;
+
+        _figureEvents.Text = "—";
+        _figureNames.Text = "—";
+        _figureFourthValue.Text = "—";
+        _figureChars.Text = "—";
 
         _corpusPreview.Text =
             "Nothing has been read yet.\n\n"
@@ -569,6 +791,11 @@ public sealed class HelpImproveWindow : Window
             _sendCorpusButton.IsEnabled = true;
 
             var survey = _reading.Survey;
+
+            _figureEvents.Text = Number(survey.Tally.Events);
+            _figureNames.Text = Number(survey.Tally.NamesReplaced);
+            _figureFourthValue.Text = Number(survey.Files);
+            _figureChars.Text = Number(_reading.Report.Length);
 
             _status.Text =
                 $"{survey.Tally.Events:N0} events across {survey.Files:N0} files, "
@@ -926,6 +1153,8 @@ public sealed class HelpImproveWindow : Window
         bytes >= 1024L * 1024L
             ? $"{(bytes / (1024.0 * 1024.0)).ToString("0.#", CultureInfo.InvariantCulture)} MB"
             : $"{(bytes / 1024.0).ToString("0.#", CultureInfo.InvariantCulture)} KB";
+
+    private static string Number(int value) => value.ToString("N0", CultureInfo.InvariantCulture);
 
     /// <summary>A caption in front of a control.</summary>
     private Control Labelled(string caption, Control control)

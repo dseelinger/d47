@@ -18,7 +18,7 @@ public sealed class TheInfoFlyoutWrapsRatherThanScrollsTests
     {
         var window = new HelpImproveWindow(
             new DateTimeOffset(2026, 9, 2, 12, 0, 0, TimeSpan.Zero),
-            _ => "an excerpt",
+            TestSurface.Excerpt("an excerpt"),
             destination: "https://donations.example/store");
         window.Show();
         Dispatcher.UIThread.RunJobs();

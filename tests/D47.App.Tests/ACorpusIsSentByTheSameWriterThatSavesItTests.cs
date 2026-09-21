@@ -111,7 +111,7 @@ public class ACorpusIsSentByTheSameWriterThatSavesItTests : IDisposable
     {
         var window = new HelpImproveWindow(
             new DateTimeOffset(2026, 8, 31, 14, 0, 0, TimeSpan.Zero),
-            _ => string.Empty,
+            TestSurface.Excerpt(string.Empty),
             destination: destination,
             read: (_, _, _) => Task.FromResult(Reading(report)),
             write: (_, _, _) => Task.CompletedTask,
@@ -344,11 +344,10 @@ public class ACorpusIsSentByTheSameWriterThatSavesItTests : IDisposable
     [AvaloniaFact]
     public void WithNoAddressItStillSaysNothingGoesToANetwork()
     {
-        var intro = Shown().GetVisualDescendants().OfType<TextBlock>()
-            .Select(block => block.Text ?? string.Empty)
-            .Single(text => text.Contains("Nothing is saved or sent", StringComparison.Ordinal));
+        var texts = Shown().GetVisualDescendants().OfType<TextBlock>()
+            .Select(block => block.Text ?? string.Empty);
 
-        Assert.Contains("nothing here goes to a network", intro, StringComparison.Ordinal);
+        Assert.Contains(texts, text => text.Contains("nothing here goes to a network", StringComparison.Ordinal));
     }
 
     /// <summary>
@@ -362,14 +361,14 @@ public class ACorpusIsSentByTheSameWriterThatSavesItTests : IDisposable
             send: (_, _, _) => Task.FromResult(new DonationSent(DonationOutcome.Stored("k"), null)),
             destination: "https://donate.invalid/donate");
 
-        var intro = window.GetVisualDescendants().OfType<TextBlock>()
+        var texts = window.GetVisualDescendants().OfType<TextBlock>()
             .Select(block => block.Text ?? string.Empty)
-            .Single(text => text.Contains("Nothing is saved or sent", StringComparison.Ordinal));
+            .ToList();
 
-        Assert.Contains("Sent, it goes to Directive 47", intro, StringComparison.Ordinal);
-        Assert.Contains("It is kept until you press Forget", intro, StringComparison.Ordinal);
-        Assert.DoesNotContain("https://donate.invalid/donate", intro, StringComparison.Ordinal);
-        Assert.DoesNotContain("nothing here goes to a network", intro, StringComparison.Ordinal);
+        Assert.Contains(texts, text => text.Contains("Sent, it goes to Directive 47", StringComparison.Ordinal));
+        Assert.Contains(texts, text => text.Contains("It is kept until you press Forget", StringComparison.Ordinal));
+        Assert.DoesNotContain(texts, text => text.Contains("https://donate.invalid/donate", StringComparison.Ordinal));
+        Assert.DoesNotContain(texts, text => text.Contains("nothing here goes to a network", StringComparison.Ordinal));
     }
 
     /// <summary>Nothing is sent until there is a report to be sending.</summary>

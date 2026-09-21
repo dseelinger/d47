@@ -5,6 +5,7 @@ using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
+using D47.Core.Diagnostics.Donation;
 using D47.Core.Input;
 using D47.Core.Journal;
 using Microsoft.Extensions.Logging;
@@ -28,6 +29,18 @@ public static class TestSurface
 
     /// <summary>This run's capture folder, created on first use.</summary>
     public static string CaptureDirectory => Captures.Value;
+
+    /// <summary>
+    /// A <c>HelpImproveWindow</c> build delegate that renders <paramref name="text"/> and reports an empty
+    /// tally — for a test that is not about the four figures (#338).
+    /// </summary>
+    public static Func<ExcerptRequest, (string Text, ExcerptTally Tally)> Excerpt(string text) =>
+        _ => (text, new ExcerptTally(0, 0, 0, 0, 0, false, 0, 0));
+
+    /// <summary>The same wrapping, over a build that varies by request.</summary>
+    public static Func<ExcerptRequest, (string Text, ExcerptTally Tally)> Excerpt(
+        Func<ExcerptRequest, string> build) =>
+        request => (build(request), new ExcerptTally(0, 0, 0, 0, 0, false, 0, 0));
 
     /// <summary>Settings, view state, paths, registry and secrets, wired as the composition root wires them.</summary>
     /// <param name="coverage">A hand-testing coverage summary, which is what makes the Diagnostics coverage row exist at all.</param>

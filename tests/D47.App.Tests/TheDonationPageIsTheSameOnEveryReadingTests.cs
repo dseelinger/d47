@@ -67,7 +67,7 @@ public class TheDonationPageIsTheSameOnEveryReadingTests
     {
         var window = new HelpImproveWindow(
             new DateTimeOffset(2026, 9, 8, 14, 0, 0, TimeSpan.Zero),
-            _ => "an excerpt",
+            TestSurface.Excerpt("an excerpt"),
             read: (_, _, _) => Task.FromResult(
                 new HelpImproveWindow.CorpusReading(
                     new CorpusSurvey(null, null, 0, 0, new CorpusTally(0, 0, 0, 0, 0, 0), []),

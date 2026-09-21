@@ -107,7 +107,7 @@ public class ALongUploadSaysHowFarItHasGotTests : IDisposable
     {
         var window = new HelpImproveWindow(
             new DateTimeOffset(2026, 9, 1, 9, 0, 0, TimeSpan.Zero),
-            _ => string.Empty,
+            TestSurface.Excerpt(string.Empty),
             destination: "https://donate.invalid/donate",
             read: (_, _, _) => Task.FromResult(
                 new HelpImproveWindow.CorpusReading(

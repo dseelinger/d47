@@ -78,7 +78,7 @@ public class WhatIsShownIsWhatIsSentTests : IDisposable
         string? destination = null)
     {
         var window = new HelpImproveWindow(
-            new DateTimeOffset(2026, 8, 29, 14, 0, 0, TimeSpan.Zero), build, send, destination);
+            new DateTimeOffset(2026, 8, 29, 14, 0, 0, TimeSpan.Zero), TestSurface.Excerpt(build), send, destination);
 
         window.Show();
         Dispatcher.UIThread.RunJobs();
@@ -291,12 +291,10 @@ public class WhatIsShownIsWhatIsSentTests : IDisposable
     {
         var window = Shown(_ => "### Incident excerpt\n");
 
-        var intro = window.GetVisualDescendants().OfType<TextBlock>()
-            .Select(block => block.Text ?? string.Empty)
-            .Single(text => text.Contains("Only the text below", StringComparison.Ordinal));
+        var words = Words(window);
 
-        Assert.DoesNotContain("random number identifying this installation", intro, StringComparison.Ordinal);
-        Assert.DoesNotContain("donor-token", intro, StringComparison.Ordinal);
+        Assert.DoesNotContain("random number identifying this installation", words, StringComparison.Ordinal);
+        Assert.DoesNotContain("donor-token", words, StringComparison.Ordinal);
 
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
 
