@@ -10,7 +10,7 @@ namespace D47.App.Controls;
 
 /// <summary>
 /// One value stepped through a list too long, or too changeable, for <see cref="Segment"/>
-/// (#274). <c>◄</c> and <c>►</c> either side of the current value,
+/// (#274). <c>◀</c> and <c>▶</c> either side of the current value,
 /// each press moving one item and wrapping at the ends. Holding an arrow repeats the move.
 /// </summary>
 public sealed class Stepper : ContentControl, IChoiceControl
@@ -40,6 +40,7 @@ public sealed class Stepper : ContentControl, IChoiceControl
         VerticalAlignment = VerticalAlignment.Center,
         TextTrimming = TextTrimming.CharacterEllipsis,
         TextAlignment = TextAlignment.Center,
+        FontFamily = new FontFamily(Theming.Fonts.ProseFamily),
         FontSize = Theming.TypeScale.Body,
     };
 
@@ -74,8 +75,8 @@ public sealed class Stepper : ContentControl, IChoiceControl
         _position.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.TextFaintKey));
         _consequence.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.TextMutedKey));
 
-        _previous = Arrow("◄", "Previous", -1);
-        _next = Arrow("►", "Next", 1);
+        _previous = Arrow("◀", "Previous", -1);
+        _next = Arrow("▶", "Next", 1);
 
         var valueCell = new Border
         {
@@ -110,7 +111,7 @@ public sealed class Stepper : ContentControl, IChoiceControl
         caption.Children.Add(_position);
         caption.Children.Add(_consequence);
 
-        Content = new StackPanel { Children = { frame, caption } };
+        Content = new StackPanel { Spacing = 8, Children = { frame, caption } };
 
         KeyDown += OnKeyDown;
     }
