@@ -16,6 +16,9 @@ underneath.
 Switch labels read ON and OFF in bold, letterspaced uppercase at the Segment's size, matching the
 Segment control's chrome instead of the plain "On" and "Off" they drew before.
 
+The level-2 text row reads uppercase — the Control Kit's "In Ship", "Log File" and "Journal File"
+included — keeping its existing letterspacing.
+
 Text fields centre their text and placeholder vertically at body size in the prose face, instead
 of sitting against the top edge at the default size.
 

@@ -85,7 +85,7 @@ public sealed class TextChoice : ContentControl, IChoiceControl
             {
                 Theme = theme,
                 GroupName = _group,
-                Content = ItemsSource[i],
+                Content = ItemsSource[i].ToUpperInvariant(),
             };
 
             button.IsCheckedChanged += (_, _) =>

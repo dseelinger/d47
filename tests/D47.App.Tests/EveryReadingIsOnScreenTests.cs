@@ -46,7 +46,7 @@ public sealed class EveryReadingIsOnScreenTests
 
         var buttons = Readings(panel);
 
-        Assert.Equal(["In Ship", "Log File", "Journal File"], buttons.Select(button => button.Content as string));
+        Assert.Equal(["IN SHIP", "LOG FILE", "JOURNAL FILE"], buttons.Select(button => button.Content as string));
         Assert.All(buttons, button => Assert.True(button.IsVisible));
 
         window.Close();
@@ -57,16 +57,16 @@ public sealed class EveryReadingIsOnScreenTests
     /// the one checked is the reading showing.
     /// </summary>
     [AvaloniaTheory]
-    [InlineData(PanelView.ConversationRoot, "In Ship")]
-    [InlineData(PanelView.LogRoot, "Log File")]
-    [InlineData(PanelView.JournalRoot, "Journal File")]
+    [InlineData(PanelView.ConversationRoot, "IN SHIP")]
+    [InlineData(PanelView.LogRoot, "LOG FILE")]
+    [InlineData(PanelView.JournalRoot, "JOURNAL FILE")]
     public void EveryReadingIsDrawnInsideThePageBar(string root, string word)
     {
         var (panel, window) = Showing(root, 1180);
         var bar = panel.GetControl<DockPanel>("PageBar");
         var buttons = Readings(panel);
 
-        Assert.Equal(["In Ship", "Log File", "Journal File"], buttons.Select(button => button.Content as string));
+        Assert.Equal(["IN SHIP", "LOG FILE", "JOURNAL FILE"], buttons.Select(button => button.Content as string));
         Assert.Equal(word, buttons.Single(button => button.IsChecked == true).Content as string);
 
         // One line at this width — nothing has wrapped down.

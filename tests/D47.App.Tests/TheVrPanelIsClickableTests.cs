@@ -52,11 +52,11 @@ public class TheVrPanelIsClickableTests
 
         Assert.Equal(TranscriptPage.Conversation, view.Page);
 
-        PressReading(view, surface, "Log File");
+        PressReading(view, surface, "LOG FILE");
 
         Assert.Equal(TranscriptPage.Log, view.Page);
 
-        PressReading(view, surface, "In Ship");
+        PressReading(view, surface, "IN SHIP");
 
         Assert.Equal(TranscriptPage.Conversation, view.Page);
     }
@@ -78,7 +78,7 @@ public class TheVrPanelIsClickableTests
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
         var before = Frame(surface);
 
-        PressReading(view, surface, "Log File");
+        PressReading(view, surface, "LOG FILE");
 
         Assert.NotEqual(before, Frame(surface));
     }
