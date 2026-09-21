@@ -79,6 +79,9 @@ for the other Listening timings and the speech margin in decibels. The box is 44
 is in mono, and the up and down arrows sit in 40-wide cells that repeat when held. Focus now
 underlines the value instead of lighting the whole frame.
 
+A text field now pads 13px left and right instead of top and bottom, its placeholder reads in the
+faint text colour, and its caret draws as a 9x21 Accent block instead of a thin line.
+
 A protected settings row now carries a left bar instead of a bordered "protected" chip, with one
 legend line under the screen title on any screen that has one. A row's help now shows on hovering
 or focusing its own label rather than behind a separate info glyph.

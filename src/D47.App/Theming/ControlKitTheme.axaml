@@ -275,10 +275,10 @@
 
     <!--
       Text entry: a ground, no corners, one lit edge on the bottom rather than a box, so a field
-      cannot be mistaken for a read-only row (#335). Avalonia's TextBox caret has no block shape to
-      opt into from the theme; the caret stays the default thin line, in Accent, at the wanted blink
-      rate. The template keeps Fluent's own parts — PART_TextPresenter, the two placeholder
-      TextBlocks, PART_ScrollViewer — so the caret, selection and the floating placeholder still
+      cannot be mistaken for a read-only row (#335). PART_TextPresenter's own caret is drawn
+      transparent; a BlockCaret overlay tracks its caret position and draws the 9x21 Accent block
+      instead (#350). The template keeps Fluent's own parts — PART_TextPresenter, the two
+      placeholder TextBlocks, PART_ScrollViewer — so selection and the floating placeholder still
       work; only the brushes, sizing and the corner radius are d47's.
     -->
     <ControlTheme x:Key="{x:Type TextBox}" TargetType="TextBox">
@@ -288,10 +288,10 @@
       <Setter Property="CaretBlinkInterval" Value="0:0:1.1" />
       <Setter Property="BorderBrush" Value="{DynamicResource D47.Accent}" />
       <Setter Property="SelectionBrush" Value="{DynamicResource D47.AccentMuted}" />
-      <Setter Property="PlaceholderForeground" Value="{DynamicResource D47.TextMuted}" />
+      <Setter Property="PlaceholderForeground" Value="{DynamicResource D47.TextFaint}" />
       <Setter Property="BorderThickness" Value="0,0,0,2" />
       <Setter Property="MinHeight" Value="44" />
-      <Setter Property="Padding" Value="0,13" />
+      <Setter Property="Padding" Value="13,0" />
       <Setter Property="FocusAdorner" Value="{x:Null}" />
       <Setter Property="ScrollViewer.IsScrollChainingEnabled" Value="True" />
       <Setter Property="Template">
@@ -353,9 +353,14 @@
                                        RevealPassword="{TemplateBinding RevealPassword}"
                                        SelectionBrush="{TemplateBinding SelectionBrush}"
                                        SelectionForegroundBrush="{TemplateBinding SelectionForegroundBrush}"
-                                       CaretBrush="{TemplateBinding CaretBrush}"
+                                       CaretBrush="Transparent"
                                        HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                        VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                        <controls:BlockCaret Target="{Binding ElementName=PART_TextPresenter}"
+                                              Brush="{TemplateBinding CaretBrush}"
+                                              Interval="{TemplateBinding CaretBlinkInterval}"
+                                              IsActive="{TemplateBinding IsFocused}"
+                                              IsHitTestVisible="False" />
                       </Panel>
                       <ScrollViewer.Styles>
                         <Style Selector="ScrollContentPresenter#PART_ContentPresenter">
