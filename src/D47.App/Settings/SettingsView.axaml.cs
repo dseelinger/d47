@@ -3922,7 +3922,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         var chips = row.BoundKeys.Select(_ =>
         {
-            var chip = new Button { FontFamily = new FontFamily(Fonts.MonoFamily), FontSize = TypeScale.Secondary, Padding = new Thickness(14, 10) };
+            var chip = new Button
+            {
+                FontFamily = new FontFamily(Fonts.MonoFamily),
+                FontSize = TypeScale.Secondary,
+                FontWeight = FontWeight.Normal,
+                LetterSpacing = 0,
+                Padding = new Thickness(14, 10)
+            };
             Themed(chip, Button.BackgroundProperty, ThemeManager.FillHigherKey);
             Themed(chip, Button.ForegroundProperty, ThemeManager.AccentInkKey);
             chip.Click += async (_, _) => await CaptureBindAsync(row, chip, message);

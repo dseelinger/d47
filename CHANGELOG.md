@@ -8,6 +8,9 @@
 
 ## 0.169.0 — No more drop-downs
 
+Binding chips draw at normal weight with no letterspacing, matching the mono face they set
+instead of taking the button style's bold, spaced-out chrome.
+
 Normal and Destructive buttons draw their 1px border again. The Button template bound
 `BorderThickness` into `ChamferedBorder`, whose own property was a `double` where a Button's is a
 `Thickness`; the binding failed silently and no button anywhere in the app drew an outline.
