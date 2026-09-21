@@ -30,6 +30,9 @@ of sitting against the top edge at the default size.
 Binding chips draw at normal weight with no letterspacing, matching the mono face they set
 instead of taking the button style's bold, spaced-out chrome.
 
+Report rows draw their text in the prose face at body size, matching the reference. They read at
+Secondary size in muted ink before, which looked disabled.
+
 Normal and Destructive buttons draw their 1px border again. The Button template bound
 `BorderThickness` into `ChamferedBorder`, whose own property was a `double` where a Button's is a
 `Thickness`; the binding failed silently and no button anywhere in the app drew an outline.

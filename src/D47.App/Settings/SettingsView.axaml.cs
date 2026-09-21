@@ -2791,8 +2791,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// mistaken for a field (#335).</summary>
     private (Control, Action, bool) BuildInfo(SettingRow row)
     {
-        var text = new SelectableTextBlock { FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap };
-        Themed(text, SelectableTextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        var text = new SelectableTextBlock { FontSize = TypeScale.Body, TextWrapping = TextWrapping.Wrap };
+        Themed(text, SelectableTextBlock.ForegroundProperty, ThemeManager.TextKey);
 
         var inset = new Border
         {
