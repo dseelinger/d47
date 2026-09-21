@@ -8,6 +8,9 @@
 
 ## 0.169.0 — No more drop-downs
 
+A toggle switch now carries its own words — "On" and "Off" by default — on two halves that fill
+and dim as the switch changes, instead of a knob whose only signal was position and brightness.
+
 A protected settings row now carries a left bar instead of a bordered "protected" chip, with one
 legend line under the screen title on any screen that has one. A row's help now shows on hovering
 or focusing its own label rather than behind a separate info glyph.

@@ -67,42 +67,75 @@
       </Style>
     </ControlTheme>
 
-    <!-- Square track, square knob — no thumb animation, since every switch in the app toggles on a tap. -->
+    <!--
+      Two halves, each naming its own state, so a page of switches reads without checking knob
+      position and brightness one at a time (#334). A row that wants no words sets OnContent and
+      OffContent to null itself; every other row gets this pair by default.
+    -->
     <ControlTheme x:Key="{x:Type ToggleSwitch}" TargetType="ToggleSwitch">
       <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="OnContent" Value="On" />
+      <Setter Property="OffContent" Value="Off" />
+      <Setter Property="FontFamily" Value="avares://d47/Assets/Fonts/SairaSemiCondensed-Regular.ttf#Saira Semi Condensed" />
+      <Setter Property="FontSize" Value="{StaticResource D47.Type.Small}" />
       <Setter Property="Template">
         <ControlTemplate>
           <Border x:Name="Track"
-                  Width="62"
-                  Height="32"
-                  Background="{DynamicResource D47.Background}"
-                  BorderBrush="{DynamicResource D47.Rule}"
-                  BorderThickness="1">
-            <Panel>
+                  Width="128"
+                  Height="42"
+                  BorderThickness="1"
+                  BorderBrush="{DynamicResource D47.Border}">
+            <Grid Margin="3" ColumnDefinitions="*,3,*">
               <!-- Required by ToggleSwitch itself but not otherwise used — this template
-                   toggles on a tap, not a drag, so the knob below carries the whole visual. -->
+                   toggles on a tap, not a drag, so the two halves below carry the whole visual. -->
               <Panel x:Name="PART_MovingKnobs" Width="0" Height="0" IsHitTestVisible="False" />
-              <Border x:Name="Knob"
-                      Width="24"
-                      Height="24"
-                      Margin="4"
-                      HorizontalAlignment="Left"
-                      Background="{DynamicResource D47.Accent}"
-                      Opacity="0.55" />
-            </Panel>
+              <Border x:Name="OnHalf" Grid.Column="0" Background="Transparent">
+                <Border.Transitions>
+                  <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.12" Easing="CubicEaseOut" />
+                  </Transitions>
+                </Border.Transitions>
+                <ContentPresenter x:Name="OnText"
+                                  Content="{TemplateBinding OnContent}"
+                                  Foreground="{DynamicResource D47.TextFaint}"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center" />
+              </Border>
+              <Border x:Name="OffHalf" Grid.Column="2" Background="Transparent">
+                <Border.Transitions>
+                  <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.12" Easing="CubicEaseOut" />
+                  </Transitions>
+                </Border.Transitions>
+                <ContentPresenter x:Name="OffText"
+                                  Content="{TemplateBinding OffContent}"
+                                  Foreground="{DynamicResource D47.TextFaint}"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center" />
+              </Border>
+            </Grid>
           </Border>
         </ControlTemplate>
       </Setter>
 
-      <!-- On: the solid Accent knob moves to the right, so the switch reads by position, not only by brightness. -->
+      <!-- On: the left half fills Accent, ink the colour of the background it sits on, with the fill's own glow. -->
       <Style Selector="^:checked /template/ Border#Track">
-        <Setter Property="Background" Value="{DynamicResource D47.FillLow}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource D47.Accent}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource D47.Rule}" />
       </Style>
-      <Style Selector="^:checked /template/ Border#Knob">
-        <Setter Property="HorizontalAlignment" Value="Right" />
-        <Setter Property="Opacity" Value="1" />
+      <Style Selector="^:checked /template/ Border#OnHalf">
+        <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
         <Setter Property="Effect" Value="{DynamicResource D47.Bloom.Fill}" />
+      </Style>
+      <Style Selector="^:checked /template/ ContentPresenter#OnText">
+        <Setter Property="Foreground" Value="{DynamicResource D47.Background}" />
+      </Style>
+
+      <!-- Off: the right half fills Border instead, muted ink on it; the left half stays faint. -->
+      <Style Selector="^:not(:checked) /template/ Border#OffHalf">
+        <Setter Property="Background" Value="{DynamicResource D47.Border}" />
+      </Style>
+      <Style Selector="^:not(:checked) /template/ ContentPresenter#OffText">
+        <Setter Property="Foreground" Value="{DynamicResource D47.TextMuted}" />
       </Style>
     </ControlTheme>
 

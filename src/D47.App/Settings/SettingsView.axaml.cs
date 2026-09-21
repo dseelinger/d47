@@ -3335,8 +3335,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     {
         var toggle = new ToggleSwitch
         {
-            OnContent = null,
-            OffContent = null,
             Margin = new Thickness(0),
             Padding = new Thickness(0),
         };
