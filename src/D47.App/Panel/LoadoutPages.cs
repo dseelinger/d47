@@ -819,6 +819,11 @@ public static class LoadoutPages
         return row;
     }
 
+    private const double BarHeight = 14;
+    private const double EndCapWidth = 2;
+    private const double HatchTileWidth = 10;
+    private const double HatchStrokeWidth = 7;
+
     /// <summary>
     /// A bar with nothing but a track and a fill — the gauge roles this file already uses (Accent fill,
     /// SurfaceAlt track), for a criterion that carries only a fraction rather than a full gauge (#17).
@@ -827,52 +832,13 @@ public static class LoadoutPages
     {
         var clamped = Math.Clamp(double.IsFinite(fill) ? fill : 0, 0, 1);
 
-        var track = new Grid
-        {
-            Height = 6,
-            Margin = new Thickness(0, 2, 0, 0),
-            ColumnDefinitions = new ColumnDefinitions
-            {
-                new(new GridLength(clamped, GridUnitType.Star)),
-                new(new GridLength(1 - clamped, GridUnitType.Star)),
-            },
-        };
-
-        var background = new Border { CornerRadius = new CornerRadius(2) };
-
-        Themed(background, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
-        Grid.SetColumnSpan(background, 2);
-        track.Children.Add(background);
-
-        var filled = new Border { CornerRadius = new CornerRadius(2) };
-
-        Themed(filled, Border.BackgroundProperty, ThemeManager.AccentKey);
-        Grid.SetColumn(filled, 0);
-        track.Children.Add(filled);
-
-        return track;
+        return Track(clamped, ThemeManager.AccentKey);
     }
 
     /// <summary>The bar itself: a track, a fill, and a hairline per mark.</summary>
     private static Control Bar(LoadoutGauge gauge)
     {
         var fill = Math.Clamp(double.IsFinite(gauge.Fill) ? gauge.Fill : 0, 0, 1);
-
-        var track = new Grid
-        {
-            Height = 8,
-            ColumnDefinitions = new ColumnDefinitions
-            {
-                new(new GridLength(fill, GridUnitType.Star)),
-                new(new GridLength(1 - fill, GridUnitType.Star)),
-            },
-        };
-
-        var background = new Border { CornerRadius = new CornerRadius(2) };
-
-        Themed(background, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
-        Grid.SetColumnSpan(background, 2);
-        track.Children.Add(background);
 
         var fillKey =
             gauge.Tone == LoadoutTone.Danger ? ThemeManager.DangerKey
@@ -881,47 +847,7 @@ public static class LoadoutPages
             : gauge.Modelled ? ThemeManager.InfoKey
             : ThemeManager.AccentKey;
 
-        if (gauge.Segments.Count > 0)
-        {
-            // A stacked bar, one span per priority group, each in the gauge's own fill colour and
-            // separated by a gap in the track underneath (#253).
-            var at = 0.0;
-
-            foreach (var segment in gauge.Segments)
-            {
-                var start = Math.Clamp(at, 0, 1);
-                var width = Math.Clamp(segment.Share, 0, 1 - start);
-
-                var over = new Grid
-                {
-                    ColumnDefinitions = new ColumnDefinitions
-                    {
-                        new(new GridLength(start, GridUnitType.Star)),
-                        new(new GridLength(width, GridUnitType.Star)),
-                        new(new GridLength(1 - start - width, GridUnitType.Star)),
-                    },
-                };
-
-                var span = new Border { CornerRadius = new CornerRadius(2), Margin = new Thickness(1, 0) };
-
-                Themed(span, Border.BackgroundProperty, fillKey);
-                Grid.SetColumn(span, 1);
-                over.Children.Add(span);
-
-                Grid.SetColumnSpan(over, 2);
-                track.Children.Add(over);
-
-                at += width;
-            }
-        }
-        else
-        {
-            var filled = new Border { CornerRadius = new CornerRadius(2) };
-
-            Themed(filled, Border.BackgroundProperty, fillKey);
-            Grid.SetColumn(filled, 0);
-            track.Children.Add(filled);
-        }
+        var track = gauge.Segments.Count > 0 ? SegmentedTrack(gauge, fillKey) : Track(fill, fillKey);
 
         // Each mark, as its own two-column grid over the same track.
         foreach (var mark in gauge.Marks)
@@ -967,6 +893,124 @@ public static class LoadoutPages
         }
 
         return track;
+    }
+
+    /// <summary>
+    /// A track: SurfaceAlt background, a hatched fill to the given fraction, TextMuted end caps (#353).
+    /// </summary>
+    private static Grid Track(double fill, string fillKey)
+    {
+        var track = new Grid
+        {
+            Height = BarHeight,
+            ColumnDefinitions = new ColumnDefinitions
+            {
+                new(new GridLength(fill, GridUnitType.Star)),
+                new(new GridLength(1 - fill, GridUnitType.Star)),
+            },
+        };
+
+        var background = new Border();
+
+        Themed(background, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
+        Grid.SetColumnSpan(background, 2);
+        track.Children.Add(background);
+
+        var filled = new Border { Background = Hatch(fillKey) };
+
+        Grid.SetColumn(filled, 0);
+        track.Children.Add(filled);
+
+        EndCaps(track, 2);
+
+        return track;
+    }
+
+    /// <summary>
+    /// A stacked bar, one hatched span per priority group, separated by a gap in the track underneath
+    /// (#253).
+    /// </summary>
+    private static Grid SegmentedTrack(LoadoutGauge gauge, string fillKey)
+    {
+        var track = new Grid { Height = BarHeight };
+
+        var background = new Border();
+
+        Themed(background, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
+        track.Children.Add(background);
+
+        var at = 0.0;
+
+        foreach (var segment in gauge.Segments)
+        {
+            var start = Math.Clamp(at, 0, 1);
+            var width = Math.Clamp(segment.Share, 0, 1 - start);
+
+            var over = new Grid
+            {
+                ColumnDefinitions = new ColumnDefinitions
+                {
+                    new(new GridLength(start, GridUnitType.Star)),
+                    new(new GridLength(width, GridUnitType.Star)),
+                    new(new GridLength(1 - start - width, GridUnitType.Star)),
+                },
+            };
+
+            var span = new Border { Background = Hatch(fillKey), Margin = new Thickness(1, 0) };
+
+            Grid.SetColumn(span, 1);
+            over.Children.Add(span);
+
+            track.Children.Add(over);
+
+            at += width;
+        }
+
+        EndCaps(track, 1);
+
+        return track;
+    }
+
+    /// <summary>The 2px `D47.TextMuted` caps bounding the whole track.</summary>
+    private static void EndCaps(Grid track, int columns)
+    {
+        var left = new Border { Width = EndCapWidth, HorizontalAlignment = HorizontalAlignment.Left };
+        var right = new Border { Width = EndCapWidth, HorizontalAlignment = HorizontalAlignment.Right };
+
+        Themed(left, Border.BackgroundProperty, ThemeManager.TextMutedKey);
+        Themed(right, Border.BackgroundProperty, ThemeManager.TextMutedKey);
+
+        Grid.SetColumnSpan(left, columns);
+        Grid.SetColumnSpan(right, columns);
+
+        track.Children.Add(left);
+        track.Children.Add(right);
+    }
+
+    /// <summary>A 10px tile, 7px of the tone's colour then 3px clear, for a Gauge's fill.</summary>
+    private static DrawingBrush Hatch(string colorKey)
+    {
+        var stripe = new GeometryDrawing
+        {
+            Geometry = new RectangleGeometry(new Rect(0, 0, HatchStrokeWidth, BarHeight)),
+        };
+
+        Themed(stripe, GeometryDrawing.BrushProperty, colorKey);
+
+        var ground = new GeometryDrawing
+        {
+            Geometry = new RectangleGeometry(new Rect(0, 0, HatchTileWidth, BarHeight)),
+            Brush = Brushes.Transparent,
+        };
+
+        return new DrawingBrush
+        {
+            Drawing = new DrawingGroup { Children = { ground, stripe } },
+            TileMode = TileMode.Tile,
+            Stretch = Stretch.None,
+            SourceRect = new RelativeRect(0, 0, 1, 1, RelativeUnit.Relative),
+            DestinationRect = new RelativeRect(0, 0, HatchTileWidth, BarHeight, RelativeUnit.Absolute),
+        };
     }
 
     /// <summary>

@@ -8,6 +8,10 @@
 
 ## 0.169.0 — No more drop-downs
 
+Every reported bar on the Loadout pages now draws as the hatched Gauge: 14 tall, square-cornered,
+with muted end caps and a hatched fill in the reading's own colour, instead of a rounded solid
+bar.
+
 A page's own "Settings for this page" strip now sits at the bottom of the page instead of the
 top, on Fleet › Ships, Fleet › Carrier, Adventures, Routing › Community Goal and Transcript › Log
 File, on the desktop window and in the headset. An open strip never takes more than half the
