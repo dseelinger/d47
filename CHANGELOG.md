@@ -8,6 +8,11 @@
 
 ## 0.169.0 — No more drop-downs
 
+A stepper now shows where it stands in its list and what stepping onto its next value costs, in
+mono under the arrows — position on the left, cost on the right where a row has one. The speech
+model row names each model's size, whether it is English only and how it compares for speed;
+holding an arrow now repeats the move rather than requiring a press each time.
+
 Machine text — the live log, the journal list and detail, the Help Improve payload and excerpt
 preview, and time and key readouts — now draws in an embedded JetBrains Mono rather than
 whatever monospace font the machine happens to have installed.

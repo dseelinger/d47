@@ -120,7 +120,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     /// What the list keeps whatever the band would like, in pixels: the filter row above it plus enough
     /// rows underneath to still be a list.
     /// </summary>
-    private const double ListKeeps = 150;
+    private const double ListKeeps = 170;
 
     /// <summary>The floor under anything on this page a ray has to hit, in pixels.</summary>
     private const double TouchTarget = 30;

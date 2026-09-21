@@ -577,6 +577,26 @@ public static class ListeningCapability
                         ? $"{label} — installed"
                         : $"{label} — about {size} MB to download";
                 },
+                Consequence = id =>
+                {
+                    var model = WhisperModels.Find(id);
+
+                    if (model is null)
+                    {
+                        return null;
+                    }
+
+                    var size = model.ApproximateMegabytes >= 1000
+                        ? $"{model.ApproximateMegabytes / 1000.0:0.#} GB"
+                        : $"{model.ApproximateMegabytes} MB";
+
+                    var index = WhisperModels.All.ToList().FindIndex(m => m.Id == model.Id);
+                    var speed = index == 0
+                        ? "fastest"
+                        : $"slower than {WhisperModels.All[index - 1].Label.Split(' ')[0]}";
+
+                    return model.EnglishOnly ? $"{size}, English only, {speed}" : $"{size}, {speed}";
+                },
                 ConfirmLabel = id => WhisperModels.Find(id) is not { } model
                     ? "Stop transcribing"
                     : surface.InstalledModels().Contains(model.Id)

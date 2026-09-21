@@ -3361,6 +3361,19 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         // and the next, so it is always a stepper (#274).
         var (view, combo) = Choice.Build(items, selectedIndex: -1, alwaysStepper: row.ChoiceSource is not null);
 
+        // The position and what stepping onto a value costs, both shown only on a stepper (#336).
+        if (view is Stepper stepper)
+        {
+            var consequences = new List<string?>();
+            if (clearable)
+            {
+                consequences.Add(null);
+            }
+
+            consequences.AddRange(choices.Select(row.ConsequenceFor));
+            stepper.Consequences = consequences;
+        }
+
         view.HorizontalAlignment = HorizontalAlignment.Right;
         view.MinWidth = StandardControlWidth;
         DressAsAChoice(view);

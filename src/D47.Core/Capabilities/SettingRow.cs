@@ -111,6 +111,9 @@ public sealed record SettingRow
     /// <summary>How a choice is written for a person.</summary>
     public Func<string, string>? ChoiceLabel { get; init; }
 
+    /// <summary>What choosing one value costs or changes — null where a row has nothing to add (#336).</summary>
+    public Func<string, string?>? Consequence { get; init; }
+
     /// <summary>
     /// Choices that depend on other settings — the model list belongs to the selected provider's
     /// endpoint, not to the app.
@@ -330,6 +333,9 @@ public sealed record SettingRow
 
     /// <summary>One choice, written for a person.</summary>
     public string LabelForChoice(string choice, D47Settings settings) => DescriberFor(settings)(choice);
+
+    /// <summary>What one choice costs or changes, or null where <see cref="Consequence"/> has nothing to say.</summary>
+    public string? ConsequenceFor(string choice) => Consequence?.Invoke(choice);
 
     /// <summary>The id reads fine as-is, which is true of log levels and of most rows.</summary>
     private static readonly Func<string, string> Verbatim = choice => choice;
