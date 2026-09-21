@@ -75,7 +75,8 @@ public sealed class BlockCaret : Control
         }
 
         var hit = target.TextLayout.HitTestTextPosition(target.CaretIndex);
-        context.FillRectangle(brush, new Rect(hit.Position, BlockSize));
+        var position = target.TranslatePoint(hit.Position, this) ?? hit.Position;
+        context.FillRectangle(brush, new Rect(position, BlockSize));
     }
 
     private void OnTargetChanged(TextPresenter? oldTarget, TextPresenter? newTarget)
