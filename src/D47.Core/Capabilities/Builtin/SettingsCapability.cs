@@ -99,7 +99,8 @@ public static class SettingsCapability
             var fallback = row.DefaultDisplayFor(settings.Current);
             var value = row.Binding!.Read(settings.Current)
                         ?? (fallback is null ? "(default)" : $"(default: {fallback})");
-            report.AppendLine($"{row.Key} — {row.Label}: {value}");
+            var label = row.Unit is null ? row.Label : $"{row.Label}, in {row.Unit}";
+            report.AppendLine($"{row.Key} — {label}: {value}");
 
             if (row.ChoicesFor(settings.Current) is { Count: > 0 } choices)
             {

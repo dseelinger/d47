@@ -73,6 +73,12 @@ own, and a value cell filled in the stronger accent tint with its ink in the new
 ellipsising only past 512px. Its position and cost line below now draws at 12px mono, a size the
 type scale gained for it.
 
+A number setting now shows its unit inside the box, in a small chip beside the value: "Capture
+before the key" reads 500 and ms rather than naming milliseconds in its label, and the same goes
+for the other Listening timings and the speech margin in decibels. The box is 44 tall, the value
+is in mono, and the up and down arrows sit in 40-wide cells that repeat when held. Focus now
+underlines the value instead of lighting the whole frame.
+
 A protected settings row now carries a left bar instead of a bordered "protected" chip, with one
 legend line under the screen title on any screen that has one. A row's help now shows on hovering
 or focusing its own label rather than behind a separate info glyph.

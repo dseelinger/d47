@@ -471,7 +471,7 @@ different.
 The name has to be near the front of what you said. Talking *about* Directive 47 is not talking
 *to* it.
 
-#### Seconds D47 keeps listening after you say its name {#wake-window}
+#### How long D47 keeps listening after you say its name {#wake-window}
 
 Say the name on its own, Directive 47 sounds its listening cue, and the next thing you say is the
 request — the way you would address a person. **12 seconds** out of the box, and the follow-up

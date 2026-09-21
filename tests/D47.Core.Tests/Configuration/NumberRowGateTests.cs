@@ -1,11 +1,12 @@
 using System.Globalization;
+using System.Text.RegularExpressions;
 using D47.Core.Capabilities;
 using D47.Core.Configuration;
 using Xunit;
 
 namespace D47.Core.Tests.Configuration;
 
-/// <summary>Every registered number row, held to two rules it is easy to break one row at a time.</summary>
+/// <summary>Every registered number row, held to rules it is easy to break one row at a time.</summary>
 public class NumberRowGateTests
 {
     public static TheoryData<string> NumberRows
@@ -87,6 +88,37 @@ public class NumberRowGateTests
 
         Assert.NotNull(value);
         Assert.DoesNotContain(',', value);
+    }
+
+    /// <summary>The unit is drawn inside the control from <see cref="SettingRow.Unit"/>, so a label naming it says it twice.</summary>
+    [Fact]
+    public void ANumberRowsLabelLeavesItsUnitToTheControl()
+    {
+        using var install = new TempInstall();
+        var settings = TestSurface.For(install).Settings;
+
+        var unitWord = new Regex(
+            @"\b(milliseconds|seconds|minutes|decibels|percent|metres|tonnes|days)\b",
+            RegexOptions.IgnoreCase);
+
+        var named = from section in settings.Sections
+                    from row in section.Rows
+                    where row.Kind == SettingKind.Number && unitWord.IsMatch(row.Label)
+                    select $"{row.Key}: {row.Label}";
+
+        Assert.Empty(named);
+    }
+
+    [Fact]
+    public void CaptureBeforeTheKeyIsCountedInMilliseconds()
+    {
+        using var install = new TempInstall();
+        var settings = TestSurface.For(install).Settings;
+
+        var row = settings.Find(D47.Core.Capabilities.Builtin.ListeningCapability.PreRollKey)!;
+
+        Assert.Equal("Capture before the key", row.Label);
+        Assert.Equal("ms", row.Unit);
     }
 
     private static IEnumerable<string> Keys()

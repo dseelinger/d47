@@ -217,7 +217,7 @@ public sealed class MacroWindow : Window
             Minimum = 0,
             Maximum = MacroStep.MaxPauseMs,
             Increment = 50,
-            Width = 110,
+            Width = 170,
         };
         pause.ValueChanged += (_, _) => step.PauseMs = (int)(pause.Value ?? 0);
 

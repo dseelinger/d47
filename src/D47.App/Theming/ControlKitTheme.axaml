@@ -386,8 +386,8 @@
     <!--
       The border and stepper buttons a NumericUpDown wraps its field in — kept as its own theme
       because NumericUpDown composes an actual ButtonSpinner rather than drawing the spinner
-      itself (#289). Square, no fill; the increase/decrease glyphs read as controls rather than
-      as the field's own value, so they draw in Accent.
+      itself (#289). Square, no fill; the increase/decrease glyphs draw in Accent, each in a
+      40-wide cell behind a D47.Border rule, repeating after 400 ms at 8 per second.
     -->
     <ControlTheme x:Key="D47.NumberSpinner" TargetType="ButtonSpinner">
       <Setter Property="Background" Value="Transparent" />
@@ -410,11 +410,13 @@
                               FontSize="{StaticResource D47.Type.Small}"
                               Foreground="{DynamicResource D47.Accent}"
                               Background="Transparent"
-                              BorderBrush="{TemplateBinding BorderBrush}"
+                              BorderBrush="{DynamicResource D47.Border}"
                               BorderThickness="1,0,0,0"
                               CornerRadius="0"
-                              Padding="8,0"
-                              MinWidth="44"
+                              Padding="0"
+                              Width="40"
+                              Delay="400"
+                              Interval="125"
                               VerticalAlignment="Stretch"
                               VerticalContentAlignment="Center"
                               HorizontalContentAlignment="Center" />
@@ -424,11 +426,13 @@
                               FontSize="{StaticResource D47.Type.Small}"
                               Foreground="{DynamicResource D47.Accent}"
                               Background="Transparent"
-                              BorderBrush="{TemplateBinding BorderBrush}"
+                              BorderBrush="{DynamicResource D47.Border}"
                               BorderThickness="1,0,0,0"
                               CornerRadius="0"
-                              Padding="8,0"
-                              MinWidth="44"
+                              Padding="0"
+                              Width="40"
+                              Delay="400"
+                              Interval="125"
                               VerticalAlignment="Stretch"
                               VerticalContentAlignment="Center"
                               HorizontalContentAlignment="Center" />
@@ -455,15 +459,19 @@
     </ControlTheme>
 
     <!--
-      A number field: the same border and no-fill as TextBox, wrapped around the spinner above.
+      A number field, 44 tall in a D47.Rule frame: the value in mono, InnerRightContent as the
+      unit chip beside it, then the spinner above. Focus underlines the value cell only.
     -->
     <ControlTheme x:Key="{x:Type NumericUpDown}" TargetType="NumericUpDown">
-      <Setter Property="Foreground" Value="{DynamicResource D47.Text}" />
+      <Setter Property="Foreground" Value="{DynamicResource D47.AccentInk}" />
       <Setter Property="PlaceholderForeground" Value="{DynamicResource D47.TextMuted}" />
       <Setter Property="BorderBrush" Value="{DynamicResource D47.Rule}" />
       <Setter Property="BorderThickness" Value="1" />
-      <Setter Property="MinHeight" Value="32" />
-      <Setter Property="Padding" Value="10,6" />
+      <Setter Property="Height" Value="44" />
+      <Setter Property="Padding" Value="14,0" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+      <Setter Property="FontFamily" Value="{StaticResource D47.Font.Mono}" />
+      <Setter Property="FontSize" Value="{StaticResource D47.Type.Subheading}" />
       <Setter Property="Template">
         <ControlTemplate>
           <DataValidationErrors>
@@ -479,30 +487,38 @@
                            AllowSpin="{TemplateBinding AllowSpin}"
                            ShowButtonSpinner="{TemplateBinding ShowButtonSpinner}"
                            ButtonSpinnerLocation="{TemplateBinding ButtonSpinnerLocation}">
-              <TextBox Name="PART_TextBox"
-                       Background="Transparent"
-                       BorderThickness="0"
-                       Padding="{TemplateBinding Padding}"
-                       MinWidth="0"
-                       Foreground="{TemplateBinding Foreground}"
-                       PlaceholderText="{TemplateBinding PlaceholderText}"
-                       PlaceholderForeground="{TemplateBinding PlaceholderForeground}"
-                       IsReadOnly="{TemplateBinding IsReadOnly}"
-                       VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
-                       HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                       Text="{TemplateBinding Text}"
-                       TextAlignment="{TemplateBinding TextAlignment}"
-                       AcceptsReturn="False"
-                       TextWrapping="NoWrap"
-                       InnerLeftContent="{Binding InnerLeftContent, RelativeSource={RelativeSource TemplatedParent}}"
-                       InnerRightContent="{Binding InnerRightContent, RelativeSource={RelativeSource TemplatedParent}}"/>
+              <DockPanel>
+                <ContentPresenter Name="PART_Unit"
+                                  DockPanel.Dock="Right"
+                                  Content="{TemplateBinding InnerRightContent}"
+                                  IsVisible="{TemplateBinding InnerRightContent, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                <TextBox Name="PART_TextBox"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         Padding="{TemplateBinding Padding}"
+                         MinWidth="0"
+                         MinHeight="0"
+                         FontFamily="{TemplateBinding FontFamily}"
+                         FontSize="{TemplateBinding FontSize}"
+                         Foreground="{TemplateBinding Foreground}"
+                         PlaceholderText="{TemplateBinding PlaceholderText}"
+                         PlaceholderForeground="{TemplateBinding PlaceholderForeground}"
+                         IsReadOnly="{TemplateBinding IsReadOnly}"
+                         VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                         HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                         Text="{TemplateBinding Text}"
+                         TextAlignment="{TemplateBinding TextAlignment}"
+                         AcceptsReturn="False"
+                         TextWrapping="NoWrap"
+                         InnerLeftContent="{Binding InnerLeftContent, RelativeSource={RelativeSource TemplatedParent}}"/>
+              </DockPanel>
             </ButtonSpinner>
           </DataValidationErrors>
         </ControlTemplate>
       </Setter>
 
-      <Style Selector="^:focus-within /template/ ButtonSpinner#PART_Spinner">
-        <Setter Property="BorderBrush" Value="{DynamicResource D47.Accent}" />
+      <Style Selector="^:focus-within /template/ TextBox#PART_TextBox">
+        <Setter Property="BorderThickness" Value="0,0,0,2" />
       </Style>
     </ControlTheme>
 

@@ -438,7 +438,8 @@ public static class ListeningCapability
             new SettingRow
             {
                 Key = SensitivityKey,
-                Label = "How much louder than the room speech has to be, in decibels",
+                Label = "How much louder than the room speech has to be",
+                Unit = "dB",
                 Help =
                     "Lower hears more and will open on a cough or a keyboard; higher waits until you "
                     + "are clearly talking. D47 measures the room continuously, so this is a margin "
@@ -467,7 +468,8 @@ public static class ListeningCapability
             {
                 Key = SilenceKey,
                 Advanced = true,
-                Label = "Quiet that ends a sentence, in milliseconds",
+                Label = "Quiet that ends a sentence",
+                Unit = "ms",
                 Help =
                     "How long you have to stop talking before D47 decides you have finished. Short "
                     + "cuts you off mid-thought; long makes every answer wait for it.",
@@ -524,7 +526,8 @@ public static class ListeningCapability
             {
                 Key = WakeWindowKey,
                 Advanced = true,
-                Label = "Seconds D47 keeps listening after you say its name",
+                Label = "How long D47 keeps listening after you say its name",
+                Unit = "s",
                 Help =
                     "Say the name alone, D47 answers, and the next thing you say is the request — the "
                     + "way you would address a person. Zero means the name and the request have to "
@@ -650,7 +653,8 @@ public static class ListeningCapability
             {
                 Key = PreRollKey,
                 Advanced = true,
-                Label = "Capture before the key, in milliseconds",
+                Label = "Capture before the key",
+                Unit = "ms",
                 Help =
                     "How much audio from just before the key was noticed is kept. The key is sampled ten "
                     + "times a second, so without this the first syllable is clipped.",

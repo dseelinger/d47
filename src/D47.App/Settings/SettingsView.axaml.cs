@@ -3789,8 +3789,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         {
             Increment = (decimal)row.Step,
             FormatString = row.NumberFormat,
-            MinWidth = 130,
-            MinHeight = TypeScale.MinimumTarget,
+            Width = 216,
             HorizontalAlignment = HorizontalAlignment.Right,
 
             // The row's own range where it declares one, so a stepper never offers a click that the store is
@@ -3799,6 +3798,28 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Minimum = row.Minimum is { } low ? (decimal)low : decimal.MinValue,
             Maximum = row.Maximum is { } high ? (decimal)high : decimal.MaxValue,
         };
+
+        if (row.Unit is { } unit)
+        {
+            var text = new TextBlock
+            {
+                Text = unit,
+                FontFamily = new FontFamily(Fonts.MonoFamily),
+                FontSize = TypeScale.Meta,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            Themed(text, TextBlock.ForegroundProperty, ThemeManager.TextFaintKey);
+
+            var chip = new Border
+            {
+                BorderThickness = new Thickness(1, 0, 0, 0),
+                Padding = new Thickness(11, 0),
+                Child = text,
+            };
+            Themed(chip, Border.BorderBrushProperty, ThemeManager.BorderKey);
+
+            number.InnerRightContent = chip;
+        }
 
         number.ValueChanged += (_, e) =>
         {

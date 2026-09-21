@@ -213,6 +213,9 @@ public sealed record SettingRow
     /// </summary>
     public double Step { get; init; } = 1;
 
+    /// <summary>What a <see cref="SettingKind.Number"/> row's value is counted in — "ms", "dB" — drawn inside the control, so the label does not name it.</summary>
+    public string? Unit { get; init; }
+
     /// <summary>The ends of a number row's range, where it has them.</summary>
     public double? Minimum { get; init; }
 
