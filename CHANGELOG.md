@@ -39,6 +39,11 @@ it edge to edge. The card sits centred and capped in width over that dimming, th
 page bar hide while it is open and come back once it is dismissed or abandoned, and a list longer
 than the card scrolls inside it.
 
+A read-only settings row — "Data folder", "Version", every other read-out — now draws with no box
+at all, just a rule on its left edge, instead of the same bordered rectangle a text field draws.
+An editable text field now sits on a lit ground with one bright edge on the bottom rather than a
+box on all four sides, so the two kinds of row are told apart at a glance.
+
 Owned suits and weapons now survive a restart, the same way the fleet already did: bought,
 upgraded, sold and equipped items are kept in a per-commander file and restored on load, merged
 under whatever the current session has already seen. A suit or weapon bought and not worn since is

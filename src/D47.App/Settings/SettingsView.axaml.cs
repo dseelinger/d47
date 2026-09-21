@@ -2773,7 +2773,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         }
     }
 
-    /// <summary>The read-out an Info row shows.</summary>
+    /// <summary>The read-out an Info row shows: no box, a 2px rule on the left edge, so it cannot be
+    /// mistaken for a field (#335).</summary>
     private (Control, Action, bool) BuildInfo(SettingRow row)
     {
         var text = new SelectableTextBlock { FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap };
@@ -2781,10 +2782,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         var inset = new Border
         {
-            Padding = new Thickness(8, 8),
+            BorderThickness = new Thickness(2, 0, 0, 0),
+            Padding = new Thickness(14),
             Child = text,
         };
-        CardChrome.Card(inset);
+        Themed(inset, Border.BorderBrushProperty, ThemeManager.BorderKey);
 
         return row.Binding?.Read is { } read
             ? (inset, () => text.Text = read(_settings!.Current), false)

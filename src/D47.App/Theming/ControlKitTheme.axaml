@@ -222,21 +222,24 @@
     </ControlTheme>
 
     <!--
-      Text entry: square corners, no fill, a 1px Rule border that turns Accent while focused
-      (#289). The template keeps Fluent's own parts — PART_TextPresenter, the two placeholder
+      Text entry: a ground, no corners, one lit edge on the bottom rather than a box, so a field
+      cannot be mistaken for a read-only row (#335). Avalonia's TextBox caret has no block shape to
+      opt into from the theme; the caret stays the default thin line, in Accent, at the wanted blink
+      rate. The template keeps Fluent's own parts — PART_TextPresenter, the two placeholder
       TextBlocks, PART_ScrollViewer — so the caret, selection and the floating placeholder still
-      work; only the brushes and the corner radius are d47's.
+      work; only the brushes, sizing and the corner radius are d47's.
     -->
     <ControlTheme x:Key="{x:Type TextBox}" TargetType="TextBox">
-      <Setter Property="Foreground" Value="{DynamicResource D47.Text}" />
-      <Setter Property="Background" Value="Transparent" />
-      <Setter Property="CaretBrush" Value="{DynamicResource D47.Text}" />
-      <Setter Property="BorderBrush" Value="{DynamicResource D47.Rule}" />
+      <Setter Property="Foreground" Value="{DynamicResource D47.AccentInk}" />
+      <Setter Property="Background" Value="{DynamicResource D47.FillHigh}" />
+      <Setter Property="CaretBrush" Value="{DynamicResource D47.Accent}" />
+      <Setter Property="CaretBlinkInterval" Value="0:0:1.1" />
+      <Setter Property="BorderBrush" Value="{DynamicResource D47.Accent}" />
       <Setter Property="SelectionBrush" Value="{DynamicResource D47.AccentMuted}" />
       <Setter Property="PlaceholderForeground" Value="{DynamicResource D47.TextMuted}" />
-      <Setter Property="BorderThickness" Value="1" />
-      <Setter Property="MinHeight" Value="32" />
-      <Setter Property="Padding" Value="10,6" />
+      <Setter Property="BorderThickness" Value="0,0,0,2" />
+      <Setter Property="MinHeight" Value="44" />
+      <Setter Property="Padding" Value="0,13" />
       <Setter Property="FocusAdorner" Value="{x:Null}" />
       <Setter Property="ScrollViewer.IsScrollChainingEnabled" Value="True" />
       <Setter Property="Template">
@@ -321,10 +324,6 @@
 
       <Style Selector="^:disabled">
         <Setter Property="Foreground" Value="{DynamicResource D47.TextMuted}" />
-      </Style>
-
-      <Style Selector="^:focus /template/ Border#PART_BorderElement">
-        <Setter Property="BorderBrush" Value="{DynamicResource D47.Accent}" />
       </Style>
 
       <Style Selector="^[UseFloatingPlaceholder=true]:not(:empty) /template/ TextBlock#PART_FloatingPlaceholder">
