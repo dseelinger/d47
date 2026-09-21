@@ -527,6 +527,80 @@
       </Style>
     </ControlTheme>
 
+    <!--
+      The Level control's Slider (#352): a 30-tall D47.Rule/D47.FillLow track, centred inside the
+      40-tall Track that the 10-wide handle needs so it can overhang 5px top and bottom.
+    -->
+    <ControlTheme x:Key="{x:Type Slider}" TargetType="Slider">
+      <Setter Property="MinHeight" Value="44" />
+      <Setter Property="FocusAdorner" Value="{StaticResource D47.FocusAdorner}" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Grid MinHeight="44" VerticalAlignment="Center">
+            <Border Height="30"
+                    VerticalAlignment="Center"
+                    BorderThickness="1"
+                    BorderBrush="{DynamicResource D47.Rule}"
+                    Background="{DynamicResource D47.FillLow}" />
+            <Track Name="PART_Track"
+                   Height="40"
+                   Orientation="Horizontal"
+                   Minimum="{TemplateBinding Minimum}"
+                   Maximum="{TemplateBinding Maximum}"
+                   Value="{TemplateBinding Value, Mode=TwoWay}"
+                   IsDirectionReversed="{TemplateBinding IsDirectionReversed}">
+              <Track.DecreaseButton>
+                <RepeatButton Name="PART_DecreaseButton"
+                              Theme="{StaticResource D47.SliderFill}"
+                              Focusable="False" />
+              </Track.DecreaseButton>
+              <Track.IncreaseButton>
+                <RepeatButton Name="PART_IncreaseButton"
+                              Background="Transparent"
+                              BorderThickness="0"
+                              Focusable="False" />
+              </Track.IncreaseButton>
+              <Thumb Name="thumb" Theme="{StaticResource D47.SliderThumb}" />
+            </Track>
+          </Grid>
+        </ControlTemplate>
+      </Setter>
+    </ControlTheme>
+
+    <!-- The Level's fill: Accent, inset 3px on every side of the 30-tall track, bloom (null and so off in Light). -->
+    <ControlTheme x:Key="D47.SliderFill" TargetType="RepeatButton">
+      <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="Height" Value="24" />
+      <Setter Property="Margin" Value="3,0" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="Effect" Value="{DynamicResource D47.Bloom}" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Background="{TemplateBinding Background}" />
+        </ControlTemplate>
+      </Setter>
+    </ControlTheme>
+
+    <!--
+      The Level's handle: a visible 10-wide D47.AccentInk bar inside a 44-wide transparent hit
+      rectangle, so the drawn handle stays the handoff's width while a pointer or VR ray still
+      finds it at the minimum interactive target.
+    -->
+    <ControlTheme x:Key="D47.SliderThumb" TargetType="Thumb">
+      <Setter Property="Width" Value="10" />
+      <Setter Property="Height" Value="40" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Panel>
+            <Rectangle Width="44" Height="44" Fill="Transparent" />
+            <Rectangle Width="10" Height="40" Fill="{DynamicResource D47.AccentInk}" />
+          </Panel>
+        </ControlTemplate>
+      </Setter>
+    </ControlTheme>
+
   </Styles.Resources>
 
 </Styles>

@@ -8,6 +8,11 @@
 
 ## 0.169.0 — No more drop-downs
 
+A new Level control draws the handoff's settable slider: a 30-tall track with a solid Accent fill
+inset 3px, blooming on dark themes, and a 10-wide handle overhanging the track 5px top and bottom
+inside a 44-wide hit area. The numeric value always shows beside it, and arrow keys step by one,
+Page Up/Down by ten. Nothing in the app uses it yet.
+
 Every reported bar on the Loadout pages now draws as the hatched Gauge: 14 tall, square-cornered,
 with muted end caps and a hatched fill in the reading's own colour, instead of a rounded solid
 bar.
