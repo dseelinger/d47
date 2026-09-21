@@ -10,7 +10,7 @@ namespace D47.App.Controls;
 
 /// <summary>
 /// One value stepped through a list too long, or too changeable, for <see cref="Segment"/>
-/// (#274). <c>◂</c> and <c>▸</c> either side of the current value,
+/// (#274). <c>◄</c> and <c>►</c> either side of the current value,
 /// each press moving one item and wrapping at the ends. Holding an arrow repeats the move.
 /// </summary>
 public sealed class Stepper : ContentControl, IChoiceControl
@@ -31,12 +31,16 @@ public sealed class Stepper : ContentControl, IChoiceControl
     /// <summary>Raised when the choice changes by a press — never by setting <see cref="SelectedIndex"/>.</summary>
     public event EventHandler? SelectionChanged;
 
+    /// <summary>The value cell ellipsises past this width; nothing else in the stepper truncates.</summary>
+    private const double ValueMaxWidth = 512;
+
     private readonly TextBlock _value = new()
     {
         HorizontalAlignment = HorizontalAlignment.Center,
         VerticalAlignment = VerticalAlignment.Center,
         TextTrimming = TextTrimming.CharacterEllipsis,
         TextAlignment = TextAlignment.Center,
+        FontSize = Theming.TypeScale.Body,
     };
 
     private readonly TextBlock _position = new()
@@ -44,7 +48,7 @@ public sealed class Stepper : ContentControl, IChoiceControl
         Name = "StepperPosition",
         HorizontalAlignment = HorizontalAlignment.Left,
         FontFamily = new FontFamily(Theming.Fonts.MonoFamily),
-        FontSize = Theming.TypeScale.Small,
+        FontSize = Theming.TypeScale.Meta,
     };
 
     private readonly TextBlock _consequence = new()
@@ -52,7 +56,7 @@ public sealed class Stepper : ContentControl, IChoiceControl
         Name = "StepperConsequence",
         HorizontalAlignment = HorizontalAlignment.Right,
         FontFamily = new FontFamily(Theming.Fonts.MonoFamily),
-        FontSize = Theming.TypeScale.Small,
+        FontSize = Theming.TypeScale.Meta,
         TextTrimming = TextTrimming.CharacterEllipsis,
         TextAlignment = TextAlignment.Right,
         IsVisible = false,
@@ -64,26 +68,41 @@ public sealed class Stepper : ContentControl, IChoiceControl
     public Stepper()
     {
         Focusable = true;
-        BorderThickness = new Thickness(1);
-        Padding = new Thickness(2, 0);
         FontFamily = new FontFamily(Theming.Fonts.ChromeFamily);
 
-        this.Bind(BackgroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.FillLowKey));
-        this.Bind(BorderBrushProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.RuleKey));
-        _value.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.TextKey));
+        _value.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.AccentInkKey));
         _position.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.TextFaintKey));
         _consequence.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.TextMutedKey));
 
-        _previous = Arrow("◂", "Previous", -1);
-        _next = Arrow("▸", "Next", 1);
+        _previous = Arrow("◄", "Previous", -1);
+        _next = Arrow("►", "Next", 1);
+
+        var valueCell = new Border
+        {
+            Padding = new Thickness(14, 0),
+            MaxWidth = ValueMaxWidth,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            Child = _value,
+        };
+
+        valueCell.Bind(Border.BackgroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.FillHigherKey));
 
         var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto") };
         Grid.SetColumn(_previous, 0);
-        Grid.SetColumn(_value, 1);
+        Grid.SetColumn(valueCell, 1);
         Grid.SetColumn(_next, 2);
         row.Children.Add(_previous);
-        row.Children.Add(_value);
+        row.Children.Add(valueCell);
         row.Children.Add(_next);
+
+        var frame = new Border
+        {
+            Height = Theming.TypeScale.MinimumTarget,
+            BorderThickness = new Thickness(1),
+            Child = row,
+        };
+
+        frame.Bind(Border.BorderBrushProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.RuleKey));
 
         var caption = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
         Grid.SetColumn(_position, 0);
@@ -91,7 +110,7 @@ public sealed class Stepper : ContentControl, IChoiceControl
         caption.Children.Add(_position);
         caption.Children.Add(_consequence);
 
-        Content = new StackPanel { Children = { row, caption } };
+        Content = new StackPanel { Children = { frame, caption } };
 
         KeyDown += OnKeyDown;
     }
@@ -136,11 +155,9 @@ public sealed class Stepper : ContentControl, IChoiceControl
             Delay = 400,
             Interval = 125,
             Content = glyph,
-            Padding = new Thickness(8, 0),
 
-            // At least the minimum interactive target, for a VR ray to land on.
-            MinWidth = Theming.TypeScale.MinimumTarget,
-            MinHeight = Theming.TypeScale.MinimumTarget,
+            // Exactly the handoff's cell, which also meets the minimum interactive target for a VR ray.
+            Width = Theming.TypeScale.MinimumTarget,
             Background = Brushes.Transparent,
             BorderThickness = new Thickness(0),
             VerticalAlignment = VerticalAlignment.Stretch,

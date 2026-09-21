@@ -1,6 +1,6 @@
 namespace D47.App.Theming;
 
-/// <summary>The seven sizes d47 draws text at, named by the job the text is doing.</summary>
+/// <summary>The eight sizes d47 draws text at, named by the job the text is doing.</summary>
 public static class TypeScale
 {
     /// <summary>The minimum edge, in either dimension, of an interactive control's hit target.</summary>
@@ -26,6 +26,9 @@ public static class TypeScale
 
     /// <summary>A badge, or a count beside something else.</summary>
     public const double Small = 13;
+
+    /// <summary>Mono text about a control rather than in it: a stepper's position and its cost.</summary>
+    public const double Meta = 12;
 
     /// <summary>The smallest d47 will draw: unit labels, machine captions.</summary>
     public const double Caption = 11;

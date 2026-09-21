@@ -68,6 +68,11 @@ width. Segments carry no border of their own; the unselected ink is the faint te
 selected segment still carries the accent fill, the knock ink and the bloom. Arrow keys now move
 the selection.
 
+A stepper now carries the handoff's own numbers: 44 tall with 44-wide arrows and no ground of its
+own, and a value cell filled in the stronger accent tint with its ink in the new accent-ink colour,
+ellipsising only past 512px. Its position and cost line below now draws at 12px mono, a size the
+type scale gained for it.
+
 A protected settings row now carries a left bar instead of a bordered "protected" chip, with one
 legend line under the screen title on any screen that has one. A row's help now shows on hovering
 or focusing its own label rather than behind a separate info glyph.
