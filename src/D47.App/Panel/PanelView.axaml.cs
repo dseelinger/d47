@@ -477,7 +477,7 @@ public partial class PanelView : UserControl
         if (state == D47.Core.Listening.MicrophoneState.Open)
         {
             MicrophoneRow.Bind(Border.BorderBrushProperty, this.GetResourceObservable(key));
-            MicrophoneRow.Bind(Border.EffectProperty, this.GetResourceObservable(Theming.ThemeManager.BloomFillKey));
+            MicrophoneRow.Bind(Border.EffectProperty, this.GetResourceObservable(Theming.ThemeManager.BloomKey));
         }
         else
         {

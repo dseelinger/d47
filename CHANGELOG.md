@@ -43,6 +43,12 @@ The Elite, Guardian and Light themes now use the handoff's own accent and backgr
 switch's On half, a checked segment, a checked tab — now use their own colour instead of borrowing
 the theme's background colour, so Light reads correctly there instead of showing dark-theme ink.
 
+Bloom and scanlines now match the handoff's own numbers on dark themes: one glow, at 10px and 34%
+with no offset, on the diamond mark, the window title, the active tab, a switch's On half, a
+checked segment, the primary button and the microphone status row; and a black scanline at 34%
+alpha, the whole overlay at 55% opacity. The tab-strip rule, the panel's outer edge and the
+selected list row no longer glow. The headset no longer reads a stronger bloom than the desktop.
+
 A protected settings row now carries a left bar instead of a bordered "protected" chip, with one
 legend line under the screen title on any screen that has one. A row's help now shows on hovering
 or focusing its own label rather than behind a separate info glyph.

@@ -69,34 +69,6 @@
       <Setter Property="IsVisible" Value="False" />
     </Style>
 
-    <!--
-      The tab-strip rule's and the panel edge's own glows (#285), set at Style priority rather
-      than as a local XAML attribute so the headset overrides below — also Style priority — can
-      win for the headset's copy. A local value sits above Style in binding priority and a later
-      Style could never beat it (see the comment on the output-only style above).
-    -->
-    <Style Selector="Border#TabStripRule">
-      <Setter Property="Effect" Value="{DynamicResource D47.Bloom.Rule}" />
-    </Style>
-    <Style Selector="controls|ChamferedBorder#EdgeGlow">
-      <Setter Property="Effect" Value="{DynamicResource D47.Bloom.Edge}" />
-    </Style>
-
-    <!--
-      The headset's stronger reading of the tab and edge glows (#285): a glow shows only where
-      the area around it is dark, and the headset is read from further away than the desktop
-      window is. Declared after the desktop-wide styles above, so it wins for the elements it
-      matches.
-    -->
-    <Style Selector="panel|PanelView.headset RadioButton:checked /template/ controls|ChamferedBorder#Shape">
-      <Setter Property="Effect" Value="{DynamicResource D47.Bloom.Fill.Headset}" />
-    </Style>
-    <Style Selector="panel|PanelView.headset Border#TabStripRule">
-      <Setter Property="Effect" Value="{DynamicResource D47.Bloom.Rule.Headset}" />
-    </Style>
-    <Style Selector="panel|PanelView.headset controls|ChamferedBorder#EdgeGlow">
-      <Setter Property="Effect" Value="{DynamicResource D47.Bloom.Edge.Headset}" />
-    </Style>
   </UserControl.Styles>
 
   <UserControl.Resources>
@@ -1259,13 +1231,13 @@
 
   <!--
     Scanlines, over the whole window and on top of everything else — dark themes only, since the
-    brush itself is null in Light (#281). Never hit-testable: a Commander's press or a headset's
+    brush itself is null in Light (#345). Never hit-testable: a Commander's press or a headset's
     ray must land on the panel underneath, not on this.
   -->
   <!--
     The brush is built in code for this surface's render scaling, not taken from the resource, which only
     says whether the theme has scanlines at all. No bitmap smoothing, so a 1px line stays 1px.
   -->
-  <Border x:Name="Scanlines" IsHitTestVisible="False" RenderOptions.BitmapInterpolationMode="None" />
+  <Border x:Name="Scanlines" Opacity="0.55" IsHitTestVisible="False" RenderOptions.BitmapInterpolationMode="None" />
   </Panel>
 </UserControl>

@@ -114,10 +114,9 @@ public static class CaptionStrip
         };
         diamond.Bind(Shape.FillProperty, diamond.GetResourceObservable(ThemeManager.AccentKey));
 
-        // The same glows the panel uses, null on Light.
-        diamond.Bind(Visual.EffectProperty, diamond.GetResourceObservable(ThemeManager.BloomFillKey));
-        name.Bind(Visual.EffectProperty, name.GetResourceObservable(ThemeManager.BloomRuleKey));
-        version.Bind(Visual.EffectProperty, version.GetResourceObservable(ThemeManager.BloomFillKey));
+        // The same glow the panel uses, null on Light.
+        diamond.Bind(Visual.EffectProperty, diamond.GetResourceObservable(ThemeManager.BloomKey));
+        name.Bind(Visual.EffectProperty, name.GetResourceObservable(ThemeManager.BloomKey));
 
         var drag = new Border
         {
@@ -143,7 +142,7 @@ public static class CaptionStrip
         tint.Bind(Border.BackgroundProperty, tint.GetResourceObservable(ThemeManager.PaneFillKey));
 
         // Over the text as well as the tint, sampled pixel for pixel so each line stays 1px, as on the panel.
-        var scanlines = new Border { IsHitTestVisible = false };
+        var scanlines = new Border { Opacity = 0.55, IsHitTestVisible = false };
         RenderOptions.SetBitmapInterpolationMode(scanlines, BitmapInterpolationMode.None);
 
         void ShowScanlines() => scanlines.Background =
@@ -157,7 +156,6 @@ public static class CaptionStrip
 
         var rule = new Border { Height = 1, VerticalAlignment = VerticalAlignment.Bottom, IsHitTestVisible = false, IsVisible = drawRule };
         rule.Bind(Border.BackgroundProperty, rule.GetResourceObservable(ThemeManager.TagBorderKey));
-        rule.Bind(Visual.EffectProperty, rule.GetResourceObservable(ThemeManager.BloomRuleKey));
 
         var strip = new Grid
         {

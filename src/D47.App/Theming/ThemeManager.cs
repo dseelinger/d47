@@ -83,25 +83,10 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     /// <summary>A 2px rule, 70% of Accent mixed onto Background — under the tab strip, in every theme (#285).</summary>
     public const string TabStripRuleKey = "D47.TabStripRule";
 
-    /// <summary>An 18px glow of <see cref="AccentKey"/> at 38%, behind a solid Accent fill — dark themes only, null in Light (#285).</summary>
-    public const string BloomFillKey = "D47.Bloom.Fill";
+    /// <summary>A 10px glow of <see cref="AccentKey"/> at 34%, behind the marked elements — dark themes only, null in Light (#345).</summary>
+    public const string BloomKey = "D47.Bloom";
 
-    /// <summary>The headset's stronger reading of <see cref="BloomFillKey"/>: 34px at 60% (#285).</summary>
-    public const string BloomFillHeadsetKey = "D47.Bloom.Fill.Headset";
-
-    /// <summary>A 16px glow of <see cref="AccentKey"/> at 22%, offset 2px down, behind the tab-strip rule — dark themes only, null in Light (#285).</summary>
-    public const string BloomRuleKey = "D47.Bloom.Rule";
-
-    /// <summary>The headset's stronger reading of <see cref="BloomRuleKey"/>: 28px at 45% (#285).</summary>
-    public const string BloomRuleHeadsetKey = "D47.Bloom.Rule.Headset";
-
-    /// <summary>A 22px glow of <see cref="AccentKey"/> at 12%, behind the panel's outer edge — dark themes only, null in Light (#285).</summary>
-    public const string BloomEdgeKey = "D47.Bloom.Edge";
-
-    /// <summary>The headset's stronger reading of <see cref="BloomEdgeKey"/>: 44px at 30% (#285).</summary>
-    public const string BloomEdgeHeadsetKey = "D47.Bloom.Edge.Headset";
-
-    /// <summary>A tiled 1px-at-3.5%-white line brush over the whole window — dark themes only, null in Light (#281).</summary>
+    /// <summary>A tiled 1px-at-34%-black line brush over the whole window — dark themes only, null in Light (#345).</summary>
     public const string ScanlinesKey = "D47.Scanlines";
 
     /// <summary>
@@ -127,8 +112,7 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         RuleKey, FillLowKey, FillHighKey, FillHigherKey,
         AccentBorderKey, AccentInkKey, InfoFillKey, InfoBorderKey, InfoInkKey,
         CardFillKey, CardFillSelectedKey, RowFillKey, TagBorderKey, TabStripRuleKey,
-        BloomFillKey, BloomFillHeadsetKey, BloomRuleKey, BloomRuleHeadsetKey, BloomEdgeKey, BloomEdgeHeadsetKey,
-        ScanlinesKey,
+        BloomKey, ScanlinesKey,
         PaneFillKey, PaneBorderKey, TagInkKey, ScrimKey,
     ];
 
@@ -215,16 +199,10 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         // The tab-strip rule (#285): drawn in every theme, unlike bloom, which only glows around it.
         resources[TabStripRuleKey] = new SolidColorBrush(derived.TabStripRule);
 
-        // Bloom and scanlines (#281, recalibrated #285): dark themes only, so both resolve to null
-        // rather than a brush or effect in Light — which is what turns them off, since an unset Effect
-        // or Background paints nothing. A glow shows only where the area around it is dark, so the
-        // headset's copy runs stronger values than the desktop's rather than the same ones (#285).
-        resources[BloomFillKey] = palette.IsDark ? Bloom(palette.Accent, 18, 0.38) : null;
-        resources[BloomFillHeadsetKey] = palette.IsDark ? Bloom(palette.Accent, 34, 0.60) : null;
-        resources[BloomRuleKey] = palette.IsDark ? Bloom(palette.Accent, 16, 0.22, offsetY: 2) : null;
-        resources[BloomRuleHeadsetKey] = palette.IsDark ? Bloom(palette.Accent, 28, 0.45, offsetY: 2) : null;
-        resources[BloomEdgeKey] = palette.IsDark ? Bloom(palette.Accent, 22, 0.12) : null;
-        resources[BloomEdgeHeadsetKey] = palette.IsDark ? Bloom(palette.Accent, 44, 0.30) : null;
+        // Bloom and scanlines (#345): dark themes only, so both resolve to null rather than a brush
+        // or effect in Light — which is what turns them off, since an unset Effect or Background
+        // paints nothing.
+        resources[BloomKey] = palette.IsDark ? Bloom(palette.Accent, 10, 0.34) : null;
         resources[ScanlinesKey] = palette.IsDark ? Scanlines(1) : null;
 
         // The tint is the pane's, not the page's: the ground behind the pane stays Background.
@@ -239,12 +217,12 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         logger.LogInformation("Theme is now {Theme}", theme.Name);
     }
 
-    /// <summary>A glow of <paramref name="accent"/>, for the elements named in #285.</summary>
-    private static DropShadowEffect Bloom(Color accent, double blurRadius, double opacity, double offsetY = 0) => new()
+    /// <summary>A glow of <paramref name="accent"/>, for the elements named in #345.</summary>
+    private static DropShadowEffect Bloom(Color accent, double blurRadius, double opacity) => new()
     {
         Color = accent,
         OffsetX = 0,
-        OffsetY = offsetY,
+        OffsetY = 0,
         BlurRadius = blurRadius,
         Opacity = opacity,
     };
@@ -262,9 +240,9 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     };
 
     /// <summary>
-    /// A tiled brush of a 1px line at 3.5% white every 3px, for the overlay in #281. The pixels are layout
-    /// pixels at <paramref name="renderScaling"/>, each rounded to whole screen pixels, so the tile is drawn
-    /// one bitmap pixel to one screen pixel.
+    /// A tiled brush of a 1px black line at 34% alpha every 3px, for the overlay in #345. The pixels are
+    /// layout pixels at <paramref name="renderScaling"/>, each rounded to whole screen pixels, so the tile
+    /// is drawn one bitmap pixel to one screen pixel.
     /// </summary>
     /// <remarks>
     /// A 1px line every 3 screen pixels is too fine to see at 150% or 200%; a tile laid out in unrounded
@@ -279,17 +257,19 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
 
         using (var buffer = bitmap.Lock())
         {
-            var ink = (byte)Math.Round(255 * 0.035);
+            var ink = (byte)Math.Round(255 * 0.34);
 
             for (var y = 0; y < size.Height; y++)
             {
-                var value = y < line ? ink : (byte)0;
+                var alpha = y < line ? ink : (byte)0;
                 var row = buffer.Address + (y * buffer.RowBytes);
 
-                for (var channel = 0; channel < 4; channel++)
+                for (var channel = 0; channel < 3; channel++)
                 {
-                    Marshal.WriteByte(row + channel, value);
+                    Marshal.WriteByte(row + channel, 0);
                 }
+
+                Marshal.WriteByte(row + 3, alpha);
             }
         }
 
