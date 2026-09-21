@@ -54,6 +54,14 @@ sidebar — now draws in Saira Condensed instead of Saira. Prose and row labels 
 placeholders, message bodies — now draw in Titillium Web instead of Saira Semi Condensed. Tab
 labels, group headings and the window title carry the handoff's own letter spacing.
 
+The four button weights now carry the handoff's own sizes, padding and ink. The normal weight
+draws no fill and its ink in the plain text colour, not accent; primary is bolder and larger, with
+its ink in the new knock colour; quiet's underline is dotted instead of dashed; destructive draws
+no fill either. Hovering the normal weight switches its border to accent; hovering quiet also
+switches its ink to the plain text colour; destructive and primary keep their own colour on hover.
+A disabled button now dims to 35% opacity instead of recolouring. Every button also carries a 2px
+accent focus ring, 2px clear of its edge, on keyboard focus.
+
 A protected settings row now carries a left bar instead of a bordered "protected" chip, with one
 legend line under the screen title on any screen that has one. A row's help now shows on hovering
 or focusing its own label rather than behind a separate info glyph.
