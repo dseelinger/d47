@@ -244,7 +244,7 @@ public static class LoadoutPages
 
     /// <summary>
     /// One thing in the index, as a card in a grid rather than a bar in a list (asked for 2026-09-03).
-    /// Restyled for the HUD redesign: a black hull cell, the name in Saira Semi Condensed upper case, and
+    /// Restyled for the HUD redesign: a black hull cell, the name in Saira Condensed upper case, and
     /// a fill and border that say whether this is the card the other pane is drawing (#278).
     /// </summary>
     /// <param name="text">
@@ -337,7 +337,7 @@ public static class LoadoutPages
         var label = new TextBlock
         {
             Text = headline.ToUpperInvariant(),
-            FontFamily = Fonts.LabelFamily,
+            FontFamily = Fonts.ChromeFamily,
             FontSize = TypeScale.Body,
             TextWrapping = TextWrapping.Wrap,
             MaxLines = 2,

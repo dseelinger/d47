@@ -66,7 +66,7 @@ public sealed class Stepper : ContentControl, IChoiceControl
         Focusable = true;
         BorderThickness = new Thickness(1);
         Padding = new Thickness(2, 0);
-        FontFamily = new FontFamily("avares://d47/Assets/Fonts/SairaSemiCondensed-Regular.ttf#Saira Semi Condensed");
+        FontFamily = new FontFamily(Theming.Fonts.ChromeFamily);
 
         this.Bind(BackgroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.FillLowKey));
         this.Bind(BorderBrushProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.RuleKey));

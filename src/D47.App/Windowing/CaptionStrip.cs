@@ -25,6 +25,8 @@ public static class CaptionStrip
 {
     public const double StripHeight = 44;
     private const double ButtonWidth = 46;
+    private const double TitleSize = 23;
+    private const double TitleTracking = 5.06;
 
     /// <summary>
     /// Wraps the window's existing content under the strip. Called last in a window's constructor,
@@ -83,10 +85,10 @@ public static class CaptionStrip
         var name = new TextBlock
         {
             VerticalAlignment = VerticalAlignment.Center,
-            FontFamily = new FontFamily("avares://d47/Assets/Fonts/SairaSemiCondensed-Bold.ttf#Saira Semi Condensed"),
-            FontSize = TypeScale.Subheading,
+            FontFamily = new FontFamily(Fonts.ChromeFamily),
+            FontSize = TitleSize,
             FontWeight = FontWeight.Bold,
-            LetterSpacing = 3,
+            LetterSpacing = TitleTracking,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
         name.Bind(TextBlock.ForegroundProperty, name.GetResourceObservable(ThemeManager.TextKey));
@@ -94,7 +96,7 @@ public static class CaptionStrip
         var version = new TextBlock
         {
             VerticalAlignment = VerticalAlignment.Center,
-            FontFamily = new FontFamily(Fonts.LabelFamily),
+            FontFamily = new FontFamily(Fonts.ChromeFamily),
             FontSize = TypeScale.Secondary,
             LetterSpacing = 1,
         };

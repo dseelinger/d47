@@ -1,0 +1,14 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!--
+    The same three families Fonts.cs declares, for the views authored in markup. x:Static against a
+    const string fails the way TypeScale.axaml's comment describes for doubles: a Setter receives the
+    raw string and casts it straight to the property type with no TypeConverter step. FontsTests
+    asserts the two stay in step.
+  -->
+  <FontFamily x:Key="D47.Font.Chrome">avares://d47/Assets/Fonts/SairaCondensed-SemiBold.ttf#Saira Condensed</FontFamily>
+  <FontFamily x:Key="D47.Font.Prose">avares://d47/Assets/Fonts/TitilliumWeb-Regular.ttf#Titillium Web</FontFamily>
+  <FontFamily x:Key="D47.Font.Mono">avares://d47/Assets/Fonts/JetBrainsMono-Regular.ttf#JetBrains Mono</FontFamily>
+
+</ResourceDictionary>

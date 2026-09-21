@@ -14,9 +14,9 @@
   -->
   <ControlTheme x:Key="D47.Tab" TargetType="RadioButton">
     <Setter Property="Cursor" Value="Hand" />
-    <Setter Property="FontFamily" Value="avares://d47/Assets/Fonts/SairaSemiCondensed-Regular.ttf#Saira Semi Condensed" />
+    <Setter Property="FontFamily" Value="{StaticResource D47.Font.Chrome}" />
     <Setter Property="FontSize" Value="{StaticResource D47.Type.Body}" />
-    <Setter Property="LetterSpacing" Value="1" />
+    <Setter Property="LetterSpacing" Value="2.56" />
     <Setter Property="Foreground" Value="{DynamicResource D47.Accent}" />
     <Setter Property="Padding" Value="18,7" />
     <Setter Property="Margin" Value="0,0,3,0" />
@@ -64,7 +64,7 @@
   -->
   <ControlTheme x:Key="D47.Crumb" TargetType="Button">
     <Setter Property="Cursor" Value="Hand" />
-    <Setter Property="FontFamily" Value="avares://d47/Assets/Fonts/SairaSemiCondensed-Regular.ttf#Saira Semi Condensed" />
+    <Setter Property="FontFamily" Value="{StaticResource D47.Font.Chrome}" />
     <Setter Property="FontSize" Value="{StaticResource D47.Type.Body}" />
     <Setter Property="Foreground" Value="{DynamicResource D47.Accent}" />
     <Setter Property="Background" Value="Transparent" />

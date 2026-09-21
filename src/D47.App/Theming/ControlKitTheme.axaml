@@ -16,7 +16,10 @@
       delete (#337).
     -->
     <ControlTheme x:Key="{x:Type Button}" TargetType="Button">
+      <Setter Property="FontFamily" Value="{StaticResource D47.Font.Chrome}" />
       <Setter Property="FontSize" Value="{StaticResource D47.Type.Body}" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="LetterSpacing" Value="2.24" />
       <Setter Property="Cursor" Value="Hand" />
       <Setter Property="Padding" Value="14,7" />
       <Setter Property="MinHeight" Value="44" />
@@ -111,7 +114,7 @@
       <Setter Property="Cursor" Value="Hand" />
       <Setter Property="OnContent" Value="On" />
       <Setter Property="OffContent" Value="Off" />
-      <Setter Property="FontFamily" Value="avares://d47/Assets/Fonts/SairaSemiCondensed-Regular.ttf#Saira Semi Condensed" />
+      <Setter Property="FontFamily" Value="{StaticResource D47.Font.Chrome}" />
       <Setter Property="FontSize" Value="{StaticResource D47.Type.Small}" />
       <Setter Property="Template">
         <ControlTemplate>
@@ -185,7 +188,7 @@
     -->
     <ControlTheme x:Key="D47.Segment" TargetType="RadioButton">
       <Setter Property="Cursor" Value="Hand" />
-      <Setter Property="FontFamily" Value="avares://d47/Assets/Fonts/SairaSemiCondensed-Regular.ttf#Saira Semi Condensed" />
+      <Setter Property="FontFamily" Value="{StaticResource D47.Font.Chrome}" />
       <Setter Property="FontSize" Value="{StaticResource D47.Type.Body}" />
       <Setter Property="Foreground" Value="{DynamicResource D47.Accent}" />
       <Setter Property="Padding" Value="14,6" />

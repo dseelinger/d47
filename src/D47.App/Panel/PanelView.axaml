@@ -257,9 +257,8 @@
           <TextBox.Styles>
             <Style Selector="TextBox#AskBox /template/ TextBlock#PART_Placeholder,
                              TextBox#AskBox /template/ TextBlock#PART_FloatingPlaceholder">
-              <Setter Property="FontFamily" Value="avares://d47/Assets/Fonts/SairaSemiCondensed-Regular.ttf#Saira Semi Condensed" />
+              <Setter Property="FontFamily" Value="{StaticResource D47.Font.Prose}" />
               <Setter Property="FontSize" Value="{StaticResource D47.Type.Heading}" />
-              <Setter Property="LetterSpacing" Value="1" />
             </Style>
           </TextBox.Styles>
         </TextBox>
@@ -292,7 +291,7 @@
                  StrokeThickness="1.5" />
         <TextBlock x:Name="MicrophoneLabel"
                    VerticalAlignment="Center"
-                   FontFamily="avares://d47/Assets/Fonts/SairaSemiCondensed-Regular.ttf#Saira Semi Condensed"
+                   FontFamily="{StaticResource D47.Font.Chrome}"
                    LetterSpacing="1"
                    FontSize="{StaticResource D47.Type.Small}" />
       </StackPanel>
@@ -379,12 +378,11 @@
               FontSize="{StaticResource D47.Type.Secondary}"
               Foreground="{DynamicResource D47.Accent}"
               Click="OnTurnDetailsClick" />
-      <!-- A label, not a readout: the label face, not monospace, which is kept for times. -->
+      <!-- A sentence, not a readout: the prose face, not monospace, which is kept for times. -->
       <TextBlock x:Name="TurnLine"
                  Text="{Binding TurnLine}"
                  VerticalAlignment="Center"
-                 FontFamily="avares://d47/Assets/Fonts/SairaSemiCondensed-Regular.ttf#Saira Semi Condensed"
-                 LetterSpacing="1"
+                 FontFamily="{StaticResource D47.Font.Prose}"
                  FontSize="{StaticResource D47.Type.Secondary}"
                  Foreground="{DynamicResource D47.TextMuted}"
                  TextWrapping="Wrap" />
@@ -1026,7 +1024,7 @@
                  then don't invent a workflow that's unneeded". SelectableTextBlockTests asserts
                  it stays that way. -->
             <SelectableTextBlock x:Name="Transcript"
-                                 FontFamily="avares://d47/Assets/Fonts/JetBrainsMono-Regular.ttf#JetBrains Mono"
+                                 FontFamily="{StaticResource D47.Font.Mono}"
                                  FontSize="{StaticResource D47.Type.Body}"
                                  TextWrapping="Wrap">
               <!--
@@ -1103,7 +1101,7 @@
               <ListBox x:Name="JournalList"
                        Background="Transparent"
                        BorderThickness="0"
-                       FontFamily="avares://d47/Assets/Fonts/JetBrainsMono-Regular.ttf#JetBrains Mono"
+                       FontFamily="{StaticResource D47.Font.Mono}"
                        FontSize="{StaticResource D47.Type.Secondary}"
                        SelectionChanged="OnJournalSelected" />
             </ScrollViewer>
@@ -1133,7 +1131,7 @@
                 into a bug report. Same control and the same free copy the live log gets.
               -->
               <SelectableTextBlock x:Name="JournalDetail"
-                                   FontFamily="avares://d47/Assets/Fonts/JetBrainsMono-Regular.ttf#JetBrains Mono"
+                                   FontFamily="{StaticResource D47.Font.Mono}"
                                    FontSize="{StaticResource D47.Type.Secondary}"
                                    TextWrapping="NoWrap" />
             </ScrollViewer>

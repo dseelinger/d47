@@ -149,7 +149,7 @@ public sealed class AdventureEditor : UserControl
         var label = new TextBlock
         {
             Text = "CAUTION",
-            FontFamily = Fonts.LabelFamily,
+            FontFamily = Fonts.ChromeFamily,
             FontSize = TypeScale.Small,
             FontWeight = FontWeight.SemiBold,
         };

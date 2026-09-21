@@ -49,6 +49,11 @@ checked segment, the primary button and the microphone status row; and a black s
 alpha, the whole overlay at 55% opacity. The tab-strip rule, the panel's outer edge and the
 selected list row no longer glow. The headset no longer reads a stronger bloom than the desktop.
 
+Chrome text — the window title, tab labels, group headings, button labels and the settings
+sidebar — now draws in Saira Condensed instead of Saira. Prose and row labels — settings rows,
+placeholders, message bodies — now draw in Titillium Web instead of Saira Semi Condensed. Tab
+labels, group headings and the window title carry the handoff's own letter spacing.
+
 A protected settings row now carries a left bar instead of a bordered "protected" chip, with one
 legend line under the screen title on any screen that has one. A row's help now shows on hovering
 or focusing its own label rather than behind a separate info glyph.

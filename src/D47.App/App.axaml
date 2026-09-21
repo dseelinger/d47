@@ -8,6 +8,7 @@
         <!-- Application-wide, because every surface draws text and the reason for the
              scale is that there is one of it. -->
         <ResourceInclude Source="avares://d47/Theming/TypeScale.axaml" />
+        <ResourceInclude Source="avares://d47/Theming/Fonts.axaml" />
       </ResourceDictionary.MergedDictionaries>
     </ResourceDictionary>
   </Application.Resources>

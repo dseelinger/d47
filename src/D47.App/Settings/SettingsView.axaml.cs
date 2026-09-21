@@ -1240,7 +1240,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         var text = new TextBlock
         {
             Text = title,
-            FontFamily = Fonts.LabelFamily,
+            FontFamily = Fonts.ChromeFamily,
             FontSize = TypeScale.Body,
             Margin = new Thickness(8, 0, 0, 0),
             VerticalAlignment = VerticalAlignment.Center,
@@ -2311,7 +2311,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         var label = new TextBlock
         {
             Text = row.Label,
-            FontFamily = Fonts.LabelFamily,
+            FontFamily = Fonts.ProseFamily,
             FontSize = TypeScale.Body,
             VerticalAlignment = VerticalAlignment.Center,
         };

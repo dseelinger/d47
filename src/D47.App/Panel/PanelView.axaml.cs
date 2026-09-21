@@ -2427,7 +2427,7 @@ public partial class PanelView : UserControl
         var padding = theme?.Setters.OfType<Avalonia.Styling.Setter>()
             .FirstOrDefault(setter => setter.Property == PaddingProperty)?.Value as Thickness? ?? new Thickness(14, 6);
 
-        var typeface = new Typeface(Theming.Fonts.LabelFamily);
+        var typeface = new Typeface(Theming.Fonts.ChromeFamily);
 
         // Each segment is its word, its padding and a 1px left edge; the last one closes the row with a right edge.
         var width = words.Sum(word => new FormattedText(
@@ -3086,7 +3086,7 @@ public partial class PanelView : UserControl
         {
             var block = new SelectableTextBlock
             {
-                FontFamily = Theming.Fonts.BodyFamily,
+                FontFamily = Theming.Fonts.ProseFamily,
                 FontSize = Transcript.FontSize,
                 TextWrapping = TextWrapping.Wrap,
 

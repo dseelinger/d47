@@ -42,5 +42,12 @@ public class HeadlessApp : Application
             {
                 Source = new Uri("avares://d47/Theming/TypeScale.axaml"),
             });
+
+        // The same families App.axaml merges.
+        Resources.MergedDictionaries.Add(
+            new Avalonia.Markup.Xaml.Styling.ResourceInclude((Uri?)null)
+            {
+                Source = new Uri("avares://d47/Theming/Fonts.axaml"),
+            });
     }
 }
