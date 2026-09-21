@@ -83,6 +83,11 @@ public static class TitleText
             block.TextWrapping = TextWrapping.NoWrap;
         }
 
+        if (rank == TitleRank.Screen)
+        {
+            block.Bind(Visual.EffectProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.BloomKey));
+        }
+
         return block;
     }
 

@@ -8,6 +8,9 @@
 
 ## 0.169.0 — No more drop-downs
 
+Screen titles glow in Elite, Dark and Guardian, matching the primary button, the lit switch cell,
+the selected segment and the tab. They drew with no glow before.
+
 Subgroup headings draw in the mono face at caption size, letterspaced as wide as the Control
 Kit's cell captions; row headings draw in the prose face at body size, in sentence case, matching
 the settings row labels. Both used the chrome face and — for row headings — upper case before.
