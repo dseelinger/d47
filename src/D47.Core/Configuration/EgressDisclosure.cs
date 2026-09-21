@@ -2,12 +2,18 @@
 
 namespace D47.Core.Configuration;
 
-/// <summary>One destination d47 can send to, and what it sends there.</summary>
-public sealed record EgressEntry(string Id, string Name, string Destination, string What, bool Active)
+/// <summary>
+/// One destination d47 can send to, and what it sends there. <paramref name="Summary"/> is the one
+/// sentence shown before the full <paramref name="What"/> is opened (#339).
+/// </summary>
+public sealed record EgressEntry(string Id, string Name, string Destination, string What, bool Active, string Summary)
 {
-    /// <summary>A destination that is configured off, so nothing goes there right now.</summary>
-    public static EgressEntry Silent(string id, string name, string what) =>
-        new(id, name, "nothing sent", what, Active: false);
+    /// <summary>
+    /// A destination that is configured off, so nothing goes there right now. <paramref name="summary"/>
+    /// defaults to <paramref name="what"/>, which is already short for a silent entry unless overridden.
+    /// </summary>
+    public static EgressEntry Silent(string id, string name, string what, string? summary = null) =>
+        new(id, name, "nothing sent", what, Active: false, Summary: summary ?? what);
 
     public string Line => Active ? $"{Name} → {Destination}" : $"{Name} → nothing sent";
 }
@@ -132,7 +138,9 @@ public static class EgressDisclosure
                     + "name to spansh.co.uk; switching Trading Mode off stops it. "
                     : string.Empty)
                 + "No key, no identifier, and nothing else from your journal.",
-                Active: true)
+                Active: true,
+                Summary: "Sends the system name and search filters you ask about, and your location "
+                    + "when a question is relative to you.")
             : EgressEntry.Silent(
                 GalaxySearch,
                 NameOf(GalaxySearch),
@@ -148,12 +156,16 @@ public static class EgressDisclosure
                 + "choosing by distance happens on this machine. The catalogue's descriptions are read as "
                 + "information and never written into D47's own tables; its content is CC BY-NC-SA 3.0, "
                 + "acknowledged in NOTICE.",
-                Active: true)
+                Active: true,
+                Summary: "One ~2 MB request for the whole exploration catalogue, made when you ask for "
+                    + "an adventure. Nothing about you goes with it.")
             : EgressEntry.Silent(
                 NotablePlaces,
                 NameOf(NotablePlaces),
                 "Notable places are off, so no catalogue is fetched and a generated adventure chooses its "
-                + "stops from the galaxy search alone."),
+                + "stops from the galaxy search alone.",
+                summary: "Notable places are off, so no catalogue is fetched; an adventure's stops come "
+                    + "from galaxy search alone."),
 
         // The key is the switch, and deliberately the only one.
         CommunityGoals => inaraKeyPresent
@@ -165,7 +177,9 @@ public static class EgressDisclosure
                 + "says nothing about you — not your Commander name, not your Frontier ID, not where you are "
                 + "and nothing from your journal. What comes back is treated as information rather than as "
                 + "an instruction, and the goal descriptions are left there rather than read.",
-                Active: true)
+                Active: true,
+                Summary: "Your Inara API key, to ask for the current community goals. Nothing else "
+                    + "about you goes with it.")
             : EgressEntry.Silent(
                 CommunityGoals,
                 NameOf(CommunityGoals),
@@ -182,12 +196,14 @@ public static class EgressDisclosure
                 + "Nothing else goes with it: no key, no Commander name, no position and nothing from your "
                 + "journal. Which hulls you own is not sent, and the small picture on each card came with "
                 + "the build and is never fetched.",
-                Active: true)
+                Active: true,
+                Summary: "The hull symbol of a ship you open, when no large picture exists yet on disk.")
             : EgressEntry.Silent(
                 HullArt,
                 NameOf(HullArt),
                 "Hull pictures are off, so nothing is fetched, fleet cards show no drawing, and a ship's "
-                + "own page shows no picture and no turntable, even for a hull already on disk."),
+                + "own page shows no picture and no turntable, even for a hull already on disk.",
+                summary: "Hull pictures are off, so nothing is fetched and no ship shows a picture."),
 
         UpdateCheck => settings.Updates.CheckOnStartup
             ? new EgressEntry(
@@ -199,7 +215,9 @@ public static class EgressDisclosure
                 + "no journal content, and no identifier beyond the request itself. Accepting an offered "
                 + "update downloads that release from github.com and replaces D47 with it; nothing is "
                 + "downloaded unless you ask for it.",
-                Active: true)
+                Active: true,
+                Summary: "One request for the latest release tag, at startup and on demand. Accepting "
+                    + "an update downloads it from GitHub.")
             : EgressEntry.Silent(
                 UpdateCheck,
                 NameOf(UpdateCheck),
@@ -220,7 +238,8 @@ public static class EgressDisclosure
                 + "downloads it from this host — once, and only the model file. "
                 + "Nothing about you goes with the request — no audio, no transcript, no key, no identifier. "
                 + "Once downloaded, transcription runs entirely on this machine.",
-                Active: true),
+                Active: true,
+                Summary: $"The {settings.Listening.Model} speech model, fetched once if not already on disk."),
 
         Diagnostics => EgressEntry.Silent(
             Diagnostics,
@@ -231,7 +250,9 @@ public static class EgressDisclosure
             JournalFiles,
             NameOf(JournalFiles),
             "Your journal is read from disk and never uploaded. Facts drawn from it — system, body, station — "
-            + "can reach the model as game state when one is configured; see the language model row."),
+            + "can reach the model as game state when one is configured; see the language model row.",
+            summary: "Read from disk and never uploaded. Facts from it can reach the model as game "
+                + "state; see the language model row."),
 
         Donation => DonationEntry(),
 
@@ -255,7 +276,9 @@ public static class EgressDisclosure
             + $"{AppPaths.DataFolderName}\\donor-token.txt ends that grouping. d47 writes its own "
             + "copy of every donation beside the executable, with the hash of what it sent, so you "
             + "can check that what was shown is what left.",
-            Active: true);
+            Active: true,
+            Summary: "Nothing unless you press send, every time: the scrubbed text you were shown, "
+                + "plus a random installation identifier.");
     }
 
     /// <summary>What a web search sends, and where.</summary>
@@ -307,7 +330,8 @@ public static class EgressDisclosure
             + "conversation. Anything read there is treated as information, never as an instruction, "
             + "and is never written into D47's own tables. Searches are billed by the provider on top "
             + "of the turn, at about a penny each.",
-            Active: true);
+            Active: true,
+            Summary: $"{provider.Name} runs the search and reads the pages; D47 only ever sees the reply.");
     }
 
     /// <summary>
@@ -327,19 +351,21 @@ public static class EgressDisclosure
             return EgressEntry.Silent(
                 TextToSpeech,
                 NameOf(TextToSpeech),
-                Audio.TtsProviderCatalog.None.Egress);
+                Audio.TtsProviderCatalog.None.Egress,
+                summary: "No voice provider is selected, so no text is sent anywhere to be spoken.");
         }
 
         var others = speaking.Where(pair => pair.Slot.OtherPeoplesWords).ToList();
 
-        var what = new System.Text.StringBuilder();
-
-        // The legible sentence first.
-        what.Append(others.Count == 0
+        // The one-sentence form, kept for the summary as well as leading the full disclosure below.
+        var headline = others.Count == 0
             ? "No other player's words are being sent anywhere: every slot that could carry them "
-              + "is silent. "
-            : $"Another player's words are sent to {Destinations(others.Select(pair => pair.Provider))}"
-              + " to be spoken aloud. ");
+              + "is silent."
+            : $"Another player's words are sent to {Destinations(others.Select(pair => pair.Provider))} "
+              + "to be spoken aloud.";
+
+        var what = new System.Text.StringBuilder();
+        what.Append(headline).Append(' ');
 
         what.Append("Line by line: ");
         what.AppendJoin(
@@ -360,7 +386,8 @@ public static class EgressDisclosure
             NameOf(TextToSpeech),
             Destinations(speaking.Select(pair => pair.Provider)),
             what.ToString(),
-            Active: true);
+            Active: true,
+            Summary: headline);
     }
 
     /// <summary>Where the bytes actually go, each host once, in the order the slots run.</summary>
@@ -381,16 +408,28 @@ public static class EgressDisclosure
                     + "typed, in whatever volume they choose to type them.";
         }
 
+        var summary = provider.Speaks
+            ? $"{slot.Name} is spoken by {provider.Name}."
+            : $"{slot.Name} is silent — nothing is sent for it.";
+
         return provider.Speaks
-            ? new EgressEntry(TextToSpeech, NameOf(TextToSpeech), provider.Destination, what, Active: true)
-            : EgressEntry.Silent(TextToSpeech, NameOf(TextToSpeech), what);
+            ? new EgressEntry(
+                TextToSpeech, NameOf(TextToSpeech), provider.Destination, what, Active: true, Summary: summary)
+            : EgressEntry.Silent(TextToSpeech, NameOf(TextToSpeech), what, summary);
     }
 
     /// <summary>What one named voice provider receives, whether or not it is the one selected.</summary>
     public static EgressEntry TextToSpeechFor(Audio.TtsProviderInfo provider) =>
         provider.Speaks
-            ? new EgressEntry(TextToSpeech, NameOf(TextToSpeech), provider.Destination, provider.Egress, Active: true)
-            : EgressEntry.Silent(TextToSpeech, NameOf(TextToSpeech), provider.Egress);
+            ? new EgressEntry(
+                TextToSpeech,
+                NameOf(TextToSpeech),
+                provider.Destination,
+                provider.Egress,
+                Active: true,
+                Summary: $"{provider.Name} receives the text D47 speaks in this voice.")
+            : EgressEntry.Silent(
+                TextToSpeech, NameOf(TextToSpeech), provider.Egress, $"{provider.Name} sends nothing.");
 
     public static IReadOnlyList<EgressEntry> For(
         D47Settings settings,
@@ -455,7 +494,8 @@ public static class EgressDisclosure
                 $"{provider.Name} is selected and pointed at {destination}, which is this machine. Your question, "
                 + "the reply, the persona, what D47 remembers about you and the game state D47 assembled from your "
                 + "journal all go to that address and no further — nothing leaves this machine, and no account or "
-                + "key is involved.");
+                + "key is involved.",
+                summary: $"Pointed at {destination}, this machine — nothing leaves it.");
         }
 
         return new EgressEntry(
@@ -463,6 +503,8 @@ public static class EgressDisclosure
             NameOf(LanguageModel),
             destination,
             $"{provider.Name} is selected. {provider.Egress}",
-            Active: true);
+            Active: true,
+            Summary: $"{provider.Name} receives your question, the game state from your journal, and "
+                + "sends back its reply.");
     }
 }

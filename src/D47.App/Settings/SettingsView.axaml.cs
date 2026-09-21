@@ -2739,6 +2739,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             case SettingKind.Info when row.ValueAsHint:
                 return (new Avalonia.Controls.Panel(), () => { }, true);
 
+            // A summary with its full detail behind a one-press disclosure (#339).
+            case SettingKind.Info when row.DetailBinding is not null:
+                return BuildEgressDisclosure(row);
+
             case SettingKind.Info:
                 return BuildInfo(row);
 
@@ -2791,6 +2795,57 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         return row.Binding?.Read is { } read
             ? (inset, () => text.Text = read(_settings!.Current), false)
             : (inset, () => { }, false);
+    }
+
+    /// <summary>
+    /// The two-line summary <see cref="BuildInfo"/> already draws, plus the full text behind a "Show
+    /// more" press (#339).
+    /// </summary>
+    private (Control, Action, bool) BuildEgressDisclosure(SettingRow row)
+    {
+        var (summary, refreshSummary, _) = BuildInfo(row);
+
+        var detail = new SelectableTextBlock
+        {
+            FontSize = TypeScale.Secondary,
+            TextWrapping = TextWrapping.Wrap,
+            IsVisible = false,
+            Margin = new Thickness(14, 0, 14, 8),
+        };
+        Themed(detail, SelectableTextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+
+        var toggle = new Button
+        {
+            Content = "Show more",
+            FontSize = TypeScale.Secondary,
+            Padding = new Thickness(0),
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Cursor = new Cursor(StandardCursorType.Hand),
+            Margin = new Thickness(14, 4, 0, 8),
+        };
+        Themed(toggle, ForegroundProperty, ThemeManager.AccentKey);
+
+        toggle.Click += (_, _) =>
+        {
+            detail.IsVisible = !detail.IsVisible;
+            toggle.Content = detail.IsVisible ? "Show less" : "Show more";
+        };
+
+        var stack = new StackPanel { Children = { summary, toggle, detail } };
+
+        void Refresh()
+        {
+            refreshSummary();
+
+            if (row.DetailBinding is { } read)
+            {
+                detail.Text = read(_settings!.Current);
+            }
+        }
+
+        return (stack, Refresh, false);
     }
 
     /// <summary>A disclosure with the button that clears it.</summary>

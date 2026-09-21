@@ -258,13 +258,17 @@ public static class PrivacyCapability
             DocsAnchor = $"egress-{id}",
             Binding = new SettingBinding
             {
+                // The summary: what leaves and where, in at most two lines. The full detail sits behind
+                // DetailBinding, reachable with one press (#339).
                 Read = s =>
                 {
                     var entry = EgressDisclosure.Entry(
                         id, s, keyPresent(), inaraKeyPresent(), searchAvailable());
-                    return $"{entry.Line}\n{entry.What}";
+                    return $"{entry.Line}\n{entry.Summary}";
                 },
             },
+            DetailBinding = s => EgressDisclosure.Entry(
+                id, s, keyPresent(), inaraKeyPresent(), searchAvailable()).What,
         }));
 
         return rows;

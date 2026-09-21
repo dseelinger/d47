@@ -182,6 +182,12 @@ public sealed record SettingRow
     /// <summary>How the value is read and written.</summary>
     public SettingBinding? Binding { get; init; }
 
+    /// <summary>
+    /// The full text behind an <see cref="SettingKind.Info"/> row whose <see cref="Binding"/> shows only
+    /// a summary — reachable with one press rather than shown by default (#339).
+    /// </summary>
+    public Func<D47Settings, string?>? DetailBinding { get; init; }
+
     /// <summary>The name in the secret store for a <see cref="SettingKind.Secret"/> row.</summary>
     public string? SecretName { get; init; }
 

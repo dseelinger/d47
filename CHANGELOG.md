@@ -319,6 +319,10 @@ and Light keep their existing neutral text colour. Every border, fill, rule and 
 fully opaque, so a fill drawn inside a bordered card no longer comes out lighter than the same fill
 drawn on its own.
 
+Each row under "What leaves this machine" in Privacy and egress now opens at two lines — where it
+goes, and one sentence of what — with the full paragraph behind a Show more press instead of drawn
+open by default. What Ask says when asked directly is unchanged.
+
 ## 0.168.0 — Controls take the HUD dress
 
 Buttons, toggle switches and the transcript tabs now draw d47's own look rather than the
