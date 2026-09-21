@@ -69,6 +69,24 @@ public class AStepperNamesItsPositionAndCostTests
         host.Close();
     }
 
+    [AvaloniaFact]
+    public void TheSpeechModelStepperHasRoomForItsWholeFrameAndTheLineUnderIt()
+    {
+        var host = Open();
+
+        var stepper = Row(host, "Speech model").GetVisualDescendants().OfType<Stepper>().First();
+        var position = Position(stepper);
+        var bottom = position.TranslatePoint(new Point(0, position.Bounds.Height), stepper);
+
+        Assert.True(stepper.Bounds.Height >= TypeScale.MinimumTarget, $"stepper is {stepper.Bounds.Height:0.#} tall");
+        Assert.NotNull(bottom);
+        Assert.True(
+            bottom.Value.Y <= stepper.Bounds.Height,
+            $"position line ends at {bottom.Value.Y:0.#}, stepper is {stepper.Bounds.Height:0.#} tall");
+
+        host.Close();
+    }
+
     /// <summary>Holding an arrow repeats the move — the repeat timing named in #336.</summary>
     [AvaloniaFact]
     public void EachArrowRepeatsFourHundredMillisecondsInAtEightASecond()

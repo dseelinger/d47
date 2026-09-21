@@ -2277,6 +2277,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
     private void DressAsAChoice(TemplatedControl control)
     {
+        // A stepper sizes itself: a 44px frame with its position line under it, which 32px would cut off.
+        if (control is Stepper)
+        {
+            return;
+        }
+
         // Fixed rather than a floor.
         control.Height = ChoiceHeight;
         control.Padding = ChoicePadding;

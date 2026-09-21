@@ -12,7 +12,10 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>Three implementations — segment, stepper, picker button (#274) — one look.</summary>
+/// <summary>
+/// The segment and the picker button (#274) share one look. The stepper is left out: it draws its
+/// own 44px frame with a line under it (#349).
+/// </summary>
 public class ChoiceControlsLookAlikeTests
 {
     [AvaloniaFact]
@@ -41,12 +44,9 @@ public class ChoiceControlsLookAlikeTests
         var segments = host.View.GetVisualDescendants().OfType<Segment>()
             .Where(control => control.Bounds.Height > 0).Cast<TemplatedControl>();
 
-        var steppers = host.View.GetVisualDescendants().OfType<Stepper>()
-            .Where(control => control.Bounds.Height > 0).Cast<TemplatedControl>();
-
         var buttons = PickerButtons(host.View).Where(control => control.Bounds.Height > 0);
 
-        var all = segments.Concat(steppers).Concat(buttons).ToList();
+        var all = segments.Concat(buttons).ToList();
 
         Assert.NotEmpty(all);
 

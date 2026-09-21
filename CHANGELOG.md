@@ -9,7 +9,9 @@
 ## 0.169.0 — No more drop-downs
 
 Stepper draws solid `◀`/`▶` arrows and sets its value in the prose face at body size, with an 8px
-gap between the box and the position/consequence line underneath.
+gap between the box and the position/consequence line underneath. In Settings it now shows at full
+height; it was held to 32px there, which cut off the bottom of its 44px box and the whole line
+underneath.
 
 Switch labels read ON and OFF in bold, letterspaced uppercase at the Segment's size, matching the
 Segment control's chrome instead of the plain "On" and "Off" they drew before.
