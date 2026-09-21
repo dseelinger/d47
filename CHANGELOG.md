@@ -8,6 +8,10 @@
 
 ## 0.169.0 — No more drop-downs
 
+A button now has two weights below primary: quiet, with no border and muted ink under a dotted
+underline, for an alternate or an exit; and destructive, with a Danger border and ink, for a
+delete. The primary weight's fill now clips its top-right corner.
+
 A toggle switch now carries its own words — "On" and "Off" by default — on two halves that fill
 and dim as the switch changes, instead of a knob whose only signal was position and brightness.
 

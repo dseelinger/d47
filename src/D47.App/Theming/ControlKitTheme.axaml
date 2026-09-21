@@ -1,6 +1,7 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:panel="clr-namespace:D47.App.Panel">
+        xmlns:panel="clr-namespace:D47.App.Panel"
+        xmlns:controls="clr-namespace:D47.App.Controls">
 
   <!--
     The HUD dress for the three controls that appear everywhere and had no d47 look of their
@@ -11,34 +12,47 @@
 
     <!--
       Secondary by default: Accent ink on a faint Accent fill, with the rule as a border. A
-      button that wants the bolder primary treatment opts in with Classes="primary".
+      button opts into one of the other three weights with Classes — "primary" for the one
+      solid-fill action a surface gets, "quiet" for an alternate or an exit, "destructive" for a
+      delete (#337).
     -->
     <ControlTheme x:Key="{x:Type Button}" TargetType="Button">
       <Setter Property="FontSize" Value="{StaticResource D47.Type.Body}" />
       <Setter Property="Cursor" Value="Hand" />
       <Setter Property="Padding" Value="14,7" />
+      <Setter Property="MinHeight" Value="44" />
       <Setter Property="Foreground" Value="{DynamicResource D47.Accent}" />
       <Setter Property="Background" Value="{DynamicResource D47.FillLow}" />
       <Setter Property="BorderBrush" Value="{DynamicResource D47.Rule}" />
       <Setter Property="BorderThickness" Value="1" />
       <Setter Property="Template">
         <ControlTemplate>
-          <Border x:Name="Shape"
-                  Background="{TemplateBinding Background}"
-                  BorderBrush="{TemplateBinding BorderBrush}"
-                  BorderThickness="{TemplateBinding BorderThickness}">
-            <ContentPresenter x:Name="PART_ContentPresenter"
-                              Content="{TemplateBinding Content}"
-                              ContentTemplate="{TemplateBinding ContentTemplate}"
-                              Padding="{TemplateBinding Padding}"
-                              Foreground="{TemplateBinding Foreground}"
-                              HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                              VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
-          </Border>
+          <controls:ChamferedBorder x:Name="Shape"
+                                     Background="{TemplateBinding Background}"
+                                     BorderBrush="{TemplateBinding BorderBrush}"
+                                     BorderThickness="{TemplateBinding BorderThickness}">
+            <Grid>
+              <ContentPresenter x:Name="PART_ContentPresenter"
+                                Content="{TemplateBinding Content}"
+                                ContentTemplate="{TemplateBinding ContentTemplate}"
+                                Padding="{TemplateBinding Padding}"
+                                Foreground="{TemplateBinding Foreground}"
+                                HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+              <!-- The quiet weight's underline, drawn as a dashed rectangle rather than a second clipper. -->
+              <Rectangle x:Name="QuietRule"
+                         IsVisible="False"
+                         Height="1"
+                         VerticalAlignment="Bottom"
+                         Stroke="{DynamicResource D47.Rule}"
+                         StrokeThickness="1"
+                         StrokeDashArray="2,2" />
+            </Grid>
+          </controls:ChamferedBorder>
         </ControlTemplate>
       </Setter>
 
-      <Style Selector="^:pointerover /template/ Border#Shape">
+      <Style Selector="^:pointerover /template/ controls|ChamferedBorder#Shape">
         <Setter Property="Background" Value="{DynamicResource D47.FillHigh}" />
       </Style>
 
@@ -47,23 +61,45 @@
         <Setter Property="Background" Value="Transparent" />
       </Style>
 
-      <!-- Primary: solid Accent, ink the colour of the background it sits on. -->
+      <!-- Primary: solid Accent, ink the colour of the background it sits on, one per surface. -->
       <Style Selector="^.primary">
         <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
         <Setter Property="Foreground" Value="{DynamicResource D47.Background}" />
         <Setter Property="BorderThickness" Value="0" />
 
+        <Style Selector="^ /template/ controls|ChamferedBorder#Shape">
+          <Setter Property="Chamfer" Value="0,11,0,0" />
+        </Style>
+
         <!-- The solid fill's own glow (#281, recalibrated #285), off the disabled state along with the fill itself. -->
-        <Style Selector="^:not(:disabled) /template/ Border#Shape">
+        <Style Selector="^:not(:disabled) /template/ controls|ChamferedBorder#Shape">
           <Setter Property="Effect" Value="{DynamicResource D47.Bloom.Fill}" />
         </Style>
-        <Style Selector="^:pointerover /template/ Border#Shape">
+        <Style Selector="^:pointerover /template/ controls|ChamferedBorder#Shape">
           <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
         </Style>
         <Style Selector="^:disabled">
           <Setter Property="Background" Value="Transparent" />
           <Setter Property="Foreground" Value="{DynamicResource D47.TextMuted}" />
         </Style>
+      </Style>
+
+      <!-- Quiet: no border, muted ink, a dotted rule underline. For alternates and exits. -->
+      <Style Selector="^.quiet">
+        <Setter Property="Foreground" Value="{DynamicResource D47.TextMuted}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="11,4" />
+
+        <Style Selector="^ /template/ Rectangle#QuietRule">
+          <Setter Property="IsVisible" Value="True" />
+        </Style>
+      </Style>
+
+      <!-- Destructive: a Danger border and ink. For deletes only. -->
+      <Style Selector="^.destructive">
+        <Setter Property="Foreground" Value="{DynamicResource D47.Danger}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource D47.Danger}" />
+        <Setter Property="Padding" Value="11,18" />
       </Style>
     </ControlTheme>
 
@@ -461,7 +497,7 @@
     area around it is dark, and the headset is read from further away than the desktop window
     is. Declared after the base styles above, so it wins for the elements it matches.
   -->
-  <Style Selector="panel|PanelView.headset Button.primary:not(:disabled) /template/ Border#Shape">
+  <Style Selector="panel|PanelView.headset Button.primary:not(:disabled) /template/ controls|ChamferedBorder#Shape">
     <Setter Property="Effect" Value="{DynamicResource D47.Bloom.Fill.Headset}" />
   </Style>
   <Style Selector="panel|PanelView.headset ListBoxItem:selected /template/ Border#Bar">
