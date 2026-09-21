@@ -137,10 +137,10 @@ public sealed class Stepper : ContentControl, IChoiceControl
             Interval = 125,
             Content = glyph,
             Padding = new Thickness(8, 0),
-            MinWidth = 0,
 
-            // Tall enough for a VR ray to land on.
-            MinHeight = 30,
+            // At least the minimum interactive target, for a VR ray to land on.
+            MinWidth = Theming.TypeScale.MinimumTarget,
+            MinHeight = Theming.TypeScale.MinimumTarget,
             Background = Brushes.Transparent,
             BorderThickness = new Thickness(0),
             VerticalAlignment = VerticalAlignment.Stretch,

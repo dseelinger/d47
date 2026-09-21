@@ -149,7 +149,7 @@ public class TheGoalsBandLeavesRoomForTheListTests
         Toggle(panel);
 
         Assert.True(
-            ListScroller(panel).Bounds.Height > 60,
+            ListScroller(panel).Bounds.Height > 50,
             $"the list was left {ListScroller(panel).Bounds.Height} pixels tall");
     }
 

@@ -2366,8 +2366,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 // A stroked Path rather than U+21BA (#69).
                 Content = Glyphs.Draw(Glyphs.Reset, ThemeManager.AccentKey, TypeScale.Secondary),
 
-                Width = 40,
-                Height = 40,
+                Width = TypeScale.MinimumTarget,
+                Height = TypeScale.MinimumTarget,
                 Padding = new Thickness(0),
                 HorizontalContentAlignment = HorizontalAlignment.Center,
                 VerticalContentAlignment = VerticalAlignment.Center,
@@ -2545,6 +2545,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
             // Room above and below for the stroke.
             Padding = new Thickness(4, 2),
+            MinWidth = TypeScale.MinimumTarget,
+            MinHeight = TypeScale.MinimumTarget,
             Background = Brushes.Transparent,
             BorderThickness = new Thickness(0),
             VerticalAlignment = VerticalAlignment.Center,
@@ -3721,6 +3723,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Increment = (decimal)row.Step,
             FormatString = row.NumberFormat,
             MinWidth = 130,
+            MinHeight = TypeScale.MinimumTarget,
             HorizontalAlignment = HorizontalAlignment.Right,
 
             // The row's own range where it declares one, so a stepper never offers a click that the store is

@@ -44,30 +44,18 @@ public partial class TypeScaleTests
             + string.Join(", ", offenders));
     }
 
-    /// <summary>Body is whatever an unstyled control draws at.</summary>
-    [AvaloniaFact]
-    public void BodyIsWhatAControlAlreadyRendersAt()
-    {
-        // The theme's own number for control content, rather than a control instance: a ComboBox reports the
-        // framework default on itself and takes this through its template, so the instance is the wrong thing
-        // to ask.
-        Assert.True(
-            Application.Current!.TryGetResource("ControlContentThemeFontSize", null, out var control),
-            "The Fluent theme did not supply ControlContentThemeFontSize.");
-
-        Assert.Equal(TypeScale.Body, Assert.IsType<double>(control));
-    }
-
     [AvaloniaFact]
     public void TheMarkupScaleAgreesWithTheCodeScale()
     {
         var expected = new Dictionary<string, double>
         {
+            ["D47.Type.Title"] = TypeScale.Title,
             ["D47.Type.Heading"] = TypeScale.Heading,
             ["D47.Type.Subheading"] = TypeScale.Subheading,
             ["D47.Type.Body"] = TypeScale.Body,
             ["D47.Type.Secondary"] = TypeScale.Secondary,
             ["D47.Type.Small"] = TypeScale.Small,
+            ["D47.Type.Caption"] = TypeScale.Caption,
         };
 
         foreach (var (key, size) in expected)
@@ -84,10 +72,12 @@ public partial class TypeScaleTests
     [Fact]
     public void TheRolesDescendInTheOrderTheyAreNamed()
     {
+        Assert.True(TypeScale.Title > TypeScale.Heading);
         Assert.True(TypeScale.Heading > TypeScale.Subheading);
         Assert.True(TypeScale.Subheading > TypeScale.Body);
         Assert.True(TypeScale.Body > TypeScale.Secondary);
         Assert.True(TypeScale.Secondary > TypeScale.Small);
+        Assert.True(TypeScale.Small > TypeScale.Caption);
     }
 
     private static IEnumerable<string> Sources()

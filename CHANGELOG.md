@@ -8,6 +8,10 @@
 
 ## 0.169.0 — No more drop-downs
 
+The settings panel's text now reads at seven sizes instead of five, grown for the headset — body
+text moves from 14 to 16. The reset and info buttons on a settings row, the stepper's arrows and
+the number field's arrows now offer at least a 44x44 target for a VR ray to land on.
+
 A stepper now shows where it stands in its list and what stepping onto its next value costs, in
 mono under the arrows — position on the left, cost on the right where a row has one. The speech
 model row names each model's size, whether it is English only and how it compares for speed;
