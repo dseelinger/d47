@@ -182,6 +182,35 @@ reach — the panel, the overlay, speech, a device, the game itself. Where the a
 cover the change, say they cover it and name them rather than inventing a manual pass over ground
 the suite walks every run.
 
+### When it needs manual testing, launch it
+
+Run `/test-drive` before writing the steps, so the build under test is already up when the
+maintainer reads them. It builds Debug, mirrors it to the test-drive folder, syncs data and
+launches `d47.exe` from there. If the build fails, the test drive stops; fix that before reporting —
+steps written against a binary that does not contain the fix test nothing.
+
+The steps start from the running test drive. Do not include "build the app" or "launch d47"; the
+app is open. Say in one line above the list that the test drive is running with this commit.
+
+### Every step is exact
+
+Read the code the change touched before writing the steps, and take the names from it — the
+maintainer should never have to guess what a step means. Each step names:
+
+- **Where**: the window, panel section, tab or overlay, by the label it shows on screen.
+- **What to do**: the control by its visible label, the key or binding, or the exact words to say in
+  quotes — `Say "set volume to forty percent"`, not "ask it to change the volume".
+- **What to expect**: the visible text, the spoken reply or the state change that means it passed.
+  Quote it where the code fixes it. Where the change is a fix, also say what the defect looked like,
+  so a failure is recognisable.
+
+Where a step needs game state — docked, in supercruise, a particular journal event — say which, and
+how to get there in the game. Where a setting has to be changed first, name the setting and the
+value, and add a final step that puts it back.
+
+Not acceptable: "check that it works", "verify the panel looks right", "try a few commands",
+"confirm nothing regressed".
+
 ## Finishing
 
 The turn where the work lands ends in this order:
@@ -189,9 +218,10 @@ The turn where the work lands ends in this order:
 1. Commit.
 2. `/code-review` or `/prose`, when the Reviews section calls for one, with its findings amended into
    the commit.
-3. The spoken done sentence, through `/neural-voice`'s command, unless the voice was turned off. It
+3. `/test-drive`, when the change needs manual testing.
+4. The spoken done sentence, through `/neural-voice`'s command, unless the voice was turned off. It
    is the last tool call of the turn.
-4. The written report, then how to test it.
+5. The written report, then how to test it — the exact steps, against the test drive now running.
 
 The voice rules were loaded at the start of the session, many tool calls earlier, and writing the
 report ends the turn. A sentence left until after the report is not spoken.
