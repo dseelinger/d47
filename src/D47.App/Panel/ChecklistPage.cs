@@ -1232,7 +1232,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             Margin = new Thickness(0, 12, 0, 2),
         };
 
-        TitleText.Style(block, TypeScale.Body);
+        TitleText.Style(block, TypeScale.Body, TitleRank.Row);
         TitleText.Show(block, text);
 
         return block;

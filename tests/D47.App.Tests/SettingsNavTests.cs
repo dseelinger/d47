@@ -54,31 +54,39 @@ public class SettingsNavTests
     private static Color? Colour(IBrush? brush) => (brush as ISolidColorBrush)?.Color;
 
     /// <summary>
-    /// Every section is named in the nav the moment the page opens, and named in ink that draws.
+    /// Every section is named in the nav the moment the page opens, and named in ink that draws
+    /// against whatever it sits on — the page behind an unmarked item, its own Accent fill behind
+    /// the marked one (#357).
     /// </summary>
     [AvaloniaFact]
     public void TheNavIsReadableAsSoonAsThePageOpens()
     {
         var (window, _, view) = OpenLikeTheApp();
 
-        var labels = NavLabels(view);
+        var items = ((StackPanel)view.FindControl<Control>("NavItems")!).Children
+            .Where(item => item.Classes.Contains(SettingsView.NavPlaceClass))
+            .Cast<Border>()
+            .ToList();
 
-        Assert.True(labels.Count > 1, "there is a nav column to read");
+        Assert.True(items.Count > 1, "there is a nav column to read");
 
         var background = Colour(Application.Current!.FindResource(ThemeManager.BackgroundKey) as IBrush);
 
-        foreach (var label in labels)
+        foreach (var item in items)
         {
+            var label = item.GetVisualDescendants().OfType<TextBlock>().First();
+            var ground = Colour(item.Background) is { A: > 0 } fill ? fill : background;
+
             Assert.NotNull(label.Foreground);
-            Assert.NotEqual(background, Colour(label.Foreground));
+            Assert.NotEqual(ground, Colour(label.Foreground));
         }
 
         window.Close();
     }
 
     /// <summary>
-    /// And the active one is marked apart from the rest — the property the fetched brushes were there
-    /// to provide, which a binding has to keep.
+    /// And the active one is marked apart from the rest — an Accent fill with Knock ink, against
+    /// TextMuted ink on everything else (#357) — and the mark follows the scroller.
     /// </summary>
     [AvaloniaFact]
     public void TheActiveSectionIsMarkedAndTheMarkFollowsTheScroller()
@@ -92,22 +100,23 @@ public class SettingsNavTests
             .ToList();
         var scroller = (ScrollViewer)view.FindControl<Control>("Scroller")!;
 
-        // Ink is Accent on every place, selected or not (#279) — the fill is the only thing that marks
-        // the active one.
         Assert.True(labels.Count > 1);
-        Assert.All(labels, label => Assert.Equal(Colour(labels[0].Foreground), Colour(label.Foreground)));
+        Assert.NotEqual(Colour(labels[0].Foreground), Colour(labels[1].Foreground));
         Assert.NotEqual(Colour(((Border)items[0]).Background), Colour(((Border)items[1]).Background));
 
         var wasFill = Colour(((Border)items[0]).Background);
+        var wasInk = Colour(labels[0].Foreground);
 
         scroller.Offset = new Vector(0, scroller.Extent.Height);
         Jobs();
 
         // The last section is the one being read now, and it wears what the first one wore.
         Assert.Equal(wasFill, Colour(((Border)items[^1]).Background));
+        Assert.Equal(wasInk, Colour(labels[^1].Foreground));
 
-        // The one it left goes back to no fill at all.
+        // The one it left goes back to no fill and TextMuted ink.
         Assert.Equal(Colour(((Border)items[1]).Background), Colour(((Border)items[0]).Background));
+        Assert.Equal(Colour(labels[1].Foreground), Colour(labels[0].Foreground));
 
         window.Close();
     }
@@ -149,17 +158,23 @@ public class SettingsNavTests
         var (window, _, view) = OpenLikeTheApp();
 
         var labels = NavLabels(view);
-        var before = Colour(labels[0].Foreground);
+        var beforeActive = Colour(labels[0].Foreground);
+        var beforeInactive = Colour(labels[1].Foreground);
 
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .Apply(D47.Core.Interface.ThemeCatalog.Light);
 
         Jobs();
 
-        Assert.NotEqual(before, Colour(labels[0].Foreground));
+        Assert.NotEqual(beforeActive, Colour(labels[0].Foreground));
+        Assert.NotEqual(beforeInactive, Colour(labels[1].Foreground));
+
         Assert.Equal(
-            Colour(Application.Current!.FindResource(ThemeManager.AccentKey) as IBrush),
+            Colour(Application.Current!.FindResource(ThemeManager.KnockKey) as IBrush),
             Colour(labels[0].Foreground));
+        Assert.Equal(
+            Colour(Application.Current!.FindResource(ThemeManager.TextMutedKey) as IBrush),
+            Colour(labels[1].Foreground));
 
         window.Close();
     }

@@ -176,10 +176,10 @@ public sealed class PanelPrompts : IHearsText
             TextWrapping = TextWrapping.Wrap,
         };
 
-        TitleText.Style(heading, TypeScale.Heading, sentence: true);
+        TitleText.Style(heading, TypeScale.Heading, TitleRank.Group, sentence: true);
         TitleText.Show(heading, title, sentence: true);
 
-        var header = new StackPanel { Spacing = 3, Children = { heading } };
+        var header = new StackPanel { Spacing = 3, Children = { TitleText.GroupRow(heading) } };
 
         if (!string.IsNullOrWhiteSpace(context))
         {

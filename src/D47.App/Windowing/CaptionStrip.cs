@@ -91,7 +91,7 @@ public static class CaptionStrip
             LetterSpacing = TitleTracking,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        name.Bind(TextBlock.ForegroundProperty, name.GetResourceObservable(ThemeManager.TextKey));
+        name.Bind(TextBlock.ForegroundProperty, name.GetResourceObservable(TitleText.ColourKey(TitleRank.Window)));
 
         var version = new TextBlock
         {

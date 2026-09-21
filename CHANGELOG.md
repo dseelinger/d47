@@ -8,6 +8,11 @@
 
 ## 0.169.0 — No more drop-downs
 
+Screen and window titles draw hot; group headings draw nowrap with a trailing rule; subgroup and
+caption headings draw faint. The Settings sidebar's active item is now a solid Accent fill with
+Knock text, and an inactive item draws in muted text. The protected-row legend now names the bar
+it means.
+
 Tabs show their word alone, with no icon. The active tab is a solid Accent fill with Knock text;
 the rest sit on the higher fill in faint text. Both are sheared 13px. A strip too narrow for every
 tab now wraps a tab onto a second row instead of clipping it or scrolling to reach it.

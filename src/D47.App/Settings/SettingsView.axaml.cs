@@ -728,7 +728,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         Themed(chevron, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
 
         var heading = new TextBlock { FontWeight = FontWeight.Medium, VerticalAlignment = VerticalAlignment.Center };
-        TitleText.Style(heading, TypeScale.Subheading);
+        TitleText.Style(heading, TypeScale.Subheading, TitleRank.Subgroup);
         TitleText.Show(heading, title);
 
         var headerRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
@@ -1046,12 +1046,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// <summary>The selected area's own title and sentence, drawn above its cards (#220).</summary>
     /// <summary>What a protected row's bar means, said once per screen rather than on every row (#333).</summary>
     internal const string ProtectedLegend =
-        "Rows marked with a bar are protected — D47 will not change them on your say-so alone.";
+        "Rows marked ▌ are protected — D47 will not change them on your say-so alone.";
 
     private StackPanel BuildAreaHeader(out TextBlock title, out TextBlock sentence, out TextBlock legend)
     {
         title = new TextBlock { FontWeight = FontWeight.Medium };
-        TitleText.Style(title, TypeScale.Heading);
+        TitleText.Style(title, TypeScale.Heading, TitleRank.Group);
 
         sentence = new TextBlock { FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) };
         Themed(sentence, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
@@ -1069,7 +1069,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         return new StackPanel
         {
             Margin = new Thickness(16, 4, 16, 8),
-            Children = { title, sentence, legend },
+            Children = { TitleText.GroupRow(title), sentence, legend },
         };
     }
 
@@ -1246,7 +1246,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        Themed(text, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
 
         var layout = new DockPanel();
         DockPanel.SetDock(bar, Dock.Left);
@@ -1423,7 +1422,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     }
 
     /// <summary>
-    /// The selected node's own fill — its ink stays Accent whether selected or not (#279).
+    /// The selected node's own mark — an Accent fill with Knock text; an unselected node's text is
+    /// TextMuted (#279, #357).
     /// </summary>
     private void PaintNav(SectionView section, bool active)
     {
@@ -1437,14 +1437,18 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         section.NavFill?.Dispose();
         section.NavFill = null;
 
+        section.NavInk?.Dispose();
+
         if (active)
         {
-            section.NavFill = Themed(section.NavItem, Border.BackgroundProperty, ThemeManager.FillHighKey);
+            section.NavFill = Themed(section.NavItem, Border.BackgroundProperty, ThemeManager.AccentKey);
+            section.NavInk = Themed(section.NavText, TextBlock.ForegroundProperty, ThemeManager.KnockKey);
         }
         else
         {
             // No resource for "nothing", so the fill is dropped rather than bound.
             section.NavItem.Background = Brushes.Transparent;
+            section.NavInk = Themed(section.NavText, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
         }
     }
 
@@ -4315,6 +4319,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         /// <summary>The nav item's live fill subscription, held so the next state can drop it.</summary>
         public IDisposable? NavFill { get; set; }
+
+        /// <summary>The nav item's live text-ink subscription, held so the next state can drop it.</summary>
+        public IDisposable? NavInk { get; set; }
     }
 
     /// <summary>One area's nav heading, its title and sentence, and the run of sections beneath it (#220).</summary>

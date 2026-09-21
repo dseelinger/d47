@@ -56,7 +56,7 @@ public sealed class AdventureEditor : UserControl
     {
         _page.Children.Clear();
 
-        _page.Children.Add(AdventuresPage.Title(_isNew ? "Write an adventure" : $"Edit {_draft.Name}", TypeScale.Heading));
+        _page.Children.Add(AdventuresPage.Title(_isNew ? "Write an adventure" : $"Edit {_draft.Name}", TypeScale.Heading, TitleRank.Group));
 
         _page.Children.Add(Field("Name", string.IsNullOrWhiteSpace(_draft.Name) ? "unnamed" : _draft.Name, () => Enter(
             "adventure.name", "Name", "What is it called?", null, _draft.Name, EntrySurface.Keyboard,

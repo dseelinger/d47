@@ -851,7 +851,7 @@ public sealed class AdventuresPage : UserControl
         return button;
     }
 
-    internal static TextBlock Title(string text, double size = TypeScale.Subheading)
+    internal static Control Title(string text, double size = TypeScale.Subheading, TitleRank rank = TitleRank.Subgroup)
     {
         var block = new TextBlock
         {
@@ -859,10 +859,10 @@ public sealed class AdventuresPage : UserControl
             TextWrapping = TextWrapping.Wrap,
         };
 
-        TitleText.Style(block, size);
+        TitleText.Style(block, size, rank);
         TitleText.Show(block, text);
 
-        return block;
+        return rank == TitleRank.Group ? TitleText.GroupRow(block) : block;
     }
 
     internal static TextBlock Text(string text, double size, string key = ThemeManager.TextKey)
