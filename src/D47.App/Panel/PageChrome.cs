@@ -21,4 +21,11 @@ public static class PageChrome
 
     /// <summary>Whether this control was marked.</summary>
     public static bool IsChrome(this Control control) => control.Classes.Contains(Class);
+
+    /// <summary>Caps an open settings strip at half the height of the page it sits on (#340).</summary>
+    public static void CapStripHeight(this Control host, Control strip)
+    {
+        strip.MaxHeight = host.Bounds.Height / 2;
+        host.SizeChanged += (_, e) => strip.MaxHeight = e.NewSize.Height / 2;
+    }
 }

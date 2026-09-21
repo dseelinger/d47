@@ -1460,16 +1460,18 @@ public sealed class IndexPage : LoadoutPage
 
         _scroller = LoadoutPages.Scrolling(_list);
 
+        DockPanel.SetDock(head, Dock.Top);
+        root.Children.Add(head);
+
+        // Docked first among the bottom children, so it sits below `say` at the very bottom (#340).
         if (settingsStrip is not null)
         {
-            DockPanel.SetDock(settingsStrip, Dock.Top);
+            DockPanel.SetDock(settingsStrip, Dock.Bottom);
             root.Children.Add(settingsStrip);
+            root.CapStripHeight(settingsStrip);
         }
 
-        DockPanel.SetDock(head, Dock.Top);
         DockPanel.SetDock(say, Dock.Bottom);
-
-        root.Children.Add(head);
         root.Children.Add(say);
         root.Children.Add(_scroller);
 

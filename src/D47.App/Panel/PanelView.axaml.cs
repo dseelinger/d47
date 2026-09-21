@@ -4048,7 +4048,13 @@ public partial class PanelView : UserControl
 
         if (show && LogSettingsStrip.Content is null)
         {
-            LogSettingsStrip.Content = _logSettingsStrip?.Invoke();
+            var strip = _logSettingsStrip?.Invoke();
+            LogSettingsStrip.Content = strip;
+
+            if (strip is not null)
+            {
+                ContentPane.CapStripHeight(strip);
+            }
         }
 
         LogSettingsStrip.IsVisible = show && LogSettingsStrip.Content is not null;

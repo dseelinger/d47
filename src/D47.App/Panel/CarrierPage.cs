@@ -49,10 +49,12 @@ public sealed class CarrierPage : UserControl
         var root = new DockPanel { Margin = new Thickness(14) };
         var say = LoadoutPages.SayLine("where is my carrier");
 
+        // Docked first among the bottom children, so it sits below `say` at the very bottom (#340).
         if (settingsStrip is not null)
         {
-            DockPanel.SetDock(settingsStrip, Dock.Top);
+            DockPanel.SetDock(settingsStrip, Dock.Bottom);
             root.Children.Add(settingsStrip);
+            root.CapStripHeight(settingsStrip);
         }
 
         DockPanel.SetDock(say, Dock.Bottom);

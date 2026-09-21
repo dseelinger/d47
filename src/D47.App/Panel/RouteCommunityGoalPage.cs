@@ -81,8 +81,8 @@ public sealed class RouteCommunityGoalPage : UserControl
         Action? openSettings = null,
         Func<string, Task<bool>>? copy = null,
 
-        // Community Goal's own settings, on the tab they only affect (#218). Prepended below and
-        // never touched by Build(), so it survives every Refresh().
+        // Community Goal's own settings, on the tab they only affect (#218). Docked outside the
+        // scroller and never touched by Build(), so it survives every Refresh() (#340).
         Control? settingsStrip = null)
     {
         _registry = registry;
@@ -111,23 +111,34 @@ public sealed class RouteCommunityGoalPage : UserControl
 
         var body = new StackPanel { Spacing = 12 };
 
-        if (settingsStrip is not null)
-        {
-            body.Children.Add(settingsStrip);
-        }
-
         body.Children.Add(_off);
         body.Children.Add(_form);
         body.Children.Add(_results);
         body.Children.Add(_ledger);
 
-        Content = new ScrollViewer
+        var scroller = new ScrollViewer
         {
             Padding = new Thickness(14),
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
             Content = body,
         };
+
+        if (settingsStrip is not null)
+        {
+            var root = new DockPanel();
+
+            DockPanel.SetDock(settingsStrip, Dock.Bottom);
+            root.Children.Add(settingsStrip);
+            root.CapStripHeight(settingsStrip);
+            root.Children.Add(scroller);
+
+            Content = root;
+        }
+        else
+        {
+            Content = scroller;
+        }
 
         Build();
     }

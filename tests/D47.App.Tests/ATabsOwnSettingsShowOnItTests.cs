@@ -141,6 +141,30 @@ public class ATabsOwnSettingsShowOnItTests
         window.Close();
     }
 
+    /// <summary>The cap tracks the host page's height, not a fixed pixel value (#340).</summary>
+    [AvaloniaFact]
+    public void AnOpenStripIsNeverTallerThanHalfThePage()
+    {
+        var host = new DockPanel();
+        var strip = new Border { Height = 1000 };
+
+        var window = new Window { Content = host, Width = 300, Height = 400 };
+        window.Show();
+
+        host.Children.Add(strip);
+        host.CapStripHeight(strip);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(200, strip.MaxHeight);
+
+        window.Height = 600;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(300, strip.MaxHeight);
+
+        window.Close();
+    }
+
     [AvaloniaFact]
     public void TheStripIsClosedByDefaultAndOpensOnClick()
     {
@@ -187,8 +211,9 @@ public class ATabsOwnSettingsShowOnItTests
         window.Close();
     }
 
+    /// <summary>The strip sits at the very bottom of the page, below the index (#340).</summary>
     [AvaloniaFact]
-    public void TheFleetShipsPageDrawsTheGivenStripAboveTheIndex()
+    public void TheFleetShipsPageDrawsTheGivenStripAtTheBottom()
     {
         var root = TempFolders.Create("d47-tab-settings-strip-tests");
 
@@ -214,7 +239,13 @@ public class ATabsOwnSettingsShowOnItTests
         panel.Tab = PanelTab.Loadout;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Contains(panel.GetVisualDescendants(), c => c.Name == "StripMarker");
+        var host = (Control)marker.GetVisualParent()!;
+
+        Assert.Equal(Dock.Bottom, DockPanel.GetDock(marker));
+        Assert.True(
+            Math.Abs(host.Bounds.Height - marker.Bounds.Bottom) < 1.0,
+            $"expected the strip flush with the bottom of its {host.GetType().Name}, "
+            + $"got host height {host.Bounds.Height} and strip bottom {marker.Bounds.Bottom}");
 
         window.Close();
     }
@@ -290,7 +321,16 @@ public class ATabsOwnSettingsShowOnItTests
         panel.Tab = PanelTab.Routing;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Contains(panel.GetVisualDescendants(), c => c.Name == "StripMarker");
+        // Outside the page's ScrollViewer, so scrolling the results does not move it (#340).
+        Assert.Null(marker.FindAncestorOfType<ScrollViewer>());
+
+        var host = (Control)marker.GetVisualParent()!;
+
+        Assert.Equal(Dock.Bottom, DockPanel.GetDock(marker));
+        Assert.True(
+            Math.Abs(host.Bounds.Height - marker.Bounds.Bottom) < 1.0,
+            $"expected the strip flush with the bottom of its {host.GetType().Name}, "
+            + $"got host height {host.Bounds.Height} and strip bottom {marker.Bounds.Bottom}");
 
         // The page's own Refresh() redraws its results and ledger; the strip is not among them.
         board.Post(new CommodityPosting(

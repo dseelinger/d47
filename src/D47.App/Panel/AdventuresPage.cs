@@ -85,18 +85,22 @@ public sealed class AdventuresPage : UserControl
 
         var root = new DockPanel { Margin = new Thickness(14) };
 
-        if (settingsStrip is not null)
-        {
-            DockPanel.SetDock(settingsStrip, Dock.Top);
-            root.Children.Add(settingsStrip);
-        }
-
         DockPanel.SetDock(bar, Dock.Top);
         DockPanel.SetDock(_problems, Dock.Top);
         _problems.Margin = new Thickness(0, 0, 0, 10);
 
         root.Children.Add(bar);
         root.Children.Add(_problems);
+
+        // The lowest element on the page, ahead of the scroller so the scroller stays the child
+        // that fills (#340).
+        if (settingsStrip is not null)
+        {
+            DockPanel.SetDock(settingsStrip, Dock.Bottom);
+            root.Children.Add(settingsStrip);
+            root.CapStripHeight(settingsStrip);
+        }
+
         root.Children.Add(new ScrollViewer
         {
             Content = _list,

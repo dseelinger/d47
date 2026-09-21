@@ -8,6 +8,11 @@
 
 ## 0.169.0 — No more drop-downs
 
+A page's own "Settings for this page" strip now sits at the bottom of the page instead of the
+top, on Fleet › Ships, Fleet › Carrier, Adventures, Routing › Community Goal and Transcript › Log
+File, on the desktop window and in the headset. An open strip never takes more than half the
+page's height; longer ones scroll inside the strip instead of pushing content off the bottom.
+
 The mouse's Back button now navigates the panel back, on the desktop window and the SteamVR
 overlay, wherever the pointer sits over the panel. The Forward button does nothing.
 
