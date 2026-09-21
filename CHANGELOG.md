@@ -8,6 +8,9 @@
 
 ## 0.169.0 — No more drop-downs
 
+Text fields centre their text and placeholder vertically at body size in the prose face, instead
+of sitting against the top edge at the default size.
+
 Binding chips draw at normal weight with no letterspacing, matching the mono face they set
 instead of taking the button style's bold, spaced-out chrome.
 
