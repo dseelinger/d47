@@ -48,13 +48,6 @@ public static class Glyphs
     public const string CollapseAll =
         "M 6,11 L 18,11 A 1,1 0 0 1 18,13 L 6,13 A 1,1 0 0 1 6,11 Z";
 
-    /// <summary>
-    /// What this row is: a lower-case <c>i</c> in a circle (asked for 2026-09-01 — "That is WAY too
-    /// much text").
-    /// </summary>
-    public const string Info =
-        "M 12,4 A 8,8 0 0 1 12,20 A 8,8 0 0 1 12,4  M 12,8 L 12,8  M 12,11.5 L 12,16";
-
     /// <summary>Two sheets, one behind the other.</summary>
     public const string Copy =
         "M 9,9 L 20,9 L 20,20 L 9,20 Z  M 15,9 L 15,4 L 4,4 L 4,15 L 9,15";

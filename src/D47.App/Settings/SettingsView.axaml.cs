@@ -51,6 +51,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
     private TextBlock? _areaHeaderSentence;
 
+    /// <summary>The protected-row legend, shown once under the screen title when the area has one (#333).</summary>
+    private TextBlock? _areaLegend;
+
     private StackPanel? _areaHeader;
 
     /// <summary>The area picker shown once the nav has collapsed (#220).</summary>
@@ -74,19 +77,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// </summary>
     public const string RowResetName = "RowReset";
 
-    /// <summary>
-    /// The prefix on a row's info glyph, which carries the row key so two rows' callouts are
-    /// distinguishable (asked for 2026-09-01).
-    /// </summary>
-    public const string RowInfoPrefix = "Info_";
-
-    /// <summary>
-    /// Whether a button is the row's chrome rather than the control the row is about — the reset glyph
-    /// and the info glyph.
-    /// </summary>
+    /// <summary>Whether a button is the row's chrome rather than the control the row is about.</summary>
     public static bool IsRowChrome(Button button) =>
-        button?.Name is { } name
-        && (name == RowResetName || name.StartsWith(RowInfoPrefix, StringComparison.Ordinal));
+        button?.Name is { } name && name == RowResetName;
 
     /// <summary>Which sections a jump or a "Show N more" press has unfolded for this session (#60, #221).
     /// Not saved: a fresh Build folds every place again.</summary>
@@ -348,6 +341,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         _areaHeader = null;
         _areaHeaderTitle = null;
         _areaHeaderSentence = null;
+        _areaLegend = null;
         _areaDropdown = null;
         _groups.Clear();
         _tabPlaceRows.Clear();
@@ -436,7 +430,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             _topStrip = alone;
         }
 
-        _areaHeader = BuildAreaHeader(out _areaHeaderTitle, out _areaHeaderSentence);
+        _areaHeader = BuildAreaHeader(out _areaHeaderTitle, out _areaHeaderSentence, out _areaLegend);
         Cards.Children.Add(_areaHeader);
 
         var owners = new Dictionary<string, CapabilityDescriptor>(StringComparer.Ordinal);
@@ -1050,7 +1044,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     }
 
     /// <summary>The selected area's own title and sentence, drawn above its cards (#220).</summary>
-    private StackPanel BuildAreaHeader(out TextBlock title, out TextBlock sentence)
+    /// <summary>What a protected row's bar means, said once per screen rather than on every row (#333).</summary>
+    internal const string ProtectedLegend =
+        "Rows marked with a bar are protected — D47 will not change them on your say-so alone.";
+
+    private StackPanel BuildAreaHeader(out TextBlock title, out TextBlock sentence, out TextBlock legend)
     {
         title = new TextBlock { FontWeight = FontWeight.Medium };
         TitleText.Style(title, TypeScale.Heading);
@@ -1058,10 +1056,20 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         sentence = new TextBlock { FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) };
         Themed(sentence, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
 
+        legend = new TextBlock
+        {
+            Text = ProtectedLegend,
+            FontSize = TypeScale.Secondary,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 4, 0, 0),
+            IsVisible = false,
+        };
+        Themed(legend, TextBlock.ForegroundProperty, ThemeManager.WarnKey);
+
         return new StackPanel
         {
             Margin = new Thickness(16, 4, 16, 8),
-            Children = { title, sentence },
+            Children = { title, sentence, legend },
         };
     }
 
@@ -2202,6 +2210,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         TitleText.Show(_areaHeaderTitle!, selected.Title);
         _areaHeaderSentence!.Text = selected.Sentence;
 
+        _areaLegend!.IsVisible = _rows.Any(row =>
+            row.Row.Protected && row.Section >= selected.First && row.Section < selected.First + selected.Count);
+
         if (_areaHeader is { } header)
         {
             order.Add(header);
@@ -2234,6 +2245,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
     /// <summary>A compact row's own top and bottom padding (#332).</summary>
     private const double RowVerticalPadding = 8;
+
+    /// <summary>The width of a protected row's left bar (#333).</summary>
+    private const double ProtectedBarWidth = 3;
+
+    /// <summary>The extra left padding a protected row needs, so its bar does not crowd the label (#333).</summary>
+    private const double ProtectedBarPadding = 12;
 
     /// <summary>
     /// Marks a caption-and-control row, so a test can find the rows this view builds rather than every
@@ -2301,13 +2318,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         Themed(label, TextBlock.ForegroundProperty, ThemeManager.TextKey);
         header.Children.Add(label);
 
-        if (row.Protected)
-        {
-            // Said on the row rather than only in the docs: a Commander who asks d47 to change this and gets
-            // refused should already know why.
-            header.Children.Add(RowTag("protected"));
-        }
-
         if (row.Scope == SettingScope.Commander)
         {
             // The same tag for the other declaration a row can make (Phase 44): this value is the
@@ -2316,7 +2326,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             header.Children.Add(RowTag("per Commander"));
         }
 
-        // **The help is behind a glyph now** (asked for 2026-09-01 — *"That is WAY too much text"*).
+        // Hidden inline copy, shown only when a search matches text no other visible control carries (#333).
         var help = new TextBlock
         {
             Text = row.Help,
@@ -2361,7 +2371,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         if (!string.IsNullOrWhiteSpace(row.Help))
         {
-            header.Children.Add(Explains(capability, row, spoken));
+            AttachHelp(label, capability, row, spoken);
         }
 
         // A square glyph button at the end of the row rather than beside the label, so it stays put
@@ -2543,6 +2553,21 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             line = rowShape;
         }
 
+        if (row.Protected)
+        {
+            // A bar rather than a chip: the row itself says it is protected, with no extra control to read
+            // (#333). The legend that explains the bar is drawn once, above the cards.
+            var bar = new Border
+            {
+                BorderThickness = new Thickness(ProtectedBarWidth, 0, 0, 0),
+                Padding = new Thickness(ProtectedBarPadding, 0, 0, 0),
+                Child = line,
+            };
+            Themed(bar, Border.BorderBrushProperty, ThemeManager.WarnKey);
+
+            line = bar;
+        }
+
         var container = new StackPanel();
         container.Children.Add(line);
         container.Children.Add(message);
@@ -2559,10 +2584,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     }
 
     /// <summary>
-    /// The row's help, behind a lower-case <c>i</c> in a circle (asked for 2026-09-01 — "use an info
-    /// glyph … which goes away when clicked outside").
+    /// The row's help, reached by hovering or focusing its label rather than a separate glyph — the
+    /// label is where a Commander already looks to know what the row is (#333).
     /// </summary>
-    private Control Explains(CapabilityDescriptor capability, SettingRow row, TextBlock spoken)
+    private void AttachHelp(TextBlock label, CapabilityDescriptor capability, SettingRow row, TextBlock spoken)
     {
         var inside = new StackPanel
         {
@@ -2570,66 +2595,16 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Children = { spoken, ExplainsLink(capability, row) },
         };
 
-        var button = new Button
-        {
-            Name = RowInfoPrefix + row.Key.Replace('.', '_'),
-            // The muted accent the pills beside it carry, not the bright one (asked for 2026-09-01).
-            Content = Glyphs.Draw(Glyphs.Info, ThemeManager.AccentMutedKey, TypeScale.Secondary),
+        label.Focusable = true;
+        ToolTip.SetTip(label, new Border { Padding = new Thickness(4), Child = inside });
+        ToolTip.SetShowDelay(label, 250);
 
-            // Room above and below for the stroke.
-            Padding = new Thickness(4, 4),
-            MinWidth = TypeScale.MinimumTarget,
-            MinHeight = TypeScale.MinimumTarget,
-            Background = Brushes.Transparent,
-            BorderThickness = new Thickness(0),
-            VerticalAlignment = VerticalAlignment.Center,
-            Cursor = new Cursor(StandardCursorType.Hand),
-            Flyout = new Flyout
-            {
-                Content = new Border { Padding = new Thickness(4), Child = inside },
-                Placement = PlacementMode.BottomEdgeAlignedLeft,
-                ShowMode = FlyoutShowMode.Standard,
-            },
-        };
-
-        // A Path has no text, so a screen reader would find an unnamed button — the same fault, and the same
-        // fix, as the reset glyph and the run-composed captions.
-        AutomationProperties.SetName(button, $"About {row.Label}");
-
-        // The hover says the same words the click does (#341).
-        ToolTip.SetTip(button, ExplainsTooltip(capability, row));
-
-        return button;
+        // A TextBlock shows its tooltip on hover already; keyboard focus needs to open and close it by hand.
+        label.GotFocus += (_, _) => ToolTip.SetIsOpen(label, true);
+        label.LostFocus += (_, _) => ToolTip.SetIsOpen(label, false);
     }
 
-    /// <summary>
-    /// A second copy of <see cref="Explains"/>'s flyout content, for the hover — the same words and the
-    /// same way out to the web page, wrapped at the width the flyout already wraps at rather than
-    /// running off the window on a two-sentence help string.
-    /// </summary>
-    private Control ExplainsTooltip(CapabilityDescriptor capability, SettingRow row)
-    {
-        var spoken = new TextBlock
-        {
-            Text = row.Help,
-            FontSize = TypeScale.Secondary,
-            TextWrapping = TextWrapping.Wrap,
-            MaxWidth = 420,
-        };
-        Themed(spoken, TextBlock.ForegroundProperty, ThemeManager.TextKey);
-
-        return new Border
-        {
-            Padding = new Thickness(4),
-            Child = new StackPanel
-            {
-                Spacing = 8,
-                Children = { spoken, ExplainsLink(capability, row) },
-            },
-        };
-    }
-
-    /// <summary>The "Help" link the flyout and its tooltip twin both carry.</summary>
+    /// <summary>The "Help" link the row's tooltip carries.</summary>
     private Button ExplainsLink(CapabilityDescriptor capability, SettingRow row)
     {
         var page = new Button
@@ -2661,6 +2636,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// </summary>
     internal Control? ControlFor(string key) =>
         _rows.FirstOrDefault(row => string.Equals(row.Row.Key, key, StringComparison.Ordinal))?.Control;
+
+    /// <summary>The row's own label, which carries its help as a tooltip on hover and focus (#333).</summary>
+    internal TextBlock? LabelFor(string key) =>
+        _rows.FirstOrDefault(row => string.Equals(row.Row.Key, key, StringComparison.Ordinal))?.Label;
 
     public void ShowBusy(string key, bool busy)
     {

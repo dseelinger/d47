@@ -8,6 +8,10 @@
 
 ## 0.169.0 — No more drop-downs
 
+A protected settings row now carries a left bar instead of a bordered "protected" chip, with one
+legend line under the screen title on any screen that has one. A row's help now shows on hovering
+or focusing its own label rather than behind a separate info glyph.
+
 A settings row now puts its control immediately beside its label instead of at the far right of
 the row, and reserves the same width for the reset button whether or not that row draws one, so a
 card's rows no longer go ragged down the page. The row's minimum height, padding and every margin
