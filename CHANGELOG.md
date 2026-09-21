@@ -8,6 +8,10 @@
 
 ## 0.169.0 — No more drop-downs
 
+Tabs show their word alone, with no icon. The active tab is a solid Accent fill with Knock text;
+the rest sit on the higher fill in faint text. Both are sheared 13px. A strip too narrow for every
+tab now wraps a tab onto a second row instead of clipping it or scrolling to reach it.
+
 A new Level control draws the handoff's settable slider: a 30-tall track with a solid Accent fill
 inset 3px, blooming on dark themes, and a 10-wide handle overhanging the track 5px top and bottom
 inside a 44-wide hit area. The numeric value always shows beside it, and arrow keys step by one,

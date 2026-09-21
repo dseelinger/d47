@@ -55,8 +55,6 @@ public sealed record DerivedPalette
 
     public required Color TagBorder { get; init; }
 
-    public required Color TabStripRule { get; init; }
-
     public required Color PaneBorder { get; init; }
 
     public required Color TagInk { get; init; }
@@ -98,7 +96,6 @@ public sealed record DerivedPalette
             CardFillSelected = Onto(0.14),
             RowFill = Onto(0.05),
             TagBorder = Onto(0.60),
-            TabStripRule = Onto(0.70),
             PaneBorder = Onto(0.30),
             TagInk = Onto(0.85),
         };

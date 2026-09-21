@@ -5,9 +5,8 @@
   <!--
     A tab, and it has to read as one rather than as a button or a link.
 
-    Skewed 12px on both edges and sitting on the rule, the way every strip in the kit does.
-    Selected is a solid Accent fill with Background-colour ink; unselected is Accent ink on the
-    faint Accent fill (#273).
+    Skewed 13px on both edges and sitting on the rule, the way every strip in the kit does.
+    Selected is a solid Accent fill with Knock ink; unselected is faint text on the higher fill.
 
     Built on RadioButton rather than on Buttons and a hand-rolled selected flag, because
     mutually-exclusive selection, keyboard arrows and the accessibility role all come with it.
@@ -15,15 +14,16 @@
   <ControlTheme x:Key="D47.Tab" TargetType="RadioButton">
     <Setter Property="Cursor" Value="Hand" />
     <Setter Property="FontFamily" Value="{StaticResource D47.Font.Chrome}" />
-    <Setter Property="FontSize" Value="{StaticResource D47.Type.Body}" />
-    <Setter Property="LetterSpacing" Value="2.56" />
-    <Setter Property="Foreground" Value="{DynamicResource D47.Accent}" />
-    <Setter Property="Padding" Value="18,7" />
+    <Setter Property="FontSize" Value="{StaticResource D47.Type.Secondary}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="LetterSpacing" Value="2.4" />
+    <Setter Property="Foreground" Value="{DynamicResource D47.TextFaint}" />
+    <Setter Property="Padding" Value="26,11" />
     <Setter Property="Margin" Value="0,0,3,0" />
 
     <Setter Property="Template">
       <ControlTemplate>
-        <controls:ChamferedBorder x:Name="Shape" Skew="12" Background="{DynamicResource D47.FillLow}">
+        <controls:ChamferedBorder x:Name="Shape" Skew="13" Background="{DynamicResource D47.FillHigh}">
           <ContentPresenter x:Name="PART_ContentPresenter"
                             Content="{TemplateBinding Content}"
                             Padding="{TemplateBinding Padding}"
@@ -35,14 +35,15 @@
     </Setter>
 
     <Style Selector="^:pointerover /template/ controls|ChamferedBorder#Shape">
-      <Setter Property="Background" Value="{DynamicResource D47.FillHigh}" />
+      <Setter Property="Background" Value="{DynamicResource D47.FillHigher}" />
     </Style>
 
     <!-- The current tab: a solid fill rather than a muted one, findable at a glance from a
          metre away, which is the whole job of a selected tab in a headset. -->
     <Style Selector="^:checked">
       <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
-      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="FontWeight" Value="Bold" />
+      <Setter Property="Padding" Value="30,13" />
       <Style Selector="^ /template/ controls|ChamferedBorder#Shape">
         <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
         <Setter Property="Effect" Value="{DynamicResource D47.Bloom}" />

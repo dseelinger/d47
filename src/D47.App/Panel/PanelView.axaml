@@ -398,34 +398,6 @@
     <DockPanel x:Name="TabStrip" DockPanel.Dock="Top" Margin="0,16,0,0">
 
       <!--
-        The steppers, for when the tabs do not fit (remediation.md 10, item 1).
-        <para/>
-        The strip used to carry the tabs, the mode control and the search box in one row, and
-        below a certain width they simply overlapped: a DockPanel gives its docked children what
-        they ask for and lets the filling child have whatever is left, which below a threshold is
-        a negative number rather than a scrollbar. The mode control and the search box have moved
-        into the pane, which is most of the fix; these are what makes the remainder reachable at
-        any width at all, including the headset's, where the strip is narrower still.
-        <para/>
-        Docked outside the scroller rather than floating over it, so a tab is never underneath the
-        control that scrolls to it. Hidden entirely when everything fits, which is the ordinary
-        case on a desktop — a pair of dead arrows either side of six tabs is two controls that do
-        nothing, permanently.
-      -->
-      <Button x:Name="TabsLeft"
-              DockPanel.Dock="Left"
-              Content="&#x2039;"
-              IsVisible="False"
-              Padding="7,0"
-              MinWidth="0"
-              Height="30"
-              Margin="0,0,4,0"
-              VerticalAlignment="Bottom"
-              FontSize="{StaticResource D47.Type.Body}"
-              ToolTip.Tip="Earlier tabs"
-              AutomationProperties.Name="Show earlier tabs"
-              Click="OnTabsLeftClick" />
-      <!--
         The panel's chrome, on the tab row rather than in a band above it (#234). Three small
         controls were costing a whole strip of height that the page below did not get, which is
         nothing on a desktop window and is a real fraction of a headset panel.
@@ -546,33 +518,6 @@
                           Margin="8,0,0,0" />
       </StackPanel>
 
-      <Button x:Name="TabsRight"
-              DockPanel.Dock="Right"
-              Content="&#x203A;"
-              IsVisible="False"
-              Padding="7,0"
-              MinWidth="0"
-              Height="30"
-              Margin="4,0,0,0"
-              VerticalAlignment="Bottom"
-              FontSize="{StaticResource D47.Type.Body}"
-              ToolTip.Tip="Later tabs"
-              AutomationProperties.Name="Show later tabs"
-              Click="OnTabsRightClick" />
-
-      <!--
-        The strip itself, which scrolls rather than wraps. Wrapping would move the tabs into a
-        second row and take the join to the panel with them, and the join is the whole idiom —
-        a tab that is not touching its page does not read as a tab.
-
-        No visible scrollbar: a horizontal bar under a tab strip reads as a second, thinner strip.
-        The arrows above are the affordance, and the wheel and a drag still work.
-      -->
-      <ScrollViewer x:Name="TabsScroller"
-                    HorizontalScrollBarVisibility="Hidden"
-                    VerticalScrollBarVisibility="Disabled"
-                    SizeChanged="OnTabsResized">
-
       <!--
         No GroupName, deliberately. Avalonia groups named radio buttons across the whole
         application rather than within a tree, and this view is instantiated twice - once by the
@@ -585,10 +530,13 @@
         below. Every tab but Transcript is hidden until a host furnishes it, which is what lets
         the phases that fill them land one at a time without a dead tab in between - the same
         rule Settings has followed since Phase 12, generalised.
+
+        A WrapPanel rather than a scrolling strip: a tab too many moves to a second row rather
+        than being clipped or reached through steppers (#355).
       -->
-      <StackPanel x:Name="Tabs"
-                  Orientation="Horizontal"
-                  VerticalAlignment="Bottom">
+      <WrapPanel x:Name="Tabs"
+                 Orientation="Horizontal"
+                 VerticalAlignment="Bottom">
         <!--
           One tab for three readings of one exchange. Conversation and Technical are the same
           turns at two verbosities and the log is a file read off disk - which is why the busy
@@ -665,17 +613,15 @@
                      Content="Settings"
                      Tapped="OnTabTapped"
                      IsCheckedChanged="OnTabChecked" />
-      </StackPanel>
-
-      </ScrollViewer>
+      </WrapPanel>
 
     </DockPanel>
 
-    <!-- The rule under the tab strip (#285): 2px, full width, with its own glow. -->
+    <!-- The rule under the tab strip: 2px, full width, with its own glow (#285). -->
     <Border x:Name="TabStripRule"
             DockPanel.Dock="Top"
             Height="2"
-            Background="{DynamicResource D47.TabStripRule}" />
+            Background="{DynamicResource D47.Rule}" />
 
     <!--
       Where the Commander is, once they are below a root (list.md Phase 25, "Drill in, and find

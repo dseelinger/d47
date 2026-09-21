@@ -2,7 +2,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Headless.XUnit;
-using Avalonia.Interactivity;
 using Avalonia.Threading;
 using D47.App.Panel;
 using D47.Core.Interface;
@@ -37,109 +36,16 @@ public class TheTabStripFitsAnyWidthTests
         return panel;
     }
 
-    /// <summary>
-    /// Wide enough for every tab: no steppers, because a pair of arrows either side of six tabs that
-    /// all fit is two controls that permanently do nothing.
-    /// </summary>
+    /// <summary>Every tab shows the word alone — no icon, on any width (#355).</summary>
     [AvaloniaFact]
-    public void AWideSurfaceShowsNoSteppers()
+    public void ATabShowsItsWordAloneAtAnyWidth()
     {
-        var panel = Furnished(1400);
-
-        Assert.False(panel.GetControl<Button>("TabsLeft").IsVisible);
-        Assert.False(panel.GetControl<Button>("TabsRight").IsVisible);
-    }
-
-    /// <summary>
-    /// And narrow enough that they do not: the steppers appear, and every tab stays reachable rather
-    /// than being drawn underneath its neighbour.
-    /// </summary>
-    [AvaloniaFact]
-    public void ANarrowSurfaceGainsSteppersAndScrolls()
-    {
-        var panel = Furnished(340);
-
-        Assert.True(panel.GetControl<Button>("TabsLeft").IsVisible);
-        Assert.True(panel.GetControl<Button>("TabsRight").IsVisible);
-
-        var scroller = panel.GetControl<ScrollViewer>("TabsScroller");
-
-        Assert.Equal(0, scroller.Offset.X);
-
-        panel.GetControl<Button>("TabsRight").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
-
-        Assert.True(scroller.Offset.X > 0, "the strip did not scroll");
-    }
-
- /// <summary>Words while they fit, marks when they do not — before any tab leaves the strip.</summary>
-    [AvaloniaFact]
-    public void TheTabsShedTheirWordsBeforeTheyShedTabs()
-    {
-        var wide = Furnished(1400);
-
-        AssertMarkAndWord(wide.GetControl<RadioButton>("TranscriptTab"), "Transcript");
-
-        var narrow = Furnished(420);
-
-        // The mark, and the word kept where it still has to be reachable.
-        var tab = narrow.GetControl<RadioButton>("TranscriptTab");
-
-        Assert.IsType<Avalonia.Controls.Shapes.Path>(tab.Content);
-        Assert.Equal("Transcript", Avalonia.Automation.AutomationProperties.GetName(tab));
-        Assert.Equal("Transcript", ToolTip.GetTip(tab));
-    }
-
-    /// <summary>
-    /// And the strip goes back to words when the room comes back, without flickering between the two on
-    /// the way.
-    /// </summary>
-    [AvaloniaFact]
-    public void TheWordsComeBackWhenTheRoomDoes()
-    {
-        var panel = Furnished(420);
-
-        Assert.IsType<Avalonia.Controls.Shapes.Path>(
-            panel.GetControl<RadioButton>("TranscriptTab").Content);
-
-        if (panel.Parent is ContentControl host)
+        foreach (var width in new[] { 340, 512, 1400 })
         {
-            host.Width = 1400;
-        }
+            var panel = Furnished(width);
+            var tab = panel.GetControl<RadioButton>("TranscriptTab");
 
-        Dispatcher.UIThread.RunJobs();
-
-        AssertMarkAndWord(panel.GetControl<RadioButton>("TranscriptTab"), "Transcript");
-    }
-
-    /// <summary>And the words go away again when the room does, the same trigger working both ways (#95).</summary>
-    [AvaloniaFact]
-    public void TheWordsGoAwayWhenTheRoomDoes()
-    {
-        var panel = Furnished(1400);
-
-        AssertMarkAndWord(panel.GetControl<RadioButton>("TranscriptTab"), "Transcript");
-
-        if (panel.Parent is ContentControl host)
-        {
-            host.Width = 420;
-        }
-
-        Dispatcher.UIThread.RunJobs();
-
-        Assert.IsType<Avalonia.Controls.Shapes.Path>(
-            panel.GetControl<RadioButton>("TranscriptTab").Content);
-    }
-
- /// <summary>A strip that opens wide and stays wide still gets its marks.</summary>
-    [AvaloniaFact]
-    public void AStripThatNeverNarrowsStillGetsItsMarks()
-    {
-        var wide = Furnished(1400);
-
-        foreach (var name in new[] { "TranscriptTab", "RoutingTab", "SettingsTab" })
-        {
-            Assert.IsType<StackPanel>(wide.GetControl<RadioButton>(name).Content);
+            Assert.Equal("Transcript", tab.Content);
         }
     }
 
@@ -153,33 +59,38 @@ public class TheTabStripFitsAnyWidthTests
         Assert.DoesNotContain("Cascadia", tab.FontFamily.Name, StringComparison.OrdinalIgnoreCase);
     }
 
- /// <summary>A wide tab carries its mark and its word, mark on the left.</summary>
-    private static void AssertMarkAndWord(RadioButton tab, string word)
+    /// <summary>
+    /// Too narrow for every tab on one line: the strip wraps a tab onto a second row rather than
+    /// clipping it or scrolling to reach it (#355).
+    /// </summary>
+    [AvaloniaFact]
+    public void ANarrowStripWrapsRatherThanClipping()
     {
-        var content = Assert.IsType<StackPanel>(tab.Content);
+        var panel = Furnished(512);
+        var tabs = panel.GetControl<WrapPanel>("Tabs");
 
-        Assert.Equal(Orientation.Horizontal, content.Orientation);
-        Assert.Equal(2, content.Children.Count);
+        var rows = tabs.Children
+            .OfType<RadioButton>()
+            .Where(t => t.IsVisible)
+            .Select(t => t.Bounds.Y)
+            .Distinct()
+            .Count();
 
-        Assert.IsType<Avalonia.Controls.Shapes.Path>(content.Children[0]);
-        Assert.Equal(word.ToUpperInvariant(), Assert.IsType<TextBlock>(content.Children[1]).Text);
+        Assert.True(rows > 1, "the tabs stayed on one row at 512px");
 
-        // Said once.
-        Assert.Equal(word, Avalonia.Automation.AutomationProperties.GetName(tab));
-        Assert.Equal(
-            Avalonia.Automation.AccessibilityView.Raw,
-            Avalonia.Automation.AutomationProperties.GetAccessibilityView(content.Children[0]));
-
-        // And no tooltip, unlike the collapsed tab: the word is right there, so one repeating it is noise.
-        Assert.Null(ToolTip.GetTip(tab));
+        Assert.All(
+            tabs.Children.OfType<RadioButton>().Where(t => t.IsVisible),
+            t => Assert.True(
+                t.Bounds.Right <= tabs.Bounds.Width + 0.5,
+                $"{t.Name} sits at x={t.Bounds.Right} outside a {tabs.Bounds.Width}-wide strip"));
     }
 
     /// <summary>
-    /// The strip holds the tabs, the steppers, and the panel's own chrome — and nothing that competes
-    /// with the tabs for width.
+    /// The strip holds the tabs and the panel's own chrome — and nothing that competes with the tabs
+    /// for width.
     /// </summary>
     [AvaloniaFact]
-    public void TheStripHoldsTabsTheSteppersAndTheChrome()
+    public void TheStripHoldsTabsAndTheChrome()
     {
         var panel = Furnished(1400);
         var strip = panel.GetControl<DockPanel>("TabStrip");
@@ -187,7 +98,7 @@ public class TheTabStripFitsAnyWidthTests
         Assert.All(
             strip.Children,
             child => Assert.True(
-                child is ScrollViewer or Button or StackPanel,
+                child is WrapPanel or StackPanel,
                 $"{child.GetType().Name} is in the tab strip and should not be"));
 
         // The chrome is one row of a fixed height rather than three controls each aligning themselves,

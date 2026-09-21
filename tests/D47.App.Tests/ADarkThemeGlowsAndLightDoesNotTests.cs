@@ -57,7 +57,7 @@ public class ADarkThemeGlowsAndLightDoesNotTests
 
         Assert.Null(resources[ThemeManager.BloomKey]);
         Assert.Null(resources[ThemeManager.ScanlinesKey]);
-        Assert.IsType<SolidColorBrush>(resources[ThemeManager.TabStripRuleKey]);
+        Assert.IsType<SolidColorBrush>(resources[ThemeManager.RuleKey]);
     }
 
     /// <summary>A theme switch recomputes the key, rather than leaving Light with Elite's value still set.</summary>

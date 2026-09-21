@@ -80,9 +80,6 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     /// <summary>A 1px rule, 60% of Accent mixed onto Background — a row's inline tag border (#279).</summary>
     public const string TagBorderKey = "D47.TagBorder";
 
-    /// <summary>A 2px rule, 70% of Accent mixed onto Background — under the tab strip, in every theme (#285).</summary>
-    public const string TabStripRuleKey = "D47.TabStripRule";
-
     /// <summary>A 10px glow of <see cref="AccentKey"/> at 34%, behind the marked elements — dark themes only, null in Light (#345).</summary>
     public const string BloomKey = "D47.Bloom";
 
@@ -111,7 +108,7 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         TextMutedKey, TextFaintKey, AccentKey, AccentMutedKey, KnockKey, DangerKey, WarnKey, GoodKey, InfoKey,
         RuleKey, FillLowKey, FillHighKey, FillHigherKey,
         AccentBorderKey, AccentInkKey, InfoFillKey, InfoBorderKey, InfoInkKey,
-        CardFillKey, CardFillSelectedKey, RowFillKey, TagBorderKey, TabStripRuleKey,
+        CardFillKey, CardFillSelectedKey, RowFillKey, TagBorderKey,
         BloomKey, ScanlinesKey,
         PaneFillKey, PaneBorderKey, TagInkKey, ScrimKey,
     ];
@@ -195,9 +192,6 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         // The Settings page's own roles (#279): alternating rows at 5% of Accent, a tag's border at 60%.
         resources[RowFillKey] = new SolidColorBrush(derived.RowFill);
         resources[TagBorderKey] = new SolidColorBrush(derived.TagBorder);
-
-        // The tab-strip rule (#285): drawn in every theme, unlike bloom, which only glows around it.
-        resources[TabStripRuleKey] = new SolidColorBrush(derived.TabStripRule);
 
         // Bloom and scanlines (#345): dark themes only, so both resolve to null rather than a brush
         // or effect in Light — which is what turns them off, since an unset Effect or Background

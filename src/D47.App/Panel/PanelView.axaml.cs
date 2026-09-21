@@ -169,10 +169,6 @@ public partial class PanelView : UserControl
         // row is showing beside them — a drag changes the one, a search or a page change the other.
         PageBar.LayoutUpdated += (_, _) => ShowModeControl();
 
-        // The strip's own first measurement, so a window that opens too narrow for the words is decided
-        // before it is shown rather than only on the first drag (#95).
-        TabsScroller.LayoutUpdated += (_, _) => ShowTabSteppers();
-
         // Set in code rather than bound, because what mini hides is three named regions and a binding for
         // each would be three expressions no test can reach.
         ModeProperty.Changed.AddClassHandler<PanelView>((view, _) =>
@@ -3896,116 +3892,6 @@ public partial class PanelView : UserControl
             Controls.Glyphs.Copy,
             Theming.ThemeManager.AccentKey,
             "Copy this whole page to the clipboard");
-    }
-
-    /// <summary>Scrolls the tab strip (remediation.md 10, item 1).</summary>
-    private void StepTabs(double by) =>
-        TabsScroller.Offset = new Vector(
-            Math.Clamp(
-                TabsScroller.Offset.X + by,
-                0,
-                Math.Max(0, TabsScroller.Extent.Width - TabsScroller.Viewport.Width)),
-            TabsScroller.Offset.Y);
-
-    private void OnTabsLeftClick(object? sender, RoutedEventArgs e) => StepTabs(-120);
-
-    private void OnTabsRightClick(object? sender, RoutedEventArgs e) => StepTabs(120);
-
-    /// <summary>Whether the strip needs its steppers, asked whenever it is measured.</summary>
-    private void OnTabsResized(object? sender, SizeChangedEventArgs e) => ShowTabSteppers();
-
-    /// <summary>What each tab says when the strip has room for words.</summary>
-    private static readonly (string Name, string Word, string Glyph)[] TabMarks =
-    [
-        (nameof(TranscriptTab), "Transcript", Controls.Glyphs.Tabs.Transcript),
-        (nameof(RoutingTab), "Routing", Controls.Glyphs.Tabs.Routing),
-        (nameof(ChecklistTab), "Checklist", Controls.Glyphs.Tabs.Checklist),
-        (nameof(LoadoutTab), "Fleet", Controls.Glyphs.Tabs.Fleet),
-        (nameof(EngineersTab), "Engineers", Controls.Glyphs.Tabs.Engineers),
-        (nameof(AdventuresTab), "Adventures", Controls.Glyphs.Tabs.Adventures),
-        (nameof(UtilitiesTab), "Utilities", Controls.Glyphs.Tabs.Utilities),
-        (nameof(SettingsTab), "Settings", Controls.Glyphs.Tabs.Settings),
-    ];
-
-    /// <summary>
-    /// Whether the strip is showing marks instead of words, or null before the first settled
-    /// measurement has decided (#95) — never a plain <c>bool</c>, because that has to start at one
-    /// answer and the markup's own answer, words, is exactly the one a narrow window must not keep.
-    /// </summary>
-    private bool? _tabsCollapsed;
-
-    /// <summary>
-    /// How wide the strip was the last time it was drawn with words — the number the decision to expand
-    /// again is made against.
-    /// </summary>
-    private double _tabWordsWidth;
-
-    /// <summary>Three stages, in order: words, marks, then marks that scroll (#234).</summary>
-    private void ShowTabSteppers()
-    {
-        var room = TabsScroller.Viewport.Width;
-
-        // Nothing settled to decide against yet — the layout-pass subscription above will call this
-        // again once there is (#95).
-        if (room <= 0)
-        {
-            return;
-        }
-
-        if (_tabsCollapsed is not { } was)
-        {
-            // The first decision, against the strip as the markup drew it: words.
-            _tabWordsWidth = TabsScroller.Extent.Width;
-            _tabsCollapsed = _tabWordsWidth > room + 1;
-            DrawTabMarks();
-            TabsScroller.UpdateLayout();
-        }
-        else
-        {
-            if (!was)
-            {
-                _tabWordsWidth = TabsScroller.Extent.Width;
-            }
-
-            var wanted = was ? _tabWordsWidth : TabsScroller.Extent.Width;
-            var collapse = wanted > room + 1;
-
-            if (collapse != was)
-            {
-                _tabsCollapsed = collapse;
-                DrawTabMarks();
-                TabsScroller.UpdateLayout();
-            }
-        }
-
-        var overflowing = TabsScroller.Extent.Width > TabsScroller.Viewport.Width + 1;
-
-        TabsLeft.IsVisible = overflowing;
-        TabsRight.IsVisible = overflowing;
-    }
-
-    /// <summary>Puts the mark and the word, or the mark alone, on every tab.</summary>
-    private void DrawTabMarks()
-    {
-        foreach (var (name, word, glyph) in TabMarks)
-        {
-            if (this.FindControl<RadioButton>(name) is not { } tab)
-            {
-                continue;
-            }
-
-            if (_tabsCollapsed == true)
-            {
-                Controls.Glyphs.Mark(
-                    tab, glyph, word, size: 17, filled: Controls.Glyphs.IsFilled(glyph));
-
-                continue;
-            }
-
-            // Smaller than the collapsed mark on purpose: at 17 it is the tab, and beside a word it is a mark
-            // next to a word.
-            Controls.Glyphs.MarkAndWord(tab, glyph, word, size: 15);
-        }
     }
 
     /// <summary>Whether the page's bar exists at all.</summary>

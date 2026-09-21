@@ -98,45 +98,6 @@ public static class Glyphs
     /// </summary>
     public const string BoxUndecided = "M 5,5 L 19,5 L 19,19 L 5,19 Z  M 9,12 L 15,12";
 
-    /// <summary>The eight tab marks (#234).</summary>
-    public static class Tabs
-    {
-        /// <summary>A speech bubble.</summary>
-        public const string Transcript = "M 4,5 L 20,5 L 20,15 L 11,15 L 7,19 L 7,15 L 4,15 Z";
-
-        /// <summary>A signpost: a post with an arm pointing each way.</summary>
-        public const string Routing = "M 12,3 L 12,21  M 12,6 L 20,6 L 18,9 L 12,9  M 12,12 L 4,12 L 6,15 L 12,15";
-
-        /// <summary>Two ticks beside two lines: the list, and the fact that lines come off it.</summary>
-        public const string Checklist = "M 3,7 L 5,9 L 9,5  M 3,15 L 5,17 L 9,13  M 12,7 L 21,7  M 12,15 L 21,15";
-
-        /// <summary>A flagship and two escorts — everything the Commander owns, rather than one hull.</summary>
-        public const string Fleet =
-            "M 12,3 L 16.5,13 L 12,10.8 L 7.5,13 Z  M 5,13 L 7.8,19.5 L 5,18 L 2.2,19.5 Z"
-            + "  M 19,13 L 21.8,19.5 L 19,18 L 16.2,19.5 Z";
-
-        /// <summary>An anvil.</summary>
-        public const string Engineers =
-            "M 12,2.5 L 20.2,7.3 L 20.2,16.7 L 12,21.5 L 3.8,16.7 L 3.8,7.3 Z"
-            + "  M 12,8.8 A 3.2,3.2 0 1 1 11.99,8.8";
-
-        /// <summary>A compass rose.</summary>
-        public const string Adventures = "M 12,3 A 9,9 0 1 1 11.99,3  M 15.5,8.5 L 13,13 L 8.5,15.5 L 11,11 Z";
-
-        /// <summary>A plug: the odds and ends that attach to d47 without being settings.</summary>
-        public const string Utilities =
-            "M 9,3 L 9,8  M 15,3 L 15,8  M 6,8 L 18,8 L 18,13 A 6,6 0 0 1 6,13 Z  M 12,19 L 12,21";
-
-        /// <summary>A gear, and the one mark here that is filled rather than stroked.</summary>
-        public const string Settings =
-            "F0 M 10.1,1.2 L 13.9,1.2 L 13.9,4.0 L 16.3,5.0 L 18.3,3.0 L 21.0,5.7 L 19.0,7.7"
-            + " L 20.0,10.1 L 22.8,10.1 L 22.8,13.9 L 20.0,13.9 L 19.0,16.3 L 21.0,18.3"
-            + " L 18.3,21.0 L 16.3,19.0 L 13.9,20.0 L 13.9,22.8 L 10.1,22.8 L 10.1,20.0"
-            + " L 7.7,19.0 L 5.7,21.0 L 3.0,18.3 L 5.0,16.3 L 4.0,13.9 L 1.2,13.9 L 1.2,10.1"
-            + " L 4.0,10.1 L 5.0,7.7 L 3.0,5.7 L 5.7,3.0 L 7.7,5.0 L 10.1,4.0 Z"
-            + " M 12,6.8 A 5.2,5.2 0 1 1 11.99,6.8 Z";
-    }
-
     /// <summary>One mark, sized and coloured for the row it sits in.</summary>
     /// <param name="data">One of the constants above.</param>
     /// <param name="brush">
@@ -242,63 +203,4 @@ public static class Glyphs
         Avalonia.Automation.AutomationProperties.SetName(button, says);
     }
 
-    /// <summary>
-    /// A mark tinted to match <paramref name="inkSource"/>'s own <c>Foreground</c> rather than a fixed
-    /// theme key, so it tracks a tab between its selected and unselected ink without knowing which one
-    /// it currently is (#273).
-    /// </summary>
-    public static Path Draw(
-        string data, AvaloniaObject inkSource, double size = 14, bool filled = false, double strokeThickness = 2)
-    {
-        var glyph = Made(data, size, strokeThickness);
-
-        if (filled)
-        {
-            glyph.StrokeThickness = 0;
-            glyph.Bind(Shape.FillProperty, inkSource.GetObservable(TemplatedControl.ForegroundProperty));
-        }
-        else
-        {
-            glyph.Bind(Shape.StrokeProperty, inkSource.GetObservable(TemplatedControl.ForegroundProperty));
-        }
-
-        return glyph;
-    }
-
-    /// <summary>The mark alone, on a tab collapsed to marks.</summary>
-    public static void Mark(
-        RadioButton tab, string data, string says, double size = 14, bool filled = false,
-        double strokeThickness = 2)
-    {
-        tab.Content = Draw(data, tab, size, filled, strokeThickness);
-
-        ToolTip.SetTip(tab, says);
-        Avalonia.Automation.AutomationProperties.SetName(tab, says);
-    }
-
-    /// <summary>The mark and the word, on a tab — the word upper case, per the tab's own type (#273).</summary>
-    public static void MarkAndWord(RadioButton tab, string data, string says, double size = 14)
-    {
-        var glyph = Draw(data, tab, size, IsFilled(data));
-
-        Avalonia.Automation.AutomationProperties.SetAccessibilityView(
-            glyph, Avalonia.Automation.AccessibilityView.Raw);
-
-        var word = new TextBlock
-        {
-            Text = says.ToUpperInvariant(),
-            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-        };
-
-        tab.Content = new StackPanel
-        {
-            Orientation = Avalonia.Layout.Orientation.Horizontal,
-            Spacing = 7,
-            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-            Children = { glyph, word },
-        };
-
-        ToolTip.SetTip(tab, null);
-        Avalonia.Automation.AutomationProperties.SetName(tab, says);
-    }
 }
