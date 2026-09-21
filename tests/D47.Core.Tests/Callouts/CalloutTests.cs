@@ -618,7 +618,7 @@ public class CalloutTests
         Assert.Empty(callout.Examine(Context(state, Status(StatusFlags.None, fuel: 16))));
 
         var low = callout
-            .Examine(Context(state, Status(StatusFlags.None, fuel: 6), atSecond: 1))
+            .Examine(Context(state, Status(StatusFlags.LowFuel, fuel: 6), atSecond: 1))
             .Single(a => a.Key == "fuel.low");
 
         Assert.Contains("19", low.Text);
@@ -667,7 +667,7 @@ public class CalloutTests
         Assert.Empty(callout.Examine(Context(state, Status(StatusFlags.None, fuel: 16))));
 
         var low = callout
-            .Examine(Context(state, Status(StatusFlags.None, fuel: 6), atSecond: 1))
+            .Examine(Context(state, Status(StatusFlags.LowFuel, fuel: 6), atSecond: 1))
             .Single(a => a.Key == "fuel.low");
 
         Assert.Contains("19", low.Text);
@@ -681,7 +681,7 @@ public class CalloutTests
             """{"timestamp":"3311-01-01T00:00:00Z","event":"Loadout","Ship":"Anaconda","FuelCapacity":{"Main":32}}""");
 
         var critical = callout
-            .Examine(Context(state, Status(StatusFlags.None, fuel: 2)))
+            .Examine(Context(state, Status(StatusFlags.LowFuel, fuel: 2)))
             .Single(a => a.Key == "fuel.critical");
 
         Assert.Equal(CalloutUrgency.Urgent, critical.Urgency);

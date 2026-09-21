@@ -54,10 +54,13 @@ public sealed class FuelCallout(ILogger? logger = null) : ICallout
         }
 
         var fraction = status.FuelFraction(state.Ship.FuelCapacity);
+        var flagged = status.Has(StatusFlags.LowFuel);
 
-        // Elite's flag when the capacity is not known yet, the computed fraction when it is.
-        var low = fraction is { } value ? value < 0.25 : status.Has(StatusFlags.LowFuel);
-        var critical = fraction is { } critical1 && critical1 < CriticalFraction;
+        // The computed fraction can read low from a stale tank capacity right after a ship swap
+        // (#341), so a known fraction is only trusted alongside Elite's own flag. The flag alone
+        // is the fallback when the capacity is not known yet.
+        var low = fraction is { } value ? value < 0.25 && flagged : flagged;
+        var critical = fraction is { } critical1 && critical1 < CriticalFraction && flagged;
 
         if (critical && !_wasCritical && !context.IsPriming)
         {

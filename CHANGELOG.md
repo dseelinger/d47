@@ -8,6 +8,11 @@
 
 ## 0.169.0 — No more drop-downs
 
+Fuel low and fuel critical no longer speak on a stale tank level. Right after a ship swap,
+Status.json can still report the old ship's fuel for up to a second while the new ship's tank
+capacity has already applied, reading as a low fraction that was never really low; the callout now
+also checks Elite's own low-fuel flag before speaking.
+
 Help improve D47 now leads with one sentence and one primary button, Send it, instead of eight
 buttons of equal weight under five paragraphs. Three consent lines replace the old bullet list;
 what will leave is shown as four figures — log entries, journal events, names replaced,
