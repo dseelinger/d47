@@ -92,7 +92,7 @@ public sealed class RoutePlanResultPage : UserControl
             Margin = new Thickness(0, 0, 0, 2),
         };
 
-        TitleText.Style(block, TypeScale.Subheading, TitleRank.Subgroup, sentence: true);
+        TitleText.Style(block, TypeScale.Caption, TitleRank.Subgroup, sentence: true);
         TitleText.Show(block, text, sentence: true);
 
         return block;

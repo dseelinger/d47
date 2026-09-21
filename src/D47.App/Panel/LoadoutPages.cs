@@ -615,8 +615,8 @@ public static class LoadoutPages
             Margin = new Thickness(0, 12, 0, 4),
         };
 
-        TitleText.Style(block, TypeScale.Body, TitleRank.Row);
-        TitleText.Show(block, text);
+        TitleText.Style(block, TypeScale.Body, TitleRank.Row, sentence: true);
+        TitleText.Show(block, text, sentence: true);
 
         return block;
     }

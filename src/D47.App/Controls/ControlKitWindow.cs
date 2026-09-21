@@ -116,7 +116,7 @@ public sealed class ControlKitWindow : Window
             {
                 TitleText.GroupRow(TitleText.Build("Ramp", TypeScale.Heading, TitleRank.Group)),
                 ramp,
-                TitleText.Build("Status", TypeScale.Subheading, TitleRank.Subgroup),
+                TitleText.Build("Status", TypeScale.Caption, TitleRank.Subgroup),
                 status,
             },
         };
@@ -316,7 +316,7 @@ public sealed class ControlKitWindow : Window
             {
                 TitleText.GroupRow(TitleText.Build("Screen title", TypeScale.Title, TitleRank.Screen)),
                 TitleText.GroupRow(TitleText.Build("Group heading", TypeScale.Heading, TitleRank.Group)),
-                TitleText.Build("SUBGROUP CAPTION", TypeScale.Subheading, TitleRank.Subgroup),
+                TitleText.Build("SUBGROUP CAPTION", TypeScale.Caption, TitleRank.Subgroup),
                 TitleText.Build("Row label", TypeScale.Body, TitleRank.Row, sentence: true),
             },
         };

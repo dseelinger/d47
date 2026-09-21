@@ -8,6 +8,11 @@
 
 ## 0.169.0 — No more drop-downs
 
+Subgroup headings draw in the mono face at caption size, letterspaced as wide as the Control
+Kit's cell captions; row headings draw in the prose face at body size, in sentence case, matching
+the settings row labels. Both used the chrome face and — for row headings — upper case before.
+Checklist, Loadout, Route, Adventures and Settings headings all follow.
+
 Stepper draws solid `◀`/`▶` arrows and sets its value in the prose face at body size, with an 8px
 gap between the box and the position/consequence line underneath. In Settings it now shows at full
 height; it was held to 32px there, which cut off the bottom of its 44px box and the whole line

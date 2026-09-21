@@ -167,7 +167,7 @@ public class ChecklistTabTests
             .ToList();
 
         // Kept, counted, and out of the way.
-        Assert.Contains("DONE (1)", text);
+        Assert.Contains("Done (1)", text);
 
         window.Close();
     }

@@ -851,7 +851,7 @@ public sealed class AdventuresPage : UserControl
         return button;
     }
 
-    internal static Control Title(string text, double size = TypeScale.Subheading, TitleRank rank = TitleRank.Subgroup)
+    internal static Control Title(string text, double size = TypeScale.Caption, TitleRank rank = TitleRank.Subgroup)
     {
         var block = new TextBlock
         {

@@ -409,7 +409,7 @@ public sealed class RoutePlanPage : UserControl
     private Control Card(string title, Control body, string? help = null)
     {
         var heading = new TextBlock { FontWeight = FontWeight.SemiBold };
-        TitleText.Style(heading, TypeScale.Subheading, TitleRank.Subgroup);
+        TitleText.Style(heading, TypeScale.Caption, TitleRank.Subgroup);
         TitleText.Show(heading, title);
 
         var headingRow = new StackPanel

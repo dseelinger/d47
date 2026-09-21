@@ -213,15 +213,15 @@ public class OnFootLoadoutTabTests
 
         var shown = Text(surface.Panel);
 
-        Assert.Contains("FITTED", shown);
-        Assert.Contains("PLANNED", shown);
+        Assert.Contains("Fitted", shown);
+        Assert.Contains("Planned", shown);
 
         // What it is now, and what is wanted, each on its own.
         Assert.Contains("Grade 3", shown);
         Assert.Contains(shown, line => line.Contains("grade 5", StringComparison.Ordinal));
 
         // And what the two upgrade steps cost, exactly - nothing on foot is rolled.
-        Assert.Contains("WHAT IT COSTS", shown);
+        Assert.Contains("What it costs", shown);
 
         // No tick: a derived item's progress is a diff against live state.
         Assert.Empty(Ticks.On(surface.Panel));

@@ -728,7 +728,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         Themed(chevron, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
 
         var heading = new TextBlock { FontWeight = FontWeight.Medium, VerticalAlignment = VerticalAlignment.Center };
-        TitleText.Style(heading, TypeScale.Subheading, TitleRank.Subgroup);
+        TitleText.Style(heading, TypeScale.Caption, TitleRank.Subgroup);
         TitleText.Show(heading, title);
 
         var headerRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };

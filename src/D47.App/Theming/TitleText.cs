@@ -50,17 +50,32 @@ public static class TitleText
     public static TBlock Style<TBlock>(TBlock block, double size, TitleRank rank, bool sentence = false)
         where TBlock : TextBlock
     {
-        block.FontFamily = Fonts.ChromeFamily;
+        block.FontFamily = rank switch
+        {
+            TitleRank.Subgroup => Fonts.MonoFamily,
+            TitleRank.Row => Fonts.ProseFamily,
+            _ => Fonts.ChromeFamily,
+        };
         block.FontSize = size;
-        block.FontWeight = size == TypeScale.Title ? FontWeight.Bold : FontWeight.SemiBold;
-        block.LetterSpacing = sentence
-            ? 0
-            : size switch
-            {
-                TypeScale.Title => size * 0.07,
-                TypeScale.Heading => size * 0.15,
-                _ => 1,
-            };
+        block.FontWeight = rank switch
+        {
+            TitleRank.Subgroup => FontWeight.Normal,
+            TitleRank.Row => FontWeight.Normal,
+            _ => size == TypeScale.Title ? FontWeight.Bold : FontWeight.SemiBold,
+        };
+        block.LetterSpacing = rank switch
+        {
+            TitleRank.Subgroup => size * (1.2 / TypeScale.Caption),
+            TitleRank.Row => 0,
+            _ => sentence
+                ? 0
+                : size switch
+                {
+                    TypeScale.Title => size * 0.07,
+                    TypeScale.Heading => size * 0.15,
+                    _ => 1,
+                },
+        };
         block.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(ColourKey(rank)));
 
         if (rank == TitleRank.Group)
