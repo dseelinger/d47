@@ -104,8 +104,8 @@ Push `main` and nothing else — no tags, no other branch. The push is also what
 whose commit carries a `Fixes` trailer, so list what went by subject, including commits this
 session did not write; they are going out under the same version.
 
-An `issue-worker` commit is deliberately left local so a review can amend it. If the log shows one
-whose review has not run, name it and ask before pushing rather than deciding for him.
+Local `issue-worker` commits go out with the push. Do not ask whether their reviews have run: a
+green suite is the go-ahead, and the push happens without a question.
 
 ## What else refuses the release
 
