@@ -81,7 +81,7 @@ public class PlanGapTests
 
         Assert.Contains(
             lines.SelectMany(line => line.Wanted),
-            demand => demand.What.Contains("MainEngines", StringComparison.Ordinal));
+            demand => demand.What.Contains("Thrusters", StringComparison.Ordinal));
 
         Assert.Contains(
             lines.SelectMany(line => line.Wanted),
@@ -242,7 +242,7 @@ public class PlanGapTests
         Assert.NotEmpty(demands);
         Assert.All(demands, demand => Assert.Equal("Dirty Drive Tuning 5", demand.Blueprint));
         Assert.All(demands, demand =>
-            Assert.Equal("Bad Idea (Python) · MainEngines · Dirty Drive Tuning 5", demand.Fully()));
+            Assert.Equal("Bad Idea (Python) · Thrusters · Dirty Drive Tuning 5", demand.Fully()));
     }
 
     /// <summary>
@@ -261,7 +261,7 @@ public class PlanGapTests
             .First();
 
         Assert.DoesNotContain("Dirty Drive Tuning", demand.Describe(), StringComparison.Ordinal);
-        Assert.Contains("MainEngines", demand.Describe(), StringComparison.Ordinal);
+        Assert.Contains("Thrusters", demand.Describe(), StringComparison.Ordinal);
     }
 
     /// <summary>

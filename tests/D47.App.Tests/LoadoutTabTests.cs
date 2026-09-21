@@ -253,7 +253,7 @@ public class LoadoutTabTests
         Dispatcher.UIThread.RunJobs();
 
         // The ship's slot index, which only exists if the pane followed the click.
-        Assert.NotNull(Row(surface.Panel, "Main Engines"));
+        Assert.NotNull(Row(surface.Panel, "Thrusters"));
 
         surface.Window.Close();
     }
@@ -271,11 +271,11 @@ public class LoadoutTabTests
 
         // The slot index: one line each, for every slot the hull has rather than only the ones the journal
         // mentioned, and said in words rather than in Frontier's spelling.
-        Row(surface.Panel, "Main Engines").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Row(surface.Panel, "Thrusters").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(
-            ["Ships", "Bad Idea", "Main Engines"],
+            ["Ships", "Bad Idea", "Thrusters"],
             surface.Panel.Nav.Trail.Select(crumb => crumb.Word));
 
         surface.Window.Close();
@@ -536,7 +536,9 @@ public class LoadoutTabTests
         var shown = Text(surface.Panel).ToList();
         var joined = string.Join("\n", shown);
 
-        Assert.Contains("5A Thrusters", shown);
+        // The slot itself is already named Thrusters, so the module cell does not repeat the word.
+        Assert.Contains("Thrusters", shown);
+        Assert.Contains("5A", shown);
         Assert.Contains("3E Pulse Laser, gimballed", shown);
 
         Assert.DoesNotContain("int_engine", joined, StringComparison.OrdinalIgnoreCase);
@@ -1256,7 +1258,7 @@ public class LoadoutTabTests
     /// <summary> The variant page offers the module already in the slot. </summary>
     [AvaloniaTheory]
     [InlineData("Life Support", "4D Life Support")]
-    [InlineData("Radar", "6D Sensors")]
+    [InlineData("Sensors", "6D Sensors")]
     public void TheVariantPageOffersTheOneAlreadyFitted(string slot, string named)
     {
         var surface = Open();
@@ -1308,13 +1310,14 @@ public class LoadoutTabTests
                 : block.Text ?? string.Empty)
             .ToList();
 
-        Assert.Contains(drawn, line => line.StartsWith("5A Thrusters", StringComparison.Ordinal));
-        Assert.Contains(drawn, line => line.StartsWith("5C Thrusters", StringComparison.Ordinal));
+        // The slot itself is already named Thrusters, so each cell keeps only its own size and rating.
+        Assert.Contains(drawn, line => line.StartsWith("5A", StringComparison.Ordinal));
+        Assert.Contains(drawn, line => line.StartsWith("5C", StringComparison.Ordinal));
 
         // And never both in one cell, which is the shape this replaced.
         Assert.DoesNotContain(drawn, line =>
-            line.Contains("5A Thrusters", StringComparison.Ordinal)
-            && line.Contains("5C Thrusters", StringComparison.Ordinal));
+            line.Contains("5A", StringComparison.Ordinal)
+            && line.Contains("5C", StringComparison.Ordinal));
 
         surface.Window.Close();
     }
@@ -1458,13 +1461,13 @@ public class LoadoutTabTests
 
         Assert.Empty(Outlined(surface.Panel));
 
-        Row(surface.Panel, "Main Engines").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Row(surface.Panel, "Thrusters").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
         var outlined = Outlined(surface.Panel);
 
         Assert.Single(outlined);
-        Assert.Equal("Main Engines", AutomationProperties.GetName(outlined[0]));
+        Assert.Equal("Thrusters", AutomationProperties.GetName(outlined[0]));
 
         Row(surface.Panel, "Large Hardpoint 1").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();

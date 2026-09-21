@@ -221,7 +221,7 @@ public class EngineeringCapabilityTests
         // The grade comes from Level and the verdict from the 0.85 band, which are two different facts about
         // the same module.
         Assert.Contains("Frame Shift Drive — FSD LongRange, grade 5, finished (1.0)", answer, StringComparison.Ordinal);
-        Assert.Contains("Thrusters in Main Engines — Engine Dirty, grade 3", answer, StringComparison.Ordinal);
+        Assert.Contains("Thrusters — Engine Dirty, grade 3", answer, StringComparison.Ordinal);
 
         // The slot is dropped where it only repeats the module's name and kept where a ship has several of
         // the thing.

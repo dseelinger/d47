@@ -948,7 +948,7 @@ public static class EngineeringCapability
             return $"Nothing fitted matches '{wanted.Trim()}'. "
                    + $"Engineered right now: {(engineered.Count == 0
                        ? "nothing"
-                       : string.Join(", ", engineered.Select(module => Where(module))))}."
+                       : string.Join(", ", engineered.Select(module => Where(ship.Type, module))))}."
                    + remembered;
         }
 
@@ -962,13 +962,13 @@ public static class EngineeringCapability
 
             foreach (var module in matches)
             {
-                report.AppendLine("  " + Line(module, active.Engineers));
+                report.AppendLine("  " + Line(ship.Type, module, active.Engineers));
             }
 
             return report.ToString().TrimEnd() + remembered;
         }
 
-        return Detail(matches[0], active.Engineers) + remembered;
+        return Detail(ship.Type, matches[0], active.Engineers) + remembered;
     }
 
     private static string Summarise(
@@ -993,15 +993,15 @@ public static class EngineeringCapability
 
         foreach (var module in engineered)
         {
-            report.AppendLine("  " + Line(module, progress));
+            report.AppendLine("  " + Line(ship.Type, module, progress));
         }
 
         return report.ToString().TrimEnd();
     }
 
-    private static string Line(ShipModule module, EngineerProgressState progress)
+    private static string Line(string? hull, ShipModule module, EngineerProgressState progress)
     {
-        var report = new StringBuilder(Where(module));
+        var report = new StringBuilder(Where(hull, module));
 
         if (module.Blueprint is { } blueprint)
         {
@@ -1022,11 +1022,11 @@ public static class EngineeringCapability
         return report.ToString();
     }
 
-    private static string Detail(ShipModule module, EngineerProgressState progress)
+    private static string Detail(string? hull, ShipModule module, EngineerProgressState progress)
     {
         var report = new StringBuilder();
 
-        report.AppendLine(Where(module) + ".");
+        report.AppendLine(Where(hull, module) + ".");
 
         if (module.Blueprint is not { } blueprint)
         {
@@ -1178,10 +1178,15 @@ public static class EngineeringCapability
     }
 
     /// <summary>What a module is and where it sits.</summary>
-    private static string Where(ShipModule module)
+    private static string Where(string? hull, ShipModule module)
     {
         var name = EliteSpecifications.Module(module.Item)?.Name ?? ModuleNames.Readable(module.Item);
-        var slot = Spaced(module.Slot.Replace('_', ' '));
+
+        // Only a core slot is renamed against the outfitting screen — a hardpoint or a compartment still
+        // reads as its own spaced symbol.
+        var slot = EliteSpecifications.Slot(hull, module.Slot) is { Kind: ShipSlotKind.Core } resolved
+            ? resolved.Describe()
+            : Spaced(module.Slot.Replace('_', ' '));
 
         return string.Equals(Catalogue.Relax(slot), Catalogue.Relax(name), StringComparison.Ordinal)
             ? name

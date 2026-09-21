@@ -8,6 +8,9 @@
 
 ## 0.169.0 — No more drop-downs
 
+The Engineers tab and the Fleet build page now name the Radar and Main Engines slots the way the
+outfitting screen does: Sensors and Thrusters. Armour is unchanged.
+
 Fuel low and fuel critical no longer speak on a stale tank level. Right after a ship swap,
 Status.json can still report the old ship's fuel for up to a second while the new ship's tank
 capacity has already applied, reading as a low fraction that was never really low; the callout now

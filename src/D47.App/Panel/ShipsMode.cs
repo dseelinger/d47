@@ -930,7 +930,9 @@ public sealed class ShipsMode(
 
         ships.Plan(build.Id, moved);
 
-        return $"Copied to {moved.Slot}: {moved.Describe()}.";
+        var slotName = EliteSpecifications.Slot(build.Hull, moved.Slot)?.Describe() ?? moved.Slot;
+
+        return $"Copied to {slotName}: {moved.Describe()}.";
     }
 
     /// <summary>Why a drop was turned down, in the Commander's terms (remediation.md 17, item 8).</summary>

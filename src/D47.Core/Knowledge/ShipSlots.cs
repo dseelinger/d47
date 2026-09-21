@@ -41,10 +41,18 @@ public sealed record ShipSlot(
         _ => "Optional Internal",
     };
 
+    /// <summary>The core slot symbols the outfitting screen names differently to the journal.</summary>
+    private static readonly Dictionary<string, string> CoreRenames = new(StringComparer.Ordinal)
+    {
+        ["Radar"] = "Sensors",
+        ["MainEngines"] = "Thrusters",
+    };
+
     /// <summary>The slot as a Commander would say it: the size and the ordinal, rather than the symbol.</summary>
     public string Describe() => Kind switch
     {
-        ShipSlotKind.Core or ShipSlotKind.Hardpoint => Spaced(Name),
+        ShipSlotKind.Core => CoreRenames.TryGetValue(Name, out var renamed) ? renamed : Spaced(Name),
+        ShipSlotKind.Hardpoint => Spaced(Name),
         ShipSlotKind.Utility => Ordinal(Name) is { } utility
             ? $"Utility Mount {utility}"
             : Spaced(Name),
@@ -64,7 +72,7 @@ public sealed record ShipSlot(
     /// </summary>
     public string Short() => Kind switch
     {
-        ShipSlotKind.Core => ShortNames.Of(Spaced(Name)),
+        ShipSlotKind.Core => ShortNames.Of(CoreRenames.TryGetValue(Name, out var renamed) ? renamed : Spaced(Name)),
 
         // "Large Hardpoint 1" under a heading that already says Hardpoints, so: "Large 1".
         ShipSlotKind.Hardpoint => Spaced(Name).Replace("Hardpoint ", string.Empty, StringComparison.Ordinal),

@@ -54,7 +54,8 @@ public static class PlannedNeeds
         {
             foreach (var slot in build.Slots.Where(slot => !slot.IsEmpty))
             {
-                var what = $"{build.Describe()} · {slot.Slot}";
+                var slotName = EliteSpecifications.Slot(build.Hull, slot.Slot)?.Describe() ?? slot.Slot;
+                var what = $"{build.Describe()} · {slotName}";
 
                 if (slot.Blueprint is { Length: > 0 } blueprint)
                 {

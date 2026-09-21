@@ -155,9 +155,11 @@ public static class PlanGap
                     [slot.ToRequest()],
                     canonicalSlot);
 
+                var slotName = EliteSpecifications.Slot(build.Hull, slot.Slot)?.Describe() ?? slot.Slot;
+
                 Fold(
                     EngineeringPlan.Cost(items, state),
-                    $"{build.Describe()} · {slot.Slot}",
+                    $"{build.Describe()} · {slotName}",
                     Named(slot.Blueprint, slot.Grade),
                     needed,
                     held,

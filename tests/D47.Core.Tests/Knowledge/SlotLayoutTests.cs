@@ -226,7 +226,7 @@ public class SlotLayoutTests
     [Fact]
     public void ASlotSaysItselfInWordsRatherThanInTheJournalsSpelling()
     {
-        Assert.Equal("Main Engines", EliteSpecifications.Slot("anaconda", "MainEngines")?.Describe());
+        Assert.Equal("Thrusters", EliteSpecifications.Slot("anaconda", "MainEngines")?.Describe());
         Assert.Equal(
             "Large Hardpoint 1", EliteSpecifications.Slot("anaconda", "LargeHardpoint1")?.Describe());
         Assert.Equal(
@@ -235,5 +235,17 @@ public class SlotLayoutTests
             "Compartment 1 (size 7)", EliteSpecifications.Slot("anaconda", "Slot01_Size7")?.Describe());
         Assert.Equal(
             "Military 1 (size 5)", EliteSpecifications.Slot("anaconda", "Military01")?.Describe());
+    }
+
+    [Fact]
+    public void CoreSlotsAreNamedAsOutfittingNamesThem()
+    {
+        Assert.Equal("Sensors", EliteSpecifications.Slot("anaconda", "Radar")?.Describe());
+        Assert.Equal("Thrusters", EliteSpecifications.Slot("anaconda", "MainEngines")?.Describe());
+        Assert.Equal("Armour", EliteSpecifications.Slot("anaconda", "Armour")?.Describe());
+
+        Assert.Equal("Sensors", EliteSpecifications.Slot("anaconda", "Radar")?.Short());
+        Assert.Equal("Thrusters", EliteSpecifications.Slot("anaconda", "MainEngines")?.Short());
+        Assert.Equal("Armour", EliteSpecifications.Slot("anaconda", "Armour")?.Short());
     }
 }
