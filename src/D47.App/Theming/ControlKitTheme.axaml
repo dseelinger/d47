@@ -123,10 +123,12 @@
     -->
     <ControlTheme x:Key="{x:Type ToggleSwitch}" TargetType="ToggleSwitch">
       <Setter Property="Cursor" Value="Hand" />
-      <Setter Property="OnContent" Value="On" />
-      <Setter Property="OffContent" Value="Off" />
+      <Setter Property="OnContent" Value="ON" />
+      <Setter Property="OffContent" Value="OFF" />
       <Setter Property="FontFamily" Value="{StaticResource D47.Font.Chrome}" />
-      <Setter Property="FontSize" Value="{StaticResource D47.Type.Small}" />
+      <Setter Property="FontSize" Value="14" />
+      <Setter Property="FontWeight" Value="Bold" />
+      <Setter Property="LetterSpacing" Value="1.68" />
       <Setter Property="Template">
         <ControlTemplate>
           <Border x:Name="Track"
