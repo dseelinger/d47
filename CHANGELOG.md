@@ -8,6 +8,11 @@
 
 ## 0.169.0 — No more drop-downs
 
+The app no longer crashes on launch. Three `FocusAdorner` setters — on the Button, TextChoice and
+Slider themes — referenced a `ControlTemplate` that the XAML compiler left unbuilt against a
+`FocusAdorner` property, throwing `InvalidCastException` on the first control that applied one of
+those themes. The focus ring is now built in C# and referenced with `{x:Static}` instead.
+
 Screen and window titles draw hot; group headings draw nowrap with a trailing rule; subgroup and
 caption headings draw faint. The Settings sidebar's active item is now a solid Accent fill with
 Knock text, and an inactive item draws in muted text. The protected-row legend now names the bar

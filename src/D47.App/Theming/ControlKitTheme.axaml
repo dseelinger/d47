@@ -1,6 +1,7 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:controls="clr-namespace:D47.App.Controls">
+        xmlns:controls="clr-namespace:D47.App.Controls"
+        xmlns:theming="clr-namespace:D47.App.Theming">
 
   <!--
     The HUD dress for the three controls that appear everywhere and had no d47 look of their
@@ -8,14 +9,6 @@
     dress carries no rounded shape (#273).
   -->
   <Styles.Resources>
-
-    <!-- The keyboard focus ring every control gets: a 2px Accent outline, 2px clear of the edge (#347). -->
-    <ControlTemplate x:Key="D47.FocusAdorner">
-      <Rectangle IsHitTestVisible="False"
-                 Margin="-3"
-                 Stroke="{DynamicResource D47.Accent}"
-                 StrokeThickness="2" />
-    </ControlTemplate>
 
     <!--
       Normal by default: ink on no fill, with the rule as a border. A button opts into one of the
@@ -34,7 +27,7 @@
       <Setter Property="Background" Value="Transparent" />
       <Setter Property="BorderBrush" Value="{DynamicResource D47.Rule}" />
       <Setter Property="BorderThickness" Value="1" />
-      <Setter Property="FocusAdorner" Value="{StaticResource D47.FocusAdorner}" />
+      <Setter Property="FocusAdorner" Value="{x:Static theming:FocusRing.Template}" />
       <Setter Property="Template">
         <ControlTemplate>
           <controls:ChamferedBorder x:Name="Shape"
@@ -253,7 +246,7 @@
       <Setter Property="LetterSpacing" Value="2.4" />
       <Setter Property="Foreground" Value="{DynamicResource D47.TextFaint}" />
       <Setter Property="Padding" Value="0,2,0,0" />
-      <Setter Property="FocusAdorner" Value="{StaticResource D47.FocusAdorner}" />
+      <Setter Property="FocusAdorner" Value="{x:Static theming:FocusRing.Template}" />
 
       <Setter Property="Template">
         <ControlTemplate>
@@ -568,7 +561,7 @@
     -->
     <ControlTheme x:Key="{x:Type Slider}" TargetType="Slider">
       <Setter Property="MinHeight" Value="44" />
-      <Setter Property="FocusAdorner" Value="{StaticResource D47.FocusAdorner}" />
+      <Setter Property="FocusAdorner" Value="{x:Static theming:FocusRing.Template}" />
       <Setter Property="Template">
         <ControlTemplate>
           <Grid MinHeight="44" VerticalAlignment="Center">
