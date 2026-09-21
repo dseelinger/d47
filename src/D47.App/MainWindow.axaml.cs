@@ -559,6 +559,16 @@ public partial class MainWindow : Window
     /// <summary>Window-scoped gestures, matched against the bound settings.</summary>
     protected override void OnKeyDown(KeyEventArgs e)
     {
+#if DEBUG
+        // The control system handoff's sign-off gate (#358) — not a bound setting, since it exists
+        // in this build alone.
+        if (!e.Handled && e.Key == Key.K && e.KeyModifiers == (KeyModifiers.Control | KeyModifiers.Shift))
+        {
+            e.Handled = true;
+            _ = new ControlKitWindow().Over(this);
+        }
+#endif
+
         if (_host is not null && !e.Handled)
         {
             if (Matches(_host.Settings.Current.Hotkeys.OpenSettings, e))

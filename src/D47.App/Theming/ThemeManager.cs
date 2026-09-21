@@ -128,14 +128,18 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         };
     }
 
-    public void Apply(string? themeId)
+    /// <param name="matrixOverride">
+    /// Used instead of reading the Commander's own HUD matrix from disk — the Control Kit's Accent
+    /// entry drives the recolour path this way (#358).
+    /// </param>
+    public void Apply(string? themeId, GuiColourMatrix? matrixOverride = null)
     {
         var theme = ThemeCatalog.Selected(themeId);
         var palette = Palettes.For(theme.Id);
 
         if (theme.Id == ThemeCatalog.ElitePaletteId)
         {
-            var matrix = ElitePalette.Read(ElitePalette.DefaultPath());
+            var matrix = matrixOverride ?? ElitePalette.Read(ElitePalette.DefaultPath());
 
             if (matrix is null)
             {

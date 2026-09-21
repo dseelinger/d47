@@ -8,6 +8,11 @@
 
 ## 0.169.0 — No more drop-downs
 
+A Debug-only Control Kit window (Ctrl+Shift+K) shows every control theme and resource key
+against the derived colour ramp, the heading ranks, and the five app themes, drawn from the real
+controls rather than copies. Its Accent entry recolours the app through the same HUD-matrix path a
+Commander's own matrix change takes.
+
 The app no longer crashes on launch. Three `FocusAdorner` setters — on the Button, TextChoice and
 Slider themes — referenced a `ControlTemplate` that the XAML compiler left unbuilt against a
 `FocusAdorner` property, throwing `InvalidCastException` on the first control that applied one of
