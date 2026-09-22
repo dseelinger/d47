@@ -81,6 +81,7 @@ public class AuditionDoesNotCommitTests
             {
                 Assert.True(row.Playable);
                 Assert.Equal("Play a voice to hear it. Each one costs about $0.013.", row.Why);
+                Assert.Equal($"Play {row.Text}. Play a voice to hear it. Each one costs about $0.013.", row.Tip);
             });
     }
 
@@ -105,6 +106,9 @@ public class AuditionDoesNotCommitTests
                 Assert.True(row.CanPlay);
                 Assert.False(row.Playable);
                 Assert.Equal("ElevenLabs needs an API key before it will speak.", row.Why);
+
+                // Shut says why, with no action name attached — there is nothing to press (#383).
+                Assert.Equal("ElevenLabs needs an API key before it will speak.", row.Tip);
             });
     }
 
@@ -240,7 +244,6 @@ public class AuditionDoesNotCommitTests
         await Task.Yield();
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal("ElevenLabs refused that voice.", ToolTip.GetTip(glyph));
         Assert.Equal(
             "ElevenLabs refused that voice.",
             picker.GetControl<TextBlock>("AuditionNote").Text);
@@ -399,7 +402,10 @@ public class AuditionDoesNotCommitTests
         Assert.True(row.HasSample);
         Assert.True(LineGlyph(picker, "en-GB-SoniaNeural").IsVisible);
         Assert.Equal("Hear it say its own line. Costs about $0.070.", row.LineWhy);
-        Assert.DoesNotContain("$", row.Why, StringComparison.Ordinal);
+
+        // The free sample has no cost, so the play glyph's tip is its action name alone (#383).
+        Assert.Null(row.Why);
+        Assert.Equal("Play en-GB-SoniaNeural", row.Tip);
 
         picker.Close();
     }

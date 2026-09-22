@@ -359,12 +359,9 @@ public sealed class RouteTradePage : UserControl
                 Button.ForegroundProperty,
                 Application.Current!.Resources.GetResourceObservable(ThemeManager.TextMutedKey));
 
-            if (D47.Core.Help.HelpLibrary.For(page)?.Intro is { Length: > 0 } intro)
-            {
-                ToolTip.SetTip(mark, intro);
-            }
-
+            // A bare glyph names its own action rather than repeating the page it opens (#383).
             AutomationProperties.SetName(mark, $"About {title}");
+            ToolTip.SetTip(mark, $"About {title}");
 
             mark.Click += (_, _) => D47.Core.Help.HelpLevel.Open(_nav, page);
 

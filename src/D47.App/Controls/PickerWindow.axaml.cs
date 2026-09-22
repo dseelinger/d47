@@ -102,7 +102,7 @@ public sealed class PickerChoice : INotifyPropertyChanged
     /// <summary>And whether one can be played right now — false where the provider cannot speak.</summary>
     public required bool Playable { get; init; }
 
-    /// <summary>The pointer text on the glyph: what a press costs, or why it cannot be pressed.</summary>
+    /// <summary>What a press costs, or why it cannot be pressed — null for a free sample, which costs nothing.</summary>
     public string? Why { get; init; }
 
     /// <summary>
@@ -111,8 +111,15 @@ public sealed class PickerChoice : INotifyPropertyChanged
     /// </summary>
     public bool HasSample { get; init; }
 
-    /// <summary>The pointer text on the second glyph.</summary>
+    /// <summary>What the second glyph's press costs, or why it cannot be pressed.</summary>
     public string? LineWhy { get; init; }
+
+    /// <summary>The tooltip: the unavailable reason while shut, the action and its cost while live (#383).</summary>
+    public string? Tip => Playable ? Why is { Length: > 0 } cost ? $"{ActionName}. {cost}" : ActionName : Why;
+
+    /// <summary>The second glyph's tooltip, on the same terms as <see cref="Tip"/>.</summary>
+    public string? LineTip =>
+        Playable ? LineWhy is { Length: > 0 } cost ? $"{LineActionName}. {cost}" : LineActionName : LineWhy;
 
     public bool PlayingLine
     {
@@ -128,6 +135,7 @@ public sealed class PickerChoice : INotifyPropertyChanged
             Raise(nameof(PlayingLine));
             Raise(nameof(LineGlyph));
             Raise(nameof(LineActionName));
+            Raise(nameof(LineTip));
         }
     }
 
@@ -145,6 +153,7 @@ public sealed class PickerChoice : INotifyPropertyChanged
             Raise(nameof(Playing));
             Raise(nameof(Glyph));
             Raise(nameof(ActionName));
+            Raise(nameof(Tip));
         }
     }
 
@@ -267,7 +276,7 @@ public partial class PickerWindow : Window
                 Playable = _request.Audition is { Unavailable: null },
                 HasSample = sample,
                 Why = _request.Audition is { } offered
-                    ? offered.Unavailable ?? (sample ? FreeSample : offered.LineCost ?? offered.Cost)
+                    ? offered.Unavailable ?? (sample ? null : offered.LineCost ?? offered.Cost)
                     : null,
                 LineWhy = _request.Audition is { } paid ? paid.Unavailable ?? paid.LineCost ?? paid.Cost : null,
             };
@@ -445,9 +454,6 @@ public partial class PickerWindow : Window
     /// <summary>The audition in flight, so the next press can drop it.</summary>
     private CancellationTokenSource? _auditioning;
 
-    /// <summary>What the play glyph says on a row whose glyph plays a free sample.</summary>
-    private const string FreeSample = "Hear this voice's free sample. It costs nothing.";
-
     /// <summary>
     /// Plays the row the glyph is on — not the selection, which is the point of moving it there
     /// (change-requests.md 18): a Commander can listen to one voice while another stays highlighted,
@@ -461,7 +467,6 @@ public partial class PickerWindow : Window
             && _request.Audition is { Unavailable: null } audition)
         {
             await AuditionAsync(
-                control,
                 choice,
                 line: false,
                 choice.HasSample && audition.Preview is { } preview ? preview : audition.Play);
@@ -475,16 +480,12 @@ public partial class PickerWindow : Window
             && control.DataContext is PickerChoice choice
             && _request.Audition is { Unavailable: null } audition)
         {
-            await AuditionAsync(control, choice, line: true, audition.Play);
+            await AuditionAsync(choice, line: true, audition.Play);
         }
     }
 
     /// <summary>One audition from one glyph: a second press on that glyph stops it, and any press stops the rest.</summary>
-    private async Task AuditionAsync(
-        Control control,
-        PickerChoice choice,
-        bool line,
-        Func<string, CancellationToken, Task> play)
+    private async Task AuditionAsync(PickerChoice choice, bool line, Func<string, CancellationToken, Task> play)
     {
         // Read before stopping, because stopping is what clears it.
         var stopping = line ? choice.PlayingLine : choice.Playing;
@@ -510,8 +511,7 @@ public partial class PickerWindow : Window
         }
         catch (Exception ex)
         {
-            // A provider that would not speak.
-            ToolTip.SetTip(control, ex.Message);
+            // A provider that would not speak. AuditionNote already carries the message (#383).
             AuditionNote.Text = ex.Message;
         }
         finally

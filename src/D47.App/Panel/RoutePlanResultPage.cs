@@ -291,7 +291,6 @@ public sealed class RoutePlanResultPage : UserControl
         {
             row.Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand);
             row.Tapped += (_, _) => _ = tap(system);
-            ToolTip.SetTip(row, $"Copy {system}");
         }
 
         return row;

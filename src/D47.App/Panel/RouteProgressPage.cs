@@ -205,7 +205,6 @@ public sealed class RouteProgressPage : UserControl
             // of plotting that always works, whatever the map is doing.
             row.Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand);
             row.Tapped += (_, _) => _ = copy(hop.StarSystem);
-            ToolTip.SetTip(row, $"Copy {hop.StarSystem}");
         }
 
         return row;

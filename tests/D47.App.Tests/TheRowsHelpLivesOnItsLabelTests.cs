@@ -44,8 +44,7 @@ public class TheRowsHelpLivesOnItsLabelTests
         var host = Open();
 
         var label = Label(host, "listening.pushToTalkKey");
-        var tip = Assert.IsType<StackPanel>(ToolTip.GetTip(label));
-        var words = tip.Children.OfType<TextBlock>().Single();
+        var words = Assert.IsType<TextBlock>(ToolTip.GetTip(label));
 
         Assert.Contains("Held, D47 listens", words.Text, StringComparison.Ordinal);
 
@@ -56,16 +55,25 @@ public class TheRowsHelpLivesOnItsLabelTests
         host.Close();
     }
 
-    /// <summary>The tooltip carries the way out to the web page too, not just the words.</summary>
+    /// <summary>
+    /// A tooltip is not hoverable or focusable, so nothing inside a row label's tip can be reached
+    /// reliably — the card heading's "?" is the only way to the help page (#383).
+    /// </summary>
     [AvaloniaFact]
-    public void TheTooltipOffersTheHelpPage()
+    public void NoRowLabelsTooltipCarriesAButton()
     {
         var host = Open();
 
-        var tip = Assert.IsType<StackPanel>(ToolTip.GetTip(Label(host, "listening.pushToTalkKey")));
-        var link = tip.Children.OfType<Button>().Single();
+        var tips = host.View.GetVisualDescendants()
+            .OfType<TextBlock>()
+            .Select(label => ToolTip.GetTip(label))
+            .Where(tip => tip is not null);
 
-        Assert.Equal("Help", link.Content);
+        Assert.All(
+            tips,
+            tip => Assert.False(
+                tip is Button || (tip is Control control && control.GetVisualDescendants().OfType<Button>().Any()),
+                $"a row label's tooltip carries a Button: {tip}"));
 
         host.Close();
     }
@@ -129,8 +137,7 @@ public class TheRowsHelpLivesOnItsLabelTests
     {
         var host = Open();
 
-        var tip = Assert.IsType<StackPanel>(ToolTip.GetTip(Label(host, "listening.pushToTalkKey")));
-        var words = tip.Children.OfType<TextBlock>().Single();
+        var words = Assert.IsType<TextBlock>(ToolTip.GetTip(Label(host, "listening.pushToTalkKey")));
 
         // One line of the same text, at the same size, unwrapped — the yardstick a wrapped multi-line block
         // is measured against.

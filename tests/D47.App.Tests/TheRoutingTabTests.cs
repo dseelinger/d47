@@ -908,11 +908,11 @@ public class TheRoutingTabTests
         }
     }
 
- /// <summary>Hover and click are two ways to the same words.</summary>
+ /// <summary>A bare glyph's hover names the same action its automation name does (#383).</summary>
     [AvaloniaTheory]
-    [InlineData("Neutron Plotter", "general-neutron-plotter")]
-    [InlineData("Road to Riches", "general-road-to-riches")]
-    public void EachPlannersMarkShowsThatPlannersHelpOnHover(string heading, string page)
+    [InlineData("Neutron Plotter")]
+    [InlineData("Road to Riches")]
+    public void EachPlannersMarkNamesItsActionOnHover(string heading)
     {
         var folder = Scratch();
 
@@ -927,10 +927,7 @@ public class TheRoutingTabTests
             var mark = PlannerMark(panel, heading);
 
             Assert.Equal($"About {heading}", AutomationProperties.GetName(mark));
-
-            var intro = D47.Core.Help.HelpLibrary.For(page)!.Intro;
-
-            Assert.Equal(intro, ToolTip.GetTip(mark));
+            Assert.Equal($"About {heading}", ToolTip.GetTip(mark));
         }
         finally
         {
@@ -971,9 +968,9 @@ public class TheRoutingTabTests
         }
     }
 
-    /// <summary>And its hover shows the same words as the click, the same as the other two.</summary>
+    /// <summary>And its hover names its action, the same as the other two.</summary>
     [AvaloniaFact]
-    public void TheTradePagesMarkShowsThatPlannersHelpOnHover()
+    public void TheTradePagesMarkNamesItsActionOnHover()
     {
         var folder = Scratch();
 
@@ -988,10 +985,7 @@ public class TheRoutingTabTests
             var mark = PlannerMark(panel, "Trade run");
 
             Assert.Equal("About Trade run", AutomationProperties.GetName(mark));
-
-            var intro = D47.Core.Help.HelpLibrary.For("general-trade-run")!.Intro;
-
-            Assert.Equal(intro, ToolTip.GetTip(mark));
+            Assert.Equal("About Trade run", ToolTip.GetTip(mark));
         }
         finally
         {

@@ -2383,7 +2383,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         if (!string.IsNullOrWhiteSpace(row.Help))
         {
-            AttachHelp(label, capability, row, spoken);
+            AttachHelp(label, spoken);
         }
 
         // A square glyph button at the end of the row rather than beside the label, so it stays put
@@ -2593,47 +2593,17 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
     /// <summary>
     /// The row's help, reached by hovering or focusing its label rather than a separate glyph — the
-    /// label is where a Commander already looks to know what the row is (#333).
+    /// label is where a Commander already looks to know what the row is (#333). The card heading's own
+    /// "?" reaches the capability's page; this tooltip carries text only (#383).
     /// </summary>
-    private void AttachHelp(TextBlock label, CapabilityDescriptor capability, SettingRow row, TextBlock spoken)
+    private void AttachHelp(TextBlock label, TextBlock spoken)
     {
-        var inside = new StackPanel
-        {
-            Spacing = 8,
-            Children = { spoken, ExplainsLink(capability, row) },
-        };
-
         label.Focusable = true;
-        ToolTip.SetTip(label, inside);
+        ToolTip.SetTip(label, spoken);
 
         // A TextBlock shows its tooltip on hover already; keyboard focus needs to open and close it by hand.
         label.GotFocus += (_, _) => ToolTip.SetIsOpen(label, true);
         label.LostFocus += (_, _) => ToolTip.SetIsOpen(label, false);
-    }
-
-    /// <summary>The "Help" link the row's tooltip carries.</summary>
-    private Button ExplainsLink(CapabilityDescriptor capability, SettingRow row)
-    {
-        var page = new Button
-        {
-            Content = "Help",
-            FontSize = TypeScale.Secondary,
-            Padding = new Thickness(0),
-            Background = Brushes.Transparent,
-            BorderThickness = new Thickness(0),
-            HorizontalAlignment = HorizontalAlignment.Left,
-            Cursor = new Cursor(StandardCursorType.Hand),
-        };
-
-        Themed(page, ForegroundProperty, ThemeManager.AccentKey);
-
-        // The row's own anchor where it has one, the capability's page where it does not — a row with no
-        // anchor still has somewhere to send the Commander, and it is better than a link that is missing on
-        // the rows that most need explaining.
-        page.Click += (_, _) => Process.Start(new ProcessStartInfo(
-            DocsSite.Capability(capability.Id, row.DocsAnchor)) { UseShellExecute = true });
-
-        return page;
     }
 
     /// <summary>

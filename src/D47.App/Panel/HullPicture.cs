@@ -60,9 +60,6 @@ internal sealed class HullPicture : Grid
             Children = { _marks, _frame },
         };
 
-        ToolTip.SetTip(
-            _frame, "Click to fill the window. The wheel zooms, dragging moves it, Escape returns.");
-
         _frame.PointerPressed += (_, e) =>
         {
             if (e.GetCurrentPoint(_frame).Properties.IsLeftButtonPressed)

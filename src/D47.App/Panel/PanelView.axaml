@@ -500,8 +500,7 @@
                 CornerRadius="3"
                 Background="Transparent"
                 BorderThickness="1"
-                BorderBrush="{DynamicResource D47.Accent}"
-                ToolTip.Tip="This is a pre-release. It is offered to nobody automatically, and it is not final.">
+                BorderBrush="{DynamicResource D47.Accent}">
           <TextBlock x:Name="PreReleaseBadgeText"
                      Text="PRE-RELEASE"
                      FontSize="{StaticResource D47.Type.Small}"
@@ -823,7 +822,6 @@
                   IsVisible="False"
                   Content="Help improve D47…"
                   FontSize="{StaticResource D47.Type.Secondary}"
-                  ToolTip.Tip="Share a scrubbed excerpt around an incident - or, on the journal pages, your journal history - after reading exactly what would leave"
                   Click="OnDonateClick" />
           <!--
             The clear affordance sits inside the field, not beside it. Another sibling in this

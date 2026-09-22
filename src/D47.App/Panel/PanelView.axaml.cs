@@ -430,7 +430,6 @@ public partial class PanelView : UserControl
         }
 
         var state = _bound.Microphone;
-        var detail = _bound.MicrophoneDetail;
         var loading = _bound.ModelLoading && state != D47.Core.Listening.MicrophoneState.Open;
 
         var (key, label, filled) = state switch
@@ -471,12 +470,6 @@ public partial class PanelView : UserControl
                 state == D47.Core.Listening.MicrophoneState.Open ? key : Theming.ThemeManager.RuleKey));
 
         MicrophoneLabel.Text = label;
-
-        // The detail — which key to hold, or which name to say — is a tooltip rather than more text on the
-        // row.
-        ToolTip.SetTip(
-            MicrophoneRow,
-            string.IsNullOrWhiteSpace(detail) ? label : $"{label} — {detail}");
     }
 
     /// <summary>The Settings tab, so a host can hang a tooltip naming the bound gesture on it.</summary>
@@ -1458,13 +1451,6 @@ public partial class PanelView : UserControl
         if (marker is not null)
         {
             PreReleaseBadgeText.Text = marker.ToUpperInvariant();
-        }
-
-        // The tip is set here rather than beside the text, because the wording is a fact about the
-        // channel and the caller with the channel is this one.
-        if (D47.Core.Updates.ReleaseChannelText.Full(channel) is { } says)
-        {
-            ToolTip.SetTip(PreReleaseBadge, says);
         }
     }
 

@@ -492,10 +492,6 @@ public sealed class AdventuresPage : UserControl
             _ => AdventureLength.Evening,
         };
 
-        ToolTip.SetTip(
-            usingBox,
-            "This ship only is a story that stays aboard; anything you own lets it send you to fetch another.");
-
         usingSwitch.IsChecked = thisShipOnly;
         usingSwitch.IsCheckedChanged += (_, _) => thisShipOnly = usingSwitch.IsChecked == true;
 

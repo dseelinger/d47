@@ -438,16 +438,9 @@ public sealed class RoutePlanPage : UserControl
                 Button.ForegroundProperty,
                 Application.Current!.Resources.GetResourceObservable(ThemeManager.TextMutedKey));
 
-            // The same words the click reveals (#341), not an invented sentence about the click — the
-            // destination page's own intro, the way HelpPageView already introduces it.
-            if (D47.Core.Help.HelpLibrary.For(page)?.Intro is { Length: > 0 } intro)
-            {
-                ToolTip.SetTip(mark, intro);
-            }
-
-            // A Path-free "?" has text, but no name naming what it is about — the same fault, and the same
-            // fix, as the settings row's info glyph.
+            // A bare glyph names its own action rather than repeating the page it opens (#383).
             AutomationProperties.SetName(mark, $"About {title}");
+            ToolTip.SetTip(mark, $"About {title}");
 
             mark.Click += (_, _) => D47.Core.Help.HelpLevel.Open(_nav, page);
 

@@ -14,15 +14,20 @@ card with a drop shadow before. Every tooltip opens 600ms after the pointer sett
 left-aligned with the control it explains, 8px away, instead of each call site setting its own
 delay.
 
-A tooltip now survives in three cases only: a bare glyph names the action it takes, cut-off text
-carries its full value while the column actually clips it, and a disabled control says why. Gone
+A tooltip now survives in four cases only: a bare glyph names the action it takes, cut-off text
+carries its full value while the column actually clips it, a disabled control says why, and a
+Settings row's label shows the row's own explanation on hover or focus, as plain text with nothing
+clickable inside it — the card heading's `?` is the only way from there to the help page. Gone
 from everywhere else: the Stepper's own tooltip repeating the value cell 20px away, `Default: …`
 on a chooser, number box or text box, the Settings tab naming its own shortcut, worded buttons
-such as Copy All, Raw and the picker's default button repeating their own label, and a help mark
-showing the address it is about to open rather than saying what pressing it does. Every `↺` reads
+such as Copy All, Raw and the picker's default button repeating their own label, a help mark
+showing the address it is about to open rather than saying what pressing it does, the pre-release
+badge's and the donate button's own explanations, the microphone row's detail, the adventures
+ship-only note, the hull picture's controls, and a route row's "Copy …" hint. Every `↺` reads
 "Reset to default"; a screen reader still hears which one. The Stepper's value cell, a chooser
 button's label, the Loadout tab's slot and side-cell names, and the coverage report's item name
-now carry their full text only while the column has actually cut them off.
+now carry their full text only while the column has actually cut them off. A picker's play glyph
+now names the action it takes as well as the cost, where it has one.
 
 ## 0.169.0 — No more drop-downs
 
