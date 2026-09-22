@@ -13,8 +13,12 @@ public class AHullWithNoShipRowKeepsItsSlotsTests
     public void TheGapThisGuardsIsRealRatherThanHypothetical()
     {
         // If this ever starts failing, the table has caught up and the fallback below is no longer
-        // needed for this hull — which means the table improved, not that the test broke.
-        Assert.Null(EliteSpecifications.Ship(NoShipRow));
+        // needed for this hull — which means the table improved, not that the test broke. It happened
+        // on #385: the generator's EDSY fallback gave every hull with a slot layout a ships row too, so
+        // no hull currently demonstrates this gap.
+        Assert.SkipWhen(
+            EliteSpecifications.Ship(NoShipRow) is not null,
+            "explorer_nx now has a ships row (#385); no hull currently demonstrates this gap");
     }
 
     [Fact]

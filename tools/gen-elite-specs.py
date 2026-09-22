@@ -303,32 +303,51 @@ def requirement(ship: dict) -> str:
     return ""
 
 
-def build_ships(documents: list[dict]) -> tuple[list[list[str]], list[str]]:
-    by_id = {int(row["id"]): row for row in rows("shipyard.csv")}
+def build_ships(
+    documents: list[dict], shipyard: list[dict], edsy_hulls: dict[str, dict]
+) -> tuple[list[list[str]], list[str]]:
+    """Every hull `shipyard.csv` names, the naming authority driving the loop rather than
+    being joined against it.
+
+    coriolis-data supplies the figures where its `edID` matches the id `shipyard.csv` gives
+    the same hull. Where it does not — either because coriolis-data has no file for the hull
+    at all, or because its file's own `edID` disagrees with `shipyard.csv`'s — EDSY's
+    `eddb.js` fills `speed`, `boost`, `armour`, `shields`, `hardness` and `hull_mass` by
+    symbol, the same `fdname` the journal writes. Neither source names every column: a hull
+    only EDSY measures still carries no manufacturer, pad, crew or slot sizes, because EDSY
+    is not asked for those here.
+    """
+    by_edid = {ship.get("edID"): ship for ship in documents}
 
     built, missing = [], []
 
-    for ship in documents:
-        properties = ship.get("properties") or {}
-        slots = ship.get("slots") or {}
+    for identity in shipyard:
+        symbol = identity["symbol"].lower()
 
-        identity = by_id.get(ship.get("edID"))
+        ship = by_edid.get(int(identity["id"]))
+        properties = (ship.get("properties") or {}) if ship else {}
+        slots = (ship.get("slots") or {}) if ship else {}
+        figures = (edsy_hulls.get(symbol) or {}).get("figures") or {}
 
-        if identity is None:
-            missing.append(properties.get("name") or "an unnamed hull")
+        def pick(coriolis_key: str, edsy_key: str) -> str:
+            value = properties.get(coriolis_key)
+            return number(value) if value is not None else figures.get(edsy_key, "")
+
+        if ship is None and not any(figures.values()):
+            missing.append(identity["name"])
             continue
 
         built.append([
-            identity["symbol"].lower(),
+            symbol,
             identity["name"],
             properties.get("manufacturer") or "",
             PADS.get(properties.get("class"), ""),
-            number(properties.get("speed")),
-            number(properties.get("boost")),
-            number(properties.get("baseArmour")),
-            number(properties.get("baseShieldStrength")),
-            number(properties.get("hardness")),
-            number(properties.get("hullMass")),
+            pick("speed", "topspd"),
+            pick("boost", "bstspd"),
+            pick("baseArmour", "armour"),
+            pick("baseShieldStrength", "shields"),
+            pick("hardness", "hardness"),
+            pick("hullMass", "mass"),
             number(properties.get("reserveFuelCapacity")),
             number(properties.get("crew")),
             number(properties.get("masslock")),
@@ -339,15 +358,12 @@ def build_ships(documents: list[dict]) -> tuple[list[list[str]], list[str]]:
             ",".join(str(size) for size in slots.get("hardpoints") or [] if size),
             ",".join(str(size) for size in slots.get("internal") or []
                      if isinstance(size, int) and size),
-            requirement(ship),
+            requirement(ship) if ship else "",
         ])
 
-    # A hull with no id row cannot be keyed to anything the journal writes, so its figures
-    # are unreachable — but its *existence* is worth recording. Three of them on
-    # 2026-08-14: Caspian Explorer, Corsair and Kestrel Mk II, all newer than the id list.
-    # Carried through so d47 can say "that is a ship I know of and have no figures for",
-    # which is a better answer than "I have never heard of it" and is the difference
-    # between a stale table and a wrong one.
+    # A hull no source measures cannot be keyed to anything the journal writes, so its
+    # figures are unreachable — but its *existence* is worth recording, so d47 can say "that
+    # is a ship I know of and have no figures for" rather than "I have never heard of it".
     return sorted(built), sorted(missing)
 
 
@@ -952,8 +968,17 @@ def entries(text: str) -> list[tuple[int, str]]:
     return found
 
 
+def edsy_number(text: str, key: str) -> str:
+    found = re.search(r"\b%s\s*:\s*(-?[\d.]+)" % key, text)
+    return number(float(found.group(1))) if found else ""
+
+
 def edsy_ships(database: str) -> dict[str, dict]:
-    """Every hull EDSY declares, keyed by the symbol the journal writes."""
+    """Every hull EDSY declares, keyed by the symbol the journal writes.
+
+    `figures` carries the six performance numbers `build_ships` falls back to when
+    coriolis-data has no file for a hull, or the file it has does not join.
+    """
     ships = {}
     block = section(database, "ship")
 
@@ -979,6 +1004,14 @@ def edsy_ships(database: str) -> dict[str, dict]:
             "names": {group: strings(named.group(1), group) for group in groups} if named else {},
             "restrict": {group: restrictions(reserved.group(1), group) for group in groups}
                         if reserved else {},
+            "figures": {
+                "topspd": edsy_number(head, "topspd"),
+                "bstspd": edsy_number(head, "bstspd"),
+                "armour": edsy_number(head, "armour"),
+                "shields": edsy_number(head, "shields"),
+                "mass": edsy_number(head, "mass"),
+                "hardness": edsy_number(head, "hardness"),
+            },
         }
 
     return ships
@@ -1261,7 +1294,10 @@ def main() -> None:
 
     documents = ship_documents(ship_paths)
 
-    ships, unkeyed = build_ships(documents)
+    database = edsy_database()
+    hulls = edsy_ships(database)
+
+    ships, unkeyed = build_ships(documents, rows("shipyard.csv"), hulls)
     generic, mismatched, unnamed, duplicated = build_modules(
         module_paths, outfitting, by_symbol)
     unnamed = inherit_family_names(generic, unnamed)
@@ -1271,8 +1307,6 @@ def main() -> None:
     # sorting and de-duplicating on the key keeps the output stable between runs.
     unique = {row[0]: row for row in sorted(generic + bulkheads)}
 
-    database = edsy_database()
-    hulls = edsy_ships(database)
     kinds = edsy_groups(database)
     slots = build_slots(hulls)
 

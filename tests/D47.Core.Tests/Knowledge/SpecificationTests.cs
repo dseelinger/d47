@@ -331,10 +331,12 @@ public class SpecificationTests
     [Fact]
     public async Task AHullTheTableKnowsOfAndHasNoFiguresForSaysExactlyThat()
     {
-        // Newer than the id list the table is keyed by, so its figures are unreachable and its existence is
-        // certain. "I don't know that ship" would tell a Commander flying a brand new hull that d47 is
-        // broken.
-        Assert.NotEmpty(EliteSpecifications.KnownButUnmeasured);
+        // The generator's EDSY fallback (#385) closed every gap shipping data left, so the list is empty
+        // until a hull ships ahead of both sources again. The wording still has to be right when that
+        // happens.
+        Assert.SkipWhen(
+            EliteSpecifications.KnownButUnmeasured.Count == 0,
+            "no hull is currently known-but-unmeasured");
 
         var result = await Registry().InvokeAsync(
             "get_ship_specification",
@@ -347,17 +349,13 @@ public class SpecificationTests
 
     /// <summary>
     /// Reported 2026-08-23 as a ship called <c>smallcombat01_nx</c>: a hull with no measured row had no
-    /// name at all, so every line about it read out Frontier's internal symbol.
+    /// name at all, so every line about it read out Frontier's internal symbol. The EDSY fallback (#385)
+    /// has since given that hull a measured row of its own, so the armour-derived name is exercised here
+    /// against whatever hull the shipped table currently leaves unmeasured, if any.
     /// </summary>
     [Fact]
     public void AHullWithNoMeasuredRowIsStillNamedFromItsOwnArmour()
     {
-        Assert.Equal("Kestrel Mk II", EliteSpecifications.HullName("smallcombat01_nx"));
-
-        // The table's own second opinion: this hull is in the known-but-unmeasured list under exactly that
-        // name, and the two were derived from different columns of it.
-        Assert.Contains("Kestrel Mk II", EliteSpecifications.KnownButUnmeasured);
-
         // A measured hull keeps the id list's name, which is the naming authority — this must not become a
         // second answer to a question already answered.
         Assert.Equal("Krait MkII", EliteSpecifications.HullName("krait_mkii"));
@@ -365,6 +363,16 @@ public class SpecificationTests
         // And nothing is invented for a symbol no armour and no row knows.
         Assert.Null(EliteSpecifications.HullName("smallcombat99_zz"));
         Assert.Equal("smallcombat99_zz", EliteSpecifications.HullSaid("smallcombat99_zz"));
+
+        Assert.SkipWhen(
+            EliteSpecifications.KnownButUnmeasured.Count == 0,
+            "no hull is currently known-but-unmeasured");
+
+        var unmeasured = EliteSpecifications.KnownButUnmeasured[0];
+        var symbol = EliteSpecifications.HullSymbol(unmeasured);
+
+        Assert.NotNull(symbol);
+        Assert.Equal(unmeasured, EliteSpecifications.HullName(symbol));
     }
 
     [Fact]

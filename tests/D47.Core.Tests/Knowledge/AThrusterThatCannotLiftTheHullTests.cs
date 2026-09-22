@@ -53,7 +53,13 @@ public class AThrusterThatCannotLiftTheHullTests
     [Fact]
     public void AHullWithNoMassRecordedIsNotFilteredOnAGuess()
     {
-        // Four hulls have a slot layout and no ships row, so there is no mass to test against.
+        // No hull currently has a slot layout and no ships row — the generator's EDSY fallback (#385)
+        // closed that gap — so this skips until one recurs. When it does, the filter must not guess a
+        // hull's mass off a sibling's and must offer every thruster instead.
+        Assert.SkipWhen(
+            EliteSpecifications.Ship("explorer_nx") is not null,
+            "explorer_nx now has a ships row (#385); no hull currently demonstrates this gap");
+
         Assert.Null(EliteSpecifications.Ship("explorer_nx"));
         Assert.NotEmpty(Enhanced("explorer_nx"));
     }

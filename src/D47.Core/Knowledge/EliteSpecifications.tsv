@@ -10,10 +10,10 @@
 # modules/, and their names carry the hull because forty-eight hulls have a
 # Lightweight Alloy. Class and rating are placeholders for armour and are dropped.
 # Game data is Frontier's, used under their media usage rules — see NOTICE.
-# Ships: 44. Modules: 1214, of which bulkheads 241. Known but unmeasured: 3.
+# Ships: 48. Modules: 1214, of which bulkheads 241. Known but unmeasured: 0.
 # Slots: 1247 across 48 hulls. Modules with no type: 17.
 # coriolis-data tree 0db9234b5b9c. EDSY eddb.js as of the same day.
-# Built: 2026-09-15.
+# Built: 2026-09-22.
 [ships]
 symbol	name	manufacturer	pad	speed	boost	armour	shields	hardness	hull_mass	fuel	crew	masslock	cost	hardpoints	internals	requirement
 adder	Adder	Zorgon Peterson	small	220	320	90	60	35	35	0.36	2	7	40833	2,1,1	3,3,2,2,1,1,1	
@@ -24,6 +24,7 @@ belugaliner	Beluga Liner	Saud Kruger	large	200	280	280	280	60	950	0.81	4	18	7969
 cobramkiii	Cobra MkIII	Faulcon DeLacy	small	280	400	120	80	35	180	0.49	2	8	208372	2,2,1,1	4,4,4,2,2,2,1,1	
 cobramkiv	Cobra MkIV	Faulcon DeLacy	small	200	300	120	120	35	210	0.51	2	8	623374	2,2,1,1,1	4,4,4,4,3,3,2,2,1,1	early-adoption
 cobramkv	Cobra MkV	Faulcon DeLacy	small	291	412	180	160	40	150	0.49	3	8	1477085	2,2,2,1,1	5,4,4,4,3,3,3,2,1	
+corsair	Corsair			280	355	270	235	65	265							
 cutter	Imperial Cutter	Gutamaya	large	200	320	400	600	70	1100	1.16	4	27	200493413	4,3,3,2,2,2,2	8,8,6,6,6,5,5,4,3,1	empire:12
 diamondback	Diamondback Scout	Lakon	small	280	380	120	120	40	170	0.49	1	8	463926	2,2,1,1	3,3,3,2,1,1	
 diamondbackxl	Diamondback Explorer	Lakon	small	260	340	150	150	42	260	0.52	1	10	1638277	3,2,2	4,4,3,3,2,2,1,1	
@@ -32,6 +33,7 @@ eagle	Eagle	Core Dynamics	small	240	350	40	60	28	50	0.34	1	6	10947	1,1,1	3,2,1,1
 empire_courier	Imperial Courier	Gutamaya	small	280	380	80	200	30	35	0.41	1	7	2484137	2,2,2	3,3,2,2,2,1,1,1	empire:3
 empire_eagle	Imperial Eagle	Gutamaya	small	300	400	60	80	28	50	0.37	1	6	73023	2,1,1	3,2,1,1,1,1	
 empire_trader	Imperial Clipper	Gutamaya	large	300	380	270	180	60	400	0.74	2	12	21116895	3,3,2,2	7,6,4,4,3,3,2,2,1	empire:7
+explorer_nx	Caspian Explorer			210	290	345	500	60	950							
 federation_corvette	Federal Corvette	Core Dynamics	large	200	260	370	555	70	900	1.13	4	24	183156068	4,4,3,2,2,1,1	7,7,7,6,6,5,5,4,4,3,1	federation:12
 federation_dropship	Federal Dropship	Core Dynamics	medium	180	300	300	200	60	580	0.83	2	14	13510106	3,2,2,2,2	6,5,5,4,3,3,2,1	federation:3
 federation_dropship_mkii	Federal Assault Ship	Core Dynamics	medium	210	350	300	200	60	480	0.72	2	14	19111109	3,3,2,2	5,5,4,3,2,2,1	federation:5
@@ -44,11 +46,13 @@ krait_mkii	Krait MkII	Faulcon DeLacy	medium	240	330	220	220	55	320	0.63	3	16	441
 lakonminer	Type-11 Prospector	Lakon	medium	272	367	350	275	58	320	0.77	3	16	66346710	{'class': 3, 'name': 'Mining', 'eligible': {'abl': 1, 'ml': 1, 'mvr': 1, 'pwa': 1, 'scl': 1, 'sdm': 1}},{'class': 2, 'name': 'Mining', 'eligible': {'abl': 1, 'ml': 1, 'pwa': 1, 'scl': 1, 'sdm': 1}},{'class': 2, 'name': 'Mining', 'eligible': {'abl': 1, 'ml': 1, 'pwa': 1, 'scl': 1, 'sdm': 1}},2,{'class': 1, 'name': 'Mining', 'eligible': {'abl': 1, 'ml': 1, 'pwa': 1, 'scl': 1, 'sdm': 1}},1,1,1	6,6,6,5,5,4,3,2,1,1	
 mamba	Mamba	Zorgon Peterson	medium	310	380	230	270	70	250	0.5	2	12	55442918	4,3,3,1,1	5,4,3,2,2,1	
 mandalay	Mandalay	Zorgon Peterson	medium	280	350	230	220	55	230	0.52	2	11	16527192	2,2,2,2,1,1	6,5,4,4,3,3,2,1,1,1	
+mediumtransport01	Lynx Highliner			285	350	350	200	55	260							
 orca	Orca	Saud Kruger	large	300	380	220	220	55	290	0.79	2	16	47800723	3,2,2	6,5,5,5,4,3,2,2,1	
 panthermkii	Panther Clipper MkII	Zorgon Peterson	large	181	250	620	350	70	1200	1.16	4	27	286905678	3,3,2,2,2,2,1,1,1,1	8,7,6,6,6,5,5,4,2,1	
 python	Python	Faulcon DeLacy	medium	230	300	260	260	65	350	0.83	2	17	55324684	3,3,3,2,2	6,6,6,5,5,4,3,3,2,1	
 python_nx	Python MkII	Faulcon DeLacy	medium	256	345	280	335	70	450	0.83	2	17	64743724	3,3,3,3,2,2	6,4,3,2,1,1	
 sidewinder	Sidewinder	Faulcon DeLacy	small	220	320	60	40	20	25	0.3	1	6	4588	1,1	2,2,1,1,1,1	
+smallcombat01_nx	Kestrel Mk II			270	360	70	225	55	190							
 type6	Type-6 Transporter	Lakon	medium	220	350	180	90	35	155	0.39	1	8	866622	1,1	5,5,4,4,3,2,2,1	
 type7	Type-7 Transporter	Lakon	large	180	300	340	155	54	350	0.52	1	10	16783094	1,1,1,1	6,6,6,5,5,5,3,3,2,1	
 type8	Type-8 Transporter	Lakon	medium	200	340	440	228	58	400	0.52	1	18	34820576	2,1,1,1,1,1	7,6,6,6,5,5,4,2,1	
@@ -2560,9 +2564,6 @@ vulture	Slot06_Size1	optional	1
 vulture	Slot07_Size1	optional	1	
 vulture	Slot08_Size1	optional	1	
 [known-but-unmeasured]
-Caspian Explorer
-Corsair
-Kestrel Mk II
 [known-but-unnamed]
 symbol	mtype
 hpt_cannon_turret_huge	hc

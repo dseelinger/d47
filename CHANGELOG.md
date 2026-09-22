@@ -33,6 +33,12 @@ button's label, the Loadout tab's slot and side-cell names, and the coverage rep
 now carry their full text only while the column has actually cut them off. A picker's play glyph
 now names the action it takes as well as the cost, where it has one.
 
+The Loadout page now shows speed, boost, armour, shields and hull mass for the Corsair, Caspian
+Explorer, Kestrel Mk II and Lynx Highliner. Each was missing them: the first three because
+coriolis-data's own id for the hull disagrees with FDevIDs', and the Lynx because coriolis-data
+has no file for it at all. The generator now falls back to EDSY's figures, keyed by the symbol the
+journal writes, wherever coriolis-data's id does not join.
+
 ## 0.169.0 — No more drop-downs
 
 Screen titles glow in Elite, Dark and Guardian, matching the primary button, the lit switch cell,
