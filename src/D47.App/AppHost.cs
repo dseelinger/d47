@@ -4727,12 +4727,12 @@ public sealed class AppHost : IDisposable
     /// <summary>Says out loud that the model is not usable, if there is a voice to say it with.</summary>
     public async Task AnnounceStartupProblemsAsync()
     {
-        if (StartupError is { } settingsError)
+        if (StartupError is not null)
         {
             Voice.EnterState(Core.Audio.LoopState.Failed);
-            // "Did not load cleanly" rather than "could not be loaded": since #368 this carries a kept
-            // unknown key as well as a refusal, and the file it names may have loaded fine.
-            await Voice.AnnounceAsync($"My settings did not load cleanly. {settingsError}")
+            // The detail carries a settings.json path and, for a kept unknown key, its full name;
+            // neither belongs in speech. It stays on screen and in the log.
+            await Voice.AnnounceAsync("My settings did not load cleanly.")
                 .ConfigureAwait(false);
             return;
         }

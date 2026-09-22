@@ -48,6 +48,10 @@ the ask box share one footer: the dot beside PTT READY, LISTENING or MIC ON is t
 changes colour, and it turns the danger colour when no microphone is open. The ask box grows to
 three lines as you type, then scrolls, and its send arrow is now a SEND button.
 
+A settings problem at startup now speaks only "My settings did not load cleanly." The path and,
+for a kept unknown key, the key names stay out of speech; the window and the log still show the
+full detail.
+
 ## 1.6.1 — Every hull has its figures
 
 A hull missing from the shipped table now names itself and says which figures are missing —
