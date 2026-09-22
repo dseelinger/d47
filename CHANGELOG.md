@@ -6,6 +6,14 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.6.1 — Every hull has its figures
+
+A hull missing from the shipped table now names itself and says which figures are missing —
+"I have no hull figures for the Corsair: its speed, boost, armour, shields and cost are not in my
+table." — rather than "I have no figures for this ship," which read as though d47 knew nothing
+about the ship even while the game's own jump range, hold, mass, value and rebuy were shown below
+it.
+
 ## 1.5.1 — Tooltips say only what the screen does not
 
 A gauge's name now draws in uppercase mono at the left edge, and its reading right-aligned in mono,

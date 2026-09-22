@@ -265,7 +265,12 @@ public sealed class ShipsMode(
     {
         if (EliteSpecifications.Ship(build.Hull) is not { } hull)
         {
-            return [new LoadoutLine("I have no figures for this ship.")];
+            return
+            [
+                new LoadoutLine(
+                    $"I have no hull figures for the {build.HullName}: its speed, boost, armour, "
+                    + "shields and cost are not in my table."),
+            ];
         }
 
         var lines = new List<LoadoutLine> { new("The ship", LoadoutTone.Heading) };
