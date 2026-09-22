@@ -157,8 +157,8 @@
         </Setter>
       </Style>
 
+      <!-- Hover lifts the ink alone; the ground stays transparent. -->
       <Style Selector="^:pointerover">
-        <Setter Property="Background" Value="{DynamicResource D47.FillHigh}" />
         <Setter Property="Foreground" Value="{DynamicResource D47.Text}" />
       </Style>
 

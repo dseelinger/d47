@@ -454,8 +454,8 @@ open by default. What Ask says when asked directly is unchanged.
 
 The stepper's arrows, the amount control's up/down buttons, and the three reset icons now take a
 control theme of their own instead of drawing Fluent's gray hover and press states. At rest a
-glyph shows only its mark; hover fills the whole cell and lifts the mark to full ink; a press fills
-Accent with the bloom and sets the mark to Knock ink; disabled, or at a limit, the mark sits faint with no
+glyph shows only its mark; hover lifts the mark to full ink with no fill; a press fills Accent
+with the bloom and sets the mark to Knock ink; disabled, or at a limit, the mark sits faint with no
 hover or press. The card and placement-group reset icons now sit in a fixed 44×44 cell, reserved
 whether or not there is anything to reset, so the heading's row no longer changes height when one
 appears.
