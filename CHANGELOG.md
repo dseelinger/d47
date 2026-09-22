@@ -12,6 +12,9 @@ The Interface capability now has a Bloom setting, beside Theme: 0 to 2.5, defaul
 resizes every glow halo in the open panel and the headset overlay without a restart. On Light the
 row shows disabled, since bloom never draws there.
 
+Panel tab labels are now in capitals, and the selected tab shows its whole label in bold. On a
+150% display the selected tab had lost its last letter and read "Transcrip".
+
 Scroll bars now take the d47 theme instead of Fluent's grey default: a thin D47.Rule thumb on a
 transparent track, turning D47.Accent on hover or drag, with no arrow buttons.
 

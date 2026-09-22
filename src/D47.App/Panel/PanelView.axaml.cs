@@ -3418,6 +3418,46 @@ public partial class PanelView : UserControl
 
         DrawScanlines();
         ApplyNavigation();
+
+        // PROBE-TABCLIP: temporary, remove before commit.
+        Avalonia.Threading.DispatcherTimer.RunOnce(ProbeTabClip, TimeSpan.FromSeconds(4));
+    }
+
+    // PROBE-TABCLIP: temporary, remove before commit.
+    private void ProbeTabClip()
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine($"=== {DateTime.Now:O} scaling={_topLevel?.RenderScaling} root={_topLevel?.GetType().Name}");
+        foreach (var (tab, button) in _tabs)
+        {
+            if (!button.IsVisible)
+            {
+                continue;
+            }
+
+            sb.AppendLine($"tab {tab} checked={button.IsChecked} content='{button.Content}' bounds={button.Bounds} fs={button.FontSize} fw={button.FontWeight} ls={button.LetterSpacing} ff={button.FontFamily}");
+            foreach (var v in button.GetVisualDescendants())
+            {
+                sb.AppendLine($"   {v.GetType().Name}#{(v as Control)?.Name} bounds={v.Bounds} clip={v.Clip is not null} clipBounds={v.ClipToBounds} effect={v.Effect?.GetType().Name} visible={v.IsVisible} zi={v.ZIndex}");
+                if (v is TextBlock t)
+                {
+                    var l = t.TextLayout;
+                    sb.AppendLine($"      text='{t.Text}' inlines={t.Inlines?.Count} fs={t.FontSize} fw={t.FontWeight} ls={t.LetterSpacing} wrap={t.TextWrapping} trim={t.TextTrimming} desired={t.DesiredSize} layoutW={l.Width} layoutWT={l.WidthIncludingTrailingWhitespace} maxW={l.MaxWidth} lines={l.TextLines.Count}");
+                    foreach (var line in l.TextLines)
+                    {
+                        sb.AppendLine($"      line start={line.FirstTextSourceIndex} len={line.Length} width={line.Width} wt={line.WidthIncludingTrailingWhitespace} trimmed={line.HasCollapsed} overflow={line.HasOverflowed} runs={line.TextRuns.Count}");
+                        foreach (var run in line.TextRuns)
+                        {
+                            sb.AppendLine($"         run {run.GetType().Name} len={run.Length} text='{run.Text}'");
+                        }
+                    }
+                }
+            }
+        }
+
+        System.IO.File.AppendAllText(
+            System.IO.Path.Combine(System.IO.Path.GetTempPath(), "claude", "C--dev-d47", "be2c68a4-1271-4dc9-b2a5-59fb138ffb8d", "scratchpad", "live-tab.txt"),
+            sb.ToString());
     }
 
     /// <summary>The window or overlay host this view is drawn in, held for its render scaling.</summary>

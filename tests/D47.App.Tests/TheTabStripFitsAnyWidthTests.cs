@@ -45,7 +45,7 @@ public class TheTabStripFitsAnyWidthTests
             var panel = Furnished(width);
             var tab = panel.GetControl<RadioButton>("TranscriptTab");
 
-            Assert.Equal("Transcript", tab.Content);
+            Assert.Equal("TRANSCRIPT", tab.Content);
         }
     }
 

@@ -32,7 +32,15 @@
                               Padding="{TemplateBinding Padding}"
                               Foreground="{TemplateBinding Foreground}"
                               HorizontalAlignment="Center"
-                              VerticalAlignment="Center" />
+                              VerticalAlignment="Center">
+              <!-- Unclipped: beside the lit glow at a fractional render scaling, a clipped label
+                   loses its last letter. -->
+              <ContentPresenter.ContentTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding}" ClipToBounds="False" />
+                </DataTemplate>
+              </ContentPresenter.ContentTemplate>
+            </ContentPresenter>
           </controls:ChamferedBorder>
         </theming:BloomStack>
       </ControlTemplate>

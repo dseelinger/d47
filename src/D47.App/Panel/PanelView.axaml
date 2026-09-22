@@ -391,7 +391,7 @@
         <RadioButton x:Name="TranscriptTab"
                      Theme="{StaticResource D47.Tab}"
                      IsChecked="True"
-                     Content="Transcript"
+                     Content="TRANSCRIPT"
                      Tapped="OnTabTapped"
                      IsCheckedChanged="OnTabChecked" />
         <!--
@@ -402,19 +402,19 @@
         <RadioButton x:Name="LoadoutTab"
                      Theme="{StaticResource D47.Tab}"
                      IsVisible="False"
-                     Content="Fleet"
+                     Content="FLEET"
                      Tapped="OnTabTapped"
                      IsCheckedChanged="OnTabChecked" />
         <RadioButton x:Name="EngineersTab"
                      Theme="{StaticResource D47.Tab}"
                      IsVisible="False"
-                     Content="Engineers"
+                     Content="ENGINEERS"
                      Tapped="OnTabTapped"
                      IsCheckedChanged="OnTabChecked" />
         <RadioButton x:Name="ChecklistTab"
                      Theme="{StaticResource D47.Tab}"
                      IsVisible="False"
-                     Content="Checklist"
+                     Content="CHECKLIST"
                      Tapped="OnTabTapped"
                      IsCheckedChanged="OnTabChecked" />
         <!--
@@ -426,7 +426,7 @@
         <RadioButton x:Name="RoutingTab"
                      Theme="{StaticResource D47.Tab}"
                      IsVisible="False"
-                     Content="Routing"
+                     Content="ROUTING"
                      Tapped="OnTabTapped"
                      IsCheckedChanged="OnTabChecked" />
         <!--
@@ -437,13 +437,13 @@
         <RadioButton x:Name="AdventuresTab"
                      Theme="{StaticResource D47.Tab}"
                      IsVisible="False"
-                     Content="Adventures"
+                     Content="ADVENTURES"
                      Tapped="OnTabTapped"
                      IsCheckedChanged="OnTabChecked" />
         <RadioButton x:Name="UtilitiesTab"
                      Theme="{StaticResource D47.Tab}"
                      IsVisible="False"
-                     Content="Utilities"
+                     Content="UTILITIES"
                      Tapped="OnTabTapped"
                      IsCheckedChanged="OnTabChecked" />
         <!--
@@ -455,7 +455,7 @@
         <RadioButton x:Name="SettingsTab"
                      Theme="{StaticResource D47.Tab}"
                      IsVisible="False"
-                     Content="Settings"
+                     Content="SETTINGS"
                      Tapped="OnTabTapped"
                      IsCheckedChanged="OnTabChecked" />
       </WrapPanel>
