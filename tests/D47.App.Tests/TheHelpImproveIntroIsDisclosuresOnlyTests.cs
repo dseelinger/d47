@@ -12,8 +12,8 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The one-sentence lede and the three consent lines carry the disclosures; the ⓘ carries the
-/// reasoning (#338).
+/// The one-sentence lede and the three consent lines carry the disclosures; the intro's hover carries
+/// the reasoning (#338).
 /// </summary>
 public sealed class TheHelpImproveIntroIsDisclosuresOnlyTests
 {
@@ -122,10 +122,10 @@ public sealed class TheHelpImproveIntroIsDisclosuresOnlyTests
     }
 
     /// <summary>
-    /// The reverse guard, and the one that matters most: the glyph holds no term of the consent.
+    /// The reverse guard, and the one that matters most: the hover holds no term of the consent.
     /// </summary>
     [Fact]
-    public void TheGlyphHoldsNoDisclosure()
+    public void TheHoverHoldsNoDisclosure()
     {
         var reasoning = HelpImproveWindow.Reasoning;
 
@@ -168,44 +168,20 @@ public sealed class TheHelpImproveIntroIsDisclosuresOnlyTests
         window.Close();
     }
 
-    /// <summary>
-    /// The glyph is on the window, beside the mark, and its way out goes to the same page — one
-    /// authored copy, on the site.
-    /// </summary>
+    /// <summary>The reasoning is the intro's hover, and no separate glyph carries it (#360).</summary>
     [AvaloniaFact]
-    public void TheGlyphSitsBesideTheMarkAndOpensTheSamePage()
+    public void TheReasoningIsTheIntrosHover()
     {
         var window = Excerpt();
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        var buttons = window.GetVisualDescendants().OfType<Button>().ToList();
-        var info = buttons.Single(button => button.Name == "HelpImproveInfo");
-        var mark = buttons.Single(button => button.Name == "HelpImproveHelp");
-
-        Assert.Equal("ⓘ", info.Content);
-
-        // Opened, because a flyout that is merely attached proves nothing: the reasoning and the way out to
-        // the site both have to be on screen once it is showing.
-        var flyout = Assert.IsType<Flyout>(info.Flyout);
-        flyout.ShowAt(info);
-        Dispatcher.UIThread.RunJobs();
-
-        var shown = Assert.IsType<StackPanel>(flyout.Content);
-        var body = shown.Children.OfType<TextBlock>().Single();
-        var more = shown.Children.OfType<Button>().Single();
-
-        Assert.Equal(HelpImproveWindow.Reasoning, body.Text);
-        Assert.Equal("Read the full page on the website", more.Content);
-        Assert.Equal(DocsSite.Page(HelpImproveWindow.HelpPage), ToolTip.GetTip(more));
-
-        flyout.Hide();
-
-        // Same parent, and the ⓘ first: the glyphs read left to right in the order they deepen.
-        var row = Assert.IsType<StackPanel>(info.Parent);
-        Assert.Same(row, mark.Parent);
-        Assert.Equal(0, row.Children.IndexOf(info));
-        Assert.Equal(1, row.Children.IndexOf(mark));
+        Assert.Contains(
+            window.GetVisualDescendants().OfType<TextBlock>(),
+            block => Equals(ToolTip.GetTip(block), HelpImproveWindow.Reasoning));
+        Assert.DoesNotContain(
+            window.GetVisualDescendants().OfType<Button>(),
+            button => button.Name == "HelpImproveInfo");
 
         window.Close();
     }

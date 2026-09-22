@@ -175,7 +175,7 @@ and the line is absent entirely until something has been spoken.
 
 #### What it has cost over time {#running-totals}
 
-The line under the panel says what the last turn cost, and **the banknote** beside it opens the rest:
+The line under the panel says what the last turn cost, and **SPEND** beside it opens the rest:
 the token counts, what the session has come to, and five running totals — **today**, **the last 7
 days**, **the last 30 days**, **this week** (Sunday to Saturday) and **this calendar month**.
 

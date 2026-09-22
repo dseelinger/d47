@@ -167,7 +167,7 @@ public sealed class RouteProgressPage : UserControl
 
         if (_copy is { } glyph)
         {
-            line.Children.Add(D47.App.Controls.CopyGlyph.For(hop.StarSystem, glyph));
+            line.Children.Add(D47.App.Controls.CopyWord.For(hop.StarSystem, glyph));
         }
 
         if (hop.Hazardous)

@@ -325,21 +325,14 @@ public sealed class HelpImproveWindow : Window
             _disclosureToggle.Content = _disclosureExpanded ? "Hide the exact text" : "Show the exact text";
         };
 
-        // The two glyphs, above everything and on the right — ⓘ then ?, which is the order they deepen in
-        // (#269).
+        // Help, above everything and on the right; the reasoning behind the window is the intro's hover (#269).
         var marked = new DockPanel { Margin = new Thickness(0, 0, 0, 6), LastChildFill = false };
         var mark = SiteHelpMark.For(DocsSite.Page(HelpPage), "HelpImproveHelp");
-        var info = InfoGlyph.For(Reasoning, DocsSite.Page(HelpPage), "HelpImproveInfo");
 
-        var glyphs = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 6,
-            Children = { info, mark },
-        };
+        ToolTip.SetTip(_intro, Reasoning);
 
-        DockPanel.SetDock(glyphs, Dock.Right);
-        marked.Children.Add(glyphs);
+        DockPanel.SetDock(mark, Dock.Right);
+        marked.Children.Add(mark);
 
         DockPanel.SetDock(marked, Dock.Top);
         DockPanel.SetDock(_intro, Dock.Top);
@@ -463,7 +456,7 @@ public sealed class HelpImproveWindow : Window
                   + "where it goes afterwards is yours — anything posted publicly can be archived "
                   + "beyond anyone's reach.";
 
-    /// <summary>What the <c>ⓘ</c> holds (#269): the arguments for pressing.</summary>
+    /// <summary>The intro's hover (#269): the arguments for pressing.</summary>
     internal const string Reasoning =
         "Why real journals\n"
         + "A bug is nearly always about a situation — a callout that fires when it should not, "

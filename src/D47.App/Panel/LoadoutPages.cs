@@ -520,7 +520,7 @@ public static class LoadoutPages
             };
 
             copyable.Children.Add(Line(line));
-            copyable.Children.Add(D47.App.Controls.CopyGlyph.For(target.Value, copy));
+            copyable.Children.Add(D47.App.Controls.CopyWord.For(target.Value, copy));
 
             return copyable;
         }
@@ -2397,13 +2397,10 @@ public sealed class GapPage : UserControl
         Grid.SetColumn(name, 0);
         header.Children.Add(name);
 
-        var info = new Button
-        {
-            Content = "ⓘ",
-            Padding = new Thickness(7, 1),
-            VerticalAlignment = VerticalAlignment.Center,
-            [ToolTip.TipProperty] = "Where this card's materials come from",
-        };
+        var info = D47.App.Controls.Glyphs.Quiet(
+            new Button { VerticalAlignment = VerticalAlignment.Center },
+            "SOURCES",
+            "Where this card's materials come from");
 
         info.Click += (_, _) => OpenSources(card);
         Grid.SetColumn(info, 1);

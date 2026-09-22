@@ -841,7 +841,7 @@ public class TheRoutingTabTests
 
         return ((StackPanel)title.Parent!).Children
             .OfType<Button>()
-            .First(button => button.Content as string == "?");
+            .First(button => button.Content as string == "HELP");
     }
 
     /// <summary>Three planners, three pages.</summary>
@@ -1009,7 +1009,7 @@ public class TheRoutingTabTests
             static Button[] Offenders(PanelView panel) =>
                 panel.GetVisualDescendants()
                     .OfType<Button>()
-                    .Where(button => button.Content as string == "?")
+                    .Where(button => button.Content as string == "HELP")
                     .Where(mark => ToolTip.GetTip(mark) is string tip
                                    && System.Text.RegularExpressions.Regex.IsMatch(
                                        tip, @"^What .+ does$"))

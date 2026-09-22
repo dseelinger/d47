@@ -544,7 +544,7 @@ public class EngineersTabTests
         var shown = Text(surface.Panel);
 
         Assert.Contains("Unlock Prerequisites", shown);
-        Assert.Contains(Boxes(surface.Panel), says => says == "met");
+        Assert.Contains(Boxes(surface.Panel), says => says == "MET");
 
         // Marco Qwent, whose referral through Elvira Martuuk is not met and whose invitation is not readable.
         surface.Panel.Nav.Drill(
@@ -558,8 +558,8 @@ public class EngineersTabTests
 
         var boxes = Boxes(surface.Panel);
 
-        Assert.Contains(boxes, says => says == "not met");
-        Assert.Contains(boxes, says => says == "not yet known");
+        Assert.Contains(boxes, says => says == "NOT MET");
+        Assert.Contains(boxes, says => says == "UNKNOWN");
 
         surface.Window.Close();
     }
@@ -652,6 +652,7 @@ public class EngineersTabTests
 
     private static IReadOnlyList<string?> Boxes(PanelView panel) =>
         [.. panel.GetVisualDescendants()
-            .OfType<Avalonia.Controls.Shapes.Path>()
-            .Select(Avalonia.Automation.AutomationProperties.GetName)];
+            .OfType<TextBlock>()
+            .Select(block => block.Text)
+            .Where(text => text is "MET" or "NOT MET" or "UNKNOWN")];
 }

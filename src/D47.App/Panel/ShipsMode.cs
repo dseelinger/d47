@@ -35,7 +35,7 @@ public sealed class ShipsMode(
 
     public string? SlotHelp => D47.Core.Capabilities.Builtin.EngineeringCapability.Id;
 
-    /// <summary>The page behind the module picker's question mark — its own, rather than the slot's.</summary>
+    /// <summary>The page behind the module picker's HELP — its own, rather than the slot's.</summary>
     public const string ModuleChoiceHelp =
         D47.Core.Help.HelpLibrary.GeneralPrefix + "choosing-a-module";
 

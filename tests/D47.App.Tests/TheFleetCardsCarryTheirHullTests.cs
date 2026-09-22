@@ -370,35 +370,42 @@ public class TheFleetCardsCarryTheirHullTests
     /// 2026-09-04).
     /// </summary>
     [AvaloniaFact]
-    public void ThePictureHasThreeSizesAndTheFiguresMoveWithIt()
+    public void ThePictureIsBesideOrWideAndTheFiguresMoveWithIt()
     {
         var (panel, _) = Fleet(drawings: true, "corsair.png", "corsair.4k.png");
 
         Open(panel, "Reaper");
 
         var picture = panel.GetVisualDescendants().OfType<HullPicture>().Single();
-        var marks = picture.GetVisualDescendants().OfType<Button>().ToList();
 
-        Assert.Equal(3, marks.Count);
+        Assert.Single(
+            picture.GetVisualDescendants().OfType<Button>(),
+            button => button.Content as string == "ZOOM");
+
+        // The segment is rebuilt with every size change, so it is looked up again before each press.
+        void Press(string size)
+        {
+            picture.GetVisualDescendants().OfType<RadioButton>().Single(choice => choice.Content as string == size)
+                .IsChecked = true;
+            Dispatcher.UIThread.RunJobs();
+        }
 
         // Pressed rather than assumed, because the size is kept for the session: a test that opened by
         // asserting the default would pass or fail on which test ran before it.
-        marks[0].RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
+        Press("WIDE");
+        Press("BESIDE");
 
         // Half the pane: two columns, the figures in one and the picture in the other.
         Assert.Equal(2, picture.ColumnDefinitions.Count);
 
-        marks[1].RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
+        Press("WIDE");
 
         // The width of the pane: one column, the figures under it.
         Assert.Empty(picture.ColumnDefinitions);
         Assert.Equal(2, picture.RowDefinitions.Count);
         Assert.Single(Large(panel));
 
-        marks[0].RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
+        Press("BESIDE");
 
         Assert.Equal(2, picture.ColumnDefinitions.Count);
     }

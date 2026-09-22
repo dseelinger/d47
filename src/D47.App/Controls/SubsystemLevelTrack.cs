@@ -6,6 +6,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
+using Avalonia.Styling;
 using D47.App.Theming;
 using D47.Core.Capabilities;
 using D47.Core.Configuration;
@@ -285,14 +286,10 @@ public sealed class SubsystemLevelTrack : ContentControl
 
         var reset = new Button
         {
-            Content = Glyphs.Draw(Glyphs.Reset, ThemeManager.AccentKey, TypeScale.Small),
-            Width = 28,
-            Height = 28,
-            Padding = new Thickness(0),
-            Background = Brushes.Transparent,
-            BorderThickness = new Thickness(0),
-            HorizontalContentAlignment = HorizontalAlignment.Center,
-            VerticalContentAlignment = VerticalAlignment.Center,
+            Theme = Application.Current?.FindResource("D47.GlyphButton") as ControlTheme,
+            Content = Glyphs.Text(Glyphs.ResetText, TypeScale.Secondary),
+            Width = TypeScale.MinimumTarget,
+            Height = TypeScale.MinimumTarget,
             IsVisible = false,
         };
 

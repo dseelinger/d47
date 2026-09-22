@@ -101,12 +101,9 @@ public class TheTabStripFitsAnyWidthTests
                 child is WrapPanel or StackPanel,
                 $"{child.GetType().Name} is in the tab strip and should not be"));
 
-        // The chrome is one row of a fixed height rather than three controls each aligning themselves,
-        // because bottom-aligning three different heights lines up their bottom edges and nothing a reader
-        // looks at.
+        // Every child centred in one row, so what a reader sees lines up rather than the children's bottom edges.
         var chrome = panel.GetControl<StackPanel>("ChromeRow");
 
-        Assert.Equal(35, chrome.Height);
         Assert.All(chrome.Children, child => Assert.Equal(VerticalAlignment.Center, child.VerticalAlignment));
 
         // And the avatar is last in it, which puts it rightmost — the Commander asked for that by name.
@@ -126,8 +123,7 @@ public class TheTabStripFitsAnyWidthTests
 
         Assert.True(copy.IsVisible);
 
- // It draws a mark rather than the words now, so what is asserted is the name
-        // it still answers to — which is the half that has to survive a picture.
+        Assert.Equal(D47.App.Controls.CopyWord.Word, copy.Content);
         Assert.Equal(
             "Copy this whole page to the clipboard",
             Avalonia.Automation.AutomationProperties.GetName(copy));
@@ -169,34 +165,13 @@ public class TheTabStripFitsAnyWidthTests
         Assert.True(panel.GetControl<DockPanel>("PageBar").IsVisible);
     }
 
-    /// <summary> The help glyph sits in the middle of the box that highlights under it. </summary>
+    /// <summary>Help is a quiet word on the tab strip (#360).</summary>
     [AvaloniaFact]
-    public void TheHelpGlyphIsCentredInItsButton()
+    public void HelpIsAQuietWord()
     {
-        var panel = Furnished(1200);
+        var button = Furnished(1200).GetControl<Button>("HelpButton");
 
-        var button = panel.GetControl<Button>("HelpButton");
-        var glyph = panel.GetControl<Avalonia.Controls.Shapes.Path>("HelpGlyph");
-
-        // The drawn geometry, not the element's box.
-        Assert.NotNull(glyph.RenderedGeometry);
-
-        var ink = glyph.RenderedGeometry.Bounds;
-
-        var middle = glyph.TranslatePoint(
-            new Point(ink.X + (ink.Width / 2), ink.Y + (ink.Height / 2)),
-            button);
-
-        Assert.NotNull(middle);
-
-        // Half a pixel either way: a square button with an odd-width glyph in it cannot land on a whole
-        // number, and anything a Commander can see is a great deal larger than that.
-        Assert.True(
-            Math.Abs(middle.Value.X - (button.Bounds.Width / 2)) <= 0.5,
-            $"the glyph sits at x={middle.Value.X} in a {button.Bounds.Width}-wide button");
-
-        Assert.True(
-            Math.Abs(middle.Value.Y - (button.Bounds.Height / 2)) <= 0.5,
-            $"the glyph sits at y={middle.Value.Y} in a {button.Bounds.Height}-tall button");
+        Assert.Equal("HELP", button.Content);
+        Assert.Contains("quiet", button.Classes);
     }
 }

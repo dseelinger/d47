@@ -130,21 +130,25 @@ public static class EngineersPages
         return row;
     }
 
-    /// <summary>
-    /// One prerequisite, a drawn box in front of it rather than a character — the same box wherever a
-    /// criterion is shown (#126).
-    /// </summary>
+    /// <summary>One prerequisite, its state as a word in front of it — the same words wherever a criterion is shown (#126).</summary>
     internal static Control CriterionLine(UnlockCriterion criterion)
     {
-        var (data, brush, says) = criterion.Met switch
+        var (word, brush) = criterion.Met switch
         {
-            true => (Glyphs.BoxChecked, ThemeManager.AccentKey, "met"),
-            false => (Glyphs.BoxEmpty, ThemeManager.TextMutedKey, "not met"),
-            _ => (Glyphs.BoxUndecided, ThemeManager.InfoKey, "not yet known"),
+            true => ("MET", ThemeManager.GoodKey),
+            false => ("NOT MET", ThemeManager.TextFaintKey),
+            _ => ("UNKNOWN", ThemeManager.WarnKey),
         };
 
-        var box = Glyphs.Draw(data, brush);
-        AutomationProperties.SetName(box, says);
+        var box = new TextBlock
+        {
+            Text = word,
+            FontFamily = new FontFamily(Fonts.MonoFamily),
+            FontSize = TypeScale.Small,
+            MinWidth = 64,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        LoadoutPages.Themed(box, TextBlock.ForegroundProperty, brush);
 
         var row = new StackPanel
         {
@@ -454,7 +458,7 @@ public sealed class EngineerPage : EngineerPageBase
             {
                 Orientation = Orientation.Horizontal,
                 Spacing = 6,
-                Children = { where, CopyGlyph.For(system, copy) },
+                Children = { where, CopyWord.For(system, copy) },
             });
         }
         else
@@ -551,7 +555,7 @@ public sealed class EngineerPage : EngineerPageBase
                         VerticalAlignment = VerticalAlignment.Center,
                     });
 
-                    row.Children.Add(CopyGlyph.For(split.System, stopCopy));
+                    row.Children.Add(CopyWord.For(split.System, stopCopy));
 
                     row.Children.Add(new SelectableTextBlock
                     {

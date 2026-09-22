@@ -121,7 +121,7 @@ this is the only reading with one, because it is the only one that waits on a di
 **Newest** appears once you have scrolled away from the end and takes you back. The log grows
 downwards, so its arrow points down.
 
-**Copy All** puts the whole file as shown on the clipboard — the same text you are looking at, and
+**COPY** puts the whole file as shown on the clipboard — the same text you are looking at, and
 not something assembled for the occasion.
 
 **Clear what is shown is greyed here.** There is nothing of Directive 47's to clear: this is a file,

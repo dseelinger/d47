@@ -109,36 +109,6 @@
     -->
     <DockPanel x:Name="Header" DockPanel.Dock="Top" LastChildFill="False">
       <!--
-        Help. The gear used to sit beside it and no longer does: settings is a page of this panel
-        now, chosen from the tab strip below like every other page, and a second affordance
-        opening the same page would be a second thing to keep in step (list.md Phase 12).
-
-        Drawn rather than typed. A "?" set as text was a character in a font: lighter than the
-        glyph beside it, and sitting on a baseline rather than in the middle of its box, so it
-        read as smaller and hung high. This is a 24-unit coordinate space scaled into a
-        17-pixel box, so it lines up by construction rather than by adjustment.
-
-        Stroked rather than filled, because thickness is the property being matched and a stroke
-        states it directly. The dot is a zero-length segment with a round cap - a line from a
-        point to itself, drawn as a disc exactly as wide as the stroke, which keeps it in step
-        with the hook for free.
-      -->
-      <!--
-        Square, with the glyph centred in it by construction (remediation.md 10, item 4).
-        <para/>
-        It was a uniform padding around a 17x17 Path, which reads as centred and is not. Two things
-        were off. The button was as wide as the glyph plus its padding and as tall as the glyph
-        plus the same, but the ink is a question mark — about half as wide as it is tall — and
-        <c>Stretch="Uniform"</c> scales the geometry's own bounds, so the drawn mark filled the
-        height and left slack across the width that the padding then did not account for. And the
-        button's content alignment was whatever the default theme said rather than centre.
-        <para/>
-        So the button is a fixed square, the content is centred on both axes explicitly, and the
-        Path's box is the shape of the ink rather than a square the ink sits inside. The highlight
-        is the button's own background, so a glyph centred in the button is centred in the
-        highlight — which is what was being asked for.
-      -->
-      <!--
         Hidden until the host hands this surface a way to open the site (EnableHelp). The headset
         copy is never handed one: the button opened a browser on the desktop, which a Commander in
         the headset cannot see (change-requests.md 24).
@@ -355,30 +325,11 @@
         "did that work" stay here and the rest are a click away. The link is docked so the line
         wraps against it rather than pushing it off the row.
       -->
-      <!--
-        A banknote rather than the word "Details" (#210), chosen by the Commander from six drawings
-        on 2026-08-30. The content, the tooltip and the accessible name are all set in code by
-        Glyphs.Mark, which is what keeps the word reachable: a glyph-only control with no accessible
-        name is a control that does not exist for anybody not looking at it.
-
-        Centred rather than padded on one axis. The word was 6,1 around text on a baseline; a mark
-        sits in a box of its own, so the padding is even and the content is centred explicitly —
-        the same correction the help button already carries.
-      -->
       <Button x:Name="TurnDetails"
               DockPanel.Dock="Right"
               IsVisible="False"
               Margin="8,0,0,0"
-              Padding="4,2"
-              MinWidth="0"
               VerticalAlignment="Center"
-              VerticalContentAlignment="Center"
-              HorizontalContentAlignment="Center"
-              Background="Transparent"
-              BorderThickness="0"
-              Cursor="Hand"
-              FontSize="{StaticResource D47.Type.Secondary}"
-              Foreground="{DynamicResource D47.Accent}"
               Click="OnTurnDetailsClick" />
       <!-- A sentence, not a readout: the prose face, not monospace, which is kept for times. -->
       <TextBlock x:Name="TurnLine"
@@ -400,97 +351,23 @@
     <DockPanel x:Name="TabStrip" DockPanel.Dock="Top" Margin="0,16,0,0">
 
       <!--
-        The panel's chrome, on the tab row rather than in a band above it (#234). Three small
-        controls were costing a whole strip of height that the page below did not get, which is
-        nothing on a desktop window and is a real fraction of a headset panel.
-
-        **One row of a fixed height, rather than three controls each aligning themselves.** They
-        were docked separately and bottom-aligned, and bottom-aligning things of three different
-        heights lines up their bottom edges and nothing else - the question mark sits in a 35-pixel
-        button, the badge in a 22-pixel border, and the ink came out at three different heights.
-        A container with one height, and every child centred in it, aligns what a reader actually
-        sees.
-
-        Right-to-left: avatar, badge, help, and then the tab stepper nearest the tabs it scrolls.
-        The avatar is outermost on the Commander's instruction. Both the badge and the help mark
-        are furnished by hand and are absent on the headset's copy, so this row has to sit
-        correctly with any of the three missing - which a StackPanel does by giving a hidden child
-        no width.
+        The panel's chrome, on the tab row. Right-to-left: avatar, badge, help, resize. Each child is
+        centred in the row, and a hidden one takes no width, so the row sits correctly with any of
+        them missing.
       -->
       <StackPanel x:Name="ChromeRow"
                   DockPanel.Dock="Right"
                   Orientation="Horizontal"
-                  Height="35"
                   VerticalAlignment="Bottom"
                   Margin="6,0,0,0">
-        <!--
-          Thirty-five, and the row is thirty-five because of it. Two constraints meet on this
-          number: the headset presses this mark with a ray, so it may not go under the 30-pixel
-          floor (Phase 39) - and the glyph inside is centred against the button's own box, which
-          TheHelpGlyphIsCentredInItsButton measures to half a pixel. Shrinking the button moved
-          the ink off centre by more than that, so the size that was proven stays and the row is
-          built around it rather than the other way about.
-        -->
         <Button x:Name="HelpButton"
                 IsVisible="False"
-                Width="35"
-                Height="35"
-                Padding="0"
-                HorizontalContentAlignment="Center"
-                VerticalContentAlignment="Center"
                 VerticalAlignment="Center"
-                CornerRadius="0"
-                Background="Transparent"
-                BorderThickness="0"
-                ToolTip.Tip="Open the documentation"
-                Click="OnHelpClick">
-          <!--
-            Width is the ink's own aspect rather than a square: the geometry spans 9.2 units across
-            and 18.6 down, so 8.4 by 17 is the box it actually fills. A 17-wide box would leave four
-            pixels of nothing on each side of the mark and hang it left of centre.
-
-            **Accent at rest** (#208). It was muted until pointed at, and a pair of handlers swapped
-            the stroke on the way in and out — which is the pattern `Glyphs.Draw` exists to refuse:
-            `FindResource` reads a brush *once*, at the moment of the hover, and assigns it, so a
-            theme switched after a hover left the mark painted in the old theme's colour. Both
-            handlers are gone with the resting colour; a `DynamicResource` is the only mechanism on
-            this stroke now.
-
-            And the hover feedback goes with them rather than being replaced. The colour was saying
-            two things — "this can be pressed" and "you are pointing at it" — and the first is the one
-            worth keeping. `TurnDetails` is accent at rest and changes nothing on hover; the
-            button's own background wash is what says the pointer is here.
-          -->
-          <Path x:Name="HelpGlyph"
-                Width="8.4" Height="17"
-                Stretch="Uniform"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                Stroke="{DynamicResource D47.Accent}"
-                StrokeThickness="2.8"
-                StrokeLineCap="Round"
-                StrokeJoin="Round"
-                Data="M 7.4,7.6 A 4.6,4.6 0 1 1 12,12.2 L 12,15.5 M 12,20.2 L 12,20.2" />
-        </Button>
-        <!--
-          The headset's own way into resize mode (#190): a ray can reach the hotkey nowhere, so this
-          is what lets the Commander enter it without speaking. Content, tooltip and accessible name
-          are set in code by Glyphs.Mark, the same as HelpButton beside it. Visible only on the
-          headset's full panel with the motion controllers on — see EnableResize and SetControllersOn
-          in the code-behind.
-        -->
+                Click="OnHelpClick" />
+        <!-- The headset's own way into resize mode (#190), shown only on its full panel with the motion controllers on. -->
         <Button x:Name="ResizeButton"
                 IsVisible="False"
-                Width="35"
-                Height="35"
-                Padding="0"
-                HorizontalContentAlignment="Center"
-                VerticalContentAlignment="Center"
                 VerticalAlignment="Center"
-                CornerRadius="0"
-                Background="Transparent"
-                BorderThickness="0"
-                ToolTip.Tip="Resize the panel"
                 Click="OnResizeClick" />
         <Border x:Name="PreReleaseBadge"
                 IsVisible="False"
@@ -789,12 +666,7 @@
           <Button x:Name="CopyButton"
                   DockPanel.Dock="Left"
                   Margin="0,0,6,0"
-                  Height="28"
                   VerticalAlignment="Center"
-                  VerticalContentAlignment="Center"
-                  HorizontalContentAlignment="Center"
-                  Padding="10,0"
-                  FontSize="{StaticResource D47.Type.Secondary}"
                   Click="OnCopyClick" />
           <!--
             The other thing a Commander does with these two pages, and the one Copy All cannot do

@@ -12,7 +12,7 @@ nav_order: 204
 
   Colours are the nine Palette roles and nothing else — see .d47-eli5 in assets/main.scss.
 
-  This is the page behind the module picker's question mark. Its own page rather than the
+  This is the page behind the module picker's HELP. Its own page rather than the
   slot's, asked for 2026-08-23: a slot's page is about engineering a module, and this one is
   about the list of every module that fits.
 -->

@@ -344,24 +344,8 @@ public sealed class RouteTradePage : UserControl
 
         if (help is { Length: > 0 } page)
         {
-            var mark = new Button
-            {
-                Content = "?",
-                FontSize = TypeScale.Secondary,
-                Padding = new Thickness(5, 0),
-                MinWidth = 0,
-                VerticalAlignment = VerticalAlignment.Center,
-                Background = Brushes.Transparent,
-                BorderThickness = new Thickness(0),
-            };
-
-            mark.Bind(
-                Button.ForegroundProperty,
-                Application.Current!.Resources.GetResourceObservable(ThemeManager.TextMutedKey));
-
-            // A bare glyph names its own action rather than repeating the page it opens (#383).
-            AutomationProperties.SetName(mark, $"About {title}");
-            ToolTip.SetTip(mark, $"About {title}");
+            var mark = D47.App.Controls.Glyphs.Quiet(
+                new Button { VerticalAlignment = VerticalAlignment.Center }, "HELP", $"About {title}");
 
             mark.Click += (_, _) => D47.Core.Help.HelpLevel.Open(_nav, page);
 

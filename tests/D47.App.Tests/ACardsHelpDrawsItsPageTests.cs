@@ -11,8 +11,8 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>The question mark on a settings card.</summary>
-public class ACardsQuestionMarkDrawsHelpTests
+/// <summary>The HELP word on a settings card.</summary>
+public class ACardsHelpDrawsItsPageTests
 {
     private static void Jobs() => Dispatcher.UIThread.RunJobs();
 
@@ -31,7 +31,7 @@ public class ACardsQuestionMarkDrawsHelpTests
                 .Any(text => text.Text == heading));
 
         return card.GetVisualDescendants().OfType<Button>()
-            .First(button => button.Content as string == "?");
+            .First(button => button.Content as string == "HELP");
     }
 
     private static void Click(Button button) =>

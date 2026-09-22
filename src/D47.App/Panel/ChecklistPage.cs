@@ -171,12 +171,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             Rebuild();
         };
 
-        // A plus rather than the words (asked for 2026-08-24).
-        var add = new Button { Padding = new Thickness(12, 4), MinHeight = TouchTarget };
-
-        // Accent, like every other bare glyph whose only affordance is that it can be pressed (#208).
-        D47.App.Controls.Glyphs.Mark(
-            add, D47.App.Controls.Glyphs.Add, Theming.ThemeManager.AccentKey, "Add a line");
+        var add = D47.App.Controls.Glyphs.Quiet(new Button(), "ADD", "Add a line");
 
         add.Click += (_, _) => AddLine();
 

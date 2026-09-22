@@ -406,7 +406,7 @@ public sealed class RouteMarketPage : UserControl
 
         if (_copy is { } copy)
         {
-            cells.Children.Add(D47.App.Controls.CopyGlyph.For(system, copy));
+            cells.Children.Add(D47.App.Controls.CopyWord.For(system, copy));
         }
 
         return cells;

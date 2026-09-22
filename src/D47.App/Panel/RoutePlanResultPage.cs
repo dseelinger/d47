@@ -272,7 +272,7 @@ public sealed class RoutePlanResultPage : UserControl
             {
                 Orientation = Orientation.Horizontal,
                 Spacing = 6,
-                Children = { content, D47.App.Controls.CopyGlyph.For(system, copy) },
+                Children = { content, D47.App.Controls.CopyWord.For(system, copy) },
             };
         }
 

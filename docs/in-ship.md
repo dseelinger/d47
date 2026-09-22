@@ -60,9 +60,9 @@ nav_order: 4
 </section>
 <section>
 <h2><span class="num">3</span> Additional controls.</h2>
-<svg viewBox="0 0 880 320" role="img" aria-label="Copy All, Search, the banknote, and Clear what is shown">
+<svg viewBox="0 0 880 320" role="img" aria-label="Copy, Search, Spend, and Clear what is shown">
  <rect x="20" y="26" width="270" height="126" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="155" y="64" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">COPY ALL</text>
+ <text x="155" y="64" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">COPY</text>
  <text x="155" y="96" text-anchor="middle" font-size="14" fill="var(--text-muted)">copies the whole conversation,</text>
  <text x="155" y="118" text-anchor="middle" font-size="14" fill="var(--text-muted)">not just selected text</text>
  <text x="155" y="140" text-anchor="middle" font-size="14" fill="var(--text-muted)">— that is Ctrl+C</text>
@@ -72,7 +72,7 @@ nav_order: 4
  <text x="440" y="118" text-anchor="middle" font-size="14" fill="var(--text-muted)">steps you through them</text>
  <text x="440" y="140" text-anchor="middle" font-size="14" fill="var(--text-muted)">forward or back.</text>
  <rect x="590" y="26" width="270" height="126" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="725" y="64" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">THE BANKNOTE</text>
+ <text x="725" y="64" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">SPEND</text>
  <text x="725" y="96" text-anchor="middle" font-size="14" fill="var(--text-muted)">tracks how much this and</text>
  <text x="725" y="118" text-anchor="middle" font-size="14" fill="var(--text-muted)">previous sessions cost,</text>
  <text x="725" y="140" text-anchor="middle" font-size="14" fill="var(--text-muted)">in detail</text>
@@ -80,7 +80,7 @@ nav_order: 4
  <text x="440" y="212" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">Ctrl+L clears the page for less cluttered viewing</text>
  <text x="440" y="240" text-anchor="middle" font-size="15" fill="var(--text-muted)">It deletes nothing — scroll back up and it's all still there for the session.</text>
  <text x="440" y="288" text-anchor="middle" font-size="15" fill="var(--text-muted)">Scroll up and a "↓ Newest" button appears to bring you back to the latest.</text>
- <text x="440" y="312" text-anchor="middle" font-size="15" fill="var(--text-muted)">The banknote is on only the desktop.</text>
+ <text x="440" y="312" text-anchor="middle" font-size="15" fill="var(--text-muted)">Spend is on only the desktop.</text>
 </svg>
 </section>
 <div class="next">
@@ -115,10 +115,9 @@ sides and the same colours, with the gutter and most of the padding given back, 
 
 ### The controls
 
-**Copy All** puts the entire conversation on the clipboard. It is deliberately not called *Copy*:
-the text on the page is selectable and Ctrl+C already copies a selection, so a button called *Copy*
-beside selectable text is a button that means two things. A search query does not narrow what it
-copies — you asked for the conversation, not for the matches.
+**COPY** puts the entire conversation on the clipboard, and says *COPIED* or *COPY FAILED* for two
+seconds after. To copy only part of it, select the text and press Ctrl+C. A search query does not
+narrow what it copies — you asked for the conversation, not for the matches.
 
 **Search** highlights every match, counts them, and steps forward and back through them. It clears
 in one press, and Escape does the same.
@@ -133,9 +132,8 @@ Directive 47 only reads: a control appearing to empty one would be offering to d
 It clears the page and not the record. The model still remembers the conversation, so a follow-up
 question is answered as if you had not cleared anything, and the log file on disk is untouched.
 
-**The banknote** at the right of the status line opens the receipt for the most recent response —
-the tools it ran, the tokens and characters it spent, and the price. It was the word *Details*
-until 0.93.0; hovering still says what it does, and so does a screen reader. It opens a window, so
+**SPEND** at the right of the status line opens the receipt for the most recent response —
+the tools it ran, the tokens and characters it spent, and the price. It opens a window, so
 it is on the desktop and not in a headset, and there is no second place these figures are shown.
 
 It is a note rather than a coin on purpose. These are dollars on a provider account, not your

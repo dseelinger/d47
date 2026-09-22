@@ -347,7 +347,7 @@ public sealed class CarrierPage : UserControl
             {
                 Orientation = Orientation.Horizontal,
                 Spacing = 6,
-                Children = { said, D47.App.Controls.CopyGlyph.For(target, copy) },
+                Children = { said, D47.App.Controls.CopyWord.For(target, copy) },
             };
 
             Grid.SetColumn(content, 1);

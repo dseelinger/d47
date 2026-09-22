@@ -26,6 +26,15 @@ colour, each labelled on its own fill. The four heading ranks share one left rul
 carries the panel's scanlines on dark themes, and the filled field takes focus on open so its
 block caret shows.
 
+Drawn pictures on buttons are now words. Copy is COPY, and says COPIED or COPY FAILED after a press;
+the banknote is SPEND; the plus on the checklist is ADD; the settings page's plus and minus are
+EXPAND ALL and COLLAPSE ALL; the `?` marks are HELP; the Loadout card's `ⓘ` is SOURCES. The hull
+picture's size marks are a BESIDE / WIDE choice with ZOOM beside it, and the headset's resize bar
+reads ZOOM OUT, ↺, ZOOM IN and DONE. An engineer's prerequisites read MET, NOT MET or UNKNOWN in
+place of a ticked, empty or dashed box. Reset is the ↺ character, in a 44 × 44 target everywhere
+it appears. The Help Improve window's `ⓘ` is gone; its reasoning is the hover on the window's
+opening sentence. The window's minimise, maximise and close buttons are unchanged.
+
 ## 1.6.1 — Every hull has its figures
 
 A hull missing from the shipped table now names itself and says which figures are missing —

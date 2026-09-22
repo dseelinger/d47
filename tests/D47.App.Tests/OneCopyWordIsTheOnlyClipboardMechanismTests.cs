@@ -20,7 +20,7 @@ namespace D47.App.Tests;
 /// <see cref="D47.Core.Capabilities.Builtin.IClipboard"/> seam, rather than three mechanisms of
 /// their own (#157).
 /// </summary>
-public class OneCopyGlyphIsTheOnlyClipboardMechanismTests
+public class OneCopyWordIsTheOnlyClipboardMechanismTests
 {
     private static string RepositoryRoot()
     {
@@ -37,7 +37,7 @@ public class OneCopyGlyphIsTheOnlyClipboardMechanismTests
 
     /// <summary>
     /// The pages that drew a system name never reach for a mechanism of their own: no glyph text, no
-    /// bare <see cref="D47.App.Controls.Glyphs.Copy"/> mark, and no clipboard read straight off the
+    /// bare copy mark, and no clipboard read straight off the
     /// visual root. The Transcript tab's own "Copy this whole page" button is a different feature
     /// (Phase 19, copying the whole page rather than a system name) and is not scanned here.
     /// </summary>
@@ -148,11 +148,11 @@ public class OneCopyGlyphIsTheOnlyClipboardMechanismTests
     }
 
     /// <summary>
-    /// Clicking the glyph shows a tick when the clipboard reports success and a cross when it does
-    /// not; two seconds later the mark is the copy glyph again.
+    /// Clicking <c>COPY</c> says <c>COPY FAILED</c> when the clipboard refuses; two seconds later it says
+    /// <c>COPY</c> again.
     /// </summary>
     [AvaloniaFact]
-    public async Task ClickingItShowsATickOrACrossAndThenResetsTheMark()
+    public async Task ClickingItSaysWhatHappenedAndThenGoesBack()
     {
         var (window, panel, clipboard) = Open(enableCopy: true);
 
@@ -161,31 +161,20 @@ public class OneCopyGlyphIsTheOnlyClipboardMechanismTests
         Row(panel, "Big Slow (Anaconda)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
-        var glyph = panel.GetVisualDescendants().OfType<Button>()
+        var copy = panel.GetVisualDescendants().OfType<Button>()
             .Single(button => AutomationProperties.GetName(button) == "Copy Shinrarta Dezhra");
 
-        glyph.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Assert.Equal(D47.App.Controls.CopyWord.Word, copy.Content);
+
+        copy.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
-        // Compared by the geometry's bounds against a path built from the constant, because Data is a parsed
-        // StreamGeometry and does not hand back the string it came from.
-        var crossBounds = D47.App.Controls.Glyphs.Draw(
-            D47.App.Controls.Glyphs.Cross, D47.App.Theming.ThemeManager.DangerKey, size: 12).Data!.Bounds;
-        var copyBounds = D47.App.Controls.Glyphs.Draw(
-            D47.App.Controls.Glyphs.Copy, D47.App.Theming.ThemeManager.AccentKey, size: 12).Data!.Bounds;
-
-        var cross = Assert.IsType<Avalonia.Controls.Shapes.Path>(glyph.Content);
-
-        Assert.Equal(crossBounds, cross.Data!.Bounds);
-
-        clipboard.Works = true;
+        Assert.Equal(D47.App.Controls.CopyWord.Failed, copy.Content);
 
         await Task.Delay(2200, TestContext.Current.CancellationToken);
         Dispatcher.UIThread.RunJobs();
 
-        var reset = Assert.IsType<Avalonia.Controls.Shapes.Path>(glyph.Content);
-
-        Assert.Equal(copyBounds, reset.Data!.Bounds);
+        Assert.Equal(D47.App.Controls.CopyWord.Word, copy.Content);
 
         window.Close();
     }

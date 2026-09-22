@@ -189,26 +189,10 @@ public partial class PanelView : UserControl
         Bubbles.AddHandler(PointerPressedEvent, OnBubblesPointerPressed, handledEventsToo: true);
         Bubbles.AddHandler(PointerMovedEvent, OnBubblesPointerMoved, handledEventsToo: true);
 
-        // Two sheets rather than the words "Copy All" (asked for 2026-08-24).
-        Controls.Glyphs.Mark(
-            CopyButton,
-            Controls.Glyphs.Copy,
-            Theming.ThemeManager.AccentKey,
-            "Copy this whole page to the clipboard");
-
-        // A banknote rather than the word "Details" (#210).
-        Controls.Glyphs.Mark(
-            TurnDetails,
-            Controls.Glyphs.Spend,
-            Theming.ThemeManager.AccentKey,
-            "Tokens, cost, and what this has come to over time");
-
-        // Outward arrows for the headset's own way into resize mode (#190).
-        Controls.Glyphs.Mark(
-            ResizeButton,
-            Controls.Glyphs.Expand,
-            Theming.ThemeManager.AccentKey,
-            "Resize the panel");
+        Controls.Glyphs.Quiet(CopyButton, Controls.CopyWord.Word, "Copy this whole page to the clipboard");
+        Controls.Glyphs.Quiet(TurnDetails, "SPEND", "Tokens, cost, and what this has come to over time");
+        Controls.Glyphs.Quiet(ResizeButton, "RESIZE", "Resize the panel");
+        Controls.Glyphs.Quiet(HelpButton, "HELP", "Open the documentation");
 
         Watch(Transcript);
 
@@ -2738,7 +2722,7 @@ public partial class PanelView : UserControl
         {
             Orientation = Orientation.Horizontal,
             Spacing = 6,
-            Children = { text, Controls.CopyGlyph.For(system, copy) },
+            Children = { text, Controls.CopyWord.For(system, copy) },
         };
     }
 
@@ -2987,7 +2971,7 @@ public partial class PanelView : UserControl
                 {
                     Orientation = Orientation.Horizontal,
                     Spacing = 4,
-                    Children = { label, Controls.CopyGlyph.For(name, copy) },
+                    Children = { label, Controls.CopyWord.For(name, copy) },
                 },
             };
 
@@ -3711,23 +3695,19 @@ public partial class PanelView : UserControl
         // Drawn rather than written, for the reason above: the same text the Commander is looking at.
         var text = string.Concat(Drawn(_bound.Segments(Page), Page).Select(segment => segment.Text));
 
-        // Said on the button rather than in a banner.
+        bool worked;
+
         try
         {
             await clipboard.SetTextAsync(text);
-            CopyButton.Content = "Copied";
+            worked = true;
         }
         catch (Exception)
         {
-            CopyButton.Content = "Could not copy";
+            worked = false;
         }
 
-        await Task.Delay(TimeSpan.FromSeconds(2));
-        Controls.Glyphs.Mark(
-            CopyButton,
-            Controls.Glyphs.Copy,
-            Theming.ThemeManager.AccentKey,
-            "Copy this whole page to the clipboard");
+        Controls.CopyWord.Show(CopyButton, worked);
     }
 
     /// <summary>Whether the page's bar exists at all.</summary>

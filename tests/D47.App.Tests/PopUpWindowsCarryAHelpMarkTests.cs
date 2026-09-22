@@ -31,7 +31,7 @@ public sealed class PopUpWindowsCarryAHelpMarkTests
 
         var mark = Mark(window, "HelpImproveHelp");
 
-        Assert.Equal("?", mark.Content);
+        Assert.Equal("HELP", mark.Content);
         Assert.Equal(
             "https://dseelinger.github.io/d47/help-improve.html",
             DocsSite.Page(HelpImproveWindow.HelpPage));

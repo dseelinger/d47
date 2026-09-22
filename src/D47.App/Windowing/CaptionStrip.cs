@@ -62,7 +62,7 @@ public static class CaptionStrip
             buttons.Children.Add(maximizeButton);
         }
 
-        buttons.Children.Add(CaptionButton(Glyphs.Cross, "Close", window.Close, isClose: true));
+        buttons.Children.Add(CaptionButton(Glyphs.Close, "Close", window.Close, isClose: true));
 
         if (maximizeButton is { } toggle)
         {

@@ -1,6 +1,6 @@
-﻿using Avalonia;
+using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Shapes;
 using Avalonia.Media;
 
@@ -10,114 +10,50 @@ using Path = Avalonia.Controls.Shapes.Path;
 namespace D47.App.Controls;
 
 /// <summary>
-/// The drawn marks d47 uses instead of words, where a word had a standard picture already (asked for
-/// 2026-08-24: "use standard glyphs where possible, including expand and shrink, instead of the
-/// words").
+/// The window caption's drawn marks, and the words and text glyphs every other affordance carries
+/// instead of a picture.
 /// </summary>
 public static class Glyphs
 {
-    /// <summary>Show more: four diagonal arrows, heads pointing outward to the corners.</summary>
-    public const string Expand =
-        "M 4.8,7.6 L 4.8,4.8 L 7.6,4.8  M 4.8,4.8 L 9.8,9.8  M 16.4,4.8 L 19.2,4.8 L 19.2,7.6"
-        + "  M 19.2,4.8 L 14.2,9.8  M 19.2,16.4 L 19.2,19.2 L 16.4,19.2  M 19.2,19.2 L 14.2,14.2"
-        + "  M 7.6,19.2 L 4.8,19.2 L 4.8,16.4  M 4.8,19.2 L 9.8,14.2";
+    /// <summary>Reset to default, as a text glyph.</summary>
+    public const string ResetText = "↺";
 
-    /// <summary>Show less: four diagonal arrows, heads pointing inward to the centre.</summary>
-    public const string Shrink =
-        "M 7.2,10 L 10,10 L 10,7.2  M 10,10 L 4.5,4.5  M 16.8,10 L 14,10 L 14,7.2  M 14,10 L 19.5,4.5"
-        + "  M 16.8,14 L 14,14 L 14,16.8  M 14,14 L 19.5,19.5  M 7.2,14 L 10,14 L 10,16.8"
-        + "  M 10,14 L 4.5,19.5";
-
-    /// <summary>
-    /// A picture in half the width with the words beside it: a box on the right, short lines to its
-    /// left and full-width lines under both (#289).
-    /// </summary>
-    public const string PictureBeside =
-        "M 13,4 L 20,4 L 20,12 L 13,12 Z  M 4,6 L 10,6  M 4,10 L 10,10  M 4,16 L 20,16  M 4,20 L 20,20";
-
-    /// <summary>
-    /// A picture across the full width with the words under it: the same mark with the box widened.
-    /// </summary>
-    public const string PictureWide =
-        "M 4,4 L 20,4 L 20,12 L 4,12 Z  M 4,16 L 20,16  M 4,20 L 20,20";
-
-    /// <summary>Open every card: a plus (#223).</summary>
-    public const string ExpandAll = "M 12,5 L 12,19  M 5,12 L 19,12";
-
-    /// <summary>Shut every card: a minus, drawn as a filled bar rather than as a stroked line.</summary>
-    public const string CollapseAll =
+    /// <summary>Minimise a window: a filled bar.</summary>
+    public const string Minimize =
         "M 6,11 L 18,11 A 1,1 0 0 1 18,13 L 6,13 A 1,1 0 0 1 6,11 Z";
 
-    /// <summary>Two sheets, one behind the other.</summary>
-    public const string Copy =
-        "M 9,9 L 20,9 L 20,20 L 9,20 Z  M 15,9 L 15,4 L 4,4 L 4,15 L 9,15";
+    /// <summary>Maximise a window: an empty box.</summary>
+    public const string Maximize = "M 5,5 L 19,5 L 19,19 L 5,19 Z";
 
-    /// <summary>A copy landed: a check mark.</summary>
-    public const string Tick = "M 8,12.5 L 11,15.5 L 16.5,8.5";
-
-    /// <summary>A copy failed: an X.</summary>
-    public const string Cross = "M 6,6 L 18,18  M 18,6 L 6,18";
-
-    /// <summary>A plus.</summary>
-    public const string Add = "M 12,5 L 12,19  M 5,12 L 19,12";
-
-    /// <summary>
-    /// Go back to how it was: a circle open at the upper right, travelled anticlockwise from the top,
-    /// with the arrowhead where it starts.
-    /// </summary>
-    public const string Reset =
-        "M 5,9.2 A 8.5,8.5 0 1 1 4.5,13.5  M 9.6,8.9 L 4.8,9.1 L 5.0,4.3";
-
-    /// <summary>What this has cost: a banknote, a rectangle with a circle in the middle of it (#210).</summary>
-    public const string Spend =
-        "M 3,6 L 21,6 L 21,18 L 3,18 Z  M 12,9 A 3,3 0 1 1 11.99,9";
-
-    /// <summary>A prerequisite not met: an empty box (#126).</summary>
-    public const string BoxEmpty = "M 5,5 L 19,5 L 19,19 L 5,19 Z";
-
-    /// <summary>Minimise a window: the same filled bar as <see cref="CollapseAll"/> (#286).</summary>
-    public const string Minimize = CollapseAll;
-
-    /// <summary>Maximise a window: the same empty box as <see cref="BoxEmpty"/> (#286).</summary>
-    public const string Maximize = BoxEmpty;
-
-    /// <summary>
-    /// Restore a maximised window: two overlapping boxes, the back one open where the front one
-    /// covers it (#286).
-    /// </summary>
+    /// <summary>Restore a maximised window: two overlapping boxes.</summary>
     public const string Restore =
         "M 5,9 L 16,9 L 16,20 L 5,20 Z  M 9,7 L 9,4 L 20,4 L 20,15 L 17,15";
 
-    /// <summary>A prerequisite met: the same box with a check inside it (#126).</summary>
-    public const string BoxChecked =
-        "M 5,5 L 19,5 L 19,19 L 5,19 Z  M 8,12.5 L 11,15.5 L 16.5,8.5";
+    /// <summary>Close a window: an X.</summary>
+    public const string Close = "M 6,6 L 18,18  M 18,6 L 6,18";
 
-    /// <summary>
-    /// A prerequisite nothing d47 reads can decide: the same box with a dash, the mark an indeterminate
-    /// checkbox carries elsewhere (#126).
-    /// </summary>
-    public const string BoxUndecided = "M 5,5 L 19,5 L 19,19 L 5,19 Z  M 9,12 L 15,12";
-
-    /// <summary>One mark, sized and coloured for the row it sits in.</summary>
-    /// <param name="data">One of the constants above.</param>
-    /// <param name="brush">
-    /// The theme key to stroke it with, so switching theme repaints it without it knowing a theme
-    /// exists — colour by role, never by literal (Phase 4).
-    /// </param>
-    /// <param name="size">
-    /// Pixels across, square. 14 sits beside secondary text; the microphone uses 13 beside small text.
-    /// </param>
-    /// <param name="strokeThickness">
-    /// Pen weight. 2 for every mark but <see cref="Expand"/> and <see cref="Shrink"/>, whose
-    /// arrowheads need a finer pen to read as points rather than as thickenings of the shaft.
-    /// </param>
-    public static Path Draw(
-        string data, string brush, double size = 14, bool filled = false, double strokeThickness = 2)
+    /// <summary>One mark, stroked or filled with the theme key <paramref name="brush"/> so a theme switch repaints it.</summary>
+    public static Path Draw(string data, string brush, double size = 14, bool filled = false)
     {
-        var glyph = Made(data, size, strokeThickness);
+        var geometry = Geometry.Parse(data);
+        var bounds = geometry.Bounds;
 
-        // Bound rather than assigned, so switching theme repaints it — colour by role, never by literal, and
-        // never a colour read once at build time (Phase 4).
+        // Both sides, for a geometry with no area at all.
+        var longest = Math.Max(Math.Max(bounds.Width, bounds.Height), 0.001);
+
+        var glyph = new Path
+        {
+            Width = size * bounds.Width / longest,
+            Height = size * bounds.Height / longest,
+            Stretch = Stretch.Uniform,
+            StrokeThickness = 2,
+            StrokeLineCap = PenLineCap.Round,
+            StrokeJoin = PenLineJoin.Round,
+            Data = geometry,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+        };
+
         if (filled)
         {
             glyph.StrokeThickness = 0;
@@ -131,94 +67,38 @@ public static class Glyphs
         return glyph;
     }
 
-    /// <summary>
-    /// The box is the mark's own shape, not always a square (reported 2026-09-01 — the minus "is at the
-    /// top of the square block").
-    /// </summary>
-    private static Path Made(string data, double size, double strokeThickness = 2)
-    {
-        var geometry = Geometry.Parse(data);
-        var bounds = geometry.Bounds;
-
-        // Both sides, for a geometry with no area at all.
-        var longest = Math.Max(Math.Max(bounds.Width, bounds.Height), 0.001);
-
-        return new()
-        {
-            Width = size * bounds.Width / longest,
-            Height = size * bounds.Height / longest,
-            Stretch = Stretch.Uniform,
-            StrokeThickness = strokeThickness,
-            StrokeLineCap = PenLineCap.Round,
-            StrokeJoin = PenLineJoin.Round,
-            Data = geometry,
-            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-        };
-    }
-
-    /// <summary>
-    /// Puts a mark on a button and keeps the word where a word still belongs: on the tooltip, and on
-    /// the name a screen reader says.
-    /// </summary>
+    /// <summary>Puts a mark on a button, with <paramref name="says"/> as its tooltip and accessible name.</summary>
     public static void Mark(
-        Button button, string data, string brush, string says, double size = 14, bool filled = false,
-        double strokeThickness = 2)
+        Button button, string data, string brush, string says, double size = 14, bool filled = false)
     {
-        button.Content = Draw(data, brush, size, filled, strokeThickness);
+        button.Content = Draw(data, brush, size, filled);
 
         ToolTip.SetTip(button, says);
-        Avalonia.Automation.AutomationProperties.SetName(button, says);
+        AutomationProperties.SetName(button, says);
     }
 
     /// <summary>
-    /// Puts a mark on a button whose stroke follows the button's own <see cref="Button.Foreground"/>
-    /// rather than a fixed theme key — for a glyph button (#376), whose control theme moves
-    /// Foreground between states and needs the mark to move with it. A Path's Stroke is not an
-    /// inherited property the way a TextBlock's Foreground is, so this binds it explicitly.
+    /// Makes <paramref name="button"/> a quiet word button: <paramref name="word"/> as its content, which the
+    /// caller writes in capitals, and <paramref name="says"/> as its tooltip and accessible name.
     /// </summary>
-    public static void MarkFollowingForeground(
-        Button button, string data, string says, double size = 14, double strokeThickness = 2)
+    public static Button Quiet(Button button, string word, string says)
     {
-        var glyph = Made(data, size, strokeThickness);
-        glyph.Bind(Shape.StrokeProperty, button.GetObservable(TemplatedControl.ForegroundProperty));
-
-        button.Content = glyph;
+        button.Classes.Add("quiet");
+        button.Content = word;
 
         ToolTip.SetTip(button, says);
-        Avalonia.Automation.AutomationProperties.SetName(button, says);
+        AutomationProperties.SetName(button, says);
+
+        return button;
     }
 
-    /// <summary>Whether a path is a filled shape rather than a stroked outline.</summary>
-    public static bool IsFilled(string data) =>
-        data.StartsWith("F0", StringComparison.Ordinal)
-        || data.StartsWith("F1", StringComparison.Ordinal);
-
-    /// <summary>Puts a mark and its word on a button, the mark on the left (#266).</summary>
-    public static void MarkAndWord(
-        Button button, string data, string brush, string says, double size = 14)
+    /// <summary>A text glyph for a glyph button, untracked so it sits centred, its ink following the button's.</summary>
+    public static TextBlock Text(string glyph, double size) => new()
     {
-        var glyph = Draw(data, brush, size, IsFilled(data));
-
-        Avalonia.Automation.AutomationProperties.SetAccessibilityView(
-            glyph, Avalonia.Automation.AccessibilityView.Raw);
-
-        var word = new TextBlock
-        {
-            Text = says,
-            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-        };
-
-        button.Content = new StackPanel
-        {
-            Orientation = Avalonia.Layout.Orientation.Horizontal,
-            Spacing = 7,
-            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-            Children = { glyph, word },
-        };
-
-        ToolTip.SetTip(button, null);
-        Avalonia.Automation.AutomationProperties.SetName(button, says);
-    }
-
+        Text = glyph,
+        FontSize = size,
+        LetterSpacing = 0,
+        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+        VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+    };
 }

@@ -22,9 +22,9 @@ nav_order: 10
   This page takes the mechanism. Do not move a disclosure here to shorten the dialog.
 
   **Three levels since #269, and this page is the deepest of them.** The dialog's intro is the
-  disclosures alone; the ⓘ beside the ? holds the reasoning — why real journals, and what the scrub
+  disclosures alone; the intro's hover holds the reasoning — why real journals, and what the scrub
   keeps — in about a paragraph each; this page is all of it at length with the diagrams, and the
-  ⓘ's own button is what opens it. So the glyph and the sections below say the same things at two
+  dialog's HELP is what opens it. So the hover and the sections below say the same things at two
   depths on purpose. Edit them together, or the short form starts promising something the long form
   no longer says.
 

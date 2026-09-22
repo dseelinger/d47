@@ -587,12 +587,10 @@ public sealed class ControlKitWindow : Window
         {
             var reset = new Button
             {
-                Content = Glyphs.Draw(Glyphs.Reset, ThemeManager.AccentKey, TypeScale.Secondary),
+                Theme = Application.Current?.FindResource("D47.GlyphButton") as ControlTheme,
+                Content = Glyphs.Text(Glyphs.ResetText, TypeScale.Secondary),
                 Width = TypeScale.MinimumTarget,
                 Height = TypeScale.MinimumTarget,
-                Padding = new Thickness(0),
-                HorizontalContentAlignment = HorizontalAlignment.Center,
-                VerticalContentAlignment = VerticalAlignment.Center,
             };
 
             Grid.SetColumn(reset, 4);

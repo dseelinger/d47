@@ -27,11 +27,11 @@ internal sealed class HullPicture : Grid
         VerticalAlignment = VerticalAlignment.Top,
     };
 
-    /// <summary>The marks, held clear of the scroller's right edge.</summary>
+    /// <summary>The size choice and the zoom, held clear of the scroller's right edge.</summary>
     private readonly StackPanel _marks = new()
     {
         Orientation = Orientation.Horizontal,
-        Spacing = 2,
+        Spacing = 12,
         HorizontalAlignment = HorizontalAlignment.Right,
         Margin = new Thickness(0, 0, 16, 0),
     };
@@ -159,45 +159,29 @@ internal sealed class HullPicture : Grid
         }
     }
 
-    /// <summary>The three sizes, as marks rather than words.</summary>
+    /// <summary>Beside or wide, and the way into the whole-window view.</summary>
     private void Marks()
     {
         _marks.Children.Clear();
 
-        _marks.Children.Add(Step(
-            Glyphs.PictureBeside,
-            "Half the pane, with the figures beside it",
-            _size == HullPictureSize.Beside,
-            () => Resize(HullPictureSize.Beside)));
-
-        _marks.Children.Add(Step(
-            Glyphs.PictureWide,
-            "The width of the pane",
-            _size == HullPictureSize.Wide,
-            () => Resize(HullPictureSize.Wide)));
-
-        _marks.Children.Add(Step(
-            Glyphs.Expand, "The whole window, with zoom", showing: false, Expand, strokeThickness: 0.8));
-    }
-
-    private static Button Step(
-        string glyph, string said, bool showing, Action pressed, double strokeThickness = 2)
-    {
-        var button = new Button
+        var sizes = new Segment
         {
-            Content = Glyphs.Draw(
-                glyph, showing ? ThemeManager.AccentKey : ThemeManager.TextMutedKey, size: 13,
-                strokeThickness: strokeThickness),
-            Padding = new Thickness(6, 2),
-            Background = Brushes.Transparent,
-            BorderThickness = new Thickness(showing ? 1 : 0),
+            ItemsSource = ["BESIDE", "WIDE"],
+            SelectedIndex = _size == HullPictureSize.Beside ? 0 : 1,
+            VerticalAlignment = VerticalAlignment.Center,
         };
 
-        LoadoutPages.Themed(button, Button.BorderBrushProperty, ThemeManager.AccentKey);
-        ToolTip.SetTip(button, said);
-        button.Click += (_, _) => pressed();
+        ToolTip.SetTip(sizes, "Half the pane with the figures beside it, or the width of the pane");
+        sizes.SelectionChanged += (_, _) =>
+            Resize(sizes.SelectedIndex == 0 ? HullPictureSize.Beside : HullPictureSize.Wide);
 
-        return button;
+        var zoom = Glyphs.Quiet(
+            new Button { VerticalAlignment = VerticalAlignment.Center }, "ZOOM", "The whole window, with zoom");
+
+        zoom.Click += (_, _) => Expand();
+
+        _marks.Children.Add(sizes);
+        _marks.Children.Add(zoom);
     }
 
     private void Resize(HullPictureSize size)

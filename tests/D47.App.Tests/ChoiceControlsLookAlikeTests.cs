@@ -101,7 +101,7 @@ public class ChoiceControlsLookAlikeTests
     private static IEnumerable<Button> PickerButtons(Visual within) =>
         within.GetVisualDescendants().OfType<Button>()
             .Where(button => button.Content is DockPanel panel
-                && panel.Children.OfType<TextBlock>().Any(text => text.Text == "⌄"));
+                && panel.Children.OfType<TextBlock>().Any(text => text.Text == "▾"));
 
     private static SettingsHost Open()
     {

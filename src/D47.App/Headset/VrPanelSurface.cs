@@ -467,26 +467,27 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         IsVisible = false,
         Children =
         {
-            Grip(Controls.Glyphs.Shrink, "Zoom the panel out", () => stepZoom("out")),
-            Grip(Controls.Glyphs.Reset, "Reset the panel's zoom", () => stepZoom("reset")),
-            Grip(Controls.Glyphs.Expand, "Zoom the panel in", () => stepZoom("in")),
-            Grip(Controls.Glyphs.Cross, "Done resizing", leaveResize),
+            Grip("ZOOM OUT", "Zoom the panel out", () => stepZoom("out")),
+            Grip(Controls.Glyphs.ResetText, "Reset the panel's zoom", () => stepZoom("reset")),
+            Grip("ZOOM IN", "Zoom the panel in", () => stepZoom("in")),
+            Grip("DONE", "Done resizing", leaveResize),
         },
     };
 
     /// <summary>One button of the bar, sized for a ray rather than a mouse.</summary>
-    private static Button Grip(string glyph, string says, Action click)
+    private static Button Grip(string word, string says, Action click)
     {
         var button = new Button
         {
-            Width = 44,
-            Height = 44,
-            Padding = new Thickness(0),
+            Content = word,
+            MinWidth = 44,
+            MinHeight = 44,
             HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Center,
             VerticalContentAlignment = Avalonia.Layout.VerticalAlignment.Center,
         };
 
-        Controls.Glyphs.Mark(button, glyph, Theming.ThemeManager.AccentKey, says, size: 20);
+        ToolTip.SetTip(button, says);
+        Avalonia.Automation.AutomationProperties.SetName(button, says);
 
         button.Click += (_, _) => click();
 

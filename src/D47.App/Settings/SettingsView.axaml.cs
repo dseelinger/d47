@@ -184,45 +184,23 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// <summary>The container holding the two bulk glyphs, so a test can tell them from a reset.</summary>
     public const string BulkName = "BulkExpand";
 
-    /// <summary>
-    /// A plus and a minus, beside "Show every setting" (#223, moved onto that row on the Commander's
-    /// instruction 2026-09-01).
-    /// </summary>
+    /// <summary>Expand all and collapse all, beside "Show every setting" (#223).</summary>
     private Control BulkControls()
     {
-        var open = new Button
-        {
-            Name = "ExpandAll",
-            Height = 28,
-            Padding = new Thickness(8, 0),
-            VerticalContentAlignment = VerticalAlignment.Center,
-            HorizontalContentAlignment = HorizontalAlignment.Center,
-        };
+        var open = Glyphs.Quiet(
+            new Button { Name = "ExpandAll", VerticalAlignment = VerticalAlignment.Center }, "EXPAND ALL", "Expand all");
 
-        var shut = new Button
-        {
-            Name = "CollapseAll",
-            Height = 28,
-            Padding = new Thickness(8, 0),
-            VerticalContentAlignment = VerticalAlignment.Center,
-            HorizontalContentAlignment = HorizontalAlignment.Center,
-        };
+        var shut = Glyphs.Quiet(
+            new Button { Name = "CollapseAll", VerticalAlignment = VerticalAlignment.Center }, "COLLAPSE ALL", "Collapse all");
 
         open.Click += (_, _) => SetEveryCard(true);
         shut.Click += (_, _) => SetEveryCard(false);
-
-        Controls.Glyphs.Mark(open, Controls.Glyphs.ExpandAll, ThemeManager.AccentKey, "Expand all");
-
-        // Filled, alone among these: a minus has no height, and a stretched-to-fit geometry with no height
-        // collapses to nothing.
-        Controls.Glyphs.Mark(
-            shut, Controls.Glyphs.CollapseAll, ThemeManager.AccentKey, "Collapse all", filled: true);
 
         return new StackPanel
         {
             Name = BulkName,
             Orientation = Orientation.Horizontal,
-            Spacing = 4,
+            Spacing = 12,
             VerticalAlignment = VerticalAlignment.Center,
             HorizontalAlignment = HorizontalAlignment.Left,
             Margin = new Thickness(0, 0, 12, 0),
@@ -738,19 +716,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         headerRow.Children.Add(heading);
 
         // One per card, not one per row.
-        var docs = new Button
-        {
-            Content = "?",
-            FontSize = TypeScale.Secondary,
-            Padding = new Thickness(4, 0),
-            MinWidth = 0,
-            VerticalAlignment = VerticalAlignment.Center,
-            Background = Brushes.Transparent,
-            BorderThickness = new Thickness(0),
-        };
-
-        Themed(docs, Button.ForegroundProperty, ThemeManager.TextMutedKey);
-        ToolTip.SetTip(docs, $"Open the setup guide for {title}");
+        var docs = Glyphs.Quiet(
+            new Button { VerticalAlignment = VerticalAlignment.Center }, "HELP", $"Open the setup guide for {title}");
 
         docs.Click += (_, _) => OpenDocs(place.DocsCapabilityId);
 
@@ -774,8 +741,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             IsEnabled = CardHasChanges(rows),
         };
 
-        Glyphs.MarkFollowingForeground(
-            reset, Glyphs.Reset, $"Reset {title}", TypeScale.Small);
+        reset.Content = Glyphs.Text(Glyphs.ResetText, TypeScale.Secondary);
+        AutomationProperties.SetName(reset, $"Reset {title}");
 
         ToolTip.SetTip(reset, "Reset to default");
 
@@ -909,7 +876,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        Glyphs.MarkFollowingForeground(reset, Glyphs.Reset, $"Reset {group}", TypeScale.Small);
+        reset.Content = Glyphs.Text(Glyphs.ResetText, TypeScale.Secondary);
+        AutomationProperties.SetName(reset, $"Reset {group}");
 
         ToolTip.SetTip(reset, "Reset to default");
 
@@ -2407,10 +2375,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 IsVisible = false,
             };
 
-            // A stroked Path rather than U+21BA (#69), following the button's own Foreground so it
-            // moves with the glyph theme's states (#376). Also this button's accessible name, since a
-            // Path has no text of its own.
-            Glyphs.MarkFollowingForeground(back, Glyphs.Reset, $"Reset {row.Label}", TypeScale.Secondary);
+            back.Content = Glyphs.Text(Glyphs.ResetText, TypeScale.Secondary);
+            AutomationProperties.SetName(back, $"Reset {row.Label}");
 
             ToolTip.SetTip(back, "Reset to default");
 
@@ -2594,7 +2560,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// <summary>
     /// The row's help, reached by hovering or focusing its label rather than a separate glyph — the
     /// label is where a Commander already looks to know what the row is (#333). The card heading's own
-    /// "?" reaches the capability's page; this tooltip carries text only (#383).
+    /// HELP reaches the capability's page; this tooltip carries text only (#383).
     /// </summary>
     private void AttachHelp(TextBlock label, TextBlock spoken)
     {
@@ -3707,7 +3673,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
 
-        var chevron = new TextBlock { Text = "⌄", FontSize = TypeScale.Body, VerticalAlignment = VerticalAlignment.Center };
+        var chevron = new TextBlock { Text = "▾", FontSize = TypeScale.Body, VerticalAlignment = VerticalAlignment.Center };
         Themed(chevron, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
 
         var layout = new DockPanel();

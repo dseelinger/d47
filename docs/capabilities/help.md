@@ -31,7 +31,7 @@ nav_order: 100
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> Or press the question mark on any card.</h2>
+<h2><span class="num">2</span> Or press HELP on any card.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Any settings card">
  <rect x="20" y="16" width="840" height="212" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Any settings card</text>
@@ -39,9 +39,9 @@ nav_order: 100
  <text x="68" y="98" font-size="16" fill="var(--text)">Push-to-talk</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">Right Shift</text>
  <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
- <text x="68" y="154" font-size="16" fill="var(--text)">?</text>
+ <text x="68" y="154" font-size="16" fill="var(--text)">HELP</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">opens this page at that row</text>
- <text x="44" y="222" font-size="15" fill="var(--text-muted)">The mark takes you to the section for that exact row, not to the top of a page.</text>
+ <text x="44" y="222" font-size="15" fill="var(--text-muted)">HELP takes you to the section for that exact row, not to the top of a page.</text>
 </svg>
 </section>
 <section>

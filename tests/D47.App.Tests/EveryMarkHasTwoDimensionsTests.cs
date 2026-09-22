@@ -19,7 +19,7 @@ public class EveryMarkHasTwoDimensionsTests
             foreach (var field in type.GetFields(BindingFlags.Public | BindingFlags.Static)
                          .Where(field => field is { IsLiteral: true, FieldType.Name: nameof(String) }))
             {
-                if (field.GetRawConstantValue() is string data && data.Length > 0)
+                if (field.GetRawConstantValue() is string data && data.StartsWith('M'))
                 {
                     found.Add($"{type.Name}.{field.Name}", data);
                 }
@@ -44,16 +44,5 @@ public class EveryMarkHasTwoDimensionsTests
         Assert.True(
             bounds.Height >= 1,
             $"{name} is {bounds.Height} units tall, so Stretch.Uniform will collapse it: {data}");
-    }
-
-    /// <summary>And the pair still matches.</summary>
-    [AvaloniaFact]
-    public void ThePlusAndTheMinusAreTheSameWeightAndLength()
-    {
-        var plus = Geometry.Parse(Glyphs.ExpandAll).Bounds;
-        var minus = Geometry.Parse(Glyphs.CollapseAll).Bounds;
-
-        Assert.Equal(plus.Width, minus.Width, 1);
-        Assert.Equal(2, minus.Height, 1);
     }
 }
