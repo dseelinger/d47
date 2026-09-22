@@ -13,40 +13,57 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>Bloom and scanlines (#345): present in every dark theme, absent in Light.</summary>
+/// <summary>Bloom and scanlines (#345, #377): present in every dark theme, absent in Light.</summary>
 public class ADarkThemeGlowsAndLightDoesNotTests
 {
     private static ThemeManager Manager() =>
         new(Application.Current!, NullLogger<ThemeManager>.Instance);
+
+    private static IEnumerable<string> StopKeys() =>
+        Enum.GetValues<BloomTier>().SelectMany(tier =>
+            Enumerable.Range(0, BloomTiers.Table(tier).Count).Select(stop => ThemeManager.BloomStopKey(tier, stop)));
 
     [AvaloniaTheory]
     [InlineData(ThemeCatalog.Elite)]
     [InlineData(ThemeCatalog.Dark)]
     [InlineData(ThemeCatalog.Guardian)]
     [InlineData(ThemeCatalog.ElitePaletteId)]
-    public void EveryDarkThemeCarriesBloomAndScanlines(string themeId)
+    public void EveryDarkThemeCarriesEveryBloomStopAndScanlines(string themeId)
     {
         Manager().Apply(themeId);
 
         var resources = Application.Current!.Resources;
 
-        Assert.IsType<DropShadowEffect>(resources[ThemeManager.BloomKey]);
+        foreach (var key in StopKeys())
+        {
+            var stop = Assert.IsType<DropShadowEffect>(resources[key]);
+            Assert.InRange(stop.Opacity, 0, 1);
+        }
+
         Assert.IsType<ImageBrush>(resources[ThemeManager.ScanlinesKey]);
     }
 
-    /// <summary>The handoff's literal values: 10px, 34%, no offset (#345's design correction).</summary>
+    /// <summary>The bloom tier's widest stop, [38, 22] at amount 1.1, with no offset.</summary>
     [AvaloniaFact]
-    public void TheBloomMatchesTheHandoffsNumbers()
+    public void TheBloomTierMatchesTheHandoffsStops()
     {
         Manager().Apply(ThemeCatalog.Elite);
 
-        var bloom = (DropShadowEffect)Application.Current!.Resources[ThemeManager.BloomKey]!;
+        var widest = (DropShadowEffect)Application.Current!.Resources[ThemeManager.BloomStopKey(BloomTier.Normal, 3)]!;
 
-        Assert.Equal(10, bloom.BlurRadius);
-        Assert.Equal(0.34, bloom.Opacity);
-        Assert.Equal(0, bloom.OffsetX);
-        Assert.Equal(0, bloom.OffsetY);
+        Assert.Equal(ThemeManager.SkiaBlurRadius(38 * 1.1), widest.BlurRadius, 9);
+        Assert.Equal(0.22 * 1.1, widest.Opacity, 9);
+        Assert.Equal(0, widest.OffsetX);
+        Assert.Equal(0, widest.OffsetY);
     }
+
+    /// <summary>Avalonia.Skia's σ for the converted radius is the CSS σ of r / 2.</summary>
+    [Theory]
+    [InlineData(38)]
+    [InlineData(112)]
+    [InlineData(6)]
+    public void AConvertedRadiusSpreadsAsFarAsTheCssOne(double css) =>
+        Assert.Equal(css / 2, (0.288675 * ThemeManager.SkiaBlurRadius(css)) + 0.5, 9);
 
     [AvaloniaFact]
     public void LightCarriesNoBloomAndNoScanlinesButStillDrawsTheRule()
@@ -55,12 +72,12 @@ public class ADarkThemeGlowsAndLightDoesNotTests
 
         var resources = Application.Current!.Resources;
 
-        Assert.Null(resources[ThemeManager.BloomKey]);
+        Assert.All(StopKeys(), key => Assert.Null(resources[key]));
         Assert.Null(resources[ThemeManager.ScanlinesKey]);
         Assert.IsType<SolidColorBrush>(resources[ThemeManager.RuleKey]);
     }
 
-    /// <summary>A theme switch recomputes the key, rather than leaving Light with Elite's value still set.</summary>
+    /// <summary>A theme switch recomputes the keys, rather than leaving Light with Elite's value still set.</summary>
     [AvaloniaFact]
     public void SwitchingBackToLightTurnsBloomOff()
     {
@@ -70,7 +87,7 @@ public class ADarkThemeGlowsAndLightDoesNotTests
 
         var resources = Application.Current!.Resources;
 
-        Assert.Null(resources[ThemeManager.BloomKey]);
+        Assert.All(StopKeys(), key => Assert.Null(resources[key]));
         Assert.Null(resources[ThemeManager.ScanlinesKey]);
     }
 

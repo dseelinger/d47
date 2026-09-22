@@ -11,6 +11,14 @@
 Screen titles glow in Elite, Dark and Guardian, matching the primary button, the lit switch cell,
 the selected segment and the tab. They drew with no glow before.
 
+The glow on dark themes is drawn as several layered halos, from a tight bright edge out to a wide
+faint wash, at two strengths. The window title's diamond and name, Screen titles, the Level's fill
+and handle, and the microphone dot take the stronger; the selected tab, the primary button, the lit
+switch half, the selected segment and a pressed glyph button take the other. It was one 10px halo
+before, and on a button, tab, switch or segment it was cut off at the control's edge. The
+microphone dot glows in its own colour whenever it is filled, and the microphone row no longer
+glows as a box while the gate is open. Light still draws no glow.
+
 Subgroup headings draw in the mono face at caption size, letterspaced as wide as the Control
 Kit's cell captions; row headings draw in the prose face at body size, in sentence case, matching
 the settings row labels. Both used the chrome face and — for row headings — upper case before.

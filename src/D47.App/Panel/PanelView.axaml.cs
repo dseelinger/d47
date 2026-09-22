@@ -460,18 +460,15 @@ public partial class PanelView : UserControl
             MicrophoneGlyph.Fill = null;
         }
 
-        // The border stays the box's own faint Accent rule except while the gate is open, when it turns
-        // solid to match the glow.
-        if (state == D47.Core.Listening.MicrophoneState.Open)
-        {
-            MicrophoneRow.Bind(Border.BorderBrushProperty, this.GetResourceObservable(key));
-            MicrophoneRow.Bind(Border.EffectProperty, this.GetResourceObservable(Theming.ThemeManager.BloomKey));
-        }
-        else
-        {
-            MicrophoneRow.Bind(Border.BorderBrushProperty, this.GetResourceObservable(Theming.ThemeManager.RuleKey));
-            MicrophoneRow.Effect = null;
-        }
+        // A filled dot glows in its own colour.
+        MicrophoneBloom.Bind(Theming.BloomStack.GlowProperty, this.GetResourceObservable(key));
+        MicrophoneBloom.IsLit = filled;
+
+        // The border stays the box's own faint Accent rule except while the gate is open, when it turns solid.
+        MicrophoneRow.Bind(
+            Border.BorderBrushProperty,
+            this.GetResourceObservable(
+                state == D47.Core.Listening.MicrophoneState.Open ? key : Theming.ThemeManager.RuleKey));
 
         MicrophoneLabel.Text = label;
 

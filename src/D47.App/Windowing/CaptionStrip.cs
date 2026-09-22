@@ -10,6 +10,7 @@ using Avalonia.Controls.Templates;
 using Avalonia.Styling;
 using D47.App.Controls;
 using D47.App.Theming;
+using D47.Core.Interface;
 using Path = Avalonia.Controls.Shapes.Path;
 
 namespace D47.App.Windowing;
@@ -116,9 +117,6 @@ public static class CaptionStrip
         };
         diamond.Bind(Shape.FillProperty, diamond.GetResourceObservable(ThemeManager.AccentKey));
 
-        // The same glow the panel uses, null on Light.
-        diamond.Bind(Visual.EffectProperty, diamond.GetResourceObservable(ThemeManager.BloomKey));
-        name.Bind(Visual.EffectProperty, name.GetResourceObservable(ThemeManager.BloomKey));
 
         var drag = new Border
         {
@@ -128,7 +126,12 @@ public static class CaptionStrip
                 Orientation = Orientation.Horizontal,
                 Spacing = 12,
                 Margin = new Thickness(16, 0, 0, 0),
-                Children = { diamond, name, version },
+                Children =
+                {
+                    new BloomStack { Tier = BloomTier.High, VerticalAlignment = VerticalAlignment.Center, Child = diamond },
+                    new BloomStack { Tier = BloomTier.High, VerticalAlignment = VerticalAlignment.Center, Child = name },
+                    version,
+                },
             },
         };
 

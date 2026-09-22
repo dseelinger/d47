@@ -80,12 +80,6 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     /// <summary>A 1px rule, 60% of Accent mixed onto Background — a row's inline tag border (#279).</summary>
     public const string TagBorderKey = "D47.TagBorder";
 
-    /// <summary>A 10px glow of <see cref="AccentKey"/> at 34%, behind the marked elements — dark themes only, null in Light (#345).</summary>
-    public const string BloomKey = "D47.Bloom";
-
-    /// <summary>A 12px glow of <see cref="AccentKey"/> at 85%, behind a screen title's letters — dark themes only, null in Light.</summary>
-    public const string TitleBloomKey = "D47.TitleBloom";
-
     /// <summary>A tiled 1px-at-34%-black line brush over the whole window — dark themes only, null in Light (#345).</summary>
     public const string ScanlinesKey = "D47.Scanlines";
 
@@ -112,9 +106,19 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         RuleKey, FillLowKey, FillHighKey, FillHigherKey,
         AccentBorderKey, AccentInkKey, InfoFillKey, InfoBorderKey, InfoInkKey,
         CardFillKey, CardFillSelectedKey, RowFillKey, TagBorderKey,
-        BloomKey, TitleBloomKey, ScanlinesKey,
+        .. BloomStopKeys(), ScanlinesKey,
         PaneFillKey, PaneBorderKey, TagInkKey, ScrimKey,
     ];
+
+    /// <summary>
+    /// One stop of a tier's glow: a <see cref="DropShadowEffect"/> of Accent, drawn by a
+    /// <see cref="BloomStack"/> ghost. Null in Light and past the stops the amount emits.
+    /// </summary>
+    public static string BloomStopKey(BloomTier tier, int stop) => $"D47.Bloom.{tier}.{stop}";
+
+    private static IEnumerable<string> BloomStopKeys() =>
+        Enum.GetValues<BloomTier>().SelectMany(tier =>
+            Enumerable.Range(0, BloomTiers.Table(tier).Count).Select(stop => BloomStopKey(tier, stop)));
 
     /// <summary>Applies the theme named in settings, and re-applies it whenever that setting changes.</summary>
     public void FollowSettings(SettingsService settings)
@@ -203,8 +207,16 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         // Bloom and scanlines (#345): dark themes only, so both resolve to null rather than a brush
         // or effect in Light — which is what turns them off, since an unset Effect or Background
         // paints nothing.
-        resources[BloomKey] = palette.IsDark ? Bloom(palette.Accent, 10, 0.34) : null;
-        resources[TitleBloomKey] = palette.IsDark ? Bloom(palette.Accent, 12, 0.85) : null;
+        foreach (var tier in Enum.GetValues<BloomTier>())
+        {
+            var stops = palette.IsDark ? BloomTiers.Stops(tier, BloomTiers.DefaultAmount) : [];
+
+            for (var stop = 0; stop < BloomTiers.Table(tier).Count; stop++)
+            {
+                resources[BloomStopKey(tier, stop)] = stop < stops.Count ? Bloom(palette.Accent, stops[stop]) : null;
+            }
+        }
+
         resources[ScanlinesKey] = palette.IsDark ? Scanlines(1) : null;
 
         // The tint is the pane's, not the page's: the ground behind the pane stays Background.
@@ -219,15 +231,21 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         logger.LogInformation("Theme is now {Theme}", theme.Name);
     }
 
-    /// <summary>A glow of <paramref name="accent"/>, for the elements named in #345.</summary>
-    private static DropShadowEffect Bloom(Color accent, double blurRadius, double opacity) => new()
+    /// <summary>One stop of a glow of <paramref name="accent"/>, spread as the stop's CSS radius would spread it.</summary>
+    private static DropShadowEffect Bloom(Color accent, BloomStop stop) => new()
     {
         Color = accent,
         OffsetX = 0,
         OffsetY = 0,
-        BlurRadius = blurRadius,
-        Opacity = opacity,
+        BlurRadius = SkiaBlurRadius(stop.Radius),
+        Opacity = stop.Alpha,
     };
+
+    /// <summary>
+    /// The <see cref="DropShadowEffect.BlurRadius"/> that spreads as far as a CSS blur radius:
+    /// CSS blurs at σ = r / 2, Avalonia.Skia at σ = 0.288675 × BlurRadius + 0.5.
+    /// </summary>
+    public static double SkiaBlurRadius(double cssRadius) => Math.Max(0, (cssRadius / 2 - 0.5) / 0.288675);
 
     /// <summary>Accent from 5% at the top to 1.5% at the bottom, top to bottom of whatever it fills.</summary>
     private static LinearGradientBrush PaneFill(Color accent) => new()

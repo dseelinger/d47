@@ -30,28 +30,30 @@
       <Setter Property="FocusAdorner" Value="{x:Static theming:FocusRing.Template}" />
       <Setter Property="Template">
         <ControlTemplate>
-          <controls:ChamferedBorder x:Name="Shape"
-                                     Background="{TemplateBinding Background}"
-                                     BorderBrush="{TemplateBinding BorderBrush}"
-                                     BorderThickness="{TemplateBinding BorderThickness}">
-            <Grid>
-              <ContentPresenter x:Name="PART_ContentPresenter"
-                                Content="{TemplateBinding Content}"
-                                ContentTemplate="{TemplateBinding ContentTemplate}"
-                                Padding="{TemplateBinding Padding}"
-                                Foreground="{TemplateBinding Foreground}"
-                                HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
-              <!-- The quiet weight's underline, drawn as a dotted rectangle rather than a second clipper. -->
-              <Rectangle x:Name="QuietRule"
-                         IsVisible="False"
-                         Height="1"
-                         VerticalAlignment="Bottom"
-                         Stroke="{DynamicResource D47.Rule}"
-                         StrokeThickness="1"
-                         StrokeDashArray="1,1" />
-            </Grid>
-          </controls:ChamferedBorder>
+          <theming:BloomStack x:Name="Glow" Tier="Normal" IsLit="False">
+            <controls:ChamferedBorder x:Name="Shape"
+                                       Background="{TemplateBinding Background}"
+                                       BorderBrush="{TemplateBinding BorderBrush}"
+                                       BorderThickness="{TemplateBinding BorderThickness}">
+              <Grid>
+                <ContentPresenter x:Name="PART_ContentPresenter"
+                                  Content="{TemplateBinding Content}"
+                                  ContentTemplate="{TemplateBinding ContentTemplate}"
+                                  Padding="{TemplateBinding Padding}"
+                                  Foreground="{TemplateBinding Foreground}"
+                                  HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                  VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+                <!-- The quiet weight's underline, drawn as a dotted rectangle rather than a second clipper. -->
+                <Rectangle x:Name="QuietRule"
+                           IsVisible="False"
+                           Height="1"
+                           VerticalAlignment="Bottom"
+                           Stroke="{DynamicResource D47.Rule}"
+                           StrokeThickness="1"
+                           StrokeDashArray="1,1" />
+              </Grid>
+            </controls:ChamferedBorder>
+          </theming:BloomStack>
         </ControlTemplate>
       </Setter>
 
@@ -74,14 +76,15 @@
         <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
         <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
         <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="ClipToBounds" Value="False" />
 
         <Style Selector="^ /template/ controls|ChamferedBorder#Shape">
           <Setter Property="Chamfer" Value="0,11,0,0" />
         </Style>
 
         <!-- The solid fill's own glow (#345), off the disabled state along with the fill itself. -->
-        <Style Selector="^:not(:disabled) /template/ controls|ChamferedBorder#Shape">
-          <Setter Property="Effect" Value="{DynamicResource D47.Bloom}" />
+        <Style Selector="^:not(:disabled) /template/ theming|BloomStack#Glow">
+          <Setter Property="IsLit" Value="True" />
         </Style>
       </Style>
 
@@ -123,6 +126,7 @@
       RepeatButton too.
     -->
     <ControlTheme x:Key="D47.GlyphButton" TargetType="Button">
+      <Setter Property="ClipToBounds" Value="False" />
       <Setter Property="Cursor" Value="Hand" />
       <Setter Property="Padding" Value="0" />
       <Setter Property="Background" Value="Transparent" />
@@ -131,16 +135,18 @@
       <Setter Property="FocusAdorner" Value="{x:Static theming:FocusRing.Template}" />
       <Setter Property="Template">
         <ControlTemplate>
-          <Border x:Name="Ground"
-                  Background="{TemplateBinding Background}"
-                  HorizontalAlignment="Stretch"
-                  VerticalAlignment="Stretch">
-            <ContentPresenter x:Name="PART_ContentPresenter"
-                              Content="{TemplateBinding Content}"
-                              Foreground="{TemplateBinding Foreground}"
-                              HorizontalAlignment="Center"
-                              VerticalAlignment="Center" />
-          </Border>
+          <theming:BloomStack x:Name="Glow" Tier="Normal" IsLit="False">
+            <Border x:Name="Ground"
+                    Background="{TemplateBinding Background}"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch">
+              <ContentPresenter x:Name="PART_ContentPresenter"
+                                Content="{TemplateBinding Content}"
+                                Foreground="{TemplateBinding Foreground}"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center" />
+            </Border>
+          </theming:BloomStack>
         </ControlTemplate>
       </Setter>
 
@@ -169,8 +175,8 @@
       <Style Selector="^:pressed">
         <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
         <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
-        <Style Selector="^ /template/ Border#Ground">
-          <Setter Property="Effect" Value="{DynamicResource D47.Bloom}" />
+        <Style Selector="^ /template/ theming|BloomStack#Glow">
+          <Setter Property="IsLit" Value="True" />
         </Style>
       </Style>
 
@@ -186,6 +192,7 @@
       OffContent to null itself; every other row gets this pair by default.
     -->
     <ControlTheme x:Key="{x:Type ToggleSwitch}" TargetType="ToggleSwitch">
+      <Setter Property="ClipToBounds" Value="False" />
       <Setter Property="Cursor" Value="Hand" />
       <Setter Property="OnContent" Value="ON" />
       <Setter Property="OffContent" Value="OFF" />
@@ -204,18 +211,20 @@
               <!-- Required by ToggleSwitch itself but not otherwise used — this template
                    toggles on a tap, not a drag, so the two halves below carry the whole visual. -->
               <Panel x:Name="PART_MovingKnobs" Width="0" Height="0" IsHitTestVisible="False" />
-              <Border x:Name="OnHalf" Grid.Column="0" Background="Transparent">
-                <Border.Transitions>
-                  <Transitions>
-                    <BrushTransition Property="Background" Duration="0:0:0.12" Easing="CubicEaseOut" />
-                  </Transitions>
-                </Border.Transitions>
-                <ContentPresenter x:Name="OnText"
-                                  Content="{TemplateBinding OnContent}"
-                                  Foreground="{DynamicResource D47.TextFaint}"
-                                  HorizontalAlignment="Center"
-                                  VerticalAlignment="Center" />
-              </Border>
+              <theming:BloomStack x:Name="Glow" Grid.Column="0" Tier="Normal" IsLit="False">
+                <Border x:Name="OnHalf" Background="Transparent">
+                  <Border.Transitions>
+                    <Transitions>
+                      <BrushTransition Property="Background" Duration="0:0:0.12" Easing="CubicEaseOut" />
+                    </Transitions>
+                  </Border.Transitions>
+                  <ContentPresenter x:Name="OnText"
+                                    Content="{TemplateBinding OnContent}"
+                                    Foreground="{DynamicResource D47.TextFaint}"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center" />
+                </Border>
+              </theming:BloomStack>
               <Border x:Name="OffHalf" Grid.Column="2" Background="Transparent">
                 <Border.Transitions>
                   <Transitions>
@@ -239,7 +248,9 @@
       </Style>
       <Style Selector="^:checked /template/ Border#OnHalf">
         <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
-        <Setter Property="Effect" Value="{DynamicResource D47.Bloom}" />
+      </Style>
+      <Style Selector="^:checked /template/ theming|BloomStack#Glow">
+        <Setter Property="IsLit" Value="True" />
       </Style>
       <Style Selector="^:checked /template/ ContentPresenter#OnText">
         <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
@@ -265,6 +276,7 @@
       come with it, the same reason D47.Tab is.
     -->
     <ControlTheme x:Key="D47.Segment" TargetType="RadioButton">
+      <Setter Property="ClipToBounds" Value="False" />
       <Setter Property="Cursor" Value="Hand" />
       <Setter Property="FontFamily" Value="{StaticResource D47.Font.Chrome}" />
       <Setter Property="FontSize" Value="14" />
@@ -275,14 +287,16 @@
 
       <Setter Property="Template">
         <ControlTemplate>
-          <Border x:Name="Shape" Background="Transparent">
-            <ContentPresenter x:Name="PART_ContentPresenter"
-                              Content="{TemplateBinding Content}"
-                              Padding="{TemplateBinding Padding}"
-                              Foreground="{TemplateBinding Foreground}"
-                              HorizontalAlignment="Center"
-                              VerticalAlignment="Center" />
-          </Border>
+          <theming:BloomStack x:Name="Glow" Tier="Normal" IsLit="False">
+            <Border x:Name="Shape" Background="Transparent">
+              <ContentPresenter x:Name="PART_ContentPresenter"
+                                Content="{TemplateBinding Content}"
+                                Padding="{TemplateBinding Padding}"
+                                Foreground="{TemplateBinding Foreground}"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center" />
+            </Border>
+          </theming:BloomStack>
         </ControlTemplate>
       </Setter>
 
@@ -294,7 +308,9 @@
         <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
         <Style Selector="^ /template/ Border#Shape">
           <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
-          <Setter Property="Effect" Value="{DynamicResource D47.Bloom}" />
+        </Style>
+        <Style Selector="^ /template/ theming|BloomStack#Glow">
+          <Setter Property="IsLit" Value="True" />
         </Style>
       </Style>
     </ControlTheme>
@@ -619,6 +635,7 @@
       40-tall Track that the 10-wide handle needs so it can overhang 5px top and bottom.
     -->
     <ControlTheme x:Key="{x:Type Slider}" TargetType="Slider">
+      <Setter Property="ClipToBounds" Value="False" />
       <Setter Property="MinHeight" Value="44" />
       <Setter Property="FocusAdorner" Value="{x:Static theming:FocusRing.Template}" />
       <Setter Property="Template">
@@ -654,18 +671,20 @@
       </Setter>
     </ControlTheme>
 
-    <!-- The Level's fill: Accent, inset 3px on every side of the 30-tall track, bloom (null and so off in Light). -->
+    <!-- The Level's fill: Accent, inset 3px on every side of the 30-tall track, with the high bloom. -->
     <ControlTheme x:Key="D47.SliderFill" TargetType="RepeatButton">
+      <Setter Property="ClipToBounds" Value="False" />
       <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
       <Setter Property="BorderThickness" Value="0" />
       <Setter Property="Padding" Value="0" />
       <Setter Property="Height" Value="24" />
       <Setter Property="Margin" Value="3,0" />
       <Setter Property="VerticalAlignment" Value="Center" />
-      <Setter Property="Effect" Value="{DynamicResource D47.Bloom}" />
       <Setter Property="Template">
         <ControlTemplate>
-          <Border Background="{TemplateBinding Background}" />
+          <theming:BloomStack Tier="High">
+            <Border Background="{TemplateBinding Background}" />
+          </theming:BloomStack>
         </ControlTemplate>
       </Setter>
     </ControlTheme>
@@ -676,13 +695,16 @@
       finds it at the minimum interactive target.
     -->
     <ControlTheme x:Key="D47.SliderThumb" TargetType="Thumb">
+      <Setter Property="ClipToBounds" Value="False" />
       <Setter Property="Width" Value="10" />
       <Setter Property="Height" Value="40" />
       <Setter Property="Template">
         <ControlTemplate>
           <Panel>
             <Rectangle Width="44" Height="44" Fill="Transparent" />
-            <Rectangle Width="10" Height="40" Fill="{DynamicResource D47.AccentInk}" />
+            <theming:BloomStack Tier="High" Width="10" Height="40">
+              <Rectangle Fill="{DynamicResource D47.AccentInk}" />
+            </theming:BloomStack>
           </Panel>
         </ControlTemplate>
       </Setter>

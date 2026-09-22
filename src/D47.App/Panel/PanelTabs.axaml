@@ -1,6 +1,7 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:controls="clr-namespace:D47.App.Controls">
+                    xmlns:controls="clr-namespace:D47.App.Controls"
+                    xmlns:theming="clr-namespace:D47.App.Theming">
 
   <!--
     A tab, and it has to read as one rather than as a button or a link.
@@ -12,6 +13,7 @@
     mutually-exclusive selection, keyboard arrows and the accessibility role all come with it.
   -->
   <ControlTheme x:Key="D47.Tab" TargetType="RadioButton">
+    <Setter Property="ClipToBounds" Value="False" />
     <Setter Property="Cursor" Value="Hand" />
     <Setter Property="FontFamily" Value="{StaticResource D47.Font.Chrome}" />
     <Setter Property="FontSize" Value="{StaticResource D47.Type.Secondary}" />
@@ -23,14 +25,16 @@
 
     <Setter Property="Template">
       <ControlTemplate>
-        <controls:ChamferedBorder x:Name="Shape" Skew="13" Background="{DynamicResource D47.FillHigh}">
-          <ContentPresenter x:Name="PART_ContentPresenter"
-                            Content="{TemplateBinding Content}"
-                            Padding="{TemplateBinding Padding}"
-                            Foreground="{TemplateBinding Foreground}"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center" />
-        </controls:ChamferedBorder>
+        <theming:BloomStack x:Name="Glow" Tier="Normal" IsLit="False">
+          <controls:ChamferedBorder x:Name="Shape" Skew="13" Background="{DynamicResource D47.FillHigh}">
+            <ContentPresenter x:Name="PART_ContentPresenter"
+                              Content="{TemplateBinding Content}"
+                              Padding="{TemplateBinding Padding}"
+                              Foreground="{TemplateBinding Foreground}"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center" />
+          </controls:ChamferedBorder>
+        </theming:BloomStack>
       </ControlTemplate>
     </Setter>
 
@@ -46,7 +50,9 @@
       <Setter Property="Padding" Value="30,13" />
       <Style Selector="^ /template/ controls|ChamferedBorder#Shape">
         <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
-        <Setter Property="Effect" Value="{DynamicResource D47.Bloom}" />
+      </Style>
+      <Style Selector="^ /template/ theming|BloomStack#Glow">
+        <Setter Property="IsLit" Value="True" />
       </Style>
     </Style>
 

@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:panel="clr-namespace:D47.App.Panel"
              xmlns:controls="clr-namespace:D47.App.Controls"
+             xmlns:theming="clr-namespace:D47.App.Theming"
              x:Class="D47.App.Panel.PanelView"
              x:DataType="panel:PanelViewModel"
              Background="{DynamicResource D47.Background}"
@@ -285,10 +286,11 @@
           reading a shape before they read a hue - and because a colour difference alone is not a
           difference for everybody.
         -->
-        <Ellipse x:Name="MicrophoneGlyph"
-                 Width="8" Height="8"
-                 VerticalAlignment="Center"
-                 StrokeThickness="1.5" />
+        <theming:BloomStack x:Name="MicrophoneBloom" Tier="High" IsLit="False" VerticalAlignment="Center">
+          <Ellipse x:Name="MicrophoneGlyph"
+                   Width="8" Height="8"
+                   StrokeThickness="1.5" />
+        </theming:BloomStack>
         <TextBlock x:Name="MicrophoneLabel"
                    VerticalAlignment="Center"
                    FontFamily="{StaticResource D47.Font.Chrome}"

@@ -314,7 +314,7 @@ public sealed class ControlKitWindow : Window
             Spacing = 10,
             Children =
             {
-                TitleText.GroupRow(TitleText.Build("Screen title", TypeScale.Title, TitleRank.Screen)),
+                TitleText.GroupRow(TitleText.Screen("Screen title")),
                 TitleText.GroupRow(TitleText.Build("Group heading", TypeScale.Heading, TitleRank.Group)),
                 TitleText.Build("SUBGROUP CAPTION", TypeScale.Caption, TitleRank.Subgroup),
                 TitleText.Build("Row label", TypeScale.Body, TitleRank.Row, sentence: true),

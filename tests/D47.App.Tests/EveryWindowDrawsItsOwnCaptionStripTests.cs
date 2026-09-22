@@ -6,6 +6,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Controls;
+using D47.App.Theming;
 using D47.App.Windowing;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -40,7 +41,7 @@ public class EveryWindowDrawsItsOwnCaptionStripTests
         window.Show();
 
         var title = window.GetVisualDescendants().OfType<TextBlock>()
-            .Single(t => t.Text == "BEFORE");
+            .Single(t => t.Text == "BEFORE" && !BloomStack.IsGhost(t));
 
         window.Title = "After";
 

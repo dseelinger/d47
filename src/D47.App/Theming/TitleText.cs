@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using D47.Core.Interface;
 
 namespace D47.App.Theming;
 
@@ -83,13 +84,15 @@ public static class TitleText
             block.TextWrapping = TextWrapping.NoWrap;
         }
 
-        if (rank == TitleRank.Screen)
-        {
-            block.Bind(Visual.EffectProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.TitleBloomKey));
-        }
-
         return block;
     }
+
+    /// <summary>A <see cref="TitleRank.Screen"/> title at <see cref="TypeScale.Title"/>, with the high bloom behind its letters.</summary>
+    public static Control Screen(string text) => new BloomStack
+    {
+        Tier = BloomTier.High,
+        Child = Build(text, TypeScale.Title, TitleRank.Screen),
+    };
 
     /// <summary>Sets a title's text, upper-cased unless it is a sentence.</summary>
     public static void Show(TextBlock block, string text, bool sentence = false) =>
@@ -109,7 +112,7 @@ public static class TitleText
     /// <summary>
     /// Wraps a <see cref="TitleRank.Group"/> heading with a 1px rule filling the rest of the row (#357).
     /// </summary>
-    public static Control GroupRow(TextBlock heading)
+    public static Control GroupRow(Control heading)
     {
         var rule = new Border { Height = 1, Margin = new Thickness(8, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
         rule.Bind(Border.BackgroundProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.BorderKey));
