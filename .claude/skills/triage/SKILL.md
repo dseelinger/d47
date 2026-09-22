@@ -94,16 +94,19 @@ belong elsewhere.
 Emit the exact tokens, so the line can be pasted: `opus` / `sonnet` / `haiku`, and
 `low` / `medium` / `high` / `xhigh` / `max`.
 
-| | When |
-| --- | --- |
-| `haiku` | A generated table or a string. Almost never — the generators are the edit point, not the table. |
-| `sonnet` | The default. The issue names the cause and the fix follows from it. |
-| `opus` | The fix crosses a project boundary, moves a Core seam, touches `TickLoop` or its subscribers, or the issue names a symptom without a cause. |
+| Model | Effort | When |
+| --- | --- | --- |
+| `haiku` | `medium` | A generated table or a string. Almost never — the generators are the edit point, not the table. |
+| `sonnet` | `medium` | The default. The issue names the cause and the fix follows from it. |
+| `opus` | `medium` | The cause is named but the fix is a judgement: placement, layout, which of several sites changes. |
+| `opus` | `high` | The fix crosses a project boundary, moves a Core seam, touches `TickLoop` or its subscribers, or the issue names a symptom without a cause. |
 
-Effort: `low` only for a change whose diff you could write from the title. `medium` is the default.
-`high` where the cause is named but the fix is a judgement. `xhigh` or `max` where the issue is a
-design question wearing a bug's clothes — flag those as candidates for the `design` label instead of
-picking an effort for them.
+Opus runs at `medium` unless the last row applies. Do not pair `sonnet` with `high`: work that needs
+more than `sonnet medium` goes to `opus medium`.
+
+`low` only for a change whose diff you could write from the title. `xhigh` or `max` where the issue
+is a design question wearing a bug's clothes — flag those as candidates for the `design` label
+instead of picking an effort for them.
 
 Never go below `medium` on anything in `src/`. `TreatWarningsAsErrors` is on and there is no
 `#pragma warning disable` in the tree, so a careless fix does not merely read badly, it fails to
