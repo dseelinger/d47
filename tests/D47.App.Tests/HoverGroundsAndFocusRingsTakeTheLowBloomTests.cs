@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -7,6 +8,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -19,16 +21,16 @@ namespace D47.App.Tests;
 
 /// <summary>
 /// Hovering a button, a glyph button, an unselected tab or an unselected segment lights a Low-tier
-/// halo behind its ground; the primary button, the selected tab and the selected segment, already
-/// lit at Normal, gain no second one. Keyboard focus lights the same halo behind the focus ring
-/// without touching the ring's own outline (#379).
+/// halo around its hover ground without painting over the ground itself; the primary button, the
+/// selected tab and the selected segment stay at Normal. Keyboard focus lights the same halo behind
+/// the focus ring without touching the ring's own outline (#379).
 /// </summary>
 public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
 {
     private static ThemeManager Manager() => new(Application.Current!, NullLogger<ThemeManager>.Instance);
 
     [AvaloniaFact]
-    public void HoveringAPlainButtonLightsTheLowHaloBehindIt()
+    public void HoveringAPlainButtonLightsTheLowHalo()
     {
         using var kit = ControlKitTheme();
         Manager().Apply(ThemeCatalog.Elite);
@@ -36,7 +38,7 @@ public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
         var button = new Button { Content = "Go", Width = 120, Height = 44 };
         var window = Open(button);
 
-        var halo = Halo(button);
+        var halo = Glow(button);
         Assert.False(halo.IsLit);
 
         Hover(window, button);
@@ -49,7 +51,7 @@ public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
     }
 
     [AvaloniaFact]
-    public void HoveringThePrimaryButtonAddsNoSecondHalo()
+    public void HoveringThePrimaryButtonKeepsItsNormalGlow()
     {
         using var kit = ControlKitTheme();
         Manager().Apply(ThemeCatalog.Elite);
@@ -59,7 +61,7 @@ public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
 
         Hover(window, button);
 
-        Assert.False(Halo(button).IsLit);
+        Assert.Equal(BloomTier.Normal, Glow(button).Tier);
 
         window.Close();
     }
@@ -70,23 +72,41 @@ public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
         using var kit = ControlKitTheme();
         Manager().Apply(ThemeCatalog.Elite);
 
-        var button = new Button
-        {
-            Theme = (ControlTheme)Application.Current!.FindResource("D47.GlyphButton")!,
-            Content = "↺",
-            Width = 44,
-            Height = 44,
-        };
+        var button = GlyphButton();
         var window = Open(button);
 
         Hover(window, button);
 
-        var halo = Halo(button);
+        var halo = button.GetVisualDescendants().OfType<BloomStack>().Single(stack => stack.Name == "HoverGlow");
         Assert.True(halo.IsLit);
         AssertGlowing(halo);
 
         var ground = button.GetVisualDescendants().OfType<Border>().Single(b => b.Name == "Ground");
         Assert.Equal(Colors.Transparent, ((ISolidColorBrush)ground.Background!).Color);
+
+        window.Close();
+    }
+
+    /// <summary>The halo draws outside the cell and leaves the cell itself as it was.</summary>
+    [AvaloniaFact]
+    public void AHoveredGlyphButtonsCellIsNotFilledByItsHalo()
+    {
+        using var kit = ControlKitTheme();
+        Manager().Apply(ThemeCatalog.Elite);
+
+        var button = GlyphButton();
+        var window = Open(button);
+
+        var inside = At(button, window, 3, 3);
+        var outside = At(button, window, -3, 22);
+
+        var restInside = Pixel(window, inside);
+        var restOutside = Pixel(window, outside);
+
+        Hover(window, button);
+
+        Assert.Equal(restInside, Pixel(window, inside));
+        Assert.NotEqual(restOutside, Pixel(window, outside));
 
         window.Close();
     }
@@ -101,17 +121,15 @@ public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
         var theme = (ControlTheme)Application.Current!.FindResource("D47.Tab")!;
         var one = new RadioButton { Theme = theme, Content = "One" };
         var two = new RadioButton { Theme = theme, Content = "Two", IsChecked = true };
-        var panel = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Children = { one, two } };
-        var window = Open(panel);
+        var window = Open(new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Children = { one, two } });
 
         Hover(window, one);
 
-        Assert.True(Halo(one).IsLit);
-        AssertGlowing(Halo(one));
+        Assert.Equal(BloomTier.Low, Glow(one).Tier);
+        AssertGlowing(Glow(one));
 
-        // The already-lit selected tab gains no second halo.
         Hover(window, two);
-        Assert.False(Halo(two).IsLit);
+        Assert.Equal(BloomTier.Normal, Glow(two).Tier);
 
         window.Close();
     }
@@ -122,19 +140,36 @@ public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
         using var kit = ControlKitTheme();
         Manager().Apply(ThemeCatalog.Elite);
 
-        var one = new RadioButton { Theme = (ControlTheme)Application.Current!.FindResource("D47.Segment")!, Content = "One" };
-        var two = new RadioButton { Theme = (ControlTheme)Application.Current!.FindResource("D47.Segment")!, Content = "Two", IsChecked = true };
-        var panel = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Children = { one, two } };
-        var window = Open(panel);
+        var theme = (ControlTheme)Application.Current!.FindResource("D47.Segment")!;
+        var one = new RadioButton { Theme = theme, Content = "One" };
+        var two = new RadioButton { Theme = theme, Content = "Two", IsChecked = true };
+        var window = Open(new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Children = { one, two } });
 
         Hover(window, one);
 
-        Assert.True(Halo(one).IsLit);
-        AssertGlowing(Halo(one));
+        Assert.Equal(BloomTier.Low, Glow(one).Tier);
+        AssertGlowing(Glow(one));
 
-        // The already-lit selected segment gains no second halo.
         Hover(window, two);
-        Assert.False(Halo(two).IsLit);
+        Assert.Equal(BloomTier.Normal, Glow(two).Tier);
+
+        window.Close();
+    }
+
+    /// <summary>A hovered segment's ground is D47.FillHigh, not Accent laid over it by its halo.</summary>
+    [AvaloniaFact]
+    public void AHoveredSegmentsGroundKeepsItsFill()
+    {
+        using var kit = ControlKitTheme();
+        Manager().Apply(ThemeCatalog.Elite);
+
+        var segment = new RadioButton { Theme = (ControlTheme)Application.Current!.FindResource("D47.Segment")!, Content = "One" };
+        var window = Open(segment);
+
+        Hover(window, segment);
+
+        var fill = ((ISolidColorBrush)Application.Current!.Resources[ThemeManager.FillHighKey]!).Color;
+        Assert.Equal(fill, Pixel(window, At(segment, window, 3, 3)));
 
         window.Close();
     }
@@ -150,7 +185,7 @@ public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
 
         Hover(window, button);
 
-        Assert.All(Halo(button).Ghosts, ghost => Assert.False(ghost.IsVisible));
+        Assert.All(Glow(button).Ghosts, ghost => Assert.False(ghost.IsVisible));
 
         window.Close();
     }
@@ -176,6 +211,7 @@ public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
 
         var rectangle = Assert.IsType<Rectangle>(stack.Child);
         Assert.Equal(2, rectangle.StrokeThickness);
+        Assert.Null(rectangle.Fill);
         Assert.DoesNotContain(rectangle, stack.Ghosts);
 
         var accent = (ISolidColorBrush)Application.Current!.Resources[ThemeManager.AccentKey]!;
@@ -183,6 +219,14 @@ public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
 
         window.Close();
     }
+
+    private static Button GlyphButton() => new()
+    {
+        Theme = (ControlTheme)Application.Current!.FindResource("D47.GlyphButton")!,
+        Content = "↺",
+        Width = 44,
+        Height = 44,
+    };
 
     private static void AssertGlowing(BloomStack stack)
     {
@@ -195,15 +239,33 @@ public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
         }
     }
 
-    /// <summary>The Low-tier <c>HoverGlow</c> bloom stack behind <paramref name="control"/>'s own ground.</summary>
-    private static BloomStack Halo(Control control) =>
-        control.GetVisualDescendants().OfType<BloomStack>().Single(stack => stack.Name == "HoverGlow");
+    private static BloomStack Glow(Control control) =>
+        control.GetVisualDescendants().OfType<BloomStack>().Single(stack => stack.Name == "Glow");
 
     private static void Hover(Window window, Control control)
     {
-        var centre = control.TranslatePoint(new Point(control.Bounds.Width / 2, control.Bounds.Height / 2), window)!.Value;
-        window.MouseMove(centre);
+        window.MouseMove(At(control, window, control.Bounds.Width / 2, control.Bounds.Height / 2));
         Dispatcher.UIThread.RunJobs();
+    }
+
+    private static Point At(Control control, Window window, double x, double y) =>
+        control.TranslatePoint(new Point(x, y), window)!.Value;
+
+    /// <summary>The colour the window draws at <paramref name="at"/>, alpha dropped.</summary>
+    private static Color Pixel(Window window, Point at)
+    {
+        using var frame = window.CaptureRenderedFrame()!;
+        using var buffer = frame.Lock();
+
+        var x = (int)at.X;
+        var y = (int)at.Y;
+        var offset = (y * buffer.RowBytes) + (x * 4);
+        var bytes = new byte[4];
+        Marshal.Copy(buffer.Address + offset, bytes, 0, 4);
+
+        return buffer.Format == Avalonia.Platform.PixelFormat.Bgra8888
+            ? Color.FromRgb(bytes[2], bytes[1], bytes[0])
+            : Color.FromRgb(bytes[0], bytes[1], bytes[2]);
     }
 
     private static Window Open(Control content)

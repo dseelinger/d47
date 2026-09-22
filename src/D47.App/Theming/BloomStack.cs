@@ -35,6 +35,15 @@ public sealed class BloomStack : Control
     public static readonly StyledProperty<IBrush?> GlowProperty =
         AvaloniaProperty.Register<BloomStack, IBrush?>(nameof(Glow));
 
+    /// <summary>
+    /// True clips each ghost to outside the child's rectangle, so only the glow draws and not the
+    /// ghost's own fill — for a child whose shape is never meant to be seen.
+    /// </summary>
+    public static readonly StyledProperty<bool> IsHollowProperty =
+        AvaloniaProperty.Register<BloomStack, bool>(nameof(IsHollow));
+
+    private const double HollowReach = 200;
+
     private readonly List<Control> _ghosts = [];
 
     private readonly List<IDisposable> _links = [];
@@ -42,6 +51,7 @@ public sealed class BloomStack : Control
     static BloomStack()
     {
         AffectsMeasure<BloomStack>(ChildProperty);
+        AffectsArrange<BloomStack>(IsHollowProperty);
     }
 
     [Content]
@@ -67,6 +77,12 @@ public sealed class BloomStack : Control
     {
         get => GetValue(GlowProperty);
         set => SetValue(GlowProperty, value);
+    }
+
+    public bool IsHollow
+    {
+        get => GetValue(IsHollowProperty);
+        set => SetValue(IsHollowProperty, value);
     }
 
     /// <summary>The ghosts, backmost and narrowest first.</summary>
@@ -145,12 +161,26 @@ public sealed class BloomStack : Control
         child.Arrange(new Rect(finalSize));
 
         // Each ghost takes the child's own arranged rectangle, margin and alignment already applied.
+        var hollow = IsHollow ? Hollow(child.Bounds.Size) : null;
+
         foreach (var ghost in _ghosts)
         {
             ghost.Arrange(child.Bounds);
+            ghost.Clip = hollow;
         }
 
         return finalSize;
+    }
+
+    /// <summary>Everything within <see cref="HollowReach"/> of a rectangle of <paramref name="size"/>, less the rectangle.</summary>
+    private static Geometry Hollow(Size size)
+    {
+        var inner = new Rect(size);
+
+        return new CombinedGeometry(
+            GeometryCombineMode.Exclude,
+            new RectangleGeometry(inner.Inflate(HollowReach)),
+            new RectangleGeometry(inner));
     }
 
     private void Rebuild()
@@ -227,8 +257,9 @@ public sealed class BloomStack : Control
     }
 
     /// <summary>
-    /// An empty copy of <paramref name="child"/>'s shape, its geometry, fill and (for a Rectangle) stroke
-    /// bound to the child's — a Rectangle's stroke lets a hollow shape glow along its outline (#379).
+    /// An empty copy of <paramref name="child"/>'s shape, its geometry, fill and outline bound to the
+    /// child's. A ghost draws its own fill and outline as well as the glow, so it must sit exactly
+    /// under the child's, or be <see cref="IsHollow"/>.
     /// </summary>
     private static Control Ghost(Control child)
     {
@@ -238,6 +269,8 @@ public sealed class BloomStack : Control
             {
                 var ghost = new ChamferedBorder();
                 Follow(ghost, ChamferedBorder.BackgroundProperty, chamfered);
+                Follow(ghost, ChamferedBorder.BorderBrushProperty, chamfered);
+                Follow(ghost, ChamferedBorder.BorderThicknessProperty, chamfered);
                 Follow(ghost, ChamferedBorder.ChamferProperty, chamfered);
                 Follow(ghost, ChamferedBorder.SkewProperty, chamfered);
                 return ghost;
