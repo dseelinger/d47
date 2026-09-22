@@ -6,6 +6,17 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.6.2 — Controls drop their ornaments
+
+The Debug-only Control Kit window now follows the design reference's layout and wording. It opens
+with the CONTROL KIT title, the reference's introduction and three spec cards (Spacing, Row,
+Columns). The ten controls sit in a three-column grid in the reference's order, each captioned with
+what kind of control it is and ending in a one-line note. The grid drops to two columns, then one,
+as the window narrows. Theme comes before Status. Status shows five full-width bars, one per
+colour, each labelled on its own fill. The four heading ranks share one left rule, the window
+carries the panel's scanlines on dark themes, and the filled field takes focus on open so its
+block caret shows.
+
 ## 1.6.1 — Every hull has its figures
 
 A hull missing from the shipped table now names itself and says which figures are missing —

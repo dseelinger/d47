@@ -23,6 +23,9 @@ public sealed class Level : ContentControl
     public static readonly StyledProperty<double> ValueProperty =
         AvaloniaProperty.Register<Level, double>(nameof(Value));
 
+    public static readonly StyledProperty<string> ReadoutFormatProperty =
+        AvaloniaProperty.Register<Level, string>(nameof(ReadoutFormat), "0");
+
     /// <summary>Raised when the slider moves the value — never by setting <see cref="Value"/> directly.</summary>
     public event EventHandler? ValueChanged;
 
@@ -92,6 +95,13 @@ public sealed class Level : ContentControl
         set => SetValue(ValueProperty, value);
     }
 
+    /// <summary>The numeric format the readout shows <see cref="Value"/> in.</summary>
+    public string ReadoutFormat
+    {
+        get => GetValue(ReadoutFormatProperty);
+        set => SetValue(ReadoutFormatProperty, value);
+    }
+
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
@@ -101,7 +111,11 @@ public sealed class Level : ContentControl
             return;
         }
 
-        if (change.Property == MinimumProperty)
+        if (change.Property == ReadoutFormatProperty)
+        {
+            Sync();
+        }
+        else if (change.Property == MinimumProperty)
         {
             _slider.Minimum = Minimum;
         }
@@ -126,5 +140,5 @@ public sealed class Level : ContentControl
         ValueChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    private void Sync() => _readout.Text = Value.ToString("0", CultureInfo.InvariantCulture);
+    private void Sync() => _readout.Text = Value.ToString(ReadoutFormat, CultureInfo.InvariantCulture);
 }

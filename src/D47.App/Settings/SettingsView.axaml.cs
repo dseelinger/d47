@@ -10,6 +10,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
+using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
@@ -2758,8 +2759,18 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// mistaken for a field (#335).</summary>
     private (Control, Action, bool) BuildInfo(SettingRow row)
     {
+        var (inset, text) = Report();
+
+        return row.Binding?.Read is { } read
+            ? (inset, () => text.Text = read(_settings!.Current), false)
+            : (inset, () => { }, false);
+    }
+
+    /// <summary>A Report: its text on a 2px left rule, with no box around it.</summary>
+    internal static (Border Inset, SelectableTextBlock Text) Report()
+    {
         var text = new SelectableTextBlock { FontSize = TypeScale.Body, TextWrapping = TextWrapping.Wrap };
-        Themed(text, SelectableTextBlock.ForegroundProperty, ThemeManager.TextKey);
+        text[!SelectableTextBlock.ForegroundProperty] = new DynamicResourceExtension(ThemeManager.TextKey);
 
         var inset = new Border
         {
@@ -2767,11 +2778,25 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Padding = new Thickness(14),
             Child = text,
         };
-        Themed(inset, Border.BorderBrushProperty, ThemeManager.BorderKey);
+        inset[!Border.BorderBrushProperty] = new DynamicResourceExtension(ThemeManager.BorderKey);
 
-        return row.Binding?.Read is { } read
-            ? (inset, () => text.Text = read(_settings!.Current), false)
-            : (inset, () => { }, false);
+        return (inset, text);
+    }
+
+    /// <summary>A binding chip: mono at normal weight and no letterspacing, on fill-3.</summary>
+    internal static Button BindingChip()
+    {
+        var chip = new Button
+        {
+            FontFamily = new FontFamily(Fonts.MonoFamily),
+            FontSize = TypeScale.Secondary,
+            FontWeight = FontWeight.Normal,
+            LetterSpacing = 0,
+            Padding = new Thickness(14, 10),
+        };
+        chip[!Button.BackgroundProperty] = new DynamicResourceExtension(ThemeManager.FillHigherKey);
+        chip[!Button.ForegroundProperty] = new DynamicResourceExtension(ThemeManager.AccentInkKey);
+        return chip;
     }
 
     /// <summary>
@@ -3875,16 +3900,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         var chips = row.BoundKeys.Select(_ =>
         {
-            var chip = new Button
-            {
-                FontFamily = new FontFamily(Fonts.MonoFamily),
-                FontSize = TypeScale.Secondary,
-                FontWeight = FontWeight.Normal,
-                LetterSpacing = 0,
-                Padding = new Thickness(14, 10)
-            };
-            Themed(chip, Button.BackgroundProperty, ThemeManager.FillHigherKey);
-            Themed(chip, Button.ForegroundProperty, ThemeManager.AccentInkKey);
+            var chip = BindingChip();
             chip.Click += async (_, _) => await CaptureBindAsync(row, chip, message);
             return chip;
         }).ToList();

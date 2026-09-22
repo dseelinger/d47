@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@400;600;700&family=Titillium+Web:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin:0; padding:0; background:#08070A; }
+  * { box-sizing:border-box; }
+  a { color:#FF7A1A; text-decoration:none; }
+  a:hover { color:#FFD9A8; }
+  button { font-family:inherit; }
+  @keyframes d47caret { 0%,49%{opacity:1} 50%,100%{opacity:0} }
+</style>
+</helmet>
+
+<div style="{{ shell }}">
+
+  <div style="position:absolute;inset:0;pointer-events:none;z-index:40;background:repeating-linear-gradient(to bottom, rgba(0,0,0,0.34) 0px, rgba(0,0,0,0.34) 1px, transparent 1px, transparent 3px);opacity:{{ scanOpacity }}"></div>
+
+  <div style="display:flex;align-items:center;gap:16px;padding:14px 20px;border-bottom:1px solid var(--line-2,#38200c)">
+    <div style="width:16px;height:16px;background:var(--accent,#FF7A1A);transform:rotate(45deg);box-shadow:var(--bloom-hi,none)"></div>
+    <div style="font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:23px;letter-spacing:0.22em;color:var(--hot,#FFD9A8);text-shadow:var(--bloom-hi,none)">DIRECTIVE 47</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-3,#7a4413)">1.2.0</div>
+    <div style="flex:1"></div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-3,#7a4413);letter-spacing:0.1em">— ▢ ✕</div>
+  </div>
+
+  <div style="display:flex;align-items:flex-end;gap:2px;padding:10px 20px 0 20px;border-bottom:2px solid var(--line,#8a4a12)">
+    <div style="clip-path:polygon(13px 0, 100% 0, calc(100% - 13px) 100%, 0 100%);background:var(--fill-2,#1c1208);color:var(--ink-3,#7a4413);font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:15px;letter-spacing:0.16em;padding:11px 26px">TRANSCRIPT</div>
+    <div style="clip-path:polygon(13px 0, 100% 0, calc(100% - 13px) 100%, 0 100%);background:var(--fill-2,#1c1208);color:var(--ink-3,#7a4413);font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:15px;letter-spacing:0.16em;padding:11px 26px">FLEET</div>
+    <div style="clip-path:polygon(13px 0, 100% 0, calc(100% - 13px) 100%, 0 100%);background:var(--fill-2,#1c1208);color:var(--ink-3,#7a4413);font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:15px;letter-spacing:0.16em;padding:11px 26px">ENGINEERS</div>
+    <div style="clip-path:polygon(13px 0, 100% 0, calc(100% - 13px) 100%, 0 100%);background:var(--fill-2,#1c1208);color:var(--ink-3,#7a4413);font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:15px;letter-spacing:0.16em;padding:11px 26px">CHECKLIST</div>
+    <div style="clip-path:polygon(13px 0, 100% 0, calc(100% - 13px) 100%, 0 100%);background:var(--accent,#FF7A1A);color:var(--knock,#08070A);box-shadow:var(--bloom,none);font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:15px;letter-spacing:0.16em;padding:13px 30px;box-shadow:var(--bloom,none)">SETTINGS</div>
+    <div style="flex:1"></div>
+    <div style="font-family:'Saira Condensed',sans-serif;font-size:14px;letter-spacing:0.14em;color:var(--ink-3,#7a4413);padding:0 6px 11px 0">DESIGN STUDY</div>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:0 30px;padding:0 20px;border-bottom:1px solid var(--line-2,#38200c)">
+    <sc-for list="{{ screens }}" as="s" hint-placeholder-count="3">
+      <button onClick="{{ s.pick }}" style="background:none;border:0;border-bottom:3px solid {{ s.rule }};color:{{ s.fg }};font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:16px;letter-spacing:0.14em;padding:14px 2px 11px 2px;cursor:pointer;white-space:nowrap;flex:none">{{ s.label }}</button>
+    </sc-for>
+  </div>
+
+  <div style="flex:1;overflow-y:auto;padding:0">
+
+    <sc-if value="{{ isKit }}" hint-placeholder-val="{{ true }}">
+      <div style="padding:30px 32px 60px 32px;max-width:1120px">
+
+        <div style="font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:31px;letter-spacing:0.07em;color:var(--hot,#FFD9A8);text-shadow:var(--bloom-hi,none);margin:0 0 6px 0">CONTROL KIT</div>
+        <div style="font-family:'Titillium Web',sans-serif;font-size:16px;color:var(--ink-2,#b55d13);max-width:640px;margin:0 0 30px 0;text-wrap:pretty">Every control says what it is and what it is set to, without being read twice. Reverse video carries state, not outlines — a filled block is the terminal idiom and it is the thing that still reads at arm's length in a headset.</div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin:0 0 36px 0">
+          <div style="border:1px solid var(--line-2,#38200c);padding:16px 18px"><div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.16em;color:var(--ink-3,#7a4413);margin-bottom:6px">SPACING</div><div style="font-family:'Titillium Web',sans-serif;font-size:15px;color:var(--ink,#FF7A1A)">4 · 8 · 12 · 16 · 24 · 32 · 48. Nothing else.</div></div>
+          <div style="border:1px solid var(--line-2,#38200c);padding:16px 18px"><div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.16em;color:var(--ink-3,#7a4413);margin-bottom:6px">ROW</div><div style="font-family:'Titillium Web',sans-serif;font-size:15px;color:var(--ink,#FF7A1A)">52px settings · 44px minimum target</div></div>
+          <div style="border:1px solid var(--line-2,#38200c);padding:16px 18px"><div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.16em;color:var(--ink-3,#7a4413);margin-bottom:6px">COLUMNS</div><div style="font-family:'Titillium Web',sans-serif;font-size:15px;color:var(--ink,#FF7A1A)">Label 300px · control next to it · reset gutter fixed</div></div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:16px;margin:0 0 20px 0">
+          <div style="font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:21px;letter-spacing:0.15em;color:var(--ink,#FF7A1A);white-space:nowrap;flex:none">TELLING THINGS APART</div>
+          <div style="flex:1;height:1px;background:var(--line-2,#38200c)"></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:28px;margin:0 0 44px 0">
+
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.18em;color:var(--ink-3,#7a4413);margin-bottom:10px">REPORT — READ ONLY</div>
+            <div style="border-left:2px solid var(--line-2,#38200c);padding:3px 0 3px 14px;font-family:'Titillium Web',sans-serif;font-size:16px;color:var(--ink-2,#b55d13);text-wrap:pretty">11 ships, the oldest last seen about a day ago.</div>
+            <div style="font-family:'Titillium Web',sans-serif;font-size:14px;color:var(--ink-3,#7a4413);margin-top:10px;text-wrap:pretty">No box at all. A box is a promise you can type in it.</div>
+          </div>
+
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.18em;color:var(--ink-3,#7a4413);margin-bottom:10px">FIELD — EDITABLE</div>
+            <div style="display:flex;align-items:center;gap:2px;height:44px;background:var(--fill-2,#1c1208);border-bottom:2px solid var(--accent,#FF7A1A);padding:0 13px">
+              <span style="font-family:'Titillium Web',sans-serif;font-size:16px;color:var(--hot,#FFD9A8)">Diaguandri</span>
+              <span style="width:9px;height:21px;background:var(--accent,#FF7A1A);animation:d47caret 1.1s steps(1) infinite;margin-left:2px"></span>
+            </div>
+            <div style="font-family:'Titillium Web',sans-serif;font-size:14px;color:var(--ink-3,#7a4413);margin-top:10px;text-wrap:pretty">Inset ground, one lit edge, block caret.</div>
+          </div>
+
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.18em;color:var(--ink-3,#7a4413);margin-bottom:10px">ACTIONS — THREE WEIGHTS</div>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+              <div style="clip-path:polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 0 100%);background:var(--accent,#FF7A1A);color:var(--knock,#08070A);box-shadow:var(--bloom,none);font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:15px;letter-spacing:0.14em;padding:12px 22px;box-shadow:var(--bloom,none)">SEND IT</div>
+              <div style="border:1px solid var(--line,#8a4a12);color:var(--ink,#FF7A1A);font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:15px;letter-spacing:0.14em;padding:11px 20px">RESCAN</div>
+              <div style="color:var(--ink-2,#b55d13);font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:15px;letter-spacing:0.14em;padding:11px 4px;border-bottom:1px dotted var(--line,#8a4a12)">CANCEL</div>
+              <div style="border:1px solid var(--danger,#e0533f);color:var(--danger,#e0533f);font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:15px;letter-spacing:0.14em;padding:11px 20px">FORGET ALL</div>
+            </div>
+            <div style="font-family:'Titillium Web',sans-serif;font-size:14px;color:var(--ink-3,#7a4413);margin-top:10px;text-wrap:pretty">One filled primary per surface. Never five equals.</div>
+          </div>
+
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.18em;color:var(--ink-3,#7a4413);margin-bottom:10px">SWITCH — TWO STATE</div>
+            <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+              <div style="display:grid;grid-template-columns:1fr 1fr;width:128px;height:42px;border:1px solid var(--line,#8a4a12);background:var(--fill-1,#120c07);padding:3px;gap:3px">
+                <div style="display:grid;place-items:center;background:var(--accent,#FF7A1A);color:var(--knock,#08070A);box-shadow:var(--bloom,none);font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:0.14em;box-shadow:var(--bloom,none)">ON</div>
+                <div style="display:grid;place-items:center;color:var(--ink-3,#7a4413);font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:14px;letter-spacing:0.14em">OFF</div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;width:128px;height:42px;border:1px solid var(--line-2,#38200c);background:var(--fill-1,#120c07);padding:3px;gap:3px">
+                <div style="display:grid;place-items:center;color:var(--ink-3,#7a4413);font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:14px;letter-spacing:0.14em">ON</div>
+                <div style="display:grid;place-items:center;background:var(--line-2,#38200c);color:var(--ink-2,#b55d13);font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:0.14em">OFF</div>
+              </div>
+            </div>
+            <div style="font-family:'Titillium Web',sans-serif;font-size:14px;color:var(--ink-3,#7a4413);margin-top:10px;text-wrap:pretty">Double-coded: the lit block moves <em>and</em> names itself. Scannable down thirty rows.</div>
+          </div>
+
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.18em;color:var(--ink-3,#7a4413);margin-bottom:10px">CHOICE — FEW OPTIONS</div>
+            <div style="display:inline-flex;flex-wrap:wrap;border:1px solid var(--line,#8a4a12);background:var(--fill-1,#120c07);padding:3px;gap:3px">
+              <div style="padding:9px 15px;color:var(--ink-3,#7a4413);font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:14px;letter-spacing:0.12em">NONE</div>
+              <div style="padding:9px 15px;color:var(--ink-3,#7a4413);font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:14px;letter-spacing:0.12em">WARN</div>
+              <div style="padding:9px 15px;background:var(--accent,#FF7A1A);color:var(--knock,#08070A);font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:0.12em;box-shadow:var(--bloom,none)">INFO</div>
+              <div style="padding:9px 15px;color:var(--ink-3,#7a4413);font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:14px;letter-spacing:0.12em">DEBUG</div>
+              <div style="padding:9px 15px;color:var(--ink-3,#7a4413);font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:14px;letter-spacing:0.12em">TRACE</div>
+            </div>
+            <div style="font-family:'Titillium Web',sans-serif;font-size:14px;color:var(--ink-3,#7a4413);margin-top:10px;text-wrap:pretty">Up to six: show them all. No ComboBox needed, and nothing is hidden behind arrows.</div>
+          </div>
+
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.18em;color:var(--ink-3,#7a4413);margin-bottom:10px">CHOICE — MANY OPTIONS</div>
+            <div style="display:flex;height:44px;border:1px solid var(--line,#8a4a12);max-width:400px">
+              <div style="width:44px;display:grid;place-items:center;color:var(--ink-2,#b55d13);border-right:1px solid var(--line-2,#38200c);font-size:15px">◄</div>
+              <div style="flex:1;min-width:0;display:block;line-height:42px;padding:0 14px;background:var(--fill-3,#33200e);color:var(--hot,#FFD9A8);font-family:'Titillium Web',sans-serif;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Medium (English only)</div>
+              <div style="width:44px;display:grid;place-items:center;color:var(--ink-2,#b55d13);border-left:1px solid var(--line-2,#38200c);font-size:15px">►</div>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-3,#7a4413)"><span>3 / 6</span><span style="color:var(--ink-2,#b55d13)">1.5 GB · runs on the GPU</span></div>
+            <div style="font-family:'Titillium Web',sans-serif;font-size:14px;color:var(--ink-3,#7a4413);margin-top:8px;text-wrap:pretty">Position shown, consequence shown. The old spinner told you neither.</div>
+          </div>
+
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.18em;color:var(--ink-3,#7a4413);margin-bottom:10px">AMOUNT — NUMBER + UNIT</div>
+            <div style="display:flex;height:44px;border:1px solid var(--line,#8a4a12);width:216px">
+              <div style="flex:1;display:grid;align-items:center;padding:0 14px;font-family:'JetBrains Mono',monospace;font-size:18px;color:var(--hot,#FFD9A8)">500</div>
+              <div style="display:grid;place-items:center;padding:0 11px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-3,#7a4413);border-left:1px solid var(--line-2,#38200c)">ms</div>
+              <div style="width:40px;display:grid;place-items:center;color:var(--ink-2,#b55d13);border-left:1px solid var(--line-2,#38200c);font-size:11px">▲</div>
+              <div style="width:40px;display:grid;place-items:center;color:var(--ink-2,#b55d13);border-left:1px solid var(--line-2,#38200c);font-size:11px">▼</div>
+            </div>
+            <div style="font-family:'Titillium Web',sans-serif;font-size:14px;color:var(--ink-3,#7a4413);margin-top:10px;text-wrap:pretty">The unit lives in the control, so the label stops saying "in milliseconds".</div>
+          </div>
+
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.18em;color:var(--ink-3,#7a4413);margin-bottom:10px">LEVEL — SETTABLE</div>
+            <div style="display:flex;align-items:center;gap:14px;max-width:400px">
+              <div style="position:relative;flex:1;height:30px;border:1px solid var(--line,#8a4a12);background:var(--fill-1,#120c07)">
+                <div style="position:absolute;left:3px;top:3px;bottom:3px;width:58%;background:var(--accent,#FF7A1A);box-shadow:var(--bloom-hi,none)"></div>
+                <div style="position:absolute;left:calc(58% + 3px);top:-5px;bottom:-5px;width:10px;background:var(--hot,#FFD9A8);box-shadow:var(--bloom-hi,none)"></div>
+              </div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:17px;color:var(--hot,#FFD9A8);min-width:52px;text-align:right">0.85</div>
+            </div>
+            <div style="font-family:'Titillium Web',sans-serif;font-size:14px;color:var(--ink-3,#7a4413);margin-top:10px;text-wrap:pretty">A handle that overhangs the track, and the number always present.</div>
+          </div>
+
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.18em;color:var(--ink-3,#7a4413);margin-bottom:10px">GAUGE — REPORTED, NOT SETTABLE</div>
+            <div style="max-width:400px">
+              <div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:13px;margin-bottom:5px"><span style="color:var(--ink-2,#b55d13)">POWER</span><span style="color:var(--danger,#e0533f)">25.04 / 22.93 MW · 109%</span></div>
+              <div style="height:14px;background:repeating-linear-gradient(90deg, var(--danger,#e0533f) 0 7px, transparent 7px 10px);border-left:2px solid var(--ink-2,#b55d13);border-right:2px solid var(--ink-2,#b55d13)"></div>
+            </div>
+            <div style="font-family:'Titillium Web',sans-serif;font-size:14px;color:var(--ink-3,#7a4413);margin-top:10px;text-wrap:pretty">Hatched, capped, no handle — it can never be mistaken for the slider above.</div>
+          </div>
+
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.18em;color:var(--ink-3,#7a4413);margin-bottom:10px">BINDING</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--hot,#FFD9A8);background:var(--fill-3,#33200e);border:1px solid var(--line,#8a4a12);padding:10px 14px;white-space:nowrap">Ctrl+Alt+X</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--hot,#FFD9A8);background:var(--fill-3,#33200e);border:1px solid var(--line,#8a4a12);padding:10px 14px;white-space:nowrap">button 9</div>
+              <div style="color:var(--ink-2,#b55d13);font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:14px;letter-spacing:0.14em;padding:10px 4px;border-bottom:1px dotted var(--line,#8a4a12)">CLEAR</div>
+            </div>
+            <div style="font-family:'Titillium Web',sans-serif;font-size:14px;color:var(--ink-3,#7a4413);margin-top:10px;text-wrap:pretty">Bindings are machine text, so they are mono — and they wrap instead of colliding.</div>
+          </div>
+
+        </div>
+
+        <div style="display:flex;align-items:center;gap:16px;margin:0 0 20px 0">
+          <div style="font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:21px;letter-spacing:0.15em;color:var(--ink,#FF7A1A);white-space:nowrap;flex:none">STATUS, DERIVED FROM ACCENT</div>
+          <div style="flex:1;height:1px;background:var(--line-2,#38200c)"></div>
+        </div>
+        <div style="font-family:'Titillium Web',sans-serif;font-size:16px;color:var(--ink-2,#b55d13);max-width:680px;margin:0 0 18px 0;text-wrap:pretty">Status hues are anchored (danger 27°, warn 82°, good 146°, info 248°) but take their lightness and chroma from Accent. Switch theme above and watch them follow — no fixed hex survives the HUD matrix.</div>
+        <div style="display:flex;gap:2px;flex-wrap:wrap;margin:0 0 44px 0">
+          <div style="flex:1;min-width:150px;background:var(--accent,#FF7A1A);color:var(--knock,#08070A);padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:0.12em">ACCENT</div>
+          <div style="flex:1;min-width:150px;background:var(--danger,#e0533f);color:var(--knock,#08070A);padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:0.12em">DANGER · rebuy</div>
+          <div style="flex:1;min-width:150px;background:var(--warn,#d8a21a);color:var(--knock,#08070A);padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:0.12em">WARN · over budget</div>
+          <div style="flex:1;min-width:150px;background:var(--good,#3fbf72);color:var(--knock,#08070A);padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:0.12em">GOOD · unlocked</div>
+          <div style="flex:1;min-width:150px;background:var(--info,#4d9adf);color:var(--knock,#08070A);padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:0.12em">INFO · inherited</div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:16px;margin:0 0 20px 0">
+          <div style="font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:21px;letter-spacing:0.15em;color:var(--ink,#FF7A1A);white-space:nowrap;flex:none">FOUR RANKS OF HEADING</div>
+          <div style="flex:1;height:1px;background:var(--line-2,#38200c)"></div>
+        </div>
+        <div style="border-left:2px solid var(--line-2,#38200c);padding-left:22px">
+          <div style="font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:31px;letter-spacing:0.07em;color:var(--hot,#FFD9A8)">SCREEN TITLE</div>
+          <div style="font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:21px;letter-spacing:0.15em;color:var(--ink,#FF7A1A);margin-top:14px">GROUP, WITH A RULE</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--ink-3,#7a4413);margin-top:14px">SUBGROUP</div>
+          <div style="font-family:'Titillium Web',sans-serif;font-size:16px;color:var(--ink,#FF7A1A);margin-top:10px">Row label, sentence case</div>
+        </div>
+
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isVoice }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;min-height:100%">
+
+        <div style="width:clamp(170px,22%,250px);flex:none;border-right:1px solid var(--line-2,#38200c);padding:26px 0">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--ink-3,#7a4413);padding:0 22px 14px 22px">SETTINGS</div>
+          <div style="padding:10px 22px;border-left:3px solid var(--accent,#FF7A1A);background:var(--fill-2,#1c1208);font-family:'Titillium Web',sans-serif;font-weight:600;font-size:16px;color:var(--hot,#FFD9A8)">Voice and hearing</div>
+          <div style="padding:8px 22px 8px 38px;font-family:'Titillium Web',sans-serif;font-size:15px;color:var(--knock,#08070A);background:var(--accent,#FF7A1A);margin:3px 0">Voice input</div>
+          <div style="padding:8px 22px 8px 38px;font-family:'Titillium Web',sans-serif;font-size:15px;color:var(--ink-2,#b55d13)">Its voice</div>
+          <div style="padding:8px 22px 8px 38px;font-family:'Titillium Web',sans-serif;font-size:15px;color:var(--ink-2,#b55d13)">Sounds and levels</div>
+          <div style="padding:10px 22px;border-left:3px solid transparent;font-family:'Titillium Web',sans-serif;font-weight:600;font-size:16px;color:var(--ink,#FF7A1A);margin-top:6px">The ship's AI</div>
+          <div style="padding:10px 22px;border-left:3px solid transparent;font-family:'Titillium Web',sans-serif;font-weight:600;font-size:16px;color:var(--ink,#FF7A1A)">Speaking up</div>
+          <div style="padding:10px 22px;border-left:3px solid transparent;font-family:'Titillium Web',sans-serif;font-weight:600;font-size:16px;color:var(--ink,#FF7A1A)">Acting on the game</div>
+          <div style="padding:10px 22px;border-left:3px solid transparent;font-family:'Titillium Web',sans-serif;font-weight:600;font-size:16px;color:var(--ink,#FF7A1A)">Screens</div>
+          <div style="padding:10px 22px;border-left:3px solid transparent;font-family:'Titillium Web',sans-serif;font-weight:600;font-size:16px;color:var(--ink,#FF7A1A)">Privacy and this install</div>
+        </div>
+
+        <div style="flex:1;min-width:0;padding:26px 32px 70px 32px;max-width:920px">
+
+          <div style="font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:31px;letter-spacing:0.07em;color:var(--hot,#FFD9A8);text-shadow:var(--bloom-hi,none)">VOICE INPUT</div>
+          <div style="font-family:'Titillium Web',sans-serif;font-size:16px;color:var(--ink-2,#b55d13);margin:5px 0 22px 0;text-wrap:pretty">Changes apply as you make them. Rows marked <span style="color:var(--warn,#d8a21a)">▌</span> are protected — D47 will not change them on your say-so alone.</div>
+
+          <div style="display:flex;align-items:center;gap:16px;margin:0 0 4px 0">
+            <div style="font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:21px;letter-spacing:0.15em;color:var(--ink,#FF7A1A);white-space:nowrap;flex:none">MICROPHONE</div>
+            <div style="flex:1;height:1px;background:var(--line-2,#38200c)"></div>
+          </div>
+          <div style="font-family:'Titillium Web',sans-serif;font-size:15px;color:var(--ink-3,#7a4413);margin:0 0 10px 0">The input device, and how D47 decides you are talking to it.</div>
+
+          <div style="display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr) 44px;align-items:center;gap:10px 20px;min-height:52px;padding:7px 0;border-top:1px solid var(--line-2,#38200c)">
+            <div style="font-family:'Titillium Web',sans-serif;font-size:16px;color:var(--ink,#FF7A1A)">Microphone</div>
+            <div style="display:flex;height:44px;border:1px solid var(--line,#8a4a12);max-width:400px">
+              <div style="width:44px;display:grid;place-items:center;color:var(--ink-2,#b55d13);border-right:1px solid var(--line-2,#38200c)">◄</div>
+              <div style="flex:1;min-width:0;display:block;line-height:42px;padding:0 14px;background:var(--fill-3,#33200e);color:var(--hot,#FFD9A8);font-family:'Titillium Web',sans-serif;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Logi 4K Stream Edition</div>
+              <div style="width:44px;display:grid;place-items:center;color:var(--ink-2,#b55d13);border-left:1px solid var(--line-2,#38200c)">►</div>
+            </div>
+            <div></div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr) 44px;align-items:center;gap:10px 20px;min-height:52px;padding:7px 0 7px 12px;border-top:1px solid var(--line-2,#38200c);border-left:3px solid var(--warn,#d8a21a)">
+            <div style="font-family:'Titillium Web',sans-serif;font-size:16px;color:var(--ink,#FF7A1A)">Push to talk</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--hot,#FFD9A8);background:var(--fill-3,#33200e);border:1px solid var(--line,#8a4a12);padding:10px 14px;white-space:nowrap">button 11</div>
+              <div style="color:var(--ink-2,#b55d13);font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:14px;letter-spacing:0.14em;padding:10px 4px;border-bottom:1px dotted var(--line,#8a4a12)">CLEAR</div>
+            </div>
+            <div></div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr) 44px;align-items:center;gap:10px 20px;min-height:52px;padding:7px 0 7px 12px;border-top:1px solid var(--line-2,#38200c);border-left:3px solid var(--warn,#d8a21a)">
+            <div style="font-family:'Titillium Web',sans-serif;font-size:16px;color:var(--ink,#FF7A1A)">Cancel what it is saying</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--hot,#FFD9A8);background:var(--fill-3,#33200e);border:1px solid var(--line,#8a4a12);padding:10px 14px;white-space:nowrap">Ctrl+Alt+X</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--hot,#FFD9A8);background:var(--fill-3,#33200e);border:1px solid var(--line,#8a4a12);padding:10px 14px;white-space:nowrap">button 9</div>
+              <div style="color:var(--ink-2,#b55d13);font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:14px;letter-spacing:0.14em;padding:10px 4px;border-bottom:1px dotted var(--line,#8a4a12)">CLEAR</div>
+            </div>
+            <div></div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr) 44px;align-items:center;gap:10px 20px;min-height:52px;padding:7px 0 7px 12px;border-top:1px solid var(--line-2,#38200c);border-left:3px solid var(--warn,#d8a21a)">
+            <div>
+              <div style="font-family:'Titillium Web',sans-serif;font-size:16px;color:var(--ink,#FF7A1A)">When it assumes you mean it</div>
+            </div>
+            <div style="display:inline-flex;border:1px solid var(--line,#8a4a12);background:var(--fill-1,#120c07);padding:3px;gap:3px;flex-wrap:wrap">
+              <sc-for list="{{ eagerness }}" as="o" hint-placeholder-count="4">
+                <button onClick="{{ o.pick }}" style="border:0;cursor:pointer;padding:9px 14px;font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:14px;letter-spacing:0.12em;background:{{ o.bg }};color:{{ o.fg }}">{{ o.label }}</button>
+              </sc-for>
+            </div>
+            <div></div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr) 44px;align-items:center;gap:10px 20px;min-height:52px;padding:7px 0;border-top:1px solid var(--line-2,#38200c)">
+            <div style="font-family:'Titillium Web',sans-serif;font-size:16px;color:var(--ink,#FF7A1A)">Cancel its own voice out of the mic</div>
+            <div>
+              <button onClick="{{ toggleEcho }}" style="display:grid;grid-template-columns:1fr 1fr;width:128px;height:42px;border:1px solid {{ echo.edge }};background:var(--fill-1,#120c07);padding:3px;gap:3px;cursor:pointer">
+                <span style="display:grid;place-items:center;font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:0.14em;background:{{ echo.onBg }};color:{{ echo.onFg }}">ON</span>
+                <span style="display:grid;place-items:center;font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:0.14em;background:{{ echo.offBg }};color:{{ echo.offFg }}">OFF</span>
+              </button>
+            </div>
+            <div></div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr) 44px;align-items:center;gap:10px 20px;min-height:52px;padding:7px 0;border-top:1px solid var(--line-2,#38200c)">
+            <div style="font-family:'Titillium Web',sans-serif;font-size:16px;color:var(--ink,#FF7A1A)">Take the room out of what it hears</div>
+            <div>
+              <button onClick="{{ toggleRoom }}" style="display:grid;grid-template-columns:1fr 1fr;width:128px;height:42px;border:1px solid {{ room.edge }};background:var(--fill-1,#120c07);padding:3px;gap:3px;cursor:pointer">
+                <span style="display:grid;place-items:center;font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:0.14em;background:{{ room.onBg }};color:{{ room.onFg }}">ON</span>
+                <span style="display:grid;place-items:center;font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:0.14em;background:{{ room.offBg }};color:{{ room.offFg }}">OFF</span>
+              </button>
+            </div>
+            <div></div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr) 44px;align-items:center;gap:10px 20px;min-height:52px;padding:7px 0;border-top:1px solid var(--line-2,#38200c);border-bottom:1px solid var(--line-2,#38200c)">
+            <div style="font-family:'Titillium Web',sans-serif;font-size:16px;color:var(--ink,#FF7A1A)">Capture before the key</div>
+            <div style="display:flex;height:44px;border:1px solid var(--line,#8a4a12);width:216px">
+              <div style="flex:1;display:grid;align-items:center;padding:0 14px;font-family:'JetBrains Mono',monospace;font-size:18px;color:var(--hot,#FFD9A8)">500</div>
+              <div style="display:grid;place-items:center;padding:0 11px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-3,#7a4413);border-left:1px solid var(--line-2,#38200c)">ms</div>
+              <div style="width:40px;display:grid;place-items:center;color:var(--ink-2,#b55d13);border-left:1px solid var(--line-2,#38200c);font-size:11px">▲</div>
+              <div style="width:40px;display:grid;place-items:center;color:var(--ink-2,#b55d13);border-left:1px solid var(--line-2,#38200c);font-size:11px">▼</div>
+            </div>
+            <div style="display:grid;place-items:center;color:var(--ink-2,#b55d13);font-size:17px">↺</div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:16px;margin:30px 0 4px 0">
+            <div style="font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:21px;letter-spacing:0.15em;color:var(--ink,#FF7A1A);white-space:nowrap;flex:none">SPEECH RECOGNITION</div>
+            <div style="flex:1;height:1px;background:var(--line-2,#38200c)"></div>
+          </div>
+          <div style="font-family:'Titillium Web',sans-serif;font-size:15px;color:var(--ink-3,#7a4413);margin:0 0 10px 0">Which model turns speech into words, and where it runs.</div>
+
+          <div style="display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr) 44px;align-items:center;gap:10px 20px;min-height:52px;padding:7px 0;border-top:1px solid var(--line-2,#38200c)">
+            <div style="font-family:'Titillium Web',sans-serif;font-size:16px;color:var(--ink,#FF7A1A)">Speech model</div>
+            <div>
+              <div style="display:flex;height:44px;border:1px solid var(--line,#8a4a12);max-width:400px">
+                <div style="width:44px;display:grid;place-items:center;color:var(--ink-2,#b55d13);border-right:1px solid var(--line-2,#38200c)">◄</div>
+                <div style="flex:1;min-width:0;display:block;line-height:42px;padding:0 14px;background:var(--fill-3,#33200e);color:var(--hot,#FFD9A8);font-family:'Titillium Web',sans-serif;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Medium (English only)</div>
+                <div style="width:44px;display:grid;place-items:center;color:var(--ink-2,#b55d13);border-left:1px solid var(--line-2,#38200c)">►</div>
+              </div>
+              <div style="display:flex;gap:12px;margin-top:7px;font-family:'JetBrains Mono',monospace;font-size:12px"><span style="color:var(--ink-3,#7a4413);white-space:nowrap">3 / 6</span><span style="color:var(--ink-2,#b55d13)">1.5 GB · English only · slower than Small</span></div>
+            </div>
+            <div></div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr) 44px;align-items:center;gap:10px 20px;min-height:52px;padding:7px 0;border-top:1px solid var(--line-2,#38200c);border-bottom:1px solid var(--line-2,#38200c)">
+            <div style="font-family:'Titillium Web',sans-serif;font-size:16px;color:var(--ink,#FF7A1A)">Run the model on the GPU</div>
+            <div>
+              <button onClick="{{ toggleGpu }}" style="display:grid;grid-template-columns:1fr 1fr;width:128px;height:42px;border:1px solid {{ gpu.edge }};background:var(--fill-1,#120c07);padding:3px;gap:3px;cursor:pointer">
+                <span style="display:grid;place-items:center;font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:0.14em;background:{{ gpu.onBg }};color:{{ gpu.onFg }}">ON</span>
+                <span style="display:grid;place-items:center;font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:0.14em;background:{{ gpu.offBg }};color:{{ gpu.offFg }}">OFF</span>
+              </button>
+            </div>
+            <div style="display:grid;place-items:center;color:var(--ink-2,#b55d13);font-size:17px">↺</div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:16px;margin:30px 0 4px 0">
+            <div style="font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:21px;letter-spacing:0.15em;color:var(--ink,#FF7A1A);white-space:nowrap;flex:none">CORRECTIONS</div>
+            <div style="flex:1;height:1px;background:var(--line-2,#38200c)"></div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr) 44px;align-items:start;gap:20px;padding:14px 0;border-top:1px solid var(--line-2,#38200c);border-bottom:1px solid var(--line-2,#38200c)">
+            <div style="font-family:'Titillium Web',sans-serif;font-size:16px;color:var(--ink,#FF7A1A);padding-top:2px">Names it has learned to hear</div>
+            <div>
+              <div style="border-left:2px solid var(--line-2,#38200c);padding:3px 0 3px 14px;font-family:'Titillium Web',sans-serif;font-size:16px;color:var(--ink-2,#b55d13);text-wrap:pretty">Nothing yet. D47 learns a name only when you correct one it misheard, never on its own.</div>
+              <div style="display:inline-block;margin-top:12px;border:1px solid var(--danger,#e0533f);color:var(--danger,#e0533f);font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:14px;letter-spacing:0.14em;padding:10px 18px">FORGET THEM ALL</div>
+            </div>
+            <div></div>
+          </div>
+
+          <div style="margin-top:26px;font-family:'Titillium Web',sans-serif;font-size:15px;color:var(--ink-3,#7a4413);font-style:italic">Say: “stop hearing Farseer as far seer”</div>
+
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isHelp }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:34px 32px 70px 32px;max-width:860px">
+
+        <div style="font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:31px;letter-spacing:0.07em;color:var(--hot,#FFD9A8);text-shadow:var(--bloom-hi,none)">HELP IMPROVE D47</div>
+        <div style="font-family:'Titillium Web',sans-serif;font-size:17px;color:var(--ink,#FF7A1A);margin:8px 0 28px 0;max-width:620px;text-wrap:pretty">Send the developer a slice of what just happened, so a fix can be proved against it. Nothing leaves until you press <span style="color:var(--hot,#FFD9A8);font-weight:600">Send it</span>.</div>
+
+        <div style="border-left:2px solid var(--line-2,#38200c);padding-left:18px;margin:0 0 30px 0;display:grid;gap:7px;max-width:620px">
+          <div style="font-family:'Titillium Web',sans-serif;font-size:16px;color:var(--ink-2,#b55d13);text-wrap:pretty">Your name and IDs are swapped for stand-ins. Other people's words are stripped.</div>
+          <div style="font-family:'Titillium Web',sans-serif;font-size:16px;color:var(--ink-2,#b55d13);text-wrap:pretty">It goes to Directive 47 and nowhere else, and is deleted after thirty days.</div>
+          <div style="font-family:'Titillium Web',sans-serif;font-size:16px;color:var(--ink-2,#b55d13);text-wrap:pretty">No standing consent — you are asked every single time.</div>
+          <div style="margin-top:5px"><a href="https://dseelinger.github.io/d47/donation-privacy.html" style="font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:14px;letter-spacing:0.14em;color:var(--ink,#FF7A1A);border-bottom:1px dotted var(--line,#8a4a12)">READ THE FULL NOTE ↗</a></div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:16px;margin:0 0 14px 0">
+          <div style="font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:21px;letter-spacing:0.15em;color:var(--ink,#FF7A1A);white-space:nowrap;flex:none">WHAT TO INCLUDE</div>
+          <div style="flex:1;height:1px;background:var(--line-2,#38200c)"></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr);align-items:center;gap:10px 20px;min-height:52px;padding:8px 0;border-top:1px solid var(--line-2,#38200c)">
+          <div style="font-family:'Titillium Web',sans-serif;font-size:16px;color:var(--ink,#FF7A1A)">Journal history</div>
+          <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+            <button onClick="{{ toggleJournal }}" style="display:grid;grid-template-columns:1fr 1fr;width:128px;height:42px;border:1px solid {{ journal.edge }};background:var(--fill-1,#120c07);padding:3px;gap:3px;cursor:pointer">
+              <span style="display:grid;place-items:center;font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:0.14em;background:{{ journal.onBg }};color:{{ journal.onFg }}">ON</span>
+              <span style="display:grid;place-items:center;font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:0.14em;background:{{ journal.offBg }};color:{{ journal.offFg }}">OFF</span>
+            </button>
+            <div style="display:inline-flex;flex-wrap:wrap;border:1px solid var(--line,#8a4a12);background:var(--fill-1,#120c07);padding:3px;gap:3px;opacity:{{ windowOpacity }}">
+              <sc-for list="{{ windows }}" as="w" hint-placeholder-count="4">
+                <button onClick="{{ w.pick }}" style="border:0;cursor:pointer;padding:9px 14px;font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:14px;letter-spacing:0.12em;background:{{ w.bg }};color:{{ w.fg }}">{{ w.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr);align-items:center;gap:10px 20px;min-height:52px;padding:8px 0;border-top:1px solid var(--line-2,#38200c);border-bottom:1px solid var(--line-2,#38200c)">
+          <div style="font-family:'Titillium Web',sans-serif;font-size:16px;color:var(--ink,#FF7A1A)">What I said out loud</div>
+          <button onClick="{{ toggleSpoken }}" style="display:grid;grid-template-columns:1fr 1fr;width:128px;height:42px;border:1px solid {{ spoken.edge }};background:var(--fill-1,#120c07);padding:3px;gap:3px;cursor:pointer">
+            <span style="display:grid;place-items:center;font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:0.14em;background:{{ spoken.onBg }};color:{{ spoken.onFg }}">ON</span>
+            <span style="display:grid;place-items:center;font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:0.14em;background:{{ spoken.offBg }};color:{{ spoken.offFg }}">OFF</span>
+          </button>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:16px;margin:30px 0 14px 0">
+          <div style="font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:21px;letter-spacing:0.15em;color:var(--ink,#FF7A1A);white-space:nowrap;flex:none">WHAT WILL LEAVE</div>
+          <div style="flex:1;height:1px;background:var(--line-2,#38200c)"></div>
+        </div>
+
+        <div style="display:flex;gap:2px;flex-wrap:wrap;margin-bottom:16px">
+          <div style="flex:1;min-width:140px;background:var(--fill-2,#1c1208);padding:14px 16px">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--hot,#FFD9A8)">74</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.16em;color:var(--ink-3,#7a4413);margin-top:4px">LOG ENTRIES</div>
+          </div>
+          <div style="flex:1;min-width:140px;background:var(--fill-2,#1c1208);padding:14px 16px">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--hot,#FFD9A8)">0</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.16em;color:var(--ink-3,#7a4413);margin-top:4px">JOURNAL EVENTS</div>
+          </div>
+          <div style="flex:1;min-width:140px;background:var(--fill-2,#1c1208);padding:14px 16px">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--hot,#FFD9A8)">2</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.16em;color:var(--ink-3,#7a4413);margin-top:4px">NAMES REPLACED</div>
+          </div>
+          <div style="flex:1;min-width:140px;background:var(--fill-2,#1c1208);padding:14px 16px">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--hot,#FFD9A8)">9,968</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.16em;color:var(--ink-3,#7a4413);margin-top:4px">CHARACTERS</div>
+          </div>
+        </div>
+
+        <button onClick="{{ toggleRaw }}" style="background:none;border:0;cursor:pointer;display:flex;align-items:center;gap:10px;padding:10px 0;font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:15px;letter-spacing:0.14em;color:var(--ink,#FF7A1A)">
+          <span style="color:var(--ink-2,#b55d13)">{{ rawGlyph }}</span>SHOW ME THE EXACT TEXT
+        </button>
+
+        <sc-if value="{{ rawOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="border:1px solid var(--line-2,#38200c);background:var(--fill-1,#120c07);padding:16px 18px;max-height:230px;overflow:auto;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.65;color:var(--ink-2,#b55d13);white-space:pre-wrap;margin-top:6px">### Incident excerpt
+
+Cut from d47 1.2.0+3f5675a at 2026-09-20 18:42:35Z,
+covering 18:32:35Z to 18:43:35Z (11 minutes).
+
+2 names and IDs replaced with consistent stand-ins,
+by field list rather than by guesswork.
+No in-game message arrived in this window.
+The Commander said nothing aloud in this window.
+
+d47 log — 74 entries
+[14:36:09 INF] CarrierBackfill: recovered 3 carriers
+[14:36:09 INF] WhisperTranscriber: medium.en on the GPU
+[14:36:09 INF] StartupTimer: speech model took 13378 ms</div>
+        </sc-if>
+
+        <div style="display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin-top:34px;padding-top:22px;border-top:1px solid var(--line-2,#38200c)">
+          <div style="clip-path:polygon(0 0, calc(100% - 11px) 0, 100% 11px, 100% 100%, 0 100%);background:var(--accent,#FF7A1A);color:var(--knock,#08070A);box-shadow:var(--bloom,none);font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:17px;letter-spacing:0.16em;padding:15px 34px;box-shadow:var(--bloom,none)">SEND IT</div>
+          <div style="color:var(--ink-2,#b55d13);font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:14px;letter-spacing:0.14em;border-bottom:1px dotted var(--line,#8a4a12)">SAVE A FILE INSTEAD</div>
+          <div style="color:var(--ink-2,#b55d13);font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:14px;letter-spacing:0.14em;border-bottom:1px dotted var(--line,#8a4a12)">COPY FOR A BUG REPORT</div>
+          <div style="flex:1"></div>
+          <div style="color:var(--ink-3,#7a4413);font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:14px;letter-spacing:0.14em">CANCEL</div>
+          <div style="border:1px solid var(--danger,#e0533f);color:var(--danger,#e0533f);font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:14px;letter-spacing:0.14em;padding:11px 18px">FORGET</div>
+        </div>
+
+        <div style="margin-top:26px;font-family:'Titillium Web',sans-serif;font-size:15px;color:var(--ink-3,#7a4413);max-width:620px;text-wrap:pretty">Five co-equal buttons became one action, two alternates, and two exits. <span style="color:var(--ink-2,#b55d13)">Forget</span> is destructive, so it is the only other thing wearing a colour.</div>
+
+      </div>
+    </sc-if>
+
+  </div>
+
+  <div style="display:flex;align-items:center;gap:14px;padding:11px 20px;border-top:1px solid var(--line,#8a4a12);background:var(--fill-1,#120c07)">
+    <div style="width:9px;height:9px;background:var(--good,#3fbf72);box-shadow:var(--bloom-hi,none)"></div>
+    <div style="font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:14px;letter-spacing:0.18em;color:var(--ink-2,#b55d13)">PTT READY</div>
+    <div style="flex:1"></div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-3,#7a4413)">{{ themeLabel }}</div>
+  </div>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;$preview&quot;: { &quot;width&quot;: 1280, &quot;height&quot;: 860 },
+  &quot;theme&quot;: { &quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;Elite orange&quot;, &quot;Phosphor green&quot;, &quot;HUD matrix&quot;, &quot;Daylight&quot;], &quot;default&quot;: &quot;Elite orange&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Theme&quot; },
+  &quot;accent&quot;: { &quot;editor&quot;: &quot;color&quot;, &quot;options&quot;: [&quot;#57C8FF&quot;, &quot;#B47CFF&quot;, &quot;#FF3F6C&quot;, &quot;#7CFF9E&quot;], &quot;default&quot;: &quot;#57C8FF&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Theme&quot; },
+  &quot;bloom&quot;: { &quot;editor&quot;: &quot;range&quot;, &quot;min&quot;: 0, &quot;max&quot;: 2.5, &quot;step&quot;: 0.1, &quot;default&quot;: 1.1, &quot;tsType&quot;: &quot;number&quot;, &quot;section&quot;: &quot;Theme&quot; },
+  &quot;scanlines&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Theme&quot; },
+  &quot;vr&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: false, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Legibility&quot; }
+}">
+class Component extends DCLogic {
+  state = {
+    screen: 'kit',
+    echo: true, room: true, gpu: true,
+    journal: true, spoken: false,
+    eager: 'BALANCED', window: '10 MIN',
+    raw: false
+  };
+
+  sw(on) {
+    const A = 'var(--accent)', K = 'var(--knock)', D = 'var(--line-2)', M = 'var(--ink-2)', F = 'var(--ink-3)';
+    return on
+      ? { edge: 'var(--line)', onBg: A, onFg: K, offBg: 'transparent', offFg: F }
+      : { edge: 'var(--line-2)', onBg: 'transparent', onFg: F, offBg: D, offFg: M };
+  }
+
+  seg(list, current, key) {
+    return list.map(label => ({
+      label,
+      bg: label === current ? 'var(--accent)' : 'transparent',
+      fg: label === current ? 'var(--knock)' : 'var(--ink-3)',
+      pick: () => this.setState({ [key]: label })
+    }));
+  }
+
+  renderVals() {
+    const p = this.props;
+    const name = p.theme ?? 'Elite orange';
+    const defs = {
+      'Elite orange':  { accent: '#FF7A1A', bg: '#08070A', dark: true },
+      'Phosphor green':{ accent: '#3BE377', bg: '#040705', dark: true },
+      'HUD matrix':    { accent: p.accent ?? '#57C8FF', bg: '#05070C', dark: true },
+      'Daylight':      { accent: '#9A3B00', bg: '#EAE6DE', dark: false }
+    };
+    const T = defs[name] || defs['Elite orange'];
+    const mix = (n) => `color-mix(in oklab, var(--accent) ${n}%, var(--bg))`;
+    const bloom = T.dark ? (p.bloom ?? 1.1) : 0;
+    // Elite's CRT glow is a multi-stop halo, not a single soft shadow: a near-opaque
+    // 2px core, a bright mid, then a wide low-alpha wash that carries several
+    // character-heights. Blur radii scale with `bloom`; alphas hold until ~1.4.
+    const glow = (stops) => stops
+      .map(([r, a]) => `0 0 ${(r * bloom).toFixed(1)}px color-mix(in oklab, var(--accent) ${Math.min(Math.round(Math.min(a * bloom, a * 1.35)), 100)}%, transparent)`)
+      .join(', ');
+
+    const vars = {
+      '--accent': T.accent,
+      '--bg': T.bg,
+      '--hot': T.dark
+        ? `color-mix(in oklab, ${T.accent} 58%, #ffffff)`
+        : `color-mix(in oklab, ${T.accent} 55%, #140800)`,
+      '--knock': T.dark ? T.bg : '#FBF8F2',
+      '--ink': 'var(--accent)',
+      '--ink-2': mix(66),
+      '--ink-3': mix(42),
+      '--line': mix(50),
+      '--line-2': mix(24),
+      '--fill-1': mix(9),
+      '--fill-2': mix(16),
+      '--fill-3': mix(27),
+      '--danger': 'oklch(from var(--accent) l c 27)',
+      '--warn': 'oklch(from var(--accent) l c 82)',
+      '--good': 'oklch(from var(--accent) l c 146)',
+      '--info': 'oklch(from var(--accent) l c 248)',
+      '--bloom': bloom > 0 ? glow([[2, 88], [6, 66], [16, 42], [38, 22]]) : 'none',
+      '--bloom-hi': bloom > 0 ? glow([[2, 95], [9, 84], [26, 64], [60, 38], [112, 20]]) : 'none',
+      '--bloom-lo': bloom > 0 ? glow([[2, 70], [7, 40], [18, 18]]) : 'none'
+    };
+
+    const shell = Object.assign({}, vars, {
+      position: 'relative',
+      display: 'flex',
+      flexDirection: 'column',
+      minHeight: '100vh',
+      background: 'var(--bg)',
+      color: 'var(--ink)',
+      fontFamily: "'Titillium Web', sans-serif",
+      zoom: p.vr ? 1.2 : 1
+    });
+
+    const s = this.state.screen;
+    const tab = (id, label) => ({
+      label,
+      rule: s === id ? 'var(--accent)' : 'transparent',
+      fg: s === id ? 'var(--hot)' : 'var(--ink-3)',
+      pick: () => this.setState({ screen: id })
+    });
+
+    return {
+      shell,
+      themeLabel: name.toUpperCase() + (p.vr ? ' · HEADSET SCALE' : ''),
+      scanOpacity: (p.scanlines ?? true) && T.dark ? 0.55 : 0,
+      screens: [tab('kit', 'CONTROL KIT'), tab('voice', 'SETTINGS › VOICE INPUT'), tab('help', 'HELP IMPROVE D47')],
+      isKit: s === 'kit', isVoice: s === 'voice', isHelp: s === 'help',
+      echo: this.sw(this.state.echo),
+      room: this.sw(this.state.room),
+      gpu: this.sw(this.state.gpu),
+      journal: this.sw(this.state.journal),
+      spoken: this.sw(this.state.spoken),
+      toggleEcho: () => this.setState(x => ({ echo: !x.echo })),
+      toggleRoom: () => this.setState(x => ({ room: !x.room })),
+      toggleGpu: () => this.setState(x => ({ gpu: !x.gpu })),
+      toggleJournal: () => this.setState(x => ({ journal: !x.journal })),
+      toggleSpoken: () => this.setState(x => ({ spoken: !x.spoken })),
+      eagerness: this.seg(['NAMED ONLY', 'CAUTIOUS', 'BALANCED', 'EAGER'], this.state.eager, 'eager'),
+      windows: this.seg(['10 MIN', '1 HR', '6 HR', '12 HR'], this.state.window, 'window'),
+      windowOpacity: this.state.journal ? 1 : 0.35,
+      rawOpen: this.state.raw,
+      rawGlyph: this.state.raw ? '▾' : '▸',
+      toggleRaw: () => this.setState(x => ({ raw: !x.raw }))
+    };
+  }
+}
+
+</script>
+</body>
+</html>
