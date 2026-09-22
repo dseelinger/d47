@@ -361,12 +361,7 @@ public sealed class RouteTradePage : UserControl
 
             if (D47.Core.Help.HelpLibrary.For(page)?.Intro is { Length: > 0 } intro)
             {
-                ToolTip.SetTip(mark, new TextBlock
-                {
-                    Text = intro,
-                    TextWrapping = TextWrapping.Wrap,
-                    MaxWidth = 420,
-                });
+                ToolTip.SetTip(mark, intro);
             }
 
             AutomationProperties.SetName(mark, $"About {title}");

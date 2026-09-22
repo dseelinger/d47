@@ -15,6 +15,7 @@
   <sys:Double x:Key="D47.Type.Subheading">17</sys:Double>
   <sys:Double x:Key="D47.Type.Body">16</sys:Double>
   <sys:Double x:Key="D47.Type.Secondary">15</sys:Double>
+  <sys:Double x:Key="D47.Type.Tip">14</sys:Double>
   <sys:Double x:Key="D47.Type.Small">13</sys:Double>
   <sys:Double x:Key="D47.Type.Meta">12</sys:Double>
   <sys:Double x:Key="D47.Type.Caption">11</sys:Double>

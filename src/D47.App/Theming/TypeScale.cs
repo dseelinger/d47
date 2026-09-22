@@ -24,6 +24,9 @@ public static class TypeScale
     /// </summary>
     public const double Secondary = 15;
 
+    /// <summary>A tooltip's own prose (#381).</summary>
+    public const double Tip = 14;
+
     /// <summary>A badge, or a count beside something else.</summary>
     public const double Small = 13;
 

@@ -150,7 +150,7 @@ public sealed class CoverageWindow : Window
             TextWrapping = TextWrapping.NoWrap,
             TextTrimming = TextTrimming.CharacterEllipsis,
             // The id is the thing to grep for or type at the app; the name is what it reads as.
-            [ToolTip.TipProperty] = $"{line.Item.Kind} {line.Item.Id}",
+            [ToolTip.TipProperty] = MachineTip.For($"{line.Item.Kind} {line.Item.Id}"),
         };
 
         Themed(name, TextBlock.ForegroundProperty, ThemeManager.TextKey);

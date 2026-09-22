@@ -6,6 +6,14 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.5.1 — Tooltips say only what the screen does not
+
+Tooltips draw square, opaque and un-Fluent: a fill-3 ground, a 1px rule border, no corner radius
+and no shadow, in the prose face at 14pt, wrapping at 280px. They drew as Fluent's rounded gray
+card with a drop shadow before. Every tooltip opens 600ms after the pointer settles, below and
+left-aligned with the control it explains, 8px away, instead of each call site setting its own
+delay.
+
 ## 0.169.0 — No more drop-downs
 
 Screen titles glow in Elite, Dark and Guardian, matching the primary button, the lit switch cell,

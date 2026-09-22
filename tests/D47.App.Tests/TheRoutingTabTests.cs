@@ -929,9 +929,8 @@ public class TheRoutingTabTests
             Assert.Equal($"About {heading}", AutomationProperties.GetName(mark));
 
             var intro = D47.Core.Help.HelpLibrary.For(page)!.Intro;
-            var tip = Assert.IsType<TextBlock>(ToolTip.GetTip(mark));
 
-            Assert.Equal(intro, tip.Text);
+            Assert.Equal(intro, ToolTip.GetTip(mark));
         }
         finally
         {
@@ -991,9 +990,8 @@ public class TheRoutingTabTests
             Assert.Equal("About Trade run", AutomationProperties.GetName(mark));
 
             var intro = D47.Core.Help.HelpLibrary.For("general-trade-run")!.Intro;
-            var tip = Assert.IsType<TextBlock>(ToolTip.GetTip(mark));
 
-            Assert.Equal(intro, tip.Text);
+            Assert.Equal(intro, ToolTip.GetTip(mark));
         }
         finally
         {

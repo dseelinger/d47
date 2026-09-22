@@ -44,8 +44,8 @@ public class TheRowsHelpLivesOnItsLabelTests
         var host = Open();
 
         var label = Label(host, "listening.pushToTalkKey");
-        var tip = Assert.IsType<Border>(ToolTip.GetTip(label));
-        var words = ((StackPanel)tip.Child!).Children.OfType<TextBlock>().Single();
+        var tip = Assert.IsType<StackPanel>(ToolTip.GetTip(label));
+        var words = tip.Children.OfType<TextBlock>().Single();
 
         Assert.Contains("Held, D47 listens", words.Text, StringComparison.Ordinal);
 
@@ -62,8 +62,8 @@ public class TheRowsHelpLivesOnItsLabelTests
     {
         var host = Open();
 
-        var tip = Assert.IsType<Border>(ToolTip.GetTip(Label(host, "listening.pushToTalkKey")));
-        var link = ((StackPanel)tip.Child!).Children.OfType<Button>().Single();
+        var tip = Assert.IsType<StackPanel>(ToolTip.GetTip(Label(host, "listening.pushToTalkKey")));
+        var link = tip.Children.OfType<Button>().Single();
 
         Assert.Equal("Help", link.Content);
 
@@ -129,8 +129,8 @@ public class TheRowsHelpLivesOnItsLabelTests
     {
         var host = Open();
 
-        var tip = Assert.IsType<Border>(ToolTip.GetTip(Label(host, "listening.pushToTalkKey")));
-        var words = ((StackPanel)tip.Child!).Children.OfType<TextBlock>().Single();
+        var tip = Assert.IsType<StackPanel>(ToolTip.GetTip(Label(host, "listening.pushToTalkKey")));
+        var words = tip.Children.OfType<TextBlock>().Single();
 
         // One line of the same text, at the same size, unwrapped — the yardstick a wrapped multi-line block
         // is measured against.

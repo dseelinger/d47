@@ -736,6 +736,49 @@
       </Setter>
     </ControlTheme>
 
+    <!--
+      Terminal-readout tooltips (#381): opaque fill-3, a 1px rule border, square corners and no
+      shadow — Fluent's rounded gray card, replaced everywhere in the app. Delay and placement are
+      attached properties on the target control, not the tooltip, so a ControlTheme keyed to ToolTip
+      cannot set them; the Style below the Resources block does, once, for every Control.
+    -->
+    <ControlTheme x:Key="{x:Type ToolTip}" TargetType="ToolTip">
+      <Setter Property="Background" Value="{DynamicResource D47.FillHigher}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource D47.Rule}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="0" />
+      <Setter Property="Padding" Value="12,8" />
+      <Setter Property="MaxWidth" Value="280" />
+      <Setter Property="FontFamily" Value="{StaticResource D47.Font.Prose}" />
+      <Setter Property="FontSize" Value="{StaticResource D47.Type.Tip}" />
+      <Setter Property="Foreground" Value="{DynamicResource D47.Text}" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Background="{TemplateBinding Background}"
+                  BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}">
+            <ContentPresenter Content="{TemplateBinding Content}"
+                               ContentTemplate="{TemplateBinding ContentTemplate}"
+                               Padding="{TemplateBinding Padding}"
+                               Foreground="{TemplateBinding Foreground}"
+                               TextWrapping="Wrap" />
+          </Border>
+        </ControlTemplate>
+      </Setter>
+    </ControlTheme>
+
   </Styles.Resources>
+
+  <!--
+    Every tooltip's own delay and placement (#381): 600ms to show, opening below and left-aligned
+    with the control it explains, 8px away, flipped above by Avalonia's own popup placement when
+    that would clip past the window edge. One default for every control rather than a call at every
+    site that sets a tip.
+  -->
+  <Style Selector=":is(Control)">
+    <Setter Property="ToolTip.ShowDelay" Value="600" />
+    <Setter Property="ToolTip.Placement" Value="BottomEdgeAlignedLeft" />
+    <Setter Property="ToolTip.VerticalOffset" Value="8" />
+  </Style>
 
 </Styles>

@@ -442,12 +442,7 @@ public sealed class RoutePlanPage : UserControl
             // destination page's own intro, the way HelpPageView already introduces it.
             if (D47.Core.Help.HelpLibrary.For(page)?.Intro is { Length: > 0 } intro)
             {
-                ToolTip.SetTip(mark, new TextBlock
-                {
-                    Text = intro,
-                    TextWrapping = TextWrapping.Wrap,
-                    MaxWidth = 420,
-                });
+                ToolTip.SetTip(mark, intro);
             }
 
             // A Path-free "?" has text, but no name naming what it is about — the same fault, and the same

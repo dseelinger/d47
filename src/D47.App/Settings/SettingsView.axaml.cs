@@ -2467,8 +2467,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 ToolTip.SetTip(caption, hinted.Read(_settings!.Current));
             };
 
-            ToolTip.SetShowDelay(caption, 250);
-
             // The pointer has to have something to be over.
             caption.Background = Brushes.Transparent;
         }
@@ -2617,8 +2615,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         };
 
         label.Focusable = true;
-        ToolTip.SetTip(label, new Border { Padding = new Thickness(4), Child = inside });
-        ToolTip.SetShowDelay(label, 250);
+        ToolTip.SetTip(label, inside);
 
         // A TextBlock shows its tooltip on hover already; keyboard focus needs to open and close it by hand.
         label.GotFocus += (_, _) => ToolTip.SetIsOpen(label, true);
