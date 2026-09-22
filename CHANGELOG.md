@@ -39,6 +39,12 @@ coriolis-data's own id for the hull disagrees with FDevIDs', and the Lynx becaus
 has no file for it at all. The generator now falls back to EDSY's figures, keyed by the symbol the
 journal writes, wherever coriolis-data's id does not join.
 
+The build page's Jump range gauge now draws for any hull the shipped table has no mass figure for,
+once a plan changes a module. It worked out the hull's mass from the table before, which for a
+hull missing there meant no gauge at all. It now takes the hull's mass from the journal instead —
+the ship's own reported mass less every fitted module's — and only falls back to the table when a
+fitted module's own mass cannot be told either.
+
 ## 0.169.0 — No more drop-downs
 
 Screen titles glow in Elite, Dark and Guardian, matching the primary button, the lit switch cell,

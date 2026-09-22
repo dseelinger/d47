@@ -293,7 +293,7 @@ public static class ShipGauges
 
         var unladen = !modelled && seen?.UnladenMass is { } reported
             ? reported
-            : Mass(build, parts);
+            : Mass(build, parts, seen);
 
         var tank = !modelled && seen?.FuelCapacity is { } fuel ? fuel : Capacity(parts, "cft");
         var hold = !modelled && seen?.CargoCapacity is { } cargo ? cargo : Capacity(parts, "icr");
@@ -314,16 +314,70 @@ public static class ShipGauges
     }
 
     /// <summary>The hull plus everything in it, for a build there is no measured mass for.</summary>
-    private static double? Mass(ShipBuild build, List<Part> parts)
+    private static double? Mass(ShipBuild build, List<Part> parts, ShipLoadout? seen)
     {
-        if (EliteSpecifications.Ship(build.Hull)?.HullMass is not { } hull)
+        var hull = (seen is { IsKnown: true } ? HullMass(seen) : null)
+                   ?? EliteSpecifications.Ship(build.Hull)?.HullMass;
+
+        if (hull is not { } known)
         {
             return null;
         }
 
         return parts.Aggregate(
-            (double)hull,
+            (double)known,
             (total, part) => total + (part.Figure("Mass", "Mass", part.Spec.Mass) ?? 0));
+    }
+
+    /// <summary>
+    /// The hull's own mass, worked out as <c>UnladenMass</c> less every fitted module inside the hull's
+    /// slot layout, using the engineered figure where the module carries one and the stock figure
+    /// otherwise. Null where the loadout carries no <c>UnladenMass</c>, or a module inside the layout
+    /// has no mass to subtract — a hull the shipped table has no figure for either.
+    /// </summary>
+    private static double? HullMass(ShipLoadout seen)
+    {
+        if (seen.UnladenMass is not { } unladen)
+        {
+            return null;
+        }
+
+        var layout = EliteSpecifications.Slots(seen.Type);
+        var fitted = 0.0;
+
+        foreach (var module in seen.Modules)
+        {
+            // Outside the layout — a cosmetic, the cargo hatch, a ship-kit part — never counts toward
+            // the outfitting screen's own mass, so it weighs nothing here no matter what specification
+            // it happens to have.
+            if (!layout.Any(slot => string.Equals(slot.Name, module.Slot, StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
+
+            if (FittedMass(module) is not { } mass)
+            {
+                return null;
+            }
+
+            fitted += mass;
+        }
+
+        return unladen - fitted;
+    }
+
+    /// <summary>One fitted module's mass: engineered where <c>Modifiers</c> carries one, stock otherwise.</summary>
+    private static double? FittedMass(ShipModule module)
+    {
+        foreach (var modifier in module.Modifiers)
+        {
+            if (string.Equals(modifier.Label, "Mass", StringComparison.OrdinalIgnoreCase) && modifier.Value is { } value)
+            {
+                return value;
+            }
+        }
+
+        return EliteSpecifications.Module(module.Item)?.Mass;
     }
 
     /// <summary>Everything one kind of module holds — <c>cft</c> is a fuel tank, <c>icr</c> a rack.</summary>

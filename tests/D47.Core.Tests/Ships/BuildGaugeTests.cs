@@ -429,6 +429,97 @@ public class BuildGaugeTests
     }
 
     [Fact]
+    public void TheHullMassWorkedOutFromTheJournalMatchesTheShippedTable()
+    {
+        // The subtraction the fix (#386) depends on: UnladenMass less every fitted module inside the
+        // hull's own slot layout, using the engineered figure where there is one. For a hull the table
+        // already has a figure for, that has to land on exactly the table's own number.
+        var loadout = Flown(Predestinatio);
+        var layout = EliteSpecifications.Slots(loadout.Type);
+
+        double FittedMass(ShipModule module)
+        {
+            foreach (var modifier in module.Modifiers)
+            {
+                if (modifier.Label == "Mass" && modifier.Value is { } value)
+                {
+                    return value;
+                }
+            }
+
+            return EliteSpecifications.Module(module.Item)!.Mass!.Value;
+        }
+
+        var fitted = loadout.Modules
+            .Where(module => layout.Any(
+                slot => string.Equals(slot.Name, module.Slot, StringComparison.OrdinalIgnoreCase)))
+            .Sum(FittedMass);
+
+        Assert.Equal(
+            EliteSpecifications.Ship("cobramkv")!.HullMass!.Value,
+            loadout.UnladenMass!.Value - fitted,
+            3);
+    }
+
+    [Fact]
+    public void AHullMissingFromTheShippedTableStillDerivesItsMassFromTheJournal()
+    {
+        var loadout = Flown(Predestinatio);
+
+        // Stands in for the Corsair, Caspian Explorer and Kestrel Mk II before their rows were filled
+        // (#385), and for any hull Frontier ships after this table is next generated — the build names a
+        // hull the table has never heard of, while the loadout underneath it is a real, known ship.
+        Assert.Null(EliteSpecifications.Ship("not-a-real-hull"));
+
+        var build = new ShipBuild(
+            "F1", "ship-3", "not-a-real-hull", loadout.ShipId, loadout.Name,
+            [new SlotPlan("Radar") { Variant = "int_sensors_size3_class2" }]);
+
+        var jump = ShipGauges.Read(build, loadout).Jump;
+
+        Assert.NotNull(jump);
+        Assert.Equal(FigureKind.Modelled, jump.Kind);
+    }
+
+    [Fact]
+    public void AModuleWithNoMassInTheTableFallsBackRatherThanCountingItAsZero()
+    {
+        // The Lynx Highliner's own bulkhead has no mass in the table (#386). Counting that as zero would
+        // derive a hull far heavier than the real one, so the whole hull mass has to fall back to the
+        // table instead of substituting zero for the one figure it cannot find.
+        var loadout = Flown(
+            """
+            {"timestamp":"2026-09-20T00:00:00Z","event":"Loadout","Ship":"mediumtransport01","ShipID":20,"UnladenMass":900.0,"MaxJumpRange":20.0,"CargoCapacity":0,"Modules":[
+            {"Slot":"Armour","Item":"mediumtransport01_armour_grade1","On":true,"Priority":1,"Health":1.0},
+            {"Slot":"PowerPlant","Item":"int_powerplant_size4_class5","On":true,"Priority":1,"Health":1.0},
+            {"Slot":"FrameShiftDrive","Item":"int_hyperdrive_overcharge_size4_class5","On":true,"Priority":1,"Health":1.0}]}
+            """);
+
+        Assert.Null(EliteSpecifications.Module("mediumtransport01_armour_grade1")!.Mass);
+
+        var jump = ShipGauges.Read(
+            Build(loadout, new SlotPlan("PowerPlant", "Armoured", 5)),
+            loadout).Jump;
+
+        Assert.NotNull(jump);
+
+        var plant = EliteSpecifications.Module("int_powerplant_size4_class5")!;
+        var plannedPlantMass = RollModel.Apply(plant.Mass, "Mass", plant, "Armoured", 5, null)!.Value;
+        var fsd = EliteSpecifications.Module("int_hyperdrive_overcharge_size4_class5")!;
+
+        // The table's own hull_mass for the Lynx, with the bulkhead counted as nothing rather than as a
+        // weight of its own.
+        var empty = EliteSpecifications.Ship("mediumtransport01")!.HullMass!.Value
+                    + plannedPlantMass
+                    + fsd.Mass!.Value;
+
+        var best = Math.Pow(fsd.MaxFuelPerJump!.Value / fsd.FuelMultiplier!.Value, 1 / fsd.FuelPower!.Value)
+                   * fsd.OptimalMass!.Value / (empty + fsd.MaxFuelPerJump!.Value);
+
+        Assert.Equal(best, jump.Best, 3);
+    }
+
+    [Fact]
     public void ABuildWithNoPlantSaysThatRatherThanZero()
     {
         var loadout = Flown(
