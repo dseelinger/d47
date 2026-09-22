@@ -84,15 +84,24 @@
       </Style>
     </ControlTheme>
 
+    <!-- The track either side of the thumb: transparent, filling its share, paging on click. -->
+    <ControlTheme x:Key="D47.ScrollPage" TargetType="RepeatButton">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Focusable" Value="False" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Background="{TemplateBinding Background}" />
+        </ControlTemplate>
+      </Setter>
+    </ControlTheme>
+
     <!--
       Replaces Fluent's own bar (#368): a transparent track holding only the thumb, no line
-      or page arrow buttons. The bar's own Width/Height is the track's thickness; the cross
-      axis stretches to fill the column or row ScrollViewerTheme reserves for it.
+      or page arrow buttons. Only the thickness is fixed; the length stretches to fill the
+      column or row ScrollViewerTheme reserves for it.
     -->
     <ControlTheme x:Key="{x:Type ScrollBar}" TargetType="ScrollBar">
       <Setter Property="Background" Value="Transparent" />
-      <Setter Property="Width" Value="10" />
-      <Setter Property="Height" Value="10" />
       <Setter Property="Template">
         <ControlTemplate>
           <Border Background="{TemplateBinding Background}">
@@ -103,16 +112,25 @@
                    Value="{TemplateBinding Value, Mode=TwoWay}"
                    ViewportSize="{TemplateBinding ViewportSize}">
               <Track.DecreaseButton>
-                <RepeatButton Name="PART_PageUpButton" Background="Transparent" BorderThickness="0" Focusable="False" />
+                <RepeatButton Name="PART_PageUpButton" Theme="{StaticResource D47.ScrollPage}" />
               </Track.DecreaseButton>
               <Track.IncreaseButton>
-                <RepeatButton Name="PART_PageDownButton" Background="Transparent" BorderThickness="0" Focusable="False" />
+                <RepeatButton Name="PART_PageDownButton" Theme="{StaticResource D47.ScrollPage}" />
               </Track.IncreaseButton>
               <Thumb Name="thumb" Theme="{StaticResource D47.ScrollThumb}" />
             </Track>
           </Border>
         </ControlTemplate>
       </Setter>
+      <Style Selector="^:vertical">
+        <Setter Property="Width" Value="10" />
+      </Style>
+      <Style Selector="^:vertical /template/ Track#PART_Track">
+        <Setter Property="IsDirectionReversed" Value="True" />
+      </Style>
+      <Style Selector="^:horizontal">
+        <Setter Property="Height" Value="10" />
+      </Style>
     </ControlTheme>
   </Styles.Resources>
 

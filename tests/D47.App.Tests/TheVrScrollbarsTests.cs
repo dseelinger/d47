@@ -136,6 +136,10 @@ public class TheVrScrollbarsTests
     public void TheHeadsetSurfaceTakesHoldAndScrolls()
     {
         var (settings, _, _) = TestSurface.Create();
+
+        settings.Replace(
+            "the transcript is shown only on the full panel",
+            current => current with { Vr = current.Vr with { Mode = "full" } });
         var model = new PanelViewModel();
 
         for (var line = 0; line < 200; line++)

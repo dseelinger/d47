@@ -4,7 +4,9 @@ using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.Layout;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Xunit;
@@ -32,6 +34,11 @@ public class ScrollbarsNeverCoverScrolledContentTests
         };
 
         var window = new Window { Content = scroller, Width = 300, Height = 200 };
+
+        // The palette App.axaml merges; without a background the thumb is not hit-tested.
+        window.Resources["D47.Rule"] = Brushes.Gray;
+        window.Resources["D47.Accent"] = Brushes.Orange;
+
         window.Show();
         Jobs();
 
@@ -88,6 +95,64 @@ public class ScrollbarsNeverCoverScrolledContentTests
         Jobs();
 
         Assert.Equal(collapsedWidth, thumb.Bounds.Width, 1);
+    }
+
+    [AvaloniaFact]
+    public void TheVerticalBarRunsTheFullHeightAndIsTenPixelsThick()
+    {
+        var (_, scroller) = Filled();
+
+        var bar = scroller.GetVisualDescendants().OfType<ScrollBar>()
+            .First(found => found.Orientation == Orientation.Vertical);
+        var horizontal = scroller.GetVisualDescendants().OfType<ScrollBar>()
+            .First(found => found.Orientation == Orientation.Horizontal);
+        var row = horizontal.IsVisible ? horizontal.Bounds.Height : 0;
+
+        Assert.Equal(scroller.Bounds.Height - row, bar.Bounds.Height, 1);
+        Assert.Equal(10, bar.Bounds.Width, 1);
+    }
+
+    [AvaloniaFact]
+    public void TheThumbShowsHowMuchIsInViewAndDraggingItToTheBottomReachesTheEnd()
+    {
+        var (window, scroller) = Filled();
+
+        var bar = scroller.GetVisualDescendants().OfType<ScrollBar>()
+            .First(found => found.Orientation == Orientation.Vertical);
+        var thumb = bar.GetVisualDescendants().OfType<Thumb>().First();
+
+        Assert.InRange(thumb.Bounds.Height, 11, bar.Bounds.Height - 1);
+
+        var grip = thumb.TranslatePoint(new Point(thumb.Bounds.Width / 2, thumb.Bounds.Height / 2), window);
+        Assert.NotNull(grip);
+        var bottom = new Point(grip.Value.X, grip.Value.Y + bar.Bounds.Height);
+
+        window.MouseDown(grip.Value, MouseButton.Left);
+        Jobs();
+        window.MouseMove(bottom);
+        Jobs();
+        window.MouseUp(bottom, MouseButton.Left);
+        Jobs();
+
+        Assert.Equal(scroller.Extent.Height - scroller.Viewport.Height, scroller.Offset.Y, 1);
+    }
+
+    [AvaloniaFact]
+    public void ClickingTheTrackBelowTheThumbScrollsDownOnePage()
+    {
+        var (window, scroller) = Filled();
+
+        var bar = scroller.GetVisualDescendants().OfType<ScrollBar>()
+            .First(found => found.Orientation == Orientation.Vertical);
+        var below = bar.TranslatePoint(new Point(bar.Bounds.Width / 2, bar.Bounds.Height - 2), window);
+        Assert.NotNull(below);
+
+        window.MouseDown(below.Value, MouseButton.Left);
+        Jobs();
+        window.MouseUp(below.Value, MouseButton.Left);
+        Jobs();
+
+        Assert.Equal(scroller.Viewport.Height, scroller.Offset.Y, 1);
     }
 
     [AvaloniaFact]
