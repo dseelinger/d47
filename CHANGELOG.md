@@ -8,6 +8,9 @@
 
 ## 1.6.2 — Controls drop their ornaments
 
+Scroll bars now take the d47 theme instead of Fluent's grey default: a thin D47.Rule thumb on a
+transparent track, turning D47.Accent on hover or drag, with no arrow buttons.
+
 Every corner in the app now draws square. The settings card header, the Control Kit's primary
 button and the panel's level-1 tab keep the HUD's one clipped corner and one shear; every other
 rounded or clipped corner named in the design audit is gone. The headset caption box now takes its

@@ -59,12 +59,61 @@
     </ControlTheme>
 
     <!--
-      Fluent draws the thumb at a fraction of its width and only draws it full width on
-      hover. The reserved column is already full width, so keep the thumb at that width
-      always instead of animating it on and off.
+      The bar's thumb (#368): D47.Rule on a transparent track, turning D47.Accent on hover
+      or drag. Colour only, no width change, so it needs none of Fluent's small/expanded
+      thumb states.
     -->
-    <TransformOperations x:Key="VerticalSmallScrollThumbScaleTransform">none</TransformOperations>
-    <TransformOperations x:Key="HorizontalSmallScrollThumbScaleTransform">none</TransformOperations>
+    <ControlTheme x:Key="D47.ScrollThumb" TargetType="Thumb">
+      <Setter Property="Background" Value="{DynamicResource D47.Rule}" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Background="{TemplateBinding Background}">
+            <Border.Transitions>
+              <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.12" Easing="CubicEaseOut" />
+              </Transitions>
+            </Border.Transitions>
+          </Border>
+        </ControlTemplate>
+      </Setter>
+      <Style Selector="^:pointerover">
+        <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
+      </Style>
+      <Style Selector="^:pressed">
+        <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
+      </Style>
+    </ControlTheme>
+
+    <!--
+      Replaces Fluent's own bar (#368): a transparent track holding only the thumb, no line
+      or page arrow buttons. The bar's own Width/Height is the track's thickness; the cross
+      axis stretches to fill the column or row ScrollViewerTheme reserves for it.
+    -->
+    <ControlTheme x:Key="{x:Type ScrollBar}" TargetType="ScrollBar">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Width" Value="10" />
+      <Setter Property="Height" Value="10" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Background="{TemplateBinding Background}">
+            <Track Name="PART_Track"
+                   Orientation="{TemplateBinding Orientation}"
+                   Minimum="{TemplateBinding Minimum}"
+                   Maximum="{TemplateBinding Maximum}"
+                   Value="{TemplateBinding Value, Mode=TwoWay}"
+                   ViewportSize="{TemplateBinding ViewportSize}">
+              <Track.DecreaseButton>
+                <RepeatButton Name="PART_PageUpButton" Background="Transparent" BorderThickness="0" Focusable="False" />
+              </Track.DecreaseButton>
+              <Track.IncreaseButton>
+                <RepeatButton Name="PART_PageDownButton" Background="Transparent" BorderThickness="0" Focusable="False" />
+              </Track.IncreaseButton>
+              <Thumb Name="thumb" Theme="{StaticResource D47.ScrollThumb}" />
+            </Track>
+          </Border>
+        </ControlTemplate>
+      </Setter>
+    </ControlTheme>
   </Styles.Resources>
 
 </Styles>
