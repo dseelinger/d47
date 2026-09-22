@@ -230,7 +230,7 @@ public sealed class RouteProgressPage : UserControl
         var badge = new Border
         {
             Padding = new Thickness(6, 1),
-            CornerRadius = new CornerRadius(2),
+            CornerRadius = new CornerRadius(0),
             BorderThickness = new Thickness(1),
             VerticalAlignment = VerticalAlignment.Center,
             Child = text,

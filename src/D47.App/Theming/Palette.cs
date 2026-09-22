@@ -23,6 +23,12 @@ public sealed record Palette
     /// <summary>The same colour with the volume down.</summary>
     public required Color AccentMuted { get; init; }
 
+    /// <summary>Near-black, mixed with Accent for AccentInk on a light theme.</summary>
+    public static Color NearBlack { get; } = Color.Parse("#140800");
+
+    /// <summary>Off-white, the Knock ink on a solid accent fill in the Light theme.</summary>
+    public static Color OffWhite { get; } = Color.Parse("#FBF8F2");
+
     /// <summary>Recolours the accents through Elite's own HUD matrix.</summary>
     public Palette RecolouredBy(GuiColourMatrix matrix) => this with
     {

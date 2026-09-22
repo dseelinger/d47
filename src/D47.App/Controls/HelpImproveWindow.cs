@@ -628,7 +628,7 @@ public sealed class HelpImproveWindow : Window
         {
             Name = "DisclosurePane",
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(4),
+            CornerRadius = new CornerRadius(0),
             Padding = new Thickness(10),
             Height = 0,
             Child = new ScrollViewer

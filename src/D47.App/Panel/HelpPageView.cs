@@ -341,7 +341,7 @@ public static class HelpPageView
             {
                 Width = 32,
                 Height = 32,
-                CornerRadius = new CornerRadius(16),
+                CornerRadius = new CornerRadius(0),
                 Child = number,
                 VerticalAlignment = VerticalAlignment.Top,
             };

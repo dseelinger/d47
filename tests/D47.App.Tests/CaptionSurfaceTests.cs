@@ -4,7 +4,10 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Media.Imaging;
 using D47.App.Headset;
 using D47.App.Panel;
+using D47.App.Theming;
+using D47.Core.Interface;
 using D47.Core.Vr;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.App.Tests;
@@ -86,6 +89,8 @@ public class CaptionSurfaceTests
     /// <summary>Renders and hands the frame to the assertion while the surface is still alive.</summary>
     private static void Render(CaptionViewModel model, Action<RenderTargetBitmap, PixelSize> assert)
     {
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.ElitePaletteId);
+
         var size = new PixelSize(1600, 340);
 
         var view = new CaptionView { DataContext = model };
@@ -131,8 +136,8 @@ public class CaptionsKeepArrivingTests
         {
             var at = (y * stride) + (x * 4);
 
-            // The text is #F2F2F2 on a black box.
-            if (pixels[at] > 200 && pixels[at + 1] > 200 && pixels[at + 2] > 200)
+            // D47.AccentInk on a near-black D47.Background: a bright pixel is text, not ground.
+            if (pixels[at] + pixels[at + 1] + pixels[at + 2] > 400)
             {
                 ink++;
             }
@@ -193,6 +198,8 @@ public class CaptionsKeepArrivingTests
     [AvaloniaFact]
     public void EveryCaptionInATurnIsDrawnAndNotJustTheFirst()
     {
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.ElitePaletteId);
+
         var layer = new CaptionLayer();
         using var surface = new VrCaptionSurface(layer) { Enabled = true };
 

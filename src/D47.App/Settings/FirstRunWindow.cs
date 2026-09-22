@@ -84,7 +84,7 @@ public sealed class FirstRunWindow : Window
         var border = new Border
         {
             Padding = new Thickness(16),
-            CornerRadius = new CornerRadius(8),
+            CornerRadius = new CornerRadius(0),
             BorderThickness = new Thickness(1),
             Child = card,
         };

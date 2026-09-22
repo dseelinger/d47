@@ -28,7 +28,7 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     public const string AccentKey = "D47.Accent";
     public const string AccentMutedKey = "D47.AccentMuted";
 
-    /// <summary>Text or a glyph drawn on a solid Accent fill: Background on a dark theme, #FBF8F2 on Light.</summary>
+    /// <summary>Text or a glyph drawn on a solid Accent fill: Background on a dark theme, <see cref="Palette.OffWhite"/> on Light.</summary>
     public const string KnockKey = "D47.Knock";
 
     public const string DangerKey = "D47.Danger";
@@ -177,7 +177,7 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         resources[TextFaintKey] = new SolidColorBrush(derived.TextFaint);
         resources[AccentKey] = new SolidColorBrush(palette.Accent);
         resources[AccentMutedKey] = new SolidColorBrush(palette.AccentMuted);
-        resources[KnockKey] = new SolidColorBrush(palette.IsDark ? palette.Background : Color.Parse("#FBF8F2"));
+        resources[KnockKey] = new SolidColorBrush(palette.IsDark ? palette.Background : Palette.OffWhite);
         resources[DangerKey] = new SolidColorBrush(derived.Danger);
         resources[WarnKey] = new SolidColorBrush(derived.Warn);
         resources[GoodKey] = new SolidColorBrush(derived.Good);

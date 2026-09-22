@@ -85,7 +85,7 @@ public sealed class SecretEditor : UserControl
         _badge = new Border
         {
             Padding = new Thickness(8, 2),
-            CornerRadius = new CornerRadius(8),
+            CornerRadius = new CornerRadius(0),
             BorderThickness = new Thickness(1),
             VerticalAlignment = VerticalAlignment.Center,
             Child = _state,

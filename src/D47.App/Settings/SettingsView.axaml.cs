@@ -566,17 +566,16 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         headerRow.Children.Add(heading);
         headerRow.Children.Add(Chip(rows.Count.ToString(CultureInfo.InvariantCulture)));
 
-        // Chamfered rather than rounded, in the HUD redesign's own shape (#273, #278).
-        var header = new ChamferedBorder
+        var header = new Border
         {
-            Chamfer = new CornerRadius(0, 10, 0, 10),
+            CornerRadius = new CornerRadius(0),
             BorderThickness = new Thickness(1),
             Cursor = new Cursor(StandardCursorType.Hand),
             Child = headerRow,
         };
 
-        Themed(header, ChamferedBorder.BackgroundProperty, ThemeManager.FillLowKey);
-        Themed(header, ChamferedBorder.BorderBrushProperty, ThemeManager.RuleKey);
+        Themed(header, Border.BackgroundProperty, ThemeManager.FillLowKey);
+        Themed(header, Border.BorderBrushProperty, ThemeManager.RuleKey);
 
         header.PointerPressed += (_, _) =>
         {

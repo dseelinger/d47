@@ -177,7 +177,7 @@
             IsVisible="{Binding HasError}"
             Margin="0,14,0,0"
             Padding="12"
-            CornerRadius="4"
+            CornerRadius="0"
             Background="{DynamicResource D47.SurfaceAlt}"
             BorderBrush="{DynamicResource D47.Danger}"
             BorderThickness="1">
@@ -207,7 +207,7 @@
             IsVisible="{Binding HasUpdate}"
             Margin="0,14,0,0"
             Padding="12"
-            CornerRadius="4"
+            CornerRadius="0"
             Background="{DynamicResource D47.SurfaceAlt}"
             BorderBrush="{DynamicResource D47.Info}"
             BorderThickness="1">
@@ -316,7 +316,7 @@
               IsVisible="{Binding StartupVisible}"
               Margin="10,0,0,0"
               Padding="7,2"
-              CornerRadius="3"
+              CornerRadius="0"
               VerticalAlignment="Center"
               Background="{DynamicResource D47.SurfaceAlt}"
               BorderBrush="{DynamicResource D47.TextMuted}"
@@ -334,7 +334,7 @@
               IsVisible="{Binding SwitchesVisible}"
               Margin="10,0,0,0"
               Padding="7,2"
-              CornerRadius="3"
+              CornerRadius="0"
               VerticalAlignment="Center"
               Background="{DynamicResource D47.SurfaceAlt}"
               BorderBrush="{DynamicResource D47.TextMuted}"
@@ -439,7 +439,7 @@
                 HorizontalContentAlignment="Center"
                 VerticalContentAlignment="Center"
                 VerticalAlignment="Center"
-                CornerRadius="4"
+                CornerRadius="0"
                 Background="Transparent"
                 BorderThickness="0"
                 ToolTip.Tip="Open the documentation"
@@ -487,7 +487,7 @@
                 HorizontalContentAlignment="Center"
                 VerticalContentAlignment="Center"
                 VerticalAlignment="Center"
-                CornerRadius="4"
+                CornerRadius="0"
                 Background="Transparent"
                 BorderThickness="0"
                 ToolTip.Tip="Resize the panel"
@@ -497,7 +497,7 @@
                 VerticalAlignment="Center"
                 Margin="0,0,6,0"
                 Padding="7,2"
-                CornerRadius="3"
+                CornerRadius="0"
                 Background="Transparent"
                 BorderThickness="1"
                 BorderBrush="{DynamicResource D47.Accent}">
@@ -660,14 +660,11 @@
       settings page is Background, since a card the colour of its page is not a card. That is
       still true and is still the rule; what changed is that one border can carry either fill, so
       the difference is a property rather than a second control. ApplyChrome sets it.
-      <para/>
-      Top-left corner square, because a tab is sitting on it. Rounding it there would leave a
-      visible notch between the first tab and the panel it belongs to.
     -->
     <Border x:Name="ContentPane"
             BorderBrush="{DynamicResource D47.PaneBorder}"
             BorderThickness="1"
-            CornerRadius="0,4,4,4">
+            CornerRadius="0">
       <DockPanel>
 
       <!--
@@ -1091,7 +1088,7 @@
                   VerticalAlignment="Bottom"
                   Margin="0,0,14,10"
                   Padding="10,5"
-                  CornerRadius="14"
+                  CornerRadius="0"
                   FontSize="{StaticResource D47.Type.Secondary}"
                   Background="{DynamicResource D47.SurfaceAlt}"
                   BorderBrush="{DynamicResource D47.Border}"
@@ -1141,7 +1138,7 @@
               Background="{DynamicResource D47.Background}"
               BorderBrush="{DynamicResource D47.Border}"
               BorderThickness="1"
-              CornerRadius="0,4,4,4" />
+              CornerRadius="0" />
 
       <!--
         The in-tree layer, for the choosers that are declared as layers rather than as pages - a

@@ -455,7 +455,7 @@ public static class LoadoutPages
         var pill = new Border
         {
             Padding = new Thickness(7, 1),
-            CornerRadius = new CornerRadius(9),
+            CornerRadius = new CornerRadius(0),
             BorderThickness = new Thickness(1),
             HorizontalAlignment = HorizontalAlignment.Left,
             VerticalAlignment = VerticalAlignment.Top,

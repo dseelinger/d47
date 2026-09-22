@@ -84,7 +84,7 @@ public sealed record DerivedPalette
             AccentBorder = Onto(0.35),
             AccentInk = palette.IsDark
                 ? Mix(Colors.White, accent, 0.58)
-                : Mix(Color.Parse("#140800"), accent, 0.55),
+                : Mix(Palette.NearBlack, accent, 0.55),
             Danger = Hue(accent, 27),
             Warn = Hue(accent, 82),
             Good = Hue(accent, 146),

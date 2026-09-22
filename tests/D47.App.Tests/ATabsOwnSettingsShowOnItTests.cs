@@ -173,7 +173,7 @@ public class ATabsOwnSettingsShowOnItTests
 
         var strip = (StackPanel)view.GetVisualDescendants().First(c => c.Name == SettingsView.TabStripName);
         var content = (StackPanel)strip.Children[1];
-        var header = (ChamferedBorder)strip.Children[0];
+        var header = (Border)strip.Children[0];
 
         Assert.False(content.IsVisible);
 

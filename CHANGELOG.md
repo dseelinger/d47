@@ -8,6 +8,12 @@
 
 ## 1.6.2 — Controls drop their ornaments
 
+Every corner in the app now draws square. The settings card header, the Control Kit's primary
+button and the panel's level-1 tab keep the HUD's one clipped corner and one shear; every other
+rounded or clipped corner named in the design audit is gone. The headset caption box now takes its
+ground and ink from the selected theme instead of a fixed dark box and near-white text, so a
+caption stays legible whatever palette is on.
+
 The Debug-only Control Kit window now follows the design reference's layout and wording. It opens
 with the CONTROL KIT title, the reference's introduction and three spec cards (Spacing, Row,
 Columns). The ten controls sit in a three-column grid in the reference's order, each captioned with

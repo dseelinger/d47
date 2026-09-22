@@ -470,7 +470,7 @@ public sealed class SubsystemLevelTrack : ContentControl
         var chip = new Border
         {
             Padding = new Thickness(6, 1),
-            CornerRadius = new CornerRadius(3),
+            CornerRadius = new CornerRadius(0),
             BorderThickness = new Thickness(1),
             Child = text,
         };

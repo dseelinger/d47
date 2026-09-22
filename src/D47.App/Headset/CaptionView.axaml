@@ -10,26 +10,22 @@
     so the cockpit shows through: a caption sits over a starfield, a station's floodlights and
     the ship's own instruments, and this is the only surface D47 draws that is mostly nothing.
 
-    Deliberately not themed. Every other surface takes its colour from the palette; a caption
-    takes it from the caption standard, which is white-ish text on a dark box and has been
-    since teletext. A themed caption would be an amber caption in the Elite palette, which is
-    the one thing broadcast captioning has never done.
+    Themed like every other surface, so a caption stays legible whatever palette is selected.
 
-    Not quite white and not quite opaque, both on purpose. Pure white on black rings at this
-    contrast, and a fully opaque box is a hole cut in the cockpit.
+    Not quite opaque, on purpose. A fully opaque box is a hole cut in the cockpit.
   -->
-  <Border HorizontalAlignment="Center"
-          VerticalAlignment="Bottom"
-          CornerRadius="6"
-          Padding="28,16"
-          IsVisible="{Binding HasLines}">
+  <Panel HorizontalAlignment="Center"
+         VerticalAlignment="Bottom"
+         IsVisible="{Binding HasLines}">
 
-    <!-- The opacity belongs to the brush, not to the border. On the border it would take the
-         text down with it, and a caption that is only three quarters there is a caption that
-         is harder to read than a solid one - which is the opposite of what the box is for. -->
-    <Border.Background>
-      <SolidColorBrush Color="#000000" Opacity="{Binding BackgroundOpacity}" />
-    </Border.Background>
+    <!-- The opacity belongs to this ground layer alone, not to the text in front of it. A shared
+         Border.Opacity would take the text down with it, and a caption that is only three
+         quarters there is harder to read than a solid one - the opposite of what the box is for. -->
+    <Border HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            CornerRadius="0"
+            Background="{DynamicResource D47.Background}"
+            Opacity="{Binding BackgroundOpacity}" />
 
     <!--
       One text block with newlines in it, not an item per line. The quad is rasterised out of a
@@ -42,9 +38,10 @@
     <TextBlock Text="{Binding Text}"
                TextAlignment="Center"
                HorizontalAlignment="Center"
-               Foreground="#F2F2F2"
+               Margin="28,16"
+               Foreground="{DynamicResource D47.AccentInk}"
                FontFamily="Segoe UI,Inter,sans-serif"
                FontWeight="SemiBold"
                FontSize="{Binding FontSize}" />
-  </Border>
+  </Panel>
 </UserControl>

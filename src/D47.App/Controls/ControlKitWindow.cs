@@ -317,7 +317,12 @@ public sealed class ControlKitWindow : Window
             }
         };
 
-        var accentBox = new TextBox { Width = 160, PlaceholderText = "#00E5FF", VerticalAlignment = VerticalAlignment.Stretch };
+        var accentBox = new TextBox
+        {
+            Width = 160,
+            PlaceholderText = Palettes.Elite.Accent.ToString(),
+            VerticalAlignment = VerticalAlignment.Stretch,
+        };
         var apply = new Button
         {
             Content = "APPLY",
