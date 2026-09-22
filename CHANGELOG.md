@@ -8,6 +8,10 @@
 
 ## 1.5.1 — Tooltips say only what the screen does not
 
+A gauge's name now draws in uppercase mono at the left edge, and its reading right-aligned in mono,
+both in the gauge's own tone colour — in the Control Kit's three demo gauges and the Loadout page.
+The name drew in TextMuted SemiBold before, with the reading following it in the prose face.
+
 Tooltips draw square, opaque and un-Fluent: a fill-3 ground, a 1px rule border, no corner radius
 and no shadow, in the prose face at 14pt, wrapping at 280px. They drew as Fluent's rounded gray
 card with a drop shadow before. Every tooltip opens 600ms after the pointer settles, below and

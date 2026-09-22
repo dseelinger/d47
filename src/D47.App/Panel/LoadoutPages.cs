@@ -717,9 +717,17 @@ public static class LoadoutPages
         // **A DockPanel rather than a horizontal stack, so the reading wraps** (#289).
         var heading = new DockPanel();
 
+        var toneKey =
+            gauge.Tone == LoadoutTone.Danger ? ThemeManager.DangerKey
+            : gauge.Tone == LoadoutTone.Warn ? ThemeManager.WarnKey
+            : gauge.Tone == LoadoutTone.Good ? ThemeManager.GoodKey
+            : gauge.Modelled ? ThemeManager.InfoKey
+            : ThemeManager.TextKey;
+
         var name = new TextBlock
         {
-            Text = gauge.Name,
+            Text = gauge.Name.ToUpperInvariant(),
+            FontFamily = new FontFamily(Fonts.MonoFamily),
             FontSize = TypeScale.Secondary,
             FontWeight = FontWeight.SemiBold,
             VerticalAlignment = VerticalAlignment.Center,
@@ -728,7 +736,7 @@ public static class LoadoutPages
 
         DockPanel.SetDock(name, Dock.Left);
 
-        Themed(name, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(name, TextBlock.ForegroundProperty, toneKey);
         heading.Children.Add(name);
 
         // The reading, in the gauge's own tone: red where the build does not fit, and the muted Info hue
@@ -736,19 +744,15 @@ public static class LoadoutPages
         var reading = new TextBlock
         {
             Text = gauge.Modelled ? $"~ {gauge.Reading}" : gauge.Reading,
+            FontFamily = new FontFamily(Fonts.MonoFamily),
             FontSize = TypeScale.Body,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            TextAlignment = TextAlignment.Right,
             VerticalAlignment = VerticalAlignment.Center,
             TextWrapping = TextWrapping.Wrap,
         };
 
-        Themed(
-            reading,
-            TextBlock.ForegroundProperty,
-            gauge.Tone == LoadoutTone.Danger ? ThemeManager.DangerKey
-            : gauge.Tone == LoadoutTone.Warn ? ThemeManager.WarnKey
-            : gauge.Tone == LoadoutTone.Good ? ThemeManager.GoodKey
-            : gauge.Modelled ? ThemeManager.InfoKey
-            : ThemeManager.TextKey);
+        Themed(reading, TextBlock.ForegroundProperty, toneKey);
 
         heading.Children.Add(reading);
         stack.Children.Add(heading);

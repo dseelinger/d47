@@ -120,8 +120,8 @@ public class GaugesAtTheHeadOfTheSlotListTests
 
         var said = Said(surface.Panel);
 
-        Assert.Contains(said, text => text == "Power");
-        Assert.Contains(said, text => text == "Jump range");
+        Assert.Contains(said, text => text == "POWER");
+        Assert.Contains(said, text => text == "JUMP RANGE");
 
         // The figures a Commander was alt-tabbing to Coriolis for: megawatts against the plant, and a range
         // rather than a number.
@@ -142,7 +142,7 @@ public class GaugesAtTheHeadOfTheSlotListTests
         OpenTheShip(surface);
 
         var power = surface.Panel.GetVisualDescendants().OfType<TextBlock>()
-            .First(block => block.Text == "Power");
+            .First(block => block.Text == "POWER");
 
         var slot = Row(surface.Panel, "Power Plant");
 
