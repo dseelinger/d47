@@ -110,19 +110,21 @@ public class VoiceRowFitsItsColumnTests
     [AvaloniaFact]
     public void TheWholeVoiceNameIsOnTheTooltip()
     {
-        var host = Open();
+        // The one voice long enough that the column actually clips it — the tip only carries what was
+        // cut (#382).
+        var host = Open(voice: "long");
 
         // Not the reset glyph or the info glyph beside the label — those are different buttons about
         // different things (#61, and the 2026-09-01 callout).
         var button = RowFor(host, "Voice").GetVisualDescendants().OfType<Button>()
             .First(control => !D47.App.Settings.SettingsView.IsRowChrome(control));
 
-        Assert.Contains("Bill", ToolTip.GetTip(button) as string ?? string.Empty, StringComparison.Ordinal);
+        Assert.Contains("Christopher", ToolTip.GetTip(button) as string ?? string.Empty, StringComparison.Ordinal);
 
         host.Close();
     }
 
-    private static SettingsHost Open(double? width = null)
+    private static SettingsHost Open(double? width = null, string voice = "bill")
     {
         var (settings, viewState, paths) = TestSurface.Create(voices: Voices());
 
@@ -133,7 +135,7 @@ public class VoiceRowFitsItsColumnTests
             ? SettingsHost.Open(settings, viewState, paths, width: w)
             : SettingsHost.Open(settings, viewState, paths);
 
-        settings.Apply(SpeechCapability.VoiceKey, "bill", SettingsCaller.Panel);
+        settings.Apply(SpeechCapability.VoiceKey, voice, SettingsCaller.Panel);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         return host;

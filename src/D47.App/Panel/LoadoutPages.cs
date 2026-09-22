@@ -1120,7 +1120,7 @@ public static class LoadoutPages
         // The slot's name in full, for anything that cannot see the row — and now for the eye as well, since
         // the column is the short form.
         AutomationProperties.SetName(button, row.Word);
-        ToolTip.SetTip(slot, row.Word);
+        TruncationTip.Watch(slot, () => row.Word);
 
         if (showing)
         {
@@ -1320,14 +1320,14 @@ public static class LoadoutPages
     }
 
     /// <summary>
-    /// The long name on the tooltip, so a short one is never the only one (the Commander's ruling,
-    /// 2026-08-25).
+    /// The long name on the tooltip while the cell actually clips it, so a short one is never the only
+    /// one (the Commander's ruling, 2026-08-25).
     /// </summary>
-    private static void Hover(Control cell, LoadoutSide side)
+    private static void Hover(TextBlock cell, LoadoutSide side)
     {
         if (side.Long is { Length: > 0 } spelled)
         {
-            ToolTip.SetTip(cell, spelled);
+            TruncationTip.Watch(cell, () => spelled);
         }
     }
 

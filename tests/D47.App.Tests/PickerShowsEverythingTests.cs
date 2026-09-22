@@ -93,10 +93,7 @@ public class PickerShowsEverythingTests
             StringComparison.Ordinal);
     }
 
-    /// <summary>
-    /// The default button is the width of the list and trims what does not fit, with the whole string
-    /// on the pointer.
-    /// </summary>
+    /// <summary>The default button is the width of the list and trims what does not fit.</summary>
     [AvaloniaFact]
     public void TheDefaultButtonTrimsInsteadOfPushingTheOtherButtonsOffScreen()
     {
@@ -104,13 +101,9 @@ public class PickerShowsEverythingTests
         picker.Show();
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        var button = picker.GetControl<Button>("DefaultButton");
         var label = picker.GetControl<TextBlock>("DefaultButtonText");
 
         Assert.Equal(TextTrimming.CharacterEllipsis, label.TextTrimming);
-        Assert.Equal(
-            "Use the default (the system default — Microphone (Virtual Desktop Audio))",
-            ToolTip.GetTip(button));
 
         // Both of the other buttons are still on screen, which is the failure this row shape exists to
         // prevent.

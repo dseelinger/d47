@@ -416,7 +416,6 @@ public partial class MainWindow : Window
         _host.Voice.SynthesisFailed += reason => Avalonia.Threading.Dispatcher.UIThread.Post(
             () => _model.ErrorText = reason);
 
-        DescribeHotkeys();
         BindShutUp();
         BindOverlayKeys();
         BindHeadsetZoomAndResizeKeys();
@@ -456,8 +455,6 @@ public partial class MainWindow : Window
 
         _host.Settings.Changed += change => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
-            DescribeHotkeys();
-
             if (change.Key == ListeningCapability.CancelHotkeyKey)
             {
                 BindShutUp();
@@ -651,22 +648,6 @@ public partial class MainWindow : Window
             // A hand-edited settings file can hold anything.
             return false;
         }
-    }
-
-    private void DescribeHotkeys()
-    {
-        if (_host is null)
-        {
-            return;
-        }
-
-        var open = _host.Settings.Current.Hotkeys.OpenSettings;
-
-        // Read from settings rather than hardcoded, so rebinding the gesture updates the tip instead of
-        // leaving a "Ctrl+," that silently became wrong.
-        ToolTip.SetTip(
-            Panel.SettingsAffordance,
-            open is null ? "Settings" : $"Settings ({Gestures.Describe(open)})");
     }
 
     private void OpenSettings() => Panel.Tab = PanelTab.Settings;

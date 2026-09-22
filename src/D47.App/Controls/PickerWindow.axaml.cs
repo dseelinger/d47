@@ -246,7 +246,6 @@ public partial class PickerWindow : Window
         var useDefault = $"Use the default ({_request.DefaultDisplay})";
 
         DefaultButtonText.Text = useDefault;
-        ToolTip.SetTip(DefaultButton, useDefault);
 
         // Said once for the whole list, whichever way it goes: shut, it says why nothing here can be played;
         // live, it says what pressing a glyph will do, which on a paid provider is spend money.

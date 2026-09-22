@@ -738,8 +738,7 @@
                       Orientation="Horizontal"
                       VerticalAlignment="Center"
                       Margin="13,0,0,0"
-                      IsVisible="False"
-                      ToolTip.Tip="Show the file's own JSON instead of sentences">
+                      IsVisible="False">
             <TextBlock Text="Raw"
                        VerticalAlignment="Center"
                        Margin="0,0,6,0"
@@ -800,7 +799,6 @@
                   HorizontalContentAlignment="Center"
                   Padding="10,0"
                   FontSize="{StaticResource D47.Type.Secondary}"
-                  ToolTip.Tip="Copy this whole page to the clipboard"
                   Click="OnCopyClick" />
           <!--
             The other thing a Commander does with these two pages, and the one Copy All cannot do
@@ -1100,7 +1098,6 @@
                   Background="{DynamicResource D47.SurfaceAlt}"
                   BorderBrush="{DynamicResource D47.Border}"
                   BorderThickness="1"
-                  ToolTip.Tip="Scroll to the newest line and follow it again"
                   Click="OnFollowClick" />
         </Panel>
       </Border>

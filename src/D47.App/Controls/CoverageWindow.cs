@@ -149,9 +149,9 @@ public sealed class CoverageWindow : Window
             VerticalAlignment = VerticalAlignment.Center,
             TextWrapping = TextWrapping.NoWrap,
             TextTrimming = TextTrimming.CharacterEllipsis,
-            // The id is the thing to grep for or type at the app; the name is what it reads as.
-            [ToolTip.TipProperty] = MachineTip.For($"{line.Item.Kind} {line.Item.Id}"),
         };
+
+        TruncationTip.Watch(name, () => line.Item.Name);
 
         Themed(name, TextBlock.ForegroundProperty, ThemeManager.TextKey);
 

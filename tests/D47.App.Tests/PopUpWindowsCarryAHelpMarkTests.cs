@@ -36,9 +36,8 @@ public sealed class PopUpWindowsCarryAHelpMarkTests
             "https://dseelinger.github.io/d47/help-improve.html",
             DocsSite.Page(HelpImproveWindow.HelpPage));
 
-        // The address is the tooltip, which is how a control that launches a browser says where it is about
-        // to go on a window with no status line.
-        Assert.Equal(DocsSite.Page(HelpImproveWindow.HelpPage), ToolTip.GetTip(mark));
+        // The bare glyph names the action rather than the address it opens (#382).
+        Assert.Equal("Opens in your browser", ToolTip.GetTip(mark));
 
         window.Close();
     }

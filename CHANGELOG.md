@@ -14,6 +14,16 @@ card with a drop shadow before. Every tooltip opens 600ms after the pointer sett
 left-aligned with the control it explains, 8px away, instead of each call site setting its own
 delay.
 
+A tooltip now survives in three cases only: a bare glyph names the action it takes, cut-off text
+carries its full value while the column actually clips it, and a disabled control says why. Gone
+from everywhere else: the Stepper's own tooltip repeating the value cell 20px away, `Default: …`
+on a chooser, number box or text box, the Settings tab naming its own shortcut, worded buttons
+such as Copy All, Raw and the picker's default button repeating their own label, and a help mark
+showing the address it is about to open rather than saying what pressing it does. Every `↺` reads
+"Reset to default"; a screen reader still hears which one. The Stepper's value cell, a chooser
+button's label, the Loadout tab's slot and side-cell names, and the coverage report's item name
+now carry their full text only while the column has actually cut them off.
+
 ## 0.169.0 — No more drop-downs
 
 Screen titles glow in Elite, Dark and Guardian, matching the primary button, the lit switch cell,

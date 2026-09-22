@@ -85,7 +85,7 @@ public class CoverageWindowTests
         var links = window.GetVisualDescendants()
             .OfType<Button>()
             .Where(button => button.Name == "CoverageHelp")
-            .Select(button => ToolTip.GetTip(button) as string)
+            .Select(button => button.Tag as string)
             .ToList();
 
         Assert.Equal(report.Total, links.Count);

@@ -255,9 +255,6 @@ public class TheSlotListIsATableTests
 
         Assert.Contains(tips, tip => tip.Contains("Hull Reinforcement Package", StringComparison.Ordinal));
 
-        // And the slot, which the column now says short as well.
-        Assert.Contains("Compartment 1 (size 6)", tips);
-
         surface.Window.Close();
     }
 

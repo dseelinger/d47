@@ -37,6 +37,7 @@ public sealed class Stepper : ContentControl, IChoiceControl
 
     private readonly TextBlock _value = new()
     {
+        Name = "StepperValue",
         HorizontalAlignment = HorizontalAlignment.Center,
         VerticalAlignment = VerticalAlignment.Center,
         TextTrimming = TextTrimming.CharacterEllipsis,
@@ -78,6 +79,9 @@ public sealed class Stepper : ContentControl, IChoiceControl
 
         _previous = Arrow("◀", "Previous", -1);
         _next = Arrow("▶", "Next", 1);
+
+        // The value cell's own truncation tip, not the whole control's — an arrow carries none (#382).
+        TruncationTip.Watch(_value, () => _value.Text);
 
         var valueCell = new Border
         {

@@ -62,7 +62,6 @@ public sealed class SecretEditor : UserControl
             var shown = _revealSwitch.IsChecked == true;
             _box.PasswordChar = shown ? '\0' : '•';
 
-            ToolTip.SetTip(_revealSwitch, shown ? "Hide the key" : "Show the key while you paste it");
             AutomationProperties.SetName(_revealSwitch, shown ? "Hide the key" : "Show the key");
         };
 
@@ -115,6 +114,7 @@ public sealed class SecretEditor : UserControl
         // about to be replaced, which "Store" said either way.
         _store = new Button();
         _check = new Button { Content = "Verify Key", IsVisible = row.Verify is not null };
+        ToolTip.SetShowOnDisabled(_check, true);
 
         _store.Click += (_, _) => Store();
         _clear.Click += async (_, _) => await ClearAsync();
@@ -309,11 +309,7 @@ public sealed class SecretEditor : UserControl
 
         _check.IsEnabled = typed && _row.Verify is not null;
 
-        ToolTip.SetTip(
-            _check,
-            typed
-                ? "Store this key and check it against the provider"
-                : "Paste a key first — there is nothing here to check yet");
+        ToolTip.SetTip(_check, _check.IsEnabled ? null : "Paste a key first — there is nothing here to check yet");
     }
 
     private void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>

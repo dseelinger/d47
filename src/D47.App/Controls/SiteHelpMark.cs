@@ -19,7 +19,10 @@ public static class SiteHelpMark
             FontSize = Theming.TypeScale.Secondary,
             Padding = new Thickness(7, 1),
             VerticalAlignment = VerticalAlignment.Center,
-            [ToolTip.TipProperty] = url,
+
+            // Held for anything that needs to know where this goes without reading it off the tip (#382).
+            Tag = url,
+            [ToolTip.TipProperty] = "Opens in your browser",
         };
 
         mark.Click += (_, _) => Open(url);

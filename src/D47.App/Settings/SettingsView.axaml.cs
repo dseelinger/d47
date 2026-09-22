@@ -325,14 +325,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     private IDisposable Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
         target.Bind(property, this.GetResourceObservable(key));
 
-    /// <summary>Hangs the row's default on a control as a tooltip, in full.</summary>
-    private void ShowDefaultOnHover(Control control, SettingRow row)
-    {
-        var shown = row.DefaultDisplayFor(_settings!.Current);
-
-        ToolTip.SetTip(control, string.IsNullOrWhiteSpace(shown) ? null : $"Default: {shown}");
-    }
-
     private void Build()
     {
         var settings = _settings ?? throw new InvalidOperationException("Attach() has not been called.");
@@ -785,7 +777,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         Glyphs.MarkFollowingForeground(
             reset, Glyphs.Reset, $"Reset {title}", TypeScale.Small);
 
-        ToolTip.SetTip(reset, $"Put every {title} setting you have changed back to its default. Keys are untouched.");
+        ToolTip.SetTip(reset, "Reset to default");
 
         reset.Click += (_, _) =>
         {
@@ -919,10 +911,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         Glyphs.MarkFollowingForeground(reset, Glyphs.Reset, $"Reset {group}", TypeScale.Small);
 
-        ToolTip.SetTip(
-            reset,
-            "Put this panel back where a fresh install puts it: world-locked, at its default "
-            + "distance, resting in front of you.");
+        ToolTip.SetTip(reset, "Reset to default");
 
         reset.Click += (_, _) =>
         {
@@ -2423,7 +2412,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             // Path has no text of its own.
             Glyphs.MarkFollowingForeground(back, Glyphs.Reset, $"Reset {row.Label}", TypeScale.Secondary);
 
-            ToolTip.SetTip(back, $"Put {row.Label} back to its default");
+            ToolTip.SetTip(back, "Reset to default");
 
             back.Click += (_, _) =>
             {
@@ -3466,11 +3455,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         DressAsAChoice(view);
         AutomationProperties.SetName(view, row.Label);
 
-        // What fits in a fifth of the row, and some of these labels carry the part that matters on the
-        // end of them: a speech model not on disk reads as "Small (English only) - more accu", which is
-        // indistinguishable from one already installed.
-        combo.SelectionChanged += (_, _) => ToolTip.SetTip(view, combo.SelectedItem);
-
         var offset = clearable ? 1 : 0;
 
         // The rows that download something carry a progress bar, and only those.
@@ -3584,14 +3568,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                     .FirstOrDefault() ?? -1;
 
             combo.SelectedIndex = found < 0 ? (clearable ? 0 : -1) : found + offset;
-
-            // The column is bounded, so a label written as a sentence - the speech models state their size
-            // and speed - is clipped at the closed control.
-            ToolTip.SetTip(
-                view,
-                combo.SelectedIndex >= 0 && combo.SelectedIndex < items.Count
-                    ? items[combo.SelectedIndex]
-                    : null);
         }, true);
     }
 
@@ -3762,6 +3738,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         Panel.OffscreenSurface.OpensAWindow(button);
 
+        // The button's own tip, carrying what the column clipped — only while it actually did (#382).
+        TruncationTip.Watch(value, () => value.Text, button);
+
         // Said rather than left to be guessed at.
         var busy = new BusyGlyph
         {
@@ -3788,14 +3767,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 ? $"({row.BareDefaultFor(_settings.Current) ?? "not set"})"
                 : row.LabelForChoice(current, _settings.Current);
 
-            // The button is one line in a column; a model id or a resolved device name is routinely longer
-            // than it.
-            ToolTip.SetTip(button, current is null ? null : row.LabelForChoice(current, _settings.Current));
-
-            if (current is null)
-            {
-                ShowDefaultOnHover(button, row);
-            }
             Themed(value, TextBlock.ForegroundProperty, current is null ? ThemeManager.TextMutedKey : ThemeManager.TextKey);
         }, true);
     }
@@ -3854,7 +3825,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         {
             number.Value = decimal.TryParse(_settings!.Read(row.Key), out var parsed) ? parsed : null;
             number.PlaceholderText = row.DefaultDisplayFor(_settings.Current);
-            ShowDefaultOnHover(number, row);
         }, true);
     }
 
@@ -3899,7 +3869,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             // The default is a placeholder, never a value, so "I have not chosen" stays distinguishable from
             // "I chose the default" (Phase 4).
             box.PlaceholderText = row.DefaultDisplayFor(_settings.Current) ?? string.Empty;
-            ShowDefaultOnHover(box, row);
         }, false);
     }
 

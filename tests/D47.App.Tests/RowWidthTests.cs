@@ -107,7 +107,10 @@ public class RowWidthTests
         host.Close();
     }
 
-    /// <summary>The whole label is reachable even though the closed box cannot hold it.</summary>
+    /// <summary>
+    /// The whole label is reachable off the value cell even though the closed box cannot hold it — the
+    /// stepper's own tooltip, not the whole control's (#382).
+    /// </summary>
     [AvaloniaFact]
     public void TheWholeChoiceLabelIsOnTheTooltipWhenTheBoxClipsIt()
     {
@@ -118,9 +121,11 @@ public class RowWidthTests
             .OfType<D47.App.Controls.Stepper>()
             .First();
 
-        var tip = ToolTip.GetTip(combo) as string;
+        var value = combo.GetVisualDescendants().OfType<TextBlock>().Single(text => text.Name == "StepperValue");
 
-        Assert.False(string.IsNullOrWhiteSpace(tip), "The stepper carries no tooltip.");
+        var tip = ToolTip.GetTip(value) as string;
+
+        Assert.False(string.IsNullOrWhiteSpace(tip), "The stepper's value cell carries no tooltip.");
         Assert.Contains("to download", tip, StringComparison.Ordinal);
 
         host.Close();
