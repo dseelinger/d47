@@ -226,7 +226,10 @@ public sealed class BloomStack : Control
         }
     }
 
-    /// <summary>An empty copy of <paramref name="child"/>'s shape, its geometry and fill bound to the child's.</summary>
+    /// <summary>
+    /// An empty copy of <paramref name="child"/>'s shape, its geometry, fill and (for a Rectangle) stroke
+    /// bound to the child's — a Rectangle's stroke lets a hollow shape glow along its outline (#379).
+    /// </summary>
     private static Control Ghost(Control child)
     {
         switch (child)
@@ -259,6 +262,8 @@ public sealed class BloomStack : Control
             {
                 var ghost = new Rectangle();
                 Follow(ghost, Shape.FillProperty, rectangle);
+                Follow(ghost, Shape.StrokeProperty, rectangle);
+                Follow(ghost, Shape.StrokeThicknessProperty, rectangle);
                 return ghost;
             }
 

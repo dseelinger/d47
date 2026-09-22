@@ -25,21 +25,34 @@
 
     <Setter Property="Template">
       <ControlTemplate>
-        <theming:BloomStack x:Name="Glow" Tier="Normal" IsLit="False">
-          <controls:ChamferedBorder x:Name="Shape" Skew="13" Background="{DynamicResource D47.FillHigh}">
-            <ContentPresenter x:Name="PART_ContentPresenter"
-                              Content="{TemplateBinding Content}"
-                              Padding="{TemplateBinding Padding}"
-                              Foreground="{TemplateBinding Foreground}"
-                              HorizontalAlignment="Center"
-                              VerticalAlignment="Center" />
-          </controls:ChamferedBorder>
-        </theming:BloomStack>
+        <Grid ClipToBounds="False">
+          <!-- The hover halo (#379): an Accent ghost with no visible shape of its own, skewed to
+               match the tab below it. -->
+          <theming:BloomStack x:Name="HoverGlow" Tier="Low" IsLit="False" ClipToBounds="False">
+            <controls:ChamferedBorder Skew="13" Background="{DynamicResource D47.Accent}"
+                                       Opacity="0" IsHitTestVisible="False" />
+          </theming:BloomStack>
+          <theming:BloomStack x:Name="Glow" Tier="Normal" IsLit="False">
+            <controls:ChamferedBorder x:Name="Shape" Skew="13" Background="{DynamicResource D47.FillHigh}">
+              <ContentPresenter x:Name="PART_ContentPresenter"
+                                Content="{TemplateBinding Content}"
+                                Padding="{TemplateBinding Padding}"
+                                Foreground="{TemplateBinding Foreground}"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center" />
+            </controls:ChamferedBorder>
+          </theming:BloomStack>
+        </Grid>
       </ControlTemplate>
     </Setter>
 
     <Style Selector="^:pointerover /template/ controls|ChamferedBorder#Shape">
       <Setter Property="Background" Value="{DynamicResource D47.FillHigher}" />
+    </Style>
+
+    <!-- The hover halo (#379): unselected only, since the selected tab is already lit. -->
+    <Style Selector="^:pointerover:not(:checked) /template/ theming|BloomStack#HoverGlow">
+      <Setter Property="IsLit" Value="True" />
     </Style>
 
     <!-- The current tab: a solid fill rather than a muted one, findable at a glance from a

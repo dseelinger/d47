@@ -239,11 +239,11 @@ public class EveryGlowIsAStackOfGhostsTests
             yield return ("level fill", BloomTier.High, Within(Kit.Level, stack => stack.Child is Border));
             yield return ("level handle", BloomTier.High, Within(Kit.Level, stack => stack.Child is Rectangle));
             yield return ("microphone dot", BloomTier.High, Panel.FindControl<BloomStack>("MicrophoneBloom")!);
-            yield return ("active tab", BloomTier.Normal, Within(Panel.FindControl<RadioButton>("TranscriptTab")!));
-            yield return ("primary button", BloomTier.Normal, Within(Kit.Primary));
+            yield return ("active tab", BloomTier.Normal, Within(Panel.FindControl<RadioButton>("TranscriptTab")!, stack => stack.Name == "Glow"));
+            yield return ("primary button", BloomTier.Normal, Within(Kit.Primary, stack => stack.Name == "Glow"));
             yield return ("lit switch half", BloomTier.Normal, Within(Kit.Switch));
-            yield return ("selected segment", BloomTier.Normal, Within(Kit.Segment));
-            yield return ("pressed glyph button", BloomTier.Normal, Within(Kit.Glyph));
+            yield return ("selected segment", BloomTier.Normal, Within(Kit.Segment, stack => stack.Name == "Glow"));
+            yield return ("pressed glyph button", BloomTier.Normal, Within(Kit.Glyph, stack => stack.Name == "Glow"));
         }
 
         public void Dispose()

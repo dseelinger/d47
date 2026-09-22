@@ -468,6 +468,11 @@ hover or press. The card and placement-group reset icons now sit in a fixed 44×
 whether or not there is anything to reset, so the heading's row no longer changes height when one
 appears.
 
+Hovering a button, a glyph button, an unselected tab or an unselected segment now shows a faint
+Accent halo, and keyboard focus shows the same halo behind the focus ring, its 2px outline drawn at
+full strength as before. A settings row, a list row and a transcript message still show no halo on
+hover. Light still draws none of it.
+
 ## 0.168.0 — Controls take the HUD dress
 
 Buttons, toggle switches and the transcript tabs now draw d47's own look rather than the
