@@ -117,6 +117,70 @@
     </ControlTheme>
 
     <!--
+      A button whose only content is a glyph — the stepper's arrows, the amount control's spinner
+      buttons, and every reset icon (#376). No frame in any state; the whole cell takes the ground,
+      not the glyph's bounds. Applies to Button and, since RepeatButton derives from it, to
+      RepeatButton too.
+    -->
+    <ControlTheme x:Key="D47.GlyphButton" TargetType="Button">
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Foreground" Value="{DynamicResource D47.TextMuted}" />
+      <Setter Property="FocusAdorner" Value="{x:Static theming:FocusRing.Template}" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border x:Name="Ground"
+                  Background="{TemplateBinding Background}"
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Stretch">
+            <ContentPresenter x:Name="PART_ContentPresenter"
+                              Content="{TemplateBinding Content}"
+                              Foreground="{TemplateBinding Foreground}"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center" />
+          </Border>
+        </ControlTemplate>
+      </Setter>
+
+      <!--
+        The transition lives here, gated to everything but the pressed state, so pressing in jumps
+        straight to Accent while releasing eases back over 120ms (the ToggleSwitch technique at
+        this file's line 146, made one-directional).
+      -->
+      <Style Selector="^:not(:pressed) /template/ Border#Ground">
+        <Setter Property="Transitions">
+          <Transitions>
+            <BrushTransition Property="Background" Duration="0:0:0.12" Easing="CubicEaseOut" />
+          </Transitions>
+        </Setter>
+      </Style>
+
+      <Style Selector="^:pointerover">
+        <Setter Property="Background" Value="{DynamicResource D47.FillHigh}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.Text}" />
+      </Style>
+
+      <Style Selector="^:focus-visible">
+        <Setter Property="Foreground" Value="{DynamicResource D47.Text}" />
+      </Style>
+
+      <Style Selector="^:pressed">
+        <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
+        <Style Selector="^ /template/ Border#Ground">
+          <Setter Property="Effect" Value="{DynamicResource D47.Bloom}" />
+        </Style>
+      </Style>
+
+      <!-- No hover or press while disabled — a limit reads the same as an empty list. -->
+      <Style Selector="^:disabled">
+        <Setter Property="Foreground" Value="{DynamicResource D47.TextFaint}" />
+      </Style>
+    </ControlTheme>
+
+    <!--
       Two halves, each naming its own state, so a page of switches reads without checking knob
       position and brightness one at a time (#334). A row that wants no words sets OnContent and
       OffContent to null itself; every other row gets this pair by default.
@@ -424,8 +488,9 @@
     <!--
       The border and stepper buttons a NumericUpDown wraps its field in — kept as its own theme
       because NumericUpDown composes an actual ButtonSpinner rather than drawing the spinner
-      itself (#289). Square, no fill; the increase/decrease glyphs draw in Accent, each in a
-      40-wide cell behind a D47.Border rule, repeating after 400 ms at 8 per second.
+      itself (#289). Square, no fill; the increase/decrease glyphs take D47.GlyphButton (#376),
+      each in a 40-wide cell, repeating after 400 ms at 8 per second. The dividers are drawn here,
+      on the control, so they hold D47.Border regardless of a button's state.
     -->
     <ControlTheme x:Key="D47.NumberSpinner" TargetType="ButtonSpinner">
       <Setter Property="Background" Value="Transparent" />
@@ -442,32 +507,24 @@
                           DockPanel.Dock="Right"
                           Orientation="Horizontal"
                           IsVisible="{TemplateBinding ShowButtonSpinner}">
+                <Border Width="1" Background="{DynamicResource D47.Border}" />
                 <RepeatButton Name="PART_IncreaseButton"
+                              Theme="{StaticResource D47.GlyphButton}"
                               IsTabStop="{TemplateBinding IsTabStop}"
                               Content="▲"
                               FontSize="{StaticResource D47.Type.Small}"
-                              Foreground="{DynamicResource D47.Accent}"
-                              Background="Transparent"
-                              BorderBrush="{DynamicResource D47.Border}"
-                              BorderThickness="1,0,0,0"
-                              CornerRadius="0"
-                              Padding="0"
                               Width="40"
                               Delay="400"
                               Interval="125"
                               VerticalAlignment="Stretch"
                               VerticalContentAlignment="Center"
                               HorizontalContentAlignment="Center" />
+                <Border Width="1" Background="{DynamicResource D47.Border}" />
                 <RepeatButton Name="PART_DecreaseButton"
+                              Theme="{StaticResource D47.GlyphButton}"
                               IsTabStop="{TemplateBinding IsTabStop}"
                               Content="▼"
                               FontSize="{StaticResource D47.Type.Small}"
-                              Foreground="{DynamicResource D47.Accent}"
-                              Background="Transparent"
-                              BorderBrush="{DynamicResource D47.Border}"
-                              BorderThickness="1,0,0,0"
-                              CornerRadius="0"
-                              Padding="0"
                               Width="40"
                               Delay="400"
                               Interval="125"
@@ -489,9 +546,6 @@
       <Style Selector="^:left">
         <Style Selector="^ /template/ StackPanel#PART_SpinnerPanel">
           <Setter Property="DockPanel.Dock" Value="Left" />
-        </Style>
-        <Style Selector="^ /template/ RepeatButton">
-          <Setter Property="BorderThickness" Value="0,0,1,0" />
         </Style>
       </Style>
     </ControlTheme>

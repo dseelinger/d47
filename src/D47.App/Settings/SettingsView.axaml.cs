@@ -11,6 +11,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Styling;
 using Avalonia.Threading;
 using D47.App.Controls;
 using D47.App.Input;
@@ -307,6 +308,15 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
     /// <summary>A brush fetched at call time, so state changes pick up the current theme.</summary>
     private IBrush? Res(string key) => this.FindResource(key) as IBrush;
+
+    /// <summary>
+    /// The glyph button control theme (#376), shared by every bare-glyph button this view builds.
+    /// Resolved from Application.Current rather than <c>this.FindResource</c>: these buttons are
+    /// built before the view is attached to a window, and an unattached control's FindResource
+    /// cannot walk up to Application yet.
+    /// </summary>
+    private static ControlTheme? GlyphButtonTheme =>
+        Application.Current!.FindResource("D47.GlyphButton") as ControlTheme;
 
     /// <summary>
     /// Binds a brush property to a theme resource, so a theme switch repaints controls built in code
@@ -759,26 +769,22 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         headerRow.Children.Add(docs);
 
         // The gesture that matters when things have gone wrong .com/dseelinger/d47/issues/61).
+        // Reserved as a fixed 44x44 cell whether or not the card has changes, so the heading row
+        // does not change height when the reset appears (#376).
         var reset = new Button
         {
-            // Accent, like every other bare glyph whose only affordance is that it can be pressed (#208).
-            Content = Glyphs.Draw(Glyphs.Reset, ThemeManager.AccentKey, TypeScale.Small),
-
-            // Room for the stroke, which Made puts half of outside the box — see the note on Glyphs.Reset.
-            Padding = new Thickness(4, 4),
-            MinWidth = 0,
+            Theme = GlyphButtonTheme,
+            Width = TypeScale.MinimumTarget,
+            Height = TypeScale.MinimumTarget,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
-            Background = Brushes.Transparent,
-            BorderThickness = new Thickness(0),
-            IsVisible = CardHasChanges(rows),
+            IsEnabled = CardHasChanges(rows),
         };
 
-        // With the mark rather than against it (#208).
-        Themed(reset, Button.ForegroundProperty, ThemeManager.AccentKey);
+        Glyphs.MarkFollowingForeground(
+            reset, Glyphs.Reset, $"Reset {title}", TypeScale.Small);
 
-        // The word was this button's accessible name by being its content; a Path has no text, so without
-        // this a screen reader finds an unnamed button where it used to find "Reset".
-        AutomationProperties.SetName(reset, $"Reset {title}");
         ToolTip.SetTip(reset, $"Put every {title} setting you have changed back to its default. Keys are untouched.");
 
         reset.Click += (_, _) =>
@@ -791,7 +797,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Refresh();
         };
 
-        // Held so its visibility can follow the card's state, the same way each row's glyph follows its own.
+        // Held so its enabled state can follow the card's state, the same way each row's glyph follows its own.
         _cardResets.Add((rows, reset));
 
         reset.PointerPressed += (_, e) => e.Handled = true;
@@ -864,7 +870,15 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         if (resetSlot is { } slot)
         {
-            var headingRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
+            // Minimum height 44 so the reset's fixed cell does not change the row's height (#376).
+            var headingRow = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 4,
+                MinHeight = TypeScale.MinimumTarget,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            heading.VerticalAlignment = VerticalAlignment.Center;
             headingRow.Children.Add(heading);
             headingRow.Children.Add(GroupResetButton(group, slot));
             stack.Children.Add(headingRow);
@@ -895,17 +909,16 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     {
         var reset = new Button
         {
-            Content = Glyphs.Draw(Glyphs.Reset, ThemeManager.AccentKey, TypeScale.Small),
-            Padding = new Thickness(4, 4),
-            MinWidth = 0,
+            Theme = GlyphButtonTheme,
+            Width = TypeScale.MinimumTarget,
+            Height = TypeScale.MinimumTarget,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
-            Background = Brushes.Transparent,
-            BorderThickness = new Thickness(0),
         };
 
-        Themed(reset, Button.ForegroundProperty, ThemeManager.AccentKey);
+        Glyphs.MarkFollowingForeground(reset, Glyphs.Reset, $"Reset {group}", TypeScale.Small);
 
-        AutomationProperties.SetName(reset, $"Reset {group}");
         ToolTip.SetTip(
             reset,
             "Put this panel back where a fresh install puts it: world-locked, at its default "
@@ -1720,7 +1733,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         foreach (var (rows, button) in _cardResets)
         {
-            button.IsVisible = CardHasChanges(rows);
+            button.IsEnabled = CardHasChanges(rows);
         }
 
         var pageRowsShown = 0;
@@ -2395,12 +2408,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 // Named so anything looking for "the control this row is about" can tell this apart from it.
                 Name = RowResetName,
 
-                // A stroked Path rather than U+21BA (#69).
-                Content = Glyphs.Draw(Glyphs.Reset, ThemeManager.AccentKey, TypeScale.Secondary),
-
+                Theme = GlyphButtonTheme,
                 Width = TypeScale.MinimumTarget,
                 Height = TypeScale.MinimumTarget,
-                Padding = new Thickness(0),
                 HorizontalContentAlignment = HorizontalAlignment.Center,
                 VerticalContentAlignment = VerticalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
@@ -2408,11 +2418,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 IsVisible = false,
             };
 
-            ToolTip.SetTip(back, $"Put {row.Label} back to its default");
+            // A stroked Path rather than U+21BA (#69), following the button's own Foreground so it
+            // moves with the glyph theme's states (#376). Also this button's accessible name, since a
+            // Path has no text of its own.
+            Glyphs.MarkFollowingForeground(back, Glyphs.Reset, $"Reset {row.Label}", TypeScale.Secondary);
 
-            // The character used to be this button's accessible name by being its content; a Path has no
-            // text, so a screen reader would have found an unnamed button where it used to find one.
-            AutomationProperties.SetName(back, $"Reset {row.Label}");
+            ToolTip.SetTip(back, $"Put {row.Label} back to its default");
 
             back.Click += (_, _) =>
             {

@@ -171,6 +171,24 @@ public static class Glyphs
         Avalonia.Automation.AutomationProperties.SetName(button, says);
     }
 
+    /// <summary>
+    /// Puts a mark on a button whose stroke follows the button's own <see cref="Button.Foreground"/>
+    /// rather than a fixed theme key — for a glyph button (#376), whose control theme moves
+    /// Foreground between states and needs the mark to move with it. A Path's Stroke is not an
+    /// inherited property the way a TextBlock's Foreground is, so this binds it explicitly.
+    /// </summary>
+    public static void MarkFollowingForeground(
+        Button button, string data, string says, double size = 14, double strokeThickness = 2)
+    {
+        var glyph = Made(data, size, strokeThickness);
+        glyph.Bind(Shape.StrokeProperty, button.GetObservable(TemplatedControl.ForegroundProperty));
+
+        button.Content = glyph;
+
+        ToolTip.SetTip(button, says);
+        Avalonia.Automation.AutomationProperties.SetName(button, says);
+    }
+
     /// <summary>Whether a path is a filled shape rather than a stroked outline.</summary>
     public static bool IsFilled(string data) =>
         data.StartsWith("F0", StringComparison.Ordinal)

@@ -5,6 +5,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Styling;
 
 namespace D47.App.Controls;
 
@@ -153,22 +154,17 @@ public sealed class Stepper : ContentControl, IChoiceControl
     {
         var button = new RepeatButton
         {
+            Theme = Application.Current!.FindResource("D47.GlyphButton") as ControlTheme,
             Delay = 400,
             Interval = 125,
             Content = glyph,
 
             // Exactly the handoff's cell, which also meets the minimum interactive target for a VR ray.
             Width = Theming.TypeScale.MinimumTarget,
-            Background = Brushes.Transparent,
-            BorderThickness = new Thickness(0),
             VerticalAlignment = VerticalAlignment.Stretch,
             VerticalContentAlignment = VerticalAlignment.Center,
             HorizontalContentAlignment = HorizontalAlignment.Center,
         };
-
-        button.Bind(
-            TemplatedControl.ForegroundProperty,
-            Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.AccentKey));
 
         AutomationProperties.SetName(button, name);
         button.Click += (_, _) => Move(delta);
