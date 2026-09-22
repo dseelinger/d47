@@ -101,10 +101,10 @@ public class EveryGlowIsAStackOfGhostsTests
         scene.Model.Microphone = MicrophoneState.Armed;
         Dispatcher.UIThread.RunJobs();
 
-        var info = ((ISolidColorBrush)Application.Current!.Resources[ThemeManager.InfoKey]!).Color;
+        var warn = ((ISolidColorBrush)Application.Current!.Resources[ThemeManager.WarnKey]!).Color;
         var dot = scene.Panel.FindControl<BloomStack>("MicrophoneBloom")!;
 
-        Assert.All(dot.Ghosts, ghost => Assert.Equal(info, ((DropShadowEffect)ghost.Effect!).Color));
+        Assert.All(dot.Ghosts, ghost => Assert.Equal(warn, ((DropShadowEffect)ghost.Effect!).Color));
         Assert.Null(scene.Panel.FindControl<Border>("MicrophoneRow")!.Effect);
     }
 

@@ -155,10 +155,9 @@ public class ADarkThemeGlowsAndLightDoesNotTests
         Assert.Null(label.Effect);
     }
 
-    /// <summary>The tab-strip rule and the panel's outer edge draw in every theme, but neither carries a glow
-    /// any more — only the elements #345 names do.</summary>
+    /// <summary>The tab-strip rule draws in every theme but carries no glow — only the elements #345 names do.</summary>
     [AvaloniaFact]
-    public void TheTabStripRuleAndTheEdgeGlowNeverGlow()
+    public void TheTabStripRuleNeverGlows()
     {
         Manager().Apply(ThemeCatalog.Elite);
 
@@ -167,16 +166,13 @@ public class ADarkThemeGlowsAndLightDoesNotTests
         surface.Render();
 
         var rule = view.GetVisualDescendants().OfType<Border>().Single(b => b.Name == "TabStripRule");
-        var edge = view.GetVisualDescendants().OfType<ChamferedBorder>().Single(b => b.Name == "EdgeGlow");
 
         Assert.Null(rule.Effect);
-        Assert.Null(edge.Effect);
     }
 
-    /// <summary>The panel's outer edge draws behind the frame rather than on it, so the frame's own text does
-    /// not render into its offscreen layer, and is never hit-testable.</summary>
+    /// <summary>The window edge is the panel's edge: no frame, no chamfer, no edge glow — 32px of padding.</summary>
     [AvaloniaFact]
-    public void TheEdgeGlowIsAnEmptySiblingBehindTheFrame()
+    public void ThePanelHasNoFrame()
     {
         Manager().Apply(ThemeCatalog.Elite);
 
@@ -184,13 +180,11 @@ public class ADarkThemeGlowsAndLightDoesNotTests
         using var surface = new OffscreenSurface(view, new PixelSize(1180, 880));
         surface.Render();
 
-        var edgeGlow = view.GetVisualDescendants().OfType<ChamferedBorder>().Single(b => b.Name == "EdgeGlow");
-        var root = (Avalonia.Controls.Panel)edgeGlow.GetVisualParent()!;
-        var frameIndex = root.Children.ToList().FindIndex(c => c is ChamferedBorder chamfered && chamfered.Name != "EdgeGlow");
-        var edgeIndex = root.Children.IndexOf(edgeGlow);
+        var frame = view.GetVisualDescendants().OfType<DockPanel>().Single(d => d.Name == "Frame");
 
-        Assert.False(edgeGlow.IsHitTestVisible);
-        Assert.True(edgeIndex < frameIndex);
+        Assert.Equal(new Thickness(32), frame.Margin);
+        Assert.Empty(frame.GetVisualAncestors().OfType<ChamferedBorder>());
+        Assert.Equal(default, view.GetVisualDescendants().OfType<Border>().Single(b => b.Name == "ContentPane").BorderThickness);
     }
 
     [AvaloniaFact]

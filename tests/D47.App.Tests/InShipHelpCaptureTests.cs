@@ -33,7 +33,7 @@ public class InShipHelpCaptureTests
         // The intro, the three headings and the three cards — which together are the whole claim that this
         // page is about this reading rather than about the language model.
         Assert.Contains("The conversations you have with those in your ship.", shown);
-        Assert.Contains("Reads like an SMS thread.", shown);
+        Assert.Contains("Reads like a chat log.", shown);
         Assert.Contains("Two ways to input your requests.", shown);
         Assert.Contains("Additional controls.", shown);
         Assert.Contains("Listening", shown);

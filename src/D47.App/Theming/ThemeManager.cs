@@ -59,15 +59,6 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     /// <summary>Accent blended toward white or near-black — the ship conversation bubble's ink (#329).</summary>
     public const string AccentInkKey = "D47.AccentInk";
 
-    /// <summary>A fill, 9% of <see cref="InfoKey"/> mixed onto Background — the Commander conversation bubble's fill.</summary>
-    public const string InfoFillKey = "D47.InfoFill";
-
-    /// <summary>A 1px rule, 35% of <see cref="InfoKey"/> mixed onto Background — the Commander conversation bubble's border.</summary>
-    public const string InfoBorderKey = "D47.InfoBorder";
-
-    /// <summary>Info blended into <see cref="TextKey"/> — the Commander conversation bubble's ink.</summary>
-    public const string InfoInkKey = "D47.InfoInk";
-
     /// <summary>A fill, 5% of Accent mixed onto Background — an unselected Fleet card (#278).</summary>
     public const string CardFillKey = "D47.CardFill";
 
@@ -104,7 +95,7 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         BackgroundKey, SurfaceKey, SurfaceAltKey, BorderKey, TextKey,
         TextMutedKey, TextFaintKey, AccentKey, AccentMutedKey, KnockKey, DangerKey, WarnKey, GoodKey, InfoKey,
         RuleKey, FillLowKey, FillHighKey, FillHigherKey,
-        AccentBorderKey, AccentInkKey, InfoFillKey, InfoBorderKey, InfoInkKey,
+        AccentBorderKey, AccentInkKey,
         CardFillKey, CardFillSelectedKey, RowFillKey, TagBorderKey,
         .. BloomStopKeys(), ScanlinesKey,
         PaneFillKey, PaneBorderKey, TagInkKey, ScrimKey,
@@ -192,9 +183,6 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         // blended toward white or near-black so it stays legible on both light and dark themes.
         resources[AccentBorderKey] = new SolidColorBrush(derived.AccentBorder);
         resources[AccentInkKey] = new SolidColorBrush(derived.AccentInk);
-        resources[InfoFillKey] = new SolidColorBrush(derived.InfoFill);
-        resources[InfoBorderKey] = new SolidColorBrush(derived.InfoBorder);
-        resources[InfoInkKey] = new SolidColorBrush(derived.InfoInk);
 
         // The Fleet card's own fills (#278): unselected at 5% of Accent, selected at 14%.
         resources[CardFillKey] = new SolidColorBrush(derived.CardFill);

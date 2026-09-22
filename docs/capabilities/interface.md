@@ -561,18 +561,16 @@ but invented chatter and a message you only overheard rather than were sent. It 
 installation opens on, and what you come back to unless you left the tab on another reading — see
 *the panel* above.
 
-It is drawn as a conversation, the way the messaging app on your phone draws one: a turn to a
-bubble, **yours on the right in the theme's own colour** and everyone else's on the left. When D47
-notes something *about* the conversation rather than saying something in it — the core changing
-under you — that sits across the middle in the accent, with no bubble, because it is not a side.
+It is drawn as a conversation: a turn to a message, every one on the left behind a thin rule,
+told apart by the badge above it. When D47 notes something *about* the conversation rather than
+saying something in it — the core changing under you — that sits across the middle in the accent,
+with no badge.
 
-Every bubble but that note carries a head: a chip naming who spoke — `CMDR`, `D47`, a persona's
+Every message but that note carries a head: a badge naming who spoke — `CMDR`, `D47`, a persona's
 own name, or a role like `Tower` or `Carrier` for a callout with nobody specific behind it — the
-callout's own key as a small tag when the line came from one, and the time.
+callout's own key in small type when the line came from one, and the time.
 
-The headset's big panel does the same. The mini panel does too and spends less on it: the same
-sides and the same colours, with the gutter and most of the padding given back, because a surface
-512 pixels across cannot afford to say twice over which side a turn is on.
+The headset's big panel does the same, and so does the mini panel.
 
 Only this reading. The other three are one flat block of text — a file is not a conversation
 between anybody, and the `> ` in front of your own words is how a flat page says who spoke.
@@ -721,12 +719,12 @@ view hardcodes a literal and a sixth theme is a file rather than a sweep through
 ```text
 D47.Background      the window behind everything
 D47.Surface         cards, the transcript, raised areas
-D47.SurfaceAlt      row striping, inset areas, the ship's side of the conversation
+D47.SurfaceAlt      row striping, inset areas
 D47.Border          hairlines between things, and the chip behind a code span
 D47.Text            body text
 D47.TextMuted       help text, placeholders, provenance lines
-D47.Accent          the theme's own colour: focus, headings, the ask button
-D47.AccentMuted     the same colour with the volume down: your side of the conversation
+D47.Accent          the theme's own colour: focus, headings, the SEND button
+D47.AccentMuted     the same colour with the volume down: a search match that is not the current one
 D47.Danger          the error banner
 D47.Info            the update banner
 ```

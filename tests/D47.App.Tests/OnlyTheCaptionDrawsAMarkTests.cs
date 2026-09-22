@@ -49,4 +49,13 @@ public class OnlyTheCaptionDrawsAMarkTests
 
         Assert.Empty(offenders);
     }
+
+    /// <summary>The panel's own markup draws no path: the send arrow is the word SEND.</summary>
+    [Fact]
+    public void ThePanelMarkupDrawsNoPath()
+    {
+        var markup = File.ReadAllText(Path.Combine(RepositoryRoot(), "src", "D47.App", "Panel", "PanelView.axaml"));
+
+        Assert.DoesNotContain("<Path", markup, StringComparison.Ordinal);
+    }
 }

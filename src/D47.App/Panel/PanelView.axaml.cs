@@ -189,6 +189,8 @@ public partial class PanelView : UserControl
         Bubbles.AddHandler(PointerPressedEvent, OnBubblesPointerPressed, handledEventsToo: true);
         Bubbles.AddHandler(PointerMovedEvent, OnBubblesPointerMoved, handledEventsToo: true);
 
+        PageBar.SizeChanged += (_, _) => SizeSearchRow();
+
         Controls.Glyphs.Quiet(CopyButton, Controls.CopyWord.Word, "Copy this whole page to the clipboard");
         Controls.Glyphs.Quiet(TurnDetails, "SPEND", "Tokens, cost, and what this has come to over time");
         Controls.Glyphs.Quiet(ResizeButton, "RESIZE", "Resize the panel");
@@ -401,11 +403,18 @@ public partial class PanelView : UserControl
     {
         if (_bound is not null)
         {
-            AskBox.PlaceholderText = _bound.AskHint.ToUpperInvariant();
+            AskBox.PlaceholderText = _bound.AskHint;
         }
     }
 
-    /// <summary>Draws what the microphone is doing (Phase 13, "Show that the microphone is open").</summary>
+    /// <summary>The ask box's tallest: three lines of body text, then it scrolls.</summary>
+    public const double AskBoxMaxHeight = 80;
+
+    /// <summary>
+    /// Draws what the microphone is doing (Phase 13, "Show that the microphone is open"). The dot carries
+    /// the state — Good when ready, Warn while listening or loading, Danger when nothing is open — and is
+    /// hollow unless a device is open; the words stay ink-3 in every state.
+    /// </summary>
     private void ApplyMicrophone()
     {
         if (_bound is null)
@@ -418,21 +427,20 @@ public partial class PanelView : UserControl
 
         var (key, label, filled) = state switch
         {
-            D47.Core.Listening.MicrophoneState.Open => (Theming.ThemeManager.AccentKey, "MIC ON", true),
-            D47.Core.Listening.MicrophoneState.Armed => ("D47.Info", "LISTENING", true),
-            D47.Core.Listening.MicrophoneState.Idle => (Theming.ThemeManager.AccentKey, "PTT READY", true),
-            _ => ("D47.TextMuted", "MIC OFF", false),
+            D47.Core.Listening.MicrophoneState.Open => (Theming.ThemeManager.WarnKey, "MIC ON", true),
+            D47.Core.Listening.MicrophoneState.Armed => (Theming.ThemeManager.WarnKey, "LISTENING", true),
+            D47.Core.Listening.MicrophoneState.Idle => (Theming.ThemeManager.GoodKey, "PTT READY", true),
+            _ => (Theming.ThemeManager.DangerKey, "MIC OFF", false),
         };
 
         // An open gate is open whatever the model is doing. Every other state would otherwise report that
         // the microphone is ready while the model is still loading (#147).
         if (loading)
         {
-            (key, label, filled) = ("D47.Info", "LOADING MODEL", false);
+            (key, label, filled) = (Theming.ThemeManager.WarnKey, "LOADING MODEL", false);
         }
 
         MicrophoneGlyph.Bind(Avalonia.Controls.Shapes.Shape.StrokeProperty, this.GetResourceObservable(key));
-        MicrophoneLabel.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(key));
 
         if (filled)
         {
@@ -446,12 +454,6 @@ public partial class PanelView : UserControl
         // A filled dot glows in its own colour.
         MicrophoneBloom.Bind(Theming.BloomStack.GlowProperty, this.GetResourceObservable(key));
         MicrophoneBloom.IsLit = filled;
-
-        // The border stays the box's own faint Accent rule except while the gate is open, when it turns solid.
-        MicrophoneRow.Bind(
-            Border.BorderBrushProperty,
-            this.GetResourceObservable(
-                state == D47.Core.Listening.MicrophoneState.Open ? key : Theming.ThemeManager.RuleKey));
 
         MicrophoneLabel.Text = label;
     }
@@ -1922,6 +1924,7 @@ public partial class PanelView : UserControl
         {
             SearchCount.Text = D47.Core.Interface.TextSearch.Describe(_matches.Count, _hit);
         }
+        SizeSearchRow();
     }
 
     /// <summary>Puts the current hit on screen.</summary>
@@ -1976,14 +1979,15 @@ public partial class PanelView : UserControl
         // The provenance line, because it is about the transcript and no other tab has turns on it.
         StatusRow.IsVisible = transcript;
 
-        // The microphone indicator shares that rule but not the ask row's: mini and the headset take the
-        // ask box away and keep this, since continuous capture with no visible state is the thing a
+        // The footer shares that rule but not the ask row's: mini and the headset take the ask box away and
+        // keep the microphone's state, since continuous capture with no visible state is the thing a
         // Commander is right to distrust.
-        MicrophoneRow.IsVisible = transcript;
+        Footer.IsVisible = transcript;
 
         // Mini is "the transcript's tail and the provenance line" and nothing else, so the tabs, the mode
         // control, the breadcrumb and the search box go with the rest of the chrome.
         TabStrip.IsVisible = full;
+        TabStripRule.IsVisible = full;
         CrumbRow.IsVisible = full && CrumbRow.Children.Count > 0;
 
         var modal = ModalPane.Child is not null;
@@ -2007,13 +2011,10 @@ public partial class PanelView : UserControl
         TranscriptPane.IsVisible = transcript && !modal && !miniStory;
         PagePane.IsVisible = !transcript && !modal && !miniStory;
 
-        // One border for the whole content region, so the fill is a property rather than a second control
-        // (remediation.md 10, item 1).
-        ContentPane.Bind(
-            Border.BackgroundProperty,
-            this.GetResourceObservable(transcript
-                ? Theming.ThemeManager.PaneFillKey
-                : Theming.ThemeManager.BackgroundKey));
+        // The transcript has no frame of its own: its edge is the window's, and its bar and list sit at the
+        // panel's padding.
+        ContentPane.BorderThickness = transcript ? default : new Thickness(1);
+        PageBar.Margin = transcript ? default : new Thickness(14, 12, 14, 0);
 
         // The page's own bar.
         ShowSearch();
@@ -2744,6 +2745,7 @@ public partial class PanelView : UserControl
                 ? "no lines match"
                 : $"{shown} of {held}";
         }
+        SizeSearchRow();
     }
 
     /// <summary>A line was chosen, so the fields beside it change.</summary>
@@ -2809,10 +2811,12 @@ public partial class PanelView : UserControl
 
         Transcript.IsVisible = !bubbled;
         Bubbles.IsVisible = bubbled;
+        EmptyConversation.IsVisible = false;
         AnchorThread();
 
         if (_bound is null)
         {
+            EmptyConversation.IsVisible = bubbled;
             Transcript.Inlines?.Clear();
             ClearBubbles();
             _matches = [];
@@ -2847,6 +2851,7 @@ public partial class PanelView : UserControl
         if (bubbled)
         {
             DrawBubbles(messages, appended);
+            EmptyConversation.IsVisible = messages.Count == 0;
         }
         else
         {
@@ -2922,7 +2927,7 @@ public partial class PanelView : UserControl
 
             FillStrip(strip, turn, known);
 
-            Bubbles.Children.Add(Bubble(block, turn, mini, strip));
+            Bubbles.Children.Add(Bubble(block, turn, strip));
             _bubbles.Add((block, at, strip));
 
             at += turn.Segments.Sum(segment => segment.Text.Length);
@@ -2984,26 +2989,24 @@ public partial class PanelView : UserControl
         strip.IsVisible = strip.Children.Count > 0;
     }
 
-    /// <summary>One turn, dressed.</summary>
-    private Control Bubble(SelectableTextBlock block, DrawnTurn turn, bool mini, WrapPanel? strip)
+    /// <summary>
+    /// One turn, dressed: a 2px left rule and the turn beside it, no border, ground or clip. Hovering lays
+    /// a fill-1 ground under the row and lifts the rule from line-2 to line.
+    /// </summary>
+    private Control Bubble(SelectableTextBlock block, DrawnTurn turn, WrapPanel? strip)
     {
         if (turn.Marker)
         {
             block.TextAlignment = TextAlignment.Center;
-            block.Margin = new Thickness(0, mini ? 3 : 6, 0, mini ? 3 : 6);
 
             return block;
         }
 
-        var commander = turn.Voice == TranscriptVoice.Commander;
+        block.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.TextMutedKey));
+        block.MaxWidth = BodyMaxWidth;
+        block.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left;
 
-        block.Bind(
-            TextBlock.ForegroundProperty,
-            this.GetResourceObservable(commander
-                ? Theming.ThemeManager.InfoInkKey
-                : Theming.ThemeManager.AccentInkKey));
-
-        var content = new StackPanel { Spacing = 6, Children = { Head(turn), block } };
+        var content = new StackPanel { Spacing = 8, Children = { Head(turn), block } };
 
         // The buttons only while the proposal is still waiting — looked up live rather than trusted from
         // whatever this run's own tag last said, so a settlement this surface missed still takes them away
@@ -3020,138 +3023,109 @@ public partial class PanelView : UserControl
             content.Children.Add(strip);
         }
 
-        content.Margin = mini ? new Thickness(7, 4) : new Thickness(11, 8);
-
-        // Chamfered rather than rounded (#275): 13px cut from the corner nearest the tail of that side's
-        // messaging convention — bottom-left for the ship, bottom-right for the Commander.
-        var bubble = new Controls.ChamferedBorder
+        var row = new Border
         {
             Child = content,
-            Chamfer = commander ? new CornerRadius(0, 0, 13, 0) : new CornerRadius(0, 0, 0, 13),
-            Margin = new Thickness(0, mini ? 2 : 4),
-            BorderThickness = new Thickness(1),
-            HorizontalAlignment = commander
-                ? Avalonia.Layout.HorizontalAlignment.Right
-                : Avalonia.Layout.HorizontalAlignment.Left,
+            BorderThickness = new Thickness(2, 0, 0, 0),
+            Padding = new Thickness(14, 0, 0, 0),
+            Background = Brushes.Transparent,
         };
 
-        // The two sides, by colour as well as by side, which is the convention every messaging app on the
-        // Commander's phone already taught them.
-        bubble.Bind(
-            Controls.ChamferedBorder.BackgroundProperty,
-            this.GetResourceObservable(commander
-                ? Theming.ThemeManager.InfoFillKey
-                : Theming.ThemeManager.FillLowKey));
+        row.Bind(Border.BorderBrushProperty, this.GetResourceObservable(Theming.ThemeManager.BorderKey));
 
-        bubble.Bind(
-            Controls.ChamferedBorder.BorderBrushProperty,
-            this.GetResourceObservable(commander
-                ? Theming.ThemeManager.InfoBorderKey
-                : Theming.ThemeManager.AccentBorderKey));
-
-        // Each side keeps to its own share of the pane, the ship a little more than the Commander (#275) —
-        // as Grid star columns so the split holds at any width without measuring the pane itself.
-        var gutter = mini ? "12*,*" : commander ? "58*,42*" : "72*,28*";
-
-        var row = new Grid
+        row.PointerEntered += (_, _) =>
         {
-            ColumnDefinitions = new ColumnDefinitions(commander ? Reversed(gutter) : gutter),
-            Margin = commander ? new Thickness(0, 0, CommanderBubbleScrollbarClearance, 0) : default,
+            row.Bind(Border.BackgroundProperty, this.GetResourceObservable(Theming.ThemeManager.FillLowKey));
+            row.Bind(Border.BorderBrushProperty, this.GetResourceObservable(Theming.ThemeManager.RuleKey));
         };
 
-        Grid.SetColumn(bubble, commander ? 1 : 0);
-        row.Children.Add(bubble);
+        row.PointerExited += (_, _) =>
+        {
+            row.Background = Brushes.Transparent;
+            row.Bind(Border.BorderBrushProperty, this.GetResourceObservable(Theming.ThemeManager.BorderKey));
+        };
 
         return row;
     }
 
-    /// <summary>Who spoke, what it was about, and when — atop every bubble but the panel's own note (#276).</summary>
+    /// <summary>A message body's widest: 76 characters of Titillium Web at 16.</summary>
+    internal const double BodyMaxWidth = 608;
+
+    /// <summary>Who spoke, what it was about, and when — atop every turn but the panel's own note (#276).</summary>
     private Control Head(DrawnTurn turn)
     {
-        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
 
         row.Children.Add(SpeakerChip(turn));
 
         if (turn.SourceKey is { Length: > 0 } key)
         {
-            row.Children.Add(SourceTag(key));
+            row.Children.Add(Faint(key));
         }
 
-        var time = new TextBlock
-        {
-            Text = turn.Time.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture),
-            FontFamily = MonospaceFamily,
-            FontSize = Theming.TypeScale.Small,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-
-        time.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.TextMutedKey));
-
-        row.Children.Add(time);
+        row.Children.Add(Faint(turn.Time.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture)));
 
         return row;
     }
 
     /// <summary>
-    /// The chip a bubble's head names its speaker with: the Commander in Info, D47 solid Accent, and
-    /// everyone else — a persona, Tower, Carrier, Crew, Comms — Accent ink on a rule border (#276).
+    /// The badge a turn's head names its speaker with: D47 in reverse video with bloom, the Commander on a
+    /// line-2 fill in ink-2, and everyone else — a persona, Tower, Carrier, Crew, Comms — on fill-2 in hot.
     /// </summary>
     private Control SpeakerChip(DrawnTurn turn)
     {
         var label = new TextBlock
         {
             Text = turn.Speaker,
+            FontFamily = ChromeFamily,
             FontSize = Theming.TypeScale.Small,
-            FontWeight = FontWeight.SemiBold,
+            FontWeight = FontWeight.Bold,
+            LetterSpacing = Theming.TypeScale.Small * 0.14,
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        var chip = new Border { Padding = new Thickness(7, 2), Child = label };
+        var chip = new Border { Padding = new Thickness(7, 3), Child = label };
 
-        if (turn.Voice == TranscriptVoice.Commander)
-        {
-            chip.BorderThickness = new Thickness(1);
-            chip.Bind(Border.BackgroundProperty, this.GetResourceObservable(Theming.ThemeManager.InfoFillKey));
-            chip.Bind(Border.BorderBrushProperty, this.GetResourceObservable(Theming.ThemeManager.InfoBorderKey));
-            label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.InfoInkKey));
-        }
-        else if (turn.Speaker == "D47")
-        {
-            chip.Bind(Border.BackgroundProperty, this.GetResourceObservable(Theming.ThemeManager.AccentKey));
-            label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.BackgroundKey));
-        }
-        else
-        {
-            chip.BorderThickness = new Thickness(1);
-            chip.Bind(Border.BackgroundProperty, this.GetResourceObservable(Theming.ThemeManager.FillLowKey));
-            chip.Bind(Border.BorderBrushProperty, this.GetResourceObservable(Theming.ThemeManager.RuleKey));
-            label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.AccentKey));
-        }
+        var (fill, ink) = turn.Voice == TranscriptVoice.Commander
+            ? (Theming.ThemeManager.BorderKey, Theming.ThemeManager.TextMutedKey)
+            : turn.Speaker == "D47"
+                ? (Theming.ThemeManager.AccentKey, Theming.ThemeManager.KnockKey)
+                : (Theming.ThemeManager.FillHighKey, Theming.ThemeManager.AccentInkKey);
 
-        return chip;
+        chip.Bind(Border.BackgroundProperty, this.GetResourceObservable(fill));
+        label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(ink));
+
+        return turn.Speaker == "D47" && turn.Voice != TranscriptVoice.Commander
+            ? new Theming.BloomStack
+            {
+                Tier = BloomTier.Normal,
+                Child = chip,
+                VerticalAlignment = VerticalAlignment.Center,
+            }
+            : chip;
     }
 
-    /// <summary>
-    /// A callout's key, as plain monospace text rather than a boxed tag: it says where a line came from, which
-    /// is read after the line itself, so it sits below the prose in weight rather than beside the speaker.
-    /// </summary>
-    private Control SourceTag(string sourceKey)
+    /// <summary>A turn's intent or its time: JetBrains Mono 13 in ink-3, never wrapped.</summary>
+    private Control Faint(string text)
     {
         var label = new TextBlock
         {
-            Text = sourceKey,
+            Text = text,
             FontFamily = MonospaceFamily,
             FontSize = Theming.TypeScale.Small,
+            TextWrapping = TextWrapping.NoWrap,
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.TagInkKey));
+        label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.TextFaintKey));
 
         return label;
     }
 
     /// <summary>The face for times and keys — readouts, which is all monospace is kept for.</summary>
     private static readonly FontFamily MonospaceFamily = new(Theming.Fonts.MonoFamily);
+
+    private static readonly FontFamily ChromeFamily = new(Theming.Fonts.ChromeFamily);
 
     /// <summary>Whether a proposal is still waiting on the Commander, read from the store rather than a run's own say-so (#277).</summary>
     private bool IsProposalPending(string proposalId) =>
@@ -3169,27 +3143,15 @@ public partial class PanelView : UserControl
             () => { _checklists?.Decline(proposalId); },
             "or say \"accept the proposal\"");
 
-    /// <summary>
-    /// The Fluent theme's expanded (hovered/dragged) overlay scroll bar width, in DIPs — the thin idle
-    /// bar is 8px, but one fixed clearance that covers the wider state clears both without having to
-    /// track which one is currently drawn (#347).
-    /// </summary>
-    private const double CommanderBubbleScrollbarClearance = 20;
-
-    private static string Reversed(string columns) =>
-        string.Join(',', columns.Split(',').Reverse());
-
     /// <summary>One turn's text into one block, as runs.</summary>
     private void Fill(SelectableTextBlock block, DrawnTurn turn, int at)
     {
         var inlines = block.Inlines ??= [];
         inlines.Clear();
 
-        // A hit that is not the current one is drawn in the accent with the volume down — which is the
-        // Commander's own bubble fill, and would be invisible inside it.
-        var quiet = turn.Voice == TranscriptVoice.Commander && !turn.Marker && Page == TranscriptPage.Conversation
-            ? Theming.ThemeManager.SurfaceKey
-            : Theming.ThemeManager.AccentMutedKey;
+        // A message body is prose, so machine text inside one switches face; a flat page is monospace
+        // throughout and marks a code span with a ground instead.
+        var prose = !turn.Marker && Page == TranscriptPage.Conversation;
 
         foreach (var segment in turn.Segments)
         {
@@ -3209,11 +3171,17 @@ public partial class PanelView : UserControl
 
                 if (segment.Style.HasFlag(MarkupStyle.Code))
                 {
-                    // The whole transcript is already monospaced, so a code span has to be told apart some
-                    // other way: a chip behind it.
-                    run.Bind(
-                        Avalonia.Controls.Documents.TextElement.BackgroundProperty,
-                        this.GetResourceObservable(Theming.ThemeManager.BorderKey));
+                    if (prose)
+                    {
+                        run.FontFamily = MonospaceFamily;
+                        run.FontSize = Theming.TypeScale.Tip;
+                    }
+                    else
+                    {
+                        run.Bind(
+                            Avalonia.Controls.Documents.TextElement.BackgroundProperty,
+                            this.GetResourceObservable(Theming.ThemeManager.BorderKey));
+                    }
                 }
 
                 if (segment.Marker)
@@ -3233,7 +3201,7 @@ public partial class PanelView : UserControl
                         Avalonia.Controls.Documents.TextElement.BackgroundProperty,
                         this.GetResourceObservable(match == _hit
                             ? Theming.ThemeManager.AccentKey
-                            : quiet));
+                            : Theming.ThemeManager.AccentMutedKey));
 
                     if (match == _hit)
                     {
@@ -3649,6 +3617,13 @@ public partial class PanelView : UserControl
         if (e.ViewportDelta.Y != 0)
         {
             AnchorThread();
+
+            // A resize keeps the offset, so a reader who was following would lose the newest line off the
+            // bottom; posted, because this runs inside a layout pass.
+            if (_following)
+            {
+                Dispatcher.UIThread.Post(Follow);
+            }
         }
 
         // Only when the offset actually moved, and deliberately not when the viewport or the extent did.
@@ -3737,11 +3712,61 @@ public partial class PanelView : UserControl
         ShowLogSettingsStrip();
     }
 
-    private void ShowPageBar() =>
+    private void ShowPageBar()
+    {
         PageBar.IsVisible = Mode == PanelMode.Full
                             && ModalPane.Child is null
                             && !Layer.IsVisible
                             && (ModePicker.IsVisible || SearchRow.IsVisible || RawToggleBox.IsVisible);
+
+        // The rule and the 16px below it belong to the transcript's bar.
+        PageBarRule.IsVisible = PageBar.IsVisible && Tab == PanelTab.Transcript;
+        TranscriptPane.Padding = new Thickness(0, PageBarRule.IsVisible ? 16 : 0, 0, 0);
+
+        SizeSearchRow();
+    }
+
+    /// <summary>
+    /// The search field's width, clamp(240, 32% of the bar, 420), beside the readings when the readings,
+    /// the row's actions and the field all fit across the bar, and on a line of its own below them when
+    /// they do not — where it narrows to what is left, down to 90.
+    /// </summary>
+    private void SizeSearchRow()
+    {
+        var bar = PageBar.Bounds.Width;
+
+        if (!SearchRow.IsVisible || bar <= 0)
+        {
+            return;
+        }
+
+        var actions = 0.0;
+
+        foreach (var child in SearchRow.Children)
+        {
+            if (child != SearchInput && child.IsVisible)
+            {
+                child.Measure(Size.Infinity);
+                actions += child.DesiredSize.Width;
+            }
+        }
+
+        var readings = 0.0;
+
+        if (ModePicker.IsVisible)
+        {
+            ModePicker.Measure(Size.Infinity);
+            readings = ModePicker.DesiredSize.Width;
+        }
+
+        const double Gap = 16;
+        var field = Math.Clamp(bar * 0.32, 240, 420);
+        var beside = readings == 0 || readings + Gap + actions + field <= bar;
+
+        DockPanel.SetDock(SearchRow, beside ? Dock.Right : Dock.Bottom);
+        SearchRow.Margin = beside ? new Thickness(readings == 0 ? 0 : Gap, 0, 0, 0) : new Thickness(0, 8, 0, 0);
+        SearchInput.Width = Math.Max(90, Math.Min(field, bar - actions));
+    }
 
     /// <summary>Built lazily the first time it would show, and never rebuilt after (#283).</summary>
     private void ShowLogSettingsStrip()

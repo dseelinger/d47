@@ -165,10 +165,54 @@ public class MicrophoneIsVisibleTests
 
         Render(view, 1024, 640);
 
-        // Two rows, both hidden by ApplyChrome off the transcript tab.
+        // Both hidden by ApplyChrome off the transcript tab; the indicator goes with its footer.
         Assert.False(Named(view, "StatusRow").IsVisible);
-        Assert.False(Named(view, "MicrophoneRow").IsVisible);
+        Assert.False(Named(view, "Footer").IsVisible);
     }
+
+    /// <summary>Only the dot says the state by colour: Good when ready, Warn listening, Danger when off.</summary>
+    [AvaloniaTheory]
+    [InlineData(MicrophoneState.Idle, Theming.ThemeManager.GoodKey)]
+    [InlineData(MicrophoneState.Armed, Theming.ThemeManager.WarnKey)]
+    [InlineData(MicrophoneState.Open, Theming.ThemeManager.WarnKey)]
+    [InlineData(MicrophoneState.Off, Theming.ThemeManager.DangerKey)]
+    public void OnlyTheDotChangesColour(MicrophoneState state, string dotKey)
+    {
+        var model = new PanelViewModel { Microphone = state };
+        var view = Bind(model);
+        var window = new Window { Width = 924, Height = 640, Content = view };
+        window.Show();
+
+        var dot = (Avalonia.Controls.Shapes.Ellipse)Named(view, "MicrophoneGlyph");
+        var label = (TextBlock)Named(view, "MicrophoneLabel");
+
+        Assert.Equal(Colour(view, dotKey), (dot.Stroke as Avalonia.Media.ISolidColorBrush)?.Color);
+        Assert.Equal(
+            Colour(view, Theming.ThemeManager.TextFaintKey),
+            (label.Foreground as Avalonia.Media.ISolidColorBrush)?.Color);
+
+        window.Close();
+    }
+
+    /// <summary>The status band is a 36px strip on the footer's ground, with no border of its own.</summary>
+    [AvaloniaFact]
+    public void TheStatusBandHasNoBorder()
+    {
+        var view = Bind(new PanelViewModel());
+
+        Render(view, 924, 640);
+
+        var band = (Border)Named(view, "MicrophoneRow");
+        var footer = (Border)Named(view, "Footer");
+
+        Assert.Equal(36, band.Bounds.Height);
+        Assert.Equal(default, band.BorderThickness);
+        Assert.Equal(new Thickness(0, 1, 0, 0), footer.BorderThickness);
+    }
+
+    private static Avalonia.Media.Color? Colour(Control near, string key) =>
+        (near.FindResource(key) as Avalonia.Media.ISolidColorBrush)?.Color
+        ?? throw new InvalidOperationException($"{key} is not reachable from {near}");
 
     private static Control Named(Control view, string name) =>
         view.GetLogicalDescendants().OfType<Control>().Single(control => control.Name == name);

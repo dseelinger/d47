@@ -1,8 +1,11 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.VisualTree;
 using D47.App.Controls;
 using D47.App.Panel;
 using D47.App.Theming;
@@ -11,11 +14,13 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary> The conversation is a conversation, so the Conversation page is drawn as one — a turn to a bubble,
-/// the Commander's on the right and the ship's on the left, each side its own colour. </summary>
+/// <summary>
+/// The Conversation page is drawn as a conversation: a turn to a message, every one on the left behind a
+/// 2px rule, told apart by the badge in its head rather than by side or colour.
+/// </summary>
 public class TheConversationLooksLikeOneTests
 {
-    /// <summary>An exchange with both sides in it, and the panel's own note about the core.</summary>
+    /// <summary>An exchange with both speakers in it, and the panel's own note about the core.</summary>
     private static PanelViewModel Exchange()
     {
         var model = new PanelViewModel();
@@ -31,65 +36,135 @@ public class TheConversationLooksLikeOneTests
     private static IReadOnlyList<Control> Turns(PanelView panel) =>
         [.. panel.GetControl<StackPanel>("Bubbles").Children];
 
-    /// <summary>The bubble inside a turn's row, or null for a turn that is drawn without one.</summary>
-    private static ChamferedBorder? Bubble(Control turn) =>
-        turn is Grid row ? row.Children.OfType<ChamferedBorder>().Single() : null;
+    private static IReadOnlyList<Border> Messages(PanelView panel) => [.. Turns(panel).OfType<Border>()];
 
     private static Color? Colour(IBrush? brush) => (brush as ISolidColorBrush)?.Color;
 
-    /// <summary>How much of the pane's width a turn may take before it wraps.</summary>
-    private static double Share(PanelView panel)
-    {
-        var columns = ((Grid)Turns(panel)[0]).ColumnDefinitions;
+    private static Color? Resource(Control near, string key) => Colour((IBrush?)near.FindResource(key));
 
-        return columns[0].Width.Value / (columns[0].Width.Value + columns[^1].Width.Value);
-    }
+    /// <summary>The badge in a message's head.</summary>
+    private static Border Badge(Border message) =>
+        message.GetVisualDescendants().OfType<Border>().First(border => border.Child is TextBlock);
 
     /// <summary>What one turn says.</summary>
     private static string Said(SelectableTextBlock block) =>
         string.Concat(block.Inlines!.OfType<Avalonia.Controls.Documents.Run>().Select(run => run.Text));
 
     [AvaloniaFact]
-    public void TheCommanderIsOnTheRightAndTheShipOnTheLeft()
+    public void BothSpeakersSitOnTheLeft()
     {
         var panel = Laid(new PanelView { DataContext = Exchange() });
 
-        var sides = Turns(panel)
-            .Select(Bubble)
-            .Where(bubble => bubble is not null)
-            .Select(bubble => bubble!.HorizontalAlignment);
+        var messages = Messages(panel);
 
-        Assert.Equal(
-            [HorizontalAlignment.Left, HorizontalAlignment.Right, HorizontalAlignment.Left],
-            sides);
+        Assert.Equal(3, messages.Count);
+        Assert.All(messages, message => Assert.Equal(HorizontalAlignment.Stretch, message.HorizontalAlignment));
+        Assert.All(messages, message => Assert.Equal(new Thickness(14, 0, 0, 0), message.Padding));
     }
 
-    /// <summary>
-    /// And by colour as well as by side, which is the convention every messaging application on the
-    /// Commander's phone already taught them.
-    /// </summary>
+    /// <summary>A 2px left rule and nothing else: no border, no ground, no clipped corner.</summary>
     [AvaloniaFact]
-    public void EachSideHasItsOwnColour()
+    public void AMessageIsALeftRuleAndNothingElse()
     {
-        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(themeId: null);
+        Themed();
 
-        var window = new Window { Width = 900, Height = 560 };
+        var window = new Window();
         var panel = Laid(new PanelView { DataContext = Exchange() }, window);
 
-        var fills = Turns(panel)
-            .Select(Bubble)
-            .Where(bubble => bubble is not null)
-            .Select(bubble => Colour(bubble!.Background))
-            .ToArray();
+        Assert.All(Messages(panel), message =>
+        {
+            Assert.Equal(new Thickness(2, 0, 0, 0), message.BorderThickness);
+            Assert.Equal(default, message.CornerRadius);
+            Assert.Equal(Resource(window, ThemeManager.BorderKey), Colour(message.BorderBrush));
+            Assert.Equal(Colors.Transparent, Colour(message.Background));
+        });
 
-        Assert.Equal(Colour((IBrush?)window.FindResource(ThemeManager.FillLowKey)), fills[0]);
-        Assert.Equal(Colour((IBrush?)window.FindResource(ThemeManager.InfoFillKey)), fills[1]);
-        Assert.Equal(fills[0], fills[2]);
+        Assert.Empty(panel.GetControl<StackPanel>("Bubbles").GetVisualDescendants().OfType<ChamferedBorder>());
+    }
+
+    /// <summary>D47's badge is reverse video in Accent; the Commander's is a line-2 fill in ink-2.</summary>
+    [AvaloniaFact]
+    public void TheBadgeTellsTheSpeakersApart()
+    {
+        Themed();
+
+        var window = new Window();
+        var panel = Laid(new PanelView { DataContext = Exchange() }, window);
+        var messages = Messages(panel);
+
+        var ship = Badge(messages[0]);
+        var commander = Badge(messages[1]);
+
+        Assert.Equal(Resource(window, ThemeManager.AccentKey), Colour(ship.Background));
+        Assert.Equal(Resource(window, ThemeManager.KnockKey), Colour(((TextBlock)ship.Child!).Foreground));
+        Assert.IsType<BloomStack>(ship.GetVisualParent());
+
+        Assert.Equal(Resource(window, ThemeManager.BorderKey), Colour(commander.Background));
+        Assert.Equal(Resource(window, ThemeManager.TextMutedKey), Colour(((TextBlock)commander.Child!).Foreground));
+    }
+
+    /// <summary>The body is ink-2 prose, whoever spoke it.</summary>
+    [AvaloniaFact]
+    public void EveryBodyIsInkTwoProse()
+    {
+        Themed();
+
+        var window = new Window();
+        var panel = Laid(new PanelView { DataContext = Exchange() }, window);
+
+        var bodies = panel.TranscriptBlocks.Where(block => block.TextAlignment != TextAlignment.Center).ToArray();
+
+        Assert.Equal(3, bodies.Length);
+        Assert.All(bodies, body =>
+        {
+            Assert.Equal(Resource(window, ThemeManager.TextMutedKey), Colour(body.Foreground));
+            Assert.Equal(TypeScale.Body, body.FontSize);
+            Assert.Contains("Titillium", body.FontFamily.ToString(), StringComparison.Ordinal);
+        });
+    }
+
+    /// <summary>Hovering lays fill-1 under the row and lifts the rule from line-2 to line.</summary>
+    [AvaloniaFact]
+    public void HoverLiftsTheRule()
+    {
+        Themed();
+
+        var window = new Window();
+        var panel = Laid(new PanelView { DataContext = Exchange() }, window);
+        var message = Messages(panel)[0];
+
+        var middle = message.TranslatePoint(new Point(40, message.Bounds.Height / 2), window)!.Value;
+        window.MouseMove(middle, RawInputModifiers.None);
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(Resource(window, ThemeManager.FillLowKey), Colour(message.Background));
+        Assert.Equal(Resource(window, ThemeManager.RuleKey), Colour(message.BorderBrush));
+
+        window.MouseMove(new Point(1, 1), RawInputModifiers.None);
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(Colors.Transparent, Colour(message.Background));
+        Assert.Equal(Resource(window, ThemeManager.BorderKey), Colour(message.BorderBrush));
+    }
+
+    /// <summary>A long body wraps at 76 characters' width rather than running the width of the window.</summary>
+    [AvaloniaFact]
+    public void ALongBodyStopsAtItsMeasure()
+    {
+        var model = new PanelViewModel();
+        model.Append(string.Join(' ', Enumerable.Repeat("The beacon is quiet and the turn is done.", 12)));
+
+        var window = new Window();
+        var panel = Laid(new PanelView { DataContext = model }, window, width: 1600);
+
+        var body = panel.TranscriptBlocks.Single();
+
+        Assert.True(body.Bounds.Width <= PanelView.BodyMaxWidth, $"the body is {body.Bounds.Width} wide");
     }
 
     /// <summary>
-    /// The panel's own note is not a side of the conversation, so it gets no bubble and sits across the
-    /// middle — which is where a messaging thread puts the same kind of thing.
+    /// The panel's own note is not a turn of the conversation, so it gets no badge and sits across the
+    /// middle.
     /// </summary>
     [AvaloniaFact]
     public void ThePanelsOwnNoteSitsAcrossTheMiddle()
@@ -104,7 +179,7 @@ public class TheConversationLooksLikeOneTests
 
     /// <summary>The framing a flat page needs is that page's way of saying who spoke.</summary>
     [AvaloniaFact]
-    public void TheBubblesCarryWhatWasSaidAndNoneOfTheFraming()
+    public void TheMessagesCarryWhatWasSaidAndNoneOfTheFraming()
     {
         var model = Exchange();
         var conversation = Laid(new PanelView { DataContext = model });
@@ -113,8 +188,7 @@ public class TheConversationLooksLikeOneTests
             ["Standing by, Commander.", "[Switched to Sentinel]", "where am I", "Holding at Fixture Anchorage."],
             conversation.TranscriptBlocks.Select(Said));
 
-        // The buffer is untouched, mark and all — asserted on the buffer rather than through a page, because
- // the flat reading of the conversation was Details and Details is gone.
+        // The buffer is untouched, mark and all.
         Assert.Contains("\n\n> where am I\n", model.TranscriptText, StringComparison.Ordinal);
     }
 
@@ -124,47 +198,22 @@ public class TheConversationLooksLikeOneTests
         var model = Exchange();
         model.LogSource = () => "12:04 something happened";
 
-        // One page rather than two.
         var panel = Laid(new PanelView { DataContext = model, Page = TranscriptPage.Log });
 
         Assert.Empty(Turns(panel));
         Assert.True(panel.GetControl<SelectableTextBlock>("Transcript").IsVisible);
     }
 
-    /// <summary>
-    /// Mini gets the same conversation and spends less on saying so: a headset panel with 512 pixels
-    /// across it cannot give a fifth of them to a gutter when the colour already says which side a turn
-    /// is on.
-    /// </summary>
+    /// <summary>Mini draws the same messages with the same builder.</summary>
     [AvaloniaFact]
-    public void MiniIsTheSameConversationMoreQuietly()
+    public void MiniIsTheSameConversation()
     {
         var model = Exchange();
         var full = Laid(new PanelView { DataContext = model, Mode = PanelMode.Full });
         var mini = Laid(new PanelView { DataContext = model, Mode = PanelMode.Mini });
 
-        var wide = Bubble(Turns(full)[0])!;
-        var tight = Bubble(Turns(mini)[0])!;
-
-        var widePad = wide.Child!.Margin;
-        var tightPad = tight.Child!.Margin;
-
-        Assert.True(
-            tightPad.Left < widePad.Left,
-            $"mini padded the bubble {tightPad} against the window's {widePad}");
-
-        Assert.True(
-            tight.Margin.Top < wide.Margin.Top,
-            $"mini spaced the turns {tight.Margin} against the window's {wide.Margin}");
-
-        // Still sided, and still coloured.
-        Assert.Equal(wide.HorizontalAlignment, tight.HorizontalAlignment);
-        Assert.Equal(Colour(wide.Background), Colour(tight.Background));
-
-        // And the gutter it gives back is the point: a turn may run nearly the whole width.
-        Assert.True(
-            Share(mini) > Share(full),
-            $"mini gave a turn {Share(mini):P0} of the width against the window's {Share(full):P0}");
+        Assert.Equal(Messages(full).Count, Messages(mini).Count);
+        Assert.All(Messages(mini), message => Assert.Equal(new Thickness(2, 0, 0, 0), message.BorderThickness));
     }
 
     /// <summary>A reply arrives a delta at a time, and each one redraws the page.</summary>
@@ -185,9 +234,9 @@ public class TheConversationLooksLikeOneTests
         Assert.Equal("Holding at Fixture Anchorage. Fuel is at three quarters.", Said(last));
     }
 
-    /// <summary>A new voice is a new bubble rather than more of the last one.</summary>
+    /// <summary>A new voice is a new message rather than more of the last one.</summary>
     [AvaloniaFact]
-    public void TheOtherSideSpeakingStartsANewBubble()
+    public void TheOtherSpeakerStartsANewMessage()
     {
         var model = Exchange();
         var panel = Laid(new PanelView { DataContext = model });
@@ -198,15 +247,32 @@ public class TheConversationLooksLikeOneTests
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(before + 1, Turns(panel).Count);
-        Assert.Equal(HorizontalAlignment.Right, Bubble(Turns(panel)[^1])!.HorizontalAlignment);
+        Assert.Equal("CMDR", ((TextBlock)Badge(Messages(panel)[^1]).Child!).Text);
+    }
+
+    /// <summary>Before anything is said, one centred line stands in for the list.</summary>
+    [AvaloniaFact]
+    public void AnEmptyConversationSaysSo()
+    {
+        var model = new PanelViewModel();
+        var panel = Laid(new PanelView { DataContext = model });
+
+        var empty = panel.GetControl<TextBlock>("EmptyConversation");
+
+        Assert.True(empty.IsVisible);
+        Assert.Equal(HorizontalAlignment.Center, empty.HorizontalAlignment);
+
+        model.Append("Standing by, Commander.");
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.False(empty.IsVisible);
     }
 
     /// <summary>Searching still reaches every turn.</summary>
     [AvaloniaFact]
-    public void AQueryHighlightsInsideWhicheverBubblesItMatched()
+    public void AQueryHighlightsInsideWhicheverMessagesItMatched()
     {
-        // The highlight is a bound resource, so the palette has to be in place for it to land.
-        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(themeId: null);
+        Themed();
 
         var panel = Laid(new PanelView { DataContext = Exchange() });
 
@@ -225,7 +291,6 @@ public class TheConversationLooksLikeOneTests
             $"a query matching in three turns highlighted in {highlighted.Length} of "
             + $"{panel.TranscriptBlocks.Count}: {string.Join(" | ", panel.TranscriptBlocks.Select(Said))}");
 
-        // And on the query rather than beside it.
         var marked = panel.TranscriptRuns
             .Where(run => run.Background is not null)
             .Select(run => run.Text);
@@ -233,42 +298,19 @@ public class TheConversationLooksLikeOneTests
         Assert.All(marked, text => Assert.Equal("an", text, ignoreCase: true));
     }
 
-    /// <summary>
-    /// The Commander's bubble sits flush against the transcript's right edge, which is exactly where
-    /// <c>TranscriptScroller</c>'s default overlay scroll bar draws — thin when idle, wider (20px in
-    /// the Fluent theme) when active.
-    /// </summary>
-    [AvaloniaFact]
-    public void TheCommanderBubbleClearsTheScrollBar()
+    private static void Themed() =>
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(themeId: null);
+
+    private static PanelView Laid(PanelView panel, Window? into = null, double width = 900)
     {
-        const double expandedScrollBarWidth = 20;
+        var window = into ?? new Window();
 
-        var panel = Laid(new PanelView { DataContext = Exchange() });
-        var scroller = panel.GetControl<ScrollViewer>("TranscriptScroller");
-
-        var commanderBubble = Bubble(Turns(panel).First(turn =>
-            Bubble(turn)?.HorizontalAlignment == HorizontalAlignment.Right))!;
-
-        var bubbleRight = commanderBubble
-            .TranslatePoint(new Point(commanderBubble.Bounds.Width, 0), scroller)!
-            .Value.X;
-
-        Assert.True(
-            bubbleRight <= scroller.Bounds.Width - expandedScrollBarWidth,
-            $"the Commander's bubble reaches x={bubbleRight} in a {scroller.Bounds.Width}-wide "
-            + $"scroller, inside the {expandedScrollBarWidth}px the scroll bar can draw over");
-    }
-
-    private static PanelView Laid(PanelView panel, Window? into = null)
-    {
-        var window = into ?? new Window { Width = 900, Height = 560 };
-
-        window.Width = 900;
+        window.Width = width;
         window.Height = 560;
         window.Content = panel;
         window.Show();
 
-        var bounds = new Rect(0, 0, 900, 560);
+        var bounds = new Rect(0, 0, width, 560);
         window.Measure(bounds.Size);
         window.Arrange(bounds);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();

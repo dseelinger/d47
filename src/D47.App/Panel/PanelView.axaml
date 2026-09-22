@@ -81,26 +81,8 @@
   </UserControl.Resources>
 
   <Panel>
-  <!--
-    The panel's outer edge glow (#285): an empty sibling with the same chamfer geometry as the
-    frame below, behind it in paint order. An Effect on a container renders its whole subtree
-    into the shadow, so the glow could not sit on the frame itself without every line of text in
-    the panel glowing with it — this sibling carries only the geometry the glow needs.
-  -->
-  <controls:ChamferedBorder x:Name="EdgeGlow"
-                             BorderBrush="{DynamicResource D47.Rule}"
-                             BorderThickness="1"
-                             Chamfer="0,14,0,14"
-                             IsHitTestVisible="False" />
-  <!--
-    The panel's own frame: a 1px rule, chamfered top-right and bottom-left, no corner radius, no
-    drop shadow (#273). The same visual on the desktop window and the VR overlay, because both
-    render this one PanelView.
-  -->
-  <controls:ChamferedBorder BorderBrush="{DynamicResource D47.Rule}"
-                             BorderThickness="1"
-                             Chamfer="0,14,0,14">
-  <DockPanel Margin="24,16,24,24">
+  <!-- No frame: the window edge is the panel's edge. -->
+  <DockPanel x:Name="Frame" Margin="32">
 
     <!--
       LastChildFill is off because there is no last child to fill with: the version line that
@@ -200,72 +182,57 @@
 
     </StackPanel>
 
-    <!-- Ask box. Enter sends; the button is for discoverability. -->
-    <Border x:Name="AskRow" DockPanel.Dock="Bottom" Margin="0,14,0,0">
-      <DockPanel>
-        <!-- The send glyph, drawn in-repo like the help mark. The label is gone because a paper
-             aeroplane next to a text box needs no caption anywhere a Commander has been. -->
-        <Button x:Name="AskButton"
-                DockPanel.Dock="Right"
-                Margin="8,0,0,0"
-                Padding="11,7"
-                IsEnabled="{Binding CanAsk}"
-                ToolTip.Tip="Send (Enter)"
-                Click="OnAskClick">
-          <Path x:Name="AskGlyph"
-                Width="17" Height="17"
-                Stretch="Uniform"
-                Fill="{DynamicResource D47.Accent}"
-                Data="M 2.5,3 L 22,12 L 2.5,21 L 2.5,13.6 L 14.5,12 L 2.5,10.4 Z" />
-        </Button>
-        <!-- The placeholder is set in code rather than bound; see ApplyAskHint for why a
-             binding on this particular control is the wrong tool. -->
-        <TextBox x:Name="AskBox"
-                 Text="{Binding AskText, Mode=TwoWay}"
-                 KeyDown="OnAskBoxKeyDown">
-          <!-- The kit TextBox theme carries the typed text; the placeholder alone reads as a HUD
-               field label (#287). -->
-          <TextBox.Styles>
-            <Style Selector="TextBox#AskBox /template/ TextBlock#PART_Placeholder,
-                             TextBox#AskBox /template/ TextBlock#PART_FloatingPlaceholder">
-              <Setter Property="FontFamily" Value="{StaticResource D47.Font.Prose}" />
-              <Setter Property="FontSize" Value="{StaticResource D47.Type.Heading}" />
-            </Style>
-          </TextBox.Styles>
-        </TextBox>
-      </DockPanel>
-    </Border>
-
     <!--
-      Whether the microphone is open (list.md Phase 13), directly above the ask box and drawn
-      whenever the transcript tab is, so it does not go with the ask row when mini or the headset
-      take that away. "Continuous capture with no visible state is the thing a user is right to
-      distrust" does not become less true at a metre — so the indicator lives in the one region
-      both surfaces show in both modes.
+      The footer: the microphone's state over the ask box, on one ground, with one rule above both.
+      The footer shows whenever the transcript tab does, so the microphone state survives mini and the
+      headset; the ask band goes with them.
     -->
-    <Border x:Name="MicrophoneRow"
+    <Border x:Name="Footer"
             DockPanel.Dock="Bottom"
-            Margin="0,10,0,0"
-            Padding="8,5"
+            Margin="0,16,0,0"
             Background="{DynamicResource D47.FillLow}"
-            BorderThickness="1">
-      <StackPanel Orientation="Horizontal" Spacing="7">
-        <!--
-          A round dot rather than a microphone glyph, as in the design: filled or hollow is the
-          state, not just the colour, because a Commander glancing at this in a headset is
-          reading a shape before they read a hue - and because a colour difference alone is not a
-          difference for everybody.
-        -->
-        <theming:BloomStack x:Name="MicrophoneBloom" Tier="High" IsLit="False" VerticalAlignment="Center">
-          <Ellipse x:Name="MicrophoneGlyph"
-                   Width="8" Height="8"
-                   StrokeThickness="1.5" />
-        </theming:BloomStack>
-        <TextBlock x:Name="MicrophoneLabel"
-                   VerticalAlignment="Center"
-                   FontFamily="{StaticResource D47.Font.Chrome}"
-                   LetterSpacing="1"
-                   FontSize="{StaticResource D47.Type.Small}" />
+            BorderBrush="{DynamicResource D47.Border}"
+            BorderThickness="0,1,0,0">
+      <StackPanel>
+        <!-- The dot is the state, by colour and by fill; the words never change colour. -->
+        <Border x:Name="MicrophoneRow"
+                Height="36"
+                Padding="16,0">
+          <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+            <theming:BloomStack x:Name="MicrophoneBloom" Tier="High" IsLit="False" VerticalAlignment="Center">
+              <Ellipse x:Name="MicrophoneGlyph"
+                       Width="8" Height="8"
+                       StrokeThickness="1.5" />
+            </theming:BloomStack>
+            <TextBlock x:Name="MicrophoneLabel"
+                       VerticalAlignment="Center"
+                       FontFamily="{StaticResource D47.Font.Mono}"
+                       FontSize="{StaticResource D47.Type.Caption}"
+                       LetterSpacing="2.2"
+                       Foreground="{DynamicResource D47.TextFaint}" />
+          </StackPanel>
+        </Border>
+
+        <!-- Enter sends. The box grows to three lines, then scrolls. -->
+        <DockPanel x:Name="AskRow" Margin="16,0,16,16">
+          <Button x:Name="AskButton"
+                  Classes="primary"
+                  DockPanel.Dock="Right"
+                  Margin="10,0,0,0"
+                  Padding="34,0"
+                  VerticalAlignment="Bottom"
+                  VerticalContentAlignment="Center"
+                  Content="SEND"
+                  IsEnabled="{Binding CanAsk}"
+                  Click="OnAskClick" />
+          <!-- The placeholder is set in code; see ApplyAskHint. -->
+          <TextBox x:Name="AskBox"
+                   Text="{Binding AskText, Mode=TwoWay}"
+                   TextWrapping="Wrap"
+                   MaxHeight="{x:Static panel:PanelView.AskBoxMaxHeight}"
+                   ScrollViewer.VerticalScrollBarVisibility="Auto"
+                   KeyDown="OnAskBoxKeyDown" />
+        </DockPanel>
       </StackPanel>
     </Border>
 
@@ -529,56 +496,99 @@
       add a page of it too, on the same terms.
     -->
     <!--
-      One bordered container for the whole content region, with the page's own controls inside it
-      (remediation.md 10, items 1, 2 and 3).
-      <para/>
-      It used to be two borders side by side in a Panel — one for the transcript, one for every
-      furnished page — because the two want different fills: the transcript is Surface and the
-      settings page is Background, since a card the colour of its page is not a card. That is
-      still true and is still the rule; what changed is that one border can carry either fill, so
-      the difference is a property rather than a second control. ApplyChrome sets it.
+      One container for the whole content region. Bordered on every tab but the transcript, whose
+      edge is the window's; ApplyChrome sets it.
     -->
     <Border x:Name="ContentPane"
+            Background="{DynamicResource D47.Background}"
             BorderBrush="{DynamicResource D47.PaneBorder}"
             BorderThickness="1"
             CornerRadius="0">
       <DockPanel>
 
       <!--
-        The page's own bar: which reading of the page is showing, and the two things that act on
-        it (remediation.md 10, items 1, 2 and 3).
-        <para/>
-        <b>Inside the panel rather than beside the tabs.</b> The mode control was a segmented pill
-        riding in the tab strip's own row, on the argument that two stacked strips read worse than
-        eight flat tabs. That argument was about a second strip of <em>tabs</em>; what it produced
-        was a row with three unrelated controls competing for one width, which below a certain
-        window size stopped being a layout at all. A control that says which reading of this page
-        you are looking at belongs to the page, and a page is what is inside the border.
+        The page's own bar: the readings on the left, the search field pushed right. SearchRow is docked
+        right beside the readings when both fit and below them when not; SizeSearchRow decides.
       -->
       <DockPanel x:Name="PageBar"
                  DockPanel.Dock="Top"
                  IsVisible="False"
                  Margin="14,12,14,0">
         <!--
-          Which reading of this page is showing. Filled in code, because the roots come from the
-          navigator: a tab declares its own, and a tab with one root shows no control at all.
-          Hidden below the root, where the breadcrumb is already answering which stack you are in.
+          One search affordance for the surface, on the tab that is selected. The transcript pages
+          highlight and step through matches; Settings filters, so the count and the steppers are
+          hidden there. Hidden until a host enables it, which only the desktop window does.
 
-          A plain text row — no frame, no boxes, no ground — rather than a control built for
-          setting a value (#356). Every reading is always on screen; a row that does not fit
-          wraps onto a second line rather than stepping through the readings one at a time. The
-          busy glyph sits beside it rather than inside, because a control's content is its
-          current reading and a spinner is not one of them. OffscreenSurface presses it in the
-          headset the same way it presses any other button — no popup to intercept.
-
-          A DockPanel rather than a horizontal StackPanel: a StackPanel measures a horizontal
-          child with unbounded width, so a WrapPanel inside it gets no width to wrap against.
-          Docked left, the row is measured against the space the bar actually has, which is what
-          lets it wrap.
+          Every child is docked right, declared right to left, so the field keeps the right-hand end
+          and the steppers do not move as the count changes.
         -->
+        <DockPanel x:Name="SearchRow"
+                   DockPanel.Dock="Right"
+                   LastChildFill="False"
+                   IsVisible="False"
+                   VerticalAlignment="Center"
+                   Margin="16,0,0,0">
+          <TextBox x:Name="SearchInput"
+                   DockPanel.Dock="Right"
+                   Width="240"
+                   PlaceholderText="Search this page"
+                   TextChanged="OnSearchChanged"
+                   KeyDown="OnSearchKeyDown" />
+          <Button x:Name="SearchNext"
+                  DockPanel.Dock="Right"
+                  Classes="quiet"
+                  Margin="6,0,0,0"
+                  Content="&#x203A;"
+                  MinWidth="0"
+                  IsVisible="False"
+                  ToolTip.Tip="Next match (Enter)"
+                  Click="OnSearchNextClick" />
+          <Button x:Name="SearchPrevious"
+                  DockPanel.Dock="Right"
+                  Classes="quiet"
+                  Margin="6,0,0,0"
+                  Content="&#x2039;"
+                  MinWidth="0"
+                  IsVisible="False"
+                  ToolTip.Tip="Previous match (Shift+Enter)"
+                  Click="OnSearchPreviousClick" />
+          <TextBlock x:Name="SearchCount"
+                     DockPanel.Dock="Right"
+                     Margin="6,0,0,0"
+                     VerticalAlignment="Center"
+                     IsVisible="False"
+                     FontSize="{StaticResource D47.Type.Secondary}"
+                     Foreground="{DynamicResource D47.TextFaint}" />
+          <!-- Shown only while there is a query. -->
+          <Button x:Name="SearchClear"
+                  DockPanel.Dock="Right"
+                  Classes="quiet"
+                  Margin="6,0,0,0"
+                  Content="CLEAR"
+                  IsVisible="False"
+                  ToolTip.Tip="Clear the search (Esc)"
+                  AutomationProperties.Name="Clear the search"
+                  Click="OnSearchClearClick" />
+          <!--
+            Cuts a scrubbed window around an incident and shows what would leave before anything
+            does. Only on the pages it can cut from, and only where a host has wired it.
+          -->
+          <Button x:Name="DonateButton"
+                  DockPanel.Dock="Right"
+                  Classes="quiet"
+                  Margin="6,0,0,0"
+                  IsVisible="False"
+                  Content="Help improve D47…"
+                  Click="OnDonateClick" />
+          <!-- Copies the whole page as it is shown, not the selection. -->
+          <Button x:Name="CopyButton"
+                  DockPanel.Dock="Right"
+                  Margin="6,0,0,0"
+                  VerticalAlignment="Center"
+                  Click="OnCopyClick" />
+        </DockPanel>
+
         <DockPanel x:Name="ModePicker"
-                   DockPanel.Dock="Left"
-                   Margin="0,0,12,0"
                    VerticalAlignment="Center"
                    IsVisible="False">
           <controls:TextChoice x:Name="ModeReadings"
@@ -623,169 +633,15 @@
                           IsCheckedChanged="OnRawToggled" />
           </StackPanel>
         </DockPanel>
-        <!--
-          One search affordance for the surface, on the tab that is selected — not four features
-          bolted to four pages (list.md Phase 12). What a match does differs by page and that
-          difference is the design: the transcript pages highlight and step, and Settings filters,
-          so the count and the steppers are hidden where they would mean nothing.
-
-          Hidden until a host enables it, which only the desktop window does. Mini shows no strip
-          and the headset has no keyboard, and a search box the Commander cannot type into is
-          worse than no search at all.
-        -->
-        <!--
-          A DockPanel rather than a horizontal stack, and the search box is the child that flexes
-          (remediation.md 10, item 1). A stack with a fixed 200-pixel box in it takes the width it
-          wants and leaves the mode button beside it whatever is left, which on a narrow pane is a
-          sliver — the same failure this batch removed from the tab strip, reproduced one row
-          down. Everything here keeps its size and the box gives, because a search box that is
-          narrower is still a search box and a mode button that is four pixels wide is not a
-          control at all.
-        -->
-        <DockPanel x:Name="SearchRow"
-                   LastChildFill="True"
-                   IsVisible="False"
-                   VerticalAlignment="Center"
-                   Margin="12,0,0,0">
-          <!--
-            One affordance for the whole page as it is currently shown (list.md Phase 19, "Copy
-            log"). Beside the search box because both are about the page rather than about the
-            conversation, and because this is the row a Commander looks at when they are reading
-            rather than talking. The tedious case is several hundred lines of a log, to paste into
-            an issue.
-
-            "Copy All", not "Copy" (remediation.md 10, item 3). The text on this page is selectable
-            and Ctrl+C already works on a selection, so a button beside it saying "Copy" reads as
-            copying that selection — which is the one thing it does not do.
-
-            Centred on both axes, and the content alignment is the half that was missing: the
-            height made the button the right size and the label still sat where the default put
-            it, which beside a 28-pixel search box reads as one control hanging lower than its
-            neighbours.
-          -->
-          <Button x:Name="CopyButton"
-                  DockPanel.Dock="Left"
-                  Margin="0,0,6,0"
-                  VerticalAlignment="Center"
-                  Click="OnCopyClick" />
-          <!--
-            The other thing a Commander does with these two pages, and the one Copy All cannot do
-            (#160). Copy hands over the page as it stands — the Commander's name, other people's
-            messages, a screenful of whatever happened to be on screen. This cuts a window around
-            an incident, scrubs it, and shows exactly what would leave before anything does.
-
-            Worded rather than a glyph, unlike Copy beside it. Copy is a verb everybody already
-            knows and a clipboard icon says it; this is a thing nobody has done before and an icon
-            for it would be a small picture nobody presses. Shown only on the two pages it can cut
-            from, and only where a host has wired it — the headset has no clipboard and no file
-            picker, so on that surface it is simply absent.
-          -->
-          <Button x:Name="DonateButton"
-                  DockPanel.Dock="Left"
-                  Margin="0,0,6,0"
-                  Height="28"
-                  VerticalAlignment="Center"
-                  VerticalContentAlignment="Center"
-                  HorizontalContentAlignment="Center"
-                  Padding="10,0"
-                  IsVisible="False"
-                  Content="Help improve D47…"
-                  FontSize="{StaticResource D47.Type.Secondary}"
-                  Click="OnDonateClick" />
-          <!--
-            The clear affordance sits inside the field, not beside it. Another sibling in this
-            StackPanel would sit outside the border and read as a fourth button in a row that
-            already has Copy and the two steppers, rather than as part of the box it empties.
-
-            U+00D7, the multiplication sign, and deliberately not the letter x — the same reason
-            the steppers above are U+2039 and U+203A rather than angle brackets.
-
-            Hidden until there is something to clear, or it is a control that does nothing for
-            most of the time a Commander can see it.
-          -->
-          <!--
-            Docked innermost-last, and the box is the last child so it is the one that fills.
-            Order matters twice over. A DockPanel gives its first right-docked child the
-            rightmost slot, so the trio is declared next, previous, count to read left to right as
-            count, previous, next. And LastChildFill overrides the last child's own Dock: with the
-            steppers declared last, one of them stretched across the whole row and the count sat
-            outside it (remediation.md 11, item 2).
-          -->
-          <Button x:Name="SearchNext"
-                  DockPanel.Dock="Right"
-                  Margin="6,0,0,0"
-                  Content="&#x203A;"
-                  Padding="8,0"
-                  MinWidth="0"
-                  Height="28"
-                  IsVisible="False"
-                  FontSize="{StaticResource D47.Type.Body}"
-                  ToolTip.Tip="Next match (Enter)"
-                  Click="OnSearchNextClick" />
-          <Button x:Name="SearchPrevious"
-                  DockPanel.Dock="Right"
-                  Margin="6,0,0,0"
-                  Content="&#x2039;"
-                  Padding="8,0"
-                  MinWidth="0"
-                  Height="28"
-                  IsVisible="False"
-                  FontSize="{StaticResource D47.Type.Body}"
-                  ToolTip.Tip="Previous match (Shift+Enter)"
-                  Click="OnSearchPreviousClick" />
-          <TextBlock x:Name="SearchCount"
-                     DockPanel.Dock="Right"
-                     Margin="6,0,0,0"
-                     VerticalAlignment="Center"
-                     IsVisible="False"
-                     FontSize="{StaticResource D47.Type.Secondary}"
-                     Foreground="{DynamicResource D47.TextMuted}" />
-          <!--
-            Body, not Secondary. A field the Commander types into is not supporting text, and at
-            13 beside a page of 14 it read as a smaller-than-everything control rather than as a
-            quieter one — which is the exact drift TypeScale exists to stop.
-          -->
-          <!--
-            The child that gives, and the only one that can. It takes whatever width the row has
-            spare, so no other control has to hold a gap — which is the whole of item 2: the slack
-            has to go somewhere, and every other control here is the wrong place for it.
-            <para/>
-            Capping it and right-aligning the group was tried and does not work: a stretched child
-            with a MaxWidth is centred in what is left, which puts a gap on both sides of the box
-            instead of one beside it, and a child aligned Right does not stretch at all — it
-            collapses to MinWidth at every window size. So the box is wide on a wide window, which
-            is a cosmetic cost paid for having no gap at any width and still shrinking to 90 on a
-            narrow pane.
-          -->
-          <TextBox x:Name="SearchInput"
-                   MinWidth="90"
-                   Height="28"
-                   Padding="8,3"
-                   FontSize="{StaticResource D47.Type.Body}"
-                   VerticalContentAlignment="Center"
-                   PlaceholderText="Search this page"
-                   TextChanged="OnSearchChanged"
-                   KeyDown="OnSearchKeyDown">
-            <TextBox.InnerRightContent>
-              <Button x:Name="SearchClear"
-                      Content="&#x00D7;"
-                      Padding="6,0"
-                      MinWidth="0"
-                      Margin="0,0,2,0"
-                      IsVisible="False"
-                      Background="Transparent"
-                      BorderThickness="0"
-                      VerticalAlignment="Center"
-                      FontSize="{StaticResource D47.Type.Body}"
-                      Foreground="{DynamicResource D47.TextMuted}"
-                      Cursor="Hand"
-                      ToolTip.Tip="Clear the search (Esc)"
-                      AutomationProperties.Name="Clear the search"
-                      Click="OnSearchClearClick" />
-            </TextBox.InnerRightContent>
-          </TextBox>
-        </DockPanel>
       </DockPanel>
+
+      <!-- The 1px rule under the transcript's bar, 16px below it. -->
+      <Border x:Name="PageBarRule"
+              DockPanel.Dock="Top"
+              IsVisible="False"
+              Height="1"
+              Margin="0,16,0,0"
+              Background="{DynamicResource D47.Border}" />
 
       <!--
         The Log file page's own settings — log levels — pinned to the bottom of the page rather than
@@ -804,8 +660,8 @@
           <ScrollViewer x:Name="TranscriptScroller" ScrollChanged="OnTranscriptScrolled">
             <!--
               Two presentations of one page, and exactly one of them is ever visible. The
-              conversation is a conversation, so it is drawn as one - each turn its own bubble,
-              the Commander's on the right (asked for 2026-08-22). Technical and the log file
+              conversation is a conversation, so it is drawn as one - each turn its own message,
+              both speakers on the left, told apart by the badge. Technical and the log file
               are not conversations: one is a diagnostic feed and the other is a file, and both
               stay the flat block they have always been.
 
@@ -879,7 +735,19 @@
               leaving the top of the pane full and the rest empty. TranscriptContent is held at least
               the viewport's height for this to have room to act in.
             -->
-            <StackPanel x:Name="Bubbles" IsVisible="False" VerticalAlignment="Bottom" />
+            <StackPanel x:Name="Bubbles" IsVisible="False" VerticalAlignment="Bottom" Spacing="16" />
+
+            <!-- The conversation before anything has been said. -->
+            <TextBlock x:Name="EmptyConversation"
+                       IsVisible="False"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       TextAlignment="Center"
+                       TextWrapping="Wrap"
+                       FontFamily="{StaticResource D47.Font.Prose}"
+                       FontSize="{StaticResource D47.Type.Body}"
+                       Foreground="{DynamicResource D47.TextFaint}"
+                       Text="Nothing has been said yet." />
             </Panel>
           </ScrollViewer>
 
@@ -1031,7 +899,6 @@
     </Border>
 
   </DockPanel>
-  </controls:ChamferedBorder>
 
   <!--
     Scanlines, over the whole window and on top of everything else — dark themes only, since the

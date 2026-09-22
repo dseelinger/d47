@@ -88,6 +88,42 @@ public class FollowingTheLiveLogTests
         window.Close();
     }
 
+    /// <summary>Shrinking the window keeps the newest line in view while following.</summary>
+    [AvaloniaFact]
+    public void AResizeKeepsTheNewestLineInView()
+    {
+        var model = Talking();
+        var (window, view) = Open(model);
+
+        window.Height = 320;
+        Dispatcher.UIThread.RunJobs();
+
+        var scroller = Scroller(view);
+
+        Assert.True(
+            scroller.Offset.Y >= scroller.Extent.Height - scroller.Viewport.Height - 1,
+            $"the view sat at {scroller.Offset.Y} of {scroller.Extent.Height - scroller.Viewport.Height}.");
+
+        window.Close();
+    }
+
+    /// <summary>And leaves a reader who scrolled up where they were.</summary>
+    [AvaloniaFact]
+    public void AResizeLeavesHistoryWhereItWas()
+    {
+        var model = Talking();
+        var (window, view) = Open(model);
+
+        ReadHistory(view);
+
+        window.Height = 320;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(0, Scroller(view).Offset.Y);
+
+        window.Close();
+    }
+
     [AvaloniaFact]
     public void ScrollingUpStopsTheViewBeingDraggedBackDown()
     {

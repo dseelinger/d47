@@ -24,14 +24,20 @@ nav_order: 4
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">The conversations you have with those in your ship.</p>
 <section>
-<h2><span class="num">1</span> Reads like an SMS thread.</h2>
-<svg viewBox="0 0 880 268" role="img" aria-label="Your words on the right, responses on the left, and a note when the ship's persona changes across the middle">
- <rect x="470" y="24" width="390" height="52" rx="12" fill="var(--accent-muted)" stroke="var(--accent)" stroke-width="2"/>
- <text x="844" y="56" text-anchor="end" font-size="16" fill="var(--text)">Where am I?</text>
- <rect x="20" y="92" width="470" height="52" rx="12" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <text x="40" y="124" font-size="16" fill="var(--text)">We're holding at Jameson Memorial.</text>
- <text x="440" y="182" text-anchor="middle" font-size="15" font-weight="700" fill="var(--accent)">[Switched to Cora]</text>
- <text x="440" y="212" text-anchor="middle" font-size="15" fill="var(--text-muted)">Yours on the right. The ship's on the left. A note about the conversation sits across the middle.</text>
+<h2><span class="num">1</span> Reads like a chat log.</h2>
+<svg viewBox="0 0 880 268" role="img" aria-label="Every message on the left under a badge naming who spoke, and a note when the ship's persona changes across the middle">
+ <rect x="20" y="24" width="2" height="56" fill="var(--border)"/>
+ <rect x="36" y="24" width="56" height="22" fill="var(--border)"/>
+ <text x="64" y="40" text-anchor="middle" font-size="14" font-weight="700" fill="var(--text-muted)">CMDR</text>
+ <text x="104" y="40" font-size="14" fill="var(--text-muted)">14:02</text>
+ <text x="36" y="72" font-size="16" fill="var(--text-muted)">Where am I?</text>
+ <rect x="20" y="96" width="2" height="56" fill="var(--border)"/>
+ <rect x="36" y="96" width="44" height="22" fill="var(--accent)"/>
+ <text x="58" y="112" text-anchor="middle" font-size="14" font-weight="700" fill="var(--background)">D47</text>
+ <text x="92" y="112" font-size="14" fill="var(--text-muted)">14:02</text>
+ <text x="36" y="144" font-size="16" fill="var(--text-muted)">We're holding at Jameson Memorial.</text>
+ <text x="440" y="190" text-anchor="middle" font-size="15" font-weight="700" fill="var(--accent)">[Switched to Cora]</text>
+ <text x="440" y="226" text-anchor="middle" font-size="15" fill="var(--text-muted)">The badge says who spoke. A note about the conversation sits across the middle.</text>
 </svg>
 <p class="body">Other sub-tabs are from files on your disk, and each has its own help file.</p>
 </section>
@@ -42,18 +48,18 @@ nav_order: 4
  <text x="44" y="58" font-size="16" fill="var(--text-muted)">Type here, and Enter sends it</text>
  <rect x="656" y="26" width="204" height="52" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="758" y="58" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">SEND</text>
- <text x="440" y="118" text-anchor="middle" font-size="15" fill="var(--text-muted)">Or speak — and the badge beside the box is always in one of these three states.</text>
+ <text x="440" y="118" text-anchor="middle" font-size="15" fill="var(--text-muted)">Or speak — and the line above the box always shows one of these three states.</text>
  <rect x="20" y="140" width="270" height="96" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <circle cx="60" cy="176" r="9" fill="none" stroke="var(--text-muted)" stroke-width="2.5"/>
- <text x="82" y="182" font-size="17" font-weight="800" fill="var(--text-muted)">PTT Ready</text>
+ <circle cx="60" cy="176" r="6" fill="var(--accent)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="82" y="182" font-size="15" fill="var(--text-muted)">PTT READY</text>
  <text x="155" y="216" text-anchor="middle" font-size="14" fill="var(--text-muted)">holding nothing; press your key</text>
- <rect x="305" y="140" width="270" height="96" rx="10" fill="var(--surface)" stroke="var(--info)" stroke-width="2.5"/>
- <circle cx="345" cy="176" r="9" fill="none" stroke="var(--info)" stroke-width="2.5"/>
- <text x="367" y="182" font-size="17" font-weight="800" fill="var(--info)">Listening...</text>
+ <rect x="305" y="140" width="270" height="96" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <circle cx="345" cy="176" r="6" fill="var(--accent)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="367" y="182" font-size="15" fill="var(--text-muted)">LISTENING</text>
  <text x="440" y="216" text-anchor="middle" font-size="14" fill="var(--text-muted)">waiting for its name, no key held</text>
- <rect x="590" y="140" width="270" height="96" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <circle cx="630" cy="176" r="9" fill="var(--accent)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="652" y="182" font-size="17" font-weight="800" fill="var(--accent)">MIC ON</text>
+ <rect x="590" y="140" width="270" height="96" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <circle cx="630" cy="176" r="6" fill="var(--accent)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="652" y="182" font-size="15" fill="var(--text-muted)">MIC ON</text>
  <text x="725" y="216" text-anchor="middle" font-size="14" fill="var(--text-muted)">your voice is being kept</text>
 </svg>
 <p class="body">Besides <em>push-to-talk (PTT)</em> you can have D47 listen all the time, or on a wake-word, like "Alexa" or "Hey Google."</p>
@@ -104,14 +110,12 @@ of what follows.
 
 ### How it is drawn
 
-Each response gets a bubble: yours on the right in the theme's own colour, the ship's on the left.
-When Directive 47 notes something *about* the conversation rather than saying something in it —
-the core changing under you — that sits across the middle in the accent with no bubble, because it
-is not a side.
+Each response is a message on the left, under a badge naming who spoke: `D47` in the theme's own
+colour, `CMDR` in a dimmer grey, a persona or a role like `Tower` in between. When Directive 47
+notes something *about* the conversation rather than saying something in it — the core changing
+under you — that sits across the middle in the accent with no badge.
 
-The headset's big panel does the same. The mini panel does too and spends less on it: the same
-sides and the same colours, with the gutter and most of the padding given back, because a surface
-512 pixels across cannot afford to say twice over which side a line is on.
+The headset's big panel does the same, and so does the mini panel.
 
 ### The controls
 
@@ -119,8 +123,8 @@ sides and the same colours, with the gutter and most of the padding given back, 
 seconds after. To copy only part of it, select the text and press Ctrl+C. A search query does not
 narrow what it copies — you asked for the conversation, not for the matches.
 
-**Search** highlights every match, counts them, and steps forward and back through them. It clears
-in one press, and Escape does the same.
+**Search** highlights every match, counts them, and steps forward and back through them. **CLEAR**
+beside the box empties it, and Escape does the same.
 
 **Newest** appears over the text once you have scrolled away from the live end, and takes you back
 to it. This reading grows downwards, so its arrow points down.
@@ -139,14 +143,17 @@ it is on the desktop and not in a headset, and there is no second place these fi
 It is a note rather than a coin on purpose. These are dollars on a provider account, not your
 in-game balance, and a coin in a cockpit overlay is the thing that gets read as credits.
 
-**The ask box** takes typing, and Enter sends. The button beside it does the same thing and exists
-so that the first thing you do with Directive 47 is not a guess. The box is on this tab only — from
-anywhere else, say what you want instead.
+**The ask box** takes typing, and Enter sends. **SEND** beside it does the same thing and exists
+so that the first thing you do with Directive 47 is not a guess. The box grows to three lines as
+you type, then scrolls. It is on this tab only — from anywhere else, say what you want instead.
 
-**The microphone badge** is never silent about its own state. *PTT Ready* means push-to-talk is
-armed and nothing is being kept. *Listening...* means there is no key to hold and it is waiting to
-hear its name. *MIC ON* means your voice is being captured right now — and it is drawn filled as
-well as coloured, so it stays readable if the two colours are hard to tell apart.
+**The microphone line** above the box is never silent about its own state, and only its dot
+changes colour: one colour when ready, a second while listening or while the speech model loads,
+and the danger colour when no microphone is open. *PTT READY* means push-to-talk is armed and
+nothing is being kept. *LISTENING* means there is no key to hold and it is waiting to hear its
+name. *MIC ON* means your voice is being captured right now. *MIC OFF* means no microphone is open,
+and its dot is hollow — a filled dot always means a device is open, so the state stays readable if
+the colours are hard to tell apart.
 
 ### Saying where you want to go
 

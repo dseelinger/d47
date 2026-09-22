@@ -41,12 +41,6 @@ public sealed record DerivedPalette
 
     public required Color Info { get; init; }
 
-    public required Color InfoFill { get; init; }
-
-    public required Color InfoBorder { get; init; }
-
-    public required Color InfoInk { get; init; }
-
     public required Color CardFill { get; init; }
 
     public required Color CardFillSelected { get; init; }
@@ -89,9 +83,6 @@ public sealed record DerivedPalette
             Warn = Hue(accent, 82),
             Good = Hue(accent, 146),
             Info = info,
-            InfoFill = Mix(background, info, 0.09),
-            InfoBorder = Mix(background, info, 0.35),
-            InfoInk = Mix(text, info, 0.35),
             CardFill = Onto(0.05),
             CardFillSelected = Onto(0.14),
             RowFill = Onto(0.05),

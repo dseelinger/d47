@@ -102,19 +102,39 @@ public class TheSearchRowSitsTogetherTests
     }
 
     /// <summary>
-    /// The steppers stay at the right-hand end rather than following the box, so they do not move under
-    /// the pointer as a query narrows the count from "9 of 143" to "1 of 2".
+    /// The field keeps the right-hand end, so the steppers beside it do not move under the pointer as a
+    /// query narrows the count from "9 of 143" to "1 of 2".
     /// </summary>
     [AvaloniaFact]
-    public void TheSteppersStayAtTheEnd()
+    public void TheFieldKeepsTheEnd()
     {
         var panel = Searching();
 
         var row = panel.GetControl<DockPanel>("SearchRow");
+        var field = Where(panel, "SearchInput");
         var next = Where(panel, "SearchNext");
 
         Assert.True(
-            row.Bounds.Width - next.Right <= 1,
-            $"the last stepper is {row.Bounds.Width - next.Right} pixels short of the end");
+            row.Bounds.Width - field.Right <= 1,
+            $"the field is {row.Bounds.Width - field.Right} pixels short of the end");
+        Assert.True(next.Right <= field.Left, "the steppers are not left of the field");
+    }
+
+    /// <summary>The field is clamp(240px, 32%, 420px) of the bar, and pushed to its right-hand end.</summary>
+    [AvaloniaTheory]
+    [InlineData(924)]
+    [InlineData(1400)]
+    [InlineData(2400)]
+    public void TheFieldIsAThirdOfTheBarWithinItsLimits(double width)
+    {
+        var panel = Searching(width);
+
+        var bar = panel.GetControl<DockPanel>("PageBar");
+        var field = panel.GetControl<TextBox>("SearchInput");
+        var right = field.TranslatePoint(new Point(field.Bounds.Width, 0), bar)!.Value.X;
+
+        // Within the pixel that layout rounding moves an edge by.
+        Assert.InRange(field.Bounds.Width - Math.Clamp(bar.Bounds.Width * 0.32, 240, 420), -1, 1);
+        Assert.InRange(bar.Bounds.Width - right, -1, 1);
     }
 }

@@ -1,7 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
-using D47.App.Controls;
 using D47.App.Panel;
 using Xunit;
 
@@ -16,16 +15,14 @@ public class TheBubbleHeadNamesWhoSpokeTests
     private static IReadOnlyList<Control> Turns(PanelView panel) =>
         [.. panel.GetControl<StackPanel>("Bubbles").Children];
 
-    private static ChamferedBorder Bubble(Control turn) =>
-        ((Grid)turn).Children.OfType<ChamferedBorder>().Single();
-
     private static StackPanel Head(Control turn) =>
-        (StackPanel)((StackPanel)Bubble(turn).Child!).Children[0];
+        (StackPanel)((StackPanel)((Border)turn).Child!).Children[0];
 
     private static string? Said(Control chipOrTag) => chipOrTag switch
     {
         TextBlock block => block.Text,
         Border border => Said((Control)border.Child!),
+        D47.App.Theming.BloomStack stack => Said(stack.Child!),
         _ => null,
     };
 
@@ -103,7 +100,7 @@ public class TheBubbleHeadNamesWhoSpokeTests
         model.Append("On it, Commander.", speaker: "Cora");
 
         var turn = Turns(Laid(model))[0];
-        var block = (SelectableTextBlock)((StackPanel)Bubble(turn).Child!).Children[1];
+        var block = (SelectableTextBlock)((StackPanel)((Border)turn).Child!).Children[1];
 
         var said = string.Concat(
             block.Inlines!.OfType<Avalonia.Controls.Documents.Run>().Select(run => run.Text));

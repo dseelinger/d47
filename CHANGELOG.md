@@ -35,6 +35,19 @@ place of a ticked, empty or dashed box. Reset is the ↺ character, in a 44 × 4
 it appears. The Help Improve window's `ⓘ` is gone; its reasoning is the hover on the window's
 opening sentence. The window's minimise, maximise and close buttons are unchanged.
 
+The Transcript is rebuilt to the design reference. The panel has no frame of its own: the window
+edge is its edge, with 32 pixels of padding. Every message now sits on the left behind a thin rule,
+under a badge naming the speaker: D47 in the theme's colour, CMDR in grey, a persona or a role such
+as Tower in between. The Commander's messages are no longer on the right in a box of their own.
+Message text is dimmer and wraps at a readable width, and machine text inside a message is in the
+monospace face. Hovering a message shades the row behind it. An empty conversation shows one
+line saying nothing has been said yet, and resizing the window keeps the newest message in view
+unless you have scrolled up. The search field sits at the right of the readings row,
+with a CLEAR beside it while there is a query, and a rule under the row. The microphone line and
+the ask box share one footer: the dot beside PTT READY, LISTENING or MIC ON is the only thing that
+changes colour, and it turns the danger colour when no microphone is open. The ask box grows to
+three lines as you type, then scrolls, and its send arrow is now a SEND button.
+
 ## 1.6.1 — Every hull has its figures
 
 A hull missing from the shipped table now names itself and says which figures are missing —
