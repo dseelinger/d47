@@ -242,6 +242,19 @@ If you have not set a HUD colour, or the file was written by a HUD mod in a shap
 does not recognise, the theme falls back to plain `elite` — which is what it would have looked
 like anyway. Your game configuration is yours; Directive 47 is a guest in it.
 
+#### Bloom {#bloom}
+
+How wide the panel's glow halos draw, 0 to 2.5 in steps of 0.1, default 1.1:
+
+```text
+0                        no glow at all
+1.1                      the default
+2.5                      the widest halos the range offers
+```
+
+Dark themes only. On `light`, the row is shown disabled and nothing glows at any value — bloom
+does not exist in a theme that never draws it.
+
 #### Zoom {#zoom}
 
 How large the panel is drawn, from 50% to 300%. The gestures are the ones your browser already

@@ -1724,6 +1724,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 row.Container.IsVisible = shown;
                 row.Refresh();
 
+                // Greyed out rather than absent: the setting still exists and still holds a value, it
+                // just does nothing right now (#378). Left alone on a row with no DisabledWhen, so this
+                // never overrides ShowBusy's own IsEnabled on a row that has one.
+                if (row.Row.DisabledWhen is not null && row.Control is not null)
+                {
+                    row.Control.IsEnabled = !row.Row.DisabledFor(_settings.Current);
+                }
+
                 // Only the survivors.
                 if (shown)
                 {

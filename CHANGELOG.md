@@ -8,6 +8,10 @@
 
 ## 1.6.2 — Controls drop their ornaments
 
+The Interface capability now has a Bloom setting, beside Theme: 0 to 2.5, default 1.1. Changing it
+resizes every glow halo in the open panel and the headset overlay without a restart. On Light the
+row shows disabled, since bloom never draws there.
+
 Scroll bars now take the d47 theme instead of Fluent's grey default: a thin D47.Rule thumb on a
 transparent track, turning D47.Accent on hover or drag, with no arrow buttons.
 

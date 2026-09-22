@@ -111,17 +111,22 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         Enum.GetValues<BloomTier>().SelectMany(tier =>
             Enumerable.Range(0, BloomTiers.Table(tier).Count).Select(stop => BloomStopKey(tier, stop)));
 
-    /// <summary>Applies the theme named in settings, and re-applies it whenever that setting changes.</summary>
+    /// <summary>
+    /// Applies the theme and bloom amount named in settings, and re-applies them whenever either
+    /// setting changes.
+    /// </summary>
     public void FollowSettings(SettingsService settings)
     {
-        Apply(settings.Current.Ui.Theme);
+        Apply(settings.Current.Ui.Theme, bloomAmount: settings.Current.Ui.BloomAmount);
 
         // Posted, because a settings change does not arrive on the UI thread.
         settings.Changed += change =>
         {
-            if (change.Key.Equals(InterfaceCapability.ThemeKey, StringComparison.OrdinalIgnoreCase))
+            if (change.Key.Equals(InterfaceCapability.ThemeKey, StringComparison.OrdinalIgnoreCase)
+                || change.Key.Equals(InterfaceCapability.BloomKey, StringComparison.OrdinalIgnoreCase))
             {
-                Dispatcher.UIThread.Post(() => Apply(change.Settings.Ui.Theme));
+                Dispatcher.UIThread.Post(
+                    () => Apply(change.Settings.Ui.Theme, bloomAmount: change.Settings.Ui.BloomAmount));
             }
         };
     }
@@ -130,7 +135,10 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     /// Used instead of reading the Commander's own HUD matrix from disk — the Control Kit's Accent
     /// entry drives the recolour path this way (#358).
     /// </param>
-    public void Apply(string? themeId, GuiColourMatrix? matrixOverride = null)
+    /// <param name="bloomAmount">
+    /// How wide the glow halos draw, on <see cref="BloomTiers"/>'s scale (#378).
+    /// </param>
+    public void Apply(string? themeId, GuiColourMatrix? matrixOverride = null, double bloomAmount = BloomTiers.DefaultAmount)
     {
         var theme = ThemeCatalog.Selected(themeId);
         var palette = Palettes.For(theme.Id);
@@ -197,7 +205,7 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         // paints nothing.
         foreach (var tier in Enum.GetValues<BloomTier>())
         {
-            var stops = palette.IsDark ? BloomTiers.Stops(tier, BloomTiers.DefaultAmount) : [];
+            var stops = palette.IsDark ? BloomTiers.Stops(tier, bloomAmount) : [];
 
             for (var stop = 0; stop < BloomTiers.Table(tier).Count; stop++)
             {

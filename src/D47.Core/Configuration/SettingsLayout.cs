@@ -501,6 +501,7 @@ public static class SettingsLayout
                         G(
                         [
                             E("ui.theme"),
+                            E("ui.bloom"),
                             E("ui.zoom"),
                             E("hotkeys.openSettings"),
                             E("hotkeys.focusAsk"),

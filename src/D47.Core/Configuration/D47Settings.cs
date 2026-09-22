@@ -826,6 +826,9 @@ public sealed record UiSettings
     /// card plays (#289).
     /// </summary>
     public bool HullArt { get; init; } = true;
+
+    /// <summary>How wide the panel's glow halos draw, 0 to 2.5. Dark themes only (#378).</summary>
+    public double BloomAmount { get; init; } = D47.Core.Interface.BloomTiers.DefaultAmount;
 }
 
 /// <summary>

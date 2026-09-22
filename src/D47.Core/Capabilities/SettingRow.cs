@@ -152,6 +152,13 @@ public sealed record SettingRow
     /// <summary>Whether the row applies at all right now.</summary>
     public Func<D47Settings, bool>? AppliesWhen { get; init; }
 
+    /// <summary>
+    /// The row stays on the page but its control is greyed out — unlike <see cref="AppliesWhen"/>,
+    /// for a setting that still exists and still has a value, just not one that does anything right
+    /// now (#378).
+    /// </summary>
+    public Func<D47Settings, bool>? DisabledWhen { get; init; }
+
     /// <summary>Whether this hotkey is claimed from the whole system rather than from d47's own window.</summary>
     public bool SystemWide { get; init; }
 
@@ -322,6 +329,8 @@ public sealed record SettingRow
         ChoicesFor(settings).Count > 0 ? null : WhyNoChoices?.Invoke(settings);
 
     public bool Applies(D47Settings settings) => AppliesWhen?.Invoke(settings) ?? true;
+
+    public bool DisabledFor(D47Settings settings) => DisabledWhen?.Invoke(settings) ?? false;
 
     public string? DefaultDisplayFor(D47Settings settings) =>
         DefaultDisplaySource?.Invoke(settings) ?? DefaultDisplay;
