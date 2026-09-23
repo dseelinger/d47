@@ -133,6 +133,22 @@ public class TurnRetryTests
         Assert.Contains("Overloaded.", result.Text, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task OneAttemptIsNotCalledThreeTries()
+    {
+        using var install = new TempInstall();
+        var clock = new InstantClock();
+        var provider = new FakeLlmProvider(
+            new LlmStreamEvent.Failed("That model does not exist.", Transient: false));
+
+        var loop = Build(install, provider, clock, new RetryPolicy { Attempts = 3 });
+
+        var (result, _) = await RunAsync(loop);
+
+        Assert.StartsWith("I couldn't reach the model just then.", result.Text, StringComparison.Ordinal);
+        Assert.DoesNotContain("tries", result.Text, StringComparison.Ordinal);
+    }
+
     /// <summary>
     /// A provider that hangs produces no events at all — not an error, just a turn that never ends.
     /// </summary>

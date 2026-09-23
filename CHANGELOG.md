@@ -28,6 +28,12 @@ their voice if they speak again. Voices with no accent listed, and the ship's AI
 Empire and Federation ranks in goals and adventures are no longer named one rank too high. An
 Outsider was called a Serf, a Recruit a Cadet, and a King or Admiral was called "rank 14".
 
+When a local model's context is too small for the request, d47 now says so instead of reading out
+the server's JSON error. It gives the model's context size, the size the request needed, and asks
+you to raise the context length in the server's settings. LM Studio loads models with 8,192 tokens
+by default, which is too small. A failed turn also no longer says "after 3 tries" when it made only
+one attempt.
+
 d47 now answers "what's my reputation with the Empire". It reads out your reputation with each
 superpower as a band and a number, such as "Cordial, 28 of 100", with your Imperial and Federal
 navy rank beside the Empire and the Federation. Ask about a minor faction by name, such as "what's

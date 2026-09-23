@@ -1127,8 +1127,8 @@ public sealed class TurnLoop(
             {
                 // Said out loud in the current voice, because the alternative is silence, and silence here is
                 // indistinguishable from a model with nothing to say.
-                var text = Retry.Attempts > 1
-                    ? $"I couldn't reach the model after {Retry.Attempts} tries. {outcome.Failure}"
+                var text = outcome.Attempts > 1
+                    ? $"I couldn't reach the model after {outcome.Attempts} tries. {outcome.Failure}"
                     : $"I couldn't reach the model just then. {outcome.Failure}";
 
                 yield return new TurnEvent.TextDelta(text);
@@ -1347,6 +1347,9 @@ public sealed class TurnLoop(
 
         public string? Failure { get; set; }
 
+        /// <summary>The requests made for this round, retries included.</summary>
+        public int Attempts { get; set; }
+
         public void AddText(string text)
         {
             Reply.Append(text);
@@ -1450,6 +1453,7 @@ public sealed class TurnLoop(
             }
 
             outcome.Reset();
+            outcome.Attempts = attempt;
             transient = false;
             var spokeThisAttempt = false;
 

@@ -107,6 +107,6 @@ internal sealed class OpenAiEndpoint : IDisposable
             : $"Could not reach {Host} at {BaseUrl} — check the address and that the server is running.";
 
     /// <summary>The endpoint named the way a Commander would recognise it.</summary>
-    private string Host =>
+    public string Host =>
         Uri.TryCreate(BaseUrl, UriKind.Absolute, out var uri) ? uri.Host : BaseUrl;
 }

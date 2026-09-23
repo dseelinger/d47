@@ -170,7 +170,7 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
             if (chunk.TryGetProperty("error", out var error) && error.ValueKind == JsonValueKind.Object)
             {
                 yield return new LlmStreamEvent.Failed(
-                    Text(error, "message") ?? "The endpoint reported an error mid-stream.",
+                    EndpointError.Describe(error, _endpoint.Host) ?? "The endpoint reported an error mid-stream.",
                     Transient: false);
 
                 yield break;
