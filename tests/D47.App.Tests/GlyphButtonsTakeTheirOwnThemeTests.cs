@@ -2,7 +2,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
-using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Styling;
 using Avalonia.VisualTree;
 using D47.App.Controls;
@@ -17,17 +16,15 @@ namespace D47.App.Tests;
 /// Every glyph-only button takes a d47 theme rather than Fluent's own: the amount control's spinner
 /// and the three reset icons take D47.GlyphButton (#376), the stepper's arrows D47.StepperArrow (#394).
 ///
-/// HeadlessApp does not merge ControlKitTheme.axaml the way App.axaml does (that gap predates
-/// this issue and is outside it), so each test merges it onto Application.Current for its own
-/// duration only, and takes it back off on Dispose — the same resource the button's own
-/// production code resolves from, not a copy built for the test.
+/// Each test merges ControlKitTheme.axaml through <see cref="AppLook.ControlKit"/> for its own
+/// duration — the same resource the button's own production code resolves from.
 /// </summary>
 public class GlyphButtonsTakeTheirOwnThemeTests
 {
     [AvaloniaFact]
     public void TheStepperArrowsTakeTheStepperArrowTheme()
     {
-        using var _ = ControlKitTheme();
+        using var _ = AppLook.ControlKit();
         var host = Open();
         var theme = (ControlTheme)Application.Current!.FindResource("D47.StepperArrow")!;
 
@@ -45,7 +42,7 @@ public class GlyphButtonsTakeTheirOwnThemeTests
     [AvaloniaFact]
     public void TheAmountControlSpinnerButtonsTakeTheGlyphButtonTheme()
     {
-        using var _ = ControlKitTheme();
+        using var _ = AppLook.ControlKit();
         var host = Open();
         var theme = GlyphButtonTheme();
 
@@ -63,7 +60,7 @@ public class GlyphButtonsTakeTheirOwnThemeTests
     [AvaloniaFact]
     public void EveryRowResetTakesTheGlyphButtonTheme()
     {
-        using var _ = ControlKitTheme();
+        using var _ = AppLook.ControlKit();
         var host = Open();
         var theme = GlyphButtonTheme();
 
@@ -80,7 +77,7 @@ public class GlyphButtonsTakeTheirOwnThemeTests
     [AvaloniaFact]
     public void EveryCardAndGroupResetTakesTheGlyphButtonTheme()
     {
-        using var _ = ControlKitTheme();
+        using var _ = AppLook.ControlKit();
         var host = Open();
         var theme = GlyphButtonTheme();
 
@@ -98,24 +95,6 @@ public class GlyphButtonsTakeTheirOwnThemeTests
 
     private static ControlTheme GlyphButtonTheme() =>
         (ControlTheme)Application.Current!.FindResource("D47.GlyphButton")!;
-
-    /// <summary>Merges ControlKitTheme.axaml onto Application.Current, removed again on Dispose.</summary>
-    private static IDisposable ControlKitTheme()
-    {
-        var include = new StyleInclude((Uri?)null)
-        {
-            Source = new Uri("avares://d47/Theming/ControlKitTheme.axaml"),
-        };
-
-        Application.Current!.Styles.Add(include);
-
-        return new Removal(include);
-    }
-
-    private sealed class Removal(IStyle style) : IDisposable
-    {
-        public void Dispose() => Application.Current!.Styles.Remove(style);
-    }
 
     private static SettingsHost Open()
     {

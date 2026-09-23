@@ -33,7 +33,7 @@ public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
     [InlineData("primary")]
     public void AHoveredButtonCarriesNoGlow(string weight)
     {
-        using var kit = ControlKitTheme();
+        using var kit = AppLook.ControlKit();
         Manager().Apply(ThemeCatalog.Elite);
 
         var button = new Button { Content = "Go", Width = 120, Height = 44 };
@@ -54,7 +54,7 @@ public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
     [AvaloniaFact]
     public void AHoveredTabDoesNotGlowAndTheSelectedTabDoes()
     {
-        using var kit = ControlKitTheme();
+        using var kit = AppLook.ControlKit();
         using var tabs = PanelTabsResources();
         Manager().Apply(ThemeCatalog.Elite);
 
@@ -76,7 +76,7 @@ public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
     [AvaloniaFact]
     public void AHoveredOrChosenSegmentCarriesNoGlow()
     {
-        using var kit = ControlKitTheme();
+        using var kit = AppLook.ControlKit();
         Manager().Apply(ThemeCatalog.Elite);
 
         var theme = (ControlTheme)Application.Current!.FindResource("D47.Segment")!;
@@ -96,7 +96,7 @@ public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
     [AvaloniaFact]
     public void AHoveredSegmentsGroundKeepsItsFill()
     {
-        using var kit = ControlKitTheme();
+        using var kit = AppLook.ControlKit();
         Manager().Apply(ThemeCatalog.Elite);
 
         var segment = new RadioButton { Theme = (ControlTheme)Application.Current!.FindResource("D47.Segment")!, Content = "One" };
@@ -113,7 +113,7 @@ public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
     [AvaloniaFact]
     public void FocusLightsALowHaloBehindTheRingWithTheOutlineAtFullStrength()
     {
-        using var kit = ControlKitTheme();
+        using var kit = AppLook.ControlKit();
         Manager().Apply(ThemeCatalog.Elite);
 
         var slider = new Slider { Minimum = 0, Maximum = 100, Value = 50, Width = 300 };
@@ -186,24 +186,6 @@ public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
         window.Show();
         Dispatcher.UIThread.RunJobs();
         return window;
-    }
-
-    /// <summary>Merges ControlKitTheme.axaml onto Application.Current, removed again on Dispose.</summary>
-    private static IDisposable ControlKitTheme()
-    {
-        var include = new StyleInclude((Uri?)null)
-        {
-            Source = new Uri("avares://d47/Theming/ControlKitTheme.axaml"),
-        };
-
-        Application.Current!.Styles.Add(include);
-
-        return new Removal(include);
-    }
-
-    private sealed class Removal(IStyle style) : IDisposable
-    {
-        public void Dispose() => Application.Current!.Styles.Remove(style);
     }
 
     /// <summary>Merges PanelTabs.axaml's resource dictionary onto Application.Current, for D47.Tab.</summary>

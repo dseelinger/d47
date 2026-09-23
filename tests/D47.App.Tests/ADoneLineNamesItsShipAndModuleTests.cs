@@ -1,6 +1,5 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -144,17 +143,8 @@ public class ADoneLineNamesItsShipAndModuleTests
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
         panel.EnableChecklist(checklists);
-
-        var window = new Window { Content = panel, Width = 1024, Height = 640 };
-        window.Show();
-
         panel.Tab = PanelTab.Checklist;
-        Dispatcher.UIThread.RunJobs();
 
-        window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "checklist-named-line.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
-
-        window.Close();
+        AppLook.Capture(panel, "checklist-named-line.png");
     }
 }

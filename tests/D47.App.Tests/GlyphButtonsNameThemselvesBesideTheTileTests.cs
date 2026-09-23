@@ -5,7 +5,6 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
-using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
@@ -31,7 +30,7 @@ public class GlyphButtonsNameThemselvesBesideTheTileTests
     [AvaloniaFact]
     public void HoveringAGlyphButtonOpensItsLabelInCapitals()
     {
-        using var kit = ControlKitTheme();
+        using var kit = AppLook.ControlKit();
         Manager().Apply(ThemeCatalog.Elite);
 
         var button = GlyphButton("Reset ship voices");
@@ -51,7 +50,7 @@ public class GlyphButtonsNameThemselvesBesideTheTileTests
     [AvaloniaFact]
     public void TheLabelClosesWhenThePointerLeaves()
     {
-        using var kit = ControlKitTheme();
+        using var kit = AppLook.ControlKit();
         Manager().Apply(ThemeCatalog.Elite);
 
         var button = GlyphButton("Reset ship voices");
@@ -72,7 +71,7 @@ public class GlyphButtonsNameThemselvesBesideTheTileTests
     [AvaloniaFact]
     public void TheLabelClosesWhenTheButtonHidesUnderThePointer()
     {
-        using var kit = ControlKitTheme();
+        using var kit = AppLook.ControlKit();
         Manager().Apply(ThemeCatalog.Elite);
 
         var button = GlyphButton("Reset ship voices");
@@ -93,7 +92,7 @@ public class GlyphButtonsNameThemselvesBesideTheTileTests
     [AvaloniaFact]
     public void TheLabelClosesWhenFocusMovesOn()
     {
-        using var kit = ControlKitTheme();
+        using var kit = AppLook.ControlKit();
         Manager().Apply(ThemeCatalog.Elite);
 
         var button = GlyphButton("Reset ship voices");
@@ -115,7 +114,7 @@ public class GlyphButtonsNameThemselvesBesideTheTileTests
     [AvaloniaFact]
     public void KeyboardFocusOpensTheLabelAndFillsTheTile()
     {
-        using var kit = ControlKitTheme();
+        using var kit = AppLook.ControlKit();
         Manager().Apply(ThemeCatalog.Elite);
 
         var button = GlyphButton("Reset ship voices");
@@ -135,7 +134,7 @@ public class GlyphButtonsNameThemselvesBesideTheTileTests
     [AvaloniaFact]
     public void ADisabledGlyphButtonOpensNoLabel()
     {
-        using var kit = ControlKitTheme();
+        using var kit = AppLook.ControlKit();
         Manager().Apply(ThemeCatalog.Elite);
 
         var button = GlyphButton("Reset ship voices");
@@ -153,7 +152,7 @@ public class GlyphButtonsNameThemselvesBesideTheTileTests
     [AvaloniaFact]
     public void EveryGlyphButtonInSettingsHasLabelTextNoTooltipAndA44Target()
     {
-        using var kit = ControlKitTheme();
+        using var kit = AppLook.ControlKit();
         var (settings, viewState, paths) = TestSurface.Create();
         Manager().FollowSettings(settings);
         var host = SettingsHost.Open(settings, viewState, paths);
@@ -186,7 +185,7 @@ public class GlyphButtonsNameThemselvesBesideTheTileTests
     [AvaloniaFact]
     public void AFieldIsOutlinedInAAtRestAndCyanWhileFocused()
     {
-        using var kit = ControlKitTheme();
+        using var kit = AppLook.ControlKit();
         Manager().Apply(ThemeCatalog.Elite);
 
         var field = new TextBox { Width = 200 };
@@ -243,23 +242,5 @@ public class GlyphButtonsNameThemselvesBesideTheTileTests
         window.Show();
         Dispatcher.UIThread.RunJobs();
         return window;
-    }
-
-    /// <summary>Merges ControlKitTheme.axaml onto Application.Current, removed again on Dispose.</summary>
-    private static IDisposable ControlKitTheme()
-    {
-        var include = new StyleInclude((Uri?)null)
-        {
-            Source = new Uri("avares://d47/Theming/ControlKitTheme.axaml"),
-        };
-
-        Application.Current!.Styles.Add(include);
-
-        return new Removal(include);
-    }
-
-    private sealed class Removal(IStyle style) : IDisposable
-    {
-        public void Dispose() => Application.Current!.Styles.Remove(style);
     }
 }

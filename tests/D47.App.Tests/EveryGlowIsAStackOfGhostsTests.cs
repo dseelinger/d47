@@ -4,9 +4,7 @@ using Avalonia.Controls.Shapes;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
-using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Media;
-using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Controls;
@@ -35,7 +33,7 @@ public class EveryGlowIsAStackOfGhostsTests
     [InlineData(ThemeCatalog.ElitePaletteId)]
     public void EveryGlowingElementHasOneLitGhostPerStop(string themeId)
     {
-        using var kit = ControlKitTheme();
+        using var kit = AppLook.ControlKit();
         Manager().Apply(themeId);
 
         using var scene = Scene.Open();
@@ -61,7 +59,7 @@ public class EveryGlowIsAStackOfGhostsTests
     [InlineData(ThemeCatalog.Light)]
     public void DarkAndLightDrawNoGhost(string themeId)
     {
-        using var kit = ControlKitTheme();
+        using var kit = AppLook.ControlKit();
         Manager().Apply(themeId);
 
         using var scene = Scene.Open();
@@ -76,7 +74,7 @@ public class EveryGlowIsAStackOfGhostsTests
     [AvaloniaFact]
     public void ACyanHudMatrixMakesEveryAccentHaloCyan()
     {
-        using var kit = ControlKitTheme();
+        using var kit = AppLook.ControlKit();
         Manager().Apply(ThemeCatalog.ElitePaletteId, new GuiColourMatrix(0, 0, 0, 1, 0, 0, 1, 0, 0));
 
         var accent = ((ISolidColorBrush)Application.Current!.Resources[ThemeManager.AccentKey]!).Color;
@@ -94,7 +92,7 @@ public class EveryGlowIsAStackOfGhostsTests
     [AvaloniaFact]
     public void TheMicrophoneDotGlowsInItsOwnColourAndTheRowDoesNot()
     {
-        using var kit = ControlKitTheme();
+        using var kit = AppLook.ControlKit();
         Manager().Apply(ThemeCatalog.Elite);
 
         using var scene = Scene.Open();
@@ -112,7 +110,7 @@ public class EveryGlowIsAStackOfGhostsTests
     [AvaloniaFact]
     public void AHollowDotDoesNotGlow()
     {
-        using var kit = ControlKitTheme();
+        using var kit = AppLook.ControlKit();
         Manager().Apply(ThemeCatalog.Elite);
 
         using var scene = Scene.Open();
@@ -128,7 +126,7 @@ public class EveryGlowIsAStackOfGhostsTests
     [AvaloniaFact]
     public void OnlyGhostsCarryAGlow()
     {
-        using var kit = ControlKitTheme();
+        using var kit = AppLook.ControlKit();
         Manager().Apply(ThemeCatalog.Elite);
 
         using var scene = Scene.Open();
@@ -144,24 +142,6 @@ public class EveryGlowIsAStackOfGhostsTests
 
             Assert.Empty(glowing);
         }
-    }
-
-    /// <summary>Merges ControlKitTheme.axaml onto Application.Current, removed again on Dispose.</summary>
-    private static IDisposable ControlKitTheme()
-    {
-        var include = new StyleInclude((Uri?)null)
-        {
-            Source = new Uri("avares://d47/Theming/ControlKitTheme.axaml"),
-        };
-
-        Application.Current!.Styles.Add(include);
-
-        return new Removal(include);
-    }
-
-    private sealed class Removal(IStyle style) : IDisposable
-    {
-        public void Dispose() => Application.Current!.Styles.Remove(style);
     }
 
     /// <summary>The panel, a captioned window, and one of each kit control in its glowing state.</summary>
