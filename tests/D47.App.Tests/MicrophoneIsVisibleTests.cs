@@ -173,9 +173,9 @@ public class MicrophoneIsVisibleTests
     /// <summary>Only the dot says the state by colour: Good when ready, Warn listening, Danger when off.</summary>
     [AvaloniaTheory]
     [InlineData(MicrophoneState.Idle, Theming.ThemeManager.CyanKey)]
-    [InlineData(MicrophoneState.Armed, Theming.ThemeManager.WarnKey)]
-    [InlineData(MicrophoneState.Open, Theming.ThemeManager.WarnKey)]
-    [InlineData(MicrophoneState.Off, Theming.ThemeManager.DangerKey)]
+    [InlineData(MicrophoneState.Armed, Theming.ThemeManager.AKey)]
+    [InlineData(MicrophoneState.Open, Theming.ThemeManager.AKey)]
+    [InlineData(MicrophoneState.Off, Theming.ThemeManager.RedKey)]
     public void OnlyTheDotChangesColour(MicrophoneState state, string dotKey)
     {
         var model = new PanelViewModel { Microphone = state };
@@ -188,7 +188,7 @@ public class MicrophoneIsVisibleTests
 
         Assert.Equal(Colour(view, dotKey), (dot.Stroke as Avalonia.Media.ISolidColorBrush)?.Color);
         Assert.Equal(
-            Colour(view, Theming.ThemeManager.TextFaintKey),
+            Colour(view, Theming.ThemeManager.Grey2Key),
             (label.Foreground as Avalonia.Media.ISolidColorBrush)?.Color);
 
         window.Close();

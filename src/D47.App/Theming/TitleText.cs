@@ -87,11 +87,11 @@ public static class TitleText
     /// <summary>The resource key a rank draws in.</summary>
     public static string ColourKey(TitleRank rank) => rank switch
     {
-        TitleRank.Window => ThemeManager.AccentInkKey,
-        TitleRank.Screen => ThemeManager.TextKey,
-        TitleRank.Group => ThemeManager.TextKey,
-        TitleRank.Subgroup => ThemeManager.TextFaintKey,
-        TitleRank.Row => ThemeManager.TextKey,
+        TitleRank.Window => ThemeManager.WhiteKey,
+        TitleRank.Screen => ThemeManager.WhiteKey,
+        TitleRank.Group => ThemeManager.WhiteKey,
+        TitleRank.Subgroup => ThemeManager.Grey2Key,
+        TitleRank.Row => ThemeManager.WhiteKey,
         _ => throw new ArgumentOutOfRangeException(nameof(rank)),
     };
 
@@ -104,7 +104,7 @@ public static class TitleText
     private static Border Rule(Thickness margin)
     {
         var rule = new Border { Height = 1, Margin = margin };
-        rule.Bind(Border.BackgroundProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.AccentKey));
+        rule.Bind(Border.BackgroundProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.AKey));
         return rule;
     }
 }

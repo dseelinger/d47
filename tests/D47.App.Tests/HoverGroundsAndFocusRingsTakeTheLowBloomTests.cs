@@ -30,7 +30,7 @@ public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
 
     [AvaloniaTheory]
     [InlineData("")]
-    [InlineData("primary")]
+    [InlineData("destructive")]
     public void AHoveredButtonCarriesNoGlow(string weight)
     {
         using var kit = AppLook.ControlKit();
@@ -134,7 +134,7 @@ public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
         Assert.Null(rectangle.Fill);
         Assert.DoesNotContain(rectangle, stack.Ghosts);
 
-        var accent = (ISolidColorBrush)Application.Current!.Resources[ThemeManager.AccentKey]!;
+        var accent = (ISolidColorBrush)Application.Current!.Resources[ThemeManager.AKey]!;
         Assert.Equal(accent.Color, ((ISolidColorBrush)rectangle.Stroke!).Color);
 
         window.Close();

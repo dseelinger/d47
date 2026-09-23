@@ -23,7 +23,7 @@ public static class FocusRing
 
         rectangle.Bind(
             Shape.StrokeProperty,
-            Application.Current!.Resources.GetResourceObservable(ThemeManager.AccentKey));
+            Application.Current!.Resources.GetResourceObservable(ThemeManager.AKey));
 
         return new BloomStack
         {

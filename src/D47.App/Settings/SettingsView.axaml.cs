@@ -1314,8 +1314,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     }
 
     /// <summary>
-    /// The selected node's own mark — an Accent fill with Knock text; an unselected node's text is
-    /// TextMuted (#279, #357).
+    /// The selected node's own mark — an A fill with Knock text; an unselected node's text is
+    /// Grey (#279, #357).
     /// </summary>
     private void PaintNav(SectionView section, bool active)
     {
@@ -3374,14 +3374,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         // so stepping past a value never fetches it (#274).
         var confirm = new Button
         {
+            Name = "ApplyStaged",
             IsVisible = false,
             HorizontalAlignment = HorizontalAlignment.Right,
             MinHeight = 36,
             VerticalContentAlignment = VerticalAlignment.Center,
             Margin = new Thickness(0, 4, 0, 0),
         };
-
-        confirm.Classes.Add("primary");
 
         var stagedNote = new TextBlock
         {
@@ -3812,7 +3811,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         }).ToList();
 
         var clear = new Button { Content = "CLEAR" };
-        clear.Classes.Add("quiet");
 
         clear.Click += (_, _) =>
         {

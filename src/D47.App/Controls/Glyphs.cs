@@ -82,7 +82,6 @@ public static class Glyphs
     /// </summary>
     public static Button Quiet(Button button, string word, string says)
     {
-        button.Classes.Add("quiet");
         button.Content = word;
 
         ToolTip.SetTip(button, says);

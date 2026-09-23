@@ -286,7 +286,7 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
         // The marked row keeps an accent fill; every other row draws as the kit button.
         if (marked)
         {
-            Painted(button, TemplatedControl.BackgroundProperty, Theming.ThemeManager.AccentMutedKey);
+            Painted(button, TemplatedControl.BackgroundProperty, Theming.ThemeManager.LineKey);
         }
 
         return button;
@@ -312,9 +312,9 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
             Margin = new Thickness(0, 0, 0, 14),
         };
 
-        Painted(shown, TemplatedControl.ForegroundProperty, Theming.ThemeManager.TextKey);
-        Painted(shown, TemplatedControl.BackgroundProperty, Theming.ThemeManager.BackgroundKey);
-        Painted(shown, TemplatedControl.BorderBrushProperty, Theming.ThemeManager.BorderKey);
+        Painted(shown, TemplatedControl.ForegroundProperty, Theming.ThemeManager.WhiteKey);
+        Painted(shown, TemplatedControl.BackgroundProperty, Theming.ThemeManager.BgKey);
+        Painted(shown, TemplatedControl.BorderBrushProperty, Theming.ThemeManager.Line2Key);
 
         // What the board says about what it heard, and it has to say something or a refused word looks
         // like the microphone having failed (#51).
@@ -326,7 +326,7 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
             Margin = new Thickness(0, 0, 0, 12),
         };
 
-        Painted(state, TextBlock.ForegroundProperty, Theming.ThemeManager.TextMutedKey);
+        Painted(state, TextBlock.ForegroundProperty, Theming.ThemeManager.GreyKey);
 
         var board = new StackPanel { Spacing = 6 };
         var characters = new Dictionary<char, Button>();
@@ -501,7 +501,7 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
             Margin = new Thickness(0, 0, 0, 14),
         };
 
-        Painted(text, TextBlock.ForegroundProperty, Theming.ThemeManager.TextKey);
+        Painted(text, TextBlock.ForegroundProperty, Theming.ThemeManager.WhiteKey);
 
         var close = Pressable("Close", marked: true);
         close.Height = 52;
@@ -543,7 +543,7 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
 
         // The dimmer is also what makes a press anywhere else land on this layer rather than on the page
         // underneath: the panel must not be pressable while something is over it.
-        _over.Background = new SolidColorBrush(Color.FromArgb(0xB0, 0, 0, 0));
+        _over.Background = Theming.ThemeManager.Scrim();
         _over.Children.Clear();
         _over.Children.Add(card);
         _over.IsVisible = true;

@@ -77,7 +77,7 @@ public class EveryGlowIsAStackOfGhostsTests
         using var kit = AppLook.ControlKit();
         Manager().Apply(ThemeCatalog.ElitePaletteId, new GuiColourMatrix(0, 0, 0, 1, 0, 0, 1, 0, 0));
 
-        var accent = ((ISolidColorBrush)Application.Current!.Resources[ThemeManager.AccentKey]!).Color;
+        var accent = ((ISolidColorBrush)Application.Current!.Resources[ThemeManager.AKey]!).Color;
         Assert.True(accent.R < accent.G && accent.R < accent.B, $"{accent} is not cyan");
 
         using var scene = Scene.Open();
@@ -99,7 +99,7 @@ public class EveryGlowIsAStackOfGhostsTests
         scene.Model.Microphone = MicrophoneState.Armed;
         Dispatcher.UIThread.RunJobs();
 
-        var warn = ((ISolidColorBrush)Application.Current!.Resources[ThemeManager.WarnKey]!).Color;
+        var warn = ((ISolidColorBrush)Application.Current!.Resources[ThemeManager.AKey]!).Color;
         var dot = scene.Panel.FindControl<BloomStack>("MicrophoneBloom")!;
 
         Assert.All(dot.Ghosts, ghost => Assert.Equal(warn, ((DropShadowEffect)ghost.Effect!).Color));

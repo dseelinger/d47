@@ -725,20 +725,28 @@ This capability registers no tools. A descriptor declares a capability's whole s
 one's surface is settings rows — giving the model a way to repaint the app or rebind a gesture
 would be reach added for the sake of symmetry.
 
-Colour lives in one resource dictionary per theme, keyed by role rather than by colour, so no
-view hardcodes a literal and a sixth theme is a file rather than a sweep through every screen:
+Colour lives in one table per theme (`Palette`), published as application resources keyed by
+meaning rather than by colour, so no view hardcodes a literal. A source gate fails the build on a
+hex colour outside `Palette.cs`:
 
 ```text
-D47.Background      the window behind everything
-D47.Surface         cards, the transcript, raised areas
-D47.SurfaceAlt      row striping, inset areas
-D47.Border          hairlines between things, and the chip behind a code span
-D47.Text            body text
-D47.TextMuted       help text, placeholders, provenance lines
-D47.Accent          the theme's own colour: focus, headings, the SEND button
-D47.AccentMuted     the same colour with the volume down: a search match that is not the current one
-D47.Danger          the error banner
-D47.Info            the update banner
+D47.Bg        window ground
+D47.Bar       title bar, modal ground
+D47.Slab      read-only data tile
+D47.White     identity and speech
+D47.Grey      labels, helper prose
+D47.Grey2     placeholders, disabled
+D47.A         values, interactive text, rules, frames
+D47.Knock     text on solid A
+D47.Brown     secondary text in a selected row
+D47.Cyan      yours, here, ready
+D47.Blue      confirmed, met
+D47.Red       destructive, hostile, locked, error
+D47.Yellow    stored, capacity
+D47.Tile      A at 20% onto Bg
+D47.Tile2     A at 30% onto Bg
+D47.Line      A at 55% onto Bg
+D47.Line2     A at 28% onto Bg
 ```
 
 The HUD override file holds a 3x3 matrix — each output channel is the dot product of one row

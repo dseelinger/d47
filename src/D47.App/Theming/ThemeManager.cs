@@ -33,39 +33,14 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     public const string LineKey = "D47.Line";
     public const string Line2Key = "D47.Line2";
 
-    // Legacy keys, each published as the token named beside it.
-    public const string BackgroundKey = "D47.Background"; // bg
-    public const string SurfaceKey = "D47.Surface"; // bar
-    public const string SurfaceAltKey = "D47.SurfaceAlt"; // slab
-    public const string BorderKey = "D47.Border"; // line2
-    public const string TextKey = "D47.Text"; // white
-    public const string TextMutedKey = "D47.TextMuted"; // grey
-    public const string TextFaintKey = "D47.TextFaint"; // grey2
-    public const string AccentKey = "D47.Accent"; // a
-    public const string AccentMutedKey = "D47.AccentMuted"; // line
-    public const string DangerKey = "D47.Danger"; // red
-    public const string WarnKey = "D47.Warn"; // a
-    public const string GoodKey = "D47.Good"; // blue
-    public const string InfoKey = "D47.Info"; // blue
-    public const string RuleKey = "D47.Rule"; // line
-    public const string FillLowKey = "D47.FillLow"; // tile
-    public const string FillHighKey = "D47.FillHigh"; // tile2
-    public const string FillHigherKey = "D47.FillHigher"; // slab
-    public const string AccentBorderKey = "D47.AccentBorder"; // line2
-    public const string AccentInkKey = "D47.AccentInk"; // white
-    public const string CardFillKey = "D47.CardFill"; // tile
-    public const string CardFillSelectedKey = "D47.CardFillSelected"; // tile2
-    public const string RowFillKey = "D47.RowFill"; // tile
-    public const string TagBorderKey = "D47.TagBorder"; // line
-    public const string PaneFillKey = "D47.PaneFill"; // bg
-    public const string PaneBorderKey = "D47.PaneBorder"; // line2
-    public const string TagInkKey = "D47.TagInk"; // a
-
     /// <summary><see cref="Palette.CyanGround"/>.</summary>
     public const string CyanGroundKey = "D47.CyanGround";
 
     /// <summary>Black at 72% — a layer chooser's dimming behind its card, in every theme.</summary>
     public const string ScrimKey = "D47.Scrim";
+
+    /// <summary>The brush <see cref="ScrimKey"/> publishes.</summary>
+    public static SolidColorBrush Scrim() => new(Colors.Black, 0.72);
 
     /// <summary>A tiled brush of a 1px black line at 30% every 3px over the whole window; null on a theme that does not glow.</summary>
     public const string ScanlinesKey = "D47.Scanlines";
@@ -84,7 +59,6 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     public static IReadOnlyList<string> Roles { get; } =
     [
         .. Tokens,
-        .. Legacy(Palettes.Elite).Keys,
         .. BloomStopKeys(), ScanlinesKey, ScrimKey, CyanGroundKey,
     ];
 
@@ -108,37 +82,6 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         [Tile2Key] = palette.Tile2,
         [LineKey] = palette.Line,
         [Line2Key] = palette.Line2,
-    };
-
-    /// <summary>Each legacy key and the token colour it is published as.</summary>
-    public static IReadOnlyDictionary<string, Color> Legacy(Palette palette) => new Dictionary<string, Color>
-    {
-        [BackgroundKey] = palette.Bg,
-        [SurfaceKey] = palette.Bar,
-        [SurfaceAltKey] = palette.Slab,
-        [BorderKey] = palette.Line2,
-        [TextKey] = palette.White,
-        [TextMutedKey] = palette.Grey,
-        [TextFaintKey] = palette.Grey2,
-        [AccentKey] = palette.A,
-        [AccentMutedKey] = palette.Line,
-        [DangerKey] = palette.Red,
-        [WarnKey] = palette.A,
-        [GoodKey] = palette.Blue,
-        [InfoKey] = palette.Blue,
-        [RuleKey] = palette.Line,
-        [FillLowKey] = palette.Tile,
-        [FillHighKey] = palette.Tile2,
-        [FillHigherKey] = palette.Slab,
-        [AccentBorderKey] = palette.Line2,
-        [AccentInkKey] = palette.White,
-        [CardFillKey] = palette.Tile,
-        [CardFillSelectedKey] = palette.Tile2,
-        [RowFillKey] = palette.Tile,
-        [TagBorderKey] = palette.Line,
-        [PaneFillKey] = palette.Bg,
-        [PaneBorderKey] = palette.Line2,
-        [TagInkKey] = palette.A,
     };
 
     /// <summary>
@@ -211,12 +154,12 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         var palette = Resolve(themeId, matrixOverride);
         var resources = application.Resources;
 
-        foreach (var (key, colour) in TokenColours(palette).Concat(Legacy(palette)))
+        foreach (var (key, colour) in TokenColours(palette))
         {
             resources[key] = new SolidColorBrush(colour);
         }
 
-        resources[ScrimKey] = new SolidColorBrush(Colors.Black, 0.72);
+        resources[ScrimKey] = Scrim();
         resources[CyanGroundKey] = new SolidColorBrush(palette.CyanGround);
 
         // Null on a theme that does not glow, which turns both off: an unset Effect or Background paints nothing.

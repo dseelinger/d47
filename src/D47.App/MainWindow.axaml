@@ -6,8 +6,8 @@
         Icon="/Assets/directive-47.ico"
         Width="820" Height="640"
         WindowStartupLocation="CenterScreen"
-        Background="{DynamicResource D47.Background}"
-        Foreground="{DynamicResource D47.Text}">
+        Background="{DynamicResource D47.Bg}"
+        Foreground="{DynamicResource D47.White}">
 
   <!-- The window is the desktop host for the panel, and nothing more. Everything the panel
        shows lives in PanelView, which the VR overlay instantiates for itself against the same

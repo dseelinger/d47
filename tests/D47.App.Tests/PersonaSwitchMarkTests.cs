@@ -77,7 +77,7 @@ public class PersonaSwitchMarkTests
         var marked = Assert.Single(runs, run => run.Text!.Contains("[Switched to Cora]", StringComparison.Ordinal));
         var spoken = Assert.Single(runs, run => run.Text!.Contains("Standing by", StringComparison.Ordinal));
 
-        var accent = (IBrush?)window.FindResource(ThemeManager.AccentKey);
+        var accent = (IBrush?)window.FindResource(ThemeManager.AKey);
 
         Assert.Equal(accent?.ToString(), marked.Foreground?.ToString());
         Assert.NotEqual(accent?.ToString(), spoken.Foreground?.ToString());

@@ -64,14 +64,14 @@ public class TooltipsTakeATerminalReadoutThemeTests
         var tip = window.GetVisualDescendants().OfType<ToolTip>().Single();
         var resources = Application.Current!.Resources;
 
-        Assert.Equal(resources[ThemeManager.FillHigherKey], tip.Background);
-        Assert.Equal(resources[ThemeManager.RuleKey], tip.BorderBrush);
+        Assert.Equal(resources[ThemeManager.SlabKey], tip.Background);
+        Assert.Equal(resources[ThemeManager.LineKey], tip.BorderBrush);
         Assert.Equal(new Thickness(1), tip.BorderThickness);
         Assert.Equal(new CornerRadius(0), tip.CornerRadius);
         Assert.Equal(new Thickness(12, 8), tip.Padding);
         Assert.Equal(280d, tip.MaxWidth);
         Assert.Equal(TypeScale.Tip, tip.FontSize);
-        Assert.Equal(resources[ThemeManager.TextKey], tip.Foreground);
+        Assert.Equal(resources[ThemeManager.WhiteKey], tip.Foreground);
 
         var border = tip.GetVisualDescendants().OfType<Border>().First();
         Assert.Null(border.Effect);

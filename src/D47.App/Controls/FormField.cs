@@ -102,7 +102,7 @@ public sealed class FormField
         {
             Orientation = Orientation.Horizontal,
             Spacing = 4,
-            Children = { Caption(label, TypeScale.Small, ThemeManager.TextMutedKey) },
+            Children = { Caption(label, TypeScale.Small, ThemeManager.GreyKey) },
         };
 
         if (Mark(need) is { } mark)
@@ -143,7 +143,7 @@ public sealed class FormField
         var mark = Caption(
             required ? RequiredMark : SuppliedMark,
             TypeScale.Body,
-            required ? ThemeManager.AccentKey : ThemeManager.InfoKey);
+            required ? ThemeManager.AKey : ThemeManager.BlueKey);
 
         mark.FontWeight = FontWeight.Bold;
 
@@ -162,12 +162,12 @@ public sealed class FormField
 
         if (required)
         {
-            row.Children.Add(Key(RequiredMark, "required", ThemeManager.AccentKey));
+            row.Children.Add(Key(RequiredMark, "required", ThemeManager.AKey));
         }
 
         if (supplied)
         {
-            row.Children.Add(Key(SuppliedMark, "filled from your ship", ThemeManager.InfoKey));
+            row.Children.Add(Key(SuppliedMark, "filled from your ship", ThemeManager.BlueKey));
         }
 
         return row;
@@ -184,7 +184,7 @@ public sealed class FormField
         {
             Orientation = Orientation.Horizontal,
             Spacing = 4,
-            Children = { glyph, Caption(says, TypeScale.Small, ThemeManager.TextMutedKey) },
+            Children = { glyph, Caption(says, TypeScale.Small, ThemeManager.GreyKey) },
         };
 
         AutomationProperties.SetAccessibilityView(row, AccessibilityView.Raw);

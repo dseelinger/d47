@@ -120,7 +120,6 @@ public sealed class HelpImproveWindow : Window
         Name = "DonationPrivacyLink",
         Content = "Read the full privacy note",
         HorizontalAlignment = HorizontalAlignment.Left,
-        Classes = { "quiet" },
     };
 
     /// <summary>What leaves, in four figures a Commander can read at a glance (#338).</summary>
@@ -140,7 +139,6 @@ public sealed class HelpImproveWindow : Window
         Content = "Show the exact text",
         HorizontalAlignment = HorizontalAlignment.Left,
         Margin = new Thickness(0, 0, 0, 6),
-        Classes = { "quiet" },
     };
 
     /// <summary>What the disclosure toggle shows and hides.</summary>
@@ -185,19 +183,19 @@ public sealed class HelpImproveWindow : Window
 
     private readonly Button _copy = new()
     {
-        Name = "CopyExcerpt", Content = CopyLabel, MinWidth = 190, Classes = { "quiet" },
+        Name = "CopyExcerpt", Content = CopyLabel, MinWidth = 190,
     };
 
     private readonly Button _saveExcerpt = new()
     {
-        Content = "Save a file instead…", MinWidth = 160, Classes = { "quiet" },
+        Content = "Save a file instead…", MinWidth = 160,
     };
 
     private readonly Button _stop = new() { Name = "StopCorpus", Content = "Cancel", MinWidth = 110 };
 
     private readonly Button _saveCorpus = new()
     {
-        Name = "SaveCorpus", Content = "Save it instead…", MinWidth = 160, IsEnabled = false, Classes = { "quiet" },
+        Name = "SaveCorpus", Content = "Save it instead…", MinWidth = 160, IsEnabled = false,
     };
 
     // Named, like the controls above, because a test drives these to assert that what is sent is the artefact
@@ -396,11 +394,9 @@ public sealed class HelpImproveWindow : Window
         _copy.IsVisible = !history;
         _saveExcerpt.IsVisible = !history;
         _sendButton.IsVisible = !history && _send is not null;
-        _sendButton.Classes.Set("primary", !history && _send is not null);
 
         _saveCorpus.IsVisible = history;
         _sendCorpusButton.IsVisible = history && _sendCorpus is not null;
-        _sendCorpusButton.Classes.Set("primary", history && _sendCorpus is not null);
 
         _intro.Text = Sentence(history);
         _consentDestination.Text = DestinationText(history);

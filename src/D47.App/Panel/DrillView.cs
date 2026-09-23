@@ -199,7 +199,7 @@ public sealed class DrillView : UserControl, IFilterablePage
 
             host.Bind(
                 Border.BorderBrushProperty,
-                this.GetResourceObservable(Theming.ThemeManager.BorderKey));
+                this.GetResourceObservable(Theming.ThemeManager.Line2Key));
 
             Grid.SetColumn(host, index);
             _strip.Children.Add(host);

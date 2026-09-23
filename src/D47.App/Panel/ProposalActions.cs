@@ -48,7 +48,7 @@ internal static class ProposalActions
 
         block.Bind(
             TextBlock.ForegroundProperty,
-            Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.TextMutedKey));
+            Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.GreyKey));
 
         return block;
     }

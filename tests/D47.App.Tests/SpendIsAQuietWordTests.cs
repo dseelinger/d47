@@ -30,7 +30,6 @@ public class SpendIsAQuietWordTests
         var button = Details(Shown());
 
         Assert.Equal("SPEND", button.Content);
-        Assert.Contains("quiet", button.Classes);
     }
 
     [AvaloniaFact]

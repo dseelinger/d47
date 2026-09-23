@@ -13,8 +13,7 @@
     <!--
       Every button is a flat Tile with A ink in uppercase Saira: solid A with Knock ink on hover,
       keyboard focus or press, Slab with Grey2 ink when disabled. No outline, corner or glow.
-      "primary" and "quiet" draw as the default; "destructive" swaps A for Red, with White ink on
-      the solid fill.
+      "destructive" swaps A for Red, with White ink on the solid fill.
     -->
     <ControlTheme x:Key="{x:Type Button}" TargetType="Button">
       <Setter Property="FontFamily" Value="{StaticResource D47.Font.Chrome}" />
@@ -209,7 +208,6 @@
       <Setter Property="Padding" Value="0" />
       <Setter Property="Background" Value="Transparent" />
       <Setter Property="BorderThickness" Value="0" />
-      <Setter Property="CornerRadius" Value="0" />
       <Setter Property="Foreground" Value="{DynamicResource D47.A}" />
       <Setter Property="FocusAdorner" Value="{x:Null}" />
       <Setter Property="Template">
@@ -680,7 +678,7 @@
       because NumericUpDown composes an actual ButtonSpinner rather than drawing the spinner
       itself (#289). Square, no fill; the increase/decrease glyphs take D47.GlyphButton, each in a
       44-wide cell, repeating after 400 ms at 8 per second. The dividers are drawn here,
-      on the control, so they hold D47.Border regardless of a button's state.
+      on the control, so they hold D47.Line2 regardless of a button's state.
     -->
     <ControlTheme x:Key="D47.NumberSpinner" TargetType="ButtonSpinner">
       <Setter Property="Background" Value="Transparent" />
@@ -697,7 +695,7 @@
                           DockPanel.Dock="Right"
                           Orientation="Horizontal"
                           IsVisible="{TemplateBinding ShowButtonSpinner}">
-                <Border Width="1" Background="{DynamicResource D47.Border}" />
+                <Border Width="1" Background="{DynamicResource D47.Line2}" />
                 <RepeatButton Name="PART_IncreaseButton"
                               Theme="{StaticResource D47.GlyphButton}"
                               IsTabStop="{TemplateBinding IsTabStop}"
@@ -710,7 +708,7 @@
                               VerticalAlignment="Stretch"
                               VerticalContentAlignment="Center"
                               HorizontalContentAlignment="Center" />
-                <Border Width="1" Background="{DynamicResource D47.Border}" />
+                <Border Width="1" Background="{DynamicResource D47.Line2}" />
                 <RepeatButton Name="PART_DecreaseButton"
                               Theme="{StaticResource D47.GlyphButton}"
                               IsTabStop="{TemplateBinding IsTabStop}"
@@ -810,7 +808,7 @@
     </ControlTheme>
 
     <!--
-      The Level control's Slider (#352): a 30-tall D47.Rule/D47.FillLow track, centred inside the
+      The Level control's Slider (#352): a 30-tall D47.Line/D47.Tile track, centred inside the
       40-tall Track that the 10-wide handle needs so it can overhang 5px top and bottom.
     -->
     <ControlTheme x:Key="{x:Type Slider}" TargetType="Slider">
@@ -823,8 +821,8 @@
             <Border Height="30"
                     VerticalAlignment="Center"
                     BorderThickness="1"
-                    BorderBrush="{DynamicResource D47.Rule}"
-                    Background="{DynamicResource D47.FillLow}" />
+                    BorderBrush="{DynamicResource D47.Line}"
+                    Background="{DynamicResource D47.Tile}" />
             <Track Name="PART_Track"
                    Height="40"
                    Orientation="Horizontal"
@@ -853,7 +851,7 @@
     <!-- The Level's fill: Accent, inset 3px on every side of the 30-tall track, with the high bloom. -->
     <ControlTheme x:Key="D47.SliderFill" TargetType="RepeatButton">
       <Setter Property="ClipToBounds" Value="False" />
-      <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
+      <Setter Property="Background" Value="{DynamicResource D47.A}" />
       <Setter Property="BorderThickness" Value="0" />
       <Setter Property="Padding" Value="0" />
       <Setter Property="Height" Value="24" />
@@ -869,7 +867,7 @@
     </ControlTheme>
 
     <!--
-      The Level's handle: a visible 10-wide D47.AccentInk bar inside a 44-wide transparent hit
+      The Level's handle: a visible 10-wide D47.White bar inside a 44-wide transparent hit
       rectangle, so the drawn handle stays the handoff's width while a pointer or VR ray still
       finds it at the minimum interactive target.
     -->
@@ -882,7 +880,7 @@
           <Panel>
             <Rectangle Width="44" Height="44" Fill="Transparent" />
             <theming:BloomStack Tier="High" Width="10" Height="40">
-              <Rectangle Fill="{DynamicResource D47.AccentInk}" />
+              <Rectangle Fill="{DynamicResource D47.White}" />
             </theming:BloomStack>
           </Panel>
         </ControlTemplate>
@@ -896,15 +894,14 @@
       cannot set them; the Style below the Resources block does, once, for every Control.
     -->
     <ControlTheme x:Key="{x:Type ToolTip}" TargetType="ToolTip">
-      <Setter Property="Background" Value="{DynamicResource D47.FillHigher}" />
-      <Setter Property="BorderBrush" Value="{DynamicResource D47.Rule}" />
+      <Setter Property="Background" Value="{DynamicResource D47.Slab}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource D47.Line}" />
       <Setter Property="BorderThickness" Value="1" />
-      <Setter Property="CornerRadius" Value="0" />
       <Setter Property="Padding" Value="12,8" />
       <Setter Property="MaxWidth" Value="280" />
       <Setter Property="FontFamily" Value="{StaticResource D47.Font.Prose}" />
       <Setter Property="FontSize" Value="{StaticResource D47.Type.Tip}" />
-      <Setter Property="Foreground" Value="{DynamicResource D47.Text}" />
+      <Setter Property="Foreground" Value="{DynamicResource D47.White}" />
       <Setter Property="Template">
         <ControlTemplate>
           <Border Background="{TemplateBinding Background}"

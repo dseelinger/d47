@@ -51,7 +51,7 @@ public sealed class ControlKitWindow : Window
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         ShowInTaskbar = false;
 
-        Themed(this, BackgroundProperty, ThemeManager.BackgroundKey);
+        Themed(this, BackgroundProperty, ThemeManager.BgKey);
 
         // D47.Tab is scoped to wherever merges PanelTabs.axaml; a desktop-only window carries no merge
         // of it on its own.
@@ -130,7 +130,7 @@ public sealed class ControlKitWindow : Window
                 + "carries state, not outlines — a filled block is the terminal idiom and it is the thing that "
                 + "still reads at arm's length in a headset.",
             TypeScale.Body,
-            ThemeManager.TextMutedKey);
+            ThemeManager.GreyKey);
         intro.MaxWidth = 640;
         intro.Margin = new Thickness(0, 8, 0, 0);
 
@@ -158,9 +158,9 @@ public sealed class ControlKitWindow : Window
         {
             BorderThickness = new Thickness(1),
             Padding = new Thickness(18, 16),
-            Child = new StackPanel { Children = { label, Prose(body, TypeScale.Secondary, ThemeManager.TextKey) } },
+            Child = new StackPanel { Children = { label, Prose(body, TypeScale.Secondary, ThemeManager.WhiteKey) } },
         };
-        Themed(card, Border.BorderBrushProperty, ThemeManager.BorderKey);
+        Themed(card, Border.BorderBrushProperty, ThemeManager.Line2Key);
 
         return card;
     }
@@ -344,7 +344,7 @@ public sealed class ControlKitWindow : Window
     {
         var rows = new StackPanel { Spacing = Segment.Gap };
 
-        foreach (var weight in new[] { "", "primary", "quiet", "destructive" })
+        foreach (var weight in new[] { "", "destructive" })
         {
             var name = weight.Length == 0 ? "normal" : weight;
             rows.Children.Add(new WrapPanel
@@ -392,7 +392,6 @@ public sealed class ControlKitWindow : Window
         }
 
         var clear = new Button { Content = "CLEAR" };
-        clear.Classes.Add("quiet");
         wrap.Children.Add(clear);
 
         return wrap;
@@ -412,7 +411,7 @@ public sealed class ControlKitWindow : Window
         Themed(text, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         var chip = new Border { BorderThickness = new Thickness(1, 0, 0, 0), Padding = new Thickness(11, 0), Child = text };
-        Themed(chip, Border.BorderBrushProperty, ThemeManager.BorderKey);
+        Themed(chip, Border.BorderBrushProperty, ThemeManager.Line2Key);
 
         return chip;
     }
@@ -604,7 +603,7 @@ public sealed class ControlKitWindow : Window
         var question = Prose(
             "Its loadout is removed from the logbook. The ship itself is not touched.",
             TypeScale.Body,
-            ThemeManager.TextKey);
+            ThemeManager.WhiteKey);
 
         var figure = new TextBlock
         {
@@ -667,7 +666,7 @@ public sealed class ControlKitWindow : Window
     {
         var box = new Border { Width = 72, Height = 72, BorderThickness = new Thickness(1) };
         Themed(box, Border.BackgroundProperty, resourceKey);
-        Themed(box, Border.BorderBrushProperty, ThemeManager.BorderKey);
+        Themed(box, Border.BorderBrushProperty, ThemeManager.Line2Key);
 
         var name = new TextBlock
         {
@@ -676,7 +675,7 @@ public sealed class ControlKitWindow : Window
             FontSize = TypeScale.Secondary,
             FontWeight = FontWeight.SemiBold,
         };
-        Themed(name, TextBlock.ForegroundProperty, ThemeManager.TextKey);
+        Themed(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var key = new TextBlock
         {
@@ -684,10 +683,10 @@ public sealed class ControlKitWindow : Window
             FontFamily = new FontFamily(Fonts.MonoFamily),
             FontSize = TypeScale.Caption,
         };
-        Themed(key, TextBlock.ForegroundProperty, ThemeManager.TextFaintKey);
+        Themed(key, TextBlock.ForegroundProperty, ThemeManager.Grey2Key);
 
         var hex = new TextBlock { FontFamily = new FontFamily(Fonts.MonoFamily), FontSize = TypeScale.Caption };
-        Themed(hex, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(hex, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         box.GetResourceObservable(resourceKey).Subscribe(new Avalonia.Reactive.AnonymousObserver<object?>(value =>
             hex.Text = value is SolidColorBrush { Color: var c } ? $"#{c.R:X2}{c.G:X2}{c.B:X2}" : null));
 
@@ -713,7 +712,7 @@ public sealed class ControlKitWindow : Window
             Padding = new Thickness(24, 0, 0, 0),
             Child = new StackPanel { Children = { TitleText.Screen("SCREEN TITLE"), group, subgroup, row } },
         };
-        Themed(block, Border.BorderBrushProperty, ThemeManager.BorderKey);
+        Themed(block, Border.BorderBrushProperty, ThemeManager.Line2Key);
 
         return Section("Four ranks of heading", block);
     }
@@ -722,7 +721,7 @@ public sealed class ControlKitWindow : Window
 
     private static Control SettingsRowsSection()
     {
-        var legend = Prose(SettingsView.ProtectedLegend, TypeScale.Secondary, ThemeManager.TextMutedKey);
+        var legend = Prose(SettingsView.ProtectedLegend, TypeScale.Secondary, ThemeManager.GreyKey);
 
         var rows = new StackPanel
         {
@@ -764,7 +763,7 @@ public sealed class ControlKitWindow : Window
             FontSize = TypeScale.Body,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        Themed(caption, TextBlock.ForegroundProperty, ThemeManager.TextKey);
+        Themed(caption, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         control.HorizontalAlignment = HorizontalAlignment.Left;
         control.VerticalAlignment = VerticalAlignment.Center;
@@ -808,7 +807,7 @@ public sealed class ControlKitWindow : Window
             BorderThickness = new Thickness(0, 1, 0, 0),
             Child = grid,
         };
-        Themed(rowShape, Border.BorderBrushProperty, ThemeManager.BorderKey);
+        Themed(rowShape, Border.BorderBrushProperty, ThemeManager.Line2Key);
 
         Control line = rowShape;
 
@@ -820,7 +819,7 @@ public sealed class ControlKitWindow : Window
                 Padding = new Thickness(ProtectedBarPadding, 0, 0, 0),
                 Child = line,
             };
-            Themed(bar, Border.BorderBrushProperty, ThemeManager.WarnKey);
+            Themed(bar, Border.BorderBrushProperty, ThemeManager.AKey);
             line = bar;
         }
 
@@ -912,11 +911,11 @@ public sealed class ControlKitWindow : Window
             FontSize = TypeScale.Caption,
             LetterSpacing = TypeScale.Caption * Fonts.ChromeTracking,
         };
-        Themed(label, TextBlock.ForegroundProperty, ThemeManager.TextFaintKey);
+        Themed(label, TextBlock.ForegroundProperty, ThemeManager.Grey2Key);
         return label;
     }
 
-    private static TextBlock Note(string? text) => Prose(text, TypeScale.Tip, ThemeManager.TextFaintKey);
+    private static TextBlock Note(string? text) => Prose(text, TypeScale.Tip, ThemeManager.Grey2Key);
 
     private static TextBlock Prose(string? text, double size, string inkKey)
     {

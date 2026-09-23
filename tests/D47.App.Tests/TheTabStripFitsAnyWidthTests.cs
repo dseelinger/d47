@@ -172,6 +172,5 @@ public class TheTabStripFitsAnyWidthTests
         var button = Furnished(1200).GetControl<Button>("HelpButton");
 
         Assert.Equal("HELP", button.Content);
-        Assert.Contains("quiet", button.Classes);
     }
 }

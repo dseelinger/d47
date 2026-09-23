@@ -90,7 +90,7 @@ public class EliteGlowsAndDarkAndLightDoNotTests
 
         Assert.All(StopKeys(), key => Assert.Null(resources[key]));
         Assert.Null(resources[ThemeManager.ScanlinesKey]);
-        Assert.IsType<SolidColorBrush>(resources[ThemeManager.RuleKey]);
+        Assert.IsType<SolidColorBrush>(resources[ThemeManager.LineKey]);
     }
 
     /// <summary>A theme switch recomputes the keys, rather than leaving Light with Elite's value still set.</summary>

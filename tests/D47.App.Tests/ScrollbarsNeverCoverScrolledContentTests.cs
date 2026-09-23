@@ -36,8 +36,8 @@ public class ScrollbarsNeverCoverScrolledContentTests
         var window = new Window { Content = scroller, Width = 300, Height = 200 };
 
         // The palette App.axaml merges; without a background the thumb is not hit-tested.
-        window.Resources["D47.Rule"] = Brushes.Gray;
-        window.Resources["D47.Accent"] = Brushes.Orange;
+        window.Resources["D47.Line"] = Brushes.Gray;
+        window.Resources["D47.A"] = Brushes.Orange;
 
         window.Show();
         Jobs();

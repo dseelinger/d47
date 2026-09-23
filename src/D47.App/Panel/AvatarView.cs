@@ -143,10 +143,10 @@ public sealed class AvatarView : UserControl
     /// <summary>Colour by role, never by literal, like every other view.</summary>
     internal static string ResourceKeyFor(LoopState state) => state switch
     {
-        LoopState.Failed => "D47.Danger",
-        LoopState.Unsure => "D47.Info",
-        LoopState.Idle => "D47.TextMuted",
-        _ => "D47.Accent",
+        LoopState.Failed => "D47.Red",
+        LoopState.Unsure => "D47.Blue",
+        LoopState.Idle => "D47.Grey",
+        _ => "D47.A",
     };
 
     /// <summary>

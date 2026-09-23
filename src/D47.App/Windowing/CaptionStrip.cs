@@ -101,7 +101,7 @@ public static class CaptionStrip
         void ShowTitle() => (name.Text, version.Text) = Split(window.Title);
 
         ShowTitle();
-        version.Bind(TextBlock.ForegroundProperty, version.GetResourceObservable(ThemeManager.AccentKey));
+        version.Bind(TextBlock.ForegroundProperty, version.GetResourceObservable(ThemeManager.AKey));
 
         var diamond = new Path
         {
@@ -111,7 +111,7 @@ public static class CaptionStrip
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(0, 0, 8, 0),
         };
-        diamond.Bind(Shape.FillProperty, diamond.GetResourceObservable(ThemeManager.AccentKey));
+        diamond.Bind(Shape.FillProperty, diamond.GetResourceObservable(ThemeManager.AKey));
 
 
         var drag = new Border

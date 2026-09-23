@@ -192,7 +192,7 @@ public sealed class PanelPrompts : IHearsText
 
             second.Bind(
                 TextBlock.ForegroundProperty,
-                App.Current!.GetResourceObservable(ThemeManager.TextMutedKey));
+                App.Current!.GetResourceObservable(ThemeManager.GreyKey));
 
             header.Children.Add(second);
         }
@@ -258,7 +258,7 @@ public sealed class PanelPrompts : IHearsText
 
                 nothing.Bind(
                     TextBlock.ForegroundProperty,
-                    App.Current!.GetResourceObservable(ThemeManager.TextMutedKey));
+                    App.Current!.GetResourceObservable(ThemeManager.GreyKey));
 
                 rows.Children.Add(nothing);
                 return;
@@ -375,7 +375,7 @@ public sealed class PanelPrompts : IHearsText
 
         said.Bind(
             TextBlock.ForegroundProperty,
-            App.Current!.GetResourceObservable(ThemeManager.TextMutedKey));
+            App.Current!.GetResourceObservable(ThemeManager.GreyKey));
 
         return said;
     }
@@ -406,7 +406,7 @@ public sealed class PanelPrompts : IHearsText
 
             detail.Bind(
                 TextBlock.ForegroundProperty,
-                App.Current!.GetResourceObservable(ThemeManager.TextMutedKey));
+                App.Current!.GetResourceObservable(ThemeManager.GreyKey));
 
             stack.Children.Add(detail);
         }
@@ -419,7 +419,7 @@ public sealed class PanelPrompts : IHearsText
                 Text = request.CurrentWord,
                 FontSize = TypeScale.Small,
                 [!TextBlock.ForegroundProperty] =
-                    App.Current!.GetResourceObservable(ThemeManager.AccentKey).ToBinding(),
+                    App.Current!.GetResourceObservable(ThemeManager.AKey).ToBinding(),
             });
         }
 
@@ -578,7 +578,7 @@ public sealed class PanelPrompts : IHearsText
 
             _state.Bind(
                 TextBlock.ForegroundProperty,
-                App.Current!.GetResourceObservable(ThemeManager.TextMutedKey));
+                App.Current!.GetResourceObservable(ThemeManager.GreyKey));
 
             (_swap, _) = LabeledCheckBox.Build("Keyboard");
             _swap.IsCheckedChanged += (_, _) =>
@@ -866,7 +866,6 @@ public sealed class PanelPrompts : IHearsText
                 Margin = new Thickness(14, 0, 0, 0),
             };
 
-            _commit.Classes.Add("primary");
             _commit.Click += (_, _) => CommitHighlighted();
 
             _state = Muted(string.Empty);
@@ -947,7 +946,7 @@ public sealed class PanelPrompts : IHearsText
 
             block.Bind(
                 TextBlock.ForegroundProperty,
-                App.Current!.GetResourceObservable(ThemeManager.TextMutedKey));
+                App.Current!.GetResourceObservable(ThemeManager.GreyKey));
 
             return block;
         }

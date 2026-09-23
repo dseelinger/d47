@@ -59,12 +59,12 @@
     </ControlTheme>
 
     <!--
-      The bar's thumb (#368): D47.Rule on a transparent track, turning D47.Accent on hover
+      The bar's thumb (#368): D47.Line on a transparent track, turning D47.A on hover
       or drag. Colour only, no width change, so it needs none of Fluent's small/expanded
       thumb states.
     -->
     <ControlTheme x:Key="D47.ScrollThumb" TargetType="Thumb">
-      <Setter Property="Background" Value="{DynamicResource D47.Rule}" />
+      <Setter Property="Background" Value="{DynamicResource D47.Line}" />
       <Setter Property="Template">
         <ControlTemplate>
           <Border Background="{TemplateBinding Background}">
@@ -77,10 +77,10 @@
         </ControlTemplate>
       </Setter>
       <Style Selector="^:pointerover">
-        <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
+        <Setter Property="Background" Value="{DynamicResource D47.A}" />
       </Style>
       <Style Selector="^:pressed">
-        <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
+        <Setter Property="Background" Value="{DynamicResource D47.A}" />
       </Style>
     </ControlTheme>
 

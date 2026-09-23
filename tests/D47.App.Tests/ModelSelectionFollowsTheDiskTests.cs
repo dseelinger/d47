@@ -196,7 +196,7 @@ public class ModelSelectionFollowsTheDiskTests
 
     /// <summary>The button a staged choice waits on.</summary>
     private static Button Confirm(SettingsHost host) =>
-        Row(host).GetVisualDescendants().OfType<Button>().Single(button => button.Classes.Contains("primary") && button.IsVisible);
+        Row(host).GetVisualDescendants().OfType<Button>().Single(button => button.Name == "ApplyStaged" && button.IsVisible);
 
     /// <summary>Steps to the model and presses the button that applies it.</summary>
     private static void Choose(SettingsHost host, string modelId)

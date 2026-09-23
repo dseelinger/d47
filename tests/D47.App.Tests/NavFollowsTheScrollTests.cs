@@ -65,7 +65,7 @@ public class NavFollowsTheScrollTests
     private static int Active(SettingsView view)
     {
         var items = NavItems(view);
-        var fill = Colour(Application.Current!.FindResource(ThemeManager.AccentKey) as IBrush);
+        var fill = Colour(Application.Current!.FindResource(ThemeManager.AKey) as IBrush);
 
         for (var i = 0; i < items.Count; i++)
         {

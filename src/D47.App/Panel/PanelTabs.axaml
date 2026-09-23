@@ -89,22 +89,22 @@
     <Setter Property="Cursor" Value="Hand" />
     <Setter Property="FontFamily" Value="{StaticResource D47.Font.Chrome}" />
     <Setter Property="FontSize" Value="{StaticResource D47.Type.Body}" />
-    <Setter Property="Foreground" Value="{DynamicResource D47.Accent}" />
+    <Setter Property="Foreground" Value="{DynamicResource D47.A}" />
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="Padding" Value="4,2" />
     <Setter Property="MinWidth" Value="0" />
 
     <Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-      <Setter Property="Background" Value="{DynamicResource D47.SurfaceAlt}" />
-      <Setter Property="TextBlock.Foreground" Value="{DynamicResource D47.Accent}" />
+      <Setter Property="Background" Value="{DynamicResource D47.Slab}" />
+      <Setter Property="TextBlock.Foreground" Value="{DynamicResource D47.A}" />
     </Style>
 
     <!-- Where you are. Disabled rather than drawn as a label, so the control keeps its metrics
          and the row does not shift by a pixel as the trail grows and shrinks. -->
     <Style Selector="^:disabled">
       <Setter Property="Cursor" Value="Arrow" />
-      <Setter Property="Foreground" Value="{DynamicResource D47.Text}" />
+      <Setter Property="Foreground" Value="{DynamicResource D47.White}" />
       <Setter Property="FontWeight" Value="SemiBold" />
       <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Opacity" Value="1" />

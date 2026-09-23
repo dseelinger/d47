@@ -259,7 +259,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
         foreach (var edge in new[] { _left, _right, _top, _bottom })
         {
-            edge.Bind(Border.BackgroundProperty, edge.GetResourceObservable(Theming.ThemeManager.AccentKey));
+            edge.Bind(Border.BackgroundProperty, edge.GetResourceObservable(Theming.ThemeManager.AKey));
             framed.Children.Add(edge);
         }
 

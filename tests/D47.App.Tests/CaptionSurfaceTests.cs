@@ -136,7 +136,7 @@ public class CaptionsKeepArrivingTests
         {
             var at = (y * stride) + (x * 4);
 
-            // D47.AccentInk on a near-black D47.Background: a bright pixel is text, not ground.
+            // D47.White on a near-black D47.Bg: a bright pixel is text, not ground.
             if (pixels[at] + pixels[at + 1] + pixels[at + 2] > 400)
             {
                 ink++;

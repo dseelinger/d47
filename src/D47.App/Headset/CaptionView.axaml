@@ -23,8 +23,7 @@
          quarters there is harder to read than a solid one - the opposite of what the box is for. -->
     <Border HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
-            CornerRadius="0"
-            Background="{DynamicResource D47.Background}"
+            Background="{DynamicResource D47.Bg}"
             Opacity="{Binding BackgroundOpacity}" />
 
     <!--
@@ -39,7 +38,7 @@
                TextAlignment="Center"
                HorizontalAlignment="Center"
                Margin="28,16"
-               Foreground="{DynamicResource D47.AccentInk}"
+               Foreground="{DynamicResource D47.White}"
                FontFamily="Segoe UI,Inter,sans-serif"
                FontWeight="SemiBold"
                FontSize="{Binding FontSize}" />

@@ -158,7 +158,7 @@ public sealed class OverlayPanel : Window
 
         // The panel paints its own background over every pixel of this window, so what this brush is is only
         // ever seen for the width of a layout pass.
-        this.Bind(BackgroundProperty, this.GetResourceObservable(Theming.ThemeManager.BackgroundKey));
+        this.Bind(BackgroundProperty, this.GetResourceObservable(Theming.ThemeManager.BgKey));
 
         ApplyScale();
 
@@ -301,7 +301,7 @@ public sealed class OverlayPanel : Window
         ApplyStyles();
 
         _frame.BorderThickness = new Thickness(2);
-        _frame.Bind(Border.BorderBrushProperty, this.GetResourceObservable(Theming.ThemeManager.AccentKey));
+        _frame.Bind(Border.BorderBrushProperty, this.GetResourceObservable(Theming.ThemeManager.AKey));
 
         _logger.LogInformation("The overlay is in place mode; drag it and let go");
     }

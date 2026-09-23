@@ -32,7 +32,7 @@ public sealed class ConfirmWindow : Window
             TextWrapping = TextWrapping.Wrap,
         };
 
-        Themed(text, TextBlock.ForegroundProperty, ThemeManager.TextKey);
+        Themed(text, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var confirm = new Button { Content = confirmLabel, MinWidth = 110 };
         var decline = new Button { Content = declineLabel, MinWidth = 110 };

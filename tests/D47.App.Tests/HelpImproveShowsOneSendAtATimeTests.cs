@@ -10,8 +10,8 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>The action bar carries one primary action and a clear rank below it (#338).</summary>
-public sealed class HelpImproveHasOnePrimaryActionTests
+/// <summary>The action bar carries one send at a time, for the page that is showing (#338).</summary>
+public sealed class HelpImproveShowsOneSendAtATimeTests
 {
     private static T Control<T>(Window window, string name)
         where T : Control =>
@@ -20,8 +20,7 @@ public sealed class HelpImproveHasOnePrimaryActionTests
     private static HelpImproveWindow.CorpusReading Reading(string report) =>
         new(new CorpusSurvey(null, null, 0, 0, new CorpusTally(0, 0, 0, 0, 0, 0), []), report);
 
-    /// <summary>Both halves wired, which is the shape the running app always builds — the shape most
-    /// likely to end up with two primaries if the rule is only "add the class once".</summary>
+    /// <summary>Both halves wired, which is the shape the running app always builds.</summary>
     private static HelpImproveWindow Full()
     {
         var window = new HelpImproveWindow(
@@ -40,40 +39,36 @@ public sealed class HelpImproveHasOnePrimaryActionTests
         return window;
     }
 
+    private static IEnumerable<string?> SendsShown(Window window) =>
+        window.GetVisualDescendants().OfType<Button>()
+            .Where(button => button.IsEffectivelyVisible && button.Name is "SendExcerpt" or "SendCorpus")
+            .Select(button => button.Name);
+
     [AvaloniaFact]
-    public void ExactlyOneButtonIsPrimaryOnTheExcerptPage()
+    public void OnlyTheExcerptSendIsShownOnTheExcerptPage()
     {
         var window = Full();
 
-        Assert.Single(window.GetVisualDescendants().OfType<Button>(), b => b.Classes.Contains("primary"));
-        Assert.Contains("primary", Control<Button>(window, "SendExcerpt").Classes);
+        Assert.Equal(["SendExcerpt"], SendsShown(window));
     }
 
     [AvaloniaFact]
-    public void ExactlyOneButtonIsPrimaryOnTheHistoryPageToo()
+    public void OnlyTheHistorySendIsShownOnTheHistoryPage()
     {
         var window = Full();
 
         Control<CheckBox>(window, "IncludeHistory").IsChecked = true;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Single(window.GetVisualDescendants().OfType<Button>(), b => b.Classes.Contains("primary"));
-        Assert.Contains("primary", Control<Button>(window, "SendCorpus").Classes);
+        Assert.Equal(["SendCorpus"], SendsShown(window));
     }
 
     [AvaloniaFact]
-    public void SaveAndCopyAreQuietCancelIsNeitherAndForgetIsDestructive()
+    public void ForgetIsDestructiveAndCancelIsNot()
     {
         var window = Full();
 
-        Assert.Contains("quiet", Control<Button>(window, "CopyExcerpt").Classes);
-        Assert.Contains("quiet", Control<Button>(window, "SaveCorpus").Classes);
-
-        var cancel = Control<Button>(window, "StopCorpus");
-        Assert.DoesNotContain("quiet", cancel.Classes);
-        Assert.DoesNotContain("primary", cancel.Classes);
-        Assert.DoesNotContain("destructive", cancel.Classes);
-
+        Assert.DoesNotContain("destructive", Control<Button>(window, "StopCorpus").Classes);
         Assert.Contains("destructive", Control<Button>(window, "ForgetDonations").Classes);
     }
 

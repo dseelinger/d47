@@ -7,33 +7,30 @@ namespace D47.App.Theming;
 /// corner radius (#288).</summary>
 public static class CardChrome
 {
-    /// <summary>A card: no corner radius, CardFill, a 1px Rule border. Selected or open:
-    /// CardFillSelected with a 1px Accent border.</summary>
+    /// <summary>A card: Tile with a 1px Line border. Selected or open:
+    /// Tile2 with a 1px A border.</summary>
     public static void Card(Border border, bool selected = false) => Card(border, selected, track: null);
 
     /// <summary>As <see cref="Card(Border, bool)"/>, adding the two binding disposables to
     /// <paramref name="track"/> for a control whose bindings are torn down on rebuild.</summary>
     public static void Card(Border border, bool selected, List<IDisposable>? track)
     {
-        border.CornerRadius = default;
         border.BorderThickness = new Thickness(1);
 
-        var background = Themed(border, Border.BackgroundProperty, selected ? ThemeManager.CardFillSelectedKey : ThemeManager.CardFillKey);
-        var borderBrush = Themed(border, Border.BorderBrushProperty, selected ? ThemeManager.AccentKey : ThemeManager.RuleKey);
+        var background = Themed(border, Border.BackgroundProperty, selected ? ThemeManager.Tile2Key : ThemeManager.TileKey);
+        var borderBrush = Themed(border, Border.BorderBrushProperty, selected ? ThemeManager.AKey : ThemeManager.LineKey);
 
         track?.Add(background);
         track?.Add(borderBrush);
     }
 
-    /// <summary>The current row in a list: FillHigh behind a 3px Accent bar on the leading edge,
-    /// no corner radius. Wraps the row's existing child behind the bar.</summary>
+    /// <summary>The current row in a list: Tile2 behind a 3px A bar on the leading edge. Wraps the row's existing child behind the bar.</summary>
     public static void CurrentRow(Border row)
     {
-        row.CornerRadius = default;
-        Themed(row, Border.BackgroundProperty, ThemeManager.FillHighKey);
+        Themed(row, Border.BackgroundProperty, ThemeManager.Tile2Key);
 
         var bar = new Border { Width = 3 };
-        Themed(bar, Border.BackgroundProperty, ThemeManager.AccentKey);
+        Themed(bar, Border.BackgroundProperty, ThemeManager.AKey);
 
         var child = row.Child!;
         row.Child = null;

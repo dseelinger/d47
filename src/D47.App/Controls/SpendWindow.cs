@@ -315,7 +315,7 @@ public sealed class SpendWindow : Window
             FontSize = TypeScale.Body,
             FontWeight = FontWeight.SemiBold,
         };
-        Themed(title, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
+        Themed(title, TextBlock.ForegroundProperty, ThemeManager.AKey);
         stack.Children.Add(title);
 
         var picks = Providers();
@@ -328,7 +328,7 @@ public sealed class SpendWindow : Window
                 FontSize = TypeScale.Secondary,
                 TextWrapping = TextWrapping.Wrap,
             };
-            Themed(empty, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+            Themed(empty, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
             stack.Children.Add(empty);
             return stack;
         }
@@ -437,7 +437,7 @@ public sealed class SpendWindow : Window
             TextWrapping = TextWrapping.Wrap,
         };
 
-        Themed(line, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(line, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         return line;
     }
@@ -447,7 +447,7 @@ public sealed class SpendWindow : Window
         var stack = new StackPanel { Spacing = 4 };
 
         var title = new TextBlock { Text = heading, FontSize = TypeScale.Body, FontWeight = FontWeight.SemiBold };
-        Themed(title, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
+        Themed(title, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         stack.Children.Add(title);
 
@@ -473,7 +473,7 @@ public sealed class SpendWindow : Window
         };
 
         var label = new TextBlock { Text = caption, FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap };
-        Themed(label, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(label, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var figure = new TextBlock
         {
@@ -484,7 +484,7 @@ public sealed class SpendWindow : Window
             TextWrapping = TextWrapping.NoWrap,
             Margin = new Thickness(0, 0, 8, 0),
         };
-        Themed(figure, TextBlock.ForegroundProperty, ThemeManager.TextKey);
+        Themed(figure, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var behind = new TextBlock
         {
@@ -493,7 +493,7 @@ public sealed class SpendWindow : Window
             FontFamily = new FontFamily(Fonts.MonoFamily),
             TextWrapping = TextWrapping.Wrap,
         };
-        Themed(behind, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(behind, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         Grid.SetColumn(figure, 1);
         Grid.SetColumn(behind, 2);

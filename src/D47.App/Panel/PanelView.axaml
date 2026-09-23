@@ -5,8 +5,8 @@
              xmlns:theming="clr-namespace:D47.App.Theming"
              x:Class="D47.App.Panel.PanelView"
              x:DataType="panel:PanelViewModel"
-             Background="{DynamicResource D47.Background}"
-             Foreground="{DynamicResource D47.Text}">
+             Background="{DynamicResource D47.Bg}"
+             Foreground="{DynamicResource D47.White}">
 
   <!--
     One view definition, instantiated twice: once by the desktop window, once by the VR
@@ -128,8 +128,8 @@
             IsVisible="{Binding HasError}"
             Margin="0,14,0,0"
             Padding="12"
-            Background="{DynamicResource D47.SurfaceAlt}"
-            BorderBrush="{DynamicResource D47.Danger}"
+            Background="{DynamicResource D47.Slab}"
+            BorderBrush="{DynamicResource D47.Red}"
             BorderThickness="1">
       <DockPanel>
         <Button x:Name="DismissErrorButton"
@@ -139,7 +139,7 @@
                 VerticalAlignment="Top"
                 Background="Transparent"
                 BorderThickness="0"
-                Foreground="{DynamicResource D47.Danger}"
+                Foreground="{DynamicResource D47.Red}"
                 FontSize="{StaticResource D47.Type.Body}"
                 Content="&#x2715;"
                 ToolTip.Tip="Dismiss"
@@ -148,7 +148,7 @@
                              Text="{Binding ErrorText}"
                              TextWrapping="Wrap"
                              FontSize="{StaticResource D47.Type.Body}"
-                             Foreground="{DynamicResource D47.Danger}" />
+                             Foreground="{DynamicResource D47.Red}" />
       </DockPanel>
     </Border>
 
@@ -157,8 +157,8 @@
             IsVisible="{Binding HasUpdate}"
             Margin="0,14,0,0"
             Padding="12"
-            Background="{DynamicResource D47.SurfaceAlt}"
-            BorderBrush="{DynamicResource D47.Info}"
+            Background="{DynamicResource D47.Slab}"
+            BorderBrush="{DynamicResource D47.Blue}"
             BorderThickness="1">
       <DockPanel>
         <StackPanel DockPanel.Dock="Right"
@@ -187,7 +187,7 @@
     <Border x:Name="Footer"
             DockPanel.Dock="Bottom"
             Margin="0,16,0,0"
-            BorderBrush="{DynamicResource D47.Border}"
+            BorderBrush="{DynamicResource D47.Line2}"
             BorderThickness="0,1,0,0">
       <StackPanel>
         <!-- The dot is the state, by colour and by fill; the words never change colour. -->
@@ -205,7 +205,7 @@
                        FontFamily="{StaticResource D47.Font.Mono}"
                        FontSize="{StaticResource D47.Type.Caption}"
                        LetterSpacing="0.72"
-                       Foreground="{DynamicResource D47.TextFaint}" />
+                       Foreground="{DynamicResource D47.Grey2}" />
           </StackPanel>
         </Border>
 
@@ -249,15 +249,15 @@
               Margin="10,0,0,0"
               Padding="7,2"
               VerticalAlignment="Center"
-              Background="{DynamicResource D47.SurfaceAlt}"
-              BorderBrush="{DynamicResource D47.TextMuted}"
+              Background="{DynamicResource D47.Slab}"
+              BorderBrush="{DynamicResource D47.Grey}"
               BorderThickness="1">
         <TextBlock x:Name="StartupLabel"
                    Text="{Binding StartupText}"
                    VerticalAlignment="Center"
                    TextWrapping="Wrap"
                    FontSize="{StaticResource D47.Type.Small}"
-                   Foreground="{DynamicResource D47.TextMuted}" />
+                   Foreground="{DynamicResource D47.Grey}" />
       </Border>
 
       <Border x:Name="SwitchRow"
@@ -266,15 +266,15 @@
               Margin="10,0,0,0"
               Padding="7,2"
               VerticalAlignment="Center"
-              Background="{DynamicResource D47.SurfaceAlt}"
-              BorderBrush="{DynamicResource D47.TextMuted}"
+              Background="{DynamicResource D47.Slab}"
+              BorderBrush="{DynamicResource D47.Grey}"
               BorderThickness="1">
         <TextBlock x:Name="SwitchText"
                    Text="{Binding SwitchesText}"
                    VerticalAlignment="Center"
                    TextWrapping="Wrap"
                    FontSize="{StaticResource D47.Type.Small}"
-                   Foreground="{DynamicResource D47.Accent}" />
+                   Foreground="{DynamicResource D47.A}" />
       </Border>
 
       <!--
@@ -297,7 +297,7 @@
                  VerticalAlignment="Center"
                  FontFamily="{StaticResource D47.Font.Prose}"
                  FontSize="{StaticResource D47.Type.Secondary}"
-                 Foreground="{DynamicResource D47.TextMuted}"
+                 Foreground="{DynamicResource D47.Grey}"
                  TextWrapping="Wrap" />
     </DockPanel>
 
@@ -336,12 +336,12 @@
                 Padding="7,2"
                 Background="Transparent"
                 BorderThickness="1"
-                BorderBrush="{DynamicResource D47.Accent}">
+                BorderBrush="{DynamicResource D47.A}">
           <TextBlock x:Name="PreReleaseBadgeText"
                      Text="PRE-RELEASE"
                      FontSize="{StaticResource D47.Type.Small}"
                      FontWeight="Bold"
-                     Foreground="{DynamicResource D47.Accent}" />
+                     Foreground="{DynamicResource D47.A}" />
         </Border>
 
         <!--
@@ -493,8 +493,8 @@
       edge is the window's; ApplyChrome sets it.
     -->
     <Border x:Name="ContentPane"
-            Background="{DynamicResource D47.Background}"
-            BorderBrush="{DynamicResource D47.PaneBorder}"
+            Background="{DynamicResource D47.Bg}"
+            BorderBrush="{DynamicResource D47.Line2}"
             BorderThickness="1">
       <DockPanel>
 
@@ -528,7 +528,6 @@
                    KeyDown="OnSearchKeyDown" />
           <Button x:Name="SearchNext"
                   DockPanel.Dock="Right"
-                  Classes="quiet"
                   Margin="6,0,0,0"
                   Content="&#x203A;"
                   MinWidth="0"
@@ -537,7 +536,6 @@
                   Click="OnSearchNextClick" />
           <Button x:Name="SearchPrevious"
                   DockPanel.Dock="Right"
-                  Classes="quiet"
                   Margin="6,0,0,0"
                   Content="&#x2039;"
                   MinWidth="0"
@@ -550,11 +548,10 @@
                      VerticalAlignment="Center"
                      IsVisible="False"
                      FontSize="{StaticResource D47.Type.Secondary}"
-                     Foreground="{DynamicResource D47.TextFaint}" />
+                     Foreground="{DynamicResource D47.Grey2}" />
           <!-- Shown only while there is a query. -->
           <Button x:Name="SearchClear"
                   DockPanel.Dock="Right"
-                  Classes="quiet"
                   Margin="6,0,0,0"
                   Content="CLEAR"
                   IsVisible="False"
@@ -567,7 +564,6 @@
           -->
           <Button x:Name="DonateButton"
                   DockPanel.Dock="Right"
-                  Classes="quiet"
                   Margin="6,0,0,0"
                   IsVisible="False"
                   Content="Help improve D47…"
@@ -617,7 +613,7 @@
               IsVisible="False"
               Height="1"
               Margin="0,16,0,0"
-              Background="{DynamicResource D47.Border}" />
+              Background="{DynamicResource D47.Line2}" />
 
       <!--
         The Log file page's own settings — log levels — pinned to the bottom of the page rather than
@@ -722,7 +718,7 @@
                        TextWrapping="Wrap"
                        FontFamily="{StaticResource D47.Font.Prose}"
                        FontSize="{StaticResource D47.Type.Body}"
-                       Foreground="{DynamicResource D47.TextFaint}"
+                       Foreground="{DynamicResource D47.Grey2}"
                        Text="Nothing has been said yet." />
             </Panel>
           </ScrollViewer>
@@ -774,7 +770,7 @@
                     Width="1"
                     HorizontalAlignment="Center"
                     IsHitTestVisible="False"
-                    Background="{DynamicResource D47.Border}" />
+                    Background="{DynamicResource D47.Line2}" />
 
             <ScrollViewer Grid.Column="2" x:Name="JournalDetailScroller" Padding="14,0,0,0">
               <!--
@@ -813,7 +809,7 @@
         than one per tab, with the built pages kept: constructing ninety-odd settings rows is not
         free, and a Commander who flips between Checklist and Settings should pay for each once.
 
-        The fill is D47.Background rather than the transcript's D47.Surface because the cards
+        The fill is D47.Bg rather than the transcript's D47.Bar because the cards
         inside a settings page are Surface, and a card the same colour as the page it sits on is
         not a card - which is also why the Settings tab has a control theme of its own for the
         join. A page that wants the transcript's fill draws its own.
@@ -845,8 +841,8 @@
       <Border x:Name="ModalPane"
               IsVisible="False"
               ClipToBounds="True"
-              Background="{DynamicResource D47.Background}"
-              BorderBrush="{DynamicResource D47.Border}"
+              Background="{DynamicResource D47.Bg}"
+              BorderBrush="{DynamicResource D47.Line2}"
               BorderThickness="1" />
 
       <!--

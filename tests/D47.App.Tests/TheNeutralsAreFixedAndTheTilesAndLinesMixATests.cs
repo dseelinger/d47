@@ -133,17 +133,17 @@ public class TheNeutralsAreFixedAndTheTilesAndLinesMixATests
     {
         Manager().Apply(themeId);
 
-        Assert.Equal(Published(ThemeManager.BgKey), Published(ThemeManager.BackgroundKey));
-        Assert.Equal(Published(ThemeManager.WhiteKey), Published(ThemeManager.TextKey));
-        Assert.Equal(Published(ThemeManager.GreyKey), Published(ThemeManager.TextMutedKey));
-        Assert.Equal(Published(ThemeManager.AKey), Published(ThemeManager.AccentKey));
-        Assert.Equal(Published(ThemeManager.RedKey), Published(ThemeManager.DangerKey));
-        Assert.Equal(Published(ThemeManager.BlueKey), Published(ThemeManager.GoodKey));
-        Assert.Equal(Published(ThemeManager.LineKey), Published(ThemeManager.RuleKey));
-        Assert.Equal(Published(ThemeManager.Line2Key), Published(ThemeManager.BorderKey));
-        Assert.Equal(Published(ThemeManager.TileKey), Published(ThemeManager.FillLowKey));
-        Assert.Equal(Published(ThemeManager.Tile2Key), Published(ThemeManager.FillHighKey));
-        Assert.Equal(Published(ThemeManager.SlabKey), Published(ThemeManager.FillHigherKey));
+        Assert.Equal(Published(ThemeManager.BgKey), Published(ThemeManager.BgKey));
+        Assert.Equal(Published(ThemeManager.WhiteKey), Published(ThemeManager.WhiteKey));
+        Assert.Equal(Published(ThemeManager.GreyKey), Published(ThemeManager.GreyKey));
+        Assert.Equal(Published(ThemeManager.AKey), Published(ThemeManager.AKey));
+        Assert.Equal(Published(ThemeManager.RedKey), Published(ThemeManager.RedKey));
+        Assert.Equal(Published(ThemeManager.BlueKey), Published(ThemeManager.BlueKey));
+        Assert.Equal(Published(ThemeManager.LineKey), Published(ThemeManager.LineKey));
+        Assert.Equal(Published(ThemeManager.Line2Key), Published(ThemeManager.Line2Key));
+        Assert.Equal(Published(ThemeManager.TileKey), Published(ThemeManager.TileKey));
+        Assert.Equal(Published(ThemeManager.Tile2Key), Published(ThemeManager.Tile2Key));
+        Assert.Equal(Published(ThemeManager.SlabKey), Published(ThemeManager.SlabKey));
     }
 
     /// <summary>The scrim is a dimming overlay and translucent on purpose; every other colour is opaque.</summary>

@@ -70,7 +70,7 @@ public class SettingsNavTests
 
         Assert.True(items.Count > 1, "there is a nav column to read");
 
-        var background = Colour(Application.Current!.FindResource(ThemeManager.BackgroundKey) as IBrush);
+        var background = Colour(Application.Current!.FindResource(ThemeManager.BgKey) as IBrush);
 
         foreach (var item in items)
         {
@@ -173,7 +173,7 @@ public class SettingsNavTests
             Colour(Application.Current!.FindResource(ThemeManager.KnockKey) as IBrush),
             Colour(labels[0].Foreground));
         Assert.Equal(
-            Colour(Application.Current!.FindResource(ThemeManager.TextMutedKey) as IBrush),
+            Colour(Application.Current!.FindResource(ThemeManager.GreyKey) as IBrush),
             Colour(labels[1].Foreground));
 
         window.Close();

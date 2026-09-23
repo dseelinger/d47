@@ -239,7 +239,7 @@ public partial class PanelView : UserControl
         // Beside the box rather than inside it (#231).
         _logBusy.Bind(
             Avalonia.Controls.Shapes.Shape.StrokeProperty,
-            this.GetResourceObservable(Theming.ThemeManager.AccentKey));
+            this.GetResourceObservable(Theming.ThemeManager.AKey));
 
         ModePicker.Children.Add(_logBusy);
 
@@ -427,17 +427,17 @@ public partial class PanelView : UserControl
 
         var (key, label, filled) = state switch
         {
-            D47.Core.Listening.MicrophoneState.Open => (Theming.ThemeManager.WarnKey, "MIC ON", true),
-            D47.Core.Listening.MicrophoneState.Armed => (Theming.ThemeManager.WarnKey, "LISTENING", true),
+            D47.Core.Listening.MicrophoneState.Open => (Theming.ThemeManager.AKey, "MIC ON", true),
+            D47.Core.Listening.MicrophoneState.Armed => (Theming.ThemeManager.AKey, "LISTENING", true),
             D47.Core.Listening.MicrophoneState.Idle => (Theming.ThemeManager.CyanKey, "PTT READY", true),
-            _ => (Theming.ThemeManager.DangerKey, "MIC OFF", false),
+            _ => (Theming.ThemeManager.RedKey, "MIC OFF", false),
         };
 
         // An open gate is open whatever the model is doing. Every other state would otherwise report that
         // the microphone is ready while the model is still loading (#147).
         if (loading)
         {
-            (key, label, filled) = (Theming.ThemeManager.WarnKey, "LOADING MODEL", false);
+            (key, label, filled) = (Theming.ThemeManager.AKey, "LOADING MODEL", false);
         }
 
         MicrophoneGlyph.Bind(Avalonia.Controls.Shapes.Shape.StrokeProperty, this.GetResourceObservable(key));
@@ -2338,7 +2338,7 @@ public partial class PanelView : UserControl
 
                 separator.Bind(
                     TextBlock.ForegroundProperty,
-                    this.GetResourceObservable(Theming.ThemeManager.TextMutedKey));
+                    this.GetResourceObservable(Theming.ThemeManager.GreyKey));
 
                 CrumbRow.Children.Add(separator);
             }
@@ -3022,7 +3022,7 @@ public partial class PanelView : UserControl
             return block;
         }
 
-        block.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.TextKey));
+        block.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.WhiteKey));
         block.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left;
         block.TextAlignment = TextAlignment.Left;
 
@@ -3169,7 +3169,7 @@ public partial class PanelView : UserControl
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.TextMutedKey));
+        label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.GreyKey));
 
         return label;
     }
@@ -3232,7 +3232,7 @@ public partial class PanelView : UserControl
                     {
                         run.Bind(
                             Avalonia.Controls.Documents.TextElement.BackgroundProperty,
-                            this.GetResourceObservable(Theming.ThemeManager.BorderKey));
+                            this.GetResourceObservable(Theming.ThemeManager.Line2Key));
                     }
                 }
 
@@ -3240,7 +3240,7 @@ public partial class PanelView : UserControl
                 {
                     run.Bind(
                         Avalonia.Controls.Documents.TextElement.ForegroundProperty,
-                        this.GetResourceObservable(Theming.ThemeManager.AccentKey));
+                        this.GetResourceObservable(Theming.ThemeManager.AKey));
                     run.FontWeight = FontWeight.SemiBold;
                 }
 
@@ -3252,14 +3252,14 @@ public partial class PanelView : UserControl
                     run.Bind(
                         Avalonia.Controls.Documents.TextElement.BackgroundProperty,
                         this.GetResourceObservable(match == _hit
-                            ? Theming.ThemeManager.AccentKey
-                            : Theming.ThemeManager.AccentMutedKey));
+                            ? Theming.ThemeManager.AKey
+                            : Theming.ThemeManager.LineKey));
 
                     if (match == _hit)
                     {
                         run.Bind(
                             Avalonia.Controls.Documents.TextElement.ForegroundProperty,
-                            this.GetResourceObservable(Theming.ThemeManager.BackgroundKey));
+                            this.GetResourceObservable(Theming.ThemeManager.BgKey));
                     }
                 }
 

@@ -59,7 +59,7 @@ public sealed class Level : ContentControl
 
         _readout.Bind(
             TextBlock.ForegroundProperty,
-            Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.AccentInkKey));
+            Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.WhiteKey));
 
         var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
         Grid.SetColumn(_slider, 0);

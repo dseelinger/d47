@@ -18,7 +18,7 @@ namespace D47.App.Tests;
 /// </summary>
 public class EveryButtonIsAFlatTileTests
 {
-    public static TheoryData<string> Weights => ["", "primary", "quiet", "destructive"];
+    public static TheoryData<string> Weights => ["", "destructive"];
 
     private static Window Open(Button button)
     {

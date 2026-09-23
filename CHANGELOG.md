@@ -8,6 +8,8 @@
 
 ## 1.7.0 — Elite's colours
 
+In the headset, the dimming behind a chooser is the same shade as on the desktop.
+
 Segmented settings rows (Theme among them) no longer clip to a fixed height: the row now grows to
 fit its labels, wrapped lines included. The Theme row's fourth choice is renamed from "Elite
 colour scheme" to "My HUD colours".
