@@ -23,6 +23,9 @@ public sealed record ReputationState
 
     public bool IsKnown => !SuperpowerReadings.IsEmpty || !FactionReadings.IsEmpty;
 
+    /// <summary>Every minor faction's last reading, keyed by faction name, case-insensitively.</summary>
+    public IReadOnlyDictionary<string, FactionReading> Factions => FactionReadings;
+
     /// <summary>The last reading for a superpower or faction. A faction absent from later events keeps it.</summary>
     public FactionReading? Reading(string name)
     {

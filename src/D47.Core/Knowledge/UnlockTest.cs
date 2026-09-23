@@ -5,6 +5,30 @@ namespace D47.Core.Knowledge;
 /// <summary>A reputation band <see cref="EngineerStanding"/> and the journal's own text can carry.</summary>
 public enum ReputationBand { Hostile, Unfriendly, Neutral, Cordial, Friendly, Allied }
 
+/// <summary>Where each <see cref="ReputationBand"/> starts and ends on Frontier's −100 to 100 scale.</summary>
+public static class ReputationBands
+{
+    /// <summary>Where a band starts.</summary>
+    public static double Floor(ReputationBand band) => band switch
+    {
+        ReputationBand.Hostile => -100,
+        ReputationBand.Unfriendly => -90,
+        ReputationBand.Neutral => -35,
+        ReputationBand.Cordial => 4,
+        ReputationBand.Friendly => 35,
+        ReputationBand.Allied => 90,
+        _ => throw new ArgumentOutOfRangeException(nameof(band)),
+    };
+
+    /// <summary>Where the next band up starts.</summary>
+    public static double Ceiling(ReputationBand band) =>
+        band == ReputationBand.Allied ? double.PositiveInfinity : Floor(band + 1);
+
+    /// <summary>The band a reputation value falls in; below −100 reads as Hostile.</summary>
+    public static ReputationBand Of(double reputation) =>
+        Enum.GetValues<ReputationBand>().LastOrDefault(band => reputation >= Floor(band), ReputationBand.Hostile);
+}
+
 /// <summary>
 /// One machine-readable test for a meeting or unlock requirement, parsed from the fixed grammar
 /// <c>tools/gen-engineers.py</c> writes into <c>Engineers.tsv</c>'s <c>meeting_test</c> and

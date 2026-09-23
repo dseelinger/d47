@@ -28,6 +28,12 @@ their voice if they speak again. Voices with no accent listed, and the ship's AI
 Empire and Federation ranks in goals and adventures are no longer named one rank too high. An
 Outsider was called a Serf, a Recruit a Cadet, and a King or Admiral was called "rank 14".
 
+d47 now answers "what's my reputation with the Empire". It reads out your reputation with each
+superpower as a band and a number, such as "Cordial, 28 of 100", with your Imperial and Federal
+navy rank beside the Empire and the Federation. Ask about a minor faction by name, such as "what's
+my reputation with Mother Gaia", for its band, number and the date d47 last read it. "What's my
+navy rank" and "what's my imperial rank" work too, and none of these needs a language model.
+
 ## 1.10.0 — Every voice paired afresh
 
 The Advanced speech row "Reset every voice to its pairing" is replaced by "Forget every voice and

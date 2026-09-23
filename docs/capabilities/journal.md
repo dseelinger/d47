@@ -140,6 +140,7 @@ from a model that will produce a plausible one.
 > "what materials am I carrying"
 > "how have I done this session"
 > "what are my career statistics"
+> "what's my reputation with the Empire"
 
 **Every one of those reaches the thing it names.** This capability has six answers and used to be
 reached as a whole, with the first of the six taken by default — which is *where you are*. So
@@ -305,6 +306,29 @@ Exobiology, as of 2026-09-05 16:36 UTC:
 The game has not reported your career statistics this session.
 ```
 
+**Your reputation and navy rank** — each superpower as a band and a number out of 100, with the
+Imperial and Federal navy ranks beside the Empire and the Federation. Ask for one superpower —
+*"what's my reputation with the Empire"*, *"what's my imperial rank"* — and only that one comes
+back:
+
+```text
+Reputation, as of 2026-09-23 10:00 UTC:
+  Empire: Cordial, 28 of 100. Imperial Navy rank: Outsider, 93% into it.
+```
+
+The superpower figures come from the `Reputation` event Elite writes when you enter the game.
+
+**A minor faction, by name** — *"what's my reputation with Mother Gaia"*. The reading comes from
+the last time you arrived in a system where that faction is present, so the answer always says
+when that was:
+
+```text
+Mother Gaia: Friendly, 43 of 100, last read on 2026-09-20.
+```
+
+Part of a name is enough when only one faction you have met matches it. When several do, they
+are listed by name rather than one being picked for you.
+
 ### When it does not know
 
 It says which event it is waiting for rather than shrugging — "Directive 47 started after Elite"
@@ -424,6 +448,17 @@ in the tool so the model is comparing figures rather than deriving them:
 ```json
 {"type":"object","properties":{"section":{"type":"string","description":"One section of the career statistics to report. Omit to report every section.","enum":["Bank_Account","Combat","Crime","Smuggling","Trading","Mining","Exploration","Passengers","Search_And_Rescue","Squadron","Crafting","Crew","Multicrew","Material_Trader_Stats","FLEETCARRIER","Exobiology"]}},"required":[],"additionalProperties":false}
 ```
+
+`get_standing` takes an optional superpower or minor faction, whole or part of its name:
+
+```json
+{"type":"object","properties":{"faction":{"type":"string","description":"A superpower or a minor faction, whole or part of its name. Omit for the four superpowers and both navy ranks."}},"required":[],"additionalProperties":false}
+```
+
+A faction's full name is also a phrase the router matches without the model, one set per faction
+a reading is held for (`JournalCapability.StandingPhrases`). The bands are
+`ReputationBands` in `Knowledge/UnlockTest.cs`, the same thresholds engineer unlocks are tested
+against.
 
 `StoredModules`, like `StoredShips`, is a complete snapshot rather than a delta, so the store is
 replaced wholesale on each one. Merging would keep modules that have since been sold or fitted,

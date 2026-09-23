@@ -1,4 +1,6 @@
+using System.Globalization;
 using System.Text;
+using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 
@@ -42,6 +44,7 @@ public static class JournalCapability
                 "what materials am I carrying",
                 "how have I done this session",
                 "what are my career statistics",
+                "what's my reputation with the Empire",
             ],
 
             // Phrases, not words. "where" and "system" on their own match "Where is Iran?" and "what's your
@@ -88,6 +91,10 @@ public static class JournalCapability
                 new("my career statistics", "get_commander_statistics"),
                 new("my career stats", "get_commander_statistics"),
                 new("commander statistics", "get_commander_statistics"),
+                .. SuperpowerKeywords(),
+                new("my navy rank", "get_standing"),
+                new("my naval rank", "get_standing"),
+                new("my navy ranks", "get_standing"),
             ],
             Display = new CapabilityDisplay { PanelTitle = "Location", Order = 20 },
             Tools =
@@ -229,6 +236,28 @@ public static class JournalCapability
                     ],
                     Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(DescribeStatistics(gameState, arguments))),
                 },
+                new ToolDefinition
+                {
+                    Name = "get_standing",
+                    Description =
+                        "Report the Commander's reputation with the Empire, Federation, Alliance and "
+                        + "Independents as a band and a number out of 100, and their Imperial and Federal navy "
+                        + "ranks. Set faction to one superpower, or to a minor faction by name for its band, "
+                        + "number and the date it was last read.",
+                    Parameters =
+                    [
+                        new ToolParameter
+                        {
+                            Name = "faction",
+                            Type = ToolParameterType.String,
+                            Description =
+                                "A superpower or a minor faction, whole or part of its name. Omit for the four "
+                                + "superpowers and both navy ranks.",
+                        },
+                    ],
+                    Commands = Asking(Standing),
+                    Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(DescribeStanding(gameState, arguments))),
+                },
             ],
         };
     }
@@ -295,6 +324,71 @@ public static class JournalCapability
         "how have i done this session", "how have i done", "session summary",
         "how has this session gone", "what have i done this session",
     ];
+
+    private static readonly string[] Standing =
+    [
+        "what's my reputation", "what is my reputation", "my reputation",
+        "what's my standing", "what is my standing", "my standing",
+    ];
+
+    /// <summary>The superpowers, in the order they are reported, and the navy each one has.</summary>
+    private static readonly (string Name, string? Navy)[] Superpowers =
+    [
+        ("Empire", "Imperial Navy"), ("Federation", "Federal Navy"), ("Alliance", null), ("Independent", null),
+    ];
+
+    /// <summary>"Reputation with the Empire", "imperial rank" and the like, each naming its superpower.</summary>
+    private static IEnumerable<CapabilityKeyword> SuperpowerKeywords()
+    {
+        (string Superpower, string[] Phrases)[] spoken =
+        [
+            ("Empire", ["reputation with the empire", "reputation with empire", "standing with the empire",
+                "standing with empire", "imperial rank", "imperial navy rank", "empire rank"]),
+            ("Federation", ["reputation with the federation", "reputation with federation",
+                "standing with the federation", "standing with federation", "federal rank", "federal navy rank",
+                "federation rank"]),
+            ("Alliance", ["reputation with the alliance", "reputation with alliance", "standing with the alliance",
+                "standing with alliance"]),
+            ("Independent", ["reputation with the independents", "reputation with independents",
+                "standing with the independents", "standing with independents"]),
+        ];
+
+        foreach (var (superpower, phrases) in spoken)
+        {
+            var arguments = new Dictionary<string, string>(StringComparer.Ordinal) { ["faction"] = superpower };
+
+            foreach (var phrase in phrases)
+            {
+                yield return new CapabilityKeyword(phrase, "get_standing") { Arguments = arguments };
+            }
+        }
+    }
+
+    /// <summary>"What's my reputation with" each minor faction a reading is held for, by its whole name.</summary>
+    public static IEnumerable<DynamicCommand> StandingPhrases(Func<CommanderGameState?> commander)
+    {
+        if (commander() is not { } active)
+        {
+            yield break;
+        }
+
+        foreach (var name in active.Reputation.Factions.Keys)
+        {
+            var arguments = new Dictionary<string, string>(StringComparer.Ordinal) { ["faction"] = name };
+
+            foreach (var shape in new[]
+                     {
+                         $"what's my reputation with {name}",
+                         $"what is my reputation with {name}",
+                         $"my reputation with {name}",
+                         $"what's my standing with {name}",
+                         $"my standing with {name}",
+                     })
+            {
+                yield return new DynamicCommand(shape, Id, "get_standing", arguments);
+            }
+        }
+    }
 
     /// <summary>The one answer every other one needs first.</summary>
     private static bool TryActive(GameStateStore gameState, out CommanderGameState active, out string reason)
@@ -1072,6 +1166,109 @@ public static class JournalCapability
             }
         }
     }
+
+    private static string DescribeStanding(GameStateStore gameState, ToolArguments arguments)
+    {
+        if (!TryActive(gameState, out var active, out var reason))
+        {
+            return reason;
+        }
+
+        var asked = arguments.TryGetString("faction", out var named) && !string.IsNullOrWhiteSpace(named)
+            ? named.Trim()
+            : null;
+
+        if (asked is null)
+        {
+            return DescribeSuperpowers(active, Superpowers);
+        }
+
+        if (Superpower(asked) is { } superpower)
+        {
+            return DescribeSuperpowers(active, [superpower]);
+        }
+
+        var matches = active.Reputation.Factions
+            .Where(faction => faction.Key.Contains(asked, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(faction => faction.Key, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var exact = matches.FindIndex(faction => string.Equals(faction.Key, asked, StringComparison.OrdinalIgnoreCase));
+
+        return (exact, matches.Count) switch
+        {
+            (>= 0, _) => DescribeFaction(matches[exact].Key, matches[exact].Value),
+            (_, 0) => $"I have not seen your reputation with a faction called '{asked}'. A faction's standing "
+                      + "is read when you arrive in a system where it is present.",
+            (_, 1) => DescribeFaction(matches[0].Key, matches[0].Value),
+            _ => $"Several factions match '{asked}': {string.Join(", ", matches.Select(faction => faction.Key))}.",
+        };
+    }
+
+    /// <summary>The superpower a spoken name means, or null for a minor faction.</summary>
+    private static (string Name, string? Navy)? Superpower(string asked)
+    {
+        var name = asked.StartsWith("the ", StringComparison.OrdinalIgnoreCase) ? asked[4..].Trim() : asked;
+
+        var meant = name.ToUpperInvariant() switch
+        {
+            "EMPIRE" or "IMPERIAL" or "IMPERIAL NAVY" => "Empire",
+            "FEDERATION" or "FEDERAL" or "FEDERAL NAVY" => "Federation",
+            "ALLIANCE" => "Alliance",
+            "INDEPENDENT" or "INDEPENDENTS" => "Independent",
+            _ => null,
+        };
+
+        return meant is null ? null : Superpowers.First(superpower => superpower.Name == meant);
+    }
+
+    /// <summary>Each superpower's band and number, and its navy rank where it has one.</summary>
+    private static string DescribeSuperpowers(
+        CommanderGameState active, IReadOnlyList<(string Name, string? Navy)> superpowers)
+    {
+        var readings = superpowers
+            .Select(superpower => (
+                superpower.Name,
+                Reading: active.Reputation.Reading(superpower.Name),
+                Rank: superpower.Navy is { } navy && active.Ranks.For(superpower.Name) is { } rank
+                    ? $"{navy} rank: {rank.Describe()}."
+                    : null))
+            .ToList();
+
+        var latest = readings.Max(reading => reading.Reading?.SeenAt);
+        var report = new StringBuilder().AppendLine(
+            latest is { } header
+                ? $"Reputation{AsOf(header)}:"
+                : "The game has not reported your superpower reputation yet. It is written when you enter the game.");
+
+        foreach (var (name, reading, rank) in readings)
+        {
+            if (reading is null && rank is null)
+            {
+                continue;
+            }
+
+            report.Append($"  {name}: ");
+            report.Append(reading is null ? "reputation not reported." : $"{Band(reading.MyReputation)}.");
+
+            if (reading is not null && reading.SeenAt != latest)
+            {
+                report.Append($" Read on {reading.SeenAt:yyyy-MM-dd HH:mm} UTC.");
+            }
+
+            report.AppendLine(rank is null ? "" : $" {rank}");
+        }
+
+        return report.ToString().TrimEnd();
+    }
+
+    private static string DescribeFaction(string name, FactionReading reading) =>
+        $"{name}: {Band(reading.MyReputation)}, last read on {reading.SeenAt:yyyy-MM-dd}.";
+
+    /// <summary>"Cordial, 28 of 100".</summary>
+    private static string Band(double reputation) =>
+        $"{ReputationBands.Of(reputation)}, "
+        + $"{Math.Round(reputation, MidpointRounding.AwayFromZero).ToString(CultureInfo.InvariantCulture)} of 100";
 
     private static string DescribeStatistics(GameStateStore gameState, ToolArguments arguments)
     {

@@ -1882,6 +1882,9 @@ public sealed class AppHost : IDisposable
                 // argument.
                 .Concat(CommunityGoalCourse.Phrases(lastFoundSystem))
 
+                // And "what's my reputation with Mother Gaia" (#418), one set per faction a reading is held for.
+                .Concat(JournalCapability.StandingPhrases(() => gameState.Active))
+
                 // And "forget 'set focus on elite'" (#171), one per phrase the flying Commander has taught
                 // d47 stands for a declared phrase.
                 .Concat(LearnedPhrasesCapability.Phrases(

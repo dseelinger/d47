@@ -156,8 +156,8 @@ public sealed record UnlockCriterion(string Text, bool? Met)
 /// The current figure and target behind a graded criterion, so a bar can draw under it (#17).
 /// </summary>
 /// <param name="Current">The figure read from the journal or the save.</param>
-/// <param name="Target">The threshold the test asks for — <see cref="EngineerAccess.FloorFor"/> or
-/// <see cref="EngineerAccess.CeilingFor"/> for a reputation test, <c>AtLeast</c> otherwise.</param>
+/// <param name="Target">The threshold the test asks for — <see cref="ReputationBands.Floor"/> or
+/// <see cref="ReputationBands.Ceiling"/> for a reputation test, <c>AtLeast</c> otherwise.</param>
 /// <param name="IsCeiling">Whether staying under <see cref="Target"/> is what is wanted, rather than
 /// reaching it.</param>
 public sealed record UnlockMeasure(double Current, double Target, bool IsCeiling)
@@ -413,7 +413,7 @@ public static class EngineerAccess
             return (null, null, null);
         }
 
-        var target = test.AtMost ? CeilingFor(test.Band) : FloorFor(test.Band);
+        var target = test.AtMost ? ReputationBands.Ceiling(test.Band) : ReputationBands.Floor(test.Band);
         var met = test.AtMost ? reading.MyReputation < target : reading.MyReputation >= target;
 
         var stale = evidence.SessionStart is { } start && reading.SeenAt < start;
@@ -459,22 +459,6 @@ public static class EngineerAccess
                 new UnlockMeasure(short_.Value, test.Quantity, false)),
         };
     }
-
-    /// <summary>Where a reputation band starts, on Frontier's own scale.</summary>
-    private static double FloorFor(ReputationBand band) => band switch
-    {
-        ReputationBand.Hostile => -100,
-        ReputationBand.Unfriendly => -90,
-        ReputationBand.Neutral => -35,
-        ReputationBand.Cordial => 4,
-        ReputationBand.Friendly => 35,
-        ReputationBand.Allied => 90,
-        _ => throw new ArgumentOutOfRangeException(nameof(band)),
-    };
-
-    /// <summary>Where the next band up starts — "at-most" this band means staying below it.</summary>
-    private static double CeilingFor(ReputationBand band) =>
-        band == ReputationBand.Allied ? double.PositiveInfinity : FloorFor(band + 1);
 
     /// <summary>
     /// The engineers this one refers into, whose plans name them and whose referral through this
