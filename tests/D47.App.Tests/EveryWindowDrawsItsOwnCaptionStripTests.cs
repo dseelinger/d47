@@ -189,34 +189,112 @@ public class EveryWindowDrawsItsOwnCaptionStripTests
         Assert.All(Buttons(window), button => Assert.True(button.Focusable));
     }
 
-    [AvaloniaFact]
-    public void CloseHoversToDangerAndMinimiseHoversToTheFaintFill()
-    {
-        new D47.App.Theming.ThemeManager(Application.Current!, NullLogger<D47.App.Theming.ThemeManager>.Instance)
-            .Apply(TestSurface.Settings().Current.Ui.Theme);
+    private static Color Colour(string key) =>
+        ((SolidColorBrush)Application.Current!.Resources[key]!).Color;
 
+    private static Color? Ground(Button button) => (button.Background as ISolidColorBrush)?.Color;
+
+    private static Color? Ink(Button button) => (((Avalonia.Controls.Shapes.Path)button.Content!).Stroke as ISolidColorBrush)?.Color
+        ?? (((Avalonia.Controls.Shapes.Path)button.Content!).Fill as ISolidColorBrush)?.Color;
+
+    private static (Window Window, Button Minimize, Button Maximize, Button Close) Themed()
+    {
         var window = new Window { Content = new TextBlock(), CanResize = true, Width = 400, Height = 300 };
         CaptionStrip.Apply(window);
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        var close = Buttons(window).Single(b => Avalonia.Automation.AutomationProperties.GetName(b) == "Close");
-        var minimize = Buttons(window).Single(b => Avalonia.Automation.AutomationProperties.GetName(b) == "Minimize");
+        Button Named(string name) =>
+            Buttons(window).Single(b => Avalonia.Automation.AutomationProperties.GetName(b) == name);
 
-        var closeAt = close.TranslatePoint(new Point(close.Bounds.Width / 2, close.Bounds.Height / 2), window)!.Value;
-        window.MouseMove(closeAt);
+        return (window, Named("Minimize"), Named("Maximize"), Named("Close"));
+    }
 
-        var dangerBrush = (IBrush)Application.Current!.Resources[D47.App.Theming.ThemeManager.DangerKey]!;
-        Assert.Equal(((SolidColorBrush)dangerBrush).Color, ((SolidColorBrush)close.Background!).Color);
+    private static void PointAt(Window window, Button button) =>
+        window.MouseMove(button.TranslatePoint(new Point(button.Bounds.Width / 2, button.Bounds.Height / 2), window)!.Value);
 
-        var minimizeAt = minimize.TranslatePoint(new Point(minimize.Bounds.Width / 2, minimize.Bounds.Height / 2), window)!.Value;
-        window.MouseMove(minimizeAt);
+    [AvaloniaFact]
+    public void AtRestNoCaptionButtonHasAGroundAndEachGlyphIsA()
+    {
+        using var look = AppLook.Put();
+        var (_, minimize, maximize, close) = Themed();
 
-        var fillHighBrush = (IBrush)Application.Current!.Resources[D47.App.Theming.ThemeManager.FillHighKey]!;
-        Assert.Equal(((SolidColorBrush)fillHighBrush).Color, ((SolidColorBrush)minimize.Background!).Color);
+        Assert.All([minimize, maximize, close], button =>
+        {
+            Assert.Equal(Colors.Transparent, Ground(button));
+            Assert.Equal(Colour(ThemeManager.AKey), Ink(button));
+        });
+    }
 
-        // And the pointer moving on drops the one it left back to nothing.
-        Assert.Equal(Brushes.Transparent, close.Background);
+    [AvaloniaFact]
+    public void MinimiseAndMaximiseHoverToSolidAWithAKnockGlyph()
+    {
+        using var look = AppLook.Put();
+        var (window, minimize, maximize, _) = Themed();
+
+        foreach (var button in new[] { minimize, maximize })
+        {
+            PointAt(window, button);
+
+            Assert.Equal(Colour(ThemeManager.AKey), Ground(button));
+            Assert.Equal(Colour(ThemeManager.KnockKey), Ink(button));
+        }
+
+        Assert.Equal(Colors.Transparent, Ground(minimize));
+    }
+
+    [AvaloniaFact]
+    public void CloseHoversToSolidRedWithAWhiteGlyph()
+    {
+        using var look = AppLook.Put();
+        var (window, _, _, close) = Themed();
+
+        PointAt(window, close);
+
+        Assert.Equal(Colour(ThemeManager.RedKey), Ground(close));
+        Assert.Equal(Colour(ThemeManager.WhiteKey), Ink(close));
+    }
+
+    [AvaloniaFact]
+    public void KeyboardFocusFillsACaptionButtonAsHoverDoes()
+    {
+        using var look = AppLook.Put();
+        var (_, minimize, _, close) = Themed();
+
+        minimize.Focus(Avalonia.Input.NavigationMethod.Tab);
+        Assert.Equal(Colour(ThemeManager.AKey), Ground(minimize));
+        Assert.Equal(Colour(ThemeManager.KnockKey), Ink(minimize));
+
+        close.Focus(Avalonia.Input.NavigationMethod.Tab);
+        Assert.Equal(Colour(ThemeManager.RedKey), Ground(close));
+        Assert.Equal(Colour(ThemeManager.WhiteKey), Ink(close));
+        Assert.Equal(Colors.Transparent, Ground(minimize));
+    }
+
+    [AvaloniaFact]
+    public void TheCaptionButtonsAreCapturedAtRestHoveredAndFocused()
+    {
+        using var look = AppLook.Put();
+        var (window, minimize, maximize, close) = Themed();
+
+        void Save(string state)
+        {
+            Dispatcher.UIThread.RunJobs();
+            using var frame = window.CaptureRenderedFrame()!;
+            frame.Save(Path.Combine(TestSurface.CaptureDirectory, $"caption-buttons-{state}.png"),
+                new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        }
+
+        Save("rest");
+        PointAt(window, minimize);
+        Save("hover-minimise");
+        PointAt(window, close);
+        Save("hover-close");
+        window.MouseMove(new Point(20, 200));
+        maximize.Focus(Avalonia.Input.NavigationMethod.Tab);
+        Save("focus-maximise");
+
+        Assert.True(File.Exists(Path.Combine(TestSurface.CaptureDirectory, "caption-buttons-focus-maximise.png")));
     }
 
     // -- The two ways a window actually gets the strip in the running app --

@@ -160,6 +160,57 @@
     </ControlTheme>
 
     <!--
+      A window caption's minimise, maximise or close button: no ground and an A glyph at rest; solid A
+      with a Knock glyph on hover, keyboard focus or press. With the close class, solid Red with a
+      White glyph instead. No outline, corner or glow. The glyph must follow Foreground.
+    -->
+    <ControlTheme x:Key="D47.CaptionButton" TargetType="Button">
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="CornerRadius" Value="0" />
+      <Setter Property="Foreground" Value="{DynamicResource D47.A}" />
+      <Setter Property="FocusAdorner" Value="{x:Null}" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Background="{TemplateBinding Background}">
+            <ContentPresenter x:Name="PART_ContentPresenter"
+                              Content="{TemplateBinding Content}"
+                              Foreground="{TemplateBinding Foreground}"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center" />
+          </Border>
+        </ControlTemplate>
+      </Setter>
+
+      <Style Selector="^:pointerover">
+        <Setter Property="Background" Value="{DynamicResource D47.A}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
+      </Style>
+      <Style Selector="^:focus-visible">
+        <Setter Property="Background" Value="{DynamicResource D47.A}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
+      </Style>
+      <Style Selector="^:pressed">
+        <Setter Property="Background" Value="{DynamicResource D47.A}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
+      </Style>
+
+      <Style Selector="^.close:pointerover">
+        <Setter Property="Background" Value="{DynamicResource D47.Red}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.White}" />
+      </Style>
+      <Style Selector="^.close:focus-visible">
+        <Setter Property="Background" Value="{DynamicResource D47.Red}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.White}" />
+      </Style>
+      <Style Selector="^.close:pressed">
+        <Setter Property="Background" Value="{DynamicResource D47.Red}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.White}" />
+      </Style>
+    </ControlTheme>
+
+    <!--
       A stepper's arrow: a Tile cell with an A glyph; solid A with a Knock glyph on hover, focus or
       press; a Grey2 glyph when disabled. No glow. Applies to RepeatButton, which derives from Button.
     -->

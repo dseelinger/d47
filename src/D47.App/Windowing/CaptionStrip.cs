@@ -66,7 +66,7 @@ public static class CaptionStrip
             void ApplyMaximizeGlyph()
             {
                 var maximized = window.WindowState == WindowState.Maximized;
-                Glyphs.Mark(toggle, maximized ? Glyphs.Restore : Glyphs.Maximize, ThemeManager.AccentKey,
+                Glyphs.Mark(toggle, maximized ? Glyphs.Restore : Glyphs.Maximize,
                     maximized ? "Restore" : "Maximize", size: 12);
             }
 
@@ -246,35 +246,21 @@ public static class CaptionStrip
     {
         var button = new Button
         {
+            Theme = Application.Current?.FindResource("D47.CaptionButton") as ControlTheme,
             Width = ButtonWidth,
             Height = StripHeight,
-            Background = Brushes.Transparent,
-            BorderThickness = new Thickness(0),
-            Padding = new Thickness(0),
-            CornerRadius = new CornerRadius(0),
-            HorizontalContentAlignment = HorizontalAlignment.Center,
-            VerticalContentAlignment = VerticalAlignment.Center,
             Classes = { "caption-button" },
         };
 
-        Glyphs.Mark(button, glyph, isClose ? ThemeManager.TextKey : ThemeManager.AccentKey, says, size: 12, filled: filled);
+        if (isClose)
+        {
+            button.Classes.Add("close");
+        }
+
+        Glyphs.Mark(button, glyph, says, size: 12, filled: filled);
 
         button.Click += (_, _) => press();
-        button.PointerEntered += (_, _) => button.Background = HoverFill(isClose);
-        button.PointerExited += (_, _) => button.Background = Brushes.Transparent;
 
         return button;
     }
-
-    /// <summary>Close hovers to Danger; minimise and maximise hover to the same faint fill every other
-    /// control in the kit does.</summary>
-    private static IBrush HoverFill(bool isClose)
-    {
-        var key = isClose ? ThemeManager.DangerKey : ThemeManager.FillHighKey;
-
-        return Application.Current!.TryGetResource(key, null, out var value) && value is IBrush brush
-            ? brush
-            : Brushes.Transparent;
-    }
-
 }

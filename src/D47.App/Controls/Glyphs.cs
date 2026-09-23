@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Shapes;
 using Avalonia.Media;
 
@@ -32,8 +33,7 @@ public static class Glyphs
     /// <summary>Close a window: an X.</summary>
     public const string Close = "M 6,6 L 18,18  M 18,6 L 6,18";
 
-    /// <summary>One mark, stroked or filled with the theme key <paramref name="brush"/> so a theme switch repaints it.</summary>
-    public static Path Draw(string data, string brush, double size = 14, bool filled = false)
+    private static Path Build(string data, double size, bool filled)
     {
         var geometry = Geometry.Parse(data);
         var bounds = geometry.Bounds;
@@ -57,21 +57,20 @@ public static class Glyphs
         if (filled)
         {
             glyph.StrokeThickness = 0;
-            glyph.Bind(Shape.FillProperty, glyph.GetResourceObservable(brush));
-        }
-        else
-        {
-            glyph.Bind(Shape.StrokeProperty, glyph.GetResourceObservable(brush));
         }
 
         return glyph;
     }
 
-    /// <summary>Puts a mark on a button, with <paramref name="says"/> as its tooltip and accessible name.</summary>
-    public static void Mark(
-        Button button, string data, string brush, string says, double size = 14, bool filled = false)
+    /// <summary>
+    /// Puts a mark on a button, drawn in the button's <see cref="TemplatedControl.Foreground"/>, with
+    /// <paramref name="says"/> as its tooltip and accessible name.
+    /// </summary>
+    public static void Mark(Button button, string data, string says, double size = 14, bool filled = false)
     {
-        button.Content = Draw(data, brush, size, filled);
+        var glyph = Build(data, size, filled);
+        glyph.Bind(filled ? Shape.FillProperty : Shape.StrokeProperty, button.GetObservable(TemplatedControl.ForegroundProperty));
+        button.Content = glyph;
 
         ToolTip.SetTip(button, says);
         AutomationProperties.SetName(button, says);

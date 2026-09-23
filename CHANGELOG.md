@@ -60,6 +60,11 @@ the theme and is not drawn when the window is maximised. The title bar is one sh
 page, with a thin rule beneath it on every window. The panel's content sits closer to the edges:
 20 at the top, 28 at the sides and 24 at the bottom, in place of 32 all round.
 
+The minimise, maximise and close buttons in every title bar show an accent-coloured mark on no
+background. Minimise and maximise fill solid in the accent colour with a dark mark on hover, on
+press or when reached with Tab; close fills solid red with a white mark. Reaching them with Tab
+used to show nothing.
+
 ## 1.6.3 — Guardian theme removed
 
 The Guardian theme is gone from Theme's choices. A saved theme of `guardian` now opens as Elite,
