@@ -192,14 +192,27 @@ steps written against a binary that does not contain the fix test nothing.
 The steps start from the running test drive. Do not include "build the app" or "launch d47"; the
 app is open. Say in one line above the list that the test drive is running with this commit.
 
-### Ask for a screenshot where you can check it faster
+### Capture it yourself where a picture can check it
 
-Where a step's result is something you can read off a picture — hex values in the Control Kit, a
-colour, a layout, a label — ask the maintainer for a screenshot of that screen and check it
-yourself, rather than handing over a step for them to judge by eye. Name the window and what the
-shot must show. Reading a screenshot needs the desktop app: in a terminal session, say that
-`/desktop` has to be run first. Steps that need a device, speech or the game stay with the
-maintainer.
+Where a result can be read off a picture — hex values in the Control Kit, a colour, a layout, a
+label — render the screen headlessly and check the image yourself, rather than handing over a step
+for the maintainer to judge by eye. Write or reuse a test in `D47.App.Tests` that renders the
+changed view and saves it with `CaptureRenderedFrame()` to `TestSurface.CaptureDirectory`, run it
+with a filter, and read the PNG. Capture before and after the change where the change is a look.
+
+Send every capture you checked to the maintainer with `SendUserFile` (`display: "render"`), with a
+caption naming the screen and what it shows, so they see what you judged. A capture you did not
+check is not sent.
+
+Until #412 lands, `HeadlessApp` does not load `ControlKitTheme.axaml` or apply a theme, so a
+capture draws Fluent's grey on white unless the test sets the theme up itself — see
+`HoverGroundsAndFocusRingsTakeTheLowBloomTests` for how. A capture that does not show the d47 theme
+checks nothing about colour.
+
+Ask the maintainer for a screenshot only for what headless rendering does not show: display
+scaling, the native window border, and the headset overlay. Name the window and what the shot must
+show; reading one needs the desktop app, so in a terminal session say that `/desktop` has to be
+run first. Steps that need a device, speech or the game stay with the maintainer.
 
 ### Every step is exact
 
