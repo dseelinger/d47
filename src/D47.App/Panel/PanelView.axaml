@@ -81,8 +81,7 @@
   </UserControl.Resources>
 
   <Panel>
-  <!-- No frame: the window edge is the panel's edge. -->
-  <DockPanel x:Name="Frame" Margin="32">
+  <DockPanel x:Name="Frame" Margin="28,20,28,24">
 
     <!--
       LastChildFill is off because there is no last child to fill with: the version line that

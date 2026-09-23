@@ -38,10 +38,7 @@ public static class CaptionStrip
     /// Off for <see cref="D47.App.Controls.PickerWindow"/>: it is <c>ShowInTaskbar="False"</c>, and a
     /// minimised window with no taskbar entry has no way back (#286).
     /// </param>
-    /// <param name="drawRule">
-    /// Off for <see cref="MainWindow"/>, whose panel draws its own chamfered top edge directly under the strip.
-    /// </param>
-    public static void Apply(Window window, bool showMinimize = true, bool drawRule = true)
+    public static void Apply(Window window, bool showMinimize = true)
     {
         var content = window.Content as Control;
         window.Content = null;
@@ -142,10 +139,7 @@ public static class CaptionStrip
         row.Children.Add(drag);
         row.Children.Add(buttons);
 
-        var tint = new Border { IsHitTestVisible = false };
-        tint.Bind(Border.BackgroundProperty, tint.GetResourceObservable(ThemeManager.PaneFillKey));
-
-        // Over the text as well as the tint, sampled pixel for pixel so each line stays 1px, as on the panel.
+        // Over the text as well as the ground, sampled pixel for pixel so each line stays 1px, as on the panel.
         var scanlines = new Border { Opacity = ThemeManager.ScanlinesOpacity, IsHitTestVisible = false };
         RenderOptions.SetBitmapInterpolationMode(scanlines, BitmapInterpolationMode.None);
 
@@ -158,16 +152,16 @@ public static class CaptionStrip
             .Subscribe(new Avalonia.Reactive.AnonymousObserver<object?>(_ => ShowScanlines()));
         window.ScalingChanged += (_, _) => ShowScanlines();
 
-        var rule = new Border { Height = 1, VerticalAlignment = VerticalAlignment.Bottom, IsHitTestVisible = false, IsVisible = drawRule };
-        rule.Bind(Border.BackgroundProperty, rule.GetResourceObservable(ThemeManager.TagBorderKey));
+        var rule = new Border { Height = 1, VerticalAlignment = VerticalAlignment.Bottom, IsHitTestVisible = false };
+        rule.Bind(Border.BackgroundProperty, rule.GetResourceObservable(ThemeManager.Line2Key));
 
         var strip = new Grid
         {
             Name = "CaptionStrip",
             Height = StripHeight,
-            Children = { tint, row, scanlines, rule },
+            Children = { row, scanlines, rule },
         };
-        strip.Bind(Avalonia.Controls.Panel.BackgroundProperty, strip.GetResourceObservable(ThemeManager.BackgroundKey));
+        strip.Bind(Avalonia.Controls.Panel.BackgroundProperty, strip.GetResourceObservable(ThemeManager.BarKey));
 
         var wrapper = new DockPanel();
         DockPanel.SetDock(strip, Dock.Top);

@@ -54,6 +54,12 @@ lighter on hover or when reached with Tab, and clicking anywhere on the row tick
 Enter tick it too. Settings rows, the Transcript's Raw switch, the page filters and the checklist's
 completed box all use it. A checkbox you cannot change has a grey outline.
 
+Every d47 window has a 1px border on all four sides, so its edges show on a black desktop: the main
+window and the Control Kit in a dark brown, dialogs in the accent colour. The border changes with
+the theme and is not drawn when the window is maximised. The title bar is one shade lighter than the
+page, with a thin rule beneath it on every window. The panel's content sits closer to the edges:
+20 at the top, 28 at the sides and 24 at the bottom, in place of 32 all round.
+
 ## 1.6.3 — Guardian theme removed
 
 The Guardian theme is gone from Theme's choices. A saved theme of `guardian` now opens as Elite,

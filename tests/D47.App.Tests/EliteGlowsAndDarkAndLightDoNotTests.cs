@@ -186,7 +186,7 @@ public class EliteGlowsAndDarkAndLightDoNotTests
         Assert.Null(rule.Effect);
     }
 
-    /// <summary>The window edge is the panel's edge: no frame, no edge glow — 32px of padding.</summary>
+    /// <summary>No frame and no edge glow inside the window; padding 20 top, 28 sides, 24 bottom (#392).</summary>
     [AvaloniaFact]
     public void ThePanelHasNoFrame()
     {
@@ -198,7 +198,7 @@ public class EliteGlowsAndDarkAndLightDoNotTests
 
         var frame = view.GetVisualDescendants().OfType<DockPanel>().Single(d => d.Name == "Frame");
 
-        Assert.Equal(new Thickness(32), frame.Margin);
+        Assert.Equal(new Thickness(28, 20, 28, 24), frame.Margin);
         Assert.Equal(default, view.GetVisualDescendants().OfType<Border>().Single(b => b.Name == "ContentPane").BorderThickness);
     }
 
