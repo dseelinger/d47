@@ -192,6 +192,15 @@ steps written against a binary that does not contain the fix test nothing.
 The steps start from the running test drive. Do not include "build the app" or "launch d47"; the
 app is open. Say in one line above the list that the test drive is running with this commit.
 
+### Ask for a screenshot where you can check it faster
+
+Where a step's result is something you can read off a picture — hex values in the Control Kit, a
+colour, a layout, a label — ask the maintainer for a screenshot of that screen and check it
+yourself, rather than handing over a step for them to judge by eye. Name the window and what the
+shot must show. Reading a screenshot needs the desktop app: in a terminal session, say that
+`/desktop` has to be run first. Steps that need a device, speech or the game stay with the
+maintainer.
+
 ### Every step is exact
 
 Read the code the change touched before writing the steps, and take the names from it — the
