@@ -32,7 +32,19 @@ public sealed class SpendWindow : Window
     private readonly TurnCost? _turn;
 
     /// <summary>Where the sections live, so a reset can replace them rather than reopen the window.</summary>
-    private readonly StackPanel _body = new() { Margin = new Thickness(24), Spacing = 18 };
+    private readonly StackPanel _body = new() { Spacing = 18 };
+
+    /// <summary>The footer's buttons, rebuilt with the sections.</summary>
+    private readonly StackPanel _buttons = new() { Orientation = Orientation.Horizontal, Spacing = 10 };
+
+    /// <summary>The session's running total, at the top right of the header.</summary>
+    private readonly TextBlock _figure = new()
+    {
+        Name = "SpendFigure",
+        FontFamily = new FontFamily(Fonts.MonoFamily),
+        FontSize = TypeScale.Subheading,
+        TextWrapping = TextWrapping.NoWrap,
+    };
 
     /// <summary>The provider the drill-down is reading, kept across a redraw (#35).</summary>
     private ProviderPick? _provider;
@@ -74,18 +86,12 @@ public sealed class SpendWindow : Window
         CanResize = true;
         ShowInTaskbar = false;
 
-        Themed(this, BackgroundProperty, ThemeManager.BackgroundKey);
+        Themed(_figure, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         Draw();
 
-        // **Horizontal scrolling disabled, and it is the whole of the fix** (GitHub issue 87).
-        Content = new ScrollViewer
-        {
-            Name = "SpendScroller",
-            Content = _body,
-            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-        };
+        // The modal's body scrolls vertically only; that is the whole of the fix for GitHub issue 87.
+        Modal.Apply(this, "Spend", Title, _body, [_buttons], _figure);
     }
 
     /// <summary>Every section, from scratch.</summary>
@@ -112,21 +118,17 @@ public sealed class SpendWindow : Window
 
         _body.Children.Add(ByProviderSection());
 
-        _body.Children.Add(Buttons());
+        _figure.Text = _session.RunningTotalDollars.ToString("C4");
+
+        _buttons.Children.Clear();
+        Buttons(_buttons);
     }
 
     /// <summary>Close, and — on a window that was told when the process started — Reset beside it.</summary>
-    private Control Buttons()
+    private void Buttons(StackPanel row)
     {
         var close = new Button { Content = "Close", MinWidth = 110 };
         close.Click += (_, _) => Close();
-
-        var row = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            HorizontalAlignment = HorizontalAlignment.Right,
-            Spacing = 10,
-        };
 
         // The mark, on the left of the row so it is not mistaken for one of the two controls that do
         // something (#252).
@@ -149,8 +151,6 @@ public sealed class SpendWindow : Window
         }
 
         row.Children.Add(close);
-
-        return row;
     }
 
     /// <summary>How far back to reset, as a menu over the button.</summary>

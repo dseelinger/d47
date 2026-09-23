@@ -65,6 +65,14 @@ background. Minimise and maximise fill solid in the accent colour with a dark ma
 press or when reached with Tab; close fills solid red with a white mark. Reaching them with Tab
 used to show nothing.
 
+The confirmation dialog and the "What this has cost" dialog share one layout. An orange context
+line and a white title sit above an accent rule, the body scrolls, and the buttons sit beneath a
+thin rule. The cost dialog shows the session's running total at the top right. Esc closes both;
+closing the confirmation this way answers no. Loadout's power and jump range gauges are a thin
+solid bar in place of the thick striped one. The bar is orange, and red when the build does not fit.
+The gauge's name is grey and its reading is in the bar's colour. The Control Kit has Stat tiles,
+Gauges and Modal sections.
+
 ## 1.6.3 — Guardian theme removed
 
 The Guardian theme is gone from Theme's choices. A saved theme of `guardian` now opens as Elite,

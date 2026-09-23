@@ -1,6 +1,5 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Markup.Xaml.MarkupExtensions;
 using D47.App.Theming;
@@ -25,39 +24,23 @@ public sealed class ConfirmWindow : Window
         CanResize = false;
         ShowInTaskbar = false;
 
-        // Themed the same way every control the settings view builds in code is: a dynamic resource, so the
-        // dialog repaints with the rest of the app rather than pinning a literal (Phase 4, "Themes").
-        Themed(this, BackgroundProperty, ThemeManager.BackgroundKey);
-
         var text = new TextBlock
         {
             Text = question,
+            FontFamily = Fonts.ProseFamily,
+            FontSize = TypeScale.Body,
             TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(0, 0, 0, 20),
         };
 
         Themed(text, TextBlock.ForegroundProperty, ThemeManager.TextKey);
 
         var confirm = new Button { Content = confirmLabel, MinWidth = 110 };
-        var decline = new Button { Content = declineLabel, MinWidth = 110, Margin = new Thickness(0, 0, 10, 0) };
+        var decline = new Button { Content = declineLabel, MinWidth = 110 };
 
         confirm.Click += (_, _) => Answer(true);
         decline.Click += (_, _) => Answer(false);
 
-        Content = new StackPanel
-        {
-            Margin = new Thickness(24),
-            Children =
-            {
-                text,
-                new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    HorizontalAlignment = HorizontalAlignment.Right,
-                    Children = { decline, confirm },
-                },
-            },
-        };
+        Modal.Apply(this, "Confirm", title, text, [decline, confirm]);
 
         // Closing the window without choosing is a no.
         Closed += (_, _) => _answer.TrySetResult(false);

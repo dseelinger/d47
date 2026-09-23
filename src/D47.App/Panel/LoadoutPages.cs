@@ -712,52 +712,15 @@ public static class LoadoutPages
     /// <summary>One gauge at the head of a slot list — a labelled horizontal bar (Phase 38).</summary>
     internal static Control Gauge(LoadoutGauge gauge)
     {
-        var stack = new StackPanel { Spacing = 2, Margin = new Thickness(0, 6, 0, 6) };
+        var stack = new StackPanel { Spacing = 4, Margin = new Thickness(0, 6, 0, 6) };
 
-        // **A DockPanel rather than a horizontal stack, so the reading wraps** (#289).
-        var heading = new DockPanel();
+        var fillKey = Controls.Gauge.FillKey(Fill(gauge.Tone));
 
-        var toneKey =
-            gauge.Tone == LoadoutTone.Danger ? ThemeManager.DangerKey
-            : gauge.Tone == LoadoutTone.Warn ? ThemeManager.WarnKey
-            : gauge.Tone == LoadoutTone.Good ? ThemeManager.GoodKey
-            : gauge.Modelled ? ThemeManager.InfoKey
-            : ThemeManager.TextKey;
+        // A modelled reading is marked "~": every figure in it was worked out rather than read off the game.
+        stack.Children.Add(Controls.Gauge.Heading(
+            gauge.Name, gauge.Modelled ? $"~ {gauge.Reading}" : gauge.Reading, fillKey));
 
-        var name = new TextBlock
-        {
-            Text = gauge.Name.ToUpperInvariant(),
-            FontFamily = new FontFamily(Fonts.MonoFamily),
-            FontSize = TypeScale.Secondary,
-            FontWeight = FontWeight.SemiBold,
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(0, 0, 8, 0),
-        };
-
-        DockPanel.SetDock(name, Dock.Left);
-
-        Themed(name, TextBlock.ForegroundProperty, toneKey);
-        heading.Children.Add(name);
-
-        // The reading, in the gauge's own tone: red where the build does not fit, and the muted Info hue
-        // where every figure in it was worked out rather than read off the game.
-        var reading = new TextBlock
-        {
-            Text = gauge.Modelled ? $"~ {gauge.Reading}" : gauge.Reading,
-            FontFamily = new FontFamily(Fonts.MonoFamily),
-            FontSize = TypeScale.Body,
-            HorizontalAlignment = HorizontalAlignment.Right,
-            TextAlignment = TextAlignment.Right,
-            VerticalAlignment = VerticalAlignment.Center,
-            TextWrapping = TextWrapping.Wrap,
-        };
-
-        Themed(reading, TextBlock.ForegroundProperty, toneKey);
-
-        heading.Children.Add(reading);
-        stack.Children.Add(heading);
-
-        stack.Children.Add(Bar(gauge));
+        stack.Children.Add(Bar(gauge, fillKey));
 
         // The figures under the points they belong to, where the gauge supplied any.
         if (gauge.Scale.Count > 0)
@@ -782,6 +745,14 @@ public static class LoadoutPages
 
         return stack;
     }
+
+    /// <summary>Danger is over its limit and Warn is capacity; every other tone is progress.</summary>
+    internal static GaugeFill Fill(LoadoutTone tone) => tone switch
+    {
+        LoadoutTone.Danger => GaugeFill.Over,
+        LoadoutTone.Warn => GaugeFill.Capacity,
+        _ => GaugeFill.Progress,
+    };
 
     /// <summary>
     /// The figures written under the points on the bar they belong to (the Commander's instruction,
@@ -823,35 +794,15 @@ public static class LoadoutPages
         return row;
     }
 
-    private const double BarHeight = 14;
-    private const double EndCapWidth = 2;
-    private const double HatchTileWidth = 10;
-    private const double HatchStrokeWidth = 7;
-
-    /// <summary>
-    /// A bar with nothing but a track and a fill — the gauge roles this file already uses (Accent fill,
-    /// SurfaceAlt track), for a criterion that carries only a fraction rather than a full gauge (#17).
-    /// </summary>
-    internal static Control MeasureBar(double fill)
-    {
-        var clamped = Math.Clamp(double.IsFinite(fill) ? fill : 0, 0, 1);
-
-        return Track(clamped, ThemeManager.AccentKey);
-    }
+    /// <summary>A bar with nothing but a track and an A fill, for a criterion that carries only a fraction (#17).</summary>
+    internal static Control MeasureBar(double fill) => Controls.Gauge.Track(fill, ThemeManager.AKey);
 
     /// <summary>The bar itself: a track, a fill, and a hairline per mark.</summary>
-    private static Control Bar(LoadoutGauge gauge)
+    private static Grid Bar(LoadoutGauge gauge, string fillKey)
     {
-        var fill = Math.Clamp(double.IsFinite(gauge.Fill) ? gauge.Fill : 0, 0, 1);
-
-        var fillKey =
-            gauge.Tone == LoadoutTone.Danger ? ThemeManager.DangerKey
-            : gauge.Tone == LoadoutTone.Warn ? ThemeManager.WarnKey
-            : gauge.Tone == LoadoutTone.Good ? ThemeManager.GoodKey
-            : gauge.Modelled ? ThemeManager.InfoKey
-            : ThemeManager.AccentKey;
-
-        var track = gauge.Segments.Count > 0 ? SegmentedTrack(gauge, fillKey) : Track(fill, fillKey);
+        var track = gauge.Segments.Count > 0
+            ? SegmentedTrack(gauge, fillKey)
+            : Controls.Gauge.Track(gauge.Fill, fillKey);
 
         // Each mark, as its own two-column grid over the same track.
         foreach (var mark in gauge.Marks)
@@ -900,47 +851,16 @@ public static class LoadoutPages
     }
 
     /// <summary>
-    /// A track: SurfaceAlt background, a hatched fill to the given fraction, TextMuted end caps (#353).
-    /// </summary>
-    private static Grid Track(double fill, string fillKey)
-    {
-        var track = new Grid
-        {
-            Height = BarHeight,
-            ColumnDefinitions = new ColumnDefinitions
-            {
-                new(new GridLength(fill, GridUnitType.Star)),
-                new(new GridLength(1 - fill, GridUnitType.Star)),
-            },
-        };
-
-        var background = new Border();
-
-        Themed(background, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
-        Grid.SetColumnSpan(background, 2);
-        track.Children.Add(background);
-
-        var filled = new Border { Background = Hatch(fillKey) };
-
-        Grid.SetColumn(filled, 0);
-        track.Children.Add(filled);
-
-        EndCaps(track, 2);
-
-        return track;
-    }
-
-    /// <summary>
-    /// A stacked bar, one hatched span per priority group, separated by a gap in the track underneath
+    /// A stacked bar, one solid span per priority group, separated by a gap in the track underneath
     /// (#253).
     /// </summary>
     private static Grid SegmentedTrack(LoadoutGauge gauge, string fillKey)
     {
-        var track = new Grid { Height = BarHeight };
+        var track = new Grid { Height = Controls.Gauge.TrackHeight };
 
         var background = new Border();
 
-        Themed(background, Border.BackgroundProperty, ThemeManager.SurfaceAltKey);
+        Themed(background, Border.BackgroundProperty, ThemeManager.TileKey);
         track.Children.Add(background);
 
         var at = 0.0;
@@ -960,8 +880,9 @@ public static class LoadoutPages
                 },
             };
 
-            var span = new Border { Background = Hatch(fillKey), Margin = new Thickness(1, 0) };
+            var span = new Border { Margin = new Thickness(1, 0) };
 
+            Themed(span, Border.BackgroundProperty, fillKey);
             Grid.SetColumn(span, 1);
             over.Children.Add(span);
 
@@ -970,51 +891,7 @@ public static class LoadoutPages
             at += width;
         }
 
-        EndCaps(track, 1);
-
         return track;
-    }
-
-    /// <summary>The 2px `D47.TextMuted` caps bounding the whole track.</summary>
-    private static void EndCaps(Grid track, int columns)
-    {
-        var left = new Border { Width = EndCapWidth, HorizontalAlignment = HorizontalAlignment.Left };
-        var right = new Border { Width = EndCapWidth, HorizontalAlignment = HorizontalAlignment.Right };
-
-        Themed(left, Border.BackgroundProperty, ThemeManager.TextMutedKey);
-        Themed(right, Border.BackgroundProperty, ThemeManager.TextMutedKey);
-
-        Grid.SetColumnSpan(left, columns);
-        Grid.SetColumnSpan(right, columns);
-
-        track.Children.Add(left);
-        track.Children.Add(right);
-    }
-
-    /// <summary>A 10px tile, 7px of the tone's colour then 3px clear, for a Gauge's fill.</summary>
-    private static DrawingBrush Hatch(string colorKey)
-    {
-        var stripe = new GeometryDrawing
-        {
-            Geometry = new RectangleGeometry(new Rect(0, 0, HatchStrokeWidth, BarHeight)),
-        };
-
-        Themed(stripe, GeometryDrawing.BrushProperty, colorKey);
-
-        var ground = new GeometryDrawing
-        {
-            Geometry = new RectangleGeometry(new Rect(0, 0, HatchTileWidth, BarHeight)),
-            Brush = Brushes.Transparent,
-        };
-
-        return new DrawingBrush
-        {
-            Drawing = new DrawingGroup { Children = { ground, stripe } },
-            TileMode = TileMode.Tile,
-            Stretch = Stretch.None,
-            SourceRect = new RelativeRect(0, 0, 1, 1, RelativeUnit.Relative),
-            DestinationRect = new RelativeRect(0, 0, HatchTileWidth, BarHeight, RelativeUnit.Absolute),
-        };
     }
 
     /// <summary>

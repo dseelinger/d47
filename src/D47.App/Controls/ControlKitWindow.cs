@@ -70,6 +70,9 @@ public sealed class ControlKitWindow : Window
                 ChoosingSection(),
                 ThemeSection(),
                 StatusSection(),
+                StatTilesSection(),
+                GaugesSection(),
+                ModalSection(),
                 RampSection(),
                 HeadingRanksSection(),
                 SettingsRowsSection(),
@@ -131,7 +134,7 @@ public sealed class ControlKitWindow : Window
         intro.MaxWidth = 640;
         intro.Margin = new Thickness(0, 8, 0, 0);
 
-        var cards = Reflow(
+        var cards = Reflow.Grid(
             [
                 SpecCard("SPACING", "4 · 8 · 12 · 16 · 24 · 32 · 48. Nothing else."),
                 SpecCard("ROW", "52px settings · 44px minimum target"),
@@ -238,7 +241,7 @@ public sealed class ControlKitWindow : Window
                 Note("Bindings are machine text, so they are mono — and they wrap instead of colliding.")),
         };
 
-        return Section("Telling things apart", Reflow(cells, GridMinColumn, GridGap, GridGap, maxColumns: 3));
+        return Section("Telling things apart", Reflow.Grid(cells, GridMinColumn, GridGap, GridGap, maxColumns: 3));
     }
 
     // -- Choosing among items --
@@ -307,7 +310,7 @@ public sealed class ControlKitWindow : Window
             Cell("STEPPER — HOVER, DISABLED", steppers, Note("The right arrow is hovered. The second stepper is disabled.")),
         };
 
-        return Section("Choosing among items", Reflow(cells, GridMinColumn, GridGap, GridGap, maxColumns: 2));
+        return Section("Choosing among items", Reflow.Grid(cells, GridMinColumn, GridGap, GridGap, maxColumns: 2));
     }
 
     private static Border KitRow(string name, string secondary, bool selected = false)
@@ -508,7 +511,7 @@ public sealed class ControlKitWindow : Window
             ThemeManager.GreyKey);
         intro.MaxWidth = 680;
 
-        var bars = Reflow(
+        var bars = Reflow.Grid(
             [
                 StatusBar("A · values, rules", ThemeManager.AKey),
                 StatusBar("CYAN · yours, ready", ThemeManager.CyanKey),
@@ -539,6 +542,111 @@ public sealed class ControlKitWindow : Window
         Themed(bar, Border.BackgroundProperty, fillKey);
 
         return bar;
+    }
+
+    // -- Stat tiles, gauges and the modal --
+
+    private static Control StatTilesSection()
+    {
+        var grid = StatTile.Grid(
+            [
+                StatTile.Build("System", "Diaguandri"),
+                StatTile.Build("Tritium", "1,248 t"),
+                StatTile.Build("Range", "500 ly"),
+                StatTile.Build("Carrier", "Nautilus Deep", StatInk.Name),
+                StatTile.Build("Docked at", "Ray Gateway", StatInk.Name),
+                StatTile.Build("Current system", "Shinrarta Dezhra", StatInk.Here),
+            ]);
+        grid.Name = "KitStatGrid";
+
+        return Section(
+            "Stat tiles",
+            new StackPanel
+            {
+                Spacing = 12,
+                Children =
+                {
+                    Note("Read-only, on slab. A value in orange; a ship, engineer or carrier name in white; "
+                        + "the system you are in, in cyan. The grid drops columns as the width falls."),
+                    grid,
+                },
+            });
+    }
+
+    private static Control GaugesSection()
+    {
+        var gauges = Reflow.Grid(
+            [
+                Gauge.Build("Delivered", "1,860 / 3,000 t · 62%", 0.62),
+                Gauge.Build("Cargo", "28 / 32 t", 28.0 / 32, GaugeFill.Capacity),
+                Gauge.Build("Power", "25.04 / 22.93 MW · 109%", 1.0, GaugeFill.Over),
+            ],
+            GridMinColumn,
+            GridGap,
+            GridGap,
+            maxColumns: 3);
+
+        return Section(
+            "Gauges",
+            new StackPanel
+            {
+                Spacing = 12,
+                Children = { Note("Progress in orange, capacity in yellow, over its limit in red."), gauges },
+            });
+    }
+
+    /// <summary>
+    /// The modal as a dialog drawn over the panel would show it: the scrim, and the modal inside its 1px A
+    /// frame, which on a separate window is the native border.
+    /// </summary>
+    private static Control ModalSection()
+    {
+        var question = Prose(
+            "Its loadout is removed from the logbook. The ship itself is not touched.",
+            TypeScale.Body,
+            ThemeManager.TextKey);
+
+        var figure = new TextBlock
+        {
+            Text = "$0.0412",
+            FontFamily = new FontFamily(Fonts.MonoFamily),
+            FontSize = TypeScale.Subheading,
+        };
+        Themed(figure, TextBlock.ForegroundProperty, ThemeManager.AKey);
+
+        var modal = Modal.Build(
+            "Confirm",
+            "Forget this ship?",
+            question,
+            [new Button { Content = "Keep", MinWidth = 110 }, new Button { Content = "Forget", MinWidth = 110 }],
+            figure);
+
+        var frame = new Border
+        {
+            MaxWidth = 520,
+            BorderThickness = new Thickness(1),
+            Child = modal,
+        };
+        Themed(frame, Border.BorderBrushProperty, ThemeManager.AKey);
+
+        var scrim = new Border { Name = "KitModal", Padding = new Thickness(24, 40), Child = frame };
+        Themed(scrim, Border.BackgroundProperty, ThemeManager.ScrimKey);
+
+        var ground = new Border { Child = scrim };
+        Themed(ground, Border.BackgroundProperty, ThemeManager.SlabKey);
+
+        return Section(
+            "Modal",
+            new StackPanel
+            {
+                Spacing = 12,
+                Children =
+                {
+                    Note("Context, title and an A rule; a scrolling body; a Line2 rule and the buttons. "
+                        + "Esc closes it. The scrim is black at 72%."),
+                    ground,
+                },
+            });
     }
 
     // -- Ramp --
@@ -829,60 +937,6 @@ public sealed class ControlKitWindow : Window
         ColumnDefinitions = [new ColumnDefinition(1, GridUnitType.Star) { MaxWidth = CappedControlWidth }],
         Children = { control },
     };
-
-    /// <summary>
-    /// Lays <paramref name="cells"/> in reading order in as many equal columns, up to
-    /// <paramref name="maxColumns"/>, as fit at <paramref name="minColumn"/> each, re-laying them when
-    /// the width changes.
-    /// </summary>
-    private static Grid Reflow(
-        IReadOnlyList<Control> cells, double minColumn, double columnGap, double rowGap, int maxColumns)
-    {
-        var grid = new Grid { ColumnSpacing = columnGap, RowSpacing = rowGap };
-
-        foreach (var cell in cells)
-        {
-            cell.VerticalAlignment = VerticalAlignment.Top;
-            grid.Children.Add(cell);
-        }
-
-        var laid = 0;
-
-        void Lay(double width)
-        {
-            var columns = Math.Clamp((int)Math.Floor((width + columnGap) / (minColumn + columnGap)), 1, maxColumns);
-
-            if (columns == laid)
-            {
-                return;
-            }
-
-            laid = columns;
-            grid.ColumnDefinitions.Clear();
-            grid.RowDefinitions.Clear();
-
-            for (var c = 0; c < columns; c++)
-            {
-                grid.ColumnDefinitions.Add(new ColumnDefinition(1, GridUnitType.Star));
-            }
-
-            for (var r = 0; r < (cells.Count + columns - 1) / columns; r++)
-            {
-                grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
-            }
-
-            for (var i = 0; i < cells.Count; i++)
-            {
-                Grid.SetColumn(cells[i], i % columns);
-                Grid.SetRow(cells[i], i / columns);
-            }
-        }
-
-        Lay(minColumn * maxColumns + columnGap * (maxColumns - 1));
-        grid.SizeChanged += (_, e) => Lay(e.NewSize.Width);
-
-        return grid;
-    }
 
     private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
         target[!property] = new DynamicResourceExtension(key);
