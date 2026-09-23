@@ -1,4 +1,5 @@
 using System.Globalization;
+using D47.App.Controls;
 using D47.Core.Checklists;
 using D47.Core.Engineers;
 using D47.Core.Interface;
@@ -209,7 +210,7 @@ public sealed class ShipsMode(
         // does not, so "here" becomes the station it is parked at.
         if (entry?.Stored is { } stored)
         {
-            lines.Add(new LoadoutLine(Whereabouts(stored, entry.IsActive), LoadoutTone.Body)
+            lines.Add(new LoadoutLine(Whereabouts(stored, entry.IsActive), entry.IsActive ? LoadoutTone.Here : LoadoutTone.Body)
             {
                 // The system, on the clipboard, for Elite's Galaxy Map search.
                 Copy = stored.HasSystem ? new LoadoutCopy(stored.StarSystem) : null,
@@ -217,13 +218,15 @@ public sealed class ShipsMode(
 
             if (stored.TransferPrice is { } price)
             {
-                lines.Add(new LoadoutLine(
-                    $"Transferring it here costs {Credits(price)}."));
+                lines.Add(new LoadoutLine($"Transferring it here costs {Credits(price)}.")
+                {
+                    Stats = [new("Transfer here", Credits(price))],
+                });
             }
 
             if (stored.Value is { } worth)
             {
-                lines.Add(new LoadoutLine($"Worth {Credits(worth)}."));
+                lines.Add(new LoadoutLine($"Worth {Credits(worth)}.") { Stats = [new("Value", Credits(worth))] });
             }
         }
         else if (entry is not null)
@@ -279,13 +282,25 @@ public sealed class ShipsMode(
         var made = hull.Described();
 
         lines.Add(new LoadoutLine(
-            hull.Pad is { Length: > 0 } pad ? $"{made}. Needs a {pad} pad." : $"{made}."));
+            hull.Pad is { Length: > 0 } pad ? $"{made}. Needs a {pad} pad." : $"{made}.")
+        {
+            Stats = hull.Pad is { Length: > 0 } size
+                ? [new("Hull", made, StatInk.Name), new("Pad", size)]
+                : [new("Hull", made, StatInk.Name)],
+        });
 
         if (hull.Speed is { } speed && hull.Boost is { } boost)
         {
             lines.Add(new LoadoutLine(
                 $"{speed.ToString(CultureInfo.InvariantCulture)} m/s, "
-                + $"{boost.ToString(CultureInfo.InvariantCulture)} boosting."));
+                + $"{boost.ToString(CultureInfo.InvariantCulture)} boosting.")
+            {
+                Stats =
+                [
+                    new("Speed", $"{speed.ToString(CultureInfo.InvariantCulture)} m/s"),
+                    new("Boost", $"{boost.ToString(CultureInfo.InvariantCulture)} m/s"),
+                ],
+            });
         }
 
         if (hull.Armour is { } armour && hull.Shields is { } shields)
@@ -293,12 +308,22 @@ public sealed class ShipsMode(
             lines.Add(new LoadoutLine(
                 $"{armour.ToString(CultureInfo.InvariantCulture)} armour and "
                 + $"{shields.ToString(CultureInfo.InvariantCulture)} shields before anything is "
-                + "fitted."));
+                + "fitted.")
+            {
+                Stats =
+                [
+                    new("Base armour", armour.ToString(CultureInfo.InvariantCulture)),
+                    new("Base shields", shields.ToString(CultureInfo.InvariantCulture)),
+                ],
+            });
         }
 
         if (hull.Cost is { } cost)
         {
-            lines.Add(new LoadoutLine($"Unfitted, it lists at {Credits(cost)}."));
+            lines.Add(new LoadoutLine($"Unfitted, it lists at {Credits(cost)}.")
+            {
+                Stats = [new("List price", Credits(cost))],
+            });
         }
 
         return lines;
@@ -336,35 +361,52 @@ public sealed class ShipsMode(
         {
             lines.Add(new LoadoutLine(
                 $"{range.ToString("N1", CultureInfo.InvariantCulture)} ly a jump with one jump's "
-                + "fuel and an empty hold."));
+                + "fuel and an empty hold.")
+            {
+                Stats = [new("Jump range, empty hold", $"{range.ToString("N1", CultureInfo.InvariantCulture)} ly")],
+            });
         }
 
         if (loadout.CargoCapacity is { } cargo)
         {
-            lines.Add(new LoadoutLine($"{cargo.ToString(CultureInfo.InvariantCulture)} tonnes of hold."));
+            lines.Add(new LoadoutLine($"{cargo.ToString(CultureInfo.InvariantCulture)} tonnes of hold.")
+            {
+                Stats = [new("Hold", $"{cargo.ToString(CultureInfo.InvariantCulture)} t")],
+            });
         }
 
         if (loadout.UnladenMass is { } mass)
         {
             lines.Add(new LoadoutLine(
-                $"{mass.ToString("N1", CultureInfo.InvariantCulture)} tonnes unladen."));
+                $"{mass.ToString("N1", CultureInfo.InvariantCulture)} tonnes unladen.")
+            {
+                Stats = [new("Unladen", $"{mass.ToString("N1", CultureInfo.InvariantCulture)} t")],
+            });
         }
 
         if (loadout.TotalValue is { } worth)
         {
-            lines.Add(new LoadoutLine($"Worth {Credits(worth)}, ship and modules together."));
+            lines.Add(new LoadoutLine($"Worth {Credits(worth)}, ship and modules together.")
+            {
+                Stats = [new("Value with modules", Credits(worth))],
+            });
         }
 
         if (loadout.Rebuy is { } rebuy)
         {
-            // Its own line and its own tone.
-            lines.Add(new LoadoutLine($"Rebuy is {Credits(rebuy)}.", LoadoutTone.Danger));
+            lines.Add(new LoadoutLine($"Rebuy is {Credits(rebuy)}.", LoadoutTone.Danger)
+            {
+                Stats = [new("Rebuy", Credits(rebuy))],
+            });
         }
 
         if (loadout.HullHealth is { } health && health < 100)
         {
             lines.Add(new LoadoutLine(
-                $"Hull at {health.ToString(CultureInfo.InvariantCulture)}%.", LoadoutTone.Danger));
+                $"Hull at {health.ToString(CultureInfo.InvariantCulture)}%.", LoadoutTone.Danger)
+            {
+                Stats = [new("Hull integrity", $"{health.ToString(CultureInfo.InvariantCulture)}%")],
+            });
         }
 
         // The heading last, and only if anything is under it.

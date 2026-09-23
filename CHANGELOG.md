@@ -82,6 +82,19 @@ shown in the heading and no longer in the text. System name chips are grey tiles
 system you are in. The microphone dot is cyan when push-to-talk is ready. The footer has no
 background of its own, and SEND and the Newest button are ordinary tiles.
 
+Fleet's ship pages are restyled to match Elite. Ship cards, slot rows and material rows are tiles
+2px apart with a white name and an accent-coloured second line. The card or row the other pane
+is showing fills solid in the accent colour instead of being outlined. The CURRENT SHIP badge is
+cyan. A ship's page opens with its name as a large white title over an accent rule. Its figures
+(hull, pad, speed, boost, armour, shields, price, jump range, hold, mass, value, rebuy and hull
+integrity) are grey-labelled tiles that drop columns as the pane narrows. Where the ship is reads
+in cyan when it is the ship you are flying. Headings such as Fitted, Planned and the slot groups
+are white capitals over a thin accent rule, on the Suits pages too, and "Say:" hints are grey. A
+met plan's tick is blue. Materials no longer scrolls inside five fixed-height cards: each group is
+as tall as its rows and the page scrolls. A material you hold enough of reads in blue, a shortfall
+in the accent colour instead of red, and its detail opens in the same layout as the confirmation
+dialog. Scrollbars on Fleet and Engineers pages sit clear of the content instead of over it.
+
 ## 1.6.3 — Guardian theme removed
 
 The Guardian theme is gone from Theme's choices. A saved theme of `guardian` now opens as Elite,

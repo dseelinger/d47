@@ -282,12 +282,12 @@ public class TheFleetTabIsInTheHeadsetTests
 
         // Whichever slot row the mode listed first - the point is that a slot row takes a ray, not which
         // slot it is. A named button alone is not enough to say so: the tab strip and the scrollbar carry
-        // automation names too. A slot row is the one built from LoadoutPages.SlotRow's own four-column
-        // grid, at its own fixed height.
+        // automation names too. A slot row is a list row holding LoadoutPages.SlotRow's own five-column grid.
         var slot = Pressable(
             panel,
-            control => control is Button { Bounds.Width: > 300, Bounds.Height: 34 } button &&
-                !string.IsNullOrEmpty(AutomationProperties.GetName(button)));
+            control => control is Button { Bounds.Width: > 300, Content: Grid { ColumnDefinitions.Count: 5 } } button
+                && button.Classes.Contains(ListRow.Class)
+                && !string.IsNullOrEmpty(AutomationProperties.GetName(button)));
 
         Assert.NotNull(slot);
         Assert.True(Press(panel, pixels, slot!));

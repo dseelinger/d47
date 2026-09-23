@@ -303,15 +303,15 @@ public class LoadoutTabTests
 
         var shown = Text(surface.Panel);
 
-        Assert.Contains("Fitted", shown);
-        Assert.Contains("Planned", shown);
+        Assert.Contains("FITTED", shown);
+        Assert.Contains("PLANNED", shown);
 
         // What is actually there, and what is wanted, each on its own.
         Assert.Contains(shown, line => line.Contains("Engine", StringComparison.OrdinalIgnoreCase));
         Assert.Contains(shown, line => line.Contains("Dirty Drive Tuning", StringComparison.Ordinal));
 
         // And the cost of this plan, on this slot, with held and needed both.
-        Assert.Contains("What it costs", shown);
+        Assert.Contains("WHAT IT COSTS", shown);
 
         surface.Window.Close();
     }
@@ -456,7 +456,7 @@ public class LoadoutTabTests
 
         foreach (var heading in new[]
                  {
-                     "Hardpoints", "Utility Mounts", "Core Internal", "Optional Internal",
+                     "HARDPOINTS", "UTILITY MOUNTS", "CORE INTERNAL", "OPTIONAL INTERNAL",
                  })
         {
             Assert.Contains(heading, shown);
@@ -464,13 +464,13 @@ public class LoadoutTabTests
 
         // In that order, and the utility mounts under their own heading rather than among the hardpoints —
         // which is where the journal's name for them would have put them.
-        Assert.True(shown.IndexOf("Hardpoints") < shown.IndexOf("Utility Mounts"));
-        Assert.True(shown.IndexOf("Utility Mounts") < shown.IndexOf("Core Internal"));
-        Assert.True(shown.IndexOf("Core Internal") < shown.IndexOf("Optional Internal"));
+        Assert.True(shown.IndexOf("HARDPOINTS") < shown.IndexOf("UTILITY MOUNTS"));
+        Assert.True(shown.IndexOf("UTILITY MOUNTS") < shown.IndexOf("CORE INTERNAL"));
+        Assert.True(shown.IndexOf("CORE INTERNAL") < shown.IndexOf("OPTIONAL INTERNAL"));
 
         // A utility mount is drawn under its own heading.
         var mounts = surface.Panel.GetVisualDescendants().OfType<TextBlock>()
-            .First(block => block.Text == "Utility Mounts");
+            .First(block => block.Text == "UTILITY MOUNTS");
 
         Assert.True(
             Row(surface.Panel, "Utility Mount 1").TranslatePoint(default, surface.Panel)!.Value.Y
@@ -910,7 +910,7 @@ public class LoadoutTabTests
         var order = line.Children.ToList();
 
         // The sentence, then the grade, then the two arrows — in that order and nothing between.
-        var said = Assert.IsType<TextBlock>(order[0]);
+        var said = Assert.IsAssignableFrom<TextBlock>(order[0]);
 
         Assert.Contains("Lightweight Mount", said.Text ?? string.Empty, StringComparison.Ordinal);
         Assert.DoesNotContain("grade 5", said.Text ?? string.Empty, StringComparison.Ordinal);
@@ -1169,7 +1169,7 @@ public class LoadoutTabTests
 
         var shown = Text(surface.Panel);
 
-        Assert.Contains(shown, line => line == "Effect");
+        Assert.Contains(shown, line => line == "EFFECT");
         Assert.DoesNotContain(shown, line => line.StartsWith("Auto Loader:", StringComparison.Ordinal));
 
         surface.Window.Close();
@@ -1335,19 +1335,22 @@ public class LoadoutTabTests
 
         // Where it is, from the journal, and what it is worth.
         Assert.Contains("Parked at Jameson Memorial, Shinrarta Dezhra.", shown);
-        Assert.Contains("Worth 150,000,000 cr.", shown);
+        Assert.Contains("150,000,000 cr", shown);
 
         // And what the hull is, from the shipped table — true of every Anaconda ever built, which is why it
-        // can be said for a ship in another dock.
-        Assert.Contains("The ship", shown);
-        Assert.Contains("Anaconda, by Faulcon DeLacy. Needs a large pad.", shown);
-        Assert.Contains("180 m/s, 240 boosting.", shown);
+        // can be said for a ship in another dock. Figures are stat tiles, their labels in capitals.
+        Assert.Contains("THE SHIP", shown);
+        Assert.Contains("Anaconda, by Faulcon DeLacy", shown);
+        Assert.Contains("large", shown);
+        Assert.Contains("180 m/s", shown);
+        Assert.Contains("BOOST", shown);
+        Assert.Contains("240 m/s", shown);
 
         // What it cannot say, and why.
         Assert.Contains(shown, line => line.Contains(
             "only known once you have been in it", StringComparison.Ordinal));
 
-        Assert.DoesNotContain("As it is fitted", shown);
+        Assert.DoesNotContain("AS IT IS FITTED", shown);
 
         surface.Window.Close();
     }
@@ -1391,13 +1394,15 @@ public class LoadoutTabTests
         var shown = Text(surface.Panel);
 
         Assert.Contains("You are flying it.", shown);
-        Assert.Contains("As it is fitted", shown);
+        Assert.Contains("AS IT IS FITTED", shown);
         // 34.25 formats to 34.2, not 34.3: N1 rounds a midpoint to the even digit.
-        Assert.Contains("34.2 ly a jump with one jump's fuel and an empty hold.", shown);
-        Assert.Contains("128 tonnes of hold.", shown);
-        Assert.Contains("Worth 100,000,000 cr, ship and modules together.", shown);
-        Assert.Contains("Rebuy is 5,000,000 cr.", shown);
-        Assert.Contains("Hull at 87%.", shown);
+        Assert.Contains("34.2 ly", shown);
+        Assert.Contains("128 t", shown);
+        Assert.Contains("100,000,000 cr", shown);
+        Assert.Contains("REBUY", shown);
+        Assert.Contains("5,000,000 cr", shown);
+        Assert.Contains("HULL INTEGRITY", shown);
+        Assert.Contains("87%", shown);
 
         surface.Window.Close();
     }

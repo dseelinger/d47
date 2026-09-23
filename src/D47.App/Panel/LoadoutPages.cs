@@ -122,11 +122,11 @@ public static class LoadoutPages
 
     // ------------------------------------------------------------------ shared drawing
 
+    /// <summary>Marks the row or card the other pane is drawing.</summary>
+    internal const string ShowingClass = "showing";
+
     /// <summary>One pressable line of an index.</summary>
-    /// <param name="showing">
-    /// Whether this is the row the other pane is currently drawing, in which case it is outlined
-    /// (#110).
-    /// </param>
+    /// <param name="showing">Whether this is the row the other pane is drawing, which fills it solid (#110).</param>
     internal static Control Row(
         string text,
         string? aside,
@@ -135,13 +135,13 @@ public static class LoadoutPages
         bool engineered = false,
         bool showing = false)
     {
-        var label = new TextBlock
+        var label = ListRow.Name(new TextBlock
         {
             Text = text,
             FontSize = TypeScale.Body,
             TextWrapping = TextWrapping.Wrap,
             VerticalAlignment = VerticalAlignment.Center,
-        };
+        });
 
         // A grid rather than a dock, because a right-docked child takes as much width as it asks for and the
         // fill child gets what is left (remediation.md 14, item 1).
@@ -170,7 +170,7 @@ public static class LoadoutPages
                 TextAlignment = TextAlignment.Right,
             };
 
-            Themed(note, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+            ListRow.Secondary(note);
             Grid.SetColumn(note, 2);
             body.Children.Add(note);
 
@@ -207,7 +207,7 @@ public static class LoadoutPages
                 Margin = new Thickness(0, 0, 8, 0),
             };
 
-            Themed(mark, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
+            ListRow.Secondary(mark);
             body.Children.Add(mark);
         }
 
@@ -215,37 +215,21 @@ public static class LoadoutPages
 
         body.Children.Add(label);
 
-        var button = new Button
-        {
-            Content = body,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+        var button = ListRow.Dress(
+            new Button { Content = body, HorizontalAlignment = HorizontalAlignment.Stretch },
+            showing);
 
-            // Tall enough for a ray at a metre.
-            MinHeight = 34,
-            Padding = new Thickness(12, 6),
-        };
-
-        if (showing)
-        {
-            // The class names the state and the two lines below draw it.
-            button.Classes.Add("showing");
-            button.BorderThickness = new Thickness(2);
-            Themed(button, Button.BorderBrushProperty, ThemeManager.AccentKey);
-        }
+        button.Classes.Set(ShowingClass, showing);
 
         button.Click += (_, _) => pressed();
 
         return button;
     }
 
-    /// <summary>75% black, behind the current-ship badge wherever the hull picture sits under it.</summary>
-    private static readonly IBrush BadgeBacking = new SolidColorBrush(Colors.Black, 0.75);
-
     /// <summary>
     /// One thing in the index, as a card in a grid rather than a bar in a list (asked for 2026-09-03).
-    /// Restyled for the HUD redesign: a black hull cell, the name in Saira upper case, and
-    /// a fill and border that say whether this is the card the other pane is drawing (#278).
+    /// A list-row tile: a black hull cell, the name in Saira upper case, and a solid A fill when this is
+    /// the card the other pane is drawing.
     /// </summary>
     /// <param name="text">
     /// The name in full — with the hull in parentheses where the Commander has named the ship — read as
@@ -270,12 +254,12 @@ public static class LoadoutPages
     {
         headline ??= text;
 
-
+        // The picture takes whatever height the card has spare; without one, the name sits at the top.
         var body = new Grid
         {
             RowDefinitions =
             [
-                new RowDefinition(GridLength.Star),
+                new RowDefinition(drawings ? GridLength.Star : GridLength.Auto),
                 new RowDefinition(GridLength.Auto),
                 new RowDefinition(GridLength.Auto),
             ],
@@ -292,10 +276,8 @@ public static class LoadoutPages
             {
                 // Pure black in every theme — the picture is framed against nothing else (#278).
                 Background = Brushes.Black,
-                BorderThickness = new Thickness(0, 0, 0, 1),
+                Margin = new Thickness(0, 0, 0, 6),
             };
-
-            Themed(cell, Border.BorderBrushProperty, ThemeManager.RuleKey);
 
             // Uniform, so a hull keeps its proportions whatever share of the width the column count left the
             // card; and centred in the row rather than stretched to it, because a Sidewinder and a Type-10
@@ -319,7 +301,7 @@ public static class LoadoutPages
             // in the corner and backed so it reads over any hull's own colours (#278).
             if (standing == LoadoutStanding.Active)
             {
-                var badge = Pill("CURRENT SHIP", BadgeBacking);
+                var badge = Pill("CURRENT SHIP", overArt: true);
 
                 Grid.SetRow(badge, 0);
                 body.Children.Add(badge);
@@ -328,21 +310,22 @@ public static class LoadoutPages
         else if (standing == LoadoutStanding.Active)
         {
             // No hull cell to carry it, so the badge sits on the card itself instead.
-            var badge = Pill("CURRENT SHIP", BadgeBacking);
+            var badge = Pill("CURRENT SHIP");
 
             Grid.SetRow(badge, 0);
             body.Children.Add(badge);
         }
 
-        var label = new TextBlock
+        var label = ListRow.Name(new TextBlock
         {
             Text = headline.ToUpperInvariant(),
             FontFamily = Fonts.ChromeFamily,
             FontSize = TypeScale.Body,
+            FontWeight = FontWeight.SemiBold,
             TextWrapping = TextWrapping.Wrap,
             MaxLines = 2,
             TextTrimming = TextTrimming.CharacterEllipsis,
-        };
+        });
 
         if (marked)
         {
@@ -366,48 +349,33 @@ public static class LoadoutPages
 
             foreach (var line in aside.Split('\n', StringSplitOptions.RemoveEmptyEntries))
             {
-                var note = new TextBlock
+                lines.Children.Add(ListRow.Secondary(new TextBlock
                 {
                     Text = line,
                     FontSize = TypeScale.Secondary,
                     TextTrimming = TextTrimming.CharacterEllipsis,
-                };
-
-                Themed(note, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
-                lines.Children.Add(note);
+                }));
             }
 
             Grid.SetRow(lines, 2);
             body.Children.Add(lines);
         }
 
-        var button = new Button
-        {
-            Content = body,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            VerticalAlignment = VerticalAlignment.Stretch,
-            HorizontalContentAlignment = HorizontalAlignment.Stretch,
-            VerticalContentAlignment = VerticalAlignment.Stretch,
-            Padding = new Thickness(10, 6),
-        };
+        var button = ListRow.Dress(
+            new Button
+            {
+                Content = body,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch,
+                VerticalContentAlignment = VerticalAlignment.Stretch,
+                Padding = new Thickness(10, 8),
+            },
+            showing);
+
+        button.Classes.Set(ShowingClass, showing);
 
         // The name in full, for anything that cannot see the upper-case headline (#278).
         AutomationProperties.SetName(button, text);
-
-        if (showing)
-        {
-            // **The card the other pane is drawing**, the same outline a row has carried since #110 and the
-            // same reason: an index that stays on screen beside what it opened has to say which one that is.
-            button.BorderThickness = new Thickness(2);
-            Themed(button, Button.BorderBrushProperty, ThemeManager.AccentKey);
-            Themed(button, Button.BackgroundProperty, ThemeManager.CardFillSelectedKey);
-        }
-        else
-        {
-            button.BorderThickness = new Thickness(1);
-            Themed(button, Button.BorderBrushProperty, ThemeManager.RuleKey);
-            Themed(button, Button.BackgroundProperty, ThemeManager.CardFillKey);
-        }
 
         if (spinning is { } turning && resting is { } still)
         {
@@ -439,53 +407,38 @@ public static class LoadoutPages
     }
 
     /// <summary>
-    /// A small bordered label, the shape the build badge and the issue chips already use — with
-    /// <paramref name="backing"/> in place of the themed background where a badge sits over artwork rather
-    /// than over the panel itself (#278).
+    /// A small Cyan label meaning "yours": on Bg, or on the scrim where it sits over the hull picture so it
+    /// reads over any hull's own colours (#278).
     /// </summary>
-    private static Control Pill(string said, IBrush? backing = null)
+    private static Control Pill(string said, bool overArt = false)
     {
         var text = new TextBlock
         {
             Text = said,
-            FontSize = TypeScale.Small,
-            FontWeight = FontWeight.Bold,
+            FontFamily = Fonts.ChromeFamily,
+            FontSize = TypeScale.Meta,
+            FontWeight = FontWeight.SemiBold,
+            LetterSpacing = TypeScale.Meta * Fonts.ChromeTracking,
         };
 
         var pill = new Border
         {
-            Padding = new Thickness(7, 1),
-            CornerRadius = new CornerRadius(0),
+            Padding = new Thickness(7, 2),
             BorderThickness = new Thickness(1),
             HorizontalAlignment = HorizontalAlignment.Left,
             VerticalAlignment = VerticalAlignment.Top,
             Child = text,
         };
 
-        Themed(text, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
-        Themed(pill, Border.BorderBrushProperty, ThemeManager.AccentKey);
-
-        if (backing is null)
-        {
-            Themed(pill, Border.BackgroundProperty, ThemeManager.BackgroundKey);
-        }
-        else
-        {
-            pill.Background = backing;
-        }
+        Themed(text, TextBlock.ForegroundProperty, ThemeManager.CyanKey);
+        Themed(pill, Border.BorderBrushProperty, ThemeManager.CyanKey);
+        Themed(pill, Border.BackgroundProperty, overArt ? ThemeManager.ScrimKey : ThemeManager.BgKey);
 
         return pill;
     }
 
-    /// <summary>The plan mark, as an inline so it travels with the name on a card.</summary>
-    private static Run Dot()
-    {
-        var dot = new Run(" ●");
-
-        Themed(dot, Run.ForegroundProperty, ThemeManager.AccentKey);
-
-        return dot;
-    }
+    /// <summary>The plan mark, as an inline so it travels with the name on a card, in the name's ink.</summary>
+    private static Run Dot() => new(" ●");
 
     /// <summary>
     /// The say-line along the bottom of a page: the phrase for what the Commander is looking at.
@@ -500,7 +453,7 @@ public static class LoadoutPages
             Margin = new Thickness(0, 12, 0, 0),
         };
 
-        Themed(said, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(said, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         return said;
     }
@@ -512,15 +465,20 @@ public static class LoadoutPages
         {
             // Beside the text for the same reason the stepper is: the line is one string that is both shown
             // and spoken, so it keeps its sentence and the control sits next to it.
-            var copyable = new StackPanel
+            // The sentence takes the width the copy tile does not use, and wraps.
+            var copyable = new Grid
             {
-                Orientation = Orientation.Horizontal,
-                Spacing = 6,
-                VerticalAlignment = VerticalAlignment.Center,
+                ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto)],
+                ColumnSpacing = 6,
             };
 
-            copyable.Children.Add(Line(line));
-            copyable.Children.Add(D47.App.Controls.CopyWord.For(target.Value, copy));
+            var said = Line(line);
+            said.VerticalAlignment = VerticalAlignment.Center;
+            copyable.Children.Add(said);
+
+            var word = D47.App.Controls.CopyWord.For(target.Value, copy);
+            Grid.SetColumn(word, 1);
+            copyable.Children.Add(word);
 
             return copyable;
         }
@@ -574,31 +532,73 @@ public static class LoadoutPages
         return button;
     }
 
-    internal static TextBlock Line(LoadoutLine line) => line.Tone switch
+    /// <summary>Headings as sections; body and engineered lines as values in A; danger in Red; the rest Grey.</summary>
+    internal static Control Line(LoadoutLine line) => line.Tone switch
     {
-        LoadoutTone.Heading => Heading(line.Text),
-        LoadoutTone.Body => new TextBlock
-        {
-            Text = line.Text,
-            FontSize = TypeScale.Body,
-            TextWrapping = TextWrapping.Wrap,
-        },
-        LoadoutTone.Danger => Toned(line.Text, ThemeManager.DangerKey),
-
-        // What was done to the module, in its own colour (remediation.md 15, item 10).
-        LoadoutTone.Engineered => Toned(line.Text, ThemeManager.InfoKey),
+        LoadoutTone.Heading => Section(line.Text),
+        LoadoutTone.Body => Toned(line.Text, ThemeManager.AKey, TypeScale.Body),
+        LoadoutTone.Danger => Toned(line.Text, ThemeManager.RedKey),
+        LoadoutTone.Engineered => Toned(line.Text, ThemeManager.AKey),
+        LoadoutTone.Here => Toned(line.Text, ThemeManager.CyanKey, TypeScale.Body),
+        LoadoutTone.Good => Toned(line.Text, ThemeManager.BlueKey),
+        LoadoutTone.Warn => Toned(line.Text, ThemeManager.AKey),
         _ => Muted(line.Text),
     };
 
-    internal static TextBlock Muted(string text) => Toned(text, ThemeManager.TextMutedKey);
+    /// <summary>
+    /// Lines in order, with each run of lines that carry figures laid as one grid of stat tiles and the
+    /// rest drawn as <see cref="Stepped"/> does.
+    /// </summary>
+    internal static IEnumerable<Control> Figures(IEnumerable<LoadoutLine> lines, Func<string, Task<bool>>? copy)
+    {
+        var tiles = new List<Control>();
+
+        foreach (var line in lines)
+        {
+            if (line.Stats.Count > 0)
+            {
+                tiles.AddRange(line.Stats.Select(stat => StatTile.Build(stat.Label, stat.Value, stat.Ink)));
+                continue;
+            }
+
+            if (tiles.Count > 0)
+            {
+                yield return StatTile.Grid([.. tiles], maxColumns: 3);
+                tiles = [];
+            }
+
+            yield return Stepped(line, copy);
+        }
+
+        if (tiles.Count > 0)
+        {
+            yield return StatTile.Grid([.. tiles], maxColumns: 3);
+        }
+    }
+
+    internal static TextBlock Muted(string text) => Toned(text, ThemeManager.GreyKey);
+
+    /// <summary>A section heading: uppercase White Saira over a 1px A rule, selectable; compact for mini.</summary>
+    internal static Control Section(string text, bool compact = false)
+    {
+        var block = new SelectableTextBlock();
+
+        TitleText.Style(block, TypeScale.Section, TitleRank.Group);
+        TitleText.Show(block, text);
+
+        var section = TitleText.GroupRow(block);
+        section.Margin = compact ? new Thickness(0, 4, 0, 2) : new Thickness(0, 14, 0, 6);
+
+        return section;
+    }
 
     /// <summary>Prose in a detail pane, and it is selectable (#122).</summary>
-    internal static TextBlock Toned(string text, string key)
+    internal static TextBlock Toned(string text, string key, double size = TypeScale.Secondary)
     {
         var block = new SelectableTextBlock
         {
             Text = text,
-            FontSize = TypeScale.Secondary,
+            FontSize = size,
             TextWrapping = TextWrapping.Wrap,
         };
 
@@ -634,7 +634,7 @@ public static class LoadoutPages
             FontWeight = FontWeight.Bold,
         };
 
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.TextKey);
+        Themed(block, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         return block;
     }
@@ -655,24 +655,17 @@ public static class LoadoutPages
     }
 
     /// <summary>
-    /// The mark meaning a roll has been done, as an inline so it travels with the name it is about
-    /// (remediation.md 17, item 10).
+    /// The mark meaning a roll has been done, as an inline so it travels with the name it is about, in
+    /// the name's ink (remediation.md 17, item 10).
     /// </summary>
-    private static Run Gear()
-    {
-        var gear = new Run(" ⚙");
+    private static Run Gear() => new(" ⚙");
 
-        Themed(gear, Run.ForegroundProperty, ThemeManager.AccentKey);
-
-        return gear;
-    }
-
-    /// <summary>The coin: this module is behind a Powerplay pledge (Phase 38).</summary>
+    /// <summary>The coin: this module is locked behind a Powerplay pledge (Phase 38).</summary>
     private static Run Coin()
     {
         var coin = new Run($" {ShipsMode.Coin}");
 
-        Themed(coin, Run.ForegroundProperty, ThemeManager.DangerKey);
+        Themed(coin, Run.ForegroundProperty, ThemeManager.RedKey);
 
         return coin;
     }
@@ -687,6 +680,8 @@ public static class LoadoutPages
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(0, 0, 0, 8),
         };
+
+        Themed(text, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var buttons = new StackPanel
         {
@@ -704,7 +699,7 @@ public static class LoadoutPages
             Child = new StackPanel { Children = { text, buttons } },
         };
 
-        CardChrome.Card(border, selected: true);
+        Themed(border, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return border;
     }
@@ -782,7 +777,7 @@ public static class LoadoutPages
                 HorizontalAlignment = HorizontalAlignment.Right,
             };
 
-            Themed(text, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+            Themed(text, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
             Grid.SetColumn(text, 0);
             over.Children.Add(text);
@@ -824,7 +819,7 @@ public static class LoadoutPages
                 HorizontalAlignment = HorizontalAlignment.Right,
             };
 
-            Themed(hairline, Border.BackgroundProperty, ThemeManager.TextKey);
+            Themed(hairline, Border.BackgroundProperty, ThemeManager.WhiteKey);
 
             // **The mark says what it is** (asked 2026-09-01 — *"I can't remember what the white bar on the
             // blue line is for"*).
@@ -918,13 +913,15 @@ public static class LoadoutPages
             var said = new TextBlock
             {
                 Text = word,
-                FontSize = TypeScale.Secondary,
-                FontWeight = FontWeight.Bold,
+                FontFamily = Fonts.ChromeFamily,
+                FontSize = TypeScale.Meta,
+                FontWeight = FontWeight.Medium,
+                LetterSpacing = TypeScale.Meta * Fonts.ChromeTracking,
                 VerticalAlignment = VerticalAlignment.Center,
                 HorizontalAlignment = word == "MW" ? HorizontalAlignment.Right : HorizontalAlignment.Left,
             };
 
-            Themed(said, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+            Themed(said, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
             Grid.SetColumn(said, at++);
             line.Children.Add(said);
         }
@@ -947,30 +944,28 @@ public static class LoadoutPages
         };
 
         // The dot: there is work left in this slot.
-        var mark = new TextBlock
+        var mark = ListRow.Secondary(new TextBlock
         {
             Text = "●",
             FontSize = TypeScale.Secondary,
             VerticalAlignment = VerticalAlignment.Center,
             Opacity = row.Marked ? 1 : 0,
-        };
+        });
 
-        Themed(mark, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
         Grid.SetColumn(mark, 0);
         line.Children.Add(mark);
 
         // The slot, muted: it is what the row is *about* rather than what the row says, and the heading above
         // already names the block it belongs to.
-        var slot = new TextBlock
+        var slot = ListRow.Secondary(new TextBlock
         {
             Text = parts.Slot,
             FontSize = TypeScale.Body,
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
             Margin = new Thickness(0, 0, 10, 0),
-        };
+        });
 
-        Themed(slot, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
         Grid.SetColumn(slot, 1);
         line.Children.Add(slot);
 
@@ -989,26 +984,16 @@ public static class LoadoutPages
         Grid.SetColumn(draw, 4);
         line.Children.Add(draw);
 
-        var button = new Button
-        {
-            Content = line,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            HorizontalContentAlignment = HorizontalAlignment.Stretch,
-            MinHeight = 34,
-            Padding = new Thickness(12, 6),
-        };
+        var button = ListRow.Dress(
+            new Button { Content = line, HorizontalAlignment = HorizontalAlignment.Stretch },
+            showing);
+
+        button.Classes.Set(ShowingClass, showing);
 
         // The slot's name in full, for anything that cannot see the row — and now for the eye as well, since
         // the column is the short form.
         AutomationProperties.SetName(button, row.Word);
         TruncationTip.Watch(slot, () => row.Word);
-
-        if (showing)
-        {
-            button.Classes.Add("showing");
-            button.BorderThickness = new Thickness(2);
-            Themed(button, Button.BorderBrushProperty, ThemeManager.AccentKey);
-        }
 
         button.Click += (_, _) => pressed();
 
@@ -1035,7 +1020,8 @@ public static class LoadoutPages
                 VerticalAlignment = VerticalAlignment.Center,
             };
 
-            Themed(tick, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
+            // Met, on the status ladder.
+            Themed(tick, TextBlock.ForegroundProperty, ThemeManager.BlueKey);
 
             return tick;
         }
@@ -1053,26 +1039,16 @@ public static class LoadoutPages
     }
 
     /// <summary>
-    /// What this slot draws, right-aligned, in the Info tone and <c>~</c> prefix the Power gauge uses for
-    /// a modelled reading — or a blank cell for a slot with no figure (#252).
+    /// What this slot draws, right-aligned, with the <c>~</c> prefix the Power gauge uses for a modelled
+    /// reading — or a blank cell for a slot with no figure (#252).
     /// </summary>
-    private static Control DrawCell(LoadoutDraw? draw)
+    private static Control DrawCell(LoadoutDraw? draw) => ListRow.Secondary(new TextBlock
     {
-        var cell = new TextBlock
-        {
-            Text = draw is null ? string.Empty : draw.Modelled ? $"~ {draw.Reading}" : draw.Reading,
-            FontSize = TypeScale.Secondary,
-            VerticalAlignment = VerticalAlignment.Center,
-            HorizontalAlignment = HorizontalAlignment.Right,
-        };
-
-        Themed(
-            cell,
-            TextBlock.ForegroundProperty,
-            draw is { Modelled: true } ? ThemeManager.InfoKey : ThemeManager.TextMutedKey);
-
-        return cell;
-    }
+        Text = draw is null ? string.Empty : draw.Modelled ? $"~ {draw.Reading}" : draw.Reading,
+        FontSize = TypeScale.Secondary,
+        VerticalAlignment = VerticalAlignment.Center,
+        HorizontalAlignment = HorizontalAlignment.Right,
+    });
 
     /// <summary>
     /// One side of a slot row, drawn: the module, then what was rolled on it, then as much of what the
@@ -1098,10 +1074,19 @@ public static class LoadoutPages
             Margin = new Thickness(0, 0, 10, 0),
         };
 
+        // What is fitted is the row's name; the plan, and a silent side, are secondary.
+        if (bold && !side.Silent)
+        {
+            ListRow.Name(cell);
+        }
+        else
+        {
+            ListRow.Secondary(cell);
+        }
+
         if (side.Silent)
         {
             cell.Text = vacant;
-            Themed(cell, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
 
             return cell;
         }
@@ -1116,7 +1101,7 @@ public static class LoadoutPages
         {
             cell.Text = head;
             cell.FontSize = TypeScale.Secondary;
-            Themed(cell, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+            ListRow.Secondary(cell);
             Trailing(cell, null, string.Empty, head, side.Effects, bold);
             Hover(cell, side);
 
@@ -1144,7 +1129,7 @@ public static class LoadoutPages
                 FontSize = TypeScale.Secondary,
             };
 
-            Themed(rest, Run.ForegroundProperty, ThemeManager.TextMutedKey);
+            rest.Bind(Run.ForegroundProperty, cell.GetObservable(ListRow.SecondaryBrushProperty));
             inlines.Add(rest);
             Trailing(cell, rest, module, head, side.Effects, bold);
         }
@@ -1275,9 +1260,10 @@ public static class LoadoutPages
     internal static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
         target.Bind(property, Application.Current!.Resources.GetResourceObservable(key));
 
+    /// <summary>Scrolls <paramref name="content"/> vertically, with a gutter so the scrollbar sits clear of it.</summary>
     internal static ScrollViewer Scrolling(Control content) => new()
     {
-        Content = content,
+        Content = new Border { Padding = new Thickness(0, 0, 14, 0), Child = content },
         VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
         HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
     };
@@ -1359,10 +1345,13 @@ public sealed class IndexPage : LoadoutPage
 {
     private readonly PanelNavigator _nav;
     private readonly PanelPrompts _prompts;
-    private readonly StackPanel _list = new() { Spacing = 3 };
+    private readonly StackPanel _list = new() { Spacing = ListGap };
 
     /// <summary>Where the cards go, for a mode that has them.</summary>
-    private readonly WrapPanel _cards = new();
+    private readonly WrapPanel _cards = new() { ItemSpacing = ListGap, LineSpacing = ListGap };
+
+    /// <summary>The gap between rows and between cards.</summary>
+    internal const double ListGap = 2;
 
     private readonly ScrollViewer _scroller;
 
@@ -1422,22 +1411,23 @@ public sealed class IndexPage : LoadoutPage
         // rather than two unreadable ones.
         const double Smallest = 210;
 
-        var columns = Math.Max(1, (int)Math.Floor(available / Smallest));
+        var columns = Math.Max(1, (int)Math.Floor((available + ListGap) / (Smallest + ListGap)));
 
         // A pixel back, because a width that divides the space exactly still wraps once the panel's own
         // rounding goes the wrong way — and a wrap one card early is a column of whitespace down the side of
         // the page.
-        var width = Math.Floor(available / columns) - 1;
+        var width = Math.Floor((available - (columns - 1) * ListGap) / columns) - 1;
 
         _cards.ItemWidth = width;
 
-        // 64 is what the name and its note need, and the drawing adds a 16:9 box of whatever width is left
-        // inside the card's padding.
-        const double Text = 64;
+        // What the badge, the name and its notes need, and the drawing adds a 16:9 box of whatever width is left inside
+        // the card's padding, and the gap under it.
+        const double Text = 128;
         const double Sides = 20;
+        const double UnderArt = 6;
 
         _cards.ItemHeight = Drawings
-            ? Text + Math.Floor((width - Sides) * 9 / 16)
+            ? Text + UnderArt + Math.Floor((width - Sides) * 9 / 16)
             : Text;
     }
 
@@ -1565,16 +1555,16 @@ public sealed class ItemPage : LoadoutPage
     private readonly string _item;
     private readonly Func<string, Task<bool>>? _copy;
     private readonly Button? _drop;
-    private readonly StackPanel _list = new() { Spacing = 3 };
+    private readonly StackPanel _list = new() { Spacing = IndexPage.ListGap };
 
-    /// <summary>What the page is about, in the size a name goes in (#289).</summary>
-    private readonly TextBlock _title = new()
-    {
-        FontSize = TypeScale.Heading,
-        FontWeight = FontWeight.Bold,
-        TextWrapping = TextWrapping.Wrap,
-        Margin = new Thickness(0, 0, 0, 8),
-    };
+    /// <summary>What the page is about: the screen title, under the breadcrumb that is its context line.</summary>
+    private readonly TextBlock _title = TitleText.Style(
+        new TextBlock { TextWrapping = TextWrapping.Wrap },
+        TypeScale.Title,
+        TitleRank.Screen,
+        sentence: true);
+
+    private readonly Control _heading;
 
     private readonly TextBlock _summary = new()
     {
@@ -1601,8 +1591,10 @@ public sealed class ItemPage : LoadoutPage
         _prompts = prompts;
         _copy = copy;
 
-        LoadoutPages.Themed(_title, TextBlock.ForegroundProperty, ThemeManager.TextKey);
-        LoadoutPages.Themed(_summary, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        LoadoutPages.Themed(_summary, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+
+        _heading = TitleText.GroupRow(_title);
+        _heading.Margin = new Thickness(0, 0, 0, 10);
 
         var promote = LoadoutPages.Press(mode.PromoteLabel, () => Said(Mode.Promote(_item)));
 
@@ -1625,12 +1617,12 @@ public sealed class ItemPage : LoadoutPage
         var root = new DockPanel { Margin = new Thickness(14) };
         var say = LoadoutPages.SayLine(mode.SayAtItem);
 
-        DockPanel.SetDock(_title, Dock.Top);
+        DockPanel.SetDock(_heading, Dock.Top);
         DockPanel.SetDock(_summary, Dock.Top);
         DockPanel.SetDock(actions, Dock.Top);
         DockPanel.SetDock(say, Dock.Bottom);
 
-        root.Children.Add(_title);
+        root.Children.Add(_heading);
         root.Children.Add(_summary);
         root.Children.Add(actions);
         root.Children.Add(say);
@@ -1703,14 +1695,17 @@ public sealed class ItemPage : LoadoutPage
         // nothing in the summary for an owned ship.
         if (title is null && summary is null)
         {
-            _title.IsVisible = false;
+            _heading.IsVisible = false;
             _summary.IsVisible = false;
             _list.Children.Add(LoadoutPages.Muted("That build is not there any more."));
             return;
         }
 
         _title.Text = title ?? string.Empty;
-        _title.IsVisible = title is { Length: > 0 };
+
+        // Smaller on mini, leaving room for the slot rows.
+        _title.FontSize = Mini ? TypeScale.Heading : TypeScale.Title;
+        _heading.IsVisible = title is { Length: > 0 };
 
         Said(summary);
 
@@ -1741,14 +1736,11 @@ public sealed class ItemPage : LoadoutPage
         var roomy = !Mini || rows.All(row => row.Parts is null);
 
         // What the ship is, before what is in it (remediation.md 13, item 2).
-        var facts = new StackPanel { Spacing = 3 };
+        var facts = new StackPanel { Spacing = 6 };
 
-        foreach (var line in roomy ? Mode.Details(_item) : [])
-        {
-            // Stepped rather than Line, for the copy glyph a whereabouts line carries: the system a ship is
-            // parked in goes on the clipboard from here, to be pasted into the Galaxy Map.
-            facts.Children.Add(LoadoutPages.Stepped(line, _copy));
-        }
+        // Stepped rather than Line, for the copy glyph a whereabouts line carries: the system a ship is parked in
+        // goes on the clipboard from here, to be pasted into the Galaxy Map.
+        facts.Children.AddRange(LoadoutPages.Figures(roomy ? Mode.Details(_item) : [], _copy));
 
         // Power and jump range, at the head of the slot list and under the hull's own figures (Phase 38).
         foreach (var gauge in roomy ? Mode.Gauges(_item) : [])
@@ -1787,7 +1779,7 @@ public sealed class ItemPage : LoadoutPage
             if (row.Group is { Length: > 0 } heading && heading != group)
             {
                 group = heading;
-                _list.Children.Add(LoadoutPages.Heading(heading));
+                _list.Children.Add(LoadoutPages.Section(heading, compact: Mini));
             }
 
             // Read off the trail rather than kept as a second piece of state (#110): the last crumb is what
@@ -1920,7 +1912,8 @@ public sealed class ItemPage : LoadoutPage
                 Child = new TextBlock { FontSize = TypeScale.Secondary },
             };
 
-            CardChrome.Card(_ghost, selected: true);
+            LoadoutPages.Themed(_ghost, Border.BackgroundProperty, ThemeManager.AKey);
+            LoadoutPages.Themed(_ghost.Child, TextBlock.ForegroundProperty, ThemeManager.KnockKey);
 
             _overlay.Children.Add(_ghost);
         }
@@ -2048,14 +2041,14 @@ public sealed class SlotPage : LoadoutPage
 
         _body.Children.Add(LoadoutPages.SlotName(name));
 
-        _body.Children.Add(LoadoutPages.Heading("Fitted"));
+        _body.Children.Add(LoadoutPages.Section("Fitted"));
 
         foreach (var line in Mode.Fitted(_item, _slot))
         {
             _body.Children.Add(LoadoutPages.Line(line));
         }
 
-        _body.Children.Add(LoadoutPages.Heading("Planned"));
+        _body.Children.Add(LoadoutPages.Section("Planned"));
 
         foreach (var line in Mode.Planned(_item, _slot))
         {
@@ -2108,17 +2101,16 @@ public sealed class SlotPage : LoadoutPage
 /// </summary>
 public sealed class GapPage : UserControl
 {
-    /// <summary>Fixed, so a card scrolls inside itself rather than growing the grid to fit its longest one.</summary>
-    private const double CardHeight = 260;
+    private const double SmallestCard = 260;
 
-    private const double SmallestCard = 220;
+    /// <summary>The gap between cards, across and down.</summary>
+    private const double CardGap = 16;
 
     private readonly GapSource _gap;
     private readonly Segment _switch;
-    private readonly StackPanel _notes = new() { Spacing = 4, Margin = new Thickness(0, 0, 0, 8) };
-    private readonly WrapPanel _cards = new();
+    private readonly StackPanel _notes = new() { Spacing = IndexPage.ListGap, Margin = new Thickness(0, 0, 0, 8) };
+    private readonly ContentControl _cards = new();
     private readonly StackPanel _body = new() { Spacing = 4 };
-    private readonly ScrollViewer _scroller;
     private readonly Avalonia.Controls.Panel _detailLayer = new() { IsVisible = false };
 
     private bool _onFoot;
@@ -2151,10 +2143,7 @@ public sealed class GapPage : UserControl
         _body.Children.Add(_notes);
         _body.Children.Add(_cards);
 
-        _scroller = LoadoutPages.Scrolling(_body);
-        _scroller.SizeChanged += (_, size) => Lay(size.NewSize.Width);
-
-        root.Children.Add(_scroller);
+        root.Children.Add(LoadoutPages.Scrolling(_body));
 
         // The page's own visual tree, above the cards — never a Flyout or a Popup, which the headset never
         // sees (#302).
@@ -2166,26 +2155,10 @@ public sealed class GapPage : UserControl
         Refresh();
     }
 
-    /// <summary>How many cards fit across the width the page actually has.</summary>
-    private void Lay(double available)
-    {
-        if (available <= 0)
-        {
-            return;
-        }
-
-        var columns = Math.Max(1, (int)Math.Floor(available / SmallestCard));
-        var width = Math.Floor(available / columns) - 1;
-
-        _cards.ItemWidth = width;
-        _cards.ItemHeight = CardHeight;
-    }
-
     /// <summary>Redraws against the live plans and the live inventory.</summary>
     public void Refresh()
     {
         _notes.Children.Clear();
-        _cards.Children.Clear();
         CloseDetail();
 
         var full = _gap.Full();
@@ -2214,12 +2187,8 @@ public sealed class GapPage : UserControl
                 report.Uncovered));
         }
 
-        foreach (var card in cards)
-        {
-            _cards.Children.Add(Card(card));
-        }
-
-        Lay(_scroller.Bounds.Width);
+        // Each card as tall as its own rows, in as many columns as fit; the page scrolls, not the card.
+        _cards.Content = Reflow.Grid([.. cards.Select(Card)], SmallestCard, CardGap, CardGap, maxColumns: 5);
     }
 
     /// <summary>
@@ -2252,26 +2221,16 @@ public sealed class GapPage : UserControl
 
     private Control Card(MaterialCard card)
     {
-        var header = new Grid
-        {
-            ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto)],
-            Margin = new Thickness(0, 0, 0, 6),
-        };
+        // The button follows the title, or drops under it where the card is too narrow for both.
+        var header = new WrapPanel { ItemSpacing = 12, LineSpacing = 4, Margin = new Thickness(0, 0, 0, 6) };
 
         var title = card.UnitsShort > 0
             ? $"{card.Name} — {card.UnitsShort.ToString(CultureInfo.InvariantCulture)} short"
             : card.Name;
 
-        var name = new TextBlock
-        {
-            Text = title,
-            FontWeight = FontWeight.Bold,
-            FontSize = TypeScale.Body,
-            TextWrapping = TextWrapping.Wrap,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
+        var name = TitleText.Build(title, TypeScale.Section, TitleRank.Group);
+        name.VerticalAlignment = VerticalAlignment.Center;
 
-        Grid.SetColumn(name, 0);
         header.Children.Add(name);
 
         var info = D47.App.Controls.Glyphs.Quiet(
@@ -2280,31 +2239,16 @@ public sealed class GapPage : UserControl
             "Where this card's materials come from");
 
         info.Click += (_, _) => OpenSources(card);
-        Grid.SetColumn(info, 1);
         header.Children.Add(info);
 
-        var rows = new StackPanel { Spacing = 2 };
+        var rows = new StackPanel { Spacing = IndexPage.ListGap, Margin = new Thickness(0, 8, 0, 0) };
 
         foreach (var row in card.Rows)
         {
             rows.Children.Add(Row(row));
         }
 
-        var scroller = LoadoutPages.Scrolling(rows);
-        scroller.MaxHeight = CardHeight - 44;
-
-        var body = new DockPanel();
-
-        DockPanel.SetDock(header, Dock.Top);
-        body.Children.Add(header);
-        body.Children.Add(scroller);
-
-        var border = new Border { Padding = new Thickness(10), Margin = new Thickness(2) };
-
-        CardChrome.Card(border);
-        border.Child = body;
-
-        return border;
+        return new StackPanel { Children = { TitleText.GroupRow(header), rows } };
     }
 
     private Control Row(MaterialRow row)
@@ -2319,18 +2263,18 @@ public sealed class GapPage : UserControl
             ],
         };
 
-        var name = new TextBlock
+        var name = ListRow.Name(new TextBlock
         {
             Text = row.Material.Name,
             FontSize = TypeScale.Secondary,
             VerticalAlignment = VerticalAlignment.Center,
             TextWrapping = TextWrapping.Wrap,
-        };
+        });
 
         Grid.SetColumn(name, 0);
         grid.Children.Add(name);
 
-        var held = new TextBlock
+        var held = ListRow.Secondary(new TextBlock
         {
             Text = row.Needed > 0
                 ? $"{row.Held.ToString(CultureInfo.InvariantCulture)} / "
@@ -2339,35 +2283,37 @@ public sealed class GapPage : UserControl
             FontSize = TypeScale.Secondary,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(8, 0, 0, 0),
-        };
+        });
 
-        LoadoutPages.Themed(held, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        // Met, on the status ladder: everything planned is held.
+        if (row.Needed > 0 && row.Short == 0)
+        {
+            LoadoutPages.Themed(held, TextBlock.ForegroundProperty, ThemeManager.BlueKey);
+        }
+
         Grid.SetColumn(held, 1);
         grid.Children.Add(held);
 
         if (row.Short > 0)
         {
-            var shortfall = new TextBlock
+            var shortfall = ListRow.Secondary(new TextBlock
             {
                 Text = $"{row.Short.ToString(CultureInfo.InvariantCulture)} short",
                 FontSize = TypeScale.Secondary,
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(8, 0, 0, 0),
-            };
+            });
 
-            LoadoutPages.Themed(shortfall, TextBlock.ForegroundProperty, ThemeManager.DangerKey);
             Grid.SetColumn(shortfall, 2);
             grid.Children.Add(shortfall);
         }
 
-        var button = new Button
+        var button = ListRow.Dress(new Button
         {
             Content = grid,
             HorizontalAlignment = HorizontalAlignment.Stretch,
-            HorizontalContentAlignment = HorizontalAlignment.Stretch,
-            Padding = new Thickness(4, 3),
-            MinHeight = 26,
-        };
+            Padding = new Thickness(10, 6),
+        });
 
         button.Click += (_, _) => OpenRow(row);
 
@@ -2383,12 +2329,12 @@ public sealed class GapPage : UserControl
                     ? $"Held {row.Held.ToString(CultureInfo.InvariantCulture)} of "
                       + $"{row.Needed.ToString(CultureInfo.InvariantCulture)}."
                     : $"Held {row.Held.ToString(CultureInfo.InvariantCulture)}. Nothing planned wants it.",
-                ThemeManager.TextMutedKey),
+                ThemeManager.AKey),
         };
 
         if (row.Wanted.Count > 0)
         {
-            body.Add(LoadoutPages.Heading("Wanted by"));
+            body.Add(LoadoutPages.Section("Wanted by"));
 
             foreach (var demand in row.Wanted)
             {
@@ -2399,13 +2345,13 @@ public sealed class GapPage : UserControl
 
         if (row.Material.Origins.Count > 0)
         {
-            body.Add(LoadoutPages.Heading("Origins"));
+            body.Add(LoadoutPages.Section("Origins"));
             body.Add(LoadoutPages.Muted(string.Join(", ", row.Material.Origins)));
         }
 
         if (row.TradeDown is { } down)
         {
-            body.Add(LoadoutPages.Heading("Trade down"));
+            body.Add(LoadoutPages.Section("Trade down"));
             body.Add(LoadoutPages.Muted(
                 $"{down.Rate.Paid.ToString(CultureInfo.InvariantCulture)} {down.From.Name} trades down for "
                 + $"{down.Rate.Received.ToString(CultureInfo.InvariantCulture)} {row.Material.Name}."));
@@ -2414,7 +2360,7 @@ public sealed class GapPage : UserControl
         // Trade second and never instead: the headline stays the raw shortfall.
         if (row.Trade is { } trade)
         {
-            body.Add(LoadoutPages.Heading("Closing the shortfall"));
+            body.Add(LoadoutPages.Section("Closing the shortfall"));
             body.Add(LoadoutPages.Muted(trade.Describe()));
         }
 
@@ -2423,7 +2369,7 @@ public sealed class GapPage : UserControl
             body.Add(LoadoutPages.Toned(
                 $"You can only hold {row.Capacity?.ToString(CultureInfo.InvariantCulture)}. That is at "
                 + "least two trips whatever happens.",
-                ThemeManager.DangerKey));
+                ThemeManager.YellowKey));
         }
 
         OpenDetail(row.Material.Name, body);
@@ -2447,30 +2393,28 @@ public sealed class GapPage : UserControl
     /// <summary>Opens the detail panel, replacing whatever was open — one is open at a time.</summary>
     private void OpenDetail(string title, IReadOnlyList<Control> body)
     {
-        var content = new StackPanel { Spacing = 4, MaxWidth = 440 };
-
-        content.Children.Add(LoadoutPages.SlotName(title));
+        var content = new StackPanel { Spacing = 4 };
 
         foreach (var line in body)
         {
             content.Children.Add(line);
         }
 
-        content.Children.Add(LoadoutPages.Press("Close", CloseDetail));
-
         var panel = new Border
         {
-            Padding = new Thickness(16),
+            BorderThickness = new Thickness(1),
             MaxWidth = 480,
             MaxHeight = 420,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
-            Child = LoadoutPages.Scrolling(content),
+            Child = Modal.Build("Materials", title, content, [LoadoutPages.Press("Close", CloseDetail)]),
         };
 
-        CardChrome.Card(panel, selected: true);
+        LoadoutPages.Themed(panel, Border.BorderBrushProperty, ThemeManager.AKey);
 
-        var backdrop = new Border { Name = DetailBackdropName, Background = DetailBackdrop };
+        var backdrop = new Border { Name = DetailBackdropName };
+
+        LoadoutPages.Themed(backdrop, Border.BackgroundProperty, ThemeManager.ScrimKey);
 
         backdrop.PointerPressed += (_, e) =>
         {
@@ -2489,8 +2433,6 @@ public sealed class GapPage : UserControl
         _detailLayer.IsVisible = false;
         _detailLayer.Children.Clear();
     }
-
-    private static readonly IBrush DetailBackdrop = new SolidColorBrush(Colors.Black, 0.55);
 
     /// <summary>Names the click-outside layer, for a test to press without aiming at the card itself.</summary>
     internal const string DetailBackdropName = "GapDetailBackdrop";

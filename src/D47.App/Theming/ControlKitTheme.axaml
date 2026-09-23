@@ -82,6 +82,47 @@
         <Setter Property="Background" Value="{DynamicResource D47.Slab}" />
         <Setter Property="Foreground" Value="{DynamicResource D47.Grey2}" />
       </Style>
+
+      <!--
+        A pressable list row (ListRow.Class on a Button): the d47-row states, with prose type and no
+        tracking. Selected (ListRow.SelectedClass) is solid A with Knock ink, and holds on hover.
+      -->
+      <Style Selector="^.d47-row">
+        <Setter Property="FontFamily" Value="{StaticResource D47.Font.Prose}" />
+        <Setter Property="FontSize" Value="{StaticResource D47.Type.Body}" />
+        <Setter Property="FontWeight" Value="Normal" />
+        <Setter Property="LetterSpacing" Value="0" />
+        <Setter Property="Padding" Value="12,6" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Background" Value="{DynamicResource D47.Tile}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.White}" />
+        <Setter Property="theming:ListRow.NameBrush" Value="{DynamicResource D47.White}" />
+        <Setter Property="theming:ListRow.SecondaryBrush" Value="{DynamicResource D47.A}" />
+      </Style>
+      <Style Selector="^.d47-row:pointerover">
+        <Setter Property="Background" Value="{DynamicResource D47.Tile2}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.White}" />
+      </Style>
+      <Style Selector="^.d47-row:focus-visible">
+        <Setter Property="Background" Value="{DynamicResource D47.Tile2}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.White}" />
+      </Style>
+      <Style Selector="^.d47-row:pressed">
+        <Setter Property="Background" Value="{DynamicResource D47.Tile2}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.White}" />
+      </Style>
+      <Style Selector="^.d47-row.selected">
+        <Setter Property="Background" Value="{DynamicResource D47.A}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
+        <Setter Property="theming:ListRow.NameBrush" Value="{DynamicResource D47.Knock}" />
+        <Setter Property="theming:ListRow.SecondaryBrush" Value="{DynamicResource D47.Brown}" />
+      </Style>
+      <Style Selector="^.d47-row:disabled">
+        <Setter Property="Background" Value="{DynamicResource D47.Slab}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.Grey}" />
+        <Setter Property="theming:ListRow.NameBrush" Value="{DynamicResource D47.Grey}" />
+        <Setter Property="theming:ListRow.SecondaryBrush" Value="{DynamicResource D47.Grey}" />
+      </Style>
     </ControlTheme>
 
     <!--

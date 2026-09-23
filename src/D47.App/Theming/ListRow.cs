@@ -39,6 +39,14 @@ public static class ListRow
         return row;
     }
 
+    /// <summary>Dresses <paramref name="row"/> as a pressable list row.</summary>
+    public static Button Dress(Button row, bool selected = false)
+    {
+        row.Classes.Add(Class);
+        row.Classes.Set(SelectedClass, selected);
+        return row;
+    }
+
     /// <summary>Colours <paramref name="text"/> as the row's name.</summary>
     public static TextBlock Name(TextBlock text) => Follow(text, NameBrushProperty);
 

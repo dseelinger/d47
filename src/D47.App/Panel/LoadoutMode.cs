@@ -49,6 +49,9 @@ public enum LoadoutTone
 
     /// <summary>What a module has been engineered with (remediation.md 15, item 10).</summary>
     Engineered,
+
+    /// <summary>A fact about where the Commander is now.</summary>
+    Here,
 }
 
 /// <summary>One line of a loadout page, as content rather than as a control.</summary>
@@ -61,7 +64,13 @@ public sealed record LoadoutLine(string Text, LoadoutTone Tone = LoadoutTone.Mut
     /// One value on this line the Commander can take away with them, where the line carries one.
     /// </summary>
     public LoadoutCopy? Copy { get; init; }
+
+    /// <summary>The line's figures, drawn as stat tiles in place of <see cref="Text"/> where there are any.</summary>
+    public IReadOnlyList<LoadoutStat> Stats { get; init; } = [];
 }
+
+/// <summary>One read-only figure on a line, drawn as a stat tile.</summary>
+public sealed record LoadoutStat(string Label, string Value, D47.App.Controls.StatInk Ink = D47.App.Controls.StatInk.Value);
 
 /// <summary>A number on a line that the Commander can move, and what happens when they do.</summary>
 /// <param name="Value">Where it is now.</param>

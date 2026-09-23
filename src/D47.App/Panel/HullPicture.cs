@@ -256,7 +256,7 @@ internal sealed class HullPictureFull : Grid
         // **Opaque, and the deepest colour the theme has rather than the page's own.** The picture is a dark
         // hull with orange lines on black: a page showing through behind it turns that black into a window
         // onto the slot list, and the panel surface behind it letterboxes a render in the colour of a form.
-        LoadoutPages.Themed(this, BackgroundProperty, ThemeManager.BackgroundKey);
+        LoadoutPages.Themed(this, BackgroundProperty, ThemeManager.BgKey);
 
         var close = LoadoutPages.Press("Close", Dismiss);
         close.HorizontalAlignment = HorizontalAlignment.Right;

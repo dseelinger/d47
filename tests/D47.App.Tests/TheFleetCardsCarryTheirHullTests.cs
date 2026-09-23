@@ -5,6 +5,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Media;
 using D47.App.Panel;
+using D47.App.Theming;
 using D47.Core.Checklists;
 using D47.Core.Configuration;
 using D47.Core.Interface;
@@ -503,9 +504,9 @@ public class TheFleetCardsCarryTheirHullTests
             .OfType<Image>()
             .Where(image => image.GetVisualParent() is not null && image.Source is WriteableBitmap)];
 
-    /// <summary>The ship whose page is open is outlined on its card, the way a row has been since #110.</summary>
+    /// <summary>The ship whose page is open is filled solid on its card, the way a row is (#110).</summary>
     [AvaloniaFact]
-    public void TheShipBeingShownIsOutlinedOnItsCard()
+    public void TheShipBeingShownIsFilledOnItsCard()
     {
         var (panel, _) = Fleet();
 
@@ -523,5 +524,5 @@ public class TheFleetCardsCarryTheirHullTests
     private static List<Button> Outlined(PanelView panel) =>
         [.. panel.GetVisualDescendants()
             .OfType<Button>()
-            .Where(button => button.BorderThickness.Left >= 2)];
+            .Where(button => button.Classes.Contains(ListRow.SelectedClass))];
 }

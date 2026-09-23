@@ -213,15 +213,15 @@ public class OnFootLoadoutTabTests
 
         var shown = Text(surface.Panel);
 
-        Assert.Contains("Fitted", shown);
-        Assert.Contains("Planned", shown);
+        Assert.Contains("FITTED", shown);
+        Assert.Contains("PLANNED", shown);
 
         // What it is now, and what is wanted, each on its own.
         Assert.Contains("Grade 3", shown);
         Assert.Contains(shown, line => line.Contains("grade 5", StringComparison.Ordinal));
 
         // And what the two upgrade steps cost, exactly - nothing on foot is rolled.
-        Assert.Contains("What it costs", shown);
+        Assert.Contains("WHAT IT COSTS", shown);
 
         // No tick: a derived item's progress is a diff against live state.
         Assert.Empty(Ticks.On(surface.Panel));
@@ -269,7 +269,7 @@ public class OnFootLoadoutTabTests
         Assert.True(surface.Panel.Nav.SelectRoot(LoadoutPages.GapRoot));
         Dispatcher.UIThread.RunJobs();
 
-        var shipHeaders = new[] { "Raw", "Manufactured", "Encoded", "Guardian", "Thargoid" };
+        var shipHeaders = new[] { "RAW", "MANUFACTURED", "ENCODED", "GUARDIAN", "THARGOID" };
         var shownOnShip = MaterialsPage(surface.Panel).Text;
 
         Assert.Equal(shipHeaders, shownOnShip.Where(line => shipHeaders.Contains(line)));
@@ -282,7 +282,7 @@ public class OnFootLoadoutTabTests
         Segment(surface.Panel, "On foot").IsChecked = true;
         Dispatcher.UIThread.RunJobs();
 
-        var onFootHeaders = new[] { "Items", "Components", "Consumables", "Data" };
+        var onFootHeaders = new[] { "ITEMS", "COMPONENTS", "CONSUMABLES", "DATA" };
         var shownOnFoot = MaterialsPage(surface.Panel).Text;
 
         Assert.Equal(onFootHeaders, shownOnFoot.Where(line => onFootHeaders.Contains(line)));
