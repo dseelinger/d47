@@ -78,8 +78,6 @@ public class TheConversationLooksLikeOneTests
             Assert.Equal(Resource(window, ThemeManager.BorderKey), Colour(message.BorderBrush));
             Assert.Equal(Colors.Transparent, Colour(message.Background));
         });
-
-        Assert.Empty(panel.GetControl<StackPanel>("Bubbles").GetVisualDescendants().OfType<ChamferedBorder>());
     }
 
     /// <summary>D47's badge is reverse video in Accent; the Commander's is a line-2 fill in ink-2.</summary>

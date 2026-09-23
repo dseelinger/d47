@@ -381,6 +381,7 @@
       -->
       <WrapPanel x:Name="Tabs"
                  Orientation="Horizontal"
+                 LineSpacing="2"
                  VerticalAlignment="Bottom">
         <!--
           One tab for three readings of one exchange. Conversation and Technical are the same
@@ -462,11 +463,11 @@
 
     </DockPanel>
 
-    <!-- The rule under the tab strip: 2px, full width, with its own glow (#285). -->
+    <!-- The rule under the tab strip: 2px A, full width, with no glow. -->
     <Border x:Name="TabStripRule"
             DockPanel.Dock="Top"
             Height="2"
-            Background="{DynamicResource D47.Rule}" />
+            Background="{DynamicResource D47.A}" />
 
     <!--
       Where the Commander is, once they are below a root (list.md Phase 25, "Drill in, and find

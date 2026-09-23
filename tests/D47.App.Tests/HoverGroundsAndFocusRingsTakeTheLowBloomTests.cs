@@ -20,48 +20,34 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// Hovering a button, a glyph button or an unselected tab lights a Low-tier halo around its hover
-/// ground without painting over the ground itself; the primary button and the selected tab stay at
-/// Normal. A segment carries no glow in any state (#394). Keyboard focus lights the same halo behind
-/// the focus ring without touching the ring's own outline (#379).
+/// Hovering a glyph button lights a Low-tier halo around its hover ground without painting over the
+/// ground itself. A button, a tab and a segment carry no hover glow; only the selected tab glows
+/// (#393, #394). Keyboard focus lights the same halo behind the focus ring without touching the
+/// ring's own outline (#379).
 /// </summary>
 public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
 {
     private static ThemeManager Manager() => new(Application.Current!, NullLogger<ThemeManager>.Instance);
 
-    [AvaloniaFact]
-    public void HoveringAPlainButtonLightsTheLowHalo()
+    [AvaloniaTheory]
+    [InlineData("")]
+    [InlineData("primary")]
+    public void AHoveredButtonCarriesNoGlow(string weight)
     {
         using var kit = ControlKitTheme();
         Manager().Apply(ThemeCatalog.Elite);
 
         var button = new Button { Content = "Go", Width = 120, Height = 44 };
-        var window = Open(button);
+        if (weight.Length > 0)
+        {
+            button.Classes.Add(weight);
+        }
 
-        var halo = Glow(button);
-        Assert.False(halo.IsLit);
-
-        Hover(window, button);
-
-        Assert.True(halo.IsLit);
-        Assert.Equal(BloomTier.Low, halo.Tier);
-        AssertGlowing(halo);
-
-        window.Close();
-    }
-
-    [AvaloniaFact]
-    public void HoveringThePrimaryButtonKeepsItsNormalGlow()
-    {
-        using var kit = ControlKitTheme();
-        Manager().Apply(ThemeCatalog.Elite);
-
-        var button = new Button { Content = "Go", Width = 120, Height = 44, Classes = { "primary" } };
         var window = Open(button);
 
         Hover(window, button);
 
-        Assert.Equal(BloomTier.Normal, Glow(button).Tier);
+        Assert.Empty(button.GetVisualDescendants().OfType<BloomStack>());
 
         window.Close();
     }
@@ -112,7 +98,7 @@ public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
     }
 
     [AvaloniaFact]
-    public void HoveringAnUnselectedTabLightsTheLowHalo()
+    public void AHoveredTabDoesNotGlowAndTheSelectedTabDoes()
     {
         using var kit = ControlKitTheme();
         using var tabs = PanelTabsResources();
@@ -125,11 +111,10 @@ public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
 
         Hover(window, one);
 
-        Assert.Equal(BloomTier.Low, Glow(one).Tier);
-        AssertGlowing(Glow(one));
-
-        Hover(window, two);
+        Assert.False(Glow(one).IsLit);
+        Assert.True(Glow(two).IsLit);
         Assert.Equal(BloomTier.Normal, Glow(two).Tier);
+        AssertGlowing(Glow(two));
 
         window.Close();
     }
@@ -177,12 +162,13 @@ public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
         using var kit = ControlKitTheme();
         Manager().Apply(ThemeCatalog.Light);
 
-        var button = new Button { Content = "Go", Width = 120, Height = 44 };
+        var button = GlyphButton();
         var window = Open(button);
 
         Hover(window, button);
 
-        Assert.All(Glow(button).Ghosts, ghost => Assert.False(ghost.IsVisible));
+        var halo = button.GetVisualDescendants().OfType<BloomStack>().Single(stack => stack.Name == "HoverGlow");
+        Assert.All(halo.Ghosts, ghost => Assert.False(ghost.IsVisible));
 
         window.Close();
     }
@@ -193,7 +179,7 @@ public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
         using var kit = ControlKitTheme();
         Manager().Apply(ThemeCatalog.Elite);
 
-        var button = new Button { Content = "Go", Width = 120, Height = 44 };
+        var button = GlyphButton();
         var window = Open(button);
 
         button.Focus(NavigationMethod.Tab);

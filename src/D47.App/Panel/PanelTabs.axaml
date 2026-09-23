@@ -1,13 +1,10 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:controls="clr-namespace:D47.App.Controls"
                     xmlns:theming="clr-namespace:D47.App.Theming">
 
   <!--
-    A tab, and it has to read as one rather than as a button or a link.
-
-    Skewed 13px on both edges and sitting on the rule, the way every strip in the kit does.
-    Selected is a solid Accent fill with Knock ink; unselected is faint text on the higher fill.
+    A tab: a flat Tile with A ink, 40 tall, 2px from its neighbour. Solid A with Knock ink on hover
+    or keyboard focus, and when selected, where it also glows. The strip sits on a 2px A rule.
 
     Built on RadioButton rather than on Buttons and a hand-rolled selected flag, because
     mutually-exclusive selection, keyboard arrows and the accessibility role all come with it.
@@ -19,14 +16,17 @@
     <Setter Property="FontSize" Value="{StaticResource D47.Type.Secondary}" />
     <Setter Property="FontWeight" Value="SemiBold" />
     <Setter Property="LetterSpacing" Value="2.4" />
-    <Setter Property="Foreground" Value="{DynamicResource D47.TextFaint}" />
-    <Setter Property="Padding" Value="26,11" />
-    <Setter Property="Margin" Value="0,0,3,0" />
+    <Setter Property="Foreground" Value="{DynamicResource D47.A}" />
+    <Setter Property="Background" Value="{DynamicResource D47.Tile}" />
+    <Setter Property="Height" Value="40" />
+    <Setter Property="Padding" Value="26,0" />
+    <Setter Property="Margin" Value="0,0,2,0" />
+    <Setter Property="FocusAdorner" Value="{x:Null}" />
 
     <Setter Property="Template">
       <ControlTemplate>
         <theming:BloomStack x:Name="Glow" Tier="Normal" IsLit="False">
-          <controls:ChamferedBorder x:Name="Shape" Skew="13" Background="{DynamicResource D47.FillHigh}">
+          <Border x:Name="Shape" Background="{TemplateBinding Background}">
             <ContentPresenter x:Name="PART_ContentPresenter"
                               Content="{TemplateBinding Content}"
                               Padding="{TemplateBinding Padding}"
@@ -41,34 +41,35 @@
                 </DataTemplate>
               </ContentPresenter.ContentTemplate>
             </ContentPresenter>
-          </controls:ChamferedBorder>
+          </Border>
         </theming:BloomStack>
       </ControlTemplate>
     </Setter>
 
-    <Style Selector="^:pointerover /template/ controls|ChamferedBorder#Shape">
-      <Setter Property="Background" Value="{DynamicResource D47.FillHigher}" />
-    </Style>
-
-    <!-- Hover halo (#379), drawn from the hover fill; the selected tab is already lit at Normal. -->
-    <Style Selector="^:pointerover:not(:checked) /template/ theming|BloomStack#Glow">
-      <Setter Property="Tier" Value="Low" />
-      <Setter Property="IsLit" Value="True" />
-      <Setter Property="Glow" Value="{DynamicResource D47.Accent}" />
-    </Style>
-
-    <!-- The current tab: a solid fill rather than a muted one, findable at a glance from a
-         metre away, which is the whole job of a selected tab in a headset. -->
-    <Style Selector="^:checked">
+    <Style Selector="^:pointerover">
+      <Setter Property="Background" Value="{DynamicResource D47.A}" />
       <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
-      <Setter Property="FontWeight" Value="Bold" />
-      <Setter Property="Padding" Value="30,13" />
-      <Style Selector="^ /template/ controls|ChamferedBorder#Shape">
-        <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
-      </Style>
+    </Style>
+    <Style Selector="^:focus-visible">
+      <Setter Property="Background" Value="{DynamicResource D47.A}" />
+      <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
+    </Style>
+    <Style Selector="^:pressed">
+      <Setter Property="Background" Value="{DynamicResource D47.A}" />
+      <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
+    </Style>
+
+    <Style Selector="^:checked">
+      <Setter Property="Background" Value="{DynamicResource D47.A}" />
+      <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
       <Style Selector="^ /template/ theming|BloomStack#Glow">
         <Setter Property="IsLit" Value="True" />
       </Style>
+    </Style>
+
+    <Style Selector="^:disabled">
+      <Setter Property="Background" Value="{DynamicResource D47.Slab}" />
+      <Setter Property="Foreground" Value="{DynamicResource D47.Grey2}" />
     </Style>
 
   </ControlTheme>

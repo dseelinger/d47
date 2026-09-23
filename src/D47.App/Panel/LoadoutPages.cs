@@ -2368,7 +2368,7 @@ public sealed class GapPage : UserControl
     {
         var button = LoadoutPages.Press(text, () => OpenList(title, lines));
 
-        LoadoutPages.Themed(button, Button.ForegroundProperty, ThemeManager.DangerKey);
+        button.Classes.Add("destructive");
 
         return button;
     }

@@ -265,17 +265,6 @@ public sealed class BloomStack : Control
     {
         switch (child)
         {
-            case ChamferedBorder chamfered:
-            {
-                var ghost = new ChamferedBorder();
-                Follow(ghost, ChamferedBorder.BackgroundProperty, chamfered);
-                Follow(ghost, ChamferedBorder.BorderBrushProperty, chamfered);
-                Follow(ghost, ChamferedBorder.BorderThicknessProperty, chamfered);
-                Follow(ghost, ChamferedBorder.ChamferProperty, chamfered);
-                Follow(ghost, ChamferedBorder.SkewProperty, chamfered);
-                return ghost;
-            }
-
             case Border border:
             {
                 var ghost = new Border();

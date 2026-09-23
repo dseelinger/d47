@@ -179,7 +179,7 @@ public sealed class ControlKitWindow : Window
         {
             Cell("REPORT — READ ONLY", report, Note("No box at all. A box is a promise you can type in it.")),
             Cell("FIELD — EDITABLE", _field, Note("Inset ground, one lit edge, block caret.")),
-            Cell("ACTIONS — THREE WEIGHTS", Actions(), Note("One filled primary per surface. Never five equals.")),
+            Cell("ACTIONS — EVERY STATE", Actions(), Note("Every class draws the same tile. Focus fills it; delete is red.")),
             Cell("SWITCH — TWO STATE", switches, SwitchNote()),
             Cell(
                 "CHOICE — FEW OPTIONS",
@@ -322,31 +322,45 @@ public sealed class ControlKitWindow : Window
         return control;
     }
 
+    /// <summary>Each button class at rest, hovered, focused and disabled. Hover and focus are shown by setting the pseudo-class.</summary>
     private static Control Actions()
     {
-        var primary = new Button { Content = "SEND IT" };
-        primary.Classes.Add("primary");
+        var rows = new StackPanel { Spacing = Segment.Gap };
 
-        var quiet = new Button { Content = "CANCEL" };
-        quiet.Classes.Add("quiet");
-
-        var destructive = new Button { Content = "FORGET ALL" };
-        destructive.Classes.Add("destructive");
-
-        return new StackPanel
+        foreach (var weight in new[] { "", "primary", "quiet", "destructive" })
         {
-            Spacing = 12,
-            Children =
+            var name = weight.Length == 0 ? "normal" : weight;
+            rows.Children.Add(new WrapPanel
             {
-                new WrapPanel { ItemSpacing = 12, LineSpacing = 12, Children = { primary, new Button { Content = "RESCAN" }, quiet } },
-                new WrapPanel
+                ItemSpacing = Segment.Gap,
+                LineSpacing = Segment.Gap,
+                Children =
                 {
-                    ItemSpacing = 12,
-                    LineSpacing = 12,
-                    Children = { destructive, new Button { Content = "DISABLED", IsEnabled = false } },
+                    Weighted(new Button { Content = name }, weight),
+                    Hovered(Weighted(new Button { Content = "hover" }, weight)),
+                    Focused(Weighted(new Button { Content = "focus" }, weight)),
+                    Disabled(Weighted(new Button { Content = "disabled" }, weight)),
                 },
-            },
-        };
+            });
+        }
+
+        return rows;
+    }
+
+    private static Button Weighted(Button button, string weight)
+    {
+        if (weight.Length > 0)
+        {
+            button.Classes.Add(weight);
+        }
+
+        return button;
+    }
+
+    private static T Focused<T>(T control) where T : Control
+    {
+        ((IPseudoClasses)control.Classes).Set(":focus-visible", true);
+        return control;
     }
 
     private static Control Binding(params string[] keys)
@@ -705,31 +719,46 @@ public sealed class ControlKitWindow : Window
     {
         var tabTheme = this.TryFindResource("D47.Tab", out var resource) ? resource as ControlTheme : null;
         var group = $"D47KitTabs{Guid.NewGuid():N}";
-        var level1 = new WrapPanel { ItemSpacing = 3, LineSpacing = 3 };
+        var level1 = new WrapPanel { LineSpacing = Segment.Gap };
 
-        var tabs = new[] { "SHIP", "SUPPLY", "TRAVEL" };
+        var tabs = new[] { "SELECTED", "REST", "HOVER", "FOCUS" };
         for (var i = 0; i < tabs.Length; i++)
         {
-            level1.Children.Add(new RadioButton
+            var tab = new RadioButton
             {
                 Theme = tabTheme,
                 GroupName = group,
                 Content = tabs[i],
                 IsChecked = i == 0,
+            };
+
+            level1.Children.Add(i switch
+            {
+                2 => Hovered(tab),
+                3 => Focused(tab),
+                _ => tab,
             });
         }
 
         var level1Strip = new Border { BorderThickness = new Thickness(0, 0, 0, 2), Child = level1 };
-        Themed(level1Strip, Border.BorderBrushProperty, ThemeManager.RuleKey);
+        Themed(level1Strip, Border.BorderBrushProperty, ThemeManager.AKey);
 
-        var level2 = new TextChoice { ItemsSource = ["In Ship", "Log File", "Journal File"], SelectedIndex = 0 };
+        var level2 = new TextChoice { ItemsSource = ["Selected", "Rest", "Hover", "Focus", "Disabled"], SelectedIndex = 0 };
+        var level2Items = level2.GetLogicalDescendants().OfType<RadioButton>().ToList();
+        Hovered(level2Items[2]);
+        Focused(level2Items[3]);
+        Disabled(level2Items[4]);
 
         return Section(
             "Navigation",
             new StackPanel
             {
                 Spacing = GridGap,
-                Children = { Cell("LEVEL 1 — TABS", level1Strip), Cell("LEVEL 2 — TEXT ROW", level2) },
+                Children =
+                {
+                    Cell("LEVEL 1 — TABS", level1Strip, Note("Only the selected tab glows.")),
+                    Cell("LEVEL 2 — TEXT ROW", level2),
+                },
             });
     }
 

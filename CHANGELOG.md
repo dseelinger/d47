@@ -28,6 +28,13 @@ fill solid on hover, either side of the value, and its position reads in grey. N
 any more. The Control Kit has a Choosing among items section showing every state of each.
 Settings cards sit on the page background, so a segment's options show as tiles.
 
+Buttons and tabs are flat tiles with no outline, clipped corner or slant. A button reads in the
+accent colour in capitals and fills solid when you hover over it, press it or reach it with Tab. A
+delete button does the same in red. The primary button no longer stands out from the rest, and no
+button glows. Tabs fill solid on hover and when selected, the strip sits on an accent-coloured
+rule, and only the selected tab glows. The second row of navigation reads in the accent colour and
+turns white on hover or when chosen. The Control Kit shows every state of each.
+
 ## 1.6.3 — Guardian theme removed
 
 The Guardian theme is gone from Theme's choices. A saved theme of `guardian` now opens as Elite,

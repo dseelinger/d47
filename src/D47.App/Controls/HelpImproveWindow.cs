@@ -284,10 +284,6 @@ public sealed class HelpImproveWindow : Window
         Themed(_size, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
         Themed(_status, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
 
-        // Cancel carries no weight class of its own — the same bordered shape as an unclassed button, just
-        // fainter ink.
-        Themed(_stop, Button.ForegroundProperty, ThemeManager.TextFaintKey);
-
         // The history half exists where both of its delegates do — which is every reading the button appears
         // on, since the page it was pressed on stopped deciding that.
         _includeHistory.IsVisible = HistoryOffered;

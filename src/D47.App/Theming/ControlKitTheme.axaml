@@ -4,16 +4,17 @@
         xmlns:theming="clr-namespace:D47.App.Theming">
 
   <!--
-    The HUD dress for the three controls that appear everywhere and had no d47 look of their
-    own: Button, ToggleSwitch, the choice controls and ListBoxItem. Squared corners throughout — the
+    The HUD dress for the controls that appear everywhere and had no d47 look of their own:
+    Button, ToggleSwitch, the choice controls and ListBoxItem. Squared corners throughout — the
     dress carries no rounded shape (#273).
   -->
   <Styles.Resources>
 
     <!--
-      Normal by default: ink on no fill, with the rule as a border. A button opts into one of the
-      other three weights with Classes — "primary" for the one solid-fill action a surface gets,
-      "quiet" for an alternate or an exit, "destructive" for a delete (#337).
+      Every button is a flat Tile with A ink in uppercase Saira: solid A with Knock ink on hover,
+      keyboard focus or press, Slab with Grey2 ink when disabled. No outline, corner or glow.
+      "primary" and "quiet" draw as the default; "destructive" swaps A for Red, with White ink on
+      the solid fill.
     -->
     <ControlTheme x:Key="{x:Type Button}" TargetType="Button">
       <Setter Property="FontFamily" Value="{StaticResource D47.Font.Chrome}" />
@@ -23,106 +24,63 @@
       <Setter Property="Cursor" Value="Hand" />
       <Setter Property="Padding" Value="20,11" />
       <Setter Property="MinHeight" Value="44" />
-      <Setter Property="Foreground" Value="{DynamicResource D47.Text}" />
-      <Setter Property="Background" Value="Transparent" />
-      <Setter Property="BorderBrush" Value="{DynamicResource D47.Rule}" />
-      <Setter Property="BorderThickness" Value="1" />
-      <Setter Property="FocusAdorner" Value="{x:Static theming:FocusRing.Template}" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+      <Setter Property="Foreground" Value="{DynamicResource D47.A}" />
+      <Setter Property="Background" Value="{DynamicResource D47.Tile}" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="FocusAdorner" Value="{x:Null}" />
       <Setter Property="Template">
         <ControlTemplate>
-          <theming:BloomStack x:Name="Glow" Tier="Normal" IsLit="False">
-            <controls:ChamferedBorder x:Name="Shape"
-                                       Background="{TemplateBinding Background}"
-                                       BorderBrush="{TemplateBinding BorderBrush}"
-                                       BorderThickness="{TemplateBinding BorderThickness}">
-              <Grid>
-                <ContentPresenter x:Name="PART_ContentPresenter"
-                                  Content="{TemplateBinding Content}"
-                                  ContentTemplate="{TemplateBinding ContentTemplate}"
-                                  Padding="{TemplateBinding Padding}"
-                                  Foreground="{TemplateBinding Foreground}"
-                                  HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                  VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
-                <!-- The quiet weight's underline, drawn as a dotted rectangle rather than a second clipper. -->
-                <Rectangle x:Name="QuietRule"
-                           IsVisible="False"
-                           Height="1"
-                           VerticalAlignment="Bottom"
-                           Stroke="{DynamicResource D47.Rule}"
-                           StrokeThickness="1"
-                           StrokeDashArray="1,1" />
-              </Grid>
-            </controls:ChamferedBorder>
-          </theming:BloomStack>
+          <Border x:Name="Shape"
+                  Background="{TemplateBinding Background}"
+                  BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}">
+            <ContentPresenter x:Name="PART_ContentPresenter"
+                              Content="{TemplateBinding Content, Converter={x:Static theming:Capitals.Text}}"
+                              ContentTemplate="{TemplateBinding ContentTemplate}"
+                              Padding="{TemplateBinding Padding}"
+                              Foreground="{TemplateBinding Foreground}"
+                              HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                              VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+          </Border>
         </ControlTemplate>
       </Setter>
 
-      <!-- Hover: the border switches from D47.Rule to Accent. -->
       <Style Selector="^:pointerover">
-        <Setter Property="BorderBrush" Value="{DynamicResource D47.Accent}" />
-      </Style>
-
-      <!-- Hover halo (#379), drawn from the Accent border; primary is already lit at Normal. -->
-      <Style Selector="^:pointerover:not(.primary) /template/ theming|BloomStack#Glow">
-        <Setter Property="Tier" Value="Low" />
-        <Setter Property="IsLit" Value="True" />
-        <Setter Property="Glow" Value="{DynamicResource D47.Accent}" />
-      </Style>
-
-      <!-- The whole control fades rather than recolours; disabled already refuses pointer input. -->
-      <Style Selector="^:disabled">
-        <Setter Property="Opacity" Value="0.35" />
-      </Style>
-
-      <!-- Primary: solid Accent, ink the colour of the background it sits on, one per surface. -->
-      <Style Selector="^.primary">
-        <Setter Property="FontSize" Value="{StaticResource D47.Type.Subheading}" />
-        <Setter Property="FontWeight" Value="Bold" />
-        <Setter Property="LetterSpacing" Value="2.72" />
-        <Setter Property="Padding" Value="34,15" />
-        <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
+        <Setter Property="Background" Value="{DynamicResource D47.A}" />
         <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="ClipToBounds" Value="False" />
-
-        <Style Selector="^ /template/ controls|ChamferedBorder#Shape">
-          <Setter Property="Chamfer" Value="0,11,0,0" />
-        </Style>
-
-        <!-- The solid fill's own glow (#345), off the disabled state along with the fill itself. -->
-        <Style Selector="^:not(:disabled) /template/ theming|BloomStack#Glow">
-          <Setter Property="IsLit" Value="True" />
-        </Style>
+      </Style>
+      <Style Selector="^:focus-visible">
+        <Setter Property="Background" Value="{DynamicResource D47.A}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
+      </Style>
+      <Style Selector="^:pressed">
+        <Setter Property="Background" Value="{DynamicResource D47.A}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
+      </Style>
+      <Style Selector="^:disabled">
+        <Setter Property="Background" Value="{DynamicResource D47.Slab}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.Grey2}" />
       </Style>
 
-      <!-- Quiet: no border, muted ink, a dotted rule underline. For alternates and exits. -->
-      <Style Selector="^.quiet">
-        <Setter Property="Foreground" Value="{DynamicResource D47.TextMuted}" />
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Padding" Value="4,11" />
-
-        <Style Selector="^ /template/ Rectangle#QuietRule">
-          <Setter Property="IsVisible" Value="True" />
-        </Style>
-
-        <!-- Hover: the ink switches from TextMuted to Text, the underline from D47.Rule to Accent. -->
-        <Style Selector="^:pointerover">
-          <Setter Property="Foreground" Value="{DynamicResource D47.Text}" />
-        </Style>
-        <Style Selector="^:pointerover /template/ Rectangle#QuietRule">
-          <Setter Property="Stroke" Value="{DynamicResource D47.Accent}" />
-        </Style>
-      </Style>
-
-      <!-- Destructive: a Danger border and ink, unchanged on hover. For deletes only. -->
       <Style Selector="^.destructive">
-        <Setter Property="Foreground" Value="{DynamicResource D47.Danger}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource D47.Danger}" />
-        <Setter Property="Padding" Value="18,11" />
-
-        <Style Selector="^:pointerover">
-          <Setter Property="BorderBrush" Value="{DynamicResource D47.Danger}" />
-        </Style>
+        <Setter Property="Foreground" Value="{DynamicResource D47.Red}" />
+      </Style>
+      <Style Selector="^.destructive:pointerover">
+        <Setter Property="Background" Value="{DynamicResource D47.Red}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.White}" />
+      </Style>
+      <Style Selector="^.destructive:focus-visible">
+        <Setter Property="Background" Value="{DynamicResource D47.Red}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.White}" />
+      </Style>
+      <Style Selector="^.destructive:pressed">
+        <Setter Property="Background" Value="{DynamicResource D47.Red}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.White}" />
+      </Style>
+      <Style Selector="^.destructive:disabled">
+        <Setter Property="Background" Value="{DynamicResource D47.Slab}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.Grey2}" />
       </Style>
     </ControlTheme>
 
@@ -387,19 +345,19 @@
     </ControlTheme>
 
     <!--
-      A plain text row of choices — no frame, no box, no ground (#356). The chosen item is hot
-      text with a 3px Accent underline; the rest sit at D47.TextFaint with no underline. Built
-      on RadioButton for the same reasons D47.Segment is.
+      A plain text row of choices, with no frame or ground (#356): A ink, White on hover or focus,
+      White with a 2px A underline when chosen, Grey2 when disabled. Built on RadioButton for the
+      same reasons D47.Segment is.
     -->
     <ControlTheme x:Key="D47.TextChoice" TargetType="RadioButton">
       <Setter Property="Cursor" Value="Hand" />
       <Setter Property="FontFamily" Value="{StaticResource D47.Font.Chrome}" />
-      <Setter Property="FontSize" Value="{StaticResource D47.Type.Secondary}" />
+      <Setter Property="FontSize" Value="14" />
       <Setter Property="FontWeight" Value="SemiBold" />
       <Setter Property="LetterSpacing" Value="2.4" />
-      <Setter Property="Foreground" Value="{DynamicResource D47.TextFaint}" />
+      <Setter Property="Foreground" Value="{DynamicResource D47.A}" />
       <Setter Property="Padding" Value="0,2,0,0" />
-      <Setter Property="FocusAdorner" Value="{x:Static theming:FocusRing.Template}" />
+      <Setter Property="FocusAdorner" Value="{x:Null}" />
 
       <Setter Property="Template">
         <ControlTemplate>
@@ -408,16 +366,28 @@
                               Content="{TemplateBinding Content}"
                               Foreground="{TemplateBinding Foreground}"
                               HorizontalAlignment="Center" />
-            <Border x:Name="Underline" Height="3" Background="Transparent" />
+            <Border x:Name="Underline" Height="2" Background="Transparent" />
           </StackPanel>
         </ControlTemplate>
       </Setter>
 
+      <Style Selector="^:pointerover">
+        <Setter Property="Foreground" Value="{DynamicResource D47.White}" />
+      </Style>
+      <Style Selector="^:focus-visible">
+        <Setter Property="Foreground" Value="{DynamicResource D47.White}" />
+      </Style>
+      <Style Selector="^:pressed">
+        <Setter Property="Foreground" Value="{DynamicResource D47.White}" />
+      </Style>
       <Style Selector="^:checked">
-        <Setter Property="Foreground" Value="{DynamicResource D47.AccentInk}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.White}" />
         <Style Selector="^ /template/ Border#Underline">
-          <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
+          <Setter Property="Background" Value="{DynamicResource D47.A}" />
         </Style>
+      </Style>
+      <Style Selector="^:disabled">
+        <Setter Property="Foreground" Value="{DynamicResource D47.Grey2}" />
       </Style>
     </ControlTheme>
 

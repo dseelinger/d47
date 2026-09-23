@@ -17,9 +17,11 @@ namespace D47.App.Tests;
 public class ATabLabelIsNeverClippedTests
 {
     [AvaloniaTheory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void TheLabelDoesNotClipToItsBounds(bool selected)
+    [InlineData(true, 924, 640)]
+    [InlineData(false, 924, 640)]
+    [InlineData(true, 512, 280)]
+    [InlineData(false, 512, 280)]
+    public void TheLabelDoesNotClipToItsBounds(bool selected, double width, double height)
     {
         var include = new ResourceInclude((Uri?)null) { Source = new Uri("avares://d47/Panel/PanelTabs.axaml") };
         Application.Current!.Resources.MergedDictionaries.Add(include);
@@ -29,7 +31,7 @@ public class ATabLabelIsNeverClippedTests
             var theme = (ControlTheme)Application.Current!.FindResource("D47.Tab")!;
             var tab = new RadioButton { Theme = theme, Content = "TRANSCRIPT", IsChecked = selected };
 
-            var window = new Window { Content = new WrapPanel { Children = { tab } }, Width = 600, Height = 200 };
+            var window = new Window { Content = new WrapPanel { Children = { tab } }, Width = width, Height = height };
             window.Show();
             Dispatcher.UIThread.RunJobs();
 
