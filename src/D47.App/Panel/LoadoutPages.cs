@@ -190,7 +190,7 @@ public static class LoadoutPages
             label.Inlines =
             [
                 new Run(text),
-                Gear(),
+                Gear(label),
             ];
         }
 
@@ -335,7 +335,7 @@ public static class LoadoutPages
             label.Inlines =
             [
                 new Run(headline.ToUpperInvariant()),
-                Dot(),
+                Dot(label),
             ];
         }
 
@@ -437,8 +437,8 @@ public static class LoadoutPages
         return pill;
     }
 
-    /// <summary>The plan mark, as an inline so it travels with the name on a card, in the name's ink.</summary>
-    private static Run Dot() => new(" ●");
+    /// <summary>The plan mark, as an inline so it travels with the name on a card, in the row's secondary ink.</summary>
+    private static Run Dot(TextBlock host) => Secondary(new Run(" ●"), host);
 
     /// <summary>
     /// The say-line along the bottom of a page: the phrase for what the Commander is looking at.
@@ -656,9 +656,16 @@ public static class LoadoutPages
 
     /// <summary>
     /// The mark meaning a roll has been done, as an inline so it travels with the name it is about, in
-    /// the name's ink (remediation.md 17, item 10).
+    /// the row's secondary ink (remediation.md 17, item 10).
     /// </summary>
-    private static Run Gear() => new(" ⚙");
+    private static Run Gear(TextBlock host) => Secondary(new Run(" ⚙"), host);
+
+    /// <summary>Colours <paramref name="run"/> with the secondary ink of the row <paramref name="host"/> sits in.</summary>
+    private static Run Secondary(Run run, TextBlock host)
+    {
+        run.Bind(Run.ForegroundProperty, host.GetObservable(ListRow.SecondaryBrushProperty));
+        return run;
+    }
 
     /// <summary>The coin: this module is locked behind a Powerplay pledge (Phase 38).</summary>
     private static Run Coin()
@@ -1113,7 +1120,7 @@ public static class LoadoutPages
         // The gear travels with the last word of the name (remediation.md 17, item 10).
         if (gear)
         {
-            inlines.Add(Gear());
+            inlines.Add(Gear(cell));
         }
 
         // And the coin, for a module a Powerplay pledge is needed to buy (Phase 38).

@@ -85,8 +85,9 @@ background of its own, and SEND and the Newest button are ordinary tiles.
 
 Fleet's ship pages are restyled to match Elite. Ship cards, slot rows and material rows are tiles
 2px apart with a white name and an accent-coloured second line. The card or row the other pane
-is showing fills solid in the accent colour instead of being outlined. The CURRENT SHIP badge is
-cyan. A ship's page opens with its name as a large white title over an accent rule. Its figures
+is showing fills solid in the accent colour instead of being outlined. The plan dot and the
+engineered gear take the second line's colour, so they can be read on a hovered or showing row.
+The CURRENT SHIP badge is cyan. A ship's page opens with its name as a large white title over an accent rule. Its figures
 (hull, pad, speed, boost, armour, shields, price, jump range, hold, mass, value, rebuy and hull
 integrity) are grey-labelled tiles that drop columns as the pane narrows. Where the ship is reads
 in cyan when it is the ship you are flying. Headings such as Fitted, Planned and the slot groups
