@@ -156,7 +156,7 @@ public class TheConversationLooksLikeOneTests
         }
     }
 
-    /// <summary>No turn is wider than 72% of the list, and the cap follows the list when it is resized.</summary>
+    /// <summary>No turn is wider than 80% of the list, and the cap follows the list when it is resized.</summary>
     [AvaloniaTheory]
     [InlineData(1600)]
     [InlineData(700)]
@@ -203,19 +203,64 @@ public class TheConversationLooksLikeOneTests
         Assert.Contains(head, text => text.Contains("calm", StringComparison.Ordinal));
     }
 
-    /// <summary>A long body wraps at 76 characters' width rather than running the width of the window.</summary>
-    [AvaloniaFact]
-    public void ALongBodyStopsAtItsMeasure()
+    /// <summary>
+    /// A long turn of either voice reaches its share of the list, before and after a resize; a short one stays
+    /// narrower, flush against its own side.
+    /// </summary>
+    [AvaloniaTheory]
+    [InlineData(1600)]
+    [InlineData(1100)]
+    public void ALongTurnReachesItsShareAndAShortOneStaysNarrow(double resizedTo)
     {
         var model = new PanelViewModel();
+
         model.Append(string.Join(' ', Enumerable.Repeat("The beacon is quiet and the turn is done.", 12)));
+        model.Append(
+            string.Join(' ', Enumerable.Repeat("where is the nearest scoopable star", 12)),
+            voice: TranscriptVoice.Commander);
+        model.Append("Holding.");
+        model.Append("Where am I?", voice: TranscriptVoice.Commander);
 
         var window = new Window();
         var panel = Laid(new PanelView { DataContext = model }, window, width: 1600);
 
-        var body = panel.TranscriptBlocks.Single();
+        Laid(panel, window, width: resizedTo);
 
-        Assert.True(body.Bounds.Width <= PanelView.BodyMaxWidth, $"the body is {body.Bounds.Width} wide");
+        var list = panel.GetControl<StackPanel>("Bubbles").Bounds.Width;
+        var share = Math.Floor(list * PanelView.TurnShare);
+        var messages = Messages(panel);
+
+        Assert.Equal(4, messages.Count);
+        Assert.All(messages.Take(2), message =>
+            Assert.True(
+                Math.Abs(message.Bounds.Width - share) <= 1,
+                $"a long turn is {message.Bounds.Width} wide against a share of {share}"));
+
+        Assert.All(messages.Skip(2), message =>
+            Assert.True(message.Bounds.Width < share, $"a short turn is {message.Bounds.Width} wide"));
+
+        Assert.True(messages[0].Bounds.Left <= 1, "the ship's long turn does not start at the left edge");
+        Assert.True(messages[1].Bounds.Right >= list - 1, "the Commander's long turn does not reach the right edge");
+        Assert.True(messages[2].Bounds.Left <= 1, "the ship's short turn does not start at the left edge");
+        Assert.True(messages[3].Bounds.Right >= list - 1, "the Commander's short turn does not reach the right edge");
+    }
+
+    /// <summary>Long and short turns of both voices, drawn in the app's look at 1600 px and saved for review.</summary>
+    [AvaloniaFact]
+    public void LongAndShortTurnsAreCaptured()
+    {
+        var model = new PanelViewModel();
+
+        model.Append(string.Join(' ', Enumerable.Repeat("The beacon is quiet and the turn is done.", 8)));
+        model.Append(
+            string.Join(' ', Enumerable.Repeat("where is the nearest scoopable star", 8)),
+            voice: TranscriptVoice.Commander);
+        model.Append("Holding at Fixture Anchorage.");
+        model.Append("Where am I?", voice: TranscriptVoice.Commander);
+
+        var path = AppLook.Capture(new PanelView { DataContext = model }, "transcript-turns.png", width: 1600);
+
+        Assert.True(File.Exists(path));
     }
 
     /// <summary>

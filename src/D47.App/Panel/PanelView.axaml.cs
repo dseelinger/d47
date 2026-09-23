@@ -3021,7 +3021,6 @@ public partial class PanelView : UserControl
         }
 
         block.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.TextKey));
-        block.MaxWidth = BodyMaxWidth;
         block.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left;
         block.TextAlignment = TextAlignment.Left;
 
@@ -3044,7 +3043,7 @@ public partial class PanelView : UserControl
 
         var commander = turn.Voice == TranscriptVoice.Commander;
 
-        var row = new Border
+        var row = new TurnBorder
         {
             Child = content,
             BorderThickness = commander ? new Thickness(0, 0, 3, 0) : new Thickness(3, 0, 0, 0),
@@ -3082,7 +3081,7 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>The widest a turn is, as a share of the list's width.</summary>
-    internal const double TurnShare = 0.72;
+    internal const double TurnShare = 0.80;
 
     /// <summary>A turn's widest at the list's current width, or no cap before the list has one.</summary>
     private double TurnWidth() =>
@@ -3095,15 +3094,12 @@ public partial class PanelView : UserControl
         {
             var width = TurnWidth();
 
-            foreach (var row in Bubbles.Children.OfType<Border>())
+            foreach (var row in Bubbles.Children.OfType<TurnBorder>())
             {
                 row.MaxWidth = width;
             }
         }
     }
-
-    /// <summary>A message body's widest line.</summary>
-    internal const double BodyMaxWidth = 608;
 
     /// <summary>
     /// Who spoke, what it was about, how it was delivered and when — atop every turn but the panel's own note
