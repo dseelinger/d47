@@ -25,6 +25,9 @@ accent out phonetically or play it as a stereotype. In chatter, d47 casts the vo
 exchange is written and the model names the speakers. An NPC already heard in the system keeps
 their voice if they speak again. Voices with no accent listed, and the ship's AI, are unchanged.
 
+Empire and Federation ranks in goals and adventures are no longer named one rank too high. An
+Outsider was called a Serf, a Recruit a Cadet, and a King or Admiral was called "rank 14".
+
 ## 1.10.0 — Every voice paired afresh
 
 The Advanced speech row "Reset every voice to its pairing" is replaced by "Forget every voice and

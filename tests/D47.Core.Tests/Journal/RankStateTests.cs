@@ -46,7 +46,7 @@ public class RankStateTests
         var federation = RankState.Empty.Apply(Event("Rank", "\"Federation\":14")).For("Federation");
 
         Assert.False(federation?.IsElite);
-        Assert.Equal("rank 14", federation?.Describe());
+        Assert.Equal("Admiral", federation?.Describe());
     }
 
     [Fact]
@@ -134,6 +134,16 @@ public class RankStateTests
     public void EveryCareerHasItsOwnNames(string career, int rank, string said)
     {
         Assert.Equal(said, new RankStanding(career, rank).Describe());
+    }
+
+    [Theory]
+    [InlineData("Empire", 1, "Outsider")]
+    [InlineData("Empire", 14, "King")]
+    [InlineData("Federation", 1, "Recruit")]
+    [InlineData("Federation", 14, "Admiral")]
+    public void ANavyRankIsNamedFromTheJournalValueAsWritten(string navy, int rank, string said)
+    {
+        Assert.Equal(said, new RankStanding(navy, rank).Describe());
     }
 
     [Fact]

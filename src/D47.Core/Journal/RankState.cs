@@ -38,11 +38,11 @@ public sealed record RankStanding(string Career, int Rank)
                 ? $"rank {Rank} of {Elite}, {numberedPercent}% into it"
                 : $"rank {Rank} of {Elite}";
 
-    /// <summary>The named rung of a navy ladder — <see cref="NavalRanks"/> is 1-based, the journal 0-based.</summary>
+    /// <summary>The named rung of a navy ladder; the journal and <see cref="NavalRanks"/> share the 0 to 14 scale.</summary>
     private string? NavyName() => Career switch
     {
-        _ when string.Equals(Career, "Empire", StringComparison.OrdinalIgnoreCase) => NavalRanks.EmpireName(Rank + 1),
-        _ when string.Equals(Career, "Federation", StringComparison.OrdinalIgnoreCase) => NavalRanks.FederationName(Rank + 1),
+        _ when string.Equals(Career, "Empire", StringComparison.OrdinalIgnoreCase) => NavalRanks.EmpireName(Rank),
+        _ when string.Equals(Career, "Federation", StringComparison.OrdinalIgnoreCase) => NavalRanks.FederationName(Rank),
         _ => null,
     };
 
