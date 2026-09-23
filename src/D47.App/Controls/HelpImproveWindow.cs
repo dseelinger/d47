@@ -584,7 +584,6 @@ public sealed class HelpImproveWindow : Window
             Text = caption,
             FontFamily = new FontFamily(Fonts.MonoFamily),
             FontSize = TypeScale.Caption,
-            LetterSpacing = 2.2,
             HorizontalAlignment = HorizontalAlignment.Center,
             TextAlignment = TextAlignment.Center,
             TextWrapping = TextWrapping.Wrap,

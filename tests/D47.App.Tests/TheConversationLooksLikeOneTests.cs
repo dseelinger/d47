@@ -117,7 +117,7 @@ public class TheConversationLooksLikeOneTests
         {
             Assert.Equal(Resource(window, ThemeManager.TextMutedKey), Colour(body.Foreground));
             Assert.Equal(TypeScale.Body, body.FontSize);
-            Assert.Contains("Titillium", body.FontFamily.ToString(), StringComparison.Ordinal);
+            Assert.Contains("Sintony", body.FontFamily.ToString(), StringComparison.Ordinal);
         });
     }
 

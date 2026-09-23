@@ -77,10 +77,11 @@ public partial class TypeScaleTests
         Assert.True(TypeScale.Title > TypeScale.Heading);
         Assert.True(TypeScale.Heading > TypeScale.Subheading);
         Assert.True(TypeScale.Subheading > TypeScale.Body);
-        Assert.True(TypeScale.Body > TypeScale.Secondary);
+        Assert.True(TypeScale.Body > TypeScale.Section);
+        Assert.True(TypeScale.Section >= TypeScale.Secondary);
         Assert.True(TypeScale.Secondary > TypeScale.Small);
         Assert.True(TypeScale.Small > TypeScale.Meta);
-        Assert.True(TypeScale.Meta > TypeScale.Caption);
+        Assert.True(TypeScale.Meta >= TypeScale.Caption);
     }
 
     private static IEnumerable<string> Sources()

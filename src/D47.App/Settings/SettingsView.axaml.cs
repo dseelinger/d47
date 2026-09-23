@@ -906,7 +906,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Text = title.ToUpperInvariant(),
             FontSize = TypeScale.Secondary,
             FontWeight = FontWeight.Medium,
-            LetterSpacing = 1,
+            LetterSpacing = TypeScale.Secondary * Fonts.ChromeTracking,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
         Themed(text, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
@@ -1024,7 +1024,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     private StackPanel BuildAreaHeader(out TextBlock title, out TextBlock sentence, out TextBlock legend)
     {
         title = new TextBlock { FontWeight = FontWeight.Medium };
-        TitleText.Style(title, TypeScale.Heading, TitleRank.Group);
+        TitleText.Style(title, TypeScale.Section, TitleRank.Group);
 
         sentence = new TextBlock { FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) };
         Themed(sentence, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
@@ -2306,25 +2306,30 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
     private RowView BuildRow(CapabilityDescriptor capability, SettingRow row, bool shaded = false)
     {
-        var header = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
+        var header = new DockPanel { HorizontalAlignment = HorizontalAlignment.Left };
 
         var label = new TextBlock
         {
             Text = row.Label,
             FontFamily = Fonts.ProseFamily,
             FontSize = TypeScale.Body,
+            TextWrapping = TextWrapping.Wrap,
             VerticalAlignment = VerticalAlignment.Center,
         };
         Themed(label, TextBlock.ForegroundProperty, ThemeManager.TextKey);
-        header.Children.Add(label);
 
         if (row.Scope == SettingScope.Commander)
         {
             // The same tag for the other declaration a row can make (Phase 44): this value is the
             // Commander's who is flying, and a second Commander on this machine will see their own here
             // rather than this one.
-            header.Children.Add(RowTag("per Commander"));
+            var tag = RowTag("per Commander");
+            tag.Margin = new Thickness(4, 0, 0, 0);
+            DockPanel.SetDock(tag, Dock.Right);
+            header.Children.Add(tag);
         }
+
+        header.Children.Add(label);
 
         // Hidden inline copy, shown only when a search matches text no other visible control carries (#333).
         var help = new TextBlock
@@ -2347,6 +2352,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         Themed(message, TextBlock.ForegroundProperty, ThemeManager.DangerKey);
 
         var (control, refresh, compact) = BuildControl(row, message);
+
+        // A compact row's label wraps within the caption column rather than running under the control.
+        if (compact && !row.PageTop)
+        {
+            header.MaxWidth = LabelColumnMaxWidth;
+        }
 
         // The settings key, shown only when it is the reason this row survived a filter.
         var keyLine = new TextBlock

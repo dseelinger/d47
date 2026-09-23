@@ -35,6 +35,13 @@ button glows. Tabs fill solid on hover and when selected, the strip sits on an a
 rule, and only the selected tab glows. The second row of navigation reads in the accent colour and
 turns white on hover or when chosen. The Control Kit shows every state of each.
 
+Chrome — tabs, buttons, headings and labels — is set in Saira at normal width instead of Saira
+Condensed, and prose in Sintony, Elite's own body face, instead of Titillium Web. Letter-spacing
+on capitals is much tighter, and names, values and sentences are not spaced out at all. A screen
+title is white, no longer glows, and sits over an accent-coloured rule. Section headings are
+smaller, with the rule beneath them instead of beside them. The smallest text is 12 instead of 11.
+A settings row label too long for its column wraps instead of running under the control beside it.
+
 ## 1.6.3 — Guardian theme removed
 
 The Guardian theme is gone from Theme's choices. A saved theme of `guardian` now opens as Elite,

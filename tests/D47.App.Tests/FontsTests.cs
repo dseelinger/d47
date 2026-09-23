@@ -72,4 +72,20 @@ public partial class FontsTests
             Assert.Equal(new FontFamily(uri), Assert.IsType<FontFamily>(found));
         }
     }
+
+    [AvaloniaTheory]
+    [InlineData(Fonts.ChromeFamily, "Saira", 400)]
+    [InlineData(Fonts.ChromeFamily, "Saira", 500)]
+    [InlineData(Fonts.ChromeFamily, "Saira", 600)]
+    [InlineData(Fonts.ChromeFamily, "Saira", 700)]
+    [InlineData(Fonts.ProseFamily, "Sintony", 400)]
+    [InlineData(Fonts.ProseFamily, "Sintony", 700)]
+    public void EachWeightDrawsInItsOwnFace(string family, string name, int weight)
+    {
+        Assert.True(FontManager.Current.TryGetGlyphTypeface(
+            new Typeface(new FontFamily(family), FontStyle.Normal, (FontWeight)weight), out var face));
+
+        Assert.StartsWith(name, face.FamilyName, StringComparison.Ordinal);
+        Assert.Equal((FontWeight)weight, face.Weight);
+    }
 }

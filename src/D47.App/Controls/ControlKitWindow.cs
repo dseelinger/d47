@@ -147,7 +147,7 @@ public sealed class ControlKitWindow : Window
 
     private static Control SpecCard(string caption, string body)
     {
-        var label = Caption(caption, 0.16);
+        var label = Caption(caption);
         label.Margin = new Thickness(0, 0, 0, 6);
 
         var card = new Border
@@ -404,7 +404,7 @@ public sealed class ControlKitWindow : Window
     {
         var note = Note(null);
         note.Inlines!.Add(new Run("Double-coded: the lit block moves "));
-        note.Inlines.Add(new Run("and") { FontFamily = new FontFamily(Fonts.ProseItalicFamily), FontStyle = FontStyle.Italic });
+        note.Inlines.Add(new Run("and") { FontStyle = FontStyle.Italic });
         note.Inlines.Add(new Run(" names itself. Scannable down thirty rows."));
         return note;
     }
@@ -526,7 +526,7 @@ public sealed class ControlKitWindow : Window
             Text = label,
             FontFamily = new FontFamily(Fonts.MonoFamily),
             FontSize = TypeScale.Meta,
-            LetterSpacing = TypeScale.Meta * 0.12,
+            LetterSpacing = TypeScale.Meta * Fonts.ChromeTracking,
         };
         Themed(text, TextBlock.ForegroundProperty, ThemeManager.KnockKey);
 
@@ -585,7 +585,7 @@ public sealed class ControlKitWindow : Window
 
     private static Control HeadingRanksSection()
     {
-        var group = TitleText.Build("GROUP, WITH A RULE", TypeScale.Heading, TitleRank.Group);
+        var group = TitleText.Build("GROUP, WITH A RULE", TypeScale.Section, TitleRank.Group);
         group.Margin = new Thickness(0, 16, 0, 0);
 
         var subgroup = TitleText.Build("SUBGROUP", TypeScale.Caption, TitleRank.Subgroup);
@@ -767,13 +767,13 @@ public sealed class ControlKitWindow : Window
     private static Control Section(string heading, Control content) => new StackPanel
     {
         Spacing = HeadingGap,
-        Children = { TitleText.GroupRow(TitleText.Build(heading, TypeScale.Heading, TitleRank.Group)), content },
+        Children = { TitleText.GroupRow(TitleText.Build(heading, TypeScale.Section, TitleRank.Group)), content },
     };
 
     /// <summary>A grid cell: the caption, the control, and an optional note beneath it.</summary>
     private static Control Cell(string caption, Control control, TextBlock? note = null, double noteGap = 12)
     {
-        var label = Caption(caption, 0.18);
+        var label = Caption(caption);
         label.Margin = new Thickness(0, 0, 0, 12);
 
         var cell = new StackPanel { Children = { label, control } };
@@ -787,16 +787,16 @@ public sealed class ControlKitWindow : Window
         return cell;
     }
 
-    /// <summary>A mono caption at caption size, tracked by <paramref name="em"/> of its size. The text is
-    /// authored in capitals, since the tracking is set for them.</summary>
-    private static TextBlock Caption(string text, double em)
+    /// <summary>A tracked mono caption at caption size. The text is authored in capitals, since the
+    /// tracking is set for them.</summary>
+    private static TextBlock Caption(string text)
     {
         var label = new TextBlock
         {
             Text = text,
             FontFamily = new FontFamily(Fonts.MonoFamily),
             FontSize = TypeScale.Caption,
-            LetterSpacing = TypeScale.Caption * em,
+            LetterSpacing = TypeScale.Caption * Fonts.ChromeTracking,
         };
         Themed(label, TextBlock.ForegroundProperty, ThemeManager.TextFaintKey);
         return label;

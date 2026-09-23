@@ -138,17 +138,15 @@ Other third-party components
     spike/OverlaySpike/vendor/openvr_api.cs   Valve's official binding, BSD-3-Clause,
                                               vendored from ValveSoftware/openvr.
 
-    Saira Condensed                          SIL Open Font License 1.1, by The Saira Project
-                                              Authors (github.com/Omnibus-Type/Saira), from
-                                              Google Fonts. Embedded in the build as
-                                              assets/fonts/SairaCondensed-*.ttf; the licence text
-                                              ships beside them as assets/fonts/OFL-SairaCondensed.txt.
+    Saira                                    SIL Open Font License 1.1, by The Saira Project
+                                              Authors (github.com/Omnibus-Type/Saira). Embedded in
+                                              the build as assets/fonts/Saira-*.ttf; the licence
+                                              text ships beside them as assets/fonts/OFL-Saira.txt.
 
-    Titillium Web                            SIL Open Font License 1.1, by Accademia di Belle
-                                              Arti di Urbino, from Google Fonts. Embedded in the
-                                              build as assets/fonts/TitilliumWeb-*.ttf; the
-                                              licence text ships beside them as
-                                              assets/fonts/OFL-TitilliumWeb.txt.
+    Sintony                                  SIL Open Font License 1.1, by Eduardo Tunni, from
+                                              Google Fonts. Embedded in the build as
+                                              assets/fonts/Sintony-*.ttf; the licence text ships
+                                              beside them as assets/fonts/OFL-Sintony.txt.
 
     JetBrains Mono                            SIL Open Font License 1.1, by JetBrains
                                               (github.com/JetBrains/JetBrainsMono). Embedded in

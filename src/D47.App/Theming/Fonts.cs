@@ -1,19 +1,19 @@
 namespace D47.App.Theming;
 
-/// <summary>The three embedded typefaces: Saira Condensed for chrome, Titillium Web for prose
-/// and labels, JetBrains Mono for machine text.</summary>
+/// <summary>The three embedded typefaces: Saira for chrome, Sintony for prose, JetBrains Mono for
+/// machine text.</summary>
 public static class Fonts
 {
-    public const string ChromeFamily =
-        "avares://d47/Assets/Fonts/SairaCondensed-SemiBold.ttf#Saira Condensed";
+    /// <summary>Saira, with Regular, Medium, SemiBold and Bold faces chosen by <c>FontWeight</c>.</summary>
+    public const string ChromeFamily = "avares://d47/Assets/Fonts#Saira";
 
-    public const string ProseFamily =
-        "avares://d47/Assets/Fonts/TitilliumWeb-Regular.ttf#Titillium Web";
-
-    /// <summary>Titillium Web's own italic face, so emphasis in prose is not a synthesised slant.</summary>
-    public const string ProseItalicFamily =
-        "avares://d47/Assets/Fonts/TitilliumWeb-Italic.ttf#Titillium Web";
+    /// <summary>Sintony, Regular and Bold. It has no italic face, so italic prose is a synthesised slant.</summary>
+    public const string ProseFamily = "avares://d47/Assets/Fonts#Sintony";
 
     public const string MonoFamily =
         "avares://d47/Assets/Fonts/JetBrainsMono-Regular.ttf#JetBrains Mono";
+
+    /// <summary>Letter-spacing on upper-case chrome, as a fraction of its font size. Names, values and
+    /// prose take none.</summary>
+    public const double ChromeTracking = 0.06;
 }

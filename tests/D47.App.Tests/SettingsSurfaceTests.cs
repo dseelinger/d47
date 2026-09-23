@@ -169,8 +169,8 @@ public class DisclosureIsAHintTests
             .OfType<TextBlock>()
             .First(block => string.Equals(block.Text, Label, StringComparison.Ordinal));
 
-        // Label, then the header row it is in, then the caption that header belongs to.
-        return (Control)label.GetVisualAncestors().OfType<StackPanel>().Skip(1).First();
+        // The label sits in a DockPanel header; the first StackPanel above it is the caption.
+        return (Control)label.GetVisualAncestors().OfType<StackPanel>().First();
     }
 
     [AvaloniaFact]

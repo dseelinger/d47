@@ -233,7 +233,6 @@ public class EveryGlowIsAStackOfGhostsTests
 
             yield return ("caption diamond", BloomTier.High, caption.Single(stack => stack.Child is Path));
             yield return ("caption name", BloomTier.High, caption.Single(stack => stack.Child is TextBlock));
-            yield return ("screen title", BloomTier.High, (BloomStack)Kit.Title);
             yield return ("level fill", BloomTier.High, Within(Kit.Level, stack => stack.Child is Border));
             yield return ("level handle", BloomTier.High, Within(Kit.Level, stack => stack.Child is Rectangle));
             yield return ("microphone dot", BloomTier.High, Panel.FindControl<BloomStack>("MicrophoneBloom")!);

@@ -66,6 +66,34 @@ public class RowWidthTests
         host.Close();
     }
 
+    /// <summary>A label longer than the caption column wraps inside it rather than running under the control.</summary>
+    [AvaloniaFact]
+    public void NoLabelRunsUnderItsControl()
+    {
+        var host = OpenWith(LongestLabel);
+
+        var laidOut = CompactRows(host).Where(row => row.Bounds.Width > 0).ToList();
+
+        Assert.NotEmpty(laidOut);
+
+        foreach (var row in laidOut)
+        {
+            var column = row.ColumnDefinitions[0].ActualWidth;
+            var widest = row.Children.Where(child => Grid.GetColumn(child) == 0)
+                .SelectMany(child => child.GetVisualDescendants().OfType<TextBlock>())
+                .Where(text => text.IsVisible)
+                .Select(text => text.Bounds.Width)
+                .DefaultIfEmpty(0)
+                .Max();
+
+            Assert.True(
+                widest <= column + Rounding,
+                $"a label in a {column:0} wide caption column measured {widest:0}");
+        }
+
+        host.Close();
+    }
+
     /// <summary>
     /// The row that broke, captured with the offending label selected, so "does it look right now" has
     /// an artifact to answer with rather than needing the app driven by hand.

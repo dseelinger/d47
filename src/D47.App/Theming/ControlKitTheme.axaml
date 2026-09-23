@@ -20,7 +20,7 @@
       <Setter Property="FontFamily" Value="{StaticResource D47.Font.Chrome}" />
       <Setter Property="FontSize" Value="{StaticResource D47.Type.Secondary}" />
       <Setter Property="FontWeight" Value="SemiBold" />
-      <Setter Property="LetterSpacing" Value="2.1" />
+      <Setter Property="LetterSpacing" Value="0.9" />
       <Setter Property="Cursor" Value="Hand" />
       <Setter Property="Padding" Value="20,11" />
       <Setter Property="MinHeight" Value="44" />
@@ -221,7 +221,7 @@
       <Setter Property="FontFamily" Value="{StaticResource D47.Font.Chrome}" />
       <Setter Property="FontSize" Value="14" />
       <Setter Property="FontWeight" Value="Bold" />
-      <Setter Property="LetterSpacing" Value="1.68" />
+      <Setter Property="LetterSpacing" Value="0.84" />
       <Setter Property="Template">
         <ControlTemplate>
           <Border x:Name="Track"
@@ -301,7 +301,7 @@
       <Setter Property="FontFamily" Value="{StaticResource D47.Font.Chrome}" />
       <Setter Property="FontSize" Value="14" />
       <Setter Property="FontWeight" Value="SemiBold" />
-      <Setter Property="LetterSpacing" Value="1.68" />
+      <Setter Property="LetterSpacing" Value="0.84" />
       <Setter Property="Foreground" Value="{DynamicResource D47.A}" />
       <Setter Property="Background" Value="{DynamicResource D47.Tile}" />
       <Setter Property="Padding" Value="15,9" />
@@ -354,7 +354,7 @@
       <Setter Property="FontFamily" Value="{StaticResource D47.Font.Chrome}" />
       <Setter Property="FontSize" Value="14" />
       <Setter Property="FontWeight" Value="SemiBold" />
-      <Setter Property="LetterSpacing" Value="2.4" />
+      <Setter Property="LetterSpacing" Value="0.84" />
       <Setter Property="Foreground" Value="{DynamicResource D47.A}" />
       <Setter Property="Padding" Value="0,2,0,0" />
       <Setter Property="FocusAdorner" Value="{x:Null}" />

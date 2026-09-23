@@ -3,14 +3,14 @@
                     xmlns:sys="clr-namespace:System;assembly=System.Runtime">
 
   <!--
-    The same eight sizes TypeScale.cs declares, for the views authored in markup. Two
+    The same sizes TypeScale.cs declares, for the views authored in markup. Two
     declarations of one scale is one more than ideal, and the alternative is worse: x:Static
     against a const double works in Avalonia markup only through a markup extension that does
     not survive the compiled-binding path every view here uses, and half the sizes are set from
     code-behind anyway. TypeScaleTests asserts the two agree, so they cannot drift the way the
     forty-six literals these replaced did.
   -->
-  <sys:Double x:Key="D47.Type.Title">31</sys:Double>
+  <sys:Double x:Key="D47.Type.Title">28</sys:Double>
   <sys:Double x:Key="D47.Type.Heading">21</sys:Double>
   <sys:Double x:Key="D47.Type.Subheading">17</sys:Double>
   <sys:Double x:Key="D47.Type.Body">16</sys:Double>
@@ -18,6 +18,6 @@
   <sys:Double x:Key="D47.Type.Tip">14</sys:Double>
   <sys:Double x:Key="D47.Type.Small">13</sys:Double>
   <sys:Double x:Key="D47.Type.Meta">12</sys:Double>
-  <sys:Double x:Key="D47.Type.Caption">11</sys:Double>
+  <sys:Double x:Key="D47.Type.Caption">12</sys:Double>
 
 </ResourceDictionary>

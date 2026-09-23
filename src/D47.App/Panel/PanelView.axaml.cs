@@ -3048,7 +3048,7 @@ public partial class PanelView : UserControl
         return row;
     }
 
-    /// <summary>A message body's widest: 76 characters of Titillium Web at 16.</summary>
+    /// <summary>A message body's widest line.</summary>
     internal const double BodyMaxWidth = 608;
 
     /// <summary>Who spoke, what it was about, and when — atop every turn but the panel's own note (#276).</summary>
@@ -3080,7 +3080,6 @@ public partial class PanelView : UserControl
             FontFamily = ChromeFamily,
             FontSize = Theming.TypeScale.Small,
             FontWeight = FontWeight.Bold,
-            LetterSpacing = Theming.TypeScale.Small * 0.14,
             VerticalAlignment = VerticalAlignment.Center,
         };
 

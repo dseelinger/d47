@@ -208,7 +208,7 @@
                        VerticalAlignment="Center"
                        FontFamily="{StaticResource D47.Font.Mono}"
                        FontSize="{StaticResource D47.Type.Caption}"
-                       LetterSpacing="2.2"
+                       LetterSpacing="0.72"
                        Foreground="{DynamicResource D47.TextFaint}" />
           </StackPanel>
         </Border>

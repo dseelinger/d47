@@ -1,13 +1,13 @@
 namespace D47.App.Theming;
 
-/// <summary>The eight sizes d47 draws text at, named by the job the text is doing.</summary>
+/// <summary>The sizes d47 draws text at, named by the job the text is doing.</summary>
 public static class TypeScale
 {
     /// <summary>The minimum edge, in either dimension, of an interactive control's hit target.</summary>
     public const double MinimumTarget = 44;
 
     /// <summary>A screen title.</summary>
-    public const double Title = 31;
+    public const double Title = 28;
 
     /// <summary>A group heading.</summary>
     public const double Heading = 21;
@@ -17,6 +17,9 @@ public static class TypeScale
 
     /// <summary>Ordinary text.</summary>
     public const double Body = 16;
+
+    /// <summary>A section heading: upper-case Saira over a rule.</summary>
+    public const double Section = 15;
 
     /// <summary>
     /// Supporting text that is genuinely subordinate: a row's help line, the provenance line under the
@@ -34,5 +37,5 @@ public static class TypeScale
     public const double Meta = 12;
 
     /// <summary>The smallest d47 will draw: unit labels, machine captions.</summary>
-    public const double Caption = 11;
+    public const double Caption = 12;
 }

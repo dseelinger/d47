@@ -15,7 +15,7 @@
     <Setter Property="FontFamily" Value="{StaticResource D47.Font.Chrome}" />
     <Setter Property="FontSize" Value="{StaticResource D47.Type.Secondary}" />
     <Setter Property="FontWeight" Value="SemiBold" />
-    <Setter Property="LetterSpacing" Value="2.4" />
+    <Setter Property="LetterSpacing" Value="0.9" />
     <Setter Property="Foreground" Value="{DynamicResource D47.A}" />
     <Setter Property="Background" Value="{DynamicResource D47.Tile}" />
     <Setter Property="Height" Value="40" />
