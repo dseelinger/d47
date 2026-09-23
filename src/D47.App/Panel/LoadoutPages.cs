@@ -127,13 +127,15 @@ public static class LoadoutPages
 
     /// <summary>One pressable line of an index.</summary>
     /// <param name="showing">Whether this is the row the other pane is drawing, which fills it solid (#110).</param>
+    /// <param name="markKey">The mark's ink, where it is not the row's secondary ink.</param>
     internal static Control Row(
         string text,
         string? aside,
         bool marked,
         Action pressed,
         bool engineered = false,
-        bool showing = false)
+        bool showing = false,
+        string? markKey = null)
     {
         var label = ListRow.Name(new TextBlock
         {
@@ -207,7 +209,15 @@ public static class LoadoutPages
                 Margin = new Thickness(0, 0, 8, 0),
             };
 
-            ListRow.Secondary(mark);
+            if (markKey is null)
+            {
+                ListRow.Secondary(mark);
+            }
+            else
+            {
+                Themed(mark, TextBlock.ForegroundProperty, markKey);
+            }
+
             body.Children.Add(mark);
         }
 

@@ -2,9 +2,12 @@ using System.Globalization;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Controls.Documents;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Reactive;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Engineers;
@@ -66,13 +69,12 @@ public static class EngineersPages
             TextWrapping = TextWrapping.Wrap,
         };
 
-        LoadoutPages.Themed(label, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
+        LoadoutPages.Themed(label, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var button = new Button
         {
             Content = label,
             Background = Brushes.Transparent,
-            BorderThickness = new Thickness(0),
             Padding = new Thickness(0, 2),
             HorizontalAlignment = HorizontalAlignment.Left,
 
@@ -109,88 +111,122 @@ public static class EngineersPages
     }
 
     /// <summary>
-    /// The "Unlock Prerequisites" heading, with the add control on the same row where there is one to
-    /// add (#257).
+    /// The "Unlock Prerequisites" section heading, with the add control on the same row where there is
+    /// one to add (#257).
     /// </summary>
     internal static Control PrerequisitesHeader(
-        Engineer engineer, IReadOnlyList<UnlockCriterion> criteria, EngineerSource source, Action refresh)
+        Engineer engineer,
+        IReadOnlyList<UnlockCriterion> criteria,
+        EngineerSource source,
+        Action refresh,
+        bool compact = false)
     {
-        var heading = LoadoutPages.Heading("Unlock Prerequisites");
-
         if (AddPrerequisitesControl(engineer, criteria, source, refresh) is not { } button)
         {
-            return heading;
+            return LoadoutPages.Section("Unlock Prerequisites", compact);
         }
+
+        var heading = new SelectableTextBlock { VerticalAlignment = VerticalAlignment.Bottom };
+
+        TitleText.Style(heading, TypeScale.Section, TitleRank.Group);
+        TitleText.Show(heading, "Unlock Prerequisites");
 
         var row = new DockPanel();
         DockPanel.SetDock(button, Dock.Right);
         row.Children.Add(button);
         row.Children.Add(heading);
 
-        return row;
+        var section = TitleText.GroupRow(row);
+        section.Margin = compact ? new Thickness(0, 4, 0, 2) : new Thickness(0, 14, 0, 6);
+
+        return section;
     }
 
-    /// <summary>One prerequisite, its state as a word in front of it — the same words wherever a criterion is shown (#126).</summary>
+    /// <summary>
+    /// A criterion's word on the status ladder and its ink — the same words wherever a criterion is shown
+    /// (#126).
+    /// </summary>
+    internal static (string Word, string Key) Ladder(UnlockCriterion criterion) => criterion switch
+    {
+        { Met: true } => ("✓ MET", ThemeManager.BlueKey),
+        { Met: null } => ("? UNKNOWN", ThemeManager.WhiteKey),
+        { Measure.Fill: > 0 } => ("IN PROGRESS", ThemeManager.AKey),
+        _ => ("NOT MET", ThemeManager.GreyKey),
+    };
+
+    /// <summary>One prerequisite as a Slab tile: its ladder word, the criterion, and its reading and gauge where it has them.</summary>
     internal static Control CriterionLine(UnlockCriterion criterion)
     {
-        var (word, brush) = criterion.Met switch
-        {
-            true => ("MET", ThemeManager.GoodKey),
-            false => ("NOT MET", ThemeManager.TextFaintKey),
-            _ => ("UNKNOWN", ThemeManager.WarnKey),
-        };
+        var (word, key) = Ladder(criterion);
 
         var box = new TextBlock
         {
             Text = word,
-            FontFamily = new FontFamily(Fonts.MonoFamily),
-            FontSize = TypeScale.Small,
-            MinWidth = 64,
+            FontFamily = new FontFamily(Fonts.ChromeFamily),
+            FontSize = TypeScale.Meta,
+            FontWeight = FontWeight.SemiBold,
+            LetterSpacing = TypeScale.Meta * Fonts.ChromeTracking,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        LoadoutPages.Themed(box, TextBlock.ForegroundProperty, brush);
+        LoadoutPages.Themed(box, TextBlock.ForegroundProperty, key);
 
-        var row = new StackPanel
+        var said = new SelectableTextBlock
         {
-            Orientation = Orientation.Horizontal,
-            Spacing = 6,
-            Children =
-            {
-                box,
-                new SelectableTextBlock
-                {
-                    Text = criterion.Text,
-                    FontSize = TypeScale.Body,
-                    TextWrapping = TextWrapping.Wrap,
-                    VerticalAlignment = VerticalAlignment.Center,
-                },
-            },
+            Text = criterion.Text,
+            FontSize = TypeScale.Body,
+            TextWrapping = TextWrapping.Wrap,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        LoadoutPages.Themed(said, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+
+        var grid = new Grid
+        {
+            ColumnDefinitions = [new ColumnDefinition(96, GridUnitType.Pixel), new ColumnDefinition(GridLength.Star)],
+            RowDefinitions = [new RowDefinition(GridLength.Auto)],
+            ColumnSpacing = 12,
+            RowSpacing = 4,
         };
 
-        var extra = new List<Control>();
+        grid.Children.Add(box);
+        Grid.SetColumn(said, 1);
+        grid.Children.Add(said);
+
+        var below = new List<Control>();
+
+        if (criterion.Reading is { Length: > 0 } reading)
+        {
+            below.Add(LoadoutPages.Toned(reading, ThemeManager.AKey));
+        }
 
         // A met line draws full even where the reading behind it fell short of the target — the journal
         // may have settled it some other way (#17).
         if (criterion.Measure is { } measure)
         {
-            extra.Add(LoadoutPages.MeasureBar(criterion.Met == true ? 1 : measure.Fill));
+            below.Add(LoadoutPages.MeasureBar(criterion.Met == true ? 1 : measure.Fill));
         }
 
-        if (criterion.Reading is { Length: > 0 } reading)
+        foreach (var child in below)
         {
-            extra.Add(LoadoutPages.Muted(reading));
+            grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+            Grid.SetRow(child, grid.RowDefinitions.Count - 1);
+            Grid.SetColumn(child, 1);
+            grid.Children.Add(child);
         }
 
-        if (extra.Count == 0)
-        {
-            return row;
-        }
+        var tile = new Border { Padding = new Thickness(14, 10), Child = grid };
+        LoadoutPages.Themed(tile, Border.BackgroundProperty, ThemeManager.SlabKey);
 
-        var stack = new StackPanel { Orientation = Orientation.Vertical, Spacing = 2, Children = { row } };
+        return tile;
+    }
 
-        foreach (var child in extra)
+    /// <summary>Criteria as ladder tiles, 2px apart.</summary>
+    internal static Control Criteria(IEnumerable<UnlockCriterion> criteria)
+    {
+        var stack = new StackPanel { Spacing = StatTile.Gap };
+
+        foreach (var criterion in criteria)
         {
-            stack.Children.Add(child);
+            stack.Children.Add(CriterionLine(criterion));
         }
 
         return stack;
@@ -206,7 +242,12 @@ public abstract class EngineerPageBase : UserControl
 {
     protected EngineerPageBase(EngineerSource source) => Source = source;
 
+    private IDisposable? _sized;
+
     protected EngineerSource Source { get; }
+
+    /// <summary>Whether the panel is drawing mini, where headings are compact.</summary>
+    protected bool Mini { get; private set; }
 
     protected abstract void Refresh();
 
@@ -219,13 +260,32 @@ public abstract class EngineerPageBase : UserControl
         base.OnAttachedToVisualTree(e);
 
         Source.Changed += OnChanged;
+
+        var panel = this.GetSelfAndVisualAncestors().OfType<PanelView>().FirstOrDefault();
+        Mini = panel?.Mode == PanelMode.Mini;
+
         Refresh();
+
+        _sized = panel?.GetObservable(PanelView.ModeProperty).Subscribe(new AnonymousObserver<PanelMode>(OnSurface));
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnDetachedFromVisualTree(e);
         Source.Changed -= OnChanged;
+        _sized?.Dispose();
+        _sized = null;
+    }
+
+    private void OnSurface(PanelMode mode)
+    {
+        var mini = mode == PanelMode.Mini;
+
+        if (mini != Mini)
+        {
+            Mini = mini;
+            Refresh();
+        }
     }
 
     private void OnChanged() => Dispatcher.UIThread.Post(Refresh);
@@ -235,14 +295,9 @@ public abstract class EngineerPageBase : UserControl
 public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage
 {
     private readonly PanelNavigator _nav;
-    private readonly TextBlock _summary = new()
-    {
-        FontSize = TypeScale.Body,
-        TextWrapping = TextWrapping.Wrap,
-        Margin = new Thickness(0, 0, 0, 10),
-    };
+    private readonly TextBlock _summary = LoadoutPages.Toned(string.Empty, ThemeManager.AKey, TypeScale.Body);
 
-    private readonly StackPanel _list = new() { Spacing = 3 };
+    private readonly StackPanel _list = new() { Spacing = 2 };
     private readonly EngineerDirectoryMemory? _memory;
 
     private readonly CheckBox _colonia;
@@ -255,6 +310,7 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage
     {
         _nav = nav;
         _memory = memory;
+        _summary.Margin = new Thickness(0, 0, 0, 10);
 
         (_colonia, _) = LabeledCheckBox.Build("Hide the Colonia eight");
         (_onFoot, _) = LabeledCheckBox.Build("Hide on-foot engineers");
@@ -276,10 +332,10 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage
             Refresh();
         };
 
-        var checks = new StackPanel
+        var checks = new WrapPanel
         {
-            Orientation = Orientation.Horizontal,
-            Spacing = 12,
+            ItemSpacing = 2,
+            LineSpacing = 2,
             Margin = new Thickness(0, 0, 0, 10),
             Children = { _colonia, _onFoot },
         };
@@ -337,8 +393,15 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage
         {
             if (group != entry.Reach)
             {
+                var section = LoadoutPages.Section(Caption(entry.Reach), compact: Mini);
+
+                if (group is null)
+                {
+                    section.Margin = new Thickness(0, 0, 0, 4);
+                }
+
                 group = entry.Reach;
-                _list.Children.Add(LoadoutPages.Heading(Caption(entry.Reach)));
+                _list.Children.Add(section);
             }
 
             var line = entry.Engineer.Name;
@@ -370,7 +433,8 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage
                 entry.Aside,
                 entry.Wanted > 0 || entry.GateLine is not null,
                 () => _nav.Drill(crumb),
-                showing: showing));
+                showing: showing,
+                markKey: entry.Reach == EngineerReach.Unlocked ? null : ThemeManager.RedKey));
         }
     }
 
@@ -441,33 +505,25 @@ public sealed class EngineerPage : EngineerPageBase
 
         var engineer = entry.Engineer;
 
-        var where = new SelectableTextBlock
-        {
-            Text = engineer.Where,
-            FontSize = TypeScale.Body,
-            FontWeight = FontWeight.SemiBold,
-            TextWrapping = TextWrapping.Wrap,
-        };
+        _body.Children.Add(Title(engineer.Name));
 
-        if (engineer.System is { Length: > 0 } system && _copy is { } copy)
+        // The workshop has a row of its own, so its COPY tile does not narrow the name to a third of the pane.
+        var tiles = new List<Control>();
+
+        if (entry.LightYears is not null)
         {
-            _body.Children.Add(new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Spacing = 6,
-                Children = { where, CopyWord.For(system, copy) },
-            });
-        }
-        else
-        {
-            _body.Children.Add(where);
+            tiles.Add(StatTile.Build("Distance", entry.Aside));
         }
 
-        _body.Children.Add(LoadoutPages.Muted(entry.Aside));
+        tiles.Add(StatTile.Build("Where you stand", entry.Status));
+
+        _body.Children.Add(Workshop(engineer, report.From));
+        _body.Children.Add(StatTile.Grid(tiles, maxColumns: 2));
 
         // Where the pin lives — d47 has no journal event for one, so the Commander says so here (#113).
         var (pinned, _) = LabeledCheckBox.Build("A blueprint is pinned with them");
         pinned.IsChecked = Source.IsPinned(engineer.Id);
+        pinned.Margin = new Thickness(0, 8, 0, 0);
 
         pinned.IsCheckedChanged += (_, _) => Source.Pin(engineer.Id, pinned.IsChecked == true);
 
@@ -479,32 +535,35 @@ public sealed class EngineerPage : EngineerPageBase
         }
 
         // One per line rather than one running clause (remediation.md 16, item 6).
-        _body.Children.Add(LoadoutPages.Heading("Grades"));
+        _body.Children.Add(LoadoutPages.Section("Grades", Mini));
 
         if (entry.SpecialityLines.Count == 0)
         {
-            _body.Children.Add(LoadoutPages.Muted(entry.Specialities));
+            _body.Children.Add(LoadoutPages.Toned(entry.Specialities, ThemeManager.AKey));
         }
         else
         {
             foreach (var speciality in entry.SpecialityLines)
             {
-                _body.Children.Add(LoadoutPages.Muted("•  " + speciality));
+                _body.Children.Add(LoadoutPages.Toned("•  " + speciality, ThemeManager.AKey));
             }
         }
-
-        _body.Children.Add(LoadoutPages.Heading("Where you stand"));
-        _body.Children.Add(LoadoutPages.Muted(entry.Status));
 
         // The reason to care about this engineer, before what reaching them costs (#109).
         if (entry.Planned.Count > 0)
         {
-            _body.Children.Add(LoadoutPages.Heading(
-                entry.Reach == EngineerReach.Unlocked ? "Planned work" : "What unlocking them buys"));
+            _body.Children.Add(LoadoutPages.Section(
+                entry.Reach == EngineerReach.Unlocked ? "Planned work" : "What unlocking them buys",
+                Mini));
 
             foreach (var work in entry.Planned.Take(PlannedShown))
             {
-                _body.Children.Add(LoadoutPages.Muted("•  " + work.Describe()));
+                _body.Children.Add(Listed(ListRow.Name(new SelectableTextBlock
+                {
+                    Text = work.Describe(),
+                    FontSize = TypeScale.Body,
+                    TextWrapping = TextWrapping.Wrap,
+                })));
             }
 
             if (entry.Planned.Count > PlannedShown)
@@ -517,73 +576,25 @@ public sealed class EngineerPage : EngineerPageBase
         // Unlock Prerequisites, with what is already done marked (remediation.md 13, item 12).
         if (entry.Criteria.Count > 0)
         {
-            _body.Children.Add(EngineersPages.PrerequisitesHeader(engineer, entry.Criteria, Source, Refresh));
-
-            foreach (var criterion in entry.Criteria)
-            {
-                _body.Children.Add(EngineersPages.CriterionLine(criterion));
-            }
+            _body.Children.Add(EngineersPages.PrerequisitesHeader(engineer, entry.Criteria, Source, Refresh, Mini));
+            _body.Children.Add(EngineersPages.Criteria(entry.Criteria));
         }
 
         // The way in, stop by stop.
         if (entry.Chain.IsDone)
         {
-            _body.Children.Add(LoadoutPages.Muted("Nothing stands between you and them."));
+            var done = LoadoutPages.Muted("Nothing stands between you and them.");
+            done.Margin = new Thickness(0, 10, 0, 0);
+
+            _body.Children.Add(done);
         }
         else
         {
-            _body.Children.Add(LoadoutPages.Heading("The way in"));
+            _body.Children.Add(LoadoutPages.Section("The way in", Mini));
 
             foreach (var step in entry.Chain.Steps)
             {
-                // The name opens that engineer, and the rest of the stop stays beside it (remediation.md 12,
-                // item 7).
-                var row = new StackPanel { Orientation = Orientation.Horizontal };
-
-                row.Children.Add(EngineersPages.Name(step.Engineer, _nav, TypeScale.Body));
-
-                if (step.SystemSplit() is { } split && _copy is { } stopCopy)
-                {
-                    row.Children.Add(new SelectableTextBlock
-                    {
-                        Text = split.Before + split.System,
-                        FontSize = TypeScale.Body,
-                        TextWrapping = TextWrapping.Wrap,
-                        VerticalAlignment = VerticalAlignment.Center,
-                    });
-
-                    row.Children.Add(CopyWord.For(split.System, stopCopy));
-
-                    row.Children.Add(new SelectableTextBlock
-                    {
-                        Text = split.After,
-                        FontSize = TypeScale.Body,
-                        TextWrapping = TextWrapping.Wrap,
-                        VerticalAlignment = VerticalAlignment.Center,
-                    });
-                }
-                else
-                {
-                    row.Children.Add(new SelectableTextBlock
-                    {
-                        Text = step.Rest(),
-                        FontSize = TypeScale.Body,
-                        TextWrapping = TextWrapping.Wrap,
-                        VerticalAlignment = VerticalAlignment.Center,
-                    });
-                }
-
-                _body.Children.Add(row);
-
-                if (step.Meeting is { Length: > 0 } meeting)
-                {
-                    _body.Children.Add(LoadoutPages.Muted($"    first: {meeting}"));
-                }
-
-                if (step.Tribute is { Length: > 0 } tribute)
-                {
-                    _body.Children.Add(LoadoutPages.Muted($"    hand over: {tribute}"));
-                }
+                _body.Children.Add(Listed(Stop(step, report.From)));
             }
         }
 
@@ -596,11 +607,122 @@ public sealed class EngineerPage : EngineerPageBase
         {
             if (text is { Length: > 0 })
             {
-                _body.Children.Add(LoadoutPages.Heading(caption));
+                _body.Children.Add(LoadoutPages.Section(caption, Mini));
                 _body.Children.Add(LoadoutPages.Muted(text));
             }
         }
     }
+
+    /// <summary>The engineer's name as the screen title, over a 1px A rule, under the breadcrumb that is its context line.</summary>
+    private Control Title(string name)
+    {
+        var block = TitleText.Style(
+            new SelectableTextBlock { TextWrapping = TextWrapping.Wrap },
+            Mini ? TypeScale.Heading : TypeScale.Title,
+            TitleRank.Screen,
+            sentence: true);
+
+        TitleText.Show(block, name, sentence: true);
+
+        var title = TitleText.GroupRow(block);
+        title.Margin = new Thickness(0, 0, 0, Mini ? 4 : 10);
+
+        return title;
+    }
+
+    /// <summary>Where the engineer works, Cyan where it is the Commander's system, with COPY inside the tile.</summary>
+    private Control Workshop(Engineer engineer, string? here)
+    {
+        var system = engineer.System;
+        var ink = Here(system, here) ? StatInk.Here : StatInk.Value;
+        var tile = StatTile.Build("Workshop", engineer.Where, ink);
+
+        if (system is not { Length: > 0 } target || _copy is not { } copy || tile.Child is not { } figures)
+        {
+            return tile;
+        }
+
+        tile.Child = null;
+
+        var word = CopyWord.For(target, copy);
+        word.VerticalAlignment = VerticalAlignment.Center;
+        Grid.SetColumn(word, 1);
+
+        tile.Child = new Grid
+        {
+            ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto)],
+            ColumnSpacing = 6,
+            Children = { figures, word },
+        };
+
+        return tile;
+    }
+
+    private static bool Here(string? system, string? here) =>
+        system is { Length: > 0 } && string.Equals(system, here, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>One stop on the way in: the engineer's name opens them, and the rest of the stop stays beside it (remediation.md 12, item 7).</summary>
+    private Control Stop(UnlockStep step, string? here)
+    {
+        var stop = new StackPanel { Spacing = 2 };
+        var row = new WrapPanel { Orientation = Orientation.Horizontal };
+
+        row.Children.Add(EngineersPages.Name(step.Engineer, _nav, TypeScale.Body));
+
+        if (step.SystemSplit() is { } split && _copy is { } stopCopy)
+        {
+            var named = Said(split.Before + split.System);
+
+            if (Here(split.System, here))
+            {
+                var system = new Run(split.System);
+                LoadoutPages.Themed(system, Run.ForegroundProperty, ThemeManager.CyanKey);
+
+                named.Inlines = [new Run(split.Before), system];
+            }
+
+            row.Children.Add(named);
+            row.Children.Add(CopyWord.For(split.System, stopCopy));
+            row.Children.Add(Said(split.After));
+        }
+        else
+        {
+            row.Children.Add(Said(step.Rest()));
+        }
+
+        stop.Children.Add(row);
+
+        if (step.Meeting is { Length: > 0 } meeting)
+        {
+            stop.Children.Add(LoadoutPages.Muted($"first: {meeting}"));
+        }
+
+        if (step.Tribute is { Length: > 0 } tribute)
+        {
+            stop.Children.Add(LoadoutPages.Muted($"hand over: {tribute}"));
+        }
+
+        return stop;
+    }
+
+    private static SelectableTextBlock Said(string text)
+    {
+        var block = new SelectableTextBlock
+        {
+            Text = text,
+            FontSize = TypeScale.Body,
+            TextWrapping = TextWrapping.Wrap,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        LoadoutPages.Themed(block, TextBlock.ForegroundProperty, ThemeManager.AKey);
+
+        return block;
+    }
+
+    /// <summary>A read-only list row holding <paramref name="content"/>.</summary>
+    private static Border Listed(Control content) =>
+        ListRow.Dress(new Border { Padding = new Thickness(12, 6), Child = content });
 }
 
 /// <summary>The solver (Phase 28, "The fastest way in").</summary>
@@ -637,12 +759,7 @@ public sealed class EngineerRoutePage : EngineerPageBase
 
         var report = Source.Read();
 
-        _body.Children.Add(new SelectableTextBlock
-        {
-            Text = report.Summary(),
-            FontSize = TypeScale.Body,
-            TextWrapping = TextWrapping.Wrap,
-        });
+        _body.Children.Add(LoadoutPages.Toned(report.Summary(), ThemeManager.AKey, TypeScale.Body));
 
         // What the ranking was measured from, said out loud.
         _body.Children.Add(LoadoutPages.Muted(Measured(report)));
@@ -664,25 +781,20 @@ public sealed class EngineerRoutePage : EngineerPageBase
         {
             // The ranked name opens that engineer rather than merely heading a block (remediation.md 12, item
             // 7).
-            _body.Children.Add(EngineersPages.Name(
-                candidate.Engineer, _nav, TypeScale.Body, FontWeight.SemiBold));
-
-            _body.Children.Add(new SelectableTextBlock
-            {
-                Text = candidate.Summary(),
-                FontSize = TypeScale.Body,
-                TextWrapping = TextWrapping.Wrap,
-            });
+            var row = Ranked(candidate);
+            row.Margin = new Thickness(0, 12, 0, 0);
+            _body.Children.Add(row);
 
             if (EngineersPages.AddPrerequisitesControl(candidate.Engineer, candidate.Criteria, Source, Refresh)
                 is { } button)
             {
+                button.Margin = new Thickness(0, 2, 0, 0);
                 _body.Children.Add(button);
             }
 
-            foreach (var criterion in candidate.Criteria)
+            if (candidate.Criteria.Count > 0)
             {
-                _body.Children.Add(EngineersPages.CriterionLine(criterion));
+                _body.Children.Add(EngineersPages.Criteria(candidate.Criteria));
             }
 
             foreach (var line in candidate.Working())
@@ -694,10 +806,49 @@ public sealed class EngineerRoutePage : EngineerPageBase
         if (route.Count > Shown)
         {
             // Said rather than silently cut.
-            _body.Children.Add(LoadoutPages.Muted(
+            var more = LoadoutPages.Muted(
                 $"{(route.Count - Shown).ToString(CultureInfo.InvariantCulture)} more ranked "
-                + "below these, on the Directory."));
+                + "below these, on the Directory.");
+            more.Margin = new Thickness(0, 10, 0, 0);
+
+            _body.Children.Add(more);
         }
+    }
+
+    /// <summary>A candidate as a pressable list row: the name, and the ranking's summary under it.</summary>
+    private Button Ranked(UnlockCandidate candidate)
+    {
+        var crumb = EngineersPages.Crumb(candidate.Engineer);
+        var showing = _nav.Trail.Count > 0
+                      && string.Equals(_nav.Trail[^1].Key, crumb.Key, StringComparison.Ordinal);
+
+        var name = ListRow.Name(new TextBlock
+        {
+            Text = candidate.Engineer.Name,
+            FontFamily = Fonts.ChromeFamily,
+            FontSize = TypeScale.Body,
+            FontWeight = FontWeight.SemiBold,
+            TextWrapping = TextWrapping.Wrap,
+        });
+
+        var summary = ListRow.Secondary(new TextBlock
+        {
+            Text = candidate.Summary(),
+            FontSize = TypeScale.Secondary,
+            TextWrapping = TextWrapping.Wrap,
+        });
+
+        var button = ListRow.Dress(
+            new Button
+            {
+                Content = new StackPanel { Spacing = 1, Children = { name, summary } },
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+            },
+            showing);
+
+        button.Click += (_, _) => _nav.Drill(crumb);
+
+        return button;
     }
 
     private static string Measured(EngineerReport report)

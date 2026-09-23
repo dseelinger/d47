@@ -106,6 +106,16 @@ decommissioning" reads in red. A suit or weapon's page now opens with its name a
 title, and a material on its costs list that you hold enough of reads in blue. Tiles in one row
 of any Fleet page are now all the same height.
 
+Engineers is restyled to match. The Directory's group headings are white capitals over an accent
+rule, and the marker on an engineer you have not unlocked is red. The two Hide checkboxes wrap
+onto a second line in a narrow pane instead of being cut off. An engineer's page opens with their
+name as a large white title. Their workshop, with COPY inside it, the distance and where you stand
+are grey-labelled tiles, and the workshop reads in cyan when it is in the system you are in. Grades
+read in the accent colour, and planned work and each stop on the way in sit on tiles. Each
+prerequisite sits on its own tile and reads ✓ MET in blue, IN PROGRESS in the accent colour with
+its bar, ? UNKNOWN in white or NOT MET in grey. On the Route, each ranked engineer is a tile with
+their name in white and the ranking's summary under it, and pressing it opens them.
+
 ## 1.6.3 — Guardian theme removed
 
 The Guardian theme is gone from Theme's choices. A saved theme of `guardian` now opens as Elite,

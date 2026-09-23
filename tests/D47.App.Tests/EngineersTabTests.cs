@@ -141,14 +141,14 @@ public class EngineersTabTests
         Assert.Contains(shown, line => line.Contains("in progress", StringComparison.Ordinal)
                                        && line.Contains("not started", StringComparison.Ordinal));
 
-        Assert.Contains("Ready for Unlock", shown);
-        Assert.Contains("Unlocked", shown);
-        Assert.Contains("Needs a Referral", shown);
+        Assert.Contains("READY FOR UNLOCK", shown);
+        Assert.Contains("UNLOCKED", shown);
+        Assert.Contains("NEEDS A REFERRAL", shown);
 
         // The heading that can be acted on comes before the one that cannot.
         Assert.True(
-            shown.ToList().IndexOf("Ready for Unlock")
-            < shown.ToList().IndexOf("Needs a Referral"));
+            shown.ToList().IndexOf("READY FOR UNLOCK")
+            < shown.ToList().IndexOf("NEEDS A REFERRAL"));
 
         // And the say-line, on this level as on every other.
         Assert.Contains(shown, line => line.StartsWith("Say:", StringComparison.Ordinal));
@@ -192,7 +192,7 @@ public class EngineersTabTests
         var shown = Text(surface.Panel);
 
         Assert.Contains("Farseer Inc in Deciat", shown);
-        Assert.Contains("The way in", shown);
+        Assert.Contains("THE WAY IN", shown);
  // One speciality per line, not one running clause.
         Assert.Contains(shown, line => line.Contains("•  Frame Shift Drive (G5)", StringComparison.Ordinal));
         Assert.DoesNotContain(shown, line => line.Contains("Frame Shift Drive to 5", StringComparison.Ordinal));
@@ -313,7 +313,7 @@ public class EngineersTabTests
         Assert.StartsWith(EngineersPages.WhoPrefix, surface.Panel.Nav.Trail[^1].Key, StringComparison.Ordinal);
 
         // And it is the engineer's own page rather than a level that merely carries their name.
-        Assert.Contains(Text(surface.Panel), line => line.Contains("Where you stand", StringComparison.Ordinal));
+        Assert.Contains(Text(surface.Panel), line => line.Contains("WHERE YOU STAND", StringComparison.Ordinal));
 
         surface.Window.Close();
     }
@@ -329,7 +329,7 @@ public class EngineersTabTests
         surface.Panel.Nav.Drill(EngineersPages.Crumb(behind));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Contains(Text(surface.Panel), line => line.Contains("The way in", StringComparison.Ordinal));
+        Assert.Contains(Text(surface.Panel), line => line.Contains("THE WAY IN", StringComparison.Ordinal));
 
         // Inside the engineer's own page, not the directory beside it: a wide panel keeps the list on screen,
         // and its rows have opened an engineer since Phase 28 — so a test that searched the whole panel would
@@ -543,8 +543,8 @@ public class EngineersTabTests
 
         var shown = Text(surface.Panel);
 
-        Assert.Contains("Unlock Prerequisites", shown);
-        Assert.Contains(Boxes(surface.Panel), says => says == "MET");
+        Assert.Contains("UNLOCK PREREQUISITES", shown);
+        Assert.Contains(Boxes(surface.Panel), says => says == "✓ MET");
 
         // Marco Qwent, whose referral through Elvira Martuuk is not met and whose invitation is not readable.
         surface.Panel.Nav.Drill(
@@ -559,7 +559,7 @@ public class EngineersTabTests
         var boxes = Boxes(surface.Panel);
 
         Assert.Contains(boxes, says => says == "NOT MET");
-        Assert.Contains(boxes, says => says == "UNKNOWN");
+        Assert.Contains(boxes, says => says == "? UNKNOWN");
 
         surface.Window.Close();
     }
@@ -654,5 +654,5 @@ public class EngineersTabTests
         [.. panel.GetVisualDescendants()
             .OfType<TextBlock>()
             .Select(block => block.Text)
-            .Where(text => text is "MET" or "NOT MET" or "UNKNOWN")];
+            .Where(text => text is "✓ MET" or "IN PROGRESS" or "NOT MET" or "? UNKNOWN")];
 }
